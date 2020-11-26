@@ -22,15 +22,18 @@
 package com.tencent.bkrepo.auth.resource
 
 import com.tencent.bkrepo.auth.api.ServiceDepartmentResource
+import com.tencent.bkrepo.auth.service.DepartmentService
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-class ServiceDepartmentResourceImpl @Autowired constructor() : ServiceDepartmentResource {
+class ServiceDepartmentResourceImpl @Autowired constructor(
+        val departmentService: DepartmentService
+) : ServiceDepartmentResource {
 
-    override fun listDepartment(): Response<List<Map<Any, Any>>> {
-        return ResponseBuilder.success(emptyList())
+    override fun listDepartment(username: String, departmentId: Int?): Response<Any?> {
+        return ResponseBuilder.success(departmentService.listDepartmentById(username, departmentId))
     }
 }

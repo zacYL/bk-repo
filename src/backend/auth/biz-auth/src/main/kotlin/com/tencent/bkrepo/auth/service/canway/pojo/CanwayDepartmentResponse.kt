@@ -43,8 +43,8 @@ data class CanwayParentDepartmentPojo(
 
 data class CanwayChildrenDepartmentPojo(
         val id: Int,
-        val order: Int,
         val name: String,
+        val order: Int?,
         val parent: Int?,
         val has_children: Boolean?
 )

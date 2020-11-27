@@ -144,6 +144,7 @@ abstract class AbstractServiceImpl constructor(
             users = tPermission.users,
             roles = tPermission.roles,
             actions = tPermission.actions,
+            departments = tPermission.departments,
             createBy = tPermission.createBy,
             createAt = tPermission.createAt,
             updatedBy = tPermission.updatedBy,

@@ -1,13 +1,22 @@
 package com.tencent.bkrepo.auth.service.canway
 
 import com.tencent.bkrepo.auth.service.DepartmentService
-import com.tencent.bkrepo.auth.service.canway.pojo.*
+import com.tencent.bkrepo.auth.service.canway.pojo.CanwayDepartmentPojo
+import com.tencent.bkrepo.auth.service.canway.pojo.CanwayChildrenDepartmentPojo
+import com.tencent.bkrepo.auth.service.canway.pojo.CanwayDepartmentResponse
+import com.tencent.bkrepo.auth.service.canway.pojo.BkCertificate
+import com.tencent.bkrepo.auth.service.canway.pojo.CertType
+import com.tencent.bkrepo.auth.service.canway.pojo.CanwayDepartmentPage
+import com.tencent.bkrepo.auth.service.canway.pojo.CanwayParentDepartmentPojo
 import com.tencent.bkrepo.auth.util.HttpUtils
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.readJsonString
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import okhttp3.MediaType
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
+import okhttp3.OkHttpClient
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -18,18 +27,15 @@ class CanwayDepartmentServiceImpl(
 ) : DepartmentService {
 
     val paasHost = canwayAuthConf.devopsGatewayApi
-    val paasListDepartmentUrl = "/api/c/compapi/v2/usermanage/list_departments/"
-    val paasBatchDepartmentUrl = "/api/c/compapi/v2/usermanage/department_batch/"
     // todo 复用 BkAuthConfig
     val bkAppCode = canwayAuthConf.appCode
     val bkAppSecret = canwayAuthConf.appSecret
-    // todo 兼容username 和bk_token 两种模式
-    val paasDepartmentApi = "%s?bk_app_code=%s&bk_app_secret=%s&bk_username=%s&page=1&page_size=1"
 
-    override fun listDepartmentById(username: String, departmentId: Int?): List<CanwayChildrenDepartmentPojo>? {
+    override fun listDepartmentById(username: String?, departmentId: Int?): List<CanwayChildrenDepartmentPojo>? {
+        val bkCertificate = getBkCertificate(username)
         if (departmentId != null) {
             val mediaType = MediaType.parse("application/json; charset=utf-8")
-            val json = String.format(jsonFormat, bkAppCode, bkAppSecret, username, departmentId)
+            val json = String.format(jsonFormat, bkAppCode, bkAppSecret, bkCertificate.certType.value, bkCertificate.value, departmentId)
             val requestUrl = "${paasHost?.removeSuffix("/")}$paasBatchDepartmentUrl"
             val body = RequestBody.create(mediaType, json)
             val request = Request.Builder()
@@ -40,25 +46,60 @@ class CanwayDepartmentServiceImpl(
             val departments = responseContent.readJsonString<CanwayDepartmentResponse<List<CanwayParentDepartmentPojo>>>()
             return departments.data.first().children
         } else {
-            val company = getCompanyId(username)
+            val company = getCompanyId(bkCertificate)
             return listOf(company).map { transferCanwayChildrenDepartment(company) }
         }
+    }
+
+    override fun listDepartmentByIds(username: String?, departmentIds: List<Int>): List<CanwayChildrenDepartmentPojo> {
+        val bkCertificate = getBkCertificate(username)
+        val list = mutableListOf<CanwayChildrenDepartmentPojo>()
+        for (departmentId in departmentIds) {
+            val url = "${paasHost?.removeSuffix("/")}$paasListDepartmentUrl"
+            val requestUrl = String.format(paasListDepartmentRequest,url, bkAppCode, bkAppSecret,
+                    bkCertificate.certType.value, bkCertificate.value,
+                    departmentId, listDepartmentField)
+            val request = Request.Builder()
+                    .url(requestUrl)
+                    .build()
+            val response = HttpUtils.doRequest(OkHttpClient(), request, 3, mutableSetOf(200))
+            val responseContent =  response.content
+            val department = responseContent.readJsonString<CanwayDepartmentResponse<CanwayDepartmentPage>>().data.results!!.first()
+            list.add(CanwayChildrenDepartmentPojo(department.id, department.name, null,null,null))
+        }
+        return list
+    }
+
+    /**
+     * 兼容蓝鲸 username 和cookie两种认证模式
+     */
+    fun getBkCertificate(username: String?): BkCertificate {
+        val cookies = HttpContextHolder.getRequest().cookies
+        if (cookies != null) {
+            for (cookie in cookies) {
+                if(cookie.name == CertType.TOKEN.value) return BkCertificate(CertType.TOKEN, cookie.value)
+            }
+        }
+        if (username != null) {
+            return BkCertificate(CertType.USERNAME, username)
+        }
+        throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING,"User authentication failed, can not found bk_token in cookie or username in request")
     }
 
     fun transferCanwayChildrenDepartment(department: CanwayDepartmentPojo): CanwayChildrenDepartmentPojo {
         return CanwayChildrenDepartmentPojo(
                 department.id,
-                department.order,
                 department.name,
+                department.order,
                 department.parent,
                 null
         )
     }
 
-    fun getCompanyId(username: String): CanwayDepartmentPojo {
+    fun getCompanyId(bkCertificate: BkCertificate): CanwayDepartmentPojo {
         //查出总公司id
         val url = "${paasHost?.removeSuffix("/")}$paasListDepartmentUrl"
-        val requestUrl = String.format(paasDepartmentApi,url, bkAppCode, bkAppSecret, username)
+        val requestUrl = String.format(paasDepartmentApi,url, bkAppCode, bkAppSecret, bkCertificate.certType.value, bkCertificate.value)
         val request = Request.Builder()
                 .url(requestUrl)
                 .build()
@@ -69,11 +110,16 @@ class CanwayDepartmentServiceImpl(
 
     companion object{
         val logger: Logger = LoggerFactory.getLogger(CanwayDepartmentServiceImpl::class.java)
-        val jsonFormat = "{\n" +
+        const val jsonFormat = "{\n" +
                 "    \"bk_app_code\":\"%s\",\n" +
                 "    \"bk_app_secret\":\"%s\",\n" +
-                "    \"bk_username\":\"%s\",\n" +
+                "    \"%s\":\"%s\",\n" +
                 "    \"id_list\": [%d]\n" +
                 "}"
+        const val paasListDepartmentUrl = "/api/c/compapi/v2/usermanage/list_departments/"
+        const val paasBatchDepartmentUrl = "/api/c/compapi/v2/usermanage/department_batch/"
+        const val paasDepartmentApi = "%s?bk_app_code=%s&bk_app_secret=%s&%s=%s&page=1&page_size=1"
+        const val paasListDepartmentRequest = "%s?bk_app_code=%s&bk_app_secret=%s&%s=%s&exact_lookups=%d&lookup_field=%s&page=1&page_size=1"
+        const val listDepartmentField = "id"
     }
 }

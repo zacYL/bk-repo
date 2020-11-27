@@ -33,7 +33,11 @@ class ServiceDepartmentResourceImpl @Autowired constructor(
         val departmentService: DepartmentService
 ) : ServiceDepartmentResource {
 
-    override fun listDepartment(username: String, departmentId: Int?): Response<Any?> {
+    override fun listDepartment(username: String?, departmentId: Int?): Response<Any?> {
         return ResponseBuilder.success(departmentService.listDepartmentById(username, departmentId))
+    }
+
+    override fun listDepartmentByIds(username: String?, departmentIds: List<Int>): Response<Any?> {
+        return ResponseBuilder.success(departmentService.listDepartmentByIds(username, departmentIds))
     }
 }

@@ -23,7 +23,7 @@ import org.springframework.stereotype.Service
 
 @Service
 class CanwayDepartmentServiceImpl(
-        canwayAuthConf: CanwayAuthConf
+    canwayAuthConf: CanwayAuthConf
 ) : DepartmentService {
 
     val paasHost = canwayAuthConf.devopsGatewayApi
@@ -39,9 +39,9 @@ class CanwayDepartmentServiceImpl(
             val requestUrl = "${paasHost?.removeSuffix("/")}$paasBatchDepartmentUrl"
             val body = RequestBody.create(mediaType, json)
             val request = Request.Builder()
-                    .url(requestUrl)
-                    .post(body)
-                    .build()
+                .url(requestUrl)
+                .post(body)
+                .build()
             val responseContent = HttpUtils.doRequest(OkHttpClient(), request, 3, mutableSetOf(200)).content
             val departments = responseContent.readJsonString<CanwayDepartmentResponse<List<CanwayParentDepartmentPojo>>>()
             return departments.data.first().children
@@ -56,16 +56,18 @@ class CanwayDepartmentServiceImpl(
         val list = mutableListOf<CanwayChildrenDepartmentPojo>()
         for (departmentId in departmentIds) {
             val url = "${paasHost?.removeSuffix("/")}$paasListDepartmentUrl"
-            val requestUrl = String.format(paasListDepartmentRequest,url, bkAppCode, bkAppSecret,
-                    bkCertificate.certType.value, bkCertificate.value,
-                    departmentId, listDepartmentField)
+            val requestUrl = String.format(
+                paasListDepartmentRequest, url, bkAppCode, bkAppSecret,
+                bkCertificate.certType.value, bkCertificate.value,
+                departmentId, listDepartmentField
+            )
             val request = Request.Builder()
-                    .url(requestUrl)
-                    .build()
+                .url(requestUrl)
+                .build()
             val response = HttpUtils.doRequest(OkHttpClient(), request, 3, mutableSetOf(200))
-            val responseContent =  response.content
+            val responseContent = response.content
             val department = responseContent.readJsonString<CanwayDepartmentResponse<CanwayDepartmentPage>>().data.results!!.first()
-            list.add(CanwayChildrenDepartmentPojo(department.id, department.name, null,null,null))
+            list.add(CanwayChildrenDepartmentPojo(department.id, department.name, null, null, null))
         }
         return list
     }
@@ -77,45 +79,45 @@ class CanwayDepartmentServiceImpl(
         val cookies = HttpContextHolder.getRequest().cookies
         if (cookies != null) {
             for (cookie in cookies) {
-                if(cookie.name == CertType.TOKEN.value) return BkCertificate(CertType.TOKEN, cookie.value)
+                if (cookie.name == CertType.TOKEN.value) return BkCertificate(CertType.TOKEN, cookie.value)
             }
         }
         if (username != null) {
             return BkCertificate(CertType.USERNAME, username)
         }
-        throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING,"User authentication failed, can not found bk_token in cookie or username in request")
+        throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "User authentication failed, can not found bk_token in cookie or username in request")
     }
 
     fun transferCanwayChildrenDepartment(department: CanwayDepartmentPojo): CanwayChildrenDepartmentPojo {
         return CanwayChildrenDepartmentPojo(
-                department.id,
-                department.name,
-                department.order,
-                department.parent,
-                null
+            department.id,
+            department.name,
+            department.order,
+            department.parent,
+            null
         )
     }
 
     fun getCompanyId(bkCertificate: BkCertificate): CanwayDepartmentPojo {
-        //查出总公司id
+        // 查出总公司id
         val url = "${paasHost?.removeSuffix("/")}$paasListDepartmentUrl"
-        val requestUrl = String.format(paasDepartmentApi,url, bkAppCode, bkAppSecret, bkCertificate.certType.value, bkCertificate.value)
+        val requestUrl = String.format(paasDepartmentApi, url, bkAppCode, bkAppSecret, bkCertificate.certType.value, bkCertificate.value)
         val request = Request.Builder()
-                .url(requestUrl)
-                .build()
+            .url(requestUrl)
+            .build()
         val response = HttpUtils.doRequest(OkHttpClient(), request, 3, mutableSetOf(200))
-        val responseContent =  response.content
+        val responseContent = response.content
         return responseContent.readJsonString<CanwayDepartmentResponse<CanwayDepartmentPage>>().data.results!!.first()
     }
 
-    companion object{
+    companion object {
         val logger: Logger = LoggerFactory.getLogger(CanwayDepartmentServiceImpl::class.java)
         const val jsonFormat = "{\n" +
-                "    \"bk_app_code\":\"%s\",\n" +
-                "    \"bk_app_secret\":\"%s\",\n" +
-                "    \"%s\":\"%s\",\n" +
-                "    \"id_list\": [%d]\n" +
-                "}"
+            "    \"bk_app_code\":\"%s\",\n" +
+            "    \"bk_app_secret\":\"%s\",\n" +
+            "    \"%s\":\"%s\",\n" +
+            "    \"id_list\": [%d]\n" +
+            "}"
         const val paasListDepartmentUrl = "/api/c/compapi/v2/usermanage/list_departments/"
         const val paasBatchDepartmentUrl = "/api/c/compapi/v2/usermanage/department_batch/"
         const val paasDepartmentApi = "%s?bk_app_code=%s&bk_app_secret=%s&%s=%s&page=1&page_size=1"

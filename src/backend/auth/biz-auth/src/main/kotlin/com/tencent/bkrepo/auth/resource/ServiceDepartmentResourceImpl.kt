@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 class ServiceDepartmentResourceImpl @Autowired constructor(
-        val departmentService: DepartmentService
+    val departmentService: DepartmentService
 ) : ServiceDepartmentResource {
 
     override fun listDepartment(username: String?, departmentId: Int?): Response<Any?> {

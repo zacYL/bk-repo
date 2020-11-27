@@ -27,32 +27,32 @@ package com.tencent.bkrepo.auth.service.canway.pojo
 
 import com.fasterxml.jackson.annotation.JsonProperty
 
-//请求资源权限的body
+// 请求资源权限的body
 data class UserTypeResourcesAuthRequest(
-        @JsonProperty("userId")
-        val userId: String?,
-        @JsonProperty("userType")
-        val userType: String? = "USER",
-        @JsonProperty("belongCode")
-        val belongCode: String?, // project
-        @JsonProperty("belongInstance")
-        val belongInstance: String?, // alen
-        @JsonProperty("resourcesActions")
-        val resourcesActions: List<ResourcesAction?>?
+    @JsonProperty("userId")
+    val userId: String?,
+    @JsonProperty("userType")
+    val userType: String? = "USER",
+    @JsonProperty("belongCode")
+    val belongCode: String?, // project
+    @JsonProperty("belongInstance")
+    val belongInstance: String?, // alen
+    @JsonProperty("resourcesActions")
+    val resourcesActions: List<ResourcesAction?>?
 ) {
     data class ResourcesAction(
-            @JsonProperty("actionCode")
-            val actionCode: String?, // list
-            @JsonProperty("resourceCode")
-            val resourceCode: String?, // pipeline
-            @JsonProperty("resourceInstance")
-            val resourceInstance: List<ResourceInstance?>
+        @JsonProperty("actionCode")
+        val actionCode: String?, // list
+        @JsonProperty("resourceCode")
+        val resourceCode: String?, // pipeline
+        @JsonProperty("resourceInstance")
+        val resourceInstance: List<ResourceInstance?>
     )
 
     data class ResourceInstance(
-            @JsonProperty("resourceCode")
-            val resourceCode: String?, // pipeline
-            @JsonProperty("instanceCode")
-            val instanceCode: String?//ALL_INSTANCE
+        @JsonProperty("resourceCode")
+        val resourceCode: String?, // pipeline
+        @JsonProperty("instanceCode")
+        val instanceCode: String? // ALL_INSTANCE
     )
 }

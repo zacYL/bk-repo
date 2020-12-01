@@ -18,7 +18,7 @@ service:
   name: auth
 
 auth:
-  realm: local
+  realm: canway
   iam:
     callbackUser: bk_iam
   devops:

@@ -126,7 +126,8 @@ open class PermissionServiceImpl constructor(
                 createBy = request.createBy,
                 createAt = LocalDateTime.now(),
                 updatedBy = request.updatedBy,
-                updateAt = LocalDateTime.now()
+                updateAt = LocalDateTime.now(),
+                departments = request.departments
             )
         )
         result.id?.let {

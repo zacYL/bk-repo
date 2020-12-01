@@ -1,6 +1,7 @@
 package com.tencent.bkrepo.auth.service.canway
 
 import com.tencent.bkrepo.auth.service.DepartmentService
+import com.tencent.bkrepo.auth.service.canway.conf.CanwayAuthConf
 import com.tencent.bkrepo.auth.service.canway.pojo.CanwayDepartmentPojo
 import com.tencent.bkrepo.auth.service.canway.pojo.CanwayChildrenDepartmentPojo
 import com.tencent.bkrepo.auth.service.canway.pojo.CanwayDepartmentResponse
@@ -26,7 +27,7 @@ class CanwayDepartmentServiceImpl(
     canwayAuthConf: CanwayAuthConf
 ) : DepartmentService {
 
-    val paasHost = canwayAuthConf.devopsGatewayApi
+    val paasHost = canwayAuthConf.bkHost
     // todo 复用 BkAuthConfig
     val bkAppCode = canwayAuthConf.appCode
     val bkAppSecret = canwayAuthConf.appSecret

@@ -1,4 +1,4 @@
-package com.tencent.bkrepo.auth.service.canway
+package com.tencent.bkrepo.auth.service.canway.conf
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
@@ -10,5 +10,7 @@ class CanwayAuthConf {
     @Value("\${bk.appSecret:#{null}}")
     val appSecret: String? = null
     @Value("\${bk.host:#{null}}")
-    val devopsGatewayApi: String? = null
+    val bkHost: String? = null
+    @Value("\${devops.host:#{null}}")
+    val devopsHost: String? = null
 }

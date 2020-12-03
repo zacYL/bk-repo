@@ -2,13 +2,13 @@ package com.tencent.bkrepo.auth.service.canway
 
 import com.tencent.bkrepo.auth.service.DepartmentService
 import com.tencent.bkrepo.auth.service.canway.conf.CanwayAuthConf
-import com.tencent.bkrepo.auth.service.canway.pojo.CanwayDepartmentPojo
-import com.tencent.bkrepo.auth.service.canway.pojo.CanwayChildrenDepartmentPojo
-import com.tencent.bkrepo.auth.service.canway.pojo.CanwayDepartmentResponse
+import com.tencent.bkrepo.auth.service.canway.pojo.BkDepartment
+import com.tencent.bkrepo.auth.service.canway.pojo.BkChildrenDepartment
+import com.tencent.bkrepo.auth.service.canway.pojo.BkResponse
 import com.tencent.bkrepo.auth.service.canway.pojo.BkCertificate
 import com.tencent.bkrepo.auth.service.canway.pojo.CertType
-import com.tencent.bkrepo.auth.service.canway.pojo.CanwayDepartmentPage
-import com.tencent.bkrepo.auth.service.canway.pojo.CanwayParentDepartmentPojo
+import com.tencent.bkrepo.auth.service.canway.pojo.BkPage
+import com.tencent.bkrepo.auth.service.canway.pojo.BkParentDepartment
 import com.tencent.bkrepo.auth.util.HttpUtils
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
@@ -32,7 +32,7 @@ class CanwayDepartmentServiceImpl(
     val bkAppCode = canwayAuthConf.appCode
     val bkAppSecret = canwayAuthConf.appSecret
 
-    override fun listDepartmentById(username: String?, departmentId: Int?): List<CanwayChildrenDepartmentPojo>? {
+    override fun listDepartmentById(username: String?, departmentId: Int?): List<BkChildrenDepartment>? {
         val bkCertificate = getBkCertificate(username)
         if (departmentId != null) {
             val mediaType = MediaType.parse("application/json; charset=utf-8")
@@ -44,7 +44,7 @@ class CanwayDepartmentServiceImpl(
                 .post(body)
                 .build()
             val responseContent = HttpUtils.doRequest(OkHttpClient(), request, 3, mutableSetOf(200)).content
-            val departments = responseContent.readJsonString<CanwayDepartmentResponse<List<CanwayParentDepartmentPojo>>>()
+            val departments = responseContent.readJsonString<BkResponse<List<BkParentDepartment>>>()
             return departments.data.first().children
         } else {
             val company = getCompanyId(bkCertificate)
@@ -52,9 +52,9 @@ class CanwayDepartmentServiceImpl(
         }
     }
 
-    override fun listDepartmentByIds(username: String?, departmentIds: List<Int>): List<CanwayChildrenDepartmentPojo> {
+    override fun listDepartmentByIds(username: String?, departmentIds: List<Int>): List<BkChildrenDepartment> {
         val bkCertificate = getBkCertificate(username)
-        val list = mutableListOf<CanwayChildrenDepartmentPojo>()
+        val list = mutableListOf<BkChildrenDepartment>()
         for (departmentId in departmentIds) {
             val url = "${paasHost?.removeSuffix("/")}$paasListDepartmentUrl"
             val requestUrl = String.format(
@@ -67,8 +67,8 @@ class CanwayDepartmentServiceImpl(
                 .build()
             val response = HttpUtils.doRequest(OkHttpClient(), request, 3, mutableSetOf(200))
             val responseContent = response.content
-            val department = responseContent.readJsonString<CanwayDepartmentResponse<CanwayDepartmentPage>>().data.results!!.first()
-            list.add(CanwayChildrenDepartmentPojo(department.id, department.name, null, null, null))
+            val department = responseContent.readJsonString<BkResponse<BkPage<BkDepartment>>>().data.results!!.first()
+            list.add(BkChildrenDepartment(department.id, department.name, null, null, null))
         }
         return list
     }
@@ -89,8 +89,8 @@ class CanwayDepartmentServiceImpl(
         throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "User authentication failed, can not found bk_token in cookie or username in request")
     }
 
-    fun transferCanwayChildrenDepartment(department: CanwayDepartmentPojo): CanwayChildrenDepartmentPojo {
-        return CanwayChildrenDepartmentPojo(
+    fun transferCanwayChildrenDepartment(department: BkDepartment): BkChildrenDepartment {
+        return BkChildrenDepartment(
             department.id,
             department.name,
             department.order,
@@ -99,7 +99,7 @@ class CanwayDepartmentServiceImpl(
         )
     }
 
-    fun getCompanyId(bkCertificate: BkCertificate): CanwayDepartmentPojo {
+    fun getCompanyId(bkCertificate: BkCertificate): BkDepartment {
         // 查出总公司id
         val url = "${paasHost?.removeSuffix("/")}$paasListDepartmentUrl"
         val requestUrl = String.format(paasDepartmentApi, url, bkAppCode, bkAppSecret, bkCertificate.certType.value, bkCertificate.value)
@@ -108,7 +108,7 @@ class CanwayDepartmentServiceImpl(
             .build()
         val response = HttpUtils.doRequest(OkHttpClient(), request, 3, mutableSetOf(200))
         val responseContent = response.content
-        return responseContent.readJsonString<CanwayDepartmentResponse<CanwayDepartmentPage>>().data.results!!.first()
+        return responseContent.readJsonString<BkResponse<BkPage<BkDepartment>>>().data.results!!.first()
     }
 
     companion object {

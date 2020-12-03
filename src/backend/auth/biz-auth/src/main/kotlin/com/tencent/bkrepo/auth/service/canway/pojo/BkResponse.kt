@@ -1,6 +1,6 @@
 package com.tencent.bkrepo.auth.service.canway.pojo
 
-class CanwayDepartmentResponse<T> (
+data class BkResponse<T> (
     val message: String,
     val code: Int,
     val data: T,
@@ -8,14 +8,18 @@ class CanwayDepartmentResponse<T> (
     val request_id: String
 )
 
-data class CanwayDepartmentPage(
+data class BkUser(
+    val username: String
+)
+
+data class BkPage<T>(
     val count: Int,
     val previous: String?,
-    val results: List<CanwayDepartmentPojo>?,
+    val results: List<T>?,
     val next: String?
 )
 
-data class CanwayDepartmentPojo(
+data class BkDepartment(
     val id: Int,
     val tree_id: Int,
     val level: Int,
@@ -29,18 +33,18 @@ data class CanwayDepartmentPojo(
     val update_time: String
 )
 
-data class CanwayParentDepartmentPojo(
+data class BkParentDepartment(
     val id: Int,
     val order: Int,
     val name: String,
     val ancestor_name: String,
     val parent: String?,
     val has_children: Boolean,
-    val children: List<CanwayChildrenDepartmentPojo>?
+    val children: List<BkChildrenDepartment>?
 
 )
 
-data class CanwayChildrenDepartmentPojo(
+data class BkChildrenDepartment(
     val id: Int,
     val name: String,
     val order: Int?,

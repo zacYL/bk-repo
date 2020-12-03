@@ -1,20 +1,27 @@
 package com.tencent.bkrepo.auth.service.canway
 
-import com.tencent.bkrepo.auth.config.BkAuthConfig
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionActionRequest
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionDepartmentRequest
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRoleRequest
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionUserRequest
+import com.tencent.bkrepo.auth.pojo.permission.Permission
 import com.tencent.bkrepo.auth.repository.PermissionRepository
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
-import com.tencent.bkrepo.auth.service.bkauth.BkAuthProjectService
-import com.tencent.bkrepo.auth.service.bkauth.BkAuthService
+import com.tencent.bkrepo.auth.service.canway.bk.BkUserService
 import com.tencent.bkrepo.auth.service.canway.conf.CanwayAuthConf
 import com.tencent.bkrepo.auth.service.canway.pojo.CanwayResponse
 import com.tencent.bkrepo.auth.service.canway.pojo.UserResourceAuthResponse
 import com.tencent.bkrepo.auth.service.canway.pojo.UserResourcesAuthRequest
+import com.tencent.bkrepo.auth.service.canway.pojo.CanwayRole
+import com.tencent.bkrepo.auth.service.canway.pojo.CanwayRoleResourceRequest
+import com.tencent.bkrepo.auth.service.canway.pojo.CanwayFunction
+import com.tencent.bkrepo.auth.service.canway.pojo.CanwayRolePermissionRequest
+import com.tencent.bkrepo.auth.service.canway.pojo.CanwayResourceDetail
+import com.tencent.bkrepo.auth.service.canway.pojo.CanwayRoleRequest
+import com.tencent.bkrepo.auth.service.canway.enum.Role
 import com.tencent.bkrepo.auth.service.local.PermissionServiceImpl
 import com.tencent.bkrepo.auth.util.HttpUtils
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
@@ -29,22 +36,24 @@ import okhttp3.Request
 import okhttp3.RequestBody
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.mongodb.core.MongoTemplate
+import java.util.concurrent.TimeUnit
 
-class CanwayPermissionServiceImpl constructor(
+class CanwayPermissionServiceImpl(
     userRepository: UserRepository,
     roleRepository: RoleRepository,
     permissionRepository: PermissionRepository,
     mongoTemplate: MongoTemplate,
     repositoryClient: RepositoryClient,
-    private val bkAuthConfig: BkAuthConfig,
-    private val bkAuthService: BkAuthService,
-    private val bkAuthProjectService: BkAuthProjectService
+    private val canwayAuthConf: CanwayAuthConf,
+    private val bkUserService: BkUserService
 ) : PermissionServiceImpl(userRepository, roleRepository, permissionRepository, mongoTemplate, repositoryClient) {
 
-    @Autowired
-    lateinit var canwayAuthConf: CanwayAuthConf
+    private val okHttpClient = OkHttpClient.Builder()
+        .connectTimeout(3L, TimeUnit.SECONDS)
+        .readTimeout(5L, TimeUnit.SECONDS)
+        .writeTimeout(5L, TimeUnit.SECONDS)
+        .build()
 
     override fun checkPermission(request: CheckPermissionRequest): Boolean {
         logger.info("check permission  request : [$request] ")
@@ -53,25 +62,216 @@ class CanwayPermissionServiceImpl constructor(
     }
 
     override fun updatePermissionAction(request: UpdatePermissionActionRequest): Boolean {
-
+        // 查询角色
+        val role = roleRepository.findFirstById(request.permissionId)
+            ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "${request.permissionId} can not found")
+        val projectId = role.projectId
+        val canwayRole = getCanwayRoleByRoleName(projectId, role.name)
+        addActionToRole(canwayRole, request.actions)
         return super.updatePermissionAction(request)
     }
 
     override fun updatePermissionDepartment(request: UpdatePermissionDepartmentRequest): Boolean {
+        val role = roleRepository.findFirstById(request.permissionId)
+            ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "${request.permissionId} can not found")
+        val projectId = role.projectId
+        val canwayRole = getCanwayRoleByRoleName(projectId, role.name)
+        updataCanwayResource(canwayRole, request.departmentId)
         return super.updatePermissionDepartment(request)
     }
 
     override fun updatePermissionRole(request: UpdatePermissionRoleRequest): Boolean {
+        val role = roleRepository.findFirstById(request.permissionId)
+            ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "${request.permissionId} can not found")
+        val projectId = role.projectId
+        val canwayRole = getCanwayRoleByRoleName(projectId, role.name)
+        updataCanwayResource(canwayRole, request.rId)
         return super.updatePermissionRole(request)
     }
 
     override fun updatePermissionUser(request: UpdatePermissionUserRequest): Boolean {
-
+        //
+        val role = roleRepository.findFirstById(request.permissionId)
+            ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "${request.permissionId} can not found")
+        val projectId = role.projectId
+        val canwayRole = getCanwayRoleByRoleName(projectId, role.name)
+        updataCanwayResource(canwayRole, request.userId)
         return super.updatePermissionUser(request)
     }
 
     /**
-     * 获取租户
+     * canway 权限中心 更新角色绑定的用户
+     * [canwayRole]  canway 权限中心 角色
+     * [userIds]     用户列表（uid）
+     */
+    private fun updataCanwayResource(canwayRole: CanwayRole, userIds: List<String>) {
+        val userId = bkUserService.getBkUser()
+        val uri = String.format(updateRoleResourceApi, canwayRole.id, userId)
+        val devopsHost = canwayAuthConf.devopsHost ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING)
+        val requestUrl = "${devopsHost.removeSuffix("/")}$uri"
+        val canwayRoleResourceRequest = CanwayRoleResourceRequest(
+            groupId = canwayRole.id,
+            memberList = userIds.map { userIdToMember(it) }
+        )
+
+        val requestBody = RequestBody.create(mediaType, canwayRoleResourceRequest.toJsonString())
+        val request = Request.Builder()
+            .url(requestUrl)
+            .post(requestBody).build()
+        HttpUtils.doRequest(okHttpClient, request, 3, mutableSetOf(200))
+    }
+
+    /**
+     *
+     */
+    private fun userIdToMember(userId: String): CanwayRoleResourceRequest.Member {
+        return CanwayRoleResourceRequest.Member(userId, USER_TYPE)
+    }
+
+    /**
+     * canway 权限中心 向角色添加动作
+     * [canwayRole]  canway 权限中心 角色
+     * [actions] 动作ID列表
+     */
+    private fun addActionToRole(canwayRole: CanwayRole, actions: List<PermissionAction>) {
+        val userId = bkUserService.getBkUser()
+        val uri = String.format(updataRoleActionApi, canwayRole.id, userId)
+        val devopsHost = canwayAuthConf.devopsHost ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING)
+        val requestUrl = "${devopsHost.removeSuffix("/")}$uri"
+        val canwayActions = actions.map { transferAction(it) }
+        val canwayRolePermissionRequest = CanwayRolePermissionRequest(
+            code = ciResourceCode,
+            name = "",
+            functionList = canwayActions
+        )
+        val requestBody = RequestBody.create(mediaType, canwayRolePermissionRequest.toJsonString())
+        val request = Request.Builder()
+            .url(requestUrl)
+            .post(requestBody)
+            .build()
+        HttpUtils.doRequest(okHttpClient, request, 3, mutableSetOf(200))
+    }
+
+    private fun transferAction(action: PermissionAction): CanwayFunction {
+        return CanwayFunction(getCanwayFunctionId(action))
+    }
+
+    fun getCanwayFunctionId(action: PermissionAction): String {
+        val userId = bkUserService.getBkUser()
+        val uri = String.format(resourceDetail, userId)
+        val devopsHost = canwayAuthConf.devopsHost ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING)
+        val requestUrl = "${devopsHost.removeSuffix("/")}$uri"
+        val request = Request.Builder()
+            .url(requestUrl)
+            .build()
+        val responseContent = HttpUtils.doRequest(okHttpClient, request, 3, mutableSetOf(200)).content
+        val canwayResourceDetail = responseContent.readJsonString<CanwayResourceDetail>()
+        val functionList = canwayResourceDetail.functionList
+        for (function in functionList) {
+            if (function.action.code.equals(action.name, ignoreCase = true)) return function.action.id
+        }
+        throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "can not find action:${action.name} in ci")
+    }
+
+    /**
+     * 根据角色名称查询canway权限中心的角色
+     */
+    private fun getCanwayRoleByRoleName(projectId: String, roleName: String): CanwayRole {
+        val canwayRoleList = listCanwayRoleByProject(projectId)
+            ?: throw ErrorCodeException(CommonMessageCode.SERVICE_CALL_ERROR, "can not load canway role")
+        for (canwayRole in canwayRoleList) {
+            if (canwayRole.name == roleName) {
+                return canwayRole
+            }
+        }
+        throw ErrorCodeException(CommonMessageCode.SERVICE_CALL_ERROR, "can not load canway role: $roleName")
+    }
+
+    override fun listBuiltinPermission(projectId: String, repoName: String): List<Permission> {
+        // 检查ci权限中心是否有对应初始角色。
+        checkCanwayRoleExist(projectId)
+        return super.listBuiltinPermission(projectId, repoName)
+    }
+
+    /**
+     * 检查预先定义的角色在canway权限中心是否存在，不存在则删除
+     */
+    fun checkCanwayRoleExist(projectId: String) {
+        // 按名称检查
+        val roles = mutableListOf(Role.ADMIN, Role.USER, Role.VIEWER)
+        val canwayRoleList = listCanwayRoleByProject(projectId) ?: createCiRole(projectId, roles)
+        for (canwayRole in canwayRoleList) {
+            if (roles.customContains(canwayRole.name)) roles.customRemove(canwayRole.name)
+        }
+        // 如果被删掉的权限，再次添加
+        createCiRole(projectId, roles)
+    }
+
+    private fun List<Role>.customContains(value: String): Boolean {
+        val rolesNickList = mutableListOf<String>()
+        for (role in this) {
+            rolesNickList.add(role.nickName())
+        }
+        return rolesNickList.contains(value)
+    }
+
+    private fun MutableList<Role>.customRemove(value: String): MutableList<Role> {
+        val resultRole = mutableListOf<Role>()
+        for (role in this) {
+            if (role.nickName() != value) resultRole.add(role)
+        }
+        return resultRole
+    }
+
+    /**
+     * 在canway权限中心 创建角色
+     */
+    private fun createCiRole(projectId: String, roleList: List<Role>): List<CanwayRole> {
+        val userId = bkUserService.getBkUser()
+        for (role in roleList) {
+            try {
+                val canwayRoleRequestBody = CanwayRoleRequest(
+                    name = role.nickName(),
+                    parentId = "",
+                    service = ciResourceCode,
+                    belongInstance = projectId,
+                    belongCode = ciBelongCode,
+                    description = "create by bkrepo"
+                )
+                val requestBody = RequestBody.create(mediaType, canwayRoleRequestBody.toJsonString())
+                val uri = String.format(addRoleApi, userId)
+                val devopsHost = canwayAuthConf.devopsHost
+                    ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING)
+                val requestUrl = "${devopsHost.removeSuffix("/")}$uri"
+                val request = Request.Builder()
+                    .url(requestUrl)
+                    .post(requestBody)
+                    .build()
+                HttpUtils.doRequest(OkHttpClient(), request, 3, mutableSetOf(200))
+            } catch (exception: Exception) {
+                logger.error("add role ${role.nickName()} by $userId failed, ${exception.message}")
+                throw exception
+            }
+        }
+        return listCanwayRoleByProject(projectId)
+            ?: throw ErrorCodeException(CommonMessageCode.SERVICE_CALL_ERROR, "add role by $userId failed")
+    }
+
+    /**
+     * 查询项目下 canway 的角色列表
+     */
+    private fun listCanwayRoleByProject(projectId: String): List<CanwayRole>? {
+        val devopsHost = canwayAuthConf.devopsHost ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING)
+        val uri = String.format(roleListApi, ciBelongCode, projectId)
+        val requestUrl = "${devopsHost.removeSuffix("/")}$uri"
+
+        val request = Request.Builder().url(requestUrl).build()
+        val responseContent = HttpUtils.doRequest(OkHttpClient(), request, 3, mutableSetOf(200)).content
+        return responseContent.readJsonString<CanwayResponse<List<CanwayRole>>>().data
+    }
+
+    /**
+     * 获取canway 权限中心 租户
      */
     private fun getTenantId(): String {
         val cookies = HttpContextHolder.getRequest().cookies
@@ -84,8 +284,11 @@ class CanwayPermissionServiceImpl constructor(
         return tenant
     }
 
+    /**
+     * 在canway 权限中心鉴权
+     */
     private fun checkCanwayPermission(request: CheckPermissionRequest): Boolean {
-        val canwayRequest = getCanwayPermissionRequest(request)
+        val canwayRequest = createCanwayPermissionRequest(request)
 
         val responseContent = HttpUtils.doRequest(OkHttpClient(), canwayRequest, 3, mutableSetOf(200)).content
 
@@ -99,7 +302,7 @@ class CanwayPermissionServiceImpl constructor(
         return super.checkPermission(request)
     }
 
-    private fun getCanwayPermissionRequest(request: CheckPermissionRequest): Request {
+    private fun createCanwayPermissionRequest(request: CheckPermissionRequest): Request {
         val userId = request.uid
         val projectId = request.projectId
         val repoName = request.repoName
@@ -131,6 +334,9 @@ class CanwayPermissionServiceImpl constructor(
             .build()
     }
 
+    /**
+     * 检查 用户在canway权限中心是否有该-实例-的权限
+     */
     private fun match(request: CheckPermissionRequest, instanceList: List<UserResourceAuthResponse.ResourcesAction>): Boolean {
         val repoName = request.repoName
         for (resourceAction in instanceList) {
@@ -142,11 +348,12 @@ class CanwayPermissionServiceImpl constructor(
     companion object {
         val logger: Logger = LoggerFactory.getLogger(CanwayPermissionServiceImpl::class.java)
         val mediaType = MediaType.parse("application/json; charset=utf-8")
-        const val checkPermissionApi = "$ci/api/service/resource_instance/query"
-        const val ciTenant = "X-DEVOPS-TENANT-ID"
-        const val ciProject = "X-DEVOPS-PROJECT-ID"
-
-        // 在 canway 权限中心注册的资源名
-        const val ciResourceCode = "bkrepo"
+        const val checkPermissionApi = "$ci$ciApi/service/resource_instance/query"
+        // 项目下角色列表
+        const val roleListApi = "$ci$ciApi/service/role/%s/%s"
+        const val addRoleApi = "$ci$ciApi/service/role?userId=%s"
+        const val updateRoleResourceApi = "$ci$ciApi/service/role/associateUser?userId=%s"
+        const val updataRoleActionApi = "$ci$ciApi/service/role/%s/updateResource?userId=%s"
+        const val resourceDetail = "$ci$ciApi/service/resources/$ciResourceCode?userId=%s"
     }
 }

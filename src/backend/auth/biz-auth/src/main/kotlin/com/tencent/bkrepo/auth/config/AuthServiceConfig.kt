@@ -47,6 +47,8 @@ import com.tencent.bkrepo.auth.service.bkauth.BkAuthProjectService
 import com.tencent.bkrepo.auth.service.bkiam.BkiamPermissionServiceImpl
 import com.tencent.bkrepo.auth.service.bkiam.BkiamService
 import com.tencent.bkrepo.auth.service.canway.CanwayPermissionServiceImpl
+import com.tencent.bkrepo.auth.service.canway.bk.BkUserService
+import com.tencent.bkrepo.auth.service.canway.conf.CanwayAuthConf
 import com.tencent.bkrepo.auth.service.local.AccountServiceImpl
 import com.tencent.bkrepo.auth.service.local.ClusterServiceImpl
 import com.tencent.bkrepo.auth.service.local.PermissionServiceImpl
@@ -143,14 +145,14 @@ class AuthServiceConfig {
     @Bean
     @ConditionalOnProperty(prefix = "auth", name = ["realm"], havingValue = "canway")
     fun canwayPermissionService(
-        @Autowired userRepository: UserRepository,
-        @Autowired roleRepository: RoleRepository,
-        @Autowired permissionRepository: PermissionRepository,
-        @Autowired mongoTemplate: MongoTemplate,
-        @Autowired repositoryClient: RepositoryClient,
-        @Autowired bkAuthConfig: BkAuthConfig,
-        @Autowired bkAuthService: BkAuthService,
-        @Autowired bkAuthProjectService: BkAuthProjectService
+            @Autowired userRepository: UserRepository,
+            @Autowired roleRepository: RoleRepository,
+            @Autowired permissionRepository: PermissionRepository,
+            @Autowired mongoTemplate: MongoTemplate,
+            @Autowired repositoryClient: RepositoryClient,
+            @Autowired bkAuthConfig: BkAuthConfig,
+            @Autowired canwayAuthConf: CanwayAuthConf,
+            @Autowired bkUserService: BkUserService
     ): PermissionService {
         logger.debug("init BkAuthPermissionServiceImpl")
         return CanwayPermissionServiceImpl(
@@ -159,9 +161,8 @@ class AuthServiceConfig {
             permissionRepository,
             mongoTemplate,
             repositoryClient,
-            bkAuthConfig,
-            bkAuthService,
-            bkAuthProjectService
+                canwayAuthConf,
+                bkUserService
         )
     }
 

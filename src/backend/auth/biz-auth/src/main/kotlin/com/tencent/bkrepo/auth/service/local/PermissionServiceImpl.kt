@@ -66,7 +66,7 @@ import java.util.stream.Collectors
 
 open class PermissionServiceImpl constructor(
     private val userRepository: UserRepository,
-    private val roleRepository: RoleRepository,
+    val roleRepository: RoleRepository,
     private val permissionRepository: PermissionRepository,
     private val mongoTemplate: MongoTemplate,
     private val repositoryClient: RepositoryClient

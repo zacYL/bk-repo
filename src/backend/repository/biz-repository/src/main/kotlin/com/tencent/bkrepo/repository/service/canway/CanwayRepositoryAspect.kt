@@ -4,6 +4,7 @@ import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.service.util.HttpUtils
 import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
+import com.tencent.bkrepo.repository.service.canway.bk.BkUserService
 import com.tencent.bkrepo.repository.service.canway.conf.CanwayAuthConf
 import com.tencent.bkrepo.repository.service.canway.pojo.BatchResourceInstance
 import com.tencent.bkrepo.repository.service.canway.pojo.ResourceRegisterInfo
@@ -16,6 +17,7 @@ import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.lang.Exception
 
@@ -24,6 +26,9 @@ import java.lang.Exception
 class CanwayRepositoryAspect(
         canwayAuthConf: CanwayAuthConf
 ) {
+
+    @Autowired
+    lateinit var bkUserService: BkUserService
 
     private val devopsHost = canwayAuthConf.devopsHost!!.removeSuffix("/")
 
@@ -51,13 +56,13 @@ class CanwayRepositoryAspect(
 
     private fun updateResource(repo: RepoCreateRequest, api: String) {
         val resourceInstance = mutableListOf<BatchResourceInstance.Instance>()
-        val userId = repo.operator
+        val userId = if(repo.operator == "anonymous") "admin" else repo.operator
         val belongInstance = repo.projectId
         val resource = ResourceRegisterInfo(repo.name, repo.name)
         resourceInstance.add(BatchResourceInstance.Instance(resource.resourceCode, resource.resourceName, null))
         val requestParam = BatchResourceInstance(
                 //todo
-                userId = "weaving",
+                userId = userId,
                 resourceCode = resourceCode,
                 belongCode = belongCode,
                 belongInstance = belongInstance,

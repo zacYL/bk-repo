@@ -297,9 +297,8 @@ class CanwayPermissionServiceImpl(
 
         val instanceList = userResources.instanceCodes ?: return false
 
-        if (!match(request, instanceList)) return false
+        return match(request, instanceList)
 
-        return super.checkPermission(request)
     }
 
     private fun createCanwayPermissionRequest(request: CheckPermissionRequest): Request {
@@ -319,7 +318,7 @@ class CanwayPermissionServiceImpl(
                     resourceInstance = mutableListOf(
                         UserResourcesAuthRequest.ResourceInstance(
                             resourceCode = ciResourceCode,
-                            instanceCode = repoName
+                            instanceCode = repoName?:""
                         )
                     )
                 )
@@ -338,7 +337,15 @@ class CanwayPermissionServiceImpl(
      * 检查 用户在canway权限中心是否有该-实例-的权限
      */
     private fun match(request: CheckPermissionRequest, instanceList: List<UserResourceAuthResponse.ResourcesAction>): Boolean {
+        val action  = request.action
+        if (action == PermissionAction.MANAGE) {
+            instanceList.first().resourceInstance?.let {
+                if(it == mutableSetOf("*")) return true
+            }
+            return false
+        }
         val repoName = request.repoName
+
         for (resourceAction in instanceList) {
             if (resourceAction.resourceInstance != null && resourceAction.resourceInstance.contains(repoName)) return true
         }

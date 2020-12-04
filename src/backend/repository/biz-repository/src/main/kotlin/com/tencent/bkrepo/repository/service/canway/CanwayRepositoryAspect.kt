@@ -4,6 +4,7 @@ import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.service.util.HttpUtils
 import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
+import com.tencent.bkrepo.repository.pojo.repo.RepoDeleteRequest
 import com.tencent.bkrepo.repository.service.canway.bk.BkUserService
 import com.tencent.bkrepo.repository.service.canway.conf.CanwayAuthConf
 import com.tencent.bkrepo.repository.service.canway.pojo.BatchResourceInstance
@@ -27,45 +28,45 @@ class CanwayRepositoryAspect(
         canwayAuthConf: CanwayAuthConf
 ) {
 
-    @Autowired
-    lateinit var bkUserService: BkUserService
-
     private val devopsHost = canwayAuthConf.devopsHost!!.removeSuffix("/")
 
     @Around(value="execution(* com.tencent.bkrepo.repository.service.impl.RepositoryServiceImpl.createRepo(..))")
     fun beforeCreateRepo(point: ProceedingJoinPoint) {
         val args = point.args
         val repo = args.first() as RepoCreateRequest
-        updateResource(repo, ciAddResourceApi)
+        updateResource(repo.projectId, repo.name, repo.operator, ciAddResourceApi)
         try {
             val result = point.proceed(args)
         } catch (exception: Exception) {
-            if((exception as ErrorCodeException).messageCode.getKey() == "artifact.repository.existed") return
-            updateResource(repo, ciDeleteResourceApi)
+            if ((exception as ErrorCodeException).messageCode.getKey() == "artifact.repository.existed") return
+            updateResource(repo.projectId, repo.name, repo.operator, ciDeleteResourceApi)
         }
-        //todo
-        //checkResult(result, repo)
     }
 
-    private fun checkResult(result: Any, repo: RepoCreateRequest) {
-        //添加失败，删除实例
-        //
-        updateResource(repo, ciDeleteResourceApi)
+    @Around(value="execution(* com.tencent.bkrepo.repository.service.impl.RepositoryServiceImpl.deleteRepo(..))")
+    fun afterDeleteRepo(point: ProceedingJoinPoint) {
+        val args = point.args
+        val repo = args.first() as RepoDeleteRequest
+        try {
+            val result = point.proceed(args)
+        } catch (exception: Exception) {
+            if((exception as ErrorCodeException).messageCode.getKey() == "artifact.repository.notfound") return
+            updateResource(repo.projectId, repo.name, repo.operator, ciDeleteResourceApi)
+        }
+        updateResource(repo.projectId, repo.name, repo.operator, ciDeleteResourceApi)
+
     }
 
-
-    private fun updateResource(repo: RepoCreateRequest, api: String) {
+    private fun updateResource(project: String, repo: String, operator: String, api: String) {
         val resourceInstance = mutableListOf<BatchResourceInstance.Instance>()
-        val userId = if(repo.operator == "anonymous") "admin" else repo.operator
-        val belongInstance = repo.projectId
-        val resource = ResourceRegisterInfo(repo.name, repo.name)
+        val userId = if(operator == "anonymous") "admin" else operator
+        val resource = ResourceRegisterInfo(repo, repo)
         resourceInstance.add(BatchResourceInstance.Instance(resource.resourceCode, resource.resourceName, null))
         val requestParam = BatchResourceInstance(
-                //todo
                 userId = userId,
                 resourceCode = resourceCode,
                 belongCode = belongCode,
-                belongInstance = belongInstance,
+                belongInstance = project,
                 instances = resourceInstance
         )
         val requestParamStr = requestParam.toJsonString()

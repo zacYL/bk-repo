@@ -1,5 +1,7 @@
 package com.tencent.bkrepo.auth.service.canway.pojo
 
+import com.fasterxml.jackson.annotation.JsonProperty
+
 data class BkResponse<T> (
     val message: String,
     val code: Int,
@@ -9,7 +11,9 @@ data class BkResponse<T> (
 )
 
 data class BkUser(
-    val username: String
+    val username: String,
+    @JsonProperty("display_name")
+    val displayName: String
 )
 
 data class BkPage<T>(

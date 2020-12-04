@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import org.springframework.util.StopWatch
 
 @Component
 class BkUserSync(
@@ -16,10 +17,15 @@ class BkUserSync(
     @Autowired
     lateinit var userService: UserService
 
-    @Scheduled(fixedDelay = 3600 * 1000)
+    @Scheduled(fixedDelay = 600 * 1000)
     @SchedulerLock(name = "BkUserSync", lockAtMostFor = "PT60M")
     fun syncBkUser() {
+        val sw = StopWatch()
+        logger.info("Start sync bk users")
+        sw.start("sync bk users")
         bkUserService.syncBkUser()
+        sw.stop()
+        logger.info("Sync bk users cost time: ${sw.totalTimeMillis}")
     }
 
     companion object {

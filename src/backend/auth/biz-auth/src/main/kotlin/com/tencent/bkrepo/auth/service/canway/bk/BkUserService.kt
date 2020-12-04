@@ -76,7 +76,7 @@ class BkUserService(
             if (userService.getUserById(bkUser.username) == null) {
                 val createUserRequest = CreateUserRequest(
                     userId = bkUser.username,
-                    name = bkUser.username,
+                    name = bkUser.displayName,
                     pwd = DEFAULT_PASSWORD,
                     admin = false
                 )
@@ -97,7 +97,7 @@ class BkUserService(
     companion object {
         val logger: Logger = LoggerFactory.getLogger(BkUserService::class.java)
         const val bkUserInfoApi = "/api/c/compapi/v2/bk_login/get_user/?bk_app_code=%s&bk_app_secret=%s&bk_token=%s"
-        const val bkUserApi = "/api/c/compapi/v2/usermanage/list_users/?bk_app_code=%s&username=admin&bk_app_secret=%s&fields=username&page=%d&page_size=%d"
+        const val bkUserApi = "/api/c/compapi/v2/usermanage/list_users/?bk_app_code=%s&username=admin&bk_app_secret=%s&fields=username,display_name&page=%d&page_size=%d"
         const val pageSize = 50
     }
 }

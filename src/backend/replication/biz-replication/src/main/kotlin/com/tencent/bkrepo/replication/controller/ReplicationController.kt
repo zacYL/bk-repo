@@ -34,7 +34,6 @@ package com.tencent.bkrepo.replication.controller
 import com.tencent.bkrepo.auth.api.ServicePermissionResource
 import com.tencent.bkrepo.auth.api.ServiceRoleResource
 import com.tencent.bkrepo.auth.api.ServiceUserResource
-import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.auth.pojo.permission.CreatePermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.Permission
 import com.tencent.bkrepo.auth.pojo.role.CreateRoleRequest
@@ -80,6 +79,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RestController
+import java.time.format.DateTimeFormatter
 
 @Principal(type = PrincipalType.ADMIN)
 @RestController
@@ -128,11 +128,15 @@ class ReplicationController(
                 userResource.createUser(request)
                 userResource.detail(userId).data!!
             }
-            val remoteTokenStringList = this.tokens.map { it.id }
             val selfTokenStringList = userInfo.tokens.map { it.id }
-            remoteTokenStringList.forEach {
-                if (!selfTokenStringList.contains(it)) {
-                    userResource.addUserToken(userId, token,it.,null)
+            this.tokens.forEach {
+                if (!selfTokenStringList.contains(it.id)) {
+                    userResource.addUserToken(
+                        userId,
+                        token,
+                        it.expiredAt!!.format(DateTimeFormatter.ISO_DATE_TIME),
+                        null
+                    )
                 }
             }
             return ResponseBuilder.success(userInfo)
@@ -173,12 +177,7 @@ class ReplicationController(
         return ResponseBuilder.success()
     }
 
-    override fun listPermission(
-        token: String,
-        resourceType: ResourceType,
-        projectId: String,
-        repoName: String?
-    ): Response<List<Permission>> {
+    override fun listPermission(token: String, projectId: String, repoName: String?): Response<List<Permission>> {
         return permissionResource.listPermission(projectId, repoName)
     }
 

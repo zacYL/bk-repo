@@ -29,36 +29,17 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.repository.search.node
+package com.tencent.bkrepo.common.artifact.repository.core
 
-import com.tencent.bkrepo.common.query.interceptor.QueryContext
-import com.tencent.bkrepo.common.query.model.QueryModel
-import com.tencent.bkrepo.repository.model.TNode
-import com.tencent.bkrepo.repository.pojo.node.NodeInfo
-import com.tencent.bkrepo.repository.search.common.SelectFieldInterceptor
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 
 /**
- * 用户排除指定字段
+ * ArtifactService 抽象类
  */
-class NodeSelectInterceptor : SelectFieldInterceptor() {
+open class ArtifactService {
 
-    override fun intercept(queryModel: QueryModel, context: QueryContext): QueryModel {
-        val newQueryModel = super.intercept(queryModel, context)
-        if (context is NodeQueryContext) {
-            context.selectMetadata = newQueryModel.select?.contains(NodeInfo::metadata.name) ?: true
-            context.selectStageTag = newQueryModel.select?.contains(NodeInfo::stageTag.name) ?: true
-            if (context.selectStageTag || context.selectMetadata) {
-                val newSelect = newQueryModel.select?.toMutableList()
-                newSelect?.add(NodeInfo::metadata.name)
-                newQueryModel.select = newSelect
-            }
-        }
-        return newQueryModel
-    }
-
-    override fun getConstraintFields(): MutableList<String> {
-        return super.getConstraintFields().apply {
-            add(TNode::deleted.name)
-        }
-    }
+    @Qualifier("artifactRepository")
+    @Autowired
+    lateinit var repository: ArtifactRepository
 }

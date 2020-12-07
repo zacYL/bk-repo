@@ -52,8 +52,8 @@ import org.springframework.data.mongodb.core.MongoTemplate
  */
 class BkAuthPermissionServiceImpl constructor(
     private val userRepository: UserRepository,
-    roleRepository: RoleRepository,
-    private val permissionRepository: PermissionRepository,
+    private val roleRepository: RoleRepository,
+    permissionRepository: PermissionRepository,
     private val mongoTemplate: MongoTemplate,
     private val repositoryClient: RepositoryClient,
     private val bkAuthConfig: BkAuthConfig,

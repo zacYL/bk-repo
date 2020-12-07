@@ -40,8 +40,8 @@ import org.springframework.data.mongodb.core.MongoTemplate
 import java.util.concurrent.TimeUnit
 
 class CanwayPermissionServiceImpl(
-    userRepository: UserRepository,
-    roleRepository: RoleRepository,
+    private val userRepository: UserRepository,
+    private val roleRepository: RoleRepository,
     permissionRepository: PermissionRepository,
     mongoTemplate: MongoTemplate,
     repositoryClient: RepositoryClient,
@@ -63,38 +63,38 @@ class CanwayPermissionServiceImpl(
 
     override fun updatePermissionAction(request: UpdatePermissionActionRequest): Boolean {
         // 查询角色
-        val role = roleRepository.findFirstById(request.permissionId)
+        val role = permissionRepository.findFirstById(request.permissionId)
             ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "${request.permissionId} can not found")
         val projectId = role.projectId
-        val canwayRole = getCanwayRoleByRoleName(projectId, role.name)
+        val canwayRole = getCanwayRoleByRoleName(projectId!!, role.permName)
         addActionToRole(canwayRole, request.actions)
         return super.updatePermissionAction(request)
     }
 
     override fun updatePermissionDepartment(request: UpdatePermissionDepartmentRequest): Boolean {
-        val role = roleRepository.findFirstById(request.permissionId)
+        val role = permissionRepository.findFirstById(request.permissionId)
             ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "${request.permissionId} can not found")
         val projectId = role.projectId
-        val canwayRole = getCanwayRoleByRoleName(projectId, role.name)
+        val canwayRole = getCanwayRoleByRoleName(projectId!!, role.permName)
         updataCanwayResource(canwayRole, request.departmentId)
         return super.updatePermissionDepartment(request)
     }
 
     override fun updatePermissionRole(request: UpdatePermissionRoleRequest): Boolean {
-        val role = roleRepository.findFirstById(request.permissionId)
+        val role = permissionRepository.findFirstById(request.permissionId)
             ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "${request.permissionId} can not found")
         val projectId = role.projectId
-        val canwayRole = getCanwayRoleByRoleName(projectId, role.name)
+        val canwayRole = getCanwayRoleByRoleName(projectId!!, role.permName)
         updataCanwayResource(canwayRole, request.rId)
         return super.updatePermissionRole(request)
     }
 
     override fun updatePermissionUser(request: UpdatePermissionUserRequest): Boolean {
         //
-        val role = roleRepository.findFirstById(request.permissionId)
+        val role = permissionRepository.findFirstById(request.permissionId)
             ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "${request.permissionId} can not found")
         val projectId = role.projectId
-        val canwayRole = getCanwayRoleByRoleName(projectId, role.name)
+        val canwayRole = getCanwayRoleByRoleName(projectId!!, role.permName)
         updataCanwayResource(canwayRole, request.userId)
         return super.updatePermissionUser(request)
     }
@@ -165,26 +165,37 @@ class CanwayPermissionServiceImpl(
             .url(requestUrl)
             .build()
         val responseContent = HttpUtils.doRequest(okHttpClient, request, 3, mutableSetOf(200)).content
-        val canwayResourceDetail = responseContent.readJsonString<CanwayResourceDetail>()
-        val functionList = canwayResourceDetail.functionList
+        val canwayResourceDetail = responseContent.readJsonString<CanwayResponse<CanwayResourceDetail>>().data
+        val functionList = canwayResourceDetail!!.functionList
         for (function in functionList) {
-            if (function.action.code.equals(action.name, ignoreCase = true)) return function.action.id
+            if (function.action.code.equals(action.name, ignoreCase = true)) return function.id
         }
         throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "can not find action:${action.name} in ci")
     }
 
     /**
      * 根据角色名称查询canway权限中心的角色
+     * [roleName]  Role.value
      */
     private fun getCanwayRoleByRoleName(projectId: String, roleName: String): CanwayRole {
+        val canwayRoleName = transferRoleName(roleName)
         val canwayRoleList = listCanwayRoleByProject(projectId)
             ?: throw ErrorCodeException(CommonMessageCode.SERVICE_CALL_ERROR, "can not load canway role")
         for (canwayRole in canwayRoleList) {
-            if (canwayRole.name == roleName) {
+            if (canwayRole.name == canwayRoleName) {
                 return canwayRole
             }
         }
         throw ErrorCodeException(CommonMessageCode.SERVICE_CALL_ERROR, "can not load canway role: $roleName")
+    }
+
+    private fun transferRoleName(roleName: String): String {
+        return when (roleName) {
+            Role.ADMIN.value -> REPO_ADMIN
+            Role.USER.value -> REPO_USER
+            Role.VIEWER.value -> REPO_VIEWER
+            else -> throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID)
+        }
     }
 
     override fun listBuiltinPermission(projectId: String, repoName: String): List<Permission> {
@@ -199,10 +210,12 @@ class CanwayPermissionServiceImpl(
     fun checkCanwayRoleExist(projectId: String) {
         // 按名称检查
         val roles = mutableListOf(Role.ADMIN, Role.USER, Role.VIEWER)
+        val existsRole = mutableListOf<Role>()
         val canwayRoleList = listCanwayRoleByProject(projectId) ?: createCiRole(projectId, roles)
         for (canwayRole in canwayRoleList) {
-            if (roles.customContains(canwayRole.name)) roles.customRemove(canwayRole.name)
+            if (roles.customContains(canwayRole.name)) existsRole.customAdd(roles, canwayRole.name)
         }
+        roles.removeAll(existsRole)
         // 如果被删掉的权限，再次添加
         createCiRole(projectId, roles)
     }
@@ -215,12 +228,11 @@ class CanwayPermissionServiceImpl(
         return rolesNickList.contains(value)
     }
 
-    private fun MutableList<Role>.customRemove(value: String): MutableList<Role> {
-        val resultRole = mutableListOf<Role>()
-        for (role in this) {
-            if (role.nickName() != value) resultRole.add(role)
+    private fun MutableList<Role>.customAdd(roles: List<Role>, value: String): MutableList<Role> {
+        for (role in roles) {
+            if (role.nickName() == value) this.add(role)
         }
-        return resultRole
+        return this
     }
 
     /**
@@ -233,7 +245,7 @@ class CanwayPermissionServiceImpl(
                 val canwayRoleRequestBody = CanwayRoleRequest(
                     name = role.nickName(),
                     parentId = "",
-                    service = ciResourceCode,
+                    service = ciBelongCode,
                     belongInstance = projectId,
                     belongCode = ciBelongCode,
                     description = "create by bkrepo"
@@ -247,7 +259,11 @@ class CanwayPermissionServiceImpl(
                     .url(requestUrl)
                     .post(requestBody)
                     .build()
+                //创建角色
                 HttpUtils.doRequest(OkHttpClient(), request, 3, mutableSetOf(200))
+                //更新角色权限
+                val canwayRole = getCanwayRoleByRoleName(projectId, role.value)
+                addActionToRole(canwayRole, getDefaultActionsByRole(role))
             } catch (exception: Exception) {
                 logger.error("add role ${role.nickName()} by $userId failed, ${exception.message}")
                 throw exception
@@ -255,6 +271,14 @@ class CanwayPermissionServiceImpl(
         }
         return listCanwayRoleByProject(projectId)
             ?: throw ErrorCodeException(CommonMessageCode.SERVICE_CALL_ERROR, "add role by $userId failed")
+    }
+
+    private fun getDefaultActionsByRole(role: Role):List<PermissionAction> {
+        return when (role) {
+            Role.ADMIN -> ADMIN
+            Role.USER -> USER
+            Role.VIEWER -> VIEWER
+        }
     }
 
     /**
@@ -362,5 +386,9 @@ class CanwayPermissionServiceImpl(
         const val updateRoleResourceApi = "$ci$ciApi/service/role/associateUser?userId=%s"
         const val updataRoleActionApi = "$ci$ciApi/service/role/%s/updateResource?userId=%s"
         const val resourceDetail = "$ci$ciApi/service/resources/$ciResourceCode?userId=%s"
+        //默认初始权限模板
+        val ADMIN = listOf(PermissionAction.MANAGE)
+        val USER = listOf(PermissionAction.WRITE, PermissionAction.DELETE, PermissionAction.UPDATE, PermissionAction.READ)
+        val VIEWER = listOf(PermissionAction.READ)
     }
 }

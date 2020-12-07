@@ -8,5 +8,5 @@ data class CanwayRolePermissionRequest(
 
 data class CanwayFunction(
     val id: String,
-    val name:String = ""
+    val name: String = ""
 )

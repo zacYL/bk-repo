@@ -145,14 +145,14 @@ class AuthServiceConfig {
     @Bean
     @ConditionalOnProperty(prefix = "auth", name = ["realm"], havingValue = "canway")
     fun canwayPermissionService(
-            @Autowired userRepository: UserRepository,
-            @Autowired roleRepository: RoleRepository,
-            @Autowired permissionRepository: PermissionRepository,
-            @Autowired mongoTemplate: MongoTemplate,
-            @Autowired repositoryClient: RepositoryClient,
-            @Autowired bkAuthConfig: BkAuthConfig,
-            @Autowired canwayAuthConf: CanwayAuthConf,
-            @Autowired bkUserService: BkUserService
+        @Autowired userRepository: UserRepository,
+        @Autowired roleRepository: RoleRepository,
+        @Autowired permissionRepository: PermissionRepository,
+        @Autowired mongoTemplate: MongoTemplate,
+        @Autowired repositoryClient: RepositoryClient,
+        @Autowired bkAuthConfig: BkAuthConfig,
+        @Autowired canwayAuthConf: CanwayAuthConf,
+        @Autowired bkUserService: BkUserService
     ): PermissionService {
         logger.debug("init BkAuthPermissionServiceImpl")
         return CanwayPermissionServiceImpl(
@@ -161,8 +161,8 @@ class AuthServiceConfig {
             permissionRepository,
             mongoTemplate,
             repositoryClient,
-                canwayAuthConf,
-                bkUserService
+            canwayAuthConf,
+            bkUserService
         )
     }
 

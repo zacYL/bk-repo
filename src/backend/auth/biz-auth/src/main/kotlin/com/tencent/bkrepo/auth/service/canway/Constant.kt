@@ -1,7 +1,5 @@
 package com.tencent.bkrepo.auth.service.canway
 
-import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
-
 const val ci = "/ms/permission"
 const val ciApi = "/api"
 

@@ -55,7 +55,7 @@ class BkUserService(
     private fun getBkToken(): String {
         val request = HttpContextHolder.getRequest()
         val cookies = request.cookies
-                ?:throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "bk_token must not be null")
+            ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "bk_token must not be null")
         for (cookie in cookies) {
             if (cookie.name == "bk_token") return cookie.value
         }

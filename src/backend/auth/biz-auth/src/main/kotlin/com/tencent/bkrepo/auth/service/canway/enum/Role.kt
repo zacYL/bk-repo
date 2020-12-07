@@ -16,7 +16,7 @@ enum class Role(val value: String) {
             "repo_admin" -> REPO_ADMIN
             "repo_user" -> REPO_USER
             "repo_viewer" -> REPO_VIEWER
-            else -> throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID,"Can not found Role name:$name")
+            else -> throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "Can not found Role name:$name")
         }
     }
 }

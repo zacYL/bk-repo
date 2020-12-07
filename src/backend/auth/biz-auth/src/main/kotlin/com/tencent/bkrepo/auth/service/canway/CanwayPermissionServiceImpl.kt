@@ -40,8 +40,8 @@ import org.springframework.data.mongodb.core.MongoTemplate
 import java.util.concurrent.TimeUnit
 
 class CanwayPermissionServiceImpl(
-    private val userRepository: UserRepository,
-    private val roleRepository: RoleRepository,
+    userRepository: UserRepository,
+    roleRepository: RoleRepository,
     permissionRepository: PermissionRepository,
     mongoTemplate: MongoTemplate,
     repositoryClient: RepositoryClient,
@@ -259,9 +259,9 @@ class CanwayPermissionServiceImpl(
                     .url(requestUrl)
                     .post(requestBody)
                     .build()
-                //创建角色
+                // 创建角色
                 HttpUtils.doRequest(OkHttpClient(), request, 3, mutableSetOf(200))
-                //更新角色权限
+                // 更新角色权限
                 val canwayRole = getCanwayRoleByRoleName(projectId, role.value)
                 addActionToRole(canwayRole, getDefaultActionsByRole(role))
             } catch (exception: Exception) {
@@ -273,7 +273,7 @@ class CanwayPermissionServiceImpl(
             ?: throw ErrorCodeException(CommonMessageCode.SERVICE_CALL_ERROR, "add role by $userId failed")
     }
 
-    private fun getDefaultActionsByRole(role: Role):List<PermissionAction> {
+    private fun getDefaultActionsByRole(role: Role): List<PermissionAction> {
         return when (role) {
             Role.ADMIN -> ADMIN
             Role.USER -> USER
@@ -322,7 +322,6 @@ class CanwayPermissionServiceImpl(
         val instanceList = userResources.instanceCodes ?: return false
 
         return match(request, instanceList)
-
     }
 
     private fun createCanwayPermissionRequest(request: CheckPermissionRequest): Request {
@@ -342,7 +341,7 @@ class CanwayPermissionServiceImpl(
                     resourceInstance = mutableListOf(
                         UserResourcesAuthRequest.ResourceInstance(
                             resourceCode = ciResourceCode,
-                            instanceCode = repoName?:""
+                            instanceCode = repoName ?: ""
                         )
                     )
                 )
@@ -361,10 +360,10 @@ class CanwayPermissionServiceImpl(
      * 检查 用户在canway权限中心是否有该-实例-的权限
      */
     private fun match(request: CheckPermissionRequest, instanceList: List<UserResourceAuthResponse.ResourcesAction>): Boolean {
-        val action  = request.action
+        val action = request.action
         if (action == PermissionAction.MANAGE) {
             instanceList.first().resourceInstance?.let {
-                if(it == mutableSetOf("*")) return true
+                if (it == mutableSetOf("*")) return true
             }
             return false
         }
@@ -386,7 +385,7 @@ class CanwayPermissionServiceImpl(
         const val updateRoleResourceApi = "$ci$ciApi/service/role/associateUser?userId=%s"
         const val updataRoleActionApi = "$ci$ciApi/service/role/%s/updateResource?userId=%s"
         const val resourceDetail = "$ci$ciApi/service/resources/$ciResourceCode?userId=%s"
-        //默认初始权限模板
+        // 默认初始权限模板
         val ADMIN = listOf(PermissionAction.MANAGE)
         val USER = listOf(PermissionAction.WRITE, PermissionAction.DELETE, PermissionAction.UPDATE, PermissionAction.READ)
         val VIEWER = listOf(PermissionAction.READ)

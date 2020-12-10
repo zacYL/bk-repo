@@ -2,10 +2,10 @@ package com.tencent.bkrepo.repository.service.canway
 
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.util.toJsonString
+import com.tencent.bkrepo.common.artifact.util.okhttp.CertTrustManager
 import com.tencent.bkrepo.common.service.util.HttpUtils
 import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoDeleteRequest
-import com.tencent.bkrepo.repository.service.canway.bk.BkUserService
 import com.tencent.bkrepo.repository.service.canway.conf.CanwayAuthConf
 import com.tencent.bkrepo.repository.service.canway.pojo.BatchResourceInstance
 import com.tencent.bkrepo.repository.service.canway.pojo.ResourceRegisterInfo
@@ -18,15 +18,23 @@ import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.lang.Exception
+import java.util.concurrent.TimeUnit
 
 @Aspect
 @Service
 class CanwayRepositoryAspect(
         canwayAuthConf: CanwayAuthConf
 ) {
+
+    private val okHttpClient = OkHttpClient.Builder()
+            .sslSocketFactory(CertTrustManager.disableValidationSSLSocketFactory, CertTrustManager.disableValidationTrustManager)
+            .hostnameVerifier(CertTrustManager.trustAllHostname)
+            .connectTimeout(3L, TimeUnit.SECONDS)
+            .readTimeout(5L, TimeUnit.SECONDS)
+            .writeTimeout(5L, TimeUnit.SECONDS)
+            .build()
 
     private val devopsHost = canwayAuthConf.devopsHost!!.removeSuffix("/")
 
@@ -36,7 +44,7 @@ class CanwayRepositoryAspect(
         val repo = args.first() as RepoCreateRequest
         updateResource(repo.projectId, repo.name, repo.operator, ciAddResourceApi)
         try {
-            val result = point.proceed(args)
+            point.proceed(args)
         } catch (exception: Exception) {
             if ((exception as ErrorCodeException).messageCode.getKey() == "artifact.repository.existed") return
             updateResource(repo.projectId, repo.name, repo.operator, ciDeleteResourceApi)
@@ -48,7 +56,7 @@ class CanwayRepositoryAspect(
         val args = point.args
         val repo = args.first() as RepoDeleteRequest
         try {
-            val result = point.proceed(args)
+            point.proceed(args)
         } catch (exception: Exception) {
             if((exception as ErrorCodeException).messageCode.getKey() == "artifact.repository.notfound") return
             updateResource(repo.projectId, repo.name, repo.operator, ciDeleteResourceApi)
@@ -76,7 +84,7 @@ class CanwayRepositoryAspect(
                 .url(ciAddResourceUrl)
                 .post(body)
                 .build()
-        HttpUtils.doRequest(OkHttpClient(), request, 3, mutableSetOf(200)).content
+        HttpUtils.doRequest(okHttpClient, request, 3, mutableSetOf(200)).content
     }
 
     companion object{

@@ -39,16 +39,12 @@ import com.tencent.bkrepo.auth.repository.UserRepository
 import com.tencent.bkrepo.auth.service.AccountService
 import com.tencent.bkrepo.auth.service.ClusterService
 import com.tencent.bkrepo.auth.service.PermissionService
-import com.tencent.bkrepo.auth.service.RoleService
 import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.auth.service.bkauth.BkAuthService
 import com.tencent.bkrepo.auth.service.bkauth.BkAuthPermissionServiceImpl
 import com.tencent.bkrepo.auth.service.bkauth.BkAuthProjectService
 import com.tencent.bkrepo.auth.service.bkiam.BkiamPermissionServiceImpl
 import com.tencent.bkrepo.auth.service.bkiam.BkiamService
-import com.tencent.bkrepo.auth.service.canway.CanwayPermissionServiceImpl
-import com.tencent.bkrepo.auth.service.canway.bk.BkUserService
-import com.tencent.bkrepo.auth.service.canway.conf.CanwayAuthConf
 import com.tencent.bkrepo.auth.service.local.AccountServiceImpl
 import com.tencent.bkrepo.auth.service.local.ClusterServiceImpl
 import com.tencent.bkrepo.auth.service.local.PermissionServiceImpl
@@ -143,31 +139,7 @@ class AuthServiceConfig {
     }
 
     @Bean
-    @ConditionalOnProperty(prefix = "auth", name = ["realm"], havingValue = "canway")
-    fun canwayPermissionService(
-        @Autowired userRepository: UserRepository,
-        @Autowired roleRepository: RoleRepository,
-        @Autowired permissionRepository: PermissionRepository,
-        @Autowired mongoTemplate: MongoTemplate,
-        @Autowired repositoryClient: RepositoryClient,
-        @Autowired bkAuthConfig: BkAuthConfig,
-        @Autowired canwayAuthConf: CanwayAuthConf,
-        @Autowired bkUserService: BkUserService
-    ): PermissionService {
-        logger.debug("init BkAuthPermissionServiceImpl")
-        return CanwayPermissionServiceImpl(
-            userRepository,
-            roleRepository,
-            permissionRepository,
-            mongoTemplate,
-            repositoryClient,
-            canwayAuthConf,
-            bkUserService
-        )
-    }
-
-    @Bean
-    @ConditionalOnMissingBean(RoleService::class)
+    @ConditionalOnProperty(prefix = "auth", name = ["realm"], havingValue = "local")
     fun roleService(@Autowired roleRepository: RoleRepository) = RoleServiceImpl(roleRepository)
 
     @Bean

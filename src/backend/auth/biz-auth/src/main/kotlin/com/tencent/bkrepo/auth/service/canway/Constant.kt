@@ -17,3 +17,5 @@ const val REPO_VIEWER = "制品库-查看者"
 const val REPO_USER = "制品库-使用者"
 
 const val USER_TYPE = "G_USER"
+const val GROUP_TYPE = "G_GROUP"
+const val DEPARTMENT_TYPE = "G_DEPARTMENT"

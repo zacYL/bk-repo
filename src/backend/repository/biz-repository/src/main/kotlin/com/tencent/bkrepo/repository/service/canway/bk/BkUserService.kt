@@ -3,10 +3,14 @@ package com.tencent.bkrepo.repository.service.canway.bk
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.readJsonString
+import com.tencent.bkrepo.common.artifact.util.okhttp.CertTrustManager.disableValidationSSLSocketFactory
+import com.tencent.bkrepo.common.artifact.util.okhttp.CertTrustManager.disableValidationTrustManager
+import com.tencent.bkrepo.common.artifact.util.okhttp.CertTrustManager.trustAllHostname
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.HttpUtils
 import com.tencent.bkrepo.repository.service.canway.conf.CanwayAuthConf
 import com.tencent.bkrepo.repository.service.canway.pojo.BkUserInfo
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -18,7 +22,9 @@ class BkUserService(
         canwayAuthConf: CanwayAuthConf
 ) {
 
-    private val okHttpClient = okhttp3.OkHttpClient.Builder()
+    private val okHttpClient = OkHttpClient.Builder()
+            .sslSocketFactory(disableValidationSSLSocketFactory, disableValidationTrustManager)
+            .hostnameVerifier(trustAllHostname)
             .connectTimeout(3L, TimeUnit.SECONDS)
             .readTimeout(5L, TimeUnit.SECONDS)
             .writeTimeout(5L, TimeUnit.SECONDS)

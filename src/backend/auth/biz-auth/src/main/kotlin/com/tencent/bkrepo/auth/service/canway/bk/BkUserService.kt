@@ -4,6 +4,7 @@ import com.tencent.bkrepo.auth.constant.DEFAULT_PASSWORD
 import com.tencent.bkrepo.auth.pojo.user.CreateUserRequest
 import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.auth.service.canway.conf.CanwayAuthConf
+import com.tencent.bkrepo.auth.service.canway.http.CertTrustManager
 import com.tencent.bkrepo.auth.service.canway.pojo.BkPage
 import com.tencent.bkrepo.auth.service.canway.pojo.BkResponse
 import com.tencent.bkrepo.auth.service.canway.pojo.BkUser
@@ -13,6 +14,7 @@ import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -27,7 +29,9 @@ class BkUserService(
     @Autowired
     lateinit var userService: UserService
 
-    private val okHttpClient = okhttp3.OkHttpClient.Builder()
+    private val okHttpClient = OkHttpClient.Builder()
+        .sslSocketFactory(CertTrustManager.disableValidationSSLSocketFactory, CertTrustManager.disableValidationTrustManager)
+        .hostnameVerifier(CertTrustManager.trustAllHostname)
         .connectTimeout(3L, TimeUnit.SECONDS)
         .readTimeout(5L, TimeUnit.SECONDS)
         .writeTimeout(5L, TimeUnit.SECONDS)
@@ -63,7 +67,7 @@ class BkUserService(
     }
 
     fun syncBkUser() {
-        val count = getBkUsers(1, 1).count
+        val count = getBkUsers(1, 1)?.count ?: return
         val pages = (count / pageSize).inc()
         for (i in 1..pages) {
             val userPage = getBkUsers(i, pageSize)
@@ -71,8 +75,8 @@ class BkUserService(
         }
     }
 
-    private fun checkUserExist(bkUsers: BkPage<BkUser>) {
-        bkUsers.results ?: return
+    private fun checkUserExist(bkUsers: BkPage<BkUser>?) {
+        bkUsers?.results ?: return
         for (bkUser in bkUsers.results) {
             if (userService.getUserById(bkUser.username) == null) {
                 val createUserRequest = CreateUserRequest(
@@ -86,7 +90,7 @@ class BkUserService(
         }
     }
 
-    private fun getBkUsers(page: Int, pageSize: Int): BkPage<BkUser> {
+    private fun getBkUsers(page: Int, pageSize: Int): BkPage<BkUser>? {
         val uri = String.format(bkUserApi, appCode, appSecret, page, pageSize)
         val requestUrl = "${bkHost.removeSuffix("/")}$uri"
         val request = Request.Builder().url(requestUrl).build()

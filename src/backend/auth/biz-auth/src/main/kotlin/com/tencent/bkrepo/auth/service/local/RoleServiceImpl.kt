@@ -41,8 +41,8 @@ import com.tencent.bkrepo.auth.service.RoleService
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import org.slf4j.LoggerFactory
 
-class RoleServiceImpl constructor(
-    private val roleRepository: RoleRepository
+open class RoleServiceImpl constructor(
+    val roleRepository: RoleRepository
 ) : RoleService {
 
     override fun createRole(request: CreateRoleRequest): String? {

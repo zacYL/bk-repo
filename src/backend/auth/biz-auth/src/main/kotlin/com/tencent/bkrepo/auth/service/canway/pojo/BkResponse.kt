@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 data class BkResponse<T> (
     val message: String,
     val code: Int,
-    val data: T,
+    val data: T?,
     val result: Boolean,
     val request_id: String
 )

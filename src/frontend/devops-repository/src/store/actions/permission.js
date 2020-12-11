@@ -3,6 +3,12 @@ import Vue from 'vue'
 const authPrefix = 'auth/api'
 
 export default {
+    // 查询所有动作
+    getRepoActions (_, { projectId, repoName }) {
+        return Vue.prototype.$ajax.get(
+            `${authPrefix}/${projectId}/${repoName}/optional`
+        )
+    },
     // 查询所有用户
     getRepoUserList () {
         return Vue.prototype.$ajax.get(

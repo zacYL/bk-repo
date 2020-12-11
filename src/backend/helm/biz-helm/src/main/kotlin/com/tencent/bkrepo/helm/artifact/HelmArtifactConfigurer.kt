@@ -29,28 +29,38 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.pypi.artifact
+package com.tencent.bkrepo.helm.artifact
 
-import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.pojo.Response
-import com.tencent.bkrepo.common.artifact.config.ArtifactConfiguration
+import com.tencent.bkrepo.common.artifact.config.ArtifactConfigurerSupport
 import com.tencent.bkrepo.common.artifact.exception.ExceptionResponseTranslator
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
-import com.tencent.bkrepo.pypi.pojo.PypiExceptionResponse
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
+import com.tencent.bkrepo.common.security.http.core.HttpAuthSecurity
+import com.tencent.bkrepo.common.security.http.core.HttpAuthSecurityCustomizer
+import com.tencent.bkrepo.common.service.util.SpringContextUtils
+import com.tencent.bkrepo.helm.artifact.repository.HelmLocalRepository
+import com.tencent.bkrepo.helm.artifact.repository.HelmRemoteRepository
+import com.tencent.bkrepo.helm.artifact.repository.HelmVirtualRepository
+import com.tencent.bkrepo.helm.pojo.HelmErrorResponse
 import org.springframework.http.server.ServerHttpRequest
 import org.springframework.http.server.ServerHttpResponse
+import org.springframework.stereotype.Component
 
-@Configuration
-class PypiArtifactConfiguration : ArtifactConfiguration {
+@Component
+class HelmArtifactConfigurer : ArtifactConfigurerSupport() {
 
-    override fun getRepositoryType() = RepositoryType.PYPI
-
-    @Bean
-    fun exceptionResponseTranslator() = object : ExceptionResponseTranslator {
+    override fun getRepositoryType() = RepositoryType.HELM
+    override fun getLocalRepository() = SpringContextUtils.getBean<HelmLocalRepository>()
+    override fun getRemoteRepository() = SpringContextUtils.getBean<HelmRemoteRepository>()
+    override fun getVirtualRepository() = SpringContextUtils.getBean<HelmVirtualRepository>()
+    override fun getAuthSecurityCustomizer() = object : HttpAuthSecurityCustomizer {
+        override fun customize(httpAuthSecurity: HttpAuthSecurity) {
+            httpAuthSecurity.withPrefix("/helm")
+        }
+    }
+    override fun getExceptionResponseTranslator() = object : ExceptionResponseTranslator {
         override fun translate(payload: Response<*>, request: ServerHttpRequest, response: ServerHttpResponse): Any {
-            return PypiExceptionResponse(StringPool.EMPTY, payload.message.orEmpty())
+            return HelmErrorResponse(payload.message.orEmpty())
         }
     }
 }

@@ -29,32 +29,26 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.repository.search.node
+package com.tencent.bkrepo.generic.artifact
 
-import com.tencent.bkrepo.common.query.interceptor.QueryContext
-import com.tencent.bkrepo.common.query.interceptor.QueryRuleInterceptor
-import com.tencent.bkrepo.common.query.model.Rule
-import com.tencent.bkrepo.repository.constant.METADATA_PREFIX
-import com.tencent.bkrepo.repository.constant.SystemMetadata
-import com.tencent.bkrepo.repository.pojo.node.NodeInfo
-import org.springframework.data.mongodb.core.query.Criteria
+import com.tencent.bkrepo.common.artifact.config.ArtifactConfigurerSupport
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.security.http.core.HttpAuthSecurity
+import com.tencent.bkrepo.common.security.http.core.HttpAuthSecurityCustomizer
+import com.tencent.bkrepo.common.service.util.SpringContextUtils
+import org.springframework.stereotype.Component
 
-/**
- * 晋级标签规则拦截器
- *
- * 条件构造器中传入条件是`stageTag`，需要转换成对应元数据查询条件
- */
-class StageTagRuleInterceptor : QueryRuleInterceptor {
+@Component
+class GenericArtifactConfigurer: ArtifactConfigurerSupport() {
 
-    override fun match(rule: Rule): Boolean {
-        return rule is Rule.QueryRule && rule.field == NodeInfo::stageTag.name
-    }
+    override fun getRepositoryType() = RepositoryType.GENERIC
+    override fun getLocalRepository() = SpringContextUtils.getBean<GenericLocalRepository>()
+    override fun getRemoteRepository() = SpringContextUtils.getBean<GenericRemoteRepository>()
+    override fun getVirtualRepository() = SpringContextUtils.getBean<GenericVirtualRepository>()
 
-    override fun intercept(rule: Rule, context: QueryContext): Criteria {
-        require(rule is Rule.QueryRule)
-        with(rule) {
-            val queryRule = Rule.QueryRule(METADATA_PREFIX + SystemMetadata.STAGE.key, value, operation)
-            return context.interpreter.resolveRule(queryRule, context)
+    override fun getAuthSecurityCustomizer() = object : HttpAuthSecurityCustomizer {
+        override fun customize(httpAuthSecurity: HttpAuthSecurity) {
+            httpAuthSecurity.withPrefix("/generic")
         }
     }
 }

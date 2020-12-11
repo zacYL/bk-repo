@@ -32,6 +32,7 @@
 package com.tencent.bkrepo.auth.repository
 
 import com.tencent.bkrepo.auth.model.TPermission
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import org.springframework.data.mongodb.repository.MongoRepository
 import org.springframework.stereotype.Repository
@@ -49,4 +50,10 @@ interface PermissionRepository : MongoRepository<TPermission, String> {
         permName: String,
         resourceType: ResourceType
     ): TPermission?
+    fun findByProjectIdAndReposContainsAndResourceTypeAndActionsContains(
+        projectId: String,
+        repoName: String,
+        resourceType: ResourceType,
+        action: PermissionAction
+    ): List<TPermission>?
 }

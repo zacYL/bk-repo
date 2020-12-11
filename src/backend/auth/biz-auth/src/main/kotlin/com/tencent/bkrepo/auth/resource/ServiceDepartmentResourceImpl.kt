@@ -23,6 +23,7 @@ package com.tencent.bkrepo.auth.resource
 
 import com.tencent.bkrepo.auth.api.ServiceDepartmentResource
 import com.tencent.bkrepo.auth.service.DepartmentService
+import com.tencent.bkrepo.auth.service.canway.pojo.bk.BkChildrenDepartment
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import org.springframework.beans.factory.annotation.Autowired
@@ -33,7 +34,7 @@ class ServiceDepartmentResourceImpl @Autowired constructor(
     val departmentService: DepartmentService
 ) : ServiceDepartmentResource {
 
-    override fun listDepartment(username: String?, departmentId: Int?): Response<Any?> {
+    override fun listDepartment(username: String?, departmentId: Int?): Response<List<BkChildrenDepartment>?> {
         return ResponseBuilder.success(departmentService.listDepartmentById(username, departmentId))
     }
 

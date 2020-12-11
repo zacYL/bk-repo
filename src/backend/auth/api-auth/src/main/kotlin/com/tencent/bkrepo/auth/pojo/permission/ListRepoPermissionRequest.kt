@@ -53,5 +53,7 @@ data class ListRepoPermissionRequest(
     @ApiModelProperty("角色")
     val role: String? = null,
     @ApiModelProperty("AppId")
-    val appId: String? = null
+    val appId: String? = null,
+    @ApiModelProperty("部门")
+    val department: String? = null
 )

@@ -36,7 +36,20 @@ enum class PermissionAction {
     WRITE,
     READ,
     UPDATE,
-    DELETE;
+    DELETE,
+
+    // cawnay extend
+    REPO_MANAGE,
+    FOLDER_MANAGE,
+    ARTIFACT_COPY,
+    ARTIFACT_RENAME,
+    ARTIFACT_MOVE,
+    ARTIFACT_SHARE,
+    ARTIFACT_DOWNLOAD,
+    ARTIFACT_READWRITE,
+    ARTIFACT_READ,
+    ARTIFACT_DELETE,
+    ARTIFACT_UPDATE;
 
     fun id() = this.name.toLowerCase()
 }

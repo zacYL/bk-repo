@@ -1,14 +1,13 @@
 package com.tencent.bkrepo.auth.service.canway.conf
 
-import com.tencent.bkrepo.auth.config.BkAuthConfig
 import com.tencent.bkrepo.auth.repository.PermissionRepository
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
+import com.tencent.bkrepo.auth.service.DepartmentService
 import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.service.RoleService
 import com.tencent.bkrepo.auth.service.canway.CanwayPermissionServiceImpl
 import com.tencent.bkrepo.auth.service.canway.CanwayRoleServiceImpl
-import com.tencent.bkrepo.auth.service.canway.bk.BkUserService
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -31,9 +30,8 @@ class CanwayAuthServiceConfig {
         @Autowired permissionRepository: PermissionRepository,
         @Autowired mongoTemplate: MongoTemplate,
         @Autowired repositoryClient: RepositoryClient,
-        @Autowired bkAuthConfig: BkAuthConfig,
         @Autowired canwayAuthConf: CanwayAuthConf,
-        @Autowired bkUserService: BkUserService
+        @Autowired departmentService: DepartmentService
     ): PermissionService {
         logger.debug("init CanwayPermissionServiceImpl")
         return CanwayPermissionServiceImpl(
@@ -43,7 +41,7 @@ class CanwayAuthServiceConfig {
             mongoTemplate,
             repositoryClient,
             canwayAuthConf,
-            bkUserService
+            departmentService
         )
     }
 

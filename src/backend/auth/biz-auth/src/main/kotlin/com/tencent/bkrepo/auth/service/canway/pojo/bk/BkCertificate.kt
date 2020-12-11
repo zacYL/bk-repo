@@ -1,4 +1,4 @@
-package com.tencent.bkrepo.auth.service.canway.pojo
+package com.tencent.bkrepo.auth.service.canway.pojo.bk
 
 data class BkCertificate(
     val certType: CertType,

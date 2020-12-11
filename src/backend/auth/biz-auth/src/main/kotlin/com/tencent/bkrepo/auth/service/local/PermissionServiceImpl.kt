@@ -240,8 +240,6 @@ open class PermissionServiceImpl constructor(
             }
             return false
         }
-
-        // check department
     }
 
     override fun listRepoPermission(request: ListRepoPermissionRequest): List<String> {

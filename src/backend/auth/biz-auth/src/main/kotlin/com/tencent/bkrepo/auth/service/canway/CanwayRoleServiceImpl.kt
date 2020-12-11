@@ -31,10 +31,10 @@ class CanwayRoleServiceImpl(
     private fun checkGroups(groups: List<CanwayGroup>?, projectId: String) {
         groups ?: return
         for (group in groups) {
-            if (roleRepository.findFirstById(group.name) == null) {
+            if (roleRepository.findFirstById(group.id) == null) {
                 roleRepository.insert(
                     TRole(
-                        roleId = group.name,
+                        roleId = group.id,
                         name = group.name,
                         type = RoleType.PROJECT,
                         projectId = projectId,

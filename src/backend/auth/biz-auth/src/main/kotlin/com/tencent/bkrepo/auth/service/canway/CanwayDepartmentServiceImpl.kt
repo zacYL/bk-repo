@@ -2,14 +2,16 @@ package com.tencent.bkrepo.auth.service.canway
 
 import com.tencent.bkrepo.auth.service.DepartmentService
 import com.tencent.bkrepo.auth.service.canway.conf.CanwayAuthConf
+import com.tencent.bkrepo.auth.service.canway.http.CanwayHttpUtils
 import com.tencent.bkrepo.auth.service.canway.http.CertTrustManager
-import com.tencent.bkrepo.auth.service.canway.pojo.BkDepartment
-import com.tencent.bkrepo.auth.service.canway.pojo.BkChildrenDepartment
-import com.tencent.bkrepo.auth.service.canway.pojo.BkResponse
-import com.tencent.bkrepo.auth.service.canway.pojo.BkCertificate
-import com.tencent.bkrepo.auth.service.canway.pojo.CertType
-import com.tencent.bkrepo.auth.service.canway.pojo.BkPage
-import com.tencent.bkrepo.auth.service.canway.pojo.BkParentDepartment
+import com.tencent.bkrepo.auth.service.canway.pojo.bk.BkResponse
+import com.tencent.bkrepo.auth.service.canway.pojo.bk.BkChildrenDepartment
+import com.tencent.bkrepo.auth.service.canway.pojo.bk.BkPage
+import com.tencent.bkrepo.auth.service.canway.pojo.bk.BkDepartment
+import com.tencent.bkrepo.auth.service.canway.pojo.bk.BkCertificate
+import com.tencent.bkrepo.auth.service.canway.pojo.bk.CertType
+import com.tencent.bkrepo.auth.service.canway.pojo.bk.BkDepartmentUser
+import com.tencent.bkrepo.auth.service.canway.pojo.bk.BkParentDepartment
 import com.tencent.bkrepo.auth.util.HttpUtils
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
@@ -123,6 +125,14 @@ class CanwayDepartmentServiceImpl(
             ?: throw ErrorCodeException(CommonMessageCode.RESOURCE_NOT_FOUND, "Can not found any companyId")
     }
 
+    override fun getUsersByDepartmentId(departmentId: Int): Set<BkDepartmentUser>? {
+        val bkCertificate = getBkCertificate(null)
+        val uri = String.format(getUsersByDepartmentIdApi, bkAppCode, bkAppSecret, bkCertificate.certType.value, bkCertificate.value, departmentId)
+        val requestUrl = "${paasHost?.removeSuffix("/")}$uri"
+        val responseContent = CanwayHttpUtils.doGet(requestUrl).content
+        return responseContent.readJsonString<BkResponse<Set<BkDepartmentUser>>>().data
+    }
+
     companion object {
         val logger: Logger = LoggerFactory.getLogger(CanwayDepartmentServiceImpl::class.java)
         const val jsonFormat = "{\n" +
@@ -136,5 +146,6 @@ class CanwayDepartmentServiceImpl(
         const val paasDepartmentApi = "%s?bk_app_code=%s&bk_app_secret=%s&%s=%s&page=1&page_size=1"
         const val paasListDepartmentRequest = "%s?bk_app_code=%s&bk_app_secret=%s&%s=%s&exact_lookups=%d&lookup_field=%s&page=1&page_size=1"
         const val listDepartmentField = "id"
+        const val getUsersByDepartmentIdApi = "/api/c/compapi/v2/usermanage/list_department_profiles/?bk_app_code=%s&bk_app_secret=%s&%s=%s&id=%d&recursive=true&no_page=true"
     }
 }

@@ -52,7 +52,7 @@ interface PermissionRepository : MongoRepository<TPermission, String> {
     ): TPermission?
     fun findByProjectIdAndReposContainsAndResourceTypeAndActionsContains(
         projectId: String,
-        repoName: String,
+        repoName: String?,
         resourceType: ResourceType,
         action: PermissionAction
     ): List<TPermission>?

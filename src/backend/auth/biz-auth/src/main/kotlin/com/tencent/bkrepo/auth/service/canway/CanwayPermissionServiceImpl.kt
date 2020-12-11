@@ -1,7 +1,10 @@
 package com.tencent.bkrepo.auth.service.canway
 
 import com.tencent.bkrepo.auth.model.TPermission
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
+import com.tencent.bkrepo.auth.pojo.permission.Permission
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionActionRequest
 import com.tencent.bkrepo.auth.repository.PermissionRepository
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
@@ -48,12 +51,41 @@ class CanwayPermissionServiceImpl(
         return super.checkPermission(request)
     }
 
+    override fun updatePermissionAction(request: UpdatePermissionActionRequest): Boolean {
+        val actions = request.actions
+        val targetActions = mutableSetOf<PermissionAction>()
+        for (action in actions) {
+            if (ActionCollection.isCanwayAction(action)) {
+                targetActions.addAll(ActionCollection.getActionsByCanway(action))
+            }
+            targetActions.add(action)
+        }
+        val targetRequest = request.copy(
+            actions = targetActions.map { it }
+        )
+        return super.updatePermissionAction(targetRequest)
+    }
+
+    override fun listBuiltinPermission(projectId: String, repoName: String): List<Permission> {
+        val permissions = super.listBuiltinPermission(projectId, repoName)
+        val targetPermissions = mutableListOf<Permission>()
+        for (permission in permissions) {
+            val actions = permission.actions
+            val targetActions = mutableSetOf<PermissionAction>()
+            for (action in actions) {
+                if (ActionCollection.isCanwayAction(action)) targetActions.add(action)
+            }
+            targetPermissions.add(permission.copy(actions = targetActions.map { it }))
+        }
+        return targetPermissions
+    }
+
     private fun canwayCheckPermission(request: CheckPermissionRequest): Boolean {
         val uid = request.uid
         val projectId = request.projectId
             ?: throw(ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "`projectId` is must not be null"))
         // todo
-        val repoName = request.repoName!!
+        val repoName = request.repoName
         val resourceType = request.resourceType
         val action = request.action
         // 用户组鉴权

@@ -2,7 +2,7 @@
 
 ### 查询部门
 
-- API: GET /{project}/{repo}/optional
+- API: GET /action/{project}/{repo}/optional
 - API 名称: list_action
 - 功能说明：
   - 中文：查询该仓库下可选的动作

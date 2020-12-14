@@ -38,7 +38,7 @@ class CanwayPermissionServiceImpl(
 
     override fun checkPermission(request: CheckPermissionRequest): Boolean {
         logger.info("check permission  request : [$request] ")
-        // canway 权限中心 权限校验
+        // 校验用户是否属于对应部门和用户组
         canwayCheckPermission(request)
         val action = request.action
         if (ActionCollection.isCanwayAction(action)) {
@@ -50,6 +50,7 @@ class CanwayPermissionServiceImpl(
                 val result = super.checkPermission(tempRequest)
                 if (!result) return false
             }
+            return true
         }
         return super.checkPermission(request)
     }

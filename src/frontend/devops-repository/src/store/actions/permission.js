@@ -6,7 +6,7 @@ export default {
     // 查询所有动作
     getRepoActions (_, { projectId, repoName }) {
         return Vue.prototype.$ajax.get(
-            `${authPrefix}/${projectId}/${repoName}/optional`
+            `${authPrefix}/action/${projectId}/${repoName}/optional`
         )
     },
     // 查询所有用户

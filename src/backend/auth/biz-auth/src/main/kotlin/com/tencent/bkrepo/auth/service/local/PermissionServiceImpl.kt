@@ -309,7 +309,7 @@ open class PermissionServiceImpl constructor(
         }
     }
 
-    private fun getOnePermission(
+    fun getOnePermission(
         projectId: String,
         repoName: String,
         permName: String,

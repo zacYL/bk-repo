@@ -49,7 +49,7 @@ data class BkParentDepartment(
 )
 
 data class BkChildrenDepartment(
-    val id: Int,
+    val id: String,
     val name: String,
     val order: Int?,
     val parent: Int?,

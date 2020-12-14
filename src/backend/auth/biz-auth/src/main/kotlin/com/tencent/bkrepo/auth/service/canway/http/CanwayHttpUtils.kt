@@ -9,7 +9,7 @@ import okhttp3.RequestBody
 import java.util.concurrent.TimeUnit
 
 object CanwayHttpUtils {
-    val mediaType = MediaType.parse("application/json; charset=utf-8")
+    private val mediaType = MediaType.parse("application/json; charset=utf-8")
 
     private val okHttpClient = OkHttpClient.Builder()
         .sslSocketFactory(CertTrustManager.disableValidationSSLSocketFactory, CertTrustManager.disableValidationTrustManager)

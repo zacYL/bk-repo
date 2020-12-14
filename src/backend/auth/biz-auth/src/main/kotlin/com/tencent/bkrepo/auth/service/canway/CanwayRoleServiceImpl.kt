@@ -24,21 +24,21 @@ class CanwayRoleServiceImpl(
         // 插入用户组
         val tenantId = getTenantId()
         val groups = getGroupByTenantId(tenantId)
-        checkGroups(groups, projectId)
+        checkGroups(groups, projectId, repoName)
         return super.listRoleByProject(projectId, repoName)
     }
 
-    private fun checkGroups(groups: List<CanwayGroup>?, projectId: String) {
+    private fun checkGroups(groups: List<CanwayGroup>?, projectId: String, repoName: String?) {
         groups ?: return
         for (group in groups) {
-            if (roleRepository.findFirstById(group.id) == null) {
+            if (repoName?.let { roleRepository.findFirstByRoleIdAndProjectIdAndRepoName(group.id, projectId, it) } == null) {
                 roleRepository.insert(
                     TRole(
                         roleId = group.id,
                         name = group.name,
-                        type = RoleType.PROJECT,
+                        type = RoleType.REPO,
                         projectId = projectId,
-                        repoName = null,
+                        repoName = repoName,
                         admin = false
                     )
                 )

@@ -81,7 +81,7 @@ class CanwayDepartmentServiceImpl(
             val responseContent = response.content
             val department = responseContent.readJsonString<BkResponse<BkPage<BkDepartment>>>().data?.results?.first()
                 ?: throw ErrorCodeException(CommonMessageCode.RESOURCE_NOT_FOUND, "Can not load departmentId: $departmentId")
-            list.add(BkChildrenDepartment(department.id, department.name, null, null, null))
+            list.add(BkChildrenDepartment(department.id.toString(), department.name, null, null, null))
         }
         return list
     }
@@ -104,7 +104,7 @@ class CanwayDepartmentServiceImpl(
 
     fun transferCanwayChildrenDepartment(department: BkDepartment): BkChildrenDepartment {
         return BkChildrenDepartment(
-            department.id,
+            department.id.toString(),
             department.name,
             department.order,
             department.parent,

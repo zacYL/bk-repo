@@ -13,7 +13,7 @@ class BkUserSync(
     val bkUserService: BkUserService
 ) {
 
-    @Scheduled(fixedDelay = 600 * 1000)
+    @Scheduled(fixedDelay = 300 * 1000)
     @SchedulerLock(name = "BkUserSync", lockAtMostFor = "PT60M")
     fun syncBkUser() {
         val sw = StopWatch()

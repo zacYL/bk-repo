@@ -1,5 +1,8 @@
 package com.tencent.bkrepo.auth.service.canway
 
+import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_ADMIN
+import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_USER
+import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_VIEWER
 import com.tencent.bkrepo.auth.model.TPermission
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
@@ -67,7 +70,20 @@ class CanwayPermissionServiceImpl(
     }
 
     override fun listBuiltinPermission(projectId: String, repoName: String): List<Permission> {
-        val permissions = super.listBuiltinPermission(projectId, repoName)
+        logger.debug("list  builtin permission  projectId: [$projectId], repoName: [$repoName]")
+        val repoAdmin = getOnePermission(
+            projectId, repoName, AUTH_BUILTIN_ADMIN,
+            getDefaultAdminBuiltinPermission(repoName)
+        )
+        val repoUser = getOnePermission(
+            projectId,
+            repoName,
+            AUTH_BUILTIN_USER,
+            getDefaultUserBuiltinPermission(repoName)
+        )
+        val repoViewer = getOnePermission(projectId, repoName, AUTH_BUILTIN_VIEWER, getDefaultViewerBuiltinPermission(repoName))
+        val permissions = listOf(repoAdmin, repoUser, repoViewer).map { transferPermission(it) }
+        // 过滤非业务权限
         val targetPermissions = mutableListOf<Permission>()
         for (permission in permissions) {
             val actions = permission.actions
@@ -78,6 +94,105 @@ class CanwayPermissionServiceImpl(
             targetPermissions.add(permission.copy(actions = targetActions.map { it }))
         }
         return targetPermissions
+    }
+
+    private fun getDefaultAdminBuiltinPermission(repoName: String): List<PermissionAction> {
+        return when (repoName) {
+            "custom" -> listOf(
+                PermissionAction.MANAGE,
+                PermissionAction.READ,
+                PermissionAction.WRITE,
+                PermissionAction.UPDATE,
+                PermissionAction.DELETE,
+                PermissionAction.REPO_MANAGE,
+                PermissionAction.FOLDER_MANAGE,
+                PermissionAction.ARTIFACT_COPY,
+                PermissionAction.ARTIFACT_RENAME,
+                PermissionAction.ARTIFACT_MOVE,
+                PermissionAction.ARTIFACT_SHARE,
+                PermissionAction.ARTIFACT_DOWNLOAD,
+                PermissionAction.ARTIFACT_READWRITE,
+                PermissionAction.ARTIFACT_READ
+            )
+            "pipeline" -> listOf(
+                PermissionAction.MANAGE,
+                PermissionAction.READ,
+                PermissionAction.UPDATE,
+                PermissionAction.WRITE,
+                PermissionAction.REPO_MANAGE,
+                PermissionAction.ARTIFACT_SHARE,
+                PermissionAction.ARTIFACT_DOWNLOAD,
+                PermissionAction.ARTIFACT_READ
+            )
+            else -> listOf(
+                PermissionAction.MANAGE,
+                PermissionAction.READ,
+                PermissionAction.WRITE,
+                PermissionAction.UPDATE,
+                PermissionAction.DELETE,
+                PermissionAction.REPO_MANAGE,
+                PermissionAction.ARTIFACT_UPDATE,
+                PermissionAction.ARTIFACT_DOWNLOAD,
+                PermissionAction.ARTIFACT_READWRITE,
+                PermissionAction.ARTIFACT_READ,
+                PermissionAction.ARTIFACT_DELETE
+            )
+        }
+    }
+
+    private fun getDefaultUserBuiltinPermission(repoName: String): List<PermissionAction> {
+        return when (repoName) {
+            "custom" -> listOf(
+                PermissionAction.READ,
+                PermissionAction.WRITE,
+                PermissionAction.UPDATE,
+                PermissionAction.DELETE,
+                PermissionAction.FOLDER_MANAGE,
+                PermissionAction.ARTIFACT_COPY,
+                PermissionAction.ARTIFACT_RENAME,
+                PermissionAction.ARTIFACT_MOVE,
+                PermissionAction.ARTIFACT_SHARE,
+                PermissionAction.ARTIFACT_DOWNLOAD,
+                PermissionAction.ARTIFACT_READWRITE,
+                PermissionAction.ARTIFACT_READ
+            )
+            "pipeline" -> listOf(
+                PermissionAction.READ,
+                PermissionAction.UPDATE,
+                PermissionAction.WRITE,
+                PermissionAction.ARTIFACT_SHARE,
+                PermissionAction.ARTIFACT_DOWNLOAD,
+                PermissionAction.ARTIFACT_READ
+            )
+            else -> listOf(
+                PermissionAction.READ,
+                PermissionAction.WRITE,
+                PermissionAction.UPDATE,
+                PermissionAction.DELETE,
+                PermissionAction.ARTIFACT_UPDATE,
+                PermissionAction.ARTIFACT_DOWNLOAD,
+                PermissionAction.ARTIFACT_READWRITE,
+                PermissionAction.ARTIFACT_READ,
+                PermissionAction.ARTIFACT_DELETE
+            )
+        }
+    }
+
+    private fun getDefaultViewerBuiltinPermission(repoName: String): List<PermissionAction> {
+        return when (repoName) {
+            "custom" -> listOf(
+                PermissionAction.READ,
+                PermissionAction.ARTIFACT_READ
+            )
+            "pipeline" -> listOf(
+                PermissionAction.READ,
+                PermissionAction.ARTIFACT_READ
+            )
+            else -> listOf(
+                PermissionAction.READ,
+                PermissionAction.ARTIFACT_READ
+            )
+        }
     }
 
     private fun canwayCheckPermission(request: CheckPermissionRequest): Boolean {

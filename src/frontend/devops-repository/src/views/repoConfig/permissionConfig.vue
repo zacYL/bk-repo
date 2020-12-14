@@ -210,13 +210,7 @@
                 roleList: {},
                 flatDepartment: {},
                 departmentTree: [],
-                actionList: [
-                    { id: 'MANAGE', name: '管理' },
-                    { id: 'READ', name: '查看' },
-                    { id: 'WRITE', name: '新增' },
-                    { id: 'DELETE', name: '删除' },
-                    { id: 'UPDATE', name: '修改' }
-                ]
+                actionList: []
             }
         },
         computed: {
@@ -255,6 +249,12 @@
             }
         },
         created () {
+            this.getRepoActions({
+                projectId: this.projectId,
+                repoName: this.repoName
+            }).then(res => {
+                this.actionList = res.map(v => ({ id: v.action, name: v.nickName }))
+            })
             this.getRepoUserList().then(res => {
                 this.userList = res.reduce((target, item) => {
                     target[item.userId] = {
@@ -279,6 +279,7 @@
         methods: {
             ...mapActions([
                 'getPermissionDetail',
+                'getRepoActions',
                 'getRepoUserList',
                 'getRepoRoleList',
                 'getRepoDepartmentList',

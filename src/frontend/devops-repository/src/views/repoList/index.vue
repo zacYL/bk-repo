@@ -32,7 +32,7 @@
                     :right-icon="'bk-icon icon-search'">
                 </bk-input>
             </div>
-            <div class="create-repo-btn">
+            <div class="create-repo-btn" v-if="canCreate">
                 <bk-button :theme="'primary'" @click="toCreateRepo">
                     {{$t('create') + $t('repository')}}
                 </bk-button>
@@ -87,6 +87,7 @@
             return {
                 repoEnum: ['generic', ...repoEnum],
                 isLoading: false,
+                canCreate: false,
                 repoList: [],
                 query: {
                     name: '',
@@ -113,10 +114,20 @@
         },
         created () {
             this.handlerPaginationChange()
+            this.getRepoPermission({
+                projectId: this.projectId,
+                action: 'create'
+            }).then(res => {
+                this.canCreate = res
+            })
         },
         methods: {
             formatDate,
-            ...mapActions(['getRepoList', 'deleteRepoList']),
+            ...mapActions([
+                'getRepoList',
+                'deleteRepoList',
+                'getRepoPermission'
+            ]),
             async getListData () {
                 this.isLoading = true
                 const { records, totalRecords } = await this.getRepoList({
@@ -152,15 +163,30 @@
                 })
             },
             showRepoConfig ({ repoType, name }) {
-                this.$router.push({
-                    name: 'repoConfig',
-                    params: {
-                        ...this.$route.params,
-                        repoType
-                    },
-                    query: {
-                        name
+                this.getRepoPermission({
+                    projectId: this.projectId,
+                    action: 'create',
+                    repoName: name
+                }).then(res => {
+                    if (res) {
+                        this.$router.push({
+                            name: 'repoConfig',
+                            params: {
+                                ...this.$route.params,
+                                repoType
+                            },
+                            query: {
+                                name
+                            }
+                        })
+                    } else {
+                        return Promise.reject(new Error(false))
                     }
+                }).catch(e => {
+                    this.$bkMessage({
+                        theme: 'error',
+                        message: this.$t('noPermission')
+                    })
                 })
             },
             deleteRepo ({ name }) {

@@ -72,5 +72,12 @@ export default {
             `${authPrefix}/department/listByIds`,
             body
         )
+    },
+    // 查询仓库级别权限
+    getRepoPermission (_, { projectId, action, repoName }) {
+        return Vue.prototype.$ajax.get(
+            `/repository/api/permission/${projectId}/${action}`,
+            { params: { repoName } }
+        )
     }
 }

@@ -32,8 +32,8 @@
                     :right-icon="'bk-icon icon-search'">
                 </bk-input>
             </div>
-            <div class="create-repo-btn">
-                <bk-button :theme="'primary'" @click="toCreateRepo">
+            <div class="create-repo-btn" v-if="canCreate">
+                <bk-button :disabled="!canCreate" :theme="'primary'" @click="toCreateRepo">
                     {{$t('create') + $t('repository')}}
                 </bk-button>
             </div>
@@ -46,12 +46,13 @@
                 :row-border="false"
                 size="small"
                 :pagination="pagination"
+                :row-style="({ row }) => ({ 'color': row.hasPermission ? '' : '#dcdee5 !important' })"
                 @page-change="current => handlerPaginationChange({ current })"
                 @page-limit-change="limit => handlerPaginationChange({ limit })"
             >
                 <bk-table-column :label="$t('repoName')">
                     <template slot-scope="props">
-                        <div class="repo-name" @click="toRepoDetail(props.row)">
+                        <div class="repo-name" :class="{ 'hover-btn': props.row.hasPermission }" @click="toRepoDetail(props.row)">
                             <icon size="24" :name="props.row.repoType" />
                             <span class="ml10">{{props.row.name}}</span>
                         </div>
@@ -69,8 +70,8 @@
                 </bk-table-column>
                 <bk-table-column :label="$t('operation')" width="100">
                     <template slot-scope="props">
-                        <i class="hover-btn devops-icon icon-cog mr10" @click="showRepoConfig(props.row)"></i>
-                        <i v-if="props.row.repoType !== 'generic'" class="hover-btn devops-icon icon-delete" @click="deleteRepo(props.row)"></i>
+                        <i class="devops-icon icon-cog mr10" :class="{ 'hover-btn': props.row.hasPermission }" @click="showRepoConfig(props.row)"></i>
+                        <i v-if="props.row.repoType !== 'generic'" class="devops-icon icon-delete" :class="{ 'hover-btn': props.row.hasPermission }" @click="deleteRepo(props.row)"></i>
                     </template>
                 </bk-table-column>
             </bk-table>
@@ -87,6 +88,7 @@
             return {
                 repoEnum: ['generic', ...repoEnum],
                 isLoading: false,
+                canCreate: false,
                 repoList: [],
                 query: {
                     name: '',
@@ -113,10 +115,20 @@
         },
         created () {
             this.handlerPaginationChange()
+            this.getRepoPermission({
+                projectId: this.projectId,
+                action: 'create'
+            }).then(res => {
+                this.canCreate = res
+            })
         },
         methods: {
             formatDate,
-            ...mapActions(['getRepoList', 'deleteRepoList']),
+            ...mapActions([
+                'getRepoList',
+                'deleteRepoList',
+                'getRepoPermission'
+            ]),
             async getListData () {
                 this.isLoading = true
                 const { records, totalRecords } = await this.getRepoList({
@@ -139,7 +151,8 @@
                     name: 'createRepo'
                 })
             },
-            toRepoDetail ({ repoType, name }) {
+            toRepoDetail ({ hasPermission, repoType, name }) {
+                if (!hasPermission) return
                 this.$router.push({
                     name: repoType === 'generic' ? 'repoGeneric' : 'repoCommon',
                     params: {
@@ -151,7 +164,8 @@
                     }
                 })
             },
-            showRepoConfig ({ repoType, name }) {
+            showRepoConfig ({ hasPermission, repoType, name }) {
+                if (!hasPermission) return
                 this.$router.push({
                     name: 'repoConfig',
                     params: {
@@ -163,7 +177,8 @@
                     }
                 })
             },
-            deleteRepo ({ name }) {
+            deleteRepo ({ hasPermission, name }) {
+                if (!hasPermission) return
                 this.$bkInfo({
                     type: 'error',
                     title: this.$t('deleteRepoTitle'),
@@ -226,9 +241,5 @@
     display: flex;
     align-items: center;
     font-size: 14px;
-    cursor: pointer;
-    &:hover {
-        color: $primaryColor;
-    }
 }
 </style>

@@ -65,5 +65,7 @@ data class RepositoryInfo(
     @ApiModelProperty("上次修改者")
     val lastModifiedBy: String,
     @ApiModelProperty("上次修改日期")
-    val lastModifiedDate: String
+    val lastModifiedDate: String,
+    @ApiModelProperty("在权限中心是否有查看权限")
+    val hasPermission: Boolean? = false
 )

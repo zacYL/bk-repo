@@ -42,7 +42,7 @@ class CanwayPermissionService(
         return false
     }
 
-    private fun getCanwayPermissionInstance(projectId: String, operator: String, action: String):
+    fun getCanwayPermissionInstance(projectId: String, operator: String, action: String):
         CanwayPermissionResponse? {
             val canwayCheckPermissionRequest = CanwayPermissionRequest(
                 userId = operator,

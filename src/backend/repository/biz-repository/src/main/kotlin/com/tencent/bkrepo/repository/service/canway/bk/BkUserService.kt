@@ -4,8 +4,11 @@ import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
+import com.tencent.bkrepo.repository.service.canway.BKTOKEN
+import com.tencent.bkrepo.repository.service.canway.BKUSERNAME
 import com.tencent.bkrepo.repository.service.canway.conf.CanwayAuthConf
 import com.tencent.bkrepo.repository.service.canway.http.CanwayHttpUtils
+import com.tencent.bkrepo.repository.service.canway.pojo.BkUserData
 import com.tencent.bkrepo.repository.service.canway.pojo.BkUserInfo
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -23,13 +26,21 @@ class BkUserService(
 
     fun getBkUser(): String {
         val bkToken = getBkToken()
-        val uri = String.format(bkUserInfoApi, appCode, appSecert, bkToken)
+        val uri = String.format(bkUserInfoApi, appCode, appSecert, BKTOKEN, bkToken)
         val requestUrl = "${bkHost.removeSuffix("/")}$uri"
         val responseContent = CanwayHttpUtils.doGet(requestUrl).content
         val bkUser = responseContent.readJsonString<BkUserInfo>().data
             ?: throw ErrorCodeException(CommonMessageCode.SERVICE_CALL_ERROR, "Can not load user info")
 
         return bkUser.bk_username
+    }
+
+    fun getBkUserByUserId(userId: String): BkUserData {
+        val uri = String.format(bkUserInfoApi, appCode, appSecert, BKUSERNAME, userId)
+        val requestUrl = "${bkHost.removeSuffix("/")}$uri"
+        val responseContent = CanwayHttpUtils.doGet(requestUrl).content
+        return responseContent.readJsonString<BkUserInfo>().data
+            ?: throw ErrorCodeException(CommonMessageCode.SERVICE_CALL_ERROR, "Can not load user info")
     }
 
     private fun getBkToken(): String {
@@ -43,6 +54,6 @@ class BkUserService(
 
     companion object {
         val logger: Logger = LoggerFactory.getLogger(BkUserService::class.java)
-        const val bkUserInfoApi = "/api/c/compapi/v2/bk_login/get_user/?bk_app_code=%s&bk_app_secret=%s&bk_token=%s"
+        const val bkUserInfoApi = "/api/c/compapi/v2/bk_login/get_user/?bk_app_code=%s&bk_app_secret=%s&%s=%s"
     }
 }

@@ -199,7 +199,7 @@ open class PermissionServiceImpl constructor(
         }
 
         // check user admin permission
-        if (user.admin || !request.appId.isNullOrBlank()) return true
+        if (user.admin) return true
         val roles = user.roles
 
         // check role project admin

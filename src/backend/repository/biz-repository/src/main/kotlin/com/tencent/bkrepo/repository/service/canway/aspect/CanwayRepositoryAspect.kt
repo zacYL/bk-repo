@@ -89,22 +89,24 @@ class CanwayRepositoryAspect(
             val page = (result as Page<RepositoryInfo>)
             val repoInfos = page.records
             val canwayPermissionResponse = canwayPermissionService.getCanwayPermissionInstance(
-                    projectId = projectId,
-                    operator = userId,
-                    action = ACCESS
+                projectId = projectId,
+                operator = userId,
+                action = ACCESS
             )
             val hasPermissionRepos = canwayPermissionResponse?.instanceCodes?.first()?.resourceInstance ?: setOf()
             for (repo in repoInfos) {
                 if (hasPermissionRepos.contains(repo.name)) {
-                    resultRepos.add(repo.copy(
+                    resultRepos.add(
+                        repo.copy(
                             hasPermission = true
-                    ))
+                        )
+                    )
                 } else {
                     resultRepos.add(repo)
                 }
             }
             return result.copy(
-                    records = resultRepos
+                records = resultRepos
             )
         }
         return result

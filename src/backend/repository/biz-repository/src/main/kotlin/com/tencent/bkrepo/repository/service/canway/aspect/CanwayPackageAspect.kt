@@ -1,24 +1,19 @@
 package com.tencent.bkrepo.repository.service.canway.aspect
 
-import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.security.exception.AccessDeniedException
-import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
 import com.tencent.bkrepo.repository.service.canway.ACCESS
-import com.tencent.bkrepo.repository.service.canway.CREATE
 import com.tencent.bkrepo.repository.service.canway.bk.BkUserService
-import com.tencent.bkrepo.repository.service.canway.conf.CanwayAuthConf
 import com.tencent.bkrepo.repository.service.canway.service.CanwayPermissionService
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import java.lang.Exception
 
 @Aspect
 @Service
 class CanwayPackageAspect(
-        val bkUserService: BkUserService
+    val bkUserService: BkUserService
 ) {
 
     @Autowired

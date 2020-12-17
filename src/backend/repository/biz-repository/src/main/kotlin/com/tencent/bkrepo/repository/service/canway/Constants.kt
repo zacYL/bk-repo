@@ -8,3 +8,5 @@ const val CREATE = "create"
 @Deprecated("")
 const val DELETE = "delete"
 const val ACCESS = "access"
+const val BKTOKEN = "bk_token"
+const val BKUSERNAME = "bk_username"

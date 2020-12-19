@@ -67,7 +67,9 @@ class CanwayRepositoryAspect(
             val canwayPermissionResponse = canwayPermissionService.getCanwayPermissionInstance(
                 projectId = projectId,
                 operator = userId,
-                action = ACCESS
+                action = ACCESS,
+                    belongCode = BELONGCODE,
+                    resourceCode = RESOURCECODE
             )
             val hasPermissionRepos = canwayPermissionResponse?.instanceCodes?.first()?.resourceInstance ?: setOf()
             for (repo in repoInfos) {
@@ -91,7 +93,9 @@ class CanwayRepositoryAspect(
             val canwayPermissionResponse = canwayPermissionService.getCanwayPermissionInstance(
                 projectId = projectId,
                 operator = userId,
-                action = ACCESS
+                action = ACCESS,
+                    belongCode = BELONGCODE,
+                    resourceCode = RESOURCECODE
             )
             val hasPermissionRepos = canwayPermissionResponse?.instanceCodes?.first()?.resourceInstance ?: setOf()
             for (repo in repoInfos) {

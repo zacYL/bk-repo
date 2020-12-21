@@ -15,12 +15,15 @@ import com.tencent.bkrepo.auth.service.DepartmentService
 import com.tencent.bkrepo.auth.service.canway.conf.CanwayAuthConf
 import com.tencent.bkrepo.auth.service.canway.http.CanwayHttpUtils
 import com.tencent.bkrepo.auth.service.canway.pojo.ActionCollection
+import com.tencent.bkrepo.auth.service.canway.pojo.CanwayPermissionRequest
+import com.tencent.bkrepo.auth.service.canway.pojo.CanwayPermissionResponse
 import com.tencent.bkrepo.auth.service.canway.pojo.CanwayResponse
 import com.tencent.bkrepo.auth.service.canway.pojo.bk.BkDepartmentUser
 import com.tencent.bkrepo.auth.service.local.PermissionServiceImpl
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.readJsonString
+import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -100,19 +103,69 @@ class CanwayPermissionServiceImpl(
         return targetPermissions
     }
 
+    private fun checkUserHasProjectPermission(operator: String): Boolean {
+        val canwayPermissionResponse = getCanwayPermissionInstance(
+                "bk_ci", operator, "create", "system", "project")
+        return checkInstance("bk_ci", canwayPermissionResponse)
+    }
+
+    fun getCanwayPermissionInstance(
+            projectId: String, operator: String, action: String, belongCode: String, resourceCode: String):
+            CanwayPermissionResponse? {
+        val canwayCheckPermissionRequest = CanwayPermissionRequest(
+                userId = operator,
+                belongCode = belongCode,
+                belongInstance = projectId,
+                resourcesActions = setOf(
+                        CanwayPermissionRequest.CanwayAction(
+                                actionCode = action,
+                                resourceCode = resourceCode,
+                                resourceInstance = setOf(
+                                        CanwayPermissionRequest.CanwayAction.CanwayInstance(
+                                                resourceCode = resourceCode
+                                        )
+                                )
+                        )
+                )
+        ).toJsonString()
+        val ciAddResourceUrl = getRequestUrl(ciCheckPermissionApi)
+        val responseContent = CanwayHttpUtils.doPost(ciAddResourceUrl, canwayCheckPermissionRequest).content
+
+        return responseContent.readJsonString<CanwayResponse<CanwayPermissionResponse>>().data
+    }
+
+    private fun checkInstance(repoName: String?, canwayPermission: CanwayPermissionResponse?): Boolean {
+        canwayPermission?.let {
+            return matchInstance(repoName, it.instanceCodes.first().resourceInstance)
+        }
+        return false
+    }
+
+    private fun matchInstance(repoName: String?, instances: Set<String>?): Boolean {
+        instances?.let {
+            if (repoName == null) {
+                if (it.contains("*")) return true
+            } else {
+                if (it.contains("*") || it.contains(repoName)) return true
+            }
+        }
+        return false
+    }
+
     /**
      *
      */
     private fun canwayCheckPermission(request: CheckPermissionRequest): Boolean {
         val uid = request.uid
+        if(checkUserHasProjectPermission(uid)) return true
         val projectId = request.projectId
-            ?: throw(ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "`projectId` is must not be null"))
+                ?: throw(ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "`projectId` is must not be null"))
         val repoName = request.repoName
         val resourceType = request.resourceType
         val action = request.action
 
         val tPermissions = permissionRepository.findByProjectIdAndReposContainsAndResourceTypeAndActionsContains(
-            projectId, repoName, resourceType, action
+                projectId, repoName, resourceType, action
         )
 
         if (tPermissions != null) {
@@ -180,5 +233,6 @@ class CanwayPermissionServiceImpl(
     companion object {
         val logger: Logger = LoggerFactory.getLogger(CanwayPermissionServiceImpl::class.java)
         const val getUsersByGroupIdApi = "$ci$ciApi/service/organization/%s?userId=%s"
+        const val ciCheckPermissionApi = "/service/resource_instance/query"
     }
 }

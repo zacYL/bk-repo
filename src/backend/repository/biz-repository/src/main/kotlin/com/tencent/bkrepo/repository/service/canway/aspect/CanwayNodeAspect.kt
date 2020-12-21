@@ -2,6 +2,7 @@ package com.tencent.bkrepo.repository.service.canway.aspect
 
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.security.exception.AccessDeniedException
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.repository.service.canway.ACCESS
 import com.tencent.bkrepo.repository.service.canway.bk.BkUserService
 import com.tencent.bkrepo.repository.service.canway.service.CanwayPermissionService
@@ -25,9 +26,12 @@ class CanwayNodeAspect(
     fun beforeNodePage(point: ProceedingJoinPoint):Any {
         val args = point.args
         val artifactInfo = args.first() as ArtifactInfo
-        val userId = bkUserService.getBkUser()
-        if (!canwayPermissionService.checkCanwayPermission(artifactInfo.projectId, artifactInfo.repoName, userId, ACCESS))
-            throw AccessDeniedException()
+        val request = HttpContextHolder.getRequest()
+        if (request.requestURI.removePrefix("/").startsWith("web", ignoreCase = true)) {
+            val userId = bkUserService.getBkUser()
+            if (!canwayPermissionService.checkCanwayPermission(artifactInfo.projectId, artifactInfo.repoName, userId, ACCESS))
+                throw AccessDeniedException()
+        }
         return point.proceed(args)
     }
 }

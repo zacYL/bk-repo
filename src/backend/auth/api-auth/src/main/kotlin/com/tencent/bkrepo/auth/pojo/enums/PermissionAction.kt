@@ -38,7 +38,7 @@ enum class PermissionAction {
     UPDATE,
     DELETE,
 
-    // cawnay extend
+    // canway extend
     REPO_MANAGE,
     FOLDER_MANAGE,
     ARTIFACT_COPY,

@@ -38,8 +38,8 @@ class CanwayPermissionServiceImpl(
 
     override fun checkPermission(request: CheckPermissionRequest): Boolean {
         logger.info("check permission  request : [$request] ")
-        // 校验用户是否属于对应部门和用户组
-        canwayCheckPermission(request)
+        // 校验用户是否属于对应部门、用户组和已添加用户
+        if (!canwayCheckPermission(request)) return false
         val action = request.action
         if (ActionCollection.isCanwayAction(action)) {
             val actions = ActionCollection.getActionsByCanway(action)
@@ -74,15 +74,18 @@ class CanwayPermissionServiceImpl(
         logger.debug("list  builtin permission  projectId: [$projectId], repoName: [$repoName]")
         val repoAdmin = getOnePermission(
             projectId, repoName, AUTH_BUILTIN_ADMIN,
-            getDefaultAdminBuiltinPermission(repoName)
+            ActionCollection.getDefaultAdminBuiltinPermission(repoName)
         )
         val repoUser = getOnePermission(
             projectId,
             repoName,
             AUTH_BUILTIN_USER,
-            getDefaultUserBuiltinPermission(repoName)
+            ActionCollection.getDefaultUserBuiltinPermission(repoName)
         )
-        val repoViewer = getOnePermission(projectId, repoName, AUTH_BUILTIN_VIEWER, getDefaultViewerBuiltinPermission(repoName))
+        val repoViewer = getOnePermission(
+            projectId, repoName, AUTH_BUILTIN_VIEWER,
+            ActionCollection.getDefaultViewerBuiltinPermission(repoName)
+        )
         val permissions = listOf(repoAdmin, repoUser, repoViewer).map { transferPermission(it) }
         // 过滤非业务权限
         val targetPermissions = mutableListOf<Permission>()
@@ -97,114 +100,17 @@ class CanwayPermissionServiceImpl(
         return targetPermissions
     }
 
-    private fun getDefaultAdminBuiltinPermission(repoName: String): List<PermissionAction> {
-        return when (repoName) {
-            "custom" -> listOf(
-                PermissionAction.MANAGE,
-                PermissionAction.READ,
-                PermissionAction.WRITE,
-                PermissionAction.UPDATE,
-                PermissionAction.DELETE,
-                PermissionAction.REPO_MANAGE,
-                PermissionAction.FOLDER_MANAGE,
-                PermissionAction.ARTIFACT_COPY,
-                PermissionAction.ARTIFACT_RENAME,
-                PermissionAction.ARTIFACT_MOVE,
-                PermissionAction.ARTIFACT_SHARE,
-                PermissionAction.ARTIFACT_DOWNLOAD,
-                PermissionAction.ARTIFACT_READWRITE,
-                PermissionAction.ARTIFACT_READ
-            )
-            "pipeline" -> listOf(
-                PermissionAction.MANAGE,
-                PermissionAction.READ,
-                PermissionAction.UPDATE,
-                PermissionAction.WRITE,
-                PermissionAction.REPO_MANAGE,
-                PermissionAction.ARTIFACT_SHARE,
-                PermissionAction.ARTIFACT_DOWNLOAD,
-                PermissionAction.ARTIFACT_READ
-            )
-            else -> listOf(
-                PermissionAction.MANAGE,
-                PermissionAction.READ,
-                PermissionAction.WRITE,
-                PermissionAction.UPDATE,
-                PermissionAction.DELETE,
-                PermissionAction.REPO_MANAGE,
-                PermissionAction.ARTIFACT_UPDATE,
-                PermissionAction.ARTIFACT_DOWNLOAD,
-                PermissionAction.ARTIFACT_READWRITE,
-                PermissionAction.ARTIFACT_READ,
-                PermissionAction.ARTIFACT_DELETE
-            )
-        }
-    }
-
-    private fun getDefaultUserBuiltinPermission(repoName: String): List<PermissionAction> {
-        return when (repoName) {
-            "custom" -> listOf(
-                PermissionAction.READ,
-                PermissionAction.WRITE,
-                PermissionAction.UPDATE,
-                PermissionAction.DELETE,
-                PermissionAction.FOLDER_MANAGE,
-                PermissionAction.ARTIFACT_COPY,
-                PermissionAction.ARTIFACT_RENAME,
-                PermissionAction.ARTIFACT_MOVE,
-                PermissionAction.ARTIFACT_SHARE,
-                PermissionAction.ARTIFACT_DOWNLOAD,
-                PermissionAction.ARTIFACT_READWRITE,
-                PermissionAction.ARTIFACT_READ
-            )
-            "pipeline" -> listOf(
-                PermissionAction.READ,
-                PermissionAction.UPDATE,
-                PermissionAction.WRITE,
-                PermissionAction.ARTIFACT_SHARE,
-                PermissionAction.ARTIFACT_DOWNLOAD,
-                PermissionAction.ARTIFACT_READ
-            )
-            else -> listOf(
-                PermissionAction.READ,
-                PermissionAction.WRITE,
-                PermissionAction.UPDATE,
-                PermissionAction.DELETE,
-                PermissionAction.ARTIFACT_UPDATE,
-                PermissionAction.ARTIFACT_DOWNLOAD,
-                PermissionAction.ARTIFACT_READWRITE,
-                PermissionAction.ARTIFACT_READ,
-                PermissionAction.ARTIFACT_DELETE
-            )
-        }
-    }
-
-    private fun getDefaultViewerBuiltinPermission(repoName: String): List<PermissionAction> {
-        return when (repoName) {
-            "custom" -> listOf(
-                PermissionAction.READ,
-                PermissionAction.ARTIFACT_READ
-            )
-            "pipeline" -> listOf(
-                PermissionAction.READ,
-                PermissionAction.ARTIFACT_READ
-            )
-            else -> listOf(
-                PermissionAction.READ,
-                PermissionAction.ARTIFACT_READ
-            )
-        }
-    }
-
+    /**
+     *
+     */
     private fun canwayCheckPermission(request: CheckPermissionRequest): Boolean {
         val uid = request.uid
         val projectId = request.projectId
             ?: throw(ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "`projectId` is must not be null"))
-        // todo
         val repoName = request.repoName
         val resourceType = request.resourceType
         val action = request.action
-        // 用户组鉴权
+
         val tPermissions = permissionRepository.findByProjectIdAndReposContainsAndResourceTypeAndActionsContains(
             projectId, repoName, resourceType, action
         )
@@ -217,14 +123,21 @@ class CanwayPermissionServiceImpl(
         return false
     }
 
+    /**
+     * 用户在部门、用户组、授权用户中任一返回true
+     */
     private fun canwayCheckTPermission(uid: String, tPermission: TPermission): Boolean {
         val departments = tPermission.departments
-        if (!checkDepartment(uid, departments)) return false
+        val departmentResult = checkDepartment(uid, departments)
         val roles = tPermission.roles
-        if (!checkGroup(uid, roles)) return false
-        return true
+        val roleResult = checkGroup(uid, roles)
+        val userResult = tPermission.users.contains(uid)
+        return (departmentResult || roleResult || userResult)
     }
 
+    /**
+     * 检查用户是否在被授权的用户组内
+     */
     private fun checkGroup(uid: String, roles: List<String>): Boolean {
         val sumUsers = mutableSetOf<String>()
         for (role in roles) {
@@ -233,6 +146,9 @@ class CanwayPermissionServiceImpl(
         return sumUsers.contains(uid)
     }
 
+    /**
+     * 检查用户是否在被授权的部门内
+     */
     private fun checkDepartment(uid: String, departments: List<String>): Boolean {
         val sumUsers = mutableSetOf<BkDepartmentUser>()
         for (department in departments) {
@@ -244,6 +160,11 @@ class CanwayPermissionServiceImpl(
         return false
     }
 
+    /**
+     * 查询出用户组内所有成员
+     * [uid] 查询人
+     * [groupId] 用户组id
+     */
     private fun getUsersByGroupId(uid: String, groupId: String): List<String>? {
         val uri = String.format(getUsersByGroupIdApi, groupId, uid)
         val requestUrl = getRequestUrl(uri)

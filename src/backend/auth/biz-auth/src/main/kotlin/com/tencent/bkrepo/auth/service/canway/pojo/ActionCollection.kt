@@ -37,4 +37,103 @@ object ActionCollection {
             else -> setOf(action)
         }
     }
+
+    fun getDefaultAdminBuiltinPermission(repoName: String): List<PermissionAction> {
+        return when (repoName) {
+            "custom" -> listOf(
+                PermissionAction.MANAGE,
+                PermissionAction.READ,
+                PermissionAction.WRITE,
+                PermissionAction.UPDATE,
+                PermissionAction.DELETE,
+                PermissionAction.REPO_MANAGE,
+                PermissionAction.FOLDER_MANAGE,
+                PermissionAction.ARTIFACT_COPY,
+                PermissionAction.ARTIFACT_RENAME,
+                PermissionAction.ARTIFACT_MOVE,
+                PermissionAction.ARTIFACT_SHARE,
+                PermissionAction.ARTIFACT_DOWNLOAD,
+                PermissionAction.ARTIFACT_READWRITE,
+                PermissionAction.ARTIFACT_READ
+            )
+            "pipeline" -> listOf(
+                PermissionAction.MANAGE,
+                PermissionAction.READ,
+                PermissionAction.UPDATE,
+                PermissionAction.WRITE,
+                PermissionAction.REPO_MANAGE,
+                PermissionAction.ARTIFACT_SHARE,
+                PermissionAction.ARTIFACT_DOWNLOAD,
+                PermissionAction.ARTIFACT_READ
+            )
+            else -> listOf(
+                PermissionAction.MANAGE,
+                PermissionAction.READ,
+                PermissionAction.WRITE,
+                PermissionAction.UPDATE,
+                PermissionAction.DELETE,
+                PermissionAction.REPO_MANAGE,
+                PermissionAction.ARTIFACT_UPDATE,
+                PermissionAction.ARTIFACT_DOWNLOAD,
+                PermissionAction.ARTIFACT_READWRITE,
+                PermissionAction.ARTIFACT_READ,
+                PermissionAction.ARTIFACT_DELETE
+            )
+        }
+    }
+
+    fun getDefaultUserBuiltinPermission(repoName: String): List<PermissionAction> {
+        return when (repoName) {
+            "custom" -> listOf(
+                PermissionAction.READ,
+                PermissionAction.WRITE,
+                PermissionAction.UPDATE,
+                PermissionAction.DELETE,
+                PermissionAction.FOLDER_MANAGE,
+                PermissionAction.ARTIFACT_COPY,
+                PermissionAction.ARTIFACT_RENAME,
+                PermissionAction.ARTIFACT_MOVE,
+                PermissionAction.ARTIFACT_SHARE,
+                PermissionAction.ARTIFACT_DOWNLOAD,
+                PermissionAction.ARTIFACT_READWRITE,
+                PermissionAction.ARTIFACT_READ
+            )
+            "pipeline" -> listOf(
+                PermissionAction.READ,
+                PermissionAction.UPDATE,
+                PermissionAction.WRITE,
+                PermissionAction.ARTIFACT_SHARE,
+                PermissionAction.ARTIFACT_DOWNLOAD,
+                PermissionAction.ARTIFACT_READ
+            )
+            else -> listOf(
+                PermissionAction.READ,
+                PermissionAction.WRITE,
+                PermissionAction.UPDATE,
+                PermissionAction.DELETE,
+                PermissionAction.ARTIFACT_UPDATE,
+                PermissionAction.ARTIFACT_DOWNLOAD,
+                PermissionAction.ARTIFACT_READWRITE,
+                PermissionAction.ARTIFACT_READ,
+                PermissionAction.ARTIFACT_DELETE
+            )
+        }
+    }
+
+    fun getDefaultViewerBuiltinPermission(repoName: String): List<PermissionAction> {
+        return when (repoName) {
+            "custom" -> listOf(
+                PermissionAction.READ,
+                PermissionAction.ARTIFACT_READ
+            )
+            "pipeline" -> listOf(
+                PermissionAction.READ,
+                PermissionAction.ARTIFACT_READ
+            )
+            else -> listOf(
+                PermissionAction.READ,
+                PermissionAction.ARTIFACT_READ
+            )
+        }
+    }
 }

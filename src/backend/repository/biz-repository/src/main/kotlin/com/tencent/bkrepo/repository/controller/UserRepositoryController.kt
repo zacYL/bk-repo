@@ -89,7 +89,6 @@ class UserRepositoryController(
         @ApiParam(value = "仓库名称", required = true)
         @PathVariable repoName: String
     ): Response<Boolean> {
-//        permissionManager.checkPermission(userId, ResourceType.PROJECT, PermissionAction.READ, projectId)
         return ResponseBuilder.success(repositoryService.checkExist(projectId, repoName))
     }
 
@@ -100,7 +99,6 @@ class UserRepositoryController(
         @RequestBody userRepoCreateRequest: UserRepoCreateRequest
     ): Response<Void> {
         val createRequest = with(userRepoCreateRequest) {
-//            permissionManager.checkPermission(userId, ResourceType.PROJECT, PermissionAction.MANAGE, projectId)
             RepoCreateRequest(
                 projectId = projectId,
                 name = name,
@@ -128,7 +126,6 @@ class UserRepositoryController(
         @ApiParam("仓库类型", required = false)
         @RequestParam type: String? = null
     ): Response<List<RepositoryInfo>> {
-//        permissionManager.checkPermission(userId, ResourceType.PROJECT, PermissionAction.READ, projectId)
         return ResponseBuilder.success(repositoryService.listRepo(projectId, name, type))
     }
 
@@ -147,7 +144,6 @@ class UserRepositoryController(
         @ApiParam("仓库类型", required = false)
         @RequestParam type: String? = null
     ): Response<Page<RepositoryInfo>> {
-//        permissionManager.checkPermission(userId, ResourceType.PROJECT, PermissionAction.READ, projectId)
         return ResponseBuilder.success(repositoryService.listRepoPage(projectId, pageNumber, pageSize, name, type))
     }
 

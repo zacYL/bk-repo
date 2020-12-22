@@ -4,6 +4,7 @@ import com.tencent.bkrepo.common.security.exception.AccessDeniedException
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.repository.service.canway.ACCESS
 import com.tencent.bkrepo.repository.service.canway.bk.BkUserService
+import com.tencent.bkrepo.repository.service.canway.exception.CanwayPermissionException
 import com.tencent.bkrepo.repository.service.canway.service.CanwayPermissionService
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
@@ -30,7 +31,7 @@ class CanwayPackageAspect(
         if (api.startsWith("api", ignoreCase = true)) {
             val userId = bkUserService.getBkUser()
             if (!canwayPermissionService.checkCanwayPermission(projectId, repoName, userId, ACCESS))
-                throw AccessDeniedException()
+                throw CanwayPermissionException()
         }
         return point.proceed(args)
     }

@@ -1,17 +1,22 @@
 package com.tencent.bkrepo.repository.service.canway.aspect
 
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.repository.pojo.share.ShareRecordCreateRequest
 import com.tencent.bkrepo.repository.pojo.share.ShareRecordInfo
 import com.tencent.bkrepo.repository.service.canway.bk.BkUserService
 import com.tencent.bkrepo.repository.service.canway.conf.CanwayMailConf
+import com.tencent.bkrepo.repository.service.canway.exception.CanwayPermissionException
 import com.tencent.bkrepo.repository.service.canway.mail.CanwayMailTemplate
 import com.tencent.bkrepo.repository.service.canway.pojo.FileShareInfo
+import com.tencent.bkrepo.repository.service.canway.service.CanwayPermissionService
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.mail.SimpleMailMessage
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.MimeMessageHelper
@@ -28,12 +33,15 @@ class CanwayShareAspect(
     private val sender = canwayMailConf.mailUsername
     private val bkrepoHost = canwayMailConf.bkrepoHost
 
+    @Autowired
+    lateinit var canwayPermissionService: CanwayPermissionService
+
     @Around("execution(* com.tencent.bkrepo.repository.service.impl.ShareServiceImpl.create(..))")
     fun sendMail(point: ProceedingJoinPoint): Any {
         val args = point.args
         val userId = args.first() as String
         val artifactInfo = args[1] as ArtifactInfo
-        val request = args[2] as ShareRecordCreateRequest
+        val shareRecordCreateRequest = args[2] as ShareRecordCreateRequest
         val fileName = artifactInfo.getArtifactFullPath().split("/").last()
         val result = point.proceed(args)
         try {
@@ -52,7 +60,7 @@ class CanwayShareAspect(
                     // todo
                     qrCodeBase64 = "ddd"
                 )
-                val shareUsers = request.authorizedUserList
+                val shareUsers = shareRecordCreateRequest.authorizedUserList
                 val receivers = mutableSetOf<String>()
                 for (user in shareUsers) {
                     // 查询蓝鲸用户信息

@@ -1,6 +1,10 @@
 package com.tencent.bkrepo.repository.service.canway.aspect
 
+import com.tencent.bkrepo.auth.api.ServicePermissionResource
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionUserRequest
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.api.exception.SystemException
+import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.security.exception.AccessDeniedException
@@ -14,6 +18,7 @@ import com.tencent.bkrepo.repository.service.canway.BELONGCODE
 import com.tencent.bkrepo.repository.service.canway.CREATE
 import com.tencent.bkrepo.repository.service.canway.bk.BkUserService
 import com.tencent.bkrepo.repository.service.canway.conf.CanwayAuthConf
+import com.tencent.bkrepo.repository.service.canway.exception.CanwayPermissionException
 import com.tencent.bkrepo.repository.service.canway.http.CanwayHttpUtils
 import com.tencent.bkrepo.repository.service.canway.pojo.BatchResourceInstance
 import com.tencent.bkrepo.repository.service.canway.pojo.ResourceRegisterInfo
@@ -35,6 +40,9 @@ class CanwayRepositoryAspect(
 ) {
 
     @Autowired
+    lateinit var permissionService: ServicePermissionResource
+
+    @Autowired
     lateinit var canwayPermissionService: CanwayPermissionService
 
     private val devopsHost = canwayAuthConf.devopsHost!!.removeSuffix("/")
@@ -44,19 +52,41 @@ class CanwayRepositoryAspect(
         val args = point.args
         val repo = args.first() as RepoCreateRequest
         val request = HttpContextHolder.getRequest()
+        val userId = try {
+            bkUserService.getBkUser()
+        } catch (e: Exception) {
+            repo.operator
+        }
+
         val api = request.requestURI.removePrefix("/").removePrefix("web/")
         if (api.startsWith("api", ignoreCase = true)) {
             if (!canwayPermissionService.checkCanwayPermission(repo.projectId, repo.name, repo.operator, CREATE))
-                throw AccessDeniedException()
+                throw CanwayPermissionException()
         }
         updateResource(repo.projectId, repo.name, repo.operator, ciAddResourceApi)
         try {
-            return point.proceed(args)
+            val result =  point.proceed(args)
+            addUserIdToAdmin(userId, repo.projectId, repo.name)
+            return result
         } catch (exception: Exception) {
             if ((exception as ErrorCodeException).messageCode.getKey() == "artifact.repository.existed") return null
             updateResource(repo.projectId, repo.name, repo.operator, ciDeleteResourceApi)
         }
         return null
+    }
+
+    private fun addUserIdToAdmin(userId: String, projectId: String, repoName: String) {
+        val permissions = permissionService.listRepoBuiltinPermission(projectId, repoName).data?:
+        throw SystemException(CommonMessageCode.RESOURCE_NOT_FOUND, "Can not load buildin permission")
+        for (permission in permissions) {
+            if (permission.permName == "repo_admin") {
+                permissionService.updatePermissionUser(
+                        UpdatePermissionUserRequest(permission.id!!, listOf(userId))
+                )
+            }
+            return
+        }
+        throw SystemException(CommonMessageCode.RESOURCE_NOT_FOUND, "Can not load buildin admin permission")
     }
 
     @Around(value = "execution(* com.tencent.bkrepo.repository.service.impl.RepositoryServiceImpl.listRepo(..))")

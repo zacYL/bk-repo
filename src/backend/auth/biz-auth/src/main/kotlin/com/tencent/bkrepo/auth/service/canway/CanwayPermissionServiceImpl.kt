@@ -49,6 +49,7 @@ class CanwayPermissionServiceImpl(
     override fun checkPermission(request: CheckPermissionRequest): Boolean {
         logger.info("check permission  request : [$request] ")
         // 校验用户是否属于对应部门、用户组和已添加用户
+        if(checkUserHasProjectPermission(request.uid)) return true
         if (!canwayCheckPermission(request)) return false
         val action = request.action
         if (ActionCollection.isCanwayAction(action)) {
@@ -215,10 +216,9 @@ class CanwayPermissionServiceImpl(
      */
     private fun canwayCheckPermission(request: CheckPermissionRequest): Boolean {
         val uid = request.uid
-        if (checkUserHasProjectPermission(uid)) return true
         val projectId = request.projectId
             ?: throw(ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "`projectId` is must not be null"))
-        val repoName = request.repoName?:return true
+        val repoName = request.repoName
 
         val resourceType = request.resourceType
         val action = request.action

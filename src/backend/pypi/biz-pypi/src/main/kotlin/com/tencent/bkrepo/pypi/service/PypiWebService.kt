@@ -43,21 +43,21 @@ import org.springframework.stereotype.Service
 @Service
 class PypiWebService {
 
-    @Permission(type = ResourceType.REPO, action = PermissionAction.DELETE)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_DELETE)
     fun deletePackage(pypiArtifactInfo: PypiArtifactInfo, packageKey: String) {
         val context = ArtifactRemoveContext()
         val repository = ArtifactContextHolder.getRepository(context.repositoryDetail.category)
         repository.remove(context)
     }
 
-    @Permission(type = ResourceType.REPO, action = PermissionAction.DELETE)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_DELETE)
     fun delete(pypiArtifactInfo: PypiArtifactInfo, packageKey: String, version: String?) {
         val context = ArtifactRemoveContext()
         val repository = ArtifactContextHolder.getRepository(context.repositoryDetail.category)
         repository.remove(context)
     }
 
-    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_READ)
     fun artifactDetail(pypiArtifactInfo: PypiArtifactInfo, packageKey: String, version: String?): Any? {
         val context = ArtifactQueryContext()
         val repository = ArtifactContextHolder.getRepository(context.repositoryDetail.category)

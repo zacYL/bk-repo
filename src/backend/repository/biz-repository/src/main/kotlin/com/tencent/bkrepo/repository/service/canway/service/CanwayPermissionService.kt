@@ -16,17 +16,17 @@ import org.springframework.stereotype.Service
 
 @Service
 class CanwayPermissionService(
-        canwayAuthConf: CanwayAuthConf
+    canwayAuthConf: CanwayAuthConf
 ) {
 
     private val devopsHost = canwayAuthConf.devopsHost!!.removeSuffix("/")
 
     private fun checkUserHasProjectPermission(operator: String): Boolean {
         val canwayPermissionResponse = getCanwayPermissionInstance(
-                "bk_ci", operator, "create", "system", "project")
+            "bk_ci", operator, "create", "system", "project"
+        )
         return checkInstance("bk_ci", canwayPermissionResponse)
     }
-
 
     fun checkCanwayPermission(projectId: String, repoName: String?, operator: String, action: String): Boolean {
         if (checkUserHasProjectPermission(operator)) return true
@@ -53,29 +53,34 @@ class CanwayPermissionService(
     }
 
     fun getCanwayPermissionInstance(
-            projectId: String, operator: String, action: String, belongCode: String, resourceCode: String):
-            CanwayPermissionResponse? {
-        val canwayCheckPermissionRequest = CanwayPermissionRequest(
+        projectId: String,
+        operator: String,
+        action: String,
+        belongCode: String,
+        resourceCode: String
+    ):
+        CanwayPermissionResponse? {
+            val canwayCheckPermissionRequest = CanwayPermissionRequest(
                 userId = operator,
                 belongCode = belongCode,
                 belongInstance = projectId,
                 resourcesActions = setOf(
-                        CanwayPermissionRequest.CanwayAction(
-                                actionCode = action,
-                                resourceCode = resourceCode,
-                                resourceInstance = setOf(
-                                        CanwayPermissionRequest.CanwayAction.CanwayInstance(
-                                                resourceCode = resourceCode
-                                        )
-                                )
+                    CanwayPermissionRequest.CanwayAction(
+                        actionCode = action,
+                        resourceCode = resourceCode,
+                        resourceInstance = setOf(
+                            CanwayPermissionRequest.CanwayAction.CanwayInstance(
+                                resourceCode = resourceCode
+                            )
                         )
+                    )
                 )
-        ).toJsonString()
-        val ciAddResourceUrl = "$devopsHost${CanwayRepositoryAspect.ci}$ciCheckPermissionApi"
-        val responseContent = CanwayHttpUtils.doPost(ciAddResourceUrl, canwayCheckPermissionRequest).content
+            ).toJsonString()
+            val ciAddResourceUrl = "$devopsHost${CanwayRepositoryAspect.ci}$ciCheckPermissionApi"
+            val responseContent = CanwayHttpUtils.doPost(ciAddResourceUrl, canwayCheckPermissionRequest).content
 
-        return responseContent.readJsonString<CanwayResponse<CanwayPermissionResponse>>().data
-    }
+            return responseContent.readJsonString<CanwayResponse<CanwayPermissionResponse>>().data
+        }
 
     companion object {
         val logger: Logger = LoggerFactory.getLogger(CanwayPermissionService::class.java)

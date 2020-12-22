@@ -57,7 +57,7 @@ class UserStageController(
 ) {
 
     @ApiOperation("查询制品状态")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_READ)
     @GetMapping("/{projectId}/{repoName}")
     fun query(
         @PathVariable projectId: String,
@@ -69,7 +69,7 @@ class UserStageController(
     }
 
     @ApiOperation("制品晋级")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_UPDATE)
     @PostMapping("/upgrade/{projectId}/{repoName}")
     fun upgrade(
         @RequestAttribute userId: String,

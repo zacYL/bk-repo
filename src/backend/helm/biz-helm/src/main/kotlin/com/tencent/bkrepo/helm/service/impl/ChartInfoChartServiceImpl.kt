@@ -157,6 +157,7 @@ class ChartInfoChartServiceImpl(
         response.status = status
     }
 
+    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_READ)
     override fun detailVersion(
         userId: String,
         artifactInfo: HelmArtifactInfo,

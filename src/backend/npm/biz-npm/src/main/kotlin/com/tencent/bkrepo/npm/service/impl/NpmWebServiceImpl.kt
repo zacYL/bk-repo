@@ -78,7 +78,7 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
     @Autowired
     private lateinit var npmClientService: NpmClientService
 
-    @Permission(ResourceType.REPO, PermissionAction.READ)
+    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_READ)
     @Transactional(rollbackFor = [Throwable::class])
     override fun detailVersion(artifactInfo: NpmArtifactInfo, packageKey: String, version: String): PackageVersionInfo {
         val name = PackageKeys.resolveNpm(packageKey)
@@ -121,7 +121,7 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
         return VersionDependenciesInfo(dependenciesList, devDependenciesList, moduleDepsPage)
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.WRITE)
+    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_DELETE)
     @Transactional(rollbackFor = [Throwable::class])
     override fun deletePackage(artifactInfo: NpmArtifactInfo, deleteRequest: PackageDeleteRequest) {
         logger.info("npm delete package request: [$deleteRequest]")
@@ -131,7 +131,7 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
         }
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.WRITE)
+    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_DELETE)
     @Transactional(rollbackFor = [Throwable::class])
     override fun deleteVersion(artifactInfo: NpmArtifactInfo, deleteRequest: PackageVersionDeleteRequest) {
         logger.info("npm delete package version request: [$deleteRequest]")

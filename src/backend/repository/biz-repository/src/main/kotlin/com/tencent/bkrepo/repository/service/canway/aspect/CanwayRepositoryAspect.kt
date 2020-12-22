@@ -4,6 +4,7 @@ import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.security.exception.AccessDeniedException
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoDeleteRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
@@ -39,20 +40,23 @@ class CanwayRepositoryAspect(
     private val devopsHost = canwayAuthConf.devopsHost!!.removeSuffix("/")
 
     @Around(value = "execution(* com.tencent.bkrepo.repository.service.impl.RepositoryServiceImpl.createRepo(..))")
-    fun beforeCreateRepo(point: ProceedingJoinPoint) {
+    fun beforeCreateRepo(point: ProceedingJoinPoint): Any? {
         val args = point.args
         val repo = args.first() as RepoCreateRequest
-        if (!canwayPermissionService.checkCanwayPermission(repo.projectId, repo.name, repo.operator, CREATE))
-            throw AccessDeniedException()
+        val request = HttpContextHolder.getRequest()
+        val api = request.requestURI.removePrefix("/").removePrefix("web/")
+        if (api.startsWith("api", ignoreCase = true)) {
+            if (!canwayPermissionService.checkCanwayPermission(repo.projectId, repo.name, repo.operator, CREATE))
+                throw AccessDeniedException()
+        }
         updateResource(repo.projectId, repo.name, repo.operator, ciAddResourceApi)
         try {
-            point.proceed(args)
+            return point.proceed(args)
         } catch (exception: Exception) {
-            if ((exception as ErrorCodeException).messageCode.getKey() == "artifact.repository.existed") return
+            if ((exception as ErrorCodeException).messageCode.getKey() == "artifact.repository.existed") return null
             updateResource(repo.projectId, repo.name, repo.operator, ciDeleteResourceApi)
         }
-        // todo
-        // checkResult(result, repo)
+        return null
     }
 
     @Around(value = "execution(* com.tencent.bkrepo.repository.service.impl.RepositoryServiceImpl.listRepo(..))")
@@ -61,21 +65,26 @@ class CanwayRepositoryAspect(
         val result = point.proceed(args)
         val projectId = args.first() as String
         val userId = bkUserService.getBkUser()
-        if (result != null) {
-            val resultRepos = mutableListOf<RepositoryInfo>()
-            val repoInfos = result as List<RepositoryInfo>
-            val canwayPermissionResponse = canwayPermissionService.getCanwayPermissionInstance(
-                projectId = projectId,
-                operator = userId,
-                action = ACCESS,
+        val request = HttpContextHolder.getRequest()
+        val api = request.requestURI.removePrefix("/").removePrefix("web/")
+        if (api.startsWith("api", ignoreCase = true)) {
+            if (result != null) {
+                val resultRepos = mutableListOf<RepositoryInfo>()
+                val repoInfos = result as List<RepositoryInfo>
+                val canwayPermissionResponse = canwayPermissionService.getCanwayPermissionInstance(
+                    projectId = projectId,
+                    operator = userId,
+                    action = ACCESS,
                     belongCode = BELONGCODE,
                     resourceCode = RESOURCECODE
-            )
-            val hasPermissionRepos = canwayPermissionResponse?.instanceCodes?.first()?.resourceInstance ?: setOf()
-            for (repo in repoInfos) {
-                if (hasPermissionRepos.contains(repo.name)) resultRepos.add(repo)
+                )
+                val hasPermissionRepos = canwayPermissionResponse?.instanceCodes?.first()?.resourceInstance ?: setOf()
+                for (repo in repoInfos) {
+                    if (hasPermissionRepos.contains(repo.name)) resultRepos.add(repo)
+                }
+                return resultRepos
             }
-            return resultRepos
+            return result
         }
         return result
     }
@@ -86,56 +95,58 @@ class CanwayRepositoryAspect(
         val result = point.proceed(args)
         val projectId = args.first() as String
         val userId = bkUserService.getBkUser()
-        if (result != null) {
-            val resultRepos = mutableListOf<RepositoryInfo>()
-            val page = (result as Page<RepositoryInfo>)
-            val repoInfos = page.records
-            val canwayPermissionResponse = canwayPermissionService.getCanwayPermissionInstance(
-                projectId = projectId,
-                operator = userId,
-                action = ACCESS,
+        val request = HttpContextHolder.getRequest()
+        val api = request.requestURI.removePrefix("/").removePrefix("web/")
+        if (api.startsWith("api", ignoreCase = true)) {
+            if (result != null) {
+                val resultRepos = mutableListOf<RepositoryInfo>()
+                val page = (result as Page<RepositoryInfo>)
+                val repoInfos = page.records
+                val canwayPermissionResponse = canwayPermissionService.getCanwayPermissionInstance(
+                    projectId = projectId,
+                    operator = userId,
+                    action = ACCESS,
                     belongCode = BELONGCODE,
                     resourceCode = RESOURCECODE
-            )
-            val hasPermissionRepos = canwayPermissionResponse?.instanceCodes?.first()?.resourceInstance ?: setOf()
-            for (repo in repoInfos) {
-                if (hasPermissionRepos.contains(repo.name)) {
-                    resultRepos.add(
-                        repo.copy(
-                            hasPermission = true
+                )
+                val hasPermissionRepos = canwayPermissionResponse?.instanceCodes?.first()?.resourceInstance ?: setOf()
+                for (repo in repoInfos) {
+                    if (hasPermissionRepos.contains(repo.name)) {
+                        resultRepos.add(
+                            repo.copy(
+                                hasPermission = true
+                            )
                         )
-                    )
-                } else {
-                    resultRepos.add(repo)
+                    } else {
+                        resultRepos.add(repo)
+                    }
                 }
+                return result.copy(
+                    records = resultRepos
+                )
             }
-            return result.copy(
-                records = resultRepos
-            )
+            return result
         }
         return result
     }
 
     @Around(value = "execution(* com.tencent.bkrepo.repository.service.impl.RepositoryServiceImpl.deleteRepo(..))")
-    fun deleteRepo(point: ProceedingJoinPoint) {
+    fun deleteRepo(point: ProceedingJoinPoint): Any? {
         val args = point.args
         val repo = args.first() as RepoDeleteRequest
-        try {
-            point.proceed(args)
-        } catch (exception: Exception) {
-            if ((exception as ErrorCodeException).messageCode.getKey() == "artifact.repository.notfound") return
+        val request = HttpContextHolder.getRequest()
+        val api = request.requestURI.removePrefix("/").removePrefix("web/")
+        if (api.startsWith("api", ignoreCase = true)) {
+            try {
+                return point.proceed(args)
+            } catch (exception: Exception) {
+                if ((exception as ErrorCodeException).messageCode.getKey() == "artifact.repository.notfound") return null
+                updateResource(repo.projectId, repo.name, repo.operator, ciDeleteResourceApi)
+            }
             updateResource(repo.projectId, repo.name, repo.operator, ciDeleteResourceApi)
         }
-        updateResource(repo.projectId, repo.name, repo.operator, ciDeleteResourceApi)
+        return null
     }
-
-//    @Around(value = "execution(* com.tencent.bkrepo.repository.service.impl.RepositoryServiceImpl.updateRepo(..))")
-//    fun beforeUpdateRepo(point: ProceedingJoinPoint) {
-//        val args = point.args
-//        val repo = args.first() as RepoDeleteRequest
-//        if (!canwayPermissionService.checkCanwayPermission(repo.projectId, repo.name, repo.operator, MANAGE)) throw AccessDeniedException()
-//        point.proceed(args)
-//    }
 
     private fun updateResource(projectId: String, repoName: String, operator: String, api: String) {
         val resourceInstance = mutableListOf<BatchResourceInstance.Instance>()

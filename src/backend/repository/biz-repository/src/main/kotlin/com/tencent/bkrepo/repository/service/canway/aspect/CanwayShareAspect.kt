@@ -43,14 +43,14 @@ class CanwayShareAspect(
                     "$bkrepoHost$shareUrl"
                 }
                 val fileShareInfo = FileShareInfo(
-                        fileName = fileName,
-                        //todo
-                        md5 = "33",
-                        projectId = artifactInfo.projectId,
-                        repoName = artifactInfo.repoName,
-                        downloadUrl = downloadUrl,
-                        //todo
-                        qrCodeBase64 = "ddd"
+                    fileName = fileName,
+                    // todo
+                    md5 = "33",
+                    projectId = artifactInfo.projectId,
+                    repoName = artifactInfo.repoName,
+                    downloadUrl = downloadUrl,
+                    // todo
+                    qrCodeBase64 = "ddd"
                 )
                 val shareUsers = request.authorizedUserList
                 val receivers = mutableSetOf<String>()
@@ -75,8 +75,6 @@ class CanwayShareAspect(
         simpleMailMessage.setText(content)
         mailSender.send(simpleMailMessage)
     }
-
-
 
     private fun sendMimeMail(userId: String, file: FileShareInfo, email: Array<String>) {
         val mailMessage = mailSender.createMimeMessage()

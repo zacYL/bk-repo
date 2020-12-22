@@ -21,12 +21,13 @@ class CanwayPackageAspect(
     lateinit var canwayPermissionService: CanwayPermissionService
 
     @Around(value = "execution(* com.tencent.bkrepo.repository.service.impl.PackageServiceImpl.listPackagePage(..))")
-    fun beforePackagePage(point: ProceedingJoinPoint):Any {
+    fun beforePackagePage(point: ProceedingJoinPoint): Any {
         val args = point.args
         val projectId = args.first() as String
         val repoName = args[1] as String
         val request = HttpContextHolder.getRequest()
-        if (request.requestURI.removePrefix("/").startsWith("web", ignoreCase = true)) {
+        val api = request.requestURI.removePrefix("/").removePrefix("web/")
+        if (api.startsWith("api", ignoreCase = true)) {
             val userId = bkUserService.getBkUser()
             if (!canwayPermissionService.checkCanwayPermission(projectId, repoName, userId, ACCESS))
                 throw AccessDeniedException()

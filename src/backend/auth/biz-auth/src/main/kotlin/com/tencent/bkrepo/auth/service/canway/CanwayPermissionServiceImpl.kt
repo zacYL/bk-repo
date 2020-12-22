@@ -5,13 +5,18 @@ import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_USER
 import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_VIEWER
 import com.tencent.bkrepo.auth.model.TPermission
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
+import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.Permission
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionActionRequest
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionDepartmentRequest
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionUserRequest
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRoleRequest
 import com.tencent.bkrepo.auth.repository.PermissionRepository
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
 import com.tencent.bkrepo.auth.service.DepartmentService
+import com.tencent.bkrepo.auth.service.canway.bk.BkUserService
 import com.tencent.bkrepo.auth.service.canway.conf.CanwayAuthConf
 import com.tencent.bkrepo.auth.service.canway.http.CanwayHttpUtils
 import com.tencent.bkrepo.auth.service.canway.pojo.ActionCollection
@@ -24,6 +29,7 @@ import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.api.util.toJsonString
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -36,7 +42,8 @@ class CanwayPermissionServiceImpl(
     mongoTemplate: MongoTemplate,
     repositoryClient: RepositoryClient,
     private val canwayAuthConf: CanwayAuthConf,
-    private val departmentService: DepartmentService
+    private val departmentService: DepartmentService,
+    private val bkUserService: BkUserService
 ) : PermissionServiceImpl(userRepository, roleRepository, permissionRepository, mongoTemplate, repositoryClient) {
 
     override fun checkPermission(request: CheckPermissionRequest): Boolean {
@@ -58,7 +65,39 @@ class CanwayPermissionServiceImpl(
         return super.checkPermission(request)
     }
 
+    override fun updatePermissionDepartment(request: UpdatePermissionDepartmentRequest): Boolean {
+        val webRequest = HttpContextHolder.getRequest()
+        val api = webRequest.requestURI.removePrefix("/").removePrefix("web/")
+        if (api.startsWith("api", ignoreCase = true)) {
+            if (!checkPermissionById(request.permissionId)) throw ErrorCodeException(CommonMessageCode.PERMISSION_DENIED)
+        }
+        return super.updatePermissionDepartment(request)
+    }
+
+    override fun updatePermissionUser(request: UpdatePermissionUserRequest): Boolean {
+        val webRequest = HttpContextHolder.getRequest()
+        val api = webRequest.requestURI.removePrefix("/").removePrefix("web/")
+        if (api.startsWith("api", ignoreCase = true)) {
+            if (!checkPermissionById(request.permissionId)) throw ErrorCodeException(CommonMessageCode.PERMISSION_DENIED)
+        }
+        return super.updatePermissionUser(request)
+    }
+
+    override fun updatePermissionRole(request: UpdatePermissionRoleRequest): Boolean {
+        val webRequest = HttpContextHolder.getRequest()
+        val api = webRequest.requestURI.removePrefix("/").removePrefix("web/")
+        if (api.startsWith("api", ignoreCase = true)) {
+            if (!checkPermissionById(request.permissionId)) throw ErrorCodeException(CommonMessageCode.PERMISSION_DENIED)
+        }
+        return super.updatePermissionRole(request)
+    }
+
     override fun updatePermissionAction(request: UpdatePermissionActionRequest): Boolean {
+        val webRequest = HttpContextHolder.getRequest()
+        val api = webRequest.requestURI.removePrefix("/").removePrefix("web/")
+        if (api.startsWith("api", ignoreCase = true)) {
+            if (!checkPermissionById(request.permissionId)) throw ErrorCodeException(CommonMessageCode.PERMISSION_DENIED)
+        }
         val actions = request.actions
         val targetActions = mutableSetOf<PermissionAction>()
         for (action in actions) {
@@ -105,34 +144,40 @@ class CanwayPermissionServiceImpl(
 
     private fun checkUserHasProjectPermission(operator: String): Boolean {
         val canwayPermissionResponse = getCanwayPermissionInstance(
-                "bk_ci", operator, "create", "system", "project")
+            "bk_ci", operator, "create", "system", "project"
+        )
         return checkInstance("bk_ci", canwayPermissionResponse)
     }
 
-    fun getCanwayPermissionInstance(
-            projectId: String, operator: String, action: String, belongCode: String, resourceCode: String):
-            CanwayPermissionResponse? {
-        val canwayCheckPermissionRequest = CanwayPermissionRequest(
+    private fun getCanwayPermissionInstance(
+        projectId: String,
+        operator: String,
+        action: String,
+        belongCode: String,
+        resourceCode: String
+    ):
+        CanwayPermissionResponse? {
+            val canwayCheckPermissionRequest = CanwayPermissionRequest(
                 userId = operator,
                 belongCode = belongCode,
                 belongInstance = projectId,
                 resourcesActions = setOf(
-                        CanwayPermissionRequest.CanwayAction(
-                                actionCode = action,
-                                resourceCode = resourceCode,
-                                resourceInstance = setOf(
-                                        CanwayPermissionRequest.CanwayAction.CanwayInstance(
-                                                resourceCode = resourceCode
-                                        )
-                                )
+                    CanwayPermissionRequest.CanwayAction(
+                        actionCode = action,
+                        resourceCode = resourceCode,
+                        resourceInstance = setOf(
+                            CanwayPermissionRequest.CanwayAction.CanwayInstance(
+                                resourceCode = resourceCode
+                            )
                         )
+                    )
                 )
-        ).toJsonString()
-        val ciAddResourceUrl = getRequestUrl(ciCheckPermissionApi)
-        val responseContent = CanwayHttpUtils.doPost(ciAddResourceUrl, canwayCheckPermissionRequest).content
+            ).toJsonString()
+            val ciAddResourceUrl = getRequestUrl(ciCheckPermissionApi)
+            val responseContent = CanwayHttpUtils.doPost(ciAddResourceUrl, canwayCheckPermissionRequest).content
 
-        return responseContent.readJsonString<CanwayResponse<CanwayPermissionResponse>>().data
-    }
+            return responseContent.readJsonString<CanwayResponse<CanwayPermissionResponse>>().data
+        }
 
     private fun checkInstance(repoName: String?, canwayPermission: CanwayPermissionResponse?): Boolean {
         canwayPermission?.let {
@@ -152,20 +197,34 @@ class CanwayPermissionServiceImpl(
         return false
     }
 
+    private fun checkPermissionById(permissionId: String): Boolean {
+        val userId = bkUserService.getBkUser()
+        val tPermission = permissionRepository.findFirstById(permissionId)!!
+        val checkPermissionRequest = CheckPermissionRequest(
+            uid = userId,
+            resourceType = ResourceType.REPO,
+            action = PermissionAction.REPO_MANAGE,
+            projectId = tPermission.projectId,
+            repoName = tPermission.permName
+        )
+        return checkPermission(checkPermissionRequest)
+    }
+
     /**
      *
      */
     private fun canwayCheckPermission(request: CheckPermissionRequest): Boolean {
         val uid = request.uid
-        if(checkUserHasProjectPermission(uid)) return true
+        if (checkUserHasProjectPermission(uid)) return true
         val projectId = request.projectId
-                ?: throw(ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "`projectId` is must not be null"))
-        val repoName = request.repoName
+            ?: throw(ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "`projectId` is must not be null"))
+        val repoName = request.repoName?:return true
+
         val resourceType = request.resourceType
         val action = request.action
 
         val tPermissions = permissionRepository.findByProjectIdAndReposContainsAndResourceTypeAndActionsContains(
-                projectId, repoName, resourceType, action
+            projectId, repoName, resourceType, action
         )
 
         if (tPermissions != null) {

@@ -31,7 +31,10 @@
 
 package com.tencent.bkrepo.maven.controller
 
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
+import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.pojo.Response
+import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.maven.api.MavenWebResource
 import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
@@ -43,11 +46,13 @@ class MavenWebController(
     private val mavenService: MavenService
 ) : MavenWebResource {
 
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_DELETE)
     override fun deletePackage(mavenArtifactInfo: MavenArtifactInfo, packageKey: String): Response<Void> {
         mavenService.delete(mavenArtifactInfo, packageKey, null)
         return ResponseBuilder.success()
     }
 
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_DELETE)
     override fun deleteVersion(
         mavenArtifactInfo: MavenArtifactInfo,
         packageKey: String,
@@ -57,6 +62,7 @@ class MavenWebController(
         return ResponseBuilder.success()
     }
 
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_READ)
     override fun artifactDetail(
         mavenArtifactInfo: MavenArtifactInfo,
         packageKey: String,

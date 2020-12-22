@@ -63,7 +63,7 @@ class UserPackageController(
 ) {
 
     @ApiOperation("分页查询包")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_READ)
     @GetMapping("/package/page/{projectId}/{repoName}")
     fun listPackagePage(
         @PathVariable projectId: String,
@@ -75,7 +75,7 @@ class UserPackageController(
     }
 
     @ApiOperation("分页查询版本")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_READ)
     @GetMapping("/version/page/{projectId}/{repoName}")
     fun listVersionPage(
         @PathVariable projectId: String,
@@ -88,7 +88,7 @@ class UserPackageController(
     }
 
     @ApiOperation("查询包信息")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_READ)
     @GetMapping("/package/info/{projectId}/{repoName}")
     fun findPackageByKey(
         @PathVariable projectId: String,
@@ -99,7 +99,7 @@ class UserPackageController(
     }
 
     @ApiOperation("删除包")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_DELETE)
     @DeleteMapping("/package/delete/{projectId}/{repoName}")
     fun deletePackage(
         @PathVariable projectId: String,
@@ -111,7 +111,7 @@ class UserPackageController(
     }
 
     @ApiOperation("删除版本")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_DELETE)
     @DeleteMapping("/version/delete/{projectId}/{repoName}")
     fun deleteVersion(
         @PathVariable projectId: String,
@@ -132,7 +132,7 @@ class UserPackageController(
     }
 
     @ApiOperation("下载版本")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_DOWNLOAD)
     @GetMapping("/version/download/{projectId}/{repoName}")
     fun downloadVersion(
         @PathVariable projectId: String,

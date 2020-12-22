@@ -132,7 +132,7 @@ class ChartManipulationChartServiceImpl(
         return Pair(nameMatch[1], versionMatch[1])
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.WRITE)
+    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_DELETE)
     @Transactional(rollbackFor = [Throwable::class])
     override fun deleteVersion(chartVersionDeleteRequest: ChartVersionDeleteRequest) {
         logger.info("handling delete chart version request: [$chartVersionDeleteRequest]")
@@ -153,7 +153,7 @@ class ChartManipulationChartServiceImpl(
         }
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.WRITE)
+    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_DELETE)
     @Transactional(rollbackFor = [Throwable::class])
     override fun deletePackage(chartDeleteRequest: ChartDeleteRequest) {
         logger.info("handling delete chart request: [$chartDeleteRequest]")

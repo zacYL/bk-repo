@@ -68,7 +68,7 @@ class UserShareController(
 ) {
 
     @ApiOperation("创建分享链接")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_SHARE)
     @PostMapping(DEFAULT_MAPPING_URI)
     fun share(
         @RequestAttribute userId: String,

@@ -46,7 +46,7 @@ import org.springframework.stereotype.Service
 @Service
 class MavenService {
 
-    @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_READWRITE)
     fun deploy(
         mavenArtifactInfo: MavenArtifactInfo,
         file: ArtifactFile
@@ -56,21 +56,21 @@ class MavenService {
         repository.upload(context)
     }
 
-    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_DOWNLOAD)
     fun dependency(mavenArtifactInfo: MavenArtifactInfo) {
         val context = ArtifactDownloadContext()
         val repository = ArtifactContextHolder.getRepository(context.repositoryDetail.category)
         repository.download(context)
     }
 
-    @Permission(type = ResourceType.REPO, action = PermissionAction.DELETE)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_DELETE)
     fun delete(mavenArtifactInfo: MavenArtifactInfo, packageKey: String, version: String?) {
         val context = ArtifactRemoveContext()
         val repository = ArtifactContextHolder.getRepository(context.repositoryDetail.category)
         repository.remove(context)
     }
 
-    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_READ)
     fun artifactDetail(mavenArtifactInfo: MavenArtifactInfo, packageKey: String, version: String?): Any? {
         val context = ArtifactQueryContext()
         val repository = ArtifactContextHolder.getRepository(context.repositoryDetail.category)

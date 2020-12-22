@@ -94,7 +94,7 @@ class UserNodeController(
     }
 
     @ApiOperation("创建文件夹")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.FOLDER_MANAGE)
     @PostMapping(DEFAULT_MAPPING_URI/* Deprecated */, "/mkdir/$DEFAULT_MAPPING_URI")
     fun mkdir(
         @RequestAttribute userId: String,
@@ -177,6 +177,7 @@ class UserNodeController(
 
     @Deprecated("/rename/{projectId}/{repoName}/**")
     @ApiOperation("重命名节点")
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_RENAME)
     @PostMapping("/rename")
     fun renameNode(
         @RequestAttribute userId: String,
@@ -197,6 +198,7 @@ class UserNodeController(
     }
 
     @ApiOperation("移动节点")
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_MOVE)
     @PostMapping("/move")
     fun moveNode(
         @RequestAttribute userId: String,
@@ -220,6 +222,7 @@ class UserNodeController(
     }
 
     @ApiOperation("复制节点")
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_COPY)
     @PostMapping("/copy")
     fun copyNode(
         @RequestAttribute userId: String,

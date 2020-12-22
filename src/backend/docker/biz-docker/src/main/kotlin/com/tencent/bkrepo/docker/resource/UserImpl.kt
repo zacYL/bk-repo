@@ -31,9 +31,12 @@
 
 package com.tencent.bkrepo.docker.resource
 
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
+import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.constant.StringPool.EMPTY
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.security.permission.Principal
 import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
@@ -116,6 +119,7 @@ class UserImpl @Autowired constructor(val dockerRepo: DockerV2LocalRepoService) 
         return ResponseBuilder.success(result)
     }
 
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_DELETE)
     override fun deleteRepo(
         request: HttpServletRequest,
         userId: String?,
@@ -130,6 +134,7 @@ class UserImpl @Autowired constructor(val dockerRepo: DockerV2LocalRepoService) 
         return ResponseBuilder.success(result)
     }
 
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_DELETE)
     override fun deleteRepoTag(
         request: HttpServletRequest,
         userId: String?,
@@ -145,6 +150,7 @@ class UserImpl @Autowired constructor(val dockerRepo: DockerV2LocalRepoService) 
         return ResponseBuilder.success(result)
     }
 
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_READ)
     override fun getRepoTagDetail(
         request: HttpServletRequest,
         userId: String?,

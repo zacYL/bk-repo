@@ -76,7 +76,7 @@ class UserRepositoryController(
         @ApiParam(value = "仓库类型", required = true)
         @PathVariable type: String? = null
     ): Response<RepositoryInfo?> {
-        permissionManager.checkPermission(userId, ResourceType.PROJECT, PermissionAction.READ, projectId)
+        permissionManager.checkPermission(userId, ResourceType.REPO, PermissionAction.ARTIFACT_READ, projectId, repoName)
         return ResponseBuilder.success(repositoryService.getRepoInfo(projectId, repoName))
     }
 
@@ -128,7 +128,7 @@ class UserRepositoryController(
         @ApiParam("仓库类型", required = false)
         @RequestParam type: String? = null
     ): Response<List<RepositoryInfo>> {
-        permissionManager.checkPermission(userId, ResourceType.PROJECT, PermissionAction.READ, projectId)
+//        permissionManager.checkPermission(userId, ResourceType.PROJECT, PermissionAction.READ, projectId)
         return ResponseBuilder.success(repositoryService.listRepo(projectId, name, type))
     }
 
@@ -147,7 +147,7 @@ class UserRepositoryController(
         @ApiParam("仓库类型", required = false)
         @RequestParam type: String? = null
     ): Response<Page<RepositoryInfo>> {
-        permissionManager.checkPermission(userId, ResourceType.PROJECT, PermissionAction.READ, projectId)
+//        permissionManager.checkPermission(userId, ResourceType.PROJECT, PermissionAction.READ, projectId)
         return ResponseBuilder.success(repositoryService.listRepoPage(projectId, pageNumber, pageSize, name, type))
     }
 
@@ -162,7 +162,7 @@ class UserRepositoryController(
         @ApiParam(value = "是否强制删除", required = false)
         @RequestParam forced: Boolean = false
     ): Response<Void> {
-        permissionManager.checkPermission(userId, ResourceType.REPO, PermissionAction.DELETE, projectId, repoName)
+        permissionManager.checkPermission(userId, ResourceType.REPO, PermissionAction.REPO_MANAGE, projectId, repoName)
         repositoryService.deleteRepo(RepoDeleteRequest(projectId, repoName, forced, userId))
         return ResponseBuilder.success()
     }
@@ -177,7 +177,7 @@ class UserRepositoryController(
         @PathVariable repoName: String,
         @RequestBody request: UserRepoUpdateRequest
     ): Response<Void> {
-        permissionManager.checkPermission(userId, ResourceType.REPO, PermissionAction.WRITE, projectId, repoName)
+        permissionManager.checkPermission(userId, ResourceType.REPO, PermissionAction.REPO_MANAGE, projectId, repoName)
         val repoUpdateRequest = RepoUpdateRequest(
             projectId = projectId,
             name = repoName,

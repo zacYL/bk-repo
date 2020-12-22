@@ -32,8 +32,10 @@ request.interceptors.response.use(response => {
         }
         return Promise.reject() // eslint-disable-line
     } else if (httpStatus === 403) {
-        const errorMsg = { httpStatus, code: httpStatus, message }
-        return Promise.reject(errorMsg)
+        return Promise.reject({ // eslint-disable-line
+            status: httpStatus,
+            message
+        })
     } else if (httpStatus === 500 || httpStatus === 503 || httpStatus === 512) {
         return Promise.reject({ // eslint-disable-line
             status: httpStatus,

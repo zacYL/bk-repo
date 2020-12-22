@@ -484,7 +484,7 @@
             height: 52px;
             padding: 10px;
             border-bottom: 1px solid #d5d5d5;
-            :first-child {
+            > :first-child {
                 flex-basis: 45px;
             }
             .section-sub-add-btn {

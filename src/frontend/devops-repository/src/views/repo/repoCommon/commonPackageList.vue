@@ -70,7 +70,11 @@
             }
         },
         created () {
-            this.getPackageListHandler().catch(() => {
+            this.getPackageListHandler().catch(({ message }) => {
+                this.$bkMessage({
+                    theme: 'error',
+                    message
+                })
                 this.$router.push({
                     name: 'repoList'
                 })

@@ -89,7 +89,7 @@ class UserRepositoryController(
         @ApiParam(value = "仓库名称", required = true)
         @PathVariable repoName: String
     ): Response<Boolean> {
-        permissionManager.checkPermission(userId, ResourceType.PROJECT, PermissionAction.READ, projectId)
+//        permissionManager.checkPermission(userId, ResourceType.PROJECT, PermissionAction.READ, projectId)
         return ResponseBuilder.success(repositoryService.checkExist(projectId, repoName))
     }
 
@@ -100,7 +100,7 @@ class UserRepositoryController(
         @RequestBody userRepoCreateRequest: UserRepoCreateRequest
     ): Response<Void> {
         val createRequest = with(userRepoCreateRequest) {
-            permissionManager.checkPermission(userId, ResourceType.PROJECT, PermissionAction.MANAGE, projectId)
+//            permissionManager.checkPermission(userId, ResourceType.PROJECT, PermissionAction.MANAGE, projectId)
             RepoCreateRequest(
                 projectId = projectId,
                 name = name,

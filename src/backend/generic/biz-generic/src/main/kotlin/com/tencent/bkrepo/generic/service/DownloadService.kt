@@ -45,7 +45,6 @@ import org.springframework.stereotype.Service
 @Service
 class DownloadService: ArtifactService() {
 
-    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_DOWNLOAD)
     fun download(artifactInfo: GenericArtifactInfo) {
         val context = ArtifactDownloadContext()
         repository.download(context)

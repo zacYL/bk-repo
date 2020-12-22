@@ -61,11 +61,13 @@ class GenericController(
 ) {
 
     @PutMapping(GENERIC_MAPPING_URI)
+    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_READWRITE)
     fun upload(@ArtifactPathVariable artifactInfo: GenericArtifactInfo, file: ArtifactFile) {
         uploadService.upload(artifactInfo, file)
     }
 
     @DeleteMapping(GENERIC_MAPPING_URI)
+    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_DELETE)
     fun delete(
         @RequestAttribute userId: String,
         @ArtifactPathVariable artifactInfo: GenericArtifactInfo
@@ -75,6 +77,7 @@ class GenericController(
     }
 
     @GetMapping(GENERIC_MAPPING_URI)
+    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_DOWNLOAD)
     fun download(@ArtifactPathVariable artifactInfo: GenericArtifactInfo) {
         downloadService.download(artifactInfo)
     }

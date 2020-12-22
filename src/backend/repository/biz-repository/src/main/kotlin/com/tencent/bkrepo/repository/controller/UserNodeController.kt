@@ -115,7 +115,7 @@ class UserNodeController(
     }
 
     @ApiOperation("删除节点")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_DELETE)
     @DeleteMapping(DEFAULT_MAPPING_URI/* Deprecated */, "/delete/$DEFAULT_MAPPING_URI")
     fun deleteNode(
         @RequestAttribute userId: String,
@@ -134,7 +134,7 @@ class UserNodeController(
     }
 
     @ApiOperation("更新节点")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_UPDATE)
     @PostMapping("/update/$DEFAULT_MAPPING_URI")
     fun updateNode(
         @RequestAttribute userId: String,
@@ -155,7 +155,7 @@ class UserNodeController(
     }
 
     @ApiOperation("重命名节点")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_RENAME)
     @PostMapping("/rename/$DEFAULT_MAPPING_URI")
     fun renameNode(
         @RequestAttribute userId: String,
@@ -177,14 +177,13 @@ class UserNodeController(
 
     @Deprecated("/rename/{projectId}/{repoName}/**")
     @ApiOperation("重命名节点")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_RENAME)
     @PostMapping("/rename")
     fun renameNode(
         @RequestAttribute userId: String,
         @RequestBody request: UserNodeRenameRequest
     ): Response<Void> {
         with(request) {
-            permissionManager.checkPermission(userId, ResourceType.REPO, PermissionAction.WRITE, projectId, repoName)
+            permissionManager.checkPermission(userId, ResourceType.REPO, PermissionAction.ARTIFACT_RENAME, projectId, repoName)
             val renameRequest = NodeRenameRequest(
                 projectId = projectId,
                 repoName = repoName,
@@ -198,7 +197,6 @@ class UserNodeController(
     }
 
     @ApiOperation("移动节点")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_MOVE)
     @PostMapping("/move")
     fun moveNode(
         @RequestAttribute userId: String,
@@ -222,7 +220,6 @@ class UserNodeController(
     }
 
     @ApiOperation("复制节点")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_COPY)
     @PostMapping("/copy")
     fun copyNode(
         @RequestAttribute userId: String,
@@ -257,7 +254,7 @@ class UserNodeController(
     }
 
     @ApiOperation("分页查询节点")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_READ)
     @GetMapping("/page/$DEFAULT_MAPPING_URI")
     fun listPageNode(
         @RequestAttribute userId: String,

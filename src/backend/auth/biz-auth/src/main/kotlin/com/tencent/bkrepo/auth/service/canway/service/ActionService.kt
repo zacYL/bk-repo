@@ -16,20 +16,20 @@ class ActionService() {
                 CanwayAction(PermissionAction.ARTIFACT_MOVE, "制品移动"),
                 CanwayAction(PermissionAction.ARTIFACT_SHARE, "制品分享"),
                 CanwayAction(PermissionAction.ARTIFACT_DOWNLOAD, "制品下载"),
-                CanwayAction(PermissionAction.ARTIFACT_READWRITE, "制品读写"),
-                CanwayAction(PermissionAction.ARTIFACT_READ, "制品读取")
+                CanwayAction(PermissionAction.ARTIFACT_READWRITE, "制品上传"),
+                CanwayAction(PermissionAction.ARTIFACT_READ, "制品查看")
             )
             "pipeline" -> setOf(
                 CanwayAction(PermissionAction.REPO_MANAGE, "仓库管理"),
-                CanwayAction(PermissionAction.ARTIFACT_READ, "制品读取"),
+                CanwayAction(PermissionAction.ARTIFACT_READ, "制品查看"),
                 CanwayAction(PermissionAction.ARTIFACT_SHARE, "制品分享"),
                 CanwayAction(PermissionAction.ARTIFACT_DOWNLOAD, "制品下载")
             )
             else -> setOf(
                 CanwayAction(PermissionAction.REPO_MANAGE, "仓库管理"),
                 CanwayAction(PermissionAction.ARTIFACT_UPDATE, "制品晋级"),
-                CanwayAction(PermissionAction.ARTIFACT_READWRITE, "制品读写"),
-                CanwayAction(PermissionAction.ARTIFACT_READ, "制品读取"),
+                CanwayAction(PermissionAction.ARTIFACT_READWRITE, "制品上传"),
+                CanwayAction(PermissionAction.ARTIFACT_READ, "制品查看"),
                 CanwayAction(PermissionAction.ARTIFACT_DELETE, "制品删除"),
                 CanwayAction(PermissionAction.ARTIFACT_DOWNLOAD, "制品下载")
             )

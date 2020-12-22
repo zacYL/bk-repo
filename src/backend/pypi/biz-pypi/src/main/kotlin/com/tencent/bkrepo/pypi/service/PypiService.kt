@@ -52,21 +52,20 @@ import org.springframework.stereotype.Service
 @Service
 class PypiService {
 
-    @Permission(ResourceType.REPO, PermissionAction.READ)
+    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_DOWNLOAD)
     fun packages(pypiArtifactInfo: PypiArtifactInfo) {
         val context = ArtifactDownloadContext()
         val repository = ArtifactContextHolder.getRepository(context.repositoryDetail.category)
         repository.download(context)
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.READ)
+    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_READ)
     fun simple(artifactInfo: PypiArtifactInfo): Any? {
         val context = ArtifactQueryContext()
         val repository = ArtifactContextHolder.getRepository(context.repositoryDetail.category)
         return repository.query(context)
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.READ)
     fun search(pypiArtifactInfo: PypiArtifactInfo): String {
         val context = ArtifactSearchContext()
         val repository = ArtifactContextHolder.getRepository(context.repositoryDetail.category)
@@ -76,7 +75,7 @@ class PypiService {
         return XmlConvertUtil.methodResponse2Xml(methodResponse)
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.WRITE)
+    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_READWRITE)
     fun upload(pypiArtifactInfo: PypiArtifactInfo, artifactFileMap: ArtifactFileMap) {
         val context = ArtifactUploadContext(artifactFileMap)
         val repository = ArtifactContextHolder.getRepository(context.repositoryDetail.category)

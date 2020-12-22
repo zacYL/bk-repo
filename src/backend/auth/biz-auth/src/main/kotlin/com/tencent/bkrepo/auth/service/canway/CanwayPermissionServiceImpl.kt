@@ -206,7 +206,7 @@ class CanwayPermissionServiceImpl(
             resourceType = ResourceType.REPO,
             action = PermissionAction.REPO_MANAGE,
             projectId = tPermission.projectId,
-            repoName = tPermission.permName
+            repoName = tPermission.repos.first()
         )
         return checkPermission(checkPermissionRequest)
     }

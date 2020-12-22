@@ -382,7 +382,7 @@ class PypiLocalRepository(
             builder.append("The directory is empty.")
         }
         for (node in nodeList) {
-            builder.append("<a data-requires-python=\">=\" href=\"/$projectId/$repoName/simple/${node.name}\" rel=\"internal\" >${node.name}</a><br/>")
+            builder.append("<a data-requires-python=\">=\" href=\"simple/${node.name}/\" rel=\"internal\" >${node.name}</a><br/>")
         }
         return builder.toString()
     }

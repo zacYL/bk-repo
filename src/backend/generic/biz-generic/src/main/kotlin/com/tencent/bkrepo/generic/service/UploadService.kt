@@ -69,13 +69,11 @@ class UploadService(
     private val storageService: StorageService
 ): ArtifactService() {
 
-    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_READWRITE)
     fun upload(artifactInfo: GenericArtifactInfo, file: ArtifactFile) {
         val context = ArtifactUploadContext(file)
         repository.upload(context)
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_DELETE)
     fun delete(userId: String, artifactInfo: GenericArtifactInfo) {
         val context = ArtifactRemoveContext()
         repository.remove(context)

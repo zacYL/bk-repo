@@ -30,7 +30,7 @@ object ActionCollection {
             PermissionAction.ARTIFACT_MOVE -> setOf(PermissionAction.ARTIFACT_MOVE, PermissionAction.WRITE, PermissionAction.DELETE)
             PermissionAction.ARTIFACT_SHARE -> setOf(PermissionAction.ARTIFACT_SHARE, PermissionAction.WRITE, PermissionAction.UPDATE)
             PermissionAction.ARTIFACT_DOWNLOAD -> setOf(PermissionAction.ARTIFACT_DOWNLOAD, PermissionAction.UPDATE)
-            PermissionAction.ARTIFACT_READWRITE -> setOf(PermissionAction.ARTIFACT_READWRITE, PermissionAction.UPDATE, PermissionAction.READ,PermissionAction.WRITE)
+            PermissionAction.ARTIFACT_READWRITE -> setOf(PermissionAction.ARTIFACT_READWRITE, PermissionAction.UPDATE, PermissionAction.READ, PermissionAction.WRITE)
             PermissionAction.ARTIFACT_READ -> setOf(PermissionAction.ARTIFACT_READ, PermissionAction.READ)
             PermissionAction.ARTIFACT_UPDATE -> setOf(PermissionAction.ARTIFACT_UPDATE, PermissionAction.UPDATE)
             PermissionAction.ARTIFACT_DELETE -> setOf(PermissionAction.ARTIFACT_DELETE, PermissionAction.DELETE)

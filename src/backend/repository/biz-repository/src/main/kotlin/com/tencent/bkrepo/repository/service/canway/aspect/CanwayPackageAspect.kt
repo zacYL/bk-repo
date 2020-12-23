@@ -1,5 +1,6 @@
 package com.tencent.bkrepo.repository.service.canway.aspect
 
+import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.security.exception.AccessDeniedException
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.repository.service.canway.ACCESS
@@ -14,9 +15,7 @@ import org.springframework.stereotype.Component
 
 @Aspect
 @Component
-class CanwayPackageAspect(
-    val bkUserService: BkUserService
-) {
+class CanwayPackageAspect {
 
     @Autowired
     lateinit var canwayPermissionService: CanwayPermissionService
@@ -29,8 +28,8 @@ class CanwayPackageAspect(
         val request = HttpContextHolder.getRequest()
         val api = request.requestURI.removePrefix("/").removePrefix("web/")
         if (api.startsWith("api", ignoreCase = true)) {
-            val userId = bkUserService.getBkUser()
-            if (!canwayPermissionService.checkCanwayPermission(projectId, repoName, userId, ACCESS))
+            val userId = request.getAttribute(USER_KEY) ?: throw AccessDeniedException()
+            if (!canwayPermissionService.checkCanwayPermission(projectId, repoName, userId as String, ACCESS))
                 throw CanwayPermissionException()
         }
         return point.proceed(args)

@@ -8,6 +8,6 @@ data class BkCertificate(
 enum class CertType(
     val value: String
 ) {
-    USERNAME("username"),
+    USERNAME("bk_username"),
     TOKEN("bk_token")
 }

@@ -92,7 +92,7 @@ class NpmClientServiceImpl(
     private val npmProperties: NpmProperties
 ) : NpmClientService, AbstractNpmService() {
 
-    @Permission(ResourceType.REPO, PermissionAction.WRITE)
+    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_READWRITE)
     @Transactional(rollbackFor = [Throwable::class])
     override fun publishOrUpdatePackage(
         userId: String,
@@ -189,7 +189,7 @@ class NpmClientServiceImpl(
         }
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.READ)
+    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_DOWNLOAD)
     @Transactional(rollbackFor = [Throwable::class])
     override fun download(artifactInfo: NpmArtifactInfo) {
         val context = ArtifactDownloadContext()
@@ -207,7 +207,7 @@ class NpmClientServiceImpl(
         return NpmSearchResponse(npmSearchInfoMapList)
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.READ)
+    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_READ)
     override fun getDistTags(artifactInfo: NpmArtifactInfo, name: String): DistTags {
         with(artifactInfo) {
             logger.info("handling get distTags request for package [$name] in repo [$projectId/$repoName]")
@@ -216,7 +216,7 @@ class NpmClientServiceImpl(
         }
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.WRITE)
+    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_READ)
     override fun addDistTags(userId: String, artifactInfo: NpmArtifactInfo, name: String, tag: String) {
         logger.info("handling add distTags [$tag] request for package [$name]")
         val packageMetaData = queryPackageInfo(artifactInfo, name, false)
@@ -225,7 +225,7 @@ class NpmClientServiceImpl(
         doPackageFileUpload(userId, artifactInfo, packageMetaData)
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.WRITE)
+    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_READ)
     override fun deleteDistTags(userId: String, artifactInfo: NpmArtifactInfo, name: String, tag: String) {
         logger.info("handling delete distTags [$tag] request for package [$name]")
         val packageMetaData = queryPackageInfo(artifactInfo, name, false)
@@ -233,7 +233,7 @@ class NpmClientServiceImpl(
         doPackageFileUpload(userId, artifactInfo, packageMetaData)
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.WRITE)
+    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_DELETE)
     override fun updatePackage(userId: String, artifactInfo: NpmArtifactInfo, name: String) {
         logger.info("handling update package request for package [$name]")
         val packageMetadata =
@@ -241,7 +241,7 @@ class NpmClientServiceImpl(
         doPackageFileUpload(userId, artifactInfo, packageMetadata)
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.WRITE)
+    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_DELETE)
     override fun deleteVersion(userId: String, artifactInfo: NpmArtifactInfo, name: String, filename: String) {
         val version = NpmUtils.analyseVersionFromPackageName(filename, name)
         logger.info("handling delete version [$version] request for package [$name]")
@@ -256,7 +256,7 @@ class NpmClientServiceImpl(
         npmPackageHandler.deleteVersion(userId, name, version, artifactInfo)
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.WRITE)
+    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_DELETE)
     override fun deletePackage(userId: String, artifactInfo: NpmArtifactInfo, name: String) {
         logger.info("handling delete package request for package [$name]")
         val fullPathList = mutableListOf<String>()

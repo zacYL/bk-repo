@@ -45,28 +45,28 @@ import org.springframework.stereotype.Service
 @Service
 class ComposerService {
 
-    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_READ)
     fun installRequire(composerArtifactInfo: ComposerArtifactInfo) {
         val context = ArtifactDownloadContext()
         val repository = ArtifactContextHolder.getRepository(context.repositoryDetail.category)
         repository.download(context)
     }
 
-    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_READ)
     fun getJson(composerArtifactInfo: ComposerArtifactInfo): Any? {
         val context = ArtifactQueryContext()
         val repository = ArtifactContextHolder.getRepository(context.repositoryDetail.category)
         return repository.query(context)
     }
 
-    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_READ)
     fun packages(composerArtifactInfo: ComposerArtifactInfo): String? {
         val context = ArtifactQueryContext()
         val repository = ArtifactContextHolder.getRepository(context.repositoryDetail.category)
         return repository.query(context) as String
     }
 
-    @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_READWRITE)
     fun deploy(composerArtifactInfo: ComposerArtifactInfo, file: ArtifactFile) {
         val context = ArtifactUploadContext(file)
         val repository = ArtifactContextHolder.getRepository(context.repositoryDetail.category)

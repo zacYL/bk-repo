@@ -2,11 +2,13 @@ package com.tencent.bkrepo.repository.service.canway.aspect
 
 import com.tencent.bkrepo.auth.api.ServicePermissionResource
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionUserRequest
+import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.exception.SystemException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.toJsonString
+import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.security.exception.AccessDeniedException
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
@@ -35,8 +37,7 @@ import java.lang.Exception
 @Aspect
 @Service
 class CanwayRepositoryAspect(
-    canwayAuthConf: CanwayAuthConf,
-    val bkUserService: BkUserService
+    canwayAuthConf: CanwayAuthConf
 ) {
 
     @Autowired
@@ -53,10 +54,10 @@ class CanwayRepositoryAspect(
         val repo = args.first() as RepoCreateRequest
         val request = HttpContextHolder.getRequest()
         val userId = try {
-            bkUserService.getBkUser()
+            request.getAttribute(USER_KEY)
         } catch (e: Exception) {
             repo.operator
-        }
+        } ?: throw AccessDeniedException()
 
         val api = request.requestURI.removePrefix("/").removePrefix("web/")
         if (api.startsWith("api", ignoreCase = true)) {
@@ -66,7 +67,7 @@ class CanwayRepositoryAspect(
         updateResource(repo.projectId, repo.name, repo.operator, ciAddResourceApi)
         try {
             val result =  point.proceed(args)
-            addUserIdToAdmin(userId, repo.projectId, repo.name)
+            addUserIdToAdmin(userId as String, repo.projectId, repo.name)
             return result
         } catch (exception: Exception) {
             if ((exception as ErrorCodeException).messageCode.getKey() == "artifact.repository.existed") return null
@@ -94,16 +95,16 @@ class CanwayRepositoryAspect(
         val args = point.args
         val result = point.proceed(args)
         val projectId = args.first() as String
-        val userId = bkUserService.getBkUser()
         val request = HttpContextHolder.getRequest()
         val api = request.requestURI.removePrefix("/").removePrefix("web/")
         if (api.startsWith("api", ignoreCase = true)) {
             if (result != null) {
+                val userId = request.getAttribute(USER_KEY) ?: throw AccessDeniedException()
                 val resultRepos = mutableListOf<RepositoryInfo>()
                 val repoInfos = result as List<RepositoryInfo>
                 val canwayPermissionResponse = canwayPermissionService.getCanwayPermissionInstance(
                     projectId = projectId,
-                    operator = userId,
+                    operator = userId as String,
                     action = ACCESS,
                     belongCode = BELONGCODE,
                     resourceCode = RESOURCECODE
@@ -124,17 +125,17 @@ class CanwayRepositoryAspect(
         val args = point.args
         val result = point.proceed(args)
         val projectId = args.first() as String
-        val userId = bkUserService.getBkUser()
         val request = HttpContextHolder.getRequest()
         val api = request.requestURI.removePrefix("/").removePrefix("web/")
         if (api.startsWith("api", ignoreCase = true)) {
             if (result != null) {
+                val userId = request.getAttribute(USER_KEY) ?: throw AccessDeniedException()
                 val resultRepos = mutableListOf<RepositoryInfo>()
                 val page = (result as Page<RepositoryInfo>)
                 val repoInfos = page.records
                 val canwayPermissionResponse = canwayPermissionService.getCanwayPermissionInstance(
                     projectId = projectId,
-                    operator = userId,
+                    operator = userId as String,
                     action = ACCESS,
                     belongCode = BELONGCODE,
                     resourceCode = RESOURCECODE
@@ -170,7 +171,7 @@ class CanwayRepositoryAspect(
             try {
                 return point.proceed(args)
             } catch (exception: Exception) {
-                if ((exception as ErrorCodeException).messageCode.getKey() == "artifact.repository.notfound") return null
+                if ((exception as ErrorCodeException).messageCode == ArtifactMessageCode.REPOSITORY_NOT_FOUND) return null
                 updateResource(repo.projectId, repo.name, repo.operator, ciDeleteResourceApi)
             }
             updateResource(repo.projectId, repo.name, repo.operator, ciDeleteResourceApi)

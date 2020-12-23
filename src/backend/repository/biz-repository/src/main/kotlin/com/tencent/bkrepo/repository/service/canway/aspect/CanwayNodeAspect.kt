@@ -16,9 +16,7 @@ import org.springframework.stereotype.Component
 
 @Aspect
 @Component
-class CanwayNodeAspect(
-    val bkUserService: BkUserService
-) {
+class CanwayNodeAspect {
 
     @Autowired
     lateinit var canwayPermissionService: CanwayPermissionService
@@ -30,8 +28,7 @@ class CanwayNodeAspect(
         val request = HttpContextHolder.getRequest()
         val api = request.requestURI.removePrefix("/").removePrefix("web/")
         if (api.startsWith("api", ignoreCase = true)) {
-            val userId = request.getAttribute(USER_KEY)
-                    ?: throw AccessDeniedException()
+            val userId = request.getAttribute(USER_KEY) ?: throw AccessDeniedException()
             if (!canwayPermissionService.checkCanwayPermission(artifactInfo.projectId, artifactInfo.repoName, userId as String, ACCESS))
                 throw CanwayPermissionException()
         }

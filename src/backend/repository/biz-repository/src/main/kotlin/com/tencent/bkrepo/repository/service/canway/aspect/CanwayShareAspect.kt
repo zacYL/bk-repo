@@ -33,9 +33,6 @@ class CanwayShareAspect(
     private val sender = canwayMailConf.mailUsername
     private val bkrepoHost = canwayMailConf.bkrepoHost
 
-    @Autowired
-    lateinit var canwayPermissionService: CanwayPermissionService
-
     @Around("execution(* com.tencent.bkrepo.repository.service.impl.ShareServiceImpl.create(..))")
     fun sendMail(point: ProceedingJoinPoint): Any {
         val args = point.args

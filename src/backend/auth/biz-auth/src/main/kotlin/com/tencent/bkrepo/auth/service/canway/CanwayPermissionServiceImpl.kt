@@ -49,7 +49,7 @@ class CanwayPermissionServiceImpl(
     override fun checkPermission(request: CheckPermissionRequest): Boolean {
         logger.info("check permission  request : [$request] ")
         // 校验用户是否属于对应部门、用户组和已添加用户
-        if(checkUserHasProjectPermission(request.uid)) return true
+        if (checkUserHasProjectPermission(request.uid)) return true
         if (!canwayCheckPermission(request)) return false
         val action = request.action
         if (ActionCollection.isCanwayAction(action)) {

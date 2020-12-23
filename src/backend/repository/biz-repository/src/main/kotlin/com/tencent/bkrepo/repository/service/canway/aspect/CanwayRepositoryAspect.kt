@@ -64,15 +64,16 @@ class CanwayRepositoryAspect(
                 throw CanwayPermissionException()
         }
         updateResource(repo.projectId, repo.name, repo.operator, ciAddResourceApi)
+        val result: Any?
         try {
-            val result = point.proceed(args)
+            result = point.proceed(args)
             addUserIdToAdmin(userId as String, repo.projectId, repo.name)
             return result
         } catch (exception: Exception) {
-            if ((exception as ErrorCodeException).messageCode.getKey() == "artifact.repository.existed") return null
-            updateResource(repo.projectId, repo.name, repo.operator, ciDeleteResourceApi)
+            if ((exception as ErrorCodeException).messageCode.getKey() == "artifact.repository.existed")
+                updateResource(repo.projectId, repo.name, repo.operator, ciDeleteResourceApi)
+            throw exception
         }
-        return null
     }
 
     private fun addUserIdToAdmin(userId: String, projectId: String, repoName: String) {
@@ -97,7 +98,7 @@ class CanwayRepositoryAspect(
         val request = HttpContextHolder.getRequest()
         val api = request.requestURI.removePrefix("/").removePrefix("web/")
         if (api.startsWith("api", ignoreCase = true)) {
-            if (result != null) {
+            result?.let {
                 val userId = request.getAttribute(USER_KEY) ?: throw AccessDeniedException()
                 val resultRepos = mutableListOf<RepositoryInfo>()
                 val repoInfos = result as List<RepositoryInfo>
@@ -114,7 +115,6 @@ class CanwayRepositoryAspect(
                 }
                 return resultRepos
             }
-            return result
         }
         return result
     }
@@ -127,7 +127,7 @@ class CanwayRepositoryAspect(
         val request = HttpContextHolder.getRequest()
         val api = request.requestURI.removePrefix("/").removePrefix("web/")
         if (api.startsWith("api", ignoreCase = true)) {
-            if (result != null) {
+            result?.let {
                 val userId = request.getAttribute(USER_KEY) ?: throw AccessDeniedException()
                 val resultRepos = mutableListOf<RepositoryInfo>()
                 val page = (result as Page<RepositoryInfo>)
@@ -155,27 +155,21 @@ class CanwayRepositoryAspect(
                     records = resultRepos
                 )
             }
-            return result
         }
         return result
     }
 
     @Around(value = "execution(* com.tencent.bkrepo.repository.service.impl.RepositoryServiceImpl.deleteRepo(..))")
-    fun deleteRepo(point: ProceedingJoinPoint): Any? {
+    fun deleteRepo(point: ProceedingJoinPoint) {
         val args = point.args
         val repo = args.first() as RepoDeleteRequest
-        val request = HttpContextHolder.getRequest()
-        val api = request.requestURI.removePrefix("/").removePrefix("web/")
-        if (api.startsWith("api", ignoreCase = true)) {
-            try {
-                return point.proceed(args)
-            } catch (exception: Exception) {
-                if ((exception as ErrorCodeException).messageCode == ArtifactMessageCode.REPOSITORY_NOT_FOUND) return null
+        try {
+            point.proceed(args)
+        } catch (exception: Exception) {
+            if ((exception as ErrorCodeException).messageCode == ArtifactMessageCode.REPOSITORY_NOT_FOUND)
                 updateResource(repo.projectId, repo.name, repo.operator, ciDeleteResourceApi)
-            }
-            updateResource(repo.projectId, repo.name, repo.operator, ciDeleteResourceApi)
         }
-        return null
+        updateResource(repo.projectId, repo.name, repo.operator, ciDeleteResourceApi)
     }
 
     private fun updateResource(projectId: String, repoName: String, operator: String, api: String) {

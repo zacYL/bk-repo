@@ -47,13 +47,13 @@ class BkUserService(
 
     private fun getBkToken(): BkCertificate {
         val request = HttpContextHolder.getRequest()
+        request.getAttribute(USER_KEY)?.let {
+            return BkCertificate(CertType.USERID, it as String)
+        }
         request.cookies?.let {
             for (cookie in it) {
                 if (cookie.name == "bk_token") return BkCertificate(CertType.TOKEN, cookie.value)
             }
-        }
-        request.getAttribute(USER_KEY)?.let {
-            return BkCertificate(CertType.USERID, it as String)
         }
         throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "Can not found bk_token in cookies")
     }

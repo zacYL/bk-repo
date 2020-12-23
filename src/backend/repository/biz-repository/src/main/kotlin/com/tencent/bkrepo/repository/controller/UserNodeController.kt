@@ -82,7 +82,7 @@ class UserNodeController(
 ) {
 
     @ApiOperation("根据路径查看节点详情")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_READ)
     @GetMapping(DEFAULT_MAPPING_URI/* Deprecated */, "/detail/$DEFAULT_MAPPING_URI")
     fun getNodeDetail(
         @RequestAttribute userId: String,
@@ -243,7 +243,7 @@ class UserNodeController(
     }
 
     @ApiOperation("查询节点大小信息")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_READ)
     @GetMapping("/size/$DEFAULT_MAPPING_URI")
     fun computeSize(
         @RequestAttribute userId: String,

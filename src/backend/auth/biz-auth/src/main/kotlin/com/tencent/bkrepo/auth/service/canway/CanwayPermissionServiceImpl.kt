@@ -23,7 +23,9 @@ import com.tencent.bkrepo.auth.service.canway.pojo.ActionCollection
 import com.tencent.bkrepo.auth.service.canway.pojo.CanwayPermissionRequest
 import com.tencent.bkrepo.auth.service.canway.pojo.CanwayPermissionResponse
 import com.tencent.bkrepo.auth.service.canway.pojo.CanwayResponse
-import com.tencent.bkrepo.auth.service.canway.pojo.bk.BkDepartmentUser
+import com.tencent.bkrepo.auth.service.canway.pojo.CanwayPermissionResult
+import com.tencent.bkrepo.auth.service.canway.pojo.CanwayPermissionRole
+import com.tencent.bkrepo.auth.service.canway.pojo.CanwayPermissionDepartment
 import com.tencent.bkrepo.auth.service.local.PermissionServiceImpl
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
@@ -37,7 +39,7 @@ import org.springframework.data.mongodb.core.MongoTemplate
 
 class CanwayPermissionServiceImpl(
     userRepository: UserRepository,
-    roleRepository: RoleRepository,
+    private val roleRepository: RoleRepository,
     permissionRepository: PermissionRepository,
     mongoTemplate: MongoTemplate,
     repositoryClient: RepositoryClient,
@@ -50,13 +52,16 @@ class CanwayPermissionServiceImpl(
         logger.info("check permission  request : [$request] ")
         // 校验用户是否属于对应部门、用户组和已添加用户
         if (checkUserHasProjectPermission(request.uid)) return true
-        if (!canwayCheckPermission(request)) return false
+        val canwayPermissionResult = canwayCheckPermission(request)
+        if (!canwayPermissionResult.hasPermission) return false
         val action = request.action
         if (ActionCollection.isCanwayAction(action)) {
             val actions = ActionCollection.getActionsByCanway(action)
             for (ac in actions) {
                 val tempRequest = request.copy(
-                    action = ac
+                    action = ac,
+                    role = canwayPermissionResult.roles,
+                    department = canwayPermissionResult.departments
                 )
                 val result = super.checkPermission(tempRequest)
                 if (!result) return false
@@ -211,7 +216,7 @@ class CanwayPermissionServiceImpl(
         return checkPermission(checkPermissionRequest)
     }
 
-    private fun canwayCheckPermission(request: CheckPermissionRequest): Boolean {
+    private fun canwayCheckPermission(request: CheckPermissionRequest): CanwayPermissionResult {
         val uid = request.uid
         val projectId = request.projectId
             ?: throw(ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "`projectId` is must not be null"))
@@ -226,47 +231,55 @@ class CanwayPermissionServiceImpl(
 
         if (tPermissions != null) {
             for (tPermission in tPermissions) {
-                if (canwayCheckTPermission(uid, tPermission)) return true
+                val canwayPermissionResult = canwayCheckTPermission(uid, tPermission)
+                if (canwayPermissionResult.hasPermission) return canwayPermissionResult
             }
         }
-        return false
+        return CanwayPermissionResult(false, null, null)
     }
 
     /**
      * 用户在部门、用户组、授权用户中任一返回true
      */
-    private fun canwayCheckTPermission(uid: String, tPermission: TPermission): Boolean {
+    private fun canwayCheckTPermission(uid: String, tPermission: TPermission): CanwayPermissionResult {
         val departments = tPermission.departments
         val departmentResult = checkDepartment(uid, departments)
         val roles = tPermission.roles
         val roleResult = checkGroup(uid, roles)
         val userResult = tPermission.users.contains(uid)
-        return (departmentResult || roleResult || userResult)
+        return CanwayPermissionResult((departmentResult.hasPermission || roleResult.hasPermission || userResult), roleResult.role, departmentResult.department)
     }
 
     /**
      * 检查用户是否在被授权的用户组内
      */
-    private fun checkGroup(uid: String, roles: List<String>): Boolean {
-        val sumUsers = mutableSetOf<String>()
+    private fun checkGroup(uid: String, roles: List<String>): CanwayPermissionRole {
         for (role in roles) {
-            getUsersByGroupId(uid, role)?.let { sumUsers.addAll(it) }
+            val tRole = roleRepository.findFirstById(role)
+            tRole?.let {
+                getUsersByGroupId(uid, tRole.roleId)?.let {
+                    if (it.contains(uid)) {
+                        return CanwayPermissionRole(true, role)
+                    }
+                }
+                return CanwayPermissionRole(true, tRole.roleId)
+            }
         }
-        return sumUsers.contains(uid)
+        return CanwayPermissionRole(false, null)
     }
 
     /**
      * 检查用户是否在被授权的部门内
      */
-    private fun checkDepartment(uid: String, departments: List<String>): Boolean {
-        val sumUsers = mutableSetOf<BkDepartmentUser>()
+    private fun checkDepartment(uid: String, departments: List<String>): CanwayPermissionDepartment {
         for (department in departments) {
-            departmentService.getUsersByDepartmentId(uid, department.toInt())?.let { sumUsers.addAll(it) }
+            departmentService.getUsersByDepartmentId(uid, department.toInt())?.let {
+                for (user in it) {
+                    if (user.username == uid) return CanwayPermissionDepartment(true, department)
+                }
+            }
         }
-        for (user in sumUsers) {
-            if (user.username == uid) return true
-        }
-        return false
+        return CanwayPermissionDepartment(false, null)
     }
 
     /**

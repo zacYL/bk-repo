@@ -230,7 +230,10 @@ open class PermissionServiceImpl constructor(
         // check repo action permission
         with(request) {
             projectId?.let {
-                var celeriac = buildCheckActionQuery(projectId!!, uid, action, resourceType, roles, repoName)
+                val resultRole = mutableListOf<String>()
+                resultRole.addAll(roles)
+                request.role?.let { resultRole.add(it) }
+                var celeriac = buildCheckActionQuery(projectId!!, uid, action, resourceType, resultRole, department)
                 if (request.resourceType == ResourceType.REPO) {
                     celeriac = celeriac.and(TPermission::repos.name).`is`(request.repoName)
                 }
@@ -350,16 +353,18 @@ open class PermissionServiceImpl constructor(
         action: PermissionAction,
         resourceType: ResourceType,
         roles: List<String>,
-        repoName: String?
+        department: String?
     ): Criteria {
         val criteria = Criteria()
-        var celeriac = criteria.and(TPermission::resourceType.name).`is`(resourceType.toString()).and(TPermission::actions.name)
+        var celeriac = criteria.orOperator(
+            Criteria.where(TPermission::users.name).`in`(uid),
+            Criteria.where(TPermission::roles.name).`in`(roles),
+            Criteria.where(TPermission::departments.name).`in`(department)
+        )
+            .and(TPermission::resourceType.name).`is`(resourceType.toString()).and(TPermission::actions.name)
             .`in`(action.toString())
         if (resourceType != ResourceType.SYSTEM) {
             celeriac = celeriac.and(TPermission::projectId.name).`is`(projectId)
-//            if (repoName != null) {
-//                celeriac = celeriac.and(TPermission::repos.name).`is`(repoName)
-//            }
         }
         return celeriac
     }

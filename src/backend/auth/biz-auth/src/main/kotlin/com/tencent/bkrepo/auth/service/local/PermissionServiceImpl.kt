@@ -230,7 +230,7 @@ open class PermissionServiceImpl constructor(
         // check repo action permission
         with(request) {
             projectId?.let {
-                var celeriac = buildCheckActionQuery(projectId!!, uid, action, resourceType, roles)
+                var celeriac = buildCheckActionQuery(projectId!!, uid, action, resourceType, roles, repoName)
                 if (request.resourceType == ResourceType.REPO) {
                     celeriac = celeriac.and(TPermission::repos.name).`is`(request.repoName)
                 }
@@ -289,7 +289,7 @@ open class PermissionServiceImpl constructor(
 
         // check repo permission
         with(request) {
-            val celeriac = buildCheckActionQuery(projectId, uid, action, request.resourceType, roles)
+            val celeriac = buildCheckActionQuery(projectId, uid, action, request.resourceType, roles, null)
             val query = Query.query(celeriac)
             val result = mongoTemplate.find(query, TPermission::class.java)
             val permissionRepoList = result.stream().flatMap { it.repos.stream() }.collect(Collectors.toList())
@@ -349,16 +349,17 @@ open class PermissionServiceImpl constructor(
         uid: String,
         action: PermissionAction,
         resourceType: ResourceType,
-        roles: List<String>
+        roles: List<String>,
+        repoName: String?
     ): Criteria {
         val criteria = Criteria()
-        var celeriac = criteria.orOperator(
-            Criteria.where(TPermission::users.name).`in`(uid),
-            Criteria.where(TPermission::roles.name).`in`(roles)
-        ).and(TPermission::resourceType.name).`is`(resourceType.toString()).and(TPermission::actions.name)
+        var celeriac = criteria.and(TPermission::resourceType.name).`is`(resourceType.toString()).and(TPermission::actions.name)
             .`in`(action.toString())
         if (resourceType != ResourceType.SYSTEM) {
             celeriac = celeriac.and(TPermission::projectId.name).`is`(projectId)
+//            if (repoName != null) {
+//                celeriac = celeriac.and(TPermission::repos.name).`is`(repoName)
+//            }
         }
         return celeriac
     }

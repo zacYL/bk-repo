@@ -18,7 +18,6 @@ import com.tencent.bkrepo.repository.service.canway.RESOURCECODE
 import com.tencent.bkrepo.repository.service.canway.ACCESS
 import com.tencent.bkrepo.repository.service.canway.BELONGCODE
 import com.tencent.bkrepo.repository.service.canway.CREATE
-import com.tencent.bkrepo.repository.service.canway.bk.BkUserService
 import com.tencent.bkrepo.repository.service.canway.conf.CanwayAuthConf
 import com.tencent.bkrepo.repository.service.canway.exception.CanwayPermissionException
 import com.tencent.bkrepo.repository.service.canway.http.CanwayHttpUtils
@@ -66,7 +65,7 @@ class CanwayRepositoryAspect(
         }
         updateResource(repo.projectId, repo.name, repo.operator, ciAddResourceApi)
         try {
-            val result =  point.proceed(args)
+            val result = point.proceed(args)
             addUserIdToAdmin(userId as String, repo.projectId, repo.name)
             return result
         } catch (exception: Exception) {
@@ -77,12 +76,12 @@ class CanwayRepositoryAspect(
     }
 
     private fun addUserIdToAdmin(userId: String, projectId: String, repoName: String) {
-        val permissions = permissionService.listRepoBuiltinPermission(projectId, repoName).data?:
-        throw SystemException(CommonMessageCode.RESOURCE_NOT_FOUND, "Can not load buildin permission")
+        val permissions = permissionService.listRepoBuiltinPermission(projectId, repoName).data
+            ?: throw SystemException(CommonMessageCode.RESOURCE_NOT_FOUND, "Can not load buildin permission")
         for (permission in permissions) {
             if (permission.permName == "repo_admin") {
                 permissionService.updatePermissionUser(
-                        UpdatePermissionUserRequest(permission.id!!, listOf(userId))
+                    UpdatePermissionUserRequest(permission.id!!, listOf(userId))
                 )
             }
             return

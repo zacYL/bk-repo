@@ -5,7 +5,6 @@ import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
-import com.tencent.bkrepo.repository.service.canway.BKTOKEN
 import com.tencent.bkrepo.repository.service.canway.BKUSERNAME
 import com.tencent.bkrepo.repository.service.canway.conf.CanwayAuthConf
 import com.tencent.bkrepo.repository.service.canway.http.CanwayHttpUtils
@@ -13,7 +12,6 @@ import com.tencent.bkrepo.repository.service.canway.pojo.BkCertificate
 import com.tencent.bkrepo.repository.service.canway.pojo.BkUserData
 import com.tencent.bkrepo.repository.service.canway.pojo.BkUserInfo
 import com.tencent.bkrepo.repository.service.canway.pojo.CertType
-import org.omg.PortableServer.IdAssignmentPolicyValue.USER_ID
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service

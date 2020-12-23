@@ -17,7 +17,8 @@ class ActionService() {
                 CanwayAction(PermissionAction.ARTIFACT_SHARE, "制品分享"),
                 CanwayAction(PermissionAction.ARTIFACT_DOWNLOAD, "制品下载"),
                 CanwayAction(PermissionAction.ARTIFACT_READWRITE, "制品上传"),
-                CanwayAction(PermissionAction.ARTIFACT_READ, "制品查看")
+                CanwayAction(PermissionAction.ARTIFACT_READ, "制品查看"),
+                CanwayAction(PermissionAction.ARTIFACT_DELETE, "制品删除")
             )
             "pipeline" -> setOf(
                 CanwayAction(PermissionAction.REPO_MANAGE, "仓库管理"),

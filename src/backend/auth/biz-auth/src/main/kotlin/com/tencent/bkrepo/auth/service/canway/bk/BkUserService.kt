@@ -2,6 +2,8 @@ package com.tencent.bkrepo.auth.service.canway.bk
 
 import com.tencent.bkrepo.auth.constant.DEFAULT_PASSWORD
 import com.tencent.bkrepo.auth.pojo.user.CreateUserRequest
+import com.tencent.bkrepo.auth.pojo.user.UpdateUserRequest
+import com.tencent.bkrepo.auth.pojo.user.User
 import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.auth.service.canway.conf.CanwayAuthConf
 import com.tencent.bkrepo.auth.service.canway.http.CertTrustManager
@@ -78,15 +80,27 @@ class BkUserService(
     private fun checkUserExist(bkUsers: BkPage<BkUser>?) {
         bkUsers?.results ?: return
         for (bkUser in bkUsers.results) {
-            if (userService.getUserById(bkUser.username) == null) {
+            val bkrepoUser = userService.getUserById(bkUser.username)
+            if (bkrepoUser == null) {
                 val createUserRequest = CreateUserRequest(
-                    userId = bkUser.username,
-                    name = bkUser.displayName,
-                    pwd = DEFAULT_PASSWORD,
-                    admin = false
+                        userId = bkUser.username,
+                        name = bkUser.displayName,
+                        pwd = DEFAULT_PASSWORD,
+                        admin = false
                 )
                 userService.createUser(createUserRequest)
+            } else {
+                checkUserName(bkrepoUser, bkUser)
             }
+        }
+    }
+
+    private fun checkUserName(bkrepoUser: User, bkUser: BkUser) {
+        if (bkrepoUser.name != bkUser.displayName) {
+            userService.updateUserById(bkrepoUser.userId, UpdateUserRequest(
+                    name = bkUser.displayName
+            ))
+            logger.info("${bkrepoUser.userId} name : ${bkrepoUser.name} to ${bkUser.displayName}" )
         }
     }
 

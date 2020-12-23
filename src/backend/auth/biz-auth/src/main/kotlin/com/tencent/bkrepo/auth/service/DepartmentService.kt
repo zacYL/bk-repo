@@ -8,5 +8,5 @@ interface DepartmentService {
 
     fun listDepartmentByIds(username: String?, departmentIds: List<Int>): List<BkChildrenDepartment>
 
-    fun getUsersByDepartmentId(departmentId: Int): Set<BkDepartmentUser>?
+    fun getUsersByDepartmentId(username: String?, departmentId: Int): Set<BkDepartmentUser>?
 }

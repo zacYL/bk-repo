@@ -83,10 +83,10 @@ class BkUserService(
             val bkrepoUser = userService.getUserById(bkUser.username)
             if (bkrepoUser == null) {
                 val createUserRequest = CreateUserRequest(
-                        userId = bkUser.username,
-                        name = bkUser.displayName,
-                        pwd = DEFAULT_PASSWORD,
-                        admin = false
+                    userId = bkUser.username,
+                    name = bkUser.displayName,
+                    pwd = DEFAULT_PASSWORD,
+                    admin = false
                 )
                 userService.createUser(createUserRequest)
             } else {
@@ -97,10 +97,13 @@ class BkUserService(
 
     private fun checkUserName(bkrepoUser: User, bkUser: BkUser) {
         if (bkrepoUser.name != bkUser.displayName) {
-            userService.updateUserById(bkrepoUser.userId, UpdateUserRequest(
+            userService.updateUserById(
+                bkrepoUser.userId,
+                UpdateUserRequest(
                     name = bkUser.displayName
-            ))
-            logger.info("${bkrepoUser.userId} name : ${bkrepoUser.name} to ${bkUser.displayName}" )
+                )
+            )
+            logger.info("${bkrepoUser.userId} name : ${bkrepoUser.name} to ${bkUser.displayName}")
         }
     }
 

@@ -211,9 +211,6 @@ class CanwayPermissionServiceImpl(
         return checkPermission(checkPermissionRequest)
     }
 
-    /**
-     *
-     */
     private fun canwayCheckPermission(request: CheckPermissionRequest): Boolean {
         val uid = request.uid
         val projectId = request.projectId
@@ -264,7 +261,7 @@ class CanwayPermissionServiceImpl(
     private fun checkDepartment(uid: String, departments: List<String>): Boolean {
         val sumUsers = mutableSetOf<BkDepartmentUser>()
         for (department in departments) {
-            departmentService.getUsersByDepartmentId(department.toInt())?.let { sumUsers.addAll(it) }
+            departmentService.getUsersByDepartmentId(uid, department.toInt())?.let { sumUsers.addAll(it) }
         }
         for (user in sumUsers) {
             if (user.username == uid) return true

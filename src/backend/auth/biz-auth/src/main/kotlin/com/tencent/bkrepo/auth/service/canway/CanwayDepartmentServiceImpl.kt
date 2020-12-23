@@ -13,6 +13,7 @@ import com.tencent.bkrepo.auth.service.canway.pojo.bk.CertType
 import com.tencent.bkrepo.auth.service.canway.pojo.bk.BkDepartmentUser
 import com.tencent.bkrepo.auth.service.canway.pojo.bk.BkParentDepartment
 import com.tencent.bkrepo.auth.util.HttpUtils
+import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.readJsonString
@@ -90,7 +91,11 @@ class CanwayDepartmentServiceImpl(
      * 兼容蓝鲸 username 和cookie两种认证模式
      */
     fun getBkCertificate(username: String?): BkCertificate {
-        val cookies = HttpContextHolder.getRequest().cookies
+        val request = HttpContextHolder.getRequest()
+        val cookies = request.cookies
+        request.getAttribute(USER_KEY)?.let {
+            return BkCertificate(CertType.USERNAME, it as String)
+        }
         if (cookies != null) {
             for (cookie in cookies) {
                 if (cookie.name == CertType.TOKEN.value) return BkCertificate(CertType.TOKEN, cookie.value)
@@ -125,8 +130,8 @@ class CanwayDepartmentServiceImpl(
             ?: throw ErrorCodeException(CommonMessageCode.RESOURCE_NOT_FOUND, "Can not found any companyId")
     }
 
-    override fun getUsersByDepartmentId(departmentId: Int): Set<BkDepartmentUser>? {
-        val bkCertificate = getBkCertificate(null)
+    override fun getUsersByDepartmentId(username: String?, departmentId: Int): Set<BkDepartmentUser>? {
+        val bkCertificate = getBkCertificate(username)
         val uri = String.format(getUsersByDepartmentIdApi, bkAppCode, bkAppSecret, bkCertificate.certType.value, bkCertificate.value, departmentId)
         val requestUrl = "${paasHost?.removeSuffix("/")}$uri"
         val responseContent = CanwayHttpUtils.doGet(requestUrl).content

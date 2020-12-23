@@ -54,7 +54,8 @@ object ActionCollection {
                 PermissionAction.ARTIFACT_SHARE,
                 PermissionAction.ARTIFACT_DOWNLOAD,
                 PermissionAction.ARTIFACT_READWRITE,
-                PermissionAction.ARTIFACT_READ
+                PermissionAction.ARTIFACT_READ,
+                PermissionAction.ARTIFACT_DELETE
             )
             "pipeline" -> listOf(
                 PermissionAction.MANAGE,

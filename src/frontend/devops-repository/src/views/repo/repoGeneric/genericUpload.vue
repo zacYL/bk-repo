@@ -79,12 +79,13 @@
                 const { file, progressHandler } = await this.$refs.artifactoryUpload.getFiles()
                 if (!file.overwrite) {
                     this.loading = true
-                    const url = `/web/generic/${this.$route.params.projectId}/${this.$route.query.name}/${encodeURIComponent(`${this.fullPath}/${file.name}`)}`
+                    const url = `/generic/${this.$route.params.projectId}/${this.$route.query.name}/${encodeURIComponent(`${this.fullPath}/${file.name}`)}`
                     this.$ajax.head(url).then(() => {
                         this.$bkMessage({
                             theme: 'error',
                             message: this.$t('fileExist')
                         })
+                        this.loading = false
                     }).catch(e => {
                         if (e.status === 404) {
                             this.uploadFile(file, progressHandler)
@@ -93,9 +94,8 @@
                                 theme: 'error',
                                 message: e.message
                             })
+                            this.loading = false
                         }
-                    }).finally(() => {
-                        this.loading = false
                     })
                 } else {
                     this.uploadFile(file, progressHandler)

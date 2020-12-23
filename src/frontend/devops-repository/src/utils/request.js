@@ -41,7 +41,7 @@ request.interceptors.response.use(response => {
             status: httpStatus,
             message: '服务维护中，请稍候...'
         })
-    } else if (httpStatus === 400) {
+    } else if (httpStatus === 400 || httpStatus === 404) {
         return Promise.reject({ // eslint-disable-line
             status: httpStatus,
             message

@@ -34,7 +34,7 @@ request.interceptors.response.use(response => {
     } else if (httpStatus === 403) {
         return Promise.reject({ // eslint-disable-line
             status: httpStatus,
-            message
+            message: '未获得授权'
         })
     } else if (httpStatus === 500 || httpStatus === 503 || httpStatus === 512) {
         return Promise.reject({ // eslint-disable-line

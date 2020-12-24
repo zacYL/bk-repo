@@ -3,6 +3,7 @@ package com.tencent.bkrepo.auth.service.canway
 import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_ADMIN
 import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_USER
 import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_VIEWER
+import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.model.TPermission
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
@@ -38,7 +39,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.data.mongodb.core.MongoTemplate
 
 class CanwayPermissionServiceImpl(
-    userRepository: UserRepository,
+    private val userRepository: UserRepository,
     private val roleRepository: RoleRepository,
     permissionRepository: PermissionRepository,
     mongoTemplate: MongoTemplate,
@@ -51,6 +52,7 @@ class CanwayPermissionServiceImpl(
     override fun checkPermission(request: CheckPermissionRequest): Boolean {
         logger.info("check permission  request : [$request] ")
         // 校验用户是否属于对应部门、用户组和已添加用户
+        if(isBkrepoAdmin(request)) return true
         if (checkUserHasProjectPermission(request.uid)) return true
         val canwayPermissionResult = canwayCheckPermission(request)
         if (!canwayPermissionResult.hasPermission) return false
@@ -70,6 +72,18 @@ class CanwayPermissionServiceImpl(
         }
         return super.checkPermission(request)
     }
+
+    private fun isBkrepoAdmin(request: CheckPermissionRequest): Boolean {
+        logger.debug("check permission  request : [$request] ")
+        val user = userRepository.findFirstByUserId(request.uid) ?: run {
+            throw ErrorCodeException(AuthMessageCode.AUTH_USER_NOT_EXIST)
+        }
+
+        // check user admin permission
+        return user.admin
+    }
+
+
 
     override fun updatePermissionDepartment(request: UpdatePermissionDepartmentRequest): Boolean {
         val webRequest = HttpContextHolder.getRequest()
@@ -149,31 +163,26 @@ class CanwayPermissionServiceImpl(
     }
 
     private fun checkUserHasProjectPermission(operator: String): Boolean {
-        val canwayPermissionResponse = getCanwayPermissionInstance(
-            "bk_ci", operator, "create", "system", "project"
-        )
-        return checkInstance("bk_ci", canwayPermissionResponse)
+        val canwayPermissionResponse = getCanwayPermissionInstance(operator)
+        return checkInstance(canwayPermissionResponse)
     }
 
-    private fun getCanwayPermissionInstance(
-        projectId: String,
-        operator: String,
-        action: String,
-        belongCode: String,
-        resourceCode: String
-    ):
+    /**
+     * 查询系统级创建
+     */
+    private fun getCanwayPermissionInstance(operator: String):
         CanwayPermissionResponse? {
             val canwayCheckPermissionRequest = CanwayPermissionRequest(
                 userId = operator,
-                belongCode = belongCode,
-                belongInstance = projectId,
+                belongCode = "system",
+                belongInstance = "bk_ci",
                 resourcesActions = setOf(
                     CanwayPermissionRequest.CanwayAction(
-                        actionCode = action,
-                        resourceCode = resourceCode,
+                        actionCode = "create",
+                        resourceCode = "project",
                         resourceInstance = setOf(
                             CanwayPermissionRequest.CanwayAction.CanwayInstance(
-                                resourceCode = resourceCode
+                                resourceCode = "project"
                             )
                         )
                     )
@@ -185,20 +194,16 @@ class CanwayPermissionServiceImpl(
             return responseContent.readJsonString<CanwayResponse<CanwayPermissionResponse>>().data
         }
 
-    private fun checkInstance(repoName: String?, canwayPermission: CanwayPermissionResponse?): Boolean {
+    private fun checkInstance(canwayPermission: CanwayPermissionResponse?): Boolean {
         canwayPermission?.let {
-            return matchInstance(repoName, it.instanceCodes.first().resourceInstance)
+            return matchInstance(it.instanceCodes.first().resourceInstance)
         }
         return false
     }
 
-    private fun matchInstance(repoName: String?, instances: Set<String>?): Boolean {
+    private fun matchInstance(instances: Set<String>?): Boolean {
         instances?.let {
-            if (repoName == null) {
-                if (it.contains("*")) return true
-            } else {
-                if (it.contains("*") || it.contains(repoName)) return true
-            }
+                if (it.contains("*") || it.contains("bk_ci")) return true
         }
         return false
     }

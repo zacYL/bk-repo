@@ -7,18 +7,7 @@ const val ciApi = "/api"
 const val ciTenant = "X-DEVOPS-TENANT-ID"
 const val ciProject = "X-DEVOPS-PROJECT-ID"
 
-// 在 canway 权限中心注册的资源名
-const val ciResourceCode = "bkrepo"
 // 在 canway 权限中心注册资源所属类型: project 代表项目一级
-const val ciBelongCode = "project"
-
-const val REPO_ADMIN = "制品库-管理员"
-const val REPO_VIEWER = "制品库-查看者"
-const val REPO_USER = "制品库-使用者"
-
-const val USER_TYPE = "G_USER"
-const val GROUP_TYPE = "G_GROUP"
-const val DEPARTMENT_TYPE = "G_DEPARTMENT"
-
 const val BELONGCODE = "project"
+// 在 canway 权限中心注册的资源名
 const val RESOURCECODE = "bkrepo"

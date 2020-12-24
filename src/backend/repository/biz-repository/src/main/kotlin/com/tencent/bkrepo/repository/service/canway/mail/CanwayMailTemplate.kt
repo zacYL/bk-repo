@@ -1,13 +1,20 @@
 package com.tencent.bkrepo.repository.service.canway.mail
 
+import cn.hutool.core.img.ImgUtil
+import cn.hutool.extra.qrcode.QrCodeUtil
+import cn.hutool.extra.qrcode.QrConfig
 import com.tencent.bkrepo.repository.service.canway.pojo.FileShareInfo
+import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel.H
 import java.text.SimpleDateFormat
 import java.util.Date
 
 object CanwayMailTemplate {
 
+    private const val QRCODE_HEIGHT = 100
+    private const val QRCODE_WIDTH = 100
+
     fun getShareEmailTitle(cnName: String, fileName: String): String {
-        return "【BKREPO仓库通知】${cnName}与你共享${fileName}文件"
+        return "【蓝鲸DevOps平台版本仓库通知】${cnName}与你共享${fileName}文件"
     }
 
     fun getShareEmailBody(projectId: String, title: String, cnName: String, days: Int, FileShareInfoList: List<FileShareInfo>): String {
@@ -30,6 +37,13 @@ object CanwayMailTemplate {
             .replace(TABLE_COLUMN3_TITLE, "操作")
     }
 
+    fun getQRCodeBase64(shortUrl: String): String {
+        val qrConfig = QrConfig(QRCODE_WIDTH, QRCODE_HEIGHT)
+        qrConfig.margin = 0
+        qrConfig.errorCorrection = H
+        return QrCodeUtil.generateAsBase64(shortUrl, qrConfig, ImgUtil.IMAGE_TYPE_PNG)
+    }
+
     private fun getShareEmailBodyRow(fileName: String, md5: String, projectName: String, downloadUrl: String, qrCodeBase64: String): String {
         return "                                                                            <tr>\n" +
             "                                                                                <td style=\"padding: 16px; border: 1px solid #e6e6e6;text-align: left; font-weight: normal;\">" +
@@ -49,7 +63,14 @@ object CanwayMailTemplate {
     private val TABLE_COLUMN2_TITLE = "#{column2Title}"
     private val TABLE_COLUMN3_TITLE = "#{column3Title}"
 
-    private val SHARE_EMAIL_HTML_PREFIX = "<table class=\"template-table\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; min-width: auto; mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #fff; background: #fff;\">\n" +
+    private val SHARE_EMAIL_HTML_PREFIX = "<!DOCTYPE html>\n" +
+            "<html>\n" +
+            "<head>\n" +
+            "<meta charset=\"utf-8\">\n" +
+            "<title></title>\n" +
+            "</head>\n" +
+            "<body>" +
+            "<table class=\"template-table\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; min-width: auto; mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #fff; background: #fff;\">\n" +
         "    <tbody>\n" +
         "        <tr>\n" +
         "            <td align=\"center\" valign=\"top\" width=\"100%\" style=\"padding: 16px;\">\n" +
@@ -81,7 +102,7 @@ object CanwayMailTemplate {
         "                                        <td class=\"email-content\" style=\"padding: 0 36px; background: #fff;\">\n" +
         "                                            <table cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; mso-table-lspace: 0pt; mso-table-rspace: 0pt;\">\n" +
         "                                                <tr>\n" +
-        "                                                    <td class=\"email-source\" style=\"padding: 14px 0; color: #bebebe;\">来自蓝鲸DevOps平台的推送</td>\n" +
+        "                                                    <td class=\"email-source\" style=\"padding: 14px 0; color: #bebebe;\">来自Bkrepo制品库的通知</td>\n" +
         "                                                </tr>\n" +
         "                                                <!-- 表格内容 -->\n" +
         "                                                <tr class=\"email-information\">\n" +
@@ -133,5 +154,7 @@ object CanwayMailTemplate {
             "            </td>\n" +
             "        </tr>\n" +
             "    </tbody>\n" +
-            "</table>\n"
+            "</table>\n" +
+            "</body>\n" +
+            "</html>"
 }

@@ -27,7 +27,7 @@ class BkUserService(
     val appSecert = canwayAuthConf.appSecret
 
     fun getBkUser(): String {
-        val bkCert = getBkToken()
+        val bkCert = getBkCert()
         val uri = String.format(bkUserInfoApi, appCode, appSecert, bkCert.certType.value, bkCert.value)
         val requestUrl = "${bkHost.removeSuffix("/")}$uri"
         val responseContent = CanwayHttpUtils.doGet(requestUrl).content
@@ -45,7 +45,7 @@ class BkUserService(
             ?: throw ErrorCodeException(CommonMessageCode.SERVICE_CALL_ERROR, "Can not load user info")
     }
 
-    private fun getBkToken(): BkCertificate {
+    private fun getBkCert(): BkCertificate {
         val request = HttpContextHolder.getRequest()
         request.getAttribute(USER_KEY)?.let {
             return BkCertificate(CertType.USERID, it as String)

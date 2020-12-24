@@ -9,7 +9,5 @@ class CanwayMailUtils(
 
     private val mailMessage = mailSender.createMimeMessage()
 
-    private fun mimeMailMessage() {
-        val mimeMailMessage = MimeMessageHelper(mailMessage, true)
-    }
+
 }

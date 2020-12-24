@@ -7,11 +7,9 @@ import com.tencent.bkrepo.auth.pojo.user.User
 import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.auth.service.canway.conf.CanwayAuthConf
 import com.tencent.bkrepo.auth.service.canway.http.CertTrustManager
-import com.tencent.bkrepo.auth.service.canway.pojo.bk.BkPage
-import com.tencent.bkrepo.auth.service.canway.pojo.bk.BkResponse
-import com.tencent.bkrepo.auth.service.canway.pojo.bk.BkUser
-import com.tencent.bkrepo.auth.service.canway.pojo.bk.BkUserInfo
+import com.tencent.bkrepo.auth.service.canway.pojo.bk.*
 import com.tencent.bkrepo.auth.util.HttpUtils
+import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.readJsonString
@@ -45,8 +43,8 @@ class BkUserService(
     val appSecret = canwayAuthConf.appSecret
 
     fun getBkUser(): String {
-        val bkToken = getBkToken()
-        val uri = String.format(bkUserInfoApi, appCode, appSecret, bkToken)
+        val bkCert = getBkCert()
+        val uri = String.format(bkUserInfoApi, appCode, appSecret, bkCert.certType.value, bkCert.value)
         val requestUrl = "${bkHost.removeSuffix("/")}$uri"
         val request = Request.Builder()
             .url(requestUrl)
@@ -58,12 +56,15 @@ class BkUserService(
         return bkUser.bk_username
     }
 
-    private fun getBkToken(): String {
+    private fun getBkCert(): BkCertificate {
         val request = HttpContextHolder.getRequest()
+        request.getAttribute(USER_KEY)?.let {
+            return BkCertificate(CertType.USERNAME, it as String)
+        }
         val cookies = request.cookies
             ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "bk_token must not be null")
         for (cookie in cookies) {
-            if (cookie.name == "bk_token") return cookie.value
+            if (cookie.name == "bk_token") return BkCertificate(CertType.TOKEN, cookie.value)
         }
         throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "Can not found bk_token in cookies")
     }
@@ -118,7 +119,7 @@ class BkUserService(
 
     companion object {
         val logger: Logger = LoggerFactory.getLogger(BkUserService::class.java)
-        const val bkUserInfoApi = "/api/c/compapi/v2/bk_login/get_user/?bk_app_code=%s&bk_app_secret=%s&bk_token=%s"
+        const val bkUserInfoApi = "/api/c/compapi/v2/bk_login/get_user/?bk_app_code=%s&bk_app_secret=%s&%s=%s"
         const val bkUserApi = "/api/c/compapi/v2/usermanage/list_users/?bk_app_code=%s&username=admin&bk_app_secret=%s&fields=username,display_name&page=%d&page_size=%d"
         const val pageSize = 50
     }

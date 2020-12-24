@@ -198,8 +198,6 @@ open class PermissionServiceImpl constructor(
             throw ErrorCodeException(AuthMessageCode.AUTH_USER_NOT_EXIST)
         }
 
-        // check user admin permission
-        if (user.admin) return true
         val roles = user.roles
 
         // check role project admin
@@ -231,7 +229,7 @@ open class PermissionServiceImpl constructor(
         with(request) {
             projectId?.let {
                 val resultRole = mutableListOf<String>()
-                resultRole.addAll(roles)
+                resultRole.addAll(user.roles)
                 request.role?.let { resultRole.add(it) }
                 var celeriac = buildCheckActionQuery(projectId!!, uid, action, resourceType, resultRole, department)
                 if (request.resourceType == ResourceType.REPO) {

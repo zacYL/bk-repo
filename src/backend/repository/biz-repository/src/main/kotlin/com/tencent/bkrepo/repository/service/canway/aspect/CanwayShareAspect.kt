@@ -1,6 +1,8 @@
 package com.tencent.bkrepo.repository.service.canway.aspect
 
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
+import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.pojo.share.ShareRecordCreateRequest
 import com.tencent.bkrepo.repository.pojo.share.ShareRecordInfo
 import com.tencent.bkrepo.repository.service.canway.bk.BkUserService
@@ -12,7 +14,6 @@ import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.mail.SimpleMailMessage
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.MimeMessageHelper
 import org.springframework.stereotype.Component
@@ -22,7 +23,8 @@ import org.springframework.stereotype.Component
 class CanwayShareAspect(
     canwayMailConf: CanwayMailConf,
     val bkUserService: BkUserService,
-    val mailSender: JavaMailSender
+    val mailSender: JavaMailSender,
+    val nodeClient: NodeClient
 ) {
 
     private val sender = canwayMailConf.mailUsername
@@ -33,6 +35,8 @@ class CanwayShareAspect(
         val args = point.args
         val userId = args.first() as String
         val artifactInfo = args[1] as ArtifactInfo
+        val node = nodeClient.getNodeDetail(artifactInfo.projectId, artifactInfo.repoName,
+                artifactInfo.getArtifactFullPath()).data?:throw ArtifactNotFoundException("Can not found artifact")
         val shareRecordCreateRequest = args[2] as ShareRecordCreateRequest
         val fileName = artifactInfo.getArtifactFullPath().split("/").last()
         val result = point.proceed(args)
@@ -43,20 +47,21 @@ class CanwayShareAspect(
                     "$bkrepoHost$shareUrl"
                 }
                 val fileShareInfo = FileShareInfo(
-                    fileName = fileName,
-                    // todo
-                    md5 = "33",
-                    projectId = artifactInfo.projectId,
-                    repoName = artifactInfo.repoName,
-                    downloadUrl = downloadUrl,
-                    // todo
-                    qrCodeBase64 = "ddd"
+                        fileName = fileName,
+                        md5 = node.md5 ?: "Can not found md5 value",
+                        projectId = artifactInfo.projectId,
+                        repoName = artifactInfo.repoName,
+                        downloadUrl = downloadUrl,
+                        qrCodeBase64 = if (fileName.endsWith("apk") || fileName.endsWith("ipa")){
+                            CanwayMailTemplate.getQRCodeBase64(downloadUrl)
+                        }else "null"
+
                 )
                 val shareUsers = shareRecordCreateRequest.authorizedUserList
                 val receivers = mutableSetOf<String>()
                 for (user in shareUsers) {
                     // 查询蓝鲸用户信息
-                    val userData = bkUserService.getBkUserByUserId(userId)
+                    val userData = bkUserService.getBkUserByUserId(user)
                     userData.email?.let { receivers.add(it) }
                 }
                 sendMimeMail(userId, fileShareInfo, receivers.toTypedArray())
@@ -67,15 +72,6 @@ class CanwayShareAspect(
         return result
     }
 
-    private fun sendSimpleMail(email: Array<String>, content: String) {
-        val simpleMailMessage = SimpleMailMessage()
-        simpleMailMessage.setFrom(sender)
-        simpleMailMessage.setTo(*email)
-        simpleMailMessage.setSubject("文件分享")
-        simpleMailMessage.setText(content)
-        mailSender.send(simpleMailMessage)
-    }
-
     private fun sendMimeMail(userId: String, file: FileShareInfo, email: Array<String>) {
         val mailMessage = mailSender.createMimeMessage()
         val mimeMailMessage = MimeMessageHelper(mailMessage, true)
@@ -84,7 +80,7 @@ class CanwayShareAspect(
         val title = CanwayMailTemplate.getShareEmailTitle(userId, file.fileName)
         mimeMailMessage.setSubject(title)
         val body = CanwayMailTemplate.getShareEmailBody(file.projectId, title, userId, 1, listOf(file))
-        mimeMailMessage.setText(body)
+        mimeMailMessage.setText(body, true)
         mailSender.send(mailMessage)
     }
 

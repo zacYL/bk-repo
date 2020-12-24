@@ -34,10 +34,14 @@ class CanwayShareAspect(
     fun sendMail(point: ProceedingJoinPoint): Any {
         val args = point.args
         val userId = args.first() as String
+        //获取用户中文名
+        val senderBk = bkUserService.getBkUserByUserId(userId)
+        val chname = senderBk.chname?:senderBk.bk_username
         val artifactInfo = args[1] as ArtifactInfo
         val node = nodeClient.getNodeDetail(artifactInfo.projectId, artifactInfo.repoName,
                 artifactInfo.getArtifactFullPath()).data?:throw ArtifactNotFoundException("Can not found artifact")
         val shareRecordCreateRequest = args[2] as ShareRecordCreateRequest
+        val expireDays = shareRecordCreateRequest.expireSeconds/86400
         val fileName = artifactInfo.getArtifactFullPath().split("/").last()
         val result = point.proceed(args)
         try {
@@ -55,7 +59,6 @@ class CanwayShareAspect(
                         qrCodeBase64 = if (fileName.endsWith("apk") || fileName.endsWith("ipa")){
                             CanwayMailTemplate.getQRCodeBase64(downloadUrl)
                         }else "null"
-
                 )
                 val shareUsers = shareRecordCreateRequest.authorizedUserList
                 val receivers = mutableSetOf<String>()
@@ -64,7 +67,7 @@ class CanwayShareAspect(
                     val userData = bkUserService.getBkUserByUserId(user)
                     userData.email?.let { receivers.add(it) }
                 }
-                sendMimeMail(userId, fileShareInfo, receivers.toTypedArray())
+                sendMimeMail(chname, fileShareInfo, receivers.toTypedArray(), expireDays.toInt())
             }
         } catch (e: Exception) {
             logger.error(e.message)
@@ -72,14 +75,14 @@ class CanwayShareAspect(
         return result
     }
 
-    private fun sendMimeMail(userId: String, file: FileShareInfo, email: Array<String>) {
+    private fun sendMimeMail(userId: String, file: FileShareInfo, email: Array<String> , days: Int) {
         val mailMessage = mailSender.createMimeMessage()
         val mimeMailMessage = MimeMessageHelper(mailMessage, true)
         mimeMailMessage.setFrom(sender)
         mimeMailMessage.setTo(email)
         val title = CanwayMailTemplate.getShareEmailTitle(userId, file.fileName)
         mimeMailMessage.setSubject(title)
-        val body = CanwayMailTemplate.getShareEmailBody(file.projectId, title, userId, 1, listOf(file))
+        val body = CanwayMailTemplate.getShareEmailBody(file.projectId, title, userId, days, listOf(file))
         mimeMailMessage.setText(body, true)
         mailSender.send(mailMessage)
     }

@@ -70,8 +70,14 @@ class CanwayRepositoryAspect(
             addUserIdToAdmin(userId as String, repo.projectId, repo.name)
             return result
         } catch (exception: Exception) {
-            if ((exception as ErrorCodeException).messageCode.getKey() == "artifact.repository.existed")
-                updateResource(repo.projectId, repo.name, repo.operator, ciDeleteResourceApi)
+            try {
+                val e = exception as ErrorCodeException
+                if (e.messageCode.getKey() != "artifact.repository.existed") {
+                    updateResource(repo.projectId, repo.name, repo.operator, ciDeleteResourceApi)
+                }
+            } catch (exception1: Exception) {
+                throw exception
+            }
             throw exception
         }
     }

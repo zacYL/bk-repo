@@ -34,5 +34,6 @@ dependencies {
     api(project(":auth:api-auth"))
     api(project(":common:common-security"))
     api(project(":repository:api-repository"))
+    api(project(":common:common-job"))
     implementation("com.google.guava:guava")
 }

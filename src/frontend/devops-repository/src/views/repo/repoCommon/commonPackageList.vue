@@ -28,7 +28,7 @@
     </div>
 </template>
 <script>
-    import emptyData from '@/components/emptyData'
+    import emptyData from '@/components/EmptyData'
     import packageCard from './packageCard'
     import emptyGuide from './emptyGuide'
     import commonMixin from './commonMixin'
@@ -70,15 +70,7 @@
             }
         },
         created () {
-            this.getPackageListHandler().catch(({ message }) => {
-                this.$bkMessage({
-                    theme: 'error',
-                    message
-                })
-                this.$router.push({
-                    name: 'repoList'
-                })
-            })
+            this.getPackageListHandler()
         },
         methods: {
             ...mapActions([

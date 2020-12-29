@@ -67,7 +67,7 @@ import org.springframework.stereotype.Service
 class UploadService(
     private val nodeClient: NodeClient,
     private val storageService: StorageService
-): ArtifactService() {
+) : ArtifactService() {
 
     fun upload(artifactInfo: GenericArtifactInfo, file: ArtifactFile) {
         val context = ArtifactUploadContext(file)

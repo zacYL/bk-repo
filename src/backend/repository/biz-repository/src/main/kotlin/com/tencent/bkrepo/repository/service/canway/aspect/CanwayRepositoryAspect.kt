@@ -2,6 +2,7 @@ package com.tencent.bkrepo.repository.service.canway.aspect
 
 import com.tencent.bkrepo.auth.api.ServicePermissionResource
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionUserRequest
+import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
 import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.exception.SystemException
@@ -52,17 +53,17 @@ class CanwayRepositoryAspect(
         val args = point.args
         val repo = args.first() as RepoCreateRequest
         val request = HttpContextHolder.getRequest()
-        val userId = try {
-            request.getAttribute(USER_KEY)
-        } catch (e: Exception) {
-            repo.operator
-        } ?: throw AccessDeniedException()
+        val requestUserId = request.getAttribute(USER_KEY)?.let { ANONYMOUS_USER }
+        val userId = if (ANONYMOUS_USER == requestUserId && repo.operator.isBlank()) {
+            throw AccessDeniedException()
+        } else repo.operator
 
         val api = request.requestURI.removePrefix("/").removePrefix("web/")
         if (api.startsWith("api", ignoreCase = true)) {
             if (!canwayPermissionService.checkCanwayPermission(repo.projectId, repo.name, userId as String, CREATE))
                 throw CanwayPermissionException()
         }
+        logger.info("userId: $userId  ,   operator: ${repo.operator}")
         updateResource(repo.projectId, repo.name, userId as String, ciAddResourceApi)
         val result: Any?
         try {

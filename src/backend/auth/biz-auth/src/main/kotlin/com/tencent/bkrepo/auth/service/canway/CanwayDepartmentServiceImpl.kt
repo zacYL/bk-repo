@@ -60,7 +60,7 @@ class CanwayDepartmentServiceImpl(
             val departments = responseContent.readJsonString<BkResponse<List<BkParentDepartment>>>()
             return departments.data?.first()?.children
         } else {
-            val company = getCompanyId(bkCertificate)
+            val company = getCompanyId(bkCertificate) ?: return null
             return listOf(company).map { transferCanwayChildrenDepartment(company) }
         }
     }
@@ -117,7 +117,7 @@ class CanwayDepartmentServiceImpl(
         )
     }
 
-    fun getCompanyId(bkCertificate: BkCertificate): BkDepartment {
+    fun getCompanyId(bkCertificate: BkCertificate): BkDepartment? {
         // 查出总公司id
         val url = "${paasHost?.removeSuffix("/")}$paasListDepartmentUrl"
         val requestUrl = String.format(paasDepartmentApi, url, bkAppCode, bkAppSecret, bkCertificate.certType.value, bkCertificate.value)
@@ -127,7 +127,6 @@ class CanwayDepartmentServiceImpl(
         val response = HttpUtils.doRequest(okHttpClient, request, 3, mutableSetOf(200))
         val responseContent = response.content
         return responseContent.readJsonString<BkResponse<BkPage<BkDepartment>>>().data?.results?.first()
-            ?: throw ErrorCodeException(CommonMessageCode.RESOURCE_NOT_FOUND, "Can not found any companyId")
     }
 
     override fun getUsersByDepartmentId(username: String?, departmentId: Int): Set<BkDepartmentUser>? {

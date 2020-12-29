@@ -60,17 +60,19 @@ class CanwayRepositoryAspect(
 
         val api = request.requestURI.removePrefix("/").removePrefix("web/")
         if (api.startsWith("api", ignoreCase = true)) {
-            if (!canwayPermissionService.checkCanwayPermission(repo.projectId, repo.name, repo.operator, CREATE))
+            if (!canwayPermissionService.checkCanwayPermission(repo.projectId, repo.name, userId as String, CREATE))
                 throw CanwayPermissionException()
         }
-        updateResource(repo.projectId, repo.name, repo.operator, ciAddResourceApi)
+        updateResource(repo.projectId, repo.name, userId as String, ciAddResourceApi)
         val result: Any?
         try {
             result = point.proceed(args)
-            addUserIdToAdmin(userId as String, repo.projectId, repo.name)
+            addUserIdToAdmin(userId, repo.projectId, repo.name)
             return result
         } catch (exception: Exception) {
+            logger.warn("create repo aspect ${exception.message}")
             if (exception is ErrorCodeException && exception.messageCode.getKey() != "artifact.repository.existed") {
+                logger.warn("create repo aspect ${exception.message}")
                 updateResource(repo.projectId, repo.name, repo.operator, ciDeleteResourceApi)
             }
             throw exception

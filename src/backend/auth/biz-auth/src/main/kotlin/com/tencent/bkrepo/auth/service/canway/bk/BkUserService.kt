@@ -7,7 +7,12 @@ import com.tencent.bkrepo.auth.pojo.user.User
 import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.auth.service.canway.conf.CanwayAuthConf
 import com.tencent.bkrepo.auth.service.canway.http.CertTrustManager
-import com.tencent.bkrepo.auth.service.canway.pojo.bk.*
+import com.tencent.bkrepo.auth.service.canway.pojo.bk.BkUserInfo
+import com.tencent.bkrepo.auth.service.canway.pojo.bk.BkCertificate
+import com.tencent.bkrepo.auth.service.canway.pojo.bk.CertType
+import com.tencent.bkrepo.auth.service.canway.pojo.bk.BkUser
+import com.tencent.bkrepo.auth.service.canway.pojo.bk.BkPage
+import com.tencent.bkrepo.auth.service.canway.pojo.bk.BkResponse
 import com.tencent.bkrepo.auth.util.HttpUtils
 import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException

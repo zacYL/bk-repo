@@ -52,7 +52,7 @@ class CanwayPermissionServiceImpl(
     override fun checkPermission(request: CheckPermissionRequest): Boolean {
         logger.info("check permission  request : [$request] ")
         // 校验用户是否属于对应部门、用户组和已添加用户
-        if(isBkrepoAdmin(request)) return true
+        if (isBkrepoAdmin(request)) return true
         if (checkUserHasProjectPermission(request.uid)) return true
         val canwayPermissionResult = canwayCheckPermission(request)
         if (!canwayPermissionResult.hasPermission) return false
@@ -82,8 +82,6 @@ class CanwayPermissionServiceImpl(
         // check user admin permission
         return user.admin
     }
-
-
 
     override fun updatePermissionDepartment(request: UpdatePermissionDepartmentRequest): Boolean {
         val webRequest = HttpContextHolder.getRequest()
@@ -203,7 +201,7 @@ class CanwayPermissionServiceImpl(
 
     private fun matchInstance(instances: Set<String>?): Boolean {
         instances?.let {
-                if (it.contains("*") || it.contains("bk_ci")) return true
+            if (it.contains("*") || it.contains("bk_ci")) return true
         }
         return false
     }

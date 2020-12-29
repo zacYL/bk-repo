@@ -33,8 +33,8 @@ data class BkDepartment(
     val rght: Int,
     val lft: Int,
     val order: Int,
-    val create_time: String,
-    val update_time: String
+    val create_time: String?,
+    val update_time: String?
 )
 
 data class BkParentDepartment(

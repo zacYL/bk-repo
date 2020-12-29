@@ -115,7 +115,7 @@ class UserServiceImpl constructor(
             if (exception.messageCode == AuthMessageCode.AUTH_DUP_UID) {
                 return true
             }
-            throw  exception
+            throw exception
         }
         return true
     }

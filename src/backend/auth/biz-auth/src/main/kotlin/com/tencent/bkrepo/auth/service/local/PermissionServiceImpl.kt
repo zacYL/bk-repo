@@ -58,6 +58,7 @@ import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import org.slf4j.LoggerFactory
+import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
@@ -316,33 +317,39 @@ open class PermissionServiceImpl constructor(
         permName: String,
         actions: List<PermissionAction>
     ): TPermission {
-        permissionRepository.findOneByProjectIdAndReposAndPermNameAndResourceType(
-            projectId,
-            repoName,
-            permName,
-            ResourceType.REPO
-        ) ?: run {
-            val request =
-                TPermission(
-                    projectId = projectId,
-                    repos = listOf(repoName),
-                    permName = permName,
-                    actions = actions,
-                    resourceType = ResourceType.REPO,
-                    createAt = LocalDateTime.now(),
-                    updateAt = LocalDateTime.now(),
-                    createBy = AUTH_ADMIN,
-                    updatedBy = AUTH_ADMIN
-                )
-            logger.info("permission not exist, create [$request]")
-            permissionRepository.insert(request)
+        logger.info("start check permission : $projectId, $repoName, $permName , $actions")
+        return findPermission(projectId, repoName, permName) ?: run {
+            val request = TPermission(
+                projectId = projectId,
+                repos = listOf(repoName),
+                permName = permName,
+                actions = actions,
+                resourceType = ResourceType.REPO,
+                createAt = LocalDateTime.now(),
+                updateAt = LocalDateTime.now(),
+                createBy = AUTH_ADMIN,
+                updatedBy = AUTH_ADMIN
+            )
+            if (logger.isDebugEnabled) {
+                logger.debug("create permission request [$request]")
+            }
+            try {
+                permissionRepository.insert(request)
+            } catch (exception: DuplicateKeyException) {
+                logger.error("insert permission [$request] error: [${exception.message}]")
+                findPermission(projectId, repoName, permName)!!
+            }
         }
-        return permissionRepository.findOneByProjectIdAndReposAndPermNameAndResourceType(
+    }
+
+    private fun findPermission(projectId: String, repoName: String, permName: String): TPermission? {
+        logger.info("find permission : $projectId, $repoName, $permName ")
+        return permissionRepository.findOneByProjectIdAndReposContainsAndPermNameAndResourceType(
             projectId,
             repoName,
             permName,
             ResourceType.REPO
-        )!!
+        )
     }
 
     private fun buildCheckActionQuery(

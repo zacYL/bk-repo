@@ -64,13 +64,13 @@ object CanwayMailTemplate {
     private val TABLE_COLUMN3_TITLE = "#{column3Title}"
 
     private val SHARE_EMAIL_HTML_PREFIX = "<!DOCTYPE html>\n" +
-            "<html>\n" +
-            "<head>\n" +
-            "<meta charset=\"utf-8\">\n" +
-            "<title></title>\n" +
-            "</head>\n" +
-            "<body>" +
-            "<table class=\"template-table\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; min-width: auto; mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #fff; background: #fff;\">\n" +
+        "<html>\n" +
+        "<head>\n" +
+        "<meta charset=\"utf-8\">\n" +
+        "<title></title>\n" +
+        "</head>\n" +
+        "<body>" +
+        "<table class=\"template-table\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; min-width: auto; mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #fff; background: #fff;\">\n" +
         "    <tbody>\n" +
         "        <tr>\n" +
         "            <td align=\"center\" valign=\"top\" width=\"100%\" style=\"padding: 16px;\">\n" +

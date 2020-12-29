@@ -34,14 +34,16 @@ class CanwayShareAspect(
     fun sendMail(point: ProceedingJoinPoint): Any {
         val args = point.args
         val userId = args.first() as String
-        //获取用户中文名
+        // 获取用户中文名
         val senderBk = bkUserService.getBkUserByUserId(userId)
-        val chname = senderBk.chname?:senderBk.bk_username
+        val chname = senderBk.chname ?: senderBk.bk_username
         val artifactInfo = args[1] as ArtifactInfo
-        val node = nodeClient.getNodeDetail(artifactInfo.projectId, artifactInfo.repoName,
-                artifactInfo.getArtifactFullPath()).data?:throw ArtifactNotFoundException("Can not found artifact")
+        val node = nodeClient.getNodeDetail(
+            artifactInfo.projectId, artifactInfo.repoName,
+            artifactInfo.getArtifactFullPath()
+        ).data ?: throw ArtifactNotFoundException("Can not found artifact")
         val shareRecordCreateRequest = args[2] as ShareRecordCreateRequest
-        val expireDays = shareRecordCreateRequest.expireSeconds/86400
+        val expireDays = shareRecordCreateRequest.expireSeconds / 86400
         val fileName = artifactInfo.getArtifactFullPath().split("/").last()
         val result = point.proceed(args)
         try {
@@ -51,14 +53,14 @@ class CanwayShareAspect(
                     "$bkrepoHost$shareUrl"
                 }
                 val fileShareInfo = FileShareInfo(
-                        fileName = fileName,
-                        md5 = node.md5 ?: "Can not found md5 value",
-                        projectId = artifactInfo.projectId,
-                        repoName = artifactInfo.repoName,
-                        downloadUrl = downloadUrl,
-                        qrCodeBase64 = if (fileName.endsWith("apk") || fileName.endsWith("ipa")){
-                            CanwayMailTemplate.getQRCodeBase64(downloadUrl)
-                        }else "null"
+                    fileName = fileName,
+                    md5 = node.md5 ?: "Can not found md5 value",
+                    projectId = artifactInfo.projectId,
+                    repoName = artifactInfo.repoName,
+                    downloadUrl = downloadUrl,
+                    qrCodeBase64 = if (fileName.endsWith("apk") || fileName.endsWith("ipa")) {
+                        CanwayMailTemplate.getQRCodeBase64(downloadUrl)
+                    } else "null"
                 )
                 val shareUsers = shareRecordCreateRequest.authorizedUserList
                 val receivers = mutableSetOf<String>()
@@ -75,7 +77,7 @@ class CanwayShareAspect(
         return result
     }
 
-    private fun sendMimeMail(userId: String, file: FileShareInfo, email: Array<String> , days: Int) {
+    private fun sendMimeMail(userId: String, file: FileShareInfo, email: Array<String>, days: Int) {
         val mailMessage = mailSender.createMimeMessage()
         val mimeMailMessage = MimeMessageHelper(mailMessage, true)
         mimeMailMessage.setFrom(sender)

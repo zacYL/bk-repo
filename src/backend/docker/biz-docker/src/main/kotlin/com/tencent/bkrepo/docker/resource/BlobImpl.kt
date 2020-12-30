@@ -31,10 +31,7 @@
 
 package com.tencent.bkrepo.docker.resource
 
-import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
-import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
-import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.docker.api.Blob
 import com.tencent.bkrepo.docker.constant.BLOB_PATTERN
 import com.tencent.bkrepo.docker.context.RequestContext
@@ -52,7 +49,6 @@ import javax.servlet.http.HttpServletRequest
 @RestController
 class BlobImpl @Autowired constructor(val dockerRepo: DockerV2LocalRepoService) : Blob {
 
-    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_READWRITE)
     override fun uploadBlob(
         request: HttpServletRequest,
         userId: String?,
@@ -83,7 +79,6 @@ class BlobImpl @Autowired constructor(val dockerRepo: DockerV2LocalRepoService) 
         return dockerRepo.isBlobExists(pathContext, DockerDigest(digest))
     }
 
-    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_DOWNLOAD)
     override fun getBlob(
         request: HttpServletRequest,
         userId: String?,
@@ -97,7 +92,6 @@ class BlobImpl @Autowired constructor(val dockerRepo: DockerV2LocalRepoService) 
         return dockerRepo.getBlob(pathContext, DockerDigest(digest))
     }
 
-    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_READWRITE)
     override fun startBlobUpload(
         request: HttpServletRequest,
         userId: String?,
@@ -113,7 +107,6 @@ class BlobImpl @Autowired constructor(val dockerRepo: DockerV2LocalRepoService) 
         return dockerRepo.startBlobUpload(pathContext, mount)
     }
 
-    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_READWRITE)
     override fun patchUpload(
         request: HttpServletRequest,
         userId: String?,

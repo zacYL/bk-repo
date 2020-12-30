@@ -31,10 +31,7 @@
 
 package com.tencent.bkrepo.docker.resource
 
-import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
-import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
-import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.docker.api.Manifest
 import com.tencent.bkrepo.docker.constant.MANIFEST_PATTERN
 import com.tencent.bkrepo.docker.context.RequestContext
@@ -52,7 +49,6 @@ import javax.servlet.http.HttpServletRequest
 @RestController
 class ManifestImpl @Autowired constructor(val dockerRepo: DockerV2LocalRepoService) : Manifest {
 
-    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_READWRITE)
     override fun putManifest(
         request: HttpServletRequest,
         userId: String?,

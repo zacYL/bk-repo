@@ -64,30 +64,34 @@ class CanwayRepositoryAspect(
                 throw CanwayPermissionException()
         }
         logger.info("userId: $userId  ,   operator: ${repo.operator}")
-        updateResource(repo.projectId, repo.name, userId as String, ciAddResourceApi)
+        updateResource(repo.projectId, repo.name, userId , ciAddResourceApi)
         val result: Any?
         try {
             result = point.proceed(args)
-            addUserIdToAdmin(userId, repo.projectId, repo.name)
-            return result
         } catch (exception: Exception) {
             logger.warn("create repo aspect ${exception.message}")
-            if (exception is ErrorCodeException && exception.messageCode.getKey() != "artifact.repository.existed") {
+            if (exception is ErrorCodeException && exception.messageCode != ArtifactMessageCode.REPOSITORY_EXISTED) {
                 logger.warn("create repo aspect ${exception.message}")
                 updateResource(repo.projectId, repo.name, repo.operator, ciDeleteResourceApi)
             }
+            if (exception is ErrorCodeException && exception.messageCode == ArtifactMessageCode.REPOSITORY_EXISTED) {
+                addUserIdToAdmin(userId, repo.projectId, repo.name)
+            }
             throw exception
         }
+        addUserIdToAdmin(userId, repo.projectId, repo.name)
+        return result
     }
 
     private fun addUserIdToAdmin(userId: String, projectId: String, repoName: String) {
         val permissions = permissionService.listRepoBuiltinPermission(projectId, repoName).data
-            ?: throw SystemException(CommonMessageCode.RESOURCE_NOT_FOUND, "Can not load buildin permission")
+                ?: throw SystemException(CommonMessageCode.RESOURCE_NOT_FOUND, "Can not load buildin permission")
+        logger.info("Found permission size: ${permissions.size}")
         for (permission in permissions) {
+            logger.info("Current permission: $permission")
             if (permission.permName == "repo_admin") {
-                permissionService.updatePermissionUser(
-                    UpdatePermissionUserRequest(permission.id!!, listOf(userId))
-                )
+                logger.info("Update Permission: $permission User with $userId")
+                permissionService.updatePermissionUser(UpdatePermissionUserRequest(permission.id!!, listOf(userId)))
             }
             return
         }

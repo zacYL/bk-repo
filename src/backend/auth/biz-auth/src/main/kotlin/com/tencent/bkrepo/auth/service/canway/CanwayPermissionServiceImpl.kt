@@ -94,7 +94,9 @@ class CanwayPermissionServiceImpl(
 
     override fun updatePermissionUser(request: UpdatePermissionUserRequest): Boolean {
         val webRequest = HttpContextHolder.getRequest()
-        val api = webRequest.requestURI.removePrefix("/").removePrefix("web/")
+        val requestUri = webRequest.requestURI
+        logger.info("CanwayPermissionService accept : $requestUri, $request")
+        val api = requestUri.removePrefix("/").removePrefix("web/")
         if (api.startsWith("api", ignoreCase = true)) {
             if (!checkPermissionById(request.permissionId)) throw ErrorCodeException(CommonMessageCode.PERMISSION_DENIED)
         }
@@ -131,7 +133,7 @@ class CanwayPermissionServiceImpl(
     }
 
     override fun listBuiltinPermission(projectId: String, repoName: String): List<Permission> {
-        logger.debug("list  builtin permission  projectId: [$projectId], repoName: [$repoName]")
+        logger.info("list  builtin permission  projectId: [$projectId], repoName: [$repoName]")
         val repoAdmin = getOnePermission(
             projectId, repoName, AUTH_BUILTIN_ADMIN,
             ActionCollection.getDefaultAdminBuiltinPermission(repoName)
@@ -209,6 +211,7 @@ class CanwayPermissionServiceImpl(
     private fun checkPermissionById(permissionId: String): Boolean {
         val userId = bkUserService.getBkUser()
         val tPermission = permissionRepository.findFirstById(permissionId)!!
+        logger.info("CanwayPermissionService found tPermission: $tPermission")
         val checkPermissionRequest = CheckPermissionRequest(
             uid = userId,
             resourceType = ResourceType.REPO,

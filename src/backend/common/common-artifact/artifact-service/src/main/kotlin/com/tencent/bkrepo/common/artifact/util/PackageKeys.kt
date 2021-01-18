@@ -44,6 +44,7 @@ object PackageKeys {
     private const val RPM = "rpm"
     private const val PYPI = "pypi"
     private const val COMPOSER = "composer"
+    private const val NUGET = "nuget"
     private const val SEPARATOR = "://"
 
     /**
@@ -54,15 +55,6 @@ object PackageKeys {
             .append(StringPool.COLON)
             .append(artifactId)
             .toString()
-    }
-
-    /**
-     * 生成name格式key
-     *
-     * 例子: {schema}://test
-     */
-    fun ofName(schema: String, name: String): String {
-        return StringBuilder(schema).append(SEPARATOR).append(name).toString()
     }
 
     /**
@@ -97,7 +89,7 @@ object PackageKeys {
      * 例子: rpm://test
      */
     fun ofRpm(path: String, name: String): String {
-        return if (!path.isBlank()) {
+        return if (path.isNotBlank()) {
             StringBuilder(RPM).append(SEPARATOR).append(path)
                 .append(StringPool.SLASH)
                 .append(name)
@@ -123,6 +115,14 @@ object PackageKeys {
      */
     fun ofComposer(name: String): String {
         return ofName(COMPOSER, name)
+    }
+
+    /**
+     * 生成nuget格式key
+     * 例子: nuget://test
+     */
+    fun ofNuget(name: String): String {
+        return ofName(NUGET, name)
     }
 
     /**
@@ -179,11 +179,29 @@ object PackageKeys {
     }
 
     /**
+     * 生成name格式key
+     *
+     * 例子: {schema}://test
+     */
+    private fun ofName(schema: String, name: String): String {
+        return StringBuilder(schema).append(SEPARATOR).append(name).toString()
+    }
+
+    /**
+     * 解析nuget格式的key
+     *
+     * 例子: nuget://test  ->  test
+     */
+    fun resolveNuget(nugetKey: String): String {
+        return resolveName(NUGET, nugetKey)
+    }
+
+    /**
      * 解析name格式key
      *
      * 例子: {schema}://test  ->  test
      */
-    fun resolveName(schema: String, nameKey: String): String {
+    private fun resolveName(schema: String, nameKey: String): String {
         val prefix = StringBuilder(schema).append(SEPARATOR).toString()
         return nameKey.substringAfter(prefix)
     }

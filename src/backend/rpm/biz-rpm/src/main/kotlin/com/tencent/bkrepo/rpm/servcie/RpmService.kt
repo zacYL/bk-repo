@@ -34,11 +34,17 @@ package com.tencent.bkrepo.rpm.servcie
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
+import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
+import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.configuration.local.LocalConfiguration
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
+import com.tencent.bkrepo.common.artifact.repository.core.ArtifactRepository
+import com.tencent.bkrepo.common.artifact.repository.core.ArtifactService
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.repo.RepoUpdateRequest
@@ -53,7 +59,7 @@ import org.springframework.stereotype.Service
 @Service
 class RpmService(
     private val repositoryClient: RepositoryClient
-) {
+) : ArtifactService() {
 
     // groups 中不允许的元素
     private val rpmIndexSet = mutableSetOf(REPOMD_XML, FILELISTS_XML, OTHERS_XML, PRIMARY_XML)
@@ -61,14 +67,24 @@ class RpmService(
     @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_READ)
     fun install(rpmArtifactInfo: RpmArtifactInfo) {
         val context = ArtifactDownloadContext()
-        val repository = ArtifactContextHolder.getRepository(context.repositoryDetail.category)
-        repository.download(context)
+        repository.downloadRetry(context)
+    }
+
+    private fun ArtifactRepository.downloadRetry(context: ArtifactDownloadContext) {
+        for (i in 1..4) {
+            try {
+                this.download(context)
+                break
+            } catch (e: ArtifactNotFoundException) {
+                if (i == 4) throw e
+                Thread.sleep(i * 2 * 1000L)
+            }
+        }
     }
 
     @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_READWRITE)
     fun deploy(rpmArtifactInfo: RpmArtifactInfo, file: ArtifactFile) {
         val context = ArtifactUploadContext(file)
-        val repository = ArtifactContextHolder.getRepository(context.repositoryDetail.category)
         repository.upload(context)
     }
 
@@ -81,7 +97,7 @@ class RpmService(
             .addAll(groups)
         val repoUpdateRequest = createRepoUpdateRequest(context, rpmLocalConfiguration)
         repositoryClient.updateRepo(repoUpdateRequest)
-        val repository = ArtifactContextHolder.getRepository(context.repositoryDetail.category)
+        val repository = ArtifactContextHolder.getRepository(RepositoryCategory.LOCAL)
         (repository as RpmLocalRepository).flushAllRepoData(context)
     }
 
@@ -93,7 +109,7 @@ class RpmService(
             .removeAll(groups)
         val repoUpdateRequest = createRepoUpdateRequest(context, rpmLocalConfiguration)
         repositoryClient.updateRepo(repoUpdateRequest)
-        val repository = ArtifactContextHolder.getRepository(context.repositoryDetail.category)
+        val repository = ArtifactContextHolder.getRepository(RepositoryCategory.LOCAL)
         (repository as RpmLocalRepository).flushAllRepoData(context)
     }
 
@@ -109,5 +125,11 @@ class RpmService(
             rpmLocalConfiguration,
             context.userId
         )
+    }
+
+    @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
+    fun delete(@ArtifactPathVariable rpmArtifactInfo: RpmArtifactInfo) {
+        val context = ArtifactRemoveContext()
+        repository.remove(context)
     }
 }

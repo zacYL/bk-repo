@@ -44,8 +44,6 @@ interface ServiceDepartmentResource {
     @ApiOperation("查询该部门下一级部门列表")
     @GetMapping("/list")
     fun listDepartment(
-        @ApiParam(value = "用户名")
-        @RequestParam username: String?,
         @ApiParam(value = "部门id")
         @RequestParam departmentId: Int?
     ): Response<Any?>
@@ -53,8 +51,6 @@ interface ServiceDepartmentResource {
     @ApiOperation("批量查询部门名称")
     @PostMapping("/listByIds")
     fun listDepartmentByIds(
-        @ApiParam(value = "用户名")
-        @RequestParam username: String?,
         @ApiParam(value = "部门id列表")
         @RequestBody departmentIds: List<Int>
     ): Response<Any?>

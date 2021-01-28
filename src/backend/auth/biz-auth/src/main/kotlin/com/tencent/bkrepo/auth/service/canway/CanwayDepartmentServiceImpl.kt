@@ -45,8 +45,8 @@ class CanwayDepartmentServiceImpl(
     val bkAppCode = canwayAuthConf.appCode
     val bkAppSecret = canwayAuthConf.appSecret
 
-    override fun listDepartmentById(departmentId: Int?): List<BkChildrenDepartment>? {
-        val bkCertificate = getBkCertificate()
+    override fun listDepartmentById(username: String?, departmentId: Int?): List<BkChildrenDepartment>? {
+        val bkCertificate = getBkCertificate(username)
         if (departmentId != null) {
             val mediaType = MediaType.parse("application/json; charset=utf-8")
             val json = String.format(jsonFormat, bkAppCode, bkAppSecret, bkCertificate.certType.value, bkCertificate.value, departmentId)
@@ -65,8 +65,8 @@ class CanwayDepartmentServiceImpl(
         }
     }
 
-    override fun listDepartmentByIds(departmentIds: List<Int>): List<BkChildrenDepartment> {
-        val bkCertificate = getBkCertificate()
+    override fun listDepartmentByIds(username: String?, departmentIds: List<Int>): List<BkChildrenDepartment> {
+        val bkCertificate = getBkCertificate(username)
         val list = mutableListOf<BkChildrenDepartment>()
         for (departmentId in departmentIds) {
             val url = "${paasHost?.removeSuffix("/")}$paasListDepartmentUrl"
@@ -90,7 +90,7 @@ class CanwayDepartmentServiceImpl(
     /**
      * 兼容蓝鲸 username 和cookie两种认证模式
      */
-    fun getBkCertificate(): BkCertificate {
+    fun getBkCertificate(username: String?): BkCertificate {
         val request = HttpContextHolder.getRequest()
         val cookies = request.cookies
         request.getAttribute(USER_KEY)?.let {
@@ -100,6 +100,9 @@ class CanwayDepartmentServiceImpl(
             for (cookie in cookies) {
                 if (cookie.name == CertType.TOKEN.value) return BkCertificate(CertType.TOKEN, cookie.value)
             }
+        }
+        if (username != null) {
+            return BkCertificate(CertType.USERNAME, username)
         }
         throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "User authentication failed, can not found bk_token in cookie or username in request")
     }
@@ -126,8 +129,8 @@ class CanwayDepartmentServiceImpl(
         return responseContent.readJsonString<BkResponse<BkPage<BkDepartment>>>().data?.results?.first()
     }
 
-    override fun getUsersByDepartmentId(departmentId: Int): Set<BkDepartmentUser>? {
-        val bkCertificate = getBkCertificate()
+    override fun getUsersByDepartmentId(username: String?, departmentId: Int): Set<BkDepartmentUser>? {
+        val bkCertificate = getBkCertificate(username)
         val uri = String.format(getUsersByDepartmentIdApi, bkAppCode, bkAppSecret, bkCertificate.certType.value, bkCertificate.value, departmentId)
         val requestUrl = "${paasHost?.removeSuffix("/")}$uri"
         val responseContent = CanwayHttpUtils.doGet(requestUrl).content

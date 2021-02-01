@@ -27,70 +27,30 @@
 package net.devops.canway.common.lse
 
 import net.canway.license.bean.Result
-import net.canway.license.service.impl.LicenseAuthServiceImpl
-import net.canway.license.utils.Constant
-import org.apache.http.client.HttpClient
-import org.apache.http.client.config.RequestConfig
-import org.apache.http.conn.ssl.NoopHostnameVerifier
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy
-import org.apache.http.impl.client.HttpClients
-import org.apache.http.impl.conn.DefaultSchemePortResolver
-import org.apache.http.ssl.SSLContexts
+import net.canway.license.service.LicenseAuthService
+import net.canway.license.utils.LicenseProperties
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.util.concurrent.TimeUnit
 
-class LseChecker{
-
-    private var httpClient: HttpClient
+class LseChecker constructor(
+        private val licenseAuthService: LicenseAuthService
+) {
     private var monitorTh: Thread? = null
     private var vo: Result<Any>? = null
     private var run = true
 
     init {
-        // Trust own CA and all self-signed certs
-        val sslContext = SSLContexts.custom().loadTrustMaterial(TrustSelfSignedStrategy()).build()
-        // Allow SSL protocol only
-        val sslsf = SSLConnectionSocketFactory(sslContext, null, null, NoopHostnameVerifier())
-        httpClient = HttpClients.custom()
-            .setDefaultRequestConfig(
-                RequestConfig.custom()
-                    .setConnectionRequestTimeout(15000)
-                    .setConnectTimeout(15000)
-                    .setSocketTimeout(15000).build()
-            )
-            .setConnectionTimeToLive(180, TimeUnit.SECONDS)
-            .setSSLSocketFactory(sslsf)
-            .setSchemePortResolver(DefaultSchemePortResolver()).build()
-
         if (monitorTh == null || !monitorTh!!.isAlive) {
             monitorTh = object : Thread() {
-
-                private val minSleepTime = 60 * 1000L
-
-                private val maxSleepTime = 2 * 3600 * 1000L
-
+                private val sleepTime = 60 * 1000L
                 override fun run() {
-                    var sleepTime = minSleepTime
+                    logger.info(LicenseProperties().toString())
                     while (run) {
-                        //vo = checkLseImmediately()
-                        vo = checkCwLseImmediately(CI_MODULE_NAME)
-                        if (vo != null && Constant.SUCCESS == vo!!.code) {
-                            // 检查下次要再向LicenceServer通信的时间,根据有效期来定
-//                            if (vo!!.validEndTime != null) {
-//                                sleepTime = vo!!.validEndTime!!.time - System.currentTimeMillis()
-//                            }
-                        } else { // 错误情况下，每分钟都会尝试去连接验证Licence，以求最快速度恢复系统服务
-                            sleepTime = minSleepTime
-                        }
-
-                        if (sleepTime > maxSleepTime) {
-                            sleepTime = maxSleepTime
-                        }
+                        vo = checkCwLseImmediately()
                         try {
                             sleep(sleepTime)
                         } catch (ignored: InterruptedException) {
+                            logger.error("InterruptedException happen", ignored)
                         }
                     }
                 }
@@ -99,14 +59,23 @@ class LseChecker{
         }
     }
 
-    fun checkCwLseImmediately(module:String) : Result<Any>{
-        val result =  LicenseAuthServiceImpl().requestAuth(module)
-        logger.info("$result")
-        return result
+    fun checkLse(): Result<Any> {
+        if (vo == null) {
+            synchronized(this::class.java) {
+                if (vo == null) {
+                    vo = checkCwLseImmediately()
+                }
+            }
+        }
+        return vo!!
+    }
+
+    private fun checkCwLseImmediately(): Result<Any> {
+        return licenseAuthService.requestAuth(MODULE_NAME, false)
     }
 
     companion object {
         val logger: Logger = LoggerFactory.getLogger(LseChecker::class.java)
-        const val CI_MODULE_NAME = "CI"
+        const val MODULE_NAME = "LIBRARY"
     }
 }

@@ -1,0 +1,122 @@
+# Common config Template 重复的通用的配置抽离在到
+
+spring:
+  profiles:
+    active: __BK_REPO_PROFILES_ACTIVE__
+  application:
+    version: 4.0.0
+  cloud:
+    consul:
+      discovery:
+        tags: __DEVOPS_CONSUL_TAG__
+        health-check-path: /management/health
+        heartbeat:
+          enabled: true
+        query-passing: true
+        preferIpAddress: true
+      port: __DEVOPS_CONSUL_PORT__
+  data:
+    mongodb:
+      socket-keep-alive: true
+      max-connection-idle-time: 60000
+      autoConnectRetry: true
+      socketTimeout: 1500
+      ### 单机情况下关闭事物，否则报错
+      transaction:
+        enabled: false
+      uri: mongodb://__BK_REPO_MONGODB_USER__:__BK_REPO_MONGODB_PASSWORD__@__BK_REPO_MONGODB_ADDR__/__BK_REPO_MONGODB_DB_NAME__?maxPoolSize=50&replicaSet=rs0&slaveOk=true&safe=true&w=__MONGODB_RES__&wtimeoutMS=2000
+
+feign:
+  okhttp:
+    enabled: true
+  httpclient:
+    enabled: false
+  hystrix:
+    enabled: true
+  client:
+    config:
+      default:
+        connectTimeout: 600000
+        readTimeout: 600000
+        logger-level: basic
+  compression:
+    request:
+      enabled: true
+    response:
+      enabled: true
+
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          strategy: SEMAPHORE
+          semaphore:
+            maxConcurrentRequests: 100
+          thread:
+            timeoutInMilliseconds: 600000
+
+ribbon:
+  ReadTimeout: 120000
+  ConnectTimeout: 30000
+
+swagger:
+  enabled: true
+
+logging:
+  config: classpath:logback-config.xml
+  path-common: __BK_REPO_LOGS_DIR__
+
+storage:
+  type: filesystem
+  filesystem:
+    path: __BK_REPO_FILE_PATH__
+  cache:
+    enabled: false
+    path: data/bkee/repo/filesystem/cached
+    expireHours: 12
+
+security:
+  # HTTP认证相关配置
+  auth:
+    # 默认开启
+    enabled: true
+    # jwt认证相关配置
+    jwt:
+      # 默认值
+      secretKey: secret@key
+      # spring Duration配置格式，可以带时间单位，为0表示永不过期，默认为0
+      expiration: 0
+  # 微服务认证相关配置
+  service:
+    # 默认开始
+    enabled: false
+    # 默认值
+    secretKey: secret@key
+
+service: 
+  suffix: "-__BKCI_CONSUL_TAG__"
+  prefix: "__BK_REPO_SERVICE_PREFIX__"
+
+# 许可需要的配置  
+service-suffix: "-devops"  
+
+bk:
+  paas:
+    host: __BK_PAAS_PUBLIC_URL__
+    version: "__BK_PAAS_VERSION__"
+
+esb:
+  code: __BK_CI_APP_CODE__
+  secret: __BK_CI_APP_TOKEN__
+
+# 需要限制许可人数的时候
+devopsGateway: 
+  host: __BK_CI_PUBLIC_URL__ 
+
+# canway certificate
+license:
+  auth:
+    host: http://__CW_LICENSE_HOST__:__CW_LICENSE_PORT__
+  
+  

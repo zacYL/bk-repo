@@ -54,4 +54,8 @@ allprojects {
         exclude(group = "org.slf4j", module = "slf4j-log4j12")
         exclude(group = "commons-logging", module = "commons-logging")
     }
+
+    repositories{
+        maven { setUrl("http://artifact.canway.net/maven-public/")}
+    }
 }

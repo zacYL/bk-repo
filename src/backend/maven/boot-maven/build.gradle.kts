@@ -31,4 +31,5 @@
 
 dependencies {
     implementation(project(":maven:biz-maven"))
+    implementation(project(":common:common-license-canway"))
 }

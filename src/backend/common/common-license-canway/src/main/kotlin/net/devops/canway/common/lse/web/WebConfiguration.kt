@@ -11,20 +11,19 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 class WebConfiguration {
 
     @Bean
-    fun lseConfigurer(lseInterceptor:LseInterceptor): WebMvcConfigurer {
+    fun lseConfigurer(lseInterceptor: LseInterceptor): WebMvcConfigurer {
         return object : WebMvcConfigurer {
             override fun addInterceptors(registry: InterceptorRegistry) {
                 registry.addInterceptor(lseInterceptor)
-                        .order(0)
+                    .order(0)
                 super.addInterceptors(registry)
             }
         }
     }
 
     @Bean
-    fun lseInterceptor(lseChecker:LseChecker) = LseInterceptor(lseChecker)
+    fun lseInterceptor(lseChecker: LseChecker) = LseInterceptor(lseChecker)
 
     @Bean
     fun lseChecker(licenseAuthService: LicenseAuthService) = LseChecker(licenseAuthService)
-
 }

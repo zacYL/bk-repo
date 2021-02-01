@@ -5,14 +5,13 @@ import net.canway.license.utils.Constant
 import net.devops.canway.common.lse.LseChecker
 import org.apache.http.HttpStatus
 import org.slf4j.LoggerFactory
-import org.springframework.web.servlet.HandlerInterceptor
-import org.springframework.web.servlet.ModelAndView
+import org.springframework.web.servlet.handler.HandlerInterceptorAdapter
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 class LseInterceptor constructor(
-        private val lseChecker: LseChecker
-) : HandlerInterceptor {
+    private val lseChecker: LseChecker
+) : HandlerInterceptorAdapter() {
 
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
         try {
@@ -28,22 +27,6 @@ class LseInterceptor constructor(
             response.writer.print(e.message)
             return false
         }
-    }
-
-    override fun postHandle(
-            request: HttpServletRequest,
-            response: HttpServletResponse,
-            handler: Any,
-            modelAndView: ModelAndView?
-    ) {
-    }
-
-    override fun afterCompletion(
-            request: HttpServletRequest,
-            response: HttpServletResponse,
-            handler: Any,
-            ex: Exception?
-    ) {
     }
 
     companion object {

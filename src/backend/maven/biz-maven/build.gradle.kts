@@ -32,4 +32,5 @@
 dependencies{
     api(project(":maven:api-maven"))
     api(project(":common:common-artifact:artifact-service"))
+    api(project((":common:common-license-canway")))
 }

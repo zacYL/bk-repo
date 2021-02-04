@@ -40,7 +40,7 @@ class LseChecker constructor(
     private var vo: Result<Any>? = null
     private var run = true
 
-    @Value("\${ci.license}")
+    @Value("\${ci.license:true}")
     val licenseRequire: Boolean = true
 
     init {

@@ -34,7 +34,7 @@
                     <bk-table-column :label="$t('fileName')">
                         <template slot-scope="props">
                             <div class="flex-align-center fine-name">
-                                <icon size="24" :name="props.row.folder ? 'folder' : getIconName(props.row.name)" />
+                                <Icon size="24" :name="props.row.folder ? 'folder' : getIconName(props.row.name)" />
                                 <div class="ml10" :title="props.row.name">{{props.row.name}}</div>
                             </div>
                         </template>
@@ -124,7 +124,7 @@
             </aside>
         </div>
 
-        <genericDetail :detail-slider="detailSlider"></genericDetail>
+        <genericDetail :detail-slider="detailSlider" @refresh="showDetail"></genericDetail>
         <bk-dialog
             v-model="formDialog.show"
             :title="formDialog.title"
@@ -322,7 +322,7 @@
         watch: {
             '$route.query.name' () {
                 this.initPage()
-                this.handlerPaginationChange()
+                this.getArtifactories()
             },
             'selectedTreeNode.fullPath' () {
                 // 重置选中行
@@ -417,7 +417,7 @@
                 this.query = null
                 this.selectedRow.element && this.selectedRow.element.classList.remove('selected-row')
                 this.selectedRow = this.selectedTreeNode
-                this.handlerPaginationChange()
+                this.getArtifactories()
             },
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
                 this.pagination.current = current
@@ -487,12 +487,14 @@
                     }
                 }, 300)
             },
-            async showDetail () {
-                this.detailSlider = {
-                    show: true,
-                    loading: true,
-                    folder: this.selectedRow.folder,
-                    data: {}
+            async showDetail (async = false) {
+                if (!async) {
+                    this.detailSlider = {
+                        show: true,
+                        loading: true,
+                        folder: this.selectedRow.folder,
+                        data: {}
+                    }
                 }
                 const data = await this.getNodeDetail({
                     projectId: this.projectId,
@@ -686,7 +688,7 @@
                     // 更新源和目的的节点信息
                     this.updateGenericTreeNode(this.selectedTreeNode)
                     this.updateGenericTreeNode(this.treeDialog.selectedNode)
-                    this.handlerPaginationChange()
+                    this.getArtifactories()
                     this.$bkMessage({
                         theme: 'success',
                         message: this.treeDialog.type + this.$t('success')

@@ -219,5 +219,19 @@ export default {
         return Vue.prototype.$ajax.get(
             `${prefix}/node/size/${projectId}/${repoName}/${encodeURIComponent(fullPath)}`
         )
+    },
+    // 添加元数据
+    addMetadata (_, { projectId, repoName, fullPath, body }) {
+        return Vue.prototype.$ajax.post(
+            `${prefix}/metadata/${projectId}/${repoName}/${encodeURIComponent(fullPath)}`,
+            body
+        )
+    },
+    // 删除元数据
+    deleteMetadata (_, { projectId, repoName, fullPath, body }) {
+        return Vue.prototype.$ajax.delete(
+            `${prefix}/metadata/${projectId}/${repoName}/${encodeURIComponent(fullPath)}`,
+            { data: body }
+        )
     }
 }

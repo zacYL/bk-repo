@@ -25,6 +25,7 @@ import com.tencent.bkrepo.repository.service.canway.http.CanwayHttpUtils
 import com.tencent.bkrepo.repository.service.canway.pojo.BatchResourceInstance
 import com.tencent.bkrepo.repository.service.canway.pojo.ResourceRegisterInfo
 import com.tencent.bkrepo.repository.service.canway.service.CanwayPermissionService
+import net.bytebuddy.dynamic.Nexus
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
@@ -36,17 +37,16 @@ import java.lang.Exception
 
 @Aspect
 @Service
-class CanwayRepositoryAspect(
-    canwayAuthConf: CanwayAuthConf
-) {
+class CanwayRepositoryAspect {
+
+    @Autowired
+    lateinit var canwayAuthConf: CanwayAuthConf
 
     @Autowired
     lateinit var permissionService: ServicePermissionResource
 
     @Autowired
     lateinit var canwayPermissionService: CanwayPermissionService
-
-    private val devopsHost = canwayAuthConf.devopsHost!!.removeSuffix("/")
 
     @Around(value = "execution(* com.tencent.bkrepo.repository.service.impl.RepositoryServiceImpl.createRepo(..))")
     fun beforeCreateRepo(point: ProceedingJoinPoint): Any? {
@@ -193,7 +193,9 @@ class CanwayRepositoryAspect(
             instances = resourceInstance
         )
         val requestParamStr = requestParam.toJsonString()
-        val ciAddResourceUrl = "$devopsHost$ci$api"
+        val devopsHost = canwayAuthConf.devops
+            ?:throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "devops.host must not be null")
+        val ciAddResourceUrl = "${devopsHost.removeSuffix("/")}$ci$api"
         CanwayHttpUtils.doPost(ciAddResourceUrl, requestParamStr).content
     }
 

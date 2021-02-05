@@ -42,10 +42,10 @@ class BkUserService(
         .writeTimeout(5L, TimeUnit.SECONDS)
         .build()
 
-    val bkHost = canwayAuthConf.bkHost
+    val bkHost = canwayAuthConf.host
         ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "bkHost must be not null")
-    val appCode = canwayAuthConf.appCode
-    val appSecret = canwayAuthConf.appSecret
+    val appCode = canwayAuthConf.code
+    val appSecret = canwayAuthConf.secret
 
     fun getBkUser(): String {
         val bkCert = getBkCert()

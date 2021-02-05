@@ -12,6 +12,7 @@ import com.tencent.bkrepo.repository.service.canway.pojo.CanwayPermissionRespons
 import com.tencent.bkrepo.repository.service.canway.pojo.CanwayResponse
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
 @Service
@@ -19,7 +20,7 @@ class CanwayPermissionService(
     canwayAuthConf: CanwayAuthConf
 ) {
 
-    private val devopsHost = canwayAuthConf.devopsHost!!.removeSuffix("/")
+    private val devopsHost = canwayAuthConf.devops!!.removeSuffix("/")
 
     private fun checkUserHasProjectPermission(operator: String): Boolean {
         val canwayPermissionResponse = getCanwayPermissionInstance(
@@ -76,7 +77,7 @@ class CanwayPermissionService(
                     )
                 )
             ).toJsonString()
-            val ciAddResourceUrl = "$devopsHost${CanwayRepositoryAspect.ci}$ciCheckPermissionApi"
+            val ciAddResourceUrl = "${devopsHost!!.removeSuffix("/")}${CanwayRepositoryAspect.ci}$ciCheckPermissionApi"
             val responseContent = CanwayHttpUtils.doPost(ciAddResourceUrl, canwayCheckPermissionRequest).content
 
             return responseContent.readJsonString<CanwayResponse<CanwayPermissionResponse>>().data

@@ -40,10 +40,10 @@ class CanwayDepartmentServiceImpl(
         .writeTimeout(5L, TimeUnit.SECONDS)
         .build()
 
-    val paasHost = canwayAuthConf.bkHost
+    val paasHost = canwayAuthConf.host
     // todo 复用 BkAuthConfig
-    val bkAppCode = canwayAuthConf.appCode
-    val bkAppSecret = canwayAuthConf.appSecret
+    val bkAppCode = canwayAuthConf.code
+    val bkAppSecret = canwayAuthConf.secret
 
     override fun listDepartmentById(username: String?, departmentId: Int?): List<BkChildrenDepartment>? {
         val bkCertificate = getBkCertificate(username)

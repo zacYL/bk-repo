@@ -1,16 +1,13 @@
 package com.tencent.bkrepo.repository.service.canway.conf
 
-import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.stereotype.Component
 
+@ConfigurationProperties("bk")
 @Component
-class CanwayAuthConf {
-    @Value("\${bk.appCode:#{null}}")
-    val appCode: String? = null
-    @Value("\${bk.appSecret:#{null}}")
-    val appSecret: String? = null
-    @Value("\${devops.host:#{null}}")
-    val devopsHost: String? = null
-    @Value("\${bk.host:#{null}}")
-    val bkHost: String? = null
-}
+data class CanwayAuthConf(
+    var code: String? = null,
+    var secret: String? = null,
+    var devops: String? = null,
+    var host: String? = null
+)

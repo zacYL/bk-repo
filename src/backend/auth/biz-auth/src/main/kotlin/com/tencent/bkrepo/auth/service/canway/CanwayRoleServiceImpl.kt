@@ -71,7 +71,7 @@ class CanwayRoleServiceImpl(
     }
 
     private fun getRequestUrl(uri: String): String {
-        val devopsHost = canwayAuthConf.devopsHost ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING)
+        val devopsHost = canwayAuthConf.devops ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING)
         return "${devopsHost.removeSuffix("/")}$ci$ciApi$uri"
     }
 

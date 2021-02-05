@@ -9,7 +9,7 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
 @Configuration
-@ConditionalOnProperty(prefix = "ci", value = ["license"], havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(prefix = "ci", value = ["license"], havingValue = "true", matchIfMissing = true)
 class WebConfiguration {
 
     @Bean

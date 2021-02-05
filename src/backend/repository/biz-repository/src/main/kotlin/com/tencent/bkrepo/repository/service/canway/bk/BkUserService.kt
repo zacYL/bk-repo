@@ -25,6 +25,7 @@ class BkUserService(
     val appCode = canwayAuthConf.appCode
     val appSecert = canwayAuthConf.appSecret
 
+
     fun getBkUser(): String {
         val bkCert = getBkCert()
         val uri = String.format(bkUserInfoApi, appCode, appSecert, bkCert.certType.value, bkCert.value)

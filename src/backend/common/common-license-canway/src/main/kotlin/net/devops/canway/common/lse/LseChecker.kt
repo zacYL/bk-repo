@@ -31,7 +31,6 @@ import net.canway.license.service.LicenseAuthService
 import net.canway.license.utils.LicenseProperties
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
 
 class LseChecker constructor(
     private val licenseAuthService: LicenseAuthService
@@ -39,9 +38,6 @@ class LseChecker constructor(
     private var monitorTh: Thread? = null
     private var vo: Result<Any>? = null
     private var run = true
-
-    @Value("\${ci.license:true}")
-    val licenseRequire: Boolean = true
 
     init {
         if (monitorTh == null || !monitorTh!!.isAlive) {
@@ -75,12 +71,7 @@ class LseChecker constructor(
     }
 
     private fun checkCwLseImmediately(): Result<Any> {
-        logger.info("start license!")
-        return if (licenseRequire) {
-            licenseAuthService.requestAuth(MODULE_NAME, false)
-        } else {
-            Result()
-        }
+        return licenseAuthService.requestAuth(MODULE_NAME, false)
     }
 
     companion object {

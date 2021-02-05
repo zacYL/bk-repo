@@ -2,12 +2,14 @@ package net.devops.canway.common.lse.web
 
 import net.canway.license.service.LicenseAuthService
 import net.devops.canway.common.lse.LseChecker
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
 @Configuration
+@ConditionalOnProperty(prefix = "ci", value = ["license"], havingValue = "true", matchIfMissing = false)
 class WebConfiguration {
 
     @Bean

@@ -1,56 +1,49 @@
 package com.tencent.bkrepo.repository.service.canway.conf
 
-import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.JavaMailSenderImpl
+import org.springframework.stereotype.Component
 import java.util.Properties
 
-@Configuration
-class CanwayMailConf(
-    @Value("\${mail.host:smtp.exmail.qq.com}")
-    val mailHost: String,
+@ConfigurationProperties("mail")
+@Component
+data class CanwayMailConf(
 
-    @Value("\${mail.port:465}")
-    val mailPort: Int,
+    var host: String = "smtp.exmail.qq.com",
 
-    @Value("\${mail.protocol:smtps}")
-    val mailProtocol: String,
+    var port: Int = 465,
 
-    @Value("\${mail.username:undefined}")
-    val mailUsername: String,
+    var protocol: String = "smtps",
 
-    @Value("\${mail.password:undefined}")
-    val mailPassword: String,
+    var username: String = "undefined",
 
-    @Value("\${mail.smtp.auth:true}")
-    val mailSmtpAuth: String,
+    var password: String = "undefined",
 
-    @Value("\${mail.smtp.starttls.enable:true}")
-    val mailSmtpTlsEnable: String,
+    var smtpAuth: String = "true",
 
-    @Value("\${mail.smtp.starttls.required:true}")
-    val mailSmtpTlsRequired: String,
+    var smtpTlsEnable: String = "true",
 
-    @Value("\${bkrepo.host:undefined}")
-    val bkrepoHost: String
+    var smtpTlsRequired: String = "true",
+
+    var bkrepo: String = "undefined"
 ) {
 
     @Bean
     fun mailSender(): JavaMailSender {
-        val mailSender = JavaMailSenderImpl()
-        val prop = Properties().apply {
-            setProperty("mail.smtp.auth", mailSmtpAuth)
-            setProperty("mail.smtp.starttls.enable", mailSmtpTlsEnable)
-            setProperty("mail.smtp.starttls.required", mailSmtpTlsRequired)
+        var mailSender = JavaMailSenderImpl()
+        var prop = Properties().apply {
+            setProperty("mail.smtp.auth", smtpAuth)
+            setProperty("mail.smtp.starttls.enable", smtpTlsEnable)
+            setProperty("mail.smtp.starttls.required", smtpTlsRequired)
         }
         mailSender.javaMailProperties = prop
-        mailSender.host = mailHost
-        mailSender.port = mailPort
-        mailSender.username = mailUsername
-        mailSender.password = mailPassword
-        mailSender.protocol = mailProtocol
+        mailSender.host = host
+        mailSender.port = port
+        mailSender.username = username
+        mailSender.password = password
+        mailSender.protocol = protocol
         mailSender.defaultEncoding = "UTF-8"
         return mailSender
     }

@@ -27,8 +27,8 @@ class CanwayShareAspect(
     val nodeClient: NodeClient
 ) {
 
-    private val sender = canwayMailConf.mailUsername
-    private val bkrepoHost = canwayMailConf.bkrepoHost
+    private val sender = canwayMailConf.username
+    private val bkrepoHost = canwayMailConf.bkrepo
 
     @Around("execution(* com.tencent.bkrepo.repository.service.impl.ShareServiceImpl.create(..))")
     fun sendMail(point: ProceedingJoinPoint): Any {

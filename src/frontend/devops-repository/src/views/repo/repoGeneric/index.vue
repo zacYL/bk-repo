@@ -311,7 +311,7 @@
             }
         },
         computed: {
-            ...mapState(['userList', 'genericTree']),
+            ...mapState(['userList', 'genericTree', 'breadcrumb']),
             projectId () {
                 return this.$route.params.projectId
             },
@@ -501,7 +501,8 @@
                 })
                 this.detailSlider.data = {
                     ...data,
-                    name: data.name || this.repoName,
+                    name: data.metadata.displayName || data.name || this.repoName,
+                    fullPath: this.transformPipelineFullPath(data),
                     size: convertFileSize(data.size),
                     createdBy: this.userList[data.createdBy] ? this.userList[data.createdBy].name : data.createdBy,
                     createdDate: formatDate(data.createdDate),
@@ -509,6 +510,18 @@
                     lastModifiedDate: formatDate(data.lastModifiedDate)
                 }
                 this.detailSlider.loading = false
+            },
+            transformPipelineFullPath (data) {
+                if (this.repoName !== 'pipeline') return data.fullPath
+                const strMap = this.breadcrumb.reduce((target, item) => {
+                    const key = item.value.fullPath.split('/').pop()
+                    target[key] = item.value.name
+                    return target
+                }, {})
+                return data.fullPath.split('/').map(v => {
+                    if (!v) return ''
+                    return strMap[v] || data.name
+                }).join('/')
             },
             renameRes () {
                 this.formDialog = {

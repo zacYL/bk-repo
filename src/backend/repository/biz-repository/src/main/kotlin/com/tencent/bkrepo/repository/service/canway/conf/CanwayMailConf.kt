@@ -1,6 +1,7 @@
 package com.tencent.bkrepo.repository.service.canway.conf
 
 import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.boot.context.properties.NestedConfigurationProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.JavaMailSenderImpl
@@ -21,22 +22,18 @@ data class CanwayMailConf(
 
     var password: String = "undefined",
 
-    var smtpAuth: String = "true",
+    @NestedConfigurationProperty
+    var smtp: Smtp = Smtp()
 
-    var smtpTlsEnable: String = "true",
-
-    var smtpTlsRequired: String = "true",
-
-    var bkrepo: String = "undefined"
 ) {
 
     @Bean
     fun mailSender(): JavaMailSender {
-        var mailSender = JavaMailSenderImpl()
-        var prop = Properties().apply {
-            setProperty("mail.smtp.auth", smtpAuth)
-            setProperty("mail.smtp.starttls.enable", smtpTlsEnable)
-            setProperty("mail.smtp.starttls.required", smtpTlsRequired)
+        val mailSender = JavaMailSenderImpl()
+        val prop = Properties().apply {
+            setProperty("mail.smtp.auth", smtp.auth)
+            setProperty("mail.smtp.starttls.enable", smtp.starttls.enable)
+            setProperty("mail.smtp.starttls.required", smtp.starttls.required)
         }
         mailSender.javaMailProperties = prop
         mailSender.host = host
@@ -48,3 +45,14 @@ data class CanwayMailConf(
         return mailSender
     }
 }
+
+data class Smtp(
+    var auth: String = "true",
+    @NestedConfigurationProperty
+    var starttls: Starttls = Starttls()
+)
+
+data class Starttls(
+    val enable: String = "true",
+    val required: String = "true"
+)

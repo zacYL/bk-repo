@@ -35,7 +35,10 @@ class BkUserService(
     lateinit var userService: UserService
 
     private val okHttpClient = OkHttpClient.Builder()
-        .sslSocketFactory(CertTrustManager.disableValidationSSLSocketFactory, CertTrustManager.disableValidationTrustManager)
+        .sslSocketFactory(
+            CertTrustManager.disableValidationSSLSocketFactory,
+            CertTrustManager.disableValidationTrustManager
+        )
         .hostnameVerifier(CertTrustManager.trustAllHostname)
         .connectTimeout(3L, TimeUnit.SECONDS)
         .readTimeout(5L, TimeUnit.SECONDS)
@@ -43,9 +46,8 @@ class BkUserService(
         .build()
 
     val bkHost = canwayAuthConf.host
-        ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "bkHost must be not null")
-    val appCode = canwayAuthConf.code
-    val appSecret = canwayAuthConf.secret
+    val appCode = canwayAuthConf.appCode
+    val appSecret = canwayAuthConf.appSecret
 
     fun getBkUser(): String {
         val bkCert = getBkCert()

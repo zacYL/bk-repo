@@ -6,6 +6,7 @@ import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.pojo.share.ShareRecordCreateRequest
 import com.tencent.bkrepo.repository.pojo.share.ShareRecordInfo
 import com.tencent.bkrepo.repository.service.canway.bk.BkUserService
+import com.tencent.bkrepo.repository.service.canway.conf.CanwayDevopsConf
 import com.tencent.bkrepo.repository.service.canway.conf.CanwayMailConf
 import com.tencent.bkrepo.repository.service.canway.mail.CanwayMailTemplate
 import com.tencent.bkrepo.repository.service.canway.pojo.FileShareInfo
@@ -22,13 +23,14 @@ import org.springframework.stereotype.Component
 @Component
 class CanwayShareAspect(
     canwayMailConf: CanwayMailConf,
+    canwayDevopsConf: CanwayDevopsConf,
     val bkUserService: BkUserService,
     val mailSender: JavaMailSender,
     val nodeClient: NodeClient
 ) {
 
     private val sender = canwayMailConf.username
-    private val bkrepoHost = canwayMailConf.bkrepo
+    private val bkrepoHost = canwayDevopsConf.host
 
     @Around("execution(* com.tencent.bkrepo.repository.service.impl.ShareServiceImpl.create(..))")
     fun sendMail(point: ProceedingJoinPoint): Any {

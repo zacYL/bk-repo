@@ -19,7 +19,7 @@ import com.tencent.bkrepo.repository.service.canway.RESOURCECODE
 import com.tencent.bkrepo.repository.service.canway.ACCESS
 import com.tencent.bkrepo.repository.service.canway.BELONGCODE
 import com.tencent.bkrepo.repository.service.canway.CREATE
-import com.tencent.bkrepo.repository.service.canway.conf.CanwayAuthConf
+import com.tencent.bkrepo.repository.service.canway.conf.CanwayDevopsConf
 import com.tencent.bkrepo.repository.service.canway.exception.CanwayPermissionException
 import com.tencent.bkrepo.repository.service.canway.http.CanwayHttpUtils
 import com.tencent.bkrepo.repository.service.canway.pojo.BatchResourceInstance
@@ -39,7 +39,7 @@ import java.lang.Exception
 class CanwayRepositoryAspect {
 
     @Autowired
-    lateinit var canwayAuthConf: CanwayAuthConf
+    lateinit var canwayDevopsConf: CanwayDevopsConf
 
     @Autowired
     lateinit var permissionService: ServicePermissionResource
@@ -200,8 +200,7 @@ class CanwayRepositoryAspect {
             instances = resourceInstance
         )
         val requestParamStr = requestParam.toJsonString()
-        val devopsHost = canwayAuthConf.devops
-            ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "devops.host must not be null")
+        val devopsHost = canwayDevopsConf.host
         val ciAddResourceUrl = "${devopsHost.removeSuffix("/")}$ci$api"
         CanwayHttpUtils.doPost(ciAddResourceUrl, requestParamStr).content
     }

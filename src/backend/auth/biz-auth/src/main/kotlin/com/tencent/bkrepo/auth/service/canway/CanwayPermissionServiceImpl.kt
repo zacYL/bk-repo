@@ -18,7 +18,7 @@ import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
 import com.tencent.bkrepo.auth.service.DepartmentService
 import com.tencent.bkrepo.auth.service.canway.bk.BkUserService
-import com.tencent.bkrepo.auth.service.canway.conf.CanwayAuthConf
+import com.tencent.bkrepo.auth.service.canway.conf.CanwayDevopsConf
 import com.tencent.bkrepo.auth.service.canway.http.CanwayHttpUtils
 import com.tencent.bkrepo.auth.service.canway.pojo.ActionCollection
 import com.tencent.bkrepo.auth.service.canway.pojo.CanwayPermissionRequest
@@ -44,7 +44,7 @@ class CanwayPermissionServiceImpl(
     permissionRepository: PermissionRepository,
     mongoTemplate: MongoTemplate,
     repositoryClient: RepositoryClient,
-    private val canwayAuthConf: CanwayAuthConf,
+    private val canwayDevopsConf: CanwayDevopsConf,
     private val departmentService: DepartmentService,
     private val bkUserService: BkUserService
 ) : PermissionServiceImpl(userRepository, roleRepository, permissionRepository, mongoTemplate, repositoryClient) {
@@ -301,7 +301,7 @@ class CanwayPermissionServiceImpl(
     }
 
     private fun getRequestUrl(uri: String): String {
-        val devopsHost = canwayAuthConf.devops ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING)
+        val devopsHost = canwayDevopsConf.host ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING)
         return "${devopsHost.removeSuffix("/")}$ci$ciApi$uri"
     }
 

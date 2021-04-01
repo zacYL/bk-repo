@@ -25,7 +25,6 @@ import com.tencent.bkrepo.repository.service.canway.http.CanwayHttpUtils
 import com.tencent.bkrepo.repository.service.canway.pojo.BatchResourceInstance
 import com.tencent.bkrepo.repository.service.canway.pojo.ResourceRegisterInfo
 import com.tencent.bkrepo.repository.service.canway.service.CanwayPermissionService
-import net.bytebuddy.dynamic.Nexus
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
@@ -64,7 +63,7 @@ class CanwayRepositoryAspect {
                 throw CanwayPermissionException()
         }
         logger.info("userId: $userId  ,   operator: ${repo.operator}")
-        updateResource(repo.projectId, repo.name, userId , ciAddResourceApi)
+        updateResource(repo.projectId, repo.name, userId, ciAddResourceApi)
         val result: Any?
         try {
             result = point.proceed(args)
@@ -85,7 +84,7 @@ class CanwayRepositoryAspect {
 
     private fun addUserIdToAdmin(userId: String, projectId: String, repoName: String) {
         val permissions = permissionService.listRepoBuiltinPermission(projectId, repoName).data
-                ?: throw SystemException(CommonMessageCode.RESOURCE_NOT_FOUND, "Can not load buildin permission")
+            ?: throw SystemException(CommonMessageCode.RESOURCE_NOT_FOUND, "Can not load buildin permission")
         logger.info("Found permission size: ${permissions.size}")
         for (permission in permissions) {
             logger.info("Current permission: $permission")
@@ -171,13 +170,17 @@ class CanwayRepositoryAspect {
     fun deleteRepo(point: ProceedingJoinPoint) {
         val args = point.args
         val repo = args.first() as RepoDeleteRequest
+        updateResource(repo.projectId, repo.name, repo.operator, ciDeleteResourceApi)
         try {
             point.proceed(args)
         } catch (exception: Exception) {
-            if ((exception as ErrorCodeException).messageCode == ArtifactMessageCode.REPOSITORY_NOT_FOUND)
-                updateResource(repo.projectId, repo.name, repo.operator, ciDeleteResourceApi)
+            if (exception is ErrorCodeException) {
+                if (exception.messageCode == ArtifactMessageCode.REPOSITORY_NOT_FOUND) {
+                    updateResource(repo.projectId, repo.name, repo.operator, ciDeleteResourceApi)
+                }
+            }
+            updateResource(repo.projectId, repo.name, repo.operator, ciAddResourceApi)
         }
-        updateResource(repo.projectId, repo.name, repo.operator, ciDeleteResourceApi)
     }
 
     private fun updateResource(projectId: String, repoName: String, operator: String, api: String) {
@@ -194,7 +197,7 @@ class CanwayRepositoryAspect {
         )
         val requestParamStr = requestParam.toJsonString()
         val devopsHost = canwayAuthConf.devops
-            ?:throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "devops.host must not be null")
+            ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "devops.host must not be null")
         val ciAddResourceUrl = "${devopsHost.removeSuffix("/")}$ci$api"
         CanwayHttpUtils.doPost(ciAddResourceUrl, requestParamStr).content
     }

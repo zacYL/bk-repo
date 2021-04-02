@@ -39,6 +39,7 @@ import com.tencent.bkrepo.auth.pojo.token.Token
 import com.tencent.bkrepo.auth.pojo.token.TokenResult
 import com.tencent.bkrepo.auth.pojo.user.CreateUserRequest
 import com.tencent.bkrepo.auth.pojo.user.CreateUserToProjectRequest
+import com.tencent.bkrepo.auth.pojo.user.CreateUserToRepoRequest
 import com.tencent.bkrepo.auth.pojo.user.UpdateUserRequest
 import com.tencent.bkrepo.auth.pojo.user.User
 import com.tencent.bkrepo.auth.repository.RoleRepository
@@ -47,7 +48,11 @@ import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.auth.util.DataDigestUtils
 import com.tencent.bkrepo.auth.util.IDUtil
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.api.sensitive.DesensitizedUtils
+import com.tencent.bkrepo.repository.api.ProjectClient
+import com.tencent.bkrepo.repository.api.RepositoryClient
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
@@ -62,9 +67,15 @@ class UserServiceImpl constructor(
     private val mongoTemplate: MongoTemplate
 ) : UserService, AbstractServiceImpl(mongoTemplate, userRepository, roleRepository) {
 
+    @Autowired
+    lateinit var repositoryClient: RepositoryClient
+
+    @Autowired
+    lateinit var projectClient: ProjectClient
+
     override fun createUser(request: CreateUserRequest): Boolean {
         // todo 校验
-        logger.info("create user request : [$request]")
+        logger.info("create user request : [${DesensitizedUtils.toString(request)}]")
         val user = userRepository.findFirstByUserId(request.userId)
         user?.let {
             logger.warn("create user [${request.userId}]  is exist.")
@@ -93,20 +104,37 @@ class UserServiceImpl constructor(
         return true
     }
 
-    override fun createUserToProject(request: CreateUserToProjectRequest): Boolean {
-        // todo 校验
-        logger.info("create user to project request : [$request]")
+    override fun createUserToRepo(request: CreateUserToRepoRequest): Boolean {
+        logger.info("create user to repo request : [${DesensitizedUtils.toString(request)}]")
+        repositoryClient.getRepoInfo(request.projectId, request.repoName).data ?: run {
+            logger.warn("repo [${request.projectId}/${request.repoName}]  not exist.")
+            throw ErrorCodeException(AuthMessageCode.AUTH_REPO_NOT_EXIST)
+        }
+        // user not exist, create user
+        try {
+            val userResult = createUser(convCreateRepoUserRequest(request))
+            if (!userResult) {
+                logger.warn("create user fail [$userResult]")
+                return false
+            }
+        } catch (exception: ErrorCodeException) {
+            if (exception.messageCode == AuthMessageCode.AUTH_DUP_UID) {
+                return true
+            }
+            throw exception
+        }
+        return true
+    }
 
-        val query = Query()
-        query.addCriteria(Criteria.where("name").`is`(request.projectId))
-        val result = mongoTemplate.count(query, "project")
-        if (result == 0L) {
+    override fun createUserToProject(request: CreateUserToProjectRequest): Boolean {
+        logger.info("create user to project request : [${DesensitizedUtils.toString(request)}]")
+        projectClient.getProjectInfo(request.projectId).data ?: run {
             logger.warn("project [${request.projectId}]  not exist.")
             throw ErrorCodeException(AuthMessageCode.AUTH_PROJECT_NOT_EXIST)
         }
         // user not exist, create user
         try {
-            val userResult = createUser(convCreateUserRequest(request))
+            val userResult = createUser(convCreateProjectUserRequest(request))
             if (!userResult) {
                 logger.warn("create user fail [$userResult]")
                 return false
@@ -238,7 +266,7 @@ class UserServiceImpl constructor(
             val id = IDUtil.genRandomId()
             val now = LocalDateTime.now()
             var expiredTime: LocalDateTime? = null
-            expiredAt?.let {
+            if (expiredAt != null && expiredAt.length != 0) {
                 val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
                 expiredTime = LocalDateTime.parse(expiredAt, dateTimeFormatter)
                 // conv time
@@ -284,7 +312,7 @@ class UserServiceImpl constructor(
     }
 
     override fun removeToken(userId: String, name: String): Boolean {
-        logger.info("remove token userId : [$userId] ,token : [$name]")
+        logger.info("remove token userId : [$userId] ,name : [$name]")
         checkUserExist(userId)
         val query = Query.query(Criteria.where(TUser::userId.name).`is`(userId))
         val s = BasicDBObject()

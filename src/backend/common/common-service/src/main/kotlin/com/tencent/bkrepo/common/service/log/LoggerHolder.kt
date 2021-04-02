@@ -38,6 +38,7 @@ import com.tencent.bkrepo.common.api.constant.JOB_LOGGER_NAME
 import com.tencent.bkrepo.common.api.constant.MS_REQUEST_KEY
 import com.tencent.bkrepo.common.api.constant.PLATFORM_KEY
 import com.tencent.bkrepo.common.api.constant.USER_KEY
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.web.context.request.RequestContextHolder
@@ -61,15 +62,12 @@ object LoggerHolder {
      */
     val accessLogger: Logger = LoggerFactory.getLogger(ACCESS_LOGGER_NAME)
 
-    fun logBusinessException(exception: Exception, message: String? = null) {
-        logException(exception, message, false)
+    fun logErrorCodeException(exception: ErrorCodeException, message: String) {
+        val systemError = exception.status.isServerError()
+        logException(exception, message, systemError)
     }
 
-    fun logSystemException(exception: Exception, message: String? = null) {
-        logException(exception, message, true)
-    }
-
-    private fun logException(exception: Exception, message: String?, systemError: Boolean) {
+    fun logException(exception: Exception, message: String?, systemError: Boolean) {
         val request = (RequestContextHolder.getRequestAttributes() as? ServletRequestAttributes)?.request
         val userId = request?.getAttribute(USER_KEY) ?: ANONYMOUS_USER
         val platformId = request?.getAttribute(PLATFORM_KEY)
@@ -79,9 +77,14 @@ object LoggerHolder {
         val method = request?.method
         val exceptionMessage = message ?: exception.message.orEmpty()
         val exceptionName = exception.javaClass.simpleName
+        val cause = if (exception is ErrorCodeException && exception.cause != null) {
+            exception.cause
+        } else {
+            exception
+        }
         val fullMessage = "User[$principal] $method [$uri] from [$channel] failed[$exceptionName]: $exceptionMessage"
         if (systemError) {
-            exceptionLogger.error(fullMessage, exception)
+            exceptionLogger.error(fullMessage, cause)
         } else {
             exceptionLogger.warn(fullMessage)
         }
@@ -89,15 +92,9 @@ object LoggerHolder {
 
     private fun determineAccessChannel(request: HttpServletRequest?): String {
         return when {
-            request == null -> {
-                "None"
-            }
-            request.getAttribute(MS_REQUEST_KEY) as? Boolean == true -> {
-                "MicroService"
-            }
-            else -> {
-                "Api"
-            }
+            request == null -> "None"
+            request.getAttribute(MS_REQUEST_KEY) != null -> "MicroService"
+            else -> "Api"
         }
     }
 }

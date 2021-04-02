@@ -31,12 +31,13 @@
 
 package com.tencent.bkrepo.common.artifact.repository.core
 
+import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
+import com.tencent.bkrepo.common.artifact.event.ArtifactDownloadedEvent
+import com.tencent.bkrepo.common.artifact.event.ArtifactResponseEvent
 import com.tencent.bkrepo.common.artifact.event.ArtifactUploadedEvent
 import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
-import com.tencent.bkrepo.common.artifact.exception.ArtifactValidateException
-import com.tencent.bkrepo.common.artifact.exception.UnsupportedMethodException
+import com.tencent.bkrepo.common.artifact.exception.ArtifactResponseException
 import com.tencent.bkrepo.common.artifact.metrics.ArtifactMetrics
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactMigrateContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
@@ -44,16 +45,18 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveConte
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.migration.MigrateDetail
+import com.tencent.bkrepo.common.artifact.manager.StorageManager
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.util.http.ArtifactResourceWriter
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.storage.core.StorageService
+import com.tencent.bkrepo.common.storage.monitor.Throughput
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.PackageClient
-import com.tencent.bkrepo.repository.api.PackageDownloadStatisticsClient
+import com.tencent.bkrepo.repository.api.PackageDownloadsClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
-import com.tencent.bkrepo.repository.pojo.download.service.DownloadStatisticsAddRequest
+import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationEventPublisher
@@ -89,7 +92,7 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
     lateinit var publisher: ApplicationEventPublisher
 
     @Autowired
-    lateinit var packageDownloadStatisticsClient: PackageDownloadStatisticsClient
+    lateinit var packageDownloadsClient: PackageDownloadsClient
 
     @Autowired
     private lateinit var taskAsyncExecutor: ThreadPoolTaskExecutor
@@ -97,12 +100,9 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
     override fun upload(context: ArtifactUploadContext) {
         try {
             this.onUploadBefore(context)
-            this.onUploadValidate(context)
             this.onUpload(context)
             this.onUploadSuccess(context)
-        } catch (validateException: ArtifactValidateException) {
-            this.onValidateFailed(context, validateException)
-        } catch (exception: Exception) {
+        } catch (exception: RuntimeException) {
             this.onUploadFailed(context, exception)
         } finally {
             this.onUploadFinished(context)
@@ -112,14 +112,15 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
     override fun download(context: ArtifactDownloadContext) {
         try {
             this.onDownloadBefore(context)
-            this.onDownloadValidate(context)
             val artifactResponse = this.onDownload(context)
-                ?: throw ArtifactNotFoundException("Artifact[${context.artifactInfo}] not found")
-            ArtifactResourceWriter.write(artifactResponse)
-            this.onDownloadSuccess(context, artifactResponse)
-        } catch (validateException: ArtifactValidateException) {
-            this.onValidateFailed(context, validateException)
-        } catch (exception: Exception) {
+                ?: throw ArtifactNotFoundException(context.artifactInfo.toString())
+            val throughput = ArtifactResourceWriter.write(artifactResponse)
+            this.onDownloadSuccess(context, artifactResponse, throughput)
+        } catch (responseException: ArtifactResponseException) {
+            val principal = SecurityUtils.getPrincipal()
+            val artifactInfo = context.artifactInfo
+            logger.warn("User[$principal] download artifact[$artifactInfo] failed, ${responseException.message}")
+        } catch (exception: RuntimeException) {
             this.onDownloadFailed(context, exception)
         } finally {
             this.onDownloadFinished(context)
@@ -127,26 +128,19 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
     }
 
     override fun remove(context: ArtifactRemoveContext) {
-        throw UnsupportedMethodException()
+        throw MethodNotAllowedException()
     }
 
     override fun query(context: ArtifactQueryContext): Any? {
-        throw UnsupportedMethodException()
+        throw MethodNotAllowedException()
     }
 
     override fun search(context: ArtifactSearchContext): List<Any> {
-        throw UnsupportedMethodException()
+        throw MethodNotAllowedException()
     }
 
     override fun migrate(context: ArtifactMigrateContext): MigrateDetail {
-        throw UnsupportedMethodException()
-    }
-
-    /**
-     * 验证构件
-     */
-    @Throws(ArtifactValidateException::class)
-    open fun onUploadValidate(context: ArtifactUploadContext) {
+        throw MethodNotAllowedException()
     }
 
     /**
@@ -160,7 +154,7 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
      * 上传构件
      */
     open fun onUpload(context: ArtifactUploadContext) {
-        throw UnsupportedMethodException()
+        throw MethodNotAllowedException()
     }
 
     /**
@@ -181,13 +175,6 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
     }
 
     /**
-     * 下载验证
-     */
-    @Throws(ArtifactValidateException::class)
-    open fun onDownloadValidate(context: ArtifactDownloadContext) {
-    }
-
-    /**
      * 下载前回调
      */
     open fun onDownloadBefore(context: ArtifactDownloadContext) {
@@ -198,18 +185,26 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
      * 下载构件
      */
     open fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
-        throw UnsupportedMethodException()
+        throw MethodNotAllowedException()
     }
 
     /**
      * 下载成功回调
      */
-    open fun onDownloadSuccess(context: ArtifactDownloadContext, artifactResource: ArtifactResource) {
+    open fun onDownloadSuccess(
+        context: ArtifactDownloadContext,
+        artifactResource: ArtifactResource,
+        throughput: Throughput
+    ) {
         if (artifactResource.channel == ArtifactChannel.LOCAL) {
             buildDownloadRecord(context, artifactResource)?.let {
-                taskAsyncExecutor.execute { packageDownloadStatisticsClient.add(it) }
+                taskAsyncExecutor.execute { packageDownloadsClient.record(it) }
             }
         }
+        if (throughput != Throughput.EMPTY) {
+            publisher.publishEvent(ArtifactResponseEvent(artifactResource, throughput, context.storageCredentials))
+        }
+        publisher.publishEvent(ArtifactDownloadedEvent(context))
         logger.info("User[${SecurityUtils.getPrincipal()}] download artifact[${context.artifactInfo}] success")
     }
 
@@ -221,7 +216,7 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
     open fun buildDownloadRecord(
         context: ArtifactDownloadContext,
         artifactResource: ArtifactResource
-    ): DownloadStatisticsAddRequest? {
+    ): PackageDownloadRecord? {
         return null
     }
 
@@ -232,15 +227,6 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
      */
     open fun onDownloadFailed(context: ArtifactDownloadContext, exception: Exception) {
         throw exception
-    }
-
-    /**
-     * 验证失败回调
-     *
-     * 默认向上抛异常，由全局异常处理器处理
-     */
-    open fun onValidateFailed(context: ArtifactContext, validateException: ArtifactValidateException) {
-        throw validateException
     }
 
     /**

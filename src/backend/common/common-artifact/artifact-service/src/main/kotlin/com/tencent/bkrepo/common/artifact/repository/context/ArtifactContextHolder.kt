@@ -40,7 +40,7 @@ import com.tencent.bkrepo.common.artifact.constant.ARTIFACT_INFO_KEY
 import com.tencent.bkrepo.common.artifact.constant.PROJECT_ID
 import com.tencent.bkrepo.common.artifact.constant.REPO_KEY
 import com.tencent.bkrepo.common.artifact.constant.REPO_NAME
-import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
+import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.repository.composite.CompositeRepository
@@ -48,15 +48,11 @@ import com.tencent.bkrepo.common.artifact.repository.core.ArtifactRepository
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
-import org.slf4j.LoggerFactory
-import org.springframework.stereotype.Component
 import org.springframework.web.servlet.HandlerMapping
 import java.util.concurrent.TimeUnit
 import javax.servlet.http.HttpServletRequest
 
-// LateinitUsage: 静态成员通过init构造函数初始化
-@Suppress("LateinitUsage")
-@Component
+@Suppress("LateinitUsage") // 静态成员通过init构造函数初始化
 class ArtifactContextHolder(
     artifactConfigurers: List<ArtifactConfigurer>,
     compositeRepository: CompositeRepository,
@@ -78,7 +74,6 @@ class ArtifactContextHolder(
         private lateinit var compositeRepository: CompositeRepository
         private lateinit var repositoryClient: RepositoryClient
 
-        private val logger = LoggerFactory.getLogger(ArtifactContextHolder::class.java)
         private val artifactConfigurerMap = mutableMapOf<RepositoryType, ArtifactConfigurer>()
         private val repositoryDetailCache = CacheBuilder.newBuilder()
             .maximumSize(1000)
@@ -121,6 +116,16 @@ class ArtifactContextHolder(
         }
 
         /**
+         * 根据当前请求获取对应ArtifactInfo信息
+         * 如果请求为空，则返回`null`
+         */
+        fun getArtifactInfo(): ArtifactInfo? {
+            val artifactInfo = HttpContextHolder.getRequestOrNull()?.getAttribute(ARTIFACT_INFO_KEY) ?: return null
+            require(artifactInfo is ArtifactInfo)
+            return artifactInfo
+        }
+
+        /**
          * 根据当前请求获取对应仓库详情
          * 如果请求为空，则返回`null`
          */
@@ -158,13 +163,13 @@ class ArtifactContextHolder(
 
         /**
          * 根据[repositoryId]查询仓库详情
-         * 当对应仓库不存在，抛[ArtifactNotFoundException]异常
+         * 当对应仓库不存在，抛[RepoNotFoundException]异常
          */
         private fun queryRepoDetail(repositoryId: RepositoryId): RepositoryDetail {
             with(repositoryId) {
                 val repoType = getCurrentArtifactConfigurer().getRepositoryType().name
                 val response = repositoryClient.getRepoDetail(projectId, repoName, repoType)
-                return response.data ?: throw ArtifactNotFoundException("Repository[$repositoryId] not found")
+                return response.data ?: throw RepoNotFoundException(repoName)
             }
         }
     }

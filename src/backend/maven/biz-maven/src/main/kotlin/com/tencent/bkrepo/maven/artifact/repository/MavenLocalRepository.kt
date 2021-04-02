@@ -54,7 +54,7 @@ import com.tencent.bkrepo.maven.pojo.MavenGAVC
 import com.tencent.bkrepo.maven.util.MavenGAVCUtils.mavenGAVC
 import com.tencent.bkrepo.maven.util.StringUtils.formatSeparator
 import com.tencent.bkrepo.repository.api.StageClient
-import com.tencent.bkrepo.repository.pojo.download.service.DownloadStatisticsAddRequest
+import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
@@ -86,29 +86,27 @@ class MavenLocalRepository(private val stageClient: StageClient) : LocalReposito
     }
 
     override fun onUpload(context: ArtifactUploadContext) {
-        with(context.artifactInfo) {
-            val regex = "(.)+-(.)+\\.(jar|war|tar|ear|ejb|rar|msi|rpm|tar\\.bz2|tar\\.gz|tbz|zip|pom)$"
-            val matcher = Pattern.compile(regex).matcher(getArtifactFullPath())
-            if (matcher.find()) {
-                val packaging = matcher.group(3)
-                if (packaging == "pom") {
-                    val mavenPom = context.getArtifactFile().getInputStream().readXmlString<MavenPom>()
-                    if (StringUtils.isNotBlank(mavenPom.version) && mavenPom.packaging == "pom") {
-                        val node = buildMavenArtifactNode(context, packaging)
-                        storageManager.storeArtifactFile(node, context.getArtifactFile(), context.storageCredentials)
-                        createMavenVersion(context, mavenPom)
-                    } else {
-                        super.onUpload(context)
-                    }
-                } else {
+        val regex = "(.)+-(.)+\\.(jar|war|tar|ear|ejb|rar|msi|rpm|tar\\.bz2|tar\\.gz|tbz|zip|pom)$"
+        val matcher = Pattern.compile(regex).matcher(context.artifactInfo.getArtifactFullPath())
+        if (matcher.find()) {
+            val packaging = matcher.group(3)
+            if (packaging == "pom") {
+                val mavenPom = context.getArtifactFile().getInputStream().readXmlString<MavenPom>()
+                if (StringUtils.isNotBlank(mavenPom.version) && mavenPom.packaging == "pom") {
                     val node = buildMavenArtifactNode(context, packaging)
                     storageManager.storeArtifactFile(node, context.getArtifactFile(), context.storageCredentials)
-                    val mavenJar = (this as MavenArtifactInfo).toMavenJar()
-                    createMavenVersion(context, mavenJar)
+                    createMavenVersion(context, mavenPom)
+                } else {
+                    super.onUpload(context)
                 }
             } else {
-                super.onUpload(context)
+                val node = buildMavenArtifactNode(context, packaging)
+                storageManager.storeArtifactFile(node, context.getArtifactFile(), context.storageCredentials)
+                val mavenJar = (context.artifactInfo as MavenArtifactInfo).toMavenJar()
+                createMavenVersion(context, mavenJar)
             }
+        } else {
+            super.onUpload(context)
         }
     }
 
@@ -199,7 +197,8 @@ class MavenLocalRepository(private val stageClient: StageClient) : LocalReposito
                 Range.full(mavenMetadataNode.size),
                 ArtifactRemoveContext().storageCredentials
             ) ?: return
-            val xmlStr = String(artifactInputStream.readBytes()).removePrefix("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+            val xmlStr = String(artifactInputStream.readBytes())
+                .removePrefix("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
             val mavenMetadata = xmlStr.readXmlString<MavenMetadata>()
             mavenMetadata.versioning.versions.version.removeIf { it == version }
             // 当删除当前版本后不存在任一版本则删除整个包。
@@ -295,7 +294,7 @@ class MavenLocalRepository(private val stageClient: StageClient) : LocalReposito
     override fun buildDownloadRecord(
         context: ArtifactDownloadContext,
         artifactResource: ArtifactResource
-    ): DownloadStatisticsAddRequest? {
+    ): PackageDownloadRecord? {
         with(context) {
             val fullPath = artifactInfo.getArtifactFullPath()
             val node = nodeClient.getNodeDetail(projectId, repoName, fullPath).data
@@ -305,7 +304,7 @@ class MavenLocalRepository(private val stageClient: StageClient) : LocalReposito
                 val artifactId = mavenGAVC.artifactId
                 val groupId = mavenGAVC.groupId.formatSeparator("/", ".")
                 val packageKey = PackageKeys.ofGav(groupId, artifactId)
-                DownloadStatisticsAddRequest(projectId, repoName, packageKey, artifactId, version)
+                PackageDownloadRecord(projectId, repoName, packageKey, version)
             } else {
                 null
             }

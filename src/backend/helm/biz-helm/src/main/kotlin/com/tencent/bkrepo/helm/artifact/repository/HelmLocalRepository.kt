@@ -32,8 +32,8 @@
 package com.tencent.bkrepo.helm.artifact.repository
 
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
@@ -48,7 +48,7 @@ import com.tencent.bkrepo.helm.constants.SIZE
 import com.tencent.bkrepo.helm.constants.VERSION
 import com.tencent.bkrepo.helm.exception.HelmFileAlreadyExistsException
 import com.tencent.bkrepo.helm.exception.HelmFileNotFoundException
-import com.tencent.bkrepo.repository.pojo.download.service.DownloadStatisticsAddRequest
+import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import org.slf4j.Logger
@@ -67,7 +67,9 @@ class HelmLocalRepository : LocalRepository() {
         val repoName = repositoryDetail.name
         val fullPath = context.getStringAttribute(FULL_PATH).orEmpty()
         val isExist = nodeClient.checkExist(projectId, repoName, fullPath).data!!
-        if (isExist && !isOverwrite(fullPath, isForce)) {
+        val isOverwrite = isOverwrite(fullPath, isForce)
+        context.putAttribute("isOverwrite", isOverwrite)
+        if (isExist && !isOverwrite) {
             throw HelmFileAlreadyExistsException("${fullPath.trimStart('/')} already exists")
         }
     }
@@ -109,11 +111,9 @@ class HelmLocalRepository : LocalRepository() {
         val fullPath = context.getStringAttribute(FULL_PATH)!!
         with(context) {
             val node = nodeClient.getNodeDetail(projectId, repoName, fullPath).data
-            if (node == null || node.folder) return null
-            node.metadata[NAME]?.let { context.putAttribute(NAME, it) }
+            val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials) ?: return null
+            node!!.metadata[NAME]?.let { context.putAttribute(NAME, it) }
             node.metadata[VERSION]?.let { context.putAttribute(VERSION, it) }
-            val range = resolveRange(context, node.size)
-            val inputStream = storageService.load(node.sha256!!, range, storageCredentials) ?: return null
             return ArtifactResource(
                 inputStream,
                 artifactInfo.getResponseName(),
@@ -127,13 +127,13 @@ class HelmLocalRepository : LocalRepository() {
     override fun buildDownloadRecord(
         context: ArtifactDownloadContext,
         artifactResource: ArtifactResource
-    ): DownloadStatisticsAddRequest? {
+    ): PackageDownloadRecord? {
         val name = context.getStringAttribute(NAME).orEmpty()
         val version = context.getStringAttribute(VERSION).orEmpty()
         // 下载index.yaml不进行下载次数统计
         if (name.isEmpty() && version.isEmpty()) return null
         with(context) {
-            return DownloadStatisticsAddRequest(projectId, repoName, PackageKeys.ofHelm(name), name, version)
+            return PackageDownloadRecord(projectId, repoName, PackageKeys.ofHelm(name), version)
         }
     }
 
@@ -151,7 +151,7 @@ class HelmLocalRepository : LocalRepository() {
         if (node == null || node.folder) return null
         return storageService.load(
             node.sha256!!, Range.full(node.size), context.storageCredentials
-        )?.also { logger.info("search artifact [$fullPath] success!") }
+        )?.also { logger.info("search artifact [$fullPath] success") }
     }
 
     override fun remove(context: ArtifactRemoveContext) {

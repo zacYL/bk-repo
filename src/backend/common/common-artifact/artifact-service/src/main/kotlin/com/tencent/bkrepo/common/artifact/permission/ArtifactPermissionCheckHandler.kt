@@ -31,21 +31,27 @@
 
 package com.tencent.bkrepo.common.artifact.permission
 
+import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.security.permission.PermissionCheckHandler
 import com.tencent.bkrepo.common.security.permission.Principal
-import org.springframework.stereotype.Component
 
-@Component
 class ArtifactPermissionCheckHandler(
     private val permissionManager: PermissionManager
 ) : PermissionCheckHandler {
     override fun onPermissionCheck(userId: String, permission: Permission) {
-        val repositoryDetail = ArtifactContextHolder.getRepoDetail()!!
-        with(repositoryDetail) {
-            permissionManager.checkPermission(userId, permission.type, permission.action, projectId, name, public)
+        if (permission.type == ResourceType.REPO) {
+            with(ArtifactContextHolder.getRepoDetail()!!) {
+                permissionManager.checkRepoPermission(permission.action, projectId, name, public)
+            }
+        }
+        if (permission.type == ResourceType.NODE) {
+            val path = ArtifactContextHolder.getArtifactInfo()!!.getArtifactFullPath()
+            with(ArtifactContextHolder.getRepoDetail()!!) {
+                permissionManager.checkNodePermission(permission.action, projectId, name, path, public)
+            }
         }
     }
 

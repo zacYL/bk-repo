@@ -35,11 +35,11 @@ import com.tencent.bkrepo.common.api.constant.HttpHeaders
 import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.security.constant.BASIC_AUTH_PREFIX
 import com.tencent.bkrepo.common.security.exception.AuthenticationException
-import com.tencent.bkrepo.common.security.exception.BadCredentialsException
 import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.security.manager.AuthenticationManager
 import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.common.security.permission.PrincipalType
+import org.springframework.util.AntPathMatcher
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter
 import java.util.Base64
 import javax.servlet.http.HttpServletRequest
@@ -50,8 +50,15 @@ class ActuatorAuthInterceptor(
     private val permissionManager: PermissionManager
 ) : HandlerInterceptorAdapter() {
 
+    private val antPathMatcher = AntPathMatcher()
+
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
-        val authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION) ?: throw AuthenticationException()
+        val uri = request.requestURI
+        if (antPathMatcher.match(HEALTH_ENDPOINT, uri) || antPathMatcher.match(INFO_ENDPOINT, uri)) {
+            return true
+        }
+        val authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION)
+            ?: throw AuthenticationException("Empty authorization value.")
         try {
             val encodedCredentials = authorizationHeader.removePrefix(BASIC_AUTH_PREFIX)
             val decodedHeader = String(Base64.getDecoder().decode(encodedCredentials))
@@ -65,7 +72,12 @@ class ActuatorAuthInterceptor(
         } catch (exception: PermissionException) {
             throw exception
         } catch (exception: IllegalArgumentException) {
-            throw BadCredentialsException("Authorization value [$authorizationHeader] is not a valid scheme.")
+            throw AuthenticationException("Invalid authorization value.")
         }
+    }
+
+    companion object {
+        private const val HEALTH_ENDPOINT = "/actuator/health/**"
+        private const val INFO_ENDPOINT = "/actuator/info/**"
     }
 }

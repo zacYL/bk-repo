@@ -33,11 +33,10 @@ plugins {
     id("com.tencent.devops.boot") version "0.0.2"
     id("com.tencent.devops.publish") version "0.0.2" apply false
 }
-apply(from = rootProject.file("gradle/publish.gradle.kts"))
 
 allprojects {
     group = "com.tencent.bkrepo"
-    version = "0.8.30"
+    version = "1.0.0-SNAPSHOT"
 
     apply(plugin = "com.tencent.devops.boot")
     dependencyManagement {
@@ -47,6 +46,7 @@ allprojects {
             dependency("org.apache.skywalking:apm-toolkit-trace:6.6.0")
             dependency("net.javacrumbs.shedlock:shedlock-spring:4.12.0")
             dependency("net.javacrumbs.shedlock:shedlock-provider-mongo:4.12.0")
+            dependency("com.google.code.gson:gson:2.8.6")
         }
     }
     configurations.all {
@@ -59,3 +59,5 @@ allprojects {
         maven { setUrl("http://artifact.canway.net/maven-public/")}
     }
 }
+
+apply(from = rootProject.file("gradle/publish.gradle.kts"))

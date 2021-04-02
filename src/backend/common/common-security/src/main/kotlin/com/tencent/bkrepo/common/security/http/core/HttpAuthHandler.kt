@@ -32,7 +32,6 @@
 package com.tencent.bkrepo.common.security.http.core
 
 import com.tencent.bkrepo.common.security.exception.AuthenticationException
-import com.tencent.bkrepo.common.security.exception.BadCredentialsException
 import com.tencent.bkrepo.common.security.http.credentials.HttpAuthCredentials
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -44,15 +43,20 @@ interface HttpAuthHandler {
 
     /**
      * 登录endpoint，表示该handler用于处理登录请求
-     * 默认返回null, 表示在所有请求都进行认证
      * 支持ant路径匹配规则
      */
     fun getLoginEndpoint(): String? = null
 
     /**
+     * 登录endpoint的请求方法，表示该handler用于处理登录请求
+     * 默认返回null, 表示所有请求方法
+     */
+    fun getLoginMethod(): String? = null
+
+    /**
      * 提取认证身份信息
      */
-    @Throws(BadCredentialsException::class)
+    @Throws(AuthenticationException::class)
     fun extractAuthCredentials(request: HttpServletRequest): HttpAuthCredentials
 
     /**

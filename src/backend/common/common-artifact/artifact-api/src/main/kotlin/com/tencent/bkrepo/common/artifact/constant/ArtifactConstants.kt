@@ -75,3 +75,19 @@ const val PUBLIC_PROXY_REPO_NAME = "%s-%s"
  * 私有源代理仓库名称, <RepoName>-<ChannelName>
  */
 const val PRIVATE_PROXY_REPO_NAME = "%s-%s"
+
+/**
+ * 默认storage key
+ */
+const val DEFAULT_STORAGE_KEY = "default"
+
+/**
+ * 响应header check sum
+ */
+const val X_CHECKSUM_MD5 = "X-Checksum-Md5"
+
+/**
+ * 流水线仓库
+ */
+const val PIPELINE = "pipeline"
+

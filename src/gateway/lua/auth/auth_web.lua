@@ -22,9 +22,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 local bk_ticket, err = cookieUtil:get_cookie("bk_ticket")
 local bk_token, err = cookieUtil:get_cookie("bk_token")
 local bkrepo_token, bkrepo_err = cookieUtil:get_cookie("bkrepo_ticket")
-local ticket = nil
-local token = nil
-local username = nil
+local ticket, token, username
+
 
 --- standalone模式下校验bkrepo_ticket
 if config.mode == "standalone" or config.mode == "" or config.mode == nil then
@@ -34,7 +33,6 @@ if config.mode == "standalone" or config.mode == "" or config.mode == nil then
         return
     end
     if bkrepo_token == nil then
-        ngx.log(ngx.STDERR, "failed to read user request bkrepo_ticket: ", bkrepo_err)
         ngx.exit(401)
         return
     end
@@ -47,7 +45,6 @@ elseif bk_token ~= nil then
 else
     local devops_access_token = ngx.var.http_x_devops_access_token
     if bk_ticket == nil and devops_access_token == nil then
-        ngx.log(ngx.STDERR, "failed to read user request bk_ticket or devops_access_token: ", err)
         ngx.exit(401)
         return
     end

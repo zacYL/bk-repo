@@ -35,7 +35,7 @@ import com.tencent.bkrepo.common.service.log.LoggerHolder
 import com.tencent.bkrepo.repository.constant.SHARDING_COUNT
 import com.tencent.bkrepo.repository.dao.NodeDao
 import com.tencent.bkrepo.repository.model.TNode
-import com.tencent.bkrepo.repository.service.NodeService
+import com.tencent.bkrepo.repository.service.node.NodeService
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.mongodb.core.query.Criteria
@@ -53,9 +53,9 @@ class ExpiredNodeMarkupJob(
     private val nodeService: NodeService
 ) {
 
-    @Scheduled(cron = "0 0 0/6 * * ?")
+    @Scheduled(cron = "0 0 0/6 * * ?") // 凌晨开始，6小时执行一次
     @SchedulerLock(name = "ExpiredNodeMarkupJob", lockAtMostFor = "PT6H")
-    fun markUp() {
+    fun cleanup() {
         logger.info("Starting to mark up expired nodes.")
         var markupCount = 0L
         val startTimeMillis = System.currentTimeMillis()

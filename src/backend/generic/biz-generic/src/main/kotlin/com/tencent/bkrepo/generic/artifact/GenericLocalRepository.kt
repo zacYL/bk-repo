@@ -36,10 +36,9 @@ import com.tencent.bkrepo.common.api.constant.MediaTypes
 import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.util.toJsonString
-import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
-import com.tencent.bkrepo.common.artifact.exception.ArtifactValidateException
-import com.tencent.bkrepo.common.artifact.exception.UnsupportedMethodException
+import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
@@ -51,9 +50,11 @@ import com.tencent.bkrepo.generic.constant.GenericMessageCode
 import com.tencent.bkrepo.generic.constant.HEADER_EXPIRES
 import com.tencent.bkrepo.generic.constant.HEADER_MD5
 import com.tencent.bkrepo.generic.constant.HEADER_OVERWRITE
+import com.tencent.bkrepo.generic.constant.HEADER_PREVIEW
 import com.tencent.bkrepo.generic.constant.HEADER_SEQUENCE
 import com.tencent.bkrepo.generic.constant.HEADER_SHA256
 import com.tencent.bkrepo.generic.constant.HEADER_UPLOAD_ID
+import com.tencent.bkrepo.generic.constant.PARAM_PREVIEW
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import org.slf4j.LoggerFactory
@@ -65,6 +66,13 @@ import javax.servlet.http.HttpServletRequest
 @Component
 class GenericLocalRepository : LocalRepository() {
 
+    override fun onDownloadBefore(context: ArtifactDownloadContext) {
+        super.onDownloadBefore(context)
+        val preview = HeaderUtils.getBooleanHeader(HEADER_PREVIEW) ||
+            context.request.getParameter(PARAM_PREVIEW)?.toBoolean() ?: false
+        context.useDisposition = !preview
+    }
+
     override fun onUploadBefore(context: ArtifactUploadContext) {
         super.onUploadBefore(context)
         // 若不允许覆盖, 提前检查节点是否存在
@@ -73,27 +81,22 @@ class GenericLocalRepository : LocalRepository() {
         val sequence = HeaderUtils.getHeader(HEADER_SEQUENCE)?.toInt()
         if (!overwrite && !isBlockUpload(uploadId, sequence)) {
             with(context.artifactInfo) {
-                val node = nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data
-                if (node != null) {
+                nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data?.let {
                     throw ErrorCodeException(ArtifactMessageCode.NODE_EXISTED, getArtifactName())
                 }
             }
         }
-    }
-
-    override fun onUploadValidate(context: ArtifactUploadContext) {
-        super.onUploadValidate(context)
         // 校验sha256
         val calculatedSha256 = context.getArtifactSha256()
         val uploadSha256 = HeaderUtils.getHeader(HEADER_SHA256)
         if (uploadSha256 != null && !calculatedSha256.equals(uploadSha256, true)) {
-            throw ArtifactValidateException("File sha256 validate failed.")
+            throw ErrorCodeException(ArtifactMessageCode.DIGEST_CHECK_FAILED, "sha256")
         }
         // 校验md5
         val calculatedMd5 = context.getArtifactMd5()
         val uploadMd5 = HeaderUtils.getHeader(HEADER_MD5)
         if (uploadMd5 != null && !calculatedMd5.equals(calculatedMd5, true)) {
-            throw ArtifactValidateException("File md5 validate failed.")
+            throw ErrorCodeException(ArtifactMessageCode.DIGEST_CHECK_FAILED, "md5")
         }
     }
 
@@ -118,10 +121,10 @@ class GenericLocalRepository : LocalRepository() {
     override fun remove(context: ArtifactRemoveContext) {
         with(context.artifactInfo) {
             val node = nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data
-                ?: throw ArtifactNotFoundException("Artifact[$this] not found")
+                ?: throw NodeNotFoundException(this.getArtifactFullPath())
             if (node.folder) {
                 if (nodeClient.countFileNode(projectId, repoName, getArtifactFullPath()).data!! > 0) {
-                    throw UnsupportedMethodException("Delete non empty folder is forbidden")
+                    throw ErrorCodeException(ArtifactMessageCode.FOLDER_CONTAINS_FILE)
                 }
             }
             val nodeDeleteRequest = NodeDeleteRequest(projectId, repoName, getArtifactFullPath(), context.userId)
@@ -168,6 +171,7 @@ class GenericLocalRepository : LocalRepository() {
      */
     private fun resolveMetadata(request: HttpServletRequest): Map<String, String> {
         val metadata = mutableMapOf<String, String>()
+        // case insensitive
         val headerNames = request.headerNames
         for (headerName in headerNames) {
             if (headerName.startsWith(BKREPO_META_PREFIX, true)) {
@@ -179,21 +183,24 @@ class GenericLocalRepository : LocalRepository() {
         }
         // case sensitive, base64 metadata
         // format X-BKREPO-META: base64(a=1&b=2)
-        request.getHeader(BKREPO_META)?.let {
-            try {
-                val metadataUrl = String(Base64.getDecoder().decode(it))
-                val parts = metadataUrl.split(CharPool.AND)
-                parts.forEach { part ->
-                    val pair = part.trim().split(CharPool.EQUAL, limit = 2)
-                    if (pair.size > 1 && pair[0].isNotBlank() && pair[1].isNotBlank()) {
-                        val key = URLDecoder.decode(pair[0], StringPool.UTF_8)
-                        val value = URLDecoder.decode(pair[1], StringPool.UTF_8)
-                        metadata[key] = value
-                    }
+        request.getHeader(BKREPO_META)?.let { metadata.putAll(decodeMetadata(it)) }
+        return metadata
+    }
+
+    private fun decodeMetadata(header: String): Map<String, String> {
+        val metadata = mutableMapOf<String, String>()
+        try {
+            val metadataUrl = String(Base64.getDecoder().decode(header))
+            metadataUrl.split(CharPool.AND).forEach { part ->
+                val pair = part.trim().split(CharPool.EQUAL, limit = 2)
+                if (pair.size > 1 && pair[0].isNotBlank() && pair[1].isNotBlank()) {
+                    val key = URLDecoder.decode(pair[0], StringPool.UTF_8)
+                    val value = URLDecoder.decode(pair[1], StringPool.UTF_8)
+                    metadata[key] = value
                 }
-            } catch (exception: IllegalArgumentException) {
-                logger.warn("$it is not in valid Base64 scheme.")
             }
+        } catch (exception: IllegalArgumentException) {
+            logger.warn("$header is not in valid Base64 scheme.")
         }
         return metadata
     }

@@ -37,7 +37,10 @@ import com.tencent.bkrepo.repository.pojo.packages.PackageListOption
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.VersionListOption
+import com.tencent.bkrepo.repository.pojo.packages.request.PackagePopulateRequest
+import com.tencent.bkrepo.repository.pojo.packages.request.PackageUpdateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
+import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionUpdateRequest
 
 /**
  * 包服务类接口
@@ -73,6 +76,30 @@ interface PackageService {
     ): PackageVersion?
 
     /**
+     * 根据tag查询版本名称
+     *
+     * @param projectId 项目id
+     * @param repoName 仓库名称
+     * @param packageKey 包唯一标识
+     * @param tag 标签
+     */
+    fun findVersionNameByTag(
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        tag: String
+    ): String?
+
+    /**
+     * 根据语义化版本查询latest版本
+     */
+    fun findLatestBySemVer(
+        projectId: String,
+        repoName: String,
+        packageKey: String
+    ): PackageVersion?
+
+    /**
      * 分页查询包列表, 支持根据packageName模糊搜索
      *
      * @param projectId 项目id
@@ -86,7 +113,15 @@ interface PackageService {
     ): Page<PackageSummary>
 
     /**
-     * 查询版本列表
+     * 查询所有包名称
+     *
+     * @param projectId 项目id
+     * @param repoName 仓库id
+     */
+    fun listAllPackageName(projectId: String, repoName: String): List<String>
+
+    /**
+     * 分页查询版本列表
      *
      * @param projectId 项目id
      * @param repoName 仓库id
@@ -101,6 +136,21 @@ interface PackageService {
     ): Page<PackageVersion>
 
     /**
+     * 查询版本列表
+     *
+     * @param projectId 项目id
+     * @param repoName 仓库id
+     * @param packageKey 包唯一标识
+     * @param option 列表选项
+     */
+    fun listAllVersion(
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        option: VersionListOption
+    ): List<PackageVersion>
+
+    /**
      * 创建包版本
      * 如果包不存在，会自动创建包
      *
@@ -110,6 +160,7 @@ interface PackageService {
 
     /**
      * 删除包
+     * 如果包不存在则直接返回
      *
      * @param projectId 项目id
      * @param repoName 项目id
@@ -137,6 +188,20 @@ interface PackageService {
     )
 
     /**
+     * 更新包
+     *
+     * @param request 包更新请求
+     */
+    fun updatePackage(request: PackageUpdateRequest)
+
+    /**
+     * 更新包版本
+     *
+     * @param request 包版本更新请求
+     */
+    fun updateVersion(request: PackageVersionUpdateRequest)
+
+    /**
      * 下载包版本
      *
      * @param projectId 项目id
@@ -147,17 +212,29 @@ interface PackageService {
     fun downloadVersion(projectId: String, repoName: String, packageKey: String, versionName: String)
 
     /**
-     * 包下载数量统计
+     * 添加包下载记录
      *
      * @param projectId 项目id
      * @param repoName 项目id
      * @param packageKey 包唯一标识
      * @param versionName 版本名称
      */
-    fun addDownloadMetric(projectId: String, repoName: String, packageKey: String, versionName: String)
+    fun addDownloadRecord(projectId: String, repoName: String, packageKey: String, versionName: String)
 
     /**
      * 根据[queryModel]搜索包
      */
     fun searchPackage(queryModel: QueryModel): Page<MutableMap<*, *>>
+
+    /**
+     * 填充包版本数据
+     *
+     * @param request 包版本填充请求
+     */
+    fun populatePackage(request: PackagePopulateRequest)
+
+    /**
+     * 查询包数量
+     */
+    fun getPackageCount(projectId: String, repoName: String): Long
 }

@@ -31,9 +31,10 @@
 
 package com.tencent.bkrepo.common.artifact.resolve.file.multipart
 
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactFileMap
-import com.tencent.bkrepo.common.artifact.exception.ArtifactResolveException
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import org.springframework.core.MethodParameter
 import org.springframework.web.bind.support.WebDataBinderFactory
@@ -58,12 +59,12 @@ class ArtifactFileMapMethodArgumentResolver : HandlerMethodArgumentResolver {
         container: ModelAndViewContainer?,
         nativeWebRequest: NativeWebRequest,
         factory: WebDataBinderFactory?
-    ): Any? {
+    ): Any {
         val request = nativeWebRequest.getNativeRequest(HttpServletRequest::class.java)!!
         val artifactFileMap = ArtifactFileMap()
         if (request is MultipartHttpServletRequest) {
             request.fileMap.forEach { (key, value) -> artifactFileMap[key] = resolveMultipartFile(value) }
-        } else throw ArtifactResolveException("Missing multipart file")
+        } else throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "multipart file")
         return artifactFileMap
     }
 

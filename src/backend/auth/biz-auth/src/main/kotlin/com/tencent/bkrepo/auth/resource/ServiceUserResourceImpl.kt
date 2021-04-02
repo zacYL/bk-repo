@@ -35,22 +35,31 @@ import com.tencent.bkrepo.auth.api.ServiceUserResource
 import com.tencent.bkrepo.auth.constant.BKREPO_TICKET
 import com.tencent.bkrepo.auth.constant.PROJECT_MANAGE_ID
 import com.tencent.bkrepo.auth.constant.PROJECT_MANAGE_NAME
+import com.tencent.bkrepo.auth.constant.REPO_MANAGE_ID
+import com.tencent.bkrepo.auth.constant.REPO_MANAGE_NAME
 import com.tencent.bkrepo.auth.message.AuthMessageCode
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
+import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.auth.pojo.enums.RoleType
+import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
 import com.tencent.bkrepo.auth.pojo.role.CreateRoleRequest
 import com.tencent.bkrepo.auth.pojo.token.Token
 import com.tencent.bkrepo.auth.pojo.token.TokenResult
 import com.tencent.bkrepo.auth.pojo.user.CreateUserRequest
 import com.tencent.bkrepo.auth.pojo.user.CreateUserToProjectRequest
+import com.tencent.bkrepo.auth.pojo.user.CreateUserToRepoRequest
 import com.tencent.bkrepo.auth.pojo.user.UpdateUserRequest
 import com.tencent.bkrepo.auth.pojo.user.User
 import com.tencent.bkrepo.auth.pojo.user.UserResult
+import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.service.RoleService
 import com.tencent.bkrepo.auth.service.UserService
+import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.security.http.jwt.JwtAuthProperties
 import com.tencent.bkrepo.common.security.util.JwtUtils
+import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import org.slf4j.LoggerFactory
@@ -62,6 +71,7 @@ import javax.servlet.http.Cookie
 class ServiceUserResourceImpl @Autowired constructor(
     private val userService: UserService,
     private val roleService: RoleService,
+    private val permissionService: PermissionService,
     private val jwtProperties: JwtAuthProperties
 ) : ServiceUserResource {
 
@@ -73,6 +83,21 @@ class ServiceUserResourceImpl @Autowired constructor(
     }
 
     override fun createUserToProject(request: CreateUserToProjectRequest): Response<Boolean> {
+        val userId = SecurityUtils.getUserId()
+        // check 用户权限,非匿名用户
+        if (ANONYMOUS_USER != userId) {
+            val checkRequest =
+                CheckPermissionRequest(
+                    uid = userId,
+                    resourceType = ResourceType.SYSTEM,
+                    action = PermissionAction.WRITE
+                )
+            if (!permissionService.checkPermission(checkRequest)) {
+                logger.warn("check user permission error [$checkRequest]")
+                throw ErrorCodeException(AuthMessageCode.AUTH_PERMISSION_FAILED)
+            }
+        }
+
         userService.createUserToProject(request)
         val createRoleRequest =
             CreateRoleRequest(
@@ -81,6 +106,37 @@ class ServiceUserResourceImpl @Autowired constructor(
                 RoleType.PROJECT,
                 request.projectId,
                 null,
+                true
+            )
+        val roleId = roleService.createRole(createRoleRequest)
+        userService.addUserToRole(request.userId, roleId!!)
+        return ResponseBuilder.success(true)
+    }
+
+    override fun createUserToRepo(request: CreateUserToRepoRequest): Response<Boolean> {
+        val userId = SecurityUtils.getUserId()
+        // check 用户权限,非匿名用户
+        if (ANONYMOUS_USER != userId) {
+            val checkRequest =
+                CheckPermissionRequest(
+                    uid = userId,
+                    resourceType = ResourceType.PROJECT,
+                    action = PermissionAction.WRITE,
+                    projectId = request.projectId
+                )
+            if (!permissionService.checkPermission(checkRequest)) {
+                logger.warn("check user permission error [$checkRequest]")
+                throw ErrorCodeException(AuthMessageCode.AUTH_PERMISSION_FAILED)
+            }
+        }
+        userService.createUserToRepo(request)
+        val createRoleRequest =
+            CreateRoleRequest(
+                REPO_MANAGE_ID,
+                REPO_MANAGE_NAME,
+                RoleType.REPO,
+                request.projectId,
+                request.repoName,
                 true
             )
         val roleId = roleService.createRole(createRoleRequest)

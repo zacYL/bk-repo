@@ -31,8 +31,6 @@
 
 package com.tencent.bkrepo.generic.service
 
-import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
-import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.util.Preconditions
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
@@ -41,7 +39,6 @@ import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.core.ArtifactService
-import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HeaderUtils.getBooleanHeader
 import com.tencent.bkrepo.common.service.util.HeaderUtils.getLongHeader
@@ -80,12 +77,11 @@ class UploadService(
         logger.info("User[${SecurityUtils.getPrincipal()}] delete artifact[$artifactInfo] success.")
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.WRITE)
     fun startBlockUpload(userId: String, artifactInfo: GenericArtifactInfo): UploadTransactionInfo {
         with(artifactInfo) {
             val expires = getLongHeader(HEADER_EXPIRES)
             val overwrite = getBooleanHeader(HEADER_OVERWRITE)
-            Preconditions.checkArgument(expires > 0, "expires")
+            Preconditions.checkArgument(expires >= 0, "expires")
             // 判断文件是否存在
             if (!overwrite && nodeClient.checkExist(projectId, repoName, getArtifactFullPath()).data == true) {
                 logger.warn(
@@ -106,7 +102,6 @@ class UploadService(
         }
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.WRITE)
     fun abortBlockUpload(userId: String, uploadId: String, artifactInfo: GenericArtifactInfo) {
         val storageCredentials = getStorageCredentials()
         checkUploadId(uploadId, storageCredentials)
@@ -115,7 +110,6 @@ class UploadService(
         logger.info("User[${SecurityUtils.getPrincipal()}] abort upload block [$artifactInfo] success.")
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.WRITE)
     fun completeBlockUpload(userId: String, uploadId: String, artifactInfo: GenericArtifactInfo) {
         val storageCredentials = getStorageCredentials()
         checkUploadId(uploadId, storageCredentials)
@@ -138,7 +132,6 @@ class UploadService(
         logger.info("User[${SecurityUtils.getPrincipal()}] complete upload [$artifactInfo] success.")
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.WRITE)
     fun listBlock(userId: String, uploadId: String, artifactInfo: GenericArtifactInfo): List<BlockInfo> {
         val storageCredentials = getStorageCredentials()
         checkUploadId(uploadId, storageCredentials)

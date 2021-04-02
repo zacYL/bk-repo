@@ -52,6 +52,7 @@ import com.tencent.bkrepo.repository.pojo.node.service.NodeMoveRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeRenameRequest
 import com.tencent.bkrepo.repository.pojo.project.ProjectCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
+import com.tencent.bkrepo.repository.service.node.NodeService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -129,7 +130,8 @@ class NodeServiceTest @Autowired constructor(
     @Test
     @DisplayName("测试创建文件")
     fun testCreateFile() {
-        nodeService.createNode(createRequest("/1/2/3.txt", folder = false, size = 100, metadata = mapOf("key" to "value")))
+        val request = createRequest("/1/2/3.txt", folder = false, size = 100, metadata = mapOf("key" to "value"))
+        nodeService.createNode(request)
         val node = nodeService.getNodeDetail(node("/1/2/3.txt"))!!
         assertEquals(UT_USER, node.createdBy)
         assertNotNull(node.createdDate)
@@ -148,7 +150,8 @@ class NodeServiceTest @Autowired constructor(
     @Test
     @DisplayName("测试创建目录")
     fun testCreateDir() {
-        nodeService.createNode(createRequest("/1/2/3.txt", folder = true, size = 100, metadata = mapOf("key" to "value")))
+        val request = createRequest("/1/2/3.txt", folder = true, size = 100, metadata = mapOf("key" to "value"))
+        nodeService.createNode(request)
         val node = nodeService.getNodeDetail(node("/1/2/3.txt"))!!
         assertEquals(UT_USER, node.createdBy)
         assertNotNull(node.createdDate)

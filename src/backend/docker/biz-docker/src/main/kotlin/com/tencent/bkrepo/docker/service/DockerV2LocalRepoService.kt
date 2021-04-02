@@ -187,7 +187,7 @@ class DockerV2LocalRepoService @Autowired constructor(
     override fun getManifest(context: RequestContext, reference: String): DockerResponse {
         RepoUtil.loadContext(artifactRepo, context)
         logger.info("get manifest params [$context,$reference]")
-        packageRepo.addDownloadStatic(context, reference)
+        // packageRepo.addDownloadStatic(context, reference)
         return try {
             val digest = DockerDigest(reference)
             manifestProcess.getManifestByDigest(context, digest, httpHeaders)
@@ -479,6 +479,7 @@ class DockerV2LocalRepoService @Autowired constructor(
             )
             return DockerTagDetail(basic, configBlob.history, nodeDetail.metadata, layers)
         } catch (ignored: Exception) {
+            logger.error("getRepoTagDetail exception [$ignored]")
             return null
         }
     }

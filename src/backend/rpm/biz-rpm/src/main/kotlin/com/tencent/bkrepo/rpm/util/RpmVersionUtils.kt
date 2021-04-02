@@ -31,7 +31,8 @@
 
 package com.tencent.bkrepo.rpm.util
 
-import com.tencent.bkrepo.rpm.exception.RpmArtifactMetadataResolveException
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.rpm.exception.RpmRequestParamMissException
 import com.tencent.bkrepo.rpm.pojo.RpmPackagePojo
 import com.tencent.bkrepo.rpm.pojo.RpmVersion
@@ -41,13 +42,14 @@ object RpmVersionUtils {
     /**
      * filename解析rpm构件版本信息
      */
+    @Deprecated("作为备选项保留")
     fun resolverRpmVersion(filename: String): RpmVersion {
         try {
             val strList = filename.split("-")
             val suffixFormat = strList.last()
             val suffixList = suffixFormat.split(".")
-            val arch = suffixList[1]
             val rel = suffixList[0]
+            val arch = suffixFormat.removePrefix("$rel.").removeSuffix(".rpm")
             val ver = strList[strList.size - 2]
             val name = filename.removeSuffix("-$ver-$suffixFormat")
             return RpmVersion(name, arch, "0", ver, rel)
@@ -56,6 +58,7 @@ object RpmVersionUtils {
         }
     }
 
+    @Deprecated("作为备选项保留")
     fun String.toRpmPackagePojo(): RpmPackagePojo {
         val path = this.substringBeforeLast("/").removePrefix("/")
         val rpmArtifactName = this.substringAfterLast("/")
@@ -79,19 +82,24 @@ object RpmVersionUtils {
 
     fun Map<String, Any>.toRpmVersion(artifactUri: String): RpmVersion {
         return RpmVersion(
-            this["name"] as String? ?: throw RpmArtifactMetadataResolveException(
+            this["name"] as String? ?: throw ErrorCodeException(
+                CommonMessageCode.RESOURCE_NOT_FOUND,
                 "$artifactUri: not found metadata.name value"
             ),
-            this["arch"] as String? ?: throw RpmArtifactMetadataResolveException(
+            this["arch"] as String? ?: throw ErrorCodeException(
+                CommonMessageCode.RESOURCE_NOT_FOUND,
                 "$artifactUri: not found metadata.arch value"
             ),
-            this["epoch"] as String? ?: throw RpmArtifactMetadataResolveException(
+            this["epoch"] as String? ?: throw ErrorCodeException(
+                CommonMessageCode.RESOURCE_NOT_FOUND,
                 "$artifactUri: not found metadata.epoch value"
             ),
-            this["ver"] as String? ?: throw RpmArtifactMetadataResolveException(
+            this["ver"] as String? ?: throw ErrorCodeException(
+                CommonMessageCode.RESOURCE_NOT_FOUND,
                 "$artifactUri: not found metadata.ver value"
             ),
-            this["rel"] as String? ?: throw RpmArtifactMetadataResolveException(
+            this["rel"] as String? ?: throw ErrorCodeException(
+                CommonMessageCode.RESOURCE_NOT_FOUND,
                 "$artifactUri: not found metadata.rel value"
             )
         )

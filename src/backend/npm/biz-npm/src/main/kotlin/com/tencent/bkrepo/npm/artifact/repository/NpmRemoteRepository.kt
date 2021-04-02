@@ -43,6 +43,7 @@ import com.tencent.bkrepo.common.artifact.repository.migration.MigrateDetail
 import com.tencent.bkrepo.common.artifact.repository.remote.RemoteRepository
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
+import com.tencent.bkrepo.common.storage.monitor.Throughput
 import com.tencent.bkrepo.npm.constants.NPM_FILE_FULL_PATH
 import com.tencent.bkrepo.npm.exception.NpmBadRequestException
 import com.tencent.bkrepo.npm.pojo.NpmSearchInfoMap
@@ -62,8 +63,12 @@ class NpmRemoteRepository(
     private val executor: ThreadPoolTaskExecutor
 ) : RemoteRepository() {
 
-    override fun onDownloadSuccess(context: ArtifactDownloadContext, artifactResource: ArtifactResource) {
-        super.onDownloadSuccess(context, artifactResource)
+    override fun onDownloadSuccess(
+        context: ArtifactDownloadContext,
+        artifactResource: ArtifactResource,
+        throughput: Throughput
+    ) {
+        super.onDownloadSuccess(context, artifactResource, throughput)
         // 存储package-version.json文件
         executor.execute { cachePackageVersionMetadata(context) }
     }
@@ -71,10 +76,12 @@ class NpmRemoteRepository(
     private fun cachePackageVersionMetadata(context: ArtifactDownloadContext) {
         with(context) {
             val packageInfo = NpmUtils.parseNameAndVersionFromFullPath(artifactInfo.getArtifactFullPath())
-
             val versionMetadataFullPath = NpmUtils.getVersionPackageMetadataPath(packageInfo.first, packageInfo.second)
             if (nodeClient.checkExist(projectId, repoName, versionMetadataFullPath).data!!) {
-                logger.info("version metadata [$versionMetadataFullPath] is already exits in the repo [$projectId/$repoName]")
+                logger.info(
+                    "version metadata [$versionMetadataFullPath] is already exits " +
+                        "in repo [$projectId/$repoName]"
+                )
                 return
             }
             val remoteConfiguration = context.getRemoteConfiguration()

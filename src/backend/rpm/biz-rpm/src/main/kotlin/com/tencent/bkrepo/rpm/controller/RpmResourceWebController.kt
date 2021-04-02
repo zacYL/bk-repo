@@ -31,6 +31,7 @@
 
 package com.tencent.bkrepo.rpm.controller
 
+import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.rpm.api.RpmWebResource
@@ -55,7 +56,15 @@ class RpmResourceWebController(
         return ResponseBuilder.success()
     }
 
-    override fun artifactDetail(rpmArtifactInfo: RpmArtifactInfo, packageKey: String, version: String?): Response<Any?> {
+    override fun artifactDetail(
+        rpmArtifactInfo: RpmArtifactInfo,
+        packageKey: String,
+        version: String?
+    ): Response<Any?> {
         return ResponseBuilder.success(rpmWebService.artifactDetail(rpmArtifactInfo, packageKey, version))
+    }
+
+    override fun list(rpmArtifactInfo: RpmArtifactInfo, page: Int, size: Int): Response<Page<String>> {
+        return ResponseBuilder.success(rpmWebService.extList(rpmArtifactInfo, page, size))
     }
 }

@@ -20,22 +20,35 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 local service_name = ngx.var.service
 if config.service_name ~= nil and config.service_name ~= "" then
-  service_name = config.service_name
+    service_name = config.service_name
 end
 
 if not service_name then
-  ngx.log(ngx.ERR, "failed with no service name")
-  ngx.exit(503)
-  return
+    ngx.log(ngx.ERR, "failed with no service name")
+    ngx.exit(503)
+    return
 end
 
 if service_name == "" then
-  ngx.log(ngx.ERR, "failed with empty service name")
-  ngx.exit(503)
-  return
+    ngx.log(ngx.ERR, "failed with empty service name")
+    ngx.exit(503)
+    return
 end
 
-local host, port = hostUtil:get_addr(service_name)
-ngx.var.target = host .. ":" .. port
+-- 访问限制的工具
+local access_util = nil
+
+-- 限制访问频率
+if access_util then
+    local access_result, err = access_util:isAccess()
+    if not access_result then
+        ngx.log(ngx.STDERR, "request excess!")
+        ngx.exit(503)
+        return
+    end
+end
+
+ngx.var.target = hostUtil:get_addr(service_name)
+
 
 

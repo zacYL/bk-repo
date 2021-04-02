@@ -31,8 +31,6 @@
 
 package com.tencent.bkrepo.common.artifact.repository.context
 
-import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
-import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.constant.ARTIFACT_INFO_KEY
 import com.tencent.bkrepo.common.artifact.constant.REPO_KEY
@@ -41,6 +39,7 @@ import com.tencent.bkrepo.common.artifact.pojo.configuration.composite.Composite
 import com.tencent.bkrepo.common.artifact.pojo.configuration.local.LocalConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.virtual.VirtualConfiguration
+import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
@@ -51,23 +50,20 @@ import javax.servlet.http.HttpServletResponse
  * 构件上下文
  */
 @Suppress("UNCHECKED_CAST")
-open class ArtifactContext(repo: RepositoryDetail? = null, artifact: ArtifactInfo? = null) {
+open class ArtifactContext(
+    repo: RepositoryDetail? = null,
+    artifact: ArtifactInfo? = null
+) {
     val request: HttpServletRequest = HttpContextHolder.getRequest()
     val response: HttpServletResponse = HttpContextHolder.getResponse()
-    val userId: String
-    val artifactInfo: ArtifactInfo
-    var repositoryDetail: RepositoryDetail
-    val storageCredentials: StorageCredentials? get() = repositoryDetail.storageCredentials
-    val projectId: String get() = repositoryDetail.projectId
-    val repoName: String get() = repositoryDetail.name
+    val userId: String = SecurityUtils.getUserId()
+    val artifactInfo: ArtifactInfo = artifact ?: request.getAttribute(ARTIFACT_INFO_KEY) as ArtifactInfo
+    var repositoryDetail: RepositoryDetail = repo ?: request.getAttribute(REPO_KEY) as RepositoryDetail
+    val storageCredentials: StorageCredentials? = repositoryDetail.storageCredentials
+    val projectId: String = repositoryDetail.projectId
+    val repoName: String = repositoryDetail.name
 
     private var contextAttributes: MutableMap<String, Any> = mutableMapOf()
-
-    init {
-        this.userId = request.getAttribute(USER_KEY) as? String ?: ANONYMOUS_USER
-        this.artifactInfo = artifact ?: request.getAttribute(ARTIFACT_INFO_KEY) as ArtifactInfo
-        this.repositoryDetail = repo ?: request.getAttribute(REPO_KEY) as RepositoryDetail
-    }
 
     /**
      * 使用当前实例的属性，拷贝出一个新的[ArtifactContext]实例

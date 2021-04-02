@@ -31,9 +31,9 @@
 
 package com.tencent.bkrepo.composer.artifact.repository
 
+import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
-import com.tencent.bkrepo.common.artifact.exception.UnsupportedMethodException
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
@@ -62,7 +62,7 @@ import com.tencent.bkrepo.composer.util.JsonUtil.wrapperJson
 import com.tencent.bkrepo.composer.util.JsonUtil.wrapperPackageJson
 import com.tencent.bkrepo.composer.util.pojo.ComposerArtifact
 import com.tencent.bkrepo.repository.api.StageClient
-import com.tencent.bkrepo.repository.pojo.download.service.DownloadStatisticsAddRequest
+import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
@@ -218,10 +218,9 @@ class ComposerLocalRepository(private val stageClient: StageClient) : LocalRepos
         with(context) {
             val artifactPath = artifactInfo.getArtifactFullPath().removePrefix("/$DIRECT_DISTS")
             val node = nodeClient.getNodeDetail(projectId, repoName, artifactPath).data
-            if (node == null || node.folder) return null
-            val range = resolveRange(context, node.size)
-            val inputStream = storageService.load(node.sha256!!, range, storageCredentials) ?: return null
-            return ArtifactResource(inputStream, artifactInfo.getResponseName(), node, ArtifactChannel.LOCAL, useDisposition)
+            val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials) ?: return null
+            val responseName = artifactInfo.getResponseName()
+            return ArtifactResource(inputStream, responseName, node, ArtifactChannel.LOCAL, useDisposition)
         }
     }
 
@@ -246,20 +245,18 @@ class ComposerLocalRepository(private val stageClient: StageClient) : LocalRepos
         // 保存版本信息
         packageClient.createVersion(
             PackageVersionCreateRequest(
-                context.projectId,
-                context.repoName,
-                composerArtifact.name,
-                PackageKeys.ofComposer(composerArtifact.name),
-                PackageType.COMPOSER,
-                null,
-                composerArtifact.version,
-                context.getArtifactFile().getSize(),
-                null,
-                context.artifactInfo.getArtifactFullPath(),
-                null,
-                metadata,
-                overwrite = true,
-                createdBy = context.userId
+                    projectId = context.projectId,
+                    repoName = context.repoName,
+                    packageName = composerArtifact.name,
+                    packageKey = PackageKeys.ofComposer(composerArtifact.name),
+                    packageType = PackageType.COMPOSER,
+                    packageDescription = null,
+                    versionName = composerArtifact.version,
+                    size = context.getArtifactFile().getSize(),
+                    manifestPath = null,
+                    artifactPath = context.artifactInfo.getArtifactFullPath(),
+                    overwrite = true,
+                    createdBy = context.userId
             )
         )
     }
@@ -348,7 +345,7 @@ class ComposerLocalRepository(private val stageClient: StageClient) : LocalRepos
         context: ArtifactRemoveContext
     ) {
         if (node.folder) {
-            throw UnsupportedMethodException("Delete folder is forbidden")
+            throw MethodNotAllowedException("Delete folder is forbidden")
         }
         with(context) {
             // 更新索引
@@ -458,7 +455,7 @@ class ComposerLocalRepository(private val stageClient: StageClient) : LocalRepos
     override fun buildDownloadRecord(
         context: ArtifactDownloadContext,
         artifactResource: ArtifactResource
-    ): DownloadStatisticsAddRequest? {
+    ): PackageDownloadRecord? {
         with(context) {
             val fullPath = context.artifactInfo.getArtifactFullPath().removePrefix("/$DIRECT_DISTS")
             val node = nodeClient.getNodeDetail(projectId, repoName, fullPath).data ?: return null
@@ -468,11 +465,11 @@ class ComposerLocalRepository(private val stageClient: StageClient) : LocalRepos
             val version = node.metadata["version"] ?: throw ComposerArtifactMetadataException(
                 "${artifactInfo.getArtifactFullPath()} : not found metadata.version value"
             )
-            val name = PackageKeys.resolveComposer(packageKey.toString())
             return if (fullPath.endsWith("")) {
-                return DownloadStatisticsAddRequest(
+                return PackageDownloadRecord(
                     projectId, repoName,
-                    packageKey.toString(), name, version.toString()
+                    packageKey.toString(),
+                    version.toString()
                 )
             } else {
                 null

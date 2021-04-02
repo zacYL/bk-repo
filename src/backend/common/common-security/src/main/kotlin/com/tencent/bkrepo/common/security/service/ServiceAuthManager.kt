@@ -31,7 +31,7 @@
 
 package com.tencent.bkrepo.common.security.service
 
-import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.api.exception.SystemErrorException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.security.util.JwtUtils
 import io.jsonwebtoken.ExpiredJwtException
@@ -54,11 +54,11 @@ class ServiceAuthManager(
         try {
             JwtUtils.validateToken(signingKey, token)
         } catch (exception: ExpiredJwtException) {
-            throw ErrorCodeException(CommonMessageCode.SERVICE_UNAUTHENTICATED, "Expired token")
+            throw SystemErrorException(CommonMessageCode.SERVICE_UNAUTHENTICATED, "Expired token")
         } catch (exception: JwtException) {
-            throw ErrorCodeException(CommonMessageCode.SERVICE_UNAUTHENTICATED, "Invalid token")
+            throw SystemErrorException(CommonMessageCode.SERVICE_UNAUTHENTICATED, "Invalid token")
         } catch (exception: IllegalArgumentException) {
-            throw ErrorCodeException(CommonMessageCode.SERVICE_UNAUTHENTICATED, "Empty token")
+            throw SystemErrorException(CommonMessageCode.SERVICE_UNAUTHENTICATED, "Empty token")
         }
     }
 
@@ -69,13 +69,12 @@ class ServiceAuthManager(
     }
 
     private fun generateSecurityToken(): String {
-        token = JwtUtils.generateToken(signingKey, Duration.ofMillis(TOKEN_EXPIRATION))
-        return token.orEmpty()
+        return JwtUtils.generateToken(signingKey, Duration.ofMillis(TOKEN_EXPIRATION))
     }
 
     companion object {
         private val logger = LoggerFactory.getLogger(ServiceAuthManager::class.java)
         private const val TOKEN_EXPIRATION = 10 * 60 * 1000L
-        private const val REFRESH_DELAY = TOKEN_EXPIRATION - 1000L
+        private const val REFRESH_DELAY = TOKEN_EXPIRATION - 60 * 1000L
     }
 }

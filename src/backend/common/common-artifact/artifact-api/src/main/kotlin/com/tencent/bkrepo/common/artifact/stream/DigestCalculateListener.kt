@@ -31,7 +31,8 @@
 
 package com.tencent.bkrepo.common.artifact.stream
 
-import com.tencent.bkrepo.common.artifact.exception.ArtifactReceiveException
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import java.math.BigInteger
 import java.security.MessageDigest
 
@@ -52,21 +53,27 @@ class DigestCalculateListener : StreamReceiveListener {
     }
 
     override fun finished() {
-        md5 = hexToString(md5Digest.digest(), 32)
-        sha256 = hexToString(sha256Digest.digest(), 64)
+        md5 = hexToString(md5Digest.digest(), MD5_LENGTH)
+        sha256 = hexToString(sha256Digest.digest(), SHA256_LENGTH)
     }
 
     fun getMd5(): String {
-        return md5 ?: throw ArtifactReceiveException("Artifact stream has not received.")
+        return md5 ?: throw ErrorCodeException(ArtifactMessageCode.ARTIFACT_RECEIVE_FAILED)
     }
 
     fun getSha256(): String {
-        return sha256 ?: throw ArtifactReceiveException("Artifact stream has not received.")
+        return sha256 ?: throw ErrorCodeException(ArtifactMessageCode.ARTIFACT_RECEIVE_FAILED)
     }
 
     private fun hexToString(byteArray: ByteArray, length: Int): String {
         val hashInt = BigInteger(1, byteArray)
-        val hashText = hashInt.toString(16)
+        val hashText = hashInt.toString(HASH_RADIX)
         return if (hashText.length < length) "0".repeat(length - hashText.length) + hashText else hashText
+    }
+
+    companion object {
+        private const val HASH_RADIX = 16
+        private const val MD5_LENGTH = 32
+        private const val SHA256_LENGTH = 64
     }
 }

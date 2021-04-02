@@ -5,12 +5,12 @@ import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionUserRequest
 import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
 import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
-import com.tencent.bkrepo.common.api.exception.SystemException
+import com.tencent.bkrepo.common.api.exception.NotFoundException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
-import com.tencent.bkrepo.common.security.exception.AccessDeniedException
+import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoDeleteRequest
@@ -54,12 +54,12 @@ class CanwayRepositoryAspect {
         val request = HttpContextHolder.getRequest()
         val requestUserId = request.getAttribute(USER_KEY)?.let { ANONYMOUS_USER }
         val userId = if (ANONYMOUS_USER == requestUserId && repo.operator.isBlank()) {
-            throw AccessDeniedException()
+            throw PermissionException()
         } else repo.operator
 
         val api = request.requestURI.removePrefix("/").removePrefix("web/")
         if (api.startsWith("api", ignoreCase = true)) {
-            if (!canwayPermissionService.checkCanwayPermission(repo.projectId, repo.name, userId as String, CREATE))
+            if (!canwayPermissionService.checkCanwayPermission(repo.projectId, repo.name, userId, CREATE))
                 throw CanwayPermissionException()
         }
         logger.info("userId: $userId  ,   operator: ${repo.operator}")
@@ -84,7 +84,7 @@ class CanwayRepositoryAspect {
 
     private fun addUserIdToAdmin(userId: String, projectId: String, repoName: String) {
         val permissions = permissionService.listRepoBuiltinPermission(projectId, repoName).data
-            ?: throw SystemException(CommonMessageCode.RESOURCE_NOT_FOUND, "Can not load buildin permission")
+            ?: throw NotFoundException(CommonMessageCode.RESOURCE_NOT_FOUND, "Can not load buildin permission")
         logger.info("Found permission size: ${permissions.size}")
         for (permission in permissions) {
             logger.info("Current permission: $permission")
@@ -94,7 +94,7 @@ class CanwayRepositoryAspect {
             }
             return
         }
-        throw SystemException(CommonMessageCode.RESOURCE_NOT_FOUND, "Can not load buildin admin permission")
+        throw NotFoundException(CommonMessageCode.RESOURCE_NOT_FOUND, "Can not load buildin admin permission")
     }
 
     @Around(value = "execution(* com.tencent.bkrepo.repository.service.impl.RepositoryServiceImpl.listRepo(..))")
@@ -106,7 +106,7 @@ class CanwayRepositoryAspect {
         val api = request.requestURI.removePrefix("/").removePrefix("web/")
         if (api.startsWith("api", ignoreCase = true)) {
             result?.let {
-                val userId = request.getAttribute(USER_KEY) ?: throw AccessDeniedException()
+                val userId = request.getAttribute(USER_KEY) ?: throw PermissionException()
                 val resultRepos = mutableListOf<RepositoryInfo>()
                 val repoInfos = result as List<RepositoryInfo>
                 val canwayPermissionResponse = canwayPermissionService.getCanwayPermissionInstance(
@@ -135,7 +135,7 @@ class CanwayRepositoryAspect {
         val api = request.requestURI.removePrefix("/").removePrefix("web/")
         if (api.startsWith("api", ignoreCase = true)) {
             result?.let {
-                val userId = request.getAttribute(USER_KEY) ?: throw AccessDeniedException()
+                val userId = request.getAttribute(USER_KEY) ?: throw PermissionException()
                 val resultRepos = mutableListOf<RepositoryInfo>()
                 val page = (result as Page<RepositoryInfo>)
                 val repoInfos = page.records
@@ -187,7 +187,11 @@ class CanwayRepositoryAspect {
         val resourceInstance = mutableListOf<BatchResourceInstance.Instance>()
         val userId = if (operator == "anonymous") "admin" else operator
         val resource = ResourceRegisterInfo(repoName, repoName)
-        resourceInstance.add(BatchResourceInstance.Instance(resource.resourceCode, resource.resourceName, null))
+        resourceInstance.add(
+            BatchResourceInstance.Instance(
+                resource.resourceCode, resource.resourceName, null
+            )
+        )
         val requestParam = BatchResourceInstance(
             userId = userId,
             resourceCode = RESOURCECODE,

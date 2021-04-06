@@ -79,8 +79,8 @@ class CanwayPermissionService(
         val ciAddResourceUrl = "${devopsHost.removeSuffix("/")}${CanwayRepositoryAspect.ci}$ciCheckPermissionApi"
         val responseContent = CanwayHttpUtils.doPost(ciAddResourceUrl, canwayCheckPermissionRequest).content
 
-            return responseContent.readJsonString<CanwayResponse<CanwayPermissionResponse>>().data
-        }
+        return responseContent.readJsonString<CanwayResponse<CanwayPermissionResponse>>().data
+    }
 
     companion object {
         val logger: Logger = LoggerFactory.getLogger(CanwayPermissionService::class.java)

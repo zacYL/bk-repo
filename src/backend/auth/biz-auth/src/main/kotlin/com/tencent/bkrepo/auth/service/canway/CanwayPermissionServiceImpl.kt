@@ -32,6 +32,7 @@ import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.api.util.toJsonString
+import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import org.slf4j.Logger
@@ -87,7 +88,7 @@ class CanwayPermissionServiceImpl(
         val webRequest = HttpContextHolder.getRequest()
         val api = webRequest.requestURI.removePrefix("/").removePrefix("web/")
         if (api.startsWith("api", ignoreCase = true)) {
-            if (!checkPermissionById(request.permissionId)) throw ErrorCodeException(CommonMessageCode.PERMISSION_DENIED)
+            if (!checkPermissionById(request.permissionId)) throw PermissionException()
         }
         return super.updatePermissionDepartment(request)
     }
@@ -98,7 +99,7 @@ class CanwayPermissionServiceImpl(
         logger.info("CanwayPermissionService accept : $requestUri, $request")
         val api = requestUri.removePrefix("/").removePrefix("web/")
         if (api.startsWith("api", ignoreCase = true)) {
-            if (!checkPermissionById(request.permissionId)) throw ErrorCodeException(CommonMessageCode.PERMISSION_DENIED)
+            if (!checkPermissionById(request.permissionId)) throw PermissionException()
         }
         return super.updatePermissionUser(request)
     }
@@ -107,7 +108,7 @@ class CanwayPermissionServiceImpl(
         val webRequest = HttpContextHolder.getRequest()
         val api = webRequest.requestURI.removePrefix("/").removePrefix("web/")
         if (api.startsWith("api", ignoreCase = true)) {
-            if (!checkPermissionById(request.permissionId)) throw ErrorCodeException(CommonMessageCode.PERMISSION_DENIED)
+            if (!checkPermissionById(request.permissionId)) throw PermissionException()
         }
         return super.updatePermissionRole(request)
     }
@@ -116,7 +117,7 @@ class CanwayPermissionServiceImpl(
         val webRequest = HttpContextHolder.getRequest()
         val api = webRequest.requestURI.removePrefix("/").removePrefix("web/")
         if (api.startsWith("api", ignoreCase = true)) {
-            if (!checkPermissionById(request.permissionId)) throw ErrorCodeException(CommonMessageCode.PERMISSION_DENIED)
+            if (!checkPermissionById(request.permissionId)) throw PermissionException()
         }
         val actions = request.actions
         val targetActions = mutableSetOf<PermissionAction>()
@@ -301,7 +302,7 @@ class CanwayPermissionServiceImpl(
     }
 
     private fun getRequestUrl(uri: String): String {
-        val devopsHost = canwayDevopsConf.host ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING)
+        val devopsHost = canwayDevopsConf.host
         return "${devopsHost.removeSuffix("/")}$ci$ciApi$uri"
     }
 

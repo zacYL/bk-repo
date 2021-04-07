@@ -5,7 +5,7 @@ import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.repository.service.canway.BELONGCODE
 import com.tencent.bkrepo.repository.service.canway.RESOURCECODE
 import com.tencent.bkrepo.repository.service.canway.aspect.CanwayRepositoryAspect
-import com.tencent.bkrepo.repository.service.canway.conf.CanwayAuthConf
+import com.tencent.bkrepo.repository.service.canway.conf.CanwayDevopsConf
 import com.tencent.bkrepo.repository.service.canway.http.CanwayHttpUtils
 import com.tencent.bkrepo.repository.service.canway.pojo.CanwayPermissionRequest
 import com.tencent.bkrepo.repository.service.canway.pojo.CanwayPermissionResponse
@@ -16,10 +16,10 @@ import org.springframework.stereotype.Service
 
 @Service
 class CanwayPermissionService(
-    canwayAuthConf: CanwayAuthConf
+    canwayDevopsConf: CanwayDevopsConf
 ) {
 
-    private val devopsHost = canwayAuthConf.devopsHost!!.removeSuffix("/")
+    private val devopsHost = canwayDevopsConf.host.removeSuffix("/")
 
     private fun checkUserHasProjectPermission(operator: String): Boolean {
         val canwayPermissionResponse = getCanwayPermissionInstance(
@@ -76,11 +76,11 @@ class CanwayPermissionService(
                     )
                 )
             ).toJsonString()
-            val ciAddResourceUrl = "$devopsHost${CanwayRepositoryAspect.ci}$ciCheckPermissionApi"
-            val responseContent = CanwayHttpUtils.doPost(ciAddResourceUrl, canwayCheckPermissionRequest).content
+        val ciAddResourceUrl = "${devopsHost.removeSuffix("/")}${CanwayRepositoryAspect.ci}$ciCheckPermissionApi"
+        val responseContent = CanwayHttpUtils.doPost(ciAddResourceUrl, canwayCheckPermissionRequest).content
 
-            return responseContent.readJsonString<CanwayResponse<CanwayPermissionResponse>>().data
-        }
+        return responseContent.readJsonString<CanwayResponse<CanwayPermissionResponse>>().data
+    }
 
     companion object {
         val logger: Logger = LoggerFactory.getLogger(CanwayPermissionService::class.java)

@@ -37,6 +37,7 @@ import com.tencent.bkrepo.common.api.constant.MediaTypes
 import com.tencent.bkrepo.common.api.constant.StringPool.BYTES
 import com.tencent.bkrepo.common.api.constant.StringPool.NO_CACHE
 import com.tencent.bkrepo.common.artifact.constant.CONTENT_DISPOSITION_TEMPLATE
+import com.tencent.bkrepo.common.artifact.constant.X_CHECKSUM_MD5
 import com.tencent.bkrepo.common.artifact.exception.ArtifactResponseException
 import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
@@ -65,6 +66,7 @@ object ArtifactResourceWriter {
         add("ico", MediaTypes.APPLICATION_ICO)
     }
 
+    @Throws(ArtifactResponseException::class)
     fun write(resource: ArtifactResource): Throughput {
         val request = HttpContextHolder.getRequest()
         val response = HttpContextHolder.getResponse()
@@ -74,8 +76,8 @@ object ArtifactResourceWriter {
 
         response.bufferSize = STREAM_BUFFER_SIZE
         response.characterEncoding = resource.characterEncoding
-        response.contentType = determineMediaType(artifact)
-        response.status = resolveStatus(request)
+        response.contentType = resource.contentType ?: determineMediaType(artifact)
+        response.status = resource.status?.value ?: resolveStatus(request)
         response.setHeader(HttpHeaders.ACCEPT_RANGES, BYTES)
         response.setHeader(HttpHeaders.CACHE_CONTROL, NO_CACHE)
         response.setHeader(HttpHeaders.CONTENT_LENGTH, resolveContentLength(range))
@@ -85,9 +87,10 @@ object ArtifactResourceWriter {
         }
         node?.let {
             response.setHeader(HttpHeaders.ETAG, resolveETag(it))
+            response.setHeader(X_CHECKSUM_MD5, it.md5)
             response.setDateHeader(HttpHeaders.LAST_MODIFIED, resolveLastModified(it.lastModifiedDate))
         }
-        return resource.inputStream.use { writeRangeStream(it, request, response) }
+        return writeRangeStream(resource.inputStream, request, response)
     }
 
     private fun resolveStatus(request: HttpServletRequest): Int {
@@ -119,14 +122,16 @@ object ArtifactResourceWriter {
         try {
             return measureThroughput { inputStream.copyTo(response.outputStream, STREAM_BUFFER_SIZE) }
         } catch (exception: IOException) {
-            if (IOExceptionUtils.isClientBroken(exception)) {
-                throw ArtifactResponseException(exception.message.orEmpty())
-            } else throw exception
+            // 不处理IOException会CglibAopProxy会抛java.lang.reflect.UndeclaredThrowableException: null
+            // 由于在上面已经设置了Content-Type为application/octet-stream, spring找不到对应的Converter，导致抛
+            // org.springframework.http.converter.HttpMessageNotWritableException异常，会重定向到/error页面
+            // 又因为/error页面不存在，最终返回404，所以这里要对异常进行处理
+            throw ArtifactResponseException(exception.message.orEmpty())
         }
     }
 
     private fun determineMediaType(name: String): String {
-        val extension = PathUtils.resolveExtension(name).orEmpty()
+        val extension = PathUtils.resolveExtension(name)
         return mimeMappings.get(extension) ?: MediaTypes.APPLICATION_OCTET_STREAM
     }
 

@@ -46,12 +46,17 @@ allprojects {
             dependency("org.apache.skywalking:apm-toolkit-trace:6.6.0")
             dependency("net.javacrumbs.shedlock:shedlock-spring:4.12.0")
             dependency("net.javacrumbs.shedlock:shedlock-provider-mongo:4.12.0")
+            dependency("com.google.code.gson:gson:2.8.6")
         }
     }
     configurations.all {
         exclude(group = "log4j", module = "log4j")
         exclude(group = "org.slf4j", module = "slf4j-log4j12")
         exclude(group = "commons-logging", module = "commons-logging")
+    }
+
+    repositories{
+        maven { setUrl("http://artifact.canway.net/maven-public/")}
     }
 }
 

@@ -33,13 +33,19 @@ package com.tencent.bkrepo.auth.interceptor
 
 import com.tencent.bkrepo.auth.constant.AUTHORIZATION
 import com.tencent.bkrepo.auth.constant.AUTH_FAILED_RESPONSE
+import com.tencent.bkrepo.auth.constant.AUTH_PROJECT_SUFFIX
+import com.tencent.bkrepo.auth.constant.AUTH_REPO_SUFFIX
+import com.tencent.bkrepo.auth.constant.BASIC_AUTH_HEADER_PREFIX
 import com.tencent.bkrepo.auth.constant.PLATFORM_AUTH_HEADER_PREFIX
 import com.tencent.bkrepo.auth.service.AccountService
+import com.tencent.bkrepo.auth.service.UserService
+import com.tencent.bkrepo.common.api.constant.HttpStatus
+import com.tencent.bkrepo.common.api.constant.PLATFORM_KEY
 import com.tencent.bkrepo.common.api.constant.StringPool.COLON
-import org.apache.http.HttpStatus
+import com.tencent.bkrepo.common.api.constant.USER_KEY
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.servlet.HandlerInterceptor
-import org.springframework.web.servlet.ModelAndView
 import java.util.Base64
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -49,10 +55,28 @@ class AuthInterceptor : HandlerInterceptor {
     @Autowired
     private lateinit var accountService: AccountService
 
+    @Autowired
+    private lateinit var userService: UserService
+
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
         val basicAuthHeader = request.getHeader(AUTHORIZATION).orEmpty()
         val authFailStr = String.format(AUTH_FAILED_RESPONSE, basicAuthHeader)
         try {
+            // 项目内操作，优先使用项目管理员权限
+            if (basicAuthHeader.startsWith(BASIC_AUTH_HEADER_PREFIX) &&
+                (request.requestURI.contains(AUTH_REPO_SUFFIX) || request.requestURI.contains(AUTH_PROJECT_SUFFIX))
+            ) {
+                val encodedCredentials = basicAuthHeader.removePrefix(BASIC_AUTH_HEADER_PREFIX)
+                val decodedHeader = String(Base64.getDecoder().decode(encodedCredentials))
+                val parts = decodedHeader.split(COLON)
+                require(parts.size == 2)
+                userService.findUserByUserToken(parts[0], parts[1]) ?: run {
+                    logger.warn("find no user [${parts[0]}]")
+                    throw IllegalArgumentException("check credential fail")
+                }
+                request.setAttribute(USER_KEY, parts[0])
+                return true
+            }
             if (!basicAuthHeader.startsWith(PLATFORM_AUTH_HEADER_PREFIX)) {
                 throw IllegalArgumentException("platform not found")
             }
@@ -60,30 +84,21 @@ class AuthInterceptor : HandlerInterceptor {
             val decodedHeader = String(Base64.getDecoder().decode(encodedCredentials))
             val parts = decodedHeader.split(COLON)
             require(parts.size == 2)
-            accountService.checkCredential(parts[0], parts[1]) ?: run {
+            val appId = accountService.checkCredential(parts[0], parts[1]) ?: run {
+                logger.warn("find no account [$parts[0]]")
                 throw IllegalArgumentException("check credential fail")
             }
+            request.setAttribute(PLATFORM_KEY, appId)
             return true
         } catch (e: IllegalArgumentException) {
-            response.status = HttpStatus.SC_UNAUTHORIZED
+            response.status = HttpStatus.UNAUTHORIZED.value
             response.writer.print(authFailStr)
+            logger.warn("check account exception [$e]")
             return false
         }
     }
 
-    override fun postHandle(
-        request: HttpServletRequest,
-        response: HttpServletResponse,
-        handler: Any,
-        modelAndView: ModelAndView?
-    ) {
-    }
-
-    override fun afterCompletion(
-        request: HttpServletRequest,
-        response: HttpServletResponse,
-        handler: Any,
-        ex: Exception?
-    ) {
+    companion object {
+        private val logger = LoggerFactory.getLogger(AuthInterceptor::class.java)
     }
 }

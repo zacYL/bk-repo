@@ -107,7 +107,10 @@ class NpmClientServiceImpl(
                     measureTimeMillis {
                         handlerPackagePublish(userId, artifactInfo, npmPackageMetaData)
                     }.apply {
-                        logger.info("user [$userId] public npm package [$name] to repo [${artifactInfo.getRepoIdentify()}] success, elapse $this ms")
+                        logger.info(
+                            "user [$userId] public npm package [$name] " +
+                                "to repo [${artifactInfo.getRepoIdentify()}] success, elapse $this ms"
+                        )
                     }
                     return NpmSuccessResponse.createEntitySuccess()
                 }
@@ -218,7 +221,10 @@ class NpmClientServiceImpl(
 
     @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_READ)
     override fun addDistTags(userId: String, artifactInfo: NpmArtifactInfo, name: String, tag: String) {
-        logger.info("handling add distTags [$tag] request for package [$name] in repo [${artifactInfo.getRepoIdentify()}]")
+        logger.info(
+            "handling add distTags [$tag] request for package [$name] " +
+                "in repo [${artifactInfo.getRepoIdentify()}]"
+        )
         val packageMetaData = queryPackageInfo(artifactInfo, name, false)
         val version = objectMapper.readValue(HttpContextHolder.getRequest().inputStream, String::class.java)
         if ((LATEST == tag && packageMetaData.versions.map.containsKey(version)) || LATEST != tag) {
@@ -229,7 +235,10 @@ class NpmClientServiceImpl(
 
     @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_READ)
     override fun deleteDistTags(userId: String, artifactInfo: NpmArtifactInfo, name: String, tag: String) {
-        logger.info("handling delete distTags [$tag] request for package [$name] in repo [${artifactInfo.getRepoIdentify()}]")
+        logger.info(
+            "handling delete distTags [$tag] request for package [$name] " +
+                "in repo [${artifactInfo.getRepoIdentify()}]"
+        )
         if (LATEST == tag) {
             logger.warn(
                 "dist tag for [latest] with package [$name] " +
@@ -251,18 +260,20 @@ class NpmClientServiceImpl(
     }
 
     @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_DELETE)
-    override fun deleteVersion(userId: String, artifactInfo: NpmArtifactInfo, name: String, filename: String) {
-        val version = NpmUtils.analyseVersionFromPackageName(filename, name)
+    override fun deleteVersion(
+        userId: String,
+        artifactInfo: NpmArtifactInfo,
+        name: String,
+        version: String,
+        tgzPath: String
+    ) {
         logger.info("handling delete version [$version] request for package [$name]")
         val fullPathList = mutableListOf<String>()
-        val tgzPath = HttpContextHolder.getRequest().requestURI.substringAfterLast(artifactInfo.getRepoIdentify())
-            .substringBeforeLast("/-rev")
         with(artifactInfo) {
-            if (!exist(projectId, repoName, tgzPath)) {
+            if (tgzPath.isEmpty() || !exist(projectId, repoName, tgzPath)) {
                 throw NpmArtifactNotFoundException("can not find version [$version] for package [$name]")
             }
             fullPathList.add(tgzPath)
-            // fullPathList.add(NpmUtils.getTgzPath(name, version))
             fullPathList.add(NpmUtils.getVersionPackageMetadataPath(name, version))
             val context = ArtifactRemoveContext()
             context.putAttribute(NPM_FILE_FULL_PATH, fullPathList)
@@ -412,7 +423,10 @@ class NpmClientServiceImpl(
             val context = ArtifactUploadContext(artifactFile)
             context.putAttribute(NPM_FILE_FULL_PATH, fullPath)
             ArtifactContextHolder.getRepository().upload(context).also {
-                logger.info("user [$userId] upload npm package metadata file [$fullPath] into repo [$projectId/$repoName] success.")
+                logger.info(
+                    "user [$userId] upload npm package metadata file [$fullPath] " +
+                        "into repo [$projectId/$repoName] success."
+                )
             }
             artifactFile.delete()
         }
@@ -436,7 +450,10 @@ class NpmClientServiceImpl(
             context.putAttribute(NPM_FILE_FULL_PATH, fullPath)
             context.putAttribute(ATTRIBUTE_OCTET_STREAM_SHA1, npmMetadata.dist?.shasum!!)
             ArtifactContextHolder.getRepository().upload(context).also {
-                logger.info("user [$userId] upload npm package version metadata file [$fullPath] into repo [$projectId/$repoName] success.")
+                logger.info(
+                    "user [$userId] upload npm package version metadata file [$fullPath] " +
+                        "into repo [$projectId/$repoName] success."
+                )
             }
             artifactFile.delete()
         }
@@ -454,7 +471,9 @@ class NpmClientServiceImpl(
         val withDownloadFullPath = "${versionMetadata.name}/download/$filename"
         with(artifactInfo) {
             if (exist(projectId, repoName, fullPath) || exist(projectId, repoName, withDownloadFullPath)) {
-                throw NpmArtifactExistException("You cannot publish over the previously published versions: ${versionMetadata.version}.")
+                throw NpmArtifactExistException(
+                    "You cannot publish over the previously published versions: ${versionMetadata.version}."
+                )
             }
             logger.info("user [$userId] deploying npm package [$fullPath] into repo [$projectId/$repoName]")
             try {
@@ -471,7 +490,9 @@ class NpmClientServiceImpl(
                 ArtifactContextHolder.getRepository().upload(context)
                 artifactFile.delete()
             } catch (exception: IOException) {
-                logger.error("Failed deploying npm package [$fullPath] into repo [$projectId/$repoName] due to : $exception")
+                logger.error(
+                    "Failed deploying npm package [$fullPath] into repo [$projectId/$repoName] due to : $exception"
+                )
             }
         }
     }
@@ -499,7 +520,10 @@ class NpmClientServiceImpl(
         artifactInfo: NpmArtifactInfo,
         npmPackageMetaData: NpmPackageMetaData
     ) {
-        logger.info("userId [$userId] handler deprecated request: [$npmPackageMetaData] in repo [${artifactInfo.projectId}]")
+        logger.info(
+            "userId [$userId] handler deprecated request: [$npmPackageMetaData] " +
+                "in repo [${artifactInfo.projectId}]"
+        )
         doPackageFileUpload(userId, artifactInfo, npmPackageMetaData)
         // 元数据增加过期信息
         val iterator = npmPackageMetaData.versions.map.entries.iterator()

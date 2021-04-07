@@ -207,6 +207,7 @@
         components: { RepoTree, genericDetail, genericUpload },
         data () {
             return {
+                MODE_CONFIG,
                 isLoading: false,
                 treeLoading: false,
                 importantSearch: '',
@@ -310,7 +311,7 @@
             }
         },
         computed: {
-            ...mapState(['userList', 'genericTree']),
+            ...mapState(['userList', 'genericTree', 'breadcrumb']),
             projectId () {
                 return this.$route.params.projectId
             },
@@ -321,7 +322,7 @@
         watch: {
             '$route.query.name' () {
                 this.initPage()
-                this.getArtifactories()
+                this.handlerPaginationChange()
             },
             'selectedTreeNode.fullPath' () {
                 // 重置选中行
@@ -416,7 +417,7 @@
                 this.query = null
                 this.selectedRow.element && this.selectedRow.element.classList.remove('selected-row')
                 this.selectedRow = this.selectedTreeNode
-                this.getArtifactories()
+                this.handlerPaginationChange()
             },
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
                 this.pagination.current = current
@@ -500,7 +501,8 @@
                 })
                 this.detailSlider.data = {
                     ...data,
-                    name: data.name || this.repoName,
+                    name: data.metadata.displayName || data.name || this.repoName,
+                    fullPath: this.transformPipelineFullPath(data),
                     size: convertFileSize(data.size),
                     createdBy: this.userList[data.createdBy] ? this.userList[data.createdBy].name : data.createdBy,
                     createdDate: formatDate(data.createdDate),
@@ -508,6 +510,18 @@
                     lastModifiedDate: formatDate(data.lastModifiedDate)
                 }
                 this.detailSlider.loading = false
+            },
+            transformPipelineFullPath (data) {
+                if (this.repoName !== 'pipeline') return data.fullPath
+                const strMap = this.breadcrumb.reduce((target, item) => {
+                    const key = item.value.fullPath.split('/').pop()
+                    target[key] = item.value.name
+                    return target
+                }, {})
+                return data.fullPath.split('/').map(v => {
+                    if (!v) return ''
+                    return strMap[v] || data.name
+                }).join('/')
             },
             renameRes () {
                 this.formDialog = {
@@ -672,7 +686,7 @@
                     // 更新源和目的的节点信息
                     this.updateGenericTreeNode(this.selectedTreeNode)
                     this.updateGenericTreeNode(this.treeDialog.selectedNode)
-                    this.getArtifactories()
+                    this.handlerPaginationChange()
                     this.$bkMessage({
                         theme: 'success',
                         message: this.treeDialog.type + this.$t('success')

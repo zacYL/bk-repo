@@ -49,6 +49,10 @@ fun includeAll(module: String) {
     }
 }
 
+include("dockerapi")
+include("dockerapi:biz-dockerapi")
+include("dockerapi:boot-dockerapi")
+include(":common:common-license-canway")
 include(":boot-assembly")
 includeAll(":auth")
 includeAll(":common")

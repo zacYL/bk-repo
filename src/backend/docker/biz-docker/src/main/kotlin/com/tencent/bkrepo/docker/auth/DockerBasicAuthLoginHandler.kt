@@ -64,14 +64,16 @@ class DockerBasicAuthLoginHandler(
     override fun getLoginEndpoint() = DOCKER_API_PREFIX + DOCKER_API_SUFFIX
 
     override fun onAuthenticateSuccess(request: HttpServletRequest, response: HttpServletResponse, userId: String) {
+        logger.info("Docker checkPermission: $userId")
         val token = JwtUtils.generateToken(signingKey, jwtProperties.expiration, userId)
         val issuedAt = TimeUtil.getGMTTime()
         val tokenUrl = AUTH_CHALLENGE_TOKEN.format(token, token, issuedAt)
+        logger.info("Docker token: $tokenUrl")
         response.contentType = MediaType.APPLICATION_JSON_VALUE
         response.setHeader(DOCKER_HEADER_API_VERSION, DOCKER_API_VERSION)
         response.writer.print(tokenUrl)
         response.writer.flush()
-        super.onAuthenticateSuccess(request, response, userId)
+//        super.onAuthenticateSuccess(request, response, userId)
     }
 
     override fun onAuthenticateFailed(

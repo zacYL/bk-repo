@@ -33,10 +33,12 @@ package com.tencent.bkrepo.rpm.artifact.repository
 
 import com.tencent.bkrepo.common.api.constant.StringPool.SLASH
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
+import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
-import com.tencent.bkrepo.common.artifact.exception.UnsupportedMethodException
+import com.tencent.bkrepo.common.artifact.hash.md5
 import com.tencent.bkrepo.common.artifact.hash.sha1
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
@@ -48,6 +50,7 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadConte
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
+import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.model.PageLimit
@@ -91,6 +94,7 @@ import com.tencent.bkrepo.rpm.pojo.RpmRepoConf
 import com.tencent.bkrepo.rpm.pojo.RpmUploadResponse
 import com.tencent.bkrepo.rpm.pojo.RpmVersion
 import com.tencent.bkrepo.rpm.util.GZipUtils.gZip
+import com.tencent.bkrepo.rpm.util.GZipUtils.unGzipInputStream
 import com.tencent.bkrepo.rpm.util.RpmCollectionUtils
 import com.tencent.bkrepo.rpm.util.RpmConfiguration.toRpmRepoConf
 import com.tencent.bkrepo.rpm.util.RpmHeaderUtils.getRpmBooleanHeader
@@ -111,8 +115,11 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.util.StopWatch
+import java.io.BufferedReader
 import java.io.ByteArrayInputStream
+import java.io.File
 import java.io.FileInputStream
+import java.io.InputStreamReader
 import java.nio.channels.Channels
 import java.time.LocalDateTime
 
@@ -167,18 +174,6 @@ class RpmLocalRepository(
     }
 
     /**
-     * 查询rpm仓库属性
-     */
-    private fun getRpmRepoConf(context: ArtifactContext): RpmRepoConf {
-        val rpmConfiguration = try {
-            context.getLocalConfiguration()
-        } catch (e: IllegalArgumentException) {
-            context.getCompositeConfiguration()
-        }
-        return rpmConfiguration.toRpmRepoConf()
-    }
-
-    /**
      * 检查请求uri地址的层级是否 > 仓库设置的repodata 深度
      * true 将会计算rpm包的索引
      * false 只提供文件服务器功能，返回提示信息
@@ -203,7 +198,8 @@ class RpmLocalRepository(
 
         stopWatch.start("getRpmFormat")
         val rpmFormat = Channels.newChannel(artifactFile.getInputStream()).use { RpmFormatUtils.resolveRpmFormat(it) }
-        val rpmMetadata = RpmMetadataUtils.interpret(rpmFormat, artifactFile.getSize(), sha1Digest, artifactRelativePath)
+        val rpmMetadata = RpmMetadataUtils.interpret(rpmFormat, artifactFile.getSize(), sha1Digest,
+            artifactRelativePath)
         stopWatch.stop()
         val rpmVersion = RpmVersion(
             rpmMetadata.packages[0].name,
@@ -225,7 +221,9 @@ class RpmLocalRepository(
             1L
         )
         stopWatch.start("storeOthers")
-        storeIndexMarkFile(context, repoDataPojo, repeat, markFileMatedata, IndexType.OTHERS, othersIndexData, artifactSha256)
+        storeIndexMarkFile(
+            context, repoDataPojo, repeat, markFileMatedata, IndexType.OTHERS, othersIndexData, artifactSha256
+        )
         stopWatch.stop()
         if (rpmRepoConf.enabledFileLists) {
             val fileListsIndexData = RpmMetadataFileList(
@@ -240,14 +238,20 @@ class RpmLocalRepository(
                 1L
             )
             stopWatch.start("storeFilelists")
-            storeIndexMarkFile(context, repoDataPojo, repeat, markFileMatedata, IndexType.FILELISTS, fileListsIndexData, artifactSha256)
+            storeIndexMarkFile(
+                context, repoDataPojo, repeat, markFileMatedata,
+                IndexType.FILELISTS, fileListsIndexData, artifactSha256
+            )
             stopWatch.stop()
         }
 
         rpmMetadata.filterRpmFileLists()
         rpmMetadata.packages[0].format.changeLogs.clear()
         stopWatch.start("storePrimary")
-        storeIndexMarkFile(context, repoDataPojo, repeat, markFileMatedata, IndexType.PRIMARY, rpmMetadata, artifactSha256)
+        storeIndexMarkFile(
+            context, repoDataPojo, repeat, markFileMatedata,
+            IndexType.PRIMARY, rpmMetadata, artifactSha256
+        )
         stopWatch.stop()
         if (logger.isDebugEnabled) {
             logger.debug("markStat: $stopWatch")
@@ -269,14 +273,19 @@ class RpmLocalRepository(
         sha256: String?
     ) {
         val repodataUri = repoData.repoDataPath
-        logger.info("storeIndexMarkFile, repodataUri: $repodataUri, repeat: $repeat, indexType: $indexType, metadata: $metadata")
+        logger.info(
+            "storeIndexMarkFile, repodataUri: $repodataUri, " +
+                    "repeat: $repeat, indexType: $indexType, metadata: $metadata"
+        )
         val artifactFile = when (repeat) {
             FULLPATH_SHA256 -> {
                 logger.warn("artifact repeat is $FULLPATH_SHA256, skip")
                 return
             }
             NONE, FULLPATH -> {
-                ArtifactFileFactory.build(ByteArrayInputStream(XmlStrUtils.toMarkFileXml(rpmXmlMetadata!!, indexType).toByteArray()))
+                ArtifactFileFactory.build(
+                    ByteArrayInputStream(XmlStrUtils.toMarkFileXml(rpmXmlMetadata!!, indexType).toByteArray())
+                )
             }
             else -> {
                 ArtifactFileFactory.build(ByteArrayInputStream("mark".toByteArray()))
@@ -437,16 +446,14 @@ class RpmLocalRepository(
                         val packageKey = PackageKeys.ofRpm(rpmPackagePojo.path, rpmPackagePojo.name)
                         packageClient.createVersion(
                             PackageVersionCreateRequest(
-                                context.projectId,
-                                context.repoName,
-                                rpmPackagePojo.name,
-                                packageKey,
-                                PackageType.RPM,
-                                null,
-                                rpmPackagePojo.version,
-                                context.getArtifactFile().getSize(),
-                                null,
-                                context.artifactInfo.getArtifactFullPath(),
+                                projectId = context.projectId,
+                                repoName = context.repoName,
+                                packageName = rpmPackagePojo.name,
+                                packageKey = packageKey,
+                                packageType = PackageType.RPM,
+                                versionName = rpmPackagePojo.version,
+                                size = context.getArtifactFile().getSize(),
+                                artifactPath = context.artifactInfo.getArtifactFullPath(),
                                 overwrite = true,
                                 createdBy = context.userId
                             )
@@ -459,7 +466,9 @@ class RpmLocalRepository(
                         rpmNodeCreateRequest(context, mutableMapOf())
                     }
                 }
-            } else { rpmNodeCreateRequest(context, mutableMapOf()) }
+            } else {
+                rpmNodeCreateRequest(context, mutableMapOf())
+            }
 
             store(nodeCreateRequest, context.getArtifactFile(), context.storageCredentials)
         }
@@ -567,7 +576,7 @@ class RpmLocalRepository(
         version: String
     ) {
         if (node.folder) {
-            throw UnsupportedMethodException("Delete folder is forbidden")
+            throw MethodNotAllowedException("Delete folder is forbidden")
         }
         val nodeMetadata = node.metadata
         val artifactSha256 = node.sha256
@@ -584,14 +593,17 @@ class RpmLocalRepository(
 
         // 更新 primary, others
         storeIndexMarkFile(
-            context, repoData, ArtifactRepeat.DELETE, rpmVersion.toMetadata(), IndexType.PRIMARY, null, artifactSha256
+            context, repoData, ArtifactRepeat.DELETE, rpmVersion.toMetadata(), IndexType.PRIMARY,
+            null, artifactSha256
         )
         storeIndexMarkFile(
-            context, repoData, ArtifactRepeat.DELETE, rpmVersion.toMetadata(), IndexType.OTHERS, null, artifactSha256
+            context, repoData, ArtifactRepeat.DELETE, rpmVersion.toMetadata(), IndexType.OTHERS,
+            null, artifactSha256
         )
         if (rpmRepoConf.enabledFileLists) {
             storeIndexMarkFile(
-                context, repoData, ArtifactRepeat.DELETE, rpmVersion.toMetadata(), IndexType.FILELISTS, null, artifactSha256
+                context, repoData, ArtifactRepeat.DELETE, rpmVersion.toMetadata(), IndexType.FILELISTS,
+                null, artifactSha256
             )
         }
 
@@ -680,25 +692,25 @@ class RpmLocalRepository(
         return Page(page, size, pages.totalRecords, pages.records.map { it["name"] as String })
     }
 
-    fun compensation() {
-        logger.info("start compensation package info")
+    fun populatePackage() {
+        logger.info("start populate package info")
         // 所有rpm仓库
         val repos = jobService.getAllRpmRepo() ?: return
         // 遍历仓库
         for (repo in repos) {
-            logger.info("start compensation repo: ${repo.projectId}/${repo.name}")
+            logger.info("start populate repo: ${repo.projectId}/${repo.name}")
             val rpmConfiguration = repo.configuration
             val repodataDepth = rpmConfiguration.getIntegerSetting("repodataDepth") ?: 0
             val targetSet = RpmCollectionUtils.filterByDepth(jobService.findRepodataDirs(repo), repodataDepth)
             logger.info("find ${repo.projectId}/${repo.name} : $targetSet")
             for (repoDataPath in targetSet) {
-                logger.info("start compensation package info : ${repo.projectId}/${repo.name}/$repoDataPath")
-                compensationPackage(repo, repoDataPath)
+                logger.info("start populate package info : ${repo.projectId}/${repo.name}/$repoDataPath")
+                populatePackage(repo, repoDataPath)
             }
         }
     }
 
-    private fun compensationPackage(repo: RepositoryDetail, repoDataPath: String) {
+    private fun populatePackage(repo: RepositoryDetail, repoDataPath: String) {
         val rpmNodePath = repoDataPath.removeSuffix("/").removeSuffix("repodata").removeSuffix("/")
         var i = 0
         loop@ while (true) {
@@ -711,18 +723,19 @@ class RpmLocalRepository(
                 deep = false,
                 sort = false
             )
-            val nodeInfoPage = nodeClient.listNodePage(repo.projectId, repo.name, rpmNodePath, nodeListOption).data
-                ?: break@loop
+            val nodeInfoPage = nodeClient.listNodePage(repo.projectId, repo.name, rpmNodePath, nodeListOption)
+                .data ?: break@loop
             if (nodeInfoPage.records.isEmpty()) break@loop
-            logger.info("compensation: found ${nodeInfoPage.records.size} , totalRecords: ${nodeInfoPage.totalRecords}")
+            logger.info("populatePackage: found ${nodeInfoPage.records.size}," +
+                " totalRecords: ${nodeInfoPage.totalRecords}")
             val rpmNodeList = nodeInfoPage.records.filter { it.name.endsWith(".rpm") }
             for (nodeInfo in rpmNodeList) {
-                compensationPackageByNodeInfo(nodeInfo)
+                populatePackageByNodeInfo(nodeInfo)
             }
         }
     }
 
-    private fun compensationPackageByNodeInfo(nodeInfo: NodeInfo) {
+    private fun populatePackageByNodeInfo(nodeInfo: NodeInfo) {
         val nodeMetadata = nodeInfo.metadata
         if (nodeMetadata == null) {
             logger.warn("Can not found $nodeInfo metadata, skip!")
@@ -766,6 +779,77 @@ class RpmLocalRepository(
         artifactFile.delete()
         with(node) { logger.info("Success to store$projectId/$repoName/$fullPath") }
         logger.info("Success to insert $node")
+    }
+
+    private fun getRpmRepoConf(context: ArtifactContext): RpmRepoConf {
+        val repositoryInfo = repositoryClient.getRepoInfo(context.projectId, context.repoName).data
+            ?: throw ErrorCodeException(
+                CommonMessageCode.RESOURCE_NOT_FOUND,
+                "${context.projectId}/${context.repoName}"
+            )
+        val rpmConfiguration = repositoryInfo.configuration
+        return rpmConfiguration.toRpmRepoConf()
+    }
+
+    fun fixRpmXml(originXmlFile: File): File {
+        BufferedReader(InputStreamReader(originXmlFile.inputStream(), "UTF-8")).use { reader ->
+            val resultFile = File.createTempFile("rpm_", ".xmlStream")
+            try {
+                resultFile.outputStream().use { outputStream ->
+                    var line: String? = null
+                    var firstLine = true
+                    while (reader.readLine().also { line = it } != null) {
+                        val isBugLine = (line!!.startsWith("  </package  ") || line!!.startsWith("  </packa  ")) &&
+                                line!!.endsWith("<package type=\"rpm\">")
+                        when {
+                            isBugLine -> {
+                                outputStream.write("\n  </package>\n  <package type=\"rpm\">".toByteArray())
+                            }
+                            firstLine -> {
+                                outputStream.write(line!!.toByteArray())
+                                firstLine = false
+                            }
+                            else -> {
+                                outputStream.write("\n$line".toByteArray())
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                resultFile.delete()
+            }
+            return resultFile
+        }
+    }
+
+    fun fixPrimaryXml(context: ArtifactContext) {
+        val repoPath = context.artifactInfo.getArtifactFullPath()
+        val repoDetail = context.repositoryDetail
+        logger.info("fixPrimaryXml, projectId: ${context.projectId}, repoPath: $repoPath")
+        val indexNode = jobService.getLatestIndexNode(repoDetail, repoPath, "primary.xml.gz")
+        if (indexNode == null) {
+            logger.info("primary index not found")
+            return
+        }
+        logger.info("find primary index: ${indexNode.fullPath}")
+        val originXmlFile = storageService.load(indexNode.sha256!!, Range.full(indexNode.size), null)!!
+            .use { it.unGzipInputStream() }
+        logger.info("originIndexMd5: ${originXmlFile.md5()}")
+        try {
+            val fixedXmlFile = fixRpmXml(originXmlFile)
+            jobService.checkValid(fixedXmlFile)
+            logger.info("fixedIndexMd5: ${fixedXmlFile.md5()}")
+            try {
+                jobService.storeXmlGZNode(repoDetail, fixedXmlFile, repoPath, IndexType.PRIMARY)
+            } finally {
+                fixedXmlFile.delete()
+                logger.info("temp fixedXmlFile ${fixedXmlFile.absolutePath} deleted")
+            }
+        } finally {
+            originXmlFile.delete()
+            logger.info("temp originXmlFile file ${originXmlFile.absolutePath} deleted")
+        }
+        flushRepoMdXML(context, repoPath)
     }
 
     companion object {

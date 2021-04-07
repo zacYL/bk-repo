@@ -32,6 +32,7 @@
 package com.tencent.bkrepo.common.security.util
 
 import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
+import com.tencent.bkrepo.common.api.constant.MS_REQUEST_KEY
 import com.tencent.bkrepo.common.api.constant.PLATFORM_KEY
 import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
@@ -60,5 +61,19 @@ object SecurityUtils {
      */
     fun getPrincipal(): String {
         return getPlatformId()?.let { "$it-${getUserId()}" } ?: getUserId()
+    }
+
+    /**
+     * 判断是否为匿名用户
+     */
+    fun isAnonymous(): Boolean {
+        return getUserId() == ANONYMOUS_USER
+    }
+
+    /**
+     * 判断是否为微服务请求
+     */
+    fun isServiceRequest(): Boolean {
+        return HttpContextHolder.getRequestOrNull()?.getAttribute(MS_REQUEST_KEY) != null
     }
 }

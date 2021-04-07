@@ -148,8 +148,11 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
                 deletePackage(artifactInfo, deletePackageRequest)
                 return
             }
-            // npmService.unPublishPkgWithVersion(operator, artifactInfo, name, version)
-            npmClientService.deleteVersion(operator, artifactInfo, name, String.format("%s-%s.tgz", name, version))
+            val tgzPath =
+                packageMetadata.versions.map[version]?.dist?.tarball?.substringAfterLast(
+                    artifactInfo.getRepoIdentify()
+                ).orEmpty()
+            npmClientService.deleteVersion(operator, artifactInfo, name, version, tgzPath)
             // 修改package.json文件的内容
             updatePackageWithDeleteVersion(artifactInfo, this, packageMetadata)
         }
@@ -176,8 +179,10 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
                 val newLatest =
                     packageClient.findPackageByKey(projectId, repoName, PackageKeys.ofNpm(name)).data?.latest
                         ?: run {
-                            logger.error("delete version by web operator to find new latest version failed with package [$name]")
-                            throw NpmArtifactNotFoundException("delete version by web operator to find new latest version failed with package [$name]")
+                            val message =
+                                "delete version by web operator to find new latest version failed with package [$name]"
+                            logger.error(message)
+                            throw NpmArtifactNotFoundException(message)
                         }
                 packageMetaData.versions.map.remove(version)
                 packageMetaData.time.getMap().remove(version)
@@ -196,7 +201,10 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
             context.putAttribute(NPM_FILE_FULL_PATH, fullPath)
 
             ArtifactContextHolder.getRepository().upload(context).also {
-                logger.info("user [${context.userId}] upload npm package metadata file [$fullPath] into repo [$projectId/$repoName] success.")
+                logger.info(
+                    "user [${context.userId}] upload npm package metadata file [$fullPath] " +
+                        "to repo [$projectId/$repoName] success."
+                )
             }
             artifactFile.delete()
         }

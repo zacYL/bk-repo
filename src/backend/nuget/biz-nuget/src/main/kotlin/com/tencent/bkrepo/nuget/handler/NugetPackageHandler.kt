@@ -37,9 +37,15 @@ class NugetPackageHandler {
     ) {
         nuspecMetadata.apply {
             var metadata: Map<String, Any>? = null
-            logger.info("start index nuget metadata for package [$id] and version [$version] in repo [${artifactInfo.getRepoIdentify()}]")
+            logger.info(
+                "start index nuget metadata for package [$id] and version [$version] " +
+                    "in repo [${artifactInfo.getRepoIdentify()}]"
+            )
             measureTimeMillis { metadata = indexMetadata(this) }.apply {
-                logger.info("finished index nuget metadata for package [$id] and version [$version] in repo [${artifactInfo.getRepoIdentify()}], elapse [$this] ms.")
+                logger.info(
+                    "finished index nuget metadata for package [$id] and version [$version] " +
+                        "in repo [${artifactInfo.getRepoIdentify()}], elapse [$this] ms."
+                )
             }
             with(artifactInfo) {
                 val packageVersionCreateRequest = PackageVersionCreateRequest(
@@ -110,7 +116,7 @@ class NugetPackageHandler {
     }
 
     fun getFrameworkValue(frameworkAssembly: FrameworkAssembly): String {
-        with(frameworkAssembly){
+        with(frameworkAssembly) {
             return targetFramework?.let {
                 StringJoiner(":").add(assemblyName).add(it).toString()
             } ?: assemblyName
@@ -132,7 +138,7 @@ class NugetPackageHandler {
                     val groupReferences = reference.references
                     groupReferences?.let {
                         val groupIterator = it.iterator()
-                        while (groupIterator.hasNext()){
+                        while (groupIterator.hasNext()) {
                             val groupReference = groupIterator.next()
                             values.add(groupReference.file)
                         }
@@ -159,7 +165,7 @@ class NugetPackageHandler {
                     val groupDependencies = dependency.dependencies
                     groupDependencies?.let {
                         val groupIterator = it.iterator()
-                        while (groupIterator.hasNext()){
+                        while (groupIterator.hasNext()) {
                             val groupDependency = groupIterator.next()
                             values.add(getDependencyValue(groupDependency, dependency.targetFramework))
                         }
@@ -184,7 +190,10 @@ class NugetPackageHandler {
         val packageKey = PackageKeys.ofNuget(name)
         with(artifactInfo) {
             packageClient.deleteVersion(projectId, repoName, packageKey, version).apply {
-                logger.info("user: [$userId] delete package [$name] with version [$version] in repo [${artifactInfo.getRepoIdentify()}] success!")
+                logger.info(
+                    "user: [$userId] delete package [$name] with version [$version] " +
+                        "in repo [${artifactInfo.getRepoIdentify()}] success!"
+                )
             }
         }
     }

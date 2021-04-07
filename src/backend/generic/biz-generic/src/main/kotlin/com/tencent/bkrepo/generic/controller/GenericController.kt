@@ -82,6 +82,7 @@ class GenericController(
         downloadService.download(artifactInfo)
     }
 
+    @Permission(ResourceType.NODE, PermissionAction.WRITE)
     @PostMapping(BLOCK_MAPPING_URI)
     fun startBlockUpload(
         @RequestAttribute userId: String,
@@ -90,6 +91,7 @@ class GenericController(
         return ResponseBuilder.success(uploadService.startBlockUpload(userId, artifactInfo))
     }
 
+    @Permission(ResourceType.NODE, PermissionAction.WRITE)
     @DeleteMapping(BLOCK_MAPPING_URI)
     fun abortBlockUpload(
         @RequestAttribute userId: String,
@@ -100,6 +102,7 @@ class GenericController(
         return ResponseBuilder.success()
     }
 
+    @Permission(ResourceType.NODE, PermissionAction.WRITE)
     @PutMapping(BLOCK_MAPPING_URI)
     fun completeBlockUpload(
         @RequestAttribute userId: String,
@@ -110,6 +113,7 @@ class GenericController(
         return ResponseBuilder.success()
     }
 
+    @Permission(ResourceType.REPO, PermissionAction.READ)
     @GetMapping(BLOCK_MAPPING_URI)
     fun listBlock(
         @RequestAttribute userId: String,

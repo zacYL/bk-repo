@@ -92,7 +92,7 @@ class PackageDownloadsServiceImpl(
             packageDownloadsDao.upsert(downloadsQuery, downloadsUpdate)
 
             // update package version
-            val versionQuery = PackageQueryHelper.versionQuery(tPackage.id.orEmpty(), packageVersion)
+            val versionQuery = PackageQueryHelper.versionQuery(tPackage.id.orEmpty(), name = packageVersion)
             val versionUpdate = Update().inc(TPackageVersion::downloads.name, 1)
             packageVersionDao.updateFirst(versionQuery, versionUpdate)
 
@@ -281,7 +281,7 @@ class PackageDownloadsServiceImpl(
      */
     private fun checkPackageVersion(packageId: String, versionName: String): TPackageVersion {
         return packageVersionDao.findByName(packageId, versionName)
-            ?: throw ErrorCodeException(ArtifactMessageCode.VERSION_NOT_FOUND, packageId, versionName)
+            ?: throw ErrorCodeException(ArtifactMessageCode.VERSION_NOT_FOUND, versionName)
     }
 
     companion object {

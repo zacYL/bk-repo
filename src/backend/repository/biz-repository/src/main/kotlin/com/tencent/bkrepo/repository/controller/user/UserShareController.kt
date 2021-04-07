@@ -85,10 +85,11 @@ class UserShareController(
         @RequestBody batchShareRecordCreateRequest: BatchShareRecordCreateRequest
     ): Response<List<ShareRecordInfo>> {
         with(batchShareRecordCreateRequest) {
-            permissionManager.checkPermission(userId, ResourceType.REPO, PermissionAction.WRITE, projectId, repoName)
             val shareRecordCreateRequest = ShareRecordCreateRequest(authorizedUserList, authorizedIpList, expireSeconds)
             val recordInfoList = fullPathList.map {
-                val artifactInfo = DefaultArtifactInfo(projectId, repoName, PathUtils.normalizeFullPath(it))
+                val fullPath = PathUtils.normalizeFullPath(it)
+                permissionManager.checkNodePermission(PermissionAction.WRITE, projectId, repoName, fullPath)
+                val artifactInfo = DefaultArtifactInfo(projectId, repoName, fullPath)
                 shareService.create(userId, artifactInfo, shareRecordCreateRequest)
             }
             return ResponseBuilder.success(recordInfoList)

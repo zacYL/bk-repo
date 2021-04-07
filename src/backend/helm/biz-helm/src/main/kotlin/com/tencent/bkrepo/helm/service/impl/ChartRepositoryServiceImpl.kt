@@ -45,7 +45,6 @@ import com.tencent.bkrepo.common.artifact.stream.ArtifactInputStream
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.helm.artifact.HelmArtifactInfo
 import com.tencent.bkrepo.helm.constants.CHART_PACKAGE_FILE_EXTENSION
-import com.tencent.bkrepo.helm.constants.DATA_TIME_FORMATTER
 import com.tencent.bkrepo.helm.constants.FULL_PATH
 import com.tencent.bkrepo.helm.constants.INDEX_CACHE_YAML
 import com.tencent.bkrepo.helm.constants.NODE_CREATE_DATE
@@ -59,6 +58,7 @@ import com.tencent.bkrepo.helm.service.ChartRepositoryService
 import com.tencent.bkrepo.helm.utils.DecompressUtil.getArchivesContent
 import com.tencent.bkrepo.helm.utils.HelmUtils
 import com.tencent.bkrepo.helm.utils.HelmZipResponseWriter
+import com.tencent.bkrepo.helm.utils.TimeFormatUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -94,26 +94,31 @@ class ChartRepositoryServiceImpl : AbstractChartService(), ChartRepositoryServic
         with(artifactInfo) {
             if (!exist(projectId, repoName, INDEX_CACHE_YAML)) {
                 val nodeList = queryNodeList(artifactInfo, false)
-                logger.info("query node list success, size [${nodeList.size}] in repo [$projectId/$repoName], start generate index.yaml ... ")
+                logger.info("query node list success, size [${nodeList.size}] in repo [$projectId/$repoName]," +
+                    " start generate index.yaml ... ")
                 val indexYamlMetadata = buildIndexYamlMetadata(nodeList, artifactInfo)
-                uploadIndexYamlMetadata(indexYamlMetadata).also { logger.info("fresh the index file success in repo [$projectId/$repoName]") }
+                uploadIndexYamlMetadata(indexYamlMetadata).also {
+                    logger.info("fresh the index file success in repo [$projectId/$repoName]")
+                }
                 return
             }
 
             val originalYamlMetadata = queryOriginalIndexYaml()
             val dateTime =
-                originalYamlMetadata.generated.let { LocalDateTime.parse(it, DateTimeFormatter.ISO_DATE_TIME) }
+                originalYamlMetadata.generated.let { TimeFormatUtil.convertToLocalTime(it) }
             val now = LocalDateTime.now()
             val nodeList = queryNodeList(artifactInfo, lastModifyTime = dateTime)
             if (nodeList.isNotEmpty()) {
                 val indexYamlMetadata = buildIndexYamlMetadata(nodeList, artifactInfo)
                 logger.info(
-                    "start refreshing the index file in repo [$projectId/$repoName], original index file entries size : [${indexYamlMetadata.entriesSize()}]"
+                    "start refreshing the index file in repo [$projectId/$repoName], original index file " +
+                        "entries size : [${indexYamlMetadata.entriesSize()}]"
                 )
-                indexYamlMetadata.generated = now.format(DateTimeFormatter.ofPattern(DATA_TIME_FORMATTER))
+                indexYamlMetadata.generated = TimeFormatUtil.convertToUtcTime(now)
                 uploadIndexYamlMetadata(indexYamlMetadata).also {
                     logger.info(
-                        "refresh the index file success in repo [$projectId/$repoName], current index file entries size : [${indexYamlMetadata.entriesSize()}]"
+                        "refresh the index file success in repo [$projectId/$repoName], " +
+                            "current index file entries size : [${indexYamlMetadata.entriesSize()}]"
                     )
                 }
             }
@@ -127,7 +132,8 @@ class ChartRepositoryServiceImpl : AbstractChartService(), ChartRepositoryServic
         isInit: Boolean
     ): HelmIndexYamlMetadata {
         with(artifactInfo) {
-            val indexYamlMetadata = if (!exist(projectId, repoName, HelmUtils.getIndexYamlFullPath()) || isInit) {
+            val indexYamlMetadata =
+            if (!exist(projectId, repoName, HelmUtils.getIndexYamlFullPath()) || isInit) {
                 HelmUtils.initIndexYamlMetadata()
             } else {
                 queryOriginalIndexYaml()
@@ -142,7 +148,9 @@ class ChartRepositoryServiceImpl : AbstractChartService(), ChartRepositoryServic
                     try {
                         val artifactInputStream =
                             ArtifactContextHolder.getRepository().query(context) as ArtifactInputStream
-                        val content = artifactInputStream.use { it.getArchivesContent(CHART_PACKAGE_FILE_EXTENSION) }
+                        val content = artifactInputStream.use {
+                            it.getArchivesContent(CHART_PACKAGE_FILE_EXTENSION)
+                        }
                         val chartMetadata = content.byteInputStream().readYamlString<HelmChartMetadata>()
                         chartName = chartMetadata.name
                         chartVersion = chartMetadata.version
@@ -217,7 +225,8 @@ class ChartRepositoryServiceImpl : AbstractChartService(), ChartRepositoryServic
     @Transactional(rollbackFor = [Throwable::class])
     override fun regenerateIndexYaml(artifactInfo: HelmArtifactInfo) {
         val nodeList = queryNodeList(artifactInfo, false)
-        logger.info("query node list for full refresh index.yaml success in repo [${artifactInfo.getRepoIdentify()}], size [${nodeList.size}], starting full refresh index.yaml ... ")
+        logger.info("query node list for full refresh index.yaml success in repo [${artifactInfo.getRepoIdentify()}]" +
+            ", size [${nodeList.size}], starting full refresh index.yaml ... ")
         val indexYamlMetadata = buildIndexYamlMetadata(nodeList, artifactInfo)
         uploadIndexYamlMetadata(indexYamlMetadata).also { logger.info("Full refresh index.yaml success！") }
     }
@@ -255,7 +264,7 @@ class ChartRepositoryServiceImpl : AbstractChartService(), ChartRepositoryServic
 
         fun convertDateTime(timeStr: String): String {
             val localDateTime = LocalDateTime.parse(timeStr, DateTimeFormatter.ISO_DATE_TIME)
-            return localDateTime.format(DateTimeFormatter.ofPattern(DATA_TIME_FORMATTER))
+            return TimeFormatUtil.convertToUtcTime(localDateTime)
         }
     }
 }

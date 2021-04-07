@@ -27,10 +27,7 @@
                 <i v-else class="mr5 devops-icon" @click.stop="iconClickHandler(item)"
                     :class="openList.includes(item.roadMap) ? 'icon-down-shape' : 'icon-right-shape'"></i>
                 <icon class="mr5" size="14" :name="openList.includes(item.roadMap) ? 'folder-open' : 'folder'"></icon>
-                <div class="node-text"
-                    :title="item.name" v-html="importantTransform(item.name)">
-                    <!-- {{ item.name }} -->
-                </div>
+                <div class="node-text" :title="item.name" v-html="importantTransform(item.name)"></div>
             </div>
             <CollapseTransition>
                 <template v-if="item.children && item.children.length">
@@ -84,7 +81,7 @@
                 return this.list.filter(v => v.folder)
             },
             reg () {
-                return new RegExp(this.importantSearch, 'ig')
+                return new RegExp(this.importantSearch.replace(/(.)/g, '\\$1'), 'ig')
             }
         },
         methods: {

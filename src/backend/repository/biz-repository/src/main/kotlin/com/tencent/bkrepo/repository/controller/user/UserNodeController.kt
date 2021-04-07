@@ -59,8 +59,9 @@ import com.tencent.bkrepo.repository.pojo.node.user.UserNodeCopyRequest
 import com.tencent.bkrepo.repository.pojo.node.user.UserNodeMoveRequest
 import com.tencent.bkrepo.repository.pojo.node.user.UserNodeRenameRequest
 import com.tencent.bkrepo.repository.pojo.node.user.UserNodeUpdateRequest
-import com.tencent.bkrepo.repository.service.NodeSearchService
-import com.tencent.bkrepo.repository.service.NodeService
+import com.tencent.bkrepo.repository.service.node.NodeSearchService
+import com.tencent.bkrepo.repository.service.node.NodeService
+import com.tencent.bkrepo.repository.util.PipelineRepoUtils
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -163,6 +164,7 @@ class UserNodeController(
         @RequestParam newFullPath: String
     ): Response<Void> {
         with(artifactInfo) {
+            permissionManager.checkNodePermission(PermissionAction.UPDATE, projectId, repoName, newFullPath)
             val renameRequest = NodeRenameRequest(
                 projectId = projectId,
                 repoName = repoName,
@@ -183,7 +185,9 @@ class UserNodeController(
         @RequestBody request: UserNodeRenameRequest
     ): Response<Void> {
         with(request) {
-            permissionManager.checkPermission(userId, ResourceType.REPO, PermissionAction.ARTIFACT_RENAME, projectId, repoName)
+            permissionManager.checkPermission(ResourceType.REPO, PermissionAction.ARTIFACT_RENAME, projectId, repoName)
+//            permissionManager.checkNodePermission(PermissionAction.UPDATE, projectId, repoName, fullPath)
+//            permissionManager.checkNodePermission(PermissionAction.UPDATE, projectId, repoName, newFullPath)
             val renameRequest = NodeRenameRequest(
                 projectId = projectId,
                 repoName = repoName,
@@ -203,7 +207,7 @@ class UserNodeController(
         @RequestBody request: UserNodeMoveRequest
     ): Response<Void> {
         with(request) {
-            checkCrossRepoPermission(userId, request)
+            checkCrossRepoPermission(request)
             val moveRequest = NodeMoveRequest(
                 srcProjectId = srcProjectId,
                 srcRepoName = srcRepoName,
@@ -226,7 +230,7 @@ class UserNodeController(
         @RequestBody request: UserNodeCopyRequest
     ): Response<Void> {
         with(request) {
-            checkCrossRepoPermission(userId, request)
+            checkCrossRepoPermission(request)
             val copyRequest = NodeCopyRequest(
                 srcProjectId = srcProjectId,
                 srcRepoName = srcRepoName,
@@ -261,6 +265,8 @@ class UserNodeController(
         @ArtifactPathVariable artifactInfo: ArtifactInfo,
         nodeListOption: NodeListOption
     ): Response<Page<NodeInfo>> {
+        // 禁止查询pipeline仓库
+        PipelineRepoUtils.checkPipeline(artifactInfo.repoName)
         val nodePage = nodeService.listNodePage(artifactInfo, nodeListOption)
         return ResponseBuilder.success(nodePage)
     }
@@ -283,22 +289,12 @@ class UserNodeController(
     /**
      * 校验跨仓库操作权限
      */
-    private fun checkCrossRepoPermission(userId: String, request: CrossRepoNodeRequest) {
-        val srcProjectId = request.srcProjectId
-        val srcRepoName = request.srcRepoName
-        val destProjectId = request.destProjectId
-        val destRepoName = request.destRepoName
-        // 校验src仓库权限
-        val type = ResourceType.REPO
-        val action = PermissionAction.WRITE
-        permissionManager.checkPermission(userId, type, action, srcProjectId, srcRepoName)
-
-        // 当src和dest不是用一个仓库是，校验dest仓库权限
-        val isDestRepoNull = destProjectId == null && destRepoName == null
-        val isSameRepo = destProjectId == srcProjectId && destRepoName == srcRepoName
-        if (isDestRepoNull || isSameRepo) {
-            return
+    private fun checkCrossRepoPermission(request: CrossRepoNodeRequest) {
+        with(request) {
+            permissionManager.checkNodePermission(PermissionAction.WRITE, srcProjectId, srcRepoName, srcFullPath)
+            val toProjectId = request.destProjectId ?: srcProjectId
+            val toRepoName = request.destRepoName ?: srcRepoName
+            permissionManager.checkNodePermission(PermissionAction.WRITE, toProjectId, toRepoName, destFullPath)
         }
-        permissionManager.checkPermission(userId, type, action, destProjectId.orEmpty(), destRepoName.orEmpty())
     }
 }

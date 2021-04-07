@@ -34,7 +34,6 @@ package com.tencent.bkrepo.common.artifact.repository.composite
 import com.tencent.bkrepo.common.artifact.constant.PRIVATE_PROXY_REPO_NAME
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_PROXY_PROJECT
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_PROXY_REPO_NAME
-import com.tencent.bkrepo.common.artifact.exception.ArtifactValidateException
 import com.tencent.bkrepo.common.artifact.pojo.configuration.composite.ProxyChannelSetting
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
@@ -52,7 +51,6 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.storage.monitor.Throughput
 import com.tencent.bkrepo.repository.api.ProxyChannelClient
 import org.slf4j.LoggerFactory
-import org.springframework.context.annotation.Bean
 import org.springframework.stereotype.Service
 
 /**
@@ -86,20 +84,12 @@ class CompositeRepository(
         return localRepository.remove(context)
     }
 
-    override fun onDownloadValidate(context: ArtifactDownloadContext) {
-        localRepository.onDownloadValidate(context)
-    }
-
     override fun onDownloadBefore(context: ArtifactDownloadContext) {
         localRepository.onDownloadBefore(context)
     }
 
     override fun onDownloadFailed(context: ArtifactDownloadContext, exception: Exception) {
         localRepository.onDownloadFailed(context, exception)
-    }
-
-    override fun onValidateFailed(context: ArtifactContext, validateException: ArtifactValidateException) {
-        localRepository.onValidateFailed(context, validateException)
     }
 
     override fun onDownloadFinished(context: ArtifactDownloadContext) {
@@ -151,8 +141,8 @@ class CompositeRepository(
         for (setting in proxyChannelList) {
             try {
                 action(getContextFromProxyChannel(context, setting))?.let { return it }
-            } catch (exception: RuntimeException) {
-                logger.warn("Failed to execute map with channel ${setting.name}", exception)
+            } catch (ignored: RuntimeException) {
+                logger.warn("Failed to execute map with channel ${setting.name}", ignored)
             }
         }
         return null
@@ -199,13 +189,11 @@ class CompositeRepository(
      * 根据原始上下文[context]以及代理源设置[setting]生成新的[ArtifactContext]
      */
     private fun getContextFromProxyChannel(context: ArtifactContext, setting: ProxyChannelSetting): ArtifactContext {
-        val artifactContext = if (setting.public) {
+        return if (setting.public) {
             getContextFromPublicProxyChannel(context, setting)
         } else {
             getContextFromPrivateProxyChannel(context, setting)
         }
-        require(artifactContext is ArtifactDownloadContext)
-        return artifactContext
     }
 
     /**

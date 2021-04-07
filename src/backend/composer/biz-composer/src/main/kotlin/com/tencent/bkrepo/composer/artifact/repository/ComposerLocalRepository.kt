@@ -31,9 +31,9 @@
 
 package com.tencent.bkrepo.composer.artifact.repository
 
+import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
-import com.tencent.bkrepo.common.artifact.exception.UnsupportedMethodException
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
@@ -245,20 +245,18 @@ class ComposerLocalRepository(private val stageClient: StageClient) : LocalRepos
         // 保存版本信息
         packageClient.createVersion(
             PackageVersionCreateRequest(
-                context.projectId,
-                context.repoName,
-                composerArtifact.name,
-                PackageKeys.ofComposer(composerArtifact.name),
-                PackageType.COMPOSER,
-                null,
-                composerArtifact.version,
-                context.getArtifactFile().getSize(),
-                null,
-                context.artifactInfo.getArtifactFullPath(),
-                null,
-                metadata,
-                overwrite = true,
-                createdBy = context.userId
+                    projectId = context.projectId,
+                    repoName = context.repoName,
+                    packageName = composerArtifact.name,
+                    packageKey = PackageKeys.ofComposer(composerArtifact.name),
+                    packageType = PackageType.COMPOSER,
+                    packageDescription = null,
+                    versionName = composerArtifact.version,
+                    size = context.getArtifactFile().getSize(),
+                    manifestPath = null,
+                    artifactPath = context.artifactInfo.getArtifactFullPath(),
+                    overwrite = true,
+                    createdBy = context.userId
             )
         )
     }
@@ -347,7 +345,7 @@ class ComposerLocalRepository(private val stageClient: StageClient) : LocalRepos
         context: ArtifactRemoveContext
     ) {
         if (node.folder) {
-            throw UnsupportedMethodException("Delete folder is forbidden")
+            throw MethodNotAllowedException("Delete folder is forbidden")
         }
         with(context) {
             // 更新索引

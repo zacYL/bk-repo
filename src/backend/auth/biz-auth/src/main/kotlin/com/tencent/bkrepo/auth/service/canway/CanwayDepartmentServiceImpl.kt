@@ -33,14 +33,18 @@ class CanwayDepartmentServiceImpl(
 ) : DepartmentService {
 
     private val okHttpClient = OkHttpClient.Builder()
-        .sslSocketFactory(CertTrustManager.disableValidationSSLSocketFactory, CertTrustManager.disableValidationTrustManager)
+        .sslSocketFactory(
+            CertTrustManager.disableValidationSSLSocketFactory,
+            CertTrustManager.disableValidationTrustManager
+        )
         .hostnameVerifier(CertTrustManager.trustAllHostname)
         .connectTimeout(3L, TimeUnit.SECONDS)
         .readTimeout(5L, TimeUnit.SECONDS)
         .writeTimeout(5L, TimeUnit.SECONDS)
         .build()
 
-    val paasHost = canwayAuthConf.bkHost
+    val paasHost = canwayAuthConf.host
+
     // todo 复用 BkAuthConfig
     val bkAppCode = canwayAuthConf.appCode
     val bkAppSecret = canwayAuthConf.appSecret
@@ -49,8 +53,15 @@ class CanwayDepartmentServiceImpl(
         val bkCertificate = getBkCertificate(username)
         if (departmentId != null) {
             val mediaType = MediaType.parse("application/json; charset=utf-8")
-            val json = String.format(jsonFormat, bkAppCode, bkAppSecret, bkCertificate.certType.value, bkCertificate.value, departmentId)
-            val requestUrl = "${paasHost?.removeSuffix("/")}$paasBatchDepartmentUrl"
+            val json = String.format(
+                jsonFormat,
+                bkAppCode,
+                bkAppSecret,
+                bkCertificate.certType.value,
+                bkCertificate.value,
+                departmentId
+            )
+            val requestUrl = "${paasHost.removeSuffix("/")}$paasBatchDepartmentUrl"
             val body = RequestBody.create(mediaType, json)
             val request = Request.Builder()
                 .url(requestUrl)
@@ -69,7 +80,7 @@ class CanwayDepartmentServiceImpl(
         val bkCertificate = getBkCertificate(username)
         val list = mutableListOf<BkChildrenDepartment>()
         for (departmentId in departmentIds) {
-            val url = "${paasHost?.removeSuffix("/")}$paasListDepartmentUrl"
+            val url = "${paasHost.removeSuffix("/")}$paasListDepartmentUrl"
             val requestUrl = String.format(
                 paasListDepartmentRequest, url, bkAppCode, bkAppSecret,
                 bkCertificate.certType.value, bkCertificate.value,
@@ -119,8 +130,15 @@ class CanwayDepartmentServiceImpl(
 
     fun getCompanyId(bkCertificate: BkCertificate): BkDepartment? {
         // 查出总公司id
-        val url = "${paasHost?.removeSuffix("/")}$paasListDepartmentUrl"
-        val requestUrl = String.format(paasDepartmentApi, url, bkAppCode, bkAppSecret, bkCertificate.certType.value, bkCertificate.value)
+        val url = "${paasHost.removeSuffix("/")}$paasListDepartmentUrl"
+        val requestUrl = String.format(
+            paasDepartmentApi,
+            url,
+            bkAppCode,
+            bkAppSecret,
+            bkCertificate.certType.value,
+            bkCertificate.value
+        )
         val request = Request.Builder()
             .url(requestUrl)
             .build()
@@ -131,8 +149,15 @@ class CanwayDepartmentServiceImpl(
 
     override fun getUsersByDepartmentId(username: String?, departmentId: Int): Set<BkDepartmentUser>? {
         val bkCertificate = getBkCertificate(username)
-        val uri = String.format(getUsersByDepartmentIdApi, bkAppCode, bkAppSecret, bkCertificate.certType.value, bkCertificate.value, departmentId)
-        val requestUrl = "${paasHost?.removeSuffix("/")}$uri"
+        val uri = String.format(
+            getUsersByDepartmentIdApi,
+            bkAppCode,
+            bkAppSecret,
+            bkCertificate.certType.value,
+            bkCertificate.value,
+            departmentId
+        )
+        val requestUrl = "${paasHost.removeSuffix("/")}$uri"
         val responseContent = CanwayHttpUtils.doGet(requestUrl).content
         return responseContent.readJsonString<BkResponse<Set<BkDepartmentUser>>>().data
     }

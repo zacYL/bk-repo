@@ -176,5 +176,6 @@
         "6": "五",
         "7": "六"
     },
-    "publicRepo": "公开仓库"
+    "publicRepo": "公开仓库",
+    "publicRepoDesc": "公开的仓库将会开放下载"
 }

@@ -58,7 +58,7 @@ class HttpAuthInterceptor(
             val isLoginRequest = checkLoginRequest(authHandler, requestUri, requestMethod)
             // 拦截所有请求或当前为LoginEndpoint请求，表示需要认证处理
             if (authHandler.getLoginEndpoint() == null || isLoginRequest) {
-                return authenticateRequest(authHandler, isLoginRequest, request, response)
+                authenticateRequest(authHandler, isLoginRequest, request, response)?.let { return it }
             }
         }
         // 没有合适的认证handler或为匿名用户
@@ -78,7 +78,7 @@ class HttpAuthInterceptor(
         isLoginRequest: Boolean,
         request: HttpServletRequest,
         response: HttpServletResponse
-    ): Boolean {
+    ): Boolean? {
         try {
             val authCredentials = authHandler.extractAuthCredentials(request)
             if (authCredentials !is AnonymousCredentials) {
@@ -96,7 +96,7 @@ class HttpAuthInterceptor(
             authHandler.onAuthenticateFailed(request, response, authenticationException)
             return false
         }
-        return true
+        return null
     }
 
     /**

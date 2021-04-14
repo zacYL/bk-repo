@@ -71,7 +71,7 @@ class CanwayRoleServiceImpl(
     }
 
     private fun getRequestUrl(uri: String): String {
-        val devopsHost = canwayAuthConf.host
+        val devopsHost = canwayAuthConf.devopsHost
         return "${devopsHost.removeSuffix("/")}$ci$ciApi$uri"
     }
 

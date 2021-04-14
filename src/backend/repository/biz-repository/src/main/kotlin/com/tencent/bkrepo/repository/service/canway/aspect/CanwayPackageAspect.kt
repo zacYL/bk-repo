@@ -19,7 +19,10 @@ class CanwayPackageAspect {
     @Autowired
     lateinit var canwayPermissionService: CanwayPermissionService
 
-    @Around(value = "execution(* com.tencent.bkrepo.repository.service.impl.PackageServiceImpl.listPackagePage(..))")
+    @Around(
+        value =
+        "execution(* com.tencent.bkrepo.repository.service.packages.impl.PackageServiceImpl.listPackagePage(..))"
+    )
     fun beforePackagePage(point: ProceedingJoinPoint): Any {
         val args = point.args
         val projectId = args.first() as String

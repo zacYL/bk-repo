@@ -167,28 +167,37 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
             val latest = NpmUtils.getLatestVersionFormDistTags(packageMetaData.distTags)
             if (version != latest) {
                 // 删除versions里面对应的版本
-                packageMetaData.versions.map.remove(version)
-                packageMetaData.time.getMap().remove(version)
-                val iterator = packageMetaData.distTags.getMap().entries.iterator()
-                while (iterator.hasNext()) {
-                    if (version == iterator.next().value) {
-                        iterator.remove()
-                    }
-                }
+                deleteVersion(packageMetaData)
             } else {
-                val newLatest =
-                    packageClient.findPackageByKey(projectId, repoName, PackageKeys.ofNpm(name)).data?.latest
-                        ?: run {
-                            val message =
-                                "delete version by web operator to find new latest version failed with package [$name]"
-                            logger.error(message)
-                            throw NpmArtifactNotFoundException(message)
-                        }
+                val newLatest = findNewLatest(this)
                 packageMetaData.versions.map.remove(version)
                 packageMetaData.time.getMap().remove(version)
                 packageMetaData.distTags.set(LATEST, newLatest)
             }
             reUploadPackageJsonFile(artifactInfo, packageMetaData)
+        }
+    }
+
+    private fun PackageVersionDeleteRequest.deleteVersion(packageMetaData: NpmPackageMetaData) {
+        packageMetaData.versions.map.remove(version)
+        packageMetaData.time.getMap().remove(version)
+        val iterator = packageMetaData.distTags.getMap().entries.iterator()
+        while (iterator.hasNext()) {
+            if (version == iterator.next().value) {
+                iterator.remove()
+            }
+        }
+    }
+
+    private fun findNewLatest(request: PackageVersionDeleteRequest): String {
+        return with(request) {
+            packageClient.findPackageByKey(projectId, repoName, PackageKeys.ofNpm(name)).data?.latest
+                ?: run {
+                    val message =
+                        "delete version by web operator to find new latest version failed with package [$name]"
+                    logger.error(message)
+                    throw NpmArtifactNotFoundException(message)
+                }
         }
     }
 
@@ -241,7 +250,7 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
     }
 
     private fun queryPackageInfo(pkgName: String): NpmPackageMetaData {
-        pkgName.takeIf { !pkgName.isBlank() } ?: throw NpmArgumentNotFoundException("argument [$pkgName] not found.")
+        pkgName.takeIf { pkgName.isNotBlank() } ?: throw NpmArgumentNotFoundException("argument [$pkgName] not found.")
         val context = ArtifactQueryContext()
         context.putAttribute(NPM_FILE_FULL_PATH, NpmUtils.getPackageMetadataPath(pkgName))
         val inputStream =
@@ -273,28 +282,5 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
                 )
             }
         }
-
-        // fun convert(downloadStatisticsMetric: DownloadStatisticsMetric): DownloadCount {
-        //     with(downloadStatisticsMetric) {
-        //         return DownloadCount(description, count)
-        //     }
-        // }
-        //
-        // fun convert(nodeDetail: NodeDetail): NpmPackageLatestVersionInfo {
-        //     with(nodeDetail) {
-        //         return NpmPackageLatestVersionInfo(
-        //             createdBy,
-        //             createdDate,
-        //             lastModifiedBy,
-        //             lastModifiedDate,
-        //             name,
-        //             size,
-        //             null,
-        //             stageTag,
-        //             projectId,
-        //             repoName
-        //         )
-        //     }
-        // }
     }
 }

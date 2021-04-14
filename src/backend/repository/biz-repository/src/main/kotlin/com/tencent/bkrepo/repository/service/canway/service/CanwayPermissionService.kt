@@ -12,7 +12,6 @@ import com.tencent.bkrepo.repository.service.canway.pojo.CanwayPermissionRespons
 import com.tencent.bkrepo.repository.service.canway.pojo.CanwayResponse
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
 @Service

@@ -47,7 +47,7 @@ class CanwayRepositoryAspect {
     @Autowired
     lateinit var canwayPermissionService: CanwayPermissionService
 
-    @Around(value = "execution(* com.tencent.bkrepo.repository.service.impl.RepositoryServiceImpl.createRepo(..))")
+    @Around(value = "execution(* com.tencent.bkrepo.repository.service.repo.impl.RepositoryServiceImpl.createRepo(..))")
     fun beforeCreateRepo(point: ProceedingJoinPoint): Any? {
         val args = point.args
         val repo = args.first() as RepoCreateRequest
@@ -97,7 +97,7 @@ class CanwayRepositoryAspect {
         throw NotFoundException(CommonMessageCode.RESOURCE_NOT_FOUND, "Can not load buildin admin permission")
     }
 
-    @Around(value = "execution(* com.tencent.bkrepo.repository.service.impl.RepositoryServiceImpl.listRepo(..))")
+    @Around(value = "execution(* com.tencent.bkrepo.repository.service.repo.impl.RepositoryServiceImpl.listRepo(..))")
     fun afterListRepo(point: ProceedingJoinPoint): Any {
         val args = point.args
         val result = point.proceed(args)
@@ -126,7 +126,7 @@ class CanwayRepositoryAspect {
         return result
     }
 
-    @Around(value = "execution(* com.tencent.bkrepo.repository.service.impl.RepositoryServiceImpl.listRepoPage(..))")
+    @Around(value = "execution(* com.tencent.bkrepo.repository.service.repo.impl.RepositoryServiceImpl.listRepoPage(..))")
     fun afterPageRepo(point: ProceedingJoinPoint): Any {
         val args = point.args
         val result = point.proceed(args)
@@ -166,7 +166,7 @@ class CanwayRepositoryAspect {
         return result
     }
 
-    @Around(value = "execution(* com.tencent.bkrepo.repository.service.impl.RepositoryServiceImpl.deleteRepo(..))")
+    @Around(value = "execution(* com.tencent.bkrepo.repository.service.repo.impl.RepositoryServiceImpl.deleteRepo(..))")
     fun deleteRepo(point: ProceedingJoinPoint) {
         val args = point.args
         val repo = args.first() as RepoDeleteRequest

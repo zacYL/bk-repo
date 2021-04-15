@@ -8,5 +8,7 @@ import org.springframework.stereotype.Component
 data class CanwayAuthConf(
     var appCode: String = "bk_ci",
     var appSecret: String = "undefined",
-    var host: String = "undefined"
+    var host: String = "undefined",
+    var devopsHost: String = "undefined",
+    var bkrepoHost: String = "undefined"
 )

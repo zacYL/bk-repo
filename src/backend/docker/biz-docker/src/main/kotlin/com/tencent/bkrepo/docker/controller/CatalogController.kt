@@ -29,28 +29,46 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.docker.resource
+package com.tencent.bkrepo.docker.controller
 
 import com.tencent.bkrepo.common.api.constant.StringPool.EMPTY
-import com.tencent.bkrepo.docker.api.Tag
+import com.tencent.bkrepo.docker.constant.DOCKER_API_PREFIX
+import com.tencent.bkrepo.docker.constant.DOCKER_CATALOG_SUFFIX
+import com.tencent.bkrepo.docker.constant.DOCKER_PROJECT_ID
+import com.tencent.bkrepo.docker.constant.DOCKER_REPO_NAME
 import com.tencent.bkrepo.docker.context.RequestContext
-import com.tencent.bkrepo.docker.response.DockerResponse
 import com.tencent.bkrepo.docker.service.DockerV2LocalRepoService
 import com.tencent.bkrepo.docker.util.UserUtil
+import io.swagger.annotations.ApiParam
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.RequestAttribute
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestMethod
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-class TagImpl @Autowired constructor(val dockerRepo: DockerV2LocalRepoService) : Tag {
+@RequestMapping(DOCKER_API_PREFIX)
+class CatalogController @Autowired constructor(val dockerRepo: DockerV2LocalRepoService) {
 
-    override fun list(
+    @RequestMapping(method = [RequestMethod.GET], value = [DOCKER_CATALOG_SUFFIX])
+    fun list(
+        @RequestAttribute
         userId: String,
+        @RequestParam(required = false)
+        @ApiParam(value = DOCKER_PROJECT_ID, required = false)
         projectId: String,
+        @RequestParam(required = false)
+        @ApiParam(value = DOCKER_REPO_NAME, required = false)
         repoName: String,
-        name: String,
+        @RequestParam(required = false)
+        @ApiParam(value = "n", required = false)
         n: Int?,
+        @RequestParam(required = false)
+        @ApiParam(value = "last", required = false)
         last: String?
-    ): DockerResponse {
+    ): ResponseEntity<Any> {
         var maxEntries = 0
         var index = EMPTY
         n?.let {
@@ -60,7 +78,7 @@ class TagImpl @Autowired constructor(val dockerRepo: DockerV2LocalRepoService) :
             index = last
         }
         val uId = UserUtil.getContextUserId(userId)
-        val pathContext = RequestContext(uId, projectId, repoName, name)
-        return dockerRepo.getTags(pathContext, maxEntries, index)
+        val pathContext = RequestContext(uId, projectId, repoName, EMPTY)
+        return dockerRepo.catalog(pathContext, maxEntries, index)
     }
 }

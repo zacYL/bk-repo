@@ -31,7 +31,7 @@ class CanwayAuthServiceConfig {
         @Autowired permissionRepository: PermissionRepository,
         @Autowired mongoTemplate: MongoTemplate,
         @Autowired repositoryClient: RepositoryClient,
-        @Autowired canwayDevopsConf: CanwayDevopsConf,
+        @Autowired canwayAuthConf: CanwayAuthConf,
         @Autowired departmentService: DepartmentService,
         @Autowired bkUserService: BkUserService
     ): PermissionService {
@@ -42,7 +42,7 @@ class CanwayAuthServiceConfig {
             permissionRepository,
             mongoTemplate,
             repositoryClient,
-            canwayDevopsConf,
+            canwayAuthConf,
             departmentService,
             bkUserService
         )

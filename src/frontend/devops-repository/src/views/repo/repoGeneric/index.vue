@@ -3,7 +3,7 @@
         <div v-show="!query" class="repo-generic-side" v-bkloading="{ isLoading: treeLoading }">
             <div class="important-search">
                 <bk-input
-                    v-model="importantSearch"
+                    v-model.trim="importantSearch"
                     placeholder=""
                     :clearable="true"
                     :right-icon="'bk-icon icon-search'">
@@ -34,7 +34,7 @@
                     <bk-table-column :label="$t('fileName')">
                         <template slot-scope="props">
                             <div class="flex-align-center fine-name">
-                                <icon size="24" :name="props.row.folder ? 'folder' : getIconName(props.row.name)" />
+                                <Icon size="24" :name="props.row.folder ? 'folder' : getIconName(props.row.name)" />
                                 <div class="ml10" :title="props.row.name">{{props.row.name}}</div>
                             </div>
                         </template>
@@ -124,7 +124,7 @@
             </aside>
         </div>
 
-        <genericDetail :detail-slider="detailSlider"></genericDetail>
+        <genericDetail :detail-slider="detailSlider" @refresh="showDetail"></genericDetail>
         <bk-dialog
             v-model="formDialog.show"
             :title="formDialog.title"
@@ -138,12 +138,12 @@
                         <span class="break-all">{{ selectedRow.fullPath + '/' + formDialog.path }}</span>
                     </bk-form-item>
                     <bk-form-item :label="$t('createFolderLabel')" :required="true" property="path">
-                        <bk-input v-model="formDialog.path" :placeholder="$t('folderNamePlacehodler')"></bk-input>
+                        <bk-input v-model.trim="formDialog.path" :placeholder="$t('folderNamePlacehodler')"></bk-input>
                     </bk-form-item>
                 </template>
                 <template v-else-if="formDialog.type === 'rename'">
                     <bk-form-item :label="$t('name')" :required="true" property="name">
-                        <bk-input v-model="formDialog.name" :placeholder="$t('folderNamePlacehodler')"></bk-input>
+                        <bk-input v-model.trim="formDialog.name" :placeholder="$t('folderNamePlacehodler')"></bk-input>
                     </bk-form-item>
                 </template>
                 <template v-else-if="formDialog.type === 'share'">
@@ -158,7 +158,7 @@
                         </bk-tag-input>
                     </bk-form-item>
                     <bk-form-item :label="`${$t('validity')}(${$t('day')})`" :required="true" property="time">
-                        <bk-input v-model="formDialog.time" :placeholder="$t('repoNamePlacehodler')"></bk-input>
+                        <bk-input v-model.trim="formDialog.time" :placeholder="$t('repoNamePlacehodler')"></bk-input>
                     </bk-form-item>
                 </template>
             </bk-form>
@@ -322,7 +322,7 @@
         watch: {
             '$route.query.name' () {
                 this.initPage()
-                this.handlerPaginationChange()
+                this.getArtifactories()
             },
             'selectedTreeNode.fullPath' () {
                 // 重置选中行
@@ -417,7 +417,7 @@
                 this.query = null
                 this.selectedRow.element && this.selectedRow.element.classList.remove('selected-row')
                 this.selectedRow = this.selectedTreeNode
-                this.handlerPaginationChange()
+                this.getArtifactories()
             },
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
                 this.pagination.current = current
@@ -487,12 +487,14 @@
                     }
                 }, 300)
             },
-            async showDetail () {
-                this.detailSlider = {
-                    show: true,
-                    loading: true,
-                    folder: this.selectedRow.folder,
-                    data: {}
+            async showDetail (async = false) {
+                if (!async) {
+                    this.detailSlider = {
+                        show: true,
+                        loading: true,
+                        folder: this.selectedRow.folder,
+                        data: {}
+                    }
                 }
                 const data = await this.getNodeDetail({
                     projectId: this.projectId,
@@ -686,7 +688,7 @@
                     // 更新源和目的的节点信息
                     this.updateGenericTreeNode(this.selectedTreeNode)
                     this.updateGenericTreeNode(this.treeDialog.selectedNode)
-                    this.handlerPaginationChange()
+                    this.getArtifactories()
                     this.$bkMessage({
                         theme: 'success',
                         message: this.treeDialog.type + this.$t('success')

@@ -65,8 +65,12 @@
                     window.globalVue.$on('order::syncLocale', locale => {
                         this.$setLocale(locale)
                     })
-                    this.getUserList()
-                    this.getUserInfo()
+                    window.globalVue.$on('change::$userInfo', data => { // 用户信息
+                        this.SET_USER_INFO(data.userInfo)
+                    })
+                    window.globalVue.$on('change::$userList', data => { // 用户信息
+                        this.SET_USER_LIST(data.userList)
+                    })
                 }
                 localStorage.setItem('projectId', urlProjectId || localProjectId || '')
                 !urlProjectId && this.$router.replace({
@@ -112,22 +116,6 @@
                     name: 'repoList',
                     params
                 })
-            },
-            getUserList () {
-                if (this.$userList) this.SET_USER_LIST(this.$userList)
-                else {
-                    setTimeout(() => {
-                        this.getUserList()
-                    }, 1000)
-                }
-            },
-            getUserInfo () {
-                if (this.$userInfo) this.SET_USER_INFO(this.$userInfo)
-                else {
-                    setTimeout(() => {
-                        this.getUserInfo()
-                    }, 1000)
-                }
             }
         }
     }

@@ -51,12 +51,25 @@
         <bk-tab-panel v-if="detail.metadata" name="versionMetaData" :label="$t('metaData')">
             <div class="flex-column version-metadata">
                 <div class="pl20 pb10 flex-align-center metadata-thead">
-                    <span class="display-key">{{ $t('key') }}</span>
-                    <span class="display-value">{{ $t('value') }}</span>
+                    <span class="metadata-key">{{ $t('key') }}</span>
+                    <span class="metadata-value">{{ $t('value') }}</span>
+                </div>
+                <div slot="prepend" class="pl15 add-metadata-main">
+                    <bk-form form-type="inline" :label-width="80" :model="metadata" :rules="rules" ref="metadatForm">
+                        <bk-form-item class="mr10" :required="true" property="key">
+                            <bk-input style="width: 230px" size="small" v-model="metadata.key" :placeholder="$t('key')"></bk-input>
+                        </bk-form-item>
+                        <bk-form-item class="mr10" :required="true" property="value">
+                            <bk-input style="width: 350px" size="small" v-model="metadata.value" :placeholder="$t('value')"></bk-input>
+                        </bk-form-item>
+                        <bk-form-item>
+                            <bk-button size="small" theme="default" @click="addMetadataHandler">{{ $t('add') }}</bk-button>
+                        </bk-form-item>
+                    </bk-form>
                 </div>
                 <div class="pl20 pb10 pt10 flex-align-center metadata-tr" v-for="([key, value]) in Object.entries(detail.metadata)" :key="key">
-                    <span class="display-key">{{ key }}</span>
-                    <span class="display-value">{{ value }}</span>
+                    <span class="metadata-key">{{ key }}</span>
+                    <span class="metadata-value">{{ value }}</span>
                 </div>
                 <empty-data v-if="!Object.keys(detail.metadata).length"></empty-data>
             </div>
@@ -160,7 +173,27 @@
                     limit: 10,
                     'limit-list': [10, 20, 40]
                 },
-                selectedHistory: {}
+                selectedHistory: {},
+                metadata: {
+                    key: '',
+                    value: ''
+                },
+                rules: {
+                    key: [
+                        {
+                            required: true,
+                            message: this.$t('pleaseInput') + this.$t('key'),
+                            trigger: 'blur'
+                        }
+                    ],
+                    value: [
+                        {
+                            required: true,
+                            message: this.$t('pleaseInput') + this.$t('value'),
+                            trigger: 'blur'
+                        }
+                    ]
+                }
             }
         },
         computed: {
@@ -187,7 +220,8 @@
             convertFileSize,
             ...mapActions([
                 'getVersionDetail',
-                'getNpmDependents'
+                'getNpmDependents',
+                'addPackageMetadata'
             ]),
             initDetail () {
                 this.getDetail()
@@ -241,6 +275,26 @@
                     if (records.length < 20) this.dependentsPage = 0
                 }).finally(() => {
                     this.isLoading = false
+                })
+            },
+            async addMetadataHandler () {
+                await this.$refs.metadatForm.validate()
+                this.addPackageMetadata({
+                    projectId: this.projectId,
+                    repoName: this.repoName,
+                    body: {
+                        packageKey: this.packageKey,
+                        version: this.version,
+                        metadata: {
+                            [this.metadata.key]: this.metadata.value
+                        }
+                    }
+                }).finally(() => {
+                    this.metadata = {
+                        key: '',
+                        value: ''
+                    }
+                    this.getDetail()
                 })
             }
         }
@@ -312,8 +366,18 @@
             border-bottom: 1px solid $borderWeightColor;
             line-height: 2;
         }
-        .display-key {
-            text-align: left;
+        .metadata-key {
+            width: 250px;
+        }
+        .metadata-value {
+            flex: 1;
+            word-break: break-all;
+        }
+        .add-metadata-main {
+            display: flex;
+            align-items: center;
+            height: 40px;
+            border-bottom: 1px solid $borderWeightColor;
         }
     }
     .version-layers {

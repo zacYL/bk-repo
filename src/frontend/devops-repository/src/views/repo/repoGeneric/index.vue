@@ -383,7 +383,7 @@
                     this.artifactoryList = records.map(v => {
                         return {
                             ...v,
-                            name: v.metadata.displayName || v.name
+                            name: (v.metadata && v.metadata.displayName) || v.name
                         }
                     })
                 }).finally(() => {
@@ -405,7 +405,7 @@
                     this.artifactoryList = records.map(v => {
                         return {
                             ...v,
-                            name: v.metadata.displayName || v.name
+                            name: (v.metadata && v.metadata.displayName) || v.name
                         }
                     })
                 }).finally(() => {

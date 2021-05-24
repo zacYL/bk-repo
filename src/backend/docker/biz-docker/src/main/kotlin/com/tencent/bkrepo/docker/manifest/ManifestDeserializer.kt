@@ -35,6 +35,7 @@ import com.tencent.bkrepo.docker.artifact.DockerArtifactRepo
 import com.tencent.bkrepo.docker.context.RequestContext
 import com.tencent.bkrepo.docker.model.DockerDigest
 import com.tencent.bkrepo.docker.model.ManifestMetadata
+import com.tencent.bkrepo.repository.api.NodeClient
 
 /**
  * the enterypoint for deserialize manifest
@@ -57,10 +58,11 @@ object ManifestDeserializer {
         tag: String,
         manifestType: ManifestType,
         bytes: ByteArray,
-        digest: DockerDigest
+        digest: DockerDigest,
+        nodeClient: NodeClient
     ): ManifestMetadata {
         var manifestBytes = bytes
-        val manifestProcess = ManifestProcess(repo)
+        val manifestProcess = ManifestProcess(repo, nodeClient)
         return when (manifestType) {
             ManifestType.Schema1 -> ManifestSchema1Deserializer.deserialize(manifestBytes, digest)
             ManifestType.Schema1Signed -> ManifestSchema1Deserializer.deserialize(manifestBytes, digest)

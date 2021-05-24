@@ -33,6 +33,7 @@ package com.tencent.bkrepo.docker.service
 
 import com.tencent.bkrepo.common.api.constant.StringPool.EMPTY
 import com.tencent.bkrepo.common.api.constant.StringPool.SLASH
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
@@ -67,7 +68,6 @@ import com.tencent.bkrepo.docker.errors.DockerV2Errors
 import com.tencent.bkrepo.docker.exception.DockerRepoNotFoundException
 import com.tencent.bkrepo.docker.helpers.DockerCatalogTagsSlicer
 import com.tencent.bkrepo.docker.helpers.DockerPaginationElementsHolder
-import com.tencent.bkrepo.docker.manifest.ManifestContext
 import com.tencent.bkrepo.docker.manifest.ManifestProcess
 import com.tencent.bkrepo.docker.manifest.ManifestType
 import com.tencent.bkrepo.docker.model.DockerDigest
@@ -85,6 +85,7 @@ import com.tencent.bkrepo.docker.util.ResponseUtil
 import com.tencent.bkrepo.docker.util.ResponseUtil.emptyBlobGetResponse
 import com.tencent.bkrepo.docker.util.ResponseUtil.emptyBlobHeadResponse
 import com.tencent.bkrepo.docker.util.ResponseUtil.isEmptyBlob
+import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
 import org.apache.commons.lang.StringUtils
@@ -108,7 +109,8 @@ import java.nio.charset.Charset
 @Service
 class DockerV2LocalRepoService @Autowired constructor(
     val artifactRepo: DockerArtifactRepo,
-    val packageRepo: DockerPackageRepo
+    val packageRepo: DockerPackageRepo,
+    val nodeClient: NodeClient
 ) : DockerV2RepoService {
 
     @Value("\${docker.domain: ''}")
@@ -116,7 +118,7 @@ class DockerV2LocalRepoService @Autowired constructor(
 
     var httpHeaders: HttpHeaders = HttpHeaders()
 
-    val manifestProcess = ManifestProcess(artifactRepo)
+    val manifestProcess = ManifestProcess(artifactRepo, nodeClient)
 
     override fun ping(): DockerResponse {
         return ResponseEntity.ok().apply {
@@ -188,16 +190,29 @@ class DockerV2LocalRepoService @Autowired constructor(
     override fun getManifest(context: RequestContext, reference: String): DockerResponse {
         RepoUtil.loadContext(artifactRepo, context)
         logger.info("get manifest params [$context,$reference]")
-        // packageRepo.addDownloadStatic(context, reference)
+//        packageRepo.addDownloadStatic(context, reference)
 
         // get manifest by sha256
-        if (DockerDigest.isValid(reference)) {
+        return if (DockerDigest.isValid(reference)) {
             val digest = DockerDigest(reference)
-            return manifestProcess.getManifestByDigest(context, digest, httpHeaders)
+            val manifest = manifestProcess.getManifestByDigest(context, digest, httpHeaders)
+            try {
+                packageRepo.addDownloadStatic(context, manifest.tag)
+            } catch (e: ErrorCodeException) {
+                logger.error("$e")
+            }
+
+            manifest.dockerResponse
+        } else {
+            // get manifest by tag
+            logger.info("unable to parse digest, get manifest by tag [$context,$reference]")
+            try {
+                packageRepo.addDownloadStatic(context, reference)
+            } catch (e: ErrorCodeException) {
+                logger.error("$e")
+            }
+            manifestProcess.getManifestByTag(context, reference, httpHeaders)
         }
-        // get manifest by tag
-        logger.info("unable to parse digest, get manifest by tag [$context,$reference]")
-        return manifestProcess.getManifestByTag(context, reference, httpHeaders)
     }
 
     override fun getRepoList(
@@ -299,11 +314,6 @@ class DockerV2LocalRepoService @Autowired constructor(
         val manifestPath = ResponseUtil.buildManifestPath(context.artifactName, tag, manifestType)
         logger.info("upload manifest path [$context,$tag] ,media [$mediaType , manifestPath]")
         val uploadResult = manifestProcess.uploadManifestByType(context, tag, manifestPath, manifestType, file)
-        val params = ManifestContext.buildPropertyMap(context.artifactName, tag, uploadResult.first, manifestType)
-        val labels = uploadResult.third
-        labels.entries().forEach {
-            params[it.key] = it.value
-        }
         with(context) {
             val request =
                 PackageVersionCreateRequest(
@@ -318,7 +328,7 @@ class DockerV2LocalRepoService @Autowired constructor(
                     manifestPath = manifestPath,
                     artifactPath = null,
                     stageTag = null,
-                    metadata = params,
+                    metadata = null,
                     overwrite = true,
                     createdBy = artifactRepo.userId
                 )
@@ -494,9 +504,8 @@ class DockerV2LocalRepoService @Autowired constructor(
                 DOCKER_DIGEST_SHA256 to DockerDigest(manifest.config.digest).hex,
                 DOCKER_OS to configBlob.os
             )
-            return DockerTagDetail(basic, configBlob.history, versionDetail.metadata, layers)
+            return DockerTagDetail(basic, configBlob.history, nodeDetail.metadata, layers)
         } catch (ignored: Exception) {
-            logger.error("getRepoTagDetail exception [$ignored]")
             return null
         }
     }
@@ -547,12 +556,13 @@ class DockerV2LocalRepoService @Autowired constructor(
             if (!artifactRepo.canWrite(context)) {
                 return DockerV2Errors.manifestUnknown(digest.toString())
             }
-            val manifestDigest = artifactRepo.getAttribute(
-                context.projectId, context.repoName,
-                fullPath, digest.getDigestAlg()
-            )
-            if (manifestDigest != null && StringUtils.equals(manifestDigest, digest.getDigestHex())) {
-                // repo.delete(fullPath)
+            with(context) {
+                val manifestDigest = artifactRepo.getAttribute(projectId, repoName, fullPath, digest.getDigestAlg())
+                manifestDigest.let {
+                    if (StringUtils.equals(manifestDigest, digest.getDigestHex())) {
+                        // repo.delete(fullPath)
+                    }
+                }
             }
         }
         return ResponseEntity.status(HttpStatus.ACCEPTED).header(DOCKER_HEADER_API_VERSION, DOCKER_API_VERSION).build()

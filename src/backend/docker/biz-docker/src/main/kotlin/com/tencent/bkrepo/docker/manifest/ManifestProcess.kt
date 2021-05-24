@@ -62,11 +62,13 @@ import com.tencent.bkrepo.docker.manifest.ManifestContext.buildUploadContext
 import com.tencent.bkrepo.docker.model.DockerBlobInfo
 import com.tencent.bkrepo.docker.model.DockerDigest
 import com.tencent.bkrepo.docker.model.ManifestMetadata
+import com.tencent.bkrepo.docker.pojo.DockerResponseWithTag
 import com.tencent.bkrepo.docker.response.DockerResponse
 import com.tencent.bkrepo.docker.util.BlobUtil
 import com.tencent.bkrepo.docker.util.BlobUtil.getBlobByName
 import com.tencent.bkrepo.docker.util.BlobUtil.getManifestConfigBlob
 import com.tencent.bkrepo.docker.util.ResponseUtil
+import com.tencent.bkrepo.repository.api.NodeClient
 import org.apache.commons.lang.StringUtils
 import org.slf4j.LoggerFactory
 import org.springframework.core.io.InputStreamResource
@@ -78,7 +80,7 @@ import org.springframework.http.ResponseEntity
  * docker image manifest process
  * to upload the manifest to repository and store it
  */
-class ManifestProcess constructor(val repo: DockerArtifactRepo) {
+class ManifestProcess(val repo: DockerArtifactRepo, val nodeClient: NodeClient) {
 
     companion object {
         private val logger = LoggerFactory.getLogger(ManifestProcess::class.java)
@@ -117,7 +119,9 @@ class ManifestProcess constructor(val repo: DockerArtifactRepo) {
         }
 
         // process scheme2 manifest
-        val metadata = ManifestDeserializer.deserialize(repo, context, tag, manifestType, manifestBytes, digest!!)
+        val metadata = ManifestDeserializer.deserialize(
+            repo, context, tag, manifestType, manifestBytes, digest!!, nodeClient
+        )
         val size = metadata.tagInfo.totalSize
         addManifestsBlobs(context, manifestType, manifestBytes, metadata)
         if (!DockerManifestSyncer.syncBlobs(context, repo, metadata, tag)) {
@@ -265,19 +269,37 @@ class ManifestProcess constructor(val repo: DockerArtifactRepo) {
      * @param headers request head
      * @return DockerResponse  http repsponse of manifest
      */
-    fun getManifestByDigest(context: RequestContext, digest: DockerDigest, headers: HttpHeaders): DockerResponse {
+    fun getManifestByDigest(
+        context: RequestContext,
+        digest: DockerDigest,
+        headers: HttpHeaders
+    ): DockerResponseWithTag {
         logger.info("get  manifest by digest [$context] and digest [$digest] ")
-        var artifact = getManifestByNameAndDigest(context, digest.hex)
-        artifact?.let {
+        var artifact = getManifestByNameAndDigest(context, digest.hex) ?: return DockerResponseWithTag(
+            tag = context.artifactName,
+            dockerResponse = DockerV2Errors.manifestUnknown(digest.toString())
+        )
+
+        val node = nodeClient.getNodeDetail(artifact.projectId, artifact.repoName, artifact.fullPath)
+        logger.info("Manifest node: $node")
+        val tag = node.data!!.metadata["docker.manifest"] as String
+        artifact.let {
+            logger.info("Manifest artifact : $artifact")
             val acceptable = ResponseUtil.getAcceptableManifestTypes(headers)
             if (acceptable.contains(ManifestType.Schema2List)) {
                 artifact = getManifestByName(context, DOCKER_MANIFEST_LIST) ?: run {
                     logger.warn("get manifest by name fail [$context,$digest]")
-                    return DockerV2Errors.manifestUnknown(digest.toString())
+                    return DockerResponseWithTag(
+                        tag = tag,
+                        dockerResponse = DockerV2Errors.manifestUnknown(digest.toString())
+                    )
                 }
             }
         }
-        return buildManifestResponse(context, artifact!!.fullPath, digest, artifact!!.length, headers)
+        return DockerResponseWithTag(
+            tag = tag,
+            dockerResponse = buildManifestResponse(context, artifact.fullPath, digest, artifact.length, headers)
+        )
     }
 
     /**

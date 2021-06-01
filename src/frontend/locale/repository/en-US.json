@@ -147,5 +147,5 @@
     "superAdmin": "管理员",
     "modifyPwd": "修改密码",
     "publicRepo": "公开仓库",
-    "publicRepoDesc": "公开的仓库将会开放下载"
+    "publicRepoDesc": "公开的仓库将会对所有人开放下载"
 }

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset=UTF-8>
+        <meta name=viewport content="width=device-width,initial-scale=1">
+        <meta http-equiv=X-UA-Compatible content="ie=edge">
+        <meta http-equiv="Pragma" content="no-cache" />
+        <link rel="icon" href="/bksoftware/favicon.ico" type="image/x-icon" />
+        <title>软件源</title>
+    </head>
+<body>
+    <div id="app"></div>
+    <script src="<%= htmlWebpackPlugin.options.VENDOR_LIBS%>"></script>
+    <script>
+        var PAAS_SERVICE_URL = '__BK_HTTP_SCHEMA__://__BK_REPO_PAAS_FQDN__'
+        var AJAX_URL_PREFIX = '__BK_HTTP_SCHEMA__://__BK_REPO_FQDN__/web'
+        var DEVOPS_SITE_URL = '__BK_HTTP_SCHEMA__://__BK_CI_FQDN__'
+        var LOGIN_SERVICE_URL = PAAS_SERVICE_URL + '/login/'
+        var PROJECT_ID = 'bksoftware'
+    </script>
+    <script>
+        window.getLoginUrl = function () {
+            const loginUrl = new URL(LOGIN_SERVICE_URL)
+            const cUrl = location.origin
+            loginUrl.searchParams.append('c_url', cUrl)
+            return loginUrl.href
+        }
+    </script>
+</body>

@@ -42,6 +42,7 @@ module.exports = {
         'vue'
     ],
     globals: {
+        'PROJECT_ID': true,
         'MODE_CONFIG': true,
         'DEVOPS_SITE_URL': true
     },

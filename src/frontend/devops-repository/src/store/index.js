@@ -18,16 +18,30 @@ export default new Vuex.Store({
             }
         ],
         projectList: [],
+        repoListAll: [],
         userList: {
             anonymous: {
                 id: 'anonymous',
                 name: '--'
             }
         },
-        userInfo: {},
-        dockerDomain: ''
+        userInfo: {
+            username: '',
+            name: '',
+            email: '',
+            phone: '',
+            admin: true
+        },
+        domain: {
+            docker: '',
+            npm: ''
+        },
+        clusterList: []
     },
     getters: {
+        masterNode (state) {
+            return state.clusterList.find(v => v.type === 'CENTER') || { name: '', url: '' }
+        }
     },
     mutations: {
         INIT_TREE (state) {
@@ -70,13 +84,25 @@ export default new Vuex.Store({
             }
         },
         SET_USER_INFO (state, data) {
-            state.userInfo = data
+            state.userInfo = {
+                ...state.userInfo,
+                ...data
+            }
         },
-        SET_DOCKER_DOMAIN (state, data) {
-            state.dockerDomain = data
+        SET_DOMAIN (state, { type, domain }) {
+            state.domain = {
+                ...state.domain,
+                [type]: domain
+            }
+        },
+        SET_CLUSTER_LIST (state, data) {
+            state.clusterList = data
         },
         SET_PROJECT_LIST (state, data) {
             state.projectList = data
+        },
+        SET_REPO_LIST_ALL (state, data) {
+            state.repoListAll = data
         },
         SHOW_LOGIN_DIALOG (state, show = true) {
             state.showLoginDialog = show

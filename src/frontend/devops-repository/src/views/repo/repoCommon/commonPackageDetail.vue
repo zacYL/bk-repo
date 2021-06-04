@@ -275,7 +275,7 @@
                 this.$bkInfo({
                     type: 'warning',
                     theme: 'warning',
-                    title: this.$t('deleteVersionTitle'),
+                    title: this.$t('deleteVersionTitle', { version: this.version }),
                     subTitle: this.$t('deleteVersionSubTitle'),
                     showFooter: true,
                     confirmFn: () => {

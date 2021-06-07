@@ -160,7 +160,7 @@
                 pagination: {
                     count: 0,
                     current: 1,
-                    limit: 10,
+                    limit: 20,
                     'limit-list': [10, 20, 40]
                 }
             }

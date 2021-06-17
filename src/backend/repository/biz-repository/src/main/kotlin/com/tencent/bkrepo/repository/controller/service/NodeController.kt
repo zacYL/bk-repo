@@ -37,6 +37,7 @@ import com.tencent.bkrepo.common.artifact.api.DefaultArtifactInfo
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.repository.api.NodeClient
+import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.node.NodeListOption
@@ -56,7 +57,8 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 class NodeController(
     private val nodeService: NodeService,
-    private val nodeSearchService: NodeSearchService
+    private val nodeSearchService: NodeSearchService,
+    private val projectClient: ProjectClient
 ) : NodeClient {
 
     override fun getNodeDetail(projectId: String, repoName: String, fullPath: String): Response<NodeDetail?> {
@@ -192,5 +194,19 @@ class NodeController(
 
     override fun query(queryModel: QueryModel): Response<Page<Map<String, Any?>>> {
         return this.search(queryModel)
+    }
+
+    override fun capacity(projectId: String?, repoName: String?): Response<Long> {
+        val count = if (projectId == null) {
+            val projectList = projectClient.listProject().data ?: mutableListOf()
+            var temp = 0L
+            for (project in projectList) {
+                temp += nodeService.capacity(project.name, null)
+            }
+            temp
+        } else {
+            nodeService.capacity(projectId, repoName)
+        }
+        return ResponseBuilder.success(count)
     }
 }

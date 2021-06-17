@@ -33,6 +33,7 @@ package com.tencent.bkrepo.repository.service.packages
 
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.query.model.QueryModel
+import com.tencent.bkrepo.repository.pojo.metric.PackageDetail
 import com.tencent.bkrepo.repository.pojo.packages.PackageListOption
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
@@ -237,4 +238,10 @@ interface PackageService {
      * 查询包数量
      */
     fun getPackageCount(projectId: String, repoName: String): Long
+
+    fun existArtifact(projectId: String?, repoName: String?): Long
+
+    fun sortByDown(projectId: String?, repoName: String?, limit: Long): List<PackageDetail>
+
+    fun downloads(projectId: String?, repoName: String?): Long
 }

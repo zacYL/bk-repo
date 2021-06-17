@@ -74,11 +74,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
-import org.springframework.data.mongodb.core.query.Query
-import org.springframework.data.mongodb.core.query.and
-import org.springframework.data.mongodb.core.query.inValues
-import org.springframework.data.mongodb.core.query.isEqualTo
-import org.springframework.data.mongodb.core.query.where
+import org.springframework.data.mongodb.core.query.*
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -251,6 +247,14 @@ class RepositoryServiceImpl(
         }
         publishEvent(RepoDeletedEvent(repoDeleteRequest))
         logger.info("Delete repository [$repoDeleteRequest] success.")
+    }
+
+    override fun allRepos(projectId: String?, repoName: String?): List<RepositoryInfo?> {
+        val criteria = Criteria()
+        projectId?.let { criteria.and(TRepository::projectId.name).`is`(projectId) }
+        repoName?.let { criteria.and(TRepository::name.name).`is`(repoName) }
+        val result = repositoryDao.find(Query(criteria))
+        return result.map { convertToInfo(it) }
     }
 
     /**

@@ -48,4 +48,6 @@ interface NodeStatsOperation {
      * 查询文件节点数量
      */
     fun countFileNode(artifact: ArtifactInfo): Long
+
+    fun capacity(projectId: String, repoName: String?): Long
 }

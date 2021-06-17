@@ -37,5 +37,7 @@ enum class OperateType {
     DELETE,
     MOVE,
     COPY,
-    RENAME
+    RENAME,
+    DOWNLOAD,
+    STAGE
 }

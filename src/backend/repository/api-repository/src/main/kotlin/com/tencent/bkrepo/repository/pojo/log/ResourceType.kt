@@ -35,5 +35,7 @@ enum class ResourceType {
     PROJECT,
     REPOSITORY,
     NODE,
-    METADATA
+    METADATA,
+    PACKAGE,
+    USER
 }

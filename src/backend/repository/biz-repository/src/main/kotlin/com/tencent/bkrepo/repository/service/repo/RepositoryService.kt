@@ -130,4 +130,6 @@ interface RepositoryService {
      * 删除仓库前，需要保证仓库下的文件已经被删除
      */
     fun deleteRepo(repoDeleteRequest: RepoDeleteRequest)
+
+    fun allRepos(projectId: String?, repoName: String?): List<RepositoryInfo?>
 }

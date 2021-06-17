@@ -167,4 +167,11 @@ interface RepositoryClient {
     @ApiOperation("删除仓库")
     @DeleteMapping
     fun delete(@RequestBody request: RepoDeleteRequest): Response<Void>
+
+    @ApiOperation("返回符合条件所有仓库")
+    @GetMapping("/all")
+    fun allRepos(
+        @RequestParam projectId: String?,
+        @RequestParam repoName: String?
+    ): Response<List<RepositoryInfo?>>
 }

@@ -113,4 +113,8 @@ class RepositoryController(
     override fun delete(request: RepoDeleteRequest): Response<Void> {
         return deleteRepo(request)
     }
+
+    override fun allRepos(projectId: String?, repoName: String?): Response<List<RepositoryInfo?>> {
+        return ResponseBuilder.success(repositoryService.allRepos(projectId, repoName))
+    }
 }

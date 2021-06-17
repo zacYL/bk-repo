@@ -230,4 +230,11 @@ interface NodeClient {
     @ApiOperation("自定义查询节点")
     @PostMapping("/query")
     fun query(@RequestBody queryModel: QueryModel): Response<Page<Map<String, Any?>>>
+
+    @ApiOperation("统计占用空间大小")
+    @GetMapping("/capacity")
+    fun capacity(
+        @RequestParam projectId: String?,
+        @RequestParam repoName: String?
+    ): Response<Long>
 }

@@ -41,6 +41,7 @@ import com.tencent.bkrepo.repository.pojo.node.NodeSizeInfo
 import com.tencent.bkrepo.repository.service.node.NodeStatsOperation
 import com.tencent.bkrepo.repository.util.NodeQueryHelper
 import org.springframework.data.mongodb.core.aggregation.Aggregation
+import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 
 /**
@@ -85,5 +86,19 @@ open class NodeStatsSupport(
             val query = NodeQueryHelper.nodeListQuery(projectId, repoName, getArtifactFullPath(), listOption)
             return nodeDao.count(query)
         }
+    }
+
+    override fun capacity(projectId: String, repoName: String?): Long {
+        val criteria = Criteria.where(TNode::folder.name).`is`(false)
+            .and(TNode::deleted.name).`is`(null)
+            .and(TNode::projectId.name).`is`(projectId)
+        repoName?.let { criteria.and(TNode::repoName.name).`is`(repoName) }
+        val aggregation = Aggregation.newAggregation(
+            Aggregation.match(criteria),
+            Aggregation.group().sum("\$size").`as`("count"),
+            Aggregation.project("_id", "count")
+        )
+        val result = nodeDao.aggregate(aggregation, HashMap::class.java).mappedResults
+        return (if (result.isEmpty()) 0 else result[0]["count"]).toString().toLong()
     }
 }

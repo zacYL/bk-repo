@@ -150,7 +150,7 @@
                     <bk-form-item :label="$t('share') + $t('object')" :required="true" property="user">
                         <bk-tag-input
                             v-model="formDialog.user"
-                            :list="Object.values(userList)"
+                            :list="Object.values(userList).filter(user => user.id !== 'anonymous')"
                             :clearable="false"
                             trigger="focus"
                             allow-create

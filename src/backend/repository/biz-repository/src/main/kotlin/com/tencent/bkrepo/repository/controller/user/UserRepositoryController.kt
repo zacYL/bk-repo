@@ -38,6 +38,7 @@ import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
+import com.tencent.bkrepo.repository.api.PackageClient
 import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoDeleteRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoUpdateRequest
@@ -63,7 +64,8 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/repo")
 class UserRepositoryController(
     private val permissionManager: PermissionManager,
-    private val repositoryService: RepositoryService
+    private val repositoryService: RepositoryService,
+    private val packageClient: PackageClient
 ) {
 
     @ApiOperation("根据名称类型查询仓库")
@@ -143,9 +145,19 @@ class UserRepositoryController(
         @ApiParam("仓库名称", required = false)
         @RequestParam name: String? = null,
         @ApiParam("仓库类型", required = false)
-        @RequestParam type: String? = null
+        @RequestParam type: String? = null,
+        @ApiParam("仓库使用信息", required = false)
+        @RequestParam usedInfo: Boolean = false
     ): Response<Page<RepositoryInfo>> {
-//        permissionManager.checkProjectPermission(PermissionAction.READ, projectId)
+        permissionManager.checkProjectPermission(PermissionAction.READ, projectId)
+        val repoList = repositoryService.listRepoPage(projectId, pageNumber, pageSize, name, type).records
+        if (usedInfo) {
+            repoList.map {
+                //加载权限信息
+                it.permission = permissionManager.getRepoPermission(it.projectId, it.name)?.name
+                it.artifacts = packageClient.existArtifact(it.projectId, it.name).data
+            }
+        }
         return ResponseBuilder.success(repositoryService.listRepoPage(projectId, pageNumber, pageSize, name, type))
     }
 

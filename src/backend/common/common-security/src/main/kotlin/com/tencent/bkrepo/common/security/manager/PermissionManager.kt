@@ -58,6 +58,8 @@ open class PermissionManager(
     private val httpAuthProperties: HttpAuthProperties
 ) {
 
+    private val permissionList = arrayOf(PermissionAction.WRITE, PermissionAction.READ)
+
     /**
      * 校验项目权限
      * @param action 动作
@@ -86,6 +88,32 @@ open class PermissionManager(
             return
         }
         checkPermission(ResourceType.REPO, action, projectId, repoName)
+    }
+
+    /**
+     * 返回用户作为使用者(不包含仓库管理权限)在该仓库的最高权限，约定：WRITE >> READ
+     * @param projectId 项目id
+     * @param repoName 仓库名称
+     */
+    open fun getRepoPermission(
+        projectId: String,
+        repoName: String
+    ): PermissionAction? {
+        var permission: PermissionAction? = null
+        for (permissionAction in permissionList) {
+            if (permission != null) continue
+            permission = try {
+                checkRepoPermission(
+                    action = permissionAction,
+                    projectId = projectId,
+                    repoName = repoName
+                )
+                permissionAction
+            } catch (e: PermissionException) {
+                null
+            }
+        }
+        return permission
     }
 
     /**

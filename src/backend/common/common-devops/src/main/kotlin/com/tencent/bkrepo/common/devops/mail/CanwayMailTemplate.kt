@@ -1,10 +1,10 @@
-package com.tencent.bkrepo.repository.service.canway.mail
+package com.tencent.bkrepo.common.devops.mail
 
 import cn.hutool.core.img.ImgUtil
 import cn.hutool.extra.qrcode.QrCodeUtil
 import cn.hutool.extra.qrcode.QrConfig
-import com.tencent.bkrepo.repository.service.canway.pojo.FileShareInfo
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel.H
+import com.tencent.bkrepo.common.devops.pojo.FileShareInfo
 import java.text.SimpleDateFormat
 import java.util.Date
 

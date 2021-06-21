@@ -29,7 +29,7 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.auth.service.canway.http
+package com.tencent.bkrepo.common.devops.http
 
 import java.security.KeyStore
 import java.security.cert.CertificateFactory

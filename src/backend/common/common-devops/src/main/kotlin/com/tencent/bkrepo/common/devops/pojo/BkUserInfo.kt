@@ -1,4 +1,4 @@
-package com.tencent.bkrepo.auth.service.canway.pojo.bk
+package com.tencent.bkrepo.common.devops.pojo
 
 data class BkUserInfo(
     val code: Int,

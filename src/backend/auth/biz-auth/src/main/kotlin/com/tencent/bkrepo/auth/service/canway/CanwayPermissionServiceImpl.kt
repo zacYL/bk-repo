@@ -19,7 +19,6 @@ import com.tencent.bkrepo.auth.repository.UserRepository
 import com.tencent.bkrepo.auth.service.DepartmentService
 import com.tencent.bkrepo.auth.service.canway.bk.BkUserService
 import com.tencent.bkrepo.auth.service.canway.conf.CanwayAuthConf
-import com.tencent.bkrepo.auth.service.canway.http.CanwayHttpUtils
 import com.tencent.bkrepo.auth.service.canway.pojo.ActionCollection
 import com.tencent.bkrepo.auth.service.canway.pojo.CanwayPermissionRequest
 import com.tencent.bkrepo.auth.service.canway.pojo.CanwayPermissionResponse
@@ -32,6 +31,7 @@ import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.api.util.toJsonString
+import com.tencent.bkrepo.common.devops.http.CanwayHttpUtils
 import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.repository.api.RepositoryClient

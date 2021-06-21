@@ -2,46 +2,28 @@ package com.tencent.bkrepo.auth.service.canway
 
 import com.tencent.bkrepo.auth.service.DepartmentService
 import com.tencent.bkrepo.auth.service.canway.conf.CanwayAuthConf
-import com.tencent.bkrepo.auth.service.canway.http.CanwayHttpUtils
-import com.tencent.bkrepo.auth.service.canway.http.CertTrustManager
 import com.tencent.bkrepo.auth.service.canway.pojo.bk.BkResponse
 import com.tencent.bkrepo.auth.service.canway.pojo.bk.BkChildrenDepartment
 import com.tencent.bkrepo.auth.service.canway.pojo.bk.BkPage
 import com.tencent.bkrepo.auth.service.canway.pojo.bk.BkDepartment
-import com.tencent.bkrepo.auth.service.canway.pojo.bk.BkCertificate
-import com.tencent.bkrepo.auth.service.canway.pojo.bk.CertType
 import com.tencent.bkrepo.auth.service.canway.pojo.bk.BkDepartmentUser
 import com.tencent.bkrepo.auth.service.canway.pojo.bk.BkParentDepartment
-import com.tencent.bkrepo.auth.util.HttpUtils
 import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.readJsonString
+import com.tencent.bkrepo.common.devops.http.CanwayHttpUtils
+import com.tencent.bkrepo.common.devops.pojo.BkCertificate
+import com.tencent.bkrepo.common.devops.pojo.CertType
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
-import okhttp3.MediaType
-import okhttp3.Request
-import okhttp3.RequestBody
-import okhttp3.OkHttpClient
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.util.concurrent.TimeUnit
 
 @Service
 class CanwayDepartmentServiceImpl(
     canwayAuthConf: CanwayAuthConf
 ) : DepartmentService {
-
-    private val okHttpClient = OkHttpClient.Builder()
-        .sslSocketFactory(
-            CertTrustManager.disableValidationSSLSocketFactory,
-            CertTrustManager.disableValidationTrustManager
-        )
-        .hostnameVerifier(CertTrustManager.trustAllHostname)
-        .connectTimeout(3L, TimeUnit.SECONDS)
-        .readTimeout(5L, TimeUnit.SECONDS)
-        .writeTimeout(5L, TimeUnit.SECONDS)
-        .build()
 
     val paasHost = canwayAuthConf.host
 
@@ -52,7 +34,6 @@ class CanwayDepartmentServiceImpl(
     override fun listDepartmentById(username: String?, departmentId: Int?): List<BkChildrenDepartment>? {
         val bkCertificate = getBkCertificate(username)
         if (departmentId != null) {
-            val mediaType = MediaType.parse("application/json; charset=utf-8")
             val json = String.format(
                 jsonFormat,
                 bkAppCode,
@@ -62,12 +43,7 @@ class CanwayDepartmentServiceImpl(
                 departmentId
             )
             val requestUrl = "${paasHost.removeSuffix("/")}$paasBatchDepartmentUrl"
-            val body = RequestBody.create(mediaType, json)
-            val request = Request.Builder()
-                .url(requestUrl)
-                .post(body)
-                .build()
-            val responseContent = HttpUtils.doRequest(okHttpClient, request, 3, mutableSetOf(200)).content
+            val responseContent = CanwayHttpUtils.doPost(requestUrl, json).content
             val departments = responseContent.readJsonString<BkResponse<List<BkParentDepartment>>>()
             return departments.data?.first()?.children
         } else {
@@ -86,13 +62,12 @@ class CanwayDepartmentServiceImpl(
                 bkCertificate.certType.value, bkCertificate.value,
                 departmentId, listDepartmentField
             )
-            val request = Request.Builder()
-                .url(requestUrl)
-                .build()
-            val response = HttpUtils.doRequest(okHttpClient, request, 3, mutableSetOf(200))
-            val responseContent = response.content
+            val responseContent = CanwayHttpUtils.doGet(requestUrl).content
             val department = responseContent.readJsonString<BkResponse<BkPage<BkDepartment>>>().data?.results?.first()
-                ?: throw ErrorCodeException(CommonMessageCode.RESOURCE_NOT_FOUND, "Can not load departmentId: $departmentId")
+                ?: throw ErrorCodeException(
+                    CommonMessageCode.RESOURCE_NOT_FOUND,
+                    "Can not load departmentId: $departmentId"
+                )
             list.add(BkChildrenDepartment(department.id.toString(), department.name, null, null, null))
         }
         return list
@@ -139,11 +114,7 @@ class CanwayDepartmentServiceImpl(
             bkCertificate.certType.value,
             bkCertificate.value
         )
-        val request = Request.Builder()
-            .url(requestUrl)
-            .build()
-        val response = HttpUtils.doRequest(okHttpClient, request, 3, mutableSetOf(200))
-        val responseContent = response.content
+        val responseContent = CanwayHttpUtils.doGet(requestUrl).content
         return responseContent.readJsonString<BkResponse<BkPage<BkDepartment>>>().data?.results?.first()
     }
 

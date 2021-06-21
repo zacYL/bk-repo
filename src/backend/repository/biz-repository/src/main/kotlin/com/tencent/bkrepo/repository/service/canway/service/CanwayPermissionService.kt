@@ -2,14 +2,14 @@ package com.tencent.bkrepo.repository.service.canway.service
 
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.api.util.toJsonString
+import com.tencent.bkrepo.common.devops.http.CanwayHttpUtils
+import com.tencent.bkrepo.common.devops.request.CanwayPermissionRequest
+import com.tencent.bkrepo.common.devops.response.CanwayPermissionResponse
+import com.tencent.bkrepo.common.devops.response.CanwayResponse
 import com.tencent.bkrepo.repository.service.canway.BELONGCODE
 import com.tencent.bkrepo.repository.service.canway.RESOURCECODE
 import com.tencent.bkrepo.repository.service.canway.aspect.CanwayRepositoryAspect
 import com.tencent.bkrepo.repository.service.canway.conf.CanwayAuthConf
-import com.tencent.bkrepo.repository.service.canway.http.CanwayHttpUtils
-import com.tencent.bkrepo.repository.service.canway.pojo.CanwayPermissionRequest
-import com.tencent.bkrepo.repository.service.canway.pojo.CanwayPermissionResponse
-import com.tencent.bkrepo.repository.service.canway.pojo.CanwayResponse
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service

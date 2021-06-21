@@ -1,4 +1,4 @@
-package com.tencent.bkrepo.auth.service.canway.pojo.bk
+package com.tencent.bkrepo.common.devops.pojo
 
 data class BkCertificate(
     val certType: CertType,
@@ -8,6 +8,7 @@ data class BkCertificate(
 enum class CertType(
     val value: String
 ) {
-    USERNAME("bk_username"),
+    USERID("bk_username"),
+    USERNAME("username"),
     TOKEN("bk_token")
 }

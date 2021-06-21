@@ -5,7 +5,7 @@ import com.tencent.bkrepo.auth.service.canway.pojo.CanwayAction
 import org.springframework.stereotype.Service
 
 @Service
-class ActionService() {
+class ActionService {
     fun listActions(project: String, repo: String): Set<CanwayAction> {
         return when (repo) {
             "custom" -> setOf(

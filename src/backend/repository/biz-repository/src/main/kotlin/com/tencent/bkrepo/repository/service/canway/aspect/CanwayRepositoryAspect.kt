@@ -10,6 +10,8 @@ import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
+import com.tencent.bkrepo.common.devops.exception.CanwayPermissionException
+import com.tencent.bkrepo.common.devops.http.CanwayHttpUtils
 import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
@@ -20,8 +22,6 @@ import com.tencent.bkrepo.repository.service.canway.ACCESS
 import com.tencent.bkrepo.repository.service.canway.BELONGCODE
 import com.tencent.bkrepo.repository.service.canway.CREATE
 import com.tencent.bkrepo.repository.service.canway.conf.CanwayAuthConf
-import com.tencent.bkrepo.repository.service.canway.exception.CanwayPermissionException
-import com.tencent.bkrepo.repository.service.canway.http.CanwayHttpUtils
 import com.tencent.bkrepo.repository.service.canway.pojo.BatchResourceInstance
 import com.tencent.bkrepo.repository.service.canway.pojo.ResourceRegisterInfo
 import com.tencent.bkrepo.repository.service.canway.service.CanwayPermissionService
@@ -31,21 +31,20 @@ import org.aspectj.lang.annotation.Aspect
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.stereotype.Service
 import java.lang.Exception
 
 @Aspect
-@Service
-class CanwayRepositoryAspect {
-
-    @Autowired
-    lateinit var canwayAuthConf: CanwayAuthConf
+class CanwayRepositoryAspect(
+    canwayAuthConf: CanwayAuthConf
+) {
 
     @Autowired
     lateinit var permissionService: ServicePermissionResource
 
     @Autowired
     lateinit var canwayPermissionService: CanwayPermissionService
+
+    private val devopsHost = canwayAuthConf.devopsHost.removeSuffix("/")
 
     @Around(value = "execution(* com.tencent.bkrepo.repository.service.repo.impl.RepositoryServiceImpl.createRepo(..))")
     fun beforeCreateRepo(point: ProceedingJoinPoint): Any? {
@@ -200,8 +199,7 @@ class CanwayRepositoryAspect {
             instances = resourceInstance
         )
         val requestParamStr = requestParam.toJsonString()
-        val devopsHost = canwayAuthConf.devopsHost
-        val ciAddResourceUrl = "${devopsHost.removeSuffix("/")}$ci$api"
+        val ciAddResourceUrl = "$devopsHost$ci$api"
         CanwayHttpUtils.doPost(ciAddResourceUrl, requestParamStr).content
     }
 

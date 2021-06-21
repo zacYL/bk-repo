@@ -2,14 +2,14 @@ package com.tencent.bkrepo.repository.service.canway.aspect
 
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
+import com.tencent.bkrepo.common.devops.mail.CanwayMailTemplate
+import com.tencent.bkrepo.common.devops.pojo.FileShareInfo
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.pojo.share.ShareRecordCreateRequest
 import com.tencent.bkrepo.repository.pojo.share.ShareRecordInfo
 import com.tencent.bkrepo.repository.service.canway.bk.BkUserService
 import com.tencent.bkrepo.repository.service.canway.conf.CanwayAuthConf
 import com.tencent.bkrepo.repository.service.canway.conf.CanwayMailConf
-import com.tencent.bkrepo.repository.service.canway.mail.CanwayMailTemplate
-import com.tencent.bkrepo.repository.service.canway.pojo.FileShareInfo
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
@@ -17,10 +17,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.MimeMessageHelper
-import org.springframework.stereotype.Component
 
 @Aspect
-@Component
 class CanwayShareAspect(
     canwayMailConf: CanwayMailConf,
     canwayAuthConf: CanwayAuthConf,

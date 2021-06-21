@@ -1,7 +1,7 @@
-package com.tencent.bkrepo.repository.service.canway.pojo
+package com.tencent.bkrepo.common.devops.request
 
-import com.tencent.bkrepo.repository.service.canway.BELONGCODE
-import com.tencent.bkrepo.repository.service.canway.RESOURCECODE
+import com.tencent.bkrepo.common.devops.BELONGCODE
+import com.tencent.bkrepo.common.devops.RESOURCECODE
 
 data class CanwayPermissionRequest(
     val userId: String,

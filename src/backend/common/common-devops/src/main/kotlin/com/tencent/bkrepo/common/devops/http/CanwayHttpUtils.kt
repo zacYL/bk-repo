@@ -1,4 +1,4 @@
-package com.tencent.bkrepo.repository.service.canway.http
+package com.tencent.bkrepo.common.devops.http
 
 import com.tencent.bkrepo.common.service.pojo.ApiResponse
 import com.tencent.bkrepo.common.service.util.HttpUtils
@@ -12,7 +12,10 @@ object CanwayHttpUtils {
     private val mediaType = MediaType.parse("application/json; charset=utf-8")
 
     private val okHttpClient = OkHttpClient.Builder()
-        .sslSocketFactory(CertTrustManager.disableValidationSSLSocketFactory, CertTrustManager.disableValidationTrustManager)
+        .sslSocketFactory(
+            CertTrustManager.disableValidationSSLSocketFactory,
+            CertTrustManager.disableValidationTrustManager
+        )
         .hostnameVerifier(CertTrustManager.trustAllHostname)
         .connectTimeout(3L, TimeUnit.SECONDS)
         .readTimeout(5L, TimeUnit.SECONDS)

@@ -86,7 +86,7 @@
         name: 'repoList',
         data () {
             return {
-                repoEnum: ['generic', ...repoEnum],
+                repoEnum,
                 isLoading: false,
                 canCreate: false,
                 repoList: [],

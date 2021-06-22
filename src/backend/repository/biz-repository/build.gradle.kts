@@ -40,4 +40,5 @@ dependencies {
     implementation ("cn.hutool:hutool-core:5.5.4")
     implementation ("com.google.zxing:core:3.4.1")
     testImplementation("de.flapdoodle.embed:de.flapdoodle.embed.mongo")
+    api(project(":common:common-devops"))
 }

@@ -224,6 +224,7 @@ class CanwayPermissionServiceImpl(
     }
 
     private fun canwayCheckPermission(request: CheckPermissionRequest): CanwayPermissionResult {
+        logger.info("canway permission: $request")
         val uid = request.uid
         val projectId = request.projectId
             ?: throw(ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "`projectId` is must not be null"))

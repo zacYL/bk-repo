@@ -84,6 +84,7 @@ open class PermissionManager(
         repoName: String,
         public: Boolean? = null
     ) {
+        logger.info("permission: {projectId: $projectId, repo: $repoName, action: $action, public: $public}")
         if (isReadPublicRepo(action, projectId, repoName, public)) {
             return
         }
@@ -177,7 +178,12 @@ open class PermissionManager(
         repoName: String,
         public: Boolean? = null
     ): Boolean {
-        if (action != PermissionAction.READ) {
+        val permissionSet = setOf(
+            PermissionAction.READ,
+            PermissionAction.ARTIFACT_DOWNLOAD,
+            PermissionAction.ARTIFACT_READ
+        )
+        if (!permissionSet.contains(action)) {
             return false
         }
         return public ?: queryRepositoryInfo(projectId, repoName).public

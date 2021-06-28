@@ -33,6 +33,8 @@ package com.tencent.bkrepo.auth.service.local
 
 import com.mongodb.BasicDBObject
 import com.tencent.bkrepo.auth.constant.DEFAULT_PASSWORD
+import com.tencent.bkrepo.auth.listener.event.user.UserCreateEvent
+import com.tencent.bkrepo.auth.listener.event.user.UserDeletedEvent
 import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.model.TUser
 import com.tencent.bkrepo.auth.pojo.token.Token
@@ -47,8 +49,13 @@ import com.tencent.bkrepo.auth.repository.UserRepository
 import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.auth.util.DataDigestUtils
 import com.tencent.bkrepo.auth.util.IDUtil
+import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
+import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.sensitive.DesensitizedUtils
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
+import com.tencent.bkrepo.common.service.util.SpringContextUtils
+import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import org.slf4j.LoggerFactory
@@ -101,6 +108,8 @@ class UserServiceImpl constructor(
                 group = request.group
             )
         )
+        val operator = HttpContextHolder.getRequest().getAttribute(USER_KEY) as? String ?: ANONYMOUS_USER
+        publishEvent(UserCreateEvent(request, operator))
         return true
     }
 
@@ -161,6 +170,8 @@ class UserServiceImpl constructor(
         logger.info("delete user userId : [$userId]")
         checkUserExist(userId)
         userRepository.deleteByUserId(userId)
+        val operator = HttpContextHolder.getRequest().getAttribute(USER_KEY) as? String ?: ANONYMOUS_USER
+        publishEvent(UserDeletedEvent(userId, operator))
         return true
     }
 

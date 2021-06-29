@@ -31,11 +31,14 @@
 
 package com.tencent.bkrepo.auth.pojo.enums
 
+@Deprecated("")
 enum class ResourceType {
     SYSTEM,
     PROJECT,
     REPO,
-    NODE;
+    NODE,
+    PACKAGE,
+    USER;
 
     fun id() = this.name.toLowerCase()
 }

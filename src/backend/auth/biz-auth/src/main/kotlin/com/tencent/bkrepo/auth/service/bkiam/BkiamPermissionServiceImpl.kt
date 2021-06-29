@@ -95,7 +95,7 @@ class BkiamPermissionServiceImpl constructor(
             ResourceType.SYSTEM -> StringPool.EMPTY
             ResourceType.PROJECT -> request.projectId!!
             ResourceType.REPO -> request.repoName!!
-            ResourceType.NODE -> throw IllegalArgumentException("invalid resource type")
+            else -> throw IllegalArgumentException("invalid resource type")
         }
     }
 

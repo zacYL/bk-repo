@@ -36,13 +36,9 @@ import com.tencent.bkrepo.auth.constant.AUTH_SERVICE_USER_PREFIX
 import com.tencent.bkrepo.auth.constant.AUTH_USER_PREFIX
 import com.tencent.bkrepo.auth.pojo.token.Token
 import com.tencent.bkrepo.auth.pojo.token.TokenResult
-import com.tencent.bkrepo.auth.pojo.user.CreateUserRequest
-import com.tencent.bkrepo.auth.pojo.user.CreateUserToProjectRequest
-import com.tencent.bkrepo.auth.pojo.user.CreateUserToRepoRequest
-import com.tencent.bkrepo.auth.pojo.user.UpdateUserRequest
-import com.tencent.bkrepo.auth.pojo.user.User
-import com.tencent.bkrepo.auth.pojo.user.UserResult
+import com.tencent.bkrepo.auth.pojo.user.*
 import com.tencent.bkrepo.common.api.constant.AUTH_SERVICE_NAME
+import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
@@ -222,4 +218,23 @@ interface ServiceUserResource {
         @ApiParam(value = "用户id")
         @RequestParam(value = "bkrepo_ticket") bkrepoToken: String?
     ): Response<Map<String, Any>>
+
+    @ApiOperation("软件源--批量 添加/删除 管理员")
+    @PutMapping("/admin/batch/{admin}")
+    fun batchAdmin(
+        @ApiParam(value = "执行操作，true:代表添加为管理员；false: 删除管理员")
+        @PathVariable admin: Boolean,
+        @ApiParam(value = "uid 列表")
+        @RequestBody list: List<String>
+    ): Response<Boolean>
+
+    @ApiOperation("用户分页列表")
+    @GetMapping("/page/{pageNumber}/{pageSize}")
+    fun userPage(
+        @PathVariable pageNumber: Int,
+        @PathVariable pageSize: Int,
+        @RequestParam user: String?,
+        @RequestParam admin: Boolean?,
+        @RequestParam locked: Boolean?
+    ): Response<Page<UserInfo>>
 }

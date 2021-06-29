@@ -142,4 +142,12 @@ class UserPackageController(
     ) {
         packageService.downloadVersion(projectId, repoName, packageKey, version)
     }
+
+    @ApiOperation("仓库 包数量 归总")
+    @PostMapping("/package/search/overview")
+    fun searchPackageOverview(
+        @RequestBody queryModel: QueryModel
+    ): Response<Page<MutableMap<*, *>>> {
+        return ResponseBuilder.success(packageService.searchPackage(queryModel))
+    }
 }

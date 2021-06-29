@@ -67,7 +67,7 @@ data class RepositoryInfo(
     @ApiModelProperty("上次修改日期")
     val lastModifiedDate: String,
     @ApiModelProperty("在权限中心是否有查看权限")
-    val hasPermission: Boolean? = false,
+    val hasPermission: Boolean? = null,
     @ApiModelProperty("对当前用户的最高权限")
     var permission: String? = null,
     @ApiModelProperty("制品数量")

@@ -45,17 +45,13 @@ import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
 import com.tencent.bkrepo.auth.pojo.role.CreateRoleRequest
 import com.tencent.bkrepo.auth.pojo.token.Token
 import com.tencent.bkrepo.auth.pojo.token.TokenResult
-import com.tencent.bkrepo.auth.pojo.user.CreateUserRequest
-import com.tencent.bkrepo.auth.pojo.user.CreateUserToProjectRequest
-import com.tencent.bkrepo.auth.pojo.user.CreateUserToRepoRequest
-import com.tencent.bkrepo.auth.pojo.user.UpdateUserRequest
-import com.tencent.bkrepo.auth.pojo.user.User
-import com.tencent.bkrepo.auth.pojo.user.UserResult
+import com.tencent.bkrepo.auth.pojo.user.*
 import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.service.RoleService
 import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.security.http.jwt.JwtAuthProperties
 import com.tencent.bkrepo.common.security.util.JwtUtils
@@ -268,6 +264,24 @@ class ServiceUserResourceImpl @Autowired constructor(
             logger.warn("validate user token false [$bkrepoToken]")
             throw ErrorCodeException(AuthMessageCode.AUTH_LOGIN_TOKEN_CHECK_FAILED)
         }
+    }
+
+    override fun batchAdmin(admin: Boolean, list: List<String>): Response<Boolean> {
+        for (uid in list) {
+            userService.updateUserById(uid, UpdateUserRequest(admin = admin))
+        }
+        return ResponseBuilder.success()
+    }
+
+    override fun userPage(
+        pageNumber: Int,
+        pageSize: Int,
+        user: String?,
+        admin: Boolean?,
+        locked: Boolean?
+    ): Response<Page<UserInfo>> {
+        val result = userService.userPage(pageNumber, pageSize, user, admin, locked)
+        return ResponseBuilder.success(result)
     }
 
     companion object {

@@ -150,15 +150,15 @@ class UserRepositoryController(
         @RequestParam usedInfo: Boolean = false
     ): Response<Page<RepositoryInfo>> {
         permissionManager.checkProjectPermission(PermissionAction.READ, projectId)
-        val repoList = repositoryService.listRepoPage(projectId, pageNumber, pageSize, name, type).records
+        val page = repositoryService.listRepoPage(projectId, pageNumber, pageSize, name, type)
         if (usedInfo) {
-            repoList.map {
+            page.records.map {
                 //加载权限信息
                 it.permission = permissionManager.getRepoPermission(it.projectId, it.name)?.name
                 it.artifacts = packageClient.existArtifact(it.projectId, it.name).data
             }
         }
-        return ResponseBuilder.success(repositoryService.listRepoPage(projectId, pageNumber, pageSize, name, type))
+        return ResponseBuilder.success(page)
     }
 
     @ApiOperation("删除仓库")

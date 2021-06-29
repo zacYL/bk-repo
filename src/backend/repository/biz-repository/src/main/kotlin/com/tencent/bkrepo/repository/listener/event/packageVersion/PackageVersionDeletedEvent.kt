@@ -1,14 +1,17 @@
 package com.tencent.bkrepo.repository.listener.event.packageVersion
 
 import com.tencent.bkrepo.repository.pojo.log.OperateType
+import com.tencent.bkrepo.repository.pojo.packages.PackageType
 
 class PackageVersionDeletedEvent constructor(
     override val projectId: String,
     override val repoName: String,
+    override val repoType: PackageType,
     override val packageKey: String,
-    override val version: String?,
+    override val packageName: String,
+    override val packageVersion: String?,
     override val operator: String
-) : PackageVersionEvent(projectId, repoName, packageKey, version, operator) {
+) : PackageVersionEvent(projectId, repoName, repoType, packageKey, packageName, packageVersion, operator) {
 
     override fun getOperateType(): OperateType = OperateType.DELETE
 

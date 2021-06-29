@@ -33,11 +33,8 @@ package com.tencent.bkrepo.auth.service
 
 import com.tencent.bkrepo.auth.pojo.token.Token
 import com.tencent.bkrepo.auth.pojo.token.TokenResult
-import com.tencent.bkrepo.auth.pojo.user.CreateUserRequest
-import com.tencent.bkrepo.auth.pojo.user.CreateUserToProjectRequest
-import com.tencent.bkrepo.auth.pojo.user.CreateUserToRepoRequest
-import com.tencent.bkrepo.auth.pojo.user.UpdateUserRequest
-import com.tencent.bkrepo.auth.pojo.user.User
+import com.tencent.bkrepo.auth.pojo.user.*
+import com.tencent.bkrepo.common.api.pojo.Page
 
 interface UserService {
 
@@ -72,4 +69,6 @@ interface UserService {
     fun removeToken(userId: String, name: String): Boolean
 
     fun findUserByUserToken(userId: String, pwd: String): User?
+
+    fun userPage(pageNumber: Int, pageSize: Int, user: String?, admin: Boolean?, locked: Boolean?): Page<UserInfo>
 }

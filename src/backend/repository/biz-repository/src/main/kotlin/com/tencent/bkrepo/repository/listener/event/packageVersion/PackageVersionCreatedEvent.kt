@@ -8,8 +8,10 @@ class PackageVersionCreatedEvent constructor(@BsonIgnore val request: PackageVer
     PackageVersionEvent(
         projectId = request.projectId,
         repoName = request.repoName,
+        repoType = request.packageType,
         packageKey = request.packageKey,
-        version = request.versionName,
+        packageName = request.packageName,
+        packageVersion = request.versionName,
         operator = request.createdBy
     ) {
     override fun getOperateType(): OperateType = OperateType.CREATE

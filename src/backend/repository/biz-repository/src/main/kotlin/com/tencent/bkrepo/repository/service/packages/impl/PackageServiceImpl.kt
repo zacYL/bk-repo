@@ -44,8 +44,14 @@ import com.tencent.bkrepo.common.artifact.util.version.SemVersion
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.security.util.SecurityUtils
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
+import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
 import com.tencent.bkrepo.repository.dao.PackageDao
 import com.tencent.bkrepo.repository.dao.PackageVersionDao
+import com.tencent.bkrepo.repository.listener.event.packageVersion.PackageVersionCreatedEvent
+import com.tencent.bkrepo.repository.listener.event.packageVersion.PackageVersionDeletedEvent
+import com.tencent.bkrepo.repository.listener.event.packageVersion.PackageVersionDownloadEvent
+import com.tencent.bkrepo.repository.listener.event.packageVersion.PackageVersionUpdatedEvent
 import com.tencent.bkrepo.repository.model.TPackage
 import com.tencent.bkrepo.repository.model.TPackageVersion
 import com.tencent.bkrepo.repository.pojo.metric.CountResult
@@ -181,11 +187,13 @@ class PackageServiceImpl(
             val tPackage = findOrCreatePackage(request)
             // 检查版本是否存在
             val oldVersion = packageVersionDao.findByName(tPackage.id!!, versionName)
+            var isOverride: Boolean = false
             val newVersion = if (oldVersion != null) {
                 if (!overwrite) {
                     throw ErrorCodeException(ArtifactMessageCode.VERSION_EXISTED, packageName, versionName)
                 }
                 // overwrite
+                isOverride = true
                 oldVersion.apply {
                     lastModifiedBy = request.createdBy
                     lastModifiedDate = LocalDateTime.now()
@@ -199,6 +207,7 @@ class PackageServiceImpl(
                 }
             } else {
                 // create new
+                isOverride = false
                 tPackage.versions += 1
                 TPackageVersion(
                     createdBy = createdBy,
@@ -219,6 +228,9 @@ class PackageServiceImpl(
                 )
             }
             packageVersionDao.save(newVersion)
+            if (!isOverride) {
+                publishEvent(PackageVersionCreatedEvent(request))
+            } else publishEvent(PackageVersionUpdatedEvent(request))
             // 更新包
             tPackage.lastModifiedBy = newVersion.lastModifiedBy
             tPackage.lastModifiedDate = newVersion.lastModifiedDate
@@ -237,6 +249,18 @@ class PackageServiceImpl(
         packageVersionDao.deleteByPackageId(tPackage.id!!)
         packageDao.deleteByKey(projectId, repoName, packageKey)
         logger.info("Delete package [$projectId/$repoName/$packageKey] success")
+        val userId = HttpContextHolder.getRequest().getAttribute("userId") as String
+        publishEvent(
+            PackageVersionDeletedEvent(
+                projectId,
+                repoName,
+                tPackage.type,
+                packageKey,
+                tPackage.name,
+                null,
+                userId
+            )
+        )
     }
 
     override fun deleteVersion(projectId: String, repoName: String, packageKey: String, versionName: String) {
@@ -252,6 +276,18 @@ class PackageServiceImpl(
             tPackage.latest = latestVersion?.name.orEmpty()
             packageDao.save(tPackage)
         }
+        val userId = HttpContextHolder.getRequest().getAttribute("userId") as String
+        publishEvent(
+            PackageVersionDeletedEvent(
+                projectId,
+                repoName,
+                tPackage.type,
+                packageKey,
+                tPackage.name,
+                versionName,
+                userId
+            )
+        )
         logger.info("Delete package version[$projectId/$repoName/$packageKey-$versionName] success")
     }
 
@@ -299,6 +335,18 @@ class PackageServiceImpl(
         val artifactInfo = DefaultArtifactInfo(projectId, repoName, tPackageVersion.artifactPath!!)
         val context = ArtifactDownloadContext(artifact = artifactInfo)
         ArtifactContextHolder.getRepository().download(context)
+        val userId = HttpContextHolder.getRequest().getAttribute("userId") as String
+        publishEvent(
+            PackageVersionDownloadEvent(
+                projectId,
+                repoName,
+                tPackage.type,
+                packageKey,
+                tPackage.name,
+                versionName,
+                userId
+            )
+        )
     }
 
     override fun addDownloadRecord(projectId: String, repoName: String, packageKey: String, versionName: String) {

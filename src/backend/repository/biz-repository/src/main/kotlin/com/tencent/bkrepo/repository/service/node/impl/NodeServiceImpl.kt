@@ -109,4 +109,8 @@ class NodeServiceImpl(
     override fun listDeletedPoint(artifact: ArtifactInfo): List<NodeDeletedPoint> {
         return NodeRestoreSupport(this).listDeletedPoint(artifact)
     }
+
+    override fun capacity(projectId: String, repoName: String?): Long {
+        return NodeStatsSupport(this).capacity(projectId, repoName)
+    }
 }

@@ -39,11 +39,7 @@ import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.model.TUser
 import com.tencent.bkrepo.auth.pojo.token.Token
 import com.tencent.bkrepo.auth.pojo.token.TokenResult
-import com.tencent.bkrepo.auth.pojo.user.CreateUserRequest
-import com.tencent.bkrepo.auth.pojo.user.CreateUserToProjectRequest
-import com.tencent.bkrepo.auth.pojo.user.CreateUserToRepoRequest
-import com.tencent.bkrepo.auth.pojo.user.UpdateUserRequest
-import com.tencent.bkrepo.auth.pojo.user.User
+import com.tencent.bkrepo.auth.pojo.user.*
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
 import com.tencent.bkrepo.auth.service.UserService
@@ -52,7 +48,10 @@ import com.tencent.bkrepo.auth.util.IDUtil
 import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
 import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.sensitive.DesensitizedUtils
+import com.tencent.bkrepo.common.artifact.path.PathUtils
+import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.SpringContextUtils
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
@@ -349,6 +348,39 @@ class UserServiceImpl constructor(
         val query = Query.query(criteria)
         val result = mongoTemplate.findOne(query, TUser::class.java) ?: return null
         return transferUser(result)
+    }
+
+    override fun userPage(
+        pageNumber: Int,
+        pageSize: Int,
+        user: String?, admin:
+        Boolean?,
+        locked: Boolean?
+    ): Page<UserInfo> {
+        val criteria = Criteria()
+        user?.let {
+            val userRegex = PathUtils.escapeRegex(user)
+            criteria.orOperator(
+                Criteria.where(TUser::userId.name).regex("^$userRegex"),
+                Criteria.where(TUser::name.name).regex("^$userRegex")
+            )
+        }
+        admin?.let { criteria.and(TUser::admin.name).`is`(admin) }
+        locked?.let { criteria.and(TUser::locked.name).`is`(locked) }
+        val query = Query.query(criteria)
+        val pageRequest = Pages.ofRequest(pageNumber, pageSize)
+        val totalRecords = mongoTemplate.count(query, TUser::class.java)
+        val records = mongoTemplate.find(query.with(pageRequest), TUser::class.java).map { transferUserInfo(it) }
+        return Pages.ofResponse(pageRequest, totalRecords, records)
+    }
+
+    private fun transferUserInfo(tUser: TUser): UserInfo {
+        return UserInfo(
+            userId = tUser.userId,
+            name = tUser.name,
+            locked = tUser.locked,
+            admin = tUser.admin
+        )
     }
 
     companion object {

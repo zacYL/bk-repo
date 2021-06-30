@@ -26,6 +26,9 @@ class OperateLogServiceImpl(
         type: ResourceType?,
         projectId: String?,
         repoName: String?,
+        operator: String?,
+        startTime: String?,
+        endTime: String?,
         pageNumber: Int,
         pageSize: Int
     ): Page<OperateLogResponse> {

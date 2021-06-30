@@ -31,4 +31,15 @@ object OperateMapUtils {
             "unknown resource"
         }
     }
+
+    fun transferResourceType(resourceType: ResourceType): String {
+        return when (resourceType) {
+            ResourceType.PROJECT -> "项目"
+            ResourceType.REPOSITORY -> "仓库"
+            ResourceType.USER -> "用户"
+            ResourceType.PACKAGE -> "包"
+            ResourceType.NODE -> "节点"
+            ResourceType.METADATA -> "元数据"
+        }
+    }
 }

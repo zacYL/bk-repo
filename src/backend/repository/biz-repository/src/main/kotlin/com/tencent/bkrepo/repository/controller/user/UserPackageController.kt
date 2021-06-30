@@ -42,8 +42,10 @@ import com.tencent.bkrepo.repository.pojo.packages.PackageListOption
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.VersionListOption
+import com.tencent.bkrepo.repository.pojo.software.PackageOverviewResponse
 import com.tencent.bkrepo.repository.service.packages.PackageService
 import io.swagger.annotations.ApiOperation
+import org.springframework.boot.autoconfigure.data.RepositoryType
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -145,9 +147,10 @@ class UserPackageController(
 
     @ApiOperation("仓库 包数量 归总")
     @PostMapping("/package/search/overview")
-    fun searchPackageOverview(
-        @RequestBody queryModel: QueryModel
-    ): Response<Page<MutableMap<*, *>>> {
-        return ResponseBuilder.success(packageService.searchPackage(queryModel))
+    fun packageOverview(
+        @RequestParam repoType: String,
+        @RequestParam packageName: String?
+    ): Response<PackageOverviewResponse> {
+        return ResponseBuilder.success(packageService.packageOverview(repoType, packageName))
     }
 }

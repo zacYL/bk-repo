@@ -43,6 +43,7 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadCon
 import com.tencent.bkrepo.common.artifact.util.version.SemVersion
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.query.model.QueryModel
+import com.tencent.bkrepo.common.query.util.MongoEscapeUtils
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
@@ -64,11 +65,13 @@ import com.tencent.bkrepo.repository.pojo.packages.request.PackagePopulateReques
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageUpdateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionUpdateRequest
+import com.tencent.bkrepo.repository.pojo.software.PackageOverviewResponse
 import com.tencent.bkrepo.repository.search.packages.PackageSearchInterpreter
 import com.tencent.bkrepo.repository.service.packages.PackageService
 import com.tencent.bkrepo.repository.util.MetadataUtils
 import com.tencent.bkrepo.repository.util.PackageQueryHelper
 import org.slf4j.LoggerFactory
+import org.springframework.boot.autoconfigure.data.RepositoryType
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.aggregation.AddFieldsOperation
@@ -484,6 +487,33 @@ class PackageServiceImpl(
         )
         val result = packageDao.aggregate(aggregation, CountResult::class.java).mappedResults
         return if (result.isEmpty()) 0 else result[0].count
+    }
+
+    override fun packageOverview(repoType: String, packageName: String?): PackageOverviewResponse {
+        val criteria = Criteria.where(TPackage::type.name).`is`(repoType)
+        packageName?.let {
+            val escapedValue = MongoEscapeUtils.escapeRegexExceptWildcard(packageName)
+            val regexPattern = escapedValue.replace("*", ".*")
+            criteria.and(TPackage::name.name).regex("^$regexPattern$")
+        }
+        val aggregation = Aggregation.newAggregation(
+            TPackage::class.java,
+            Aggregation.match(criteria),
+            Aggregation.group("\$repoName").count().`as`("count")
+        )
+        val result = packageDao.aggregate(aggregation, CountResult::class.java).mappedResults
+        var sum = 0L
+        val list = mutableListOf<PackageOverviewResponse.RepoPackageOverview>()
+        result.map {
+            list.add(
+                PackageOverviewResponse.RepoPackageOverview(
+                    repoName = it.id!!,
+                    packages = it.count
+                )
+            )
+            sum += it.count
+        }
+        return PackageOverviewResponse(list = list, sum = sum)
     }
 
     /**

@@ -42,6 +42,8 @@ import com.tencent.bkrepo.repository.pojo.packages.request.PackagePopulateReques
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageUpdateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionUpdateRequest
+import com.tencent.bkrepo.repository.pojo.software.PackageOverviewResponse
+import org.springframework.boot.autoconfigure.data.RepositoryType
 
 /**
  * 包服务类接口
@@ -244,4 +246,6 @@ interface PackageService {
     fun sortByDown(projectId: String?, repoName: String?, limit: Long): List<PackageDetail>
 
     fun downloads(projectId: String?, repoName: String?): Long
+
+    fun packageOverview(repoType: String, packageName: String?): PackageOverviewResponse
 }

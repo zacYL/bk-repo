@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/operate/log")
+@RequestMapping("/api/operate/log")
 class UserOperateLogController(
     private val operateLogService: OperateLogService
 ) {
@@ -30,12 +30,21 @@ class UserOperateLogController(
         @RequestParam projectId: String? = BK_SOFTWARE,
         @ApiParam("仓库名", required = false)
         @RequestParam repoName: String?,
+        @ApiParam("操作人", required = false)
+        @RequestParam operator: String?,
+        @ApiParam("开始时间", required = false)
+        @RequestParam startTime: String?,
+        @ApiParam("结束时间", required = false)
+        @RequestParam endTime: String?,
         @ApiParam("页数", required = false, defaultValue = "1")
-        @RequestParam number: Int?,
-        @ApiParam("每页数量", required = false, defaultValue = "1")
-        @RequestParam size: Int?
+        @RequestParam pageNumber: Int?,
+        @ApiParam("每页数量", required = false, defaultValue = "20")
+        @RequestParam pageSize: Int?
     ): Response<Page<OperateLogResponse>> {
-        val page = operateLogService.page(type, projectId, repoName, number ?: 1, size ?: 20)
+        val page = operateLogService.page(
+            type, projectId, repoName,
+            operator, startTime, endTime, pageNumber ?: 1, pageSize ?: 20
+        )
         return ResponseBuilder.success(page)
     }
 }

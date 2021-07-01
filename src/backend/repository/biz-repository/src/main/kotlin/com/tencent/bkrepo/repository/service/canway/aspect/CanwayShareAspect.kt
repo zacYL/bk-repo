@@ -22,9 +22,9 @@ import org.springframework.mail.javamail.MimeMessageHelper
 class CanwayShareAspect(
     canwayMailConf: CanwayMailConf,
     canwayAuthConf: CanwayAuthConf,
-    val bkUserService: BkUserService,
-    val mailSender: JavaMailSender,
-    val nodeClient: NodeClient
+    private val bkUserService: BkUserService,
+    private val mailSender: JavaMailSender,
+    private val nodeClient: NodeClient
 ) {
 
     private val sender = canwayMailConf.username

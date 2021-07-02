@@ -146,7 +146,7 @@ class UserPackageController(
     }
 
     @ApiOperation("仓库 包数量 归总")
-    @PostMapping("/package/search/overview")
+    @GetMapping("/package/search/overview")
     fun packageOverview(
         @RequestParam repoType: String,
         @RequestParam packageName: String?

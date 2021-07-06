@@ -247,5 +247,5 @@ interface PackageService {
 
     fun downloads(projectId: String?, repoName: String?): Long
 
-    fun packageOverview(repoType: String, packageName: String?): PackageOverviewResponse
+    fun packageOverview(repoType: String, packageId: String?, packageName: String?): PackageOverviewResponse
 }

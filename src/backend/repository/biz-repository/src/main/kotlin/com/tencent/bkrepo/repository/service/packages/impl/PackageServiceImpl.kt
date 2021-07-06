@@ -489,8 +489,9 @@ class PackageServiceImpl(
         return if (result.isEmpty()) 0 else result[0].count
     }
 
-    override fun packageOverview(repoType: String, packageName: String?): PackageOverviewResponse {
+    override fun packageOverview(repoType: String, projectId: String?, packageName: String?): PackageOverviewResponse {
         val criteria = Criteria.where(TPackage::type.name).`is`(repoType)
+        projectId?.let { criteria.and(TPackage::projectId.name).`is`(projectId) }
         packageName?.let {
             val escapedValue = MongoEscapeUtils.escapeRegexExceptWildcard(packageName)
             val regexPattern = escapedValue.replace("*", ".*")

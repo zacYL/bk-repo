@@ -92,3 +92,5 @@ const val AUTH_BUILTIN_VIEWER = "repo_viewer"
 const val AUTH_ACTION_PREFIX = "/action"
 const val AUTH_SERVICE_ACTION_PREFIX = "/service/action"
 const val AUTH_API_ACTION_PREFIX = "/api/action"
+
+const val BK_SOFTWARE = "bksoftware"

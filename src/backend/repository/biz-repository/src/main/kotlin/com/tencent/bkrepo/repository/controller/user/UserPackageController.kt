@@ -149,8 +149,9 @@ class UserPackageController(
     @GetMapping("/package/search/overview")
     fun packageOverview(
         @RequestParam repoType: String,
+        @RequestParam projectId: String?,
         @RequestParam packageName: String?
     ): Response<PackageOverviewResponse> {
-        return ResponseBuilder.success(packageService.packageOverview(repoType, packageName))
+        return ResponseBuilder.success(packageService.packageOverview(repoType, projectId, packageName))
     }
 }

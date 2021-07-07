@@ -237,4 +237,8 @@ interface ServiceUserResource {
         @RequestParam admin: Boolean?,
         @RequestParam locked: Boolean?
     ): Response<Page<UserInfo>>
+
+    @ApiOperation("用户info ")
+    @GetMapping("/userinfo/{uid}")
+    fun userInfoById(@PathVariable uid: String): Response<UserInfo?>
 }

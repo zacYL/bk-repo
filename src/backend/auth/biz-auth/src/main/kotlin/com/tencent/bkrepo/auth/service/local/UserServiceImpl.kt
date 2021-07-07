@@ -374,6 +374,11 @@ class UserServiceImpl constructor(
         return Pages.ofResponse(pageRequest, totalRecords, records)
     }
 
+    override fun getUserInfoById(uid: String): UserInfo? {
+        val tUser = userRepository.findFirstByUserId(uid) ?: return null
+        return transferUserInfo(tUser)
+    }
+
     private fun transferUserInfo(tUser: TUser): UserInfo {
         return UserInfo(
             userId = tUser.userId,

@@ -71,4 +71,6 @@ interface UserService {
     fun findUserByUserToken(userId: String, pwd: String): User?
 
     fun userPage(pageNumber: Int, pageSize: Int, user: String?, admin: Boolean?, locked: Boolean?): Page<UserInfo>
+
+    fun getUserInfoById(uid: String): UserInfo?
 }

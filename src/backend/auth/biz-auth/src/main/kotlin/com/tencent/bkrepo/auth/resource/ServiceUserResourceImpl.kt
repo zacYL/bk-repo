@@ -284,6 +284,10 @@ class ServiceUserResourceImpl @Autowired constructor(
         return ResponseBuilder.success(result)
     }
 
+    override fun userInfoById(uid: String): Response<UserInfo?> {
+        return ResponseBuilder.success(userService.getUserInfoById(uid))
+    }
+
     companion object {
         private val logger = LoggerFactory.getLogger(ServiceUserResourceImpl::class.java)
     }

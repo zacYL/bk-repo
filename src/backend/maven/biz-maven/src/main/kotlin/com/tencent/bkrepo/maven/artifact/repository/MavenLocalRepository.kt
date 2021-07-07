@@ -268,10 +268,10 @@ class MavenLocalRepository(private val stageClient: StageClient) : LocalReposito
                 projectId, repoName, trueVersion.contentPath!!
             ).data ?: return null
             val stageTag = stageClient.query(projectId, repoName, packageKey, version).data
-            val mavenArtifactMetadata = jarNode.metadata
             val packageVersion = packageClient.findVersionByName(
                 projectId, repoName, packageKey, version
             ).data
+            val mavenArtifactMetadata = packageVersion?.metadata
             val count = packageVersion?.downloads ?: 0
             val mavenArtifactBasic = Basic(
                 groupId,

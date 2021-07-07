@@ -1,6 +1,5 @@
 package com.tencent.bkrepo.repository.listener
 
-import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.listener.event.packageVersion.PackageVersionCreatedEvent
 import com.tencent.bkrepo.repository.listener.event.packageVersion.PackageVersionDeletedEvent
 import com.tencent.bkrepo.repository.listener.event.packageVersion.PackageVersionStagedEvent
@@ -12,7 +11,6 @@ import org.springframework.stereotype.Component
 
 @Component
 class PackageVersionEventListener : BaseEventListener() {
-
 
     @Async
     @EventListener(PackageVersionCreatedEvent::class)

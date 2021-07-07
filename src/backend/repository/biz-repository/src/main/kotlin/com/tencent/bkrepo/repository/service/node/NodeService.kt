@@ -34,7 +34,8 @@ package com.tencent.bkrepo.repository.service.node
 /**
  * 节点服务接口
  */
-interface NodeService : NodeBaseOperation,
+interface NodeService :
+    NodeBaseOperation,
     NodeStatsOperation,
     NodeDeleteOperation,
     NodeMoveCopyOperation,

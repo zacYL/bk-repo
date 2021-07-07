@@ -16,5 +16,4 @@ class PackageVersionUpdatedEvent constructor(@BsonIgnore val request: PackageVer
     ) {
 
     override fun getOperateType(): OperateType = OperateType.UPDATE
-
 }

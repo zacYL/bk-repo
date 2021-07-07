@@ -20,7 +20,7 @@ class CanwayPackageAspect {
 
     @Around(
         value =
-        "execution(* com.tencent.bkrepo.repository.service.packages.impl.PackageServiceImpl.listPackagePage(..))"
+            "execution(* com.tencent.bkrepo.repository.service.packages.impl.PackageServiceImpl.listPackagePage(..))"
     )
     fun beforePackagePage(point: ProceedingJoinPoint): Any {
         val args = point.args
@@ -38,6 +38,5 @@ class CanwayPackageAspect {
             }
             point.proceed(args)
         }
-
     }
 }

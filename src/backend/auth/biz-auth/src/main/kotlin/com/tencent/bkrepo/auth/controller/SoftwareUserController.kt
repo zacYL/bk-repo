@@ -9,8 +9,15 @@ import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
-import org.springframework.web.bind.annotation.*
-
+import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.PostMapping
 
 @Api("软件源仓库权限用户列表, ")
 @RestController
@@ -26,7 +33,6 @@ class SoftwareUserController(
     ): Response<SoftwareUseUnitResponse> {
         val response = softwareUserService.unit(repoName)
         return ResponseBuilder.success(response)
-
     }
 
     @ApiOperation("修改用户/部门权限")
@@ -72,5 +78,4 @@ class SoftwareUserController(
         softwareUserService.deleteUnit(repoName, useUnitDeleteRequest)
         return ResponseBuilder.success()
     }
-
 }

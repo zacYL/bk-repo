@@ -20,7 +20,7 @@ class SoftwareUserServiceImpl(
     private val permissionService: PermissionService
 ) : SoftwareUserService {
     override fun unit(repoName: String): SoftwareUseUnitResponse {
-        //加载仓库内置权限
+        // 加载仓库内置权限
         val userSet = mutableSetOf<SoftwareUseUnit>()
         val departmentSet = mutableSetOf<SoftwareUseUnit>()
         val permissions = permissionService.listBuiltinPermission(BK_SOFTWARE, repoName)
@@ -71,14 +71,14 @@ class SoftwareUserServiceImpl(
 
     @Transactional
     override fun updatePermission(repoName: String, set: Set<String>, unitType: UnitType, push: Boolean): Boolean {
-        //加载内置权限
+        // 加载内置权限
         val permissions = permissionService.listBuiltinPermission(BK_SOFTWARE, repoName)
-        //使用者
+        // 使用者
         val permissionUser = permissions.find { it.permName == AUTH_BUILTIN_USER }
         if (permissionUser != null) {
             updatePermission(permissionUser, unitType, push, set)
         }
-        //查看者
+        // 查看者
         val permissionViewer = permissions.find { it.permName == AUTH_BUILTIN_VIEWER }
         if (permissionViewer != null) {
             updatePermission(permissionViewer, unitType, !push, set)
@@ -87,16 +87,16 @@ class SoftwareUserServiceImpl(
     }
 
     override fun addUnit(repoName: String, set: Set<String>, unitType: UnitType, push: Boolean): Boolean {
-        //加载内置权限
+        // 加载内置权限
         val permissions = permissionService.listBuiltinPermission(BK_SOFTWARE, repoName)
         if (push) {
-            //使用者
+            // 使用者
             val permissionUser = permissions.find { it.permName == AUTH_BUILTIN_USER }
             if (permissionUser != null) {
                 updatePermission(permissionUser, unitType, true, set)
             }
         } else {
-            //查看者
+            // 查看者
             val permissionViewer = permissions.find { it.permName == AUTH_BUILTIN_VIEWER }
             if (permissionViewer != null) {
                 updatePermission(permissionViewer, unitType, true, set)
@@ -133,11 +133,11 @@ class SoftwareUserServiceImpl(
     }
 
     override fun deleteUnit(repoName: String, useUnitDeleteRequest: UseUnitDeleteRequest): Boolean {
-        //加载内置权限
+        // 加载内置权限
         val permissions = permissionService.listBuiltinPermission(BK_SOFTWARE, repoName)
-        //使用者
+        // 使用者
         val permissionUser = permissions.find { it.permName == AUTH_BUILTIN_USER }
-        //查看者
+        // 查看者
         val permissionViewer = permissions.find { it.permName == AUTH_BUILTIN_VIEWER }
 
         useUnitDeleteRequest.user.let {

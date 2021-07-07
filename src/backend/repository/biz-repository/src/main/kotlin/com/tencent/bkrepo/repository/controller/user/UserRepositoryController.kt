@@ -153,7 +153,7 @@ class UserRepositoryController(
         val page = repositoryService.listRepoPage(projectId, pageNumber, pageSize, name, type)
         if (usedInfo) {
             page.records.map {
-                //加载权限信息
+                // 加载权限信息
                 it.permission = permissionManager.getRepoPermission(it.projectId, it.name)?.name
                 it.artifacts = packageClient.existArtifact(it.projectId, it.name).data
             }

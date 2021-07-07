@@ -33,11 +33,11 @@ package com.tencent.bkrepo.repository.listener
 
 import com.tencent.bkrepo.auth.api.ServiceRoleResource
 import com.tencent.bkrepo.auth.api.ServiceUserResource
-import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
 import com.tencent.bkrepo.common.security.manager.PermissionManager
-import com.tencent.bkrepo.repository.constant.SYSTEM_USER
+import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.listener.event.repo.RepoCreatedEvent
 import com.tencent.bkrepo.repository.listener.event.repo.RepoDeletedEvent
+import com.tencent.bkrepo.repository.listener.event.repo.RepoEvent
 import com.tencent.bkrepo.repository.listener.event.repo.RepoUpdatedEvent
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.event.EventListener
@@ -48,23 +48,26 @@ import org.springframework.stereotype.Component
 class RepoEventListener @Autowired constructor(
     private val permissionManager: PermissionManager,
     private val roleResource: ServiceRoleResource,
-    private val userResource: ServiceUserResource
+    private val userResource: ServiceUserResource,
+    private val repositoryClient: RepositoryClient
 ) : BaseEventListener() {
 
     @Async
     @EventListener(RepoCreatedEvent::class)
     fun handle(event: RepoCreatedEvent) {
+        addEventData(event)
         logEvent(event)
-        if (event.request.operator != SYSTEM_USER && event.request.operator != ANONYMOUS_USER) {
-            permissionManager.registerRepo(event.request.operator, event.request.projectId, event.request.name)
-            val repoManagerRoleId = roleResource.createRepoManage(event.request.projectId, event.request.name).data!!
-            userResource.addUserRole(event.request.operator, repoManagerRoleId)
-        }
+//        if (event.request.operator != SYSTEM_USER && event.request.operator != ANONYMOUS_USER) {
+//            permissionManager.registerRepo(event.request.operator, event.request.projectId, event.request.name)
+//            val repoManagerRoleId = roleResource.createRepoManage(event.request.projectId, event.request.name).data!!
+//            userResource.addUserRole(event.request.operator, repoManagerRoleId)
+//        }
     }
 
     @Async
     @EventListener(RepoUpdatedEvent::class)
     fun handle(event: RepoUpdatedEvent) {
+        addEventData(event)
         logEvent(event)
     }
 
@@ -72,5 +75,12 @@ class RepoEventListener @Autowired constructor(
     @EventListener(RepoDeletedEvent::class)
     fun handle(event: RepoDeletedEvent) {
         logEvent(event)
+    }
+
+    private fun addEventData(event: RepoEvent): RepoEvent {
+        val repoRequest = event.repoRequest
+        val type = repositoryClient.getRepoInfo(repoRequest.projectId, repoRequest.name).data!!.type
+        event.repoType = type
+        return event
     }
 }

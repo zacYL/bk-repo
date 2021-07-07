@@ -2,7 +2,6 @@ package com.tencent.bkrepo.auth.pojo.user
 
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
-import java.time.LocalDateTime
 
 @ApiModel("分页用户信息")
 data class UserInfo(

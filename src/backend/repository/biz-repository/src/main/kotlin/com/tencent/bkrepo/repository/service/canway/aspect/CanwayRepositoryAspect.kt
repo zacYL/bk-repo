@@ -134,8 +134,6 @@ class CanwayRepositoryAspect(
             }
             return result
         }
-
-
     }
 
     @Around(value = "execution(* com.tencent.bkrepo.repository.service.repo.impl.RepositoryServiceImpl.listRepoPage(..))")
@@ -181,7 +179,6 @@ class CanwayRepositoryAspect(
             }
             return result
         }
-
     }
 
     @Around(value = "execution(* com.tencent.bkrepo.repository.service.repo.impl.RepositoryServiceImpl.deleteRepo(..))")

@@ -3,7 +3,6 @@ package com.tencent.bkrepo.repository.listener.event.packageVersion
 import com.tencent.bkrepo.repository.listener.event.IEvent
 import com.tencent.bkrepo.repository.pojo.log.ResourceType
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
-import org.springframework.boot.autoconfigure.data.RepositoryType
 
 abstract class PackageVersionEvent(
     open val projectId: String,
@@ -29,5 +28,4 @@ abstract class PackageVersionEvent(
             "packageVersion" to (packageVersion ?: "")
         )
     }
-
 }

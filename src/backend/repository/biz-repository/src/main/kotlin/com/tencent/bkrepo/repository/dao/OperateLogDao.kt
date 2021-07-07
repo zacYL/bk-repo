@@ -5,5 +5,4 @@ import com.tencent.bkrepo.repository.model.TOperateLog
 import org.springframework.stereotype.Repository
 
 @Repository
-class OperateLogDao : SimpleMongoDao<TOperateLog>() {
-}
+class OperateLogDao : SimpleMongoDao<TOperateLog>()

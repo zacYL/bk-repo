@@ -4,7 +4,6 @@ import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.repository.BK_SOFTWARE
-import com.tencent.bkrepo.repository.pojo.operate.OperateLogPojo
 import com.tencent.bkrepo.repository.pojo.log.ResourceType
 import com.tencent.bkrepo.repository.pojo.operate.OperateLogResponse
 import com.tencent.bkrepo.repository.service.operate.OperateLogService

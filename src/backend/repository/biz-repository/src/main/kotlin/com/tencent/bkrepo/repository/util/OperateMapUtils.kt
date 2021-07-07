@@ -3,7 +3,6 @@ package com.tencent.bkrepo.repository.util
 import com.tencent.bkrepo.repository.pojo.log.OperateType
 import com.tencent.bkrepo.repository.pojo.log.ResourceType
 
-
 object OperateMapUtils {
     fun transferOperationType(resourceType: ResourceType, operateType: OperateType): String {
         return if (resourceType == ResourceType.PACKAGE) {
@@ -27,6 +26,12 @@ object OperateMapUtils {
                 OperateType.CREATE -> "创建"
                 else -> "unknown operate"
             }
+        } else if (resourceType == ResourceType.ADMIN) {
+            when (operateType) {
+                OperateType.CREATE -> "添加"
+                OperateType.DELETE -> "移除"
+                else -> "unknown operate"
+            }
         } else {
             "unknown resource"
         }
@@ -40,6 +45,7 @@ object OperateMapUtils {
             ResourceType.PACKAGE -> "包"
             ResourceType.NODE -> "节点"
             ResourceType.METADATA -> "元数据"
+            ResourceType.ADMIN -> "管理员"
         }
     }
 }

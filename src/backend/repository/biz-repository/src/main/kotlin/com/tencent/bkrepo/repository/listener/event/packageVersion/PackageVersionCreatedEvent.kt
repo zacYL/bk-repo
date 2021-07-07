@@ -15,5 +15,4 @@ class PackageVersionCreatedEvent constructor(@BsonIgnore val request: PackageVer
         operator = request.createdBy
     ) {
     override fun getOperateType(): OperateType = OperateType.CREATE
-
 }

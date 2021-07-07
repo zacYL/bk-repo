@@ -74,7 +74,12 @@ import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
-import org.springframework.data.mongodb.core.query.*
+import org.springframework.data.mongodb.core.query.and
+import org.springframework.data.mongodb.core.query.inValues
+import org.springframework.data.mongodb.core.query.isEqualTo
+import org.springframework.data.mongodb.core.query.where
+import org.springframework.data.mongodb.core.query.Query
+import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -225,8 +230,8 @@ class RepositoryServiceImpl(
 
     @Transactional(rollbackFor = [Throwable::class])
     override fun deleteRepo(repoDeleteRequest: RepoDeleteRequest) {
+        val repository = checkRepository(repoDeleteRequest.projectId, repoDeleteRequest.name)
         repoDeleteRequest.apply {
-            val repository = checkRepository(projectId, name)
             if (repoDeleteRequest.forced) {
                 nodeService.deleteByPath(projectId, name, ROOT, operator)
             } else {
@@ -245,7 +250,7 @@ class RepositoryServiceImpl(
                 }
             }
         }
-        publishEvent(RepoDeletedEvent(repoDeleteRequest))
+        publishEvent(RepoDeletedEvent(repoDeleteRequest, repository.type))
         logger.info("Delete repository [$repoDeleteRequest] success.")
     }
 

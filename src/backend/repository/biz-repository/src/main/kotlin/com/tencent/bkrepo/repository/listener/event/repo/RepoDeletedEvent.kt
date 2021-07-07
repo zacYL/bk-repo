@@ -31,9 +31,11 @@
 
 package com.tencent.bkrepo.repository.listener.event.repo
 
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.repository.pojo.log.OperateType
 import com.tencent.bkrepo.repository.pojo.repo.RepoDeleteRequest
 
-data class RepoDeletedEvent(val request: RepoDeleteRequest) : RepoEvent(request, request.operator) {
+data class RepoDeletedEvent(val request: RepoDeleteRequest, override var repoType: RepositoryType?) :
+    RepoEvent(request, request.operator, repoType) {
     override fun getOperateType() = OperateType.DELETE
 }

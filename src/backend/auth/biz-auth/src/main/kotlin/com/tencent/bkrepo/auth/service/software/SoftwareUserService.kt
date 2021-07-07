@@ -12,5 +12,4 @@ interface SoftwareUserService {
     fun addUnit(repoName: String, set: Set<String>, unitType: UnitType, push: Boolean): Boolean
 
     fun deleteUnit(repoName: String, useUnitDeleteRequest: UseUnitDeleteRequest): Boolean
-
 }

@@ -43,7 +43,6 @@ import com.tencent.bkrepo.repository.pojo.packages.request.PackageUpdateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionUpdateRequest
 import com.tencent.bkrepo.repository.pojo.software.PackageOverviewResponse
-import org.springframework.boot.autoconfigure.data.RepositoryType
 
 /**
  * 包服务类接口

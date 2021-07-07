@@ -14,5 +14,4 @@ class PackageVersionDeletedEvent constructor(
 ) : PackageVersionEvent(projectId, repoName, repoType, packageKey, packageName, packageVersion, operator) {
 
     override fun getOperateType(): OperateType = OperateType.DELETE
-
 }

@@ -31,11 +31,12 @@
 
 package com.tencent.bkrepo.repository.pojo.log
 
-enum class ResourceType {
-    PROJECT,
-    REPOSITORY,
-    NODE,
-    METADATA,
-    PACKAGE,
-    USER
+enum class ResourceType(val nick: String) {
+    PROJECT("项目"),
+    REPOSITORY("仓库"),
+    NODE("节点"),
+    METADATA("元数据"),
+    PACKAGE("包"),
+    USER("用户"),
+    ADMIN("管理员")
 }

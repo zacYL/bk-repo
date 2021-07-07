@@ -1,22 +1,20 @@
 package com.tencent.bkrepo.repository.service.operate.impl
 
 import com.tencent.bkrepo.common.api.pojo.Page
-import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.repository.BK_SOFTWARE
 import com.tencent.bkrepo.repository.dao.OperateLogDao
 import com.tencent.bkrepo.repository.model.TOperateLog
-import com.tencent.bkrepo.repository.pojo.operate.OperateLogPojo
 import com.tencent.bkrepo.repository.pojo.log.ResourceType
 import com.tencent.bkrepo.repository.pojo.operate.OperateLogResponse
 import com.tencent.bkrepo.repository.service.operate.OperateLogService
 import com.tencent.bkrepo.repository.util.OperateMapUtils
-import net.bytebuddy.implementation.bytecode.constant.NullConstant
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.stereotype.Service
-import kotlin.system.exitProcess
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @Service
 class OperateLogServiceImpl(
@@ -37,12 +35,27 @@ class OperateLogServiceImpl(
         } else {
             Criteria.where(TOperateLog::resourceType.name).ne(ResourceType.NODE)
         }
+
         if (projectId == null) {
             criteria.and("${TOperateLog::description.name}.projectId").`in`(BK_SOFTWARE, null)
         } else {
             criteria.and("${TOperateLog::description.name}.projectId").`in`(projectId, null)
         }
-        repoName?.let { criteria.and("${TOperateLog::resourceType.name}.repoName").`is`(projectId) }
+
+        repoName?.let { criteria.and("${TOperateLog::description.name}.repoName").`is`(repoName) }
+
+        operator?.let { criteria.and(TOperateLog::userId.name).`is`(operator) }
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSz")
+        startTime?.let {
+            val localDateTime = LocalDateTime.parse(it, formatter)
+            criteria.and(TOperateLog::createdDate.name).gte(localDateTime)
+        }
+
+        endTime?.let {
+            val localDateTime = LocalDateTime.parse(it, formatter)
+            criteria.and(TOperateLog::createdDate.name).lte(localDateTime)
+        }
+
         val pageRequest = Pages.ofRequest(pageNumber, pageSize)
         val query = Query(criteria).with(Sort.by(TOperateLog::createdDate.name).descending())
         val totalRecords = operateLogDao.count(query)
@@ -67,18 +80,18 @@ class OperateLogServiceImpl(
                 )
             }
             ResourceType.REPOSITORY -> {
-                val projectId = tOperateLog.description["projectId"] as? String
-                val repoName = tOperateLog.description["repoName"] as? String
+                val request = tOperateLog.description["request"] as? Map<String, Any?>
+                val repoType = tOperateLog.description["repoType"] as? String
                 OperateLogResponse.Content(
-                    projectId = projectId,
-                    resKey = "$repoName"
+                    projectId = request!!["projectId"] as? String,
+                    repoType = repoType,
+                    resKey = "${request["name"] as? String}"
                 )
             }
-            ResourceType.USER -> {
-                val userId = tOperateLog.description["userId"] as? String
-                val name = tOperateLog.description["name"] as? String
+            ResourceType.ADMIN -> {
+                val list = tOperateLog.description["list"] as? List<String>
                 OperateLogResponse.Content(
-                    resKey = "$name"
+                    resKey = list!!.joinToString("::")
                 )
             }
             else -> OperateLogResponse.Content(
@@ -88,7 +101,7 @@ class OperateLogServiceImpl(
 
         return OperateLogResponse(
             createdDate = tOperateLog.createdDate,
-            resourceType = tOperateLog.resourceType,
+            resourceType = tOperateLog.resourceType.nick,
             operateType = OperateMapUtils.transferOperationType(
                 tOperateLog.resourceType, tOperateLog.operateType
             ),

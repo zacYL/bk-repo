@@ -31,15 +31,17 @@
 
 package com.tencent.bkrepo.repository.listener.event.repo
 
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.repository.listener.event.IEvent
 import com.tencent.bkrepo.repository.pojo.log.ResourceType
 import com.tencent.bkrepo.repository.pojo.repo.RepoRequest
 
 abstract class RepoEvent(
     open val repoRequest: RepoRequest,
-    open val operator: String
+    open val operator: String,
+    open var repoType: RepositoryType?
 ) : IEvent(operator) {
     override fun getResourceType() = ResourceType.REPOSITORY
     override fun getResourceKey() = "/${repoRequest.projectId}/${repoRequest.name}"
-    override fun getRequest() = mapOf("request" to repoRequest)
+    override fun getRequest(): Map<String, Any> = mapOf("request" to repoRequest, "repoType" to repoType!!)
 }

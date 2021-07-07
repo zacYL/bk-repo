@@ -7,7 +7,6 @@ import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.repository.BK_SOFTWARE
 import com.tencent.bkrepo.repository.service.canway.ACCESS
-import com.tencent.bkrepo.repository.service.canway.BKTOKEN
 import com.tencent.bkrepo.repository.service.canway.CANWAY_PERMISSION
 import com.tencent.bkrepo.repository.service.canway.service.CanwayPermissionService
 import org.aspectj.lang.ProceedingJoinPoint
@@ -40,6 +39,5 @@ class CanwayNodeAspect {
             }
             point.proceed(args)
         }
-
     }
 }

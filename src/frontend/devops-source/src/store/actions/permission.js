@@ -3,6 +3,16 @@ import Vue from 'vue'
 const authPrefix = 'auth/api'
 
 export default {
+    getUserInfo ({ commit }, { userId }) {
+        return Vue.prototype.$ajax.get(
+            `${authPrefix}/user/userinfo/${userId}`
+        ).then(res => {
+            res && commit('SET_USER_INFO', {
+                ...res,
+                username: res.userId
+            })
+        })
+    },
     // 分页查询用户列表
     getUserList (_, { current, limit, admin }) {
         return Vue.prototype.$ajax.get(
@@ -47,6 +57,65 @@ export default {
                     packageName
                 }
             }
+        )
+    },
+    // 仓库权限列表
+    getPermissionUnits (_, { repoName }) {
+        return Vue.prototype.$ajax.get(
+            `${authPrefix}/bksoftware/unit/${repoName}`
+        )
+    },
+    // 添加仓库权限
+    addPermissionUnits (_, { repoName, unitType, push, body }) {
+        return Vue.prototype.$ajax.post(
+            `${authPrefix}/bksoftware/unit/${repoName}`,
+            body,
+            {
+                params: {
+                    unitType,
+                    push
+                }
+            }
+        )
+    },
+    // 修改仓库权限
+    editPermissionUnits (_, { repoName, unitType, push, body }) {
+        return Vue.prototype.$ajax.put(
+            `${authPrefix}/bksoftware/unit/permission/update/${repoName}`,
+            body,
+            {
+                params: {
+                    unitType,
+                    push
+                }
+            }
+        )
+    },
+    // 删除仓库权限
+    deletePermissionUnits (_, { repoName, body }) {
+        return Vue.prototype.$ajax.delete(
+            `${authPrefix}/bksoftware/unit/${repoName}`,
+            {
+                data: body
+            }
+        )
+    },
+    // 查询所有部门
+    getRepoDepartmentList (_, { departmentId }) {
+        return Vue.prototype.$ajax.get(
+            `${authPrefix}/department/list`,
+            {
+                params: {
+                    departmentId
+                }
+            }
+        )
+    },
+    // 通过部门id查询部门详情
+    getRepoDepartmentDetail (_, { body }) {
+        return Vue.prototype.$ajax.post(
+            `${authPrefix}/department/listByIds`,
+            body
         )
     }
 }

@@ -24,7 +24,8 @@
         computed: {
             ...mapState(['repoList']),
             frequentRepoList () {
-                return this.repoList.slice(0, 10)
+                const frequencyRepoList = localStorage.getItem('_frequencyRepo') ? JSON.parse(localStorage.getItem('_frequencyRepo')) : []
+                return (frequencyRepoList.length ? frequencyRepoList : this.repoList).slice(0, 10)
             }
         },
         methods: {

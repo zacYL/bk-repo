@@ -46,16 +46,12 @@
                         </div>
                     </template>
                 </bk-table-column>
-                <bk-table-column :label="$t('createdDate')">
+                <bk-table-column label="仓库权限" width="250">
                     <template #default="{ row }">
-                        {{ formatDate(row.createdDate) }}
+                        {{ { 'WRITE': '可上传', 'READ': '可下载' }[row.permission] }}
                     </template>
                 </bk-table-column>
-                <bk-table-column :label="$t('createdBy')">
-                    <template #default="{ row }">
-                        {{ userList[row.createdBy] ? userList[row.createdBy].name : row.createdBy }}
-                    </template>
-                </bk-table-column>
+                <bk-table-column label="制品/文件数" prop="artifacts" width="150"></bk-table-column>
             </bk-table>
             <bk-pagination
                 class="mt10"
@@ -75,7 +71,6 @@
 <script>
     import { mapState, mapActions } from 'vuex'
     import { repoEnum } from '@/store/publicEnum'
-    import { formatDate } from '@/utils'
     export default {
         name: 'repoList',
         data () {
@@ -84,6 +79,7 @@
                 isLoading: false,
                 repoList: [],
                 query: {
+                    usedInfo: true,
                     name: '',
                     type: ''
                 },
@@ -102,7 +98,6 @@
             this.handlerPaginationChange()
         },
         methods: {
-            formatDate,
             ...mapActions([
                 'getRepoList'
             ]),

@@ -138,9 +138,9 @@ label {
 }
 
 .repo-tag {
-    display: inline-block;
-    padding: 0 10px;
-    line-height: 22px;
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
     border-radius: 10px;
     font-size: 12px;
     white-space: nowrap;

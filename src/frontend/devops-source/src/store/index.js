@@ -10,10 +10,7 @@ export default new Vuex.Store({
         repoList: [],
         userInfo: {
             username: '',
-            name: '',
-            email: '',
-            phone: '',
-            admin: true
+            admin: false
         },
         dockerDomain: ''
     },

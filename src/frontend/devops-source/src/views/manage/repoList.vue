@@ -44,12 +44,12 @@
                         </div>
                     </template>
                 </bk-table-column>
-                <bk-table-column :label="$t('createdDate')">
+                <bk-table-column :label="$t('createdDate')" width="250">
                     <template #default="{ row }">
                         {{ formatDate(row.createdDate) }}
                     </template>
                 </bk-table-column>
-                <bk-table-column :label="$t('createdBy')">
+                <bk-table-column :label="$t('createdBy')" width="250">
                     <template #default="{ row }">
                         {{ userList[row.createdBy] ? userList[row.createdBy].name : row.createdBy }}
                     </template>

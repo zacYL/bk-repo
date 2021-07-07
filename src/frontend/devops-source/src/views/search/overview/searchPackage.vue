@@ -14,28 +14,15 @@
             </div>
         </div>
         <div class="saerch-package-list">
-            <template v-if="packagetList.length">
+            <template v-if="packageList.length">
                 <main class="package-list">
-                    <div class="hover-btn flex-column result-item"
-                        @click="toRepoDetail(result)"
-                        v-for="result in packagetList"
-                        :key="result.repoName + result.key">
-                        <div class="flex-align-center">
-                            <icon size="14" :name="repoType" />
-                            <span class="ml10 result-repo-name">{{result.name}}</span>
-                            <span class="ml10 repo-tag" v-if="result.type === 'MAVEN'">
-                                {{ result.key.replace(/^.*\/\/(.+):.*$/, '$1') }}
-                            </span>
-                            <span class="ml10">({{result.repoName}})</span>
-                        </div>
-                        <div class="result-card flex-align-center">
-                            <div class="flex-align-center" :title="result.latest"><icon class="mr5" size="16" name="latest-version" />{{ result.latest }}</div>
-                            <div class="flex-align-center"><icon class="mr5" size="16" name="versions" />{{ result.versions }}</div>
-                            <div class="flex-align-center"><icon class="mr5" size="16" name="downloads" />{{ result.downloads }}</div>
-                            <div class="flex-align-center"><icon class="mr5" size="16" name="time" />{{ formatDate(result.lastModifiedDate) }}</div>
-                            <div class="flex-align-center"><icon class="mr5" size="16" name="updater" />{{ userList[result.lastModifiedBy] ? userList[result.lastModifiedBy].name : result.lastModifiedBy }}</div>
-                        </div>
-                    </div>
+                    <package-card
+                        class="package-card"
+                        v-for="pkg in packageList"
+                        :key="pkg.key"
+                        :card-data="pkg"
+                        :show-repo="true">
+                    </package-card>
                 </main>
                 <bk-pagination
                     size="small"
@@ -55,16 +42,17 @@
 <script>
     import { mapState, mapActions } from 'vuex'
     import { formatDate } from '@/utils'
+    import packageCard from '../packageList/packageCard'
     import emptyData from '@/components/EmptyData'
     export default {
         name: 'searchPackage',
-        components: { emptyData },
+        components: { packageCard, emptyData },
         data () {
             return {
                 isLoading: false,
                 repoName: '',
                 repoList: [{ repoName: '', packages: 0 }],
-                packagetList: [],
+                packageList: [],
                 pagination: {
                     current: 1,
                     limit: 20,
@@ -130,7 +118,7 @@
                     limit: this.pagination.limit
                 }).then(({ records, totalRecords }) => {
                     this.pagination.count = totalRecords
-                    this.packagetList = records
+                    this.packageList = records
                 }).finally(() => {
                     this.isLoading = false
                 })
@@ -182,51 +170,10 @@
         .package-list {
             height: calc(100% - 32px);
             overflow-y: auto;
-            .result-item{
-                justify-content: space-around;
-                padding: 5px 20px;
-                margin-bottom: 10px;
-                height: 70px;
-                border: 1px solid $borderWeightColor;
-                border-radius: 5px;
-                background-color: #fdfdfe;
-                cursor: pointer;
-                &:hover {
-                    border-color: $iconPrimaryColor;
-                }
-                .result-repo-name {
-                    color: #222222;
-                    font-size: 12px;
-                    font-weight: bold;
-                }
-                
-                .repo-tag {
-                    font-weight: normal;
-                }
-                .result-card {
-                    color: $fontWeightColor;
-                    font-size: 14px;
-                    font-weight: normal;
-                    div {
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                        white-space: nowrap;
-                        &:nth-child(1) {
-                            flex-basis: 250px;
-                        }
-                        &:nth-child(2) {
-                            flex-basis: 120px;
-                        }
-                        &:nth-child(3) {
-                            flex-basis: 140px;
-                        }
-                        &:nth-child(4) {
-                            flex-basis: 275px;
-                        }
-                        &:nth-child(5) {
-                            flex-basis: 175px;
-                        }
-                    }
+            .package-card {
+                margin-top: 10px;
+                &:first-child {
+                    margin-top: 0;
                 }
             }
         }

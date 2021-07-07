@@ -36,9 +36,7 @@
                     class="package-card"
                     v-for="pkg in packageList"
                     :key="pkg.key"
-                    :card-data="pkg"
-                    @click.native="showCommonPackageDetail(pkg)"
-                    @delete-card="deletePackageHandler(pkg)">
+                    :card-data="pkg">
                 </package-card>
             </main>
             <bk-pagination
@@ -97,8 +95,7 @@
         methods: {
             formatDate,
             ...mapActions([
-                'getPackageList',
-                'deletePackage'
+                'getPackageList'
             ]),
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
                 this.pagination.current = current
@@ -118,36 +115,6 @@
                     this.pagination.count = totalRecords
                 }).finally(() => {
                     this.isLoading = false
-                })
-            },
-            deletePackageHandler (pkg) {
-                this.$bkInfo({
-                    type: 'error',
-                    title: this.$t('deletePackageTitle'),
-                    subTitle: this.$t('deletePackageSubTitle'),
-                    showFooter: true,
-                    confirmFn: () => {
-                        this.deletePackage({
-                            projectId: this.projectId,
-                            repoType: this.repoType,
-                            repoName: this.repoName,
-                            packageKey: pkg.key
-                        }).then(() => {
-                            this.handlerPaginationChange()
-                            this.$bkMessage({
-                                theme: 'success',
-                                message: this.$t('delete') + this.$t('success')
-                            })
-                        })
-                    }
-                })
-            },
-            showCommonPackageDetail (pkg) {
-                this.$router.push({
-                    name: 'searchPackageDetail',
-                    query: {
-                        package: pkg.key
-                    }
                 })
             }
         }

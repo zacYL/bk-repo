@@ -1,28 +1,28 @@
 <template>
-    <div class="package-card-container flex-align-center">
+    <div class="package-card-container flex-align-center" @click="showCommonPackageDetail">
         <div class="mr20 package-card-main flex-column">
-            <div class="package-card-name flex-align-center">
-                <icon class="mr10" size="14" :name="cardIcon" />
-                {{ cardData.name }}
+            <div class="flex-align-center">
+                <span class="package-card-name">{{ cardData.name }}</span>
                 <span class="ml10 repo-tag" v-if="cardData.type === 'MAVEN'">{{ cardData.key.replace(/^.*\/\/(.+):.*$/, '$1') }}</span>
+                <span v-if="showRepo" class="ml10 repo-tag"><icon size="14" :name="cardData.type.toLowerCase()" />{{cardData.repoName}}</span>
             </div>
             <div class="ml20 package-card-description">
                 <span :title="cardData.description">{{ cardData.description || '--' }}</span>
             </div>
             <div class="package-card-data flex-align-center">
-                <div class="flex-align-center" :title="cardData.latest"><icon class="mr5" size="16" name="latest-version" />{{ cardData.latest }}</div>
-                <div class="flex-align-center"><icon class="mr5" size="16" name="versions" />{{ cardData.versions }}</div>
-                <div class="flex-align-center"><icon class="mr5" size="16" name="downloads" />{{ cardData.downloads }}</div>
+                <div class="flex-align-center" :title="`最新版本：${cardData.latest}`"><icon class="mr5" size="16" name="latest-version" />{{ cardData.latest }}</div>
+                <div class="flex-align-center" :title="`版本数量：${cardData.versions}`"><icon class="mr5" size="16" name="versions" />{{ cardData.versions }}</div>
+                <div class="flex-align-center" :title="`下载次数：${cardData.downloads}`"><icon class="mr5" size="16" name="downloads" />{{ cardData.downloads }}</div>
                 <div class="flex-align-center"><icon class="mr5" size="16" name="time" />{{ formatDate(cardData.lastModifiedDate) }}</div>
                 <div class="flex-align-center"><icon class="mr5" size="16" name="updater" />{{ userList[cardData.lastModifiedBy] ? userList[cardData.lastModifiedBy].name : cardData.lastModifiedBy }}</div>
             </div>
         </div>
-        <i class="devops-icon icon-delete package-card-delete hover-btn" @click.stop="deleteCard"></i>
+        <i v-if="userInfo.admin" class="devops-icon icon-delete package-card-delete hover-btn" @click.stop="deleteCard"></i>
     </div>
 </template>
 <script>
     import { formatDate } from '@/utils'
-    import { mapState } from 'vuex'
+    import { mapState, mapActions } from 'vuex'
     export default {
         name: 'packageCard',
         props: {
@@ -30,18 +30,53 @@
                 type: Object,
                 default: {}
             },
-            cardIcon: {
-                type: String,
-                default: 'default-docker'
+            showRepo: {
+                type: Boolean,
+                default: false
             }
         },
         computed: {
-            ...mapState(['userList'])
+            ...mapState(['userInfo', 'userList']),
+            projectId () {
+                return PROJECT_ID
+            }
         },
         methods: {
             formatDate,
+            ...mapActions(['deletePackage']),
             deleteCard () {
-                this.$emit('delete-card')
+                this.$bkInfo({
+                    type: 'error',
+                    title: this.$t('deletePackageTitle'),
+                    subTitle: this.$t('deletePackageSubTitle'),
+                    showFooter: true,
+                    confirmFn: () => {
+                        this.deletePackage({
+                            projectId: this.projectId,
+                            repoType: this.cardData.type.toLowerCase(),
+                            repoName: this.cardData.repoName,
+                            packageKey: this.cardData.key
+                        }).then(() => {
+                            this.handlerPaginationChange()
+                            this.$bkMessage({
+                                theme: 'success',
+                                message: this.$t('delete') + this.$t('success')
+                            })
+                        })
+                    }
+                })
+            },
+            showCommonPackageDetail () {
+                this.$router.push({
+                    name: 'searchPackageDetail',
+                    params: {
+                        repoType: this.cardData.type.toLowerCase(),
+                        repoName: this.cardData.repoName
+                    },
+                    query: {
+                        package: this.cardData.key
+                    }
+                })
             }
         }
     }
@@ -66,9 +101,6 @@
             color: #222222;
             font-size: 12px;
             font-weight: bold;
-            .repo-tag {
-                font-weight: normal;
-            }
         }
         .package-card-description {
             margin: 5px 0;

@@ -6,7 +6,7 @@
 
 <script>
     import Vue from 'vue'
-    import { mapMutations } from 'vuex'
+    import { mapMutations, mapActions } from 'vuex'
     export default {
         name: 'App',
         data () {
@@ -38,6 +38,7 @@
                 })
                 window.globalVue.$on('change::$userInfo', data => { // 用户信息
                     this.SET_USER_INFO(data.userInfo)
+                    this.getUserInfo({ userId: data.userInfo.username })
                 })
                 window.globalVue.$on('change::$userList', data => { // 用户信息
                     this.SET_USER_LIST(data.userList)
@@ -55,6 +56,7 @@
         },
         methods: {
             ...mapMutations(['SET_USER_INFO', 'SET_USER_LIST']),
+            ...mapActions(['getUserInfo']),
             goHome () {
             }
         }

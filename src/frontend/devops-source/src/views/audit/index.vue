@@ -41,7 +41,7 @@
                     {{ userList[row.userId] ? userList[row.userId].name : row.userId }}
                 </template>
             </bk-table-column>
-            <bk-table-column label="操作事件" width="120">
+            <bk-table-column label="操作事件" width="150">
                 <template #default="{ row }">
                     {{ row.operateType + row.resourceType }}
                 </template>
@@ -49,7 +49,7 @@
             <bk-table-column label="操作对象">
                 <template #default="{ row }">
                     <div class="flex-align-center">
-                        <Icon v-if="row.content.repoType" :name="row.content.repoType.toLowerCase()" size="16"></Icon>
+                        <Icon class="mr5" v-if="row.content.repoType" :name="row.content.repoType.toLowerCase()" size="16"></Icon>
                         <span :class="row.content.repoType ? 'mr20' : 'mr5 repo-tag'" v-for="item in row.content.resKey.split('::').filter(Boolean)" :key="item">
                             {{ row.content.repoType ? item : (userList[item] ? userList[item].name : item) }}
                         </span>

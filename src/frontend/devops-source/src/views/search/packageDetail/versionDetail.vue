@@ -1,5 +1,11 @@
 <template>
     <bk-tab class="common-version-container" type="unborder-card" v-bkloading="{ isLoading }">
+        <template #setting>
+            <div class="flex-align-center" style="height: 100%">
+                <i v-if="repoType !== 'docker'" class="mr15 devops-icon icon-download hover-btn" @click.stop="downloadPackageHandler"></i>
+                <i v-if="userInfo.admin" class="mr15 devops-icon icon-delete hover-btn" @click.stop="deleteVersionHandler"></i>
+            </div>
+        </template>
         <bk-tab-panel v-if="detail.basic" name="versionBaseInfo" :label="$t('baseInfo')">
             <div class="version-base-info">
                 <div class="base-info-left">
@@ -104,10 +110,10 @@
                     <div class="version-dependencies-main">
                         <template v-if="detail.dependencyInfo[type].length">
                             <div class="flex-align-center version-dependencies-item"
-                                v-for="{ name, version } in detail.dependencyInfo[type]"
+                                v-for="{ name, version: value } in detail.dependencyInfo[type]"
                                 :key="name + Math.random()">
                                 <div class="version-dependencies-key">{{ name }}</div>
-                                <div class="version-dependencies-value">{{ version }}</div>
+                                <div class="version-dependencies-value">{{ value }}</div>
                             </div>
                             <div class="flex-align-center hover-btn version-dependencies-more"
                                 v-if="type === 'dependents' && dependentsPage"
@@ -150,9 +156,6 @@
         name: 'versionDetail',
         components: { CodeArea, emptyData },
         mixins: [repoGuideMixin],
-        props: {
-            currentVersion: String
-        },
         data () {
             return {
                 isLoading: false,
@@ -190,7 +193,10 @@
             }
         },
         computed: {
-            ...mapState(['userList']),
+            ...mapState(['userInfo', 'userList']),
+            version () {
+                return this.$route.query.version
+            },
             detailInfoMap () {
                 return {
                     'version': this.$t('version'),
@@ -207,8 +213,11 @@
             }
         },
         watch: {
-            currentVersion () {
-                this.initDetail()
+            version: {
+                handler: function (val) {
+                    val && this.getDetail()
+                },
+                immediate: true
             }
         },
         methods: {
@@ -216,11 +225,9 @@
             ...mapActions([
                 'getVersionDetail',
                 'getNpmDependents',
-                'addPackageMetadata'
+                'addPackageMetadata',
+                'deleteVersion'
             ]),
-            initDetail () {
-                this.getDetail()
-            },
             getDetail () {
                 this.isLoading = true
                 this.getVersionDetail({
@@ -228,7 +235,7 @@
                     repoType: this.repoType,
                     repoName: this.repoName,
                     packageKey: this.packageKey,
-                    version: this.currentVersion
+                    version: this.version
                 }).then(res => {
                     const basic = res.basic
                     this.detail = {
@@ -279,7 +286,7 @@
                     repoName: this.repoName,
                     body: {
                         packageKey: this.packageKey,
-                        version: this.currentVersion,
+                        version: this.version,
                         metadata: {
                             [this.metadata.key]: this.metadata.value
                         }
@@ -290,6 +297,43 @@
                         value: ''
                     }
                     this.getDetail()
+                })
+            },
+            downloadPackageHandler () {
+                const url = `/repository/api/version/download/${this.projectId}/${this.repoName}?packageKey=${this.packageKey}&version=${this.version}`
+                this.$ajax.head(url).then(() => {
+                    window.open(
+                        '/web' + url,
+                        '_self'
+                    )
+                }).catch(e => {
+                    this.$bkMessage({
+                        theme: 'error',
+                        message: e.status !== 404 ? e.message : this.$t('fileNotExist')
+                    })
+                })
+            },
+            deleteVersionHandler () {
+                this.$bkInfo({
+                    type: 'error',
+                    title: this.$t('deleteVersionTitle', { version: this.version }),
+                    subTitle: this.$t('deleteVersionSubTitle'),
+                    showFooter: true,
+                    confirmFn: () => {
+                        this.deleteVersion({
+                            projectId: this.projectId,
+                            repoType: this.repoType,
+                            repoName: this.repoName,
+                            packageKey: this.packageKey,
+                            version: this.version
+                        }).then(() => {
+                            this.$emit('refresh')
+                            this.$bkMessage({
+                                theme: 'success',
+                                message: this.$t('delete') + this.$t('success')
+                            })
+                        })
+                    }
                 })
             }
         }

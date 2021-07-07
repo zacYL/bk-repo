@@ -23,11 +23,12 @@ export default {
         )
     },
     // 分页查询仓库列表
-    getRepoList (_, { current, limit, name, type }) {
+    getRepoList (_, { current, limit, name, type, usedInfo }) {
         return Vue.prototype.$ajax.get(
             `${prefix}/repo/page/${PROJECT_ID}/${current}/${limit}`,
             {
                 params: {
+                    usedInfo,
                     name,
                     type
                 }

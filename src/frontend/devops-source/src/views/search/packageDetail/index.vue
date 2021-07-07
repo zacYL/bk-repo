@@ -3,7 +3,12 @@
         <div class="package-info flex-align-center" v-bkloading="{ isLoading: infoLoading }">
             <Icon name="package-icon" size="48" />
             <div class="ml20 package-info-main flex-column flex-1">
-                <span class="package-name">{{ pkg.name }}<span class="ml10 subtitle repo-tag" v-if="pkg.type === 'MAVEN'">{{ pkg.key.replace(/^.*\/\/(.+):.*$/, '$1') }}</span></span>
+                <span class="package-name flex-align-center">
+                    {{ pkg.name }}
+                    <span class="ml10 subtitle repo-tag" v-if="pkg.type === 'MAVEN'">
+                        {{ pkg.key.replace(/^.*\/\/(.+):.*$/, '$1') }}
+                    </span>
+                </span>
                 <span class="mt5 package-description">{{ pkg.description || '--' }}</span>
                 <span class="mt5 package-create">{{ userList[pkg.lastModifiedBy] ? userList[pkg.lastModifiedBy].name : pkg.lastModifiedBy }} 更新于 {{ formatDate(pkg.lastModifiedDate) }}</span>
             </div>
@@ -18,16 +23,16 @@
                 </div>
                 <div class="version-list-main">
                     <div class="version-item text-overflow"
-                        :class="{ 'selected': version.name === selectedVersion.name }"
+                        :class="{ 'selected': version.name === $route.query.version }"
                         v-for="version in filterVersionList"
                         :key="version.name"
                         :title="version.name"
-                        @click="selectedVersion = version">
+                        @click="changeVersion(version)">
                         {{ version.name }}
                     </div>
                 </div>
             </div>
-            <version-detail :current-version="selectedVersion.name" class="version-detail"></version-detail>
+            <version-detail class="version-detail" @refresh="getVersionListHandler"></version-detail>
         </div>
     </div>
 </template>
@@ -53,7 +58,6 @@
                 },
                 versionInput: '',
                 versionList: [],
-                selectedVersion: {},
                 projectId: PROJECT_ID
             }
         },
@@ -81,8 +85,7 @@
             convertFileSize,
             ...mapActions([
                 'getPackageInfo',
-                'getVersionList',
-                'deleteVersion'
+                'getVersionList'
             ]),
             getVersionListHandler () {
                 this.isLoading = true
@@ -94,7 +97,7 @@
                     limit: 1000
                 }).then(({ records }) => {
                     this.versionList = records
-                    this.selectedVersion = this.versionList[0] || {}
+                    this.changeVersion(records[0])
                 }).finally(() => {
                     this.isLoading = false
                 })
@@ -111,50 +114,11 @@
                     this.infoLoading = false
                 })
             },
-            toCommonVersionDetail (row) {
-                this.$router.push({
-                    name: 'commonVersion',
+            changeVersion (version) {
+                this.$router.replace({
                     query: {
-                        name: this.repoName,
-                        package: this.packageKey,
-                        version: row.name
-                    }
-                })
-            },
-            downloadPackageHandler (row) {
-                const url = `/repository/api/version/download/${this.projectId}/${this.repoName}?packageKey=${this.packageKey}&version=${row.name}`
-                this.$ajax.head(url).then(() => {
-                    window.open(
-                        '/web' + url,
-                        '_self'
-                    )
-                }).catch(e => {
-                    this.$bkMessage({
-                        theme: 'error',
-                        message: e.status !== 404 ? e.message : this.$t('fileNotExist')
-                    })
-                })
-            },
-            deleteVersionHandler (row) {
-                this.$bkInfo({
-                    type: 'error',
-                    title: this.$t('deleteVersionTitle'),
-                    subTitle: this.$t('deleteVersionSubTitle'),
-                    showFooter: true,
-                    confirmFn: () => {
-                        this.deleteVersion({
-                            projectId: this.projectId,
-                            repoType: this.repoType,
-                            repoName: this.repoName,
-                            packageKey: this.packageKey,
-                            version: row.name
-                        }).then(() => {
-                            this.getVersionListHandler()
-                            this.$bkMessage({
-                                theme: 'success',
-                                message: this.$t('delete') + this.$t('success')
-                            })
-                        })
+                        ...this.$route.query,
+                        version: version.name
                     }
                 })
             }

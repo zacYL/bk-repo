@@ -8,10 +8,11 @@
                 class="ml10 w220"
                 v-model.trim="adminInput"
                 clearable
-                :placeholder="'账号/中文名'">
+                :placeholder="'账号/中文名'"
+                @change="handlerPaginationChange()">
             </bk-input>
-            <div class="flex-1 flex-end-center">
-                <span class="hover-btn flex-align-center" @click="deleteAdmins()"><i class="devops-icon icon-delete"></i>批量删除</span>
+            <div v-show="deleteAdminList.length" class="flex-1 flex-end-center">
+                <span class="hover-btn flex-align-center" @click="deleteAdmins()"><i class="mr5 devops-icon icon-delete"></i>批量删除</span>
             </div>
         </div>
         <bk-table

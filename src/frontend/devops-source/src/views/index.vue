@@ -1,6 +1,6 @@
 <template>
     <div class="flex-align-center">
-        <ul class="mr20 pt5 devops-source-nav">
+        <ul v-if="userInfo.admin" class="mr20 pt5 devops-source-nav">
             <li v-for="item in nav" :key="item.name">
                 <router-link
                     class="nav-item flex-align-center"
@@ -14,17 +14,17 @@
     </div>
 </template>
 <script>
-    import { mapActions } from 'vuex'
+    import { mapState, mapActions } from 'vuex'
     export default {
         name: 'container',
         data () {
             return {
                 nav: [
-                    {
-                        name: 'overview',
-                        label: '概览',
-                        icon: 'source-overview'
-                    },
+                    // {
+                    //     name: 'overview',
+                    //     label: '概览',
+                    //     icon: 'source-overview'
+                    // },
                     {
                         name: 'manage',
                         label: '仓库管理',
@@ -47,6 +47,9 @@
                     }
                 ]
             }
+        },
+        computed: {
+            ...mapState(['userInfo'])
         },
         created () {
             this.getRepoListAll()

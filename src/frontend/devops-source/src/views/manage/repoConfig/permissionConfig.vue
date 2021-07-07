@@ -1,106 +1,145 @@
 <template>
-    <bk-collapse class="permission-config-container" v-model="activeName" v-bkloading="{ isLoading }">
-        <bk-collapse-item v-for="section in [admin, user, viewer]" :key="section.name" :name="section.name">
-            <header class="section-header">
-                <div class="flex-align-center">
-                    <Icon class="mr10" size="20" :name="section.icon" />
-                    <span>{{ section.title }}</span>
-                    <span class="mr10 permission-actions">（{{ getActions(section.actions.data) }}）</span>
-                    <i v-if="section === user" class="devops-icon icon-edit hover-btn" @click.stop="editActionsDialogHandler(section)"></i>
-                </div>
-            </header>
-            <template #content>
-                <div class="section-main">
-                    <!-- <template v-for="part in ['users', 'roles', ...(section !== admin ? ['departments'] : [])]"> -->
-                    <template v-for="part in ['users', 'roles']">
-                        <header :key="part + 'header'" class="section-sub-title flex-align-center">
-                            <span>{{section[part].title}}</span>
-                            <i class="ml10 devops-icon hover-btn"
-                                :class="section[part].showAddArea ? 'icon-minus-square' : 'icon-plus-square'"
-                                @click="handleShowAddArea(section[part])">
-                            </i>
-                            <div v-show="section[part].showAddArea" :key="part + 'operation'" class="ml15 flex-align-center">
-                                <template v-if="part === 'departments'">
-                                    <bk-select
-                                        style="min-width: 350px"
-                                        searchable
-                                        multiple
-                                        v-model="section[part].addList"
-                                        :remote-method="(keyword) => $refs[`${section.name}Tree`][0].filter(keyword)"
-                                        :display-tag="true"
-                                        :tag-fixed-height="false"
-                                        :show-empty="false"
-                                        @toggle="show => show && initTree($refs[`${section.name}Tree`][0], section[part])"
-                                        @tab-remove="({ id }) => $refs[`${section.name}Tree`][0].setChecked(id, { emitEvent: true, checked: false })"
-                                        @clear="$refs[`${section.name}Tree`][0].removeChecked({ emitEvent: false })">
-                                        <bk-big-tree
-                                            :ref="`${section.name}Tree`"
-                                            show-checkbox
-                                            :check-strictly="false"
-                                            show-link-line
-                                            :lazy-method="(node) => handleDepartmentTreeNode(node, $refs[`${section.name}Tree`][0], section[part])"
-                                            @check-change="ids => changeAddDepartments(section[part], ids)">
-                                        </bk-big-tree>
-                                    </bk-select>
-                                </template>
-                                <template v-else>
-                                    <bk-select
-                                        style="min-width: 250px"
-                                        v-model="section[part].addList"
-                                        multiple
-                                        display-tag
-                                        searchable
-                                        :enable-virtual-scroll="filterSelectOptions(section[part], part).length > 3000"
-                                        :list="filterSelectOptions(section[part], part)">
-                                        <bk-option v-for="option in filterSelectOptions(section[part], part)"
-                                            :key="option.id"
-                                            :id="option.id"
-                                            :name="option.name">
-                                        </bk-option>
-                                    </bk-select>
-                                </template>
-                                <i v-if="section[part].addList.length"
-                                    class="section-sub-add-btn devops-icon icon-check-1"
-                                    @click="() => {
-                                        submit('add', part, section)
-                                    }">
-                                </i>
-                            </div>
-                        </header>
-                        <div :key="part + 'data'" class="section-sub">
-                            <div class="section-sub-main mt10">
-                                <div class="permission-tag" v-for="tag in filterDeleteTagList(section[part])" :key="tag">
-                                    {{ getName(part, tag) }}
-                                    <i class="devops-icon icon-close-circle-shape" @click="handleDeleteTag(tag, part, section)"></i>
-                                </div>
-                            </div>
-                            <!-- <div v-if="section[part].deleteList && section[part].deleteList.length">
-                                <bk-button :loading="section.loading" theme="primary" @click="submit('delete', part, section)">{{$t('save')}}</bk-button>
-                                <bk-button class="ml10" theme="default" @click="cancel(section[part])">{{$t('cancel')}}</bk-button>
-                            </div> -->
-                        </div>
-                    </template>
-                </div>
-            </template>
-        </bk-collapse-item>
+    <div class="permission-config-container" v-bkloading="{ isLoading }">
+        <header class="flex-align-center">
+            <bk-button class="pl5 pr5" :theme="'primary'" @click="addPermissionUnit" icon="plus">
+                {{ $t('add') }}
+            </bk-button>
+            <bk-select
+                class="ml10 w140"
+                v-model="type"
+                :placeholder="$t('type')"
+                @change="handlerPaginationChange()">
+                <bk-option v-for="item in Object.values(typeList)" :key="item.id" :id="item.id" :name="item.name"></bk-option>
+            </bk-select>
+            <bk-input
+                class="ml10 w220"
+                v-model.trim="name"
+                :clearable="true"
+                :placeholder="$t('name')"
+                @change="handlerPaginationChange()">
+            </bk-input>
+            <div class="flex-1 flex-end-center">
+                <span class="hover-btn flex-align-center" @click="deletePermissionUnit()"><i class="mr5 devops-icon icon-delete"></i>批量删除</span>
+            </div>
+        </header>
+        <bk-table
+            class="mt10 permission-table"
+            height="calc(100% - 84px)"
+            :data="filterPermissionUnits"
+            :outer-border="false"
+            :row-border="false"
+            size="small"
+            @selection-change="selectionChange">
+            <bk-table-column type="selection" width="60"></bk-table-column>
+            <bk-table-column :label="$t('type')">
+                <template #default="{ row }">
+                    {{ typeList[row.unitType].name }}
+                </template>
+            </bk-table-column>
+            <bk-table-column :label="$t('name')">
+                <template #default="{ row }">
+                    {{ getUnitName(row) }}
+                </template>
+            </bk-table-column>
+            <bk-table-column label="是否允许推送">
+                <template #default="{ row }">
+                    <div class="flex-align-center">
+                        <bk-switcher class="mr10" :key="row.unitId" v-model="row.allowPush" @change="changePushStatus(row)"></bk-switcher>
+                        <div>{{row.allowPush ? '是' : '否'}}</div>
+                    </div>
+                </template>
+            </bk-table-column>
+            <bk-table-column :label="$t('operation')" width="100">
+                <template #default="{ row }">
+                    <div class="flex-align-center">
+                        <i class="devops-icon icon-delete hover-btn" @click="deletePermissionUnit([row])"></i>
+                    </div>
+                </template>
+            </bk-table-column>
+        </bk-table>
+        <bk-pagination
+            class="mt10"
+            size="small"
+            align="right"
+            show-total-count
+            show-selection-count
+            :selection-count="deleteUnits.length"
+            :current.sync="pagination.current"
+            :limit="pagination.limit"
+            :count="pagination.count"
+            :limit-list="pagination.limitList"
+            @change="current => handlerPaginationChange({ current })"
+            @limit-change="limit => handlerPaginationChange({ limit })">
+        </bk-pagination>
         <bk-dialog
-            v-model="editActionsDialog.show"
-            :title="editActionsDialog.title"
-            width="410"
+            v-model="addDialog.show"
+            title="添加"
+            width="640"
             :close-icon="false"
             :quick-close="false"
             :draggable="false">
-            <bk-checkbox-group v-model="editActionsDialog.actions">
-                <bk-checkbox v-for="action in actionList" :key="action.id" class="m20" :value="action.id">
-                    <span v-bk-tooltips="action.permission">{{ action.name }}</span>
-                </bk-checkbox>
-            </bk-checkbox-group>
+            <bk-form ref="addpermissionForm" :label-width="120">
+                <bk-form-item :label="$t('type')">
+                    <bk-radio-group v-model="addDialog.type" @change="addDialog.list = []">
+                        <bk-radio class="mr20" v-for="item in Object.values(typeList)" :key="item.id" :value="item.id">{{ item.name }}</bk-radio>
+                    </bk-radio-group>
+                </bk-form-item>
+                <template v-if="addDialog.type === 'USER'">
+                    <bk-form-item :label="$t('user')">
+                        <bk-select
+                            v-model="addDialog.list"
+                            multiple
+                            display-tag
+                            searchable
+                            :enable-virtual-scroll="filterUserList.length > 3000"
+                            :list="filterUserList">
+                            <bk-option
+                                v-for="option in filterUserList"
+                                :key="option.id"
+                                :id="option.id"
+                                :name="option.name">
+                            </bk-option>
+                        </bk-select>
+                    </bk-form-item>
+                </template>
+                <template v-else>
+                    <bk-form-item :label="$t('department')">
+                        <bk-select
+                            style="min-width: 350px"
+                            searchable
+                            multiple
+                            v-model="addDialog.list"
+                            :remote-method="(keyword) => $refs.departmentTree.filter(keyword)"
+                            :display-tag="true"
+                            :tag-fixed-height="false"
+                            :show-empty="false"
+                            @toggle="show => show && initTree()"
+                            @tab-remove="({ id }) => $refs.departmentTree.setChecked(id, { emitEvent: true, checked: false })"
+                            @clear="$refs.departmentTree.removeChecked({ emitEvent: false })">
+                            <bk-big-tree
+                                ref="departmentTree"
+                                show-checkbox
+                                :check-strictly="false"
+                                show-link-line
+                                :lazy-method="(node) => handleDepartmentTreeNode(node)"
+                                @check-change="ids => changeAddDepartments(ids)">
+                            </bk-big-tree>
+                        </bk-select>
+                    </bk-form-item>
+                </template>
+                <bk-form-item label="是否允许推送">
+                    <div class="flex-align-center">
+                        <bk-switcher class="mr10" v-model="addDialog.allowPush"></bk-switcher>
+                        <div>{{addDialog.allowPush ? '是' : '否'}}</div>
+                    </div>
+                </bk-form-item>
+            </bk-form>
             <template #footer>
-                <bk-button :loading="editActionsDialog.loading" theme="primary" @click.stop.prevent="handleActionPermission">{{$t('submit')}}</bk-button>
-                <bk-button theme="default" @click.stop="editActionsDialog.show = false">{{$t('cancel')}}</bk-button>
+                <bk-button :loading="addDialog.loading" theme="primary" @click="confirmAdd">{{$t('submit')}}</bk-button>
+                <bk-button theme="default" @click="addDialog.show = false">{{$t('cancel')}}</bk-button>
             </template>
         </bk-dialog>
-    </bk-collapse>
+    </div>
 </template>
 <script>
     import { mapState, mapActions } from 'vuex'
@@ -109,214 +148,144 @@
         data () {
             return {
                 isLoading: false,
-                activeName: ['admin', 'user', 'viewer'],
-                editActionsDialog: {
-                    show: false,
-                    loading: false,
-                    id: '',
-                    name: '',
-                    title: '',
-                    actions: []
-                },
-                admin: {
-                    name: 'admin',
-                    loading: false,
-                    title: this.$t('admin'),
-                    icon: 'perm-controller',
-                    id: '',
-                    actions: {
-                        data: []
+                type: '',
+                typeList: {
+                    USER: {
+                        id: 'USER',
+                        name: '用户'
                     },
-                    users: {
-                        title: this.$t('user'),
-                        showAddArea: false,
-                        data: [],
-                        addList: [],
-                        deleteList: []
-                    },
-                    roles: {
-                        title: this.$t('userGroup'),
-                        showAddArea: false,
-                        data: [],
-                        addList: [],
-                        deleteList: []
-                    },
-                    departments: {
-                        title: this.$t('department'),
-                        showAddArea: false,
-                        data: [],
-                        addList: [],
-                        deleteList: []
+                    DEPARTMENT: {
+                        id: 'DEPARTMENT',
+                        name: '部门'
                     }
                 },
-                user: {
-                    name: 'user',
-                    loading: false,
-                    title: this.$t('users'),
-                    icon: 'perm-user',
-                    id: '',
-                    actions: {
-                        data: []
-                    },
-                    users: {
-                        title: this.$t('user'),
-                        showAddArea: false,
-                        data: [],
-                        addList: [],
-                        deleteList: []
-                    },
-                    roles: {
-                        title: this.$t('userGroup'),
-                        showAddArea: false,
-                        data: [],
-                        addList: [],
-                        deleteList: []
-                    },
-                    departments: {
-                        title: this.$t('department'),
-                        showAddArea: false,
-                        data: [],
-                        addList: [],
-                        deleteList: []
-                    }
+                name: '',
+                permissionUnits: {
+                    user: [],
+                    department: []
                 },
-                viewer: {
-                    name: 'viewer',
-                    loading: false,
-                    title: this.$t('viewer'),
-                    icon: 'perm-viewer',
-                    id: '',
-                    actions: {
-                        data: []
-                    },
-                    users: {
-                        title: this.$t('user'),
-                        showAddArea: false,
-                        data: [],
-                        addList: [],
-                        deleteList: []
-                    },
-                    roles: {
-                        title: this.$t('userGroup'),
-                        showAddArea: false,
-                        data: [],
-                        addList: [],
-                        deleteList: []
-                    },
-                    departments: {
-                        title: this.$t('department'),
-                        showAddArea: false,
-                        data: [],
-                        addList: [],
-                        deleteList: []
-                    }
-                },
-                roleList: {},
-                flatDepartment: {},
                 departmentTree: [],
-                actionList: [
-                    { id: 'MANAGE', name: '管理', permission: '更新仓库配置，设置仓库权限' },
-                    { id: 'READ', name: '查看', permission: '查看所有页面内容，下载' },
-                    { id: 'WRITE', name: '修改', permission: '其他三种权限（查看、管理、删除）之外的所有操作' },
-                    { id: 'DELETE', name: '删除', permission: '删除仓库' }
-                ]
+                departmentMap: {},
+                pagination: {
+                    count: 0,
+                    current: 1,
+                    limit: 20,
+                    selectionCount: 0,
+                    limitList: [10, 20, 40]
+                },
+                addDialog: {
+                    loading: false,
+                    show: false,
+                    type: 'USER',
+                    allowPush: false,
+                    list: []
+                },
+                deleteUnits: []
             }
         },
         computed: {
-            ...mapState(['userInfo', 'userList']),
+            ...mapState(['userList']),
             repoName () {
                 return this.$route.params.repoName
             },
-            getName () {
-                return (part, tag) => {
-                    const map = {
-                        users: this.userList,
-                        roles: this.roleList,
-                        departments: this.flatDepartment
-                    }[part]
-                    return map[tag] ? map[tag].name : tag
-                }
+            filterPermissionUnits () {
+                const { current, limit } = this.pagination
+                return [...this.permissionUnits.department, ...this.permissionUnits.user].filter(unit => {
+                    const unitName = this.getUnitName(unit)
+                    return (!this.type || unit.unitType === this.type) && ~unitName.indexOf(this.name)
+                }).slice((current - 1) * limit, current * limit)
             },
-            getActions () {
-                return (actions) => {
-                    return actions.map(v => (this.actionList.find(w => w.id === v) || {}).name).filter(Boolean).join('，')
-                }
-            },
-            filterDeleteTagList () {
-                return (target) => {
-                    return target.data.filter(v => !target.deleteList.find(w => w === v))
-                }
-            },
-            filterSelectOptions () {
-                return (target, part) => {
-                    const list = Object.values({ users: this.userList, roles: this.roleList }[part])
-                    return list.filter(v => !target.data.find(w => w === v.id))
-                }
+            filterUserList () {
+                return Object.values(this.userList).filter(user => {
+                    return !~this.permissionUnits.user.findIndex(unit => unit.unitId === user.id)
+                })
             }
         },
         created () {
-            this.getRepoRoleList({
-                repoName: this.repoName
-            }).then(res => {
-                this.roleList = res.reduce((target, item) => {
-                    target[item.id] = item
-                    return target
-                }, {})
-            })
+            this.handleGetPermissionUnits()
             // 根节点
-            this.getRepoDepartmentList({
-                username: this.userInfo.username
-            }).then(res => {
-                this.handleFlatDepartment(res)
+            this.getRepoDepartmentList({}).then(res => {
+                res.forEach(department => {
+                    this.$set(this.departmentMap, department.id, department)
+                })
                 this.departmentTree = res.map(v => ({ ...v, has_children: true }))
             })
-            this.handlePermissionDetail()
         },
         methods: {
             ...mapActions([
-                'getPermissionDetail',
-                'getRepoRoleList',
-                'getRepoDepartmentList',
-                'setUserPermission',
-                'setRolePermission',
-                'setDepartmentPermission',
-                'setActionPermission',
-                'getRepoDepartmentDetail'
+                'getPermissionUnits',
+                'addPermissionUnits',
+                'editPermissionUnits',
+                'deletePermissionUnits',
+                'getRepoDepartmentDetail',
+                'getRepoDepartmentList'
             ]),
-            handleShowAddArea (target) {
-                target.showAddArea = !target.showAddArea
+            getUnitName ({ unitType, unitId }) {
+                return unitType === 'USER'
+                    ? (this.userList[unitId] ? this.userList[unitId].name : unitId)
+                    : (this.departmentMap[unitId] ? this.departmentMap[unitId].name : unitId)
             },
-            handleDeleteTag (tag, part, section) {
-                section[part].deleteList.push(tag)
-                this.submit('delete', part, section)
+            handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
+                this.pagination.current = current
+                this.pagination.limit = limit
             },
-            initTree (treeTarget, { data: disabled = [], addList: add = [] } = {}) {
+            handleGetPermissionUnits () {
+                this.isLoading = true
+                this.getPermissionUnits({
+                    repoName: this.repoName
+                }).then(({ user, department }) => {
+                    this.permissionUnits = {
+                        user,
+                        department
+                    }
+                    this.pagination.count = user.length + department.length
+                    this.handleGetDepartmentDetail(department.map(v => v.unitId))
+                }).finally(() => {
+                    this.isLoading = false
+                })
+            },
+            handleGetDepartmentDetail (departmentIds) {
+                const body = departmentIds.filter(id => !this.departmentMap[id])
+                body.length && this.getRepoDepartmentDetail({
+                    body
+                }).then(list => {
+                    list.forEach(department => {
+                        this.$set(this.departmentMap, department.id, department)
+                    })
+                })
+            },
+            addPermissionUnit () {
+                this.addDialog = {
+                    loading: false,
+                    show: true,
+                    type: 'USER',
+                    allowPush: false,
+                    list: []
+                }
+            },
+            initTree () {
+                const treeTarget = this.$refs.departmentTree
                 treeTarget.setData(this.departmentTree)
-                disabled.forEach(id => {
+                this.permissionUnits.department.forEach(({ unitId: id }) => {
                     treeTarget.setChecked(id)
                     treeTarget.setDisabled(id)
                 })
-                add.forEach(id => {
+                this.addDialog.list.forEach(id => {
                     treeTarget.setChecked(id)
                 })
             },
-            changeAddDepartments (treeTarget, ids) {
-                treeTarget.addList = ids.filter(id => !treeTarget.data.find(exist => id === exist))
-            },
-            handleFlatDepartment (departments) {
-                departments.forEach(v => {
-                    this.$set(this.flatDepartment, v.id, v)
-                })
-            },
-            async handleDepartmentTreeNode (node, root, data) {
+            async handleDepartmentTreeNode (node) {
                 // 叶节点
                 if (!node.data.has_children) return ({ data: [], leaf: [] })
                 // 枝节点
                 const res = await this.getRepoDepartmentList({
-                    username: this.userInfo.username,
                     departmentId: node.id
                 })
-                this.handleFlatDepartment(res)
+                
+                res.forEach(department => {
+                    this.$set(this.departmentMap, department.id, department)
+                })
+
                 this.$nextTick(() => {
                     let target = this.departmentTree
                     node.parents.forEach(parent => {
@@ -324,9 +293,9 @@
                     })
                     target = target.find(v => v.id === node.id)
                     target.children = res
-                    if (root) {
-                        this.initTree(root, data)
-                        root.setExpanded([node.id])
+                    if (this.$refs.departmentTree) {
+                        this.initTree()
+                        this.$refs.departmentTree.setExpanded([node.id])
                     }
                 })
                 return {
@@ -334,95 +303,68 @@
                     leaf: res.filter(v => !v.has_children).map(w => w.id)
                 }
             },
-            handlePermissionDetail (target, origin, id) {
+            changeAddDepartments (ids) {
+                this.addDialog.list = ids.filter(id => !this.permissionUnits.department.find(exist => id === exist.unitId))
+            },
+            confirmAdd () {
+                if (!this.addDialog.list.length) {
+                    this.addDialog.show = false
+                }
+
+                this.addDialog.loading = true
+                this.addPermissionUnits({
+                    repoName: this.repoName,
+                    unitType: this.addDialog.type,
+                    push: this.addDialog.allowPush,
+                    body: this.addDialog.list
+                }).then(() => {
+                    this.addDialog.show = false
+                    this.handleGetPermissionUnits()
+                    this.handlerPaginationChange()
+                    this.$bkMessage({
+                        theme: 'success',
+                        message: this.$t('add') + this.$t('success')
+                    })
+                }).finally(() => {
+                    this.addDialog.loading = false
+                })
+            },
+            changePushStatus ({ unitType, unitId, allowPush }) {
+                this.editPermissionUnits({
+                    repoName: this.repoName,
+                    unitType,
+                    push: allowPush,
+                    body: [unitId]
+                }).then(() => {
+                    this.$bkMessage({
+                        theme: 'success',
+                        message: this.$t('edit') + this.$t('success')
+                    })
+                }).catch(err => {
+                    this.handleGetPermissionUnits()
+                    Promise.reject(err)
+                })
+            },
+            selectionChange (rows) {
+                this.deleteUnits = rows
+            },
+            deletePermissionUnit (list = this.deleteUnits) {
                 this.isLoading = true
-                return this.getPermissionDetail({
-                    repoName: this.repoName
-                }).then(res => {
-                    if (target && origin && id) {
-                        this[origin][target].data = res.find(v => v.id === id)[target]
-                    } else {
-                        let departments = []
-                        res.forEach(part => {
-                            const perm = this[part.permName.replace(/^.*_([^_]+)$/, '$1')]
-                            perm.id = part.id
-                            perm.users.data = part.users
-                            perm.roles.data = part.roles
-                            perm.departments.data = part.departments
-                            perm.actions.data = part.actions
-                            departments = departments.concat(part.departments)
-                        })
-                        departments = Array.from(new Set(departments)).filter(v => !this.flatDepartment.hasOwnProperty(v))
-                        departments.length && this.getRepoDepartmentDetail({ body: departments }).then(this.handleFlatDepartment)
-                    }
+                this.deletePermissionUnits({
+                    repoName: this.repoName,
+                    body: list.reduce((target, unit) => {
+                        target[unit.unitType.toLowerCase()].push(unit.unitId)
+                        return target
+                    }, { user: [], department: [] })
+                }).then(() => {
+                    this.handleGetPermissionUnits()
+                    this.handlerPaginationChange()
+                    this.$bkMessage({
+                        theme: 'success',
+                        message: this.$t('delete') + this.$t('success')
+                    })
                 }).finally(() => {
                     this.isLoading = false
-                })
-            },
-            submit (type, part, section) {
-                if (section.loading) return
-                section.loading = true
-                const fn = {
-                    users: this.setUserPermission,
-                    roles: this.setRolePermission,
-                    departments: this.setDepartmentPermission
-                }[part]
-                const key = {
-                    users: 'userId',
-                    roles: 'rId',
-                    departments: 'departmentId'
-                }[part]
-                const value = {
-                    add: [...section[part].data, ...section[part].addList],
-                    delete: section[part].data.filter(v => !section[part].deleteList.find(w => w === v))
-                }[type]
-                fn({
-                    body: {
-                        permissionId: section.id,
-                        [key]: value
-                    }
-                }).then(res => {
-                    this.$bkMessage({
-                        theme: 'success',
-                        message: (type === 'add' ? this.$t('add') : this.$t('delete')) + this.$t('success')
-                    })
-                    this.handlePermissionDetail(part, section.name, section.id).then(() => {
-                        section[part][`${type}List`] = []
-                    })
-                }).finally(() => {
-                    section.loading = false
-                })
-            },
-            cancel (target) {
-                target.deleteList = []
-            },
-            editActionsDialogHandler (data) {
-                this.editActionsDialog = {
-                    show: true,
-                    loading: false,
-                    id: data.id,
-                    name: data.name,
-                    title: data.title + '权限配置',
-                    actions: JSON.parse(JSON.stringify(data.actions.data))
-                }
-            },
-            handleActionPermission () {
-                if (this.editActionsDialog.loading) return
-                this.editActionsDialog.loading = true
-                this.setActionPermission({
-                    body: {
-                        permissionId: this.editActionsDialog.id,
-                        actions: this.editActionsDialog.actions
-                    }
-                }).then(res => {
-                    this.$bkMessage({
-                        theme: 'success',
-                        message: this.$t('save') + this.$t('success')
-                    })
-                    this.editActionsDialog.show = false
-                    this.handlePermissionDetail('actions', this.editActionsDialog.name, this.editActionsDialog.id)
-                }).finally(() => {
-                    this.editActionsDialog.loading = false
                 })
             }
         }
@@ -431,87 +373,10 @@
 <style lang="scss" scoped>
 @import '@/scss/conf';
 .permission-config-container {
-    /deep/ .bk-collapse-item {
-        margin-bottom: 20px;
-        .bk-collapse-item-detail {
-            color: inherit;
-        }
-        .bk-collapse-item-header {
-            position: relative;
-            height: 42px;
-            line-height: 40px;
-            .icon-angle-right {
-                padding: 0 15px;
-            }
-        }
-    }
-    .section-header {
-        padding-left: 10px;
-        color: $fontBoldColor;
-        background-color: #f2f2f2;
-        border: 1px solid #d5d5d5;
-        font-size: 14px;
-        font-weight: normal;
-        .icon-edit {
+    height: 100%;
+    .permission-table {
+        .devops-icon {
             font-size: 14px;
-        }
-        .permission-actions {
-            font-size: 12px;
-            color: $fontColor;
-        }
-    }
-    .section-main {
-        padding: 10px;
-        border: solid #d5d5d5;
-        border-width: 0 1px 1px;
-        /deep/ .bk-select-empty {
-            display: none;
-        }
-        .section-sub-title {
-            height: 52px;
-            padding: 10px;
-            border-bottom: 1px solid #d5d5d5;
-            > :first-child {
-                flex-basis: 45px;
-            }
-            .section-sub-add-btn {
-                position: relative;
-                z-index: 1;
-                padding: 9px;
-                color: white;
-                margin-left: -2px;
-                border-radius: 0 2px 2px 0;
-                background-color: #3a84ff;
-                cursor: pointer;
-                &:hover {
-                    background-color: #699df4;
-                }
-            }
-        }
-        .section-sub {
-            margin-bottom: 20px;
-            .section-sub-main {
-                display: flex;
-                flex-wrap: wrap;
-                .permission-tag {
-                    position: relative;
-                    margin-right: 15px;
-                    margin-bottom: 10px;
-                    padding: 7px 20px;
-                    background-color: #f2f2f2;
-                    .icon-close-circle-shape {
-                        display: none;
-                        position: absolute;
-                        top: -5px;
-                        right: -5px;
-                        color: $fontFail;
-                        cursor: pointer;
-                    }
-                    &:hover .icon-close-circle-shape {
-                        display: block;
-                    }
-                }
-            }
         }
     }
 }

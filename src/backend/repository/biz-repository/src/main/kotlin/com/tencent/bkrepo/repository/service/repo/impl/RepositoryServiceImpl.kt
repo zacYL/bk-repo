@@ -39,15 +39,18 @@ import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.DefaultArtifactInfo
 import com.tencent.bkrepo.common.artifact.constant.PRIVATE_PROXY_REPO_NAME
+import com.tencent.bkrepo.common.artifact.constant.PUBLIC_PROXY_PROJECT
+import com.tencent.bkrepo.common.artifact.constant.PUBLIC_PROXY_REPO_NAME
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode.REPOSITORY_NOT_FOUND
 import com.tencent.bkrepo.common.artifact.path.PathUtils.ROOT
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.pojo.configuration.RepositoryConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.composite.CompositeConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.composite.ProxyChannelSetting
 import com.tencent.bkrepo.common.artifact.pojo.configuration.local.LocalConfiguration
-import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
+import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.*
 import com.tencent.bkrepo.common.artifact.pojo.configuration.virtual.VirtualConfiguration
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
@@ -59,6 +62,7 @@ import com.tencent.bkrepo.repository.listener.event.repo.RepoCreatedEvent
 import com.tencent.bkrepo.repository.listener.event.repo.RepoDeletedEvent
 import com.tencent.bkrepo.repository.listener.event.repo.RepoUpdatedEvent
 import com.tencent.bkrepo.repository.model.TRepository
+import com.tencent.bkrepo.repository.pojo.project.ProjectCreateRequest
 import com.tencent.bkrepo.repository.pojo.project.RepoRangeQueryRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoDeleteRequest
@@ -330,6 +334,31 @@ class RepositoryServiceImpl(
                     proxyChannelService.checkExistById(it.channelId!!, repository.type),
                     "channelId"
                 )
+                //创建公有源代理项目
+                if (!projectService.checkExist(PUBLIC_PROXY_PROJECT)) {
+                    projectService.createProject(
+                        ProjectCreateRequest(
+                            name = PUBLIC_PROXY_PROJECT,
+                            displayName = PUBLIC_PROXY_PROJECT,
+                            description = PUBLIC_PROXY_PROJECT
+                        )
+                    )
+                }
+                val proxyRepoName = PUBLIC_PROXY_REPO_NAME.format(repository.type, it.name)
+                if (!checkExist(PUBLIC_PROXY_PROJECT, proxyRepoName)) {
+                    createRepo(
+                        RepoCreateRequest(
+                            projectId = PUBLIC_PROXY_PROJECT,
+                            name = proxyRepoName,
+                            type = repository.type,
+                            category = RepositoryCategory.REMOTE,
+                            public = true,
+                            configuration = RemoteConfiguration(
+                                url = it.url!!
+                            )
+                        )
+                    )
+                }
             } else {
                 Preconditions.checkNotBlank(it.name, "name")
                 Preconditions.checkNotBlank(it.url, "url")

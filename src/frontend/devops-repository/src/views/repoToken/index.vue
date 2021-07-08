@@ -91,7 +91,8 @@
             },
             deleteTokenHandler (row) {
                 this.$bkInfo({
-                    type: 'error',
+                    type: 'warning',
+                    theme: 'warning',
                     title: this.$t('deleteTokenTitle'),
                     showFooter: true,
                     confirmFn: () => {

@@ -636,9 +636,10 @@
             },
             async deleteRes () {
                 this.$bkInfo({
+                    type: 'warning',
+                    theme: 'warning',
                     title: `${this.$t('confirm') + this.$t('delete')}${this.selectedRow.folder ? this.$t('folder') : this.$t('file')}？`,
                     closeIcon: false,
-                    theme: 'danger',
                     confirmFn: () => {
                         this.deleteArtifactory({
                             projectId: this.projectId,

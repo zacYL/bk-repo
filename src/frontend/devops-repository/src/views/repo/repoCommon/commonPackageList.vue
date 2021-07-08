@@ -99,7 +99,8 @@
             },
             deletePackageHandler (pkg) {
                 this.$bkInfo({
-                    type: 'error',
+                    type: 'warning',
+                    theme: 'warning',
                     title: this.$t('deletePackageTitle'),
                     subTitle: this.$t('deletePackageSubTitle'),
                     showFooter: true,

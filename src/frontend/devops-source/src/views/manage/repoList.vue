@@ -149,7 +149,8 @@
             },
             deleteRepo ({ name }) {
                 this.$bkInfo({
-                    type: 'error',
+                    type: 'warning',
+                    theme: 'warning',
                     title: this.$t('deleteRepoTitle'),
                     subTitle: this.$t('deleteRepoSubTitle'),
                     showFooter: true,

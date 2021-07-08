@@ -180,7 +180,8 @@
             deleteRepo ({ hasPermission, name }) {
                 if (!hasPermission) return
                 this.$bkInfo({
-                    type: 'error',
+                    type: 'warning',
+                    theme: 'warning',
                     title: this.$t('deleteRepoTitle'),
                     subTitle: this.$t('deleteRepoSubTitle'),
                     showFooter: true,

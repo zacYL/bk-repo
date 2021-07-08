@@ -18,7 +18,7 @@
                 :placeholder="$t('name')"
                 @change="handlerPaginationChange()">
             </bk-input>
-            <div class="flex-1 flex-end-center">
+            <div v-if="deleteUnits.length" class="flex-1 flex-end-center">
                 <span class="hover-btn flex-align-center" @click="deletePermissionUnit()"><i class="mr5 devops-icon icon-delete"></i>批量删除</span>
             </div>
         </header>

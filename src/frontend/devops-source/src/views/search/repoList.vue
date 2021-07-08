@@ -48,7 +48,7 @@
                 </bk-table-column>
                 <bk-table-column label="仓库权限" width="250">
                     <template #default="{ row }">
-                        {{ { 'WRITE': '可上传', 'READ': '可下载' }[row.permission] }}
+                        {{ { 'WRITE': '可推送', 'READ': '可下载' }[row.permission] }}
                     </template>
                 </bk-table-column>
                 <bk-table-column label="制品/文件数" prop="artifacts" width="150"></bk-table-column>

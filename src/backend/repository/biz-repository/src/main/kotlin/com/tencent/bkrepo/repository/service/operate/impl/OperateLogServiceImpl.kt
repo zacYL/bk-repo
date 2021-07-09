@@ -46,14 +46,18 @@ class OperateLogServiceImpl(
 
         operator?.let { criteria.and(TOperateLog::userId.name).`is`(operator) }
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSz")
-        startTime?.let {
-            val localDateTime = LocalDateTime.parse(it, formatter)
-            criteria.and(TOperateLog::createdDate.name).gte(localDateTime)
+        if (startTime != null && endTime != null) {
+            val localStart = LocalDateTime.parse(startTime, formatter)
+            val localEnd = LocalDateTime.parse(endTime, formatter)
+            criteria.and(TOperateLog::createdDate.name).gte(localStart).lte(localEnd)
         }
-
-        endTime?.let {
-            val localDateTime = LocalDateTime.parse(it, formatter)
-            criteria.and(TOperateLog::createdDate.name).lte(localDateTime)
+        if (startTime != null && endTime == null) {
+            val localStart = LocalDateTime.parse(startTime, formatter)
+            criteria.and(TOperateLog::createdDate.name).gte(localStart)
+        }
+        if (startTime == null && endTime != null) {
+            val localEnd = LocalDateTime.parse(endTime, formatter)
+            criteria.and(TOperateLog::createdDate.name).lte(localEnd)
         }
 
         val pageRequest = Pages.ofRequest(pageNumber, pageSize)

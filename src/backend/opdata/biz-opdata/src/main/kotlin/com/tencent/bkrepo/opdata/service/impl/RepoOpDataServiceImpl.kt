@@ -1,7 +1,13 @@
 package com.tencent.bkrepo.opdata.service.impl
 
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
-import com.tencent.bkrepo.opdata.pojo.*
+import com.tencent.bkrepo.opdata.pojo.RepoTypeSum
+import com.tencent.bkrepo.opdata.pojo.RepoTypeData
+import com.tencent.bkrepo.opdata.pojo.RepoTypeValue
+import com.tencent.bkrepo.opdata.pojo.RepoCapacityDetail
+import com.tencent.bkrepo.opdata.pojo.SortType
+import com.tencent.bkrepo.opdata.pojo.RepoCapacityList
+import com.tencent.bkrepo.opdata.pojo.ArtifactMetricsData
 import com.tencent.bkrepo.opdata.service.RepoOpDataService
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.PackageClient
@@ -9,7 +15,7 @@ import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.metric.PackageDetail
 import org.springframework.stereotype.Service
-import java.lang.StringBuilder
+import java.text.DecimalFormat
 
 @Service
 class RepoOpDataServiceImpl(
@@ -34,12 +40,15 @@ class RepoOpDataServiceImpl(
                     repoTypeSum.num += 1
                 }
             }
+            val decimalFormat = DecimalFormat("##.00%")
+
             for (type in map.entries) {
-                val temp = "000${((type.value.num * 10000) / repoSum)}"
-                val percent = temp.substring(temp.length - 4, temp.length).let {
-                    StringBuilder(it).insert(2, ".").toString()
-                }.removePrefix("0")
-                type.value.percent = "$percent%"
+//                val temp = "000${((type.value.num * 10000) / repoSum)}"
+//                val percent = temp.substring(temp.length - 4, temp.length).let {
+//                    StringBuilder(it).insert(2, ".").toString()
+//                }.removePrefix("0")
+//                type.value.percent = "$percent%"
+                type.value.percent = decimalFormat.format((type.value.num * 1.0) / (repoSum * 1.0))
                 set.add(
                     RepoTypeData(
                         type = type.key,
@@ -56,8 +65,7 @@ class RepoOpDataServiceImpl(
         val repos = repositoryClient.allRepos(projectId, repoName).data ?: return RepoCapacityList(0, null)
         val repoCapacityList = mutableListOf<RepoCapacityDetail>()
         for (repo in repos) {
-            repo ?: continue
-            if (repo.type == RepositoryType.GENERIC) continue
+            if (repo == null || repo.type == RepositoryType.GENERIC) continue
             val capacity = nodeClient.capacity(repo.projectId, repo.name).data ?: 0L
             repoCapacityList.add(
                 RepoCapacityDetail(
@@ -72,7 +80,8 @@ class RepoOpDataServiceImpl(
             SortType.USED -> repoCapacityList.sortByDescending { it.used }
             SortType.RESIDUAL -> repoCapacityList.sortBy { (it.limit.minus(it.used)) }
         }
-        repoCapacityList.subList(0, limit)
+        val targetLimit = if (limit >= repoCapacityList.size) repoCapacityList.size else limit
+        repoCapacityList.subList(0, targetLimit)
         return RepoCapacityList(
             count = count,
             repos = repoCapacityList

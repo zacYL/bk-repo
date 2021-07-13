@@ -58,7 +58,7 @@ open class PermissionManager(
     private val httpAuthProperties: HttpAuthProperties
 ) {
 
-    private val permissionList = arrayOf(PermissionAction.WRITE, PermissionAction.READ)
+    private val permissionList = arrayOf(PermissionAction.ARTIFACT_READWRITE, PermissionAction.ARTIFACT_READ)
 
     /**
      * 校验项目权限

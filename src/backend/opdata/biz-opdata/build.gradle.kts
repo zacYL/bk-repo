@@ -34,5 +34,6 @@ dependencies {
     api(project(":common:common-job"))
     api(project(":common:common-artifact:artifact-service"))
     api(project(":common:common-mongo"))
+    api(project(":common:common-redis"))
     implementation("org.influxdb:influxdb-java")
 }

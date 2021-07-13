@@ -31,7 +31,6 @@
 
 package com.tencent.bkrepo.auth.pojo.enums
 
-@Deprecated("")
 enum class ResourceType {
     SYSTEM,
     PROJECT,

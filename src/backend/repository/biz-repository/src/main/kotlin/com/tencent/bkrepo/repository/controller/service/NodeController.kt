@@ -49,6 +49,8 @@ import com.tencent.bkrepo.repository.pojo.node.service.NodeRenameRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeUpdateRequest
 import com.tencent.bkrepo.repository.service.node.NodeSearchService
 import com.tencent.bkrepo.repository.service.node.NodeService
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.web.bind.annotation.RestController
 
 /**
@@ -208,5 +210,9 @@ class NodeController(
             nodeService.capacity(projectId, repoName)
         }
         return ResponseBuilder.success(count)
+    }
+
+    companion object {
+        private val logger: Logger = LoggerFactory.getLogger(NodeController::class.java)
     }
 }

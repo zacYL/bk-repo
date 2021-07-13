@@ -1,6 +1,7 @@
 package com.tencent.bkrepo.opdata.controller
 
 import DEFAULT_PROJECT
+import TIMEOUT_LIMIT
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.opdata.pojo.RepoTypeSum
@@ -13,10 +14,12 @@ import com.tencent.bkrepo.repository.api.PackageClient
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
+import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import java.util.concurrent.TimeUnit
 
 @Api("op信息接口")
 @RestController
@@ -24,7 +27,8 @@ import org.springframework.web.bind.annotation.RestController
 class RepoOpDataController(
     private val packageClient: PackageClient,
     private val nodeClient: NodeClient,
-    private val repoOpDataService: RepoOpDataService
+    private val repoOpDataService: RepoOpDataService,
+    private val redisTemplate: RedisTemplate<String, Any>
 ) {
 
     @ApiOperation("制品数量")
@@ -55,7 +59,13 @@ class RepoOpDataController(
         @ApiParam("仓库名，可为空", required = false)
         @RequestParam repoName: String?
     ): Response<Long> {
-        return nodeClient.capacity(projectId, repoName)
+        val valueOperations = redisTemplate.opsForValue()
+        var capacity: Long? = (valueOperations.get("capacity") as Int?)?.toLong()
+        if (capacity == null) {
+            capacity = nodeClient.capacity(projectId, repoName).data!!
+            valueOperations.set("capacity", capacity, TIMEOUT_LIMIT, TimeUnit.MINUTES)
+        }
+        return ResponseBuilder.success(capacity)
     }
 
     @ApiOperation("符合条件仓库容量排行")
@@ -73,11 +83,11 @@ class RepoOpDataController(
         return ResponseBuilder.success(repoOpDataService.repoCapacity(projectId, repoName, limit, sort))
     }
 
-    //todo 访问数
-    //todo 本周访问数
+    // todo 访问数
+    // todo 本周访问数
 
-    //todo 上传数
-    //todo 本周上传数
+    // todo 上传数
+    // todo 本周上传数
 
     @ApiOperation("下载总量")
     @GetMapping("/package/downs")
@@ -90,14 +100,13 @@ class RepoOpDataController(
         return ResponseBuilder.success(repoOpDataService.downSum(projectId, repoName))
     }
 
-    //todo 本自然周下载量
+    // todo 本自然周下载量
 
-    //todo 下载趋势
+    // todo 下载趋势
 
-    //todo 上传趋势
+    // todo 上传趋势
 
-    //todo 访问趋势
-
+    // todo 访问趋势
 
     @ApiOperation("仓库类型分布")
     @GetMapping("/repotype")
@@ -119,5 +128,4 @@ class RepoOpDataController(
         val list = repoOpDataService.sortByDownload(projectId, repoName)
         return ResponseBuilder.success(ArtifactDownload(list))
     }
-
 }

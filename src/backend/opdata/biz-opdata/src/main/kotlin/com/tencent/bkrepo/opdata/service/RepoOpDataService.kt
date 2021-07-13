@@ -15,5 +15,4 @@ interface RepoOpDataService {
     fun sortByDownload(projectId: String?, repoName: String?): List<ArtifactMetricsData>
 
     fun downSum(projectId: String?, repoName: String?): Long
-
 }

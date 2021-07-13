@@ -41,5 +41,9 @@ abstract class MetadataEvent(
 ) : IEvent(operator) {
     override fun getResourceType() = ResourceType.METADATA
     override fun getResourceKey() = "/${nodeRequest.projectId}/${nodeRequest.repoName}${nodeRequest.fullPath}"
-    override fun getRequest() = mapOf("request" to nodeRequest)
+    override fun getRequest() = mapOf(
+        "projectId" to nodeRequest.projectId,
+        "repoName" to nodeRequest.repoName,
+        "request" to nodeRequest
+    )
 }

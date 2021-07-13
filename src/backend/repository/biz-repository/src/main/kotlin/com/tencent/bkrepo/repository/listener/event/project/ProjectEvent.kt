@@ -41,5 +41,8 @@ abstract class ProjectEvent(
 ) : IEvent(operator) {
     override fun getResourceType() = ResourceType.PROJECT
     override fun getResourceKey() = projectRequest.name
-    override fun getRequest() = mapOf("request" to projectRequest)
+    override fun getRequest() = mapOf(
+        "projectId" to projectRequest.name,
+        "request" to projectRequest
+    )
 }

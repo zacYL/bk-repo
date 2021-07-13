@@ -43,5 +43,10 @@ abstract class RepoEvent(
 ) : IEvent(operator) {
     override fun getResourceType() = ResourceType.REPOSITORY
     override fun getResourceKey() = "/${repoRequest.projectId}/${repoRequest.name}"
-    override fun getRequest(): Map<String, Any> = mapOf("request" to repoRequest, "repoType" to repoType!!)
+    override fun getRequest(): Map<String, Any> = mapOf(
+        "projectId" to repoRequest.projectId,
+        "repoName" to repoRequest.name,
+        "repoType" to repoType!!,
+        "request" to repoRequest
+    )
 }

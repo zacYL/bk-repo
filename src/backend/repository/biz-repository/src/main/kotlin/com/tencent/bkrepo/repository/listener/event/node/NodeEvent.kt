@@ -44,6 +44,7 @@ abstract class NodeEvent(
     override fun getResourceKey() = "/${nodeRequest.projectId}/${nodeRequest.repoName}${nodeRequest.fullPath}"
     override fun getRequest() = mapOf(
         "projectId" to nodeRequest.projectId,
-        "repoName" to nodeRequest.repoName, "request" to nodeRequest.toJsonString()
+        "repoName" to nodeRequest.repoName,
+        "request" to nodeRequest.toJsonString()
     )
 }

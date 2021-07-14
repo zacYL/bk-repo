@@ -62,6 +62,8 @@ import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
+import com.tencent.bkrepo.common.security.exception.AuthenticationException
+import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.security.http.jwt.JwtAuthProperties
 import com.tencent.bkrepo.common.security.util.JwtUtils
 import com.tencent.bkrepo.common.security.util.SecurityUtils
@@ -71,6 +73,7 @@ import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publi
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.RestController
+
 import javax.servlet.http.Cookie
 
 @RestController
@@ -277,12 +280,14 @@ class ServiceUserResourceImpl @Autowired constructor(
     }
 
     override fun batchAdmin(admin: Boolean, list: List<String>): Response<Boolean> {
+        val operator = HttpContextHolder.getRequest().getAttribute(USER_KEY) as? String ?: ANONYMOUS_USER
+        val userInfo = userService.getUserById(operator) ?: throw AuthenticationException()
+        if (!userInfo.admin) throw PermissionException()
         val successId = mutableSetOf<String>()
         for (uid in list) {
             userService.updateUserById(uid, UpdateUserRequest(admin = admin))
             successId.add(uid)
         }
-        val operator = HttpContextHolder.getRequest().getAttribute(USER_KEY) as? String ?: ANONYMOUS_USER
         if (admin) {
             publishEvent(AdminAddEvent(successId.toList(), operator))
         } else {

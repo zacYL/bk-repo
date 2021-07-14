@@ -348,8 +348,7 @@ class UserServiceImpl constructor(
         pageNumber: Int,
         pageSize: Int,
         user: String?,
-        admin:
-        Boolean?,
+        admin: Boolean?,
         locked: Boolean?
     ): Page<UserInfo> {
         val criteria = Criteria()

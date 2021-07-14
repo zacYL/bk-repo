@@ -43,6 +43,7 @@ import com.tencent.bkrepo.common.api.constant.HttpStatus
 import com.tencent.bkrepo.common.api.constant.PLATFORM_KEY
 import com.tencent.bkrepo.common.api.constant.StringPool.COLON
 import com.tencent.bkrepo.common.api.constant.USER_KEY
+import com.tencent.bkrepo.common.security.constant.AUTH_HEADER_UID
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.servlet.HandlerInterceptor
@@ -88,6 +89,9 @@ class AuthInterceptor : HandlerInterceptor {
                 logger.warn("find no account [$parts[0]]")
                 throw IllegalArgumentException("check credential fail")
             }
+            val userId = request.getHeader(AUTH_HEADER_UID)
+            logger.info("userId : $userId")
+            request.setAttribute(USER_KEY, userId)
             request.setAttribute(PLATFORM_KEY, appId)
             return true
         } catch (e: IllegalArgumentException) {

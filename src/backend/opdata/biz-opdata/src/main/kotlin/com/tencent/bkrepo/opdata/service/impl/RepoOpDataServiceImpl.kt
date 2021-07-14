@@ -8,12 +8,13 @@ import com.tencent.bkrepo.opdata.pojo.RepoCapacityDetail
 import com.tencent.bkrepo.opdata.pojo.SortType
 import com.tencent.bkrepo.opdata.pojo.RepoCapacityList
 import com.tencent.bkrepo.opdata.pojo.ArtifactMetricsData
+import com.tencent.bkrepo.opdata.pojo.response.RepoCapacityData
+import com.tencent.bkrepo.opdata.pojo.response.RepoVisitData
 import com.tencent.bkrepo.opdata.service.RepoOpDataService
-import com.tencent.bkrepo.repository.api.NodeClient
-import com.tencent.bkrepo.repository.api.PackageClient
-import com.tencent.bkrepo.repository.api.ProjectClient
-import com.tencent.bkrepo.repository.api.RepositoryClient
+import com.tencent.bkrepo.repository.api.*
 import com.tencent.bkrepo.repository.pojo.metric.PackageDetail
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.text.DecimalFormat
 
@@ -22,7 +23,8 @@ class RepoOpDataServiceImpl(
     private val repositoryClient: RepositoryClient,
     private val nodeClient: NodeClient,
     private val projectClient: ProjectClient,
-    private val packageClient: PackageClient
+    private val packageClient: PackageClient,
+    private val operateLogClient: OperateLogClient
 ) : RepoOpDataService {
 
     override fun repoType(projectId: String?): RepoTypeSum {
@@ -40,14 +42,8 @@ class RepoOpDataServiceImpl(
                     repoTypeSum.num += 1
                 }
             }
-            val decimalFormat = DecimalFormat("##.00%")
 
             for (type in map.entries) {
-//                val temp = "000${((type.value.num * 10000) / repoSum)}"
-//                val percent = temp.substring(temp.length - 4, temp.length).let {
-//                    StringBuilder(it).insert(2, ".").toString()
-//                }.removePrefix("0")
-//                type.value.percent = "$percent%"
                 type.value.percent = decimalFormat.format((type.value.num * 1.0) / (repoSum * 1.0))
                 set.add(
                     RepoTypeData(
@@ -59,6 +55,46 @@ class RepoOpDataServiceImpl(
             }
         }
         return RepoTypeSum(set)
+    }
+
+    override fun repoCapacityData(
+        projectId: String?,
+        repoName: String?
+    ): List<RepoCapacityData> {
+        val repos = repositoryClient.allRepos(projectId, repoName).data ?: return listOf()
+        val repoCapacityDataList = mutableListOf<RepoCapacityData>()
+        for (repo in repos) {
+            if (repo == null || repo.type == RepositoryType.GENERIC) continue
+            val usedCapacity = nodeClient.capacity(repo.projectId, repo.name).data ?: 0L
+            repoCapacityDataList.add(
+                RepoCapacityData(
+                    repo.projectId,
+                    repo.name,
+                    repo.type,
+                    capacityLimit = Long.MAX_VALUE,
+                    usedCapacity = usedCapacity
+                )
+            )
+        }
+        return repoCapacityDataList
+    }
+
+    override fun repoVisitData(projectId: String?, repoName: String?): List<RepoVisitData> {
+        val repos = repositoryClient.allRepos(projectId, repoName).data ?: return listOf()
+        val repoVisitDataList = mutableListOf<RepoVisitData>()
+        for (repo in repos) {
+            if (repo == null || repo.type == RepositoryType.GENERIC) continue
+            repoVisitDataList.add(
+                RepoVisitData(
+                    repo.projectId,
+                    repo.name,
+                    repo.type,
+                    downloads = operateLogClient.downloads(repo.projectId, repo.name, null).data ?: 0L,
+                    uploads = operateLogClient.uploads(repo.projectId, repo.name, null).data ?: 0L
+                )
+            )
+        }
+        return repoVisitDataList
     }
 
     override fun repoCapacity(projectId: String?, repoName: String?, limit: Int, sort: SortType): RepoCapacityList {
@@ -122,5 +158,10 @@ class RepoOpDataServiceImpl(
             size = packageDetail.size,
             packageKey = packageDetail.key
         )
+    }
+
+    companion object {
+        private val logger: Logger = LoggerFactory.getLogger(RepoOpDataServiceImpl::class.java)
+        val decimalFormat = DecimalFormat("##.00%")
     }
 }

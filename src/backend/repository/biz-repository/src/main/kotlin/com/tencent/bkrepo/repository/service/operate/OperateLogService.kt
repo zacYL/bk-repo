@@ -15,4 +15,22 @@ interface OperateLogService {
         pageNumber: Int,
         pageSize: Int
     ): Page<OperateLogResponse>
+
+    fun uploads(
+        projectId: String?,
+        repoName: String?,
+        latestWeek: Boolean?
+    ): Long
+
+    fun uploadsByDay(
+        projectId: String?,
+        repoName: String?,
+        days: Long?
+    ): Long
+
+    fun downloads(
+        projectId: String?,
+        repoName: String?,
+        latestWeek: Boolean?
+    ): Long
 }

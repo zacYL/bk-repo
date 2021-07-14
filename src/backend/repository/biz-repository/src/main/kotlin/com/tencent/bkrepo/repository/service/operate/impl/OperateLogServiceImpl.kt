@@ -5,15 +5,20 @@ import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.repository.BK_SOFTWARE
 import com.tencent.bkrepo.repository.dao.OperateLogDao
 import com.tencent.bkrepo.repository.model.TOperateLog
+import com.tencent.bkrepo.repository.pojo.log.OperateType
 import com.tencent.bkrepo.repository.pojo.log.ResourceType
+import com.tencent.bkrepo.repository.pojo.metric.CountResult
 import com.tencent.bkrepo.repository.pojo.operate.OperateLogResponse
 import com.tencent.bkrepo.repository.service.operate.OperateLogService
 import com.tencent.bkrepo.repository.util.OperateMapUtils
 import org.springframework.data.domain.Sort
+import org.springframework.data.mongodb.core.aggregation.Aggregation
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.stereotype.Service
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 @Service
@@ -67,6 +72,53 @@ class OperateLogServiceImpl(
             .map { convert(it) }
 
         return Pages.ofResponse(pageRequest, totalRecords, records)
+    }
+
+    override fun uploads(projectId: String?, repoName: String?, lastWeek: Boolean?): Long {
+        val criteria = Criteria.where(TOperateLog::resourceType.name).`is`(ResourceType.PACKAGE)
+            .and(TOperateLog::operateType.name).`in`(arrayOf(OperateType.CREATE, OperateType.UPDATE))
+        projectId?.let { criteria.and("${TOperateLog::description.name}.projectId").`is`(projectId) }
+        projectId?.let { criteria.and("${TOperateLog::description.name}.repoName").`is`(repoName) }
+        if (lastWeek != null && lastWeek == true) {
+            criteria.and(TOperateLog::createdDate.name).gte(getLatestWeekStart())
+        }
+        val aggregation = Aggregation.newAggregation(
+            TOperateLog::class.java,
+            Aggregation.match(criteria),
+            Aggregation.group().count().`as`("count"),
+            Aggregation.project("_id", "count")
+        )
+        val result = operateLogDao.aggregate(aggregation, CountResult::class.java).mappedResults
+        return if (result.isEmpty()) 0 else result[0].count
+    }
+
+    override fun downloads(projectId: String?, repoName: String?, lastWeek: Boolean?): Long {
+        val criteria = Criteria.where(TOperateLog::resourceType.name).`is`(ResourceType.PACKAGE)
+            .and(TOperateLog::operateType.name).`is`(OperateType.DOWNLOAD)
+        projectId?.let { criteria.and("${TOperateLog::description.name}.projectId").`is`(projectId) }
+        projectId?.let { criteria.and("${TOperateLog::description.name}.repoName").`is`(repoName) }
+        if (lastWeek != null && lastWeek == true) {
+            criteria.and(TOperateLog::createdDate.name).gte(getLatestWeekStart())
+        }
+        val aggregation = Aggregation.newAggregation(
+            TOperateLog::class.java,
+            Aggregation.match(criteria),
+            Aggregation.group().count().`as`("count"),
+            Aggregation.project("_id", "count")
+        )
+        val result = operateLogDao.aggregate(aggregation, CountResult::class.java).mappedResults
+        return if (result.isEmpty()) 0 else result[0].count
+    }
+
+    override fun uploadsByDay(projectId: String?, repoName: String?, days: Long?): Long {
+        TODO("Not yet implemented")
+    }
+
+    private fun getLatestWeekStart(): LocalDateTime {
+        val today = LocalDate.now()
+        val week = today.dayOfWeek
+        val weekStart = today.minusDays(week.value.toLong())
+        return weekStart.atStartOfDay(ZoneId.of("UTC")).toLocalDateTime()
     }
 
     private fun convert(tOperateLog: TOperateLog): OperateLogResponse {

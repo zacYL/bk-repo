@@ -1,7 +1,7 @@
 module.exports = {
     'extends': ['@commitlint/config-conventional'],
     'rules': {
-        'type-enum': [2, 'always', ['feature', 'feat', 'bug', 'fix', 'bugfix', 'refactor', 'perf', 'test', 'docs', 'info', 'format', 'merge', 'depend', 'chore', 'del']],
+        'type-enum': [2, 'always', ['feature', 'feat', 'bug', 'fix', 'bugfix', 'refactor', 'perf', 'test', 'docs', 'info', 'format', 'merge', 'depend', 'chore', 'del', 'upgrade']],
         'subject-valid': [2, 'always']
     },
     'plugins': [
@@ -10,8 +10,8 @@ module.exports = {
                 'subject-valid': function ({ subject }) {
                     console.log('it is a subject', subject)
                     return [
-                        /^[\s\S]+?(issue\s+#\d+)$/i.test(subject),
-                        `commit-msg should end with (issue #{issueId})`
+                        /p1_\d+/i.test(subject),
+                        `commit-msg should include ({teamworkId})`
                     ]
                 }
             }

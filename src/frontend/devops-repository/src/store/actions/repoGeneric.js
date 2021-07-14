@@ -59,56 +59,40 @@ export default {
         )
     },
     // 请求文件夹下的文件夹及制品
-    getArtifactoryList (_, { projectId, repoName, fullPath, current, limit, includeFolder = true, includeMetadata = true, deep = false, isPipeline = false }) {
-        if (isPipeline) {
-            return Vue.prototype.$ajax.post(
-                `${prefix}/node/query`,
-                {
-                    page: {
-                        pageNumber: current,
-                        pageSize: limit
-                    },
-                    sort: {
-                        properties: ['lastModifiedDate'],
-                        direction: 'DESC'
-                    },
-                    rule: {
-                        rules: [
-                            {
-                                field: 'projectId',
-                                value: projectId,
-                                operation: 'EQ'
-                            },
-                            {
-                                field: 'repoName',
-                                value: repoName,
-                                operation: 'EQ'
-                            },
-                            {
-                                field: 'path',
-                                value: `${fullPath === '/' ? '' : fullPath}/`,
-                                operation: 'EQ'
-                            }
-                        ],
-                        relation: 'AND'
-                    }
+    getArtifactoryList (_, { projectId, repoName, fullPath, current, limit, sortType = 'lastModifiedDate' }) {
+        return Vue.prototype.$ajax.post(
+            `${prefix}/node/query`,
+            {
+                page: {
+                    pageNumber: current,
+                    pageSize: limit
+                },
+                sort: {
+                    properties: ['folder', sortType],
+                    direction: 'DESC'
+                },
+                rule: {
+                    rules: [
+                        {
+                            field: 'projectId',
+                            value: projectId,
+                            operation: 'EQ'
+                        },
+                        {
+                            field: 'repoName',
+                            value: repoName,
+                            operation: 'EQ'
+                        },
+                        {
+                            field: 'path',
+                            value: `${fullPath === '/' ? '' : fullPath}/`,
+                            operation: 'EQ'
+                        }
+                    ],
+                    relation: 'AND'
                 }
-            )
-        } else {
-            return Vue.prototype.$ajax.get(
-                `${prefix}/node/page/${projectId}/${repoName}/${encodeURIComponent(fullPath)}`,
-                {
-                    params: {
-                        pageNumber: current,
-                        pageSize: limit,
-                        includeFolder,
-                        includeMetadata,
-                        deep,
-                        sort: true
-                    }
-                }
-            )
-        }
+            }
+        )
     },
     // 仓库内自定义查询
     getArtifactoryListByQuery (_, { projectId, repoName, name, current = 1, limit = 15 }) {

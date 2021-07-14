@@ -31,30 +31,30 @@
                     size="small"
                     @row-click="selectRow"
                     @row-dblclick="openFolder">
-                    <bk-table-column :label="$t('fileName')">
-                        <template slot-scope="props">
+                    <bk-table-column :label="$t('fileName')" prop="name" :render-header="renderHeader">
+                        <template #default="{ row }">
                             <div class="flex-align-center fine-name">
-                                <Icon size="24" :name="props.row.folder ? 'folder' : getIconName(props.row.name)" />
-                                <div class="ml10" :title="props.row.name">{{props.row.name}}</div>
+                                <Icon size="24" :name="row.folder ? 'folder' : getIconName(row.name)" />
+                                <div class="ml10" :title="row.name">{{row.name}}</div>
                             </div>
                         </template>
                     </bk-table-column>
-                    <bk-table-column :label="$t('lastModifiedDate')" prop="lastModifiedDate" width="200">
-                        <template slot-scope="props">{{ formatDate(props.row.lastModifiedDate) }}</template>
+                    <bk-table-column :label="$t('lastModifiedDate')" prop="lastModifiedDate" width="200" :render-header="renderHeader">
+                        <template #default="{ row }">{{ formatDate(row.lastModifiedDate) }}</template>
                     </bk-table-column>
                     <bk-table-column :label="$t('lastModifiedBy')" width="120">
-                        <template slot-scope="props">
-                            {{ userList[props.row.lastModifiedBy] ? userList[props.row.lastModifiedBy].name : props.row.lastModifiedBy }}
+                        <template #default="{ row }">
+                            {{ userList[row.lastModifiedBy] ? userList[row.lastModifiedBy].name : row.lastModifiedBy }}
                         </template>
                     </bk-table-column>
                     <bk-table-column :label="$t('size')" width="100">
-                        <template slot-scope="props">
+                        <template #default="{ row }">
                             <bk-button text
-                                v-show="props.row.folder && !props.row.hasOwnProperty('folderSize')"
-                                :disabled="props.row.sizeLoading"
-                                @click="calculateFolderSize(props.row)">{{ $t('calculate') }}</bk-button>
-                            <span v-show="!props.row.folder || props.row.hasOwnProperty('folderSize')">
-                                {{ convertFileSize(props.row.size || props.row.folderSize || 0) }}
+                                v-show="row.folder && !row.hasOwnProperty('folderSize')"
+                                :disabled="row.sizeLoading"
+                                @click="calculateFolderSize(row)">{{ $t('calculate') }}</bk-button>
+                            <span v-show="!row.folder || row.hasOwnProperty('folderSize')">
+                                {{ convertFileSize(row.size || row.folderSize || 0) }}
                             </span>
                         </template>
                     </bk-table-column>
@@ -212,6 +212,7 @@
                 importantSearch: '',
                 // 左侧树处于打开状态的目录
                 sideTreeOpenList: [],
+                sortType: 'lastModifiedDate',
                 // 中间展示的table数据
                 artifactoryList: [],
                 // 左侧树选中的节点
@@ -278,7 +279,7 @@
                         },
                         {
                             regex: /^[0-9]*$/,
-                            message: this.$t('pleaseInput') + this.$t('legit') + this.$t('validity'),
+                            message: '请输入数字',
                             trigger: 'blur'
                         }
                     ]
@@ -332,7 +333,7 @@
         watch: {
             '$route.query.name' () {
                 this.initPage()
-                this.getArtifactories()
+                this.handlerPaginationChange()
             },
             'selectedTreeNode.fullPath' () {
                 // 重置选中行
@@ -374,6 +375,25 @@
                 this.sideTreeOpenList = []
                 await this.itemClickHandler(this.genericTree[0])
             },
+            renderHeader (h, { column }) {
+                return h('div', {
+                    class: 'flex-align-center hover-btn',
+                    on: {
+                        click: () => {
+                            this.sortType = column.property
+                            this.handlerPaginationChange()
+                        }
+                    }
+                }, [
+                    h('span', column.label),
+                    h('i', {
+                        class: {
+                            'ml5 devops-icon icon-down-shape': true,
+                            'selected': this.sortType === column.property
+                        }
+                    })
+                ])
+            },
             // 获取中间列表数据
             getArtifactories () {
                 // 自定义查询
@@ -388,6 +408,7 @@
                     fullPath: this.selectedTreeNode.fullPath,
                     current: this.pagination.current,
                     limit: this.pagination.limit,
+                    sortType: this.sortType,
                     isPipeline: this.repoName === 'pipeline'
                 }).then(({ records, totalRecords }) => {
                     this.pagination.count = totalRecords
@@ -427,7 +448,7 @@
                 this.query = null
                 this.selectedRow.element && this.selectedRow.element.classList.remove('selected-row')
                 this.selectedRow = this.selectedTreeNode
-                this.getArtifactories()
+                this.handlerPaginationChange()
             },
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
                 this.pagination.current = current
@@ -699,7 +720,7 @@
                     // 更新源和目的的节点信息
                     this.updateGenericTreeNode(this.selectedTreeNode)
                     this.updateGenericTreeNode(this.treeDialog.selectedNode)
-                    this.getArtifactories()
+                    this.handlerPaginationChange()
                     this.$bkMessage({
                         theme: 'success',
                         message: this.treeDialog.type + this.$t('success')
@@ -798,6 +819,19 @@
                 padding: 7px 0;
                 svg {
                     flex: none;
+                }
+            }
+            /deep/ .devops-icon {
+                font-size: 16px;
+                &.disabled {
+                    color: $disabledColor;
+                    cursor: not-allowed;
+                }
+                &.icon-down-shape {
+                    color: $fontLigtherColor;
+                    &.selected {
+                        color: $fontWeightColor;
+                    }
                 }
             }
         }

@@ -1,7 +1,7 @@
 <template>
     <ul class="repo-tree-list">
         <li class="repo-tree-item" :key="item.roadMap" v-for="item of treeList">
-            <div v-if="deepCount" class="line-dashed" :class="{ 'more': list.length > 20 }" :style="{
+            <div v-if="deepCount" class="line-dashed" :class="{ 'more': sortable && list.length > 20 }" :style="{
                 'border-width': '0 1px 0 0',
                 'margin-left': (20 * deepCount + 5) + 'px',
                 'height': '100%',
@@ -27,9 +27,7 @@
                 <i v-else class="mr5 devops-icon" @click.stop="iconClickHandler(item)"
                     :class="openList.includes(item.roadMap) ? 'icon-down-shape' : 'icon-right-shape'"></i>
                 <icon class="mr5" size="14" :name="openList.includes(item.roadMap) ? 'folder-open' : 'folder'"></icon>
-                <div class="node-text" :title="item.name">
-                    {{ item.name }}
-                </div>
+                <div class="node-text" :title="item.name" v-html="importantTransform(item.name)"></div>
             </div>
             <CollapseTransition>
                 <template v-if="item.children && item.children.length">
@@ -86,7 +84,7 @@
         computed: {
             treeList () {
                 const list = this.list.filter(v => v.folder)
-                if (list.length > 20 && this.sortable) {
+                if (this.sortable) {
                     const reg = new RegExp(`^${this.selectedNode.roadMap},[0-9]+$`)
                     const isSearch = reg.test(list[0].roadMap) && this.importantSearch
                     return list.sort((a, b) => {
@@ -117,6 +115,13 @@
              */
             itemClickHandler (item) {
                 this.$emit('item-click', item)
+            },
+            importantTransform (name) {
+                if (!this.importantSearch) return name
+                const normalText = name.split(this.importantSearch)
+                return normalText.reduce((a, b, index) => {
+                    return a + `<em>${this.importantSearch}</em>` + b
+                })
             }
         }
     }
@@ -168,10 +173,8 @@
             white-space: nowrap;
             em {
                 font-style: normal;
-                color:#e4393c;
-                &:hover {
-                    color: $primaryColor;
-                }
+                font-weight: bold;
+                background-color: #edf45d;
             }
         }
         &.selected {

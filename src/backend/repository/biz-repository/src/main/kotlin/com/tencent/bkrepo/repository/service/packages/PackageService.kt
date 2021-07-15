@@ -42,7 +42,7 @@ import com.tencent.bkrepo.repository.pojo.packages.request.PackagePopulateReques
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageUpdateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionUpdateRequest
-import com.tencent.bkrepo.repository.pojo.software.PackageOverviewResponse
+import com.tencent.bkrepo.repository.pojo.bksoftware.PackageOverviewResponse
 
 /**
  * 包服务类接口

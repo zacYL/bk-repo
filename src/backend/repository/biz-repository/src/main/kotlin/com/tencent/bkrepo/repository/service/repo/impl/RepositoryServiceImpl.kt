@@ -45,12 +45,11 @@ import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode.REPOSITORY_NOT_FOUND
 import com.tencent.bkrepo.common.artifact.path.PathUtils.ROOT
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
-import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.pojo.configuration.RepositoryConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.composite.CompositeConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.composite.ProxyChannelSetting
 import com.tencent.bkrepo.common.artifact.pojo.configuration.local.LocalConfiguration
-import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.*
+import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.virtual.VirtualConfiguration
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
@@ -334,7 +333,7 @@ class RepositoryServiceImpl(
                     proxyChannelService.checkExistById(it.channelId!!, repository.type),
                     "channelId"
                 )
-                //创建公有源代理项目
+                // 创建公有源代理项目
                 if (!projectService.checkExist(PUBLIC_PROXY_PROJECT)) {
                     projectService.createProject(
                         ProjectCreateRequest(

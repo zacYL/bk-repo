@@ -11,7 +11,14 @@ import com.tencent.bkrepo.opdata.pojo.ArtifactMetricsData
 import com.tencent.bkrepo.opdata.pojo.response.RepoCapacityData
 import com.tencent.bkrepo.opdata.pojo.response.RepoVisitData
 import com.tencent.bkrepo.opdata.service.RepoOpDataService
-import com.tencent.bkrepo.repository.api.*
+import com.tencent.bkrepo.repository.api.RepositoryClient
+import com.tencent.bkrepo.repository.api.NodeClient
+import com.tencent.bkrepo.repository.api.ProjectClient
+import com.tencent.bkrepo.repository.api.PackageClient
+import com.tencent.bkrepo.repository.api.OperateLogClient
+import com.tencent.bkrepo.repository.api.DayMetricClient
+import com.tencent.bkrepo.repository.pojo.bksoftware.DownloadMetric
+import com.tencent.bkrepo.repository.pojo.bksoftware.UploadMetric
 import com.tencent.bkrepo.repository.pojo.metric.PackageDetail
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -24,7 +31,8 @@ class RepoOpDataServiceImpl(
     private val nodeClient: NodeClient,
     private val projectClient: ProjectClient,
     private val packageClient: PackageClient,
-    private val operateLogClient: OperateLogClient
+    private val operateLogClient: OperateLogClient,
+    private val dayMetricClient: DayMetricClient
 ) : RepoOpDataService {
 
     override fun repoType(projectId: String?): RepoTypeSum {
@@ -140,6 +148,14 @@ class RepoOpDataServiceImpl(
     override fun sortByDownload(projectId: String?, repoName: String?): List<ArtifactMetricsData> {
         val list = packageClient.sortByDown(projectId, repoName).data ?: listOf()
         return list.map { transferPackageDetail(it) }
+    }
+
+    override fun downloadsByDay(projectId: String?, repoName: String?, days: Long?): DownloadMetric {
+        return dayMetricClient.listByDownload(projectId, repoName, days).data!!
+    }
+
+    override fun uploadsByDay(projectId: String?, repoName: String?, days: Long?): UploadMetric {
+        return dayMetricClient.listByUpload(projectId, repoName, days).data!!
     }
 
     override fun downSum(projectId: String?, repoName: String?): Long {

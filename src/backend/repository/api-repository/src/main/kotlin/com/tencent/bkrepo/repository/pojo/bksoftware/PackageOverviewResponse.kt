@@ -1,4 +1,4 @@
-package com.tencent.bkrepo.repository.pojo.software
+package com.tencent.bkrepo.repository.pojo.bksoftware
 
 import io.swagger.annotations.ApiModel
 

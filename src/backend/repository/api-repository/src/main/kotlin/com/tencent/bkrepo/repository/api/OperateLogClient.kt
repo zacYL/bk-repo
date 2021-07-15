@@ -27,5 +27,4 @@ interface OperateLogClient {
         @RequestParam repoName: String?,
         @RequestParam latestWeek: Boolean?
     ): Response<Long>
-
 }

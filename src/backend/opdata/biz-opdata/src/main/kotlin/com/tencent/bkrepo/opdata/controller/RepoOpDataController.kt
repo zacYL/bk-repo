@@ -4,12 +4,19 @@ import DEFAULT_PROJECT
 import TIMEOUT_LIMIT
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
-import com.tencent.bkrepo.opdata.pojo.*
-import com.tencent.bkrepo.opdata.pojo.response.*
+import com.tencent.bkrepo.opdata.pojo.SortType
+import com.tencent.bkrepo.opdata.pojo.RepoCapacityList
+import com.tencent.bkrepo.opdata.pojo.response.UseMetricResponse
+import com.tencent.bkrepo.opdata.pojo.RepoTypeSum
+import com.tencent.bkrepo.opdata.pojo.ArtifactDownload
+import com.tencent.bkrepo.opdata.pojo.response.RepoCapacityData
+import com.tencent.bkrepo.opdata.pojo.response.RepoVisitData
 import com.tencent.bkrepo.opdata.service.RepoOpDataService
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.OperateLogClient
 import com.tencent.bkrepo.repository.api.PackageClient
+import com.tencent.bkrepo.repository.pojo.bksoftware.DownloadMetric
+import com.tencent.bkrepo.repository.pojo.bksoftware.UploadMetric
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
@@ -54,7 +61,6 @@ class RepoOpDataController(
         val repoCapacityData = repoOpDataService.repoVisitData(projectId, repoName)
         return ResponseBuilder.success(repoCapacityData)
     }
-
 
     @ApiOperation("制品数量")
     @GetMapping("/packages")
@@ -164,8 +170,9 @@ class RepoOpDataController(
         @RequestParam repoName: String?,
         @ApiParam("查询几天内数据，从当天开始，默认7天", required = false)
         @RequestParam days: Long?
-    ): Response<DownloadMetrics> {
-        TODO("Not yet implemented")
+    ): Response<DownloadMetric> {
+        val downloadMetric = repoOpDataService.downloadsByDay(projectId, repoName, days)
+        return ResponseBuilder.success(downloadMetric)
     }
 
     @ApiOperation("查询每日上传量")
@@ -179,8 +186,9 @@ class RepoOpDataController(
         @RequestParam days: Long?,
         @ApiParam(required = false)
         @RequestParam cluster: String? = null
-    ): Response<UploadMetrics> {
-        TODO("Not yet implemented")
+    ): Response<UploadMetric> {
+        val uploadMetric = repoOpDataService.uploadsByDay(projectId, repoName, days)
+        return ResponseBuilder.success(uploadMetric)
     }
 
     @ApiOperation("仓库类型分布")
@@ -204,4 +212,3 @@ class RepoOpDataController(
         return ResponseBuilder.success(ArtifactDownload(list))
     }
 }
-

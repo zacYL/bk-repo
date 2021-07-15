@@ -1,4 +1,4 @@
-package com.tencent.bkrepo.opdata.pojo.response
+package com.tencent.bkrepo.repository.pojo.bksoftware
 
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
@@ -17,13 +17,13 @@ data class DayMetricsData(
 )
 
 @ApiModel("下载统计")
-data class DownloadMetrics(
+data class DownloadMetric(
     @ApiModelProperty("每日下载统计数据 列表")
     val downloadMetrics: List<DayMetricsData?>
 )
 
 @ApiModel("每日上传量统计")
-data class UploadMetrics(
+data class UploadMetric(
     @ApiModelProperty("每日下载统计数据 列表")
     val uploadMetrics: List<DayMetricsData?>
 )

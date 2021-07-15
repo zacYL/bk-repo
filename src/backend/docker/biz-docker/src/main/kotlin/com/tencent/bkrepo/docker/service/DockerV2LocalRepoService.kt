@@ -67,6 +67,7 @@ import com.tencent.bkrepo.docker.errors.DockerV2Errors
 import com.tencent.bkrepo.docker.exception.DockerRepoNotFoundException
 import com.tencent.bkrepo.docker.helpers.DockerCatalogTagsSlicer
 import com.tencent.bkrepo.docker.helpers.DockerPaginationElementsHolder
+import com.tencent.bkrepo.docker.manifest.ManifestContext
 import com.tencent.bkrepo.docker.manifest.ManifestProcess
 import com.tencent.bkrepo.docker.manifest.ManifestType
 import com.tencent.bkrepo.docker.model.DockerDigest
@@ -298,6 +299,11 @@ class DockerV2LocalRepoService @Autowired constructor(
         val manifestPath = ResponseUtil.buildManifestPath(context.artifactName, tag, manifestType)
         logger.info("upload manifest path [$context,$tag] ,media [$mediaType , manifestPath]")
         val uploadResult = manifestProcess.uploadManifestByType(context, tag, manifestPath, manifestType, file)
+        val params = ManifestContext.buildPropertyMap(context.artifactName, tag, uploadResult.first, manifestType)
+        val labels = uploadResult.third
+        labels.entries().forEach {
+            params[it.key] = it.value
+        }
         with(context) {
             val request =
                 PackageVersionCreateRequest(
@@ -312,7 +318,7 @@ class DockerV2LocalRepoService @Autowired constructor(
                     manifestPath = manifestPath,
                     artifactPath = null,
                     stageTag = null,
-                    metadata = null,
+                    metadata = params,
                     overwrite = true,
                     createdBy = artifactRepo.userId
                 )

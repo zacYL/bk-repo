@@ -32,6 +32,8 @@
 package com.tencent.bkrepo.docker.manifest
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.google.common.collect.HashMultimap
+import com.google.common.collect.Multimap
 import com.tencent.bkrepo.common.api.constant.StringPool.EMPTY
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
@@ -105,13 +107,13 @@ class ManifestProcess constructor(val repo: DockerArtifactRepo) {
         manifestPath: String,
         manifestType: ManifestType,
         artifactFile: ArtifactFile
-    ): Pair<DockerDigest, Long> {
+    ): Triple<DockerDigest, Long, Multimap<String, String>> {
         val manifestBytes = artifactFile.getInputStream().readBytes()
         val digest = DockerManifestDigester.calcDigest(manifestBytes)
         logger.info("manifest file digest content digest : [$digest]")
         if (ManifestType.Schema2List == manifestType) {
             processManifestList(context, tag, manifestPath, digest!!, manifestBytes)
-            return Pair(digest, 0L)
+            return Triple(digest, 0L, HashMultimap.create())
         }
 
         // process scheme2 manifest
@@ -135,7 +137,7 @@ class ManifestProcess constructor(val repo: DockerArtifactRepo) {
             logger.warn("upload manifest fail [$uploadContext]")
             throw DockerFileSaveFailedException(manifestPath)
         }
-        return Pair(digest, size)
+        return Triple(digest, size, labels)
     }
 
     /**

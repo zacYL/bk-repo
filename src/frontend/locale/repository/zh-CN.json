@@ -17,7 +17,8 @@
     "cancel": "取消",
     "folderNamePlacehodler": "英文字母、数字、中划线、下划线、点，最长支持50个字符",
     "repoNamePlacehodler": "英文字母开头，支持英文字母、数字、中划线、下划线，总长度2-32位",
-    "repoDescriptionPlacehodler": "请输入描述，最多200个字符",
+    "repoDockerNamePlacehodler": "英文字母开头，支持小写英文字母、数字、中划线、下划线，总长度2-32位",
+    "repoDescriptionPlacehodler": "请输入仓库描述，最多200个字符",
     "repoConfig": "仓库配置",
     "save": "保存",
     "returnBack": "返回",
@@ -135,6 +136,8 @@
     "permissionConfig": "权限管理",
     "noPermission": "未获得授权",
     "logout": "退出",
+    "publicRepo": "公开仓库",
+    "publicRepoDesc": "公开的仓库将会开放下载",
     "userManage": "用户管理",
     "userCenter": "个人中心",
     "nodeManage": "节点管理",
@@ -175,7 +178,5 @@
         "5": "四",
         "6": "五",
         "7": "六"
-    },
-    "publicRepo": "公开仓库",
-    "publicRepoDesc": "公开的仓库将会对所有人开放下载"
+    }
 }

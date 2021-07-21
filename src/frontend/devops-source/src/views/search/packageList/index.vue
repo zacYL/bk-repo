@@ -7,7 +7,7 @@
                 <span class="mt5 repo-description">{{ currentRepo.description || '--' }}</span>
                 <span class="mt5 repo-create">{{ userList[currentRepo.createdBy] ? userList[currentRepo.createdBy].name : currentRepo.createdBy }} 创建于 {{ formatDate(currentRepo.createdDate) }}</span>
             </div>
-            <div class="ml10 hover-btn flex-align-center" @click="showGuide = true">
+            <div class="ml20 hover-btn flex-align-center" @click="showGuide = true">
                 <Icon class="mr5" name="hand-guide" size="16" />
                 {{$t('guide')}}
             </div>
@@ -36,7 +36,8 @@
                     class="package-card"
                     v-for="pkg in packageList"
                     :key="pkg.key"
-                    :card-data="pkg">
+                    :card-data="pkg"
+                    @refresh="handlerPaginationChange()">
                 </package-card>
             </main>
             <bk-pagination
@@ -138,6 +139,10 @@
             .repo-description, .repo-create {
                 font-size: 12px;
                 color: $fontColor;
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
             }
         }
     }

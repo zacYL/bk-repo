@@ -58,7 +58,7 @@
                             repoName: this.cardData.repoName,
                             packageKey: this.cardData.key
                         }).then(() => {
-                            this.handlerPaginationChange()
+                            this.$emit('refresh')
                             this.$bkMessage({
                                 theme: 'success',
                                 message: this.$t('delete') + this.$t('success')

@@ -21,7 +21,8 @@
                         v-for="pkg in packageList"
                         :key="pkg.key"
                         :card-data="pkg"
-                        :show-repo="true">
+                        :show-repo="true"
+                        @refresh="handlerPaginationChange()">
                     </package-card>
                 </main>
                 <bk-pagination

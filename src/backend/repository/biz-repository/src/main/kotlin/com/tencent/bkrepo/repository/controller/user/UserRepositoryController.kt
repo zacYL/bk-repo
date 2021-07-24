@@ -129,7 +129,6 @@ class UserRepositoryController(
         @ApiParam("仓库类型", required = false)
         @RequestParam type: String? = null
     ): Response<List<RepositoryInfo>> {
-//        permissionManager.checkProjectPermission(PermissionAction.READ, projectId)
         return ResponseBuilder.success(repositoryService.listRepo(projectId, name, type))
     }
 
@@ -149,7 +148,6 @@ class UserRepositoryController(
         @ApiParam("仓库使用信息", required = false)
         @RequestParam usedInfo: Boolean = false
     ): Response<Page<RepositoryInfo>> {
-        permissionManager.checkProjectPermission(PermissionAction.READ, projectId)
         val page = repositoryService.listRepoPage(projectId, pageNumber, pageSize, name, type)
         if (usedInfo) {
             page.records.map {

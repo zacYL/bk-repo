@@ -16,7 +16,7 @@
             </div>
         </header>
         <main class="repo-config-main" v-bkloading="{ isLoading }">
-            <bk-tab class="repo-config-tab" type="unborder-card">
+            <bk-tab class="repo-config-tab" type="unborder-card" :active.sync="tabName">
                 <bk-tab-panel name="baseInfo" :label="$t('repoBaseInfo')">
                     <div class="repo-base-info">
                         <bk-form ref="repoBaseInfo" :label-width="150" :model="repoBaseInfo" :rules="rules">
@@ -87,6 +87,7 @@
         components: { proxyConfig, permissionConfig },
         data () {
             return {
+                tabName: 'baseInfo',
                 isLoading: false,
                 repoBaseInfo: {
                     loading: false,
@@ -229,7 +230,7 @@
         }
     }
     .repo-config-main {
-        height: calc(100% - 80px);
+        height: calc(100% - 70px);
         margin-top: 20px;
         padding: 20px;
         display: flex;

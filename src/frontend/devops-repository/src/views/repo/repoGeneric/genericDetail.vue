@@ -5,7 +5,7 @@
         @click.native.stop="() => {}"
         :quick-close="true"
         :width="800">
-        <bk-tab class="mt10 ml20 mr20" slot="content" type="unborder-card">
+        <bk-tab class="mt10 ml20 mr20" slot="content" type="unborder-card" :active.sync="tabName">
             <bk-tab-panel name="detailInfo" :label="$t('baseInfo')">
                 <div class="detail-info info-area" v-bkloading="{ isLoading: detailSlider.loading }">
                     <div class="flex-center" v-for="key in Object.keys(detailInfoMap)" :key="key">
@@ -65,6 +65,7 @@
         },
         data () {
             return {
+                tabName: 'detailInfo',
                 metadata: {
                     key: '',
                     value: ''

@@ -553,7 +553,7 @@ class DockerArtifactRepo @Autowired constructor(
     // to delete docker image tag
     fun deleteByTag(context: RequestContext, tag: String): Boolean {
         with(context) {
-            val fullPath = "/$artifactName/$tag/$DOCKER_MANIFEST"
+            val fullPath = "/$artifactName/$tag/"
             val deleteNodeRequest = NodeDeleteRequest(projectId, repoName, fullPath, userId)
             return nodeClient.deleteNode(deleteNodeRequest).isOk()
         }

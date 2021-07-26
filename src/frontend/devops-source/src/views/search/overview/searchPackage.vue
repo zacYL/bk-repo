@@ -92,7 +92,7 @@
                 this.isLoading = true
                 this.searchRepoList({
                     repoType: this.repoType.toUpperCase(),
-                    packageName: this.packageName || undefined
+                    packageName: this.packageName || ''
                 }).then(({ list, sum }) => {
                     this.repoList = [{ repoName: '', packages: sum }, ...list]
                 }).finally(() => {

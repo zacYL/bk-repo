@@ -54,7 +54,7 @@ export default {
                 params: {
                     projectId: PROJECT_ID,
                     repoType,
-                    packageName
+                    packageName: '*' + packageName + '*'
                 }
             }
         )

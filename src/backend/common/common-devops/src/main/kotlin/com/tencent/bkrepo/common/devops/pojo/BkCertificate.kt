@@ -9,6 +9,6 @@ enum class CertType(
     val value: String
 ) {
     USERID("bk_username"),
-    USERNAME("username"),
+    USERNAME("bk_username"),
     TOKEN("bk_token")
 }

@@ -48,7 +48,7 @@ class CanwayDepartmentServiceImpl(
             return departments.data?.first()?.children
         } else {
             val company = getCompanyId(bkCertificate) ?: return null
-            return listOf(company).map { transferCanwayChildrenDepartment(company) }
+            return company.map { transferCanwayChildrenDepartment(it) }
         }
     }
 
@@ -103,8 +103,11 @@ class CanwayDepartmentServiceImpl(
         )
     }
 
-    fun getCompanyId(bkCertificate: BkCertificate): BkDepartment? {
-        // 查出总公司id
+    /**
+     * 查询蓝鲸level:0 的部门
+     */
+    fun getCompanyId(bkCertificate: BkCertificate): List<BkDepartment>? {
+
         val url = "${paasHost.removeSuffix("/")}$paasListDepartmentUrl"
         val requestUrl = String.format(
             paasDepartmentApi,
@@ -115,7 +118,7 @@ class CanwayDepartmentServiceImpl(
             bkCertificate.value
         )
         val responseContent = CanwayHttpUtils.doGet(requestUrl).content
-        return responseContent.readJsonString<BkResponse<BkPage<BkDepartment>>>().data?.results?.first()
+        return responseContent.readJsonString<BkResponse<BkPage<BkDepartment>>>().data?.results
     }
 
     override fun getUsersByDepartmentId(username: String?, departmentId: Int): Set<BkDepartmentUser>? {
@@ -136,16 +139,19 @@ class CanwayDepartmentServiceImpl(
     companion object {
         val logger: Logger = LoggerFactory.getLogger(CanwayDepartmentServiceImpl::class.java)
         const val jsonFormat = "{\n" +
-            "    \"bk_app_code\":\"%s\",\n" +
-            "    \"bk_app_secret\":\"%s\",\n" +
-            "    \"%s\":\"%s\",\n" +
-            "    \"id_list\": [%d]\n" +
-            "}"
+                "    \"bk_app_code\":\"%s\",\n" +
+                "    \"bk_app_secret\":\"%s\",\n" +
+                "    \"%s\":\"%s\",\n" +
+                "    \"id_list\": [%d]\n" +
+                "}"
         const val paasListDepartmentUrl = "/api/c/compapi/v2/usermanage/list_departments/"
         const val paasBatchDepartmentUrl = "/api/c/compapi/v2/usermanage/department_batch/"
-        const val paasDepartmentApi = "%s?bk_app_code=%s&bk_app_secret=%s&%s=%s&page=1&page_size=1"
-        const val paasListDepartmentRequest = "%s?bk_app_code=%s&bk_app_secret=%s&%s=%s&exact_lookups=%d&lookup_field=%s&page=1&page_size=1"
+        const val paasDepartmentApi =
+            "%s?bk_app_code=%s&bk_app_secret=%s&%s=%s&lookup_field=level&exact_lookups=0&fields=id,name"
+        const val paasListDepartmentRequest =
+            "%s?bk_app_code=%s&bk_app_secret=%s&%s=%s&exact_lookups=%d&lookup_field=%s&page=1&page_size=1"
         const val listDepartmentField = "id"
-        const val getUsersByDepartmentIdApi = "/api/c/compapi/v2/usermanage/list_department_profiles/?bk_app_code=%s&bk_app_secret=%s&%s=%s&id=%d&recursive=true&no_page=true"
+        const val getUsersByDepartmentIdApi =
+            "/api/c/compapi/v2/usermanage/list_department_profiles/?bk_app_code=%s&bk_app_secret=%s&%s=%s&id=%d&recursive=true&no_page=true"
     }
 }

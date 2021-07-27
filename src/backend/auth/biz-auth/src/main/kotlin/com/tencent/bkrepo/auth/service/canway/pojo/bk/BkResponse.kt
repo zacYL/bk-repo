@@ -25,13 +25,14 @@ data class BkPage<T>(
 
 data class BkDepartment(
     val id: Int,
-    val tree_id: Int,
-    val level: Int,
-    val parent: Int?,
+    val tree_id: Int?,
+    val level: Int?,
+    val parent: Int,
     val name: String,
-    val is_deleted: Boolean,
-    val rght: Int,
-    val lft: Int,
+    val is_deleted: Boolean?,
+    val enabled: Boolean?,
+    val rght: Int?,
+    val lft: Int?,
     val order: Int,
     val create_time: String?,
     val update_time: String?

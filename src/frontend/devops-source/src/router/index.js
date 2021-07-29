@@ -12,8 +12,8 @@ function setFrequencyRepo ({ repoType: type, repoName: name }, isRemove) {
     }
     if (!isRemove) {
         frequencyRepoList.unshift({ type, name })
-        localStorage.setItem('_frequencyRepo', JSON.stringify(frequencyRepoList.slice(0, 10)))
     }
+    localStorage.setItem('_frequencyRepo', JSON.stringify(frequencyRepoList.slice(0, 10)))
 }
 
 const createRouter = (store) => {

@@ -214,7 +214,7 @@ class RepositoryServiceImpl(
     @Transactional(rollbackFor = [Throwable::class])
     override fun updateRepo(repoUpdateRequest: RepoUpdateRequest) {
         repoUpdateRequest.apply {
-            Preconditions.checkArgument(description?.length ?: 0 < REPO_DESCRIPTION_MAX_LENGTH, this::description.name)
+            Preconditions.checkArgument(description?.length ?: 0 <= REPO_DESCRIPTION_MAX_LENGTH, this::description.name)
             val repository = checkRepository(projectId, name)
             val oldConfiguration = repository.configuration.readJsonString<RepositoryConfiguration>()
             repository.public = public ?: repository.public

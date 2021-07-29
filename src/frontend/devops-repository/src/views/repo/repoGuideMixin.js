@@ -519,7 +519,7 @@ export default {
                         {
                             subTitle: '使用 cURL 命令将压缩包上传至仓库',
                             codeList: [
-                                `curl -u ${this.userName}:<PERSONAL_ACCESS_TOKEN> "${this.repoUrl}" -T <PACKAGE_FILE>`
+                                `curl -X PUT -u ${this.userName}:<PERSONAL_ACCESS_TOKEN> "${this.repoUrl}/" -T <PACKAGE_FILE>`
                             ]
                         }
                     ]

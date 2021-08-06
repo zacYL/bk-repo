@@ -442,7 +442,7 @@
 <style lang="scss" scoped>
 @import '@/scss/conf';
 .permission-config-container {
-    /deep/ .bk-collapse-item {
+    ::v-deep .bk-collapse-item {
         margin-bottom: 20px;
         .bk-collapse-item-detail {
             color: inherit;
@@ -475,7 +475,7 @@
         padding: 10px;
         border: solid #d5d5d5;
         border-width: 0 1px 1px;
-        /deep/ .bk-select-empty {
+        ::v-deep .bk-select-empty {
             display: none;
         }
         .section-sub-title {

@@ -306,7 +306,7 @@
 @import '@/scss/conf';
 .common-version-container {
     height: 100%;
-    /deep/ .bk-tab-section {
+    ::v-deep .bk-tab-section {
         height: calc(100% - 40px);
         .bk-tab-content {
             height: 100%;

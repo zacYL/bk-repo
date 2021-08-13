@@ -282,7 +282,6 @@
                 this.planForm.loading = true
 
                 const replicaTaskObjects = await this.$refs.planConfig.getConfig()
-
                 const body = {
                     name: this.planForm.name,
                     localProjectId: this.projectId,
@@ -293,7 +292,7 @@
                         rateLimit: 0, // <=0不限速
                         includeMetadata: true, // 同步元数据
                         conflictStrategy: this.planForm.conflictStrategy,
-                        errorStrategy: 'FAST_FAIL',
+                        errorStrategy: 'CONTINUE',
                         ...(this.planForm.executionStrategy !== 'REAL_TIME' ? {
                             executionStrategy: this.planForm.executionStrategy,
                             executionPlan: {

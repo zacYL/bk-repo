@@ -8,21 +8,21 @@
             <div class="ml20 mr20 upload-file-info">
                 <bk-form :label-width="80" :model="file" :rules="rules" ref="fileName">
                     <bk-form-item :label="$t('fileName')" :required="true" :property="'name'">
-                        <bk-input :disabled="Boolean(progress)" v-model.trim="file.name"></bk-input>
+                        <bk-input :disabled="Boolean(uploadProgress)" v-model.trim="file.name"></bk-input>
                     </bk-form-item>
                     <bk-form-item :label="$t('overwrite')" :required="true" :property="'overwrite'">
                         <bk-radio-group v-model="file.overwrite">
-                            <bk-radio :disabled="Boolean(progress)" :value="true">{{ $t('allow') }}</bk-radio>
-                            <bk-radio :disabled="Boolean(progress)" class="ml20" :value="false">{{ $t('notAllow') }}</bk-radio>
+                            <bk-radio :disabled="Boolean(uploadProgress)" :value="true">{{ $t('allow') }}</bk-radio>
+                            <bk-radio :disabled="Boolean(uploadProgress)" class="ml20" :value="false">{{ $t('notAllow') }}</bk-radio>
                         </bk-radio-group>
                     </bk-form-item>
                     <!-- <bk-form-item :label="$t('expiress')" :required="true" :property="'expires'">
-                        <bk-input :disabled="Boolean(progress)" :placeholder="$t('uploadExpiresPlaceholder')" v-model="file.expires"></bk-input>
+                        <bk-input :disabled="Boolean(uploadProgress)" :placeholder="$t('uploadExpiresPlaceholder')" v-model="file.expires"></bk-input>
                     </bk-form-item> -->
                 </bk-form>
-                <bk-progress v-if="progress" class="mt20" :show-text="false" :theme="uploadStatus" :percent="progress"></bk-progress>
+                <bk-progress v-if="uploadProgress" class="mt20" :show-text="false" :theme="uploadStatus" :percent="uploadProgress"></bk-progress>
             </div>
-            <i v-if="!progress" class="devops-icon icon-close hover-btn" @click="reset"></i>
+            <i v-if="!uploadProgress" class="devops-icon icon-close hover-btn" @click="reset"></i>
         </template>
         <template v-else>
             <input ref="artifactoryUploadInput" type="file" @change="selectFile" :multiple="multiple">
@@ -40,6 +40,10 @@
                 type: String,
                 default: 'primary'
             },
+            uploadProgress: {
+                type: Number,
+                default: 0
+            },
             multiple: {
                 type: Boolean,
                 default: false
@@ -55,7 +59,6 @@
                     overwrite: false,
                     expires: 0
                 },
-                progress: 0,
                 rules: {
                     name: [
                         {
@@ -81,14 +84,11 @@
         },
         methods: {
             async getFiles () {
+                if (!this.file.blob) throw new Error('请选择文件')
                 await this.$refs.fileName.validate()
-                return {
-                    file: this.file,
-                    progressHandler: this.progressHandler
-                }
+                return this.file
             },
             reset () {
-                this.progress = 0
                 this.file = {
                     name: '',
                     blob: null,
@@ -113,10 +113,6 @@
                     size: convertFileSize(file.size),
                     type: file.type
                 }
-            },
-            progressHandler ($event) {
-                console.log('upload', $event.loaded + '/' + $event.total)
-                this.progress = $event.loaded / $event.total
             }
         }
     }

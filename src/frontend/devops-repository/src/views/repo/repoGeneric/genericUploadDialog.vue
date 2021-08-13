@@ -7,10 +7,10 @@
         :close-icon="false"
         width="620"
         header-position="left">
-        <artifactory-upload ref="artifactoryUpload" :upload-status="uploadStatus"></artifactory-upload>
+        <artifactory-upload ref="artifactoryUpload" :upload-status="uploadStatus" :upload-progress="uploadProgress"></artifactory-upload>
         <div slot="footer">
             <bk-button :loading="loading" theme="primary" @click="submitUpload">{{ $t('upload') }}</bk-button>
-            <bk-button ext-cls="ml5" @click="loading ? abortUpload() : $emit('cancel')">{{ $t(loading ? 'abort' : 'cancel') }}</bk-button>
+            <bk-button ext-cls="ml5" @click="loading ? abortUpload() : $emit('cancel')">{{ $t('cancel') }}</bk-button>
         </div>
     </bk-dialog>
 </template>
@@ -29,7 +29,8 @@
             return {
                 loading: false,
                 uploadXHR: null,
-                uploadStatus: 'primary'
+                uploadStatus: 'primary',
+                uploadProgress: 0
             }
         },
         watch: {
@@ -37,6 +38,7 @@
                 if (val) {
                     this.$refs.artifactoryUpload.reset()
                     this.uploadStatus = 'primary'
+                    this.uploadProgress = 0
                 }
             }
         },
@@ -44,17 +46,18 @@
             ...mapActions([
                 'uploadArtifactory'
             ]),
-            uploadFile (file, progressHandler) {
+            uploadFile (file) {
                 this.loading = true
                 this.uploadXHR = new XMLHttpRequest()
                 this.uploadStatus = 'primary'
+                this.uploadProgress = 0
                 this.uploadArtifactory({
                     xhr: this.uploadXHR,
                     projectId: this.$route.params.projectId,
                     repoName: this.$route.query.name,
                     fullPath: `${this.fullPath}/${file.name}`,
                     body: file.blob,
-                    progressHandler,
+                    progressHandler: this.progressHandler,
                     headers: {
                         'Content-Type': file.type || 'application/octet-stream',
                         'X-BKREPO-OVERWRITE': file.overwrite,
@@ -68,7 +71,8 @@
                         message: `${this.$t('upload')} ${file.name} ${this.$t('success')}`
                     })
                 }).catch(e => {
-                    this.uploadStatus = 'danger'
+                    this.uploadStatus = 'primary'
+                    this.uploadProgress = 0
                     e && this.$bkMessage({
                         theme: 'error',
                         message: e.message || e
@@ -78,7 +82,7 @@
                 })
             },
             async submitUpload () {
-                const { file, progressHandler } = await this.$refs.artifactoryUpload.getFiles()
+                const file = await this.$refs.artifactoryUpload.getFiles()
                 if (!file.overwrite) {
                     this.loading = true
                     const url = `/generic/${this.$route.params.projectId}/${this.$route.query.name}/${encodeURIComponent(`${this.fullPath}/${file.name}`)}`
@@ -90,7 +94,7 @@
                         this.loading = false
                     }).catch(e => {
                         if (e.status === 404) {
-                            this.uploadFile(file, progressHandler)
+                            this.uploadFile(file)
                         } else if (e.status === 403) {
                             this.$bkMessage({
                                 theme: 'error',
@@ -100,13 +104,17 @@
                         }
                     })
                 } else {
-                    this.uploadFile(file, progressHandler)
+                    this.uploadFile(file)
                 }
             },
             abortUpload () {
                 this.loading = false
                 this.uploadXHR && this.uploadXHR.abort()
                 this.uploadXHR = null
+            },
+            progressHandler ($event) {
+                console.log('upload', $event.loaded + '/' + $event.total)
+                this.uploadProgress = $event.loaded / $event.total
             }
         }
     }

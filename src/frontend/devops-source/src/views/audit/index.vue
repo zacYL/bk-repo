@@ -43,7 +43,7 @@
             </bk-table-column>
             <bk-table-column label="操作事件" width="150">
                 <template #default="{ row }">
-                    {{ row.operateType + row.resourceType }}
+                    {{ row.operate }}
                 </template>
             </bk-table-column>
             <bk-table-column label="操作对象">
@@ -143,9 +143,9 @@
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
                 this.pagination.current = current
                 this.pagination.limit = limit
-                this.getauditListHandler()
+                this.getAuditListHandler()
             },
-            getauditListHandler () {
+            getAuditListHandler () {
                 this.isLoading = true
                 const [startTime, endTime] = this.query.time
                 this.getAuditList({

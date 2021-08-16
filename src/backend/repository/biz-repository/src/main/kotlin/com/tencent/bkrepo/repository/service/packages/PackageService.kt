@@ -33,6 +33,7 @@ package com.tencent.bkrepo.repository.service.packages
 
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.query.model.QueryModel
+import com.tencent.bkrepo.repository.pojo.bksoftware.PackageOverviewResponse
 import com.tencent.bkrepo.repository.pojo.metric.PackageDetail
 import com.tencent.bkrepo.repository.pojo.packages.PackageListOption
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
@@ -42,7 +43,6 @@ import com.tencent.bkrepo.repository.pojo.packages.request.PackagePopulateReques
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageUpdateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionUpdateRequest
-import com.tencent.bkrepo.repository.pojo.bksoftware.PackageOverviewResponse
 
 /**
  * 包服务类接口
@@ -229,6 +229,16 @@ interface PackageService {
     fun searchPackage(queryModel: QueryModel): Page<MutableMap<*, *>>
 
     /**
+     * 判断包的版本列表是否存在
+     */
+    fun listExistPackageVersion(
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        packageVersionList: List<String>
+    ): List<String>
+
+    /**
      * 填充包版本数据
      *
      * @param request 包版本填充请求
@@ -240,11 +250,23 @@ interface PackageService {
      */
     fun getPackageCount(projectId: String, repoName: String): Long
 
+    /**
+     * 软件源包搜索总览
+     */
+    fun packageOverview(repoType: String, projectId: String?, packageName: String?): PackageOverviewResponse
+
+    /**
+     * 制品总数
+     */
     fun existArtifact(projectId: String?, repoName: String?): Long
 
+    /**
+     * 制品下载排行
+     */
     fun sortByDown(projectId: String?, repoName: String?, limit: Long): List<PackageDetail>
 
+    /**
+     * 制品下载总量
+     */
     fun downloads(projectId: String?, repoName: String?): Long
-
-    fun packageOverview(repoType: String, packageId: String?, packageName: String?): PackageOverviewResponse
 }

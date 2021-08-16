@@ -90,7 +90,6 @@ class AuthInterceptor : HandlerInterceptor {
                 throw IllegalArgumentException("check credential fail")
             }
             val userId = request.getHeader(AUTH_HEADER_UID)
-            logger.info("userId : $userId")
             request.setAttribute(USER_KEY, userId)
             request.setAttribute(PLATFORM_KEY, appId)
             return true

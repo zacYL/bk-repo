@@ -50,10 +50,10 @@ import com.tencent.bkrepo.auth.pojo.token.TokenResult
 import com.tencent.bkrepo.auth.pojo.user.CreateUserRequest
 import com.tencent.bkrepo.auth.pojo.user.CreateUserToProjectRequest
 import com.tencent.bkrepo.auth.pojo.user.CreateUserToRepoRequest
-import com.tencent.bkrepo.auth.pojo.user.UserResult
-import com.tencent.bkrepo.auth.pojo.user.User
 import com.tencent.bkrepo.auth.pojo.user.UpdateUserRequest
+import com.tencent.bkrepo.auth.pojo.user.User
 import com.tencent.bkrepo.auth.pojo.user.UserInfo
+import com.tencent.bkrepo.auth.pojo.user.UserResult
 import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.service.RoleService
 import com.tencent.bkrepo.auth.service.UserService
@@ -62,6 +62,7 @@ import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
+import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.security.exception.AuthenticationException
 import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.security.http.jwt.JwtAuthProperties
@@ -73,7 +74,6 @@ import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publi
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.RestController
-
 import javax.servlet.http.Cookie
 
 @RestController
@@ -238,6 +238,11 @@ class ServiceUserResourceImpl @Autowired constructor(
         return ResponseBuilder.success(true)
     }
 
+    override fun checkToken(uid: String, token: String): Response<Boolean> {
+        userService.findUserByUserToken(uid, token) ?: return ResponseBuilder.success(false)
+        return ResponseBuilder.success(true)
+    }
+
     override fun loginUser(uid: String, token: String): Response<Boolean> {
         userService.findUserByUserToken(uid, token) ?: run {
             logger.info("user not match [$uid]")
@@ -279,23 +284,6 @@ class ServiceUserResourceImpl @Autowired constructor(
         }
     }
 
-    override fun batchAdmin(admin: Boolean, list: List<String>): Response<Boolean> {
-        val operator = HttpContextHolder.getRequest().getAttribute(USER_KEY) as? String ?: ANONYMOUS_USER
-        val userInfo = userService.getUserById(operator) ?: throw AuthenticationException()
-        if (!userInfo.admin) throw PermissionException()
-        val successId = mutableSetOf<String>()
-        for (uid in list) {
-            userService.updateUserById(uid, UpdateUserRequest(admin = admin))
-            successId.add(uid)
-        }
-        if (admin) {
-            publishEvent(AdminAddEvent(successId.toList(), operator))
-        } else {
-            publishEvent(AdminDeleteEvent(successId.toList(), operator))
-        }
-        return ResponseBuilder.success()
-    }
-
     override fun userPage(
         pageNumber: Int,
         pageSize: Int,
@@ -309,6 +297,35 @@ class ServiceUserResourceImpl @Autowired constructor(
 
     override fun userInfoById(uid: String): Response<UserInfo?> {
         return ResponseBuilder.success(userService.getUserInfoById(uid))
+    }
+
+    override fun updatePassword(uid: String, oldPwd: String, newPwd: String): Response<Boolean> {
+        return ResponseBuilder.success(userService.updatePassword(uid, oldPwd, newPwd))
+    }
+
+    override fun resetPassword(uid: String): Response<Boolean> {
+        return ResponseBuilder.success(userService.resetPassword(uid))
+    }
+
+    override fun repeatUid(uid: String): Response<Boolean> {
+        return ResponseBuilder.success(userService.repeatUid(uid))
+    }
+
+    override fun batchAdmin(admin: Boolean, list: List<String>): Response<Boolean> {
+        val operator = HttpContextHolder.getRequest().getAttribute(USER_KEY) as? String ?: ANONYMOUS_USER
+        val userInfo = userService.getUserById(operator) ?: throw AuthenticationException()
+        if (!userInfo.admin) throw PermissionException()
+        val successId = mutableSetOf<String>()
+        for (uid in list) {
+            userService.updateUserById(uid, UpdateUserRequest(admin = admin))
+            successId.add(uid)
+        }
+        if (admin) {
+            publishEvent(AdminAddEvent(resourceKey = successId.toList().toJsonString(), userId = operator))
+        } else {
+            publishEvent(AdminDeleteEvent(resourceKey = successId.toList().toJsonString(), userId = operator))
+        }
+        return ResponseBuilder.success()
     }
 
     companion object {

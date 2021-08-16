@@ -534,7 +534,7 @@ class JobService(
         )!!.use { it.unGzipInputStream() }
         logger.info(
             "temp index file " +
-                    "${unzipedIndexTempFile.absolutePath}(${HumanReadable.size(unzipedIndexTempFile.length())}) created"
+                "${unzipedIndexTempFile.absolutePath}(${HumanReadable.size(unzipedIndexTempFile.length())}) created"
         )
         try {
             val processedMarkNodes = mutableListOf<NodeInfo>()
@@ -551,8 +551,8 @@ class JobService(
                     XmlStrUtils.updatePackageCount(randomAccessFile, indexType, changeCount, false)
                     logger.debug(
                         "updatePackageCount indexType: $indexType," +
-                                " indexFileSize: ${HumanReadable.size(randomAccessFile.length())}, " +
-                                "cost: ${System.currentTimeMillis() - start} ms"
+                            " indexFileSize: ${HumanReadable.size(randomAccessFile.length())}, " +
+                            "cost: ${System.currentTimeMillis() - start} ms"
                     )
                 }
             }

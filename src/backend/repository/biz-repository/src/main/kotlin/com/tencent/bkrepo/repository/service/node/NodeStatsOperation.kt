@@ -33,6 +33,7 @@ package com.tencent.bkrepo.repository.service.node
 
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.repository.pojo.node.NodeSizeInfo
+import org.springframework.data.mongodb.core.query.Criteria
 
 /**
  * 节点重命名接口
@@ -50,4 +51,8 @@ interface NodeStatsOperation {
     fun countFileNode(artifact: ArtifactInfo): Long
 
     fun capacity(projectId: String, repoName: String?): Long
+    /**
+     * 聚合查询节点大小
+     */
+    fun aggregateComputeSize(criteria: Criteria): Long
 }

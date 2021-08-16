@@ -49,12 +49,9 @@ import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
 import com.tencent.bkrepo.repository.dao.PackageDao
 import com.tencent.bkrepo.repository.dao.PackageVersionDao
-import com.tencent.bkrepo.repository.listener.event.packageVersion.PackageVersionCreatedEvent
-import com.tencent.bkrepo.repository.listener.event.packageVersion.PackageVersionDeletedEvent
-import com.tencent.bkrepo.repository.listener.event.packageVersion.PackageVersionDownloadEvent
-import com.tencent.bkrepo.repository.listener.event.packageVersion.PackageVersionUpdatedEvent
 import com.tencent.bkrepo.repository.model.TPackage
 import com.tencent.bkrepo.repository.model.TPackageVersion
+import com.tencent.bkrepo.repository.pojo.bksoftware.PackageOverviewResponse
 import com.tencent.bkrepo.repository.pojo.metric.CountResult
 import com.tencent.bkrepo.repository.pojo.metric.PackageDetail
 import com.tencent.bkrepo.repository.pojo.packages.PackageListOption
@@ -65,10 +62,13 @@ import com.tencent.bkrepo.repository.pojo.packages.request.PackagePopulateReques
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageUpdateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionUpdateRequest
-import com.tencent.bkrepo.repository.pojo.bksoftware.PackageOverviewResponse
 import com.tencent.bkrepo.repository.search.packages.PackageSearchInterpreter
 import com.tencent.bkrepo.repository.service.packages.PackageService
 import com.tencent.bkrepo.repository.util.MetadataUtils
+import com.tencent.bkrepo.repository.util.PackageEventFactory.buildCreatedEvent
+import com.tencent.bkrepo.repository.util.PackageEventFactory.buildDeletedEvent
+import com.tencent.bkrepo.repository.util.PackageEventFactory.buildDownloadEvent
+import com.tencent.bkrepo.repository.util.PackageEventFactory.buildUpdatedEvent
 import com.tencent.bkrepo.repository.util.PackageQueryHelper
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
@@ -184,7 +184,7 @@ class PackageServiceImpl(
         with(request) {
             Preconditions.checkNotBlank(packageKey, this::packageKey.name)
             Preconditions.checkNotBlank(packageName, this::packageName.name)
-            Preconditions.checkNotBlank(versionName, this::packageName.name)
+            Preconditions.checkNotBlank(versionName, this::versionName.name)
             // 先查询包是否存在，不存在先创建包
             val tPackage = findOrCreatePackage(request)
             // 检查版本是否存在
@@ -209,7 +209,6 @@ class PackageServiceImpl(
                 }
             } else {
                 // create new
-                isOverride = false
                 tPackage.versions += 1
                 TPackageVersion(
                     createdBy = createdBy,
@@ -231,8 +230,11 @@ class PackageServiceImpl(
             }
             packageVersionDao.save(newVersion)
             if (!isOverride) {
-                publishEvent(PackageVersionCreatedEvent(request))
-            } else publishEvent(PackageVersionUpdatedEvent(request))
+                publishEvent((buildCreatedEvent(request)))
+            } else {
+                publishEvent((buildUpdatedEvent(request)))
+            }
+
             // 更新包
             tPackage.lastModifiedBy = newVersion.lastModifiedBy
             tPackage.lastModifiedDate = newVersion.lastModifiedDate
@@ -241,7 +243,6 @@ class PackageServiceImpl(
             tPackage.extension = extension?.let { extension }
             tPackage.versionTag = mergeVersionTag(tPackage.versionTag, versionTag)
             packageDao.save(tPackage)
-
             logger.info("Create package version[$newVersion] success")
         }
     }
@@ -250,19 +251,19 @@ class PackageServiceImpl(
         val tPackage = packageDao.findByKey(projectId, repoName, packageKey) ?: return
         packageVersionDao.deleteByPackageId(tPackage.id!!)
         packageDao.deleteByKey(projectId, repoName, packageKey)
-        logger.info("Delete package [$projectId/$repoName/$packageKey] success")
         val userId = HttpContextHolder.getRequest().getAttribute("userId") as String
         publishEvent(
-            PackageVersionDeletedEvent(
-                projectId,
-                repoName,
-                tPackage.type,
-                packageKey,
-                tPackage.name,
-                null,
-                userId
+            buildDeletedEvent(
+                projectId = projectId,
+                repoName = repoName,
+                packageType = tPackage.type,
+                packageKey = packageKey,
+                packageName = tPackage.name,
+                versionName = null,
+                createdBy = userId
             )
         )
+        logger.info("Delete package [$projectId/$repoName/$packageKey] success")
     }
 
     override fun deleteVersion(projectId: String, repoName: String, packageKey: String, versionName: String) {
@@ -282,14 +283,14 @@ class PackageServiceImpl(
         }
         val userId = HttpContextHolder.getRequest().getAttribute("userId") as String
         publishEvent(
-            PackageVersionDeletedEvent(
-                projectId,
-                repoName,
-                tPackage.type,
-                packageKey,
-                tPackage.name,
-                versionName,
-                userId
+            buildDeletedEvent(
+                projectId = projectId,
+                repoName = repoName,
+                packageType = tPackage.type,
+                packageKey = packageKey,
+                packageName = tPackage.name,
+                versionName = versionName,
+                createdBy = userId
             )
         )
         logger.info("Delete package version[$projectId/$repoName/$packageKey-$versionName] success")
@@ -337,18 +338,18 @@ class PackageServiceImpl(
             throw ErrorCodeException(CommonMessageCode.METHOD_NOT_ALLOWED, "artifactPath is null")
         }
         val artifactInfo = DefaultArtifactInfo(projectId, repoName, tPackageVersion.artifactPath!!)
-        val context = ArtifactDownloadContext(artifact = artifactInfo)
+        val context = ArtifactDownloadContext(artifact = artifactInfo, useDisposition = true)
         ArtifactContextHolder.getRepository().download(context)
         val userId = HttpContextHolder.getRequest().getAttribute("userId") as String
         publishEvent(
-            PackageVersionDownloadEvent(
-                projectId,
-                repoName,
-                tPackage.type,
-                packageKey,
-                tPackage.name,
-                versionName,
-                userId
+            buildDownloadEvent(
+                projectId = projectId,
+                repoName = repoName,
+                packageType = tPackage.type,
+                packageKey = packageKey,
+                packageName = tPackage.name,
+                versionName = versionName,
+                createdBy = userId
             )
         )
     }
@@ -370,6 +371,17 @@ class PackageServiceImpl(
         val packageList = packageDao.find(query, MutableMap::class.java)
         val pageNumber = if (query.limit == 0) 0 else (query.skip / query.limit).toInt()
         return Page(pageNumber + 1, query.limit, totalRecords, packageList)
+    }
+
+    override fun listExistPackageVersion(
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        packageVersionList: List<String>
+    ): List<String> {
+        val tPackage = packageDao.findByKey(projectId, repoName, packageKey) ?: return emptyList()
+        val versionQuery = PackageQueryHelper.versionQuery(tPackage.id!!, packageVersionList)
+        return packageVersionDao.find(versionQuery).map { it.name }
     }
 
     override fun populatePackage(request: PackagePopulateRequest) {
@@ -646,7 +658,8 @@ class PackageServiceImpl(
                     versions = it.versions,
                     description = it.description,
                     versionTag = it.versionTag.orEmpty(),
-                    extension = it.extension.orEmpty()
+                    extension = it.extension.orEmpty(),
+                    historyVersion = it.historyVersion
                 )
             }
         }

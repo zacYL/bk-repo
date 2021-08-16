@@ -38,13 +38,15 @@ import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
-import com.tencent.bkrepo.repository.api.PackageClient
 import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoDeleteRequest
+import com.tencent.bkrepo.repository.pojo.repo.RepoQuotaInfo
 import com.tencent.bkrepo.repository.pojo.repo.RepoUpdateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
 import com.tencent.bkrepo.repository.pojo.repo.UserRepoCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.UserRepoUpdateRequest
+import com.tencent.bkrepo.repository.service.packages.PackageService
+import com.tencent.bkrepo.repository.service.repo.QuotaService
 import com.tencent.bkrepo.repository.service.repo.RepositoryService
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
@@ -65,7 +67,8 @@ import org.springframework.web.bind.annotation.RestController
 class UserRepositoryController(
     private val permissionManager: PermissionManager,
     private val repositoryService: RepositoryService,
-    private val packageClient: PackageClient
+    private val packageService: PackageService,
+    private val quotaService: QuotaService
 ) {
 
     @ApiOperation("根据名称类型查询仓库")
@@ -111,7 +114,8 @@ class UserRepositoryController(
                 description = description,
                 configuration = configuration,
                 storageCredentialsKey = storageCredentialsKey,
-                operator = userId
+                operator = userId,
+                quota = quota
             )
         }
         repositoryService.createRepo(createRequest)
@@ -129,6 +133,7 @@ class UserRepositoryController(
         @ApiParam("仓库类型", required = false)
         @RequestParam type: String? = null
     ): Response<List<RepositoryInfo>> {
+        permissionManager.checkProjectPermission(PermissionAction.READ, projectId)
         return ResponseBuilder.success(repositoryService.listRepo(projectId, name, type))
     }
 
@@ -146,17 +151,52 @@ class UserRepositoryController(
         @ApiParam("仓库类型", required = false)
         @RequestParam type: String? = null,
         @ApiParam("仓库使用信息", required = false)
-        @RequestParam usedInfo: Boolean = false
+        @RequestParam usedInfo: Boolean? = false
     ): Response<Page<RepositoryInfo>> {
+        permissionManager.checkProjectPermission(PermissionAction.READ, projectId)
         val page = repositoryService.listRepoPage(projectId, pageNumber, pageSize, name, type)
-        if (usedInfo) {
+        if (usedInfo == true) {
             page.records.map {
                 // 加载权限信息
                 it.permission = permissionManager.getRepoPermission(it.projectId, it.name)?.name
-                it.artifacts = packageClient.existArtifact(it.projectId, it.name).data
+                it.artifacts = packageService.existArtifact(it.projectId, it.name)
             }
         }
-        return ResponseBuilder.success(page)
+        return ResponseBuilder.success(repositoryService.listRepoPage(projectId, pageNumber, pageSize, name, type))
+    }
+
+    @ApiOperation("查询仓库配额")
+    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
+    @GetMapping("/quota/{projectId}/{repoName}")
+    fun getRepoQuota(
+        @ApiParam(value = "所属项目", required = true)
+        @PathVariable projectId: String,
+        @ApiParam(value = "仓库名称", required = true)
+        @PathVariable repoName: String
+    ): Response<RepoQuotaInfo> {
+        return ResponseBuilder.success(quotaService.getRepoQuotaInfo(projectId, repoName))
+    }
+
+    @ApiOperation("修改仓库配额")
+    @Permission(type = ResourceType.REPO, action = PermissionAction.MANAGE)
+    @PostMapping("/quota/{projectId}/{repoName}/{quota}")
+    fun updateRepoQuota(
+        @RequestAttribute userId: String,
+        @ApiParam(value = "所属项目", required = true)
+        @PathVariable projectId: String,
+        @ApiParam(value = "仓库名称", required = true)
+        @PathVariable repoName: String,
+        @ApiParam(value = "仓库配额", required = true)
+        @PathVariable quota: Long
+    ): Response<Void> {
+        val repoUpdateRequest = RepoUpdateRequest(
+            projectId = projectId,
+            name = repoName,
+            quota = quota,
+            operator = userId
+        )
+        repositoryService.updateRepo(repoUpdateRequest)
+        return ResponseBuilder.success()
     }
 
     @ApiOperation("删除仓库")

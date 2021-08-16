@@ -4,6 +4,8 @@ import com.tencent.bkrepo.auth.model.TRole
 import com.tencent.bkrepo.auth.pojo.enums.RoleType
 import com.tencent.bkrepo.auth.pojo.role.Role
 import com.tencent.bkrepo.auth.repository.RoleRepository
+import com.tencent.bkrepo.auth.repository.UserRepository
+import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.auth.service.canway.conf.CanwayAuthConf
 import com.tencent.bkrepo.auth.service.canway.pojo.CanwayGroup
 import com.tencent.bkrepo.auth.service.canway.pojo.CanwayResponse
@@ -15,11 +17,15 @@ import com.tencent.bkrepo.common.devops.http.CanwayHttpUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.data.mongodb.core.MongoTemplate
 
 class CanwayRoleServiceImpl(
-    roleRepository: RoleRepository,
+    private val roleRepository: RoleRepository,
+    private val userService: UserService,
+    private val userRepository: UserRepository,
+    private val mongoTemplate: MongoTemplate,
     private val canwayAuthConf: CanwayAuthConf
-) : RoleServiceImpl(roleRepository) {
+) : RoleServiceImpl(roleRepository, userService, userRepository, mongoTemplate) {
     override fun listRoleByProject(projectId: String, repoName: String?): List<Role> {
         // 插入用户组
         val tenantId = getTenantId()

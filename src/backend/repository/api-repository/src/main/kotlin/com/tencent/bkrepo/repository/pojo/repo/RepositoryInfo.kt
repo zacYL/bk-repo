@@ -71,5 +71,9 @@ data class RepositoryInfo(
     @ApiModelProperty("对当前用户的最高权限")
     var permission: String? = null,
     @ApiModelProperty("制品数量")
-    var artifacts: Long? = null
+    var artifacts: Long? = null,
+    @ApiModelProperty("仓库配额")
+    val quota: Long?,
+    @ApiModelProperty("仓库已使用容量")
+    val used: Long?
 )

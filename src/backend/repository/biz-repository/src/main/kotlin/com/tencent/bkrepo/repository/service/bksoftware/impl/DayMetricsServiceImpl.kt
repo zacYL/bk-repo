@@ -101,7 +101,7 @@ class DayMetricsServiceImpl(
     private fun continuousDayMap(
         days: Long,
         map: MutableMap<LocalDate,
-                DayMetricSum>
+            DayMetricSum>
     ): Map<LocalDate, DayMetricSum> {
         val today = LocalDate.now()
         val startDate = today.minusDays(days)

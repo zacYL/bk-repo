@@ -10,23 +10,19 @@
  *
  * Terms of the MIT License:
  * ---------------------------------------------------
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+ * documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of
+ * the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+ * LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+ * NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 package com.tencent.bkrepo.repository.service.repo.impl
@@ -57,9 +53,6 @@ import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.repository.config.RepositoryProperties
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.dao.RepositoryDao
-import com.tencent.bkrepo.repository.listener.event.repo.RepoCreatedEvent
-import com.tencent.bkrepo.repository.listener.event.repo.RepoDeletedEvent
-import com.tencent.bkrepo.repository.listener.event.repo.RepoUpdatedEvent
 import com.tencent.bkrepo.repository.model.TRepository
 import com.tencent.bkrepo.repository.pojo.project.ProjectCreateRequest
 import com.tencent.bkrepo.repository.pojo.project.RepoRangeQueryRequest
@@ -73,15 +66,18 @@ import com.tencent.bkrepo.repository.service.repo.ProjectService
 import com.tencent.bkrepo.repository.service.repo.ProxyChannelService
 import com.tencent.bkrepo.repository.service.repo.RepositoryService
 import com.tencent.bkrepo.repository.service.repo.StorageCredentialService
+import com.tencent.bkrepo.repository.util.RepoEventFactory.buildCreatedEvent
+import com.tencent.bkrepo.repository.util.RepoEventFactory.buildDeletedEvent
+import com.tencent.bkrepo.repository.util.RepoEventFactory.buildUpdatedEvent
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
+import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.and
 import org.springframework.data.mongodb.core.query.inValues
 import org.springframework.data.mongodb.core.query.isEqualTo
 import org.springframework.data.mongodb.core.query.where
-import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -171,8 +167,9 @@ class RepositoryServiceImpl(
             if (checkExist(projectId, name)) {
                 throw ErrorCodeException(ArtifactMessageCode.REPOSITORY_EXISTED, name)
             }
+            // 解析存储凭证
+            val credentialsKey = determineStorageKey(this)
             // 确保存储凭证Key一定存在
-            val credentialsKey = storageCredentialsKey ?: repositoryProperties.defaultStorageCredentialsKey
             val storageCredential = credentialsKey?.takeIf { it.isNotBlank() }?.let {
                 storageCredentialService.findByKey(it) ?: throw ErrorCodeException(
                     CommonMessageCode.RESOURCE_NOT_FOUND,
@@ -194,14 +191,16 @@ class RepositoryServiceImpl(
                 createdBy = operator,
                 createdDate = LocalDateTime.now(),
                 lastModifiedBy = operator,
-                lastModifiedDate = LocalDateTime.now()
+                lastModifiedDate = LocalDateTime.now(),
+                quota = quota,
+                used = 0
             )
             return try {
                 if (repoConfiguration is CompositeConfiguration) {
                     updateCompositeConfiguration(repoConfiguration, null, repository, operator)
                 }
                 repositoryDao.insert(repository)
-                publishEvent(RepoCreatedEvent(repoCreateRequest))
+                publishEvent(buildCreatedEvent(repoCreateRequest))
                 logger.info("Create repository [$repoCreateRequest] success.")
                 convertToDetail(repository, storageCredential)!!
             } catch (exception: DuplicateKeyException) {
@@ -216,6 +215,10 @@ class RepositoryServiceImpl(
         repoUpdateRequest.apply {
             Preconditions.checkArgument(description?.length ?: 0 <= REPO_DESCRIPTION_MAX_LENGTH, this::description.name)
             val repository = checkRepository(projectId, name)
+            quota?.let {
+                Preconditions.checkArgument(it >= repository.used ?: 0, this::quota.name)
+                repository.quota = it
+            }
             val oldConfiguration = repository.configuration.readJsonString<RepositoryConfiguration>()
             repository.public = public ?: repository.public
             repository.description = description ?: repository.description
@@ -226,15 +229,15 @@ class RepositoryServiceImpl(
                 repository.configuration = it.toJsonString()
             }
             repositoryDao.save(repository)
+            publishEvent(buildUpdatedEvent(repoUpdateRequest, repository.type))
         }
-        publishEvent(RepoUpdatedEvent(repoUpdateRequest))
         logger.info("Update repository[$repoUpdateRequest] success.")
     }
 
     @Transactional(rollbackFor = [Throwable::class])
     override fun deleteRepo(repoDeleteRequest: RepoDeleteRequest) {
-        val repository = checkRepository(repoDeleteRequest.projectId, repoDeleteRequest.name)
         repoDeleteRequest.apply {
+            val repository = checkRepository(projectId, name)
             if (repoDeleteRequest.forced) {
                 nodeService.deleteByPath(projectId, name, ROOT, operator)
             } else {
@@ -252,8 +255,8 @@ class RepositoryServiceImpl(
                     deleteProxyRepo(repository.projectId, repository.name, it.name!!)
                 }
             }
+            publishEvent(buildDeletedEvent(repoDeleteRequest, repository.type))
         }
-        publishEvent(RepoDeletedEvent(repoDeleteRequest, repository.type))
         logger.info("Delete repository [$repoDeleteRequest] success.")
     }
 
@@ -431,7 +434,9 @@ class RepositoryServiceImpl(
             createdBy = operator,
             createdDate = LocalDateTime.now(),
             lastModifiedBy = operator,
-            lastModifiedDate = LocalDateTime.now()
+            lastModifiedDate = LocalDateTime.now(),
+            quota = repository.quota,
+            used = repository.used
         )
         repositoryDao.insert(proxyRepository)
         logger.info("Success to create private proxy repository[$proxyRepository]")
@@ -446,9 +451,31 @@ class RepositoryServiceImpl(
         return Page(pageNumber, pageSize, count, data)
     }
 
+    /**
+     * 解析存储凭证key
+     * 规则：
+     * 1. 如果请求指定了storageCredentialsKey，则使用指定的
+     * 2. 如果没有指定，则根据仓库名称进行匹配storageCredentialsKey
+     * 3. 如果配有匹配到，则根据仓库类型进行匹配storageCredentialsKey
+     * 3. 如果以上都没匹配，则使用全局默认storageCredentialsKey
+     */
+    private fun determineStorageKey(request: RepoCreateRequest): String? {
+        with(repositoryProperties) {
+            return if (!request.storageCredentialsKey.isNullOrBlank()) {
+                request.storageCredentialsKey
+            } else if (repoStorageMapping.names.containsKey(request.name)) {
+                repoStorageMapping.names[request.name]
+            } else if (repoStorageMapping.types.containsKey(request.type)) {
+                repoStorageMapping.types[request.type]
+            } else {
+                defaultStorageCredentialsKey
+            }
+        }
+    }
+
     companion object {
         private val logger = LoggerFactory.getLogger(RepositoryServiceImpl::class.java)
-        private const val REPO_NAME_PATTERN = "[a-zA-Z_][a-zA-Z0-9\\-_]{1,31}"
+        private const val REPO_NAME_PATTERN = "[a-zA-Z_][a-zA-Z0-9\\.\\-_]{1,63}"
         private const val REPO_DESCRIPTION_MAX_LENGTH = 200
 
         private fun convertToDetail(
@@ -468,7 +495,9 @@ class RepositoryServiceImpl(
                     createdBy = it.createdBy,
                     createdDate = it.createdDate.format(DateTimeFormatter.ISO_DATE_TIME),
                     lastModifiedBy = it.lastModifiedBy,
-                    lastModifiedDate = it.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME)
+                    lastModifiedDate = it.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME),
+                    quota = it.quota,
+                    used = it.used
                 )
             }
         }
@@ -487,7 +516,9 @@ class RepositoryServiceImpl(
                     createdBy = it.createdBy,
                     createdDate = it.createdDate.format(DateTimeFormatter.ISO_DATE_TIME),
                     lastModifiedBy = it.lastModifiedBy,
-                    lastModifiedDate = it.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME)
+                    lastModifiedDate = it.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME),
+                    quota = it.quota,
+                    used = it.used
                 )
             }
         }

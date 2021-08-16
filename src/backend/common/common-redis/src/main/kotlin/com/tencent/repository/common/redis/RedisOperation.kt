@@ -97,5 +97,4 @@ class RedisOperation(private val redisTemplate: RedisTemplate<String, String>) {
     fun <T> execute(action: RedisCallback<T>): T? {
         return redisTemplate.execute(action)
     }
-
 }

@@ -8,7 +8,6 @@ import java.util.UUID
 import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands
 import org.springframework.data.redis.connection.ReturnType
 
-
 class RedisLock(
     private val redisOperation: RedisOperation,
     private val lockKey: String,
@@ -84,27 +83,31 @@ class RedisLock(
      * @return
      */
     private fun set(key: String, value: String, seconds: Long): String? {
-        return redisOperation.execute(RedisCallback { connection ->
-            val nativeConnection = connection.nativeConnection
-            val result =
-                when (nativeConnection) {
-                    // 单机
-                    is RedisAsyncCommands<*, *> -> (nativeConnection as RedisAsyncCommands<String, String>)
-                        .statefulConnection
-                        .sync()
-                        .set(key, value, SetArgs.Builder.nx().ex(seconds))
-                    // 集群
-                    is RedisAdvancedClusterAsyncCommands<*, *> -> (nativeConnection as RedisAdvancedClusterAsyncCommands<String, String>)
-                        .statefulConnection
-                        .sync()
-                        .set(key, value, SetArgs.Builder.nx().ex(seconds))
-                    else -> {
-                        logger.warn("Unknown redis connection($nativeConnection)")
-                        null
+        return redisOperation.execute(
+            RedisCallback { connection ->
+                val nativeConnection = connection.nativeConnection
+                val result =
+                    when (nativeConnection) {
+                        // 单机
+                        is RedisAsyncCommands<*, *> ->
+                            (nativeConnection as RedisAsyncCommands<String, String>)
+                                .statefulConnection
+                                .sync()
+                                .set(key, value, SetArgs.Builder.nx().ex(seconds))
+                        // 集群
+                        is RedisAdvancedClusterAsyncCommands<*, *> ->
+                            (nativeConnection as RedisAdvancedClusterAsyncCommands<String, String>)
+                                .statefulConnection
+                                .sync()
+                                .set(key, value, SetArgs.Builder.nx().ex(seconds))
+                        else -> {
+                            logger.warn("Unknown redis connection($nativeConnection)")
+                            null
+                        }
                     }
-                }
-            result
-        })
+                result
+            }
+        )
     }
 
     /**
@@ -134,11 +137,13 @@ class RedisLock(
             return false
         }
         if (result) {
-            result = redisOperation.execute(RedisCallback { connection ->
-                val queryResult =
-                    connection.eval<Int>(UNLOCK_LUA.toByteArray(), ReturnType.INTEGER, 1, lockKey.toByteArray())
-                queryResult == 1
-            }) ?: false
+            result = redisOperation.execute(
+                RedisCallback { connection ->
+                    val queryResult =
+                        connection.eval<Int>(UNLOCK_LUA.toByteArray(), ReturnType.INTEGER, 1, lockKey.toByteArray())
+                    queryResult == 1
+                }
+            ) ?: false
         }
         return result
     }

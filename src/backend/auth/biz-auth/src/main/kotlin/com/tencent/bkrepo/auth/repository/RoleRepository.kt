@@ -33,6 +33,7 @@ package com.tencent.bkrepo.auth.repository
 
 import com.tencent.bkrepo.auth.model.TRole
 import com.tencent.bkrepo.auth.pojo.enums.RoleType
+import org.bson.types.ObjectId
 import org.springframework.data.mongodb.repository.MongoRepository
 import org.springframework.stereotype.Repository
 
@@ -44,11 +45,17 @@ interface RoleRepository : MongoRepository<TRole, String> {
     fun findFirstById(Id: String): TRole?
     fun findFirstByIdAndProjectIdAndType(Id: String, projectId: String, type: RoleType): TRole?
     fun findFirstByRoleIdAndProjectIdAndRepoName(RoleId: String, projectId: String, repoName: String): TRole?
-    fun findFirstByRoleId(RoleId: String): TRole?
     fun findFirstByIdAndProjectIdAndTypeAndRepoName(
         id: String,
         projectId: String,
         type: RoleType,
         repoName: String
     ): TRole?
+
+    fun findTRoleById(id: ObjectId): TRole?
+    fun deleteTRolesById(id: ObjectId)
+
+    fun findFirstByProjectIdAndTypeAndName(projectId: String, type: RoleType, name: String): TRole?
+
+    fun findByIdIn(roles: List<String>): List<TRole>
 }

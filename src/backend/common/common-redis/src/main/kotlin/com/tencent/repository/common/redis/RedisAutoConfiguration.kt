@@ -14,7 +14,6 @@ import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.data.redis.serializer.StringRedisSerializer
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer
 
-
 @EnableCaching
 @Configuration
 @AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE)

@@ -36,13 +36,13 @@ import com.tencent.bkrepo.auth.constant.AUTH_SERVICE_USER_PREFIX
 import com.tencent.bkrepo.auth.constant.AUTH_USER_PREFIX
 import com.tencent.bkrepo.auth.pojo.token.Token
 import com.tencent.bkrepo.auth.pojo.token.TokenResult
+import com.tencent.bkrepo.auth.pojo.user.UserInfo
 import com.tencent.bkrepo.auth.pojo.user.CreateUserRequest
 import com.tencent.bkrepo.auth.pojo.user.CreateUserToProjectRequest
 import com.tencent.bkrepo.auth.pojo.user.CreateUserToRepoRequest
-import com.tencent.bkrepo.auth.pojo.user.UserResult
-import com.tencent.bkrepo.auth.pojo.user.User
 import com.tencent.bkrepo.auth.pojo.user.UpdateUserRequest
-import com.tencent.bkrepo.auth.pojo.user.UserInfo
+import com.tencent.bkrepo.auth.pojo.user.User
+import com.tencent.bkrepo.auth.pojo.user.UserResult
 import com.tencent.bkrepo.common.api.constant.AUTH_SERVICE_NAME
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
@@ -203,6 +203,15 @@ interface ServiceUserResource {
     ): Response<Boolean>
 
     @ApiOperation("校验用户token")
+    @PostMapping("/token")
+    fun checkToken(
+        @ApiParam(value = "用户id")
+        @RequestParam uid: String,
+        @ApiParam(value = "用户token")
+        @RequestParam token: String
+    ): Response<Boolean>
+
+    @ApiOperation("校验用户token")
     @PostMapping("/login")
     fun loginUser(
         @ApiParam(value = "用户id")
@@ -225,6 +234,36 @@ interface ServiceUserResource {
         @RequestParam(value = "bkrepo_ticket") bkrepoToken: String?
     ): Response<Map<String, Any>>
 
+    @ApiOperation("用户分页列表")
+    @GetMapping("page/{pageNumber}/{pageSize}")
+    fun userPage(
+        @PathVariable pageNumber: Int,
+        @PathVariable pageSize: Int,
+        @RequestParam user: String? = null,
+        @RequestParam admin: Boolean?,
+        @RequestParam locked: Boolean?
+    ): Response<Page<UserInfo>>
+
+    @ApiOperation("修改用户密码")
+    @PutMapping("/update/password/{uid}")
+    fun updatePassword(
+        @PathVariable uid: String,
+        @RequestParam oldPwd: String,
+        @RequestParam newPwd: String
+    ): Response<Boolean>
+
+    @ApiOperation("用户info ")
+    @GetMapping("/userinfo/{uid}")
+    fun userInfoById(@PathVariable uid: String): Response<UserInfo?>
+
+    @ApiOperation("用户info ")
+    @GetMapping("/reset/{uid}")
+    fun resetPassword(@PathVariable uid: String): Response<Boolean>
+
+    @ApiOperation("检验系统中是否存在同名userId ")
+    @GetMapping("/repeat/{uid}")
+    fun repeatUid(@PathVariable uid: String): Response<Boolean>
+
     @ApiOperation("软件源--批量 添加/删除 管理员")
     @PutMapping("/admin/batch/{admin}")
     fun batchAdmin(
@@ -233,18 +272,4 @@ interface ServiceUserResource {
         @ApiParam(value = "uid 列表")
         @RequestBody list: List<String>
     ): Response<Boolean>
-
-    @ApiOperation("用户分页列表")
-    @GetMapping("/page/{pageNumber}/{pageSize}")
-    fun userPage(
-        @PathVariable pageNumber: Int,
-        @PathVariable pageSize: Int,
-        @RequestParam user: String?,
-        @RequestParam admin: Boolean?,
-        @RequestParam locked: Boolean?
-    ): Response<Page<UserInfo>>
-
-    @ApiOperation("用户info ")
-    @GetMapping("/userinfo/{uid}")
-    fun userInfoById(@PathVariable uid: String): Response<UserInfo?>
 }

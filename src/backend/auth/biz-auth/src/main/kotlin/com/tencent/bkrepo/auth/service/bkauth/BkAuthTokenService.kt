@@ -175,7 +175,7 @@ class BkAuthTokenService @Autowired constructor(
         if (responseObject.data == null) {
             logger.error(
                 "create access token failed, requestUrl: $url, requestData: $bkAuthTokenRequest," +
-                        " response: $apiResponse"
+                    " response: $apiResponse"
             )
             throw RuntimeException("create access token failed, data null")
         }

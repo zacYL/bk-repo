@@ -32,8 +32,8 @@ class CanwayNodeAspect {
             if (api.startsWith("api", ignoreCase = true)) {
                 val userId = request.getAttribute(USER_KEY) ?: throw PermissionException()
                 if (!canwayPermissionService.checkCanwayPermission(
-                        artifactInfo.projectId, artifactInfo.repoName, userId as String, ACCESS
-                    )
+                    artifactInfo.projectId, artifactInfo.repoName, userId as String, ACCESS
+                )
                 )
                     throw CanwayPermissionException(CANWAY_PERMISSION)
             }

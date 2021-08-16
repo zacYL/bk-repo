@@ -6,9 +6,11 @@ import com.tencent.bkrepo.auth.repository.UserRepository
 import com.tencent.bkrepo.auth.service.DepartmentService
 import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.service.RoleService
+import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.auth.service.canway.CanwayPermissionServiceImpl
 import com.tencent.bkrepo.auth.service.canway.CanwayRoleServiceImpl
 import com.tencent.bkrepo.auth.service.canway.bk.BkUserService
+import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -33,7 +35,8 @@ class CanwayAuthServiceConfig {
         @Autowired repositoryClient: RepositoryClient,
         @Autowired canwayAuthConf: CanwayAuthConf,
         @Autowired departmentService: DepartmentService,
-        @Autowired bkUserService: BkUserService
+        @Autowired bkUserService: BkUserService,
+        @Autowired projectClient: ProjectClient
     ): PermissionService {
         logger.debug("init CanwayPermissionServiceImpl")
         return CanwayPermissionServiceImpl(
@@ -44,7 +47,8 @@ class CanwayAuthServiceConfig {
             repositoryClient,
             canwayAuthConf,
             departmentService,
-            bkUserService
+            bkUserService,
+            projectClient
         )
     }
 
@@ -52,11 +56,17 @@ class CanwayAuthServiceConfig {
     @ConditionalOnProperty(prefix = "auth", name = ["realm"], havingValue = "canway")
     fun canwayRoleService(
         @Autowired roleRepository: RoleRepository,
+        @Autowired userRepository: UserRepository,
+        @Autowired userService: UserService,
+        @Autowired mongoTemplate: MongoTemplate,
         @Autowired canwayAuthConf: CanwayAuthConf
     ): RoleService {
         logger.debug("init CanwayRoleServiceImpl")
         return CanwayRoleServiceImpl(
             roleRepository,
+            userService,
+            userRepository,
+            mongoTemplate,
             canwayAuthConf
         )
     }

@@ -43,10 +43,7 @@ import com.tencent.bkrepo.common.service.ribbon.RibbonGrayConfiguration
 import com.tencent.bkrepo.common.service.swagger.SwaggerConfiguration
 import org.springframework.boot.autoconfigure.AutoConfigureOrder
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Import
-import org.springframework.context.annotation.PropertySource
+import org.springframework.context.annotation.*
 import org.springframework.core.Ordered
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
 
@@ -68,6 +65,7 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 class ServiceAutoConfiguration {
 
     @Bean
+    @Primary
     fun objectMapper() = JsonUtils.objectMapper
 
     @Bean

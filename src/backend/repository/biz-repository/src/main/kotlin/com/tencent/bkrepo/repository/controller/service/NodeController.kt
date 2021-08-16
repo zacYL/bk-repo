@@ -37,7 +37,6 @@ import com.tencent.bkrepo.common.artifact.api.DefaultArtifactInfo
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.repository.api.NodeClient
-import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.node.NodeListOption
@@ -51,6 +50,7 @@ import com.tencent.bkrepo.repository.service.node.NodeSearchService
 import com.tencent.bkrepo.repository.service.node.NodeService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import com.tencent.bkrepo.repository.service.repo.ProjectService
 import org.springframework.web.bind.annotation.RestController
 
 /**
@@ -60,7 +60,7 @@ import org.springframework.web.bind.annotation.RestController
 class NodeController(
     private val nodeService: NodeService,
     private val nodeSearchService: NodeSearchService,
-    private val projectClient: ProjectClient
+    private val projectService: ProjectService
 ) : NodeClient {
 
     override fun getNodeDetail(projectId: String, repoName: String, fullPath: String): Response<NodeDetail?> {
@@ -200,7 +200,7 @@ class NodeController(
 
     override fun capacity(projectId: String?, repoName: String?): Response<Long> {
         val count = if (projectId == null) {
-            val projectList = projectClient.listProject().data ?: mutableListOf()
+            val projectList = projectService.listProject()
             var temp = 0L
             for (project in projectList) {
                 temp += nodeService.capacity(project.name, null)

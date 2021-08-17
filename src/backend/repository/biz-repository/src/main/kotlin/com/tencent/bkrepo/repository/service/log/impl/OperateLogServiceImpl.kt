@@ -138,9 +138,11 @@ class OperateLogServiceImpl(
 
     private fun getEventList(resourceType: ResourceType): List<EventType> {
         return when (resourceType) {
-            ResourceType.PROJECT -> repositoryEvent
+            ResourceType.PROJECT -> projectEvent
+            ResourceType.REPOSITORY -> repositoryEvent
             ResourceType.PACKAGE -> packageEvent
             ResourceType.ADMIN -> adminEvent
+            ResourceType.METADATA -> metadataEvent
             else -> listOf()
         }
     }
@@ -222,6 +224,7 @@ class OperateLogServiceImpl(
     }
 
     companion object {
+        private val projectEvent = listOf(EventType.PROJECT_CREATED)
         private val repositoryEvent = listOf(EventType.REPO_CREATED, EventType.REPO_UPDATED, EventType.REPO_DELETED)
         private val packageEvent = listOf(
             EventType.VERSION_CREATED, EventType.VERSION_DELETED,
@@ -232,6 +235,7 @@ class OperateLogServiceImpl(
             EventType.NODE_RENAMED, EventType.NODE_COPIED
         )
         private val adminEvent = listOf(EventType.ADMIN_ADD, EventType.ADMIN_DELETE)
+        private val metadataEvent = listOf(EventType.METADATA_SAVED, EventType.METADATA_DELETED)
         private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSz")
     }
 }

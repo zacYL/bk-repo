@@ -240,6 +240,10 @@ open class PermissionManager(
         return userResource.detail(userId).data?.admin == true
     }
 
+    fun listRepoBuiltInPermission(projectId: String, repoName: String) {
+        permissionResource.listRepoBuiltinPermission(projectId, repoName)
+    }
+
     companion object {
 
         private val logger = LoggerFactory.getLogger(PermissionManager::class.java)

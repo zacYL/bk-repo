@@ -162,7 +162,7 @@ class UserRepositoryController(
                 it.artifacts = packageService.existArtifact(it.projectId, it.name)
             }
         }
-        return ResponseBuilder.success(repositoryService.listRepoPage(projectId, pageNumber, pageSize, name, type))
+        return ResponseBuilder.success(page)
     }
 
     @ApiOperation("查询仓库配额")

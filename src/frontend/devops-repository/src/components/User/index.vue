@@ -22,8 +22,6 @@
             ...mapGetters(['masterNode']),
             menuList () {
                 return [
-                    'userCenter',
-                    this.userInfo.admin && 'userManage',
                     this.userInfo.admin && this.isMasterNode && 'nodeManage',
                     this.isMasterNode && 'planManage'
                 ].filter(Boolean)

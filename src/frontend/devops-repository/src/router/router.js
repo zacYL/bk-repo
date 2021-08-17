@@ -24,8 +24,6 @@ const createRepo = () => import(/* webpackChunkName: "createRepo" */'@/views/rep
 const repoConfig = () => import(/* webpackChunkName: "repoConfig" */'@/views/repoConfig')
 const repoDetail = () => import(/* webpackChunkName: "repoDetail" */'@/views/repo')
 const repoToken = () => import(/* webpackChunkName: "repoToken" */'@/views/repoToken')
-const userCenter = () => import(/* webpackChunkName: "userCenter" */'@/views/userCenter')
-const userManage = () => import(/* webpackChunkName: "userManage" */'@/views/userManage')
 const nodeManage = () => import(/* webpackChunkName: "nodeManage" */'@/views/nodeManage')
 const createPlan = () => import(/* webpackChunkName: "createPlan" */'@/views/nodeManage/createPlan')
 const logDetail = () => import(/* webpackChunkName: "logDetail" */'@/views/nodeManage/plan/logDetail')
@@ -146,22 +144,6 @@ const routes = [
                 component: repoToken,
                 meta: {
                     title: '访问令牌'
-                }
-            },
-            {
-                path: 'userCenter',
-                name: 'userCenter',
-                component: userCenter,
-                meta: {
-                    title: '个人中心'
-                }
-            },
-            {
-                path: 'userManage',
-                name: 'userManage',
-                component: userManage,
-                meta: {
-                    title: '用户管理'
                 }
             },
             {

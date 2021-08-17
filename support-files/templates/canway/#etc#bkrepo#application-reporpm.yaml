@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: ${service.prefix}${service.name}${service.suffix}
+    desc: Rpm Service
+server:
+  port: __BK_REPO_RPM_PORT__
+logging:
+  path: ${logging.path-common}/${service.name}
+service:
+  name: rpm

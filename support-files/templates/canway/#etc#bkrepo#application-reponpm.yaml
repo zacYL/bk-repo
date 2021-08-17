@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: ${service.prefix}${service.name}${service.suffix}
+    desc: Npm Service
+server:
+  port: __BK_REPO_NPM_PORT__
+logging:
+  path: ${logging.path-common}/${service.name}
+npm:
+  tarball:
+    # 自定义配置返回的tarball地址前缀
+    prefix: http://__BK_REPO_HOST__/npm/
+  migration:
+    remote_registry: __BK_REPO_NPM_MIGRATION_REMOTE_URL__
+    # 获取包的数据的URL地址
+    data_url: __BK_REPO_NPM_MIGRATION_DATA_URL__
+service:
+  name: npm

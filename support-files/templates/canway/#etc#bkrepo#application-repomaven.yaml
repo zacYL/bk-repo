@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: ${service.prefix}${service.name}${service.suffix}
+    desc: Maven Service
+server:
+  port: __BK_REPO_MAVEN_PORT__
+logging:
+  path: ${logging.path-common}/${service.name}
+service:
+  name: maven

@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: ${service.prefix}${service.name}${service.suffix}
+    desc: Composer Service
+server:
+  port: __BK_REPO_COMPOSER_PORT__
+logging:
+  path: ${logging.path-common}/${service.name}
+service:
+  name: composer
+bkrepo:
+  host: __BK_REPO_FQDN__   #服务域名
+  composer:
+    port: composer    #服务识别字段

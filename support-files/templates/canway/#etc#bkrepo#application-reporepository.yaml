@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: ${service.prefix}${service.name}${service.suffix}
+    desc: Repository Service
+  quartz:
+    mongo: true
+    startupDelay: 60s
+    overwriteExistingJobs: true
+    schedulerName: bkrepo-scheduler
+server:
+  port: __BK_REPO_REPOSITORY_PORT__
+logging:
+  path: ${logging.path-common}/${service.name}
+service:
+  name: repository
+
+bk:
+  host: __BK_PAAS_PRIVATE_URL__
+  appCode: __APP_CODE__
+  appSecret: __APP_TOKEN__
+  devopsHost: __BK_CI_PUBLIC_URL__

@@ -47,6 +47,11 @@ const val PLATFORM_KEY = "platformId"
 const val MS_REQUEST_KEY = "MSRequest"
 
 /**
+ * CI微服务调用请求标记key
+ */
+const val CI_MS_REQUEST_KEY = "CIMSRequest"
+
+/**
  * 匿名用户
  */
 const val ANONYMOUS_USER = "anonymous"

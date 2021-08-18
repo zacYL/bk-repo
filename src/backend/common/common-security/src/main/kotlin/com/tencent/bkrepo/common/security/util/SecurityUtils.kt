@@ -35,6 +35,7 @@ import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
 import com.tencent.bkrepo.common.api.constant.MS_REQUEST_KEY
 import com.tencent.bkrepo.common.api.constant.PLATFORM_KEY
 import com.tencent.bkrepo.common.api.constant.USER_KEY
+import com.tencent.bkrepo.common.api.constant.CI_MS_REQUEST_KEY
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 
 /**
@@ -74,6 +75,7 @@ object SecurityUtils {
      * 判断是否为微服务请求
      */
     fun isServiceRequest(): Boolean {
-        return HttpContextHolder.getRequestOrNull()?.getAttribute(MS_REQUEST_KEY) != null
+        val request = HttpContextHolder.getRequestOrNull()
+        return (request?.getAttribute(MS_REQUEST_KEY) != null || request?.getHeader(CI_MS_REQUEST_KEY) != null)
     }
 }

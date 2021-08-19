@@ -331,9 +331,9 @@ class DockerArtifactRepo @Autowired constructor(
         action: PermissionAction
     ): Boolean {
         try {
-            if (resourceType == ResourceType.PROJECT) {
-                permissionManager.checkProjectPermission(action, context.projectId)
-            }
+//            if (resourceType == ResourceType.PROJECT) {
+//                permissionManager.checkProjectPermission(action, context.projectId)
+//            }
             if (resourceType == ResourceType.REPO) {
                 permissionManager.checkRepoPermission(action, context.projectId, context.repoName)
             }

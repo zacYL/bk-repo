@@ -69,7 +69,9 @@ open class PermissionManager(
         action: PermissionAction,
         projectId: String
     ) {
-        checkPermission(ResourceType.PROJECT, action, projectId)
+        //CI 项目权限交由权限中心管理
+        return
+//        checkPermission(ResourceType.PROJECT, action, projectId)
     }
 
     /**

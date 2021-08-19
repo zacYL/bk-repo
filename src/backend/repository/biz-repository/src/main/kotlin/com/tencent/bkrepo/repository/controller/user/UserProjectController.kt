@@ -81,7 +81,7 @@ class UserProjectController(
         @ApiParam(value = "项目ID", required = true)
         @PathVariable projectId: String
     ): Response<Boolean> {
-        permissionManager.checkProjectPermission(PermissionAction.READ, projectId)
+//        permissionManager.checkProjectPermission(PermissionAction.READ, projectId)
         return ResponseBuilder.success(projectService.checkExist(projectId))
     }
 

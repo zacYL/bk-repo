@@ -71,7 +71,7 @@ class UserListViewController(
 
     @GetMapping("/{projectId}")
     fun listRepositoryView(@PathVariable projectId: String) {
-        permissionManager.checkProjectPermission(PermissionAction.READ, projectId)
+//        permissionManager.checkProjectPermission(PermissionAction.READ, projectId)
         listViewService.listRepoView(projectId)
     }
 }

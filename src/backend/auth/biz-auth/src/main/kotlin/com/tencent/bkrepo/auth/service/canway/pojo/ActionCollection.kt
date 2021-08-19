@@ -1,5 +1,6 @@
 package com.tencent.bkrepo.auth.service.canway.pojo
 
+import com.tencent.bkrepo.auth.constant.BK_SOFTWARE
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 
 object ActionCollection {
@@ -130,20 +131,9 @@ object ActionCollection {
         }
     }
 
-    fun getDefaultViewerBuiltinPermission(repoName: String): List<PermissionAction> {
-        return when (repoName) {
-            "custom" -> listOf(
-                PermissionAction.READ,
-                PermissionAction.ARTIFACT_READ
-            )
-            "pipeline" -> listOf(
-                PermissionAction.READ,
-                PermissionAction.ARTIFACT_READ
-            )
-            else -> listOf(
-                PermissionAction.READ,
-                PermissionAction.ARTIFACT_READ
-            )
-        }
+    fun getDefaultViewerBuiltinPermission(projectId: String?, repoName: String): List<PermissionAction> {
+        val list = mutableListOf(PermissionAction.READ, PermissionAction.ARTIFACT_READ)
+        if (projectId == BK_SOFTWARE) list.add(PermissionAction.ARTIFACT_DOWNLOAD)
+        return list
     }
 }

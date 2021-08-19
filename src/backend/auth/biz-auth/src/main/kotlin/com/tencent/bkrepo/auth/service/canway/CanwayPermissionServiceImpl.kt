@@ -155,7 +155,7 @@ class CanwayPermissionServiceImpl(
         )
         val repoViewer = getOnePermission(
             projectId, repoName, AUTH_BUILTIN_VIEWER,
-            ActionCollection.getDefaultViewerBuiltinPermission(repoName)
+            ActionCollection.getDefaultViewerBuiltinPermission(projectId, repoName)
         )
         val permissions = listOf(repoAdmin, repoUser, repoViewer).map { transferPermission(it) }
         // 过滤非业务权限

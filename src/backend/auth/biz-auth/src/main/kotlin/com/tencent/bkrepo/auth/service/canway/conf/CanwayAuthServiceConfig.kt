@@ -9,6 +9,7 @@ import com.tencent.bkrepo.auth.service.RoleService
 import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.auth.service.canway.CanwayPermissionServiceImpl
 import com.tencent.bkrepo.auth.service.canway.CanwayRoleServiceImpl
+import com.tencent.bkrepo.auth.service.canway.CanwayUserServiceImpl
 import com.tencent.bkrepo.auth.service.canway.bk.BkUserService
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
@@ -22,7 +23,7 @@ import org.springframework.core.Ordered
 import org.springframework.data.mongodb.core.MongoTemplate
 
 @Configuration
-@AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE)
+@AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE)
 class CanwayAuthServiceConfig {
 
     @Bean
@@ -38,7 +39,6 @@ class CanwayAuthServiceConfig {
         @Autowired bkUserService: BkUserService,
         @Autowired projectClient: ProjectClient
     ): PermissionService {
-        logger.debug("init CanwayPermissionServiceImpl")
         return CanwayPermissionServiceImpl(
             userRepository,
             roleRepository,
@@ -61,11 +61,26 @@ class CanwayAuthServiceConfig {
         @Autowired mongoTemplate: MongoTemplate,
         @Autowired canwayAuthConf: CanwayAuthConf
     ): RoleService {
-        logger.debug("init CanwayRoleServiceImpl")
         return CanwayRoleServiceImpl(
             roleRepository,
             userService,
             userRepository,
+            mongoTemplate,
+            canwayAuthConf
+        )
+    }
+
+    @Bean
+    @ConditionalOnProperty(prefix = "auth", name = ["realm"], havingValue = "canway")
+    fun canwayUserService(
+        @Autowired roleRepository: RoleRepository,
+        @Autowired userRepository: UserRepository,
+        @Autowired mongoTemplate: MongoTemplate,
+        @Autowired canwayAuthConf: CanwayAuthConf
+    ): UserService {
+        return CanwayUserServiceImpl(
+            userRepository,
+            roleRepository,
             mongoTemplate,
             canwayAuthConf
         )

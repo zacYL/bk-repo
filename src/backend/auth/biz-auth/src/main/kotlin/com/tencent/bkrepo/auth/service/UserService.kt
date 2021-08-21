@@ -39,6 +39,7 @@ import com.tencent.bkrepo.auth.pojo.user.CreateUserRequest
 import com.tencent.bkrepo.auth.pojo.user.CreateUserToProjectRequest
 import com.tencent.bkrepo.auth.pojo.user.CreateUserToRepoRequest
 import com.tencent.bkrepo.auth.pojo.user.UpdateUserRequest
+import com.tencent.bkrepo.auth.pojo.user.UserResult
 import com.tencent.bkrepo.common.api.pojo.Page
 
 interface UserService {
@@ -52,6 +53,8 @@ interface UserService {
     fun createUserToRepo(request: CreateUserToRepoRequest): Boolean
 
     fun listUser(rids: List<String>): List<User>
+
+    fun listUserResult(rids: List<String>): List<UserResult>
 
     fun deleteById(userId: String): Boolean
 

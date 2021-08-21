@@ -43,6 +43,7 @@ import com.tencent.bkrepo.auth.pojo.user.CreateUserToRepoRequest
 import com.tencent.bkrepo.auth.pojo.user.UpdateUserRequest
 import com.tencent.bkrepo.auth.pojo.user.User
 import com.tencent.bkrepo.auth.pojo.user.UserInfo
+import com.tencent.bkrepo.auth.pojo.user.UserResult
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
 import com.tencent.bkrepo.auth.service.UserService
@@ -66,7 +67,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
-class UserServiceImpl constructor(
+open class UserServiceImpl constructor(
     private val userRepository: UserRepository,
     roleRepository: RoleRepository,
     private val mongoTemplate: MongoTemplate
@@ -170,6 +171,17 @@ class UserServiceImpl constructor(
             mongoTemplate.find(filter, TUser::class.java).map { transferUser(it) }
         } else {
             userRepository.findAllByRolesIn(rids).map { transferUser(it) }
+        }
+    }
+
+    override fun listUserResult(rids: List<String>): List<UserResult> {
+        logger.debug("list user rids : [$rids]")
+        return if (rids.isEmpty()) {
+            // 排除被锁定的用户
+            val filter = Query(Criteria(TUser::locked.name).`is`(false))
+            mongoTemplate.find(filter, TUser::class.java).map { transferUserResult(it) }
+        } else {
+            userRepository.findAllByRolesIn(rids).map { transferUserResult(it) }
         }
     }
 

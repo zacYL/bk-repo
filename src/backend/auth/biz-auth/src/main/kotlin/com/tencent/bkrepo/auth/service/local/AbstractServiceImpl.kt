@@ -43,6 +43,7 @@ import com.tencent.bkrepo.auth.pojo.user.CreateUserToProjectRequest
 import com.tencent.bkrepo.auth.pojo.user.CreateUserToRepoRequest
 import com.tencent.bkrepo.auth.pojo.user.User
 import com.tencent.bkrepo.auth.pojo.user.UserInfo
+import com.tencent.bkrepo.auth.pojo.user.UserResult
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
@@ -176,6 +177,13 @@ open class AbstractServiceImpl constructor(
             locked = tUser.locked,
             tokens = tUser.tokens,
             roles = tUser.roles
+        )
+    }
+
+    fun transferUserResult(tUser: TUser): UserResult {
+        return UserResult(
+            userId = tUser.userId,
+            name = tUser.name
         )
     }
 

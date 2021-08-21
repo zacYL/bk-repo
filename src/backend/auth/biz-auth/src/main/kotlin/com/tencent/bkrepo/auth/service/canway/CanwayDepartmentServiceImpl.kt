@@ -139,11 +139,11 @@ class CanwayDepartmentServiceImpl(
     companion object {
         val logger: Logger = LoggerFactory.getLogger(CanwayDepartmentServiceImpl::class.java)
         const val jsonFormat = "{\n" +
-                "    \"bk_app_code\":\"%s\",\n" +
-                "    \"bk_app_secret\":\"%s\",\n" +
-                "    \"%s\":\"%s\",\n" +
-                "    \"id_list\": [%d]\n" +
-                "}"
+            "    \"bk_app_code\":\"%s\",\n" +
+            "    \"bk_app_secret\":\"%s\",\n" +
+            "    \"%s\":\"%s\",\n" +
+            "    \"id_list\": [%d]\n" +
+            "}"
         const val paasListDepartmentUrl = "/api/c/compapi/v2/usermanage/list_departments/"
         const val paasBatchDepartmentUrl = "/api/c/compapi/v2/usermanage/department_batch/"
         const val paasDepartmentApi =

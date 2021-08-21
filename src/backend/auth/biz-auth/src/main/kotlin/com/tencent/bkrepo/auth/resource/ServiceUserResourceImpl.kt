@@ -154,10 +154,7 @@ class ServiceUserResourceImpl @Autowired constructor(
     }
 
     override fun listUser(rids: List<String>?): Response<List<UserResult>> {
-        val result = userService.listUser(rids.orEmpty()).map {
-            UserResult(it.userId, it.name)
-        }
-        return ResponseBuilder.success(result)
+        return ResponseBuilder.success(userService.listUserResult(rids.orEmpty()))
     }
 
     override fun listAllUser(rids: List<String>?): Response<List<User>> {

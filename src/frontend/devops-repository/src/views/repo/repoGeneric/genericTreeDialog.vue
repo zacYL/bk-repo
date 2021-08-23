@@ -6,6 +6,7 @@
         :quick-close="false"
         width="600"
         height="600"
+        :position="{ top: 100 }"
         header-position="left">
         <div class="dialog-tree-container">
             <repo-tree
@@ -73,6 +74,7 @@
                     ...this.genericTreeData,
                     ...data
                 }
+                setTimeout(this.$refs.dialogTree.computedSize, 0)
             },
             submit () {
                 this.$emit('submit', this.genericTreeData)
@@ -82,7 +84,7 @@
 </script>
 <style lang="scss" scoped>
 .dialog-tree-container {
-    max-height: 500px;
+    height: 420px;
     overflow: auto;
 }
 </style>

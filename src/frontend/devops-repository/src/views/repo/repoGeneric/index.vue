@@ -1,6 +1,9 @@
 <template>
     <div class="repo-generic-container" @click="() => selectRow(selectedTreeNode)">
-        <div v-show="!query" class="mr20 repo-generic-side" v-bkloading="{ isLoading: treeLoading }">
+        <div v-show="!query"
+            class="repo-generic-side"
+            :style="{ 'flex-basis': `${sideBarWidth}px` }"
+            v-bkloading="{ isLoading: treeLoading }">
             <div class="important-search">
                 <bk-input
                     v-model.trim="importantSearch"
@@ -21,6 +24,7 @@
                 @item-click="itemClickHandler">
             </repo-tree>
         </div>
+        <div class="repo-generic-split-bar"></div>
         <div class="repo-generic-main" v-bkloading="{ isLoading }">
             <div class="repo-generic-table">
                 <bk-table
@@ -100,6 +104,8 @@
         components: { RepoTree, genericDetail, genericUploadDialog, genericFormDialog, genericTreeDialog },
         data () {
             return {
+                startDrag: false,
+                sideBarWidth: 300,
                 isLoading: false,
                 treeLoading: false,
                 importantSearch: '',
@@ -184,7 +190,15 @@
         created () {
             this.initPage()
         },
+        mounted () {
+            const dragLine = document.querySelector('.repo-generic-split-bar')
+            dragLine.addEventListener('mousedown', this.dragDown)
+            window.addEventListener('mousemove', this.dragMove)
+            window.addEventListener('mouseup', this.dragUp)
+        },
         beforeDestroy () {
+            window.removeEventListener('mousemove', this.dragMove)
+            window.removeEventListener('mouseup', this.dragUp)
             this.SET_BREADCRUMB([])
         },
         methods: {
@@ -206,6 +220,17 @@
                 'getFolderSize',
                 'getFileNumOfFolder'
             ]),
+            dragDown () {
+                this.startDrag = true
+            },
+            dragMove (e) {
+                if (!this.startDrag) return
+                const clientX = e.clientX - 40
+                if (clientX > 200) this.sideBarWidth = clientX
+            },
+            dragUp () {
+                this.startDrag = false
+            },
             initPage () {
                 this.importantSearch = ''
                 this.INIT_TREE()
@@ -522,7 +547,7 @@
                     show: true,
                     type: 'move',
                     title: `${this.$t('move')} (${this.selectedRow.name})`,
-                    openList: [],
+                    openList: ['0'],
                     selectedNode: this.genericTree[0]
                 })
             },
@@ -531,7 +556,7 @@
                     show: true,
                     type: 'copy',
                     title: `${this.$t('copy')} (${this.selectedRow.name})`,
-                    openList: [],
+                    openList: ['0'],
                     selectedNode: this.genericTree[0]
                 })
             },
@@ -619,7 +644,6 @@
 .repo-generic-container {
     display: flex;
     .repo-generic-side {
-        width: 300px;
         border: 1px solid $borderWeightColor;
         .important-search {
             padding: 10px;
@@ -627,13 +651,17 @@
             border-bottom: 1px solid $borderWeightColor;
         }
         .repo-generic-tree {
-            max-height: calc(100% - 54px);
-            overflow: auto;
+            height: calc(100% - 53px);
         }
+    }
+    .repo-generic-split-bar {
+        flex-basis: 20px;
+        cursor: col-resize;
     }
     .repo-generic-main {
         flex: 1;
         display: flex;
+        overflow: hidden;
         .repo-generic-table {
             flex: 1;
             font-size: 0;

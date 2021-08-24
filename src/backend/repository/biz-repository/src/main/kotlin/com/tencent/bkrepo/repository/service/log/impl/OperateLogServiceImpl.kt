@@ -35,9 +35,12 @@ import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.repository.dao.OperateLogDao
 import com.tencent.bkrepo.repository.model.TOperateLog
+import com.tencent.bkrepo.repository.pojo.bksoftware.DayMetricRequest
 import com.tencent.bkrepo.repository.pojo.log.OperateLogResponse
+import com.tencent.bkrepo.repository.pojo.log.OperateType
 import com.tencent.bkrepo.repository.pojo.log.ResourceType
 import com.tencent.bkrepo.repository.pojo.metric.CountResult
+import com.tencent.bkrepo.repository.service.bksoftware.DayMetricService
 import com.tencent.bkrepo.repository.service.log.OperateLogService
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.aggregation.Aggregation
@@ -55,7 +58,8 @@ import java.time.format.DateTimeFormatter
  */
 @Service
 class OperateLogServiceImpl(
-    private val operateLogDao: OperateLogDao
+    private val operateLogDao: OperateLogDao,
+    private val dayMetricService: DayMetricService
 ) : OperateLogService {
 
     @Async
@@ -69,6 +73,17 @@ class OperateLogServiceImpl(
             userId = event.userId,
             clientAddress = address
         )
+        val operateType = transferEventType(event.type)
+        if (packageEvent.contains(event.type) && operateType != null) {
+            dayMetricService.add(
+                DayMetricRequest(
+                day = LocalDate.now(),
+                projectId = event.projectId,
+                repoName = event.repoName,
+                type = operateType
+            )
+            )
+        }
         operateLogDao.save(log)
     }
 
@@ -221,6 +236,17 @@ class OperateLogServiceImpl(
         }
 
         return Query(criteria).with(Sort.by(TOperateLog::createdDate.name).descending())
+    }
+
+    private fun transferEventType(eventType: EventType): OperateType? {
+        return when (eventType) {
+            EventType.VERSION_DOWNLOAD -> OperateType.DOWNLOAD
+            EventType.VERSION_CREATED -> OperateType.CREATE
+            EventType.VERSION_UPDATED -> OperateType.UPDATE
+            EventType.VERSION_DELETED -> OperateType.DELETE
+            EventType.VERSION_STAGED -> OperateType.STAGE
+            else -> null
+        }
     }
 
     companion object {

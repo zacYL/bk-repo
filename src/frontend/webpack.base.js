@@ -109,11 +109,6 @@ module.exports = ({ entry, publicPath, dist, port = 8080, argv, env }) => {
                 '@locale': path.resolve(__dirname, 'locale')
             }
         },
-        // externals: {
-        //     'vue': 'Vue',
-        //     'vue-router': 'VueRouter',
-        //     'vuex': 'Vuex'
-        // },
         devServer: {
             contentBase: path.join(__dirname, envDist),
             historyApiFallback: true,

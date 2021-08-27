@@ -1,5 +1,4 @@
 const path = require('path')
-const webpack = require('webpack')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const webpackBaseConfig = require('../webpack.base')
@@ -27,17 +26,11 @@ module.exports = (env, argv) => {
             filename: isProd ? `${dist}/frontend#bksoftware#index.html` : `${dist}/index.html`,
             template: 'index.html',
             inject: true,
-            VENDOR_LIBS: `/bksoftware/main.dll.js?v=${Math.random()}`,
             urlPrefix,
             extUrlPrefix,
             timeStamp: +new Date()
         }),
-        new webpack.DllReferencePlugin({
-            context: __dirname,
-            manifest: require('./dist/manifest.json')
-        }),
-        new CopyWebpackPlugin([{ from: path.join(__dirname, './static'), to: dist }]),
-        new CopyWebpackPlugin([{ from: path.join(__dirname, './dist'), to: dist }])
+        new CopyWebpackPlugin([{ from: path.join(__dirname, './static'), to: dist }])
     ]
 
     config.devServer.historyApiFallback = {

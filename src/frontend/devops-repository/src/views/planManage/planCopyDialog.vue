@@ -6,12 +6,14 @@
         @cancel="$emit('cancel')">
         <bk-form :label-width="85" :model="formData" :rules="rules" ref="planCopyForm">
             <bk-form-item label="计划名称" :required="true" property="name">
-                <bk-input v-model.trim="formData.name"></bk-input>
+                <bk-input v-model.trim="formData.name" maxlength="32" show-word-limit></bk-input>
             </bk-form-item>
             <bk-form-item :label="$t('description')" property="description">
                 <bk-input
                     v-model="formData.description"
                     type="textarea"
+                    maxlength="200"
+                    show-word-limit
                     :rows="3">
                 </bk-input>
             </bk-form-item>

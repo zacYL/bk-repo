@@ -174,7 +174,10 @@ const routes = [
                 name: 'createPlan',
                 component: createPlan,
                 meta: {
-                    title: '创建计划'
+                    breadcrumb: [
+                        { name: 'planManage', label: '分发计划' },
+                        { name: 'createPlan', label: '创建计划' }
+                    ]
                 }
             },
             {

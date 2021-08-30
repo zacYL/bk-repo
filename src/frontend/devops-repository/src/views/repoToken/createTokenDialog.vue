@@ -17,7 +17,7 @@
         </div>
         <bk-form v-else class="mt20 mb20" :label-width="100" :model="tokenFormData" :rules="rules" ref="tokenForm">
             <bk-form-item :label="$t('name')" :required="true" property="name">
-                <bk-input v-model.trim="tokenFormData.name"></bk-input>
+                <bk-input v-model.trim="tokenFormData.name" maxlength="32" show-word-limit></bk-input>
             </bk-form-item>
             <bk-form-item :label="$t('expiress')" property="expiredAt">
                 <bk-date-picker

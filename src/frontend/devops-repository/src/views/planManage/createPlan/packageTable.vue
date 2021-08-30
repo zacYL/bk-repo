@@ -1,38 +1,34 @@
 <template>
-    <div class="repository-table-container">
-        <div class="flex-align-center">
-            <label class="mr5">源仓库：</label>
-            <bk-select
-                class="w250"
-                v-model="selectedRepoName"
-                searchable
-                :disabled="disabled"
-                placeholder="请选择源仓库"
-                @change="packageConstraints = []">
-                <bk-option-group
-                    v-for="(list, type) in repoGroupList"
-                    :name="type.toLowerCase()"
-                    :key="type"
-                    show-collapse>
-                    <bk-option v-for="option in list"
-                        :key="option.name"
-                        :id="option.name"
-                        :name="option.name">
-                    </bk-option>
-                </bk-option-group>
-            </bk-select>
+    <div class="package-table-container">
+        <bk-select
+            class="w250"
+            v-model="selectedRepoName"
+            searchable
+            :disabled="disabled"
+            placeholder="请选择源仓库"
+            @change="packageConstraints = []">
+            <bk-option-group
+                v-for="(list, type) in repoGroupList"
+                :name="type.toLowerCase()"
+                :key="type"
+                show-collapse>
+                <bk-option v-for="option in list"
+                    :key="option.name"
+                    :id="option.name"
+                    :name="option.name">
+                </bk-option>
+            </bk-option-group>
+        </bk-select>
+        <div v-show="!disabled && selectedRepoName" class="mt10 package-add flex-center" @click="showAddDialog = true">
+            <i class="mr5 devops-icon icon-plus-circle"></i>
+            添加制品
         </div>
-        <div v-show="!disabled && selectedRepoName" class="repo-add hover-btn" @click="showAddDialog = true">
-            <i class="mr5 devops-icon icon-plus-square"></i>
-            从当前仓库添加制品
-        </div>
-        <div class="package-list" :class="{ 'mt10': disabled }" v-show="packageConstraints.length">
-            <div class="package-info flex-align-center" v-for="(pkg, ind) in packageConstraints" :key="pkg.fid">
+        <div class="mt10 package-list" v-show="packageConstraints.length">
+            <div class="pl20 package-item flex-align-center" v-for="(pkg, ind) in packageConstraints" :key="pkg.fid">
                 <Icon size="16" :name="pkg.type.toLowerCase()" />
-                <span class="package-mata text-overflow" :title="pkg.repoName">{{ pkg.repoName }}</span>
-                <span class="package-mata text-overflow" :title="pkg.key">{{ pkg.key }}</span>
-                <span class="package-mata text-overflow" :title="pkg.versions.join(',')">{{ pkg.versions.join(',') }}</span>
-                <i v-show="!disabled" class="devops-icon icon-delete hover-btn" @click="packageConstraints.splice(ind, 1)"></i>
+                <span class="package-meta text-overflow" :title="pkg.key">{{ pkg.key }}</span>
+                <span class="package-meta text-overflow" :title="pkg.versions.join(',')">{{ pkg.versions.join(',') }}</span>
+                <i v-show="!disabled" class="devops-icon icon-delete flex-center hover-btn" @click="packageConstraints.splice(ind, 1)"></i>
             </div>
         </div>
         <package-dialog
@@ -118,46 +114,35 @@
 </script>
 <style lang="scss" scoped>
 @import '@/scss/conf';
-.repository-table-container {
-    .repo-list {
-        width: 600px;
-        border: 1px solid $borderWeightColor;
-        border-bottom-width: 0;
-        .repo-item {
-            justify-content: space-between;
-            padding: 0 10px;
-            border-bottom: 1px solid $borderWeightColor;
-            .repo-name {
-                margin-left: 10px;
-                max-width: 500px;
-            }
-        }
-    }
-    .repo-add {
-        display: inline-flex;
-        align-items: center;
-    }
+.package-table-container {
     .package-list {
         width: 600px;
         border: 1px solid $borderWeightColor;
         border-bottom-width: 0;
-        .package-info {
-            padding: 0 10px;
+        .package-item {
+            justify-content: space-between;
+            height: 32px;
             font-size: 12px;
-            height: 28px;
             border-bottom: 1px solid $borderWeightColor;
-            .package-mata  {
+            background-color: #f9faff;
+            .package-meta  {
                 flex: 1;
                 margin: 0 5px;
             }
-            &:hover {
-                color: $primaryColor;
-                background-color: #e1ecff;
-            }
             .icon-delete {
+                width: 50px;
+                height: 100%;
                 font-size: 16px;
+                background-color: #e6f2fe;
             }
         }
+    }
+    .package-add {
+        width: 120px;
+        height: 36px;
+        color: $primaryColor;
+        background-color: #f0f6ff;
+        cursor: pointer;
     }
 }
 </style>

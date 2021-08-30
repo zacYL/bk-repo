@@ -1,17 +1,17 @@
 <template>
     <div class="repository-table-container">
-        <div v-show="replicaTaskObjects.length" class="repo-list">
-            <div class="repo-item flex-align-center" v-for="(repo, ind) in replicaTaskObjects" :key="repo.fid">
+        <div v-show="!disabled" class="repo-add flex-center" @click="showAddDialog = true">
+            <i class="mr5 devops-icon icon-plus-circle"></i>
+            添加仓库
+        </div>
+        <div v-show="replicaTaskObjects.length" class="mt10 repo-list">
+            <div class="pl20 repo-item flex-align-center" v-for="(repo, ind) in replicaTaskObjects" :key="repo.fid">
                 <div class="flex-align-center">
                     <Icon size="16" :name="repo.type.toLowerCase()" />
                     <span class="repo-name text-overflow" :title="repo.name">{{ repo.name }}</span>
                 </div>
-                <i v-show="!disabled" class="devops-icon icon-delete hover-btn" @click="replicaTaskObjects.splice(ind, 1)"></i>
+                <i v-show="!disabled" class="devops-icon icon-delete flex-center hover-btn" @click="replicaTaskObjects.splice(ind, 1)"></i>
             </div>
-        </div>
-        <div v-show="!disabled" class="repo-add hover-btn" @click="showAddDialog = true">
-            <i class="mr5 devops-icon icon-plus-square"></i>
-            添加仓库
         </div>
         <repo-dialog :show="showAddDialog" :replica-task-objects="replicaTaskObjects" @confirm="confirm" @cancel="showAddDialog = false"></repo-dialog>
     </div>
@@ -83,26 +83,28 @@
         border-bottom-width: 0;
         .repo-item {
             justify-content: space-between;
-            height: 28px;
-            padding: 0 10px;
+            height: 32px;
             font-size: 12px;
             border-bottom: 1px solid $borderWeightColor;
+            background-color: #f9faff;
             .repo-name {
                 flex: 1;
                 margin: 0 5px;
             }
-            &:hover {
-                color: $primaryColor;
-                background-color: #e1ecff;
-            }
             .icon-delete {
+                width: 50px;
+                height: 100%;
                 font-size: 16px;
+                background-color: #e6f2fe;
             }
         }
     }
     .repo-add {
-        display: inline-flex;
-        align-items: center;
+        width: 120px;
+        height: 36px;
+        color: $primaryColor;
+        background-color: #f0f6ff;
+        cursor: pointer;
     }
 }
 </style>

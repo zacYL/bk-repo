@@ -1,11 +1,9 @@
 <template>
-    <bk-dialog
+    <canway-dialog
         :value="show"
-        width="800"
+        width="600"
         title="添加文件路径"
-        :position="{ top: 100 }"
-        :mask-close="false"
-        :close-icon="false">
+        @cancel="$emit('cancel')">
         <bk-input
             v-model="pathsStr"
             type="textarea"
@@ -13,10 +11,10 @@
             :rows="10">
         </bk-input>
         <template #footer>
-            <bk-button theme="primary" @click="confirmPackageData">{{$t('add')}}</bk-button>
             <bk-button @click="$emit('cancel')">{{$t('cancel')}}</bk-button>
+            <bk-button class="ml10" theme="primary" @click="confirmPackageData">{{$t('confirm')}}</bk-button>
         </template>
-    </bk-dialog>
+    </canway-dialog>
 </template>
 <script>
     export default {

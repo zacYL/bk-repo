@@ -1,11 +1,10 @@
 <template>
-    <bk-dialog
+    <canway-dialog
         :value="show"
         width="800"
         title="添加仓库"
         :position="{ top: 100 }"
-        :mask-close="false"
-        :close-icon="false">
+        @cancel="$emit('cancel')">
         <bk-transfer
             :title="['仓库列表', '已选仓库']"
             :source-list="repoList"
@@ -25,10 +24,10 @@
             </template>
         </bk-transfer>
         <template #footer>
-            <bk-button theme="primary" @click="confirmPackageData">{{$t('add')}}</bk-button>
             <bk-button @click="$emit('cancel')">{{$t('cancel')}}</bk-button>
+            <bk-button class="ml10" theme="primary" @click="confirmPackageData">{{$t('confirm')}}</bk-button>
         </template>
-    </bk-dialog>
+    </canway-dialog>
 </template>
 <script>
     import { mapState } from 'vuex'

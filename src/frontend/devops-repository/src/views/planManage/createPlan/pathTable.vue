@@ -1,35 +1,32 @@
 <template>
-    <div class="repository-table-container">
-        <div class="flex-align-center">
-            <label class="mr5">源仓库：</label>
-            <bk-select
-                class="w250"
-                v-model="selectedRepoName"
-                searchable
-                :disabled="disabled"
-                placeholder="请选择源仓库"
-                @change="pathConstraints = []">
-                <bk-option-group
-                    v-for="(list, type) in repoGroupList"
-                    :name="type.toLowerCase()"
-                    :key="type"
-                    show-collapse>
-                    <bk-option v-for="option in list"
-                        :key="option.name"
-                        :id="option.name"
-                        :name="option.name">
-                    </bk-option>
-                </bk-option-group>
-            </bk-select>
-        </div>
-        <div v-show="!disabled && selectedRepoName" class="repo-add hover-btn" @click="showAddDialog = true">
-            <i class="mr5 devops-icon icon-plus-square"></i>
+    <div class="path-table-container">
+        <bk-select
+            class="w250"
+            v-model="selectedRepoName"
+            searchable
+            :disabled="disabled"
+            placeholder="请选择源仓库"
+            @change="pathConstraints = []">
+            <bk-option-group
+                v-for="(list, type) in repoGroupList"
+                :name="type.toLowerCase()"
+                :key="type"
+                show-collapse>
+                <bk-option v-for="option in list"
+                    :key="option.name"
+                    :id="option.name"
+                    :name="option.name">
+                </bk-option>
+            </bk-option-group>
+        </bk-select>
+        <div v-show="!disabled && selectedRepoName" class="mt10 path-add flex-center" @click="showAddDialog = true">
+            <i class="mr5 devops-icon icon-plus-circle"></i>
             添加文件路径
         </div>
-        <div class="repo-list" :class="{ 'mt10': disabled }" v-show="pathConstraints.length">
-            <div class="repo-item flex-align-center" v-for="(path, ind) in pathConstraints" :key="path">
-                <span class="repo-name text-overflow" :title="path">{{ path }}</span>
-                <i v-show="!disabled" class="devops-icon icon-delete hover-btn" @click="pathConstraints.splice(ind, 1)"></i>
+        <div class="mt10 path-list" v-show="pathConstraints.length">
+            <div class="pl20 path-item flex-align-center" v-for="(path, ind) in pathConstraints" :key="path">
+                <span class="path-name text-overflow" :title="path">{{ path }}</span>
+                <i v-show="!disabled" class="devops-icon icon-delete flex-center hover-btn" @click="pathConstraints.splice(ind, 1)"></i>
             </div>
         </div>
         <path-dialog :show="showAddDialog" :path-constraints="pathConstraints" @confirm="confirm" @cancel="showAddDialog = false"></path-dialog>
@@ -103,33 +100,35 @@
 </script>
 <style lang="scss" scoped>
 @import '@/scss/conf';
-.repository-table-container {
-    .repo-list {
+.path-table-container {
+    .path-list {
         width: 600px;
         border: 1px solid $borderWeightColor;
         border-bottom-width: 0;
-        .repo-item {
+        .path-item {
             justify-content: space-between;
-            height: 28px;
-            padding: 0 10px;
+            height: 32px;
             font-size: 12px;
             border-bottom: 1px solid $borderWeightColor;
-            .repo-name {
+            background-color: #f9faff;
+            .path-name {
                 flex: 1;
                 margin: 0 5px;
             }
-            &:hover {
-                color: $primaryColor;
-                background-color: #e1ecff;
-            }
             .icon-delete {
+                width: 50px;
+                height: 100%;
                 font-size: 16px;
+                background-color: #e6f2fe;
             }
         }
     }
-    .repo-add {
-        display: inline-flex;
-        align-items: center;
+    .path-add {
+        width: 120px;
+        height: 36px;
+        color: $primaryColor;
+        background-color: #f0f6ff;
+        cursor: pointer;
     }
 }
 </style>

@@ -1,127 +1,129 @@
 <template>
-    <div class="create-node-container">
-        <header class="create-node-header">
-            <span>{{ `分发计划 > ${title}` }}</span>
-            <div>
-                <bk-button v-show="!disabled" theme="primary" @click="save" :loading="planForm.loading">
-                    {{$t('save')}}
-                </bk-button>
-                <bk-button class="ml20" theme="default" @click="$router.back()">
-                    {{$t('returnBack')}}
-                </bk-button>
-            </div>
-        </header>
-        <main class="create-node-main" v-bkloading="{ isLoading }">
-            <bk-form class="plan-form" :label-width="100" :model="planForm" :rules="rules" ref="planForm">
-                <bk-form-item label="计划名称" :required="true" property="name" error-display-type="normal">
-                    <bk-input style="max-width:400px" v-model.trim="planForm.name" maxlength="32" :disabled="disabled"></bk-input>
-                </bk-form-item>
-                <bk-form-item label="同步类型" :required="true" property="replicaObjectType">
-                    <bk-radio-group v-model="planForm.replicaObjectType" class="replica-type-radio-group" @change="changeReplicaObjectType">
-                        <bk-radio-button
-                            class="mr20"
-                            v-for="type in replicaObjectTypeList"
-                            :key="type.value"
-                            :value="type.value"
-                            :disabled="disabled">
-                            <div class="replica-type-radio">
-                                <label class="replica-type-label">{{ type.label }}</label>
-                                <div class="mt5 replica-type-tip">{{ type.tip }}</div>
-                                <div v-show="type.value === planForm.replicaObjectType" class="top-right-selected">
-                                    <i class="devops-icon icon-check-1"></i>
-                                </div>
+    <main class="create-node-container" v-bkloading="{ isLoading }">
+        <bk-form class="mb20 plan-form" :label-width="100" :model="planForm" :rules="rules" ref="planForm">
+            <bk-form-item label="计划名称" :required="true" property="name" error-display-type="normal">
+                <bk-input style="max-width:400px" v-model.trim="planForm.name" maxlength="32" show-word-limit :disabled="disabled"></bk-input>
+            </bk-form-item>
+            <bk-form-item label="同步类型" :required="true" property="replicaObjectType">
+                <bk-radio-group v-model="planForm.replicaObjectType" class="replica-type-radio-group" @change="changeReplicaObjectType">
+                    <bk-radio-button
+                        class="mr20"
+                        v-for="type in replicaObjectTypeList"
+                        :key="type.value"
+                        :value="type.value"
+                        :disabled="disabled">
+                        <div class="replica-type-radio" :class="{ 'checked': type.value === planForm.replicaObjectType }">
+                            <label class="replica-type-label">{{ type.label }}</label>
+                            <div class="mt5 replica-type-tip">{{ type.tip }}</div>
+                            <div v-show="type.value === planForm.replicaObjectType" class="top-right-selected">
+                                <i class="devops-icon icon-check-1"></i>
                             </div>
-                        </bk-radio-button>
-                    </bk-radio-group>
-                </bk-form-item>
-                <bk-form-item label="同步策略" :required="true">
-                    <bk-radio-group v-model="planForm.executionStrategy">
-                        <bk-radio class="mr20" value="IMMEDIATELY" :disabled="disabled">立即执行</bk-radio>
-                        <bk-radio class="mr20" value="SPECIFIED_TIME" :disabled="disabled">指定时间</bk-radio>
-                        <bk-radio class="mr20" value="CRON_EXPRESSION" :disabled="disabled">定时执行</bk-radio>
-                        <bk-radio v-if="planForm.replicaObjectType === 'REPOSITORY'" class="mr20" value="REAL_TIME" :disabled="disabled">实时同步</bk-radio>
-                    </bk-radio-group>
-                </bk-form-item>
-                <bk-form-item v-if="planForm.executionStrategy === 'SPECIFIED_TIME'" label="时间" :required="true" property="time" error-display-type="normal">
-                    <bk-date-picker
-                        v-model="planForm.time"
-                        type="datetime"
+                        </div>
+                    </bk-radio-button>
+                </bk-radio-group>
+            </bk-form-item>
+            <bk-form-item label="同步策略"
+                :required="true"
+                :property="{ 'SPECIFIED_TIME': 'time', 'CRON_EXPRESSION': 'cron' }[planForm.executionStrategy]"
+                error-display-type="normal">
+                <bk-radio-group
+                    style="display:flex;align-items:center;height:32px;"
+                    v-model="planForm.executionStrategy"
+                    @change="clearError">
+                    <bk-radio class="mr50" value="IMMEDIATELY" :disabled="disabled">立即执行</bk-radio>
+                    <bk-radio class="mr50" value="SPECIFIED_TIME" :disabled="disabled">
+                        指定时间
+                        <bk-date-picker
+                            class="ml10"
+                            v-if="planForm.executionStrategy === 'SPECIFIED_TIME'"
+                            v-model="planForm.time"
+                            type="datetime"
+                            :disabled="disabled"
+                            :options="{
+                                disabledDate: (date) => date < new Date()
+                            }">
+                        </bk-date-picker>
+                    </bk-radio>
+                    <bk-radio class="mr50" value="CRON_EXPRESSION" :disabled="disabled">
+                        <div class="flex-align-center">
+                            定时执行
+                            <template v-if="planForm.executionStrategy === 'CRON_EXPRESSION'">
+                                <bk-input v-if="disabled" class="ml10 w250" :value="planForm.cron" :disabled="disabled"></bk-input>
+                                <Cron v-else class="ml10" v-model="planForm.cron" />
+                            </template>
+                        </div>
+                    </bk-radio>
+                    <bk-radio v-if="planForm.replicaObjectType === 'REPOSITORY'" class="mr50" value="REAL_TIME" :disabled="disabled">实时同步</bk-radio>
+                </bk-radio-group>
+            </bk-form-item>
+            <bk-form-item label="冲突策略" :required="true" property="conflictStrategy">
+                <bk-radio-group v-model="planForm.conflictStrategy">
+                    <bk-radio class="mr50" v-for="strategy in conflictStrategyList" :key="strategy.value" :value="strategy.value" :disabled="disabled">
+                        {{ strategy.label }}
+                        <i v-if="planForm.conflictStrategy === strategy.value" class="ml5 devops-icon icon-question-circle-shape" v-bk-tooltips="{
+                            content: strategy.tip,
+                            placements: ['bottom']
+                        }"></i>
+                    </bk-radio>
+                </bk-radio-group>
+            </bk-form-item>
+            <bk-form-item label="同步对象" :required="true" property="config" error-display-type="normal">
+                <template v-if="planForm.replicaObjectType === 'REPOSITORY'">
+                    <repository-table
+                        ref="planConfig"
+                        :init-data="replicaTaskObjects"
                         :disabled="disabled"
-                        :options="{
-                            disabledDate: (date) => date < new Date()
-                        }">
-                    </bk-date-picker>
-                </bk-form-item>
-                <bk-form-item v-else-if="planForm.executionStrategy === 'CRON_EXPRESSION'" label="cron表达式" :required="true" property="cron" error-display-type="normal">
-                    <div v-if="disabled">{{ planForm.cron }}</div>
-                    <Cron v-else v-model="planForm.cron" />
-                </bk-form-item>
-                <bk-form-item label="冲突策略" :required="true" property="conflictStrategy">
-                    <bk-radio-group v-model="planForm.conflictStrategy">
-                        <bk-radio class="mr20" value="SKIP" :disabled="disabled">跳过冲突</bk-radio>
-                        <bk-radio class="mr20" value="OVERWRITE" :disabled="disabled">替换制品</bk-radio>
-                        <bk-radio value="FAST_FAIL" :disabled="disabled">终止同步</bk-radio>
-                    </bk-radio-group>
-                    <div class="conflict-strategy-tips">
-                        <span v-if="planForm.conflictStrategy === 'SKIP'">当目标节点存在相同制品时，跳过该制品同步，同步剩余制品</span>
-                        <span v-else-if="planForm.conflictStrategy === 'OVERWRITE'">当目标节点存在相同制品时，覆盖原制品并继续执行计划</span>
-                        <span v-else-if="planForm.conflictStrategy === 'FAST_FAIL'">当目标节点存在相同制品时，终止执行计划</span>
-                    </div>
-                </bk-form-item>
-                <bk-form-item label="同步对象" :required="true" property="config" error-display-type="normal">
-                    <template v-if="planForm.replicaObjectType === 'REPOSITORY'">
-                        <repository-table
-                            ref="planConfig"
-                            :init-data="replicaTaskObjects"
-                            :disabled="disabled"
-                            @clearError="clearError">
-                        </repository-table>
-                    </template>
-                    <template v-else-if="planForm.replicaObjectType === 'PACKAGE'">
-                        <package-table
-                            ref="planConfig"
-                            :init-data="replicaTaskObjects"
-                            :disabled="disabled"
-                            @clearError="clearError">
-                        </package-table>
-                    </template>
-                    <template v-else-if="planForm.replicaObjectType === 'PATH'">
-                        <path-table
-                            ref="planConfig"
-                            :init-data="replicaTaskObjects"
-                            :disabled="disabled"
-                            @clearError="clearError">
-                        </path-table>
-                    </template>
-                </bk-form-item>
-                <bk-form-item label="目标节点" :required="true" property="remoteClusterIds" error-display-type="normal">
-                    <bk-select
-                        style="max-width:600px"
-                        v-model="planForm.remoteClusterIds"
-                        searchable
-                        multiple
-                        display-tag
-                        :collapse-tag="false"
-                        :disabled="disabled">
-                        <bk-option v-for="option in clusterList.filter(v => v.type !== 'CENTER')"
-                            :key="option.name"
-                            :id="option.id"
-                            :name="option.name">
-                        </bk-option>
-                    </bk-select>
-                </bk-form-item>
-                <bk-form-item :label="$t('description')">
-                    <bk-input
-                        style="max-width:640px"
-                        v-model.trim="planForm.description"
-                        type="textarea"
-                        maxlength="200"
-                        :disabled="disabled">
-                    </bk-input>
-                </bk-form-item>
-            </bk-form>
-        </main>
-    </div>
+                        @clearError="clearError">
+                    </repository-table>
+                </template>
+                <template v-else-if="planForm.replicaObjectType === 'PACKAGE'">
+                    <package-table
+                        ref="planConfig"
+                        :init-data="replicaTaskObjects"
+                        :disabled="disabled"
+                        @clearError="clearError">
+                    </package-table>
+                </template>
+                <template v-else-if="planForm.replicaObjectType === 'PATH'">
+                    <path-table
+                        ref="planConfig"
+                        :init-data="replicaTaskObjects"
+                        :disabled="disabled"
+                        @clearError="clearError">
+                    </path-table>
+                </template>
+            </bk-form-item>
+            <bk-form-item label="目标节点" :required="true" property="remoteClusterIds" error-display-type="normal">
+                <bk-select
+                    style="max-width:400px"
+                    v-model="planForm.remoteClusterIds"
+                    searchable
+                    multiple
+                    display-tag
+                    :collapse-tag="false"
+                    :disabled="disabled">
+                    <bk-option v-for="option in clusterList.filter(v => v.type !== 'CENTER')"
+                        :key="option.name"
+                        :id="option.id"
+                        :name="option.name">
+                    </bk-option>
+                </bk-select>
+            </bk-form-item>
+            <bk-form-item :label="$t('description')">
+                <bk-input
+                    style="max-width:640px"
+                    v-model.trim="planForm.description"
+                    type="textarea"
+                    maxlength="200"
+                    :disabled="disabled">
+                </bk-input>
+            </bk-form-item>
+            <bk-form-item>
+                <bk-button @click="$router.push({ name: 'planManage' })">{{$t('cancel')}}</bk-button>
+                <bk-button class="ml10" theme="primary" :loading="planForm.loading" @click="save">{{$t('confirm')}}</bk-button>
+            </bk-form-item>
+        </bk-form>
+    </main>
 </template>
 <script>
     import { mapState, mapActions } from 'vuex'
@@ -135,13 +137,18 @@
         data () {
             return {
                 isLoading: false,
+                conflictStrategyList: [
+                    { value: 'SKIP', label: '跳过冲突', tip: '当目标节点存在相同制品时，跳过该制品同步，同步剩余制品' },
+                    { value: 'OVERWRITE', label: '替换制品', tip: '当目标节点存在相同制品时，覆盖原制品并继续执行计划' },
+                    { value: 'FAST_FAIL', label: '终止同步', tip: '当目标节点存在相同制品时，终止执行计划' }
+                ],
                 planForm: {
                     loading: false,
                     name: '',
                     executionStrategy: 'IMMEDIATELY',
                     replicaObjectType: 'REPOSITORY',
                     time: new Date(new Date().getTime() + 30 * 60 * 1000),
-                    cron: '',
+                    cron: '* * * * * ? *',
                     conflictStrategy: 'SKIP',
                     remoteClusterIds: [],
                     description: ''
@@ -332,103 +339,85 @@
 @import '@/scss/conf';
 .create-node-container {
     height: 100%;
-    .create-node-header {
-        height: 50px;
-        padding: 0 20px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        font-size: 14px;
-        background-color: white;
-    }
-    .create-node-main {
-        height: calc(100% - 70px);
-        margin-top: 20px;
-        padding: 20px;
-        background-color: white;
-        overflow-y: auto;
-        .plan-form {
-            max-width: 1200px;
-            .arrow-right-icon {
+    background-color: white;
+    overflow-y: auto;
+    .plan-form {
+        max-width: 1200px;
+        margin-top: 30px;
+        margin-left: 50px;
+        .arrow-right-icon {
+            position: relative;
+            width: 20px;
+            height: 20px;
+            &:before {
+                position: absolute;
+                content: '';
+                width: 16px;
+                height: 5px;
+                margin: 8px 0;
+                border-width: 1px 0;
+                border-style: solid;
+            }
+            &:after {
+                position: absolute;
+                content: '';
+                width: 10px;
+                height: 10px;
+                margin-left: 7px;
+                margin-top: 6px;
+                border-width: 1px 1px 0 0;
+                border-style: solid;
+                transform: rotate(45deg);
+            }
+        }
+        .replica-type-radio-group {
+            ::v-deep .bk-form-radio-button {
+                .bk-radio-button-text {
+                    height: auto;
+                    line-height: initial;
+                    padding: 0;
+                    border: 0 none;
+                }
+            }
+            .replica-type-radio {
                 position: relative;
-                width: 20px;
-                height: 20px;
-                &:before {
+                padding: 10px;
+                width: 155px;
+                height: 60px;
+                text-align: left;
+                border: 1px solid transparent;
+                background-color: #f0f6ff;
+                &.checked {
+                    border-color: $primaryColor;
+                }
+                .replica-type-label {
+                    font-weight: bold;
+                    color: $fontWeightColor;
+                }
+                .replica-type-tip {
+                    font-size: 12px;
+                    color: #979BA5;
+                }
+                .top-right-selected {
                     position: absolute;
-                    content: '';
-                    width: 16px;
-                    height: 5px;
-                    margin: 8px 0;
-                    border-width: 1px 0;
+                    top: 0;
+                    right: 0;
+                    border-width: 16px;
                     border-style: solid;
-                }
-                &:after {
-                    position: absolute;
-                    content: '';
-                    width: 10px;
-                    height: 10px;
-                    margin-left: 7px;
-                    margin-top: 6px;
-                    border-width: 1px 1px 0 0;
-                    border-style: solid;
-                    transform: rotate(45deg);
-                }
-            }
-            .conflict-strategy-tips {
-                width: 400px;
-                margin-top: 5px;
-                padding-left: 10px;
-                color: #979BA5;
-                font-size: 12px;
-                line-height: 24px;
-                background-color: $bgLightColor;
-            }
-            .replica-type-radio-group {
-                ::v-deep .bk-form-radio-button {
-                    .bk-radio-button-text {
-                        height: auto;
-                        line-height: initial;
-                        padding: 0;
-                    }
-                    .bk-radio-button-input:disabled+.bk-radio-button-text {
-                        border-left: 1px solid currentColor;
-                    }
-                }
-                .replica-type-radio {
-                    position: relative;
-                    padding: 10px;
-                    width: 155px;
-                    height: 60px;
-                    text-align: left;
-                    .replica-type-label {
-                        font-weight: bold;
-                        color: $fontWeightColor;
-                    }
-                    .replica-type-tip {
-                        font-size: 12px;
-                        color: #979BA5;
-                    }
-                    .top-right-selected {
+                    border-color: $primaryColor $primaryColor transparent transparent;
+                    i {
                         position: absolute;
-                        top: 0;
-                        right: 0;
-                        border-width: 16px;
-                        border-style: solid;
-                        border-color: $primaryColor $primaryColor transparent transparent;
-                        i {
-                            position: absolute;
-                            margin-top: -12px;
-                            font-size: 12px;
-                            color: white;
-                        }
+                        margin-top: -12px;
+                        font-size: 12px;
+                        color: white;
                     }
                 }
             }
-            .plan-object-container {
-                display: grid;
-                grid-template: auto / 1fr 1fr;
-                margin: 5px 0 20px;
-            }
+        }
+        .plan-object-container {
+            display: grid;
+            grid-template: auto / 1fr 1fr;
+            margin: 5px 0 20px;
         }
     }
 }

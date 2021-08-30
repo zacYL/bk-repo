@@ -78,13 +78,11 @@
     </div>
 </template>
 <script>
-    import emptyData from '@/components/EmptyData'
     import { mapState, mapActions } from 'vuex'
     import { repoEnum } from '@/store/publicEnum'
     import { formatDate } from '@/utils'
     export default {
         name: 'repoSearch',
-        components: { emptyData },
         data () {
             return {
                 repoEnum: repoEnum.filter(v => v !== 'generic'),

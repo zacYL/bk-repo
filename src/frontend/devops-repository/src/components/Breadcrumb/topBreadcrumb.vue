@@ -6,7 +6,7 @@
             v-for="item in list"
             :key="item.name"
             :to="{ name: item.name }">
-            {{ item.label }}
+            {{ transformLabel(item.label) }}
         </bk-breadcrumb-item>
     </bk-breadcrumb>
 </template>
@@ -21,10 +21,12 @@
         methods: {
             transformLabel (label) {
                 // eslint-disable-next-line no-new-func
-                return new Function(
+                const transform = new Function(
                     'ctx',
                     `return '${label.replace(/\{(.*?)(\?){0,1}\}/g, '\'\+ (ctx.hasOwnProperty(\'$1\') ? ctx[\'$1\'] : "") \+\'')}'`
-                )({ ...this.$route.params, ...this.$route.query })
+                )
+                const transformLabel = transform({ ...this.$route.params, ...this.$route.query })
+                return transformLabel
             }
         }
     }

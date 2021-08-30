@@ -6,6 +6,7 @@ import '@/utils/request'
 
 import Icon from '@/components/Icon'
 import CanwayDialog from '@/components/CanwayDialog'
+import EmptyData from '@/components/EmptyData'
 import createLocale from '../../locale'
 import '@icon-cool/bk-icon-devops/src/index'
 import { throttleMessage } from './utils'
@@ -22,6 +23,7 @@ const { i18n, setLocale } = createLocale(require.context('@locale/repository/', 
 
 Vue.component('Icon', Icon)
 Vue.component('CanwayDialog', CanwayDialog)
+Vue.component('EmptyData', EmptyData)
 
 Vue.use(bkMagic)
 

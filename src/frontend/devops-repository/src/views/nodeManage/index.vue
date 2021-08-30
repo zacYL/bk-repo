@@ -115,12 +115,10 @@
     </div>
 </template>
 <script>
-    import emptyData from '@/components/EmptyData'
     import { mapState, mapActions } from 'vuex'
     import { formatDate } from '@/utils'
     export default {
         name: 'node',
-        components: { emptyData },
         data () {
             return {
                 isLoading: false,
@@ -312,8 +310,8 @@
             color: #ff9c01;
         }
         .status-icon {
-            width: 12px;
-            height: 12px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
             &.HEALTHY {
                 background-color: #2dcb56;

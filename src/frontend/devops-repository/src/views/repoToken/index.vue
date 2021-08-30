@@ -38,12 +38,11 @@
 </template>
 <script>
     import createTokenDialog from './createTokenDialog'
-    import emptyData from '@/components/EmptyData'
     import { formatDate } from '@/utils'
     import { mapState, mapActions } from 'vuex'
     export default {
         name: 'repoToken',
-        components: { emptyData, createTokenDialog },
+        components: { createTokenDialog },
         data () {
             return {
                 isLoading: false,

@@ -86,10 +86,8 @@
 </template>
 <script>
     import { mapActions } from 'vuex'
-    import emptyData from '@/components/EmptyData'
     export default {
         name: 'packageDialog',
-        components: { emptyData },
         props: {
             show: Boolean,
             repo: Object,

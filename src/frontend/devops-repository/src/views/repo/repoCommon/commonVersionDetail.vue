@@ -150,7 +150,6 @@
     </bk-tab>
 </template>
 <script>
-    import emptyData from '@/components/EmptyData'
     import CodeArea from '@/components/CodeArea'
     import { mapState, mapActions } from 'vuex'
     import { convertFileSize, formatDate } from '@/utils'
@@ -158,7 +157,7 @@
     import commonMixin from './commonMixin'
     export default {
         name: 'commonVersionDetail',
-        components: { CodeArea, emptyData },
+        components: { CodeArea },
         mixins: [repoGuideMixin, commonMixin],
         data () {
             return {

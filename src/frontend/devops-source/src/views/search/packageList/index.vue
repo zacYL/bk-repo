@@ -61,14 +61,13 @@
 </template>
 <script>
     import { formatDate } from '@/utils'
-    import emptyData from '@/components/EmptyData'
     import packageCard from './packageCard'
     import repoGuide from './repoGuide'
     import repoGuideMixin from './repoGuide/repoGuideMixin'
     import { mapState, mapActions } from 'vuex'
     export default {
         name: 'commonPackageList',
-        components: { packageCard, emptyData, repoGuide },
+        components: { packageCard, repoGuide },
         mixins: [repoGuideMixin],
         data () {
             return {

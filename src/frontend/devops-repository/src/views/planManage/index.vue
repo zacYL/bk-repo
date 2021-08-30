@@ -140,7 +140,6 @@
     import { formatDate } from '@/utils'
     import planLog from './planLog'
     import planCopyDialog from './planCopyDialog'
-    import emptyData from '@/components/EmptyData'
     const statusMap = {
         'RUNNING': '执行中',
         'SUCCESS': '成功',
@@ -148,7 +147,7 @@
     }
     export default {
         name: 'plan',
-        components: { planLog, planCopyDialog, emptyData },
+        components: { planLog, planCopyDialog },
         data () {
             return {
                 statusMap,
@@ -232,46 +231,10 @@
                     current: this.pagination.current,
                     limit: this.pagination.limit
                 }).then(({ records, totalRecords }) => {
-                    // this.planList = records
-                    // this.pagination.count = totalRecords
+                    this.planList = records
+                    this.pagination.count = totalRecords
                 }).finally(() => {
                     this.isLoading = false
-                    this.planList = [{
-                        'id': '6125a39afde9e6764c13dc3f',
-                        'key': '4863f346772d4c789ef61dd6a8cc2b3d',
-                        'name': '测试同步日志问题',
-                        'projectId': 'bkrepo',
-                        'replicaObjectType': 'PACKAGE',
-                        'replicaType': 'SCHEDULED',
-                        'setting': {
-                            'rateLimit': 0,
-                            'includeMetadata': true,
-                            'conflictStrategy': 'OVERWRITE',
-                            'errorStrategy': 'CONTINUE',
-                            'executionStrategy': 'IMMEDIATELY',
-                            'executionPlan': {
-                                'executeImmediately': true,
-                                'executeTime': null,
-                                'cronExpression': null
-                            }
-                        },
-                        'remoteClusters': [{
-                            'id': '6103b87bee93c8311740fabe',
-                            'name': 'bkup'
-                        }],
-                        'description': '',
-                        'lastExecutionStatus': 'FAILED',
-                        'lastExecutionTime': '2021-08-25T11:26:04.868',
-                        'nextExecutionTime': null,
-                        'executionTimes': 0,
-                        'enabled': false,
-                        'createdBy': 'admin',
-                        'createdDate': '2021-08-25T09:57:46.485',
-                        'lastModifiedBy': 'admin',
-                        'lastModifiedDate': '2021-08-25T18:23:36.235',
-                        'progress': '.00'
-                    }]
-                    this.pagination.count = 1
                 })
             },
             executePlanHandler ({ key, name, lastExecutionStatus, replicaType }) {

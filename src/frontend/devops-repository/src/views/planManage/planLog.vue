@@ -125,67 +125,9 @@
                     current: this.pagination.current,
                     limit: this.pagination.limit
                 }).then(({ records, totalRecords }) => {
-                    // this.logList = records
-                    // this.pagination.count = totalRecords
+                    this.logList = records
+                    this.pagination.count = totalRecords
                 }).finally(() => {
-                    this.logList = [
-                        {
-                            'id': '6125b84cfde9e6764c13dc59',
-                            'taskKey': '4863f346772d4c789ef61dd6a8cc2b3d',
-                            'status': 'FAILED',
-                            'startTime': '2021-08-25T11:26:04.866',
-                            'endTime': '2021-08-25T11:26:04.936',
-                            'errorReason': '部分数据同步失败',
-                            'progress': '.00',
-                            'packageSum': 1
-                        }, {
-                            'id': '6125b7fffde9e6764c13dc53',
-                            'taskKey': '4863f346772d4c789ef61dd6a8cc2b3d',
-                            'status': 'FAILED',
-                            'startTime': '2021-08-25T11:24:47.224',
-                            'endTime': '2021-08-25T11:24:47.286',
-                            'errorReason': '部分数据同步失败',
-                            'progress': '.00',
-                            'packageSum': 1
-                        }, {
-                            'id': '6125b7f7fde9e6764c13dc4f',
-                            'taskKey': '4863f346772d4c789ef61dd6a8cc2b3d',
-                            'status': 'FAILED',
-                            'startTime': '2021-08-25T11:24:39.887',
-                            'endTime': '2021-08-25T11:24:40.041',
-                            'errorReason': '部分数据同步失败',
-                            'progress': '.00',
-                            'packageSum': 1
-                        }, {
-                            'id': '6125b7dbfde9e6764c13dc44',
-                            'taskKey': '4863f346772d4c789ef61dd6a8cc2b3d',
-                            'status': 'FAILED',
-                            'startTime': '2021-08-25T11:24:11.794',
-                            'endTime': '2021-08-25T11:24:11.984',
-                            'errorReason': '部分数据同步失败',
-                            'progress': '.00',
-                            'packageSum': 1
-                        }, {
-                            'id': '6125a3c3fde9e6764c13dc42',
-                            'taskKey': '4863f346772d4c789ef61dd6a8cc2b3d',
-                            'status': 'FAILED',
-                            'startTime': '2021-08-25T09:58:27.106',
-                            'endTime': '2021-08-25T09:58:27.203',
-                            'errorReason': '部分数据同步失败',
-                            'progress': '.00',
-                            'packageSum': 1
-                        }, {
-                            'id': '6125a39ffde9e6764c13dc40',
-                            'taskKey': '4863f346772d4c789ef61dd6a8cc2b3d',
-                            'status': 'SUCCESS',
-                            'startTime': '2021-08-25T09:57:51.157',
-                            'endTime': '2021-08-25T09:57:51.568',
-                            'errorReason': null,
-                            'progress': '1.00',
-                            'packageSum': 1
-                        }
-                    ]
-                    this.pagination.count = this.logList.length
                     this.isLoading = false
                 })
             },
@@ -197,7 +139,7 @@
                         logId: id
                     },
                     query: {
-                        plan: this.planData.name
+                        planName: this.planData.name
                     }
                 })
             }

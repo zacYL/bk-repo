@@ -28,7 +28,6 @@
     </div>
 </template>
 <script>
-    import emptyData from '@/components/EmptyData'
     import packageCard from './packageCard'
     import emptyGuide from './emptyGuide'
     import commonMixin from './commonMixin'
@@ -36,7 +35,7 @@
     import { mapActions } from 'vuex'
     export default {
         name: 'commonPackageList',
-        components: { packageCard, emptyGuide, emptyData },
+        components: { packageCard, emptyGuide },
         mixins: [commonMixin, repoGuideMixin],
         props: {
             queryForList: {

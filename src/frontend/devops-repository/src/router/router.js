@@ -198,7 +198,10 @@ const routes = [
                 name: 'logDetail',
                 component: logDetail,
                 meta: {
-                    title: '日志详情'
+                    breadcrumb: [
+                        { name: 'planManage', label: '{planName}' },
+                        { name: 'logDetail', label: '日志详情' }
+                    ]
                 }
             }
         ]

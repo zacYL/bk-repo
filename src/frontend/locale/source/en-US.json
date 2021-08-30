@@ -82,6 +82,7 @@
     "calculate": "计算",
     "create": "创建",
     "noData": "暂无数据",
+    "noSearchData": "搜索结果为空",
     "refresh": "刷新",
     "download": "下载",
     "downloads": "下载数",

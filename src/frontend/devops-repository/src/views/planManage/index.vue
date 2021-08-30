@@ -38,6 +38,14 @@
             row-key="userId"
             size="small"
             @row-click="showPlanDetailHandler">
+            <template #empty>
+                <empty-data ex-style="margin-top:-250px;" :search="Boolean(planInput || lastExecutionStatus || showEnabled)">
+                    <template v-if="!Boolean(planInput || lastExecutionStatus || showEnabled)">
+                        <span class="ml10">暂无计划数据，</span>
+                        <bk-button text @click="$router.push({ name: 'createPlan' })">即刻创建</bk-button>
+                    </template>
+                </empty-data>
+            </template>
             <bk-table-column label="计划名称" prop="name"></bk-table-column>
             <bk-table-column label="同步类型" width="100">
                 <template #default="{ row }">
@@ -132,6 +140,7 @@
     import { formatDate } from '@/utils'
     import planLog from './planLog'
     import planCopyDialog from './planCopyDialog'
+    import emptyData from '@/components/EmptyData'
     const statusMap = {
         'RUNNING': '执行中',
         'SUCCESS': '成功',
@@ -139,7 +148,7 @@
     }
     export default {
         name: 'plan',
-        components: { planLog, planCopyDialog },
+        components: { planLog, planCopyDialog, emptyData },
         data () {
             return {
                 statusMap,
@@ -378,9 +387,6 @@
                 }
             }
         }
-    }
-    ::v-deep .bk-sideslider-content {
-        height: calc(100% - 60px);
     }
 }
 </style>

@@ -1,8 +1,8 @@
 <template>
     <div class="empty-data-container flex-center" :style="exStyle">
-        <Icon :name="iconName" size="36"></Icon>
+        <Icon :name="search ? 'empty-search' : 'empty-data'" size="36"></Icon>
         <slot>
-            <span class="ml10 empty-tip">{{ $t('noData') }}</span>
+            <span class="ml10 empty-tip">{{ search ? $t('noSearchData') : $t('noData') }}</span>
         </slot>
     </div>
 </template>
@@ -10,9 +10,9 @@
     export default {
         name: 'emptyData',
         props: {
-            iconName: {
-                type: String,
-                default: 'empty-data'
+            search: {
+                type: Boolean,
+                default: false
             },
             exStyle: {
                 type: String,

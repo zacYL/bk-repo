@@ -164,7 +164,9 @@ const routes = [
                 name: 'planManage',
                 component: planManage,
                 meta: {
-                    title: '分发计划'
+                    breadcrumb: [
+                        { name: 'planManage', label: '分发计划' }
+                    ]
                 }
             },
             {

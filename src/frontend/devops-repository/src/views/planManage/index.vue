@@ -1,41 +1,40 @@
 <template>
     <div class="plan-container" v-bkloading="{ isLoading }">
-        <div class="mb20 flex-align-center">
-            <bk-select
-                class="mr20 w250"
-                v-model="showEnabled"
-                placeholder="计划状态"
-                @change="handlerPaginationChange()">
-                <bk-option id="true" name="启用的计划"></bk-option>
-                <bk-option id="false" name="停用的计划"></bk-option>
-            </bk-select>
-            <bk-select
-                class="mr20 w250"
-                v-model="lastExecutionStatus"
-                placeholder="上次执行状态"
-                @change="handlerPaginationChange()">
-                <bk-option v-for="(label, key) in statusMap" :key="key" :id="key" :name="label"></bk-option>
-            </bk-select>
-            <bk-input
-                class="w250"
-                v-model.trim="planInput"
-                clearable
-                :placeholder="'请输入计划名称'"
-                @enter="handlerPaginationChange()"
-                @clear="handlerPaginationChange()">
-            </bk-input>
-            <i class="plan-search-btn devops-icon icon-search" @click="handlerPaginationChange()"></i>
-            <div class="create-plan flex-align-center">
-                <bk-button theme="primary" @click.stop="$router.push({ name: 'createPlan' })">{{ $t('create') + '计划' }}</bk-button>
+        <div class="ml20 mr20 mt10 flex-between-center">
+            <bk-button icon="plus" theme="primary" @click="$router.push({ name: 'createPlan' })"><span class="mr5">{{ $t('create') }}</span></bk-button>
+            <div class="flex-align-center">
+                <bk-input
+                    class="w250"
+                    v-model.trim="planInput"
+                    clearable
+                    placeholder="请输入计划名称, 按Enter键搜索"
+                    right-icon="bk-icon icon-search"
+                    @enter="handlerPaginationChange()"
+                    @clear="handlerPaginationChange()">
+                </bk-input>
+                <bk-select
+                    class="ml10 w250"
+                    v-model="lastExecutionStatus"
+                    placeholder="上次执行状态"
+                    @change="handlerPaginationChange()">
+                    <bk-option v-for="(label, key) in statusMap" :key="key" :id="key" :name="label"></bk-option>
+                </bk-select>
+                <bk-select
+                    class="ml10 w250"
+                    v-model="showEnabled"
+                    placeholder="计划状态"
+                    @change="handlerPaginationChange()">
+                    <bk-option id="true" name="启用的计划"></bk-option>
+                    <bk-option id="false" name="停用的计划"></bk-option>
+                </bk-select>
             </div>
         </div>
         <bk-table
-            class="plan-table"
-            height="calc(100% - 120px)"
+            class="mt10 plan-table"
+            height="calc(100% - 104px)"
             :data="planList"
             :outer-border="false"
             :row-border="false"
-            :row-style="{ cursor: 'pointer' }"
             row-key="userId"
             size="small"
             @row-click="showPlanDetailHandler">
@@ -88,28 +87,32 @@
                     </div>
                 </template>
             </bk-table-column>
-            <bk-table-column :label="$t('operation')" width="170">
+            <bk-table-column label="执行" width="70">
                 <template #default="{ row }">
-                    <div class="flex-align-center">
-                        <i title="执行"
-                            class="mr10 devops-icon icon-play3 hover-btn"
-                            :class="{ 'disabled': row.lastExecutionStatus === 'RUNNING' || row.replicaType === 'REAL_TIME' }"
-                            @click.stop="executePlanHandler(row)">
-                        </i>
-                        <i title="编辑"
-                            class="mr10 devops-icon icon-edit hover-btn"
-                            :class="{ 'disabled': Boolean(row.lastExecutionStatus) || row.replicaType === 'REAL_TIME' }"
-                            @click.stop="editPlanHandler(row)">
-                        </i>
-                        <i title="复制" class="mr10 devops-icon icon-clipboard hover-btn" @click.stop="copyPlanHandler(row)"></i>
-                        <i title="删除" class="mr10 devops-icon icon-delete hover-btn" @click.stop="deletePlanHandler(row)"></i>
-                        <i title="详情" class="mr10 devops-icon icon-calendar hover-btn" @click.stop="showPlanLogHandler(row)"></i>
-                    </div>
+                    <i class="p5 devops-icon icon-play3 hover-btn"
+                        :class="{ 'disabled': row.lastExecutionStatus === 'RUNNING' || row.replicaType === 'REAL_TIME' }"
+                        @click.stop="executePlanHandler(row)">
+                    </i>
+                </template>
+            </bk-table-column>
+            <bk-table-column :label="$t('operation')" width="90">
+                <template #default="{ row }">
+                    <bk-popover placement="bottom-end" theme="light" ext-cls="operation-container">
+                        <i class="p5 devops-icon icon-ellipsis hover-btn"></i>
+                        <ul class="operation-list" slot="content">
+                            <li class="operation-item hover-btn"
+                                :class="{ 'disabled': Boolean(row.lastExecutionStatus) || row.replicaType === 'REAL_TIME' }"
+                                @click.stop="editPlanHandler(row)">编辑</li>
+                            <li class="operation-item hover-btn" @click.stop="copyPlanHandler(row)">复制</li>
+                            <li class="operation-item hover-btn" @click.stop="deletePlanHandler(row)">删除</li>
+                            <li class="operation-item hover-btn" @click.stop="showPlanLogHandler(row)">日志</li>
+                        </ul>
+                    </bk-popover>
                 </template>
             </bk-table-column>
         </bk-table>
         <bk-pagination
-            class="mt10"
+            class="m10"
             size="small"
             align="right"
             show-total-count
@@ -220,20 +223,55 @@
                     current: this.pagination.current,
                     limit: this.pagination.limit
                 }).then(({ records, totalRecords }) => {
-                    this.planList = records
-                    this.pagination.count = totalRecords
+                    // this.planList = records
+                    // this.pagination.count = totalRecords
                 }).finally(() => {
                     this.isLoading = false
+                    this.planList = [{
+                        'id': '6125a39afde9e6764c13dc3f',
+                        'key': '4863f346772d4c789ef61dd6a8cc2b3d',
+                        'name': '测试同步日志问题',
+                        'projectId': 'bkrepo',
+                        'replicaObjectType': 'PACKAGE',
+                        'replicaType': 'SCHEDULED',
+                        'setting': {
+                            'rateLimit': 0,
+                            'includeMetadata': true,
+                            'conflictStrategy': 'OVERWRITE',
+                            'errorStrategy': 'CONTINUE',
+                            'executionStrategy': 'IMMEDIATELY',
+                            'executionPlan': {
+                                'executeImmediately': true,
+                                'executeTime': null,
+                                'cronExpression': null
+                            }
+                        },
+                        'remoteClusters': [{
+                            'id': '6103b87bee93c8311740fabe',
+                            'name': 'bkup'
+                        }],
+                        'description': '',
+                        'lastExecutionStatus': 'FAILED',
+                        'lastExecutionTime': '2021-08-25T11:26:04.868',
+                        'nextExecutionTime': null,
+                        'executionTimes': 0,
+                        'enabled': false,
+                        'createdBy': 'admin',
+                        'createdDate': '2021-08-25T09:57:46.485',
+                        'lastModifiedBy': 'admin',
+                        'lastModifiedDate': '2021-08-25T18:23:36.235',
+                        'progress': '.00'
+                    }]
+                    this.pagination.count = 1
                 })
             },
             executePlanHandler ({ key, name, lastExecutionStatus, replicaType }) {
                 if (lastExecutionStatus === 'RUNNING' || replicaType === 'REAL_TIME') return
-                this.$bkInfo({
-                    type: 'warning',
-                    title: `确认执行计划 ${name} ?`,
-                    showFooter: true,
+                this.$confirm({
+                    theme: 'warning',
+                    message: `确认执行计划 ${name} ?`,
                     confirmFn: () => {
-                        this.executePlan({
+                        return this.executePlan({
                             key
                         }).then(() => {
                             this.getPlanListHandler()
@@ -264,12 +302,11 @@
                 }
             },
             deletePlanHandler ({ key, name }) {
-                this.$bkInfo({
-                    type: 'error',
-                    title: `确认删除计划 ${name} ?`,
-                    showFooter: true,
+                this.$confirm({
+                    theme: 'danger',
+                    message: `确认删除计划 ${name} ?`,
                     confirmFn: () => {
-                        this.deletePlan({
+                        return this.deletePlan({
                             key
                         }).then(() => {
                             this.handlerPaginationChange()
@@ -312,25 +349,9 @@
 <style lang="scss" scoped>
 @import '@/scss/conf';
 .plan-container {
-    height: calc(100% + 40px);
-    margin-bottom: -40px;
-    .plan-search-btn {
-        position: relative;
-        z-index: 1;
-        padding: 9px;
-        color: white;
-        margin-left: -2px;
-        border-radius: 0 2px 2px 0;
-        background-color: #3a84ff;
-        cursor: pointer;
-        &:hover {
-            background-color: #699df4;
-        }
-    }
-    .create-plan {
-        flex: 1;
-        justify-content: flex-end;
-    }
+    height: 100%;
+    overflow: hidden;
+    background-color: white;
     .plan-table {
         .SUCCESS {
             color: #2DCB56;
@@ -360,6 +381,32 @@
     }
     ::v-deep .bk-sideslider-content {
         height: calc(100% - 60px);
+    }
+}
+</style>
+<style lang="scss">
+@import '@/scss/conf';
+.operation-container {
+    .tippy-tooltip {
+        padding-left: 0;
+        padding-right: 0;
+    }
+    .operation-list {
+        .operation-item {
+            width: 90px;
+            padding: 0 14px;
+            font-size: 14px;
+            line-height: 2.5;
+            text-align: center;
+            cursor: pointer;
+            &:hover:not(.disabled) {
+                background-color: #eaf3ff;
+            }
+            &.disabled {
+                color: $disabledColor;
+                cursor: not-allowed;
+            }
+        }
     }
 }
 </style>

@@ -1,24 +1,29 @@
 <template>
-    <div id="app" class="flex-column" v-bkloading="{ isLoading }">
+    <div class="bkrepo-main flex-column" v-bkloading="{ isLoading }">
         <Header v-if="!iframeMode" />
-        <main class="bkrepo-main-container"
-            :style="{
-                height: iframeMode ? '100%' : 'calc(100% - 50px)'
-            }">
-            <router-view></router-view>
-        </main>
+        <breadcrumb class="repo-breadcrumb">
+            <bk-breadcrumb-item :to="{ name: 'repoList' }">
+                <svg width="48" height="16" style="vertical-align:-3px">
+                    <use xlink:href="#vpack" />
+                </svg>
+            </bk-breadcrumb-item>
+        </breadcrumb>
+        <router-view class="mt10 bkrepo-main-container"></router-view>
+        <ConfirmDialog />
         <Login />
     </div>
 </template>
 
 <script>
     import Header from '@/components/Header'
+    import Breadcrumb from '@/components/Breadcrumb/topBreadcrumb'
+    import ConfirmDialog from '@/components/ConfirmDialog'
     import Login from '@/components/Login'
     import Vue from 'vue'
     import { mapState, mapMutations, mapActions } from 'vuex'
     export default {
         name: 'App',
-        components: { Login, Header },
+        components: { Header, Breadcrumb, ConfirmDialog, Login },
         data () {
             return {
                 isLoading: false,
@@ -52,6 +57,9 @@
                         if (this.projectId !== data.currentProjectId) {
                             this.goHome(data.currentProjectId)
                         }
+                    })
+                    window.globalVue.$on('change::$routePath', data => { // 蓝鲸Devops切换路径
+                        this.$router.push({ name: data.routePath.englishName })
                     })
                     window.globalVue.$on('order::backHome', data => { // 蓝鲸Devops选择项目时切换
                         this.goHome()
@@ -122,11 +130,16 @@
 </script>
 <style lang="scss">
 @import '@/scss/index';
-#app {
+.bkrepo-main {
     height: 100%;
+    padding: 10px;
     background-color: $bgLightColor;
-}
-.bkrepo-main-container {
-    padding: 20px;
+    .repo-breadcrumb {
+        height: 20px;
+    }
+    .bkrepo-main-container {
+        flex: 1;
+        overflow: hidden;
+    }
 }
 </style>

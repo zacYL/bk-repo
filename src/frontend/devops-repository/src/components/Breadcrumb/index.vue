@@ -1,33 +1,39 @@
 <template>
-    <div class="repo-breadcrumb flex-align-center">
-        <div class="ml10 hover-btn"
-            v-for="(item, index) in list"
-            :key="index"
-            @click="() => item.cilckHandler && item.cilckHandler(item)">
-            <span class="breadcrumb-value">{{ item.name }}</span>
-            <i v-if="item.list || index !== list.length - 1" class="ml10 devops-icon icon-angle-right"></i>
-        </div>
-    </div>
+    <bk-breadcrumb class="breadcrumb" separator-class="bk-icon icon-angle-right">
+        <slot></slot>
+        <bk-breadcrumb-item
+            class="breadcrumb-item"
+            v-for="item in list"
+            :key="item.name">
+            <span
+                class="breadcrumb-label"
+                @click="() => item.cilckHandler && item.cilckHandler(item)">
+                {{ item.name }}
+            </span>
+        </bk-breadcrumb-item>
+    </bk-breadcrumb>
 </template>
 <script>
     export default {
-        name: 'breadcrumb',
+        name: 'breadCrumb',
         props: {
             list: {
                 type: Array,
-                default: () => []
+                default: []
             }
         }
     }
 </script>
 <style lang="scss" scoped>
-.repo-breadcrumb {
-    .breadcrumb-select {
-        width: 200px;
-    }
-    .pointer {
-        user-select: none;
-        cursor: pointer;
+.breadcrumb {
+    color: #63656e;
+    .breadcrumb-item {
+        &:last-child {
+            color: #979ba5;
+        }
+        .breadcrumb-label {
+            cursor: pointer;
+        }
     }
 }
 </style>

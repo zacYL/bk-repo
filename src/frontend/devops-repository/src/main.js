@@ -5,6 +5,7 @@ import store from './store'
 import '@/utils/request'
 
 import Icon from '@/components/Icon'
+import CanwayDialog from '@/components/CanwayDialog'
 import createLocale from '../../locale'
 import '@icon-cool/bk-icon-devops/src/index'
 import { throttleMessage } from './utils'
@@ -12,7 +13,7 @@ import { throttleMessage } from './utils'
 import bkMagic from 'bk-magic-vue'
 // 全量引入 bk-magic-vue 样式
 require('bk-magic-vue/dist/bk-magic-vue.min.css')
-
+// 打包svg文件
 const requireAll = requireContext => requireContext.keys().map(requireContext)
 const req = require.context('@/images', false, /\.svg$/)
 requireAll(req)
@@ -20,6 +21,7 @@ requireAll(req)
 const { i18n, setLocale } = createLocale(require.context('@locale/repository/', false, /\.json$/))
 
 Vue.component('Icon', Icon)
+Vue.component('CanwayDialog', CanwayDialog)
 
 Vue.use(bkMagic)
 

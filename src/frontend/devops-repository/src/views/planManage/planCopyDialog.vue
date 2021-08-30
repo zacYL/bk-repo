@@ -1,10 +1,9 @@
 <template>
-    <bk-dialog
+    <canway-dialog
         :value="show"
         width="500"
         title="复制计划"
-        :mask-close="false"
-        :close-icon="false">
+        @cancel="$emit('cancel')">
         <bk-form :label-width="85" :model="formData" :rules="rules" ref="planCopyForm">
             <bk-form-item label="计划名称" :required="true" property="name">
                 <bk-input v-model.trim="formData.name"></bk-input>
@@ -18,10 +17,10 @@
             </bk-form-item>
         </bk-form>
         <template #footer>
-            <bk-button theme="primary" :loading="loading" @click="confirm">{{$t('confirm')}}</bk-button>
             <bk-button @click="$emit('cancel')">{{$t('cancel')}}</bk-button>
+            <bk-button class="ml10" theme="primary" :loading="loading" @click="confirm">{{$t('confirm')}}</bk-button>
         </template>
-    </bk-dialog>
+    </canway-dialog>
 </template>
 <script>
     import { mapActions } from 'vuex'

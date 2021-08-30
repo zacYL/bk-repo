@@ -25,8 +25,9 @@ const repoConfig = () => import(/* webpackChunkName: "repoConfig" */'@/views/rep
 const repoDetail = () => import(/* webpackChunkName: "repoDetail" */'@/views/repo')
 const repoToken = () => import(/* webpackChunkName: "repoToken" */'@/views/repoToken')
 const nodeManage = () => import(/* webpackChunkName: "nodeManage" */'@/views/nodeManage')
-const createPlan = () => import(/* webpackChunkName: "createPlan" */'@/views/nodeManage/createPlan')
-const logDetail = () => import(/* webpackChunkName: "logDetail" */'@/views/nodeManage/plan/logDetail')
+const planManage = () => import(/* webpackChunkName: "planManage" */'@/views/planManage')
+const createPlan = () => import(/* webpackChunkName: "createPlan" */'@/views/planManage/createPlan')
+const logDetail = () => import(/* webpackChunkName: "logDetail" */'@/views/planManage/logDetail')
 
 const repoGeneric = () => import(/* webpackChunkName: "repoGeneric" */'@/views/repo/repoGeneric')
 
@@ -143,7 +144,9 @@ const routes = [
                 name: 'repoToken',
                 component: repoToken,
                 meta: {
-                    title: '访问令牌'
+                    breadcrumb: [
+                        { name: 'repoToken', label: '访问令牌' }
+                    ]
                 }
             },
             {
@@ -151,19 +154,21 @@ const routes = [
                 name: 'nodeManage',
                 component: nodeManage,
                 meta: {
-                    title: '节点管理'
+                    breadcrumb: [
+                        { name: 'nodeManage', label: '节点管理' }
+                    ]
                 }
             },
             {
                 path: 'planManage',
                 name: 'planManage',
-                component: nodeManage,
+                component: planManage,
                 meta: {
                     title: '分发计划'
                 }
             },
             {
-                path: 'nodeManage/createPlan',
+                path: 'planManage/createPlan',
                 name: 'createPlan',
                 component: createPlan,
                 meta: {
@@ -171,7 +176,7 @@ const routes = [
                 }
             },
             {
-                path: 'nodeManage/editPlan/:planId',
+                path: 'planManage/editPlan/:planId',
                 name: 'editPlan',
                 component: createPlan,
                 meta: {
@@ -179,7 +184,7 @@ const routes = [
                 }
             },
             {
-                path: 'nodeManage/planDetail/:planId',
+                path: 'planManage/planDetail/:planId',
                 name: 'planDetail',
                 component: createPlan,
                 meta: {
@@ -187,7 +192,7 @@ const routes = [
                 }
             },
             {
-                path: 'nodeManage/logDetail/:logId',
+                path: 'planManage/logDetail/:logId',
                 name: 'logDetail',
                 component: logDetail,
                 meta: {

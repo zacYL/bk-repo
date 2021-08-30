@@ -162,9 +162,10 @@
         mixins: [repoGuideMixin, commonMixin],
         data () {
             return {
-                tabName: '',
+                tabName: 'versionBaseInfo',
                 isLoading: false,
                 detail: {
+                    basic: {}
                 },
                 // 当前已请求页数，0代表没有更多
                 dependentsPage: 1,
@@ -258,7 +259,6 @@
                     if (this.repoType === 'docker') {
                         this.selectedHistory = res.history[0] || {}
                     }
-                    this.tabName = 'versionBaseInfo'
                 }).finally(() => {
                     this.isLoading = false
                 })

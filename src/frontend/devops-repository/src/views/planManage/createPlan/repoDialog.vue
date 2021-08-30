@@ -4,7 +4,8 @@
         width="800"
         title="添加仓库"
         :position="{ top: 100 }"
-        @cancel="$emit('cancel')">
+        @cancel="$emit('cancel')"
+        @confirm="confirmPackageData">
         <bk-transfer
             :title="['仓库列表', '已选仓库']"
             :source-list="repoList"
@@ -23,10 +24,6 @@
                 <span class="ml10 text-overflow" style="max-width:280px" :title="name">{{ name }}</span>
             </template>
         </bk-transfer>
-        <template #footer>
-            <bk-button @click="$emit('cancel')">{{$t('cancel')}}</bk-button>
-            <bk-button class="ml10" theme="primary" @click="confirmPackageData">{{$t('confirm')}}</bk-button>
-        </template>
     </canway-dialog>
 </template>
 <script>

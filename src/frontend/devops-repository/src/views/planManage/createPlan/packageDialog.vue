@@ -4,7 +4,8 @@
         width="800"
         title="添加制品"
         :position="{ top: 100 }"
-        @cancel="$emit('cancel')">
+        @cancel="$emit('cancel')"
+        @confirm="confirmPackageData">
         <div class="search-package" v-bkloading="{ isLoading }">
             <bk-transfer
                 :title="['制品列表', '已选制品']"
@@ -43,10 +44,6 @@
                 </template>
             </bk-transfer>
         </div>
-        <template #footer>
-            <bk-button @click="$emit('cancel')">{{$t('cancel')}}</bk-button>
-            <bk-button class="ml10" theme="primary" @click="confirmPackageData">{{$t('confirm')}}</bk-button>
-        </template>
     </canway-dialog>
 </template>
 <script>

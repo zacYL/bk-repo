@@ -6,7 +6,7 @@
             v-for="item in list"
             :key="item.name"
             :to="{ name: item.name }">
-            {{ transformLabel(item.label) }}
+            {{ transformLabel(item.label) || item.template }}
         </bk-breadcrumb-item>
     </bk-breadcrumb>
 </template>

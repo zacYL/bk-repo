@@ -255,13 +255,16 @@
                     }
                 })
             },
-            editPlanHandler ({ key, lastExecutionStatus, replicaType }) {
+            editPlanHandler ({ name, key, lastExecutionStatus, replicaType }) {
                 if (lastExecutionStatus || replicaType === 'REAL_TIME') return
                 this.$router.push({
                     name: 'editPlan',
                     params: {
                         ...this.$route.params,
                         planId: key
+                    },
+                    query: {
+                        planName: name
                     }
                 })
             },

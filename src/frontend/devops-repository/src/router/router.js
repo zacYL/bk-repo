@@ -185,7 +185,10 @@ const routes = [
                 name: 'editPlan',
                 component: createPlan,
                 meta: {
-                    title: '编辑计划'
+                    breadcrumb: [
+                        { name: 'planManage', label: '{planName}', template: '分发计划' },
+                        { name: 'createPlan', label: '创建计划' }
+                    ]
                 }
             },
             {
@@ -202,7 +205,7 @@ const routes = [
                 component: logDetail,
                 meta: {
                     breadcrumb: [
-                        { name: 'planManage', label: '{planName}' },
+                        { name: 'planManage', label: '{planName}', template: '分发计划' },
                         { name: 'logDetail', label: '日志详情' }
                     ]
                 }

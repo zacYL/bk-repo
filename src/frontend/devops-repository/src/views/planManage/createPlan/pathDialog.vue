@@ -3,17 +3,14 @@
         :value="show"
         width="600"
         title="添加文件路径"
-        @cancel="$emit('cancel')">
+        @cancel="$emit('cancel')"
+        @confirm="confirmPackageData">
         <bk-input
             v-model="pathsStr"
             type="textarea"
             placeholder="请输入文件路径，以换行分隔"
             :rows="10">
         </bk-input>
-        <template #footer>
-            <bk-button @click="$emit('cancel')">{{$t('cancel')}}</bk-button>
-            <bk-button class="ml10" theme="primary" @click="confirmPackageData">{{$t('confirm')}}</bk-button>
-        </template>
     </canway-dialog>
 </template>
 <script>

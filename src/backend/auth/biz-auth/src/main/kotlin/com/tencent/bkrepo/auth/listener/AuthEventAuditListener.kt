@@ -25,16 +25,38 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.auth.service.log
+package com.tencent.bkrepo.auth.listener
 
 import com.tencent.bkrepo.auth.listener.event.AuthEvent
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
+import com.tencent.bkrepo.repository.api.OperateLogClient
+import com.tencent.bkrepo.repository.pojo.event.EventCreateRequest
+import org.springframework.context.event.EventListener
+import org.springframework.stereotype.Component
 
-interface OperateLogService {
+/**
+ * 事件审计记录监听器
+ */
+@Component
+class AuthEventAuditListener(
+    private val operateLogClient: OperateLogClient
+) {
 
     /**
-     * 异步保存事件
-     * @param event 事件
-     * @param address 客户端地址，需要提前传入，因为异步情况下无法获取request
+     * 将需要审计记录的事件持久化
      */
-    fun saveEventAsync(event: AuthEvent, address: String)
+    @EventListener(AuthEvent::class)
+    fun handle(event: AuthEvent) {
+        operateLogClient.saveEvent(
+            EventCreateRequest(
+                type = event.type,
+                projectId = event.projectId,
+                repoName = event.repoName,
+                resourceKey = event.resourceKey,
+                userId = event.userId,
+                data = event.data,
+                address = HttpContextHolder.getClientAddress()
+            )
+        )
+    }
 }

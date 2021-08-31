@@ -1,3 +1,3 @@
 package com.tencent.bkrepo.opdata
 
-const val DEFAULT_PROJECT = "bksoftware"
+const val BK_SOFTWARE = "bksoftware"

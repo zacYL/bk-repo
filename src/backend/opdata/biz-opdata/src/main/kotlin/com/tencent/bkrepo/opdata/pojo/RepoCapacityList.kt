@@ -8,6 +8,6 @@ data class RepoCapacityList(
 data class RepoCapacityDetail(
     val projectId: String,
     val name: String,
-    val used: Long,
-    val limit: Long = Long.MAX_VALUE
+    val usedCapacity: Long,
+    val quota: Long = Long.MAX_VALUE
 )

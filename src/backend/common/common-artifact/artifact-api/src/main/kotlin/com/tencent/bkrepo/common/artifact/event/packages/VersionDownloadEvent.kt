@@ -31,7 +31,7 @@ import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.event.base.EventType
 
 /**
- * 包版本创建事件
+ * 包版本下载事件
  */
 class VersionDownloadEvent(
     override val projectId: String,

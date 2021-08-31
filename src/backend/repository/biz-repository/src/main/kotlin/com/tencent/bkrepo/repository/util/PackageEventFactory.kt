@@ -15,7 +15,7 @@ import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionUpdateR
 object PackageEventFactory {
 
     /**
-     * 包版本创建事件
+     * 包版本创建事件-upload 新包
      */
     fun buildCreatedEvent(request: PackageVersionCreateRequest): VersionCreatedEvent {
         with(request) {
@@ -32,7 +32,7 @@ object PackageEventFactory {
     }
 
     /**
-     * 包版本更新事件
+     * 包版本更新事件-upload 覆盖上传
      */
     fun buildUpdatedEvent(request: PackageVersionCreateRequest): VersionUpdatedEvent {
         with(request) {
@@ -110,7 +110,7 @@ object PackageEventFactory {
     }
 
     /**
-     * 包删除事件
+     * 包版本下载事件
      */
     fun buildDeletedEvent(
         projectId: String,

@@ -43,7 +43,6 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadCon
 import com.tencent.bkrepo.common.artifact.util.version.SemVersion
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.query.model.QueryModel
-import com.tencent.bkrepo.common.query.util.MongoEscapeUtils
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
@@ -51,9 +50,6 @@ import com.tencent.bkrepo.repository.dao.PackageDao
 import com.tencent.bkrepo.repository.dao.PackageVersionDao
 import com.tencent.bkrepo.repository.model.TPackage
 import com.tencent.bkrepo.repository.model.TPackageVersion
-import com.tencent.bkrepo.repository.pojo.bksoftware.PackageOverviewResponse
-import com.tencent.bkrepo.repository.pojo.metric.CountResult
-import com.tencent.bkrepo.repository.pojo.metric.PackageDetail
 import com.tencent.bkrepo.repository.pojo.packages.PackageListOption
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
@@ -72,10 +68,6 @@ import com.tencent.bkrepo.repository.util.PackageEventFactory.buildUpdatedEvent
 import com.tencent.bkrepo.repository.util.PackageQueryHelper
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
-import org.springframework.data.domain.Sort
-import org.springframework.data.mongodb.core.aggregation.AddFieldsOperation
-import org.springframework.data.mongodb.core.aggregation.Aggregation
-import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
@@ -317,7 +309,8 @@ class PackageServiceImpl(
         val repoName = request.repoName
         val packageKey = request.packageKey
         val versionName = request.versionName
-        val packageId = checkPackage(projectId, repoName, packageKey).id.orEmpty()
+        val tPackage = checkPackage(projectId, repoName, packageKey)
+        val packageId = tPackage.id.orEmpty()
         val tPackageVersion = checkPackageVersion(packageId, versionName).apply {
             size = request.size ?: size
             manifestPath = request.manifestPath ?: manifestPath
@@ -330,6 +323,14 @@ class PackageServiceImpl(
             lastModifiedDate = LocalDateTime.now()
         }
         packageVersionDao.save(tPackageVersion)
+        publishEvent(
+            buildUpdatedEvent(
+                request = request,
+                packageType = tPackage.type.name,
+                packageName = tPackage.name,
+                createdBy = SecurityUtils.getUserId()
+            )
+        )
     }
 
     override fun downloadVersion(projectId: String, repoName: String, packageKey: String, versionName: String) {
@@ -434,101 +435,6 @@ class PackageServiceImpl(
     override fun getPackageCount(projectId: String, repoName: String): Long {
         val query = PackageQueryHelper.packageListQuery(projectId, repoName, null)
         return packageDao.count(query)
-    }
-
-    override fun existArtifact(projectId: String?, repoName: String?): Long {
-        val criteria = Criteria()
-        projectId?.let { criteria.and(TPackage::projectId.name).`is`(projectId) }
-        repoName?.let { criteria.and(TPackage::repoName.name).`is`(repoName) }
-        val aggregation = Aggregation.newAggregation(
-            TPackage::class.java,
-            Aggregation.match(criteria),
-            Aggregation.project("versions"),
-            Aggregation.group().sum("versions").`as`("count"),
-            Aggregation.project("_id", "count")
-        )
-        val result = packageDao.aggregate(aggregation, CountResult::class.java).mappedResults
-        return if (result.isEmpty()) 0 else result[0].count
-    }
-
-    override fun sortByDown(projectId: String?, repoName: String?, limit: Long): List<PackageDetail> {
-        val criteria = Criteria()
-        projectId?.let { criteria.and("package_version.projectId").`is`(projectId) }
-        repoName?.let { criteria.and("package_version.repoName").`is`(repoName) }
-        val aggregation = Aggregation.newAggregation(
-            TPackageVersion::class.java,
-            Aggregation.addFields()
-                .addField("package_id").withValueOfExpression("toObjectId(packageId)").build(),
-            Aggregation.lookup(
-                "package",
-                "package_id",
-                "_id",
-                "package"
-            ),
-            Aggregation.unwind("package"),
-            AddFieldsOperation("package_version.projectId", "\$package.projectId"),
-            AddFieldsOperation("package_version.repoName", "\$package.repoName"),
-            AddFieldsOperation("package_version.packageName", "\$package.name"),
-            AddFieldsOperation("package_version.key", "\$package.key"),
-            AddFieldsOperation("package_version.type", "\$package.type"),
-            Aggregation.match(criteria),
-            Aggregation.sort(Sort.by(TPackageVersion::downloads.name).descending()),
-            Aggregation.limit(limit),
-            Aggregation.project(
-                "package_version.projectId",
-                "package_version.repoName",
-                "package_version.packageName",
-                "package_version.key",
-                "package_version.type",
-                "name",
-                "downloads",
-                "size"
-            )
-        )
-        val result = packageDao.aggregate(aggregation, PackageDetail::class.java)
-        return result.mappedResults
-    }
-
-    override fun downloads(projectId: String?, repoName: String?): Long {
-        val criteria = Criteria()
-        projectId?.let { criteria.and(TPackage::projectId.name).`is`(projectId) }
-        repoName?.let { criteria.and(TPackage::repoName.name).`is`(repoName) }
-        val aggregation = Aggregation.newAggregation(
-            TPackage::class.java,
-            Aggregation.match(criteria),
-            Aggregation.group().sum("\$downloads").`as`("count"),
-            Aggregation.project("_id", "count")
-        )
-        val result = packageDao.aggregate(aggregation, CountResult::class.java).mappedResults
-        return if (result.isEmpty()) 0 else result[0].count
-    }
-
-    override fun packageOverview(repoType: String, projectId: String?, packageName: String?): PackageOverviewResponse {
-        val criteria = Criteria.where(TPackage::type.name).`is`(repoType)
-        projectId?.let { criteria.and(TPackage::projectId.name).`is`(projectId) }
-        packageName?.let {
-            val escapedValue = MongoEscapeUtils.escapeRegexExceptWildcard(packageName)
-            val regexPattern = escapedValue.replace("*", ".*")
-            criteria.and(TPackage::name.name).regex("^$regexPattern$")
-        }
-        val aggregation = Aggregation.newAggregation(
-            TPackage::class.java,
-            Aggregation.match(criteria),
-            Aggregation.group("\$repoName").count().`as`("count")
-        )
-        val result = packageDao.aggregate(aggregation, CountResult::class.java).mappedResults
-        var sum = 0L
-        val list = mutableListOf<PackageOverviewResponse.RepoPackageOverview>()
-        result.map {
-            list.add(
-                PackageOverviewResponse.RepoPackageOverview(
-                    repoName = it.id!!,
-                    packages = it.count
-                )
-            )
-            sum += it.count
-        }
-        return PackageOverviewResponse(list = list, sum = sum)
     }
 
     /**

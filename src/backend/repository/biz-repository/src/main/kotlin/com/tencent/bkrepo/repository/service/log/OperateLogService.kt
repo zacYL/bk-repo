@@ -27,10 +27,13 @@
 
 package com.tencent.bkrepo.repository.service.log
 
-import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
+import com.tencent.bkrepo.repository.pojo.event.EventCreateRequest
+import com.tencent.bkrepo.repository.pojo.log.OperateLogPojo
 import com.tencent.bkrepo.repository.pojo.log.OperateLogResponse
+import com.tencent.bkrepo.repository.pojo.log.ResourceType
+import java.time.LocalDateTime
 
 interface OperateLogService {
 
@@ -40,6 +43,8 @@ interface OperateLogService {
      * @param address 客户端地址，需要提前传入，因为异步情况下无法获取request
      */
     fun saveEventAsync(event: ArtifactEvent, address: String)
+
+    fun saveEventRequest(request: EventCreateRequest)
 
     fun page(
         type: ResourceType?,
@@ -69,4 +74,9 @@ interface OperateLogService {
         repoName: String?,
         latestWeek: Boolean?
     ): Long
+
+    /**
+     * 查询指定时间之后的操作记录
+     */
+    fun operateLogLimitByTime(time: LocalDateTime, pageNumber: Int, pageSize: Int): List<OperateLogPojo>
 }

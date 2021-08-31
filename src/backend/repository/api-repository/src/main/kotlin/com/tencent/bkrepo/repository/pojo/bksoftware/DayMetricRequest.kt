@@ -1,6 +1,7 @@
 package com.tencent.bkrepo.repository.pojo.bksoftware
 
-import com.tencent.bkrepo.repository.pojo.log.OperateType
+import com.tencent.bkrepo.common.api.event.base.EventType
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
 import java.time.LocalDate
@@ -13,6 +14,8 @@ class DayMetricRequest(
     val projectId: String,
     @ApiModelProperty("仓库", example = "docker-local")
     val repoName: String,
-    @ApiModelProperty("下载/上传 次数", example = "3")
-    val type: OperateType
+    @ApiModelProperty("事件类型", example = "3")
+    val type: EventType,
+    @ApiModelProperty("仓库类型")
+    val repoType: RepositoryType
 )

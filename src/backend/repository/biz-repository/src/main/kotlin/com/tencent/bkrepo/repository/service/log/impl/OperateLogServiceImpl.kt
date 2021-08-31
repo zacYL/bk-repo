@@ -28,19 +28,18 @@
 package com.tencent.bkrepo.repository.service.log.impl
 
 import com.tencent.bkrepo.auth.constant.BK_SOFTWARE
-import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
-import com.tencent.bkrepo.common.artifact.event.base.EventType
+import com.tencent.bkrepo.common.api.event.base.EventType
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.repository.dao.OperateLogDao
 import com.tencent.bkrepo.repository.model.TOperateLog
-import com.tencent.bkrepo.repository.pojo.bksoftware.DayMetricRequest
+import com.tencent.bkrepo.repository.pojo.event.EventCreateRequest
+import com.tencent.bkrepo.repository.pojo.log.OperateLogPojo
 import com.tencent.bkrepo.repository.pojo.log.OperateLogResponse
+import com.tencent.bkrepo.repository.pojo.log.ResourceType
 import com.tencent.bkrepo.repository.pojo.metric.CountResult
-import com.tencent.bkrepo.repository.pojo.log.OperateType
-import com.tencent.bkrepo.repository.service.bksoftware.DayMetricService
 import com.tencent.bkrepo.repository.service.log.OperateLogService
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.aggregation.Aggregation
@@ -58,8 +57,7 @@ import java.time.format.DateTimeFormatter
  */
 @Service
 class OperateLogServiceImpl(
-    private val operateLogDao: OperateLogDao,
-    private val dayMetricService: DayMetricService
+    private val operateLogDao: OperateLogDao
 ) : OperateLogService {
 
     @Async
@@ -73,17 +71,20 @@ class OperateLogServiceImpl(
             userId = event.userId,
             clientAddress = address
         )
-        val operateType = transferEventType(event.type)
-        if (packageEvent.contains(event.type) && operateType != null) {
-            dayMetricService.add(
-                DayMetricRequest(
-                day = LocalDate.now(),
-                projectId = event.projectId,
-                repoName = event.repoName,
-                type = operateType
-            )
-            )
-        }
+        operateLogDao.save(log)
+    }
+
+    @Async
+    override fun saveEventRequest(request: EventCreateRequest) {
+        val log = TOperateLog(
+            type = request.type,
+            resourceKey = request.resourceKey,
+            projectId = request.projectId,
+            repoName = request.repoName,
+            description = request.data,
+            userId = request.userId,
+            clientAddress = request.address
+        )
         operateLogDao.save(log)
     }
 
@@ -104,7 +105,7 @@ class OperateLogServiceImpl(
         return Pages.ofResponse(pageRequest, totalRecords, records)
     }
 
-    override fun uploads(projectId: String?, repoName: String?, lastWeek: Boolean?): Long {
+    override fun uploads(projectId: String?, repoName: String?, latestWeek: Boolean?): Long {
         val criteria = Criteria.where(TOperateLog::type.name)
             .`in`(listOf(EventType.VERSION_CREATED, EventType.VERSION_UPDATED))
         projectId?.let { criteria.and(TOperateLog::projectId.name).`is`(projectId) }
@@ -122,7 +123,7 @@ class OperateLogServiceImpl(
         return if (result.isEmpty()) 0 else result[0].count
     }
 
-    override fun downloads(projectId: String?, repoName: String?, lastWeek: Boolean?): Long {
+    override fun downloads(projectId: String?, repoName: String?, latestWeek: Boolean?): Long {
         val criteria = Criteria.where(TOperateLog::type.name)
             .`is`(EventType.VERSION_DOWNLOAD)
         projectId?.let { criteria.and(TOperateLog::projectId.name).`is`(projectId) }
@@ -151,15 +152,32 @@ class OperateLogServiceImpl(
         TODO("Not yet implemented")
     }
 
+    override fun operateLogLimitByTime(time: LocalDateTime, pageNumber: Int, pageSize: Int): List<OperateLogPojo> {
+        val query = Query(Criteria.where(TOperateLog::createdDate.name).gte(time))
+        val page = Pages.ofRequest(pageNumber, pageSize)
+        return operateLogDao.find(query.with(page)).map { convertToOperateLogPojo(it) }
+    }
+
     private fun getEventList(resourceType: ResourceType): List<EventType> {
         return when (resourceType) {
-            ResourceType.PROJECT -> projectEvent
-            ResourceType.REPO -> repositoryEvent
+            ResourceType.PROJECT -> repositoryEvent
             ResourceType.PACKAGE -> packageEvent
             ResourceType.ADMIN -> adminEvent
-            ResourceType.METADATA -> metadataEvent
             else -> listOf()
         }
+    }
+
+    private fun convertToOperateLogPojo(tOperateLog: TOperateLog): OperateLogPojo {
+        return OperateLogPojo(
+            projectId = tOperateLog.projectId,
+            repoName = tOperateLog.repoName,
+            resourceKey = tOperateLog.resourceKey,
+            type = tOperateLog.type,
+            userId = tOperateLog.userId,
+            clientAddress = tOperateLog.clientAddress,
+            description = tOperateLog.description,
+            createdDate = tOperateLog.createdDate
+        )
     }
 
     private fun convert(tOperateLog: TOperateLog): OperateLogResponse {
@@ -238,19 +256,7 @@ class OperateLogServiceImpl(
         return Query(criteria).with(Sort.by(TOperateLog::createdDate.name).descending())
     }
 
-    private fun transferEventType(eventType: EventType): OperateType? {
-        return when (eventType) {
-            EventType.VERSION_DOWNLOAD -> OperateType.DOWNLOAD
-            EventType.VERSION_CREATED -> OperateType.CREATE
-            EventType.VERSION_UPDATED -> OperateType.UPDATE
-            EventType.VERSION_DELETED -> OperateType.DELETE
-            EventType.VERSION_STAGED -> OperateType.STAGE
-            else -> null
-        }
-    }
-
     companion object {
-        private val projectEvent = listOf(EventType.PROJECT_CREATED)
         private val repositoryEvent = listOf(EventType.REPO_CREATED, EventType.REPO_UPDATED, EventType.REPO_DELETED)
         private val packageEvent = listOf(
             EventType.VERSION_CREATED, EventType.VERSION_DELETED,
@@ -261,7 +267,6 @@ class OperateLogServiceImpl(
             EventType.NODE_RENAMED, EventType.NODE_COPIED
         )
         private val adminEvent = listOf(EventType.ADMIN_ADD, EventType.ADMIN_DELETE)
-        private val metadataEvent = listOf(EventType.METADATA_SAVED, EventType.METADATA_DELETED)
         private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSz")
     }
 }

@@ -42,7 +42,7 @@ import com.tencent.bkrepo.repository.pojo.repo.RepoUpdateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
 import com.tencent.bkrepo.repository.pojo.repo.UserRepoCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.UserRepoUpdateRequest
-import com.tencent.bkrepo.repository.service.packages.PackageService
+import com.tencent.bkrepo.repository.service.packages.PackageStatisticsService
 import com.tencent.bkrepo.repository.service.repo.QuotaService
 import com.tencent.bkrepo.repository.service.repo.RepositoryService
 import io.swagger.annotations.Api
@@ -64,7 +64,7 @@ import org.springframework.web.bind.annotation.RestController
 class UserRepositoryController(
     private val permissionManager: PermissionManager,
     private val repositoryService: RepositoryService,
-    private val packageService: PackageService,
+    private val packageStatisticsService: PackageStatisticsService,
     private val quotaService: QuotaService
 ) {
 
@@ -149,7 +149,7 @@ class UserRepositoryController(
             page.records.map {
                 // 加载权限信息
                 it.permission = permissionManager.getRepoPermission(it.projectId, it.name)?.name
-                it.artifacts = packageService.existArtifact(it.projectId, it.name)
+                it.artifacts = packageStatisticsService.packageTotal(it.projectId, it.name)
             }
         }
         return ResponseBuilder.success(page)

@@ -44,6 +44,7 @@ import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.VersionListOption
 import com.tencent.bkrepo.repository.service.packages.PackageService
+import com.tencent.bkrepo.repository.service.packages.PackageStatisticsService
 import io.swagger.annotations.ApiOperation
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -60,7 +61,8 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api")
 class UserPackageController(
-    private val packageService: PackageService
+    private val packageService: PackageService,
+    private val packageStatisticsService: PackageStatisticsService
 ) {
 
     @ApiOperation("分页查询包")
@@ -151,6 +153,6 @@ class UserPackageController(
         @RequestParam projectId: String?,
         @RequestParam packageName: String?
     ): Response<PackageOverviewResponse> {
-        return ResponseBuilder.success(packageService.packageOverview(repoType, projectId, packageName))
+        return ResponseBuilder.success(packageStatisticsService.packageOverview(repoType, projectId, packageName))
     }
 }

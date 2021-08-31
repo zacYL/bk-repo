@@ -36,7 +36,6 @@ import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.repository.api.PackageClient
-import com.tencent.bkrepo.repository.pojo.metric.PackageDetail
 import com.tencent.bkrepo.repository.pojo.packages.PackageListOption
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
@@ -179,17 +178,5 @@ class PackageController(
     override fun populatePackage(request: PackagePopulateRequest): Response<Void> {
         packageService.populatePackage(request)
         return ResponseBuilder.success()
-    }
-
-    override fun existArtifact(projectId: String?, repoName: String?): Response<Long> {
-        return ResponseBuilder.success(packageService.existArtifact(projectId, repoName))
-    }
-
-    override fun sortByDown(projectId: String?, repoName: String?, limit: Long): Response<List<PackageDetail>> {
-        return ResponseBuilder.success(packageService.sortByDown(projectId, repoName, limit))
-    }
-
-    override fun downloads(projectId: String?, repoName: String?): Response<Long> {
-        return ResponseBuilder.success(packageService.downloads(projectId, repoName))
     }
 }

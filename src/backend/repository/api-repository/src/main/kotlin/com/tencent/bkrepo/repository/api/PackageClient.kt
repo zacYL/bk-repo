@@ -35,7 +35,6 @@ import com.tencent.bkrepo.common.api.constant.REPOSITORY_SERVICE_NAME
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.query.model.QueryModel
-import com.tencent.bkrepo.repository.pojo.metric.PackageDetail
 import com.tencent.bkrepo.repository.pojo.packages.PackageListOption
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
@@ -194,26 +193,4 @@ interface PackageClient {
     fun populatePackage(
         @RequestBody request: PackagePopulateRequest
     ): Response<Void>
-
-    @ApiOperation("查询出全部制品数量")
-    @GetMapping("/packages")
-    fun existArtifact(
-        @RequestParam projectId: String?,
-        @RequestParam repoName: String?
-    ): Response<Long>
-
-    @ApiOperation("制品下载排行")
-    @GetMapping("/package/down")
-    fun sortByDown(
-        @RequestParam projectId: String?,
-        @RequestParam repoName: String?,
-        @RequestParam limit: Long = 10
-    ): Response<List<PackageDetail>>
-
-    @ApiOperation("制品下载总量")
-    @GetMapping("/package/downs")
-    fun downloads(
-        @RequestParam projectId: String?,
-        @RequestParam repoName: String?
-    ): Response<Long>
 }

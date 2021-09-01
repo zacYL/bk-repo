@@ -106,7 +106,7 @@
     "dockerBaseInfo1": "Docker公共构建机构建机基础镜像",
     "dockerBaseInfo2": "Docker无编译环境基础镜像",
     "dockerBaseInfo3": "无编译环境的特点是小，基础的。没有编译环境等特殊依赖",
-    "packageName": "制品名称",
+    "packageName": "包名称",
     "latestVersion": "最新版本",
     "versionCount": "版本数",
     "version": "版本",
@@ -153,5 +153,6 @@
     "deleteUserTitle": "确定删除用户 {0} ?",
     "pwdPlacehodler": "密码长度为8-32个字符，必须包含大小写字母，数字，特殊字符（除空格）",
     "deleteRoleTitle": "确定删除用户组 {0} ?",
-    "deleteRoleSubTitle": "基于该用户组的授权将取消"
+    "deleteRoleSubTitle": "基于该用户组的授权将取消",
+    "loadingTips": "数据加载中，请稍候"
 }

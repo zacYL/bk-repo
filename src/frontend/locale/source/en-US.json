@@ -105,7 +105,7 @@
     "dockerBaseInfo1": "Docker公共构建机构建机基础镜像",
     "dockerBaseInfo2": "Docker无编译环境基础镜像",
     "dockerBaseInfo3": "无编译环境的特点是小，基础的。没有编译环境等特殊依赖",
-    "packageName": "制品名称",
+    "packageName": "包名称",
     "latestVersion": "最新版本",
     "versionCount": "版本数",
     "version": "版本",
@@ -145,5 +145,6 @@
     "userGroup": "用户组",
     "department": "组织",
     "superAdmin": "管理员",
-    "modifyPwd": "修改密码"
+    "modifyPwd": "修改密码",
+    "loadingTips": "数据加载中，请稍候"
 }

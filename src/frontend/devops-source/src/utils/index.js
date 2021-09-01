@@ -26,7 +26,10 @@ export function debounce (fn, interval = DEFAULT_TIME_INTERVAL) {
 
 export function throttle (func, interval = DEFAULT_TIME_INTERVAL) {
     let lastRun = Date.now()
+    let finalRun = null
     return (...args) => {
+        clearTimeout(finalRun)
+        finalRun = setTimeout(() => func(...args), interval)
         if (Date.now() - lastRun > interval) {
             func(...args)
             lastRun = Date.now()

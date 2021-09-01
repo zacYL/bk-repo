@@ -89,8 +89,21 @@ export default {
             }
         )
     },
+    // 包搜索-仓库数量
+    searchRepoList (_, { projectId, repoType, packageName }) {
+        return Vue.prototype.$ajax.get(
+            `${prefix}/package/search/overview`,
+            {
+                params: {
+                    projectId,
+                    repoType,
+                    packageName: '*' + packageName + '*'
+                }
+            }
+        )
+    },
     // 跨仓库搜索包
-    searchPackageList (_, { projectId, repoType, packageName, repoName, current = 1, limit = 20 }) {
+    searchPackageList (_, { projectId, repoType, repoName, packageName, property = 'name', direction = 'ASC', current = 1, limit = 20 }) {
         return Vue.prototype.$ajax.post(
             `${prefix}/package/search`,
             {
@@ -99,8 +112,8 @@ export default {
                     pageSize: limit
                 },
                 sort: {
-                    properties: ['name'],
-                    direction: 'ASC'
+                    properties: [property],
+                    direction
                 },
                 rule: {
                     rules: [
@@ -109,21 +122,21 @@ export default {
                             value: projectId,
                             operation: 'EQ'
                         },
-                        {
+                        ...(repoType ? [{
                             field: 'repoType',
                             value: repoType.toUpperCase(),
                             operation: 'EQ'
-                        },
+                        }] : []),
                         ...(repoName ? [{
                             field: 'repoName',
                             value: repoName,
                             operation: 'EQ'
                         }] : []),
-                        {
+                        ...(packageName ? [{
                             field: 'name',
                             value: '*' + packageName + '*',
                             operation: 'MATCH'
-                        }
+                        }] : [])
                     ],
                     relation: 'AND'
                 }

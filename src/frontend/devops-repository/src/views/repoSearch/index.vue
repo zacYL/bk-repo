@@ -1,100 +1,106 @@
 <template>
     <div class="repo-search-container">
-        <header class="repo-search-header">
-            <div class="flex-align-center">
-                <icon size="24" :name="$route.query.type"></icon>
-                <span class="mr5 ml10 hover-btn" @click="goBack">{{$route.query.name}}</span>
-                <i class="devops-icon icon-angle-right"></i>
-                <span class="ml5">{{$t('searchForPkg')}}</span>
-            </div>
-            <icon class="hover-btn" name="filter" size="16" @click.native="showRepoSearch = !showRepoSearch"></icon>
-        </header>
-        <div class="repo-search-main flex-column" v-if="showRepoSearch">
-            <div>
+        <div class="repo-search-tools flex-column">
+            <div class="name-tool flex-align-center">
                 <bk-input
-                    class="mr20 file-name-search"
+                    v-focus
+                    class="name-input"
                     v-model.trim="packageNameInput"
+                    size="large"
                     :placeholder="$t('pleaseInput') + $t('packageName')"
-                    @enter="handlerPaginationChange()"
-                    @clear="handlerPaginationChange()"
-                    clearable>
+                    @enter="handlerPaginationChange()">
                 </bk-input>
-                <bk-button :loading="isLoading" theme="primary" @click="handlerPaginationChange()">{{$t('search')}}</bk-button>
+                <i class="name-search devops-icon icon-search flex-center" @click="handlerPaginationChange()"></i>
             </div>
-            <div class="repo-type-search">
-                <bk-radio-group v-model="repoType" @change="handlerPaginationChange()" class="repo-type-radio-group">
+            <div class="mt10 flex-between-center">
+                <bk-radio-group class="type-tool" v-model="repoType" @change="handlerPaginationChange()">
+                    <bk-radio-button :value="''">全部</bk-radio-button>
                     <bk-radio-button v-for="repo in repoEnum" :key="repo" :value="repo">
-                        <div class="flex-center repo-type-radio">
-                            <icon size="60" :name="repo" />
-                            <span>{{repo}}</span>
-                            <div v-show="repoType === repo" class="top-right-selected">
-                                <i class="devops-icon icon-check-1"></i>
-                            </div>
-                        </div>
+                        <Icon size="14" :name="repo" />
+                        <span class="ml5">{{repo}}</span>
                     </bk-radio-button>
                 </bk-radio-group>
+                <div class="sort-tool flex-align-center">
+                    <bk-select
+                        style="width:150px;"
+                        v-model="property"
+                        :clearable="false"
+                        size="small"
+                        @change="handlerPaginationChange()">
+                        <bk-option id="name" name="名称排序"></bk-option>
+                        <bk-option id="lastModifiedDate" name="时间排序"></bk-option>
+                        <bk-option id="downloads" name="下载量排序"></bk-option>
+                    </bk-select>
+                    <div class="ml10 sort-order flex-center hover-btn" @click="changeDirection">
+                        <Icon :name="`order-${direction.toLowerCase()}`" size="16"></Icon>
+                    </div>
+                </div>
             </div>
         </div>
-        <main class="repo-search-result flex-column" v-bkloading="{ isLoading }"
-            :style="{
-                height: `calc(100% - ${showRepoSearch ? 300 : 80}px)`
-            }">
+        <main class="repo-search-result flex-align-center" v-bkloading="{ isLoading }">
             <template v-if="resultList.length">
-                <main class="mb10 result-list">
-                    <div class="hover-btn flex-column result-item"
-                        @click="toRepoDetail(result)"
-                        v-for="result in resultList"
-                        :key="result.repoName + result.key">
-                        <div class="flex-align-center">
-                            <icon size="14" :name="repoType" />
-                            <span class="ml10 result-repo-name">{{result.name}}</span>
-                            <span class="ml10 repo-tag" v-if="result.type === 'MAVEN'">
-                                {{ result.key.replace(/^.*\/\/(.+):.*$/, '$1') }}
-                            </span>
-                            <span class="ml10">({{result.repoName}})</span>
-                        </div>
-                        <div class="result-card flex-align-center">
-                            <div class="flex-align-center" :title="result.latest"><icon class="mr5" size="16" name="latest-version" />{{ result.latest }}</div>
-                            <div class="flex-align-center"><icon class="mr5" size="16" name="versions" />{{ result.versions }}</div>
-                            <div class="flex-align-center"><icon class="mr5" size="16" name="downloads" />{{ result.downloads }}</div>
-                            <div class="flex-align-center"><icon class="mr5" size="16" name="time" />{{ formatDate(result.lastModifiedDate) }}</div>
-                            <div class="flex-align-center"><icon class="mr5" size="16" name="updater" />{{ userList[result.lastModifiedBy] ? userList[result.lastModifiedBy].name : result.lastModifiedBy }}</div>
-                        </div>
+                <div v-if="repoType" class="mr20 mt40 repo-list">
+                    <div class="repo-item flex-between-center"
+                        :class="{ 'selected': repo.repoName === repoName }"
+                        v-for="(repo, index) in repoList"
+                        :key="repo.repoName || index"
+                        :title="repo.repoName"
+                        @click="changeRepoInput(repo)">
+                        <span class="flex-1 text-overflow">{{ repo.repoName || '全部' }}</span>
+                        <span class="ml5">{{ repo.packages }}</span>
                     </div>
-                </main>
-                <bk-pagination
-                    size="small"
-                    align="right"
-                    @change="current => handlerPaginationChange({ current })"
-                    @limit-change="limit => handlerPaginationChange({ limit })"
-                    :current.sync="pagination.current"
-                    :limit="pagination.limit"
-                    :count="pagination.count"
-                    :limit-list="pagination.limitList">
-                </bk-pagination>
+                </div>
+                <infinite-scroll
+                    ref="infiniteScroll"
+                    class="package-list flex-1"
+                    :is-loading="isLoading"
+                    :has-next="resultList.length < pagination.count"
+                    @load="handlerPaginationChange({ current: pagination.current + 1 }, true)">
+                    <div class="mb10 result-count">为您搜索到到相关结果{{ pagination.count }}个</div>
+                    <package-card
+                        class="result-card"
+                        v-for="pkg in resultList"
+                        :key="pkg.key"
+                        :card-data="pkg"
+                        readonly
+                        @click.native="showCommonPackageDetail(pkg)">
+                    </package-card>
+                </infinite-scroll>
             </template>
-            <empty-data v-else></empty-data>
+            <empty-data v-else class="flex-1" ex-style="margin-top: -250px;" search></empty-data>
         </main>
     </div>
 </template>
 <script>
+    import packageCard from '@/components/PackageCard'
+    import InfiniteScroll from '@/components/InfiniteScroll'
     import { mapState, mapActions } from 'vuex'
     import { repoEnum } from '@/store/publicEnum'
     import { formatDate } from '@/utils'
     export default {
         name: 'repoSearch',
+        components: { packageCard, InfiniteScroll },
+        directives: {
+            focus: {
+                inserted (el) {
+                    el.querySelector('input').focus()
+                }
+            }
+        },
         data () {
             return {
                 repoEnum: repoEnum.filter(v => v !== 'generic'),
-                showRepoSearch: true,
                 isLoading: false,
+                property: this.$route.query.property || 'lastModifiedDate',
+                direction: this.$route.query.direction || 'ASC',
                 packageNameInput: this.$route.query.packageName || '',
-                repoType: this.$route.query.type,
+                repoType: this.$route.query.repoType || '',
+                repoList: [{ repoName: '', packages: 0 }],
+                repoName: this.$route.query.repoName || '',
                 pagination: {
                     current: 1,
-                    limit: 20,
-                    count: 0,
-                    limitList: [10, 20, 40]
+                    limit: 7,
+                    count: 0
                 },
                 resultList: []
             }
@@ -110,30 +116,41 @@
         },
         methods: {
             formatDate,
-            ...mapActions([
-                'searchPackageList'
-            ]),
-            searckPackageHandler () {
-                this.isLoading = true
+            ...mapActions(['searchPackageList', 'searchRepoList']),
+            searchRepoHandler () {
+                this.searchRepoList({
+                    projectId: this.projectId,
+                    repoType: this.repoType.toUpperCase(),
+                    packageName: this.packageName || ''
+                }).then(({ list, sum }) => {
+                    this.repoList = [{ repoName: '', packages: sum }, ...list]
+                })
+            },
+            searckPackageHandler (load) {
+                if (this.isLoading) return
+                this.isLoading = !load
                 this.searchPackageList({
                     projectId: this.projectId,
                     repoType: this.repoType,
+                    repoName: this.repoName,
                     packageName: this.packageNameInput,
+                    property: this.property,
+                    direction: this.direction,
                     current: this.pagination.current,
                     limit: this.pagination.limit
                 }).then(({ records, totalRecords }) => {
                     this.pagination.count = totalRecords
-                    this.resultList = records
+                    load ? this.resultList.push(...records) : (this.resultList = records)
                 }).finally(() => {
                     this.isLoading = false
                 })
             },
-            toRepoDetail (pkg) {
+            showCommonPackageDetail (pkg) {
                 this.$router.push({
                     name: 'commonPackage',
                     params: {
                         projectId: this.projectId,
-                        repoType: this.repoType
+                        repoType: pkg.type.toLowerCase()
                     },
                     query: {
                         name: pkg.repoName,
@@ -141,23 +158,31 @@
                     }
                 })
             },
-            handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
+            handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}, load) {
                 this.pagination.current = current
                 this.pagination.limit = limit
-                this.searckPackageHandler()
+                this.searckPackageHandler(load)
+                if (!load) {
+                    this.$refs.infiniteScroll && this.$refs.infiniteScroll.$el.scrollTo(0, 0)
+                    this.repoType && this.searchRepoHandler()
+                    this.$router.replace({
+                        query: {
+                            repoType: this.repoType,
+                            repoName: this.repoName,
+                            packageName: this.packageNameInput,
+                            property: this.property,
+                            direction: this.direction
+                        }
+                    })
+                }
             },
-            goBack () {
-                const { type, name } = this.$route.query
-                this.$router.push({
-                    name: 'repoCommon',
-                    params: {
-                        projectId: this.projectId,
-                        repoType: type
-                    },
-                    query: {
-                        name
-                    }
-                })
+            changeDirection () {
+                this.direction = this.direction === 'ASC' ? 'DESC' : 'ASC'
+                this.handlerPaginationChange()
+            },
+            changeRepoInput (repo) {
+                this.repoName = repo.repoName
+                this.handlerPaginationChange()
             }
         }
     }
@@ -165,116 +190,81 @@
 <style lang="scss" scoped>
 @import '@/scss/conf';
 .repo-search-container {
+    position: relative;
     height: 100%;
-    .repo-search-header {
-        height: 50px;
-        padding: 0 20px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        font-size: 14px;
+    padding: 20px 20px 0;
+    background-color: white;
+    .repo-search-tools {
+        padding-bottom: 10px;
+        z-index: 1;
         background-color: white;
-    }
-    .repo-search-main {
-        height: 200px;
-        margin-top: 20px;
-        padding: 20px;
-        background-color: white;
-        .file-name-search {
-            width: 600px;
+        .name-tool {
+            height: 38px;
+            .name-input {
+                max-width: 480px;
+            }
+            .name-search {
+                width: 80px;
+                height: 100%;
+                margin-left: -1px;
+                color: white;
+                font-size: 16px;
+                font-weight: bold;
+                background-color: $primaryColor;
+                border-radius: 0 2px 2px 0;
+                cursor: pointer;
+            }
         }
-        .repo-type-search {
-            margin-top: 15px;
-            margin-bottom: -20px;
-            padding-top: 15px;
-            border-top: 1px solid $borderWeightColor;
-            .repo-type-radio-group {
-                ::v-deep .bk-form-radio-button {
-                    margin: 0 20px 20px 0;
-                    .bk-radio-button-text {
-                        height: auto;
-                        line-height: initial;
-                        padding: 0;
-                    }
+        .type-tool {
+            display: flex;
+            align-items: center;
+            ::v-deep .bk-form-radio-button {
+                margin-right: 20px;
+                .bk-radio-button-text {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    height: 24px;
+                    line-height: initial;
+                    border-radius: 24px;
                 }
-                .repo-type-radio {
-                    position: relative;
-                    padding: 10px;
-                    width: 100px;
-                    height: 100px;
-                    flex-direction: column;
-                    .top-right-selected {
-                        position: absolute;
-                        top: 0;
-                        right: 0;
-                        border-width: 16px;
-                        border-style: solid;
-                        border-color: $primaryColor $primaryColor transparent transparent;
-                        i {
-                            position: absolute;
-                            margin-top: -12px;
-                            font-size: 12px;
-                            color: white;
-                        }
-                    }
-                }
+            }
+        }
+        .sort-tool {
+            color: $boxShadowColor;
+            .sort-order {
+                width: 24px;
+                height: 24px;
+                border: 1px solid currentColor;
+                border-radius: 2px;
             }
         }
     }
     .repo-search-result {
-        margin-top: 20px;
-        padding: 20px;
-        background-color: white;
-        .result-list {
-            flex: 1;
+        height: calc(100% - 94px);
+        .repo-list {
+            width: 200px;
+            height: 100%;
             overflow-y: auto;
-            border-bottom: 1px solid $borderWeightColor;
-            .result-item{
-                justify-content: space-around;
-                padding: 5px 20px;
-                margin-bottom: 20px;
-                height: 70px;
-                border: 1px solid $borderWeightColor;
-                border-radius: 5px;
-                background-color: #fdfdfe;
+            .repo-item {
+                padding: 0 10px;
+                line-height: 32px;
                 cursor: pointer;
-                &:hover {
-                    border-color: $iconPrimaryColor;
+                &.selected {
+                    color: $primaryColor;
+                    background-color: $primaryLightColor;
                 }
-                .result-repo-name {
-                    color: #222222;
-                    font-size: 12px;
-                    font-weight: bold;
-                }
-                
-                .repo-tag {
-                    font-weight: normal;
-                }
-                .result-card {
-                    color: $fontWeightColor;
-                    font-size: 14px;
-                    font-weight: normal;
-                    div {
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                        white-space: nowrap;
-                        &:nth-child(1) {
-                            flex-basis: 250px;
-                        }
-                        &:nth-child(2) {
-                            flex-basis: 120px;
-                        }
-                        &:nth-child(3) {
-                            flex-basis: 140px;
-                        }
-                        &:nth-child(4) {
-                            flex-basis: 275px;
-                        }
-                        &:nth-child(5) {
-                            flex-basis: 175px;
-                        }
-                    }
-                }
+            }
+        }
+        .package-list {
+            height: 100%;
+            overflow-y: auto;
+            .result-count {
+                font-size: 12px;
+                color: #999;
+            }
+            .result-card {
+                margin-bottom: 20px;
             }
         }
     }

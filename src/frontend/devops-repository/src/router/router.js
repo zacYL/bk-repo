@@ -136,7 +136,9 @@ const routes = [
                 name: 'repoSearch',
                 component: repoSearch,
                 meta: {
-                    title: '文件搜索'
+                    breadcrumb: [
+                        { name: 'repoSearch', label: '制品搜索' }
+                    ]
                 }
             },
             {
@@ -187,7 +189,7 @@ const routes = [
                 meta: {
                     breadcrumb: [
                         { name: 'planManage', label: '{planName}', template: '分发计划' },
-                        { name: 'createPlan', label: '创建计划' }
+                        { name: 'createPlan', label: '编辑计划' }
                     ]
                 }
             },
@@ -196,7 +198,10 @@ const routes = [
                 name: 'planDetail',
                 component: createPlan,
                 meta: {
-                    title: '计划详情'
+                    breadcrumb: [
+                        { name: 'planManage', label: '{planName}', template: '分发计划' },
+                        { name: 'createPlan', label: '计划详情' }
+                    ]
                 }
             },
             {

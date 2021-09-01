@@ -1,18 +1,20 @@
 <template>
     <div class="proxy-config-container">
-        <span class="proxy-config-tips">{{$t('proxyConfigTips')}}</span>
-        <div class="proxy-item">
+        <div class="mb10 flex-between-center">
+            <bk-button icon="plus" theme="primary" @click="addProxy"><span class="mr5">{{ $t('create') }}</span></bk-button>
+            <span class="proxy-config-tips">{{$t('proxyConfigTips')}}</span>
+        </div>
+        <div class="proxy-head">
             <div class="proxy-index"></div>
             <div class="proxy-origin">{{$t('name')}}</div>
             <div class="proxy-type">{{$t('type')}}</div>
             <div class="proxy-address">{{$t('address')}}</div>
             <div class="proxy-operation">{{$t('operation')}}</div>
         </div>
-        <draggable v-model="proxyList" :options="{ animation: 200 }">
+        <draggable v-if="proxyList.length" v-model="proxyList" :options="{ animation: 200 }" @update="debounceSaveProxy">
             <div class="proxy-item" v-for="proxy in proxyList" :key="proxy.name + Math.random()">
-                <div class="proxy-index flex-align-center">
-                    <i class="devops-icon icon-more"></i>
-                    <i class="devops-icon icon-more" style="margin-left:-5px"></i>
+                <div class="proxy-index flex-center">
+                    <Icon name="drag" size="16" />
                 </div>
                 <div class="proxy-origin">{{proxy.name}}</div>
                 <div class="proxy-type">{{proxy.public ? $t('publicProxy') : $t('privateProxy')}}</div>
@@ -23,11 +25,10 @@
                 </div>
             </div>
         </draggable>
-        <div class="proxy-add flex-align-center" @click="addProxy">
-            <i class="mr10 devops-icon icon-plus-square"></i>
-            <span>{{$t('addProxy')}}</span>
-        </div>
-        <bk-button class="mt20 ml20" :loading="saveLoading" theme="primary" @click.stop.prevent="saveProxy">{{$t('save')}}</bk-button>
+        <empty-data v-else ex-style="margin-top:100px;">
+            <span class="ml10">暂无代理数据，</span>
+            <bk-button text @click="addProxy">即刻创建</bk-button>
+        </empty-data>
         <proxy-origin-dialog :show="showProxyDialog" :public-proxy="filterPublicProxy" :proxy-data="proxyData" @confirm="confirmProxyData" @cancel="cancelProxy"></proxy-origin-dialog>
     </div>
 </template>
@@ -35,6 +36,7 @@
     import draggable from 'vuedraggable'
     import proxyOriginDialog from './proxyOriginDialog'
     import { mapActions } from 'vuex'
+    import { debounce } from '@/utils'
     export default {
         name: 'proxyConfig',
         components: { draggable, proxyOriginDialog },
@@ -48,7 +50,8 @@
                 // 当前仓库的代理源
                 proxyList: [],
                 proxyData: {},
-                publicProxy: []
+                publicProxy: [],
+                debounceSaveProxy: null
             }
         },
         computed: {
@@ -56,7 +59,7 @@
                 return this.$route.params.projectId
             },
             repoName () {
-                return this.$route.query.name
+                return this.$route.query.repoName
             },
             repoType () {
                 return this.$route.params.repoType
@@ -68,7 +71,7 @@
             }
         },
         watch: {
-            baseData (val) {
+            baseData () {
                 this.proxyList = this.baseData.configuration.proxy.channelList
             }
         },
@@ -83,6 +86,7 @@
                     }
                 })
             })
+            this.debounceSaveProxy = debounce(this.saveProxy)
         },
         methods: {
             ...mapActions(['updateRepoInfo', 'getPublicProxy']),
@@ -102,8 +106,9 @@
             },
             deleteProxy (row) {
                 this.proxyList.splice(this.proxyList.findIndex(v => v.name === row.name), 1)
+                this.debounceSaveProxy()
             },
-            async confirmProxyData ({ name, data }) {
+            confirmProxyData ({ name, data }) {
                 // 添加公有源
                 if (data.type === 'add' && data.proxyType === 'publicProxy') {
                     this.proxyList.push(this.publicProxy.find(v => v.channelId === data.channelId))
@@ -131,6 +136,7 @@
                     })
                 }
                 this.cancelProxy()
+                this.debounceSaveProxy()
             },
             cancelProxy () {
                 this.showProxyDialog = false
@@ -144,6 +150,7 @@
                     })
                     return
                 }
+                if (this.saveLoading) return
                 this.saveLoading = true
                 this.updateRepoInfo({
                     projectId: this.projectId,
@@ -173,9 +180,10 @@
 @import '@/scss/conf';
 .proxy-config-container {
     .proxy-config-tips {
-        color: $fontWeightColor;
+        color: #999;
     }
-    .proxy-item {
+    .proxy-item,
+    .proxy-head {
         display: flex;
         align-items: center;
         height: 40px;
@@ -201,11 +209,11 @@
             }
         }
     }
-    .proxy-add {
-        cursor: pointer;
-        user-select: none;
-        margin: 10px;
-        color: $primaryColor
+    .proxy-head {
+        background-color: #FAFBFD;
+    }
+    .proxy-item {
+        cursor: move;
     }
 }
 </style>

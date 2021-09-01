@@ -64,7 +64,10 @@ const routes = [
                 name: 'repoConfig',
                 component: repoConfig,
                 meta: {
-                    title: '仓库配置'
+                    breadcrumb: [
+                        { name: 'repoList', label: '{repoName}', template: '仓库列表' },
+                        { name: 'repoConfig', label: '仓库配置' }
+                    ]
                 }
             },
             {

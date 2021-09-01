@@ -37,7 +37,7 @@
         </bk-form>
         <template v-if="editProxyData.proxyType === 'privateProxy'">
             <label class="mt20 mb10 form-label">凭证信息</label>
-            <bk-form ref="proxyOrigin" :label-width="85">
+            <bk-form :label-width="85">
                 <bk-form-item :label="$t('account')" property="username">
                     <bk-input v-model.trim="editProxyData.username"></bk-input>
                 </bk-form-item>

@@ -26,7 +26,7 @@
                     `return '${label.replace(/\{(.*?)(\?){0,1}\}/g, '\'\+ (ctx.hasOwnProperty(\'$1\') ? ctx[\'$1\'] : "") \+\'')}'`
                 )
                 const transformLabel = transform({ ...this.$route.params, ...this.$route.query })
-                return transformLabel
+                return this.replaceRepoName(transformLabel)
             }
         }
     }

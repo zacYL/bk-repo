@@ -219,7 +219,7 @@
                 return this.$route.params.projectId
             },
             repoName () {
-                return this.$route.query.name
+                return this.$route.query.repoName
             },
             getName () {
                 return (part, tag) => {

@@ -58,7 +58,7 @@
                 return {
                     name: 'repoConfig',
                     query: {
-                        name: this.$route.query.name
+                        repoName: this.$route.query.name
                     }
                 }
             }

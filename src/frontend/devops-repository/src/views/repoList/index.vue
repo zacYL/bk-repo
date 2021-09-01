@@ -63,7 +63,7 @@
             </bk-table-column>
             <bk-table-column :label="$t('operation')" width="100">
                 <template #default="{ row }"><template v-if="row.hasPermission">
-                    <i class="mr10 devops-icon icon-cog hover-btn" @click.stop="showRepoConfig(row)"></i>
+                    <i class="mr10 devops-icon icon-cog hover-btn" @click.stop="toRepoConfig(row)"></i>
                     <i v-if="row.repoType !== 'generic'" class="devops-icon icon-delete hover-btn" @click.stop="deleteRepo(row)"></i>
                 </template></template>
             </bk-table-column>
@@ -170,7 +170,7 @@
                     }
                 })
             },
-            showRepoConfig ({ hasPermission, repoType, name }) {
+            toRepoConfig ({ hasPermission, repoType, name }) {
                 if (!hasPermission) return
                 this.$router.push({
                     name: 'repoConfig',
@@ -179,7 +179,7 @@
                         repoType
                     },
                     query: {
-                        name
+                        repoName: name
                     }
                 })
             },

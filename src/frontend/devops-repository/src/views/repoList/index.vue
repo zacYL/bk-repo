@@ -1,97 +1,96 @@
 <template>
-    <div class="repo-list-container">
-        <header class="repo-list-header">
-            <div class="repo-list-search">
-                <label class="form-label">{{$t('repoType')}}:</label>
-                <bk-select
-                    v-model="query.type"
-                    class="form-input"
-                    @change="handlerPaginationChange()"
-                    :placeholder="$t('allTypes')">
-                    <bk-option
-                        v-for="type in repoEnum"
-                        :key="type"
-                        :id="type"
-                        :name="type">
-                        <div class="repo-name">
-                            <icon size="24" :name="type" />
-                            <span class="ml10">{{type}}</span>
-                        </div>
-                    </bk-option>
-                </bk-select>
-            </div>
-            <div class="repo-list-search">
-                <label class="form-label">{{$t('repoName')}}:</label>
+    <div class="repo-list-container" v-bkloading="{ isLoading }">
+        <div class="mt10 repo-list-search flex-between-center">
+            <bk-button v-if="canCreate" class="ml20" icon="plus" theme="primary" @click="createRepo"><span class="mr5">{{ $t('create') }}</span></bk-button>
+            <div class="mr20 flex-align-center">
                 <bk-input
                     v-model.trim="query.name"
-                    class="form-input"
-                    :placeholder="$t('enterSearch')"
+                    class="w250"
+                    placeholder="请输入仓库名称, 按Enter键搜索"
                     :clearable="true"
                     @enter="handlerPaginationChange()"
                     @clear="handlerPaginationChange()"
                     :right-icon="'bk-icon icon-search'">
                 </bk-input>
-            </div>
-            <div class="create-repo-btn" v-if="canCreate">
-                <bk-button :disabled="!canCreate" :theme="'primary'" @click="toCreateRepo">
-                    {{$t('create') + $t('repository')}}
-                </bk-button>
-            </div>
-        </header>
-        <main class="repo-list-table" v-bkloading="{ isLoading }">
-            <bk-table
-                :data="repoList"
-                height="calc(100% - 52px)"
-                :outer-border="false"
-                :row-border="false"
-                size="small"
-                :row-style="({ row }) => ({ 'color': row.hasPermission ? '' : '#dcdee5 !important' })">
-                <bk-table-column :label="$t('repoName')">
-                    <template slot-scope="props">
-                        <div class="repo-name" :class="{ 'hover-btn': props.row.hasPermission }" @click="toRepoDetail(props.row)">
-                            <icon size="24" :name="props.row.repoType" />
-                            <span class="ml10">{{replaceRepoName(props.row.name)}}</span>
+                <bk-select
+                    v-model="query.type"
+                    class="ml10 w250"
+                    @change="handlerPaginationChange()"
+                    :placeholder="$t('allTypes')">
+                    <bk-option v-for="type in repoEnum" :key="type" :id="type" :name="type">
+                        <div class="flex-align-center">
+                            <Icon size="24" :name="type" />
+                            <span class="ml10 flex-1 text-overflow">{{type}}</span>
                         </div>
+                    </bk-option>
+                </bk-select>
+            </div>
+        </div>
+        <bk-table
+            class="mt10"
+            :data="repoList"
+            height="calc(100% - 104px)"
+            :outer-border="false"
+            :row-border="false"
+            size="small"
+            :row-style="({ row }) => ({ 'color': row.hasPermission ? '' : '#dcdee5 !important' })"
+            @row-click="toRepoDetail">
+            <template #empty>
+                <empty-data ex-style="margin-top:-250px;" :search="Boolean(query.name || query.type)">
+                    <template v-if="!Boolean(query.name || query.type) && canCreate">
+                        <span class="ml10">暂无仓库数据，</span>
+                        <bk-button text @click="createRepo">即刻创建</bk-button>
                     </template>
-                </bk-table-column>
-                <bk-table-column :label="$t('createdDate')">
-                    <template slot-scope="props">
-                        {{ formatDate(props.row.createdDate) }}
-                    </template>
-                </bk-table-column>
-                <bk-table-column :label="$t('createdBy')">
-                    <template slot-scope="props">
-                        {{ userList[props.row.createdBy] ? userList[props.row.createdBy].name : props.row.createdBy }}
-                    </template>
-                </bk-table-column>
-                <bk-table-column :label="$t('operation')" width="100">
-                    <template slot-scope="props">
-                        <i class="devops-icon icon-cog mr10" :class="{ 'hover-btn': props.row.hasPermission }" @click="showRepoConfig(props.row)"></i>
-                        <i v-if="props.row.repoType !== 'generic'" class="devops-icon icon-delete" :class="{ 'hover-btn': props.row.hasPermission }" @click="deleteRepo(props.row)"></i>
-                    </template>
-                </bk-table-column>
-            </bk-table>
-            <bk-pagination
-                class="mt10"
-                size="small"
-                align="right"
-                show-total-count
-                @change="current => handlerPaginationChange({ current })"
-                @limit-change="limit => handlerPaginationChange({ limit })"
-                :current.sync="pagination.current"
-                :limit="pagination.limit"
-                :count="pagination.count"
-                :limit-list="pagination.limitList">
-            </bk-pagination>
-        </main>
+                </empty-data>
+            </template>
+            <bk-table-column :label="$t('repoName')">
+                <template #default="{ row }">
+                    <div class="flex-align-center">
+                        <Icon size="24" :name="row.repoType" />
+                        <span class="ml10 flex-1 text-overflow">{{replaceRepoName(row.name)}}</span>
+                    </div>
+                </template>
+            </bk-table-column>
+            <bk-table-column :label="$t('createdDate')">
+                <template #default="{ row }">
+                    {{ formatDate(row.createdDate) }}
+                </template>
+            </bk-table-column>
+            <bk-table-column :label="$t('createdBy')">
+                <template #default="{ row }">
+                    {{ userList[row.createdBy] ? userList[row.createdBy].name : row.createdBy }}
+                </template>
+            </bk-table-column>
+            <bk-table-column :label="$t('operation')" width="100">
+                <template #default="{ row }"><template v-if="row.hasPermission">
+                    <i class="mr10 devops-icon icon-cog hover-btn" @click.stop="showRepoConfig(row)"></i>
+                    <i v-if="row.repoType !== 'generic'" class="devops-icon icon-delete hover-btn" @click.stop="deleteRepo(row)"></i>
+                </template></template>
+            </bk-table-column>
+        </bk-table>
+        <bk-pagination
+            class="m10"
+            size="small"
+            align="right"
+            show-total-count
+            @change="current => handlerPaginationChange({ current })"
+            @limit-change="limit => handlerPaginationChange({ limit })"
+            :current.sync="pagination.current"
+            :limit="pagination.limit"
+            :count="pagination.count"
+            :limit-list="pagination.limitList">
+        </bk-pagination>
+        <create-repo-dialog ref="createRepo" @refresh="handlerPaginationChange()"></create-repo-dialog>
     </div>
 </template>
 <script>
+    import createRepoDialog from './createRepoDialog'
     import { mapState, mapActions } from 'vuex'
     import { repoEnum } from '@/store/publicEnum'
     import { formatDate } from '@/utils'
     export default {
         name: 'repoList',
+        components: { createRepoDialog },
         data () {
             return {
                 repoEnum,
@@ -106,7 +105,7 @@
                     count: 0,
                     current: 1,
                     limit: 20,
-                    'limit-list': [10, 20, 40]
+                    limitList: [10, 20, 40]
                 }
             }
         },
@@ -137,27 +136,26 @@
                 'deleteRepoList',
                 'getRepoPermission'
             ]),
-            async getListData () {
+            getListData () {
                 this.isLoading = true
-                const { records, totalRecords } = await this.getRepoList({
+                this.getRepoList({
                     projectId: this.projectId,
                     ...this.pagination,
                     ...this.query
+                }).then(({ records, totalRecords }) => {
+                    this.repoList = records.map(v => ({ ...v, repoType: v.type.toLowerCase() }))
+                    this.pagination.count = totalRecords
                 }).finally(() => {
                     this.isLoading = false
                 })
-                this.repoList = records.map(v => ({ ...v, repoType: v.type.toLowerCase() }))
-                this.pagination.count = totalRecords
             },
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
                 this.pagination.current = current
                 this.pagination.limit = limit
                 this.getListData()
             },
-            toCreateRepo () {
-                this.$router.push({
-                    name: 'createRepo'
-                })
+            createRepo () {
+                this.$refs.createRepo.showDialogHandler()
             },
             toRepoDetail ({ hasPermission, repoType, name }) {
                 if (!hasPermission) return
@@ -187,13 +185,11 @@
             },
             deleteRepo ({ hasPermission, name }) {
                 if (!hasPermission) return
-                this.$bkInfo({
-                    type: 'error',
-                    title: this.$t('deleteRepoTitle'),
-                    subTitle: this.$t('deleteRepoSubTitle'),
-                    showFooter: true,
+                this.$confirm({
+                    theme: 'danger',
+                    message: this.$t('deleteRepoTitle', { name }),
                     confirmFn: () => {
-                        this.deleteRepoList({
+                        return this.deleteRepoList({
                             projectId: this.projectId,
                             name
                         }).then(() => {
@@ -210,49 +206,11 @@
     }
 </script>
 <style lang="scss" scoped>
-@import '@/scss/conf';
 .repo-list-container {
     height: 100%;
-    padding: 0 20px;
     background-color: white;
-    .repo-list-header {
-        height: 50px;
-        margin-bottom: 10px;
-        display: flex;
-        align-items: center;
-        .repo-list-search {
-            display: flex;
-            align-items: center;
-            flex-basis: 400px;
-            .form-label {
-                font-size: 14px;
-                flex-basis: 65px;
-            }
-            .form-input {
-                flex-basis: 300px;
-            }
-        }
-        .create-repo-btn {
-            flex: 1;
-            display: flex;
-            justify-content: flex-end;
-        }
-    }
-    .repo-list-table {
-        height: calc(100% - 60px);
-    }
-}
-.devops-icon {
-    font-size: 16px;
-}
-.repo-name {
-    height: 44px;
-    display: flex;
-    align-items: center;
-    font-size: 14px;
-    cursor: pointer;
-    &:hover {
-        color: $primaryColor;
+    .devops-icon {
+        font-size: 14px;
     }
 }
 </style>

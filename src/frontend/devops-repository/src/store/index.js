@@ -36,49 +36,7 @@ export default new Vuex.Store({
             docker: '',
             npm: ''
         },
-        clusterList: [{
-            'id': '610b53fcfdae6c4586fbdaa6',
-            'name': '分节点',
-            'status': 'UNHEALTHY',
-            'errorReason': null,
-            'type': 'STANDALONE',
-            'url': 'http://backup.bkrepo.canway.com/',
-            'username': 'admin',
-            'password': 'bkrepo',
-            'certificate': null,
-            'createdBy': 'admin',
-            'createdDate': '2021-08-05T10:59:08.148',
-            'lastModifiedBy': 'system',
-            'lastModifiedDate': '2021-08-26T22:58:26.399'
-        }, {
-            'id': '6103b87bee93c8311740fabe',
-            'name': 'bkup',
-            'status': 'UNHEALTHY',
-            'errorReason': null,
-            'type': 'STANDALONE',
-            'url': 'http://backup.bkrepo.canway.com/',
-            'username': 'admin',
-            'password': 'bkrepo',
-            'certificate': null,
-            'createdBy': 'admin',
-            'createdDate': '2021-07-30T16:29:47.065',
-            'lastModifiedBy': 'system',
-            'lastModifiedDate': '2021-08-26T22:58:26.769'
-        }, {
-            'id': '60fe77e70c00c57e0ccdf59f',
-            'name': 'center',
-            'status': 'HEALTHY',
-            'errorReason': null,
-            'type': 'CENTER',
-            'url': 'http://independent.bkrepo.canway.com/',
-            'username': 'admin',
-            'password': 'bkrepo',
-            'certificate': '',
-            'createdBy': 'system',
-            'createdDate': '2021-07-26T16:52:52.577',
-            'lastModifiedBy': 'system',
-            'lastModifiedDate': '2021-08-05T22:32:44.062'
-        }]
+        clusterList: []
     },
     getters: {
         masterNode (state) {

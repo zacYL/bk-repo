@@ -1,38 +1,36 @@
 <template>
-    <div class="repo-token-container">
-        <main class="repo-token-main" v-bkloading="{ isLoading }">
-            <bk-button class="ml20 mt10" icon="plus" theme="primary" @click="createToken"><span class="mr5">{{ $t('create') }}</span></bk-button>
-            <bk-table
-                class="mt10"
-                :data="tokenList"
-                height="calc(100% - 52px)"
-                :outer-border="false"
-                :row-border="false"
-                size="small">
-                <template #empty>
-                    <empty-data ex-style="margin-top:-250px;">
-                        <span class="ml10">暂无个人令牌数据，</span>
-                        <bk-button text @click="createToken">即刻创建</bk-button>
-                    </empty-data>
+    <div class="repo-token-container" v-bkloading="{ isLoading }">
+        <bk-button class="ml20 mt10" icon="plus" theme="primary" @click="createToken"><span class="mr5">{{ $t('create') }}</span></bk-button>
+        <bk-table
+            class="mt10"
+            :data="tokenList"
+            height="calc(100% - 52px)"
+            :outer-border="false"
+            :row-border="false"
+            size="small">
+            <template #empty>
+                <empty-data ex-style="margin-top:-250px;">
+                    <span class="ml10">暂无个人令牌数据，</span>
+                    <bk-button text @click="createToken">即刻创建</bk-button>
+                </empty-data>
+            </template>
+            <bk-table-column :label="$t('name')" prop="name"></bk-table-column>
+            <bk-table-column :label="$t('createdDate')">
+                <template slot-scope="props">
+                    {{ formatDate(props.row.createdAt) }}
                 </template>
-                <bk-table-column :label="$t('name')" prop="name"></bk-table-column>
-                <bk-table-column :label="$t('createdDate')">
-                    <template slot-scope="props">
-                        {{ formatDate(props.row.createdAt) }}
-                    </template>
-                </bk-table-column>
-                <bk-table-column :label="$t('expiress')">
-                    <template slot-scope="props">
-                        {{ transformFormatDate(props.row.expiredAt) }}
-                    </template>
-                </bk-table-column>
-                <bk-table-column :label="$t('operation')" width="100">
-                    <template slot-scope="props">
-                        <i class="hover-btn devops-icon icon-delete" @click="deleteTokenHandler(props.row)"></i>
-                    </template>
-                </bk-table-column>
-            </bk-table>
-        </main>
+            </bk-table-column>
+            <bk-table-column :label="$t('expiress')">
+                <template slot-scope="props">
+                    {{ transformFormatDate(props.row.expiredAt) }}
+                </template>
+            </bk-table-column>
+            <bk-table-column :label="$t('operation')" width="100">
+                <template slot-scope="props">
+                    <i class="hover-btn devops-icon icon-delete" @click="deleteTokenHandler(props.row)"></i>
+                </template>
+            </bk-table-column>
+        </bk-table>
         <create-token-dialog ref="createToken" @refresh="getToken"></create-token-dialog>
     </div>
 </template>
@@ -108,12 +106,10 @@
 </script>
 <style lang="scss" scoped>
 .repo-token-container {
-    .repo-token-main {
-        height: 100%;
-        background-color: white;
-        .icon-delete {
-            font-size: 16px;
-        }
+    height: 100%;
+    background-color: white;
+    .icon-delete {
+        font-size: 16px;
     }
 }
 </style>

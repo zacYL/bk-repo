@@ -20,7 +20,6 @@
 const repoHome = () => import(/* webpackChunkName: "repoHome" */'@/views')
 
 const repoList = () => import(/* webpackChunkName: "repoList" */'@/views/repoList')
-const createRepo = () => import(/* webpackChunkName: "createRepo" */'@/views/repoList/createRepo')
 const repoConfig = () => import(/* webpackChunkName: "repoConfig" */'@/views/repoConfig')
 const repoDetail = () => import(/* webpackChunkName: "repoDetail" */'@/views/repo')
 const repoToken = () => import(/* webpackChunkName: "repoToken" */'@/views/repoToken')
@@ -48,27 +47,16 @@ const routes = [
     {
         path: '/ui/:projectId',
         component: repoHome,
+        redirect: { name: 'repoList' },
         children: [
-            {
-                path: '',
-                redirect: {
-                    name: 'repoList'
-                }
-            },
             {
                 path: 'repoList',
                 name: 'repoList',
                 component: repoList,
                 meta: {
-                    title: '仓库列表'
-                }
-            },
-            {
-                path: 'createRepo',
-                name: 'createRepo',
-                component: createRepo,
-                meta: {
-                    title: '新建仓库'
+                    breadcrumb: [
+                        { name: 'repoList', label: '仓库列表' }
+                    ]
                 }
             },
             {

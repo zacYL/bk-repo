@@ -153,12 +153,11 @@
     import CodeArea from '@/components/CodeArea'
     import { mapState, mapActions } from 'vuex'
     import { convertFileSize, formatDate } from '@/utils'
-    import repoGuideMixin from '../repoGuideMixin'
-    import commonMixin from './commonMixin'
+    import repoGuideMixin from './repoGuideMixin'
     export default {
         name: 'commonVersionDetail',
         components: { CodeArea },
-        mixins: [repoGuideMixin, commonMixin],
+        mixins: [repoGuideMixin],
         data () {
             return {
                 tabName: 'versionBaseInfo',

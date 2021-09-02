@@ -58,7 +58,7 @@
                     @load="handlerPaginationChange({ current: pagination.current + 1 }, true)">
                     <div class="mb10 result-count">为您搜索到到相关结果{{ pagination.count }}个</div>
                     <package-card
-                        class="result-card"
+                        class="mb20"
                         v-for="pkg in resultList"
                         :key="pkg.key"
                         :card-data="pkg"
@@ -99,7 +99,7 @@
                 repoName: this.$route.query.repoName || '',
                 pagination: {
                     current: 1,
-                    limit: 7,
+                    limit: 20,
                     count: 0
                 },
                 resultList: []
@@ -262,9 +262,6 @@
             .result-count {
                 font-size: 12px;
                 color: #999;
-            }
-            .result-card {
-                margin-bottom: 20px;
             }
         }
     }

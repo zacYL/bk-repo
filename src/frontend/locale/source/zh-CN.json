@@ -38,7 +38,7 @@
     "allTypes": "全部类型",
     "enterSearch": "按下Enter键搜索",
     "deleteRepoTitle": "确定删除仓库 {name} ?",
-    "deletePackageTitle": "确定删除制品?",
+    "deletePackageTitle": "确定删除制品 {name} ?",
     "deleteVersionTitle": "确定删除版本 {version} ?",
     "deleteRepoSubTitle": "此操作不可撤销，将永久删除仓库和其下所有制品",
     "deletePackageSubTitle": "此操作不可撤销，将永久删除制品和其所有版本",

@@ -136,7 +136,7 @@
                 } else {
                     this.$bkMessage({
                         theme: 'error',
-                        message: '请选择包版本'
+                        message: '请选择制品版本'
                     })
                 }
             }

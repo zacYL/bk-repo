@@ -34,7 +34,7 @@
             :row-border="false"
             size="small"
             :row-style="({ row }) => ({ 'color': row.hasPermission ? '' : '#dcdee5 !important' })"
-            @row-click="toRepoDetail">
+            @row-click="toPackageList">
             <template #empty>
                 <empty-data ex-style="margin-top:-250px;" :search="Boolean(query.name || query.type)">
                     <template v-if="!Boolean(query.name || query.type) && canCreate">
@@ -157,16 +157,16 @@
             createRepo () {
                 this.$refs.createRepo.showDialogHandler()
             },
-            toRepoDetail ({ hasPermission, repoType, name }) {
+            toPackageList ({ hasPermission, repoType, name }) {
                 if (!hasPermission) return
                 this.$router.push({
-                    name: repoType === 'generic' ? 'repoGeneric' : 'repoCommon',
+                    name: repoType === 'generic' ? 'repoGeneric' : 'commonList',
                     params: {
                         projectId: this.projectId,
                         repoType
                     },
                     query: {
-                        name
+                        repoName: name
                     }
                 })
             },

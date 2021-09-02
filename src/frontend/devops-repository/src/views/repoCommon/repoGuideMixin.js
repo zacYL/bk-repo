@@ -3,22 +3,25 @@ export default {
     computed: {
         ...mapState(['userInfo', 'domain']),
         projectId () {
-            return this.$route.params.projectId
+            return this.$route.params.projectId || ''
+        },
+        repoType () {
+            return this.$route.params.repoType || ''
         },
         repoName () {
-            return this.$route.query.name
+            return this.$route.query.repoName || ''
         },
         packageKey () {
             return this.$route.query.package || ''
         },
+        version () {
+            return this.$route.query.version || ''
+        },
         packageName () {
             return this.packageKey.replace(/^.*:\/\/(?:.*:)*([^:]+)$/, '$1') || '<PACKAGE_NAME>'
         },
-        version () {
-            return this.$route.query.version || '<PACKAGE_VERSION>'
-        },
-        repoType () {
-            return this.$route.params.repoType
+        versionLabel () {
+            return this.version || '<PACKAGE_VERSION>'
         },
         repoUrl () {
             return `${location.origin}/${this.repoType}/${this.projectId}/${this.repoName}`
@@ -65,9 +68,9 @@ export default {
                 {
                     main: [
                         {
-                            subTitle: '使用如下命令去拉取包',
+                            subTitle: '使用如下命令去拉取制品',
                             codeList: [
-                                `docker pull ${this.domain.docker}/${this.projectId}/${this.repoName}/${this.packageName}:${this.version}`
+                                `docker pull ${this.domain.docker}/${this.projectId}/${this.repoName}/${this.packageName}:${this.versionLabel}`
                             ]
                         }
                     ]
@@ -135,11 +138,11 @@ export default {
                     title: '下载',
                     main: [
                         {
-                            subTitle: '1、在设置仓库地址之后就可以使用如下命令去拉取包',
+                            subTitle: '1、在设置仓库地址之后就可以使用如下命令去拉取制品',
                             codeList: [`npm install ${this.packageName}`]
                         },
                         {
-                            subTitle: '2、也可以通过指定registry的方式去拉取包，如下命令',
+                            subTitle: '2、也可以通过指定registry的方式去拉取制品，如下命令',
                             codeList: [`npm install ${this.packageName} --registry ${this.domain.npm}/${this.projectId}/${this.repoName}/`]
                         }
                     ]
@@ -151,15 +154,15 @@ export default {
                 {
                     main: [
                         {
-                            subTitle: '1、在设置仓库地址之后就可以使用如下命令去拉取包',
+                            subTitle: '1、在设置仓库地址之后就可以使用如下命令去拉取制品',
                             codeList: [
-                                `npm install ${this.packageName}@${this.version}`
+                                `npm install ${this.packageName}@${this.versionLabel}`
                             ]
                         },
                         {
-                            subTitle: '2、也可以通过指定registry的方式去拉取包，如下命令',
+                            subTitle: '2、也可以通过指定registry的方式去拉取制品，如下命令',
                             codeList: [
-                                `npm install ${this.packageName}@${this.version} --registry ${this.domain.npm}/${this.projectId}/${this.repoName}/`
+                                `npm install ${this.packageName}@${this.versionLabel} --registry ${this.domain.npm}/${this.projectId}/${this.repoName}/`
                             ]
                         }
                     ]
@@ -227,7 +230,7 @@ export default {
                             ]
                         },
                         {
-                            subTitle: '推送包',
+                            subTitle: '推送制品',
                             codeList: [
                                 `mvn deploy`
                             ]
@@ -264,7 +267,7 @@ export default {
                             ]
                         },
                         {
-                            subTitle: '拉取maven包',
+                            subTitle: '拉取maven制品',
                             codeList: [
                                 `mvn package`
                             ]
@@ -283,20 +286,20 @@ export default {
                                 `<dependency>`,
                                 `   <groupId>${this.detail.basic.groupId}</groupId>`,
                                 `   <artifactId>${this.detail.basic.artifactId}</artifactId>`,
-                                `   <version>${this.version}</version>`,
+                                `   <version>${this.versionLabel}</version>`,
                                 `</dependency>`
                             ]
                         },
                         {
                             subTitle: 'Gradle Groovy DSL',
                             codeList: [
-                                `implementation '${this.detail.basic.groupId}:${this.detail.basic.artifactId}:${this.version}'`
+                                `implementation '${this.detail.basic.groupId}:${this.detail.basic.artifactId}:${this.versionLabel}'`
                             ]
                         },
                         {
                             subTitle: 'Gradle Kotlin DSL',
                             codeList: [
-                                `implementation("${this.detail.basic.groupId}:${this.detail.basic.artifactId}:${this.version}")`
+                                `implementation("${this.detail.basic.groupId}:${this.detail.basic.artifactId}:${this.versionLabel}")`
                             ]
                         }
                     ]
@@ -406,7 +409,7 @@ export default {
                     title: '下载',
                     main: [
                         {
-                            subTitle: '使用RPM或者yum方式拉取包'
+                            subTitle: '使用RPM或者yum方式拉取制品'
                         },
                         {
                             subTitle: 'RPM',
@@ -429,7 +432,7 @@ export default {
                 {
                     main: [
                         {
-                            subTitle: '使用RPM或者yum方式拉取包'
+                            subTitle: '使用RPM或者yum方式拉取制品'
                         },
                         {
                             subTitle: 'RPM',
@@ -490,7 +493,7 @@ export default {
                         {
                             subTitle: '执行下面命令',
                             codeList: [
-                                `pip3 install ${this.packageName}==${this.version}`
+                                `pip3 install ${this.packageName}==${this.versionLabel}`
                             ]
                         }
                     ]
@@ -502,9 +505,9 @@ export default {
                 {
                     main: [
                         {
-                            subTitle: '通过指定registry的方式去拉取包',
+                            subTitle: '通过指定registry的方式去拉取制品',
                             codeList: [
-                                `pip3 install -i ${this.repoUrl}/simple ${this.packageName}==${this.version}`
+                                `pip3 install -i ${this.repoUrl}/simple ${this.packageName}==${this.versionLabel}`
                             ]
                         }
                     ]
@@ -528,13 +531,13 @@ export default {
                     title: '拉取',
                     main: [
                         {
-                            subTitle: '1、在 Composer 包的文件目录，设置仓库地址',
+                            subTitle: '1、在 Composer 制品的文件目录，设置仓库地址',
                             codeList: [
                                 `composer config repo.packagist composer ${this.repoUrl}`
                             ]
                         },
                         {
-                            subTitle: '2、在 Composer 包的文件目录添加 auth.json，配置仓库认证信息',
+                            subTitle: '2、在 Composer 制品的文件目录添加 auth.json，配置仓库认证信息',
                             codeList: [
                                 `{`,
                                 `       "http-basic": {`,
@@ -547,9 +550,9 @@ export default {
                             ]
                         },
                         {
-                            subTitle: '3、使用如下命令去拉取包',
+                            subTitle: '3、使用如下命令去拉取制品',
                             codeList: [
-                                `composer require ${this.packageName} ${this.version}`
+                                `composer require ${this.packageName} ${this.versionLabel}`
                             ]
                         }
                     ]
@@ -561,9 +564,9 @@ export default {
                 {
                     main: [
                         {
-                            subTitle: '使用如下命令去拉取包',
+                            subTitle: '使用如下命令去拉取制品',
                             codeList: [
-                                `composer require ${this.packageName} ${this.version}`
+                                `composer require ${this.packageName} ${this.versionLabel}`
                             ]
                         }
                     ]

@@ -21,25 +21,17 @@ const repoHome = () => import(/* webpackChunkName: "repoHome" */'@/views')
 
 const repoList = () => import(/* webpackChunkName: "repoList" */'@/views/repoList')
 const repoConfig = () => import(/* webpackChunkName: "repoConfig" */'@/views/repoConfig')
-const repoDetail = () => import(/* webpackChunkName: "repoDetail" */'@/views/repo')
 const repoToken = () => import(/* webpackChunkName: "repoToken" */'@/views/repoToken')
 const nodeManage = () => import(/* webpackChunkName: "nodeManage" */'@/views/nodeManage')
 const planManage = () => import(/* webpackChunkName: "planManage" */'@/views/planManage')
 const createPlan = () => import(/* webpackChunkName: "createPlan" */'@/views/planManage/createPlan')
 const logDetail = () => import(/* webpackChunkName: "logDetail" */'@/views/planManage/logDetail')
 
-const repoGeneric = () => import(/* webpackChunkName: "repoGeneric" */'@/views/repo/repoGeneric')
+const repoGeneric = () => import(/* webpackChunkName: "repoGeneric" */'@/views/repoGeneric')
 
-const repoCommon = () => import(/* webpackChunkName: "repoCommon" */'@/views/repo/repoCommon')
-const commonPackageList = () => import(/* webpackChunkName: "repoCommon" */'@/views/repo/repoCommon/commonPackageList')
-const commonPackageDetail = () => import(/* webpackChunkName: "repoCommon" */'@/views/repo/repoCommon/commonPackageDetail')
-const commonVersionDetail = () => import(/* webpackChunkName: "repoCommon" */'@/views/repo/repoCommon/commonVersionDetail')
-
-// const repoDocker = () => import(/* webpackChunkName: "repoDocker" */'@/views/repo/repoDocker')
-
-// const repoNpm = () => import(/* webpackChunkName: "repoNpm" */'@/views/repo/repoNpm')
-
-// const repoMaven = () => import(/* webpackChunkName: "repoNpm" */'@/views/repo/repoMaven')
+const commonPackageList = () => import(/* webpackChunkName: "repoCommon" */'@/views/repoCommon/commonPackageList')
+const commonPackageDetail = () => import(/* webpackChunkName: "repoCommon" */'@/views/repoCommon/commonPackageDetail')
+const commonVersionDetail = () => import(/* webpackChunkName: "repoCommon" */'@/views/repoCommon/commonVersionDetail')
 
 const repoSearch = () => import(/* webpackChunkName: "repoSearch" */'@/views/repoSearch')
 
@@ -65,62 +57,10 @@ const routes = [
                 component: repoConfig,
                 meta: {
                     breadcrumb: [
-                        { name: 'repoList', label: '{repoName}', template: '仓库列表' },
+                        { name: 'repoList', label: '仓库列表' },
                         { name: 'repoConfig', label: '仓库配置' }
                     ]
                 }
-            },
-            {
-                path: 'repoDetail',
-                name: 'repoDetail',
-                component: repoDetail,
-                meta: {
-                    title: '仓库主页'
-                },
-                children: [
-                    {
-                        path: ':repoType',
-                        name: 'repoCommon',
-                        component: repoCommon,
-                        beforeEnter: (to, from, next) => {
-                            if (to.params.repoType === 'generic') {
-                                next({
-                                    name: 'repoGeneric',
-                                    params: to.params,
-                                    query: to.query,
-                                    replace: true
-                                })
-                            } else {
-                                next()
-                            }
-                        },
-                        redirect: {
-                            name: 'commonList'
-                        },
-                        children: [
-                            {
-                                path: 'list',
-                                name: 'commonList',
-                                component: commonPackageList
-                            },
-                            {
-                                path: 'package',
-                                name: 'commonPackage',
-                                component: commonPackageDetail
-                            },
-                            {
-                                path: 'version',
-                                name: 'commonVersion',
-                                component: commonVersionDetail
-                            }
-                        ]
-                    },
-                    {
-                        path: 'generic',
-                        name: 'repoGeneric',
-                        component: repoGeneric
-                    }
-                ]
             },
             {
                 path: 'repoSearch',
@@ -205,6 +145,32 @@ const routes = [
                         { name: 'logDetail', label: '日志详情' }
                     ]
                 }
+            },
+            {
+                path: 'generic',
+                name: 'repoGeneric',
+                component: repoGeneric
+            },
+            {
+                path: ':repoType/list',
+                name: 'commonList',
+                component: commonPackageList,
+                meta: {
+                    breadcrumb: [
+                        { name: 'repoList', label: '仓库列表' },
+                        { name: 'commonList', label: '{repoName}', template: '依赖仓库' }
+                    ]
+                }
+            },
+            {
+                path: ':repoType/package',
+                name: 'commonPackage',
+                component: commonPackageDetail
+            },
+            {
+                path: ':repoType/version',
+                name: 'commonVersion',
+                component: commonVersionDetail
             }
         ]
     }

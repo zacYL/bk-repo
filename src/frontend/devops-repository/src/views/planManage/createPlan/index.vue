@@ -217,7 +217,7 @@
             replicaObjectTypeList () {
                 return [
                     { label: '仓库', value: 'REPOSITORY', tip: '同步多个仓库' },
-                    { label: '制品', value: 'PACKAGE', tip: '同步同一仓库下多个包' },
+                    { label: '制品', value: 'PACKAGE', tip: '同步同一仓库下多个制品' },
                     { label: '文件', value: 'PATH', tip: '同步同一仓库下多个文件' }
                 ]
             }

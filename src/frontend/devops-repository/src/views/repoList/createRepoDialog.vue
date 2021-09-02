@@ -152,6 +152,7 @@
             },
             cancel () {
                 this.show = false
+                this.$emit('refresh')
             },
             asynCheckRepoName () {
                 return this.checkRepoName({

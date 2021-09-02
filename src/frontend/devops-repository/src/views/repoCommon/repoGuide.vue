@@ -26,7 +26,7 @@
             <div slot="content" class="section-main">
                 <div class="flex-column" v-for="block in section.main" :key="block.subTitle">
                     <span v-if="block.subTitle" class="sub-title" :style="block.subTitleStyle">{{ block.subTitle }}</span>
-                    <code-area class="mt15" v-if="block.codeList && block.codeList.length" :code-list="block.codeList"></code-area>
+                    <code-area class="mt15" bg-color="#e6edf6" color="#63656E" v-if="block.codeList && block.codeList.length" :code-list="block.codeList"></code-area>
                 </div>
             </div>
         </bk-collapse-item>
@@ -79,7 +79,7 @@
     .section-header {
         padding-left: 20px;
         color: $fontBoldColor;
-        background-color: #f2f2f2;
+        background-color: #e6edf6;
         font-size: 18px;
         font-weight: normal;
         .section-title-icon {
@@ -91,8 +91,8 @@
     .section-main {
         margin-top: 15px;
         padding: 5px 20px 20px;
-        border: 2px dashed $borderWeightColor;
-        border-radius: 5px;
+        border: 1px dashed $borderWeightColor;
+        border-radius: 4px;
         .sub-title {
             margin-top: 15px;
         }

@@ -113,7 +113,7 @@
                 return this.$route.params.repoType
             },
             showProxyConfigTab () {
-                return !['generic', 'docker', 'helm', 'rpm'].includes(this.repoType)
+                return ['maven', 'pypi', 'npm', 'composer'].includes(this.repoType)
             },
             repoAddress () {
                 return location.origin + `/${this.repoBaseInfo.repoType}/${this.projectId}/${this.repoBaseInfo.name}/`

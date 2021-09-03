@@ -58,7 +58,6 @@
     }
 </script>
 <style lang="scss" scoped>
-@import '@/scss/conf';
 .bkrepo-header {
     height: 50px;
     padding: 0 20px;
@@ -69,7 +68,7 @@
         $headerBgColor: #191929;
         $dropdownBorder: #2a2a42;
         width: 233px;
-        color: $fontColor;
+        color: var(--fontColor);
         border-color: $dropdownBorder;
         background-color: $headerBgColor;
 
@@ -89,7 +88,7 @@
             outline: none;
         }
         .bk-select-dropdown .bk-select-name {
-            color: $fontLigtherColor;
+            color: var(--fontLigtherColor);
             font-size: 14px;
             outline: none;
         }

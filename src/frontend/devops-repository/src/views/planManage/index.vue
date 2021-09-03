@@ -322,7 +322,6 @@
     }
 </script>
 <style lang="scss" scoped>
-@import '@/scss/conf';
 .plan-container {
     height: 100%;
     overflow: hidden;
@@ -343,13 +342,13 @@
         ::v-deep .devops-icon {
             font-size: 16px;
             &.disabled {
-                color: $disabledColor;
+                color: var(--disabledColor);
                 cursor: not-allowed;
             }
             &.icon-down-shape {
-                color: $fontLigtherColor;
+                color: var(--fontLigtherColor);
                 &.selected {
-                    color: $fontWeightColor;
+                    color: var(--fontWeightColor);
                 }
             }
         }
@@ -357,7 +356,6 @@
 }
 </style>
 <style lang="scss">
-@import '@/scss/conf';
 .operation-container {
     .tippy-tooltip {
         padding-left: 0;
@@ -375,7 +373,7 @@
                 background-color: #eaf3ff;
             }
             &.disabled {
-                color: $disabledColor;
+                color: var(--disabledColor);
                 cursor: not-allowed;
             }
         }

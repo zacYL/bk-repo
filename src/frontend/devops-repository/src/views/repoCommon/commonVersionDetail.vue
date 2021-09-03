@@ -301,7 +301,6 @@
     }
 </script>
 <style lang="scss" scoped>
-@import '@/scss/conf';
 .common-version-container {
     height: 100%;
     ::v-deep .bk-tab-section {
@@ -319,14 +318,14 @@
             overflow-y: auto;
             padding-top: 20px;
             padding-right: 20px;
-            border-right: 1px solid $borderWeightColor;
+            border-right: 1px solid var(--borderWeightColor);
             .base-info-guide {
                 position: relative;
-                border-top: 1px solid $borderWeightColor;
+                border-top: 1px solid var(--borderWeightColor);
                 .section-main {
                     margin-top: 20px;
                     padding: 20px;
-                    border: 2px dashed $borderWeightColor;
+                    border: 2px dashed var(--borderWeightColor);
                     border-radius: 5px;
                     .sub-section {
                         & + .sub-section {
@@ -338,7 +337,7 @@
             .base-info-checksums {
                 position: relative;
                 margin-top: 20px;
-                border-top: 1px solid $borderWeightColor;
+                border-top: 1px solid var(--borderWeightColor);
             }
         }
         .base-info {
@@ -346,13 +345,13 @@
             overflow-y: auto;
             margin-top: 20px;
             margin-left: 20px;
-            border-top: 1px solid $borderWeightColor;
+            border-top: 1px solid var(--borderWeightColor);
         }
         .base-info-header {
             position: absolute;
             padding-right: 20px;
             margin-top: -10px;
-            color: $fontBoldColor;
+            color: var(--fontBoldColor);
             background-color: white;
             font-weight: bolder;
         }
@@ -367,7 +366,7 @@
         height: 100%;
         overflow: auto;
         .metadata-thead, .metadata-tr {
-            border-bottom: 1px solid $borderWeightColor;
+            border-bottom: 1px solid var(--borderWeightColor);
             line-height: 2;
         }
         .metadata-key {
@@ -381,11 +380,11 @@
             display: flex;
             align-items: center;
             height: 40px;
-            border-bottom: 1px solid $borderWeightColor;
+            border-bottom: 1px solid var(--borderWeightColor);
         }
     }
     .version-layers {
-        border-bottom: 1px solid $borderWeightColor;
+        border-bottom: 1px solid var(--borderWeightColor);
         line-height: 2;
         .display-key {
             text-align: left;
@@ -400,7 +399,7 @@
             width: 30%;
             padding-right: 40px;
             margin-right: 40px;
-            border-right: 2px solid $borderWeightColor;
+            border-right: 2px solid var(--borderWeightColor);
             overflow-y: auto;
             counter-reset: row-num;
             .version-history-code {
@@ -410,7 +409,7 @@
                 text-overflow: ellipsis;
                 white-space: nowrap;
                 &:hover {
-                    background-color: $bgHoverColor;
+                    background-color: var(--bgHoverColor);
                 }
                 &.select {
                     background-color: #ebedf0;
@@ -451,9 +450,9 @@
             grid-template: auto / 1fr 1fr 1fr 1fr;
         }
         &-item {
-            border-bottom: 1px solid $borderWeightColor;
+            border-bottom: 1px solid var(--borderWeightColor);
             &:first-child, &:nth-child(2) {
-                border-top: 1px solid $borderWeightColor;
+                border-top: 1px solid var(--borderWeightColor);
             }
         }
         &-more {
@@ -466,7 +465,7 @@
             padding-left: 30px;
         }
         &-key {
-            background-color: $bgLightColor;
+            background-color: var(--bgLightColor);
         }
     }
     .display-key {

@@ -133,13 +133,12 @@
 .bkrepo-main {
     height: 100%;
     padding: 10px;
-    background-color: $bgLightColor;
+    background-color: var(--bgLightColor);
     .repo-breadcrumb {
         height: 20px;
     }
     .bkrepo-main-container {
-        flex: 1;
-        overflow: hidden;
+        height: calc(100% - 30px)!important;
     }
 }
 </style>

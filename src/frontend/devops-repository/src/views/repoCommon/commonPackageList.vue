@@ -20,16 +20,17 @@
             <bk-input
                 class="w250"
                 v-model.trim="packageNameInput"
-                size="small"
                 placeholder="请输入制品名称, 按Enter键搜索"
-                @enter="handlerPaginationChange()">
+                clearable
+                @enter="handlerPaginationChange()"
+                @clear="handlerPaginationChange()"
+                right-icon="bk-icon icon-search">
             </bk-input>
             <div class="sort-tool flex-align-center">
                 <bk-select
                     style="width:150px;"
                     v-model="property"
                     :clearable="false"
-                    size="small"
                     @change="handlerPaginationChange()">
                     <bk-option id="name" name="名称排序"></bk-option>
                     <bk-option id="lastModifiedDate" name="时间排序"></bk-option>
@@ -116,21 +117,25 @@
                 this.direction = this.direction === 'ASC' ? 'DESC' : 'ASC'
                 this.handlerPaginationChange()
             },
-            handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
+            handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}, load) {
                 this.pagination.current = current
                 this.pagination.limit = limit
-                this.getPackageListHandler()
-                this.$router.replace({
-                    query: {
-                        ...this.$route.query,
-                        packageName: this.packageNameInput,
-                        property: this.property,
-                        direction: this.direction
-                    }
-                })
+                this.getPackageListHandler(load)
+                if (!load) {
+                    this.$refs.infiniteScroll && this.$refs.infiniteScroll.scrollToTop()
+                    this.$router.replace({
+                        query: {
+                            ...this.$route.query,
+                            packageName: this.packageNameInput,
+                            property: this.property,
+                            direction: this.direction
+                        }
+                    })
+                }
             },
-            getPackageListHandler () {
-                this.isLoading = true
+            getPackageListHandler (load) {
+                if (this.isLoading) return
+                this.isLoading = !load
                 return this.searchPackageList({
                     projectId: this.projectId,
                     repoType: this.repoType,
@@ -141,7 +146,7 @@
                     current: this.pagination.current,
                     limit: this.pagination.limit
                 }).then(({ records, totalRecords }) => {
-                    this.packageList = records
+                    load ? this.packageList.push(...records) : (this.packageList = records)
                     this.pagination.count = totalRecords
                 }).finally(() => {
                     this.isLoading = false
@@ -171,7 +176,7 @@
                 this.$router.push({
                     name: 'commonPackage',
                     query: {
-                        name: this.repoName,
+                        repoName: this.repoName,
                         package: pkg.key
                     }
                 })
@@ -180,7 +185,6 @@
     }
 </script>
 <style lang="scss" scoped>
-@import '@/scss/conf';
 .common-package-container {
     height: 100%;
     .common-package-header{
@@ -198,7 +202,7 @@
                 max-width: 500px;
                 font-size: 20px;
                 font-weight: bold;
-                color: $fontBoldColor;
+                color: var(--fontBoldColor);
             }
             .repo-description {
                 max-width: 600px;
@@ -215,7 +219,7 @@
             cursor: pointer;
             &:hover {
                 color: white;
-                background-color: $primaryColor;
+                background-color: var(--primaryColor);
             }
         }
     }
@@ -223,20 +227,19 @@
         padding: 10px 20px;
         background-color: white;
         .sort-tool {
-            color: $boxShadowColor;
+            color: var(--boxShadowColor);
             .sort-order {
-                width: 24px;
-                height: 24px;
+                width: 32px;
+                height: 32px;
                 border: 1px solid currentColor;
                 border-radius: 2px;
             }
         }
     }
     .common-package-list {
-        height: calc(100% - 186px);
+        height: calc(100% - 192px);
         padding: 0 20px 10px;
         background-color: white;
-        overflow-y: auto;
         .list-count {
             font-size: 12px;
             color: #999;

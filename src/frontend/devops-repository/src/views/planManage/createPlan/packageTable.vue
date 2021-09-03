@@ -113,17 +113,16 @@
     }
 </script>
 <style lang="scss" scoped>
-@import '@/scss/conf';
 .package-table-container {
     .package-list {
         width: 600px;
-        border: 1px solid $borderWeightColor;
+        border: 1px solid var(--borderWeightColor);
         border-bottom-width: 0;
         .package-item {
             justify-content: space-between;
             height: 32px;
             font-size: 12px;
-            border-bottom: 1px solid $borderWeightColor;
+            border-bottom: 1px solid var(--borderWeightColor);
             background-color: #f9faff;
             .package-meta  {
                 flex: 1;
@@ -140,7 +139,7 @@
     .package-add {
         width: 120px;
         height: 36px;
-        color: $primaryColor;
+        color: var(--primaryColor);
         background-color: #f0f6ff;
         cursor: pointer;
     }

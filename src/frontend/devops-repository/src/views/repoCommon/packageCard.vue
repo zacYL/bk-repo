@@ -47,15 +47,14 @@
     }
 </script>
 <style lang="scss" scoped>
-@import '@/scss/conf';
 .package-card-container {
     padding: 5px 20px;
-    border: 1px solid $borderWeightColor;
+    border: 1px solid var(--borderWeightColor);
     border-radius: 5px;
     background-color: #fdfdfe;
     cursor: pointer;
     &:hover {
-        border-color: $iconPrimaryColor;
+        border-color: var(--iconPrimaryColor);
     }
     .package-card-main {
         flex: 1;
@@ -80,7 +79,7 @@
             overflow: hidden;
         }
         .package-card-data {
-            color: $fontWeightColor;
+            color: var(--fontWeightColor);
             font-size: 14px;
             font-weight: normal;
             div {

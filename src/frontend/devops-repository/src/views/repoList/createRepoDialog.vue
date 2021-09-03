@@ -200,7 +200,6 @@
     }
 </script>
 <style lang="scss" scoped>
-@import '@/scss/conf';
 .repo-base-info {
     .repo-type-radio-group {
         display: grid;

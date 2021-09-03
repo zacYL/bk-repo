@@ -31,7 +31,6 @@ const repoGeneric = () => import(/* webpackChunkName: "repoGeneric" */'@/views/r
 
 const commonPackageList = () => import(/* webpackChunkName: "repoCommon" */'@/views/repoCommon/commonPackageList')
 const commonPackageDetail = () => import(/* webpackChunkName: "repoCommon" */'@/views/repoCommon/commonPackageDetail')
-const commonVersionDetail = () => import(/* webpackChunkName: "repoCommon" */'@/views/repoCommon/commonVersionDetail')
 
 const repoSearch = () => import(/* webpackChunkName: "repoSearch" */'@/views/repoSearch')
 
@@ -165,12 +164,14 @@ const routes = [
             {
                 path: ':repoType/package',
                 name: 'commonPackage',
-                component: commonPackageDetail
-            },
-            {
-                path: ':repoType/version',
-                name: 'commonVersion',
-                component: commonVersionDetail
+                component: commonPackageDetail,
+                meta: {
+                    breadcrumb: [
+                        { name: 'repoList', label: '仓库列表' },
+                        { name: 'commonList', label: '{repoName}', template: '依赖仓库' },
+                        { name: 'commonPackage', label: '{package}', template: '制品详情' }
+                    ]
+                }
             }
         ]
     }

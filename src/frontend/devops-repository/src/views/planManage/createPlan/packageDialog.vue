@@ -144,7 +144,6 @@
     }
 </script>
 <style lang="scss" scoped>
-@import '@/scss/conf';
 .search-package {
     ::v-deep .bk-transfer{
         .transfer {

@@ -7,7 +7,7 @@
                     :class="{ 'selected': selectedNode.roadMap === item.roadMap }"
                     :style="{ 'padding-left': 20 * (computedDepth(item) + 1) + 'px' }"
                     @click.stop="itemClickHandler(item)">
-                    <i v-if="item.loading" class="mr5 loading"></i>
+                    <i v-if="item.loading" class="mr5 loading spin-icon"></i>
                     <i v-else class="mr5 devops-icon" @click.stop="iconClickHandler(item)"
                         :class="openList.includes(item.roadMap) ? 'icon-down-shape' : 'icon-right-shape'"></i>
                     <icon class="mr5" size="14" :name="openList.includes(item.roadMap) ? 'folder-open' : 'folder'"></icon>
@@ -113,7 +113,6 @@
 </script>
 
 <style lang="scss">
-@import '@/scss/conf';
 .virtual-tree {
     position: relative;
     display: flex;
@@ -129,7 +128,7 @@
     }
     &::-webkit-scrollbar {
         width: 12px;
-        background-color: $bgLightColor;
+        background-color: var(--bgLightColor);
     }
     &::-webkit-scrollbar-thumb {
         border-radius: initial;
@@ -137,11 +136,11 @@
 }
 .repo-tree-item {
     position: relative;
-    color: $fontBoldColor;
+    color: var(--fontBoldColor);
     font-size: 12px;
     .line-dashed {
         position: absolute;
-        border-color: $borderLightColor;
+        border-color: var(--borderLightColor);
         border-style: dashed;
         z-index: 1;
     }
@@ -161,10 +160,9 @@
             border-right-color: transparent;
             border-radius: 50%;
             z-index: 1;
-            animation: loading 1s linear infinite;
         }
         .devops-icon {
-            color: $fontColor;
+            color: var(--fontColor);
             z-index: 1;
         }
         .node-text {
@@ -179,8 +177,8 @@
             }
         }
         &.selected {
-            background-color: $primaryLightColor;
-            color: $primaryColor;
+            background-color: var(--primaryLightColor);
+            color: var(--primaryColor);
         }
     }
 }

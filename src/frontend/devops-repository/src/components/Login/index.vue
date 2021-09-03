@@ -97,10 +97,9 @@
     }
 </script>
 <style lang="scss" scoped>
-@import '@/scss/conf';
 .login-logo {
     padding-bottom: 20px;
-    border-bottom: 1px solid $borderWeightColor;
+    border-bottom: 1px solid var(--borderWeightColor);
     svg {
         margin-left: -20px;
     }
@@ -114,7 +113,7 @@
     margin-left: 25px;
     margin-top: 10px;
     font-size: 12px;
-    color: $failColor;
+    color: var(--failColor);
 }
 .login-form {
     margin: 40px 0 30px;

@@ -63,7 +63,6 @@
     }
 </script>
 <style lang="scss" scoped>
-@import '@/scss/conf';
 .code-area {
     position: relative;
     line-height: 2;
@@ -96,7 +95,7 @@
     &:hover .code-copy {
         visibility: visible;
         &:hover {
-            color: $iconPrimaryColor;
+            color: var(--iconPrimaryColor);
         }
     }
 }

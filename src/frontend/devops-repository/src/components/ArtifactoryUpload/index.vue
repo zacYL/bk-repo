@@ -118,7 +118,6 @@
     }
 </script>
 <style lang="scss" scoped>
-@import '@/scss/conf';
 .artifactory-upload-container {
     position: relative;
     min-height: 70px;
@@ -126,7 +125,7 @@
     border: 1px dashed;
     border-radius: 10px;
     &:hover {
-        border-color: $iconPrimaryColor;
+        border-color: var(--iconPrimaryColor);
     }
     .upload-file-info {
         flex: 1;

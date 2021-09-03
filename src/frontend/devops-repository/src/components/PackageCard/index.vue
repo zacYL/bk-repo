@@ -15,7 +15,9 @@
                 <div class="flex-align-center" :title="`下载统计：${cardData.downloads}`"></div>
             </div>
         </div>
-        <i v-if="!readonly" class="devops-icon icon-delete flex-center package-card-delete" @click.stop="deleteCard"></i>
+        <div class="card-operation flex-center">
+            <i v-if="!readonly" class="devops-icon icon-delete flex-center package-card-delete" @click.stop="deleteCard"></i>
+        </div>
     </div>
 </template>
 <script>
@@ -45,7 +47,6 @@
     }
 </script>
 <style lang="scss" scoped>
-@import '@/scss/conf';
 .package-card-container {
     height: 100px;
     padding: 16px 20px;
@@ -60,7 +61,7 @@
         width: 68px;
         height: 68px;
         background-color: white;
-        border: 1px solid $borderColor;
+        border: 1px solid var(--borderColor);
         border-radius: 4px;
     }
     .package-card-main {
@@ -80,7 +81,7 @@
             font-size: 12px;
             white-space: nowrap;
             border-radius: 2px;
-            color: $borderColor;
+            color: var(--borderColor);
             background-color: #91ADD1;
         }
         .package-card-description {
@@ -88,7 +89,7 @@
             font-size: 12px;
         }
         .package-card-data {
-            color: $fontWeightColor;
+            color: var(--fontWeightColor);
             font-size: 12px;
             div {
                 width: 300px;
@@ -101,13 +102,16 @@
             }
         }
     }
-    .package-card-delete {
-        width: 24px;
-        height: 24px;
-        &:hover {
-            color: $borderColor;
-            background-color: $dangerColor;
-            border-radius: 4px;
+    .card-operation {
+        flex-basis: 50px;
+        .package-card-delete {
+            width: 24px;
+            height: 24px;
+            &:hover {
+                color: var(--borderColor);
+                background-color: var(--dangerColor);
+                border-radius: 4px;
+            }
         }
     }
 }

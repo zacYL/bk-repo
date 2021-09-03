@@ -1,25 +1,25 @@
 <template>
-    <div class="common-package-detail flex-column">
-        <div class="common-package-base-info flex-align-center" v-bkloading="{ isLoading: infoLoading }">
-            <Icon size="80" name="default-docker" />
-            <div class="ml20 common-package-title flex-column">
-                <span class="mb10 title" :title="pkg.name">{{ pkg.name }}
-                    <span class="ml10 subtitle repo-tag" v-if="pkg.type === 'MAVEN'">{{ pkg.key.replace(/^.*\/\/(.+):.*$/, '$1') }}</span>
-                </span>
-                <span class="mb10 description" :title="pkg.description">
-                    {{ pkg.description }}
-                </span>
-                <div class="flex-align-center">
-                    <div class="mr50">{{ `${$t('downloads')}: ${pkg.downloads}` }}</div>
-                    <div class="mr50">{{ `${$t('lastModifiedDate')}: ${formatDate(pkg.lastModifiedDate)}` }}</div>
-                    <div>{{ `${$t('lastModifiedBy')}: ${userList[pkg.lastModifiedBy] ? userList[pkg.lastModifiedBy].name : pkg.lastModifiedBy}` }}</div>
-                </div>
+    <div class="common-package-detail flex-align-center">
+        <aside class="common-package-version">
+            <header class="pl30 version-header flex-align-center">制品版本</header>
+            <div class="p20 version-search">
+                <bk-input
+                    v-model.trim="versionInput"
+                    placeholder="请输入版本, 按Enter键搜索"
+                    clearable
+                    @enter="handlerPaginationChange()"
+                    @clear="handlerPaginationChange()"
+                    right-icon="bk-icon icon-search">
+                </bk-input>
             </div>
-        </div>
-        <div class="common-package-tab">
-            <bk-tab class="common-package-tab-main" type="unborder-card" :active.sync="tabName">
+            <div class="version-list">
+                <div class="version-item"></div>
+            </div>
+        </aside>
+        <div class="common-package-info flex-1">
+            <!-- <bk-tab class="common-package-info-main" type="unborder-card" :active.sync="tabName">
                 <bk-tab-panel name="commonVersion" :label="$t('version')" v-bkloading="{ isLoading }">
-                    <div class="common-package-version">
+                    <div class="common-package-version-1">
                         <div class="mb20 flex-align-center">
                             <bk-input
                                 class="common-version-search"
@@ -33,7 +33,7 @@
                         </div>
                         <bk-table
                             class="common-version-table"
-                            height="calc(100% - 120px)"
+                            height="calc(100% - 140px)"
                             :data="versionList"
                             :outer-border="false"
                             :row-border="false"
@@ -94,7 +94,7 @@
                         </bk-pagination>
                     </div>
                 </bk-tab-panel>
-            </bk-tab>
+            </bk-tab> -->
         </div>
         
         <bk-dialog
@@ -300,86 +300,20 @@
     }
 </script>
 <style lang="scss" scoped>
-@import '@/scss/conf';
 .common-package-detail {
     height: 100%;
-    .common-package-base-info {
-        .common-package-title {
-            .title {
-                max-width: 500px;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-                font-size: 20px;
-                color: $fontBoldColor;
-                .subtitle {
-                    color: $fontColor;
-                    font-weight: normal;
-                    font-size: 14px;
-                    cursor: pointer;
-                }
-            }
-            .description {
-                max-width: 800px;
-                display: -webkit-box;
-                -webkit-line-clamp: 2;
-                -webkit-box-orient: vertical;
-                overflow: hidden;
-            }
+    .common-package-version {
+        width: 250px;
+        height: 100%;
+        margin-right: 10px;
+        background-color: white;
+        .version-header {
+            height: 50px;
+            color: var(--fontWeightColor);
+            border-bottom: 1px solid var(--borderWeightColor);
         }
-    }
-    .common-package-tab {
-        flex: 1;
-        .common-package-tab-main {
-            height: 100%;
-            ::v-deep .bk-tab-section {
-                height: calc(100% - 40px);
-                .bk-tab-content {
-                    height: 100%;
-                }
-            }
-            .common-package-version {
-                height: calc(100% + 40px);
-                margin-bottom: -40px;
-                .common-version-search {
-                    width: 250px;
-                }
-                .common-version-search-btn {
-                    position: relative;
-                    z-index: 1;
-                    padding: 9px;
-                    color: white;
-                    margin-left: -2px;
-                    border-radius: 0 2px 2px 0;
-                    background-color: #3a84ff;
-                    cursor: pointer;
-                    &:hover {
-                        background-color: #699df4;
-                    }
-                }
-                .common-version-table {
-                    .devops-icon {
-                        font-size: 16px;
-                    }
-                    .icon-arrows-up {
-                        border-bottom: 1px solid;
-                    }
-                }
-            }
-            .docker-description {
-                .docker-description-header {
-                    margin: 10px 0 20px;
-                    font-size: 16px;
-                    line-height: 2;
-                    border-bottom: 1px solid;
-                }
-                .docker-description-tip {
-                    margin-bottom: 10px;
-                    font-size: 12px;
-                    padding-left: 20px;
-                    line-height: 1.5;
-                }
-            }
+        .version-search {
+
         }
     }
 }

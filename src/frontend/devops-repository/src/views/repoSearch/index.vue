@@ -25,7 +25,6 @@
                         style="width:150px;"
                         v-model="property"
                         :clearable="false"
-                        size="small"
                         @change="handlerPaginationChange()">
                         <bk-option id="name" name="名称排序"></bk-option>
                         <bk-option id="lastModifiedDate" name="时间排序"></bk-option>
@@ -52,7 +51,7 @@
                 </div>
                 <infinite-scroll
                     ref="infiniteScroll"
-                    class="package-list flex-1"
+                    class="package-list"
                     :is-loading="isLoading"
                     :has-next="resultList.length < pagination.count"
                     @load="handlerPaginationChange({ current: pagination.current + 1 }, true)">
@@ -163,7 +162,7 @@
                 this.pagination.limit = limit
                 this.searckPackageHandler(load)
                 if (!load) {
-                    this.$refs.infiniteScroll && this.$refs.infiniteScroll.$el.scrollTo(0, 0)
+                    this.$refs.infiniteScroll && this.$refs.infiniteScroll.scrollToTop()
                     this.repoType && this.searchRepoHandler()
                     this.$router.replace({
                         query: {
@@ -188,7 +187,6 @@
     }
 </script>
 <style lang="scss" scoped>
-@import '@/scss/conf';
 .repo-search-container {
     position: relative;
     height: 100%;
@@ -210,7 +208,7 @@
                 color: white;
                 font-size: 16px;
                 font-weight: bold;
-                background-color: $primaryColor;
+                background-color: var(--primaryColor);
                 border-radius: 0 2px 2px 0;
                 cursor: pointer;
             }
@@ -231,17 +229,17 @@
             }
         }
         .sort-tool {
-            color: $boxShadowColor;
+            color: var(--boxShadowColor);
             .sort-order {
-                width: 24px;
-                height: 24px;
+                width: 32px;
+                height: 32px;
                 border: 1px solid currentColor;
                 border-radius: 2px;
             }
         }
     }
     .repo-search-result {
-        height: calc(100% - 94px);
+        height: calc(100% - 100px);
         .repo-list {
             width: 200px;
             height: 100%;
@@ -251,14 +249,14 @@
                 line-height: 32px;
                 cursor: pointer;
                 &.selected {
-                    color: $primaryColor;
-                    background-color: $primaryLightColor;
+                    color: var(--primaryColor);
+                    background-color: var(--primaryLightColor);
                 }
             }
         }
         .package-list {
+            flex: 1;
             height: 100%;
-            overflow-y: auto;
             .result-count {
                 font-size: 12px;
                 color: #999;

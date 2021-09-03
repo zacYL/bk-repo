@@ -66,14 +66,13 @@
     }
 </script>
 <style lang="scss" scoped>
-@import '@/scss/conf';
 $bgColor: #f1f8ff;
 .empty-guide-container {
     position: relative;
     padding: 0 40px 20px;
     .empty-guide-header {
         margin: 40px 0 ;
-        color: $fontBoldColor;
+        color: var(--fontBoldColor);
         .empty-guide-title {
             font-size: 20px;
             font-weight: bold;
@@ -84,7 +83,7 @@ $bgColor: #f1f8ff;
     }
     .empty-guide-main {
         padding: 20px 50px 0;
-        border: 1px dashed $borderWeightColor;
+        border: 1px dashed var(--borderWeightColor);
         border-radius: 4px;
         counter-reset: step;
         .empty-guide-item {
@@ -98,7 +97,7 @@ $bgColor: #f1f8ff;
                 left: -80px;
                 top: 30px;
                 height: 100%;
-                border-left: 2px dashed $primaryColor;
+                border-left: 2px dashed var(--primaryColor);
                 &:before {
                     content: '';
                     position: absolute;
@@ -106,7 +105,7 @@ $bgColor: #f1f8ff;
                     height: 10px;
                     margin: -12px 0 0 -12px;
                     border: 6px solid #a3c5fd;
-                    background-color: $primaryColor;
+                    background-color: var(--primaryColor);
                     border-radius: 50%;
                 }
                 .step-count {
@@ -137,7 +136,7 @@ $bgColor: #f1f8ff;
         }
         .empty-guide-item-title {
             position: relative;
-            color: $fontBoldColor;
+            color: var(--fontBoldColor);
             font-size: 16px;
             font-weight: bold;
             color: #333;

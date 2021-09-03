@@ -440,7 +440,6 @@
     }
 </script>
 <style lang="scss" scoped>
-@import '@/scss/conf';
 .permission-config-container {
     ::v-deep .bk-collapse-item {
         margin-bottom: 20px;
@@ -458,7 +457,7 @@
     }
     .section-header {
         padding-left: 10px;
-        color: $fontBoldColor;
+        color: var(--fontBoldColor);
         background-color: #f2f2f2;
         border: 1px solid #d5d5d5;
         font-size: 14px;
@@ -468,7 +467,7 @@
         }
         .permission-actions {
             font-size: 12px;
-            color: $fontColor;
+            color: var(--fontColor);
         }
     }
     .section-main {
@@ -515,7 +514,7 @@
                         position: absolute;
                         top: -5px;
                         right: -5px;
-                        color: $dangerColor;
+                        color: var(--dangerColor);
                         cursor: pointer;
                     }
                     &:hover .icon-close-circle-shape {

@@ -27,7 +27,7 @@ body {
     height: 100%;
     font-family: Microsoft Yahei,PingFang SC,Helvetica Neue,Arial,Hiragino Sans GB,WenQuanYi Micro Hei,sans-serif;
     font-size: 14px;
-    color: $fontColor;
+    color: var(--fontColor);
 }
 
 html,
@@ -57,9 +57,9 @@ li {
 
 a {
 	text-decoration: none;
-	color: $fontWeightColor;
+	color: var(--fontWeightColor);
 	&:hover {
-		color: $primaryColor;
+		color: var(--primaryColor);
 	}
 }
 
@@ -72,7 +72,7 @@ label {
     user-select: none;
     cursor: pointer;
     &:hover {
-        color: $primaryColor;
+        color: var(--primaryColor);
     }
 }
 
@@ -159,7 +159,7 @@ label {
     border-radius: 10px;
     font-size: 12px;
     white-space: nowrap;
-    background-color: $primaryLightColor;
+    background-color: var(--primaryLightColor);
 }
 
 .break-all {
@@ -172,4 +172,16 @@ label {
 
 .bk-table-body-wrapper {
     overflow-y: auto!important;
+}
+
+.spin-icon {
+    animation: loading .8s linear infinite;
+}
+@keyframes loading {
+    from {
+        transform: rotate(0);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }

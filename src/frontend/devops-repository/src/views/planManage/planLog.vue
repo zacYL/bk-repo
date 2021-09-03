@@ -147,7 +147,6 @@
     }
 </script>
 <style lang="scss" scoped>
-@import '@/scss/conf';
 .plan-detail-container {
     height: 100%;
     .SUCCESS {

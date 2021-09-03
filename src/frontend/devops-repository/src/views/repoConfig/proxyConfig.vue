@@ -177,7 +177,6 @@
     }
 </script>
 <style lang="scss" scoped>
-@import '@/scss/conf';
 .proxy-config-container {
     .proxy-config-tips {
         color: #999;
@@ -188,7 +187,7 @@
         align-items: center;
         height: 40px;
         line-height: 40px;
-        border-bottom: 1px solid $borderColor;
+        border-bottom: 1px solid var(--borderColor);
         .proxy-index {
             font-size: 16px;
             flex-basis: 50px;

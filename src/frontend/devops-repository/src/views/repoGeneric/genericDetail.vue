@@ -143,11 +143,10 @@
     }
 </script>
 <style lang="scss" scoped>
-@import '@/scss/conf';
 .detail-info {
     padding: 15px;
     margin-top: 40px;
-    border: 1px solid $borderWeightColor;
+    border: 1px solid var(--borderWeightColor);
     span {
         padding: 10px 0;
         flex: 4;
@@ -178,6 +177,6 @@
     display: flex;
     align-items: center;
     height: 40px;
-    border-bottom: 1px solid $borderWeightColor;
+    border-bottom: 1px solid var(--borderWeightColor);
 }
 </style>

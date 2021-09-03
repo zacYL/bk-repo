@@ -7,10 +7,10 @@
                     v-model.trim="query.name"
                     class="w250"
                     placeholder="请输入仓库名称, 按Enter键搜索"
-                    :clearable="true"
+                    clearable
                     @enter="handlerPaginationChange()"
                     @clear="handlerPaginationChange()"
-                    :right-icon="'bk-icon icon-search'">
+                    right-icon="bk-icon icon-search">
                 </bk-input>
                 <bk-select
                     v-model="query.type"

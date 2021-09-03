@@ -336,7 +336,6 @@
     }
 </script>
 <style lang="scss" scoped>
-@import '@/scss/conf';
 .create-node-container {
     height: 100%;
     background-color: white;
@@ -388,11 +387,11 @@
                 border: 1px solid transparent;
                 background-color: #f0f6ff;
                 &.checked {
-                    border-color: $primaryColor;
+                    border-color: var(--primaryColor);
                 }
                 .replica-type-label {
                     font-weight: bold;
-                    color: $fontWeightColor;
+                    color: var(--fontWeightColor);
                 }
                 .replica-type-tip {
                     font-size: 12px;
@@ -404,7 +403,7 @@
                     right: 0;
                     border-width: 16px;
                     border-style: solid;
-                    border-color: $primaryColor $primaryColor transparent transparent;
+                    border-color: var(--primaryColor) var(--primaryColor) transparent transparent;
                     i {
                         position: absolute;
                         margin-top: -12px;

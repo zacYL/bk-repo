@@ -44,7 +44,6 @@
     }
 </script>
 <style lang="scss" scoped>
-@import '@/scss/conf';
 .bkrepo-user-container {
     justify-content: flex-end;
     position: relative;
@@ -71,18 +70,18 @@
         position: absolute;
         top: 50px;
         width: 100%;
-        border: solid $borderWeightColor;
+        border: solid var(--borderWeightColor);
         box-shadow: 0 3px 6px rgba(51, 60, 72, 0.12);
-        color: $fontColor;
+        color: var(--fontColor);
         background-color: white;
         z-index: 11;
         li {
             height: 40px;
             a {
-                color: $fontColor;
+                color: var(--fontColor);
                 cursor: pointer;
                 &:hover {
-                    color: $primaryColor;
+                    color: var(--primaryColor);
                 }
             }
         }

@@ -57,7 +57,6 @@
     }
 </script>
 <style lang="scss" scoped>
-@import '@/scss/conf';
 .repo-guide-container {
     ::v-deep .bk-collapse-item {
         margin-bottom: 20px;
@@ -78,7 +77,7 @@
     }
     .section-header {
         padding-left: 20px;
-        color: $fontBoldColor;
+        color: var(--fontBoldColor);
         background-color: #e6edf6;
         font-size: 18px;
         font-weight: normal;
@@ -91,7 +90,7 @@
     .section-main {
         margin-top: 15px;
         padding: 5px 20px 20px;
-        border: 1px dashed $borderWeightColor;
+        border: 1px dashed var(--borderWeightColor);
         border-radius: 4px;
         .sub-title {
             margin-top: 15px;

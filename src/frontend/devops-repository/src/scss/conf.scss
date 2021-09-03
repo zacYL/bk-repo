@@ -18,70 +18,43 @@
  */
 
 // 存放常用变量
-
-// 边框色
-$borderColor: #ebf0f5; // 相对较浅，常用于容器边框色
-$borderWeightColor: #dde4eb; // 相对较深，常用于输入框边框色
-$borderLightColor: #c3cdd7;
-$boxShadowColor: #b1b1b1;
-
-// 字体色
-$fontColor: #7b7d8a;
-$fontWeightColor: #63656E;
-$fontBoldColor: #333948;
-$fontLigtherColor: #c3cdd7;
-
-$fontSuccess:#34d97b;
-$fontFail: #ff5656;
-$disabledColor:  #c4c6cc;
-
-// 主体 icon 颜色
-$iconPrimaryColor: #3a84ff;
-$primaryColor: #3a84ff;
-
-$fontSuccess:#34d97b;
-$fontFail: #ff5656;
-$disabledColor:  #c4c6cc;
-
-// 成功 icon 颜色
-$iconSuccessColor: #34d97b;
-$successColor: #34d97b;
-
-// 失败 icon 颜色
-$iconFailColor: #ff5656;
-$failColor: #ff5656;
-$dangerColor: #ff5656;
-
-// warning icon 颜色
-$iconWarningColor: #ffb400;
-$warningColor: #ffb400;
-
-// 淡色
-$primaryLightColor: #ebf4ff;
-$bgLightColor: #f1f2f3;
-
-// 适配宽度
-$mediaWidth: 1500px;
-
-// 背景hover
-$bgHoverColor: #fafbfd;
-
-// pipline_detail
-$loadingColor: #459fff;
-$cancelColor: #f6b026;
-$lineColor: #c3cdd7;
-
-$StagepaddingTop: 20px;
-
-
-.spin-icon {
-    animation: loading .8s linear infinite;
+:root {
+    // 边框色
+    --borderColor: #ebf0f5; // 相对较浅，常用于容器边框色
+    --borderWeightColor: #dde4eb; // 相对较深，常用于输入框边框色
+    --borderLightColor: #c3cdd7;
+    --boxShadowColor: #b1b1b1;
+    
+    // 字体色
+    --fontColor: #7b7d8a;
+    --fontWeightColor: #63656E;
+    --fontBoldColor: #333948;
+    --fontLigtherColor: #c3cdd7;
+    
+    --fontSuccess:#34d97b;
+    --fontFail: #ff5656;
+    --disabledColor:  #c4c6cc;
+    
+    // 主体 icon 颜色
+    --primaryColor: #3a84ff;
+    
+    // 成功 icon 颜色
+    --iconSuccessColor: #34d97b;
+    --successColor: #34d97b;
+    
+    // 失败 icon 颜色
+    --failColor: #ff5656;
+    --dangerColor: #ff5656;
+    
+    // warning icon 颜色
+    --iconWarningColor: #ffb400;
+    --warningColor: #ffb400;
+    
+    // 淡色
+    --primaryLightColor: #ebf4ff;
+    --bgLightColor: #f1f2f3;
+    
+    // 背景hover
+    --bgHoverColor: #fafbfd;
 }
-@keyframes loading {
-    from {
-        transform: rotate(0);
-    }
-    to {
-        transform: rotate(360deg);
-    }
-}
+

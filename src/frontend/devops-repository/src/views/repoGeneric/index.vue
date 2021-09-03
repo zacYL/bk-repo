@@ -640,15 +640,14 @@
     }
 </script>
 <style lang="scss" scoped>
-@import '@/scss/conf';
 .repo-generic-container {
     display: flex;
     .repo-generic-side {
-        border: 1px solid $borderWeightColor;
+        border: 1px solid var(--borderWeightColor);
         .important-search {
             padding: 10px;
             background-color: #f2f2f2;
-            border-bottom: 1px solid $borderWeightColor;
+            border-bottom: 1px solid var(--borderWeightColor);
         }
         .repo-generic-tree {
             height: calc(100% - 53px);
@@ -667,7 +666,7 @@
             font-size: 0;
             .bk-table {
                 margin-bottom: 10px;
-                border-bottom: 1px solid $borderWeightColor;
+                border-bottom: 1px solid var(--borderWeightColor);
             }
             .fine-name {
                 padding: 7px 0;
@@ -678,13 +677,13 @@
             ::v-deep .devops-icon {
                 font-size: 16px;
                 &.disabled {
-                    color: $disabledColor;
+                    color: var(--disabledColor);
                     cursor: not-allowed;
                 }
                 &.icon-down-shape {
-                    color: $fontLigtherColor;
+                    color: var(--fontLigtherColor);
                     &.selected {
-                        color: $fontWeightColor;
+                        color: var(--fontWeightColor);
                     }
                 }
             }
@@ -708,6 +707,6 @@
 }
 
 ::v-deep .bk-table-row.selected-row {
-    background-color: $primaryLightColor;
+    background-color: var(--primaryLightColor);
 }
 </style>

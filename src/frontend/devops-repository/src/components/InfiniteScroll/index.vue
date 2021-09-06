@@ -19,21 +19,25 @@
         },
         data () {
             return {
-                needScroll: false
+                needScroll: false,
+                resizeFn: null
             }
         },
         watch: {
             isLoading (val) {
                 // 内容加载完成
                 if (!val) {
-                    const target = this.$el.querySelector('.infinite-scroll-list')
-                    if (target.scrollHeight > target.offsetHeight) this.needScroll = true
-                    else this.needScroll = false
+                    this.calcNeedScroll()
                 }
             }
         },
         mounted () {
             this.$el.querySelector('.infinite-scroll-list').addEventListener('scroll', throttle(this.handleScroll, 500))
+            this.resizeFn = throttle(this.calcNeedScroll)
+            window.addEventListener('resize', this.resizeFn)
+        },
+        beforeDestroy () {
+            window.removeEventListener('resize', this.resizeFn)
         },
         methods: {
             handleScroll () {
@@ -48,6 +52,11 @@
             scrollToTop () {
                 const target = this.$el.querySelector('.infinite-scroll-list')
                 target.scrollTo(0, 0)
+            },
+            calcNeedScroll () {
+                const target = this.$el.querySelector('.infinite-scroll-list')
+                if (target.scrollHeight > target.offsetHeight) this.needScroll = true
+                else this.needScroll = false
             }
         }
     }

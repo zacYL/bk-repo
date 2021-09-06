@@ -51,7 +51,7 @@
     height: 100px;
     padding: 16px 20px;
     border-radius: 5px;
-    background-color: #f6faff;
+    background-color: var(--bgHoverColor);
     cursor: pointer;
     &:hover {
         background-color: white;

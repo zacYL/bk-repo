@@ -91,7 +91,7 @@ $bgColor: #f1f8ff;
             margin-left: 80px;
             margin-bottom: 20px;
             padding: 20px;
-            background-color: #F6FAFF;
+            background-color: var(--bgHoverColor);
             .guide-step {
                 position: absolute;
                 left: -80px;

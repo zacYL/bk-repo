@@ -27,7 +27,7 @@ body {
     height: 100%;
     font-family: Microsoft Yahei,PingFang SC,Helvetica Neue,Arial,Hiragino Sans GB,WenQuanYi Micro Hei,sans-serif;
     font-size: 14px;
-    color: var(--fontColor);
+    color: var(--fontWeightColor);
 }
 
 html,
@@ -183,5 +183,30 @@ label {
     }
     to {
         transform: rotate(360deg);
+    }
+}
+
+// hover下拉列表
+.operation-container {
+    .tippy-tooltip {
+        padding-left: 0!important;
+        padding-right: 0!important;
+    }
+    .operation-list {
+        .operation-item {
+            width: 90px;
+            padding: 0 14px;
+            font-size: 14px;
+            line-height: 2.5;
+            text-align: center;
+            cursor: pointer;
+            &:hover:not(.disabled) {
+                background-color: #eaf3ff;
+            }
+            &.disabled {
+                color: var(--disabledColor);
+                cursor: not-allowed;
+            }
+        }
     }
 }

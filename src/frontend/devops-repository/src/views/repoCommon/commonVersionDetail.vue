@@ -2,48 +2,48 @@
     <bk-tab class="common-version-container" type="unborder-card" :active.sync="tabName" v-bkloading="{ isLoading }">
         <bk-tab-panel v-if="detail.basic" name="versionBaseInfo" :label="$t('baseInfo')">
             <div class="version-base-info">
-                <div class="base-info-left">
-                    <div class="base-info-guide">
-                        <header class="base-info-header">{{ $t('useTips') }}</header>
-                        <div class="section-main">
-                            <div class="sub-section flex-column" v-for="block in articleInstall[0].main" :key="block.subTitle">
-                                <span>{{ block.subTitle }}</span>
-                                <code-area class="mt15" v-if="block.codeList && block.codeList.length" :code-list="block.codeList"></code-area>
-                            </div>
-                        </div>
+                <div class="base-info" :data-title="$t('baseInfo')">
+                    <div class="package-name grid-item">
+                        <label>制品名称：</label>
+                        <span>
+                            <span>{{ packageName }}</span>
+                            <span v-if="detail.basic.groupId" class="mr5 repo-tag"> {{ detail.basic.groupId }} </span>
+                        </span>
                     </div>
-                    <div class="base-info-checksums">
-                        <header class="base-info-header">Checksums</header>
-                        <div class="mt20 flex-column version-checksums">
-                            <div v-if="detail.basic.sha256" class="mt20 flex-align-center">
-                                <span class="display-key">SHA256</span>
-                                <span class="display-value">{{ detail.basic.sha256 }}</span>
-                            </div>
-                            <div v-if="detail.basic.md5" class="mt20 flex-align-center">
-                                <span class="display-key">MD5</span>
-                                <span class="display-value">{{ detail.basic.md5 }}</span>
-                            </div>
-                        </div>
+                    <div class="grid-item"
+                        v-for="{ name, label, value } in detailInfoMap"
+                        :key="name">
+                        <label>{{ label }}：</label>
+                        <span>
+                            <span>{{ value }}</span>
+                            <template v-if="name === 'version'">
+                                <span class="mr5 repo-tag"
+                                    v-for="tag in detail.basic.stageTag"
+                                    :key="tag">
+                                    {{ tag }}
+                                </span>
+                            </template>
+                        </span>
+                    </div>
+                    <div class="package-description grid-item">
+                        <label>描述：</label>
+                        <span>{{ detail.basic.description || '--' }}</span>
                     </div>
                 </div>
-                <div class="base-info">
-                    <header class="base-info-header">{{ $t('baseInfo') }}</header>
-                    <div class="mt20 flex-column">
-                        <div v-for="key in Object.keys(detailInfoMap)" :key="key">
-                            <div class="mt20 flex-align-center" v-if="detail.basic.hasOwnProperty(key)">
-                                <span class="display-key">{{ detailInfoMap[key] }}</span>
-                                <span class="display-value">
-                                    {{ detail.basic[key] }}
-                                    <template v-if="key === 'version'">
-                                        <span class="mr5 repo-tag"
-                                            v-for="tag in detail.basic.stageTag"
-                                            :key="tag">
-                                            {{ tag }}
-                                        </span>
-                                    </template>
-                                </span>
-                            </div>
-                        </div>
+                <div class="base-info-guide" :data-title="$t('useTips')">
+                    <div class="sub-section" v-for="block in articleInstall[0].main" :key="block.subTitle">
+                        <div class="mb10">{{ block.subTitle }}</div>
+                        <code-area class="mb20" bg-color="#e6edf6" color="#63656E" v-if="block.codeList && block.codeList.length" :code-list="block.codeList"></code-area>
+                    </div>
+                </div>
+                <div class="base-info-checksums" data-title="Checksums">
+                    <div v-if="detail.basic.sha256" class="grid-item">
+                        <label>SHA256</label>
+                        <span class="pl40">{{ detail.basic.sha256 }}</span>
+                    </div>
+                    <div v-if="detail.basic.md5" class="grid-item">
+                        <label>MD5</label>
+                        <span class="pl40">{{ detail.basic.md5 }}</span>
                     </div>
                 </div>
             </div>
@@ -71,7 +71,7 @@
                     <span class="metadata-key">{{ key }}</span>
                     <span class="metadata-value">{{ value }}</span>
                 </div>
-                <empty-data v-if="!Object.keys(detail.metadata).length"></empty-data>
+                <empty-data v-if="!Object.keys(detail.metadata).length" ex-style="margin-top:100px;"></empty-data>
             </div>
         </bk-tab-panel>
         <bk-tab-panel v-if="detail.layers" name="versionLayers" label="Layers">
@@ -100,6 +100,8 @@
                 <div class="version-history-right">
                     <header class="version-history-header">Command</header>
                     <code-area class="mt20"
+                        bg-color="#e6edf6"
+                        color="#63656E"
                         :line-number="false"
                         :code-list="[selectedHistory.created_by]">
                     </code-area>
@@ -108,42 +110,21 @@
         </bk-tab-panel>
         <bk-tab-panel v-if="detail.dependencyInfo" name="versionDependencies" :label="$t('dependencies')">
             <article class="version-dependencies">
-                <section v-for="type in ['dependencies', 'devDependencies']" :key="type">
-                    <header class="version-dependencies-header">{{ type }}</header>
-                    <div class="version-dependencies-main">
-                        <template v-if="detail.dependencyInfo[type].length">
-                            <div class="flex-align-center version-dependencies-item"
-                                v-for="{ name, version } in detail.dependencyInfo[type]"
-                                :key="name + Math.random()">
-                                <div class="version-dependencies-key">{{ name }}</div>
-                                <div class="version-dependencies-value">{{ version }}</div>
-                            </div>
-                            <div class="flex-align-center hover-btn version-dependencies-more"
-                                v-if="type === 'dependents' && dependentsPage"
-                                @click="loadMore">
-                                {{ $t('loadMore') }}
-                            </div>
+                <section class="version-dependencies-main"
+                    v-for="type in ['dependencies', 'devDependencies', 'dependents']"
+                    :key="type"
+                    :data-title="type">
+                    <template v-if="detail.dependencyInfo[type].length">
+                        <template
+                            v-for="{ name, version } in detail.dependencyInfo[type]">
+                            <div class="version-dependencies-key" :key="name">{{ name }}</div>
+                            <div v-if="type !== 'dependents'" class="version-dependencies-value" :key="name + version">{{ version }}</div>
                         </template>
-                        <div v-else>{{$t('noData')}}</div>
-                    </div>
-                </section>
-                <section>
-                    <header class="version-dependencies-header">dependents</header>
-                    <div class="version-dependencies-main version-dependencies-dependents">
-                        <template v-if="detail.dependencyInfo.dependents.length">
-                            <div class="flex-align-center version-dependencies-item"
-                                v-for="({ name }, index) in detail.dependencyInfo.dependents"
-                                :key="name + Math.random()">
-                                <div :class="`version-dependencies-${index % 2 ? 'value' : 'key'}`">{{ name }}</div>
-                            </div>
-                            <div class="flex-align-center hover-btn version-dependencies-more"
-                                v-if="dependentsPage"
-                                @click="loadMore">
-                                {{ $t('loadMore') }}
-                            </div>
-                        </template>
-                        <div v-else>{{$t('noData')}}</div>
-                    </div>
+                        <div class="version-dependencies-more" v-if="type === 'dependents' && dependentsPage">
+                            <bk-button text title="primary" @click="loadMore">{{ $t('loadMore') }}</bk-button>
+                        </div>
+                    </template>
+                    <empty-data v-else class="version-dependencies-empty"></empty-data>
                 </section>
             </article>
         </bk-tab-panel>
@@ -183,14 +164,14 @@
                         {
                             required: true,
                             message: this.$t('pleaseInput') + this.$t('key'),
-                            trigger: 'blur'
+                            trigger: 'change'
                         }
                     ],
                     value: [
                         {
                             required: true,
                             message: this.$t('pleaseInput') + this.$t('value'),
-                            trigger: 'blur'
+                            trigger: 'change'
                         }
                     ]
                 }
@@ -199,22 +180,28 @@
         computed: {
             ...mapState(['userList']),
             detailInfoMap () {
-                return {
-                    'version': this.$t('version'),
-                    'os': 'OS/ARCH',
-                    'fullPath': this.$t('path'),
-                    'size': this.$t('size'),
-                    'downloadCount': this.$t('downloads'),
-                    'downloads': this.$t('downloads'),
-                    'createdBy': this.$t('createdBy'),
-                    'createdDate': this.$t('createdDate'),
-                    'lastModifiedBy': this.$t('lastModifiedBy'),
-                    'lastModifiedDate': this.$t('lastModifiedDate')
-                }
+                return [
+                    { name: 'version', label: this.$t('version') },
+                    { name: 'os', label: 'OS/ARCH' },
+                    { name: 'fullPath', label: this.$t('path') },
+                    { name: 'size', label: this.$t('size') },
+                    { name: 'downloadCount', label: this.$t('downloads') },
+                    { name: 'downloads', label: this.$t('downloads') },
+                    { name: 'createdBy', label: this.$t('createdBy') },
+                    { name: 'createdDate', label: this.$t('createdDate') },
+                    { name: 'lastModifiedBy', label: this.$t('lastModifiedBy') },
+                    { name: 'lastModifiedDate', label: this.$t('lastModifiedDate') }
+                ].filter(({ name }) => this.detail.basic.hasOwnProperty(name))
+                    .map(item => ({ ...item, value: this.detail.basic[item.name] }))
             }
         },
-        created () {
-            this.initDetail()
+        watch: {
+            version: {
+                handler: function (version) {
+                    version && this.getDetail()
+                },
+                immediate: true
+            }
         },
         methods: {
             convertFileSize,
@@ -223,9 +210,6 @@
                 'getNpmDependents',
                 'addPackageMetadata'
             ]),
-            initDetail () {
-                this.getDetail()
-            },
             getDetail () {
                 this.isLoading = true
                 this.getVersionDetail({
@@ -310,56 +294,67 @@
         }
     }
     .version-base-info {
-        height: calc(100% + 20px);
-        margin-bottom: -20px;
-        display: flex;
-        .base-info-left {
-            flex: 3;
-            overflow-y: auto;
-            padding-top: 20px;
-            padding-right: 20px;
-            border-right: 1px solid var(--borderWeightColor);
-            .base-info-guide {
-                position: relative;
-                border-top: 1px solid var(--borderWeightColor);
-                .section-main {
-                    margin-top: 20px;
-                    padding: 20px;
-                    border: 2px dashed var(--borderWeightColor);
-                    border-radius: 5px;
-                    .sub-section {
-                        & + .sub-section {
-                            margin-top: 20px;
-                        }
-                    }
-                }
+        height: 100%;
+        overflow-y: auto;
+        .base-info,
+        .base-info-guide,
+        .base-info-checksums {
+            position: relative;
+            margin-top: 55px;
+            margin-bottom: 20px;
+            &:first-child {
+                margin-top: 35px;
             }
-            .base-info-checksums {
-                position: relative;
-                margin-top: 20px;
-                border-top: 1px solid var(--borderWeightColor);
+            &:before {
+                position: absolute;
+                top: -30px;
+                left: 20px;
+                content: '';
+                width: 3px;
+                height: 12px;
+                background-color: var(--primaryColor);
+            }
+            &:after {
+                position: absolute;
+                top: -35px;
+                left: 30px;
+                content: attr(data-title);
+                font-size: 16px;
+                font-weight: bold;
             }
         }
         .base-info {
-            flex: 2;
-            overflow-y: auto;
-            margin-top: 20px;
-            margin-left: 20px;
-            border-top: 1px solid var(--borderWeightColor);
+            padding: 20px;
+            display: grid;
+            grid-template: auto / repeat(3, 1fr);
+            grid-gap: 20px;
+            background-color: var(--bgHoverColor);
+            .package-name,
+            .package-description {
+                grid-column: 1 / 4;
+            }
+            .repo-tag {
+                color: white;
+                background-color: #91ADD1;
+            }
         }
-        .base-info-header {
-            position: absolute;
-            padding-right: 20px;
-            margin-top: -10px;
-            color: var(--fontBoldColor);
-            background-color: white;
-            font-weight: bolder;
+        .base-info-guide {
+            padding: 20px 50px 0;
+            border: 1px dashed var(--borderWeightColor);
+            border-radius: 4px;
         }
-    }
-    .version-checksums {
-        .display-value {
-            flex: 12;
-            word-break: break-all;
+        .base-info-checksums {
+            padding: 20px;
+            display: grid;
+            grid-gap: 20px;
+            background-color: var(--bgHoverColor);
+        }
+        .grid-item {
+            display: flex;
+            label {
+                width: 100px;
+                text-align: right;
+            }
         }
     }
     .version-metadata {
@@ -433,39 +428,59 @@
         }
     }
     .version-dependencies {
-        height: calc(100% + 20px);
-        margin-bottom: -20px;
+        height: 100%;
         overflow-y: auto;
-        &-header {
-            font-size: 16px;
-            font-weight: bold;
-            line-height: 2;
-        }
         &-main {
+            position: relative;
+            margin-top: 55px;
+            margin-bottom: 20px;
             display: grid;
-            grid-template: auto / 1fr 1fr;
-            margin: 5px 0 20px;
-        }
-        &-dependents {
-            grid-template: auto / 1fr 1fr 1fr 1fr;
-        }
-        &-item {
-            border-bottom: 1px solid var(--borderWeightColor);
-            &:first-child, &:nth-child(2) {
-                border-top: 1px solid var(--borderWeightColor);
+            grid-template: auto / repeat(4, 1fr);
+            grid-gap: 1px;
+            background-color: var(--borderWeightColor);
+            border: 1px solid var(--borderWeightColor);
+            &:first-child {
+                margin-top: 35px;
+            }
+            &:before {
+                position: absolute;
+                top: -30px;
+                left: 20px;
+                content: '';
+                width: 3px;
+                height: 12px;
+                background-color: var(--primaryColor);
+            }
+            &:after {
+                position: absolute;
+                top: -35px;
+                left: 30px;
+                content: attr(data-title);
+                font-size: 16px;
+                font-weight: bold;
             }
         }
         &-more {
+            grid-column: 1 / 5;
             line-height: 40px;
             padding-left: 30px;
+            background-color: white;
         }
         &-key, &-value {
-            flex: 1;
             line-height: 40px;
             padding-left: 30px;
         }
         &-key {
-            background-color: var(--bgLightColor);
+            background-color: var(--bgHoverColor);
+        }
+        &-value {
+            background-color: white;
+        }
+        &-empty {
+            padding: 20px 0 20px 50px;
+            justify-content: flex-start;
+            grid-column: 1 / 5;
+            background-color: white;
         }
     }
     .display-key {

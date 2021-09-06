@@ -1,8 +1,8 @@
 <template>
     <div class="common-package-detail flex-align-center">
-        <aside class="common-package-version">
+        <aside class="common-package-version" v-bkloading="{ isLoading }">
             <header class="pl30 version-header flex-align-center">制品版本</header>
-            <div class="p20 version-search">
+            <div class="version-search">
                 <bk-input
                     v-model.trim="versionInput"
                     placeholder="请输入版本, 按Enter键搜索"
@@ -12,98 +12,42 @@
                     right-icon="bk-icon icon-search">
                 </bk-input>
             </div>
-            <div class="version-list">
-                <div class="version-item"></div>
-            </div>
+            <infinite-scroll
+                ref="infiniteScroll"
+                class="version-list"
+                :is-loading="isLoading"
+                :has-next="versionList.length < pagination.count"
+                @load="handlerPaginationChange({ current: pagination.current + 1 }, true)">
+                <div class="mb10 list-count">共计{{ pagination.count }}个版本</div>
+                <div
+                    class="mb10 version-item flex-center"
+                    :class="{ 'selected': $version.name === version }"
+                    v-for="$version in versionList"
+                    :key="$version.name"
+                    @click="changeVersion($version)">
+                    <span>{{ $version.name }}</span>
+                    <bk-popover class="version-operation" placement="bottom-end" theme="light" ext-cls="operation-container">
+                        <i class="devops-icon icon-more flex-center hover-btn"></i>
+                        <ul class="operation-list" slot="content">
+                            <li class="operation-item hover-btn"
+                                :disabled="($version.stageTag || '').includes('@release')"
+                                @click.stop="changeStageTagHandler($version)">晋级</li>
+                            <li v-if="repoType !== 'docker'" class="operation-item hover-btn" @click.stop="downloadPackageHandler($version)">下载</li>
+                            <li class="operation-item hover-btn" @click.stop="deleteVersionHandler($version)">删除</li>
+                        </ul>
+                    </bk-popover>
+                </div>
+            </infinite-scroll>
         </aside>
-        <div class="common-package-info flex-1">
-            <!-- <bk-tab class="common-package-info-main" type="unborder-card" :active.sync="tabName">
-                <bk-tab-panel name="commonVersion" :label="$t('version')" v-bkloading="{ isLoading }">
-                    <div class="common-package-version-1">
-                        <div class="mb20 flex-align-center">
-                            <bk-input
-                                class="common-version-search"
-                                v-model.trim="versionInput"
-                                clearable
-                                :placeholder="$t('versionPlacehodler')"
-                                @enter="handlerPaginationChange()"
-                                @clear="handlerPaginationChange()">
-                            </bk-input>
-                            <i class="common-version-search-btn devops-icon icon-search" @click="handlerPaginationChange()"></i>
-                        </div>
-                        <bk-table
-                            class="common-version-table"
-                            height="calc(100% - 140px)"
-                            :data="versionList"
-                            :outer-border="false"
-                            :row-border="false"
-                            :row-style="{ cursor: 'pointer' }"
-                            size="small"
-                            @row-click="toCommonVersionDetail"
-                        >
-                            <bk-table-column :label="$t('version')" prop="name"></bk-table-column>
-                            <bk-table-column :label="$t('artiStatus')">
-                                <template v-if="props.row.stageTag" slot-scope="props">
-                                    <span class="mr5 repo-tag" v-for="tag in props.row.stageTag"
-                                        :key="props.row.tag + tag">{{ tag }}</span>
-                                </template>
-                            </bk-table-column>
-                            <bk-table-column :label="$t('size')">
-                                <template slot-scope="props">
-                                    {{ convertFileSize(props.row.size) }}
-                                </template>
-                            </bk-table-column>
-                            <bk-table-column :label="$t('downloads')" prop="downloads"></bk-table-column>
-                            <bk-table-column :label="$t('lastModifiedBy')">
-                                <template slot-scope="props">
-                                    {{ userList[props.row.lastModifiedBy] ? userList[props.row.lastModifiedBy].name : props.row.lastModifiedBy }}
-                                </template>
-                            </bk-table-column>
-                            <bk-table-column :label="$t('lastModifiedDate')">
-                                <template slot-scope="props">
-                                    {{ formatDate(props.row.lastModifiedDate) }}
-                                </template>
-                            </bk-table-column>
-                            <bk-table-column :label="$t('operation')" width="150">
-                                <template slot-scope="props">
-                                    <bk-button class="mr20"
-                                        :disabled="(props.row.stageTag || '').includes('@release')"
-                                        @click.stop="changeStageTagHandler(props.row)" text theme="primary">
-                                        <i class="devops-icon icon-arrows-up"></i>
-                                    </bk-button>
-                                    <bk-button v-if="repoType !== 'docker'" class="mr20" @click.stop="downloadPackageHandler(props.row)" text theme="primary">
-                                        <i class="devops-icon icon-download"></i>
-                                    </bk-button>
-                                    <bk-button @click.stop="deleteVersionHandler(props.row)" text theme="primary">
-                                        <i class="devops-icon icon-delete"></i>
-                                    </bk-button>
-                                </template>
-                            </bk-table-column>
-                        </bk-table>
-                        <bk-pagination
-                            class="mt10"
-                            size="small"
-                            align="right"
-                            show-total-count
-                            @change="current => handlerPaginationChange({ current })"
-                            @limit-change="limit => handlerPaginationChange({ limit })"
-                            :current.sync="pagination.current"
-                            :limit="pagination.limit"
-                            :count="pagination.count"
-                            :limit-list="pagination.limitList">
-                        </bk-pagination>
-                    </div>
-                </bk-tab-panel>
-            </bk-tab> -->
+        <div class="common-version-detail flex-1">
+            <version-detail></version-detail>
         </div>
         
-        <bk-dialog
+        <canway-dialog
             v-model="formDialog.show"
-            :title="$t('upgrade')"
-            :close-icon="false"
-            :quick-close="false"
             width="600"
-            header-position="left">
+            :title="$t('upgrade')"
+            @cancel="cancelFormDialog">
             <bk-form :label-width="120" :model="formDialog" :rules="rules" ref="formDialog">
                 <bk-form-item :label="$t('upgradeTo')" :required="true" property="tag">
                     <bk-radio-group v-model="formDialog.tag">
@@ -113,19 +57,19 @@
                 </bk-form-item>
             </bk-form>
             <div slot="footer">
-                <bk-button ext-cls="mr5" :loading="formDialog.loading" theme="primary" @click.stop.prevent="submitFormDialog">{{$t('submit')}}</bk-button>
-                <bk-button ext-cls="mr5" theme="default" @click.stop="cancelFormDialog">{{$t('cancel')}}</bk-button>
+                <bk-button theme="default" @click.stop="cancelFormDialog">{{$t('cancel')}}</bk-button>
+                <bk-button class="ml5" :loading="formDialog.loading" theme="primary" @click="submitFormDialog">{{$t('confirm')}}</bk-button>
             </div>
-        </bk-dialog>
+        </canway-dialog>
     </div>
 </template>
 <script>
-    import { convertFileSize, formatDate } from '@/utils'
-    import commonMixin from './commonMixin'
-    import { mapState, mapActions } from 'vuex'
+    import InfiniteScroll from '@/components/InfiniteScroll'
+    import VersionDetail from './commonVersionDetail'
+    import { mapActions } from 'vuex'
     export default {
         name: 'commonPackageDetail',
-        mixins: [commonMixin],
+        components: { InfiniteScroll, VersionDetail },
         data () {
             return {
                 tabName: 'commonVersion',
@@ -167,28 +111,50 @@
             }
         },
         computed: {
-            ...mapState(['userList'])
+            projectId () {
+                return this.$route.params.projectId || ''
+            },
+            repoType () {
+                return this.$route.params.repoType || ''
+            },
+            repoName () {
+                return this.$route.query.repoName || ''
+            },
+            packageKey () {
+                return this.$route.query.package || ''
+            },
+            version () {
+                return this.$route.query.version || ''
+            }
         },
         created () {
             this.getPackageInfoHandler()
             this.handlerPaginationChange()
         },
         methods: {
-            formatDate,
-            convertFileSize,
             ...mapActions([
                 'getPackageInfo',
                 'getVersionList',
                 'changeStageTag',
                 'deleteVersion'
             ]),
-            handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
+            handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}, load) {
                 this.pagination.current = current
                 this.pagination.limit = limit
-                this.getVersionListHandler()
+                this.getVersionListHandler(load)
+                if (!load) {
+                    this.$refs.infiniteScroll && this.$refs.infiniteScroll.scrollToTop()
+                    this.$router.replace({
+                        query: {
+                            ...this.$route.query,
+                            versionName: this.versionInput
+                        }
+                    })
+                }
             },
-            getVersionListHandler () {
-                this.isLoading = true
+            getVersionListHandler (load) {
+                if (this.isLoading) return
+                this.isLoading = !load
                 this.getVersionList({
                     projectId: this.projectId,
                     repoName: this.repoName,
@@ -197,8 +163,16 @@
                     limit: this.pagination.limit,
                     version: this.versionInput
                 }).then(({ records, totalRecords }) => {
-                    this.versionList = records
+                    load ? this.versionList.push(...records) : (this.versionList = records)
                     this.pagination.count = totalRecords
+                    if (!this.version) {
+                        this.$router.replace({
+                            query: {
+                                ...this.$route.query,
+                                version: records[0].name
+                            }
+                        })
+                    }
                 }).finally(() => {
                     this.isLoading = false
                 })
@@ -215,13 +189,11 @@
                     this.infoLoading = false
                 })
             },
-            toCommonVersionDetail (row) {
-                this.$router.push({
-                    name: 'commonVersion',
+            changeVersion ({ name: version }) {
+                this.$router.replace({
                     query: {
-                        name: this.repoName,
-                        package: this.packageKey,
-                        version: row.name
+                        ...this.$route.query,
+                        version
                     }
                 })
             },
@@ -272,20 +244,17 @@
                     })
                 })
             },
-            deleteVersionHandler (row) {
-                this.$bkInfo({
-                    type: 'warning',
-                    theme: 'warning',
-                    title: this.$t('deleteVersionTitle', { version: this.version }),
-                    subTitle: this.$t('deleteVersionSubTitle'),
-                    showFooter: true,
+            deleteVersionHandler ({ name: version }) {
+                this.$confirm({
+                    theme: 'danger',
+                    message: this.$t('deleteVersionTitle', { version }),
                     confirmFn: () => {
-                        this.deleteVersion({
+                        return this.deleteVersion({
                             projectId: this.projectId,
                             repoType: this.repoType,
                             repoName: this.repoName,
                             packageKey: this.packageKey,
-                            version: row.name
+                            version
                         }).then(() => {
                             this.getVersionListHandler()
                             this.$bkMessage({
@@ -313,8 +282,50 @@
             border-bottom: 1px solid var(--borderWeightColor);
         }
         .version-search {
-
+            padding: 20px 20px 10px;
         }
+        .version-list {
+            height: calc(100% - 122px);
+            padding: 0 20px 10px;
+            background-color: white;
+            .list-count {
+                font-size: 12px;
+                color: #999;
+            }
+            .version-item {
+                position: relative;
+                height: 42px;
+                border-radius: 4px;
+                background-color: #F6F9FF;
+                cursor: pointer;
+                .version-operation {
+                    position: absolute;
+                    right: 10px;
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 50%;
+                    ::v-deep .bk-tooltip-ref,
+                    .icon-more {
+                        width: 100%;
+                        height: 100%;
+                    }
+                    &:hover {
+                        background-color: var(--borderColor);
+                    }
+                }
+                &.selected {
+                    color: white;
+                    background-color: var(--primaryColor);
+                    .version-operation:hover {
+                        background-color: #a3c5fd;
+                    }
+                }
+            }
+        }
+    }
+    .common-version-detail {
+        height: 100%;
+        background-color: white;
     }
 }
 </style>

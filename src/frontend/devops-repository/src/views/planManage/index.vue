@@ -355,28 +355,3 @@
     }
 }
 </style>
-<style lang="scss">
-.operation-container {
-    .tippy-tooltip {
-        padding-left: 0;
-        padding-right: 0;
-    }
-    .operation-list {
-        .operation-item {
-            width: 90px;
-            padding: 0 14px;
-            font-size: 14px;
-            line-height: 2.5;
-            text-align: center;
-            cursor: pointer;
-            &:hover:not(.disabled) {
-                background-color: #eaf3ff;
-            }
-            &.disabled {
-                color: var(--disabledColor);
-                cursor: not-allowed;
-            }
-        }
-    }
-}
-</style>

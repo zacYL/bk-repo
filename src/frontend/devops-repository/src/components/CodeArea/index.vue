@@ -11,7 +11,7 @@
             }">
             <pre class="code-pre">{{ code }}</pre>
         </div>
-        <i class="code-copy devops-icon icon-clipboard" @click="copyCode()"></i>
+        <i class="code-copy devops-icon icon-clipboard hover-btn" @click="copyCode()"></i>
     </div>
 </template>
 <script>
@@ -90,13 +90,9 @@
         top: 10px;
         right: 10px;
         font-size: 24px;
-        cursor: pointer;
     }
     &:hover .code-copy {
         visibility: visible;
-        &:hover {
-            color: var(--iconPrimaryColor);
-        }
     }
 }
 </style>

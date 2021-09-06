@@ -1,5 +1,10 @@
 <template>
     <bk-tab class="common-version-container" type="unborder-card" :active.sync="tabName" v-bkloading="{ isLoading }">
+        <template #setting>
+            <bk-button theme="primary" outline class="mr10" @click="$emit('tag')">晋级</bk-button>
+            <bk-button outline class="mr10" @click="$emit('download')">下载</bk-button>
+            <bk-button theme="danger" outline class="mr20" @click="$emit('delete')">删除</bk-button>
+        </template>
         <bk-tab-panel v-if="detail.basic" name="versionBaseInfo" :label="$t('baseInfo')">
             <div class="version-base-info">
                 <div class="base-info" :data-title="$t('baseInfo')">

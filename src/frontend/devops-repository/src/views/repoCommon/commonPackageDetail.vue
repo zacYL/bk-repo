@@ -40,7 +40,11 @@
             </infinite-scroll>
         </aside>
         <div class="common-version-detail flex-1">
-            <version-detail></version-detail>
+            <version-detail
+                @tag="changeStageTagHandler()"
+                @download="downloadPackageHandler()"
+                @delete="deleteVersionHandler()">
+            </version-detail>
         </div>
         
         <canway-dialog
@@ -125,6 +129,9 @@
             },
             version () {
                 return this.$route.query.version || ''
+            },
+            currentVersion () {
+                return this.versionList.find(version => version.name === this.version)
             }
         },
         created () {
@@ -197,7 +204,7 @@
                     }
                 })
             },
-            changeStageTagHandler (row) {
+            changeStageTagHandler (row = this.currentVersion) {
                 this.formDialog = {
                     show: true,
                     loading: false,
@@ -230,7 +237,7 @@
                 this.$refs.formDialog.clearError()
                 this.formDialog.show = false
             },
-            downloadPackageHandler (row) {
+            downloadPackageHandler (row = this.currentVersion) {
                 const url = `/repository/api/version/download/${this.projectId}/${this.repoName}?packageKey=${this.packageKey}&version=${row.name}`
                 this.$ajax.head(url).then(() => {
                     window.open(
@@ -244,7 +251,7 @@
                     })
                 })
             },
-            deleteVersionHandler ({ name: version }) {
+            deleteVersionHandler ({ name: version } = this.currentVersion) {
                 this.$confirm({
                     theme: 'danger',
                     message: this.$t('deleteVersionTitle', { version }),

@@ -54,7 +54,7 @@
                 this.uploadArtifactory({
                     xhr: this.uploadXHR,
                     projectId: this.$route.params.projectId,
-                    repoName: this.$route.query.name,
+                    repoName: this.$route.query.repoName,
                     fullPath: `${this.fullPath}/${file.name}`,
                     body: file.blob,
                     progressHandler: this.progressHandler,
@@ -85,7 +85,7 @@
                 const file = await this.$refs.artifactoryUpload.getFiles()
                 if (!file.overwrite) {
                     this.loading = true
-                    const url = `/generic/${this.$route.params.projectId}/${this.$route.query.name}/${encodeURIComponent(`${this.fullPath}/${file.name}`)}`
+                    const url = `/generic/${this.$route.params.projectId}/${this.$route.query.repoName}/${encodeURIComponent(`${this.fullPath}/${file.name}`)}`
                     this.$ajax.head(url).then(() => {
                         this.$bkMessage({
                             theme: 'error',

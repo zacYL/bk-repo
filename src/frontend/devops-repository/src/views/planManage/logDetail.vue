@@ -28,7 +28,7 @@
             :row-border="false"
             size="small">
             <template #empty>
-                <empty-data ex-style="margin-top:-250px;" :search="Boolean(searchGroup.length || status)">
+                <empty-data :search="Boolean(searchGroup.length || status)">
                     <template v-if="!Boolean(searchGroup.length || status)">
                         <span class="ml10">暂无同步记录</span>
                     </template>

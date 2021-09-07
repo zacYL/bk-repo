@@ -39,7 +39,7 @@
             size="small"
             @row-click="showPlanDetailHandler">
             <template #empty>
-                <empty-data ex-style="margin-top:-250px;" :search="Boolean(planInput || lastExecutionStatus || showEnabled)">
+                <empty-data :search="Boolean(planInput || lastExecutionStatus || showEnabled)">
                     <template v-if="!Boolean(planInput || lastExecutionStatus || showEnabled)">
                         <span class="ml10">暂无计划数据，</span>
                         <bk-button text @click="$router.push({ name: 'createPlan' })">即刻创建</bk-button>

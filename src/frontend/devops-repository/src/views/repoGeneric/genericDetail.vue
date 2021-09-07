@@ -4,54 +4,69 @@
         :title="detailSlider.data.name"
         @click.native.stop="() => {}"
         :quick-close="true"
-        :width="800">
-        <bk-tab class="mt10 ml20 mr20" slot="content" type="unborder-card" :active.sync="tabName">
+        :width="720">
+        <bk-tab class="detail-container" slot="content" type="unborder-card" :active.sync="tabName">
             <bk-tab-panel name="detailInfo" :label="$t('baseInfo')">
-                <div class="detail-info info-area" v-bkloading="{ isLoading: detailSlider.loading }">
-                    <div class="flex-center" v-for="key in Object.keys(detailInfoMap)" :key="key">
-                        <template v-if="detailSlider.data[key] && (key !== 'size' || !detailSlider.data.folder)">
-                            <span>{{ detailInfoMap[key] }}</span>
-                            <span class="pl40 break-all">{{ detailSlider.data[key] }}</span>
-                        </template>
+                <div class="version-base-info base-info" :data-title="$t('baseInfo')" v-bkloading="{ isLoading: detailSlider.loading }">
+                    <div class="grid-item"
+                        v-for="{ name, label, value } in detailInfoMap"
+                        :key="name">
+                        <label>{{ label }}：</label>
+                        <span class="flex-1 text-overflow" :title="value">{{ value }}</span>
                     </div>
                 </div>
-                <div class="detail-info checksums-area" v-if="!detailSlider.folder" v-bkloading="{ isLoading: detailSlider.loading }">
-                    <div class="flex-center" v-for="key of ['sha256', 'md5']" :key="key">
-                        <span>{{ key.toUpperCase() }}</span>
-                        <span class="pl40 break-all">{{ detailSlider.data[key] }}</span>
+                <div class="version-base-info base-info-checksums" data-title="Checksums" v-bkloading="{ isLoading: detailSlider.loading }">
+                    <div v-if="detailSlider.data.sha256" class="grid-item">
+                        <label>SHA256：</label>
+                        <span class="flex-1 text-overflow" :title="detailSlider.data.sha256">{{ detailSlider.data.sha256 }}</span>
+                    </div>
+                    <div v-if="detailSlider.data.md5" class="grid-item">
+                        <label>MD5：</label>
+                        <span class="flex-1 text-overflow" :title="detailSlider.data.md5">{{ detailSlider.data.md5 }}</span>
                     </div>
                 </div>
             </bk-tab-panel>
             <bk-tab-panel v-if="!detailSlider.folder" name="metaDate" :label="$t('metaData')">
-                <bk-table
-                    class="mt20"
-                    :data="Object.entries(detailSlider.data.metadata || {})"
-                    stripe
-                    :outer-border="false"
-                    :row-border="false"
-                    size="small"
-                >
-                    <div slot="prepend" class="pl15 add-metadata-main">
-                        <bk-form form-type="inline" :label-width="80" :model="metadata" :rules="rules" ref="metadatForm">
-                            <bk-form-item class="mr10" :required="true" property="key">
-                                <bk-input style="width: 230px" size="small" v-model="metadata.key" :placeholder="$t('key')"></bk-input>
-                            </bk-form-item>
-                            <bk-form-item class="mr10" :required="true" property="value">
-                                <bk-input style="width: 350px" size="small" v-model="metadata.value" :placeholder="$t('value')"></bk-input>
-                            </bk-form-item>
-                            <bk-form-item>
-                                <i class="devops-icon icon-plus hover-btn" @click="addMetadataHandler"></i>
-                            </bk-form-item>
-                        </bk-form>
+                <div class="version-metadata" data-title="元数据">
+                    <div class="version-metadata-add" v-bk-clickoutside="hiddenAddMetadata">
+                        <i @click="metadata.show ? hiddenAddMetadata() : showAddMetadata()" class="devops-icon icon-plus flex-center hover-btn"></i>
+                        <div class="version-metadata-add-board"
+                            :style="{ height: metadata.show ? '180px' : '0' }">
+                            <bk-form class="p20" :label-width="75" :model="metadata" :rules="rules" ref="metadatForm">
+                                <bk-form-item :label="$t('key')" :required="true" property="key">
+                                    <bk-input size="small" v-model="metadata.key" :placeholder="$t('key')"></bk-input>
+                                </bk-form-item>
+                                <bk-form-item :label="$t('value')" :required="true" property="value">
+                                    <bk-input size="small" v-model="metadata.value" :placeholder="$t('value')"></bk-input>
+                                </bk-form-item>
+                                <bk-form-item>
+                                    <bk-button size="small" theme="default" @click.stop="hiddenAddMetadata">{{$t('cancel')}}</bk-button>
+                                    <bk-button class="ml5" size="small" :loading="metadata.loading" theme="primary" @click="addMetadataHandler">{{$t('confirm')}}</bk-button>
+                                </bk-form-item>
+                            </bk-form>
+                        </div>
                     </div>
-                    <bk-table-column :label="$t('key')" prop="0" width="250"></bk-table-column>
-                    <bk-table-column :label="$t('value')" prop="1"></bk-table-column>
-                    <bk-table-column :label="$t('operation')" width="97">
-                        <template slot-scope="props">
-                            <i class="devops-icon icon-delete hover-btn" @click="deleteMetadataHandler(props.row)"></i>
+                    <bk-table
+                        :data="Object.entries(detailSlider.data.metadata || {})"
+                        :outer-border="false"
+                        :row-border="false"
+                        size="small">
+                        <template #empty>
+                            <empty-data>
+                                <span class="ml10">暂无元数据，</span>
+                                <bk-button text @click="showAddMetadata">即刻添加</bk-button>
+                            </empty-data>
                         </template>
-                    </bk-table-column>
-                </bk-table>
+                        <bk-table-column :label="$t('key')" prop="0" width="250"></bk-table-column>
+                        <bk-table-column :label="$t('value')" prop="1"></bk-table-column>
+                        <bk-table-column width="1">
+                            <template #default="{ row }">
+                                <i class="devops-icon icon-delete hover-btn" @click="deleteMetadataHandler(row)"></i>
+                            </template>
+                        </bk-table-column>
+                        <bk-table-column label="" width="35"></bk-table-column>
+                    </bk-table>
+                </div>
             </bk-tab-panel>
         </bk-tab>
     </bk-sideslider>
@@ -67,6 +82,8 @@
             return {
                 tabName: 'detailInfo',
                 metadata: {
+                    show: false,
+                    loading: false,
                     key: '',
                     value: ''
                 },
@@ -75,14 +92,14 @@
                         {
                             required: true,
                             message: this.$t('pleaseInput') + this.$t('key'),
-                            trigger: 'blur'
+                            trigger: 'change'
                         }
                     ],
                     value: [
                         {
                             required: true,
                             message: this.$t('pleaseInput') + this.$t('value'),
-                            trigger: 'blur'
+                            trigger: 'change'
                         }
                     ]
                 }
@@ -93,21 +110,33 @@
                 return this.$route.params.projectId
             },
             repoName () {
-                return this.$route.query.name
+                return this.$route.query.repoName
             },
             detailInfoMap () {
-                return {
-                    'fullPath': this.$t('path'),
-                    'size': this.$t('size'),
-                    'createdBy': this.$t('createdBy'),
-                    'createdDate': this.$t('createdDate'),
-                    'lastModifiedBy': this.$t('lastModifiedBy'),
-                    'lastModifiedDate': this.$t('lastModifiedDate')
-                }
+                return [
+                    { name: 'fullPath', label: this.$t('path') },
+                    { name: 'size', label: this.$t('size') },
+                    { name: 'createdBy', label: this.$t('createdBy') },
+                    { name: 'createdDate', label: this.$t('createdDate') },
+                    { name: 'lastModifiedBy', label: this.$t('lastModifiedBy') },
+                    { name: 'lastModifiedDate', label: this.$t('lastModifiedDate') }
+                ].filter(({ name }) => this.detailSlider.data.hasOwnProperty(name) && (name !== 'size' || !this.detailSlider.data.folder))
+                    .map(item => ({ ...item, value: this.detailSlider.data[item.name] }))
             }
         },
         methods: {
             ...mapActions(['addMetadata', 'deleteMetadata']),
+            showAddMetadata () {
+                this.metadata = {
+                    show: true,
+                    loading: false,
+                    key: '',
+                    value: ''
+                }
+            },
+            hiddenAddMetadata () {
+                this.metadata.show = false
+            },
             async addMetadataHandler () {
                 await this.$refs.metadatForm.validate()
                 this.addMetadata({
@@ -119,12 +148,15 @@
                             [this.metadata.key]: this.metadata.value
                         }
                     }
-                }).finally(() => {
-                    this.metadata = {
-                        key: '',
-                        value: ''
-                    }
+                }).then(() => {
+                    this.$bkMessage({
+                        theme: 'success',
+                        message: this.$t('add') + this.$t('success')
+                    })
+                    this.showAddMetadata()
                     this.$emit('refresh', true)
+                }).finally(() => {
+                    this.metadata.loading = false
                 })
             },
             deleteMetadataHandler (row) {
@@ -143,40 +175,100 @@
     }
 </script>
 <style lang="scss" scoped>
-.detail-info {
-    padding: 15px;
-    margin-top: 40px;
-    border: 1px solid var(--borderWeightColor);
-    span {
-        padding: 10px 0;
-        flex: 4;
-        &:first-child {
-            flex: 1;
-            display: flex;
-            justify-content: flex-end;
-        }
+@mixin display-block {
+    position: relative;
+    margin-top: 55px;
+    &:first-child {
+        margin-top: 35px;
     }
-    &.info-area:before {
-        content: 'Info';
+    &:before {
         position: absolute;
-        padding: 0 10px;
-        font-weight: 700;
-        margin-top: -25px;
-        background-color: white
+        top: -30px;
+        left: 20px;
+        content: '';
+        width: 3px;
+        height: 12px;
+        background-color: var(--primaryColor);
     }
-    &.checksums-area:before {
-        content: 'Checksums';
+    &:after {
         position: absolute;
-        padding: 0 10px;
-        font-weight: 700;
-        margin-top: -25px;
-        background-color: white
+        top: -35px;
+        left: 30px;
+        content: attr(data-title);
+        font-size: 16px;
+        font-weight: bold;
     }
 }
-.add-metadata-main {
-    display: flex;
-    align-items: center;
-    height: 40px;
-    border-bottom: 1px solid var(--borderWeightColor);
+::v-deep .bk-sideslider-content {
+    height: calc(100% - 60px);
+}
+.detail-container {
+    height: 100%;
+    ::v-deep .bk-tab-section {
+        height: calc(100% - 50px);
+        overflow-y: auto;
+    }
+    .version-base-info {
+        &.base-info,
+        &.base-info-checksums {
+            @include display-block;
+        }
+        &.base-info {
+            padding: 20px;
+            display: grid;
+            grid-gap: 20px;
+            background-color: var(--bgHoverColor);
+        }
+        &.base-info-checksums {
+            padding: 20px;
+            display: grid;
+            grid-gap: 20px;
+            background-color: var(--bgHoverColor);
+        }
+        .grid-item {
+            display: flex;
+            overflow: hidden;
+            label {
+                flex-basis: 100px;
+                text-align: right;
+            }
+        }
+    }
+    .version-metadata {
+        @include display-block;
+        .version-metadata-add {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            top: 0;
+            right: 0;
+            width: 35px;
+            height: 43px;
+            z-index: 1;
+            .version-metadata-add-board {
+                position: absolute;
+                top: 43px;
+                right: 0;
+                width: 300px;
+                overflow: hidden;
+                background: white;
+                border-radius: 2px;
+                box-shadow: 0 3px 6px rgba(51, 60, 72, 0.4);
+                will-change: height;
+                transition: all .3s;
+            }
+            .icon-plus {
+                width: 100%;
+                height: 100%;
+                &:hover {
+                    background-color: #f0f1f5;
+                }
+            }
+        }
+        .icon-delete {
+            font-size: 16px;
+        }
+    }
 }
 </style>

@@ -66,7 +66,7 @@
                     </package-card>
                 </infinite-scroll>
             </template>
-            <empty-data v-else class="flex-1" ex-style="margin-top: -250px;" search></empty-data>
+            <empty-data v-else class="flex-1" search></empty-data>
         </main>
     </div>
 </template>

@@ -9,7 +9,7 @@
             :row-border="false"
             size="small">
             <template #empty>
-                <empty-data ex-style="margin-top:-250px;">
+                <empty-data>
                     <span class="ml10">暂无个人令牌数据，</span>
                     <bk-button text @click="createToken">即刻创建</bk-button>
                 </empty-data>

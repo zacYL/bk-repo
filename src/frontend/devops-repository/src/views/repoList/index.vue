@@ -36,7 +36,7 @@
             :row-style="({ row }) => ({ 'color': row.hasPermission ? '' : '#dcdee5 !important' })"
             @row-click="toPackageList">
             <template #empty>
-                <empty-data ex-style="margin-top:-250px;" :search="Boolean(query.name || query.type)">
+                <empty-data :search="Boolean(query.name || query.type)">
                     <template v-if="!Boolean(query.name || query.type) && canCreate">
                         <span class="ml10">暂无仓库数据，</span>
                         <bk-button text @click="createRepo">即刻创建</bk-button>

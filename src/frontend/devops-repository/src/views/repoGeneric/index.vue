@@ -1,45 +1,87 @@
 <template>
     <div class="repo-generic-container" @click="() => selectRow(selectedTreeNode)">
-        <div v-show="!query"
-            class="repo-generic-side"
-            :style="{ 'flex-basis': `${sideBarWidth}px` }"
-            v-bkloading="{ isLoading: treeLoading }">
-            <div class="important-search">
-                <bk-input
-                    v-model.trim="importantSearch"
-                    placeholder=""
-                    :clearable="true"
-                    :right-icon="'bk-icon icon-search'">
-                </bk-input>
+        <header class="mb10 p20 generic-header flex-align-center">
+            <Icon class="p5 generic-img" size="80" name="generic" />
+            <div class="ml20 generic-title flex-column flex-1">
+                <span class="mb10 repo-title text-overflow" :title="replaceRepoName(repoName)">
+                    {{ replaceRepoName(repoName) }}
+                </span>
+                <span class="repo-description" :title="currentRepo.description">
+                    {{ currentRepo.description || '--' }}
+                </span>
             </div>
-            <repo-tree
-                class="repo-generic-tree"
-                ref="repoTree"
-                :sortable="true"
-                :list="genericTree"
-                :important-search="importantSearch"
-                :open-list="sideTreeOpenList"
-                :selected-node="selectedTreeNode"
-                @icon-click="iconClickHandler"
-                @item-click="itemClickHandler">
-            </repo-tree>
-        </div>
-        <div class="repo-generic-split-bar"></div>
-        <div class="repo-generic-main" v-bkloading="{ isLoading }">
-            <div class="repo-generic-table">
+        </header>
+        <div class="repo-generic-main flex-align-center">
+            <template v-if="!searchFileName">
+                <div class="repo-generic-side"
+                    :style="{ 'flex-basis': `${sideBarWidth}px` }"
+                    v-bkloading="{ isLoading: treeLoading }">
+                    <div class="important-search">
+                        <bk-input
+                            v-model.trim="importantSearch"
+                            placeholder="请输入关键字，按Enter键搜索"
+                            clearable
+                            right-icon="bk-icon icon-search"
+                            @enter="searchFile"
+                            @clear="searchFile">
+                        </bk-input>
+                    </div>
+                    <repo-tree
+                        class="repo-generic-tree"
+                        ref="repoTree"
+                        sortable
+                        :important-search="importantSearch"
+                        :open-list="sideTreeOpenList"
+                        :selected-node="selectedTreeNode"
+                        @icon-click="iconClickHandler"
+                        @item-click="itemClickHandler">
+                    </repo-tree>
+                </div>
+                <move-split-bar v-model="sideBarWidth" :min-value="200"></move-split-bar>
+            </template>
+            <div class="repo-generic-table" v-bkloading="{ isLoading }">
+                <div class="m10 flex-between-center">
+                    <bk-input
+                        class="w250"
+                        v-if="searchFileName"
+                        v-model.trim="importantSearch"
+                        placeholder="请输入关键字，按Enter键搜索"
+                        clearable
+                        right-icon="bk-icon icon-search"
+                        @enter="searchFile"
+                        @clear="searchFile">
+                    </bk-input>
+                    <breadcrumb v-else :list="breadcrumb"></breadcrumb>
+                    <div class="repo-generic-actions">
+                        <bk-button class="mr10"
+                            v-for="btn in operationBtns"
+                            :key="btn.label"
+                            @click.stop="btn.clickEvent()">
+                            {{ btn.label }}
+                        </bk-button>
+                    </div>
+                </div>
                 <bk-table
                     :data="artifactoryList"
-                    height="calc(100% - 42px)"
+                    height="calc(100% - 104px)"
                     :outer-border="false"
                     :row-border="false"
                     size="small"
                     @row-click="selectRow"
                     @row-dblclick="openFolder">
+                    <template #empty>
+                        <empty-data :search="Boolean(importantSearch)">
+                            <template v-if="!Boolean(importantSearch)">
+                                <span class="ml10">暂无文件，</span>
+                                <bk-button text @click="handlerUpload">即刻上传</bk-button>
+                            </template>
+                        </empty-data>
+                    </template>
                     <bk-table-column :label="$t('fileName')" prop="name" :render-header="renderHeader">
                         <template #default="{ row }">
-                            <div class="flex-align-center fine-name">
+                            <div class="flex-align-center">
                                 <Icon size="24" :name="row.folder ? 'folder' : getIconName(row.name)" />
-                                <div class="ml10" :title="row.name">{{row.name}}</div>
+                                <div class="ml10 flex-1 text-overflow" :title="row.name">{{row.name}}</div>
                             </div>
                         </template>
                     </bk-table-column>
@@ -64,6 +106,7 @@
                     </bk-table-column>
                 </bk-table>
                 <bk-pagination
+                    class="m10"
                     size="small"
                     align="right"
                     @change="current => handlerPaginationChange({ current })"
@@ -74,23 +117,17 @@
                     :limit-list="pagination.limitList">
                 </bk-pagination>
             </div>
-            <aside v-show="!query || selectedRow.fullPath" class="repo-generic-actions">
-                <bk-button class="detail-btn" theme="primary" @click.stop="showDetail()">{{ $t('showDetail') }}</bk-button>
-                <div class="actions-btn flex-column">
-                    <bk-button v-for="btn in operationBtns" :key="btn.label" @click.stop="btn.clickEvent()" text theme="primary">
-                        <i :class="`mr5 devops-icon icon-${btn.icon}`"></i>
-                        {{ btn.label }}
-                    </bk-button>
-                </div>
-            </aside>
         </div>
-        <genericDetail :detail-slider="detailSlider"></genericDetail>
+
+        <generic-detail :detail-slider="detailSlider" @refresh="showDetail"></generic-detail>
         <generic-form-dialog ref="genericFormDialog" @submit="submitGenericForm"></generic-form-dialog>
         <generic-tree-dialog ref="genericTreeDialog" @update="updateGenericTreeNode" @submit="submitGenericTree"></generic-tree-dialog>
         <generic-upload-dialog v-bind="uploadDialog" @update="getArtifactories" @cancel="uploadDialog.show = false"></generic-upload-dialog>
     </div>
 </template>
 <script>
+    import Breadcrumb from '@/components/Breadcrumb'
+    import MoveSplitBar from '@/components/MoveSplitBar'
     import RepoTree from '@/components/RepoTree'
     import genericDetail from './genericDetail'
     import genericUploadDialog from './genericUploadDialog'
@@ -101,10 +138,17 @@
     import { mapState, mapMutations, mapActions } from 'vuex'
     export default {
         name: 'repoGeneric',
-        components: { RepoTree, genericDetail, genericUploadDialog, genericFormDialog, genericTreeDialog },
+        components: {
+            Breadcrumb,
+            MoveSplitBar,
+            RepoTree,
+            genericDetail,
+            genericUploadDialog,
+            genericFormDialog,
+            genericTreeDialog
+        },
         data () {
             return {
-                startDrag: false,
                 sideBarWidth: 300,
                 isLoading: false,
                 treeLoading: false,
@@ -139,17 +183,19 @@
                     show: false,
                     title: '',
                     fullPath: ''
-                },
-                query: null
+                }
             }
         },
         computed: {
-            ...mapState(['userList', 'genericTree']),
+            ...mapState(['repoListAll', 'userList', 'genericTree']),
             projectId () {
                 return this.$route.params.projectId
             },
             repoName () {
-                return this.$route.query.name
+                return this.$route.query.repoName
+            },
+            currentRepo () {
+                return this.repoListAll.find(repo => repo.name === this.repoName) || {}
             },
             operationBtns () {
                 // 是否选中了行
@@ -159,16 +205,36 @@
                 // 是否选中的是文件夹
                 const isFolder = this.selectedRow.folder
                 return [
-                    isSelectedRow && !isLimit && { clickEvent: this.renameRes, icon: 'edit', label: this.$t('rename') },
-                    isSelectedRow && !isLimit && { clickEvent: this.moveRes, icon: 'move', label: this.$t('move') },
-                    isSelectedRow && !isLimit && { clickEvent: this.copyRes, icon: 'save', label: this.$t('copy') },
-                    isSelectedRow && !isLimit && { clickEvent: this.deleteRes, icon: 'delete', label: this.$t('delete') },
-                    isSelectedRow && !isFolder && { clickEvent: this.handlerShare, icon: 'none', label: this.$t('share') },
-                    isSelectedRow && { clickEvent: this.handlerDownload, icon: 'download', label: this.$t('download') },
-                    !isSelectedRow && !isLimit && { clickEvent: this.addFolder, icon: 'folder-plus', label: this.$t('create') + this.$t('folder') },
-                    !isSelectedRow && !isLimit && { clickEvent: this.handlerUpload, icon: 'upload', label: this.$t('upload') },
-                    !isSelectedRow && { clickEvent: this.getArtifactories, icon: 'refresh', label: this.$t('refresh') }
+                    { clickEvent: this.showDetail, label: this.$t('showDetail') },
+                    isSelectedRow && !isLimit && { clickEvent: this.renameRes, label: this.$t('rename') },
+                    isSelectedRow && !isLimit && { clickEvent: this.moveRes, label: this.$t('move') },
+                    isSelectedRow && !isLimit && { clickEvent: this.copyRes, label: this.$t('copy') },
+                    isSelectedRow && !isLimit && { clickEvent: this.deleteRes, label: this.$t('delete') },
+                    isSelectedRow && !isFolder && { clickEvent: this.handlerShare, label: this.$t('share') },
+                    isSelectedRow && { clickEvent: this.handlerDownload, label: this.$t('download') },
+                    !isSelectedRow && !isLimit && { clickEvent: this.addFolder, label: this.$t('create') + this.$t('folder') },
+                    !isSelectedRow && !isLimit && { clickEvent: this.handlerUpload, label: this.$t('upload') },
+                    !isSelectedRow && { clickEvent: this.getArtifactories, label: this.$t('refresh') }
                 ].filter(Boolean)
+            },
+            breadcrumb () {
+                const breadcrumb = []
+                let node = this.genericTree
+                const road = this.selectedTreeNode.roadMap.split(',')
+                road.forEach(index => {
+                    breadcrumb.push({
+                        name: node[index].name,
+                        value: node[index],
+                        cilckHandler: item => {
+                            this.itemClickHandler(item.value)
+                        }
+                    })
+                    node = node[index].children
+                })
+                return breadcrumb
+            },
+            searchFileName () {
+                return this.$route.query.fileName
             }
         },
         beforeRouteEnter (to, from, next) {
@@ -182,31 +248,17 @@
                 })
             } else next()
         },
-        watch: {
-            '$route.query.name' () {
-                this.initPage()
-            }
-        },
         created () {
+            this.getRepoListAll({ projectId: this.projectId })
             this.initPage()
-        },
-        mounted () {
-            const dragLine = document.querySelector('.repo-generic-split-bar')
-            dragLine.addEventListener('mousedown', this.dragDown)
-            window.addEventListener('mousemove', this.dragMove)
-            window.addEventListener('mouseup', this.dragUp)
-        },
-        beforeDestroy () {
-            window.removeEventListener('mousemove', this.dragMove)
-            window.removeEventListener('mouseup', this.dragUp)
-            this.SET_BREADCRUMB([])
         },
         methods: {
             convertFileSize,
             getIconName,
             formatDate,
-            ...mapMutations(['INIT_TREE', 'SET_BREADCRUMB']),
+            ...mapMutations(['INIT_TREE']),
             ...mapActions([
+                'getRepoListAll',
                 'getNodeDetail',
                 'getFolderList',
                 'getArtifactoryList',
@@ -220,23 +272,6 @@
                 'getFolderSize',
                 'getFileNumOfFolder'
             ]),
-            dragDown () {
-                this.startDrag = true
-            },
-            dragMove (e) {
-                if (!this.startDrag) return
-                const clientX = e.clientX - 40
-                if (clientX > 200) this.sideBarWidth = clientX
-            },
-            dragUp () {
-                this.startDrag = false
-            },
-            initPage () {
-                this.importantSearch = ''
-                this.INIT_TREE()
-                this.sideTreeOpenList = []
-                this.itemClickHandler(this.genericTree[0])
-            },
             renderHeader (h, { column }) {
                 return h('div', {
                     class: 'flex-align-center hover-btn',
@@ -256,15 +291,27 @@
                     })
                 ])
             },
+            initPage () {
+                this.INIT_TREE([{
+                    name: this.replaceRepoName(this.repoName),
+                    fullPath: '',
+                    folder: true,
+                    children: [],
+                    roadMap: '0'
+                }])
+                this.itemClickHandler(this.genericTree[0])
+            },
             // 获取中间列表数据
             getArtifactories () {
-                // 自定义查询
-                if (this.query) {
-                    this.searchHandler(this.query)
-                    return
-                }
                 this.isLoading = true
-                this.getArtifactoryList({
+                const ajax = this.searchFileName ? this.getArtifactoryListByQuery({
+                    projectId: this.projectId,
+                    repoName: this.repoName,
+                    name: this.searchFileName,
+                    current: this.pagination.current,
+                    limit: this.pagination.limit,
+                    sortType: this.sortType
+                }) : this.getArtifactoryList({
                     projectId: this.projectId,
                     repoName: this.repoName,
                     fullPath: this.selectedTreeNode.fullPath,
@@ -272,11 +319,13 @@
                     limit: this.pagination.limit,
                     sortType: this.sortType,
                     isPipeline: this.repoName === 'pipeline'
-                }).then(({ records, totalRecords }) => {
+                })
+                ajax.then(({ records, totalRecords }) => {
                     this.pagination.count = totalRecords
                     this.artifactoryList = records.map(v => {
                         return {
                             ...v,
+                            // 流水线文件夹名称替换
                             name: (v.metadata && v.metadata.displayName) || v.name
                         }
                     })
@@ -284,33 +333,16 @@
                     this.isLoading = false
                 })
             },
-            // 搜索文件函数
-            searchHandler (query) {
-                this.query = query
-                this.isLoading = true
-                this.getArtifactoryListByQuery({
-                    projectId: this.projectId,
-                    repoName: this.repoName,
-                    name: query.name,
-                    current: this.pagination.current,
-                    limit: this.pagination.limit
-                }).then(({ records, totalRecords }) => {
-                    this.pagination.count = totalRecords
-                    this.artifactoryList = records.map(v => {
-                        return {
-                            ...v,
-                            name: (v.metadata && v.metadata.displayName) || v.name
+            searchFile () {
+                if (this.importantSearch || this.searchFileName) {
+                    this.$router.replace({
+                        query: {
+                            ...this.$route.query,
+                            fileName: this.importantSearch
                         }
                     })
-                }).finally(() => {
-                    this.isLoading = false
-                })
-            },
-            resetQueryAndBack () {
-                this.query = null
-                this.selectedRow.element && this.selectedRow.element.classList.remove('selected-row')
-                this.selectedRow = this.selectedTreeNode
-                this.handlerPaginationChange()
+                    this.handlerPaginationChange()
+                }
             },
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
                 this.pagination.current = current
@@ -325,8 +357,6 @@
                 // 初始化table选中行、数据
                 this.selectedRow = node
                 this.handlerPaginationChange()
-                // 更新面包屑
-                this.setBreadcrumb()
                 // 更新已展开文件夹数据
                 const reg = new RegExp(`^${node.roadMap}`)
                 const openList = this.sideTreeOpenList
@@ -351,12 +381,11 @@
                     // 更新子文件夹
                     if (node.loading) return
                     // 当前选中文件夹为当前操作文件夹的后代文件夹，则锁定文件夹保证选中文件夹路径完整
-                    if (node.roadMap !== openList.roadMap && reg.test(openList.roadMap)) return
+                    if (node.roadMap !== this.selectedTreeNode.roadMap && reg.test(this.selectedTreeNode.roadMap)) return
                     this.updateGenericTreeNode(node)
                 }
             },
             updateGenericTreeNode (item) {
-                if (this.query) return
                 this.$set(item, 'loading', true)
                 this.getFolderList({
                     projectId: this.projectId,
@@ -429,9 +458,8 @@
                     show: true,
                     loading: false,
                     type: 'add',
-                    folderPath: this.selectedRow.fullPath,
-                    path: '',
-                    title: `${this.$t('create') + this.$t('folder')} (${this.selectedTreeNode.fullPath || '/'})`
+                    path: this.selectedRow.fullPath + '/',
+                    title: `${this.$t('create') + this.$t('folder')}`
                 })
             },
             handlerShare () {
@@ -484,7 +512,7 @@
                 return this.createFolder({
                     projectId: this.projectId,
                     repoName: this.repoName,
-                    fullPath: `${this.selectedTreeNode.fullPath}/${data.path}`
+                    fullPath: data.path
                 })
             },
             submitRenameNode (data) {
@@ -619,61 +647,58 @@
                 }).finally(() => {
                     this.$set(row, 'sizeLoading', false)
                 })
-            },
-            setBreadcrumb () {
-                const breadcrumb = []
-                let node = this.genericTree[0].children
-                const road = this.selectedTreeNode.roadMap.split(',').slice(1)
-                road.forEach(index => {
-                    breadcrumb.push({
-                        name: node[index].name,
-                        value: node[index],
-                        cilckHandler: item => {
-                            this.itemClickHandler(item.value)
-                        }
-                    })
-                    node = node[index].children
-                })
-                this.SET_BREADCRUMB(breadcrumb)
             }
         }
     }
 </script>
 <style lang="scss" scoped>
 .repo-generic-container {
-    display: flex;
-    .repo-generic-side {
-        border: 1px solid var(--borderWeightColor);
-        .important-search {
-            padding: 10px;
-            background-color: #f2f2f2;
-            border-bottom: 1px solid var(--borderWeightColor);
+    height: 100%;
+    .generic-header{
+        height: 130px;
+        background-color: white;
+        .generic-img {
+            width: 110px;
+            height: 90px;
+            border-radius: 4px;
+            box-shadow: 0px 3px 5px 0px rgba(217, 217, 217, 0.5);
         }
-        .repo-generic-tree {
-            height: calc(100% - 53px);
+        .generic-title {
+            overflow: hidden;
+            .repo-title {
+                max-width: 500px;
+                font-size: 20px;
+                font-weight: bold;
+                color: var(--fontBoldColor);
+            }
+            .repo-description {
+                max-width: 600px;
+                font-size: 12px;
+                display: -webkit-box;
+                -webkit-line-clamp: 3;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
         }
-    }
-    .repo-generic-split-bar {
-        flex-basis: 20px;
-        cursor: col-resize;
     }
     .repo-generic-main {
-        flex: 1;
-        display: flex;
-        overflow: hidden;
-        .repo-generic-table {
-            flex: 1;
-            font-size: 0;
-            .bk-table {
-                margin-bottom: 10px;
+        height: calc(100% - 140px);
+        user-select: none;
+        .repo-generic-side {
+            height: 100%;
+            background-color: white;
+            .important-search {
+                padding: 10px;
                 border-bottom: 1px solid var(--borderWeightColor);
             }
-            .fine-name {
-                padding: 7px 0;
-                svg {
-                    flex: none;
-                }
+            .repo-generic-tree {
+                height: calc(100% - 53px);
             }
+        }
+        .repo-generic-table {
+            flex: 1;
+            height: 100%;
+            background-color: white;
             ::v-deep .devops-icon {
                 font-size: 16px;
                 &.disabled {
@@ -686,21 +711,6 @@
                         color: var(--fontWeightColor);
                     }
                 }
-            }
-        }
-    }
-    .repo-generic-actions {
-        width: 200px;
-        .detail-btn {
-            margin: 40px 20px 20px;
-            width: calc(100% - 40px);
-        }
-        .actions-btn {
-            align-items: flex-start;
-            padding-left: 60px;
-            button {
-                height: 32px;
-                line-height: 32px;
             }
         }
     }

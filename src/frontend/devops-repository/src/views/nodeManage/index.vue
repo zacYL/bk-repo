@@ -31,7 +31,7 @@
             :row-border="false"
             size="small">
             <template #empty>
-                <empty-data ex-style="margin-top:-250px;" :search="Boolean(search.name || search.type)">
+                <empty-data :search="Boolean(search.name || search.type)">
                     <template v-if="!Boolean(search.name || search.type)">
                         <span class="ml10">暂无节点数据，</span>
                         <bk-button text @click="showCreateNode">即刻创建</bk-button>

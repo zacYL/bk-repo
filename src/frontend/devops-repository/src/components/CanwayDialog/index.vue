@@ -1,8 +1,6 @@
 <template>
     <bk-dialog
-        :value="value"
-        :width="width"
-        :position="position"
+        v-bind="$attrs"
         :close-icon="false">
         <template #tools>
             <div class="mb20 canway-dialog-header flex-align-center">
@@ -23,10 +21,7 @@
     export default {
         name: 'canwayDialog',
         props: {
-            value: Boolean,
-            title: String,
-            width: [Number, String],
-            position: Object
+            title: String
         }
     }
 </script>

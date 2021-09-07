@@ -6,88 +6,97 @@
             <bk-button theme="danger" outline class="mr20" @click="$emit('delete')">删除</bk-button>
         </template>
         <bk-tab-panel v-if="detail.basic" name="versionBaseInfo" :label="$t('baseInfo')">
-            <div class="version-base-info">
-                <div class="base-info" :data-title="$t('baseInfo')">
-                    <div class="package-name grid-item">
-                        <label>制品名称：</label>
-                        <span>
-                            <span>{{ packageName }}</span>
-                            <span v-if="detail.basic.groupId" class="mr5 repo-tag"> {{ detail.basic.groupId }} </span>
-                        </span>
-                    </div>
-                    <div class="grid-item"
-                        v-for="{ name, label, value } in detailInfoMap"
-                        :key="name">
-                        <label>{{ label }}：</label>
-                        <span>
-                            <span>{{ value }}</span>
-                            <template v-if="name === 'version'">
-                                <span class="mr5 repo-tag"
-                                    v-for="tag in detail.basic.stageTag"
-                                    :key="tag">
-                                    {{ tag }}
-                                </span>
-                            </template>
-                        </span>
-                    </div>
-                    <div class="package-description grid-item">
-                        <label>描述：</label>
-                        <span>{{ detail.basic.description || '--' }}</span>
-                    </div>
+            <div class="version-base-info base-info" :data-title="$t('baseInfo')">
+                <div class="package-name grid-item">
+                    <label>制品名称：</label>
+                    <span>
+                        <span>{{ packageName }}</span>
+                        <span v-if="detail.basic.groupId" class="mr5 repo-tag"> {{ detail.basic.groupId }} </span>
+                    </span>
                 </div>
-                <div class="base-info-guide" :data-title="$t('useTips')">
-                    <div class="sub-section" v-for="block in articleInstall[0].main" :key="block.subTitle">
-                        <div class="mb10">{{ block.subTitle }}</div>
-                        <code-area class="mb20" bg-color="#e6edf6" color="#63656E" v-if="block.codeList && block.codeList.length" :code-list="block.codeList"></code-area>
-                    </div>
+                <div class="grid-item"
+                    v-for="{ name, label, value } in detailInfoMap"
+                    :key="name">
+                    <label>{{ label }}：</label>
+                    <span class="flex-1 text-overflow" :title="value">
+                        <span>{{ value }}</span>
+                        <template v-if="name === 'version'">
+                            <span class="mr5 repo-tag"
+                                v-for="tag in detail.basic.stageTag"
+                                :key="tag">
+                                {{ tag }}
+                            </span>
+                        </template>
+                    </span>
                 </div>
-                <div class="base-info-checksums" data-title="Checksums">
-                    <div v-if="detail.basic.sha256" class="grid-item">
-                        <label>SHA256</label>
-                        <span class="pl40">{{ detail.basic.sha256 }}</span>
-                    </div>
-                    <div v-if="detail.basic.md5" class="grid-item">
-                        <label>MD5</label>
-                        <span class="pl40">{{ detail.basic.md5 }}</span>
-                    </div>
+                <div class="package-description grid-item">
+                    <label>描述：</label>
+                    <span class="flex-1 text-overflow" :title="detail.basic.description">{{ detail.basic.description || '--' }}</span>
+                </div>
+            </div>
+            <div class="version-base-info base-info-guide" :data-title="$t('useTips')">
+                <div class="sub-section" v-for="block in articleInstall[0].main" :key="block.subTitle">
+                    <div class="mb10">{{ block.subTitle }}</div>
+                    <code-area class="mb20" bg-color="#e6edf6" color="#63656E" v-if="block.codeList && block.codeList.length" :code-list="block.codeList"></code-area>
+                </div>
+            </div>
+            <div class="version-base-info base-info-checksums" data-title="Checksums">
+                <div v-if="detail.basic.sha256" class="grid-item">
+                    <label>SHA256：</label>
+                    <span class="flex-1 text-overflow" :title="detail.basic.sha256">{{ detail.basic.sha256 }}</span>
+                </div>
+                <div v-if="detail.basic.md5" class="grid-item">
+                    <label>MD5：</label>
+                    <span class="flex-1 text-overflow" :title="detail.basic.md5">{{ detail.basic.md5 }}</span>
                 </div>
             </div>
         </bk-tab-panel>
         <bk-tab-panel v-if="detail.metadata" name="versionMetaData" :label="$t('metaData')">
-            <div class="flex-column version-metadata">
-                <div class="pl20 pb10 flex-align-center metadata-thead">
-                    <span class="metadata-key">{{ $t('key') }}</span>
-                    <span class="metadata-value">{{ $t('value') }}</span>
+            <div class="version-metadata" data-title="元数据">
+                <div class="version-metadata-add" v-bk-clickoutside="hiddenAddMetadata">
+                    <i @click="metadata.show ? hiddenAddMetadata() : showAddMetadata()" class="devops-icon icon-plus flex-center hover-btn"></i>
+                    <div class="version-metadata-add-board"
+                        :style="{ height: metadata.show ? '180px' : '0' }">
+                        <bk-form class="p20" :label-width="75" :model="metadata" :rules="rules" ref="metadatForm">
+                            <bk-form-item :label="$t('key')" :required="true" property="key">
+                                <bk-input size="small" v-model="metadata.key" :placeholder="$t('key')"></bk-input>
+                            </bk-form-item>
+                            <bk-form-item :label="$t('value')" :required="true" property="value">
+                                <bk-input size="small" v-model="metadata.value" :placeholder="$t('value')"></bk-input>
+                            </bk-form-item>
+                            <bk-form-item>
+                                <bk-button size="small" theme="default" @click.stop="hiddenAddMetadata">{{$t('cancel')}}</bk-button>
+                                <bk-button class="ml5" size="small" :loading="metadata.loading" theme="primary" @click="addMetadataHandler">{{$t('confirm')}}</bk-button>
+                            </bk-form-item>
+                        </bk-form>
+                    </div>
                 </div>
-                <div slot="prepend" class="pl15 add-metadata-main">
-                    <bk-form form-type="inline" :label-width="80" :model="metadata" :rules="rules" ref="metadatForm">
-                        <bk-form-item class="mr10" :required="true" property="key">
-                            <bk-input style="width: 230px" size="small" v-model="metadata.key" :placeholder="$t('key')"></bk-input>
-                        </bk-form-item>
-                        <bk-form-item class="mr10" :required="true" property="value">
-                            <bk-input style="width: 350px" size="small" v-model="metadata.value" :placeholder="$t('value')"></bk-input>
-                        </bk-form-item>
-                        <bk-form-item>
-                            <bk-button size="small" theme="default" @click="addMetadataHandler">{{ $t('add') }}</bk-button>
-                        </bk-form-item>
-                    </bk-form>
-                </div>
-                <div class="pl20 pb10 pt10 flex-align-center metadata-tr" v-for="([key, value]) in Object.entries(detail.metadata)" :key="key">
-                    <span class="metadata-key">{{ key }}</span>
-                    <span class="metadata-value">{{ value }}</span>
-                </div>
-                <empty-data v-if="!Object.keys(detail.metadata).length" ex-style="margin-top:100px;"></empty-data>
+                <bk-table
+                    :data="Object.entries(detail.metadata || {})"
+                    :outer-border="false"
+                    :row-border="false"
+                    size="small">
+                    <template #empty>
+                        <empty-data>
+                            <span class="ml10">暂无元数据，</span>
+                            <bk-button text @click="showAddMetadata">即刻添加</bk-button>
+                        </empty-data>
+                    </template>
+                    <bk-table-column :label="$t('key')" prop="0" width="250"></bk-table-column>
+                    <bk-table-column :label="$t('value')" prop="1"></bk-table-column>
+                    <bk-table-column label="" width="35"></bk-table-column>
+                </bk-table>
             </div>
         </bk-tab-panel>
         <bk-tab-panel v-if="detail.layers" name="versionLayers" label="Layers">
-            <div class="mt20 flex-column">
-                <div class="pl10 pb10 flex-align-center version-layers">
-                    <span class="display-key">ID</span>
-                    <span class="display-value">{{ $t('size') }}</span>
+            <div class="version-layers" data-title="Layers">
+                <div class="block-header grid-item">
+                    <label>ID</label>
+                    <span class="pl40">{{ $t('size') }}</span>
                 </div>
-                <div class="pl10 pb10 pt10 flex-align-center version-layers" v-for="layer in detail.layers" :key="layer.digest">
-                    <span class="display-key">{{ layer.digest }}</span>
-                    <span class="display-value">{{ convertFileSize(layer.size) }}</span>
+                <div class="grid-item" v-for="layer in detail.layers" :key="layer.digest">
+                    <label class="text-overflow" :title="layer.digest">{{ layer.digest }}</label>
+                    <span class="pl40">{{ convertFileSize(layer.size) }}</span>
                 </div>
             </div>
         </bk-tab-panel>
@@ -122,8 +131,8 @@
                     <template v-if="detail.dependencyInfo[type].length">
                         <template
                             v-for="{ name, version } in detail.dependencyInfo[type]">
-                            <div class="version-dependencies-key" :key="name">{{ name }}</div>
-                            <div v-if="type !== 'dependents'" class="version-dependencies-value" :key="name + version">{{ version }}</div>
+                            <div class="version-dependencies-key text-overflow" :key="name" :title="name">{{ name }}</div>
+                            <div v-if="type !== 'dependents'" class="version-dependencies-value text-overflow" :key="name + version" :title="version">{{ version }}</div>
                         </template>
                         <div class="version-dependencies-more" v-if="type === 'dependents' && dependentsPage">
                             <bk-button text title="primary" @click="loadMore">{{ $t('loadMore') }}</bk-button>
@@ -161,6 +170,8 @@
                 },
                 selectedHistory: {},
                 metadata: {
+                    show: false,
+                    loading: false,
                     key: '',
                     value: ''
                 },
@@ -266,6 +277,18 @@
                     this.isLoading = false
                 })
             },
+            showAddMetadata () {
+                this.$refs.metadatForm && this.$refs.metadatForm.clearError()
+                this.metadata = {
+                    show: true,
+                    loading: false,
+                    key: '',
+                    value: ''
+                }
+            },
+            hiddenAddMetadata () {
+                this.metadata.show = false
+            },
             async addMetadataHandler () {
                 await this.$refs.metadatForm.validate()
                 this.addPackageMetadata({
@@ -278,57 +301,58 @@
                             [this.metadata.key]: this.metadata.value
                         }
                     }
-                }).finally(() => {
-                    this.metadata = {
-                        key: '',
-                        value: ''
-                    }
+                }).then(() => {
+                    this.$bkMessage({
+                        theme: 'success',
+                        message: this.$t('add') + this.$t('success')
+                    })
+                    this.showAddMetadata()
                     this.getDetail()
+                }).finally(() => {
+                    this.metadata.loading = false
                 })
             }
         }
     }
 </script>
 <style lang="scss" scoped>
+@mixin display-block {
+    position: relative;
+    margin-top: 55px;
+    &:first-child {
+        margin-top: 35px;
+    }
+    &:before {
+        position: absolute;
+        top: -30px;
+        left: 20px;
+        content: '';
+        width: 3px;
+        height: 12px;
+        background-color: var(--primaryColor);
+    }
+    &:after {
+        position: absolute;
+        top: -35px;
+        left: 30px;
+        content: attr(data-title);
+        font-size: 16px;
+        font-weight: bold;
+    }
+}
 .common-version-container {
     height: 100%;
     ::v-deep .bk-tab-section {
-        height: calc(100% - 40px);
-        .bk-tab-content {
-            height: 100%;
-        }
+        height: calc(100% - 50px);
+        overflow-y: auto;
     }
     .version-base-info {
-        height: 100%;
-        overflow-y: auto;
-        .base-info,
-        .base-info-guide,
-        .base-info-checksums {
-            position: relative;
-            margin-top: 55px;
-            margin-bottom: 20px;
-            &:first-child {
-                margin-top: 35px;
-            }
-            &:before {
-                position: absolute;
-                top: -30px;
-                left: 20px;
-                content: '';
-                width: 3px;
-                height: 12px;
-                background-color: var(--primaryColor);
-            }
-            &:after {
-                position: absolute;
-                top: -35px;
-                left: 30px;
-                content: attr(data-title);
-                font-size: 16px;
-                font-weight: bold;
-            }
+        &.base-info,
+        &.base-info-guide,
+        &.base-info-checksums {
+            @include display-block;
         }
-        .base-info {
+        &.base-info {
             padding: 20px;
             display: grid;
             grid-template: auto / repeat(3, 1fr);
@@ -343,12 +367,12 @@
                 background-color: #91ADD1;
             }
         }
-        .base-info-guide {
+        &.base-info-guide {
             padding: 20px 50px 0;
             border: 1px dashed var(--borderWeightColor);
             border-radius: 4px;
         }
-        .base-info-checksums {
+        &.base-info-checksums {
             padding: 20px;
             display: grid;
             grid-gap: 20px;
@@ -356,39 +380,62 @@
         }
         .grid-item {
             display: flex;
+            overflow: hidden;
             label {
-                width: 100px;
+                flex-basis: 100px;
                 text-align: right;
             }
         }
     }
     .version-metadata {
-        height: 100%;
-        overflow: auto;
-        .metadata-thead, .metadata-tr {
-            border-bottom: 1px solid var(--borderWeightColor);
-            line-height: 2;
-        }
-        .metadata-key {
-            width: 250px;
-        }
-        .metadata-value {
-            flex: 1;
-            word-break: break-all;
-        }
-        .add-metadata-main {
+        @include display-block;
+        .version-metadata-add {
+            position: absolute;
             display: flex;
             align-items: center;
-            height: 40px;
-            border-bottom: 1px solid var(--borderWeightColor);
+            justify-content: center;
+            top: 0;
+            right: 0;
+            width: 35px;
+            height: 43px;
+            z-index: 1;
+            .version-metadata-add-board {
+                position: absolute;
+                top: 43px;
+                right: 0;
+                width: 300px;
+                overflow: hidden;
+                background: white;
+                border-radius: 2px;
+                box-shadow: 0 3px 6px rgba(51, 60, 72, 0.4);
+                will-change: height;
+                transition: all .3s;
+            }
+            .icon-plus {
+                width: 100%;
+                height: 100%;
+                &:hover {
+                    background-color: #f0f1f5;
+                }
+            }
         }
     }
     .version-layers {
-        border-bottom: 1px solid var(--borderWeightColor);
-        line-height: 2;
-        .display-key {
-            text-align: left;
-            flex: 6;
+        @include display-block;
+        padding: 20px;
+        display: grid;
+        grid-gap: 20px;
+        background-color: var(--bgHoverColor);
+        .grid-item {
+            display: flex;
+            overflow: hidden;
+            label {
+                flex-basis: 600px;
+                text-align: right;
+            }
+        }
+        .block-header {
+            border-bottom: 1px solid var(--borderWeightColor);
         }
     }
     .version-history {
@@ -436,34 +483,12 @@
         height: 100%;
         overflow-y: auto;
         &-main {
-            position: relative;
-            margin-top: 55px;
-            margin-bottom: 20px;
+            @include display-block;
             display: grid;
             grid-template: auto / repeat(4, 1fr);
             grid-gap: 1px;
             background-color: var(--borderWeightColor);
             border: 1px solid var(--borderWeightColor);
-            &:first-child {
-                margin-top: 35px;
-            }
-            &:before {
-                position: absolute;
-                top: -30px;
-                left: 20px;
-                content: '';
-                width: 3px;
-                height: 12px;
-                background-color: var(--primaryColor);
-            }
-            &:after {
-                position: absolute;
-                top: -35px;
-                left: 30px;
-                content: attr(data-title);
-                font-size: 16px;
-                font-weight: bold;
-            }
         }
         &-more {
             grid-column: 1 / 5;
@@ -474,6 +499,7 @@
         &-key, &-value {
             line-height: 40px;
             padding-left: 30px;
+            padding-right: 10px;
         }
         &-key {
             background-color: var(--bgHoverColor);
@@ -487,15 +513,6 @@
             grid-column: 1 / 5;
             background-color: white;
         }
-    }
-    .display-key {
-        flex: 1;
-        text-align: right;
-        margin-right: 40px;
-    }
-    .display-value {
-        flex: 3;
-        word-break: break-all;
     }
 }
 </style>

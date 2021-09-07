@@ -148,7 +148,13 @@ const routes = [
             {
                 path: 'generic',
                 name: 'repoGeneric',
-                component: repoGeneric
+                component: repoGeneric,
+                meta: {
+                    breadcrumb: [
+                        { name: 'repoList', label: '仓库列表' },
+                        { name: 'repoGeneric', label: '{repoName}', template: '二进制仓库' }
+                    ]
+                }
             },
             {
                 path: ':repoType/list',

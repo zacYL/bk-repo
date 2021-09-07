@@ -134,7 +134,7 @@ export default {
         )
     },
     // 仓库内自定义查询
-    getArtifactoryListByQuery (_, { projectId, repoName, name, current = 1, limit = 15 }) {
+    getArtifactoryListByQuery (_, { projectId, repoName, name, current = 1, limit = 15, sortType = 'lastModifiedDate' }) {
         return Vue.prototype.$ajax.post(
             `${prefix}/node/query`,
             {
@@ -143,7 +143,7 @@ export default {
                     pageSize: limit
                 },
                 sort: {
-                    properties: ['lastModifiedDate'],
+                    properties: [sortType],
                     direction: 'DESC'
                 },
                 rule: {

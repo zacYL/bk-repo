@@ -7,7 +7,6 @@ Vue.use(Vuex)
 export default new Vuex.Store({
     state: {
         showLoginDialog: false,
-        breadcrumb: [],
         genericTree: [
             {
                 name: '/',
@@ -44,16 +43,8 @@ export default new Vuex.Store({
         }
     },
     mutations: {
-        INIT_TREE (state) {
-            state.genericTree = [
-                {
-                    name: '/',
-                    fullPath: '',
-                    folder: true,
-                    children: [],
-                    roadMap: '0'
-                }
-            ]
+        INIT_TREE (state, root) {
+            state.genericTree = root
         },
         UPDATE_TREE (state, { roadMap, list }) {
             let tree = state.genericTree
@@ -70,9 +61,6 @@ export default new Vuex.Store({
                 }
             })
             tree.splice(0, tree.length, ...list)
-        },
-        SET_BREADCRUMB (state, data) {
-            state.breadcrumb = data
         },
         SET_USER_LIST (state, data) {
             state.userList = {

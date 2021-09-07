@@ -8,9 +8,6 @@
         header-position="left">
         <bk-form class="repo-generic-form" :label-width="120" :model="genericForm" :rules="rules" ref="genericForm">
             <template v-if="genericForm.type === 'add'">
-                <bk-form-item :label="$t('folder') + $t('path')">
-                    <span class="break-all">{{ genericForm.folderPath + '/' + genericForm.path }}</span>
-                </bk-form-item>
                 <bk-form-item :label="$t('createFolderLabel')" :required="true" property="path">
                     <bk-input v-model.trim="genericForm.path" :placeholder="$t('folderNamePlacehodler')"></bk-input>
                 </bk-form-item>
@@ -66,7 +63,6 @@
                     loading: false,
                     title: '',
                     type: '',
-                    folderPath: '',
                     path: '',
                     name: '',
                     user: [],
@@ -83,7 +79,7 @@
                             trigger: 'blur'
                         },
                         {
-                            regex: /^((\w|-|\.){1,50}\/)*((\w|-|\.){1,50})$/,
+                            regex: /^(\/(\w|-|\.){1,50})+$/,
                             message: this.$t('folder') + this.$t('path') + this.$t('include') + this.$t('folderNamePlacehodler'),
                             trigger: 'blur'
                         }

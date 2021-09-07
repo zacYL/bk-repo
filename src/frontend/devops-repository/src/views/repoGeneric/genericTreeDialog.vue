@@ -1,17 +1,21 @@
 <template>
-    <bk-dialog
+    <canway-dialog
         v-model="genericTreeData.show"
         :title="genericTreeData.title"
-        :close-icon="false"
-        :quick-close="false"
         width="600"
-        height="600"
         :position="{ top: 100 }"
-        header-position="left">
-        <div class="dialog-tree-container">
+        @cancel="genericTreeData.show = false">
+        <bk-input
+            class="w250"
+            v-model.trim="importantSearch"
+            placeholder="请输入关键字"
+            clearable
+            right-icon="bk-icon icon-search">
+        </bk-input>
+        <div class="mt10 dialog-tree-container">
             <repo-tree
                 ref="dialogTree"
-                :list="genericTree"
+                :important-search="importantSearch"
                 :open-list="genericTreeData.openList"
                 :selected-node="genericTreeData.selectedNode"
                 @icon-click="iconClickHandler"
@@ -19,19 +23,19 @@
             </repo-tree>
         </div>
         <div slot="footer">
-            <bk-button :loading="genericTreeData.loading" theme="primary" @click="submit">{{ $t('confirm') }}</bk-button>
-            <bk-button ext-cls="ml5" @click="genericTreeData.show = false">{{ $t('cancel') }}</bk-button>
+            <bk-button @click="genericTreeData.show = false">{{ $t('cancel') }}</bk-button>
+            <bk-button class="ml10" :loading="genericTreeData.loading" theme="primary" @click="submit">{{ $t('confirm') }}</bk-button>
         </div>
-    </bk-dialog>
+    </canway-dialog>
 </template>
 <script>
     import RepoTree from '@/components/RepoTree'
-    import { mapState } from 'vuex'
     export default {
         name: 'genericTreeDialog',
         components: { RepoTree },
         data () {
             return {
+                importantSearch: '',
                 genericTreeData: {
                     show: false,
                     loading: false,
@@ -41,9 +45,6 @@
                     selectedNode: {}
                 }
             }
-        },
-        computed: {
-            ...mapState(['genericTree'])
         },
         methods: {
             // 树组件选中文件夹

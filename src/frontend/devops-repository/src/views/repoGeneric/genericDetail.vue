@@ -15,7 +15,7 @@
                         <span class="flex-1 text-overflow" :title="value">{{ value }}</span>
                     </div>
                 </div>
-                <div class="version-base-info base-info-checksums" data-title="Checksums" v-bkloading="{ isLoading: detailSlider.loading }">
+                <div v-if="!detailSlider.folder" class="version-base-info base-info-checksums" data-title="Checksums" v-bkloading="{ isLoading: detailSlider.loading }">
                     <div v-if="detailSlider.data.sha256" class="grid-item">
                         <label>SHA256：</label>
                         <span class="flex-1 text-overflow" :title="detailSlider.data.sha256">{{ detailSlider.data.sha256 }}</span>

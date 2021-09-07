@@ -1,18 +1,14 @@
 <template>
-    <bk-dialog
+    <canway-dialog
         :value="show"
         :title="title"
-        :quick-close="false"
-        :mask-close="false"
-        :close-icon="false"
-        width="620"
-        header-position="left">
+        width="620">
         <artifactory-upload ref="artifactoryUpload" :upload-status="uploadStatus" :upload-progress="uploadProgress"></artifactory-upload>
         <div slot="footer">
-            <bk-button :loading="loading" theme="primary" @click="submitUpload">{{ $t('upload') }}</bk-button>
-            <bk-button ext-cls="ml5" @click="loading ? abortUpload() : $emit('cancel')">{{ $t('cancel') }}</bk-button>
+            <bk-button @click="loading ? abortUpload() : $emit('cancel')">{{ $t('cancel') }}</bk-button>
+            <bk-button class="ml10" :loading="loading" theme="primary" @click="submitUpload">{{ $t('confirm') }}</bk-button>
         </div>
-    </bk-dialog>
+    </canway-dialog>
 </template>
 <script>
     import ArtifactoryUpload from '@/components/ArtifactoryUpload'

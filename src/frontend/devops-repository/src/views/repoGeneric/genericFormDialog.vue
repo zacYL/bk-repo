@@ -1,12 +1,10 @@
 <template>
-    <bk-dialog
+    <canway-dialog
         v-model="genericForm.show"
         :title="genericForm.title"
-        :close-icon="false"
-        :quick-close="false"
-        width="600"
-        header-position="left">
-        <bk-form class="repo-generic-form" :label-width="120" :model="genericForm" :rules="rules" ref="genericForm">
+        width="450"
+        @cancel="cancel">
+        <bk-form class="repo-generic-form" :label-width="100" :model="genericForm" :rules="rules" ref="genericForm">
             <template v-if="genericForm.type === 'add'">
                 <bk-form-item :label="$t('createFolderLabel')" :required="true" property="path">
                     <bk-input v-model.trim="genericForm.path" :placeholder="$t('folderNamePlacehodler')"></bk-input>
@@ -46,10 +44,10 @@
             </template>
         </bk-form>
         <div slot="footer">
-            <bk-button :loading="genericForm.loading" theme="primary" @click="submit">{{$t('submit')}}</bk-button>
-            <bk-button ext-cls="ml5" theme="default" @click="cancel">{{$t('cancel')}}</bk-button>
+            <bk-button theme="default" @click="cancel">{{$t('cancel')}}</bk-button>
+            <bk-button class="ml10" :loading="genericForm.loading" theme="primary" @click="submit">{{$t('submit')}}</bk-button>
         </div>
-    </bk-dialog>
+    </canway-dialog>
 </template>
 <script>
     import { mapState } from 'vuex'
@@ -135,6 +133,3 @@
         }
     }
 </script>
-<style lang="scss" scoped>
-
-</style>

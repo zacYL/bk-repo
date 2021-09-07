@@ -11,34 +11,32 @@
                 </span>
             </div>
         </header>
-        <div class="repo-generic-main flex-align-center">
-            <template v-if="!searchFileName">
-                <div class="repo-generic-side"
-                    :style="{ 'flex-basis': `${sideBarWidth}px` }"
-                    v-bkloading="{ isLoading: treeLoading }">
-                    <div class="important-search">
-                        <bk-input
-                            v-model.trim="importantSearch"
-                            placeholder="请输入关键字，按Enter键搜索"
-                            clearable
-                            right-icon="bk-icon icon-search"
-                            @enter="searchFile"
-                            @clear="searchFile">
-                        </bk-input>
-                    </div>
-                    <repo-tree
-                        class="repo-generic-tree"
-                        ref="repoTree"
-                        sortable
-                        :important-search="importantSearch"
-                        :open-list="sideTreeOpenList"
-                        :selected-node="selectedTreeNode"
-                        @icon-click="iconClickHandler"
-                        @item-click="itemClickHandler">
-                    </repo-tree>
+        <div class="repo-generic-main flex-align-center"
+            :style="{ 'margin-left': `${searchFileName ? -(sideBarWidth + 10) : 0}px` }">
+            <div class="repo-generic-side"
+                :style="{ 'flex-basis': `${sideBarWidth}px` }"
+                v-bkloading="{ isLoading: treeLoading }">
+                <div class="important-search">
+                    <bk-input
+                        v-model.trim="importantSearch"
+                        placeholder="请输入关键字，按Enter键搜索"
+                        clearable
+                        right-icon="bk-icon icon-search"
+                        @enter="searchFile"
+                        @clear="searchFile">
+                    </bk-input>
                 </div>
-                <move-split-bar v-model="sideBarWidth" :min-value="200"></move-split-bar>
-            </template>
+                <repo-tree
+                    class="repo-generic-tree"
+                    ref="repoTree"
+                    :important-search="importantSearch"
+                    :open-list="sideTreeOpenList"
+                    :selected-node="selectedTreeNode"
+                    @icon-click="iconClickHandler"
+                    @item-click="itemClickHandler">
+                </repo-tree>
+            </div>
+            <move-split-bar v-model="sideBarWidth" :min-value="200"></move-split-bar>
             <div class="repo-generic-table" v-bkloading="{ isLoading }">
                 <div class="m10 flex-between-center">
                     <bk-input
@@ -85,6 +83,7 @@
                             </div>
                         </template>
                     </bk-table-column>
+                    <bk-table-column v-if="searchFileName" :label="$t('path')" prop="fullPath"></bk-table-column>
                     <bk-table-column :label="$t('lastModifiedDate')" prop="lastModifiedDate" width="200" :render-header="renderHeader">
                         <template #default="{ row }">{{ formatDate(row.lastModifiedDate) }}</template>
                     </bk-table-column>
@@ -152,7 +151,7 @@
                 sideBarWidth: 300,
                 isLoading: false,
                 treeLoading: false,
-                importantSearch: '',
+                importantSearch: this.$route.query.fileName,
                 // 左侧树处于打开状态的目录
                 sideTreeOpenList: [],
                 sortType: 'lastModifiedDate',
@@ -205,14 +204,14 @@
                 // 是否选中的是文件夹
                 const isFolder = this.selectedRow.folder
                 return [
-                    { clickEvent: this.showDetail, label: this.$t('showDetail') },
+                    { clickEvent: this.showDetail, label: this.$t('detail') },
                     isSelectedRow && !isLimit && { clickEvent: this.renameRes, label: this.$t('rename') },
                     isSelectedRow && !isLimit && { clickEvent: this.moveRes, label: this.$t('move') },
                     isSelectedRow && !isLimit && { clickEvent: this.copyRes, label: this.$t('copy') },
                     isSelectedRow && !isLimit && { clickEvent: this.deleteRes, label: this.$t('delete') },
                     isSelectedRow && !isFolder && { clickEvent: this.handlerShare, label: this.$t('share') },
                     isSelectedRow && { clickEvent: this.handlerDownload, label: this.$t('download') },
-                    !isSelectedRow && !isLimit && { clickEvent: this.addFolder, label: this.$t('create') + this.$t('folder') },
+                    !isSelectedRow && !isLimit && { clickEvent: this.addFolder, label: this.$t('create') },
                     !isSelectedRow && !isLimit && { clickEvent: this.handlerUpload, label: this.$t('upload') },
                     !isSelectedRow && { clickEvent: this.getArtifactories, label: this.$t('refresh') }
                 ].filter(Boolean)
@@ -654,6 +653,7 @@
 <style lang="scss" scoped>
 .repo-generic-container {
     height: 100%;
+    overflow: hidden;
     .generic-header{
         height: 130px;
         background-color: white;

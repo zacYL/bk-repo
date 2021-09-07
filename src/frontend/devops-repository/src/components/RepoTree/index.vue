@@ -36,10 +36,6 @@
             openList: {
                 type: Array,
                 default: () => []
-            },
-            sortable: {
-                type: Boolean,
-                default: false
             }
         },
         data () {
@@ -56,6 +52,7 @@
                 const flatten = treeData => {
                     treeData.forEach(treeNode => {
                         flatNodes.push(treeNode)
+                        // 过滤未展开文件夹
                         this.openList.includes(treeNode.roadMap) && flatten(treeNode.children || [])
                     })
                 }
@@ -63,11 +60,18 @@
                 return flatNodes
             },
             treeList () {
-                const flattenGenericTree = this.flattenGenericTree.filter(v => v.folder)
-                return flattenGenericTree.slice(this.start, this.start + this.size)
+                return this.flattenGenericTree.slice(this.start, this.start + this.size)
             },
             totalHeight () {
                 return (this.flattenGenericTree.length + 1) * 30
+            }
+        },
+        watch: {
+            'selectedNode.roadMap' () {
+                this.calculateScrollTop(new RegExp(`^${this.selectedNode.name}$`))
+            },
+            importantSearch (val) {
+                val && this.calculateScrollTop(val)
             }
         },
         mounted () {
@@ -79,8 +83,23 @@
             window.removeEventListener('resize', this.resizeFn)
         },
         methods: {
-            scrollTree (e) {
-                this.start = Math.floor(e.target.scrollTop / 30)
+            scrollTree () {
+                this.start = Math.floor(this.$el.scrollTop / 30)
+            },
+            calculateScrollTop (keyword) {
+                let fn = () => false
+                if (typeof keyword === 'string') {
+                    fn = v => v.name.includes(keyword)
+                } else if (keyword instanceof RegExp) {
+                    fn = v => keyword.test(v.name)
+                }
+                const index = this.flattenGenericTree.findIndex(fn)
+                if (!~index) return
+                if (index < this.start) {
+                    this.$el.scrollTop = index * 30
+                } else if (index > (this.start + this.size - 1)) {
+                    this.$el.scrollTop = (index - this.size + 1) * 30
+                }
             },
             computedSize () {
                 const height = this.$el.getBoundingClientRect().height

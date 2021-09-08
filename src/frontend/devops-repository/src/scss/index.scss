@@ -119,15 +119,17 @@ label {
     outline: none;
 }
 
-::-webkit-scrollbar {
-    width: 4px;
-    height: 4px;
-    background-color: lighten(#a5a5a5, 80%);
-}
-::-webkit-scrollbar-thumb {
-    height: 8px;
-    border-radius: 20px;
-    background-color: #a5a5a5;
+:not(.init-scrollbar) {
+    &::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+        background-color: lighten(#a5a5a5, 80%);
+    }
+    &::-webkit-scrollbar-thumb {
+        height: 8px;
+        border-radius: 20px;
+        background-color: #a5a5a5;
+    }
 }
 
 .bk-table-body,

@@ -45,7 +45,7 @@
         </bk-form>
         <div slot="footer">
             <bk-button theme="default" @click="cancel">{{$t('cancel')}}</bk-button>
-            <bk-button class="ml10" :loading="genericForm.loading" theme="primary" @click="submit">{{$t('submit')}}</bk-button>
+            <bk-button class="ml10" :loading="genericForm.loading" theme="primary" @click="submit">{{$t('confirm')}}</bk-button>
         </div>
     </canway-dialog>
 </template>

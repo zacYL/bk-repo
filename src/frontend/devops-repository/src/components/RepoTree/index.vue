@@ -1,5 +1,5 @@
 <template>
-    <div class="virtual-tree" @scroll="scrollTree($event)">
+    <div class="virtual-tree init-scrollbar" @scroll="scrollTree($event)">
         <ul class="repo-tree-list">
             <li class="repo-tree-item" :key="item.roadMap" v-for="item of treeList">
                 <div class="repo-tree-title hover-btn"
@@ -102,8 +102,11 @@
                 }
             },
             computedSize () {
-                const height = this.$el.getBoundingClientRect().height
-                this.size = Math.ceil(height / 30)
+                setTimeout(() => {
+                    const height = this.$el.getBoundingClientRect().height
+                    this.size = Math.ceil(height / 30)
+                // dialog缩放动画.4s
+                }, 400)
             },
             computedDepth (node) {
                 return node.roadMap.split(',').length - 1
@@ -144,13 +147,6 @@
         width: 100%;
         height: 100%;
         overflow: hidden;
-    }
-    &::-webkit-scrollbar {
-        width: 12px;
-        background-color: var(--bgLightColor);
-    }
-    &::-webkit-scrollbar-thumb {
-        border-radius: initial;
     }
 }
 .repo-tree-item {

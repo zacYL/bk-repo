@@ -4,10 +4,11 @@
         width="480"
         title="操作确认"
         @cancel="cancel">
-        <div class="confirm-body flex-center">
+        <div class="p20 confirm-body flex-align-center">
             <i :class="`devops-icon icon-${getIcon()}`"></i>
             <span class="ml10">{{ message }}</span>
         </div>
+        <span class="confirm-tip">{{ subMessage }}</span>
         <template #footer>
             <bk-button @click="cancel">{{$t('cancel')}}</bk-button>
             <bk-button class="ml10" :loading="loading" :theme="theme" @click="confirm">{{$t('confirm')}}</bk-button>
@@ -24,6 +25,7 @@
                 loading: false,
                 theme: 'warning',
                 message: '',
+                subMessage: '',
                 confirmFn: () => {}
             }
         },
@@ -41,11 +43,12 @@
                         return 'close'
                 }
             },
-            showConfiirmDialog ({ theme, message, confirmFn }) {
+            showConfiirmDialog ({ theme = 'warning', message = '', subMessage = '', confirmFn = () => {} }) {
                 this.show = true
                 this.loading = false
                 this.theme = theme
                 this.message = message
+                this.subMessage = subMessage
                 this.confirmFn = confirmFn
             },
             confirm () {
@@ -65,8 +68,14 @@
     }
 </script>
 <style lang="scss" scoped>
+::v-deep .bk-dialog-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 150px;
+}
 .confirm-body {
-    height: 120px;
     .devops-icon {
         width: 38px;
         height: 38px;

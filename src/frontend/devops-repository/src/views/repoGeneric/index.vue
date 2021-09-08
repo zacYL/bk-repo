@@ -12,9 +12,9 @@
             </div>
         </header>
         <div class="repo-generic-main flex-align-center"
-            :style="{ 'margin-left': `${searchFileName ? -(sideBarWidth + 10) : 0}px` }">
+            :style="{ 'margin-left': `${searchFileName ? -sideBarLeft : 0}px` }">
             <div class="repo-generic-side"
-                :style="{ 'flex-basis': `${sideBarWidth}px` }"
+                :style="{ 'flex-basis': `${sideBarLeft - 10}px` }"
                 v-bkloading="{ isLoading: treeLoading }">
                 <div class="important-search">
                     <bk-input
@@ -36,7 +36,7 @@
                     @item-click="itemClickHandler">
                 </repo-tree>
             </div>
-            <move-split-bar v-model="sideBarWidth" :min-value="200"></move-split-bar>
+            <move-split-bar v-model="sideBarLeft" :min-value="210" :width="10"></move-split-bar>
             <div class="repo-generic-table" v-bkloading="{ isLoading }">
                 <div class="m10 flex-between-center">
                     <bk-input
@@ -68,8 +68,8 @@
                     @row-click="selectRow"
                     @row-dblclick="openFolder">
                     <template #empty>
-                        <empty-data :search="Boolean(importantSearch)">
-                            <template v-if="!Boolean(importantSearch)">
+                        <empty-data :search="Boolean(searchFileName)">
+                            <template v-if="!Boolean(searchFileName)">
                                 <span class="ml10">暂无文件，</span>
                                 <bk-button text @click="handlerUpload">即刻上传</bk-button>
                             </template>
@@ -148,7 +148,7 @@
         },
         data () {
             return {
-                sideBarWidth: 300,
+                sideBarLeft: 310,
                 isLoading: false,
                 treeLoading: false,
                 importantSearch: this.$route.query.fileName,
@@ -546,12 +546,10 @@
                         fullPath: this.selectedRow.fullPath
                     })
                 }
-                this.$bkInfo({
-                    title: `${this.$t('confirm') + this.$t('delete')}${this.selectedRow.folder ? this.$t('folder') : this.$t('file')} ${this.selectedRow.name} ？`,
-                    subTitle: `${this.selectedRow.folder && totalRecords ? `当前文件夹下存在${totalRecords}个文件` : ''}`,
-                    closeIcon: false,
+                this.$confirm({
                     theme: 'danger',
-                    confirmLoading: true,
+                    message: `${this.$t('confirm') + this.$t('delete')}${this.selectedRow.folder ? this.$t('folder') : this.$t('file')} ${this.selectedRow.name} ？`,
+                    subMessage: `${this.selectedRow.folder && totalRecords ? `当前文件夹下存在${totalRecords}个文件` : ''}`,
                     confirmFn: () => {
                         return this.deleteArtifactory({
                             projectId: this.projectId,

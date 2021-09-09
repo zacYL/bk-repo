@@ -152,7 +152,6 @@
             },
             cancel () {
                 this.show = false
-                this.$emit('refresh')
             },
             asynCheckRepoName () {
                 return this.checkRepoName({
@@ -192,6 +191,7 @@
                         message: this.$t('create') + this.$t('repository') + this.$t('success')
                     })
                     this.cancel()
+                    this.$emit('refresh')
                 }).finally(() => {
                     this.loading = false
                 })

@@ -8,7 +8,7 @@
                 </svg>
             </bk-breadcrumb-item>
         </breadcrumb>
-        <router-view class="mt10 bkrepo-main-container"></router-view>
+        <router-view class="m10 bkrepo-main-container"></router-view>
         <ConfirmDialog />
         <Login />
     </div>
@@ -65,17 +65,19 @@
                         this.goHome()
                     })
 
-                    window.globalVue.$on('change::$projectList', data => { // 获取项目列表
-                        // this.$store.dispatch('setProjectList', this.$projectList)
-                        // this.$store.dispatch('getProjectList')
-                    })
+                    // window.globalVue.$on('change::$projectList', data => { // 获取项目列表
+                    //     this.$store.dispatch('setProjectList', this.$projectList)
+                    //     this.$store.dispatch('getProjectList')
+                    // })
 
                     window.globalVue.$on('order::syncLocale', locale => {
                         this.$setLocale(locale)
                     })
+
                     window.globalVue.$on('change::$userInfo', data => { // 用户信息
                         this.SET_USER_INFO(data.userInfo)
                     })
+
                     window.globalVue.$on('change::$userList', data => { // 用户信息
                         this.SET_USER_LIST(data.userList)
                     })
@@ -132,13 +134,14 @@
 @import '@/scss/index';
 .bkrepo-main {
     height: 100%;
-    padding: 10px;
     background-color: var(--bgLightColor);
     .repo-breadcrumb {
         height: 20px;
+        margin: 10px 10px 0;
     }
     .bkrepo-main-container {
-        height: calc(100% - 30px)!important;
+        flex: 1;
+        overflow: hidden;
     }
 }
 </style>

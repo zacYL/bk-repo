@@ -138,6 +138,8 @@
     "logout": "退出",
     "publicRepo": "公开仓库",
     "publicRepoDesc": "公开的仓库将会开放下载",
+    "userManage": "用户管理",
+    "userCenter": "个人中心",
     "userInfo": "个人信息",
     "nodeManage": "节点管理",
     "planManage": "分发计划",
@@ -148,7 +150,7 @@
     "userGroup": "用户组",
     "department": "组织",
     "superAdmin": "管理员",
-    "modifyPwd": "修改密码",
+    "modify": "修改",
     "loadingTips": "数据加载中，请稍候",
     "cron": {
         "second": "秒",

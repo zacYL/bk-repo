@@ -44,9 +44,10 @@
     import { mapState, mapActions } from 'vuex'
     import { formatDate } from '@/utils'
     import packageCard from '../packageList/packageCard'
+    import emptyData from '@/components/EmptyData'
     export default {
         name: 'searchPackage',
-        components: { packageCard },
+        components: { packageCard, emptyData },
         data () {
             return {
                 isLoading: false,

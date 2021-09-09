@@ -93,4 +93,8 @@
         background-color: #F16965;
     }
 }
+.confirm-tip {
+    font-size: 12px;
+    color: #999;;
+}
 </style>

@@ -55,7 +55,7 @@
         },
         computed: {
             showRepoConfigRoute () {
-                return ['maven', 'pypi', 'npm', 'composer'].includes(this.$route.params.repoType)
+                return ['maven', 'pypi', 'npm', 'composer', 'nuget'].includes(this.$route.params.repoType)
             }
         },
         methods: {

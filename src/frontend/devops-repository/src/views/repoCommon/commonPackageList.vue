@@ -193,6 +193,7 @@
         .package-img {
             width: 110px;
             height: 90px;
+            padding: 5px;
             border-radius: 4px;
             box-shadow: 0px 3px 5px 0px rgba(217, 217, 217, 0.5);
         }

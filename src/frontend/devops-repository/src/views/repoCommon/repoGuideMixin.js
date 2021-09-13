@@ -573,6 +573,65 @@ export default {
                 }
             ]
         },
+        nugetGuide () {
+            return [
+                {
+                    title: '设置凭证',
+                    main: [
+                        {
+                            subTitle: '在命令行执行以下命令配置制品仓库凭据：',
+                            codeList: [`nuget sources Add -Username "${this.userName}" -Password "<PERSONAL_ACCESS_TOKEN>" -Name "${this.repoName}" -Source "${location.origin}/${this.repoType}/${this.projectId}/${this.repoName}/v3/index.json"`]
+                        }
+                    ]
+                },
+                {
+                    title: '推送',
+                    main: [
+                        {
+                            subTitle: '将<LOCAL_PACKAGE_NAME>替换为本地制品名称，命令行执行以下命令推送制品：',
+                            codeList: [
+                                `nuget push -ApiKey api -Source "${this.repoName}" <LOCAL_PACKAGE_NAME>.nupkg`
+                            ]
+                        }
+                    ]
+                },
+                {
+                    title: '拉取',
+                    main: [
+                        {
+                            subTitle: '在命令行执行以下命令拉取制品：',
+                            codeList: [
+                                `nuget install -Source "${this.repoName}" -Version ${this.versionLabel} ${this.packageName}`
+                            ]
+                        }
+                    ]
+                },
+                {
+                    title: '删除',
+                    main: [
+                        {
+                            subTitle: '注意：通过本操作删除的制品无法恢复',
+                            codeList: [
+                                `nuget delete -ApiKey api -Source "${this.repoName}" ${this.packageName} ${this.versionLabel}`
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        nugetInstall () {
+            return [
+                {
+                    main: [
+                        {
+                            subTitle: '使用如下命令去拉取制品',
+                            codeList: [
+                                `nuget install -Source "${this.repoName}" -Version ${this.versionLabel} ${this.packageName}`
+                            ]
+                        }
+                    ]
+                }]
+        },
         articleGuide () {
             return this[`${this.$route.params.repoType}Guide`]
         },

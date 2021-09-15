@@ -15,8 +15,8 @@
                 <div class="flex-align-center" :title="`下载统计：${cardData.downloads}`"></div>
             </div>
         </div>
-        <div class="card-operation flex-center">
-            <i v-if="!readonly" class="devops-icon icon-delete flex-center package-card-delete" @click.stop="deleteCard"></i>
+        <div v-if="!readonly" class="card-operation flex-center">
+            <i class="devops-icon icon-delete flex-center package-card-delete" @click.stop="deleteCard"></i>
         </div>
     </div>
 </template>

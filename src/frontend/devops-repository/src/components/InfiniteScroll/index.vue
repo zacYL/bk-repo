@@ -65,6 +65,9 @@
 <style lang="scss" scoped>
 .infinite-scroll-container {
     height: 100%;
+    overflow: hidden;
+    margin-right: -16px;
+    padding-right: 16px;
     .infinite-scroll-list {
         height: 100%;
         overflow-y: auto;

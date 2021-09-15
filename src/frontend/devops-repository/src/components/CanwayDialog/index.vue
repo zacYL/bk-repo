@@ -4,7 +4,7 @@
         :close-icon="false">
         <template #tools>
             <div class="mb20 canway-dialog-header flex-align-center">
-                <span class="canway-dialog-title">{{ title }}</span>
+                <span class="mr20 canway-dialog-title text-overflow" :title="title">{{ title }}</span>
                 <i class="devops-icon icon-close" @click="$emit('cancel')"></i>
             </div>
         </template>

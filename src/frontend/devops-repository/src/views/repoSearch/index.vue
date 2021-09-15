@@ -38,7 +38,7 @@
         </div>
         <main class="repo-search-result flex-align-center" v-bkloading="{ isLoading }">
             <template v-if="resultList.length">
-                <div v-if="repoType" class="mr20 mt40 repo-list">
+                <div v-if="repoType" class="mr20 repo-list">
                     <div class="repo-item flex-between-center"
                         :class="{ 'selected': repo.repoName === repoName }"
                         v-for="(repo, index) in repoList"
@@ -51,7 +51,7 @@
                 </div>
                 <infinite-scroll
                     ref="infiniteScroll"
-                    class="package-list"
+                    class="package-list flex-1"
                     :is-loading="isLoading"
                     :has-next="resultList.length < pagination.count"
                     @load="handlerPaginationChange({ current: pagination.current + 1 }, true)">
@@ -59,7 +59,7 @@
                     <package-card
                         class="mb20"
                         v-for="pkg in resultList"
-                        :key="pkg.key"
+                        :key="pkg.repoName + pkg.key"
                         :card-data="pkg"
                         readonly
                         @click.native="showCommonPackageDetail(pkg)">
@@ -255,7 +255,6 @@
             }
         }
         .package-list {
-            flex: 1;
             height: 100%;
             .result-count {
                 font-size: 12px;

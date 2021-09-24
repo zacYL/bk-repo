@@ -1,8 +1,8 @@
 <template>
     <div class="repo-list-container" v-bkloading="{ isLoading }">
-        <div class="mt10 repo-list-search flex-between-center">
-            <bk-button v-if="canCreate" class="ml20" icon="plus" theme="primary" @click="createRepo"><span class="mr5">{{ $t('create') }}</span></bk-button>
-            <div class="mr20 flex-align-center">
+        <div class="ml15 mr15 mt10 repo-list-search flex-between-center">
+            <bk-button v-if="canCreate" icon="plus" theme="primary" @click="createRepo"><span class="mr5">{{ $t('create') }}</span></bk-button>
+            <div class="flex-align-center">
                 <bk-input
                     v-model.trim="query.name"
                     class="w250"
@@ -45,9 +45,9 @@
             </template>
             <bk-table-column :label="$t('repoName')">
                 <template #default="{ row }">
-                    <div class="flex-align-center">
+                    <div class="flex-align-center" :title="replaceRepoName(row.name)">
                         <Icon size="24" :name="row.repoType" />
-                        <span class="ml10 flex-1 text-overflow">{{replaceRepoName(row.name)}}</span>
+                        <span class="ml10 w250 flex-1 text-overflow hover-btn">{{replaceRepoName(row.name)}}</span>
                     </div>
                 </template>
             </bk-table-column>
@@ -209,8 +209,5 @@
 .repo-list-container {
     height: 100%;
     background-color: white;
-    .devops-icon {
-        font-size: 14px;
-    }
 }
 </style>

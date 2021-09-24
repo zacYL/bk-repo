@@ -20,14 +20,19 @@
 
  @charset 'utf-8';
  @import './conf';
+ @import './reset';
  @import './icon/iconfont';
 
 html,
 body {
     height: 100%;
     font-family: Microsoft Yahei,PingFang SC,Helvetica Neue,Arial,Hiragino Sans GB,WenQuanYi Micro Hei,sans-serif;
-    font-size: 14px;
+    font-size: 12px;
     color: var(--fontWeightColor);
+}
+
+.devops-icon {
+    font-size: 14px;
 }
 
 html,
@@ -132,34 +137,11 @@ label {
     }
 }
 
-.bk-table-body,
-.bk-table-footer,
-.bk-table-header,
-.bk-table-empty-block {
-    width: auto!important; /* ����bk-margic-vue����ʽ */
-}
-
-.bk-message-icon {
-    min-width: 20px !important;
-}
-
-.bk-page .bk-page-count .bk-select {
-    min-width: 80px !important;
-}
-
-.bk-option-name {
-    width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
 .repo-tag {
     display: inline-block;
     padding: 0 10px;
     line-height: 22px;
     border-radius: 10px;
-    font-size: 12px;
     white-space: nowrap;
     background-color: var(--primaryLightColor);
 }
@@ -172,8 +154,8 @@ label {
     width: 250px!important;
 }
 
-.bk-table-body-wrapper {
-    overflow-y: auto!important;
+.w480 {
+    width: 480px!important;
 }
 
 .spin-icon {
@@ -198,7 +180,6 @@ label {
         .operation-item {
             width: 90px;
             padding: 0 14px;
-            font-size: 14px;
             line-height: 2.5;
             text-align: center;
             cursor: pointer;

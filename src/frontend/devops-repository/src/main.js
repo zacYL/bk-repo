@@ -13,7 +13,8 @@ import { throttleMessage } from './utils'
 
 import bkMagic from 'bk-magic-vue'
 // 全量引入 bk-magic-vue 样式
-require('bk-magic-vue/dist/bk-magic-vue.min.css')
+import 'bk-magic-vue/dist/bk-magic-vue.min.css'
+
 // 打包svg文件
 const requireAll = requireContext => requireContext.keys().map(requireContext)
 const req = require.context('@/images', false, /\.svg$/)

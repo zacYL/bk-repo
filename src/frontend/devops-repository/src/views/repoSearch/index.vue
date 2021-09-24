@@ -4,7 +4,7 @@
             <div class="name-tool flex-align-center">
                 <bk-input
                     v-focus
-                    class="name-input"
+                    class="w480"
                     v-model.trim="packageNameInput"
                     size="large"
                     :placeholder="$t('pleaseInput') + $t('packageName')"
@@ -198,9 +198,6 @@
         background-color: white;
         .name-tool {
             height: 38px;
-            .name-input {
-                max-width: 480px;
-            }
             .name-search {
                 width: 80px;
                 height: 100%;

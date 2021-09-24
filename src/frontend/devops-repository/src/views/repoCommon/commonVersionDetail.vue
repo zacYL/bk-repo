@@ -1,9 +1,9 @@
 <template>
     <bk-tab class="common-version-container" type="unborder-card" :active.sync="tabName" v-bkloading="{ isLoading }">
         <template #setting>
-            <bk-button theme="primary" outline class="mr10" @click="$emit('tag')">晋级</bk-button>
+            <bk-button outline class="mr10" @click="$emit('tag')">晋级</bk-button>
             <bk-button outline class="mr10" @click="$emit('download')">下载</bk-button>
-            <bk-button theme="danger" outline class="mr20" @click="$emit('delete')">删除</bk-button>
+            <bk-button outline class="mr20" @click="$emit('delete')">删除</bk-button>
         </template>
         <bk-tab-panel v-if="detail.basic" name="versionBaseInfo" :label="$t('baseInfo')">
             <div class="version-base-info base-info" :data-title="$t('baseInfo')">
@@ -37,7 +37,7 @@
             <div class="version-base-info base-info-guide" :data-title="$t('useTips')">
                 <div class="sub-section" v-for="block in articleInstall[0].main" :key="block.subTitle">
                     <div class="mb10">{{ block.subTitle }}</div>
-                    <code-area class="mb20" bg-color="#e6edf6" color="#63656E" v-if="block.codeList && block.codeList.length" :code-list="block.codeList"></code-area>
+                    <code-area class="mb20" bg-color="#e6edf6" color="#081e40" v-if="block.codeList && block.codeList.length" :code-list="block.codeList"></code-area>
                 </div>
             </div>
             <div class="version-base-info base-info-checksums" data-title="Checksums">
@@ -57,11 +57,11 @@
                     <i @click="metadata.show ? hiddenAddMetadata() : showAddMetadata()" class="devops-icon icon-plus flex-center hover-btn"></i>
                     <div class="version-metadata-add-board"
                         :style="{ height: metadata.show ? '180px' : '0' }">
-                        <bk-form class="p20" :label-width="75" :model="metadata" :rules="rules" ref="metadatForm">
-                            <bk-form-item :label="$t('key')" :required="true" property="key">
+                        <bk-form class="p20" :label-width="80" :model="metadata" :rules="rules" ref="metadatForm">
+                            <bk-form-item :label="$t('key') + '：'" :required="true" property="key">
                                 <bk-input size="small" v-model="metadata.key" :placeholder="$t('key')"></bk-input>
                             </bk-form-item>
-                            <bk-form-item :label="$t('value')" :required="true" property="value">
+                            <bk-form-item :label="$t('value') + '：'" :required="true" property="value">
                                 <bk-input size="small" v-model="metadata.value" :placeholder="$t('value')"></bk-input>
                             </bk-form-item>
                             <bk-form-item>
@@ -115,7 +115,7 @@
                     <header class="version-history-header">Command</header>
                     <code-area class="mt20"
                         bg-color="#e6edf6"
-                        color="#63656E"
+                        color="#081e40"
                         :line-number="false"
                         :code-list="[selectedHistory.created_by]">
                     </code-area>

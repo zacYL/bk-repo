@@ -2,6 +2,7 @@
     <canway-dialog
         v-model="show"
         width="480"
+        height-num="275"
         title="操作确认"
         @cancel="cancel">
         <div class="p20 confirm-body flex-align-center">

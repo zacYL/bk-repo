@@ -3,26 +3,26 @@
         <bk-tab class="repo-config-tab" type="unborder-card" :active.sync="tabName">
             <bk-tab-panel name="baseInfo" :label="$t('repoBaseInfo')">
                 <bk-form ref="repoBaseInfo" class="repo-base-info" :label-width="150" :model="repoBaseInfo" :rules="rules">
-                    <bk-form-item :label="$t('repoName')">
+                    <bk-form-item :label="$t('repoName') + '：'">
                         <div class="flex-align-center">
                             <icon size="24" :name="repoBaseInfo.repoType || repoType" />
                             <span class="ml10">{{replaceRepoName(repoBaseInfo.name || repoName)}}</span>
                         </div>
                     </bk-form-item>
-                    <bk-form-item :label="$t('repoAddress')">
+                    <bk-form-item :label="$t('repoAddress') + '：'">
                         <span>{{repoAddress}}</span>
                     </bk-form-item>
-                    <bk-form-item :label="$t('publicRepo')" :required="true" property="public">
+                    <bk-form-item :label="$t('publicRepo') + '：'" :required="true" property="public">
                         <bk-checkbox v-model="repoBaseInfo.public">{{ repoBaseInfo.public ? $t('publicRepoDesc') : '' }}</bk-checkbox>
                     </bk-form-item>
                     <template v-if="repoType === 'rpm'">
-                        <bk-form-item :label="$t('enabledFileLists')">
+                        <bk-form-item :label="$t('enabledFileLists') + '：'">
                             <bk-checkbox v-model="repoBaseInfo.enabledFileLists"></bk-checkbox>
                         </bk-form-item>
-                        <bk-form-item :label="$t('repodataDepth')" property="repodataDepth">
+                        <bk-form-item :label="$t('repodataDepth') + '：'" property="repodataDepth">
                             <bk-input v-model.trim="repoBaseInfo.repodataDepth"></bk-input>
                         </bk-form-item>
-                        <bk-form-item :label="$t('groupXmlSet')" property="groupXmlSet">
+                        <bk-form-item :label="$t('groupXmlSet') + '：'" property="groupXmlSet">
                             <bk-tag-input
                                 :value="repoBaseInfo.groupXmlSet"
                                 @change="(val) => {
@@ -38,15 +38,18 @@
                             </bk-tag-input>
                         </bk-form-item>
                     </template>
-                    <bk-form-item :label="$t('description')">
+                    <bk-form-item :label="$t('description') + '：'">
                         <bk-input type="textarea"
+                            class="w480"
                             maxlength="200"
+                            :rows="6"
                             v-model.trim="repoBaseInfo.description"
                             :placeholder="$t('repoDescriptionPlacehodler')">
                         </bk-input>
                     </bk-form-item>
                     <bk-form-item>
-                        <bk-button :loading="repoBaseInfo.loading" theme="primary" @click="saveBaseInfo">{{$t('confirm')}}</bk-button>
+                        <bk-button @click.stop.prevent="toRepoList">{{$t('cancel')}}</bk-button>
+                        <bk-button class="ml10" :loading="repoBaseInfo.loading" theme="primary" @click="saveBaseInfo">{{$t('confirm')}}</bk-button>
                     </bk-form-item>
                 </bk-form>
             </bk-tab-panel>

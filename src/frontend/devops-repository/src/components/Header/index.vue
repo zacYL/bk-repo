@@ -89,7 +89,6 @@
         }
         .bk-select-dropdown .bk-select-name {
             color: var(--fontLigtherColor);
-            font-size: 14px;
             outline: none;
         }
     }

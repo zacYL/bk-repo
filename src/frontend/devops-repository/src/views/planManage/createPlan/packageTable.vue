@@ -121,7 +121,6 @@
         .package-item {
             justify-content: space-between;
             height: 32px;
-            font-size: 12px;
             border-bottom: 1px solid var(--borderWeightColor);
             background-color: #f9faff;
             .package-meta  {
@@ -131,7 +130,6 @@
             .icon-delete {
                 width: 50px;
                 height: 100%;
-                font-size: 16px;
                 background-color: #e6f2fe;
             }
         }

@@ -1,12 +1,12 @@
 <template>
     <canway-dialog
         v-model="show"
-        width="680"
+        width="800"
+        :height-num="repoBaseInfo.type === 'rpm' ? 714 : 558"
         title="创建仓库"
-        :position="{ top: 100 }"
         @cancel="cancel">
-        <bk-form class="mr10 repo-base-info" :label-width="120" :model="repoBaseInfo" :rules="rules" ref="repoBaseInfo">
-            <bk-form-item :label="$t('repoType')" :required="true" property="type">
+        <bk-form class="mr10 repo-base-info" :label-width="130" :model="repoBaseInfo" :rules="rules" ref="repoBaseInfo">
+            <bk-form-item :label="$t('repoType') + '：'" :required="true" property="type">
                 <bk-radio-group v-model="repoBaseInfo.type" class="repo-type-radio-group" @change="changeRepoType">
                     <bk-radio-button v-for="repo in repoEnum" :key="repo" :value="repo">
                         <div class="flex-column flex-center repo-type-radio">
@@ -16,24 +16,24 @@
                     </bk-radio-button>
                 </bk-radio-group>
             </bk-form-item>
-            <bk-form-item :label="$t('repoName')" :required="true" property="name">
-                <bk-input style="width:400px;" v-model.trim="repoBaseInfo.name" maxlength="32" show-word-limit
+            <bk-form-item :label="$t('repoName') + '：'" :required="true" property="name">
+                <bk-input class="w480" v-model.trim="repoBaseInfo.name" maxlength="32" show-word-limit
                     :placeholder="$t(repoBaseInfo.type === 'docker' ? 'repoDockerNamePlacehodler' : 'repoNamePlacehodler')">
                 </bk-input>
             </bk-form-item>
-            <bk-form-item :label="$t('publicRepo')" :required="true" property="public">
+            <bk-form-item :label="$t('publicRepo') + '：'" :required="true" property="public">
                 <bk-checkbox v-model="repoBaseInfo.public">{{ repoBaseInfo.public ? $t('publicRepoDesc') : '' }}</bk-checkbox>
             </bk-form-item>
             <template v-if="repoBaseInfo.type === 'rpm'">
-                <bk-form-item :label="$t('enabledFileLists')">
+                <bk-form-item :label="$t('enabledFileLists') + '：'">
                     <bk-checkbox v-model="repoBaseInfo.enabledFileLists"></bk-checkbox>
                 </bk-form-item>
-                <bk-form-item :label="$t('repodataDepth')" property="repodataDepth">
-                    <bk-input style="width:400px;" v-model.trim="repoBaseInfo.repodataDepth"></bk-input>
+                <bk-form-item :label="$t('repodataDepth') + '：'" property="repodataDepth">
+                    <bk-input class="w480" v-model.trim="repoBaseInfo.repodataDepth"></bk-input>
                 </bk-form-item>
-                <bk-form-item :label="$t('groupXmlSet')" property="groupXmlSet">
+                <bk-form-item :label="$t('groupXmlSet') + '：'" property="groupXmlSet">
                     <bk-tag-input
-                        style="width:400px;"
+                        class="w480"
                         :value="repoBaseInfo.groupXmlSet"
                         @change="(val) => {
                             repoBaseInfo.groupXmlSet = val.map(v => {
@@ -48,10 +48,11 @@
                     </bk-tag-input>
                 </bk-form-item>
             </template>
-            <bk-form-item :label="$t('description')">
+            <bk-form-item :label="$t('description') + '：'">
                 <bk-input type="textarea"
-                    style="width:400px;"
+                    class="w480"
                     maxlength="200"
+                    :rows="6"
                     v-model.trim="repoBaseInfo.description"
                     :placeholder="$t('repoDescriptionPlacehodler')">
                 </bk-input>
@@ -203,13 +204,14 @@
 .repo-base-info {
     .repo-type-radio-group {
         display: grid;
-        grid-template: auto / repeat(5, 80px);
+        grid-template: auto / repeat(6, 80px);
         grid-gap: 20px;
         ::v-deep .bk-form-radio-button {
             .bk-radio-button-text {
                 height: auto;
                 line-height: initial;
                 padding: 0;
+                border-radius: 2px;
             }
         }
         .repo-type-radio {

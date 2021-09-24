@@ -152,7 +152,6 @@
 .repo-tree-item {
     position: relative;
     color: var(--fontBoldColor);
-    font-size: 12px;
     .line-dashed {
         position: absolute;
         border-color: var(--borderLightColor);

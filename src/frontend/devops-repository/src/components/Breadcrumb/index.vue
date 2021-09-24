@@ -1,12 +1,10 @@
 <template>
-    <bk-breadcrumb class="breadcrumb" separator-class="bk-icon icon-angle-right">
+    <bk-breadcrumb separator-class="bk-icon icon-angle-right">
         <slot></slot>
         <bk-breadcrumb-item
-            class="breadcrumb-item"
             v-for="item in list"
             :key="item.name">
             <span
-                class="breadcrumb-label"
                 @click="() => item.cilckHandler && item.cilckHandler(item)">
                 {{ item.name }}
             </span>
@@ -24,16 +22,3 @@
         }
     }
 </script>
-<style lang="scss" scoped>
-.breadcrumb {
-    color: #63656e;
-    .breadcrumb-item {
-        &:last-child {
-            color: #979ba5;
-        }
-        .breadcrumb-label {
-            cursor: pointer;
-        }
-    }
-}
-</style>

@@ -1,0 +1,80 @@
+
+body {
+    /* 表格 */
+    .bk-table {
+        /* 表格下边框线 */
+        border-bottom: 1px solid #dfe0e5;
+        /* 表格表头 */
+        th .bk-table-header-label {
+            color: #8797aa;
+        }
+        /* 流体布局适应 */
+        .bk-table-body-wrapper {
+            overflow-y: auto!important;
+        }
+
+        .bk-table-body,
+        .bk-table-footer,
+        .bk-table-header,
+        .bk-table-empty-block {
+            width: auto!important;
+        }
+    }
+    /* 按钮 */
+    .bk-button {
+        padding: 0 2px;
+        height: 30px;
+        line-height: 28px;
+        min-width: 52px;
+        .bk-icon {
+            margin-right: 1px;
+            font-size: 20px;
+        }
+    }
+    /* 面包屑 */
+    .bk-breadcrumb {
+        .bk-breadcrumb-item {
+            display: inline-flex;
+            align-items: center;
+            color: var(--fontWeightColor);
+            &:last-child {
+                color: #979ba5;
+            }
+            .bk-breadcrumb-separator {
+                margin: 0;
+                font-size: 20px;
+            }
+        }
+    }
+    /* 字体颜色重置 */
+    .bk-form .bk-label,
+    .bk-form-checkbox .bk-checkbox-text,
+    .bk-form-radio,
+    .bk-tab-header {
+        color: var(--fontBoldColor);
+    }
+    .bk-form-radio-button .bk-radio-button-text {
+        color: #8797aa;
+    }
+    /* 字体大小重置 */
+    .bk-form .bk-label,
+    .bk-form-checkbox .bk-checkbox-text,
+    .bk-breadcrumb,
+    .bk-button,
+    .bk-form-radio {
+        font-size: 12px;
+    }
+    /* 多选 */
+    .bk-form-checkbox .bk-checkbox-text
+
+    .bk-message-icon {
+        min-width: 20px !important;
+    }
+
+    .bk-option-name {
+        width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}

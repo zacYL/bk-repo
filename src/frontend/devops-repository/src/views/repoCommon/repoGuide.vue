@@ -26,7 +26,7 @@
             <div slot="content" class="section-main">
                 <div class="flex-column" v-for="block in section.main" :key="block.subTitle">
                     <span v-if="block.subTitle" class="sub-title" :style="block.subTitleStyle">{{ block.subTitle }}</span>
-                    <code-area class="mt15" bg-color="#e6edf6" color="#63656E" v-if="block.codeList && block.codeList.length" :code-list="block.codeList"></code-area>
+                    <code-area class="mt15" bg-color="#e6edf6" color="#081e40" v-if="block.codeList && block.codeList.length" :code-list="block.codeList"></code-area>
                 </div>
             </div>
         </bk-collapse-item>

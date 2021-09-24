@@ -179,7 +179,10 @@
 <style lang="scss" scoped>
 .proxy-config-container {
     .proxy-config-tips {
-        color: #999;
+        padding: 5px 20px;
+        font-size: 12px;
+        color: #1A7EAC;
+        background-color: rgba($color: #3AC1FF, $alpha: 0.1);
     }
     .proxy-item,
     .proxy-head {
@@ -189,7 +192,6 @@
         line-height: 40px;
         border-bottom: 1px solid var(--borderColor);
         .proxy-index {
-            font-size: 16px;
             flex-basis: 50px;
         }
         .proxy-origin {
@@ -203,12 +205,10 @@
         }
         .proxy-operation {
             flex:1;
-            .icon-delete {
-                font-size: 16px;
-            }
         }
     }
     .proxy-head {
+        color: #8797aa;
         background-color: #FAFBFD;
     }
     .proxy-item {

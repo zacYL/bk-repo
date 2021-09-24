@@ -1,10 +1,10 @@
 <template>
     <main class="create-node-container" v-bkloading="{ isLoading }">
         <bk-form class="mb20 plan-form" :label-width="100" :model="planForm" :rules="rules" ref="planForm">
-            <bk-form-item label="计划名称" :required="true" property="name" error-display-type="normal">
-                <bk-input style="max-width:400px" v-model.trim="planForm.name" maxlength="32" show-word-limit :disabled="disabled"></bk-input>
+            <bk-form-item label="计划名称：" :required="true" property="name" error-display-type="normal">
+                <bk-input class="w480" v-model.trim="planForm.name" maxlength="32" show-word-limit :disabled="disabled"></bk-input>
             </bk-form-item>
-            <bk-form-item label="同步类型" :required="true" property="replicaObjectType">
+            <bk-form-item label="同步类型：" :required="true" property="replicaObjectType">
                 <bk-radio-group v-model="planForm.replicaObjectType" class="replica-type-radio-group" @change="changeReplicaObjectType">
                     <bk-radio-button
                         class="mr20"
@@ -22,27 +22,31 @@
                     </bk-radio-button>
                 </bk-radio-group>
             </bk-form-item>
-            <bk-form-item label="同步策略"
+            <bk-form-item label="同步策略："
                 :required="true"
                 :property="{ 'SPECIFIED_TIME': 'time', 'CRON_EXPRESSION': 'cron' }[planForm.executionStrategy]"
                 error-display-type="normal">
                 <bk-radio-group
-                    style="display:flex;align-items:center;height:32px;"
+                    class="radio-flex"
                     v-model="planForm.executionStrategy"
                     @change="clearError">
-                    <bk-radio class="mr50" value="IMMEDIATELY" :disabled="disabled">立即执行</bk-radio>
+                    <bk-radio class="mr50" value="IMMEDIATELY" :disabled="disabled">
+                        <span class="flex-align-center">立即执行</span>
+                    </bk-radio>
                     <bk-radio class="mr50" value="SPECIFIED_TIME" :disabled="disabled">
-                        指定时间
-                        <bk-date-picker
-                            class="ml10"
-                            v-if="planForm.executionStrategy === 'SPECIFIED_TIME'"
-                            v-model="planForm.time"
-                            type="datetime"
-                            :disabled="disabled"
-                            :options="{
-                                disabledDate: (date) => date < new Date()
-                            }">
-                        </bk-date-picker>
+                        <div class="flex-align-center">
+                            指定时间
+                            <bk-date-picker
+                                class="ml10"
+                                v-if="planForm.executionStrategy === 'SPECIFIED_TIME'"
+                                v-model="planForm.time"
+                                type="datetime"
+                                :disabled="disabled"
+                                :options="{
+                                    disabledDate: (date) => date < new Date()
+                                }">
+                            </bk-date-picker>
+                        </div>
                     </bk-radio>
                     <bk-radio class="mr50" value="CRON_EXPRESSION" :disabled="disabled">
                         <div class="flex-align-center">
@@ -53,21 +57,25 @@
                             </template>
                         </div>
                     </bk-radio>
-                    <bk-radio v-if="planForm.replicaObjectType === 'REPOSITORY'" class="mr50" value="REAL_TIME" :disabled="disabled">实时同步</bk-radio>
-                </bk-radio-group>
-            </bk-form-item>
-            <bk-form-item label="冲突策略" :required="true" property="conflictStrategy">
-                <bk-radio-group v-model="planForm.conflictStrategy">
-                    <bk-radio class="mr50" v-for="strategy in conflictStrategyList" :key="strategy.value" :value="strategy.value" :disabled="disabled">
-                        {{ strategy.label }}
-                        <i v-if="planForm.conflictStrategy === strategy.value" class="ml5 devops-icon icon-question-circle-shape" v-bk-tooltips="{
-                            content: strategy.tip,
-                            placements: ['bottom']
-                        }"></i>
+                    <bk-radio v-if="planForm.replicaObjectType === 'REPOSITORY'" class="mr50" value="REAL_TIME" :disabled="disabled">
+                        <span class="flex-align-center">实时同步</span>
                     </bk-radio>
                 </bk-radio-group>
             </bk-form-item>
-            <bk-form-item label="同步对象" :required="true" property="config" error-display-type="normal">
+            <bk-form-item label="冲突策略：" :required="true" property="conflictStrategy">
+                <bk-radio-group v-model="planForm.conflictStrategy">
+                    <bk-radio class="mr50" v-for="strategy in conflictStrategyList" :key="strategy.value" :value="strategy.value" :disabled="disabled">
+                        <div class="flex-align-center">
+                            {{ strategy.label }}
+                            <i v-if="planForm.conflictStrategy === strategy.value" class="ml5 devops-icon icon-question-circle-shape" v-bk-tooltips="{
+                                content: strategy.tip,
+                                placements: ['bottom']
+                            }"></i>
+                        </div>
+                    </bk-radio>
+                </bk-radio-group>
+            </bk-form-item>
+            <bk-form-item label="同步对象：" :required="true" property="config" error-display-type="normal">
                 <template v-if="planForm.replicaObjectType === 'REPOSITORY'">
                     <repository-table
                         ref="planConfig"
@@ -93,9 +101,9 @@
                     </path-table>
                 </template>
             </bk-form-item>
-            <bk-form-item label="目标节点" :required="true" property="remoteClusterIds" error-display-type="normal">
+            <bk-form-item label="目标节点：" :required="true" property="remoteClusterIds" error-display-type="normal">
                 <bk-select
-                    style="max-width:400px"
+                    class="w480"
                     v-model="planForm.remoteClusterIds"
                     searchable
                     multiple
@@ -109,11 +117,12 @@
                     </bk-option>
                 </bk-select>
             </bk-form-item>
-            <bk-form-item :label="$t('description')">
+            <bk-form-item :label="$t('description') + '：'">
                 <bk-input
-                    style="max-width:640px"
+                    class="w480"
                     v-model.trim="planForm.description"
                     type="textarea"
+                    :rows="6"
                     maxlength="200"
                     :disabled="disabled">
                 </bk-input>
@@ -395,7 +404,7 @@
                 }
                 .replica-type-tip {
                     font-size: 12px;
-                    color: #979BA5;
+                    color: #999;
                 }
                 .top-right-selected {
                     position: absolute;
@@ -407,7 +416,6 @@
                     i {
                         position: absolute;
                         margin-top: -12px;
-                        font-size: 12px;
                         color: white;
                     }
                 }
@@ -417,6 +425,21 @@
             display: grid;
             grid-template: auto / 1fr 1fr;
             margin: 5px 0 20px;
+        }
+        .radio-flex {
+            height: 32px;
+            display: flex;
+            align-items: center;
+            label {
+                display: flex;
+                align-items: center;
+                height: 32px;
+            }
+            ::v-deep .bk-radio-text {
+                height: 32px;
+                display: flex;
+                align-items: center;
+            }
         }
     }
 }

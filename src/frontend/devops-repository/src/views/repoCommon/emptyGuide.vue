@@ -1,9 +1,9 @@
 <template>
     <div class="empty-guide-container">
-        <div class="empty-guide-header flex-center flex-column">
-            <div class="mb20 empty-guide-title">制品仓库使用指引</div>
+        <div class="pt40 pb40 empty-guide-header flex-center flex-column">
+            <div class="mb20 empty-guide-title">仓库暂无制品</div>
             <div class="empty-guide-subtitle">
-                <span>参考下方使用指引来推送您的第一个制品</span>
+                <span>请参考下方使用指引来推送您的第一个制品</span>
                 <template v-if="showRepoConfigRoute">
                     <span>，或者</span>
                     <router-link class="router-link" :to="{ name: 'repoConfig', query: { repoName: this.$route.query.repoName } }">配置代理</router-link>
@@ -34,7 +34,7 @@
                 <div class="empty-guide-item-main">
                     <div v-for="block in section.main" :key="block.subTitle">
                         <div v-if="block.subTitle" class="ml20 empty-guide-item-subtitle" :style="block.subTitleStyle">{{ block.subTitle }}</div>
-                        <code-area class="mt15" bg-color="#e6edf6" color="#63656E" v-if="block.codeList && block.codeList.length" :code-list="block.codeList"></code-area>
+                        <code-area class="mt15" bg-color="#e6edf6" color="#081e40" v-if="block.codeList && block.codeList.length" :code-list="block.codeList"></code-area>
                     </div>
                 </div>
             </div>
@@ -68,17 +68,22 @@
 <style lang="scss" scoped>
 $bgColor: #f1f8ff;
 .empty-guide-container {
+    padding: 10px 60px;
     position: relative;
-    padding: 0 40px 20px;
     .empty-guide-header {
-        margin: 40px 0 ;
+        position: sticky;
+        top: -137px;
+        z-index: 1;
         color: var(--fontBoldColor);
+        background-color: white;
         .empty-guide-title {
-            font-size: 20px;
+            font-size: 16px;
             font-weight: bold;
+            color: var(--fontBoldColor);
         }
         .empty-guide-subtitle {
-            color: #999;
+            font-size: 12px;
+            color: #385377;
         }
     }
     .empty-guide-main {
@@ -87,24 +92,25 @@ $bgColor: #f1f8ff;
         border-radius: 4px;
         counter-reset: step;
         .empty-guide-item {
+            --marginBottom: 20px;
             position: relative;
             margin-left: 80px;
-            margin-bottom: 20px;
+            margin-bottom: var(--marginBottom);
             padding: 20px;
             background-color: var(--bgHoverColor);
             .guide-step {
                 position: absolute;
                 left: -80px;
                 top: 30px;
-                height: 100%;
-                border-left: 2px dashed var(--primaryColor);
+                height: calc(100% + var(--marginBottom));
+                border-left: 1px dashed var(--primaryColor);
                 &:before {
                     content: '';
                     position: absolute;
                     width: 10px;
                     height: 10px;
                     margin: -12px 0 0 -12px;
-                    border: 6px solid #a3c5fd;
+                    border: 6px solid #d7e6ff;
                     background-color: var(--primaryColor);
                     border-radius: 50%;
                 }
@@ -139,7 +145,6 @@ $bgColor: #f1f8ff;
             color: var(--fontBoldColor);
             font-size: 16px;
             font-weight: bold;
-            color: #333;
         }
         .empty-guide-item-main {
             .empty-guide-item-subtitle {

@@ -2,6 +2,7 @@
     <canway-dialog
         v-model="show"
         width="540"
+        height-num="280"
         title="创建访问令牌"
         @cancel="cancel">
         <div v-if="token" class="mt20 mb20 flex-align-center">
@@ -16,10 +17,10 @@
             </div>
         </div>
         <bk-form v-else class="mt20 mb20" :label-width="100" :model="tokenFormData" :rules="rules" ref="tokenForm">
-            <bk-form-item :label="$t('name')" :required="true" property="name">
+            <bk-form-item :label="$t('name') + '：'" :required="true" property="name">
                 <bk-input v-model.trim="tokenFormData.name" maxlength="32" show-word-limit></bk-input>
             </bk-form-item>
-            <bk-form-item :label="$t('expiress')" property="expiredAt">
+            <bk-form-item :label="$t('expiress') + '：'" property="expiredAt">
                 <bk-date-picker
                     style="width:100%"
                     v-model="tokenFormData.expiredAt"

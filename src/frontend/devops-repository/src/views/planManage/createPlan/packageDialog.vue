@@ -2,8 +2,8 @@
     <canway-dialog
         :value="show"
         width="800"
+        height-num="554"
         title="添加制品"
-        :position="{ top: 100 }"
         @cancel="$emit('cancel')"
         @confirm="confirmPackageData">
         <div class="search-package" v-bkloading="{ isLoading }">

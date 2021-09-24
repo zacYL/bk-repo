@@ -3,7 +3,7 @@
         v-model="genericTreeData.show"
         :title="genericTreeData.title"
         width="600"
-        :position="{ top: 100 }"
+        height-num="616"
         @cancel="genericTreeData.show = false">
         <bk-input
             class="w250"

@@ -1,6 +1,6 @@
 <template>
     <main class="log-detail-container" v-bkloading="{ isLoading }">
-        <div class="mt10 mb10 mr20 log-package-seach flex-align-center">
+        <div class="mr15 mt10 log-package-seach flex-align-center">
             <bk-search-select
                 class="search-group"
                 clearable
@@ -13,7 +13,7 @@
                 @search="handlerSearchSelectChange()">
             </bk-search-select>
             <bk-select
-                class="ml20 w250"
+                class="ml10 w250"
                 v-model="status"
                 placeholder="同步状态"
                 @change="handlerSearchSelectChange()">
@@ -22,6 +22,7 @@
             </bk-select>
         </div>
         <bk-table
+            class="mt10"
             height="calc(100% - 104px)"
             :data="pkgList"
             :outer-border="false"

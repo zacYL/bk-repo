@@ -1,6 +1,6 @@
 <template>
     <div class="plan-container" v-bkloading="{ isLoading }">
-        <div class="ml20 mr20 mt10 flex-between-center">
+        <div class="ml15 mr15 mt10 flex-between-center">
             <bk-button icon="plus" theme="primary" @click="$router.push({ name: 'createPlan' })"><span class="mr5">{{ $t('create') }}</span></bk-button>
             <div class="flex-align-center">
                 <bk-input
@@ -340,7 +340,6 @@
             background-color: #FFE8C3;
         }
         ::v-deep .devops-icon {
-            font-size: 16px;
             &.disabled {
                 color: var(--disabledColor);
                 cursor: not-allowed;

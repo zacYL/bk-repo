@@ -1,8 +1,7 @@
 <template>
-    <bk-breadcrumb class="breadcrumb" separator-class="bk-icon icon-angle-right">
+    <bk-breadcrumb separator-class="bk-icon icon-angle-right">
         <slot></slot>
         <bk-breadcrumb-item
-            class="breadcrumb-item"
             v-for="item in list"
             :key="item.name"
             :to="{ name: item.name, params: $route.params, query: $route.query }">
@@ -31,13 +30,3 @@
         }
     }
 </script>
-<style lang="scss" scoped>
-.breadcrumb {
-    color: #63656e;
-    .breadcrumb-item {
-        &:last-child {
-            color: #979ba5;
-        }
-    }
-}
-</style>

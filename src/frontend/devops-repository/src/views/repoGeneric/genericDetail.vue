@@ -32,11 +32,11 @@
                         <i @click="metadata.show ? hiddenAddMetadata() : showAddMetadata()" class="devops-icon icon-plus flex-center hover-btn"></i>
                         <div class="version-metadata-add-board"
                             :style="{ height: metadata.show ? '180px' : '0' }">
-                            <bk-form class="p20" :label-width="75" :model="metadata" :rules="rules" ref="metadatForm">
-                                <bk-form-item :label="$t('key')" :required="true" property="key">
+                            <bk-form class="p20" :label-width="80" :model="metadata" :rules="rules" ref="metadatForm">
+                                <bk-form-item :label="$t('key') + '：'" :required="true" property="key">
                                     <bk-input size="small" v-model="metadata.key" :placeholder="$t('key')"></bk-input>
                                 </bk-form-item>
-                                <bk-form-item :label="$t('value')" :required="true" property="value">
+                                <bk-form-item :label="$t('value') + '：'" :required="true" property="value">
                                     <bk-input size="small" v-model="metadata.value" :placeholder="$t('value')"></bk-input>
                                 </bk-form-item>
                                 <bk-form-item>
@@ -265,9 +265,6 @@
                     background-color: #f0f1f5;
                 }
             }
-        }
-        .icon-delete {
-            font-size: 16px;
         }
     }
 }

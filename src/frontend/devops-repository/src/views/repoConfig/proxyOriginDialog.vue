@@ -2,24 +2,25 @@
     <canway-dialog
         v-model="show"
         width="600"
+        :height-num="editProxyData.proxyType === 'privateProxy' ? 456 : 321"
         :title="editProxyData.type === 'add' ? $t('addProxy') : $t('editProxy')"
         @cancel="$emit('cancel')"
         @confirm="confirmProxyData">
-        <label class="mb10 form-label">{{ $t('baseInfo') }}</label>
-        <bk-form ref="proxyOrigin" :label-width="85" :model="editProxyData" :rules="rules">
-            <bk-form-item :label="$t('type')" :required="true" property="proxyType">
+        <label class="ml20 mr20 mb10 form-label">{{ $t('baseInfo') }}</label>
+        <bk-form class="ml20 mr20" ref="proxyOrigin" :label-width="85" :model="editProxyData" :rules="rules">
+            <bk-form-item :label="$t('type') + '：'" :required="true" property="proxyType">
                 <bk-radio-group v-model="editProxyData.proxyType" @change="proxyTypeChange">
                     <bk-radio :disabled="editProxyData.type === 'edit'" value="publicProxy">{{ $t('publicProxy') }}</bk-radio>
                     <bk-radio :disabled="editProxyData.type === 'edit'" class="ml20" value="privateProxy">{{ $t('privateProxy') }}</bk-radio>
                 </bk-radio-group>
             </bk-form-item>
             <template v-if="editProxyData.proxyType === 'privateProxy'">
-                <bk-form-item :label="$t('name')" :required="true" property="name">
-                    <bk-input v-model.trim="editProxyData.name"></bk-input>
+                <bk-form-item :label="$t('name') + '：'" :required="true" property="name">
+                    <bk-input v-model.trim="editProxyData.name" maxlength="32" show-word-limit></bk-input>
                 </bk-form-item>
             </template>
             <template v-else>
-                <bk-form-item :label="$t('name')" :required="true" property="channelId">
+                <bk-form-item :label="$t('name') + '：'" :required="true" property="channelId">
                     <bk-select v-model="editProxyData.channelId" @change="changeChannelId" :clear="false">
                         <bk-option
                             v-for="option in publicProxy"
@@ -30,17 +31,17 @@
                     </bk-select>
                 </bk-form-item>
             </template>
-            <bk-form-item :label="$t('address')" :required="true" property="url">
+            <bk-form-item :label="$t('address') + '：'" :required="true" property="url">
                 <bk-input :disabled="editProxyData.proxyType === 'publicProxy'" v-model.trim="editProxyData.url"></bk-input>
             </bk-form-item>
         </bk-form>
         <template v-if="editProxyData.proxyType === 'privateProxy'">
-            <label class="mt20 mb10 form-label">凭证信息</label>
-            <bk-form :label-width="85">
-                <bk-form-item :label="$t('account')" property="username">
+            <label class="ml20 mr20 mt20 mb10 form-label">凭证信息</label>
+            <bk-form class="ml20 mr20" :label-width="85">
+                <bk-form-item :label="$t('account') + '：'" property="username">
                     <bk-input v-model.trim="editProxyData.username"></bk-input>
                 </bk-form-item>
-                <bk-form-item :label="$t('password')" property="password">
+                <bk-form-item :label="$t('password') + '：'" property="password">
                     <bk-input type="password" v-model.trim="editProxyData.password"></bk-input>
                 </bk-form-item>
             </bk-form>

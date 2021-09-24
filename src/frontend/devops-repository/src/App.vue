@@ -3,7 +3,7 @@
         <Header v-if="!iframeMode" />
         <breadcrumb class="repo-breadcrumb">
             <bk-breadcrumb-item :to="{ name: 'repoList' }">
-                <svg width="48" height="16" style="vertical-align:-3px">
+                <svg width="48" height="17" style="vertical-align:-3px">
                     <use xlink:href="#vpack" />
                 </svg>
             </bk-breadcrumb-item>

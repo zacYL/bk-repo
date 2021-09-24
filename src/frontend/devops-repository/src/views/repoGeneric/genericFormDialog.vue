@@ -2,21 +2,22 @@
     <canway-dialog
         v-model="genericForm.show"
         :title="genericForm.title"
-        width="450"
+        width="500"
+        :height-num="genericForm.type === 'share' ? 342 : 186"
         @cancel="cancel">
-        <bk-form class="repo-generic-form" :label-width="100" :model="genericForm" :rules="rules" ref="genericForm">
+        <bk-form class="repo-generic-form" :label-width="120" :model="genericForm" :rules="rules" ref="genericForm">
             <template v-if="genericForm.type === 'add'">
-                <bk-form-item :label="$t('createFolderLabel')" :required="true" property="path">
+                <bk-form-item :label="$t('createFolderLabel') + '：'" :required="true" property="path">
                     <bk-input v-model.trim="genericForm.path" :placeholder="$t('folderNamePlacehodler')"></bk-input>
                 </bk-form-item>
             </template>
             <template v-else-if="genericForm.type === 'rename'">
-                <bk-form-item :label="$t('name')" :required="true" property="name">
+                <bk-form-item :label="$t('file') + $t('name') + '：'" :required="true" property="name">
                     <bk-input v-model.trim="genericForm.name" :placeholder="$t('folderNamePlacehodler')"></bk-input>
                 </bk-form-item>
             </template>
             <template v-else-if="genericForm.type === 'share'">
-                <bk-form-item label="授权用户" property="user">
+                <bk-form-item label="授权用户：" property="user">
                     <bk-tag-input
                         v-model="genericForm.user"
                         :list="Object.values(userList).filter(user => user.id !== 'anonymous')"
@@ -26,7 +27,7 @@
                         has-delete-icon>
                     </bk-tag-input>
                 </bk-form-item>
-                <bk-form-item label="授权IP" property="ip">
+                <bk-form-item label="授权IP：" property="ip">
                     <bk-tag-input
                         v-model="genericForm.ip"
                         placeholder="授权访问IP，为空则任意IP可访问，按Enter键确认"
@@ -35,10 +36,10 @@
                         has-delete-icon>
                     </bk-tag-input>
                 </bk-form-item>
-                <bk-form-item label="访问次数" property="permits">
+                <bk-form-item label="访问次数：" property="permits">
                     <bk-input v-model.trim="genericForm.permits" placeholder="请输入数字，小于等于0则永久有效"></bk-input>
                 </bk-form-item>
-                <bk-form-item :label="`${$t('validity')}(${$t('day')})`" property="time">
+                <bk-form-item :label="`${$t('validity')}(${$t('day')})：`" property="time">
                     <bk-input v-model.trim="genericForm.time" placeholder="请输入数字，小于等于0则永久有效"></bk-input>
                 </bk-form-item>
             </template>

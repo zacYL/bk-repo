@@ -441,6 +441,7 @@
 </script>
 <style lang="scss" scoped>
 .permission-config-container {
+    margin: 0 -10px;
     ::v-deep .bk-collapse-item {
         margin-bottom: 20px;
         .bk-collapse-item-detail {
@@ -460,13 +461,8 @@
         color: var(--fontBoldColor);
         background-color: #f2f2f2;
         border: 1px solid #d5d5d5;
-        font-size: 14px;
         font-weight: normal;
-        .icon-edit {
-            font-size: 14px;
-        }
         .permission-actions {
-            font-size: 12px;
             color: var(--fontColor);
         }
     }

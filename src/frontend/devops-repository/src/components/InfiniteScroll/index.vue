@@ -78,6 +78,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            color: #cbd5e0;
             .devops-icon {
                 margin-right: 8px;
             }

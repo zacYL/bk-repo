@@ -2,7 +2,9 @@
     <canway-dialog
         :value="show"
         :title="title"
-        width="620">
+        width="620"
+        height-num="280"
+        @cancel="$emit('cancel')">
         <artifactory-upload ref="artifactoryUpload" :upload-status="uploadStatus" :upload-progress="uploadProgress"></artifactory-upload>
         <div slot="footer">
             <bk-button @click="loading ? abortUpload() : $emit('cancel')">{{ $t('cancel') }}</bk-button>
@@ -33,6 +35,7 @@
             show (val) {
                 if (val) {
                     this.$refs.artifactoryUpload.reset()
+                    this.loading = false
                     this.uploadStatus = 'primary'
                     this.uploadProgress = 0
                 }

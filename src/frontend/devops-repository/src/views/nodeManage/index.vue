@@ -1,6 +1,6 @@
 <template>
     <div class="node-container" v-bkloading="{ isLoading }">
-        <div class="ml20 mr20 mt10 flex-between-center">
+        <div class="ml15 mr15 mt10 flex-between-center">
             <bk-button icon="plus" theme="primary" @click="showCreateNode"><span class="mr5">{{ $t('create') }}</span></bk-button>
             <div class="node-search flex-align-center">
                 <bk-input
@@ -86,24 +86,25 @@
             v-model="editNodeDialog.show"
             :title="editNodeDialog.add ? '新建节点' : '编辑节点'"
             width="600"
+            height-num="425"
             @cancel="editNodeDialog.show = false">
             <bk-form class="mr50" :label-width="110" :model="editNodeDialog" :rules="rules" ref="editNodeDialog">
-                <bk-form-item :label="$t('type')" :required="true" property="type">
+                <bk-form-item :label="$t('type') + '：'" :required="true" property="type">
                     <bk-radio-group v-model="editNodeDialog.type">
                         <bk-radio class="mr20" value="STANDALONE">独立节点</bk-radio>
                         <bk-radio class="mr20" value="EDGE">边缘节点</bk-radio>
                     </bk-radio-group>
                 </bk-form-item>
-                <bk-form-item :label="$t('name')" :required="true" property="name">
+                <bk-form-item :label="$t('name') + '：'" :required="true" property="name">
                     <bk-input v-model.trim="editNodeDialog.name" :disabled="!editNodeDialog.add" maxlength="32" show-word-limit></bk-input>
                 </bk-form-item>
-                <bk-form-item class="mt30" :label="$t('address')" :required="true" property="url">
+                <bk-form-item class="mt30" :label="$t('address') + '：'" :required="true" property="url">
                     <bk-input v-model.trim="editNodeDialog.url" :disabled="!editNodeDialog.add"></bk-input>
                 </bk-form-item>
-                <bk-form-item class="mt30" :label="$t('account')" :required="true" property="username">
+                <bk-form-item class="mt30" :label="$t('account') + '：'" :required="true" property="username">
                     <bk-input v-model.trim="editNodeDialog.username"></bk-input>
                 </bk-form-item>
-                <bk-form-item class="mt30" :label="$t('password')" :required="true" property="password">
+                <bk-form-item class="mt30" :label="$t('password') + '：'" :required="true" property="password">
                     <bk-input v-model.trim="editNodeDialog.password" type="password"></bk-input>
                 </bk-form-item>
             </bk-form>
@@ -297,12 +298,6 @@
     overflow: hidden;
     background-color: white;
     .node-table {
-        .icon-edit {
-            font-size: 14px;
-        }
-        .icon-delete {
-            font-size: 16px;
-        }
         .HEALTHY {
             color: #2dcb56;
         }

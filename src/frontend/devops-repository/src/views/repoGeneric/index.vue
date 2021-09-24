@@ -671,7 +671,6 @@
             }
             .repo-description {
                 max-width: 600px;
-                font-size: 12px;
                 display: -webkit-box;
                 -webkit-line-clamp: 3;
                 -webkit-box-orient: vertical;

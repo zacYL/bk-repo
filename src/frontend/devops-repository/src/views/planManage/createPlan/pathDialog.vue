@@ -1,15 +1,17 @@
 <template>
     <canway-dialog
         :value="show"
-        width="600"
+        width="528"
+        height-num="274"
         title="添加文件路径"
         @cancel="$emit('cancel')"
         @confirm="confirmPackageData">
         <bk-input
+            class="w480"
             v-model="pathsStr"
             type="textarea"
             placeholder="请输入文件路径，以换行分隔"
-            :rows="10">
+            :rows="6">
         </bk-input>
     </canway-dialog>
 </template>

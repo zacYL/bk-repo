@@ -112,7 +112,6 @@
     position: absolute;
     margin-left: 25px;
     margin-top: 10px;
-    font-size: 12px;
     color: var(--failColor);
 }
 .login-form {
@@ -120,7 +119,6 @@
     .login-button {
         width: 100%;
         height: 40px;
-        font-size: 12px;
         margin-top: 20px;
     }
 }

@@ -66,7 +66,7 @@
 .code-area {
     position: relative;
     line-height: 2;
-    padding: 10px 40px;
+    padding: 10px 35px;
     min-height: 48px;
     word-break: break-all;
     counter-reset: row-num;
@@ -74,7 +74,7 @@
         position: relative;
         &.line-number:before {
             position: absolute;
-            margin-left: -30px;
+            margin-left: -25px;
             counter-increment: row-num;
             content: counter(row-num);
         }

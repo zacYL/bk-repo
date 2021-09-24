@@ -7,7 +7,7 @@
                     {{ repoName }}
                 </span>
                 <span class="repo-description" :title="currentRepo.description">
-                    {{ currentRepo.description || '--' }}
+                    {{ currentRepo.description || '【仓库描述】' }}
                 </span>
             </div>
             <div class="ml10 repo-guide-btn flex-align-center" @click="showGuide = true">
@@ -42,29 +42,29 @@
             </div>
         </div>
         <!-- 有数据 -->
-        <infinite-scroll
-            v-if="packageList.length"
-            ref="infiniteScroll"
-            class="common-package-list"
-            :is-loading="isLoading"
-            :has-next="packageList.length < pagination.count"
-            @load="handlerPaginationChange({ current: pagination.current + 1 }, true)">
-            <div class="mb10 list-count">共计{{ pagination.count }}个制品</div>
-            <package-card
-                class="mb20"
-                v-for="pkg in packageList"
-                :key="pkg.key"
-                :card-data="pkg"
-                @click.native="showCommonPackageDetail(pkg)"
-                @delete-card="deletePackageHandler(pkg)">
-            </package-card>
-        </infinite-scroll>
+        <div v-if="packageList.length" class="common-package-list">
+            <infinite-scroll
+                ref="infiniteScroll"
+                :is-loading="isLoading"
+                :has-next="packageList.length < pagination.count"
+                @load="handlerPaginationChange({ current: pagination.current + 1 }, true)">
+                <div class="mb10 list-count">共计{{ pagination.count }}个制品</div>
+                <package-card
+                    class="mb20"
+                    v-for="pkg in packageList"
+                    :key="pkg.key"
+                    :card-data="pkg"
+                    @click.native="showCommonPackageDetail(pkg)"
+                    @delete-card="deletePackageHandler(pkg)">
+                </package-card>
+            </infinite-scroll>
+        </div>
         <!-- 未搜索无数据 -->
         <empty-guide v-if="!isLoading && !$route.query.packageName && !packageList.length" class="empty-guide" :article="articleGuide"></empty-guide>
         <!-- 搜索无数据 -->
         <empty-data v-if="$route.query.packageName && !packageList.length" ex-style="margin-top: 100px;" search></empty-data>
 
-        <bk-sideslider :is-show.sync="showGuide" :quick-close="true" :width="850">
+        <bk-sideslider :is-show.sync="showGuide" :quick-close="true" :width="600">
             <div slot="header" class="flex-align-center"><icon class="mr5" :name="repoType" size="32"></icon>{{ replaceRepoName(repoName) + $t('guide') }}</div>
             <repo-guide class="pt20 pb20 pl10 pr10" slot="content" :article="articleGuide"></repo-guide>
         </bk-sideslider>
@@ -189,6 +189,7 @@
     height: 100%;
     .common-package-header{
         height: 130px;
+        color: var(--fontBoldColor);
         background-color: white;
         .package-img {
             width: 110px;
@@ -203,11 +204,9 @@
                 max-width: 500px;
                 font-size: 20px;
                 font-weight: bold;
-                color: var(--fontBoldColor);
             }
             .repo-description {
-                max-width: 600px;
-                font-size: 12px;
+                max-width: 70vw;
                 display: -webkit-box;
                 -webkit-line-clamp: 3;
                 -webkit-box-orient: vertical;
@@ -239,7 +238,7 @@
     }
     .common-package-list {
         height: calc(100% - 192px);
-        padding: 0 20px 10px;
+        padding: 0 20px;
         background-color: white;
         .list-count {
             font-size: 12px;
@@ -247,7 +246,7 @@
         }
     }
     .empty-guide {
-        height: calc(100% - 130px);
+        height: calc(100% - 140px);
         background-color: white;
         overflow-y: auto;
     }

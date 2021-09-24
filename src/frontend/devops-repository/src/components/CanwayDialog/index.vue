@@ -1,6 +1,7 @@
 <template>
     <bk-dialog
         v-bind="$attrs"
+        :position="{ top }"
         :close-icon="false">
         <template #tools>
             <div class="mb20 canway-dialog-header flex-align-center">
@@ -18,10 +19,41 @@
     </bk-dialog>
 </template>
 <script>
+    import { debounce } from '@/utils'
     export default {
         name: 'canwayDialog',
         props: {
-            title: String
+            title: String,
+            heightNum: {
+                type: [String, Number],
+                default: 600
+            }
+        },
+        data () {
+            return {
+                resizeFn: null,
+                bodyHeight: document.body.getBoundingClientRect().height
+            }
+        },
+        computed: {
+            top () {
+                // 25 = ci顶部导航高度 / 2
+                const offset = MODE_CONFIG === 'ci' ? 25 : 0
+                const top = (this.bodyHeight - this.heightNum) / 2 - offset
+                return top > 0 ? top : 0
+            }
+        },
+        mounted () {
+            this.resizeFn = debounce(this.getBodyHeight, 1000)
+            window.addEventListener('resize', this.resizeFn)
+        },
+        beforeDestroy () {
+            window.removeEventListener('resize', this.resizeFn)
+        },
+        methods: {
+            getBodyHeight () {
+                this.bodyHeight = document.body.getBoundingClientRect().height
+            }
         }
     }
 </script>
@@ -39,7 +71,6 @@
     }
     .icon-close {
         padding: 5px;
-        font-size: 12px;
         cursor: pointer;
     }
 }

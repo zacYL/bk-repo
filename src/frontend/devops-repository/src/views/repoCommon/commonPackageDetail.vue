@@ -50,10 +50,11 @@
         <canway-dialog
             v-model="formDialog.show"
             width="600"
+            height-num="186"
             :title="$t('upgrade')"
             @cancel="cancelFormDialog">
             <bk-form :label-width="120" :model="formDialog" :rules="rules" ref="formDialog">
-                <bk-form-item :label="$t('upgradeTo')" :required="true" property="tag">
+                <bk-form-item :label="$t('upgradeTo') + '：'" :required="true" property="tag">
                     <bk-radio-group v-model="formDialog.tag">
                         <bk-radio :disabled="!!formDialog.default.length" value="@prerelease">@prerelease</bk-radio>
                         <bk-radio class="ml20" value="@release">@release</bk-radio>
@@ -302,7 +303,7 @@
             .version-item {
                 position: relative;
                 height: 42px;
-                border-radius: 4px;
+                border-radius: 2px;
                 background-color: #F6F9FF;
                 cursor: pointer;
                 .version-operation {

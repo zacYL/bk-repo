@@ -55,7 +55,7 @@
     cursor: pointer;
     &:hover {
         background-color: white;
-        box-shadow: 0px 0px 8px 0px rgba(217, 217, 217, 0.5);
+        box-shadow: inset 0px 0px 6px 0px rgba(217, 217, 217, 0.5);
     }
     .card-icon {
         width: 68px;
@@ -70,27 +70,26 @@
         justify-content: space-around;
         overflow: hidden;
         .card-name {
+            font-size: 14px;
             max-width: 500px;
-            color: #222222;
+            color: var(--fontWeightColor);
             font-weight: bold;
         }
         .card-tag {
             display: inline-block;
             padding: 0 10px;
             line-height: 22px;
-            font-size: 12px;
             white-space: nowrap;
             border-radius: 2px;
             color: var(--borderColor);
             background-color: #91ADD1;
         }
         .package-card-description {
-            color: #999;
             font-size: 12px;
+            color: #999;
         }
         .package-card-data {
             color: var(--fontWeightColor);
-            font-size: 12px;
             div {
                 width: 300px;
                 overflow: hidden;
@@ -107,8 +106,9 @@
         .package-card-delete {
             width: 24px;
             height: 24px;
+            font-size: 16px;
             &:hover {
-                color: var(--borderColor);
+                color: white;
                 background-color: var(--dangerColor);
                 border-radius: 4px;
             }

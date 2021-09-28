@@ -364,7 +364,7 @@
             }
             .repo-tag {
                 color: white;
-                background-color: #91ADD1;
+                background-color: var(--primaryHoverColor);
             }
         }
         &.base-info-guide {
@@ -415,7 +415,7 @@
                 width: 100%;
                 height: 100%;
                 &:hover {
-                    background-color: #f0f1f5;
+                    background-color: var(--bgHoverColor);
                 }
             }
         }
@@ -456,17 +456,17 @@
                 text-overflow: ellipsis;
                 white-space: nowrap;
                 &:hover {
-                    background-color: var(--bgHoverColor);
+                    background-color: var(--bgHoverLighterColor);
                 }
                 &.select {
-                    background-color: #ebedf0;
+                    background-color: var(--bgHoverColor);
                 }
                 &:before {
                     display: inline-block;
                     width: 30px;
                     margin-right: 5px;
                     text-align: center;
-                    background-color: #f9f9f9;
+                    background-color: var(--bgColor);
                     counter-increment: row-num;
                     content: counter(row-num);
                 }

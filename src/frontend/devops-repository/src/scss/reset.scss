@@ -1,18 +1,44 @@
 
 body {
+    /*  */
+    .bk-page {
+        margin-top: -1px;
+        border-top: 1px solid var(--borderColor);
+    }
     /* 表格 */
     .bk-table {
-        /* 表格下边框线 */
-        border-bottom: 1px solid #dfe0e5;
-        /* 表格表头 */
-        th .bk-table-header-label {
-            color: #8797aa;
+        /* 列边距 */
+        .cell {
+            padding: 0 10px;
+        }
+        /* 行高 */
+        td, th {
+            height: 40px;
+            /* 列边距 */
+            &:first-child > .cell {
+                padding-left: 30px;
+            }
+            &:last-child > .cell {
+                padding-right: 30px;
+            }
+        }
+        th {
+            :hover {
+                background-color: transparent;
+            }
+            > .cell {
+                height: 40px;
+                line-height: 40px;
+            }
+        }
+        /* 行hover背景 */
+        .bk-table-body tr.bk-table-row.hover-row > td {
+            background-color: var(--bgHoverLighterColor);
         }
         /* 流体布局适应 */
         .bk-table-body-wrapper {
             overflow-y: auto!important;
         }
-
         .bk-table-body,
         .bk-table-footer,
         .bk-table-header,
@@ -25,36 +51,37 @@ body {
         padding: 0 2px;
         height: 30px;
         line-height: 28px;
-        min-width: 52px;
+        min-width: 56px;
         .bk-icon {
-            margin-right: 1px;
             font-size: 20px;
         }
     }
     /* 面包屑 */
-    .bk-breadcrumb {
-        .bk-breadcrumb-item {
-            display: inline-flex;
-            align-items: center;
-            color: var(--fontWeightColor);
-            &:last-child {
-                color: #979ba5;
-            }
-            .bk-breadcrumb-separator {
-                margin: 0;
-                font-size: 20px;
-            }
+    .bk-breadcrumb .bk-breadcrumb-item {
+        display: inline-flex;
+        align-items: center;
+        .bk-breadcrumb-separator {
+            margin: 0;
+            font-size: 20px;
         }
     }
     /* 字体颜色重置 */
+    .bk-breadcrumb .bk-breadcrumb-item,
+    .bk-table,
     .bk-form .bk-label,
     .bk-form-checkbox .bk-checkbox-text,
     .bk-form-radio,
-    .bk-tab-header {
-        color: var(--fontBoldColor);
+    .bk-tab-header,
+    .bk-form-control,
+    .bk-button,
+    .bk-select {
+        color: var(--fontPrimaryColor);
     }
+
+    .bk-breadcrumb .bk-breadcrumb-item:last-child,
+    .bk-table th .bk-table-header-label,
     .bk-form-radio-button .bk-radio-button-text {
-        color: #8797aa;
+        color: var(--fontSubsidiaryColor);
     }
     /* 字体大小重置 */
     .bk-form .bk-label,
@@ -64,8 +91,22 @@ body {
     .bk-form-radio {
         font-size: 12px;
     }
-    /* 多选 */
-    .bk-form-checkbox .bk-checkbox-text
+    /* 边框颜色重置 */
+    .bk-table:before {
+        background-color: var(--borderColor);
+    }
+    .bk-table td,
+    .bk-table th.is-leaf {
+        border-color: var(--borderColor);
+    }
+    .bk-form-input,
+    .bk-form-password,
+    .bk-form-select,
+    .bk-form-textarea,
+    .bk-select,
+    .bk-button {
+        border-color: var(--borderWeightColor);
+    }
 
     .bk-message-icon {
         min-width: 20px !important;

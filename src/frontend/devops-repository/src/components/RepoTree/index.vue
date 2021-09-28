@@ -151,10 +151,10 @@
 }
 .repo-tree-item {
     position: relative;
-    color: var(--fontBoldColor);
+    color: var(--fontPrimaryColor);
     .line-dashed {
         position: absolute;
-        border-color: var(--borderLightColor);
+        border-color: var(--borderColor);
         border-style: dashed;
         z-index: 1;
     }
@@ -176,7 +176,7 @@
             z-index: 1;
         }
         .devops-icon {
-            color: var(--fontColor);
+            color: var(--fontPrimaryColor);
             z-index: 1;
         }
         .node-text {
@@ -187,11 +187,11 @@
             em {
                 font-style: normal;
                 font-weight: bold;
-                background-color: #edf45d;
+                background-color: var(--warningColor);
             }
         }
         &.selected {
-            background-color: var(--primaryLightColor);
+            background-color: var(--bgColor);
             color: var(--primaryColor);
         }
     }

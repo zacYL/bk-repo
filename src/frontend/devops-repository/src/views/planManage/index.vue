@@ -120,7 +120,7 @@
             </bk-table-column>
         </bk-table>
         <bk-pagination
-            class="m10"
+            class="p10"
             size="small"
             align="right"
             show-total-count
@@ -328,26 +328,26 @@
     background-color: white;
     .plan-table {
         .SUCCESS {
-            color: #2DCB56;
+            color: var(--successColor);
             background-color: #DCFFE2;
         }
         .FAILED {
-            color: #EA3636;
+            color: var(--dangerColor);
             background-color: #FFDDDD;
         }
         .RUNNING {
-            color: #FF9C01;
+            color: var(--warningColor);
             background-color: #FFE8C3;
         }
         ::v-deep .devops-icon {
             &.disabled {
-                color: var(--disabledColor);
+                color: var(--fontTipColor);
                 cursor: not-allowed;
             }
             &.icon-down-shape {
-                color: var(--fontLigtherColor);
+                color: var(--fontSubsidiaryColor);
                 &.selected {
-                    color: var(--fontWeightColor);
+                    color: var(--fontPrimaryColor);
                 }
             }
         }

@@ -84,7 +84,7 @@
             </bk-table-column>
         </bk-table>
         <bk-pagination
-            class="m10"
+            class="p10"
             size="small"
             align="right"
             show-total-count
@@ -218,26 +218,26 @@
         }
     }
     .SUCCESS {
-        color: #40B740;
+        color: var(--successColor);
     }
     .FAILED {
-        color: #FF5F5F;
+        color: var(--dangerColor);
     }
     .RUNNING {
-        color: #3A84FF;
+        color: var(--primaryColor);
     }
     .status-icon {
         width: 10px;
         height: 10px;
         border-radius: 50%;
         &.SUCCESS {
-            background-color: #40B740;
+            background-color: var(--successColor);
         }
         &.FAILED {
-            background-color: #FF5F5F;
+            background-color: var(--dangerColor);
         }
         &.RUNNING {
-            background-color: #3A84FF;
+            background-color: var(--primaryColor);
         }
     }
 }

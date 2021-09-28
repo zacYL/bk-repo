@@ -71,7 +71,7 @@
             </bk-table-column>
         </bk-table>
         <bk-pagination
-            class="m10"
+            class="p10"
             size="small"
             align="right"
             show-total-count
@@ -299,20 +299,20 @@
     background-color: white;
     .node-table {
         .HEALTHY {
-            color: #2dcb56;
+            color: var(--successColor);
         }
         .UNHEALTHY {
-            color: #ff9c01;
+            color: var(--warningColor);
         }
         .status-icon {
             width: 10px;
             height: 10px;
             border-radius: 50%;
             &.HEALTHY {
-                background-color: #2dcb56;
+                background-color: var(--successColor);
             }
             &.UNHEALTHY {
-                background-color: #ff9c01;
+                background-color: var(--warningColor);
             }
         }
     }

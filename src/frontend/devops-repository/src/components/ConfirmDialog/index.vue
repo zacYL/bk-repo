@@ -80,22 +80,22 @@
     .devops-icon {
         width: 38px;
         height: 38px;
-        color: #fff;
+        color:white;
         border-radius: 50%;
     }
     .icon-exclamation {
         padding: 9px;
         font-size: 20px;
-        background-color: #ffb848;
+        background-color: var(--warningColor);
     }
     .icon-close {
         padding: 11px;
         font-size: 16px;
-        background-color: #F16965;
+        background-color: var(--dangerColor);
     }
 }
 .confirm-tip {
     font-size: 12px;
-    color: #999;;
+    color: var(--fontSubsidiaryColor);
 }
 </style>

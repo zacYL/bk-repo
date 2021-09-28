@@ -72,13 +72,13 @@
         width: 100%;
         border: solid var(--borderWeightColor);
         box-shadow: 0 3px 6px rgba(51, 60, 72, 0.12);
-        color: var(--fontColor);
+        color: var(--fontPrimaryColor);
         background-color: white;
         z-index: 11;
         li {
             height: 40px;
             a {
-                color: var(--fontColor);
+                color: var(--fontPrimaryColor);
                 cursor: pointer;
                 &:hover {
                     color: var(--primaryColor);

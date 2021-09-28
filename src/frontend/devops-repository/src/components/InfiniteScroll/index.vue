@@ -78,7 +78,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            color: #cbd5e0;
+            color: var(--fontTipColor);
             .devops-icon {
                 margin-right: 8px;
             }

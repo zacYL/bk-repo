@@ -66,7 +66,6 @@
     }
 </script>
 <style lang="scss" scoped>
-$bgColor: #f1f8ff;
 .empty-guide-container {
     padding: 10px 60px;
     position: relative;
@@ -74,16 +73,16 @@ $bgColor: #f1f8ff;
         position: sticky;
         top: -137px;
         z-index: 1;
-        color: var(--fontBoldColor);
+        color: var(--fontPrimaryColor);
         background-color: white;
         .empty-guide-title {
             font-size: 16px;
             font-weight: bold;
-            color: var(--fontBoldColor);
+            color: var(--fontPrimaryColor);
         }
         .empty-guide-subtitle {
             font-size: 12px;
-            color: #385377;
+            color: var(--fontSubsidiaryColor);
         }
     }
     .empty-guide-main {
@@ -110,7 +109,7 @@ $bgColor: #f1f8ff;
                     width: 10px;
                     height: 10px;
                     margin: -12px 0 0 -12px;
-                    border: 6px solid #d7e6ff;
+                    border: 6px solid #d8e6ff;
                     background-color: var(--primaryColor);
                     border-radius: 50%;
                 }
@@ -142,7 +141,7 @@ $bgColor: #f1f8ff;
         }
         .empty-guide-item-title {
             position: relative;
-            color: var(--fontBoldColor);
+            color: var(--fontPrimaryColor);
             font-size: 16px;
             font-weight: bold;
         }

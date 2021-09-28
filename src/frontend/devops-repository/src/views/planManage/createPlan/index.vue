@@ -394,17 +394,17 @@
                 height: 60px;
                 text-align: left;
                 border: 1px solid transparent;
-                background-color: #f0f6ff;
+                background-color: var(--bgHoverColor);
                 &.checked {
                     border-color: var(--primaryColor);
                 }
                 .replica-type-label {
                     font-weight: bold;
-                    color: var(--fontWeightColor);
+                    color: var(--fontPrimaryColor);
                 }
                 .replica-type-tip {
                     font-size: 12px;
-                    color: #999;
+                    color: var(--subsidiaryColor);
                 }
                 .top-right-selected {
                     position: absolute;

@@ -51,7 +51,7 @@
     height: 100px;
     padding: 16px 20px;
     border-radius: 5px;
-    background-color: var(--bgHoverColor);
+    background-color: var(--bgHoverLighterColor);
     cursor: pointer;
     &:hover {
         background-color: white;
@@ -72,7 +72,6 @@
         .card-name {
             font-size: 14px;
             max-width: 500px;
-            color: var(--fontWeightColor);
             font-weight: bold;
         }
         .card-tag {
@@ -81,23 +80,20 @@
             line-height: 22px;
             white-space: nowrap;
             border-radius: 2px;
-            color: var(--borderColor);
-            background-color: #91ADD1;
+            color: white;
+            background-color: var(--primaryHoverColor);
         }
         .package-card-description {
             font-size: 12px;
-            color: #999;
+            color: var(--fontSubsidiaryColor);
         }
-        .package-card-data {
-            color: var(--fontWeightColor);
-            div {
-                width: 300px;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-                &:after {
-                    content: attr(title);
-                }
+        .package-card-data > div {
+            width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            &:after {
+                content: attr(title);
             }
         }
     }

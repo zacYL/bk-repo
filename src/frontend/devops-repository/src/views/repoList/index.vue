@@ -69,7 +69,7 @@
             </bk-table-column>
         </bk-table>
         <bk-pagination
-            class="m10"
+            class="p10"
             size="small"
             align="right"
             show-total-count

@@ -262,7 +262,7 @@
                 width: 100%;
                 height: 100%;
                 &:hover {
-                    background-color: #f0f1f5;
+                    background-color: var(--bgHoverColor);
                 }
             }
         }

@@ -286,7 +286,7 @@
         background-color: white;
         .version-header {
             height: 50px;
-            color: var(--fontWeightColor);
+            color: var(--fontPrimaryColor);
             border-bottom: 1px solid var(--borderWeightColor);
         }
         .version-search {
@@ -298,13 +298,13 @@
             background-color: white;
             .list-count {
                 font-size: 12px;
-                color: #999;
+                color: var(--fontSubsidiaryColor);
             }
             .version-item {
                 position: relative;
                 height: 42px;
                 border-radius: 2px;
-                background-color: #F6F9FF;
+                background-color: var(--bgHoverColor);
                 cursor: pointer;
                 .version-operation {
                     position: absolute;
@@ -318,14 +318,14 @@
                         height: 100%;
                     }
                     &:hover {
-                        background-color: var(--borderColor);
+                        background-color: white;
                     }
                 }
                 &.selected {
                     color: white;
                     background-color: var(--primaryColor);
                     .version-operation:hover {
-                        background-color: #a3c5fd;
+                        background-color: var(--primaryHoverColor);
                     }
                 }
             }

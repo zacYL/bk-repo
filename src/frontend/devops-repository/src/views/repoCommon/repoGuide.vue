@@ -77,8 +77,8 @@
     }
     .section-header {
         padding-left: 20px;
-        color: var(--fontBoldColor);
-        background-color: #e6edf6;
+        color: var(--fontPrimaryColor);
+        background-color: var(--bgHoverColor);
         font-size: 18px;
         font-weight: normal;
         .section-title-icon {

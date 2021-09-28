@@ -62,8 +62,7 @@
     height: 50px;
     padding: 0 20px;
     justify-content: space-between;
-    color: #222;
-    border-bottom: 1px solid #EBEDF0;
+    border-bottom: 1px solid var(--borderColor);
     cursor: default;
     .canway-dialog-title {
         font-size: 16px;

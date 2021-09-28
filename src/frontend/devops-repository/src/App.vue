@@ -65,10 +65,9 @@
                         this.goHome()
                     })
 
-                    // window.globalVue.$on('change::$projectList', data => { // 获取项目列表
-                    //     this.$store.dispatch('setProjectList', this.$projectList)
-                    //     this.$store.dispatch('getProjectList')
-                    // })
+                    window.globalVue.$on('change::$projectList', data => { // 获取项目列表
+                        this.SET_PROJECT_LIST(data.projectList)
+                    })
 
                     window.globalVue.$on('order::syncLocale', locale => {
                         this.$setLocale(locale)
@@ -118,7 +117,7 @@
             Vue.config.errorHandler = callback
         },
         methods: {
-            ...mapMutations(['SET_USER_INFO', 'SET_USER_LIST']),
+            ...mapMutations(['SET_USER_INFO', 'SET_USER_LIST', 'SET_PROJECT_LIST']),
             ...mapActions(['getProjectList', 'ajaxUserInfo']),
             goHome (projectId) {
                 const params = projectId ? { projectId } : {}
@@ -134,7 +133,7 @@
 @import '@/scss/index';
 .bkrepo-main {
     height: 100%;
-    background-color: var(--bgLightColor);
+    background-color: var(--bgColor);
     .repo-breadcrumb {
         height: 20px;
         margin: 10px 10px 0;

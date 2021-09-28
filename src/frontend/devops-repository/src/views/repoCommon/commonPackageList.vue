@@ -189,7 +189,7 @@
     height: 100%;
     .common-package-header{
         height: 130px;
-        color: var(--fontBoldColor);
+        color: var(--fontPrimaryColor);
         background-color: white;
         .package-img {
             width: 110px;
@@ -242,7 +242,7 @@
         background-color: white;
         .list-count {
             font-size: 12px;
-            color: #999;
+            color: var(--fontSubsidiaryColor);
         }
     }
     .empty-guide {

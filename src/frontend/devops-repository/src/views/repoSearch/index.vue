@@ -1,10 +1,11 @@
 <template>
     <div class="repo-search-container">
         <div class="repo-search-tools flex-column">
-            <div class="name-tool flex-align-center">
+            <div class="name-tool flex-center">
+                <type-select v-model="repoType" @change="handlerPaginationChange()"></type-select>
                 <bk-input
                     v-focus
-                    class="w480"
+                    style="width:390px"
                     v-model.trim="packageNameInput"
                     size="large"
                     :placeholder="$t('pleaseInput') + $t('packageName')"
@@ -12,14 +13,8 @@
                 </bk-input>
                 <i class="name-search devops-icon icon-search flex-center" @click="handlerPaginationChange()"></i>
             </div>
-            <div class="mt10 flex-between-center">
-                <bk-radio-group class="type-tool" v-model="repoType" @change="handlerPaginationChange()">
-                    <bk-radio-button :value="''">全部</bk-radio-button>
-                    <bk-radio-button v-for="repo in repoEnum" :key="repo" :value="repo">
-                        <Icon size="14" :name="repo" />
-                        <span class="ml5">{{repo}}</span>
-                    </bk-radio-button>
-                </bk-radio-group>
+            <div class="mt20 flex-between-center">
+                <div class="result-count">为您搜索到到相关结果{{ pagination.count }}个</div>
                 <div class="sort-tool flex-align-center">
                     <bk-select
                         style="width:150px;"
@@ -55,7 +50,6 @@
                     :is-loading="isLoading"
                     :has-next="resultList.length < pagination.count"
                     @load="handlerPaginationChange({ current: pagination.current + 1 }, true)">
-                    <div class="mb10 result-count">为您搜索到到相关结果{{ pagination.count }}个</div>
                     <package-card
                         class="mb20"
                         v-for="pkg in resultList"
@@ -73,12 +67,12 @@
 <script>
     import packageCard from '@/components/PackageCard'
     import InfiniteScroll from '@/components/InfiniteScroll'
+    import typeSelect from './typeSelect'
     import { mapState, mapActions } from 'vuex'
-    import { repoEnum } from '@/store/publicEnum'
     import { formatDate } from '@/utils'
     export default {
         name: 'repoSearch',
-        components: { packageCard, InfiniteScroll },
+        components: { packageCard, InfiniteScroll, typeSelect },
         directives: {
             focus: {
                 inserted (el) {
@@ -88,7 +82,6 @@
         },
         data () {
             return {
-                repoEnum: repoEnum.filter(v => v !== 'generic'),
                 isLoading: false,
                 property: this.$route.query.property || 'lastModifiedDate',
                 direction: this.$route.query.direction || 'ASC',
@@ -197,9 +190,14 @@
         z-index: 1;
         background-color: white;
         .name-tool {
-            height: 38px;
+            height: 48px;
+            ::v-deep .bk-input-large {
+                border-radius: 0;
+                height: 48px;
+                line-height: 48px;
+            }
             .name-search {
-                width: 80px;
+                width: 81px;
                 height: 100%;
                 margin-left: -1px;
                 color: white;
@@ -210,20 +208,8 @@
                 cursor: pointer;
             }
         }
-        .type-tool {
-            display: flex;
-            align-items: center;
-            ::v-deep .bk-form-radio-button {
-                margin-right: 20px;
-                .bk-radio-button-text {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    height: 24px;
-                    line-height: initial;
-                    border-radius: 24px;
-                }
-            }
+        .result-count {
+            color: var(--fontSubsidiaryColor);
         }
         .sort-tool {
             color: var(--boxShadowColor);
@@ -247,16 +233,12 @@
                 cursor: pointer;
                 &.selected {
                     color: var(--primaryColor);
-                    background-color: var(--primaryLightColor);
+                    background-color: var(--bgColor);
                 }
             }
         }
         .package-list {
             height: 100%;
-            .result-count {
-                font-size: 12px;
-                color: #999;
-            }
         }
     }
 }

@@ -44,7 +44,7 @@
                     </bk-table-column>
                 </bk-table>
                 <bk-pagination
-                    class="m10"
+                    class="p10"
                     size="small"
                     align="right"
                     show-total-count
@@ -150,15 +150,15 @@
 .plan-detail-container {
     height: 100%;
     .SUCCESS {
-        color: #2DCB56;
+        color: var(--successColor);
         background-color: #DCFFE2;
     }
     .FAILED {
-        color: #EA3636;
+        color: var(--dangerColor);
         background-color: #FFDDDD;
     }
     .RUNNING {
-        color: #FF9C01;
+        color: var(--warningColor);
         background-color: #FFE8C3;
     }
 }

@@ -105,7 +105,7 @@
                     </bk-table-column>
                 </bk-table>
                 <bk-pagination
-                    class="m10"
+                    class="p10"
                     size="small"
                     align="right"
                     @change="current => handlerPaginationChange({ current })"
@@ -667,7 +667,7 @@
                 max-width: 500px;
                 font-size: 20px;
                 font-weight: bold;
-                color: var(--fontBoldColor);
+                color: var(--fontPrimaryColor);
             }
             .repo-description {
                 max-width: 600px;
@@ -699,13 +699,13 @@
             ::v-deep .devops-icon {
                 font-size: 16px;
                 &.disabled {
-                    color: var(--disabledColor);
+                    color: var(--fontTipColor);
                     cursor: not-allowed;
                 }
                 &.icon-down-shape {
-                    color: var(--fontLigtherColor);
+                    color: var(--fontSubsidiaryColor);
                     &.selected {
-                        color: var(--fontWeightColor);
+                        color: var(--fontPrimaryColor);
                     }
                 }
             }
@@ -714,6 +714,6 @@
 }
 
 ::v-deep .bk-table-row.selected-row {
-    background-color: var(--primaryLightColor);
+    background-color: var(--bgColor);
 }
 </style>

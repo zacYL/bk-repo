@@ -12,7 +12,7 @@
                 <header class="ml10 bkrepo-title">{{ $t('bkrepo') }}</header>
             </router-link>
             <bk-select
-                class="bkre-project-select"
+                class="w250 bkre-project-select"
                 :value="projectId"
                 searchable
                 :clearable="false"
@@ -62,38 +62,15 @@
     height: 50px;
     padding: 0 20px;
     justify-content: space-between;
-    background-color:  #191929;
+    background-color:  var(--fontPrimaryColor);
     color: white;
     .bkre-project-select {
-        $headerBgColor: #191929;
-        $dropdownBorder: #2a2a42;
-        width: 233px;
-        color: var(--fontColor);
-        border-color: $dropdownBorder;
-        background-color: $headerBgColor;
-
-        &:hover,
-        &.active,
-        &.is-focus {
-            border-color: $dropdownBorder !important;
-            background-color: black;
-            color: white !important;
-            box-shadow: none;
-        }
-        .bk-select-angle {
-            color: white;
-            top: 7px;
-        }
-        .bk-tooltip-ref {
-            outline: none;
-        }
-        .bk-select-dropdown .bk-select-name {
-            color: var(--fontLigtherColor);
-            outline: none;
-        }
+        color: white;
+        border-color: #FFFFFF33;
+        background-color: #FFFFFF1A;
     }
     .bkrepo-logo {
-        margin-right: 120px;
+        margin-right: 40px;
         color: white;
     }
     .bkrepo-title {

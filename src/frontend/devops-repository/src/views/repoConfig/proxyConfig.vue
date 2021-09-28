@@ -181,8 +181,8 @@
     .proxy-config-tips {
         padding: 5px 20px;
         font-size: 12px;
-        color: #1A7EAC;
-        background-color: rgba($color: #3AC1FF, $alpha: 0.1);
+        color: var(--primaryHoverColor);
+        background-color: #3a84ff1a;
     }
     .proxy-item,
     .proxy-head {
@@ -208,8 +208,8 @@
         }
     }
     .proxy-head {
-        color: #8797aa;
-        background-color: #FAFBFD;
+        color: var(--fontSubsidiaryColor);
+        background-color: var(--bgColor);
     }
     .proxy-item {
         cursor: move;

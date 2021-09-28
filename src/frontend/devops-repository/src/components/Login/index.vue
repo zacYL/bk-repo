@@ -112,7 +112,7 @@
     position: absolute;
     margin-left: 25px;
     margin-top: 10px;
-    color: var(--failColor);
+    color: var(--dangerColor);
 }
 .login-form {
     margin: 40px 0 30px;

@@ -96,6 +96,9 @@
             },
             cancel () {
                 this.show = false
+                if (this.token) {
+                    this.$emit('refresh')
+                }
             },
             copyToken () {
                 // eslint-disable-next-line prefer-const
@@ -129,11 +132,11 @@
     margin: 0 auto;
     line-height: 58px;
     font-size: 30px;
-    color: #fff;
+    color: white;
     border-radius: 50%;
-    background-color: #2dcb56;
+    background-color: var(--successColor);
 }
 .token-tip {
-    color: #E16F1D;
+    color: var(--warningColor);
 }
 </style>

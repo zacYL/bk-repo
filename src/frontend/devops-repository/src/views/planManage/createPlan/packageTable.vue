@@ -122,7 +122,7 @@
             justify-content: space-between;
             height: 32px;
             border-bottom: 1px solid var(--borderWeightColor);
-            background-color: #f9faff;
+            background-color: var(--bgHoverLighterColor);
             .package-meta  {
                 flex: 1;
                 margin: 0 5px;
@@ -130,7 +130,7 @@
             .icon-delete {
                 width: 50px;
                 height: 100%;
-                background-color: #e6f2fe;
+                background-color: var(--bgHoverColor);
             }
         }
     }
@@ -138,7 +138,7 @@
         width: 120px;
         height: 36px;
         color: var(--primaryColor);
-        background-color: #f0f6ff;
+        background-color: var(--bgHoverColor);
         cursor: pointer;
     }
 }

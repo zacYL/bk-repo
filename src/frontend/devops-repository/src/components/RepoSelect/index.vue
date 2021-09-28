@@ -135,7 +135,7 @@
             a {
                 height: 100%;
                 flex: 1;
-                color: var(--fontWeightColor);
+                color: var(--fontPrimaryColor);
                 & + a {
                     border-left: 1px solid var(--borderWeightColor);
                 }

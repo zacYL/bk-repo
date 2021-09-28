@@ -37,7 +37,7 @@
             <div class="version-base-info base-info-guide" :data-title="$t('useTips')">
                 <div class="sub-section" v-for="block in articleInstall[0].main" :key="block.subTitle">
                     <div class="mb10">{{ block.subTitle }}</div>
-                    <code-area class="mb20" bg-color="#e6edf6" color="#081e40" v-if="block.codeList && block.codeList.length" :code-list="block.codeList"></code-area>
+                    <code-area class="mb20" v-if="block.codeList && block.codeList.length" :code-list="block.codeList"></code-area>
                 </div>
             </div>
             <div class="version-base-info base-info-checksums" data-title="Checksums">
@@ -114,9 +114,7 @@
                 <div class="version-history-right">
                     <header class="version-history-header">Command</header>
                     <code-area class="mt20"
-                        bg-color="#e6edf6"
-                        color="#081e40"
-                        :line-number="false"
+                        :show-line-number="false"
                         :code-list="[selectedHistory.created_by]">
                     </code-area>
                 </div>

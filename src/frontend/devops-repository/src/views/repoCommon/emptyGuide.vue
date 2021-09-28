@@ -34,7 +34,7 @@
                 <div class="empty-guide-item-main">
                     <div v-for="block in section.main" :key="block.subTitle">
                         <div v-if="block.subTitle" class="ml20 empty-guide-item-subtitle" :style="block.subTitleStyle">{{ block.subTitle }}</div>
-                        <code-area class="mt15" bg-color="#e6edf6" color="#081e40" v-if="block.codeList && block.codeList.length" :code-list="block.codeList"></code-area>
+                        <code-area class="mt15" v-if="block.codeList && block.codeList.length" :code-list="block.codeList"></code-area>
                     </div>
                 </div>
             </div>
@@ -96,7 +96,7 @@
             margin-left: 80px;
             margin-bottom: var(--marginBottom);
             padding: 20px;
-            background-color: var(--bgHoverColor);
+            background-color: var(--bgHoverLighterColor);
             .guide-step {
                 position: absolute;
                 left: -80px;

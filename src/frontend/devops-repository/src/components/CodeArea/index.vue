@@ -3,15 +3,16 @@
         :style="{
             'background-color': bgColor,
             'color': color
-        }">
+        }"
+        @click="copyCode()">
         <div v-for="code in codeList" :key="code + Math.random()"
             :class="{
                 'code-main': true,
-                'line-number': lineNumber && codeList.length > 1
+                'line-number': showLineNumber && codeList.length > 1
             }">
             <pre class="code-pre">{{ code }}</pre>
         </div>
-        <i class="code-copy devops-icon icon-clipboard hover-btn" @click="copyCode()"></i>
+        <i class="code-copy devops-icon icon-clipboard hover-btn"></i>
     </div>
 </template>
 <script>
@@ -23,17 +24,17 @@
                 type: Array,
                 default: () => []
             },
-            lineNumber: {
+            showLineNumber: {
                 type: Boolean,
                 default: true
             },
             bgColor: {
                 type: String,
-                default: '#555e66'
+                default: '#EBF3FF'
             },
             color: {
                 type: String,
-                default: '#ffffff'
+                default: '#081E40'
             }
         },
         methods: {

@@ -1,50 +1,64 @@
 <template>
-    <div class="common-package-detail flex-align-center">
-        <aside class="common-package-version" v-bkloading="{ isLoading }">
-            <header class="pl30 version-header flex-align-center">制品版本</header>
-            <div class="version-search">
-                <bk-input
-                    v-model.trim="versionInput"
-                    placeholder="请输入版本, 按Enter键搜索"
-                    clearable
-                    @enter="handlerPaginationChange()"
-                    @clear="handlerPaginationChange()"
-                    right-icon="bk-icon icon-search">
-                </bk-input>
+    <div class="common-package-detail">
+        <header class="mb10 pl20 pr20 common-package-header flex-align-center">
+            <Icon class="package-img" size="80" :name="repoType" />
+            <div class="ml20 common-package-title flex-column flex-1">
+                <span class="mb5 repo-title text-overflow" :title="repoName">
+                    {{ repoName }}
+                </span>
+                <span class="repo-description" :title="pkg.description">
+                    {{ pkg.description || '【制品描述】' }}
+                </span>
             </div>
-            <infinite-scroll
-                ref="infiniteScroll"
-                class="version-list"
-                :is-loading="isLoading"
-                :has-next="versionList.length < pagination.count"
-                @load="handlerPaginationChange({ current: pagination.current + 1 }, true)">
-                <div class="mb10 list-count">共计{{ pagination.count }}个版本</div>
-                <div
-                    class="mb10 version-item flex-center"
-                    :class="{ 'selected': $version.name === version }"
-                    v-for="$version in versionList"
-                    :key="$version.name"
-                    @click="changeVersion($version)">
-                    <span>{{ $version.name }}</span>
-                    <bk-popover class="version-operation" placement="bottom-end" theme="light" ext-cls="operation-container">
-                        <i class="devops-icon icon-more flex-center hover-btn"></i>
-                        <ul class="operation-list" slot="content">
-                            <li class="operation-item hover-btn"
-                                :disabled="($version.stageTag || '').includes('@release')"
-                                @click.stop="changeStageTagHandler($version)">晋级</li>
-                            <li v-if="repoType !== 'docker'" class="operation-item hover-btn" @click.stop="downloadPackageHandler($version)">下载</li>
-                            <li class="operation-item hover-btn" @click.stop="deleteVersionHandler($version)">删除</li>
-                        </ul>
-                    </bk-popover>
+        </header>
+        <div class="common-version-main flex-align-center">
+            <aside class="common-version" v-bkloading="{ isLoading }">
+                <header class="pl30 version-header flex-align-center">制品版本</header>
+                <div class="version-search">
+                    <bk-input
+                        v-model.trim="versionInput"
+                        placeholder="请输入版本, 按Enter键搜索"
+                        clearable
+                        @enter="handlerPaginationChange()"
+                        @clear="handlerPaginationChange()"
+                        right-icon="bk-icon icon-search">
+                    </bk-input>
                 </div>
-            </infinite-scroll>
-        </aside>
-        <div class="common-version-detail flex-1">
-            <version-detail
-                @tag="changeStageTagHandler()"
-                @download="downloadPackageHandler()"
-                @delete="deleteVersionHandler()">
-            </version-detail>
+                <div class="version-list">
+                    <infinite-scroll
+                        ref="infiniteScroll"
+                        :is-loading="isLoading"
+                        :has-next="versionList.length < pagination.count"
+                        @load="handlerPaginationChange({ current: pagination.current + 1 }, true)">
+                        <div class="mb10 list-count">共计{{ pagination.count }}个版本</div>
+                        <div
+                            class="mb10 version-item flex-center"
+                            :class="{ 'selected': $version.name === version }"
+                            v-for="$version in versionList"
+                            :key="$version.name"
+                            @click="changeVersion($version)">
+                            <span>{{ $version.name }}</span>
+                            <bk-popover class="version-operation" placement="bottom-end" theme="light" ext-cls="operation-container">
+                                <i class="devops-icon icon-more flex-center hover-btn"></i>
+                                <ul class="operation-list" slot="content">
+                                    <li class="operation-item hover-btn"
+                                        :disabled="($version.stageTag || '').includes('@release')"
+                                        @click.stop="changeStageTagHandler($version)">晋级</li>
+                                    <li v-if="repoType !== 'docker'" class="operation-item hover-btn" @click.stop="downloadPackageHandler($version)">下载</li>
+                                    <li class="operation-item hover-btn" @click.stop="deleteVersionHandler($version)">删除</li>
+                                </ul>
+                            </bk-popover>
+                        </div>
+                    </infinite-scroll>
+                </div>
+            </aside>
+            <div class="common-version-detail flex-1">
+                <version-detail
+                    @tag="changeStageTagHandler()"
+                    @download="downloadPackageHandler()"
+                    @delete="deleteVersionHandler()">
+                </version-detail>
+            </div>
         </div>
         
         <canway-dialog
@@ -279,61 +293,91 @@
 <style lang="scss" scoped>
 .common-package-detail {
     height: 100%;
-    .common-package-version {
-        width: 250px;
-        height: 100%;
-        margin-right: 10px;
+    .common-package-header{
+        height: 90px;
+        color: var(--fontPrimaryColor);
         background-color: white;
-        .version-header {
-            height: 50px;
-            color: var(--fontPrimaryColor);
-            border-bottom: 1px solid var(--borderWeightColor);
+        .package-img {
+            width: 88px;
+            height: 72px;
+            padding: 5px;
+            border-radius: 4px;
+            box-shadow: 0px 3px 5px 0px rgba(217, 217, 217, 0.5);
         }
-        .version-search {
-            padding: 20px 20px 10px;
-        }
-        .version-list {
-            height: calc(100% - 122px);
-            padding: 0 20px 10px;
-            background-color: white;
-            .list-count {
-                font-size: 12px;
-                color: var(--fontSubsidiaryColor);
+        .common-package-title {
+            overflow: hidden;
+            .repo-title {
+                max-width: 500px;
+                font-size: 20px;
+                font-weight: bold;
             }
-            .version-item {
-                position: relative;
-                height: 42px;
-                border-radius: 2px;
-                background-color: var(--bgHoverColor);
-                cursor: pointer;
-                .version-operation {
-                    position: absolute;
-                    right: 10px;
-                    width: 24px;
-                    height: 24px;
-                    border-radius: 50%;
-                    ::v-deep .bk-tooltip-ref,
-                    .icon-more {
-                        width: 100%;
-                        height: 100%;
-                    }
-                    &:hover {
-                        background-color: white;
-                    }
-                }
-                &.selected {
-                    color: white;
-                    background-color: var(--primaryColor);
-                    .version-operation:hover {
-                        background-color: var(--primaryHoverColor);
-                    }
-                }
+            .repo-description {
+                max-width: 70vw;
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
             }
         }
     }
-    .common-version-detail {
-        height: 100%;
-        background-color: white;
+    .common-version-main {
+        height: calc(100% - 100px);
+        .common-version {
+            width: 250px;
+            height: 100%;
+            margin-right: 10px;
+            background-color: white;
+            .version-header {
+                height: 50px;
+                color: var(--fontPrimaryColor);
+                border-bottom: 1px solid var(--borderWeightColor);
+            }
+            .version-search {
+                padding: 20px 20px 10px;
+            }
+            .version-list {
+                height: calc(100% - 122px);
+                padding: 0 20px 10px;
+                background-color: white;
+                .list-count {
+                    font-size: 12px;
+                    color: var(--fontSubsidiaryColor);
+                }
+                .version-item {
+                    position: relative;
+                    height: 42px;
+                    border-radius: 2px;
+                    background-color: var(--bgHoverColor);
+                    cursor: pointer;
+                    .version-operation {
+                        position: absolute;
+                        right: 10px;
+                        width: 24px;
+                        height: 24px;
+                        border-radius: 50%;
+                        ::v-deep .bk-tooltip-ref,
+                        .icon-more {
+                            width: 100%;
+                            height: 100%;
+                        }
+                        &:hover {
+                            background-color: white;
+                        }
+                    }
+                    &.selected {
+                        color: white;
+                        background-color: var(--primaryColor);
+                        .version-operation:hover {
+                            background-color: var(--primaryHoverColor);
+                        }
+                    }
+                }
+            }
+        }
+        .common-version-detail {
+            height: 100%;
+            background-color: white;
+        }
     }
 }
 </style>

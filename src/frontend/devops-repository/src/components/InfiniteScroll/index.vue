@@ -1,6 +1,6 @@
 <template>
     <div class="infinite-scroll-container">
-        <div class="infinite-scroll-list init-scrollbar" :class="{ 'need-scroll': needScroll }">
+        <div class="infinite-scroll-list" :class="{ 'need-scroll': needScroll }">
             <slot></slot>
             <div v-if="!hasNext" class="loading-more">没有更多了</div>
             <div v-else class="loading-more"><i class="devops-icon icon-circle-2-1 spin-icon"></i>正在加载中</div>

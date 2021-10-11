@@ -201,8 +201,8 @@
                     { name: 'size', label: this.$t('size') },
                     { name: 'downloadCount', label: this.$t('downloads') },
                     { name: 'downloads', label: this.$t('downloads') },
-                    { name: 'createdBy', label: this.$t('createdBy') },
-                    { name: 'createdDate', label: this.$t('createdDate') },
+                    // { name: 'createdBy', label: this.$t('createdBy') },
+                    // { name: 'createdDate', label: this.$t('createdDate') },
                     { name: 'lastModifiedBy', label: this.$t('lastModifiedBy') },
                     { name: 'lastModifiedDate', label: this.$t('lastModifiedDate') }
                 ].filter(({ name }) => this.detail.basic.hasOwnProperty(name))

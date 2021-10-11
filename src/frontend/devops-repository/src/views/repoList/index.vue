@@ -1,6 +1,6 @@
 <template>
     <div class="repo-list-container" v-bkloading="{ isLoading }">
-        <div class="ml15 mr15 mt10 repo-list-search flex-between-center">
+        <div class="ml30 mr30 mt10 repo-list-search flex-between-center">
             <bk-button v-if="canCreate" icon="plus" theme="primary" @click="createRepo"><span class="mr5">{{ $t('create') }}</span></bk-button>
             <div class="flex-align-center">
                 <bk-input

@@ -22,7 +22,7 @@
                         {{ $t('tokenSubTitle') }}
                         <router-link class="router-link" :to="{ name: 'repoToken' }">{{ $t('token') }}</router-link>
                     </div>
-                    <bk-button class="mt15" theme="primary" @click="createToken">{{ $t('createToken') }}</bk-button>
+                    <bk-button class="mt15 pl5 pr5" theme="primary" @click="createToken">{{ $t('createToken') }}</bk-button>
                 </div>
                 <create-token-dialog ref="createToken"></create-token-dialog>
             </div>
@@ -128,7 +128,7 @@
                         counter-increment: step;
                         content: counter(step);
                         margin-top: -20px;
-                        margin-left: -15px;
+                        margin-left: -12px;
                         font-size: 20px;
                     }
                 }

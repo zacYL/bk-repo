@@ -191,7 +191,7 @@
             }
         }
         &.selected {
-            background-color: var(--bgColor);
+            background-color: var(--bgHoverColor);
             color: var(--primaryColor);
         }
     }

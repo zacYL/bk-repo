@@ -145,7 +145,7 @@
                         repoType: pkg.type.toLowerCase()
                     },
                     query: {
-                        name: pkg.repoName,
+                        repoName: pkg.repoName,
                         package: pkg.key
                     }
                 })

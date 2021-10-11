@@ -1,6 +1,6 @@
 <template>
     <main class="log-detail-container" v-bkloading="{ isLoading }">
-        <div class="mr15 mt10 log-package-seach flex-align-center">
+        <div class="mr30 mt10 log-package-seach flex-align-center">
             <bk-search-select
                 class="search-group"
                 clearable

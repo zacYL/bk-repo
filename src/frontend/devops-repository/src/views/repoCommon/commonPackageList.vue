@@ -1,9 +1,9 @@
 <template>
     <div class="common-package-container" v-bkloading="{ isLoading }">
-        <header class="mb10 p20 common-package-header flex-align-center">
+        <header class="mb10 pl20 pr20 common-package-header flex-align-center">
             <Icon class="package-img" size="80" :name="repoType" />
             <div class="ml20 common-package-title flex-column flex-1">
-                <span class="mb10 repo-title text-overflow" :title="repoName">
+                <span class="mb5 repo-title text-overflow" :title="repoName">
                     {{ repoName }}
                 </span>
                 <span class="repo-description" :title="currentRepo.description">
@@ -188,12 +188,12 @@
 .common-package-container {
     height: 100%;
     .common-package-header{
-        height: 130px;
+        height: 90px;
         color: var(--fontPrimaryColor);
         background-color: white;
         .package-img {
-            width: 110px;
-            height: 90px;
+            width: 88px;
+            height: 72px;
             padding: 5px;
             border-radius: 4px;
             box-shadow: 0px 3px 5px 0px rgba(217, 217, 217, 0.5);
@@ -208,7 +208,7 @@
             .repo-description {
                 max-width: 70vw;
                 display: -webkit-box;
-                -webkit-line-clamp: 3;
+                -webkit-line-clamp: 2;
                 -webkit-box-orient: vertical;
                 overflow: hidden;
             }
@@ -237,7 +237,7 @@
         }
     }
     .common-package-list {
-        height: calc(100% - 192px);
+        height: calc(100% - 152px);
         padding: 0 20px;
         background-color: white;
         .list-count {
@@ -246,7 +246,7 @@
         }
     }
     .empty-guide {
-        height: calc(100% - 140px);
+        height: calc(100% - 100px);
         background-color: white;
         overflow-y: auto;
     }

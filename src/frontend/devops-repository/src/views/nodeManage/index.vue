@@ -1,6 +1,6 @@
 <template>
     <div class="node-container" v-bkloading="{ isLoading }">
-        <div class="ml15 mr15 mt10 flex-between-center">
+        <div class="ml30 mr30 mt10 flex-between-center">
             <bk-button icon="plus" theme="primary" @click="showCreateNode"><span class="mr5">{{ $t('create') }}</span></bk-button>
             <div class="node-search flex-align-center">
                 <bk-input

@@ -47,7 +47,8 @@ body {
         }
     }
     /* 按钮 */
-    .bk-button {
+    .bk-button,
+    .bk-button.no-slot {
         padding: 0 2px;
         height: 30px;
         line-height: 28px;

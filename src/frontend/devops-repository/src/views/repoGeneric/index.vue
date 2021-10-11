@@ -1,6 +1,6 @@
 <template>
     <div class="repo-generic-container" @click="() => selectRow(selectedTreeNode)">
-        <header class="mb10 p20 generic-header flex-align-center">
+        <header class="mb10 pl20 pr20 generic-header flex-align-center">
             <Icon class="p5 generic-img" size="80" name="generic" />
             <div class="ml20 generic-title flex-column flex-1">
                 <span class="mb10 repo-title text-overflow" :title="replaceRepoName(repoName)">
@@ -52,11 +52,25 @@
                     <breadcrumb v-else :list="breadcrumb"></breadcrumb>
                     <div class="repo-generic-actions">
                         <bk-button class="mr10"
-                            v-for="btn in operationBtns"
-                            :key="btn.label"
-                            @click.stop="btn.clickEvent()">
-                            {{ btn.label }}
+                            @click.stop="showDetail()">
+                            {{ $t('detail') }}
                         </bk-button>
+                        <bk-button class="mr10"
+                            v-if="selectedRow.fullPath !== selectedTreeNode.fullPath"
+                            @click.stop="handlerDownload()">
+                            {{ $t('download') }}
+                        </bk-button>
+                        <bk-popover placement="bottom-end" theme="light" ext-cls="operation-container">
+                            <bk-button @click.stop="() => {}" icon="ellipsis"></bk-button>
+                            <ul class="operation-list" slot="content">
+                                <li class="operation-item hover-btn"
+                                    v-for="btn in operationBtns"
+                                    :key="btn.label"
+                                    @click.stop="btn.clickEvent()">
+                                    {{ btn.label }}
+                                </li>
+                            </ul>
+                        </bk-popover>
                     </div>
                 </div>
                 <bk-table
@@ -204,13 +218,11 @@
                 // 是否选中的是文件夹
                 const isFolder = this.selectedRow.folder
                 return [
-                    { clickEvent: this.showDetail, label: this.$t('detail') },
                     isSelectedRow && !isLimit && { clickEvent: this.renameRes, label: this.$t('rename') },
                     isSelectedRow && !isLimit && { clickEvent: this.moveRes, label: this.$t('move') },
                     isSelectedRow && !isLimit && { clickEvent: this.copyRes, label: this.$t('copy') },
                     isSelectedRow && !isLimit && { clickEvent: this.deleteRes, label: this.$t('delete') },
                     isSelectedRow && !isFolder && { clickEvent: this.handlerShare, label: this.$t('share') },
-                    isSelectedRow && { clickEvent: this.handlerDownload, label: this.$t('download') },
                     !isSelectedRow && !isLimit && { clickEvent: this.addFolder, label: this.$t('create') },
                     !isSelectedRow && !isLimit && { clickEvent: this.handlerUpload, label: this.$t('upload') },
                     !isSelectedRow && { clickEvent: this.getArtifactories, label: this.$t('refresh') }
@@ -653,11 +665,11 @@
     height: 100%;
     overflow: hidden;
     .generic-header{
-        height: 130px;
+        height: 90px;
         background-color: white;
         .generic-img {
-            width: 110px;
-            height: 90px;
+            width: 88px;
+            height: 72px;
             border-radius: 4px;
             box-shadow: 0px 3px 5px 0px rgba(217, 217, 217, 0.5);
         }
@@ -672,21 +684,21 @@
             .repo-description {
                 max-width: 600px;
                 display: -webkit-box;
-                -webkit-line-clamp: 3;
+                -webkit-line-clamp: 2;
                 -webkit-box-orient: vertical;
                 overflow: hidden;
             }
         }
     }
     .repo-generic-main {
-        height: calc(100% - 140px);
+        height: calc(100% - 100px);
         user-select: none;
         .repo-generic-side {
             height: 100%;
             background-color: white;
             .important-search {
-                padding: 10px;
-                border-bottom: 1px solid var(--borderWeightColor);
+                padding: 9px 10px;
+                border-bottom: 1px solid var(--borderColor);
             }
             .repo-generic-tree {
                 height: calc(100% - 53px);
@@ -714,6 +726,6 @@
 }
 
 ::v-deep .bk-table-row.selected-row {
-    background-color: var(--bgColor);
+    background-color: var(--bgHoverColor);
 }
 </style>

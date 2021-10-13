@@ -31,13 +31,17 @@
 
 package com.tencent.bkrepo.docker.artifact
 
+import com.tencent.bkrepo.common.artifact.event.base.EventType
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.docker.context.RequestContext
+import com.tencent.bkrepo.repository.api.OperateLogClient
 import com.tencent.bkrepo.repository.api.PackageClient
 import com.tencent.bkrepo.repository.api.PackageDownloadsClient
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
+import com.tencent.bkrepo.repository.pojo.event.EventCreateRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.request.PackagePopulateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
@@ -48,7 +52,8 @@ import java.security.Security
 @Service
 class DockerPackageRepo @Autowired constructor(
     private val packageClient: PackageClient,
-    private val packageDownloadsClient: PackageDownloadsClient
+    private val packageDownloadsClient: PackageDownloadsClient,
+    private val operateLogClient: OperateLogClient
 ) {
 
     /**
@@ -124,11 +129,29 @@ class DockerPackageRepo @Autowired constructor(
      */
     fun addDownloadStatic(context: RequestContext, version: String): Boolean {
         with(context) {
+            val packageKey = PackageKeys.ofDocker(artifactName)
             val request = PackageDownloadRecord(
                 projectId,
                 repoName,
-                PackageKeys.ofDocker(artifactName),
+                packageKey,
                 version
+            )
+            val realIpAddress = HttpContextHolder.getClientAddress()
+            operateLogClient.saveEvent(
+                EventCreateRequest(
+                    type = EventType.VERSION_DOWNLOAD,
+                    projectId = projectId,
+                    repoName = repoName,
+                    resourceKey = "$packageKey-$version",
+                    userId = context.userId,
+                    data = mapOf(
+                        "packageKey" to packageKey,
+                        "packageType" to RepositoryType.DOCKER.name,
+                        "packageName" to artifactName,
+                        "packageVersion" to version
+                    ),
+                    address = realIpAddress
+                )
             )
             return packageDownloadsClient.record(request).isOk()
         }

@@ -37,6 +37,7 @@ import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.docker.artifact.DockerArtifactRepo
 import com.tencent.bkrepo.docker.artifact.DockerPackageRepo
 import com.tencent.bkrepo.docker.constant.BLOB_PATTERN
@@ -188,8 +189,13 @@ class DockerV2LocalRepoService @Autowired constructor(
     }
 
     override fun getManifest(context: RequestContext, reference: String): DockerResponse {
+        val isGetRequest = HttpContextHolder.getRequest().method.equals("GET", ignoreCase = true)
         RepoUtil.loadContext(artifactRepo, context)
         logger.info("get manifest params [$context,$reference]")
+        if (isGetRequest && !manifestProcess.repo.canRead(context)) {
+            logger.warn("do not have permission to get [$context]")
+            return DockerV2Errors.unauthorizedManifest("$context")
+        }
 //        packageRepo.addDownloadStatic(context, reference)
 
         // get manifest by sha256
@@ -197,7 +203,7 @@ class DockerV2LocalRepoService @Autowired constructor(
             val digest = DockerDigest(reference)
             val manifest = manifestProcess.getManifestByDigest(context, digest, httpHeaders)
             try {
-                packageRepo.addDownloadStatic(context, manifest.tag)
+                if(isGetRequest) packageRepo.addDownloadStatic(context, manifest.tag)
             } catch (e: ErrorCodeException) {
                 logger.error("$e")
             }
@@ -207,7 +213,7 @@ class DockerV2LocalRepoService @Autowired constructor(
             // get manifest by tag
             logger.info("unable to parse digest, get manifest by tag [$context,$reference]")
             try {
-                packageRepo.addDownloadStatic(context, reference)
+                if(isGetRequest) packageRepo.addDownloadStatic(context, reference)
             } catch (e: ErrorCodeException) {
                 logger.error("$e")
             }

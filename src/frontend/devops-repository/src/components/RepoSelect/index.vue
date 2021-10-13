@@ -1,7 +1,7 @@
 <template>
     <div class="repo-select-container" v-bk-clickoutside="handleClickOutSide">
         <div class="repo-select-title hover-btn flex-align-center" @click="handleClick">
-            <icon size="24" :name="selectedItem.type"></icon>
+            <icon size="20" :name="selectedItem.type"></icon>
             <span class="ml10">{{replaceRepoName(selectedItem.name)}}</span>
             <i class="ml10 devops-icon icon-angle-right" :class="{ 'angle-down': showList }"></i>
         </div>
@@ -18,7 +18,7 @@
                 <li class="hover-btn" v-for="repo in filterRepoList" :key="repo.name">
                     <div class="repo-item flex-align-center" :class="repo.name === selectedItem.name ? 'selected' : ''"
                         @click="handlerRepoClick(repo)">
-                        <icon size="24" :name="repo.type"></icon>
+                        <icon size="20" :name="repo.type"></icon>
                         <div class="ml10 repo-item-title" :title="replaceRepoName(repo.name)">{{replaceRepoName(repo.name)}}</div>
                     </div>
                 </li>

@@ -4,7 +4,7 @@
         :position="{ top }"
         :close-icon="false">
         <template #tools>
-            <div class="mb20 canway-dialog-header flex-align-center">
+            <div class="canway-dialog-header flex-align-center">
                 <span class="mr20 canway-dialog-title text-overflow" :title="title">{{ title }}</span>
                 <i class="devops-icon icon-close" @click="$emit('cancel')"></i>
             </div>
@@ -60,6 +60,7 @@
 <style lang="scss" scoped>
 .canway-dialog-header {
     height: 50px;
+    margin-bottom: 27px;
     padding: 0 20px;
     justify-content: space-between;
     border-bottom: 1px solid var(--borderColor);

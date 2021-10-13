@@ -254,7 +254,7 @@
     .cron-icon {
         padding: 5px;
         margin-left: -1px;
-        border: 1px solid var(--fontTipColor);
+        border: 1px solid var(--borderWeightColor);
         cursor: pointer;
     }
     .cron-main {

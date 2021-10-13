@@ -9,7 +9,7 @@
             <bk-form-item label="计划名称：" :required="true" property="name">
                 <bk-input v-model.trim="formData.name" maxlength="32" show-word-limit></bk-input>
             </bk-form-item>
-            <bk-form-item :label="$t('description') + '：'" property="description">
+            <bk-form-item :label="$t('description')" property="description">
                 <bk-input
                     v-model="formData.description"
                     type="textarea"

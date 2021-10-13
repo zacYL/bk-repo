@@ -80,6 +80,9 @@ label {
     &:hover {
         color: var(--primaryColor);
     }
+    &.hover-danger:hover {
+        color: var(--dangerColor);
+    }
 }
 
 .router-link {
@@ -129,12 +132,11 @@ label {
     &::-webkit-scrollbar {
         width: 4px;
         height: 4px;
-        background-color: var(--fontTipColor);
     }
     &::-webkit-scrollbar-thumb {
         height: 8px;
         border-radius: 20px;
-        background-color: var(--fontSubsidiaryColor);
+        background-color: var(--borderWeightColor);
     }
 }
 
@@ -188,7 +190,7 @@ label {
                 background-color: var(--bgHoverColor);
             }
             &.disabled {
-                color: var(--fontTipColor);
+                color: var(--fontDisableColor);
                 cursor: not-allowed;
             }
         }

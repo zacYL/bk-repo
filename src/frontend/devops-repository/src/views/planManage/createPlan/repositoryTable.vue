@@ -10,7 +10,7 @@
                     <Icon size="16" :name="repo.type.toLowerCase()" />
                     <span class="repo-name text-overflow" :title="repo.name">{{ repo.name }}</span>
                 </div>
-                <i v-show="!disabled" class="devops-icon icon-delete flex-center hover-btn" @click="replicaTaskObjects.splice(ind, 1)"></i>
+                <i v-show="!disabled" class="devops-icon icon-delete flex-center hover-btn hover-danger" @click="replicaTaskObjects.splice(ind, 1)"></i>
             </div>
         </div>
         <repo-dialog :show="showAddDialog" :replica-task-objects="replicaTaskObjects" @confirm="confirm" @cancel="showAddDialog = false"></repo-dialog>

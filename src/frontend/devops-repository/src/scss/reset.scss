@@ -104,8 +104,11 @@ body {
     .bk-form-password,
     .bk-form-select,
     .bk-form-textarea,
+    .bk-textarea-wrapper,
     .bk-select,
-    .bk-button {
+    .bk-button,
+    .bk-date-picker-rel .bk-date-picker-editor,
+    .bk-form-checkbox .bk-checkbox {
         border-color: var(--borderWeightColor);
     }
 

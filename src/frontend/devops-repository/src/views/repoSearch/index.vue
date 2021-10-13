@@ -222,7 +222,7 @@
         }
     }
     .repo-search-result {
-        height: calc(100% - 100px);
+        height: calc(100% - 110px);
         .repo-list {
             width: 200px;
             height: 100%;

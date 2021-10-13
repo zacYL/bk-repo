@@ -14,7 +14,7 @@
                     :id="type"
                     :name="type">
                     <div class="repo-name flex-align-center">
-                        <icon size="24" :name="type" />
+                        <icon size="20" :name="type" />
                         <span class="ml10">{{type}}</span>
                     </div>
                 </bk-option>
@@ -39,7 +39,7 @@
                 <bk-table-column :label="$t('repoName')">
                     <template #default="{ row }">
                         <div class="flex-align-center" @click="toRepoDetail(row)">
-                            <Icon size="24" :name="row.repoType" />
+                            <Icon size="20" :name="row.repoType" />
                             <span class="ml10 w220 text-overflow repo-name" :title="row.name">{{row.name}}</span>
                         </div>
                     </template>

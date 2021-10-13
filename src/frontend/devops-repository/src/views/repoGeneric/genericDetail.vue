@@ -33,10 +33,10 @@
                         <div class="version-metadata-add-board"
                             :style="{ height: metadata.show ? '180px' : '0' }">
                             <bk-form class="p20" :label-width="80" :model="metadata" :rules="rules" ref="metadatForm">
-                                <bk-form-item :label="$t('key') + '：'" :required="true" property="key">
+                                <bk-form-item :label="$t('key')" :required="true" property="key">
                                     <bk-input size="small" v-model="metadata.key" :placeholder="$t('key')"></bk-input>
                                 </bk-form-item>
-                                <bk-form-item :label="$t('value') + '：'" :required="true" property="value">
+                                <bk-form-item :label="$t('value')" :required="true" property="value">
                                     <bk-input size="small" v-model="metadata.value" :placeholder="$t('value')"></bk-input>
                                 </bk-form-item>
                                 <bk-form-item>
@@ -61,7 +61,7 @@
                         <bk-table-column :label="$t('value')" prop="1"></bk-table-column>
                         <bk-table-column width="1">
                             <template #default="{ row }">
-                                <i class="devops-icon icon-delete hover-btn" @click="deleteMetadataHandler(row)"></i>
+                                <i class="devops-icon icon-delete hover-btn hover-danger" @click="deleteMetadataHandler(row)"></i>
                             </template>
                         </bk-table-column>
                         <bk-table-column label="" width="35"></bk-table-column>

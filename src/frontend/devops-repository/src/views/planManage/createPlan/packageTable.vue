@@ -28,7 +28,7 @@
                 <Icon size="16" :name="pkg.type.toLowerCase()" />
                 <span class="package-meta text-overflow" :title="pkg.key">{{ pkg.key }}</span>
                 <span class="package-meta text-overflow" :title="pkg.versions.join(',')">{{ pkg.versions.join(',') }}</span>
-                <i v-show="!disabled" class="devops-icon icon-delete flex-center hover-btn" @click="packageConstraints.splice(ind, 1)"></i>
+                <i v-show="!disabled" class="devops-icon icon-delete flex-center hover-btn hover-danger" @click="packageConstraints.splice(ind, 1)"></i>
             </div>
         </div>
         <package-dialog

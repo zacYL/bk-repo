@@ -6,7 +6,7 @@
         title="创建仓库"
         @cancel="cancel">
         <bk-form class="mr10 repo-base-info" :label-width="130" :model="repoBaseInfo" :rules="rules" ref="repoBaseInfo">
-            <bk-form-item :label="$t('repoType') + '：'" :required="true" property="type">
+            <bk-form-item :label="$t('repoType')" :required="true" property="type" error-display-type="normal">
                 <bk-radio-group v-model="repoBaseInfo.type" class="repo-type-radio-group" @change="changeRepoType">
                     <bk-radio-button v-for="repo in repoEnum" :key="repo" :value="repo">
                         <div class="flex-column flex-center repo-type-radio">
@@ -16,22 +16,25 @@
                     </bk-radio-button>
                 </bk-radio-group>
             </bk-form-item>
-            <bk-form-item :label="$t('repoName') + '：'" :required="true" property="name">
-                <bk-input class="w480" v-model.trim="repoBaseInfo.name" maxlength="32" show-word-limit
-                    :placeholder="$t(repoBaseInfo.type === 'docker' ? 'repoDockerNamePlacehodler' : 'repoNamePlacehodler')">
-                </bk-input>
+            <bk-form-item :label="$t('repoName')" :required="true" property="name" error-display-type="normal">
+                <div class="flex-align-center">
+                    <bk-input style="width:400px" v-model.trim="repoBaseInfo.name" maxlength="32" show-word-limit
+                        :placeholder="$t(repoBaseInfo.type === 'docker' ? 'repoDockerNamePlacehodler' : 'repoNamePlacehodler')">
+                    </bk-input>
+                    <span v-if="repoBaseInfo.type === 'docker'" class="ml10 form-tip">docker仓库仅能使用英文小写</span>
+                </div>
             </bk-form-item>
-            <bk-form-item :label="$t('publicRepo') + '：'" :required="true" property="public">
+            <bk-form-item :label="$t('publicRepo')" :required="true" property="public" error-display-type="normal">
                 <bk-checkbox v-model="repoBaseInfo.public">{{ repoBaseInfo.public ? $t('publicRepoDesc') : '' }}</bk-checkbox>
             </bk-form-item>
             <template v-if="repoBaseInfo.type === 'rpm'">
-                <bk-form-item :label="$t('enabledFileLists') + '：'">
+                <bk-form-item :label="$t('enabledFileLists')">
                     <bk-checkbox v-model="repoBaseInfo.enabledFileLists"></bk-checkbox>
                 </bk-form-item>
-                <bk-form-item :label="$t('repodataDepth') + '：'" property="repodataDepth">
+                <bk-form-item :label="$t('repodataDepth')" property="repodataDepth" error-display-type="normal">
                     <bk-input class="w480" v-model.trim="repoBaseInfo.repodataDepth"></bk-input>
                 </bk-form-item>
-                <bk-form-item :label="$t('groupXmlSet') + '：'" property="groupXmlSet">
+                <bk-form-item :label="$t('groupXmlSet')" property="groupXmlSet" error-display-type="normal">
                     <bk-tag-input
                         class="w480"
                         :value="repoBaseInfo.groupXmlSet"
@@ -48,7 +51,7 @@
                     </bk-tag-input>
                 </bk-form-item>
             </template>
-            <bk-form-item :label="$t('description') + '：'">
+            <bk-form-item :label="$t('description')">
                 <bk-input type="textarea"
                     class="w480"
                     maxlength="200"
@@ -212,6 +215,10 @@
                 line-height: initial;
                 padding: 0;
                 border-radius: 2px;
+                &:hover {
+                    border-color: var(--primaryHoverColor);
+                    box-shadow: 0px 0px 6px 0px var(--primaryHoverColor);
+                }
             }
         }
         .repo-type-radio {
@@ -220,6 +227,10 @@
             width: 80px;
             height: 60px;
         }
+    }
+    .form-tip {
+        font-size: 12px;
+        color: var(--subsidiaryColor)
     }
 }
 </style>

@@ -9,16 +9,18 @@
     
     // 字体色
     --fontPrimaryColor: #081E40;
-    --fontSubsidiaryColor: #8789AA;
+    --fontSubsidiaryColor: #8797AA;
     --fontTipColor: #CBD5E0;
+    --fontDisableColor: #CBD5E0;
 
     // 边框色
-    --borderColor: #E5EAF0; // 相对较浅，常用于容器边框色
+    --borderColor: #E5EAF0; // #CBD5E080 相对较浅，常用于容器边框色
     --borderWeightColor: #CBD5E0; // 相对较深，常用于输入框边框色
     --boxShadowColor: #b1b1b1;
     
     // 背景色
     --bgColor: #FAFBFD;
+    --bgWeightColor: #F0F2F4;
     --bgHoverColor: #EBF3FF;
     --bgHoverLighterColor: #F5F9FF;
     --primaryHoverColor: #619DFF;

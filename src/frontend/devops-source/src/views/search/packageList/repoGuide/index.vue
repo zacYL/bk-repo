@@ -2,7 +2,7 @@
     <bk-collapse v-model="activeName" class="repo-guide-container">
         <bk-collapse-item name="token">
             <header class="section-header">
-                <icon size="24" class="section-title-icon" name="guide-h-left"></icon>
+                <icon size="20" class="section-title-icon" name="guide-h-left"></icon>
                 {{ $t('token') }}
             </header>
             <div slot="content" class="section-main">
@@ -19,7 +19,7 @@
         </bk-collapse-item>
         <bk-collapse-item v-for="(section, index) in article" :key="`section${index}`" :name="`section${index}`">
             <header v-if="section.title" class="section-header">
-                <icon size="24" class="section-title-icon" name="guide-h-left"></icon>
+                <icon size="20" class="section-title-icon" name="guide-h-left"></icon>
                 {{ section.title }}
             </header>
             <div slot="content" class="section-main">

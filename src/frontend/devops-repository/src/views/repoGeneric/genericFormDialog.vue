@@ -7,12 +7,12 @@
         @cancel="cancel">
         <bk-form class="repo-generic-form" :label-width="120" :model="genericForm" :rules="rules" ref="genericForm">
             <template v-if="genericForm.type === 'add'">
-                <bk-form-item :label="$t('createFolderLabel') + '：'" :required="true" property="path">
+                <bk-form-item :label="$t('createFolderLabel')" :required="true" property="path">
                     <bk-input v-model.trim="genericForm.path" :placeholder="$t('folderNamePlacehodler')"></bk-input>
                 </bk-form-item>
             </template>
             <template v-else-if="genericForm.type === 'rename'">
-                <bk-form-item :label="$t('file') + $t('name') + '：'" :required="true" property="name">
+                <bk-form-item :label="$t('file') + $t('name')" :required="true" property="name">
                     <bk-input v-model.trim="genericForm.name" :placeholder="$t('folderNamePlacehodler')"></bk-input>
                 </bk-form-item>
             </template>

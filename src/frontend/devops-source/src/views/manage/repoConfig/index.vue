@@ -6,7 +6,7 @@
                     <bk-form ref="repoBaseInfo" :label-width="100" :model="repoBaseInfo" :rules="rules">
                         <bk-form-item :label="$t('repoName')">
                             <div class="flex-align-center">
-                                <Icon size="24" :name="repoBaseInfo.repoType || repoType" />
+                                <Icon size="20" :name="repoBaseInfo.repoType || repoType" />
                                 <span class="ml10">{{repoBaseInfo.name || repoName}}</span>
                             </div>
                         </bk-form-item>

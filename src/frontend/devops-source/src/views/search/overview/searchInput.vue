@@ -9,7 +9,7 @@
                 v-for="type in repoEnum"
                 :key="type"
                 @click="search.type = type">
-                <Icon size="24" :name="type" />
+                <Icon size="20" :name="type" />
             </span>
         </div>
         <div class="flex-align-center">

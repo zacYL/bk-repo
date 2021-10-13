@@ -1,8 +1,8 @@
 <template>
     <div class="code-area"
         :style="{
-            'background-color': bgColor,
-            'color': color
+            '--bgColor': bgColor,
+            '--color': color
         }"
         @click="copyCode()">
         <div v-for="code in codeList" :key="code + Math.random()"
@@ -30,7 +30,7 @@
             },
             bgColor: {
                 type: String,
-                default: '#EBF3FF'
+                default: '#E6EDF6'
             },
             color: {
                 type: String,
@@ -71,6 +71,8 @@
     min-height: 48px;
     word-break: break-all;
     counter-reset: row-num;
+    color: var(--color);
+    background-color: var(--bgColor);
     .code-main {
         position: relative;
         &.line-number:before {
@@ -92,8 +94,12 @@
         right: 10px;
         font-size: 24px;
     }
-    &:hover .code-copy {
-        visibility: visible;
+    &:hover {
+        color: white;
+        background-color: var(--fontPrimaryColor);
+        .code-copy {
+            visibility: visible;
+        }
     }
 }
 </style>

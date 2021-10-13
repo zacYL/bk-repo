@@ -1,7 +1,7 @@
 <template>
     <div class="repo-generic-container" @click="() => selectRow(selectedTreeNode)">
         <header class="mb10 pl20 pr20 generic-header flex-align-center">
-            <Icon class="p5 generic-img" size="80" name="generic" />
+            <Icon class="p10 generic-img" size="80" name="generic" />
             <div class="ml20 generic-title flex-column flex-1">
                 <span class="mb10 repo-title text-overflow" :title="replaceRepoName(repoName)">
                     {{ replaceRepoName(repoName) }}
@@ -92,7 +92,7 @@
                     <bk-table-column :label="$t('fileName')" prop="name" :render-header="renderHeader">
                         <template #default="{ row }">
                             <div class="flex-align-center">
-                                <Icon size="24" :name="row.folder ? 'folder' : getIconName(row.name)" />
+                                <Icon size="20" :name="row.folder ? 'folder' : getIconName(row.name)" />
                                 <div class="ml10 flex-1 text-overflow" :title="row.name">{{row.name}}</div>
                             </div>
                         </template>
@@ -668,8 +668,8 @@
         height: 90px;
         background-color: white;
         .generic-img {
-            width: 88px;
-            height: 72px;
+            width: 78px;
+            height: 68px;
             border-radius: 4px;
             box-shadow: 0px 3px 5px 0px rgba(217, 217, 217, 0.5);
         }
@@ -682,6 +682,9 @@
                 color: var(--fontPrimaryColor);
             }
             .repo-description {
+                padding: 2px 10px;
+                border-radius: 2px;
+                background-color: var(--bgWeightColor);
                 max-width: 600px;
                 display: -webkit-box;
                 -webkit-line-clamp: 2;
@@ -711,7 +714,7 @@
             ::v-deep .devops-icon {
                 font-size: 16px;
                 &.disabled {
-                    color: var(--fontTipColor);
+                    color: var(--fontDisableColor);
                     cursor: not-allowed;
                 }
                 &.icon-down-shape {

@@ -117,7 +117,7 @@
                     </bk-option>
                 </bk-select>
             </bk-form-item>
-            <bk-form-item :label="$t('description') + '：'">
+            <bk-form-item :label="$t('description')">
                 <bk-input
                     class="w480"
                     v-model.trim="planForm.description"

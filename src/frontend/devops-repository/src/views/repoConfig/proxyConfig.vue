@@ -21,7 +21,7 @@
                 <div class="proxy-address">{{proxy.url}}</div>
                 <div class="flex-align-center proxy-operation">
                     <i v-if="!proxy.public" class="mr10 devops-icon icon-edit hover-btn" @click.stop.prevent="editProxy(proxy)"></i>
-                    <i class="devops-icon icon-delete hover-btn" @click.stop.prevent="deleteProxy(proxy)"></i>
+                    <i class="devops-icon icon-delete hover-btn hover-danger" @click.stop.prevent="deleteProxy(proxy)"></i>
                 </div>
             </div>
         </draggable>

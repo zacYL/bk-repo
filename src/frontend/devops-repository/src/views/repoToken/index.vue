@@ -1,6 +1,6 @@
 <template>
     <div class="repo-token-container" v-bkloading="{ isLoading }">
-        <bk-button class="ml30 mt10" icon="plus" theme="primary" @click="createToken"><span class="mr5">{{ $t('create') }}</span></bk-button>
+        <bk-button class="ml20 mt10" icon="plus" theme="primary" @click="createToken"><span class="mr5">{{ $t('create') }}</span></bk-button>
         <bk-table
             class="mt10"
             :data="tokenList"
@@ -27,7 +27,7 @@
             </bk-table-column>
             <bk-table-column :label="$t('operation')" width="100">
                 <template slot-scope="props">
-                    <i class="hover-btn devops-icon icon-delete" @click="deleteTokenHandler(props.row)"></i>
+                    <i class="devops-icon icon-delete hover-btn hover-danger" @click="deleteTokenHandler(props.row)"></i>
                 </template>
             </bk-table-column>
         </bk-table>

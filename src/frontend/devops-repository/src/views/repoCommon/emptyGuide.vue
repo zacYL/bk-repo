@@ -1,8 +1,8 @@
 <template>
     <div class="empty-guide-container">
-        <div class="pt40 pb40 empty-guide-header flex-center flex-column">
-            <div class="mb20 empty-guide-title">仓库暂无制品</div>
-            <div class="empty-guide-subtitle">
+        <div class="empty-guide-header flex-center flex-column">
+            <div class="mb10 empty-guide-tip">【暂无制品】</div>
+            <div class="empty-guide-subtip">
                 <span>请参考下方使用指引来推送您的第一个制品</span>
                 <template v-if="showRepoConfigRoute">
                     <span>，或者</span>
@@ -12,13 +12,14 @@
             </div>
         </div>
         <div class="empty-guide-main">
+            <div class="empty-guide-title">快速设置</div>
             <div class="empty-guide-item">
                 <div class="guide-step">
                     <span class="step-count">step</span>
                 </div>
                 <header class="empty-guide-item-title">{{ $t('token') }}</header>
                 <div class="empty-guide-item-main flex-between-center">
-                    <div class="empty-guide-item-subtitle">
+                    <div class="ml20 empty-guide-item-subtitle">
                         {{ $t('tokenSubTitle') }}
                         <router-link class="router-link" :to="{ name: 'repoToken' }">{{ $t('token') }}</router-link>
                     </div>
@@ -67,29 +68,36 @@
 </script>
 <style lang="scss" scoped>
 .empty-guide-container {
-    padding: 10px 60px;
+    padding: 10px 60px 40px;
     position: relative;
     .empty-guide-header {
         position: sticky;
         top: -137px;
+        padding: 40px 0 80px;
         z-index: 1;
         color: var(--fontPrimaryColor);
         background-color: white;
-        .empty-guide-title {
-            font-size: 16px;
+        .empty-guide-tip {
+            font-size: 26px;
             font-weight: bold;
             color: var(--fontPrimaryColor);
         }
-        .empty-guide-subtitle {
+        .empty-guide-subtip {
             font-size: 12px;
             color: var(--fontSubsidiaryColor);
         }
     }
     .empty-guide-main {
-        padding: 20px 50px 0;
+        padding: 0 50px;
         border: 1px dashed var(--borderWeightColor);
         border-radius: 4px;
         counter-reset: step;
+        .empty-guide-title {
+            margin-left: 80px;
+            padding: 40px 0 30px;
+            font-size: 18px;
+            font-weight: bold;
+        }
         .empty-guide-item {
             --marginBottom: 20px;
             position: relative;
@@ -116,18 +124,18 @@
                 .step-count {
                     position: absolute;
                     margin-left: 30px;
-                    margin-top: 5px;
+                    margin-top: 10px;
                     &:before {
                         position: absolute;
                         content: '0';
-                        margin-top: -20px;
+                        margin-top: -27px;
                         font-size: 20px;
                     }
                     &:after {
                         position: absolute;
                         counter-increment: step;
                         content: counter(step);
-                        margin-top: -20px;
+                        margin-top: -27px;
                         margin-left: -12px;
                         font-size: 20px;
                     }

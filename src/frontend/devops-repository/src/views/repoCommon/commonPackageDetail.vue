@@ -1,7 +1,7 @@
 <template>
     <div class="common-package-detail">
         <header class="mb10 pl20 pr20 common-package-header flex-align-center">
-            <Icon class="package-img" size="80" :name="repoType" />
+            <Icon class="p10 package-img" size="80" :name="repoType" />
             <div class="ml20 common-package-title flex-column flex-1">
                 <span class="mb5 repo-title text-overflow" :title="repoName">
                     {{ repoName }}
@@ -68,7 +68,7 @@
             :title="$t('upgrade')"
             @cancel="cancelFormDialog">
             <bk-form :label-width="120" :model="formDialog" :rules="rules" ref="formDialog">
-                <bk-form-item :label="$t('upgradeTo') + '：'" :required="true" property="tag">
+                <bk-form-item :label="$t('upgradeTo')" :required="true" property="tag">
                     <bk-radio-group v-model="formDialog.tag">
                         <bk-radio :disabled="!!formDialog.default.length" value="@prerelease">@prerelease</bk-radio>
                         <bk-radio class="ml20" value="@release">@release</bk-radio>
@@ -298,9 +298,8 @@
         color: var(--fontPrimaryColor);
         background-color: white;
         .package-img {
-            width: 88px;
-            height: 72px;
-            padding: 5px;
+            width: 78px;
+            height: 68px;
             border-radius: 4px;
             box-shadow: 0px 3px 5px 0px rgba(217, 217, 217, 0.5);
         }
@@ -312,6 +311,9 @@
                 font-weight: bold;
             }
             .repo-description {
+                padding: 2px 10px;
+                border-radius: 2px;
+                background-color: var(--bgWeightColor);
                 max-width: 70vw;
                 display: -webkit-box;
                 -webkit-line-clamp: 2;

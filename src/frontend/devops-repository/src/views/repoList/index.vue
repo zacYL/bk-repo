@@ -1,6 +1,6 @@
 <template>
     <div class="repo-list-container" v-bkloading="{ isLoading }">
-        <div class="ml30 mr30 mt10 repo-list-search flex-between-center">
+        <div class="ml20 mr20 mt10 repo-list-search flex-between-center">
             <bk-button v-if="canCreate" icon="plus" theme="primary" @click="createRepo"><span class="mr5">{{ $t('create') }}</span></bk-button>
             <div class="flex-align-center">
                 <bk-input
@@ -19,7 +19,7 @@
                     :placeholder="$t('allTypes')">
                     <bk-option v-for="type in repoEnum" :key="type" :id="type" :name="type">
                         <div class="flex-align-center">
-                            <Icon size="24" :name="type" />
+                            <Icon size="20" :name="type" />
                             <span class="ml10 flex-1 text-overflow">{{type}}</span>
                         </div>
                     </bk-option>
@@ -46,7 +46,7 @@
             <bk-table-column :label="$t('repoName')">
                 <template #default="{ row }">
                     <div class="flex-align-center" :title="replaceRepoName(row.name)">
-                        <Icon size="24" :name="row.repoType" />
+                        <Icon size="20" :name="row.repoType" />
                         <span class="ml10 w250 flex-1 text-overflow hover-btn">{{replaceRepoName(row.name)}}</span>
                     </div>
                 </template>
@@ -64,7 +64,7 @@
             <bk-table-column :label="$t('operation')" width="100">
                 <template #default="{ row }"><template v-if="row.hasPermission">
                     <i class="mr10 devops-icon icon-cog hover-btn" @click.stop="toRepoConfig(row)"></i>
-                    <i v-if="row.repoType !== 'generic'" class="devops-icon icon-delete hover-btn" @click.stop="deleteRepo(row)"></i>
+                    <i v-if="row.repoType !== 'generic'" class="devops-icon icon-delete hover-btn hover-danger" @click.stop="deleteRepo(row)"></i>
                 </template></template>
             </bk-table-column>
         </bk-table>
@@ -209,5 +209,9 @@
 .repo-list-container {
     height: 100%;
     background-color: white;
+    ::v-deep .bk-table td,
+    ::v-deep .bk-table th {
+        height: 44px;
+    }
 }
 </style>

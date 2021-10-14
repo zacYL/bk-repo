@@ -4,7 +4,7 @@
             <bk-form-item label="计划名称：" :required="true" property="name" error-display-type="normal">
                 <bk-input class="w480" v-model.trim="planForm.name" maxlength="32" show-word-limit :disabled="disabled"></bk-input>
             </bk-form-item>
-            <bk-form-item label="同步类型：" :required="true" property="replicaObjectType">
+            <bk-form-item label="同步类型：" property="replicaObjectType">
                 <bk-radio-group v-model="planForm.replicaObjectType" class="replica-type-radio-group" @change="changeReplicaObjectType">
                     <bk-radio-button
                         class="mr20"
@@ -23,9 +23,7 @@
                 </bk-radio-group>
             </bk-form-item>
             <bk-form-item label="同步策略："
-                :required="true"
-                :property="{ 'SPECIFIED_TIME': 'time', 'CRON_EXPRESSION': 'cron' }[planForm.executionStrategy]"
-                error-display-type="normal">
+                :property="{ 'SPECIFIED_TIME': 'time', 'CRON_EXPRESSION': 'cron' }[planForm.executionStrategy]">
                 <bk-radio-group
                     class="radio-flex"
                     v-model="planForm.executionStrategy"
@@ -62,7 +60,7 @@
                     </bk-radio>
                 </bk-radio-group>
             </bk-form-item>
-            <bk-form-item label="冲突策略：" :required="true" property="conflictStrategy">
+            <bk-form-item label="冲突策略：" property="conflictStrategy">
                 <bk-radio-group v-model="planForm.conflictStrategy">
                     <bk-radio class="mr50" v-for="strategy in conflictStrategyList" :key="strategy.value" :value="strategy.value" :disabled="disabled">
                         <div class="flex-align-center">

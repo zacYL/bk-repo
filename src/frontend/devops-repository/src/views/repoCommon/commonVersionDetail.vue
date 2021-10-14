@@ -178,14 +178,14 @@
                         {
                             required: true,
                             message: this.$t('pleaseInput') + this.$t('key'),
-                            trigger: 'change'
+                            trigger: 'blur'
                         }
                     ],
                     value: [
                         {
                             required: true,
                             message: this.$t('pleaseInput') + this.$t('value'),
-                            trigger: 'change'
+                            trigger: 'blur'
                         }
                     ]
                 }
@@ -286,6 +286,7 @@
             },
             hiddenAddMetadata () {
                 this.metadata.show = false
+                this.$refs.metadatForm.clearError()
             },
             async addMetadataHandler () {
                 await this.$refs.metadatForm.validate()
@@ -395,11 +396,11 @@
             top: 0;
             right: 0;
             width: 35px;
-            height: 43px;
+            height: 40px;
             z-index: 1;
             .version-metadata-add-board {
                 position: absolute;
-                top: 43px;
+                top: 42px;
                 right: 0;
                 width: 300px;
                 overflow: hidden;

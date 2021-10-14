@@ -6,8 +6,9 @@
                 <span class="mb10 repo-title text-overflow" :title="replaceRepoName(repoName)">
                     {{ replaceRepoName(repoName) }}
                 </span>
-                <span class="repo-description" :title="currentRepo.description">
-                    {{ currentRepo.description || '--' }}
+                <span class="repo-description text-overflow"
+                    :title="currentRepo.description"
+                    :data-content="currentRepo.description || '【仓库描述】'">
                 </span>
             </div>
         </header>
@@ -481,8 +482,8 @@
                     title: `${this.$t('share')} (${this.selectedRow.name})`,
                     user: [],
                     ip: [],
-                    permits: 1,
-                    time: 1
+                    permits: 0,
+                    time: 0
                 })
             },
             submitGenericForm (data) {
@@ -674,7 +675,6 @@
             box-shadow: 0px 3px 5px 0px rgba(217, 217, 217, 0.5);
         }
         .generic-title {
-            overflow: hidden;
             .repo-title {
                 max-width: 500px;
                 font-size: 20px;
@@ -682,14 +682,13 @@
                 color: var(--fontPrimaryColor);
             }
             .repo-description {
-                padding: 2px 10px;
-                border-radius: 2px;
-                background-color: var(--bgWeightColor);
-                max-width: 600px;
-                display: -webkit-box;
-                -webkit-line-clamp: 2;
-                -webkit-box-orient: vertical;
-                overflow: hidden;
+                max-width: 70vw;
+                &:before {
+                    content: attr(data-content);
+                    padding: 2px 10px;
+                    background-color: var(--bgWeightColor);
+                    border-radius: 2px;
+                }
             }
         }
     }

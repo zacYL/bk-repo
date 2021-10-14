@@ -5,14 +5,14 @@
         width="500"
         :height-num="genericForm.type === 'share' ? 342 : 186"
         @cancel="cancel">
-        <bk-form class="repo-generic-form" :label-width="120" :model="genericForm" :rules="rules" ref="genericForm">
+        <bk-form class="repo-generic-form" :label-width="100" :model="genericForm" :rules="rules" ref="genericForm">
             <template v-if="genericForm.type === 'add'">
-                <bk-form-item :label="$t('createFolderLabel')" :required="true" property="path">
+                <bk-form-item :label="$t('createFolderLabel')" :required="true" property="path" error-display-type="normal">
                     <bk-input v-model.trim="genericForm.path" :placeholder="$t('folderNamePlacehodler')"></bk-input>
                 </bk-form-item>
             </template>
             <template v-else-if="genericForm.type === 'rename'">
-                <bk-form-item :label="$t('file') + $t('name')" :required="true" property="name">
+                <bk-form-item :label="$t('file') + $t('name')" :required="true" property="name" error-display-type="normal">
                     <bk-input v-model.trim="genericForm.name" :placeholder="$t('folderNamePlacehodler')"></bk-input>
                 </bk-form-item>
             </template>
@@ -36,10 +36,10 @@
                         has-delete-icon>
                     </bk-tag-input>
                 </bk-form-item>
-                <bk-form-item label="访问次数：" property="permits">
+                <bk-form-item label="访问次数：" property="permits" error-display-type="normal">
                     <bk-input v-model.trim="genericForm.permits" placeholder="请输入数字，小于等于0则永久有效"></bk-input>
                 </bk-form-item>
-                <bk-form-item :label="`${$t('validity')}(${$t('day')})：`" property="time">
+                <bk-form-item :label="`${$t('validity')}(${$t('day')})：`" property="time" error-display-type="normal">
                     <bk-input v-model.trim="genericForm.time" placeholder="请输入数字，小于等于0则永久有效"></bk-input>
                 </bk-form-item>
             </template>
@@ -66,8 +66,8 @@
                     name: '',
                     user: [],
                     ip: [],
-                    permits: 1,
-                    time: 1
+                    permits: 0,
+                    time: 0
                 },
                 // genericForm Rules
                 rules: {
@@ -97,14 +97,14 @@
                     ],
                     permits: [
                         {
-                            regex: /^[0-9]*$/,
+                            regex: /^-?[0-9]*$/,
                             message: '请输入数字',
                             trigger: 'blur'
                         }
                     ],
                     time: [
                         {
-                            regex: /^[0-9]*$/,
+                            regex: /^-?[0-9]*$/,
                             message: '请输入数字',
                             trigger: 'blur'
                         }

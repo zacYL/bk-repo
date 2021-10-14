@@ -6,7 +6,7 @@
         title="复制计划"
         @cancel="$emit('cancel')">
         <bk-form :label-width="100" :model="formData" :rules="rules" ref="planCopyForm">
-            <bk-form-item label="计划名称：" :required="true" property="name">
+            <bk-form-item label="计划名称：" :required="true" property="name" error-display-type="normal">
                 <bk-input v-model.trim="formData.name" maxlength="32" show-word-limit></bk-input>
             </bk-form-item>
             <bk-form-item :label="$t('description')" property="description">

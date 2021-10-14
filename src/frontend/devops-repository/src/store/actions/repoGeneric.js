@@ -143,7 +143,7 @@ export default {
                     pageSize: limit
                 },
                 sort: {
-                    properties: [sortType],
+                    properties: ['folder', sortType],
                     direction: 'DESC'
                 },
                 rule: {
@@ -156,11 +156,6 @@ export default {
                         {
                             field: 'repoName',
                             value: repoName,
-                            operation: 'EQ'
-                        },
-                        {
-                            field: 'folder',
-                            value: false,
                             operation: 'EQ'
                         },
                         ...(name ? [

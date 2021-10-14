@@ -6,8 +6,9 @@
                 <span class="mb5 repo-title text-overflow" :title="repoName">
                     {{ repoName }}
                 </span>
-                <span class="repo-description" :title="pkg.description">
-                    {{ pkg.description || '【制品描述】' }}
+                <span class="repo-description text-overflow"
+                    :title="pkg.description"
+                    :data-content="pkg.description || '【制品描述】'">
                 </span>
             </div>
         </header>
@@ -68,7 +69,7 @@
             :title="$t('upgrade')"
             @cancel="cancelFormDialog">
             <bk-form :label-width="120" :model="formDialog" :rules="rules" ref="formDialog">
-                <bk-form-item :label="$t('upgradeTo')" :required="true" property="tag">
+                <bk-form-item :label="$t('upgradeTo')" :required="true" property="tag" error-display-type="normal">
                     <bk-radio-group v-model="formDialog.tag">
                         <bk-radio :disabled="!!formDialog.default.length" value="@prerelease">@prerelease</bk-radio>
                         <bk-radio class="ml20" value="@release">@release</bk-radio>
@@ -311,14 +312,13 @@
                 font-weight: bold;
             }
             .repo-description {
-                padding: 2px 10px;
-                border-radius: 2px;
-                background-color: var(--bgWeightColor);
                 max-width: 70vw;
-                display: -webkit-box;
-                -webkit-line-clamp: 2;
-                -webkit-box-orient: vertical;
-                overflow: hidden;
+                &:before {
+                    content: attr(data-content);
+                    padding: 2px 10px;
+                    background-color: var(--bgWeightColor);
+                    border-radius: 2px;
+                }
             }
         }
     }

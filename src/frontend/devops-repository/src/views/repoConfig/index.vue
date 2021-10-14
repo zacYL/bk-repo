@@ -12,17 +12,17 @@
                     <bk-form-item :label="$t('repoAddress')">
                         <span>{{repoAddress}}</span>
                     </bk-form-item>
-                    <bk-form-item :label="$t('publicRepo')" :required="true" property="public">
+                    <bk-form-item :label="$t('publicRepo')" property="public">
                         <bk-checkbox v-model="repoBaseInfo.public">{{ repoBaseInfo.public ? $t('publicRepoDesc') : '' }}</bk-checkbox>
                     </bk-form-item>
                     <template v-if="repoType === 'rpm'">
                         <bk-form-item :label="$t('enabledFileLists')">
                             <bk-checkbox v-model="repoBaseInfo.enabledFileLists"></bk-checkbox>
                         </bk-form-item>
-                        <bk-form-item :label="$t('repodataDepth')" property="repodataDepth">
+                        <bk-form-item :label="$t('repodataDepth')" property="repodataDepth" error-display-type="normal">
                             <bk-input v-model.trim="repoBaseInfo.repodataDepth"></bk-input>
                         </bk-form-item>
-                        <bk-form-item :label="$t('groupXmlSet')" property="groupXmlSet">
+                        <bk-form-item :label="$t('groupXmlSet')" property="groupXmlSet" error-display-type="normal">
                             <bk-tag-input
                                 :value="repoBaseInfo.groupXmlSet"
                                 @change="(val) => {

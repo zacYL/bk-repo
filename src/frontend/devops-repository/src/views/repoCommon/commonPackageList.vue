@@ -6,8 +6,9 @@
                 <span class="mb5 repo-title text-overflow" :title="repoName">
                     {{ repoName }}
                 </span>
-                <span class="repo-description" :title="currentRepo.description">
-                    {{ currentRepo.description || '【仓库描述】' }}
+                <span class="repo-description text-overflow"
+                    :title="currentRepo.description"
+                    :data-content="currentRepo.description || '【仓库描述】'">
                 </span>
             </div>
             <div class="ml10 repo-guide-btn flex-align-center" @click="showGuide = true">
@@ -198,21 +199,19 @@
             box-shadow: 0px 3px 5px 0px rgba(217, 217, 217, 0.5);
         }
         .common-package-title {
-            overflow: hidden;
             .repo-title {
                 max-width: 500px;
                 font-size: 20px;
                 font-weight: bold;
             }
             .repo-description {
-                padding: 2px 10px;
-                border-radius: 2px;
-                background-color: var(--bgWeightColor);
                 max-width: 70vw;
-                display: -webkit-box;
-                -webkit-line-clamp: 2;
-                -webkit-box-orient: vertical;
-                overflow: hidden;
+                &:before {
+                    content: attr(data-content);
+                    padding: 2px 10px;
+                    background-color: var(--bgWeightColor);
+                    border-radius: 2px;
+                }
             }
         }
         .repo-guide-btn {

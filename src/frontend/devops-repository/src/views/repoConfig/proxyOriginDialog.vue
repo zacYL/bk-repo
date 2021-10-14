@@ -8,19 +8,19 @@
         @confirm="confirmProxyData">
         <label class="ml20 mr20 mb10 form-label">{{ $t('baseInfo') }}</label>
         <bk-form class="ml20 mr20" ref="proxyOrigin" :label-width="85" :model="editProxyData" :rules="rules">
-            <bk-form-item :label="$t('type')" :required="true" property="proxyType">
+            <bk-form-item :label="$t('type')" property="proxyType">
                 <bk-radio-group v-model="editProxyData.proxyType" @change="proxyTypeChange">
                     <bk-radio :disabled="editProxyData.type === 'edit'" value="publicProxy">{{ $t('publicProxy') }}</bk-radio>
                     <bk-radio :disabled="editProxyData.type === 'edit'" class="ml20" value="privateProxy">{{ $t('privateProxy') }}</bk-radio>
                 </bk-radio-group>
             </bk-form-item>
             <template v-if="editProxyData.proxyType === 'privateProxy'">
-                <bk-form-item :label="$t('name')" :required="true" property="name">
+                <bk-form-item :label="$t('name')" :required="true" property="name" error-display-type="normal">
                     <bk-input v-model.trim="editProxyData.name" maxlength="32" show-word-limit></bk-input>
                 </bk-form-item>
             </template>
             <template v-else>
-                <bk-form-item :label="$t('name')" :required="true" property="channelId">
+                <bk-form-item :label="$t('name')" :required="true" property="channelId" error-display-type="normal">
                     <bk-select v-model="editProxyData.channelId" @change="changeChannelId" :clear="false">
                         <bk-option
                             v-for="option in publicProxy"
@@ -31,7 +31,7 @@
                     </bk-select>
                 </bk-form-item>
             </template>
-            <bk-form-item :label="$t('address')" :required="true" property="url">
+            <bk-form-item :label="$t('address')" :required="true" property="url" error-display-type="normal">
                 <bk-input :disabled="editProxyData.proxyType === 'publicProxy'" v-model.trim="editProxyData.url"></bk-input>
             </bk-form-item>
         </bk-form>

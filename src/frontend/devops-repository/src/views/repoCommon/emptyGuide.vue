@@ -1,7 +1,7 @@
 <template>
     <div class="empty-guide-container">
         <div class="empty-guide-header flex-center flex-column">
-            <div class="mb10 empty-guide-tip">【暂无制品】</div>
+            <div class="mb10 empty-guide-tip">暂无制品</div>
             <div class="empty-guide-subtip">
                 <span>请参考下方使用指引来推送您的第一个制品</span>
                 <template v-if="showRepoConfigRoute">

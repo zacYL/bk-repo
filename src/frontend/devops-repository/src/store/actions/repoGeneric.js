@@ -97,44 +97,8 @@ export default {
             `${prefix}/node/detail/${projectId}/${repoName}/${encodeURIComponent(fullPath)}`
         )
     },
-    // 请求文件夹下的文件夹及制品
-    getArtifactoryList (_, { projectId, repoName, fullPath, current, limit, sortType = 'lastModifiedDate' }) {
-        return Vue.prototype.$ajax.post(
-            `${prefix}/node/query`,
-            {
-                page: {
-                    pageNumber: current,
-                    pageSize: limit
-                },
-                sort: {
-                    properties: ['folder', sortType],
-                    direction: 'DESC'
-                },
-                rule: {
-                    rules: [
-                        {
-                            field: 'projectId',
-                            value: projectId,
-                            operation: 'EQ'
-                        },
-                        {
-                            field: 'repoName',
-                            value: repoName,
-                            operation: 'EQ'
-                        },
-                        {
-                            field: 'path',
-                            value: `${fullPath === '/' ? '' : fullPath}/`,
-                            operation: 'EQ'
-                        }
-                    ],
-                    relation: 'AND'
-                }
-            }
-        )
-    },
     // 仓库内自定义查询
-    getArtifactoryListByQuery (_, { projectId, repoName, name, current = 1, limit = 15, sortType = 'lastModifiedDate' }) {
+    getArtifactoryList (_, { projectId, repoName, name, fullPath, current, limit, sortType = 'lastModifiedDate' }) {
         return Vue.prototype.$ajax.post(
             `${prefix}/node/query`,
             {
@@ -163,6 +127,13 @@ export default {
                                 field: 'name',
                                 value: `\*${name}\*`,
                                 operation: 'MATCH'
+                            }
+                        ] : []),
+                        ...(fullPath ? [
+                            {
+                                field: 'path',
+                                value: `${fullPath === '/' ? '' : fullPath}/`,
+                                operation: 'EQ'
                             }
                         ] : [])
                     ],

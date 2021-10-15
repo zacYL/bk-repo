@@ -53,6 +53,7 @@
                     <breadcrumb v-else :list="breadcrumb"></breadcrumb>
                     <div class="repo-generic-actions">
                         <bk-button class="mr10"
+                            v-if="!searchFileName || selectedRow.fullPath !== selectedTreeNode.fullPath"
                             @click.stop="showDetail()">
                             {{ $t('detail') }}
                         </bk-button>
@@ -61,7 +62,7 @@
                             @click.stop="handlerDownload()">
                             {{ $t('download') }}
                         </bk-button>
-                        <bk-popover placement="bottom-end" theme="light" ext-cls="operation-container">
+                        <bk-popover v-if="operationBtns.length" placement="bottom-end" theme="light" ext-cls="operation-container">
                             <bk-button @click.stop="() => {}" icon="ellipsis"></bk-button>
                             <ul class="operation-list" slot="content">
                                 <li class="operation-item hover-btn"
@@ -167,6 +168,8 @@
                 isLoading: false,
                 treeLoading: false,
                 importantSearch: this.$route.query.fileName,
+                // 搜索路径文件夹下的内容
+                searchFullPath: '',
                 // 左侧树处于打开状态的目录
                 sideTreeOpenList: [],
                 sortType: 'lastModifiedDate',
@@ -212,6 +215,8 @@
                 return this.repoListAll.find(repo => repo.name === this.repoName) || {}
             },
             operationBtns () {
+                // 是否搜索中
+                const isSearch = Boolean(this.searchFileName)
                 // 是否选中了行
                 const isSelectedRow = this.selectedRow.fullPath !== this.selectedTreeNode.fullPath
                 // 是否是限制操作仓库，report/log已被过滤
@@ -224,9 +229,9 @@
                     isSelectedRow && !isLimit && { clickEvent: this.copyRes, label: this.$t('copy') },
                     isSelectedRow && !isLimit && { clickEvent: this.deleteRes, label: this.$t('delete') },
                     isSelectedRow && !isFolder && { clickEvent: this.handlerShare, label: this.$t('share') },
-                    !isSelectedRow && !isLimit && { clickEvent: this.addFolder, label: this.$t('create') },
-                    !isSelectedRow && !isLimit && { clickEvent: this.handlerUpload, label: this.$t('upload') },
-                    !isSelectedRow && { clickEvent: this.getArtifactories, label: this.$t('refresh') }
+                    !isSelectedRow && !isLimit && !isSearch && { clickEvent: this.addFolder, label: this.$t('create') },
+                    !isSelectedRow && !isLimit && !isSearch && { clickEvent: this.handlerUpload, label: this.$t('upload') },
+                    !isSelectedRow && !isSearch && { clickEvent: this.getArtifactories, label: this.$t('refresh') }
                 ].filter(Boolean)
             },
             breadcrumb () {
@@ -275,7 +280,6 @@
                 'getFolderList',
                 'getArtifactoryList',
                 'createFolder',
-                'getArtifactoryListByQuery',
                 'deleteArtifactory',
                 'renameNode',
                 'moveNode',
@@ -316,23 +320,15 @@
             // 获取中间列表数据
             getArtifactories () {
                 this.isLoading = true
-                const ajax = this.searchFileName ? this.getArtifactoryListByQuery({
+                this.getArtifactoryList({
                     projectId: this.projectId,
                     repoName: this.repoName,
-                    name: this.searchFileName,
+                    name: this.searchFullPath ? '' : this.searchFileName,
+                    fullPath: this.searchFileName ? this.searchFullPath : this.selectedTreeNode.fullPath,
                     current: this.pagination.current,
                     limit: this.pagination.limit,
                     sortType: this.sortType
-                }) : this.getArtifactoryList({
-                    projectId: this.projectId,
-                    repoName: this.repoName,
-                    fullPath: this.selectedTreeNode.fullPath,
-                    current: this.pagination.current,
-                    limit: this.pagination.limit,
-                    sortType: this.sortType,
-                    isPipeline: this.repoName === 'pipeline'
-                })
-                ajax.then(({ records, totalRecords }) => {
+                }).then(({ records, totalRecords }) => {
                     this.pagination.count = totalRecords
                     this.artifactoryList = records.map(v => {
                         return {
@@ -353,6 +349,7 @@
                             fileName: this.importantSearch
                         }
                     })
+                    this.searchFullPath = ''
                     this.handlerPaginationChange()
                 }
             },
@@ -414,8 +411,14 @@
                 if (!row.folder) return
                 $event.stopPropagation()
                 this.rowClickCallback && clearTimeout(this.rowClickCallback)
-                const node = this.selectedTreeNode.children.find(v => v.fullPath === row.fullPath)
-                this.itemClickHandler(node)
+                if (this.searchFileName) {
+                    // 搜索中打开文件夹
+                    this.searchFullPath = row.fullPath
+                    this.handlerPaginationChange()
+                } else {
+                    const node = this.selectedTreeNode.children.find(v => v.fullPath === row.fullPath)
+                    this.itemClickHandler(node)
+                }
             },
             // 控制选中的行
             selectRow (row, $event) {

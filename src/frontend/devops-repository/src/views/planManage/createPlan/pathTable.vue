@@ -108,7 +108,7 @@
             justify-content: space-between;
             height: 32px;
             border-bottom: 1px solid var(--borderWeightColor);
-            background-color: var(--bgHoverLighterColor);
+            background-color: var(--bgLighterColor);
             .path-name {
                 flex: 1;
                 margin: 0 5px;

@@ -455,7 +455,7 @@
                 text-overflow: ellipsis;
                 white-space: nowrap;
                 &:hover {
-                    background-color: var(--bgHoverLighterColor);
+                    background-color: var(--bgLighterColor);
                 }
                 &.select {
                     background-color: var(--bgHoverColor);

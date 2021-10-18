@@ -104,7 +104,7 @@
             margin-left: 80px;
             margin-bottom: var(--marginBottom);
             padding: 20px;
-            background-color: var(--bgHoverLighterColor);
+            background-color: var(--bgLighterColor);
             .guide-step {
                 position: absolute;
                 left: -80px;

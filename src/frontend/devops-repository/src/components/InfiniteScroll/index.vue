@@ -1,7 +1,6 @@
 <template>
     <div class="infinite-scroll-container">
-        <!-- init-scrollbar控制滚动条样式 -->
-        <div class="infinite-scroll-list init-scrollbar" :class="{ 'need-scroll': needScroll }">
+        <div class="infinite-scroll-list" :class="{ 'need-scroll': needScroll }">
             <slot></slot>
             <div v-if="!hasNext" class="loading-more">没有更多了</div>
             <div v-else class="loading-more"><i class="devops-icon icon-circle-2-1 spin-icon"></i>正在加载中</div>
@@ -67,13 +66,14 @@
 .infinite-scroll-container {
     height: 100%;
     overflow: hidden;
-    margin-right: -16px;
-    padding-right: 16px;
+    margin-right: -20px;
+    padding-right: 20px;
     .infinite-scroll-list {
         height: 100%;
         overflow-y: auto;
         &.need-scroll {
-            margin-right: -16px;
+            margin-right: -20px;
+            padding-right: 20px;
         }
         .loading-more {
             display: flex;

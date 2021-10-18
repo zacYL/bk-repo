@@ -1,5 +1,5 @@
 <template>
-    <div class="virtual-tree init-scrollbar" @scroll="scrollTree($event)">
+    <div class="virtual-tree" @scroll="scrollTree($event)">
         <ul class="repo-tree-list">
             <li class="repo-tree-item" :key="item.roadMap" v-for="item of treeList">
                 <div class="repo-tree-title hover-btn"

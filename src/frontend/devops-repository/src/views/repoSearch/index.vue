@@ -14,7 +14,11 @@
                 <i class="name-search devops-icon icon-search flex-center" @click="handlerPaginationChange()"></i>
             </div>
             <div class="mt20 flex-between-center">
-                <div class="result-count">为您搜索到到相关结果{{ pagination.count }}个</div>
+                <div class="result-count flex-align-center">
+                    <span v-if="!repoType && !packageNameInput">全部制品共</span>
+                    <span v-else>为您搜索到到相关结果</span>
+                    <span>{{ pagination.count }}个</span>
+                </div>
                 <div class="sort-tool flex-align-center">
                     <bk-select
                         style="width:150px;"
@@ -51,7 +55,7 @@
                     :has-next="resultList.length < pagination.count"
                     @load="handlerPaginationChange({ current: pagination.current + 1 }, true)">
                     <package-card
-                        class="mb20"
+                        class="mb10"
                         v-for="pkg in resultList"
                         :key="pkg.repoName + pkg.key"
                         :card-data="pkg"
@@ -183,7 +187,7 @@
 .repo-search-container {
     position: relative;
     height: 100%;
-    padding: 20px 20px 0;
+    padding: 20px 30px 0;
     background-color: white;
     .repo-search-tools {
         padding-bottom: 10px;
@@ -209,7 +213,8 @@
             }
         }
         .result-count {
-            color: var(--fontSubsidiaryColor);
+            font-size: 14px;
+            color: var(--fontColor);
         }
         .sort-tool {
             color: var(--boxShadowColor);

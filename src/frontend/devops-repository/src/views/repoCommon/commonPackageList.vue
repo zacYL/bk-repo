@@ -51,7 +51,7 @@
                 @load="handlerPaginationChange({ current: pagination.current + 1 }, true)">
                 <div class="mb10 list-count">共计{{ pagination.count }}个制品</div>
                 <package-card
-                    class="mb20"
+                    class="mb10"
                     v-for="pkg in packageList"
                     :key="pkg.key"
                     :card-data="pkg"

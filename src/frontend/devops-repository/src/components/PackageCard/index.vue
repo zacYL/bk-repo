@@ -5,8 +5,8 @@
         </div>
         <div class="mr20 package-card-main flex-column">
             <div class="flex-align-center">
-                <span class="card-name text-overflow" :title="cardData.name">{{ cardData.name }}</span>
-                <span class="ml10 card-tag" v-if="cardData.type === 'MAVEN'">{{ cardData.key.replace(/^.*\/\/(.+):.*$/, '$1') }}</span>
+                <span class="pr10 card-name text-overflow" :title="cardData.name">{{ cardData.name }}</span>
+                <span class="card-tag" v-if="cardData.type === 'MAVEN'">{{ cardData.key.replace(/^.*\/\/(.+):.*$/, '$1') }}</span>
             </div>
             <span class="package-card-description text-overflow" :title="cardData.description">{{ cardData.description }}</span>
             <div class="package-card-data flex-align-center">
@@ -49,13 +49,14 @@
 <style lang="scss" scoped>
 .package-card-container {
     height: 100px;
+    margin: 3px;
     padding: 16px 20px;
     border-radius: 5px;
-    background-color: var(--bgHoverLighterColor);
+    background-color: var(--bgLighterColor);
     cursor: pointer;
     &:hover {
-        background-color: white;
-        box-shadow: inset 0px 0px 6px 0px rgba(217, 217, 217, 0.5);
+        background-color: var(--bgHoverLighterColor);
+        box-shadow: 0px 0px 6px 0px var(--primaryBoxShadowColor);
     }
     .card-icon {
         width: 68px;
@@ -73,6 +74,9 @@
             font-size: 14px;
             max-width: 500px;
             font-weight: bold;
+            &:hover {
+                color: var(--primaryColor);
+            }
         }
         .card-tag {
             display: inline-block;
@@ -89,6 +93,7 @@
         }
         .package-card-data > div {
             width: 300px;
+            color: var(--fontSubsidiaryColor);
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;

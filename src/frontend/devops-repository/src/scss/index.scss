@@ -128,16 +128,20 @@ label {
     outline: none;
 }
 
-:not(.init-scrollbar) {
-    &::-webkit-scrollbar {
-        width: 4px;
-        height: 4px;
-    }
-    &::-webkit-scrollbar-thumb {
-        height: 8px;
-        border-radius: 20px;
+
+::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+::-webkit-scrollbar-thumb {
+    border-radius: 20px;
+    background-color: var(--borderColor);
+    &:hover {
         background-color: var(--borderWeightColor);
     }
+}
+::-webkit-scrollbar-track {
+
 }
 
 .repo-tag {

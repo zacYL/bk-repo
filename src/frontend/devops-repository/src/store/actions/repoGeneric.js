@@ -128,14 +128,13 @@ export default {
                                 value: `\*${name}\*`,
                                 operation: 'MATCH'
                             }
-                        ] : []),
-                        ...(fullPath ? [
+                        ] : [
                             {
                                 field: 'path',
                                 value: `${fullPath === '/' ? '' : fullPath}/`,
                                 operation: 'EQ'
                             }
-                        ] : [])
+                        ])
                     ],
                     relation: 'AND'
                 }

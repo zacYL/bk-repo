@@ -63,7 +63,7 @@
                 return this.flattenGenericTree.slice(this.start, this.start + this.size)
             },
             totalHeight () {
-                return (this.flattenGenericTree.length + 1) * 30
+                return (this.flattenGenericTree.length + 1) * 40
             }
         },
         watch: {
@@ -84,7 +84,7 @@
         },
         methods: {
             scrollTree () {
-                this.start = Math.floor(this.$el.scrollTop / 30)
+                this.start = Math.floor(this.$el.scrollTop / 40)
             },
             calculateScrollTop (keyword) {
                 let fn = () => false
@@ -96,15 +96,15 @@
                 const index = this.flattenGenericTree.findIndex(fn)
                 if (!~index) return
                 if (index < this.start) {
-                    this.$el.scrollTop = index * 30
+                    this.$el.scrollTop = index * 40
                 } else if (index > (this.start + this.size - 1)) {
-                    this.$el.scrollTop = (index - this.size + 1) * 30
+                    this.$el.scrollTop = (index - this.size + 1) * 40
                 }
             },
             computedSize () {
                 setTimeout(() => {
                     const height = this.$el.getBoundingClientRect().height
-                    this.size = Math.ceil(height / 30)
+                    this.size = Math.ceil(height / 40)
                 // dialog缩放动画.4s
                 }, 400)
             },
@@ -159,11 +159,11 @@
         z-index: 1;
     }
     &:last-child > .line-dashed {
-        height: 30px!important;
+        height: 40px!important;
     }
     .repo-tree-title {
         position: relative;
-        height: 30px;
+        height: 40px;
         display: flex;
         align-items: center;
         .loading {
@@ -176,7 +176,7 @@
             z-index: 1;
         }
         .devops-icon {
-            color: var(--fontPrimaryColor);
+            color: var(--fontSubsidiaryColor);
             z-index: 1;
         }
         .node-text {
@@ -193,6 +193,9 @@
         &.selected {
             background-color: var(--bgHoverColor);
             color: var(--primaryColor);
+            .devops-icon {
+                color: var(--primaryColor);
+            }
         }
     }
 }

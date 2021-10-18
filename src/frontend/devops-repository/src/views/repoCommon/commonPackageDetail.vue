@@ -305,8 +305,8 @@
             box-shadow: 0px 3px 5px 0px rgba(217, 217, 217, 0.5);
         }
         .common-package-title {
-            overflow: hidden;
             .repo-title {
+                margin-top: -5px;
                 max-width: 500px;
                 font-size: 20px;
                 font-weight: bold;

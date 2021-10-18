@@ -51,7 +51,7 @@
                         @clear="searchFile">
                     </bk-input>
                     <breadcrumb v-else :list="breadcrumb"></breadcrumb>
-                    <div class="repo-generic-actions">
+                    <div class="repo-generic-actions bk-button-group">
                         <bk-button class="mr10"
                             v-if="!searchFileName || selectedRow.fullPath !== selectedTreeNode.fullPath"
                             @click.stop="showDetail()">
@@ -679,10 +679,10 @@
         }
         .generic-title {
             .repo-title {
+                margin-top: -5px;
                 max-width: 500px;
                 font-size: 20px;
                 font-weight: bold;
-                color: var(--fontPrimaryColor);
             }
             .repo-description {
                 max-width: 70vw;
@@ -722,7 +722,7 @@
                 &.icon-down-shape {
                     color: var(--fontSubsidiaryColor);
                     &.selected {
-                        color: var(--fontPrimaryColor);
+                        color: var(--primaryColor);
                     }
                 }
             }

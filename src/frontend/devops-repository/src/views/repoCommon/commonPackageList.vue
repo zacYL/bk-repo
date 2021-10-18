@@ -200,6 +200,7 @@
         }
         .common-package-title {
             .repo-title {
+                margin-top: -5px;
                 max-width: 500px;
                 font-size: 20px;
                 font-weight: bold;

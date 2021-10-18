@@ -327,7 +327,7 @@
         left: 20px;
         content: '';
         width: 3px;
-        height: 12px;
+        height: 16px;
         background-color: var(--primaryColor);
     }
     &:after {
@@ -356,7 +356,7 @@
             display: grid;
             grid-template: auto / repeat(3, 1fr);
             grid-gap: 20px;
-            background-color: var(--bgHoverColor);
+            background-color: var(--bgLighterColor);
             .package-name,
             .package-description {
                 grid-column: 1 / 4;
@@ -375,7 +375,7 @@
             padding: 20px;
             display: grid;
             grid-gap: 20px;
-            background-color: var(--bgHoverColor);
+            background-color: var(--bgLighterColor);
         }
         .grid-item {
             display: flex;
@@ -507,8 +507,7 @@
             background-color: white;
         }
         &-empty {
-            padding: 20px 0 20px 50px;
-            justify-content: flex-start;
+            padding: 20px;
             grid-column: 1 / 5;
             background-color: white;
         }

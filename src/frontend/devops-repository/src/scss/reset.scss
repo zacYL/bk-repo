@@ -112,6 +112,30 @@ body {
         border-color: var(--borderWeightColor);
     }
 
+    .bk-tab-label-item .bk-tab-label {
+        position: relative;
+        &::before {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: var(--activeBarHeight);
+            background: var(--primaryColor);
+            transition: width .3s cubic-bezier(.645,.045,.355,1);
+            will-change: width;
+        }
+    }
+    .bk-tab-label-item.active .bk-tab-label {
+        font-weight: bold;
+        &::before {
+            width: 100%;
+        }
+    }
+    .bk-tab-label-list-has-bar:after {
+        background: transparent;
+    }
+
     .bk-message-icon {
         min-width: 20px !important;
     }

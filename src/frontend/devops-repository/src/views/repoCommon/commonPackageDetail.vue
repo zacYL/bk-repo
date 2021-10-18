@@ -40,7 +40,7 @@
                             @click="changeVersion($version)">
                             <span>{{ $version.name }}</span>
                             <bk-popover class="version-operation" placement="bottom-end" theme="light" ext-cls="operation-container">
-                                <i class="devops-icon icon-more flex-center hover-btn"></i>
+                                <i class="devops-icon icon-more flex-center"></i>
                                 <ul class="operation-list" slot="content">
                                     <li class="operation-item hover-btn"
                                         :disabled="($version.stageTag || '').includes('@release')"
@@ -331,6 +331,7 @@
             background-color: white;
             .version-header {
                 height: 50px;
+                font-size: 14px;
                 color: var(--fontPrimaryColor);
                 border-bottom: 1px solid var(--borderWeightColor);
             }

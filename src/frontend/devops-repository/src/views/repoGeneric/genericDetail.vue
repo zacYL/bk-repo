@@ -188,7 +188,7 @@
         left: 20px;
         content: '';
         width: 3px;
-        height: 12px;
+        height: 16px;
         background-color: var(--primaryColor);
     }
     &:after {

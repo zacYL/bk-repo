@@ -45,7 +45,7 @@
                         :title="repo.repoName"
                         @click="changeRepoInput(repo)">
                         <span class="flex-1 text-overflow">{{ repo.repoName || '全部' }}</span>
-                        <span class="ml5">{{ repo.packages }}</span>
+                        <span class="ml5 repo-sum">{{ repo.packages }}</span>
                     </div>
                 </div>
                 <infinite-scroll
@@ -234,11 +234,18 @@
             overflow-y: auto;
             .repo-item {
                 padding: 0 10px;
-                line-height: 32px;
+                border-radius: 2px;
+                line-height: 42px;
                 cursor: pointer;
+                .repo-sum {
+                    color: var(--fontTipColor);
+                }
                 &.selected {
-                    color: var(--primaryColor);
-                    background-color: var(--bgColor);
+                    color: white;
+                    background-color: var(--primaryColor);
+                    .repo-sum {
+                        color: white;
+                    }
                 }
             }
         }

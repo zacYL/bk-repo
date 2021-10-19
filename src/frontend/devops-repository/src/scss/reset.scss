@@ -112,8 +112,15 @@ body {
     .bk-select,
     .bk-button,
     .bk-date-picker-rel .bk-date-picker-editor,
-    .bk-form-checkbox .bk-checkbox {
+    .bk-form-checkbox .bk-checkbox,
+    .bk-form-radio input[type=radio] {
         border-color: var(--borderWeightColor);
+    }
+    .bk-form-radio:hover {
+        color: var(--primaryColor);
+        input[type=radio] {
+            border-color: var(--primaryColor);
+        }
     }
 
     .bk-tab-label-item .bk-tab-label {

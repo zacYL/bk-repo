@@ -290,7 +290,10 @@
             ]),
             renderHeader (h, { column }) {
                 return h('div', {
-                    class: 'flex-align-center hover-btn',
+                    class: {
+                        'flex-align-center hover-btn': true,
+                        'selected-header': this.sortType === column.property
+                    },
                     on: {
                         click: () => {
                             this.sortType = column.property
@@ -300,10 +303,7 @@
                 }, [
                     h('span', column.label),
                     h('i', {
-                        class: {
-                            'ml5 devops-icon icon-down-shape': true,
-                            'selected': this.sortType === column.property
-                        }
+                        class: 'ml5 devops-icon icon-down-shape'
                     })
                 ])
             },
@@ -710,17 +710,13 @@
             flex: 1;
             height: 100%;
             background-color: white;
+            ::v-deep .selected-header {
+                color: var(--primaryColor);
+            }
             ::v-deep .devops-icon {
-                font-size: 16px;
                 &.disabled {
                     color: var(--fontDisableColor);
                     cursor: not-allowed;
-                }
-                &.icon-down-shape {
-                    color: var(--fontSubsidiaryColor);
-                    &.selected {
-                        color: var(--primaryColor);
-                    }
                 }
             }
         }

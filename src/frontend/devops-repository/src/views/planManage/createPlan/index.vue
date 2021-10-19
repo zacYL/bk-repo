@@ -14,7 +14,7 @@
                         :disabled="disabled">
                         <div class="replica-type-radio" :class="{ 'checked': type.value === planForm.replicaObjectType }">
                             <label class="replica-type-label">{{ type.label }}</label>
-                            <div class="mt5 replica-type-tip">{{ type.tip }}</div>
+                            <div class="replica-type-tip">{{ type.tip }}</div>
                             <div v-show="type.value === planForm.replicaObjectType" class="top-right-selected">
                                 <i class="devops-icon icon-check-1"></i>
                             </div>
@@ -28,10 +28,10 @@
                     class="radio-flex"
                     v-model="planForm.executionStrategy"
                     @change="clearError">
-                    <bk-radio class="mr50" value="IMMEDIATELY" :disabled="disabled">
+                    <bk-radio value="IMMEDIATELY" :disabled="disabled">
                         <span class="flex-align-center">立即执行</span>
                     </bk-radio>
-                    <bk-radio class="mr50" value="SPECIFIED_TIME" :disabled="disabled">
+                    <bk-radio value="SPECIFIED_TIME" :disabled="disabled">
                         <div class="flex-align-center">
                             指定时间
                             <bk-date-picker
@@ -46,7 +46,7 @@
                             </bk-date-picker>
                         </div>
                     </bk-radio>
-                    <bk-radio class="mr50" value="CRON_EXPRESSION" :disabled="disabled">
+                    <bk-radio value="CRON_EXPRESSION" :disabled="disabled">
                         <div class="flex-align-center">
                             定时执行
                             <template v-if="planForm.executionStrategy === 'CRON_EXPRESSION'">
@@ -55,14 +55,14 @@
                             </template>
                         </div>
                     </bk-radio>
-                    <bk-radio v-if="planForm.replicaObjectType === 'REPOSITORY'" class="mr50" value="REAL_TIME" :disabled="disabled">
+                    <bk-radio v-if="planForm.replicaObjectType === 'REPOSITORY'" value="REAL_TIME" :disabled="disabled">
                         <span class="flex-align-center">实时同步</span>
                     </bk-radio>
                 </bk-radio-group>
             </bk-form-item>
             <bk-form-item label="冲突策略：" property="conflictStrategy">
                 <bk-radio-group v-model="planForm.conflictStrategy">
-                    <bk-radio class="mr50" v-for="strategy in conflictStrategyList" :key="strategy.value" :value="strategy.value" :disabled="disabled">
+                    <bk-radio v-for="strategy in conflictStrategyList" :key="strategy.value" :value="strategy.value" :disabled="disabled">
                         <div class="flex-align-center">
                             {{ strategy.label }}
                             <i v-if="planForm.conflictStrategy === strategy.value" class="ml5 devops-icon icon-question-circle-shape" v-bk-tooltips="{
@@ -389,18 +389,25 @@
                 position: relative;
                 padding: 10px;
                 width: 155px;
-                height: 60px;
+                height: 70px;
                 text-align: left;
                 border: 1px solid transparent;
                 background-color: var(--bgHoverColor);
                 &.checked {
                     border-color: var(--primaryColor);
+                    .replica-type-label {
+                        color: var(--primaryColor);
+                    }
+                    .replica-type-tip {
+                        color: var(--fontPrimaryColor);
+                    }
                 }
                 .replica-type-label {
                     font-weight: bold;
                     color: var(--fontPrimaryColor);
                 }
                 .replica-type-tip {
+                    margin-top: 10px;
                     font-size: 12px;
                     color: var(--subsidiaryColor);
                 }
@@ -428,16 +435,24 @@
             height: 32px;
             display: flex;
             align-items: center;
-            label {
+            ::v-deep .bk-form-radio {
                 display: flex;
                 align-items: center;
                 height: 32px;
+                min-width: 120px;
+                .bk-radio-text {
+                    height: 32px;
+                    display: flex;
+                    align-items: center;
+                }
             }
-            ::v-deep .bk-radio-text {
-                height: 32px;
-                display: flex;
-                align-items: center;
-            }
+        }
+        ::v-deep .bk-form-radio {
+            min-width: 120px;
+            margin-right: 20px;
+        }
+        .icon-question-circle-shape {
+            color: var(--fontSubsidiaryColor);
         }
     }
 }

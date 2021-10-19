@@ -198,7 +198,10 @@
             },
             renderHeader (h, { column }) {
                 return h('div', {
-                    class: 'flex-align-center hover-btn',
+                    class: {
+                        'flex-align-center hover-btn': true,
+                        'selected-header': this.sortType === column.property
+                    },
                     on: {
                         click: () => {
                             this.sortType = column.property
@@ -208,10 +211,7 @@
                 }, [
                     h('span', column.label),
                     h('i', {
-                        class: {
-                            'ml5 devops-icon icon-down-shape': true,
-                            'selected': this.sortType === column.property
-                        }
+                        class: 'ml5 devops-icon icon-down-shape'
                     })
                 ])
             },
@@ -339,16 +339,13 @@
             color: var(--warningColor);
             background-color: #FFE8C3;
         }
+        ::v-deep .selected-header {
+            color: var(--primaryColor);
+        }
         ::v-deep .devops-icon {
             &.disabled {
                 color: var(--fontDisableColor);
                 cursor: not-allowed;
-            }
-            &.icon-down-shape {
-                color: var(--fontSubsidiaryColor);
-                &.selected {
-                    color: var(--fontPrimaryColor);
-                }
             }
         }
     }

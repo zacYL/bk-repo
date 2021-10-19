@@ -79,8 +79,7 @@
         padding-left: 15px;
         color: var(--fontPrimaryColor);
         background-color: var(--bgHoverColor);
-        font-size: 14px;
-        font-weight: normal;
+        font-weight: bold;
         .section-title-icon {
             position: absolute;
             margin-left: -27px;

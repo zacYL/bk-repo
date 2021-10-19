@@ -80,21 +80,20 @@
                 </template>
             </div>
         </bk-collapse-item>
-        <bk-dialog
-            v-model="editActionsDialog.show"
-            :title="editActionsDialog.title"
+        <canway-dialog
+            :value="editActionsDialog.show"
             width="410"
-            :close-icon="false"
-            :quick-close="false"
-            :draggable="false">
+            height-num="274"
+            :title="editActionsDialog.title"
+            @cancel="editActionsDialog.show = false">
             <bk-checkbox-group v-model="editActionsDialog.actions">
-                <bk-checkbox v-for="action in actionList" :key="action.id" class="m20" :value="action.id">{{ action.name }}</bk-checkbox>
+                <bk-checkbox v-for="action in actionList" :key="action.id" class="m10" :value="action.id">{{ action.name }}</bk-checkbox>
             </bk-checkbox-group>
-            <div slot="footer">
-                <bk-button :loading="editActionsDialog.loading" theme="primary" @click.stop.prevent="handleActionPermission">{{$t('submit')}}</bk-button>
+            <template #footer>
                 <bk-button theme="default" @click.stop="editActionsDialog.show = false">{{$t('cancel')}}</bk-button>
-            </div>
-        </bk-dialog>
+                <bk-button :loading="editActionsDialog.loading" theme="primary" @click.stop.prevent="handleActionPermission">{{$t('submit')}}</bk-button>
+            </template>
+        </canway-dialog>
     </bk-collapse>
 </template>
 <script>
@@ -461,8 +460,10 @@
         color: var(--fontPrimaryColor);
         background-color: var(--bgHoverColor);
         border: 1px solid var(--borderColor);
-        font-weight: normal;
+        font-weight: bold;
         .permission-actions {
+            font-size: 12px;
+            font-weight: normal;
             color: var(--fontPrimaryColor);
         }
     }

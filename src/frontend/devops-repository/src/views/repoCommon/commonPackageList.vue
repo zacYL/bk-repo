@@ -2,18 +2,20 @@
     <div class="common-package-container" v-bkloading="{ isLoading }">
         <header class="mb10 pl20 pr20 common-package-header flex-align-center">
             <Icon class="p10 package-img" size="80" :name="repoType" />
-            <div class="ml20 common-package-title flex-column flex-1">
+            <div class="ml20 common-package-title flex-column">
                 <span class="mb5 repo-title text-overflow" :title="repoName">
                     {{ repoName }}
                 </span>
                 <span class="repo-description text-overflow"
-                    :title="currentRepo.description"
-                    :data-content="currentRepo.description || '【仓库描述】'">
+                    :title="currentRepo.description">
+                    {{ currentRepo.description || '【仓库描述】' }}
                 </span>
             </div>
-            <div class="ml10 repo-guide-btn flex-align-center" @click="showGuide = true">
-                <Icon class="mr5" name="hand-guide" size="16" />
-                {{$t('guide')}}
+            <div class="flex-end-center flex-1">
+                <div class="ml10 repo-guide-btn flex-align-center" @click="showGuide = true">
+                    <Icon class="mr5" name="hand-guide" size="16" />
+                    {{$t('guide')}}
+                </div>
             </div>
         </header>
         <!-- 搜索中/有数据 -->
@@ -207,12 +209,9 @@
             }
             .repo-description {
                 max-width: 70vw;
-                &:before {
-                    content: attr(data-content);
-                    padding: 2px 10px;
-                    background-color: var(--bgWeightColor);
-                    border-radius: 2px;
-                }
+                padding: 6px 10px;
+                background-color: var(--bgWeightColor);
+                border-radius: 2px;
             }
         }
         .repo-guide-btn {

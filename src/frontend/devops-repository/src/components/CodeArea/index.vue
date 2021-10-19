@@ -12,7 +12,7 @@
             }">
             <pre class="code-pre">{{ code }}</pre>
         </div>
-        <i class="code-copy devops-icon icon-clipboard hover-btn"></i>
+        <Icon size="28" name="copy" class="code-copy" />
     </div>
 </template>
 <script>
@@ -67,8 +67,8 @@
 .code-area {
     position: relative;
     line-height: 2;
-    padding: 10px 35px;
-    min-height: 48px;
+    padding: 13px 45px 13px 30px;
+    min-height: 50px;
     word-break: break-all;
     counter-reset: row-num;
     color: var(--color);
@@ -77,7 +77,7 @@
         position: relative;
         &.line-number:before {
             position: absolute;
-            margin-left: -25px;
+            margin-left: -20px;
             counter-increment: row-num;
             content: counter(row-num);
         }
@@ -92,7 +92,11 @@
         visibility: hidden;
         top: 10px;
         right: 10px;
-        font-size: 24px;
+        padding: 5px;
+        border-radius: 2px;
+        color: var(--primaryColor);
+        background-color: white;
+        cursor: pointer;
     }
     &:hover {
         color: white;

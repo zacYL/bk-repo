@@ -12,7 +12,7 @@
                         <router-link class="router-link" :to="{ name: 'repoToken' }">{{ $t('token') }}</router-link>
                     </span>
                     <div class="token-main">
-                        <bk-button class="mt15" theme="primary" @click="createToken">{{ $t('createToken') }}</bk-button>
+                        <bk-button class="mt15" style="padding:0 8px;" theme="primary" @click="createToken">{{ $t('createToken') }}</bk-button>
                     </div>
                 </div>
             </div>
@@ -76,15 +76,15 @@
         margin-top: 20px;
     }
     .section-header {
-        padding-left: 20px;
+        padding-left: 15px;
         color: var(--fontPrimaryColor);
         background-color: var(--bgHoverColor);
-        font-size: 18px;
+        font-size: 14px;
         font-weight: normal;
         .section-title-icon {
             position: absolute;
-            margin-left: -32px;
-            margin-top: 12px;
+            margin-left: -27px;
+            margin-top: 14px;
         }
     }
     .section-main {

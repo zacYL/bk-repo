@@ -75,7 +75,8 @@ body {
     .bk-tab-header,
     .bk-form-control,
     .bk-button,
-    .bk-select {
+    .bk-select,
+    .bk-sideslider-title {
         color: var(--fontPrimaryColor);
     }
 
@@ -91,6 +92,9 @@ body {
     .bk-button,
     .bk-form-radio {
         font-size: 12px;
+    }
+    .bk-sideslider-title {
+        font-size: 14px;
     }
     /* 边框颜色重置 */
     .bk-table:before {

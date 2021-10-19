@@ -2,13 +2,13 @@
     <div class="repo-generic-container" @click="() => selectRow(selectedTreeNode)">
         <header class="mb10 pl20 pr20 generic-header flex-align-center">
             <Icon class="p10 generic-img" size="80" name="generic" />
-            <div class="ml20 generic-title flex-column flex-1">
+            <div class="ml20 generic-title flex-column">
                 <span class="mb10 repo-title text-overflow" :title="replaceRepoName(repoName)">
                     {{ replaceRepoName(repoName) }}
                 </span>
                 <span class="repo-description text-overflow"
-                    :title="currentRepo.description"
-                    :data-content="currentRepo.description || '【仓库描述】'">
+                    :title="currentRepo.description">
+                    {{ currentRepo.description || '【仓库描述】' }}
                 </span>
             </div>
         </header>
@@ -686,12 +686,9 @@
             }
             .repo-description {
                 max-width: 70vw;
-                &:before {
-                    content: attr(data-content);
-                    padding: 2px 10px;
-                    background-color: var(--bgWeightColor);
-                    border-radius: 2px;
-                }
+                padding: 6px 10px;
+                background-color: var(--bgWeightColor);
+                border-radius: 2px;
             }
         }
     }

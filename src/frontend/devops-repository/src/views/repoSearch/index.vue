@@ -15,8 +15,8 @@
             </div>
             <div class="mt20 flex-between-center">
                 <div class="result-count flex-align-center">
-                    <span v-if="!repoType && !packageNameInput">全部制品共</span>
-                    <span v-else>为您搜索到到相关结果</span>
+                    <span v-if="isSearching">搜索到到相关结果</span>
+                    <span v-else>全部制品共</span>
                     <span>{{ pagination.count }}个</span>
                 </div>
                 <div class="sort-tool flex-align-center">
@@ -105,6 +105,10 @@
             ...mapState(['userList']),
             projectId () {
                 return this.$route.params.projectId
+            },
+            isSearching () {
+                const { packageName, repoType, repoName } = this.$route.query
+                return Boolean(packageName || repoType || repoName)
             }
         },
         created () {
@@ -236,6 +240,7 @@
                 padding: 0 10px;
                 border-radius: 2px;
                 line-height: 42px;
+                background-color: var(--bgLighterColor);
                 cursor: pointer;
                 .repo-sum {
                     color: var(--fontTipColor);

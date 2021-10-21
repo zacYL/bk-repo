@@ -1,28 +1,10 @@
 <template>
     <main class="create-node-container" v-bkloading="{ isLoading }">
         <bk-form class="mb20 plan-form" :label-width="100" :model="planForm" :rules="rules" ref="planForm">
-            <bk-form-item label="计划名称：" :required="true" property="name" error-display-type="normal">
+            <bk-form-item label="计划名称" :required="true" property="name" error-display-type="normal">
                 <bk-input class="w480" v-model.trim="planForm.name" maxlength="32" show-word-limit :disabled="disabled"></bk-input>
             </bk-form-item>
-            <bk-form-item label="同步类型：" property="replicaObjectType">
-                <bk-radio-group v-model="planForm.replicaObjectType" class="replica-type-radio-group" @change="changeReplicaObjectType">
-                    <bk-radio-button
-                        class="mr20"
-                        v-for="type in replicaObjectTypeList"
-                        :key="type.value"
-                        :value="type.value"
-                        :disabled="disabled">
-                        <div class="replica-type-radio" :class="{ 'checked': type.value === planForm.replicaObjectType }">
-                            <label class="replica-type-label">{{ type.label }}</label>
-                            <div class="replica-type-tip">{{ type.tip }}</div>
-                            <div v-show="type.value === planForm.replicaObjectType" class="top-right-selected">
-                                <i class="devops-icon icon-check-1"></i>
-                            </div>
-                        </div>
-                    </bk-radio-button>
-                </bk-radio-group>
-            </bk-form-item>
-            <bk-form-item label="同步策略："
+            <bk-form-item label="同步策略"
                 :property="{ 'SPECIFIED_TIME': 'time', 'CRON_EXPRESSION': 'cron' }[planForm.executionStrategy]">
                 <bk-radio-group
                     class="radio-flex"
@@ -60,7 +42,7 @@
                     </bk-radio>
                 </bk-radio-group>
             </bk-form-item>
-            <bk-form-item label="冲突策略：" property="conflictStrategy">
+            <bk-form-item label="冲突策略" property="conflictStrategy">
                 <bk-radio-group v-model="planForm.conflictStrategy">
                     <bk-radio v-for="strategy in conflictStrategyList" :key="strategy.value" :value="strategy.value" :disabled="disabled">
                         <div class="flex-align-center">
@@ -73,7 +55,25 @@
                     </bk-radio>
                 </bk-radio-group>
             </bk-form-item>
-            <bk-form-item label="同步对象：" :required="true" property="config" error-display-type="normal">
+            <bk-form-item label="同步类型" property="replicaObjectType">
+                <bk-radio-group v-model="planForm.replicaObjectType" class="replica-type-radio-group" @change="changeReplicaObjectType">
+                    <bk-radio-button
+                        class="mr20"
+                        v-for="type in replicaObjectTypeList"
+                        :key="type.value"
+                        :value="type.value"
+                        :disabled="disabled">
+                        <div class="replica-type-radio" :class="{ 'checked': type.value === planForm.replicaObjectType }">
+                            <label class="replica-type-label">{{ type.label }}</label>
+                            <div class="replica-type-tip">{{ type.tip }}</div>
+                            <div v-show="type.value === planForm.replicaObjectType" class="top-right-selected">
+                                <i class="devops-icon icon-check-1"></i>
+                            </div>
+                        </div>
+                    </bk-radio-button>
+                </bk-radio-group>
+            </bk-form-item>
+            <bk-form-item label="同步对象" :required="true" property="config" error-display-type="normal">
                 <template v-if="planForm.replicaObjectType === 'REPOSITORY'">
                     <repository-table
                         ref="planConfig"
@@ -99,7 +99,7 @@
                     </path-table>
                 </template>
             </bk-form-item>
-            <bk-form-item label="目标节点：" :required="true" property="remoteClusterIds" error-display-type="normal">
+            <bk-form-item label="目标节点" :required="true" property="remoteClusterIds" error-display-type="normal">
                 <bk-select
                     class="w480"
                     v-model="planForm.remoteClusterIds"

@@ -98,13 +98,13 @@
                 <bk-form-item :label="$t('name')" :required="true" property="name" error-display-type="normal">
                     <bk-input v-model.trim="editNodeDialog.name" :disabled="!editNodeDialog.add" maxlength="32" show-word-limit></bk-input>
                 </bk-form-item>
-                <bk-form-item class="mt30" :label="$t('address')" :required="true" property="url" error-display-type="normal">
+                <bk-form-item :label="$t('address')" :required="true" property="url" error-display-type="normal">
                     <bk-input v-model.trim="editNodeDialog.url" :disabled="!editNodeDialog.add"></bk-input>
                 </bk-form-item>
-                <bk-form-item class="mt30" :label="$t('account')" :required="true" property="username" error-display-type="normal">
+                <bk-form-item :label="$t('account')" :required="true" property="username" error-display-type="normal">
                     <bk-input v-model.trim="editNodeDialog.username"></bk-input>
                 </bk-form-item>
-                <bk-form-item class="mt30" :label="$t('password')" :required="true" property="password" error-display-type="normal">
+                <bk-form-item :label="$t('password')" :required="true" property="password" error-display-type="normal">
                     <bk-input v-model.trim="editNodeDialog.password" type="password"></bk-input>
                 </bk-form-item>
             </bk-form>

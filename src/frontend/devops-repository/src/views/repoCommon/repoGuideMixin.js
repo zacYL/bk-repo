@@ -48,7 +48,7 @@ export default {
                             codeList: [`docker tag <LOCAL_IMAGE_TAG> ${this.domain.docker}/${this.projectId}/${this.repoName}/${this.packageName}`]
                         },
                         {
-                            subTitle: '2、推送您的docker 镜像',
+                            subTitle: '2、推送docker 镜像',
                             codeList: [`docker push ${this.domain.docker}/${this.projectId}/${this.repoName}/${this.packageName}`]
                         }
                     ]
@@ -382,7 +382,7 @@ export default {
                     title: '设置凭证',
                     main: [
                         {
-                            subTitle: `请将下列配置添加到您的 /etc/yum.repos.d/${this.repoName}.repo 文件中`,
+                            subTitle: `请将下列配置添加到 /etc/yum.repos.d/${this.repoName}.repo 文件中`,
                             codeList: [
                                 `[${this.repoName}]`,
                                 `name=${this.repoName}`,

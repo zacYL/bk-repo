@@ -347,7 +347,7 @@
                     position: relative;
                     height: 42px;
                     border-radius: 2px;
-                    background-color: var(--bgHoverColor);
+                    background-color: var(--bgLighterColor);
                     cursor: pointer;
                     .version-operation {
                         position: absolute;

@@ -711,7 +711,10 @@
             height: 100%;
             background-color: white;
             ::v-deep .selected-header {
-                color: var(--primaryColor);
+                color: var(--fontPrimaryColor);
+                .icon-down-shape {
+                    color: var(--primaryColor);
+                }
             }
             ::v-deep .devops-icon {
                 &.disabled {

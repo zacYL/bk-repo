@@ -84,7 +84,7 @@
                     </template>
                     <bk-table-column :label="$t('key')" prop="0" width="250"></bk-table-column>
                     <bk-table-column :label="$t('value')" prop="1"></bk-table-column>
-                    <bk-table-column label="" width="35"></bk-table-column>
+                    <bk-table-column label="" width="60"></bk-table-column>
                 </bk-table>
             </div>
         </bk-tab-panel>
@@ -305,7 +305,7 @@
                         theme: 'success',
                         message: this.$t('add') + this.$t('success')
                     })
-                    this.showAddMetadata()
+                    this.hiddenAddMetadata()
                     this.getDetail()
                 }).finally(() => {
                     this.metadata.loading = false
@@ -394,14 +394,14 @@
             align-items: center;
             justify-content: center;
             top: 0;
-            right: 0;
+            right: 25px;
             width: 35px;
             height: 40px;
             z-index: 1;
             .version-metadata-add-board {
                 position: absolute;
                 top: 42px;
-                right: 0;
+                right: -25px;
                 width: 300px;
                 overflow: hidden;
                 background: white;

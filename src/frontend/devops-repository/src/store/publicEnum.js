@@ -18,26 +18,22 @@ export const repoTypeEnum = {
 }
 
 export const fileType = [
-    'access',
-    'ai',
-    'bat',
-    'png',
+    'apk',
+    'babelrc', 'bat',
+    'c', 'cpp', 'css',
     'docx',
-    'html',
-    'md',
-    'mpd',
-    'pdf',
-    'pptx',
-    'pub',
-    'pyc',
-    'rm',
-    'sh',
-    'txt',
-    'wma',
-    'xlsx',
-    'xmind',
-    'xml',
-    'xsd',
+    'eslintrc', 'exe',
+    'h', 'html',
+    'ico',
+    'js', 'json',
+    'log',
+    'md', 'mp4', 'mpd',
+    'pdf', 'php', 'png', 'pptx', 'py',
+    'sh', 'svg',
+    'ts', 'txt',
+    'vue',
+    'xlsx', 'xmind', 'xml',
+    'yaml',
     'zip'
 ]
 
@@ -45,13 +41,20 @@ export function getIconName (name) {
     let type = name.split('.').pop()
     type = {
         'gif': 'png',
-        'svg': 'png',
         'jpg': 'png',
         'psd': 'png',
         'jpge': 'png',
-        'json': 'txt',
+        'mov': 'mp4',
+        'avi': 'mp4',
+        'asf': 'mp4',
+        'wmv': 'mp4',
+        'rmvb': 'mp4',
+        'rm': 'mp4',
         'jar': 'zip',
-        'rar': 'zip'
+        'rar': 'zip',
+        'map': 'js',
+        'pyc': 'py',
+        'xsd': 'xml'
     }[type] || type
     return fileType.includes(type) ? type : 'file'
 }

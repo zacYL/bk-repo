@@ -3,8 +3,8 @@
         <header class="mb10 pl20 pr20 common-package-header flex-align-center">
             <Icon class="p10 package-img" size="80" :name="repoType" />
             <div class="ml20 common-package-title flex-column">
-                <span class="mb5 repo-title text-overflow" :title="repoName">
-                    {{ repoName }}
+                <span class="mb5 repo-title text-overflow" :title="pkg.name">
+                    {{ pkg.name }}
                 </span>
                 <span class="repo-description text-overflow"
                     :title="pkg.description">

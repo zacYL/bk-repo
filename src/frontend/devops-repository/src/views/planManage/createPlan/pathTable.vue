@@ -122,7 +122,7 @@
     }
     .path-add {
         width: 120px;
-        height: 36px;
+        height: 32px;
         color: var(--primaryColor);
         background-color: var(--bgHoverColor);
         cursor: pointer;

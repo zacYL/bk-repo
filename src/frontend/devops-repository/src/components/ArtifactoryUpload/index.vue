@@ -2,7 +2,7 @@
     <div class="artifactory-upload-container flex-center">
         <template v-if="file.blob">
             <div class="flex-column flex-center">
-                <icon name="file" size="48"></icon>
+                <Icon size="48" :name="getIconName(file.name) || 'file'" />
                 <span>{{ file.size }}</span>
             </div>
             <div class="ml20 mr20 upload-file-info">
@@ -33,6 +33,7 @@
 </template>
 <script>
     import { convertFileSize } from '@/utils'
+    import { getIconName } from '@/store/publicEnum'
     export default {
         name: 'artifactoryUpload',
         props: {
@@ -83,6 +84,7 @@
             }
         },
         methods: {
+            getIconName,
             async getFiles () {
                 if (!this.file.blob) throw new Error('请选择文件')
                 await this.$refs.fileName.validate()

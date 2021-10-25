@@ -7,7 +7,7 @@ import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.ciApi
 import com.tencent.bkrepo.auth.ciTenant
 import com.tencent.bkrepo.auth.pojo.CanwayGroup
-import com.tencent.bkrepo.auth.ci
+import com.tencent.bkrepo.auth.ciPermission
 import com.tencent.bkrepo.auth.repository.UserRepository
 import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.auth.service.local.RoleServiceImpl
@@ -83,7 +83,7 @@ class CanwayRoleServiceImpl(
 
     private fun getRequestUrl(uri: String): String {
         val devopsHost = devopsConf.devopsHost
-        return "${devopsHost.removeSuffix("/")}$ci$ciApi$uri"
+        return "${devopsHost.removeSuffix("/")}$ciPermission$ciApi$uri"
     }
 
     companion object {

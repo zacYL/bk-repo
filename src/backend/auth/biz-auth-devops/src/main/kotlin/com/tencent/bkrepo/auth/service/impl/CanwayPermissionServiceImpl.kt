@@ -1,6 +1,6 @@
 package com.tencent.bkrepo.auth.service.impl
 
-import com.tencent.bkrepo.auth.ci
+import com.tencent.bkrepo.auth.ciPermission
 import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_ADMIN
 import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_USER
 import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_VIEWER
@@ -625,12 +625,12 @@ class CanwayPermissionServiceImpl(
 
     private fun getRequestUrl(uri: String): String {
         val devopsHost = devopsConf.devopsHost
-        return "${devopsHost.removeSuffix("/")}$ci$ciApi$uri"
+        return "${devopsHost.removeSuffix("/")}$ciPermission$ciApi$uri"
     }
 
     companion object {
         val logger: Logger = LoggerFactory.getLogger(CanwayPermissionServiceImpl::class.java)
-        const val getUsersByGroupIdApi = "$ci$ciApi/service/organization/%s?userId=%s"
+        const val getUsersByGroupIdApi = "$ciPermission$ciApi/service/organization/%s?userId=%s"
         const val ciCheckPermissionApi = "/service/resource_instance/query"
     }
 }

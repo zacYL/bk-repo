@@ -1,6 +1,7 @@
 package com.tencent.bkrepo.auth
 
-const val ci = "/ms/permission"
+const val ciPermission = "/ms/permission"
+const val ciUserManager = "/ms/usermanager"
 const val ciApi = "/api"
 
 // ci 相关cookie

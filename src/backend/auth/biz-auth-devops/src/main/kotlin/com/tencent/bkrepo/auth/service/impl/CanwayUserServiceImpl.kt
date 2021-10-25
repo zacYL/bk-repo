@@ -1,9 +1,14 @@
 package com.tencent.bkrepo.auth.service.impl
 
 import com.mongodb.BasicDBObject
+import com.tencent.bkrepo.auth.ciPermission
+import com.tencent.bkrepo.auth.ciApi
+import com.tencent.bkrepo.auth.ciUserManager
 import com.tencent.bkrepo.auth.constant.DEFAULT_PASSWORD
 import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.model.TUser
+import com.tencent.bkrepo.auth.pojo.CanwayUser
+import com.tencent.bkrepo.auth.pojo.DevopsUser
 import com.tencent.bkrepo.auth.pojo.token.Token
 import com.tencent.bkrepo.auth.pojo.token.TokenResult
 import com.tencent.bkrepo.auth.pojo.user.CreateUserRequest
@@ -12,6 +17,7 @@ import com.tencent.bkrepo.auth.pojo.user.CreateUserToProjectRequest
 import com.tencent.bkrepo.auth.pojo.user.User
 import com.tencent.bkrepo.auth.pojo.user.UpdateUserRequest
 import com.tencent.bkrepo.auth.pojo.user.UserInfo
+import com.tencent.bkrepo.auth.pojo.user.UserResult
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
 import com.tencent.bkrepo.auth.service.local.UserServiceImpl
@@ -22,11 +28,16 @@ import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.sensitive.DesensitizedUtils
+import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.artifact.path.PathUtils
+import com.tencent.bkrepo.common.devops.api.conf.DevopsConf
+import com.tencent.bkrepo.common.devops.api.pojo.response.CanwayResponse
+import com.tencent.bkrepo.common.devops.api.util.http.CanwayHttpUtils
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
@@ -40,6 +51,9 @@ class CanwayUserServiceImpl(
     roleRepository: RoleRepository,
     private val mongoTemplate: MongoTemplate
 ) : UserServiceImpl(userRepository, roleRepository, mongoTemplate) {
+
+    @Autowired
+    lateinit var devopsConf: DevopsConf
 
     override fun createUser(request: CreateUserRequest): Boolean {
         // todo 校验
@@ -333,7 +347,38 @@ class CanwayUserServiceImpl(
         return Pages.ofResponse(pageRequest, totalRecords, records)
     }
 
+    @Suppress("TooGenericExceptionCaught", "SwallowedException")
+    override fun listUserResult(rids: List<String>): List<UserResult> {
+        val devopsHost = devopsConf.devopsHost.removeSuffix("/")
+        var request = "$devopsHost$ciUserManager$ciApi$userListApi_4300"
+        return try {
+            val response = CanwayHttpUtils.doGet(request).content
+            val canwayUserList = response.readJsonString<CanwayResponse<List<DevopsUser>>>().data
+                ?: return listOf()
+            canwayUserList.map {
+                UserResult(userId = it.id, name = it.displayName)
+            }
+        } catch (e: Exception) {
+            logger.warn("CI 用户管理用户列表接头调用失败: $request")
+            try {
+                request = "$devopsHost$ciPermission$ciApi$userListApi"
+                val response = CanwayHttpUtils.doGet(request).content
+                val canwayUserList = response.readJsonString<CanwayResponse<List<CanwayUser>>>().data
+                    ?: return listOf()
+                canwayUserList.map {
+                    UserResult(userId = it.userId, name = it.displayName)
+                }
+            } catch (e: Exception) {
+                logger.error("CI 权限中心用户列表接头调用失败: $request")
+                super.listUserResult(rids)
+            }
+        }
+    }
+
     companion object {
+        const val userListApi = "/service/blueking/user"
+        // 权限中心4300接口
+        const val userListApi_4300 = "/service/user/allUser"
         private val logger: Logger = LoggerFactory.getLogger(CanwayUserServiceImpl::class.java)
     }
 }

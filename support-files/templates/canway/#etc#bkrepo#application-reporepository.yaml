@@ -13,9 +13,3 @@ logging:
   path: ${logging.path-common}/${service.name}
 service:
   name: repository
-
-bk:
-  host: __BK_PAAS_PRIVATE_URL__
-  appCode: __APP_CODE__
-  appSecret: __APP_TOKEN__
-  devopsHost: __BK_CI_PUBLIC_URL__

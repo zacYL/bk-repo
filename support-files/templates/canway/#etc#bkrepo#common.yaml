@@ -118,6 +118,12 @@ devopsGateway:
 license:
   auth:
     host: http://__CW_LICENSE_HOST__:__CW_LICENSE_PORT__
+devops:
+  bkHost: __BK_PAAS_PRIVATE_URL__
+  appCode: __APP_CODE__
+  appSecret: __APP_TOKEN__
+  devopsHost: __BK_CI_PUBLIC_URL__
+  bkrepoHost: __BK_REPO_HOST__
 
   
   

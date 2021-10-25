@@ -34,7 +34,6 @@ class RepoOpDataController(
     private val packageClient: PackageClient,
     private val nodeClient: NodeClient,
     private val repoOpDataService: RepoOpDataService,
-    private val redisTemplate: RedisTemplate<String, Any>,
     private val operateLogClient: OperateLogClient
 ) {
 
@@ -90,12 +89,7 @@ class RepoOpDataController(
         @ApiParam("仓库名，可为空", required = false)
         @RequestParam repoName: String?
     ): Response<Long> {
-        val valueOperations = redisTemplate.opsForValue()
-        var capacity: Long? = (valueOperations.get("capacity") as Int?)?.toLong()
-        if (capacity == null) {
-            capacity = nodeClient.capacity(projectId, repoName).data!!
-            valueOperations.set("capacity", capacity, TIMEOUT_LIMIT, TimeUnit.MINUTES)
-        }
+        val capacity = nodeClient.capacity(projectId, repoName).data!!
         return ResponseBuilder.success(capacity)
     }
 

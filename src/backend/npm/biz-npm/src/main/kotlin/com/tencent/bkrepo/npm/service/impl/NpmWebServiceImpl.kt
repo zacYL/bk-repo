@@ -31,8 +31,6 @@
 
 package com.tencent.bkrepo.npm.service.impl
 
-import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
-import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_NUMBER
 import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_SIZE
 import com.tencent.bkrepo.common.api.util.JsonUtils
@@ -41,7 +39,6 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadConte
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
-import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
 import com.tencent.bkrepo.npm.constants.LATEST
 import com.tencent.bkrepo.npm.constants.NPM_FILE_FULL_PATH
@@ -122,7 +119,6 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
     }
 
     @Transactional(rollbackFor = [Throwable::class])
-    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_DELETE)
     override fun deletePackage(artifactInfo: NpmArtifactInfo, deleteRequest: PackageDeleteRequest) {
         logger.info("npm delete package request: [$deleteRequest]")
         with(deleteRequest) {
@@ -132,7 +128,6 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
     }
 
     @Transactional(rollbackFor = [Throwable::class])
-    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_DELETE)
     override fun deleteVersion(artifactInfo: NpmArtifactInfo, deleteRequest: PackageVersionDeleteRequest) {
         logger.info("npm delete package version request: [$deleteRequest]")
         with(deleteRequest) {

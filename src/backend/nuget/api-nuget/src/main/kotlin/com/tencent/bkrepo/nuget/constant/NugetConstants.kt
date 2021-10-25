@@ -33,8 +33,11 @@ const val ID = "id"
 const val VERSION = "version"
 const val LOWER_VERSION = "lowerVersion"
 const val UPPER_VERSION = "upperVersion"
+const val PACKAGE = "package"
 
 const val METADATA = "nuget_metadata"
+
+const val REMOTE_URL = "remote_url"
 
 const val NUGET_V3_NOT_FOUND =
     """

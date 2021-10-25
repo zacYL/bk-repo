@@ -41,35 +41,32 @@ import com.tencent.bkrepo.auth.pojo.RegisterResourceRequest
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.auth.pojo.enums.RoleType
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionUserRequest
-import com.tencent.bkrepo.auth.pojo.permission.Permission
+import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.CreatePermissionRequest
+import com.tencent.bkrepo.auth.pojo.permission.Permission
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionActionRequest
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionDepartmentRequest
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionPathRequest
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRepoRequest
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRoleRequest
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionDepartmentRequest
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionActionRequest
-import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
-import com.tencent.bkrepo.auth.pojo.permission.ListRepoPermissionRequest
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionUserRequest
 import com.tencent.bkrepo.auth.repository.PermissionRepository
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
 import com.tencent.bkrepo.auth.service.PermissionService
+import com.tencent.bkrepo.auth.util.query.PermissionQueryHelper
+import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import org.slf4j.LoggerFactory
-import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.mongodb.core.MongoTemplate
-import org.springframework.data.mongodb.core.query.Criteria
-import org.springframework.data.mongodb.core.query.Query
 import java.time.LocalDateTime
-import java.util.stream.Collectors
 
 open class PermissionServiceImpl constructor(
     private val userRepository: UserRepository,
     private val roleRepository: RoleRepository,
-    val permissionRepository: PermissionRepository,
+    private val permissionRepository: PermissionRepository,
     private val mongoTemplate: MongoTemplate,
     private val repositoryClient: RepositoryClient,
     private val projectClient: ProjectClient
@@ -118,7 +115,7 @@ open class PermissionServiceImpl constructor(
         }
         val result = permissionRepository.insert(
             TPermission(
-                resourceType = request.resourceType,
+                resourceType = request.resourceType.toString(),
                 projectId = request.projectId,
                 permName = request.permName,
                 repos = request.repos,
@@ -129,8 +126,7 @@ open class PermissionServiceImpl constructor(
                 createBy = request.createBy,
                 createAt = LocalDateTime.now(),
                 updatedBy = request.updatedBy,
-                updateAt = LocalDateTime.now(),
-                departments = request.departments
+                updateAt = LocalDateTime.now()
             )
         )
         result.id?.let {
@@ -197,12 +193,20 @@ open class PermissionServiceImpl constructor(
 
     override fun checkPermission(request: CheckPermissionRequest): Boolean {
         logger.debug("check permission  request : [$request] ")
+
+        if (request.uid == ANONYMOUS_USER) return false
+
         val user = userRepository.findFirstByUserId(request.uid) ?: run {
             throw ErrorCodeException(AuthMessageCode.AUTH_USER_NOT_EXIST)
         }
 
+        // check user locked
+        if (user.locked) {
+            return false
+        }
+
         // check user admin permission
-        if (user.admin || !request.appId.isNullOrBlank()) return true
+        if (user.admin) return true
 
         // check role project admin
         if (checkProjectAdmin(request, user.roles)) return true
@@ -216,7 +220,7 @@ open class PermissionServiceImpl constructor(
 
     private fun checkProjectAdmin(request: CheckPermissionRequest, roles: List<String>): Boolean {
         if (roles.isNotEmpty() && request.projectId != null) {
-            roles.forEach {
+            roles.filter { !it.isNullOrEmpty() }.forEach {
                 val role = roleRepository.findFirstByIdAndProjectIdAndType(it, request.projectId!!, RoleType.PROJECT)
                 if (role != null && role.admin) return true
             }
@@ -227,7 +231,7 @@ open class PermissionServiceImpl constructor(
     private fun checkRepoAdmin(request: CheckPermissionRequest, roles: List<String>): Boolean {
         // check role repo admin
         if (roles.isNotEmpty() && request.projectId != null && request.repoName != null) {
-            roles.forEach {
+            roles.filter { !it.isNullOrEmpty() }.forEach {
                 val rRole = roleRepository.findFirstByIdAndProjectIdAndTypeAndRepoName(
                     it,
                     request.projectId!!,
@@ -242,47 +246,38 @@ open class PermissionServiceImpl constructor(
 
     private fun checkRepoAction(request: CheckPermissionRequest, roles: List<String>): Boolean {
         with(request) {
-            projectId?.let {
-                val resultRole = mutableListOf<String>()
-                resultRole.addAll(roles)
-                request.role?.let { resultRole.add(it) }
-                var celeriac = buildCheckActionQuery(projectId!!, uid, action, resourceType, resultRole, department)
-                if (request.resourceType == ResourceType.REPO) {
-                    celeriac = celeriac.and(TPermission::repos.name).`is`(request.repoName)
-                }
-                val query = Query.query(celeriac)
+            if (resourceType == ResourceType.REPO.toString() && repoName != null) {
+                val query = PermissionQueryHelper.buildPermissionCheck(
+                    projectId!!, repoName!!, uid, action, resourceType, roles
+                )
                 val result = mongoTemplate.count(query, TPermission::class.java)
                 if (result != 0L) return true
             }
-            return false
         }
+        return false
     }
 
     override fun listPermissionProject(userId: String): List<String> {
         logger.debug("list permission project request : $userId ")
-        if (userId.isNullOrEmpty()) return emptyList()
+        if (userId.isEmpty()) return emptyList()
         val user = userRepository.findFirstByUserId(userId) ?: run {
             throw ErrorCodeException(AuthMessageCode.AUTH_USER_NOT_EXIST)
         }
-        // 用户为管理员
+        // 用户为系统管理员
         if (user.admin) {
             return projectClient.listProject().data?.map { it.name } ?: emptyList()
         }
 
-        var projectList = mutableListOf<String>()
+        val projectList = mutableListOf<String>()
 
-        // 用户关联权限
-        permissionRepository.findByUsers(userId).forEach {
-            if (it.actions.isNotEmpty() && it.projectId != null) {
-                projectList.add(it.projectId!!)
-            }
-        }
+        // 非管理员用户关联权限
+        projectList.addAll(getNoAdminUserProject(userId))
 
         if (user.roles.isEmpty()) {
             return projectList.distinct()
         }
 
-        var noAdminRole = mutableListOf<String>()
+        val noAdminRole = mutableListOf<String>()
 
         // 管理员角色关联权限
         val roleList = roleRepository.findByIdIn(user.roles)
@@ -295,14 +290,81 @@ open class PermissionServiceImpl constructor(
         }
 
         // 非管理员角色关联权限
-        projectList = getNoAdminRoleProject(noAdminRole, projectList)
+        projectList.addAll(getNoAdminRoleProject(noAdminRole))
 
         return projectList.distinct()
     }
 
-    private fun getNoAdminRoleProject(role: MutableList<String>, project: MutableList<String>): MutableList<String> {
-        if (role.isNotEmpty()) {
-            permissionRepository.findByRolesIn(role).forEach {
+    override fun listPermissionRepo(projectId: String, userId: String, appId: String?): List<String> {
+        logger.debug("list repo permission request : [$projectId, $userId] ")
+        val user = userRepository.findFirstByUserId(userId) ?: run {
+            throw ErrorCodeException(AuthMessageCode.AUTH_USER_NOT_EXIST)
+        }
+
+        // 用户为系统管理员
+        if (user.admin) {
+            return getAllRepoByProjectId(projectId)
+        }
+
+        val roles = user.roles
+
+        // 用户为项目管理员
+        if (roles.isNotEmpty() &&
+            roleRepository.findByProjectIdAndTypeAndAdminAndIdIn(
+                projectId,
+                RoleType.PROJECT,
+                true,
+                roles
+            ).isNotEmpty()
+        ) {
+            return getAllRepoByProjectId(projectId)
+        }
+
+        val repoList = mutableListOf<String>()
+
+        // 非管理员用户关联权限
+        repoList.addAll(getNoAdminUserRepo(projectId, userId))
+
+        if (user.roles.isEmpty()) {
+            return repoList.distinct()
+        }
+
+        val noAdminRole = mutableListOf<String>()
+
+        // 仓库管理员角色关联权限
+        val roleList = roleRepository.findByProjectIdAndTypeAndAdminAndIdIn(projectId, RoleType.REPO, true, roles)
+        roleList.forEach {
+            if (it.admin && it.repoName != null) {
+                repoList.add(it.repoName)
+            } else {
+                noAdminRole.add(it.id!!)
+            }
+        }
+
+        // 非仓库管理员角色关联权限
+        repoList.addAll(getNoAdminRoleRepo(projectId, noAdminRole))
+
+        return repoList.distinct()
+    }
+
+    fun getAllRepoByProjectId(projectId: String): List<String> {
+        return repositoryClient.listRepo(projectId).data?.map { it.name } ?: emptyList()
+    }
+
+    private fun getNoAdminUserProject(userId: String): List<String> {
+        val projectList = mutableListOf<String>()
+        permissionRepository.findByUsers(userId).forEach {
+            if (it.actions.isNotEmpty() && it.projectId != null) {
+                projectList.add(it.projectId!!)
+            }
+        }
+        return projectList
+    }
+
+    private fun getNoAdminRoleProject(roles: List<String>): List<String> {
+        val project = mutableListOf<String>()
+        if (roles.isNotEmpty()) {
+            permissionRepository.findByRolesIn(roles).forEach {
                 if (it.actions.isNotEmpty() && it.projectId != null) {
                     project.add(it.projectId!!)
                 }
@@ -311,73 +373,26 @@ open class PermissionServiceImpl constructor(
         return project
     }
 
-    override fun listRepoPermission(request: ListRepoPermissionRequest): List<String> {
-        logger.debug("list repo permission  request : [$request] ")
-        if (request.repoNames.isNullOrEmpty()) return emptyList()
-        val user = userRepository.findFirstByUserId(request.uid) ?: run {
-            throw ErrorCodeException(AuthMessageCode.AUTH_USER_NOT_EXIST)
-        }
-        if (user.admin || !request.appId.isNullOrBlank()) {
-            // 查询该项目下的所有仓库并过滤返回
-            val repoList = repositoryClient.listRepo(request.projectId).data?.map { it.name } ?: emptyList()
-            return filterRepos(repoList, request.repoNames)
-        }
-        val roles = user.roles
-
-        // check project admin
-        if (roles.isNotEmpty() && request.resourceType == ResourceType.PROJECT) {
-            return listProjectPermissions(roles, request)
-        }
-
-        val reposList = mutableListOf<String>()
-        // check repo admin
-        if (roles.isNotEmpty() && request.resourceType == ResourceType.REPO) {
-            return listRepoPermissions(roles, request, reposList)
-        }
-
-        // check repo permission
-        with(request) {
-            val celeriac = buildCheckActionQuery(projectId, uid, action, request.resourceType, roles, null)
-            val query = Query.query(celeriac)
-            val result = mongoTemplate.find(query, TPermission::class.java)
-            val permissionRepoList = result.stream().flatMap { it.repos.stream() }.collect(Collectors.toList())
-            reposList.addAll(permissionRepoList)
-            return filterRepos(reposList, request.repoNames)
-        }
-    }
-
-    private fun listRepoPermissions(
-        roles: List<String>,
-        request: ListRepoPermissionRequest,
-        reposList: MutableList<String>
-    ): List<String> {
-        roles.forEach { role ->
-            // check project admin first
-            val pRole = roleRepository.findFirstByIdAndProjectIdAndType(role, request.projectId, RoleType.PROJECT)
-            if (pRole != null && pRole.admin) {
-                val repoList = repositoryClient.listRepo(request.projectId).data?.map { it.name } ?: emptyList()
-                return filterRepos(repoList, request.repoNames)
-            }
-            // check repo admin then
-            val rRole = roleRepository.findFirstByIdAndProjectIdAndType(
-                role,
-                request.projectId,
-                RoleType.REPO
-            )
-            if (rRole != null && rRole.admin) reposList.add(rRole.repoName!!)
-        }
-        return emptyList()
-    }
-
-    private fun listProjectPermissions(roles: List<String>, request: ListRepoPermissionRequest): List<String> {
-        roles.forEach { role ->
-            val tRole = roleRepository.findFirstByIdAndProjectIdAndType(role, request.projectId, RoleType.PROJECT)
-            if (tRole != null && tRole.admin) {
-                val repoList = repositoryClient.listRepo(request.projectId).data?.map { it.name } ?: emptyList()
-                return filterRepos(repoList, request.repoNames)
+    private fun getNoAdminUserRepo(projectId: String, userId: String): List<String> {
+        val repoList = mutableListOf<String>()
+        permissionRepository.findByProjectIdAndUsers(projectId, userId).forEach {
+            if (it.actions.isNotEmpty() && it.repos.isNotEmpty()) {
+                repoList.addAll(it.repos)
             }
         }
-        return emptyList()
+        return repoList
+    }
+
+    private fun getNoAdminRoleRepo(project: String, role: List<String>): List<String> {
+        val repoList = mutableListOf<String>()
+        if (role.isNotEmpty()) {
+            permissionRepository.findByProjectIdAndRolesIn(project, role).forEach {
+                if (it.actions.isNotEmpty() && it.repos.isNotEmpty()) {
+                    repoList.addAll(it.repos)
+                }
+            }
+        }
+        return repoList
     }
 
     override fun registerResource(request: RegisterResourceRequest) {
@@ -391,67 +406,38 @@ open class PermissionServiceImpl constructor(
         }
     }
 
-    fun getOnePermission(
+    private fun getOnePermission(
         projectId: String,
         repoName: String,
         permName: String,
         actions: List<PermissionAction>
     ): TPermission {
-        logger.info("start check permission : $projectId, $repoName, $permName , $actions")
-        return findPermission(projectId, repoName, permName) ?: run {
+        permissionRepository.findOneByProjectIdAndReposAndPermNameAndResourceType(
+            projectId,
+            repoName,
+            permName,
+            ResourceType.REPO
+        ) ?: run {
             val request = TPermission(
                 projectId = projectId,
                 repos = listOf(repoName),
                 permName = permName,
-                actions = actions,
-                resourceType = ResourceType.REPO,
+                actions = actions.map { it.toString() },
+                resourceType = ResourceType.REPO.toString(),
                 createAt = LocalDateTime.now(),
                 updateAt = LocalDateTime.now(),
                 createBy = AUTH_ADMIN,
                 updatedBy = AUTH_ADMIN
             )
-            if (logger.isDebugEnabled) {
-                logger.debug("create permission request [$request]")
-            }
-            try {
-                permissionRepository.insert(request)
-            } catch (exception: DuplicateKeyException) {
-                logger.error("insert permission [$request] error: [${exception.message}]")
-                findPermission(projectId, repoName, permName)!!
-            }
+            logger.info("permission not exist, create [$request]")
+            permissionRepository.insert(request)
         }
-    }
-
-    private fun findPermission(projectId: String, repoName: String, permName: String): TPermission? {
-        logger.info("find permission : $projectId, $repoName, $permName ")
-        return permissionRepository.findOneByProjectIdAndReposContainsAndPermNameAndResourceType(
+        return permissionRepository.findOneByProjectIdAndReposAndPermNameAndResourceType(
             projectId,
             repoName,
             permName,
             ResourceType.REPO
-        )
-    }
-
-    private fun buildCheckActionQuery(
-        projectId: String,
-        uid: String,
-        action: PermissionAction,
-        resourceType: ResourceType,
-        roles: List<String>,
-        department: String?
-    ): Criteria {
-        val criteria = Criteria()
-        var celeriac = criteria.orOperator(
-            Criteria.where(TPermission::users.name).`in`(uid),
-            Criteria.where(TPermission::roles.name).`in`(roles),
-            Criteria.where(TPermission::departments.name).`in`(department)
-        )
-            .and(TPermission::resourceType.name).`is`(resourceType.toString()).and(TPermission::actions.name)
-            .`in`(action.toString())
-        if (resourceType != ResourceType.SYSTEM) {
-            celeriac = celeriac.and(TPermission::projectId.name).`is`(projectId)
-        }
-        return celeriac
+        )!!
     }
 
     companion object {

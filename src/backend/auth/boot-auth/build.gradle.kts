@@ -30,5 +30,5 @@
  */
 
 dependencies {
-    implementation(project(":auth:biz-auth"))
+    implementation(project(":auth:biz-auth-devops"))
 }

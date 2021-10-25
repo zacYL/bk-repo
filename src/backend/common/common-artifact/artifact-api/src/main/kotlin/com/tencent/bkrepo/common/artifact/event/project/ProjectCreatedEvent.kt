@@ -29,7 +29,7 @@ package com.tencent.bkrepo.common.artifact.event.project
 
 import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
-import com.tencent.bkrepo.common.api.event.base.EventType
+import com.tencent.bkrepo.common.artifact.event.base.EventType
 
 /**
  * 项目创建事件

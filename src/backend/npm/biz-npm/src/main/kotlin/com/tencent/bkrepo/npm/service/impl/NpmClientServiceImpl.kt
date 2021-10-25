@@ -440,8 +440,7 @@ class NpmClientServiceImpl(
         with(artifactInfo) {
             // 判断包版本是否存在 如果该版本先前发布过，也不让再次发布该版本
             if (packageVersionExist(projectId, repoName, packageKey, version) ||
-                packageHistoryVersionExist(projectId, repoName, packageKey, version)
-            ) {
+                packageHistoryVersionExist(projectId, repoName, packageKey, version)) {
                 throw NpmArtifactExistException(
                     "You cannot publish over the previously published versions: ${versionMetadata.version}."
                 )

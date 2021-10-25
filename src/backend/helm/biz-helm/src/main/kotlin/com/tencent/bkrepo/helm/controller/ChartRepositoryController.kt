@@ -34,16 +34,18 @@ package com.tencent.bkrepo.helm.controller
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
-import com.tencent.bkrepo.helm.artifact.HelmArtifactInfo
-import com.tencent.bkrepo.helm.artifact.HelmArtifactInfo.Companion.HELM_INDEX_YAML_URL
-import com.tencent.bkrepo.helm.artifact.HelmArtifactInfo.Companion.HELM_INSTALL_URL
-import com.tencent.bkrepo.helm.artifact.HelmArtifactInfo.Companion.HELM_PROV_INSTALL_URL
+import com.tencent.bkrepo.helm.pojo.artifact.HelmArtifactInfo
+import com.tencent.bkrepo.helm.pojo.artifact.HelmArtifactInfo.Companion.HELM_INDEX_YAML_URL
+import com.tencent.bkrepo.helm.pojo.artifact.HelmArtifactInfo.Companion.HELM_INSTALL_URL
+import com.tencent.bkrepo.helm.pojo.artifact.HelmArtifactInfo.Companion.HELM_PROV_INSTALL_URL
 import com.tencent.bkrepo.helm.service.ChartRepositoryService
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDateTime
 
+@Suppress("MVCPathVariableInspection")
 @RestController
 class ChartRepositoryController(
     private val chartRepositoryService: ChartRepositoryService
@@ -75,7 +77,7 @@ class ChartRepositoryController(
     /**
      * regenerate index.yaml
      */
-    @GetMapping("/{projectId}/{repoName}/regenerate")
+    @PostMapping("/{projectId}/{repoName}/regenerate")
     fun regenerateIndexYaml(@ArtifactPathVariable artifactInfo: HelmArtifactInfo): Response<Void> {
         chartRepositoryService.regenerateIndexYaml(artifactInfo)
         return ResponseBuilder.success()

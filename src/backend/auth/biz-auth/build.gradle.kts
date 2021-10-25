@@ -38,5 +38,5 @@ dependencies {
     api(project(":common:common-job"))
     implementation("com.google.guava:guava")
     api(project(":common:common-plugin:plugin-service"))
-    api(project(":common:common-devops"))
+    api(project(":common:common-devops:api"))
 }

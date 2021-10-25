@@ -44,6 +44,7 @@ import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.security.http.core.HttpAuthProperties
 import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.security.util.SecurityUtils
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
 import org.slf4j.LoggerFactory
@@ -86,7 +87,6 @@ open class PermissionManager(
         repoName: String,
         public: Boolean? = null
     ) {
-        logger.info("permission: {projectId: $projectId, repo: $repoName, action: $action, public: $public}")
         if (isReadPublicRepo(action, projectId, repoName, public)) {
             return
         }
@@ -164,11 +164,13 @@ open class PermissionManager(
     }
 
     fun registerProject(userId: String, projectId: String) {
-        permissionResource.registerResource(RegisterResourceRequest(userId, ResourceType.PROJECT, projectId))
+        val request = RegisterResourceRequest(userId, ResourceType.PROJECT.toString(), projectId)
+        permissionResource.registerResource(request)
     }
 
     fun registerRepo(userId: String, projectId: String, repoName: String) {
-        permissionResource.registerResource(RegisterResourceRequest(userId, ResourceType.PROJECT, projectId, repoName))
+        val request = RegisterResourceRequest(userId, ResourceType.REPO.toString(), projectId, repoName)
+        permissionResource.registerResource(request)
     }
 
     /**
@@ -216,12 +218,17 @@ open class PermissionManager(
         val platformId = SecurityUtils.getPlatformId()
         checkAnonymous(userId, platformId)
 
+        if (userId == ANONYMOUS_USER) {
+            logger.warn("anonymous user, platform id[$platformId], " +
+                "requestUri: ${HttpContextHolder.getRequest().requestURI}")
+        }
+
         // 去auth微服务校验资源权限
         val checkRequest = CheckPermissionRequest(
             uid = userId,
             appId = platformId,
-            resourceType = type,
-            action = action,
+            resourceType = type.toString(),
+            action = action.toString(),
             projectId = projectId,
             repoName = repoName,
             path = path

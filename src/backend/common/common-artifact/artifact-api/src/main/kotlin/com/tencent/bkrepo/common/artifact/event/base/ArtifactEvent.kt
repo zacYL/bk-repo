@@ -28,7 +28,6 @@
 package com.tencent.bkrepo.common.artifact.event.base
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.tencent.bkrepo.common.api.event.base.EventType
 
 /**
  * artifact抽象事件

@@ -134,16 +134,6 @@ class NodeController(
         return ResponseBuilder.success(nodeSearchService.search(queryModel))
     }
 
-    override fun getNodeDetail(
-        projectId: String,
-        repoName: String,
-        repoType: String,
-        fullPath: String
-    ): Response<NodeDetail?> {
-        val artifactInfo = DefaultArtifactInfo(projectId, repoName, fullPath)
-        return ResponseBuilder.success(nodeService.getNodeDetail(artifactInfo, repoType))
-    }
-
     override fun listNode(
         projectId: String,
         repoName: String,

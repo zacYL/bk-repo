@@ -149,20 +149,6 @@ interface NodeClient {
     @PostMapping("/search")
     fun search(@RequestBody queryModel: QueryModel): Response<Page<Map<String, Any?>>>
 
-    @Deprecated("replace with getNodeDetail")
-    @ApiOperation("根据路径查看节点详情")
-    @GetMapping("/query/{projectId}/{repoName}/{repoType}")
-    fun getNodeDetail(
-        @ApiParam(value = "所属项目", required = true)
-        @PathVariable projectId: String,
-        @ApiParam(value = "仓库名称", required = true)
-        @PathVariable repoName: String,
-        @ApiParam(value = "仓库类型", required = true)
-        @PathVariable repoType: String,
-        @ApiParam(value = "节点完整路径", required = true)
-        @RequestParam fullPath: String
-    ): Response<NodeDetail?>
-
     @Deprecated("replace with listNodePage")
     @ApiOperation("列表查询指定目录下所有节点")
     @GetMapping("/list/{projectId}/{repoName}")

@@ -183,9 +183,9 @@ class RedisLockByValue(
                         when (nativeConnection) {
                             is RedisAdvancedClusterAsyncCommands<*, *> -> {
                                 (
-                                    nativeConnection
-                                        as RedisAdvancedClusterAsyncCommands<ByteArray, ByteArray>
-                                    )
+                                        nativeConnection
+                                                as RedisAdvancedClusterAsyncCommands<ByteArray, ByteArray>
+                                        )
                                     .eval<Long>(
                                         UNLOCK_LUA,
                                         ScriptOutputType.INTEGER,

@@ -157,8 +157,7 @@ abstract class FileBlockSupport : CleanupSupport() {
                 }
             }
             val mergedFile = tempClient.mergeFiles(
-                blockFileList,
-                tempClient.touch(
+                blockFileList, tempClient.touch(
                     blockId,
                     MERGED_FILENAME
                 )

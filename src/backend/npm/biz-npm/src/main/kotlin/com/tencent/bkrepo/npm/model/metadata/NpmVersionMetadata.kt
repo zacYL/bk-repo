@@ -78,9 +78,9 @@ class NpmVersionMetadata : Serializable {
                 devDependencies
             } else {
                 if ((
-                    devDependencies !is List<*> ||
-                        (devDependencies as List<*>).isNotEmpty()
-                    ) && devDependencies != null
+                            devDependencies !is List<*> ||
+                                    (devDependencies as List<*>).isNotEmpty()
+                            ) && devDependencies != null
                 ) {
                     throw IOException("Invalid package.json format. The devDependencies field cannot be parsed.")
                 }

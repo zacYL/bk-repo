@@ -1,6 +1,7 @@
 package com.tencent.bkrepo.repository.pojo.log
 
 import io.swagger.annotations.Api
+import jdk.management.resource.ResourceType
 import java.time.LocalDateTime
 
 @Api("操作日志")

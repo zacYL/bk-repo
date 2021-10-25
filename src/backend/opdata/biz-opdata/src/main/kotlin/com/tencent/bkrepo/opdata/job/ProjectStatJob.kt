@@ -55,24 +55,34 @@ class ProjectStatJob(
     fun statProjectRepoSize() {
         logger.info("start to stat node table metrics")
         val projects = projectModel.getProjectList()
-        var result = mutableListOf<TProjectMetrics>()
+        val result = mutableListOf<TProjectMetrics>()
         projects.forEach {
             var repoCapSize = 0L
             var repoNodeNum = 0L
             val projectId = it.name
             val repos = repoModel.getRepoListByProjectId(it.name)
-            var repoMetrics = mutableListOf<RepoMetrics>()
+            val repoMetrics = mutableListOf<RepoMetrics>()
             repos.forEach {
-                val repoName = it
+                val repoName = it.name
                 val nodeSize = nodeModel.getNodeSize(projectId, repoName)
                 repoCapSize += nodeSize.size
                 repoNodeNum += nodeSize.num
-                repoMetrics.add(RepoMetrics(repoName, nodeSize.size / (1024 * 1024 * 1024), nodeSize.num))
+                repoMetrics.add(
+                    RepoMetrics(repoName, it.credentialsKey, nodeSize.size / (1024 * 1024 * 1024), nodeSize.num)
+                )
             }
-            result.add(TProjectMetrics(projectId, repoNodeNum, repoCapSize / (1024 * 1024 * 1024), repoMetrics))
+            result.add(
+                TProjectMetrics(
+                    projectId,
+                    repoNodeNum,
+                    repoCapSize / (1024 * 1024 * 1024),
+                    repoMetrics
+                )
+            )
         }
         projectMetricsRepository.deleteAll()
         projectMetricsRepository.insert(result)
+        logger.info("stat node table metrics done")
     }
 
     companion object {

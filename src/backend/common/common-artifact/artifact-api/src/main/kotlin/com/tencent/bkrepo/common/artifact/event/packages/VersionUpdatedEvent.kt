@@ -28,7 +28,7 @@
 package com.tencent.bkrepo.common.artifact.event.packages
 
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
-import com.tencent.bkrepo.common.api.event.base.EventType
+import com.tencent.bkrepo.common.artifact.event.base.EventType
 
 /**
  * 包版本创建事件

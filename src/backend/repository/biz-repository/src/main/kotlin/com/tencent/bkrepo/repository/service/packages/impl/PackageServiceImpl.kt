@@ -242,6 +242,7 @@ class PackageServiceImpl(
             tPackage.latest = versionName
             tPackage.extension = extension?.let { extension }
             tPackage.versionTag = mergeVersionTag(tPackage.versionTag, versionTag)
+            tPackage.historyVersion = tPackage.historyVersion.toMutableSet().apply { add(versionName) }
             packageDao.save(tPackage)
             logger.info("Create package version[$newVersion] success")
         }
@@ -585,7 +586,8 @@ class PackageServiceImpl(
                     versions = 0,
                     versionTag = versionTag.orEmpty(),
                     extension = packageExtension.orEmpty(),
-                    description = packageDescription
+                    description = packageDescription,
+                    historyVersion = mutableSetOf(versionName)
                 )
                 try {
                     packageDao.save(tPackage)

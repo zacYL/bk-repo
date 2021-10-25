@@ -33,7 +33,6 @@ package com.tencent.bkrepo.auth.api
 
 import com.tencent.bkrepo.auth.constant.AUTH_API_USER_PREFIX
 import com.tencent.bkrepo.auth.constant.AUTH_SERVICE_USER_PREFIX
-import com.tencent.bkrepo.auth.constant.AUTH_USER_PREFIX
 import com.tencent.bkrepo.auth.pojo.token.Token
 import com.tencent.bkrepo.auth.pojo.token.TokenResult
 import com.tencent.bkrepo.auth.pojo.user.UserInfo
@@ -65,7 +64,7 @@ import org.springframework.web.bind.annotation.RequestParam
 @Api(tags = ["SERVICE_USER"], description = "服务-用户接口")
 @Primary
 @FeignClient(AUTH_SERVICE_NAME, contextId = "ServiceUserResource")
-@RequestMapping(AUTH_USER_PREFIX, AUTH_API_USER_PREFIX, AUTH_SERVICE_USER_PREFIX)
+@RequestMapping(AUTH_SERVICE_USER_PREFIX, AUTH_API_USER_PREFIX)
 interface ServiceUserResource {
 
     @ApiOperation("创建项目用户")
@@ -195,6 +194,7 @@ interface ServiceUserResource {
 
     @ApiOperation("校验用户token")
     @GetMapping("/token/{uid}/{token}")
+    @Deprecated("接口改为post方式")
     fun checkUserToken(
         @ApiParam(value = "用户id")
         @PathVariable uid: String,
@@ -211,7 +211,7 @@ interface ServiceUserResource {
         @RequestParam token: String
     ): Response<Boolean>
 
-    @ApiOperation("校验用户token")
+    @ApiOperation("校验用户会话token")
     @PostMapping("/login")
     fun loginUser(
         @ApiParam(value = "用户id")

@@ -31,8 +31,7 @@
 
 package com.tencent.bkrepo.auth.api
 
-import com.tencent.bkrepo.auth.constant.AUTH_API_DEPARTMENT_PREFIX
-import com.tencent.bkrepo.auth.constant.AUTH_DEPARTMENT_PREFIX
+import com.tencent.bkrepo.auth.constant.AUTH_SERVICE_DEPARTMENT_PREFIX
 import com.tencent.bkrepo.common.api.constant.AUTH_SERVICE_NAME
 import com.tencent.bkrepo.common.api.pojo.Response
 import io.swagger.annotations.Api
@@ -47,7 +46,7 @@ import org.springframework.web.bind.annotation.RequestBody
 
 @Api(tags = ["SERVICE_DEPARTMENT"], description = "服务-用户接口")
 @FeignClient(AUTH_SERVICE_NAME, contextId = "ServiceDepartmentResource")
-@RequestMapping(AUTH_DEPARTMENT_PREFIX, AUTH_API_DEPARTMENT_PREFIX)
+@RequestMapping(AUTH_SERVICE_DEPARTMENT_PREFIX)
 interface ServiceDepartmentResource {
 
     @ApiOperation("查询该部门下一级部门列表")

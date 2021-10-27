@@ -13,7 +13,7 @@
                 </bk-input>
                 <i class="name-search devops-icon icon-search flex-center" @click="handlerPaginationChange()"></i>
             </div>
-            <div class="mt20 flex-between-center">
+            <div v-if="pagination.count" class="mt20 flex-between-center">
                 <div class="result-count flex-align-center">
                     <span v-if="isSearching">搜索到到相关结果</span>
                     <span v-else>全部制品共</span>
@@ -64,7 +64,13 @@
                     </package-card>
                 </infinite-scroll>
             </template>
-            <empty-data v-else class="flex-1" search></empty-data>
+            <empty-data v-else class="flex-1" ex-style="align-self:start;margin-top:80px;"
+                :config="{
+                    imgSrc: '/ui/no-search.png',
+                    title: '搜索结果为空',
+                    subTitle: '请尝试修改搜索条件'
+                }">
+            </empty-data>
         </main>
     </div>
 </template>

@@ -22,6 +22,7 @@ const repoHome = () => import(/* webpackChunkName: "repoHome" */'@/views')
 const repoList = () => import(/* webpackChunkName: "repoList" */'@/views/repoList')
 const repoConfig = () => import(/* webpackChunkName: "repoConfig" */'@/views/repoConfig')
 const repoToken = () => import(/* webpackChunkName: "repoToken" */'@/views/repoToken')
+const repoAudit = () => import(/* webpackChunkName: "repoAudit" */'@/views/repoAudit')
 const nodeManage = () => import(/* webpackChunkName: "nodeManage" */'@/views/nodeManage')
 const planManage = () => import(/* webpackChunkName: "planManage" */'@/views/planManage')
 const createPlan = () => import(/* webpackChunkName: "createPlan" */'@/views/planManage/createPlan')
@@ -78,6 +79,16 @@ const routes = [
                 meta: {
                     breadcrumb: [
                         { name: 'repoToken', label: '访问令牌' }
+                    ]
+                }
+            },
+            {
+                path: 'repoAudit',
+                name: 'repoAudit',
+                component: repoAudit,
+                meta: {
+                    breadcrumb: [
+                        { name: 'repoAudit', label: '审计日志' }
                     ]
                 }
             },

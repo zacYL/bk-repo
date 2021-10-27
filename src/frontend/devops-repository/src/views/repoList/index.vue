@@ -1,6 +1,6 @@
 <template>
     <div class="repo-list-container" v-bkloading="{ isLoading }">
-        <div class="ml20 mr20 mt10 repo-list-search flex-between-center">
+        <div class="ml20 mr20 mt10 flex-between-center">
             <bk-button v-if="canCreate" icon="plus" theme="primary" @click="createRepo"><span class="mr5">{{ $t('create') }}</span></bk-button>
             <div class="flex-align-center">
                 <bk-input
@@ -76,12 +76,12 @@
             size="small"
             align="right"
             show-total-count
-            @change="current => handlerPaginationChange({ current })"
-            @limit-change="limit => handlerPaginationChange({ limit })"
             :current.sync="pagination.current"
             :limit="pagination.limit"
             :count="pagination.count"
-            :limit-list="pagination.limitList">
+            :limit-list="pagination.limitList"
+            @change="current => handlerPaginationChange({ current })"
+            @limit-change="limit => handlerPaginationChange({ limit })">
         </bk-pagination>
         <create-repo-dialog ref="createRepo" @refresh="handlerPaginationChange()"></create-repo-dialog>
     </div>

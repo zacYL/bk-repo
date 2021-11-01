@@ -172,7 +172,7 @@ class PackageServiceImpl(
         return packageVersionDao.find(query).map { convert(it)!! }
     }
 
-    override fun createPackageVersion(request: PackageVersionCreateRequest) {
+    override fun createPackageVersion(request: PackageVersionCreateRequest, realIpAddress: String?) {
         with(request) {
             Preconditions.checkNotBlank(packageKey, this::packageKey.name)
             Preconditions.checkNotBlank(packageName, this::packageName.name)
@@ -222,9 +222,9 @@ class PackageServiceImpl(
             }
             packageVersionDao.save(newVersion)
             if (!isOverride) {
-                publishEvent((buildCreatedEvent(request)))
+                publishEvent((buildCreatedEvent(request, realIpAddress)))
             } else {
-                publishEvent((buildUpdatedEvent(request)))
+                publishEvent((buildUpdatedEvent(request, realIpAddress)))
             }
 
             // 更新包
@@ -240,11 +240,10 @@ class PackageServiceImpl(
         }
     }
 
-    override fun deletePackage(projectId: String, repoName: String, packageKey: String) {
+    override fun deletePackage(projectId: String, repoName: String, packageKey: String, realIpAddress: String?) {
         val tPackage = packageDao.findByKey(projectId, repoName, packageKey) ?: return
         packageVersionDao.deleteByPackageId(tPackage.id!!)
         packageDao.deleteByKey(projectId, repoName, packageKey)
-        val userId = HttpContextHolder.getRequest().getAttribute("userId") as String
         publishEvent(
             buildDeletedEvent(
                 projectId = projectId,
@@ -253,13 +252,20 @@ class PackageServiceImpl(
                 packageKey = packageKey,
                 packageName = tPackage.name,
                 versionName = null,
-                createdBy = userId
+                createdBy = SecurityUtils.getUserId(),
+                realIpAddress = realIpAddress
             )
         )
         logger.info("Delete package [$projectId/$repoName/$packageKey] success")
     }
 
-    override fun deleteVersion(projectId: String, repoName: String, packageKey: String, versionName: String) {
+    override fun deleteVersion(
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        versionName: String,
+        realIpAddress: String?
+    ) {
         val tPackage = packageDao.findByKey(projectId, repoName, packageKey) ?: return
         val tPackageVersion = packageVersionDao.findByName(tPackage.id.orEmpty(), versionName) ?: return
         packageVersionDao.deleteByName(tPackageVersion.packageId, tPackageVersion.name)
@@ -274,7 +280,6 @@ class PackageServiceImpl(
             }
             packageDao.save(tPackage)
         }
-        val userId = HttpContextHolder.getRequest().getAttribute("userId") as String
         publishEvent(
             buildDeletedEvent(
                 projectId = projectId,
@@ -283,13 +288,14 @@ class PackageServiceImpl(
                 packageKey = packageKey,
                 packageName = tPackage.name,
                 versionName = versionName,
-                createdBy = userId
+                createdBy = SecurityUtils.getUserId(),
+                realIpAddress = realIpAddress
             )
         )
         logger.info("Delete package version[$projectId/$repoName/$packageKey-$versionName] success")
     }
 
-    override fun updatePackage(request: PackageUpdateRequest) {
+    override fun updatePackage(request: PackageUpdateRequest, realIpAddress: String?) {
         val projectId = request.projectId
         val repoName = request.repoName
         val packageKey = request.packageKey
@@ -304,7 +310,7 @@ class PackageServiceImpl(
         packageDao.save(tPackage)
     }
 
-    override fun updateVersion(request: PackageVersionUpdateRequest) {
+    override fun updateVersion(request: PackageVersionUpdateRequest, realIpAddress: String?) {
         val projectId = request.projectId
         val repoName = request.repoName
         val packageKey = request.packageKey
@@ -328,12 +334,19 @@ class PackageServiceImpl(
                 request = request,
                 packageType = tPackage.type.name,
                 packageName = tPackage.name,
-                createdBy = SecurityUtils.getUserId()
+                createdBy = SecurityUtils.getUserId(),
+                realIpAddress = realIpAddress
             )
         )
     }
 
-    override fun downloadVersion(projectId: String, repoName: String, packageKey: String, versionName: String) {
+    override fun downloadVersion(
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        versionName: String,
+        realIpAddress: String?
+    ) {
         val tPackage = checkPackage(projectId, repoName, packageKey)
         val tPackageVersion = checkPackageVersion(tPackage.id!!, versionName)
         if (tPackageVersion.artifactPath.isNullOrBlank()) {
@@ -342,7 +355,6 @@ class PackageServiceImpl(
         val artifactInfo = DefaultArtifactInfo(projectId, repoName, tPackageVersion.artifactPath!!)
         val context = ArtifactDownloadContext(artifact = artifactInfo, useDisposition = true)
         ArtifactContextHolder.getRepository().download(context)
-        val userId = HttpContextHolder.getRequest().getAttribute("userId") as String
         publishEvent(
             buildDownloadEvent(
                 projectId = projectId,
@@ -351,7 +363,8 @@ class PackageServiceImpl(
                 packageKey = packageKey,
                 packageName = tPackage.name,
                 versionName = versionName,
-                createdBy = userId
+                createdBy = SecurityUtils.getUserId(),
+                realIpAddress = realIpAddress
             )
         )
     }

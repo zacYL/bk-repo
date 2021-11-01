@@ -46,6 +46,9 @@ class EventAuditListener(
      */
     @EventListener(ArtifactEvent::class)
     fun handle(event: ArtifactEvent) {
-        operateLogService.saveEventAsync(event, HttpContextHolder.getClientAddress())
+        operateLogService.saveEventAsync(
+            event,
+            event.data["realIpAddress"] as? String ?: HttpContextHolder.getClientAddress()
+        )
     }
 }

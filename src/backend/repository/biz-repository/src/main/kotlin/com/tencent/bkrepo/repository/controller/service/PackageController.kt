@@ -86,12 +86,17 @@ class PackageController(
         return ResponseBuilder.success(packageVersion)
     }
 
-    override fun createVersion(request: PackageVersionCreateRequest): Response<Void> {
+    override fun createVersion(request: PackageVersionCreateRequest, realIpAddress: String?): Response<Void> {
         packageService.createPackageVersion(request)
         return ResponseBuilder.success()
     }
 
-    override fun deletePackage(projectId: String, repoName: String, packageKey: String): Response<Void> {
+    override fun deletePackage(
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        realIpAddress: String?
+    ): Response<Void> {
         packageService.deletePackage(projectId, repoName, packageKey)
         return ResponseBuilder.success()
     }
@@ -100,18 +105,19 @@ class PackageController(
         projectId: String,
         repoName: String,
         packageKey: String,
-        version: String
+        version: String,
+        realIpAddress: String?
     ): Response<Void> {
         packageService.deleteVersion(projectId, repoName, packageKey, version)
         return ResponseBuilder.success()
     }
 
-    override fun updatePackage(request: PackageUpdateRequest): Response<Void> {
+    override fun updatePackage(request: PackageUpdateRequest, realIpAddress: String?): Response<Void> {
         packageService.updatePackage(request)
         return ResponseBuilder.success()
     }
 
-    override fun updateVersion(request: PackageVersionUpdateRequest): Response<Void> {
+    override fun updateVersion(request: PackageVersionUpdateRequest, realIpAddress: String?): Response<Void> {
         packageService.updateVersion(request)
         return ResponseBuilder.success()
     }

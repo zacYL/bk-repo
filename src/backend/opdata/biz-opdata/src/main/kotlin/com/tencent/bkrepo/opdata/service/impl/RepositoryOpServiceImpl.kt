@@ -1,6 +1,6 @@
 package com.tencent.bkrepo.opdata.service.impl
 
-import com.tencent.bkrepo.common.api.event.base.EventType
+import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.opdata.model.TRepositoryOp
 import com.tencent.bkrepo.opdata.pojo.RepoTypeSum

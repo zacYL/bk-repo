@@ -33,7 +33,9 @@ package com.tencent.bkrepo.helm.handler
 
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.exception.RemoteErrorCodeException
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.helm.exception.HelmFileAlreadyExistsException
 import com.tencent.bkrepo.helm.pojo.metadata.HelmChartMetadata
 import com.tencent.bkrepo.helm.utils.HelmUtils
@@ -114,7 +116,7 @@ class HelmPackageHandler(
                     createdBy = userId
                 )
             try {
-                packageClient.createVersion(packageVersionCreateRequest).apply {
+                packageClient.createVersion(packageVersionCreateRequest, HttpContextHolder.getClientAddress()).apply {
                     logger.info("user: [$userId] create package version [$packageVersionCreateRequest] success!")
                 }
             } catch (exception: RemoteErrorCodeException) {
@@ -143,12 +145,13 @@ class HelmPackageHandler(
     fun deleteVersion(userId: String, name: String, version: String, artifactInfo: ArtifactInfo) {
         val packageKey = PackageKeys.ofHelm(name)
         with(artifactInfo) {
-            packageClient.deleteVersion(projectId, repoName, packageKey, version).apply {
-                logger.info(
-                    "user: [$userId] delete package [$name] with version [$version] " +
-                        "in repo [$projectId/$repoName] success!"
-                )
-            }
+            packageClient.deleteVersion(projectId, repoName, packageKey, version, HttpContextHolder.getClientAddress())
+                .apply {
+                    logger.info(
+                        "user: [$userId] delete package [$name] with version [$version] " +
+                                "in repo [$projectId/$repoName] success!"
+                    )
+                }
         }
     }
 

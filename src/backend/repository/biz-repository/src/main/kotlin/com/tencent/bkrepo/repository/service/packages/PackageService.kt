@@ -156,7 +156,7 @@ interface PackageService {
      *
      * @param request 包版本创建请求
      */
-    fun createPackageVersion(request: PackageVersionCreateRequest)
+    fun createPackageVersion(request: PackageVersionCreateRequest, realIpAddress: String? = null)
 
     /**
      * 删除包
@@ -169,7 +169,8 @@ interface PackageService {
     fun deletePackage(
         projectId: String,
         repoName: String,
-        packageKey: String
+        packageKey: String,
+        realIpAddress: String? = null
     )
 
     /**
@@ -184,7 +185,8 @@ interface PackageService {
         projectId: String,
         repoName: String,
         packageKey: String,
-        versionName: String
+        versionName: String,
+        realIpAddress: String? = null
     )
 
     /**
@@ -192,14 +194,14 @@ interface PackageService {
      *
      * @param request 包更新请求
      */
-    fun updatePackage(request: PackageUpdateRequest)
+    fun updatePackage(request: PackageUpdateRequest, realIpAddress: String? = null)
 
     /**
      * 更新包版本
      *
      * @param request 包版本更新请求
      */
-    fun updateVersion(request: PackageVersionUpdateRequest)
+    fun updateVersion(request: PackageVersionUpdateRequest, realIpAddress: String? = null)
 
     /**
      * 下载包版本
@@ -209,7 +211,13 @@ interface PackageService {
      * @param packageKey 包唯一标识
      * @param versionName 版本名称
      */
-    fun downloadVersion(projectId: String, repoName: String, packageKey: String, versionName: String)
+    fun downloadVersion(
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        versionName: String,
+        realIpAddress: String? = null
+    )
 
     /**
      * 添加包下载记录

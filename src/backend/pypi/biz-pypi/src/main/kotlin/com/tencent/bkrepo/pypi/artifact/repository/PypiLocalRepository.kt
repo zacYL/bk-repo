@@ -55,6 +55,7 @@ import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.query.model.Sort
+import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.pypi.artifact.PypiProperties
@@ -155,7 +156,8 @@ class PypiLocalRepository(
                 artifactPath = nodeCreateRequest.fullPath,
                 overwrite = true,
                 createdBy = context.userId
-            )
+            ),
+            HttpContextHolder.getClientAddress()
         )
         store(nodeCreateRequest, artifactFile, context.storageCredentials)
     }
@@ -250,7 +252,8 @@ class PypiLocalRepository(
             packageClient.deletePackage(
                 context.projectId,
                 context.repoName,
-                packageKey
+                packageKey,
+                HttpContextHolder.getClientAddress()
             )
         } else {
             // 删除版本
@@ -262,7 +265,13 @@ class PypiLocalRepository(
                     context.userId
                 )
             )
-            packageClient.deleteVersion(context.projectId, context.repoName, packageKey, version)
+            packageClient.deleteVersion(
+                context.projectId,
+                context.repoName,
+                packageKey,
+                version,
+                HttpContextHolder.getClientAddress()
+            )
         }
     }
 

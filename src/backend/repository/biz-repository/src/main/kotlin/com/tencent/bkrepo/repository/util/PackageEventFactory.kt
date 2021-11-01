@@ -17,7 +17,7 @@ object PackageEventFactory {
     /**
      * 包版本创建事件-upload 新包
      */
-    fun buildCreatedEvent(request: PackageVersionCreateRequest): VersionCreatedEvent {
+    fun buildCreatedEvent(request: PackageVersionCreateRequest, realIpAddress: String?): VersionCreatedEvent {
         with(request) {
             return VersionCreatedEvent(
                 projectId = projectId,
@@ -26,7 +26,8 @@ object PackageEventFactory {
                 packageKey = packageKey,
                 packageName = packageName,
                 packageVersion = versionName,
-                userId = createdBy
+                userId = createdBy,
+                realIpAddress = realIpAddress
             )
         }
     }
@@ -34,7 +35,7 @@ object PackageEventFactory {
     /**
      * 包版本更新事件-upload 覆盖上传
      */
-    fun buildUpdatedEvent(request: PackageVersionCreateRequest): VersionUpdatedEvent {
+    fun buildUpdatedEvent(request: PackageVersionCreateRequest, realIpAddress: String?): VersionUpdatedEvent {
         with(request) {
             return VersionUpdatedEvent(
                 projectId = projectId,
@@ -43,7 +44,8 @@ object PackageEventFactory {
                 packageKey = packageKey,
                 packageName = packageName,
                 packageVersion = versionName,
-                userId = createdBy
+                userId = createdBy,
+                realIpAddress = realIpAddress
             )
         }
     }
@@ -52,7 +54,8 @@ object PackageEventFactory {
         request: PackageVersionUpdateRequest,
         packageType: String,
         packageName: String,
-        createdBy: String
+        createdBy: String,
+        realIpAddress: String?
     ): VersionUpdatedEvent {
         with(request) {
             return VersionUpdatedEvent(
@@ -62,7 +65,8 @@ object PackageEventFactory {
                 packageKey = packageKey,
                 packageName = packageName,
                 packageVersion = versionName,
-                userId = createdBy
+                userId = createdBy,
+                realIpAddress = realIpAddress
             )
         }
     }
@@ -71,7 +75,8 @@ object PackageEventFactory {
         request: PackageUpdateRequest,
         packageType: String,
         packageName: String,
-        createdBy: String
+        createdBy: String,
+        realIpAddress: String?
     ): VersionUpdatedEvent {
         with(request) {
             return VersionUpdatedEvent(
@@ -81,7 +86,8 @@ object PackageEventFactory {
                 packageKey = packageKey,
                 packageName = packageName,
                 packageVersion = null,
-                userId = createdBy
+                userId = createdBy,
+                realIpAddress = realIpAddress
             )
         }
     }
@@ -96,7 +102,8 @@ object PackageEventFactory {
         packageKey: String,
         packageName: String,
         versionName: String,
-        createdBy: String
+        createdBy: String,
+        realIpAddress: String?
     ): VersionDownloadEvent {
         return VersionDownloadEvent(
             projectId = projectId,
@@ -105,7 +112,8 @@ object PackageEventFactory {
             packageKey = packageKey,
             packageName = packageName,
             packageVersion = versionName,
-            userId = createdBy
+            userId = createdBy,
+            realIpAddress = realIpAddress
         )
     }
 
@@ -119,7 +127,8 @@ object PackageEventFactory {
         packageKey: String,
         packageName: String,
         versionName: String?,
-        createdBy: String
+        createdBy: String,
+        realIpAddress: String?
     ): VersionDeletedEvent {
         return VersionDeletedEvent(
             projectId = projectId,
@@ -128,7 +137,8 @@ object PackageEventFactory {
             packageKey = packageKey,
             packageName = packageName,
             packageVersion = versionName,
-            userId = createdBy
+            userId = createdBy,
+            realIpAddress = realIpAddress
         )
     }
 }

@@ -1,6 +1,6 @@
 package com.tencent.bkrepo.opdata.model
 
-import com.tencent.bkrepo.common.api.event.base.EventType
+import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import org.springframework.data.mongodb.core.index.CompoundIndex
 import org.springframework.data.mongodb.core.index.CompoundIndexes

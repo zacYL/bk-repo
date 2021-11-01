@@ -1,6 +1,6 @@
 package com.tencent.bkrepo.opdata.service.impl
 
-import com.tencent.bkrepo.common.api.event.base.EventType
+import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.opdata.model.TDayMetric
 import com.tencent.bkrepo.opdata.repository.DayMetricDao
 import com.tencent.bkrepo.opdata.service.DayMetricService

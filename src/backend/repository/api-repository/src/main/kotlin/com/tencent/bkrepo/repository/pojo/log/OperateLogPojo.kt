@@ -1,6 +1,6 @@
 package com.tencent.bkrepo.repository.pojo.log
 
-import com.tencent.bkrepo.common.api.event.base.EventType
+import com.tencent.bkrepo.common.artifact.event.base.EventType
 import io.swagger.annotations.Api
 import java.time.LocalDateTime
 

@@ -41,6 +41,8 @@ import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.security.util.SecurityUtils
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.maven.PACKAGE_SUFFIX_REGEX
 import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
 import com.tencent.bkrepo.maven.pojo.Basic
@@ -130,7 +132,8 @@ class MavenLocalRepository(private val stageClient: StageClient) : LocalReposito
                 artifactPath = context.artifactInfo.getArtifactFullPath(),
                 overwrite = true,
                 createdBy = context.userId
-            )
+            ),
+            HttpContextHolder.getClientAddress()
         )
     }
 
@@ -160,14 +163,16 @@ class MavenLocalRepository(private val stageClient: StageClient) : LocalReposito
                 packageClient.deletePackage(
                     projectId,
                     repoName,
-                    packageKey
+                    packageKey,
+                    HttpContextHolder.getClientAddress()
                 )
             } else {
                 packageClient.deleteVersion(
                     projectId,
                     repoName,
                     packageKey,
-                    version
+                    version,
+                    HttpContextHolder.getClientAddress()
                 )
             }
             logger.info("Success to delete $packageKey:$version")

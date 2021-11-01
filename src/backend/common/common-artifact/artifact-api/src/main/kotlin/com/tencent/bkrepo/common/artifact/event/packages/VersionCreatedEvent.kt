@@ -40,17 +40,20 @@ class VersionCreatedEvent(
     val packageKey: String,
     val packageVersion: String,
     val packageName: String,
-    val packageType: String
+    val packageType: String,
+    val realIpAddress: String?
 ) : ArtifactEvent(
     type = EventType.VERSION_CREATED,
     projectId = projectId,
     repoName = repoName,
     resourceKey = "$packageKey-$packageVersion",
     userId = userId,
-    data = mapOf(
+    data = mutableMapOf(
         "packageKey" to packageKey,
         "packageType" to packageType,
         "packageName" to packageName,
         "packageVersion" to packageVersion
-    )
+    ).apply {
+        realIpAddress?.let { this["realIpAddress"] = realIpAddress }
+    }
 )

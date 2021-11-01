@@ -28,9 +28,10 @@
 package com.tencent.bkrepo.repository.service.log.impl
 
 import com.tencent.bkrepo.auth.constant.BK_SOFTWARE
+import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
-import com.tencent.bkrepo.common.api.event.base.EventType
+import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.repository.dao.OperateLogDao
@@ -38,7 +39,6 @@ import com.tencent.bkrepo.repository.model.TOperateLog
 import com.tencent.bkrepo.repository.pojo.event.EventCreateRequest
 import com.tencent.bkrepo.repository.pojo.log.OperateLogPojo
 import com.tencent.bkrepo.repository.pojo.log.OperateLogResponse
-import com.tencent.bkrepo.repository.pojo.log.ResourceType
 import com.tencent.bkrepo.repository.pojo.metric.CountResult
 import com.tencent.bkrepo.repository.service.log.OperateLogService
 import org.springframework.data.domain.Sort
@@ -110,7 +110,7 @@ class OperateLogServiceImpl(
             .`in`(listOf(EventType.VERSION_CREATED, EventType.VERSION_UPDATED))
         projectId?.let { criteria.and(TOperateLog::projectId.name).`is`(projectId) }
         repoName?.let { criteria.and(TOperateLog::repoName.name).`is`(repoName) }
-        if (lastWeek == true) {
+        if (latestWeek == true) {
             criteria.and(TOperateLog::createdDate.name).gte(getLatestWeekStart())
         }
         val aggregation = Aggregation.newAggregation(
@@ -128,7 +128,7 @@ class OperateLogServiceImpl(
             .`is`(EventType.VERSION_DOWNLOAD)
         projectId?.let { criteria.and(TOperateLog::projectId.name).`is`(projectId) }
         repoName?.let { criteria.and(TOperateLog::repoName.name).`is`(repoName) }
-        if (lastWeek == true) {
+        if (latestWeek == true) {
             criteria.and(TOperateLog::createdDate.name).gte(getLatestWeekStart())
         }
         val aggregation = Aggregation.newAggregation(

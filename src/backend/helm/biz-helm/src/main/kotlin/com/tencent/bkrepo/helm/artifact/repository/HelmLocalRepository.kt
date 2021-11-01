@@ -42,6 +42,7 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.stream.ArtifactInputStream
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.helm.constants.FORCE
 import com.tencent.bkrepo.helm.constants.FULL_PATH
 import com.tencent.bkrepo.helm.constants.NAME
@@ -181,7 +182,13 @@ class HelmLocalRepository : LocalRepository() {
      */
     private fun removeVersion(artifactInfo: HelmDeleteArtifactInfo, version: PackageVersion, userId: String) {
         with(artifactInfo) {
-            packageClient.deleteVersion(projectId, repoName, packageName, version.name)
+            packageClient.deleteVersion(
+                projectId,
+                repoName,
+                packageName,
+                version.name,
+                HttpContextHolder.getClientAddress()
+            )
             val chartPath = HelmUtils.getChartFileFullPath(getArtifactName(), version.name)
             val provPath = HelmUtils.getProvFileFullPath(getArtifactName(), version.name)
             if (chartPath.isNotBlank()) {

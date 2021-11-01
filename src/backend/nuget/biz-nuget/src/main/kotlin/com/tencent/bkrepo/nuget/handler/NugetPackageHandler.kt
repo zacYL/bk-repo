@@ -3,6 +3,8 @@ package com.tencent.bkrepo.nuget.handler
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.security.util.SecurityUtils
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.nuget.artifact.NugetArtifactInfo
 import com.tencent.bkrepo.nuget.constant.PACKAGE
 import com.tencent.bkrepo.nuget.pojo.nuspec.Dependency
@@ -66,7 +68,7 @@ class NugetPackageHandler {
                     overwrite = true,
                     createdBy = context.userId
                 )
-                packageClient.createVersion(packageVersionCreateRequest)
+                packageClient.createVersion(packageVersionCreateRequest, HttpContextHolder.getClientAddress())
                 if (logger.isDebugEnabled) {
                     logger.info(
                         "user: [${context.userId}] create package version [$packageVersionCreateRequest] success!"
@@ -201,12 +203,13 @@ class NugetPackageHandler {
     fun deleteVersion(userId: String, name: String, version: String, artifactInfo: NugetArtifactInfo) {
         val packageKey = PackageKeys.ofNuget(name)
         with(artifactInfo) {
-            packageClient.deleteVersion(projectId, repoName, packageKey, version).apply {
-                logger.info(
-                    "user: [$userId] delete package [$name] with version [$version] " +
-                        "in repo [${artifactInfo.getRepoIdentify()}] success!"
-                )
-            }
+            packageClient.deleteVersion(projectId, repoName, packageKey, version, HttpContextHolder.getClientAddress())
+                .apply {
+                    logger.info(
+                        "user: [$userId] delete package [$name] with version [$version] " +
+                                "in repo [${artifactInfo.getRepoIdentify()}] success!"
+                    )
+                }
         }
     }
 

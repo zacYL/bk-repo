@@ -1,6 +1,6 @@
 package com.tencent.bkrepo.repository.pojo.bksoftware
 
-import com.tencent.bkrepo.common.api.event.base.EventType
+import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty

@@ -27,12 +27,12 @@
 
 package com.tencent.bkrepo.repository.service.log
 
+import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.repository.pojo.event.EventCreateRequest
 import com.tencent.bkrepo.repository.pojo.log.OperateLogPojo
 import com.tencent.bkrepo.repository.pojo.log.OperateLogResponse
-import com.tencent.bkrepo.repository.pojo.log.ResourceType
 import java.time.LocalDateTime
 
 interface OperateLogService {

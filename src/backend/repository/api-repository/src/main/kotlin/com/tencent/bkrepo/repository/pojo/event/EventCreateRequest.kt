@@ -1,6 +1,6 @@
 package com.tencent.bkrepo.repository.pojo.event
 
-import com.tencent.bkrepo.common.api.event.base.EventType
+import com.tencent.bkrepo.common.artifact.event.base.EventType
 
 data class EventCreateRequest(
     /**

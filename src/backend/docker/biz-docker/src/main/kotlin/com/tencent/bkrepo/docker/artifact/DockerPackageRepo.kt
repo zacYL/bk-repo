@@ -32,6 +32,8 @@
 package com.tencent.bkrepo.docker.artifact
 
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.security.util.SecurityUtils
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.docker.context.RequestContext
 import com.tencent.bkrepo.repository.api.PackageClient
 import com.tencent.bkrepo.repository.api.PackageDownloadsClient
@@ -41,6 +43,7 @@ import com.tencent.bkrepo.repository.pojo.packages.request.PackagePopulateReques
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import java.security.Security
 
 @Service
 class DockerPackageRepo @Autowired constructor(
@@ -54,7 +57,7 @@ class DockerPackageRepo @Autowired constructor(
      * @return Boolean is the package version create success
      */
     fun createVersion(request: PackageVersionCreateRequest): Boolean {
-        return packageClient.createVersion(request).isOk()
+        return packageClient.createVersion(request, HttpContextHolder.getClientAddress()).isOk()
     }
 
     /**
@@ -73,7 +76,12 @@ class DockerPackageRepo @Autowired constructor(
      */
     fun deletePackage(context: RequestContext): Boolean {
         with(context) {
-            return packageClient.deletePackage(projectId, repoName, PackageKeys.ofDocker(artifactName)).isOk()
+            return packageClient.deletePackage(
+                projectId,
+                repoName,
+                PackageKeys.ofDocker(artifactName),
+                HttpContextHolder.getClientAddress()
+            ).isOk()
         }
     }
 
@@ -85,7 +93,13 @@ class DockerPackageRepo @Autowired constructor(
      */
     fun deletePackageVersion(context: RequestContext, version: String): Boolean {
         with(context) {
-            return packageClient.deleteVersion(projectId, repoName, PackageKeys.ofDocker(artifactName), version).isOk()
+            return packageClient.deleteVersion(
+                projectId,
+                repoName,
+                PackageKeys.ofDocker(artifactName),
+                version,
+                HttpContextHolder.getClientAddress()
+            ).isOk()
         }
     }
 

@@ -91,5 +91,20 @@ export default {
             `/repository/api/permission/${projectId}/${action}`,
             { params: { repoName } }
         )
+    },
+    // 审计日志
+    getAuditList (_, { startTime, endTime, operator, current, limit }) {
+        return Vue.prototype.$ajax.get(
+            `repository/api/operate/log/page`,
+            {
+                params: {
+                    pageNumber: current,
+                    pageSize: limit,
+                    startTime,
+                    endTime,
+                    operator
+                }
+            }
+        )
     }
 }

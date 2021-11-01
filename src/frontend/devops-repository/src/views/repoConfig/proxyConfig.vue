@@ -1,7 +1,7 @@
 <template>
     <div class="proxy-config-container">
         <div class="mb10 flex-between-center">
-            <bk-button icon="plus" theme="primary" @click="addProxy"><span class="mr5">{{ $t('create') }}</span></bk-button>
+            <bk-button icon="plus" theme="primary" @click="addProxy"><span class="mr5">{{ $t('add') }}</span></bk-button>
             <span class="proxy-config-tips">{{$t('proxyConfigTips')}}</span>
         </div>
         <div class="proxy-head">
@@ -25,9 +25,12 @@
                 </div>
             </div>
         </draggable>
-        <empty-data v-else ex-style="margin-top:100px;">
-            <span class="ml10">暂无代理数据，</span>
-            <bk-button text @click="addProxy">即刻创建</bk-button>
+        <empty-data v-else ex-style="margin-top:80px;"
+            :config="{
+                imgSrc: '/ui/no-proxy.png',
+                title: '暂无代理源配置',
+                subTitle: '请尝试添加公有代理源或配置私有代理源'
+            }">
         </empty-data>
         <proxy-origin-dialog :show="showProxyDialog" :public-proxy="filterPublicProxy" :proxy-data="proxyData" @confirm="confirmProxyData" @cancel="cancelProxy"></proxy-origin-dialog>
     </div>

@@ -77,9 +77,12 @@
                     :row-border="false"
                     size="small">
                     <template #empty>
-                        <empty-data>
-                            <span class="ml10">暂无元数据，</span>
-                            <bk-button text @click="showAddMetadata">即刻添加</bk-button>
+                        <empty-data ex-style="margin-top:80px;"
+                            :config="{
+                                imgSrc: '/ui/no-metadata.png',
+                                title: '暂无元数据',
+                                subTitle: '给制品添加任意自定义的属性，来跟踪整个制品的生产过程'
+                            }">
                         </empty-data>
                     </template>
                     <bk-table-column :label="$t('key')" prop="0" width="250"></bk-table-column>

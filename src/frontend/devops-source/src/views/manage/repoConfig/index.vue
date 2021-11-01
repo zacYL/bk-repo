@@ -195,7 +195,7 @@
     background-color: white;
     .repo-config-tab {
         height: 100%;
-        /deep/ .bk-tab-section {
+        ::v-deep .bk-tab-section {
             height: calc(100% - 42px);
             .bk-tab-content {
                 height: 100%;

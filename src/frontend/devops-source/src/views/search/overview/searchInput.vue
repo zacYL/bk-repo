@@ -64,7 +64,7 @@
     .search-input {
         flex: 1;
         margin-right: -1px;
-        /deep/ .bk-form-input {
+        ::v-deep .bk-form-input {
             border-color: #3a84ff;
             border-radius: 0 0 0 2px;
             border-right-color: transparent;

@@ -12,6 +12,7 @@
             <div class="package-card-data flex-align-center">
                 <div class="flex-align-center" :title="`最新版本：${cardData.latest}`"></div>
                 <div class="flex-align-center" :title="`最后修改：${formatDate(cardData.lastModifiedDate)}`"></div>
+                <div class="flex-align-center" :title="`版本数：${cardData.versions}`"></div>
                 <div class="flex-align-center" :title="`下载统计：${cardData.downloads}`"></div>
             </div>
         </div>

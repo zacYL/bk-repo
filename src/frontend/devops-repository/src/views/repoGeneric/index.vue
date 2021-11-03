@@ -542,14 +542,13 @@
                 return this.shareArtifactory({
                     projectId: this.projectId,
                     repoName: this.repoName,
-                    fullPathSet: [this.selectedRow.fullPath],
-                    type: 'DOWNLOAD',
-                    host: `${location.origin}/web/generic`,
-                    needsNotify: true,
-                    ...(data.ip.length ? { authorizedIpSet: data.ip } : {}),
-                    ...(data.user.length ? { authorizedUserSet: data.user } : {}),
-                    ...(Number(data.time) > 0 ? { expireSeconds: Number(data.time) * 86400 } : {}),
-                    ...(Number(data.permits) > 0 ? { permits: Number(data.permits) } : {})
+                    fullPath: this.selectedRow.fullPath,
+                    body: {
+                        // ...(data.ip.length ? { authorizedIpSet: data.ip } : {}),
+                        ...(data.user.length ? { authorizedUserSet: data.user } : {}),
+                        ...(Number(data.time) > 0 ? { expireSeconds: Number(data.time) * 86400 } : {})
+                        // ...(Number(data.permits) > 0 ? { permits: Number(data.permits) } : {})
+                    }
                 })
             },
             async deleteRes () {

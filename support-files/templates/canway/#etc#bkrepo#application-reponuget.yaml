@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: ${service.prefix}${service.name}${service.suffix}
+    desc: Nuget Service
+server:
+  port: __BK_REPO_NUGET_PORT__
+logging:
+  path: ${logging.path-common}/${service.name}
+service:
+  name: nuget

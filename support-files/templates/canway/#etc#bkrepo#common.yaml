@@ -73,7 +73,7 @@ storage:
     path: __BK_REPO_FILE_PATH__
   cache:
     enabled: false
-    path: data/bkee/repo/filesystem/cached
+    path: /data/bkee/repo/filesystem/cached
     expireHours: 12
 
 security:
@@ -117,13 +117,13 @@ devopsGateway:
 # canway certificate
 license:
   auth:
-    host: http://__CW_LICENSE_HOST__:__CW_LICENSE_PORT__
+    host: __BK_HTTP_SCHEMA__://__CW_LICENSE_HOST__:__CW_LICENSE_PORT__
 devops:
-  bkHost: __BK_PAAS_FQDN__
+  bkHost: __BK_HTTP_SCHEMA__://__BK_PAAS_FQDN__
   appCode: __APP_CODE__
   appSecret: __APP_TOKEN__
-  devopsHost: __BK_CI_FQDN__
-  bkrepoHost: __BK_REPO_FQDN__
+  devopsHost: __BK_HTTP_SCHEMA__://__BK_CI_FQDN__
+  bkrepoHost: __BK_HTTP_SCHEMA__://__BK_REPO_FQDN__
 
   
   

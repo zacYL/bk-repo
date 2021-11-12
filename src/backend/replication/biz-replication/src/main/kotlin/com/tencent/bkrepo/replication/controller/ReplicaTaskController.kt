@@ -29,8 +29,6 @@ package com.tencent.bkrepo.replication.controller
 
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
-import com.tencent.bkrepo.common.security.permission.Principal
-import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.replication.pojo.task.ReplicaTaskDetail
 import com.tencent.bkrepo.replication.pojo.task.ReplicaTaskInfo
@@ -53,7 +51,6 @@ import org.springframework.web.bind.annotation.RestController
  * 数据同步任务接口
  */
 @Api("任务接口")
-@Principal(type = PrincipalType.ADMIN)
 @RestController
 @RequestMapping("/api/task")
 class ReplicaTaskController(

@@ -52,7 +52,6 @@ import org.springframework.web.bind.annotation.RestController
 @Api("集群节点用户接口")
 @RestController
 @RequestMapping("/api/cluster")
-@Principal(PrincipalType.ADMIN)
 class ClusterNodeController(
     private val clusterNodeService: ClusterNodeService
 ) {
@@ -108,6 +107,7 @@ class ClusterNodeController(
 
     @ApiOperation("创建集群节点")
     @PostMapping("/create")
+    @Principal(PrincipalType.ADMIN)
     fun create(
         @RequestAttribute userId: String,
         @RequestBody request: ClusterNodeCreateRequest
@@ -118,6 +118,7 @@ class ClusterNodeController(
 
     @ApiOperation("根据id删除集群节点")
     @DeleteMapping("/delete/{id}")
+    @Principal(PrincipalType.ADMIN)
     fun deleteClusterNode(
         @PathVariable id: String
     ): Response<Void> {

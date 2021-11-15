@@ -85,18 +85,6 @@ interface ServiceUserResource {
         @RequestBody request: CreateUserRequest
     ): Response<Boolean>
 
-    @ApiOperation("用户列表")
-    @GetMapping("/list")
-    fun listUser(
-        @RequestBody rids: List<String>?
-    ): Response<List<UserResult>>
-
-    @ApiOperation("用户列表")
-    @GetMapping("/listall")
-    fun listAllUser(
-        @RequestBody rids: List<String>?
-    ): Response<List<User>>
-
     @ApiOperation("删除用户")
     @DeleteMapping("/{uid}")
     fun deleteById(

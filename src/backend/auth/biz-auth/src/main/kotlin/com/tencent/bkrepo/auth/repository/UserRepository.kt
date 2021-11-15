@@ -42,4 +42,5 @@ interface UserRepository : MongoRepository<TUser, String> {
     fun deleteByUserId(userId: String)
     fun findAllByRolesIn(rids: List<String>): List<TUser>
     fun findFirstByUserIdAndRolesIn(userId: String, rids: List<String>): TUser?
+    fun findAllByAdmin(admin: Boolean): List<TUser>
 }

@@ -42,9 +42,9 @@ data class CreateRoleRequest(
     @ApiModelProperty("角色名称")
     val name: String,
     @ApiModelProperty("角色类型")
-    val type: RoleType = RoleType.PROJECT,
+    val type: RoleType = RoleType.SYSTEM,
     @ApiModelProperty("项目ID")
-    val projectId: String,
+    val projectId: String?,
     @ApiModelProperty("仓库名称")
     val repoName: String? = null,
     @ApiModelProperty("管理员")

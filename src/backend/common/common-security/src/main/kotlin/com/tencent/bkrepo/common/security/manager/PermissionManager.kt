@@ -235,6 +235,14 @@ open class PermissionManager(
         }
     }
 
+    fun lisRepoBuiltinPermission(projectId: String, repoName: String) {
+        permissionResource.listRepoBuiltinPermission(projectId, repoName)
+    }
+
+    fun listProjectBuiltinPermission(projectId: String) {
+        permissionResource.listProjectBuiltinPermission(projectId)
+    }
+
     /**
      * 判断是否为管理员
      */

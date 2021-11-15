@@ -34,13 +34,23 @@ package com.tencent.bkrepo.auth.service.local
 import com.tencent.bkrepo.auth.constant.AUTH_ADMIN
 import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_ADMIN
 import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_USER
+import com.tencent.bkrepo.auth.constant.PROJECT_MANAGE_PERMISSION
+import com.tencent.bkrepo.auth.constant.PROJECT_VIEW_PERMISSION
 import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.model.TPermission
 import com.tencent.bkrepo.auth.pojo.RegisterResourceRequest
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.auth.pojo.enums.RoleType
-import com.tencent.bkrepo.auth.pojo.permission.*
+import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
+import com.tencent.bkrepo.auth.pojo.permission.CreatePermissionRequest
+import com.tencent.bkrepo.auth.pojo.permission.Permission
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionActionRequest
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionDepartmentRequest
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionPathRequest
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRepoRequest
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRoleRequest
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionUserRequest
 import com.tencent.bkrepo.auth.repository.PermissionRepository
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
@@ -48,6 +58,7 @@ import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.util.query.PermissionQueryHelper
 import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.security.exception.AuthenticationException
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import org.slf4j.LoggerFactory
@@ -88,8 +99,7 @@ open class PermissionServiceImpl constructor(
             AUTH_BUILTIN_USER,
             listOf(PermissionAction.WRITE, PermissionAction.DELETE, PermissionAction.UPDATE)
         )
-        //该权限移到项目管理处，所有项目用户都可以访问
-        //val repoViewer = getOnePermission(projectId, repoName, AUTH_BUILTIN_VIEWER, listOf(PermissionAction.READ))
+//        val repoViewer = getOnePermission(projectId, repoName, AUTH_BUILTIN_VIEWER, listOf(PermissionAction.READ))
         return listOf(repoAdmin, repoUser).map { transferPermission(it) }
     }
 
@@ -107,7 +117,7 @@ open class PermissionServiceImpl constructor(
         }
         val result = permissionRepository.insert(
             TPermission(
-                resourceType = request.resourceType.toString(),
+                resourceType = request.resourceType,
                 projectId = request.projectId,
                 permName = request.permName,
                 repos = request.repos,
@@ -193,12 +203,12 @@ open class PermissionServiceImpl constructor(
         }
 
         // check user locked
-        if (user.locked) {
-            return false
-        }
+        if (user.locked) return false
 
         // check user admin permission
         if (user.admin) return true
+
+        //check role system admin
 
         // check role project admin
         if (checkProjectAdmin(request, user.roles)) return true
@@ -253,7 +263,7 @@ open class PermissionServiceImpl constructor(
         logger.debug("list permission project request : $userId ")
         if (userId.isEmpty()) return emptyList()
         val user = userRepository.findFirstByUserId(userId) ?: run {
-            throw ErrorCodeException(AuthMessageCode.AUTH_USER_NOT_EXIST)
+            throw AuthenticationException(AuthMessageCode.AUTH_USER_NOT_EXIST.name)
         }
         // 用户为系统管理员
         if (user.admin) {
@@ -274,7 +284,7 @@ open class PermissionServiceImpl constructor(
         // 管理员角色关联权限
         val roleList = roleRepository.findByIdIn(user.roles)
         roleList.forEach {
-            if (it.admin) {
+            if (it.admin && it.projectId != null) {
                 projectList.add(it.projectId)
             } else {
                 noAdminRole.add(it.id!!)
@@ -391,6 +401,12 @@ open class PermissionServiceImpl constructor(
         return
     }
 
+    override fun listProjectBuiltinPermission(projectId: String): List<Permission> {
+        val projectManage = getProjectPermission(projectId, PROJECT_MANAGE_PERMISSION)
+        val projectView = getProjectPermission(projectId, PROJECT_VIEW_PERMISSION)
+        return listOf(projectManage, projectView).map { transferPermission(it) }
+    }
+
     private fun checkPermissionExist(pId: String) {
         permissionRepository.findFirstById(pId) ?: run {
             logger.warn("update permission repos [$pId]  not exist.")
@@ -414,8 +430,8 @@ open class PermissionServiceImpl constructor(
                 projectId = projectId,
                 repos = listOf(repoName),
                 permName = permName,
-                actions = actions.map { it.toString() },
-                resourceType = ResourceType.REPO.toString(),
+                actions = actions,
+                resourceType = ResourceType.REPO,
                 createAt = LocalDateTime.now(),
                 updateAt = LocalDateTime.now(),
                 createBy = AUTH_ADMIN,
@@ -432,7 +448,41 @@ open class PermissionServiceImpl constructor(
         )!!
     }
 
+    private fun getProjectPermission(projectId: String, permName: String): TPermission {
+        permissionRepository.findOneByPermNameAndProjectIdAndResourceType(
+            permName,
+            projectId,
+            ResourceType.PROJECT
+        ) ?: run {
+            val request = TPermission(
+                projectId = projectId,
+                permName = permName,
+                actions = getProjectBuiltinPermissionAction(permName),
+                resourceType = ResourceType.PROJECT,
+                createAt = LocalDateTime.now(),
+                updateAt = LocalDateTime.now(),
+                createBy = AUTH_ADMIN,
+                updatedBy = AUTH_ADMIN
+            )
+            logger.info("permission not exist, create [$request]")
+            permissionRepository.insert(request)
+        }
+        return permissionRepository.findOneByPermNameAndProjectIdAndResourceType(
+            permName,
+            projectId,
+            ResourceType.PROJECT
+        )!!
+    }
+
+    private fun getProjectBuiltinPermissionAction(permName: String): List<PermissionAction> {
+        return when (permName) {
+            PROJECT_MANAGE_PERMISSION -> listOf(PermissionAction.MANAGE)
+            else -> listOf(PermissionAction.READ)
+        }
+    }
+
     companion object {
         private val logger = LoggerFactory.getLogger(PermissionServiceImpl::class.java)
+        private val projectBuiltinPermission = listOf(PROJECT_MANAGE_PERMISSION, PROJECT_VIEW_PERMISSION)
     }
 }

@@ -51,7 +51,7 @@ data class TRole(
     val roleId: String,
     val type: RoleType,
     val name: String,
-    val projectId: String,
+    val projectId: String?,
     val repoName: String? = null,
     val admin: Boolean = false,
     val description: String? = null

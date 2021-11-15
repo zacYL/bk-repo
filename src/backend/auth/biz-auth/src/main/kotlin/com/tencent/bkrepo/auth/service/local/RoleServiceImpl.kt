@@ -60,20 +60,35 @@ open class RoleServiceImpl constructor(
 ) : RoleService {
 
     override fun createRole(request: CreateRoleRequest): String? {
-        logger.info("create  role  request : [$request] ")
-        val role: TRole? = if (request.type == RoleType.REPO) {
-            roleRepository.findFirstByRoleIdAndProjectIdAndRepoName(
-                request.roleId!!,
-                request.projectId,
+
+        val role: TRole? = when (request.type) {
+            RoleType.SYSTEM -> roleRepository.findFirstByTypeAndName(RoleType.SYSTEM, request.name)
+            RoleType.PROJECT -> roleRepository.findFirstByTypeAndNameAndProjectId(
+                RoleType.SYSTEM,
+                request.name,
+                request.projectId!!
+            )
+            RoleType.REPO -> roleRepository.findFirstByTypeAndNameAndProjectIdAndRepoName(
+                RoleType.SYSTEM,
+                request.name,
+                request.projectId!!,
                 request.repoName!!
             )
-        } else {
-            roleRepository.findFirstByProjectIdAndTypeAndName(
-                projectId = request.projectId,
-                type = RoleType.PROJECT,
-                name = request.name
-            )
         }
+
+//        val role: TRole? = when (request.type == RoleType.REPO) {
+//            roleRepository.findFirstByRoleIdAndProjectIdAndRepoName(
+//                request.roleId!!,
+//                request.projectId,
+//                request.repoName!!
+//            )
+//        } else {
+//            roleRepository.findFirstByProjectIdAndTypeAndName(
+//                projectId = request.projectId,
+//                type = RoleType.PROJECT,
+//                name = request.name
+//            )
+//        }
 
         role?.let {
             logger.warn("create role [${request.roleId} , ${request.projectId} ]  is exist.")
@@ -82,7 +97,8 @@ open class RoleServiceImpl constructor(
 
         val roleId = when (request.type) {
             RoleType.REPO -> request.roleId!!
-            RoleType.PROJECT -> findUsableProjectTypeRoleId(request.roleId, request.projectId)
+            RoleType.PROJECT -> findUsableProjectTypeRoleId(request.roleId, request.projectId!!)
+            RoleType.SYSTEM -> findUsableSystemTypeRoleId(request.roleId)
         }
 
         val result = roleRepository.insert(
@@ -104,6 +120,14 @@ open class RoleServiceImpl constructor(
         while (true) {
             val role = roleRepository.findFirstByRoleIdAndProjectId(tempRoleId, projectId)
             if (role == null) return tempRoleId else tempRoleId = "${projectId}_role_${IDUtil.shortUUID()}"
+        }
+    }
+
+    private fun findUsableSystemTypeRoleId(roleId: String?): String {
+        var tempRoleId = roleId ?: "system_role_${IDUtil.shortUUID()}"
+        while (true) {
+            val role = roleRepository.findTRoleById(tempRoleId)
+            if (role == null) return tempRoleId else tempRoleId = "system_role_${IDUtil.shortUUID()}"
         }
     }
 
@@ -160,6 +184,11 @@ open class RoleServiceImpl constructor(
         return result
     }
 
+    override fun systemRoles(): List<Role> {
+        val roles = roleRepository.findByType(RoleType.SYSTEM)
+        return roles.map { transfer(it) }
+    }
+
     override fun listRoleByProject(projectId: String, repoName: String?): List<Role> {
         logger.info("list  role params , projectId : [$projectId], repoName: [$repoName]")
         repoName?.let {
@@ -171,7 +200,7 @@ open class RoleServiceImpl constructor(
 
     override fun deleteRoleByid(id: String): Boolean {
         logger.info("delete  role  id : [$id]")
-        val role = roleRepository.findTRoleById(ObjectId(id))
+        val role = roleRepository.findTRoleById(id)
         if (role == null) {
             logger.warn("delete role [$id ] not exist.")
             throw ErrorCodeException(AuthMessageCode.AUTH_ROLE_NOT_EXIST)
@@ -179,7 +208,7 @@ open class RoleServiceImpl constructor(
             if (listUserByRoleId(role.id!!).isNotEmpty()) {
                 throw ErrorCodeException(AuthMessageCode.AUTH_ROLE_USER_NOT_EMPTY)
             }
-            roleRepository.deleteTRolesById(ObjectId(role.id))
+            roleRepository.deleteTRolesById(role.id)
         }
         return true
     }

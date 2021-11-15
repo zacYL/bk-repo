@@ -126,4 +126,8 @@ class ServicePermissionResourceImpl @Autowired constructor(
         permissionService.registerResource(request)
         return ResponseBuilder.success()
     }
+
+    override fun listProjectBuiltinPermission(projectId: String): Response<List<Permission>> {
+        return ResponseBuilder.success(permissionService.listProjectBuiltinPermission(projectId))
+    }
 }

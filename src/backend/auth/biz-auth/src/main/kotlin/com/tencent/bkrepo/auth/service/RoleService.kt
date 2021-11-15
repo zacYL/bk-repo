@@ -53,4 +53,6 @@ interface RoleService {
     fun updateRoleInfo(id: String, updateRoleRequest: UpdateRoleRequest): Boolean
 
     fun listUserByRoleId(id: String): Set<UserResult>
+
+    fun systemRoles(): List<Role>
 }

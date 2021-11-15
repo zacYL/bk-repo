@@ -399,6 +399,10 @@ open class UserServiceImpl constructor(
         return record.isNotEmpty()
     }
 
+    override fun listAdminUser(): List<User> {
+        return userRepository.findAllByAdmin(true).map { transferUser(it) }
+    }
+
     companion object {
         private val logger = LoggerFactory.getLogger(UserServiceImpl::class.java)
     }

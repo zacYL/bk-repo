@@ -73,4 +73,7 @@ interface PermissionService {
     fun updatePermissionAction(request: UpdatePermissionActionRequest): Boolean
 
     fun registerResource(request: RegisterResourceRequest)
+
+    fun listProjectBuiltinPermission(projectId: String): List<Permission>
+
 }

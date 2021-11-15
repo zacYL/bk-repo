@@ -101,6 +101,13 @@ interface ServicePermissionResource {
         @RequestParam repoName: String
     ): Response<List<Permission>>
 
+    @ApiOperation("获取项目内置权限列表")
+    @GetMapping("/inproject")
+    fun listProjectBuiltinPermission(
+        @ApiParam(value = "项目ID")
+        @RequestParam projectId: String
+    ): Response<List<Permission>>
+
     @ApiOperation("校验管理员")
     @GetMapping("/checkAdmin/{uid}")
     fun checkAdmin(

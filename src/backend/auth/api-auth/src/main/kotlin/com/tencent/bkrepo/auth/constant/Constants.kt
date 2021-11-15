@@ -35,9 +35,13 @@ package com.tencent.bkrepo.auth.constant
  * 认证相关
  */
 
-const val PROJECT_MANAGE_ID = "project_manage"
+const val PROJECT_MANAGE_ID = "project_manage_role"
 
-const val PROJECT_MANAGE_NAME = "项目管理员"
+const val PROJECT_MANAGE_NAME = "项目管理组"
+
+const val PROJECT_VIEW_ID = "project_view_role"
+
+const val PROJECT_VIEW_NAME = "项目访问组"
 
 const val REPO_MANAGE_ID = "repo_manage"
 
@@ -72,18 +76,18 @@ const val AUTH_API_USER_PREFIX = "/api/user"
 const val AUTH_SERVICE_USER_PREFIX = "/service/user"
 
 const val AUTH_API_DEPARTMENT_PREFIX = "/api/department"
-const val AUTH_SERVICE_DEPARTMENT_PREFIX = "/service/department"
 
 const val AUTH_SERVICE_ACCOUNT_PREFIX = "/service/account"
 const val AUTH_API_ACCOUNT_PREFIX = "/api/account"
+
+const val AUTH_SERVICE_KEY_PREFIX = "/service/key"
+const val AUTH_API_KEY_PREFIX = "/api/key"
 
 const val AUTH_ADMIN = "admin"
 const val AUTH_BUILTIN_ADMIN = "repo_admin"
 const val AUTH_BUILTIN_USER = "repo_user"
 const val AUTH_BUILTIN_VIEWER = "repo_viewer"
 
-const val AUTH_ACTION_PREFIX = "/action"
-const val AUTH_SERVICE_ACTION_PREFIX = "/service/action"
-const val AUTH_API_ACTION_PREFIX = "/api/action"
+const val PROJECT_MANAGE_PERMISSION = "project_manage_permission"
+const val PROJECT_VIEW_PERMISSION = "project_view_permission"
 
-const val BK_SOFTWARE = "bksoftware"

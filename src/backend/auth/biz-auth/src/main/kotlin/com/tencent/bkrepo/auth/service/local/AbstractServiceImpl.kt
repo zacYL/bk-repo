@@ -87,7 +87,7 @@ open class AbstractServiceImpl constructor(
 
     // check role is exist
     fun checkRoleExist(roleId: String) {
-        val role = roleRepository.findTRoleById(ObjectId(roleId))
+        val role = roleRepository.findTRoleById(roleId)
         role ?: run {
             logger.warn("role not  exist.")
             throw ErrorCodeException(AuthMessageCode.AUTH_ROLE_NOT_EXIST)

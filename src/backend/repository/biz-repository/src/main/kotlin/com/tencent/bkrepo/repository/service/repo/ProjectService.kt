@@ -31,6 +31,7 @@ import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.repository.pojo.project.ProjectCreateRequest
 import com.tencent.bkrepo.repository.pojo.project.ProjectInfo
 import com.tencent.bkrepo.repository.pojo.project.ProjectRangeQueryRequest
+import com.tencent.bkrepo.repository.pojo.project.ProjectUpdateRequest
 
 /**
  * 项目服务接口
@@ -41,6 +42,11 @@ interface ProjectService {
      * 查询名称为[name]的项目信息
      */
     fun getProjectInfo(name: String): ProjectInfo?
+
+    /**
+     * 查询名称为[displayName]的项目信息
+     */
+    fun getProjectInfoByDisplayName(displayName: String): ProjectInfo?
 
     /**
      * 查询所有项目列表
@@ -67,4 +73,11 @@ interface ProjectService {
      * 根据[request]创建项目，创建成功后返回项目信息
      */
     fun createProject(request: ProjectCreateRequest): ProjectInfo
+
+    fun updateProject(request: ProjectUpdateRequest): Boolean
+
+    /**
+     * 判断项目信息是否存在
+     */
+    fun checkProjectExist(name: String?, displayName: String?): Boolean
 }

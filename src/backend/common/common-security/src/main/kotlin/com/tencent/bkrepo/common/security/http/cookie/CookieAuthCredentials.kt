@@ -29,25 +29,11 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.auth.config
+package com.tencent.bkrepo.common.security.http.cookie
 
-import com.tencent.bkrepo.auth.interceptor.AuthInterceptor
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
+import com.tencent.bkrepo.common.security.http.credentials.HttpAuthCredentials
 
-@Configuration
-class AuthConfig : WebMvcConfigurer {
-
-    override fun addInterceptors(registry: InterceptorRegistry) {
-        registry.addInterceptor(clientAuthInterceptor())
-            .addPathPatterns("/api/**")
-            .excludePathPatterns("/external/**", "/api/user/login", "/api/user/info", "/api/user/verify")
-            .order(0)
-        super.addInterceptors(registry)
-    }
-
-    @Bean
-    fun clientAuthInterceptor() = AuthInterceptor()
-}
+/**
+ * Json web token 认证信息
+ */
+data class CookieAuthCredentials(val token: String) : HttpAuthCredentials

@@ -32,6 +32,7 @@
 package com.tencent.bkrepo.common.security.http
 
 import com.tencent.bkrepo.common.security.http.basic.BasicAuthHandler
+import com.tencent.bkrepo.common.security.http.cookie.CookieAuthHandler
 import com.tencent.bkrepo.common.security.http.core.HttpAuthInterceptor
 import com.tencent.bkrepo.common.security.http.core.HttpAuthSecurity
 import com.tencent.bkrepo.common.security.http.core.HttpAuthSecurityCustomizer
@@ -77,7 +78,6 @@ class HttpAuthSecurityConfiguration(
         httpAuthSecurity.customizers.forEach {
             it.customize(httpAuthSecurity)
         }
-
         if (httpAuthSecurity.basicAuthEnabled) {
             httpAuthSecurity.addHttpAuthHandler(BasicAuthHandler(authenticationManager))
         }
@@ -87,5 +87,6 @@ class HttpAuthSecurityConfiguration(
         if (httpAuthSecurity.jwtAuthEnabled) {
             httpAuthSecurity.addHttpAuthHandler(JwtAuthHandler(jwtAuthProperties))
         }
+        httpAuthSecurity.addHttpAuthHandler(CookieAuthHandler(jwtAuthProperties))
     }
 }

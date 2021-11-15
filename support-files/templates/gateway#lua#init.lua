@@ -35,27 +35,10 @@ config = {
     tag = "__BK_REPO_CONSUL_TAG__",
     nodes_url = "/v1/catalog/nodes"
   },
-  oauth = {  -- 对接蓝鲸权限中心才需要的配置
-    ip = "__BK_REPO_IAM_IP0__",
-    env = "__BK_REPO_IAM_ENV__",
-    port = "__BK_REPO_IAM_HTTP_PORT__",
-    host = "__BK_REPO_IAM_HOST__",
-    url = "__BK_REPO_IAM_TOKEN_URL__",     -- 接口路径
-    app_code = "__BK_REPO_APP_CODE__",
-    app_secret = "__BK_REPO_APP_TOKEN__",
-  },
   bkrepo = {
     authorization = "__BK_REPO_AUTHORIZATION__"
   },
   mode = "__BK_REPO_DEPLOY_MODE__",
-  router = {
-    project = {
-      {
-        name = "devops",
-        tag = "devops"
-      }
-    }
-  }
 }
   
 require("init_common")

@@ -76,4 +76,7 @@ interface PermissionService {
 
     fun listProjectBuiltinPermission(projectId: String): List<Permission>
 
+    fun isProjectManager(userId: String): Boolean
+
+
 }

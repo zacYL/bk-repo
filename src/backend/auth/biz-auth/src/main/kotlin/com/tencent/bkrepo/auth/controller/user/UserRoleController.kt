@@ -6,7 +6,6 @@ import com.tencent.bkrepo.auth.constant.PROJECT_VIEW_PERMISSION
 import com.tencent.bkrepo.auth.pojo.role.Role
 import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.service.RoleService
-import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
@@ -20,15 +19,16 @@ import org.springframework.web.bind.annotation.PathVariable
 @RequestMapping("/api/sys/role")
 class UserRoleController(
     private val permissionService: PermissionService,
-    private val userService: UserService,
     private val roleService: RoleService
 ) {
 
     @GetMapping("/list/{projectId}")
-    fun userByProjectId(
-//        @RequestAttribute userId: String,
+    fun roleByProjectId(
+        @RequestAttribute userId: String,
         @PathVariable projectId: String
     ): Response<List<Role>> {
+        if (permissionService.isProjectManager(userId)) return ResponseBuilder.success(
+            roleService.systemRoles())
         val permissions = permissionService.listPermission(projectId, null)
         val roles = mutableSetOf<String>()
         for (permission in permissions) {
@@ -39,15 +39,10 @@ class UserRoleController(
     }
 
     @GetMapping("/list")
-    fun allUser(
-//        @RequestAttribute userId: String
+    fun allRole(
+        @RequestAttribute userId: String
     ): Response<List<Role>> {
-//        val user = userService.getUserById(userId)!!
-//        if(!user.admin) throw PermissionException()
+        if(!permissionService.isProjectManager(userId)) throw PermissionException()
         return ResponseBuilder.success(roleService.systemRoles())
-    }
-
-    companion object{
-        val projectRole = listOf(PROJECT_MANAGE_ID, PROJECT_VIEW_ID)
     }
 }

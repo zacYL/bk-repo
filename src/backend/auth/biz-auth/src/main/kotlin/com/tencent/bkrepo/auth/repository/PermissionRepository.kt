@@ -72,9 +72,9 @@ interface PermissionRepository : MongoRepository<TPermission, String> {
 
     fun findByUsers(userId: String): List<TPermission>
 
-    fun findByRolesIn(roleId: List<String>): List<TPermission>
-
     fun findByProjectIdAndUsers(projectId: String, userId: String): List<TPermission>
+
+    fun findByRolesIn(roleId: List<String>): List<TPermission>
 
     fun findByProjectIdAndRolesIn(projectId: String, roleId: List<String>): List<TPermission>
 
@@ -85,4 +85,22 @@ interface PermissionRepository : MongoRepository<TPermission, String> {
         resourceType: ResourceType
     ): TPermission?
 
+    fun findAllByResourceTypeAndPermNameAndUsersIn(
+        resourceType: ResourceType,
+        permName: String,
+        userId: List<String>
+    ): List<TPermission>
+
+    fun findAllByResourceTypeAndPermNameAndProjectIdAndUsersIn(
+        resourceType: ResourceType,
+        permName: String,
+        projectId: String,
+        userId: List<String>
+    ): List<TPermission>
+
+    fun findAllByResourceTypeAndPermNameAndRolesIn(
+        resourceType: ResourceType,
+        permName: String,
+        roleId: List<String>
+    ): List<TPermission>
 }

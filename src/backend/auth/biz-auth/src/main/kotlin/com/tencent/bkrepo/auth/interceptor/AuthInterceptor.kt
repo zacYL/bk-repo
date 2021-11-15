@@ -93,14 +93,14 @@ class AuthInterceptor : HandlerInterceptor {
                 return true
             }
             val cookies = request.cookies
-                ?: throw AuthFailedException(AuthMessageCode.AUTH_LOGIN_TOKEN_CHECK_FAILED.name)
+                ?: throw AuthenticationException(AuthMessageCode.AUTH_LOGIN_TOKEN_CHECK_FAILED.name)
             for (cookie in cookies) {
                 if (cookie.name == BKREPO_TICKET) {
                     // 读取用户信息
                     val signingKey: Key = JwtUtils.createSigningKey(jwtProperties.secretKey)
                     val userId = JwtUtils.validateToken(signingKey, cookie.value).body.subject
                     val user = userService.getUserById(userId)
-                        ?: throw AuthFailedException(AuthMessageCode.AUTH_USER_NOT_EXIST.name)
+                        ?: throw AuthenticationException(AuthMessageCode.AUTH_USER_NOT_EXIST.name)
                     if (user.locked) throw PermissionException("${user.userId} has been locked")
                     request.setAttribute(USER_KEY, user.userId)
                     return true

@@ -1,7 +1,7 @@
 package com.tencent.bkrepo.auth.controller.user
 
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
-import com.tencent.bkrepo.auth.pojo.enums.RoleType
+import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.Permission
 import com.tencent.bkrepo.auth.service.PermissionService
@@ -29,7 +29,7 @@ class UserPermissionController(
         val result = permissionService.checkPermission(
             CheckPermissionRequest(
                 uid = userId,
-                resourceType = RoleType.PROJECT.name,
+                resourceType = ResourceType.PROJECT.name,
                 projectId = projectId,
                 action = PermissionAction.MANAGE.name
             )

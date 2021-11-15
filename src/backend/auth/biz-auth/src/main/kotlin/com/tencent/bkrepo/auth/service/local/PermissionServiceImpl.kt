@@ -31,11 +31,11 @@
 
 package com.tencent.bkrepo.auth.service.local
 
-import com.tencent.bkrepo.auth.constant.AUTH_ADMIN
-import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_ADMIN
 import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_USER
-import com.tencent.bkrepo.auth.constant.PROJECT_MANAGE_PERMISSION
+import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_ADMIN
 import com.tencent.bkrepo.auth.constant.PROJECT_VIEW_PERMISSION
+import com.tencent.bkrepo.auth.constant.PROJECT_MANAGE_PERMISSION
+import com.tencent.bkrepo.auth.constant.AUTH_ADMIN
 import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.model.TPermission
 import com.tencent.bkrepo.auth.pojo.RegisterResourceRequest
@@ -97,7 +97,7 @@ open class PermissionServiceImpl constructor(
             projectId,
             repoName,
             AUTH_BUILTIN_USER,
-            listOf(PermissionAction.WRITE, PermissionAction.DELETE, PermissionAction.UPDATE)
+            listOf(PermissionAction.WRITE, PermissionAction.READ, PermissionAction.DELETE, PermissionAction.UPDATE)
         )
 //        val repoViewer = getOnePermission(projectId, repoName, AUTH_BUILTIN_VIEWER, listOf(PermissionAction.READ))
         return listOf(repoAdmin, repoUser).map { transferPermission(it) }
@@ -205,10 +205,12 @@ open class PermissionServiceImpl constructor(
         // check user locked
         if (user.locked) return false
 
+
         // check user admin permission
         if (user.admin) return true
 
-        //check role system admin
+        //check user project admin
+        if (checkProjectUserAdmin(request)) return true
 
         // check role project admin
         if (checkProjectAdmin(request, user.roles)) return true
@@ -218,6 +220,19 @@ open class PermissionServiceImpl constructor(
 
         // check repo action action
         return checkRepoAction(request, user.roles)
+    }
+
+    private fun checkProjectUserAdmin(request: CheckPermissionRequest): Boolean {
+        request.projectId?.let {
+            if (permissionRepository.findAllByResourceTypeAndPermNameAndProjectIdAndUsersIn(
+                    ResourceType.PROJECT,
+                    PROJECT_MANAGE_PERMISSION,
+                    it,
+                    listOf(request.uid)
+                ).isNotEmpty()
+            ) return true
+        }
+        return false
     }
 
     private fun checkProjectAdmin(request: CheckPermissionRequest, roles: List<String>): Boolean {
@@ -263,7 +278,8 @@ open class PermissionServiceImpl constructor(
         logger.debug("list permission project request : $userId ")
         if (userId.isEmpty()) return emptyList()
         val user = userRepository.findFirstByUserId(userId) ?: run {
-            throw AuthenticationException(AuthMessageCode.AUTH_USER_NOT_EXIST.name)
+            return listOf()
+//            throw AuthenticationException(AuthMessageCode.AUTH_USER_NOT_EXIST.name)
         }
         // 用户为系统管理员
         if (user.admin) {
@@ -297,10 +313,17 @@ open class PermissionServiceImpl constructor(
         return projectList.distinct()
     }
 
+    private fun listProjectPublicRepo(projectId: String): List<String> {
+        return repositoryClient.listRepo(projectId).data?.filter{
+            it.public
+        }?.map { it.name } ?: listOf()
+    }
+
     override fun listPermissionRepo(projectId: String, userId: String, appId: String?): List<String> {
         logger.debug("list repo permission request : [$projectId, $userId] ")
         val user = userRepository.findFirstByUserId(userId) ?: run {
-            throw ErrorCodeException(AuthMessageCode.AUTH_USER_NOT_EXIST)
+            return listProjectPublicRepo(projectId)
+//            throw ErrorCodeException(AuthMessageCode.AUTH_USER_NOT_EXIST)
         }
 
         // 用户为系统管理员
@@ -405,6 +428,23 @@ open class PermissionServiceImpl constructor(
         val projectManage = getProjectPermission(projectId, PROJECT_MANAGE_PERMISSION)
         val projectView = getProjectPermission(projectId, PROJECT_VIEW_PERMISSION)
         return listOf(projectManage, projectView).map { transferPermission(it) }
+    }
+
+    override fun isProjectManager(userId: String): Boolean {
+        val user = userRepository.findFirstByUserId(userId) ?: return false
+        if(user.admin) return true
+        val roles = user.roles
+        if(permissionRepository.findAllByResourceTypeAndPermNameAndUsersIn(
+            ResourceType.PROJECT,
+            PROJECT_MANAGE_PERMISSION,
+            listOf(userId)
+        ).isNotEmpty()) return true
+        if(permissionRepository.findAllByResourceTypeAndPermNameAndRolesIn(
+            ResourceType.PROJECT,
+            PROJECT_MANAGE_PERMISSION,
+            roles
+        ).isNotEmpty()) return true
+        return false
     }
 
     private fun checkPermissionExist(pId: String) {

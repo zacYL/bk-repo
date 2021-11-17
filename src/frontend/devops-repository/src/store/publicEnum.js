@@ -6,8 +6,8 @@ export const repoEnum = [
     'npm',
     'helm',
     'composer',
-    'rpm',
-    'nuget'
+    'rpm'
+    // 'nuget'
 ]
 
 export const repoTypeEnum = {

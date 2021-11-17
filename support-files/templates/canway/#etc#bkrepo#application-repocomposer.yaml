@@ -12,3 +12,5 @@ bkrepo:
   host: __BK_REPO_FQDN__   #服务域名
   composer:
     port: composer    #服务识别字段
+composer:
+  domain: ${cluster.self.url}/composer

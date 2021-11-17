@@ -101,6 +101,20 @@ service:
 # 许可需要的配置  
 service-suffix: "-devops"
 
+# 自身节点信息配置
+cluster:
+  self:
+    name: __BK_REPO_CLUSTER_SELF_NAME__
+    url: __BK_HTTP_SCHEMA__://__BK_REPO_CLUSTER_SELF_DOMAIN__
+    username: __BK_REPO_CLUSTER_SELF_USERNAME__
+    password: __BK_REPO_CLUSTER_SELF_PASSWORD__
+  role: __BK_REPO_ROLE_TYPE__
+  center:
+    name: __BK_REPO_CLUSTER_CENTER_NAME__
+    url: __BK_HTTP_SCHEMA__://__BK_REPO_CLUSTER_CENTER_DOMAIN__
+    username: __BK_REPO_CLUSTER_CENTER_USERNAME__
+    password: __BK_REPO_CLUSTER_CENTER_USERNAME__
+
 bk:
   paas:
     host: __BK_PAAS_PUBLIC_URL__
@@ -125,5 +139,4 @@ devops:
   devopsHost: __BK_HTTP_SCHEMA__://__BK_CI_FQDN__
   bkrepoHost: __BK_HTTP_SCHEMA__://__BK_REPO_FQDN__
 
-  
   

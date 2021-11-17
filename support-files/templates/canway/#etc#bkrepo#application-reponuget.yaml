@@ -8,3 +8,5 @@ logging:
   path: ${logging.path-common}/${service.name}
 service:
   name: nuget
+nuget:
+  domain: ${cluster.self.url}/nuget

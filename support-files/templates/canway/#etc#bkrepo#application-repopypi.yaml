@@ -8,3 +8,5 @@ logging:
   path: ${logging.path-common}/${service.name}
 service:
   name: pypi
+pypi:
+  domain: ${cluster.self.url}/pypi

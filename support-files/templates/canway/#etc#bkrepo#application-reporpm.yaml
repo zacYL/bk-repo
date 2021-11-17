@@ -8,3 +8,5 @@ logging:
   path: ${logging.path-common}/${service.name}
 service:
   name: rpm
+rpm:
+  domain: ${cluster.self.url}/rpm

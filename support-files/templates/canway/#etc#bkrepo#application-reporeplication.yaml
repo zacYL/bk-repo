@@ -8,3 +8,5 @@ logging:
   path: ${logging.path-common}/${service.name}
 service:
   name: replication
+replication:
+  domain: ${cluster.self.url}/replication

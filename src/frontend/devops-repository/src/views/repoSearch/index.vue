@@ -2,7 +2,7 @@
     <div class="repo-search-container">
         <div class="repo-search-tools flex-column">
             <div class="name-tool flex-center">
-                <type-select v-model="repoType" @change="handlerPaginationChange()"></type-select>
+                <type-select :repo-type="repoType" @change="changeRepoType"></type-select>
                 <bk-input
                     v-focus
                     style="width:390px"
@@ -163,6 +163,11 @@
                         package: pkg.key
                     }
                 })
+            },
+            changeRepoType (repoType) {
+                this.repoType = repoType
+                this.repoName = ''
+                this.handlerPaginationChange()
             },
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}, load) {
                 this.pagination.current = current

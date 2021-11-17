@@ -3,11 +3,11 @@
         :class="{ 'active': showDropdown }"
         @click="showDropdown = !showDropdown"
         v-bk-clickoutside="hiddenDropdown">
-        <Icon v-if="value" size="40" :name="value" />
+        <Icon v-if="repoType" size="40" :name="repoType" />
         <span v-else style="font-size:16px;">全部</span>
         <i class="ml10 devops-icon" :class="showDropdown ? 'icon-up-shape' : 'icon-down-shape'"></i>
         <div v-show="showDropdown" class="dropdown-list" @click.stop="() => {}">
-            <bk-radio-group v-model="value" class="repo-type-radio-group" @change="changeType">
+            <bk-radio-group :value="repoType" class="repo-type-radio-group" @change="changeType">
                 <bk-radio-button v-for="repo in repoEnum" :key="repo" :value="repo">
                     <div class="flex-column flex-center repo-type-radio">
                         <Icon size="32" :name="repo" />
@@ -23,12 +23,8 @@
     import { repoEnum } from '@/store/publicEnum'
     export default {
         name: 'typeSelect',
-        model: {
-            prop: 'value',
-            event: 'change'
-        },
         props: {
-            value: {
+            repoType: {
                 type: String,
                 default: ''
             }

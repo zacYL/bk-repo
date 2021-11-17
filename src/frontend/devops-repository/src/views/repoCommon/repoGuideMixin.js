@@ -1,4 +1,4 @@
-import { mapState } from 'vuex'
+import { mapState, mapActions } from 'vuex'
 export default {
     computed: {
         ...mapState(['userInfo', 'domain']),
@@ -638,5 +638,12 @@ export default {
         articleInstall () {
             return this[`${this.$route.params.repoType}Install`]
         }
+    },
+    created () {
+        !this.domain.docker && this.getDockerDomain()
+        !this.domain.npm && this.getNpmDomain()
+    },
+    methods: {
+        ...mapActions(['getDockerDomain', 'getNpmDomain'])
     }
 }

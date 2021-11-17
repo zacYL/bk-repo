@@ -302,9 +302,9 @@ class DockerArtifactRepo @Autowired constructor(
      * @return Boolean is the file can be read
      */
     fun canRead(context: RequestContext): Boolean {
-        val repoPermission = checkProjectRepoPermission(context, ResourceType.REPO, PermissionAction.READ)
-        if (repoPermission) return true
-        return checkProjectRepoPermission(context, ResourceType.PROJECT, PermissionAction.READ)
+        return checkProjectRepoPermission(context, ResourceType.REPO, PermissionAction.READ)
+//        if (repoPermission) return true
+//        return checkProjectRepoPermission(context, ResourceType.PROJECT, PermissionAction.READ)
     }
 
     /**
@@ -313,9 +313,9 @@ class DockerArtifactRepo @Autowired constructor(
      * @return Boolean is the file can be write
      */
     fun canWrite(context: RequestContext): Boolean {
-        val repoPermission = checkProjectRepoPermission(context, ResourceType.REPO, PermissionAction.WRITE)
-        if (repoPermission) return true
-        return checkProjectRepoPermission(context, ResourceType.PROJECT, PermissionAction.WRITE)
+        return checkProjectRepoPermission(context, ResourceType.REPO, PermissionAction.WRITE)
+//        if (repoPermission) return true
+//        return checkProjectRepoPermission(context, ResourceType.PROJECT, PermissionAction.WRITE)
     }
 
     /**

@@ -113,7 +113,7 @@ cluster:
     name: __BK_REPO_CLUSTER_CENTER_NAME__
     url: __BK_HTTP_SCHEMA__://__BK_REPO_CLUSTER_CENTER_DOMAIN__
     username: __BK_REPO_CLUSTER_CENTER_USERNAME__
-    password: __BK_REPO_CLUSTER_CENTER_USERNAME__
+    password: __BK_REPO_CLUSTER_CENTER_PASSWORD__
 
 bk:
   paas:

@@ -43,7 +43,7 @@
                                 <i class="devops-icon icon-more flex-center"></i>
                                 <ul class="operation-list" slot="content">
                                     <li class="operation-item hover-btn"
-                                        :disabled="($version.stageTag || '').includes('@release')"
+                                        :class="{ 'disabled': ($version.stageTag || '').includes('@release') }"
                                         @click.stop="changeStageTagHandler($version)">晋级</li>
                                     <li v-if="repoType !== 'docker'" class="operation-item hover-btn" @click.stop="downloadPackageHandler($version)">下载</li>
                                     <li class="operation-item hover-btn" @click.stop="deleteVersionHandler($version)">删除</li>
@@ -55,6 +55,7 @@
             </aside>
             <div class="common-version-detail flex-1">
                 <version-detail
+                    ref="versionDetail"
                     @tag="changeStageTagHandler()"
                     @download="downloadPackageHandler()"
                     @delete="deleteVersionHandler()">
@@ -188,7 +189,10 @@
                 }).then(({ records, totalRecords }) => {
                     load ? this.versionList.push(...records) : (this.versionList = records)
                     this.pagination.count = totalRecords
-                    if (!this.version) {
+                    if (!this.versionList.length) {
+                        this.$router.back()
+                    }
+                    if (!this.version || !this.versionList.find(v => v.name === this.version)) {
                         this.$router.replace({
                             query: {
                                 ...this.$route.query,
@@ -221,6 +225,7 @@
                 })
             },
             changeStageTagHandler (row = this.currentVersion) {
+                if ((row.stageTag || '').includes('@release')) return
                 this.formDialog = {
                     show: true,
                     loading: false,
@@ -245,6 +250,10 @@
                     })
                     this.cancelFormDialog()
                     this.getVersionListHandler()
+                    // 当前版本晋级，更新详情
+                    if (this.version === this.formDialog.version) {
+                        this.$refs.versionDetail && this.$refs.versionDetail.getDetail()
+                    }
                 }).finally(() => {
                     this.formDialog.loading = false
                 })

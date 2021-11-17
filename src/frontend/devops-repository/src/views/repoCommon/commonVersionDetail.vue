@@ -236,6 +236,7 @@
                     packageKey: this.packageKey,
                     version: this.version
                 }).then(res => {
+                    if (!res) return
                     const basic = res.basic
                     this.detail = {
                         ...res,

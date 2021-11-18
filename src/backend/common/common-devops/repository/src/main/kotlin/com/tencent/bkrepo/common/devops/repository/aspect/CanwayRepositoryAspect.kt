@@ -10,8 +10,8 @@ import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
-import com.tencent.bkrepo.common.devops.BELONGCODE
-import com.tencent.bkrepo.common.devops.RESOURCECODE
+import com.tencent.bkrepo.common.devops.api.BELONGCODE
+import com.tencent.bkrepo.common.devops.api.RESOURCECODE
 import com.tencent.bkrepo.common.devops.api.conf.DevopsConf
 import com.tencent.bkrepo.common.devops.api.enums.CanwayPermissionType
 import com.tencent.bkrepo.common.devops.api.exception.CanwayPermissionException

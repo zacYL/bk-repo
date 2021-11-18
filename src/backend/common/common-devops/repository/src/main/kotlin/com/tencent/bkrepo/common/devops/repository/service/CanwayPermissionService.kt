@@ -2,9 +2,9 @@ package com.tencent.bkrepo.common.devops.repository.service
 
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.api.util.toJsonString
-import com.tencent.bkrepo.common.devops.BELONGCODE
-import com.tencent.bkrepo.common.devops.CANWAY_PERMISSION_API
-import com.tencent.bkrepo.common.devops.RESOURCECODE
+import com.tencent.bkrepo.common.devops.api.BELONGCODE
+import com.tencent.bkrepo.common.devops.api.CANWAY_PERMISSION_API
+import com.tencent.bkrepo.common.devops.api.RESOURCECODE
 import com.tencent.bkrepo.common.devops.api.conf.DevopsConf
 import com.tencent.bkrepo.common.devops.api.enums.CanwayPermissionType
 import com.tencent.bkrepo.common.devops.api.pojo.request.CanwayPermissionRequest

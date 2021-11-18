@@ -4,7 +4,7 @@ import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.readJsonString
-import com.tencent.bkrepo.common.devops.BKUSERNAME
+import com.tencent.bkrepo.common.devops.api.BKUSERNAME
 import com.tencent.bkrepo.common.devops.api.conf.DevopsConf
 import com.tencent.bkrepo.common.devops.api.pojo.BkUserData
 import com.tencent.bkrepo.common.devops.api.pojo.BkUserInfo

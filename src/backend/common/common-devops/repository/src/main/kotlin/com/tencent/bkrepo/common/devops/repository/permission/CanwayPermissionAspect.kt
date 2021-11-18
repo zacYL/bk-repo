@@ -3,7 +3,7 @@ package com.tencent.bkrepo.common.devops.repository.permission
 import com.tencent.bkrepo.auth.constant.BK_SOFTWARE
 import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
-import com.tencent.bkrepo.common.devops.CANWAY_PERMISSION
+import com.tencent.bkrepo.common.devops.api.CANWAY_PERMISSION
 import com.tencent.bkrepo.common.devops.api.exception.CanwayPermissionException
 import com.tencent.bkrepo.common.devops.repository.service.CanwayPermissionService
 import com.tencent.bkrepo.common.security.exception.PermissionException

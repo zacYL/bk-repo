@@ -1,7 +1,7 @@
 package com.tencent.bkrepo.common.devops.api.pojo.request
 
-import com.tencent.bkrepo.common.devops.BELONGCODE
-import com.tencent.bkrepo.common.devops.RESOURCECODE
+import com.tencent.bkrepo.common.devops.api.BELONGCODE
+import com.tencent.bkrepo.common.devops.api.RESOURCECODE
 import com.tencent.bkrepo.common.devops.api.enums.CanwayPermissionType
 
 data class CanwayPermissionRequest(

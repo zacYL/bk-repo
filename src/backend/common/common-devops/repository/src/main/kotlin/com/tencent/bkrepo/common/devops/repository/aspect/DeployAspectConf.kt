@@ -1,5 +1,6 @@
 package com.tencent.bkrepo.common.devops.repository.aspect
 
+import com.tencent.bkrepo.auth.api.ServiceUserResource
 import com.tencent.bkrepo.common.devops.api.conf.DevopsConf
 import com.tencent.bkrepo.common.devops.api.conf.CanwayMailConf
 import com.tencent.bkrepo.common.devops.api.service.BkUserService
@@ -14,12 +15,13 @@ class DeployAspectConf(
     val bkUserService: BkUserService,
     val mailSender: JavaMailSender,
     val nodeClient: NodeClient,
-    val canwayMailConf: CanwayMailConf
+    val canwayMailConf: CanwayMailConf,
+    val userClient: ServiceUserResource
 ) {
 
     @Bean
     fun repositoryAspect() = CanwayRepositoryAspect(devopsConf)
 
     @Bean
-    fun shareAspect() = CanwayShareAspect(canwayMailConf, devopsConf, bkUserService, mailSender, nodeClient)
+    fun shareAspect() = CanwayShareAspect(canwayMailConf, devopsConf, bkUserService, mailSender, nodeClient, userClient)
 }

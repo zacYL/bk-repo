@@ -109,6 +109,7 @@ body {
         border-color: var(--borderColor);
     }
     .bk-form-input,
+    .bk-form-control .group-box,
     .bk-form-password,
     .bk-form-select,
     .bk-form-textarea,
@@ -160,5 +161,10 @@ body {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+    }
+    
+    .bk-sideslider-content {
+        height: calc(100% - 60px);
+        overflow: hidden;
     }
 }

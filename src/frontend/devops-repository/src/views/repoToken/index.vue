@@ -80,14 +80,14 @@
                     this.isLoading = false
                 })
             },
-            deleteTokenHandler (row) {
+            deleteTokenHandler ({ name }) {
                 this.$confirm({
                     theme: 'danger',
-                    message: this.$t('deleteTokenTitle'),
+                    message: this.$t('deleteTokenTitle', { name }),
                     confirmFn: () => {
                         return this.deleteToken({
                             username: this.userInfo.username,
-                            name: row.name
+                            name
                         }).then(() => {
                             this.getToken()
                             this.$bkMessage({

@@ -22,7 +22,11 @@ const repoHome = () => import(/* webpackChunkName: "repoHome" */'@/views')
 const repoList = () => import(/* webpackChunkName: "repoList" */'@/views/repoList')
 const repoConfig = () => import(/* webpackChunkName: "repoConfig" */'@/views/repoConfig')
 const repoToken = () => import(/* webpackChunkName: "repoToken" */'@/views/repoToken')
+const userCenter = () => import(/* webpackChunkName: "userCenter" */'@/views/userCenter')
+const userManage = () => import(/* webpackChunkName: "userManage" */'@/views/userManage')
 const repoAudit = () => import(/* webpackChunkName: "repoAudit" */'@/views/repoAudit')
+const projectManage = () => import(/* webpackChunkName: "projectManage" */'@/views/projectManage')
+const projectConfig = () => import(/* webpackChunkName: "projectManage" */'@/views/projectManage/projectConfig')
 const nodeManage = () => import(/* webpackChunkName: "nodeManage" */'@/views/nodeManage')
 const planManage = () => import(/* webpackChunkName: "planManage" */'@/views/planManage')
 const createPlan = () => import(/* webpackChunkName: "createPlan" */'@/views/planManage/createPlan')
@@ -73,12 +77,52 @@ const routes = [
                 }
             },
             {
+                path: 'projectManage',
+                name: 'projectManage',
+                component: projectManage,
+                meta: {
+                    breadcrumb: [
+                        { name: 'projectManage', label: '项目管理' }
+                    ]
+                }
+            },
+            {
+                path: 'projectConfig',
+                name: 'projectConfig',
+                component: projectConfig,
+                meta: {
+                    breadcrumb: [
+                        { name: 'projectConfig', label: '项目设置' }
+                    ]
+                }
+            },
+            {
                 path: 'repoToken',
                 name: 'repoToken',
                 component: repoToken,
                 meta: {
                     breadcrumb: [
                         { name: 'repoToken', label: '访问令牌' }
+                    ]
+                }
+            },
+            {
+                path: 'userCenter',
+                name: 'userCenter',
+                component: userCenter,
+                meta: {
+                    breadcrumb: [
+                        { name: 'userCenter', label: '个人中心' }
+                    ]
+                }
+            },
+            {
+                path: 'userManage',
+                name: 'userManage',
+                component: userManage,
+                meta: {
+                    breadcrumb: [
+                        { name: 'userManage', label: '用户管理' }
                     ]
                 }
             },
@@ -108,7 +152,7 @@ const routes = [
                 component: planManage,
                 meta: {
                     breadcrumb: [
-                        { name: 'planManage', label: '分发计划' }
+                        { name: 'planManage', label: '制品分发' }
                     ]
                 }
             },
@@ -118,7 +162,7 @@ const routes = [
                 component: createPlan,
                 meta: {
                     breadcrumb: [
-                        { name: 'planManage', label: '分发计划' },
+                        { name: 'planManage', label: '制品分发' },
                         { name: 'createPlan', label: '创建计划' }
                     ]
                 }
@@ -129,7 +173,7 @@ const routes = [
                 component: createPlan,
                 meta: {
                     breadcrumb: [
-                        { name: 'planManage', label: '{planName}', template: '分发计划' },
+                        { name: 'planManage', label: '{planName}', template: '制品分发' },
                         { name: 'createPlan', label: '编辑计划' }
                     ]
                 }
@@ -140,7 +184,7 @@ const routes = [
                 component: createPlan,
                 meta: {
                     breadcrumb: [
-                        { name: 'planManage', label: '{planName}', template: '分发计划' },
+                        { name: 'planManage', label: '{planName}', template: '制品分发' },
                         { name: 'createPlan', label: '计划详情' }
                     ]
                 }
@@ -151,7 +195,7 @@ const routes = [
                 component: logDetail,
                 meta: {
                     breadcrumb: [
-                        { name: 'planManage', label: '{planName}', template: '分发计划' },
+                        { name: 'planManage', label: '{planName}', template: '制品分发' },
                         { name: 'logDetail', label: '日志详情' }
                     ]
                 }

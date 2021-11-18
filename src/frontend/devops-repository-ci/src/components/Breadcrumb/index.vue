@@ -1,0 +1,24 @@
+<template>
+    <bk-breadcrumb separator-class="bk-icon icon-angle-right">
+        <slot></slot>
+        <bk-breadcrumb-item
+            v-for="item in list"
+            :key="item.name">
+            <span
+                @click="() => item.cilckHandler && item.cilckHandler(item)">
+                {{ item.name }}
+            </span>
+        </bk-breadcrumb-item>
+    </bk-breadcrumb>
+</template>
+<script>
+    export default {
+        name: 'breadCrumb',
+        props: {
+            list: {
+                type: Array,
+                default: []
+            }
+        }
+    }
+</script>

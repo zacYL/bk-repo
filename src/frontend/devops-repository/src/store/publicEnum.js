@@ -7,6 +7,7 @@ export const repoEnum = [
     'helm',
     'composer',
     'rpm'
+    // 'git',
     // 'nuget'
 ]
 

@@ -1,6 +1,6 @@
 <template>
     <bk-collapse class="permission-config-container" v-model="activeName" v-bkloading="{ isLoading }">
-        <bk-collapse-item v-for="section in [admin, user, viewer]" :key="section.name" :name="section.name">
+        <bk-collapse-item v-for="section in [admin, user]" :key="section.name" :name="section.name">
             <header class="section-header">
                 <div class="flex-align-center">
                     <icon class="mr10" size="20" :name="section.icon"></icon>
@@ -10,7 +10,7 @@
                 </div>
             </header>
             <div slot="content" class="section-main">
-                <template v-for="part in ['users', 'roles', ...(section !== admin ? ['departments'] : [])]">
+                <template v-for="part in ['users', 'roles']">
                     <header :key="part + 'header'" class="section-sub-title flex-align-center">
                         <span>{{section[part].title}}</span>
                         <i class="ml10 devops-icon hover-btn"
@@ -18,45 +18,15 @@
                             @click="handleShowAddArea(section[part])">
                         </i>
                         <div v-show="section[part].showAddArea" :key="part + 'operation'" class="ml15 flex-align-center">
-                            <template v-if="part === 'departments'">
-                                <bk-select
-                                    style="min-width: 350px"
-                                    searchable
-                                    multiple
-                                    v-model="section[part].addList"
-                                    :remote-method="(keyword) => $refs[`${section.name}Tree`][0].filter(keyword)"
-                                    :display-tag="true"
-                                    :tag-fixed-height="false"
-                                    :show-empty="false"
-                                    @toggle="show => show && initTree($refs[`${section.name}Tree`][0], section[part])"
-                                    @tab-remove="({ id }) => $refs[`${section.name}Tree`][0].setChecked(id, { emitEvent: true, checked: false })"
-                                    @clear="$refs[`${section.name}Tree`][0].removeChecked({ emitEvent: false })">
-                                    <bk-big-tree
-                                        :ref="`${section.name}Tree`"
-                                        show-checkbox
-                                        :check-strictly="false"
-                                        show-link-line
-                                        :lazy-method="(node) => handleDepartmentTreeNode(node, $refs[`${section.name}Tree`][0], section[part])"
-                                        @check-change="ids => changeAddDepartments(section[part], ids)">
-                                    </bk-big-tree>
-                                </bk-select>
-                            </template>
-                            <template v-else>
-                                <bk-select
-                                    style="min-width: 250px"
-                                    v-model="section[part].addList"
-                                    multiple
-                                    display-tag
-                                    searchable
-                                    :enable-virtual-scroll="filterSelectOptions(section[part], part).length > 3000"
-                                    :list="filterSelectOptions(section[part], part)">
-                                    <bk-option v-for="option in filterSelectOptions(section[part], part)"
-                                        :key="option.id"
-                                        :id="option.id"
-                                        :name="option.name">
-                                    </bk-option>
-                                </bk-select>
-                            </template>
+                            <bk-tag-input
+                                style="min-width: 250px"
+                                v-model="section[part].addList"
+                                :list="filterSelectOptions(section[part], part)"
+                                :search-key="['id', 'name']"
+                                placeholder="请输入，按Enter键确认"
+                                trigger="focus"
+                                allow-create>
+                            </bk-tag-input>
                             <i v-if="section[part].addList.length"
                                 class="section-sub-add-btn devops-icon icon-check-1"
                                 @click="() => {
@@ -72,10 +42,6 @@
                                 <i class="devops-icon icon-close-circle-shape" @click="handleDeleteTag(tag, part, section)"></i>
                             </div>
                         </div>
-                        <!-- <div v-if="section[part].deleteList && section[part].deleteList.length">
-                            <bk-button :loading="section.loading" theme="primary" @click="submit('delete', part, section)">{{$t('save')}}</bk-button>
-                            <bk-button class="ml10" theme="default" @click="cancel(section[part])">{{$t('cancel')}}</bk-button>
-                        </div> -->
                     </div>
                 </template>
             </div>
@@ -103,7 +69,7 @@
         data () {
             return {
                 isLoading: false,
-                activeName: ['admin', 'user', 'viewer'],
+                activeName: ['admin', 'user'],
                 editActionsDialog: {
                     show: false,
                     loading: false,
@@ -115,28 +81,21 @@
                 admin: {
                     name: 'admin',
                     loading: false,
-                    title: '管理者',
+                    title: this.$t('admin'),
                     icon: 'perm-controller',
                     id: '',
                     actions: {
                         data: []
                     },
                     users: {
-                        title: '用户',
+                        title: this.$t('user'),
                         showAddArea: false,
                         data: [],
                         addList: [],
                         deleteList: []
                     },
                     roles: {
-                        title: '用户组',
-                        showAddArea: false,
-                        data: [],
-                        addList: [],
-                        deleteList: []
-                    },
-                    departments: {
-                        title: '组织',
+                        title: this.$t('userGroup'),
                         showAddArea: false,
                         data: [],
                         addList: [],
@@ -146,70 +105,43 @@
                 user: {
                     name: 'user',
                     loading: false,
-                    title: '使用者',
+                    title: this.$t('users'),
                     icon: 'perm-user',
                     id: '',
                     actions: {
                         data: []
                     },
                     users: {
-                        title: '用户',
+                        title: this.$t('user'),
                         showAddArea: false,
                         data: [],
                         addList: [],
                         deleteList: []
                     },
                     roles: {
-                        title: '用户组',
+                        title: this.$t('userGroup'),
                         showAddArea: false,
                         data: [],
                         addList: [],
                         deleteList: []
-                    },
-                    departments: {
-                        title: '组织',
-                        showAddArea: false,
-                        data: [],
-                        addList: [],
-                        deleteList: []
+                    // },
+                    // departments: {
+                    //     title: this.$t('department'),
+                    //     showAddArea: false,
+                    //     data: [],
+                    //     addList: [],
+                    //     deleteList: []
                     }
                 },
-                viewer: {
-                    name: 'viewer',
-                    loading: false,
-                    title: '查看者',
-                    icon: 'perm-viewer',
-                    id: '',
-                    actions: {
-                        data: []
-                    },
-                    users: {
-                        title: '用户',
-                        showAddArea: false,
-                        data: [],
-                        addList: [],
-                        deleteList: []
-                    },
-                    roles: {
-                        title: '用户组',
-                        showAddArea: false,
-                        data: [],
-                        addList: [],
-                        deleteList: []
-                    },
-                    departments: {
-                        title: '组织',
-                        showAddArea: false,
-                        data: [],
-                        addList: [],
-                        deleteList: []
-                    }
-                },
-                userList: {},
                 roleList: {},
-                flatDepartment: {},
-                departmentTree: [],
-                actionList: []
+                userList: {},
+                actionList: [
+                    { id: 'MANAGE', name: '管理' },
+                    { id: 'READ', name: '查看' },
+                    { id: 'WRITE', name: '新增' },
+                    { id: 'DELETE', name: '删除' },
+                    { id: 'UPDATE', name: '修改' }
+                ]
             }
         },
         computed: {
@@ -224,8 +156,7 @@
                 return (part, tag) => {
                     const map = {
                         users: this.userList,
-                        roles: this.roleList,
-                        departments: this.flatDepartment
+                        roles: this.roleList
                     }[part]
                     return map[tag] ? map[tag].name : tag
                 }
@@ -242,13 +173,17 @@
             }
         },
         created () {
-            this.getRepoActions({
-                projectId: this.projectId,
-                repoName: this.repoName
+            this.getProjectRoleList({
+                projectId: this.projectId
             }).then(res => {
-                this.actionList = res.map(v => ({ id: v.action, name: v.nickName }))
+                this.roleList = res.reduce((target, item) => {
+                    target[item.id] = item
+                    return target
+                }, {})
             })
-            this.getRepoUserList().then(res => {
+            this.getProjectUserList({
+                projectId: this.projectId
+            }).then(res => {
                 this.userList = res.reduce((target, item) => {
                     target[item.userId] = {
                         id: item.userId,
@@ -257,40 +192,22 @@
                     return target
                 }, {})
             })
-            this.getRepoRoleList({
-                projectId: this.projectId,
-                repoName: this.repoName
-            }).then(res => {
-                this.roleList = res.reduce((target, item) => {
-                    target[item.id] = item
-                    return target
-                }, {})
-            })
-            // 根节点
-            this.getRepoDepartmentList({
-                username: this.userInfo.username
-            }).then(res => {
-                this.handleFlatDepartment(res)
-                this.departmentTree = res.map(v => ({ ...v, has_children: true }))
-            })
             this.handlePermissionDetail()
         },
         methods: {
             ...mapActions([
                 'getPermissionDetail',
-                'getRepoActions',
-                'getRepoUserList',
-                'getRepoRoleList',
-                'getRepoDepartmentList',
+                'getProjectUserList',
+                'getProjectRoleList',
                 'setUserPermission',
                 'setRolePermission',
-                'setDepartmentPermission',
-                'setActionPermission',
-                'getRepoDepartmentDetail'
+                'setActionPermission'
             ]),
             filterSelectOptions (target, part) {
                 const list = Object.values({ users: this.userList, roles: this.roleList }[part])
-                return list.filter(v => !target.data.find(w => w === v.id && v.id !== 'anonymous'))
+                return list
+                    .filter(v => v.id !== 'anonymous')
+                    .filter(v => !~target.data.findIndex(w => w === v.id))
             },
             handleShowAddArea (target) {
                 target.showAddArea = !target.showAddArea
@@ -298,50 +215,6 @@
             handleDeleteTag (tag, part, section) {
                 section[part].deleteList.push(tag)
                 this.submit('delete', part, section)
-            },
-            initTree (treeTarget, { data: disabled = [], addList: add = [] } = {}) {
-                treeTarget.setData(this.departmentTree)
-                disabled.forEach(id => {
-                    treeTarget.setChecked(id)
-                    treeTarget.setDisabled(id)
-                })
-                add.forEach(id => {
-                    treeTarget.setChecked(id)
-                })
-            },
-            changeAddDepartments (treeTarget, ids) {
-                treeTarget.addList = ids.filter(id => !treeTarget.data.find(exist => id === exist))
-            },
-            handleFlatDepartment (departments) {
-                departments.forEach(v => {
-                    this.$set(this.flatDepartment, v.id, v)
-                })
-            },
-            async handleDepartmentTreeNode (node, root, data) {
-                // 叶节点
-                if (!node.data.has_children) return ({ data: [], leaf: [] })
-                // 枝节点
-                const res = await this.getRepoDepartmentList({
-                    username: this.userInfo.username,
-                    departmentId: node.id
-                })
-                this.handleFlatDepartment(res)
-                this.$nextTick(() => {
-                    let target = this.departmentTree
-                    node.parents.forEach(parent => {
-                        target = (target.children || target).find(v => v.id === parent.id).children
-                    })
-                    target = target.find(v => v.id === node.id)
-                    target.children = res
-                    if (root) {
-                        this.initTree(root, data)
-                        root.setExpanded([node.id])
-                    }
-                })
-                return {
-                    data: [],
-                    leaf: res.filter(v => !v.has_children).map(w => w.id)
-                }
             },
             handlePermissionDetail (target, origin, id) {
                 this.isLoading = true
@@ -352,18 +225,13 @@
                     if (target && origin && id) {
                         this[origin][target].data = res.find(v => v.id === id)[target]
                     } else {
-                        let departments = []
                         res.forEach(part => {
                             const perm = this[part.permName.replace(/^.*_([^_]+)$/, '$1')]
                             perm.id = part.id
                             perm.users.data = part.users
                             perm.roles.data = part.roles
-                            perm.departments.data = part.departments
                             perm.actions.data = part.actions
-                            departments = departments.concat(part.departments)
                         })
-                        departments = Array.from(new Set(departments)).filter(v => !this.flatDepartment.hasOwnProperty(v))
-                        departments.length && this.getRepoDepartmentDetail({ body: departments }).then(this.handleFlatDepartment)
                     }
                 }).finally(() => {
                     this.isLoading = false
@@ -374,13 +242,11 @@
                 section.loading = true
                 const fn = {
                     users: this.setUserPermission,
-                    roles: this.setRolePermission,
-                    departments: this.setDepartmentPermission
+                    roles: this.setRolePermission
                 }[part]
                 const key = {
                     users: 'userId',
-                    roles: 'rId',
-                    departments: 'departmentId'
+                    roles: 'rId'
                 }[part]
                 const value = {
                     add: [...section[part].data, ...section[part].addList],

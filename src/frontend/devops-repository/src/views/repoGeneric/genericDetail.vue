@@ -199,9 +199,6 @@
         font-weight: bold;
     }
 }
-::v-deep .bk-sideslider-content {
-    height: calc(100% - 60px);
-}
 .detail-container {
     height: 100%;
     ::v-deep .bk-tab-section {

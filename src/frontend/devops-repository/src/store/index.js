@@ -29,7 +29,8 @@ export default new Vuex.Store({
             name: '',
             email: '',
             phone: '',
-            admin: true
+            admin: true,
+            manage: false
         },
         domain: {
             docker: '',

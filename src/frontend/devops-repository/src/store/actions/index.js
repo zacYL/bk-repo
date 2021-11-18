@@ -1,10 +1,12 @@
 import Vue from 'vue'
+import cookie from 'js-cookie'
 
 import repoGeneric from './repoGeneric'
 import repoCommon from './repoCommon'
 import token from './token'
 import permission from './permission'
 import nodeManage from './nodeManage'
+import project from './project'
 
 const prefix = 'repository/api'
 
@@ -14,6 +16,7 @@ export default {
     ...token,
     ...permission,
     ...nodeManage,
+    ...project,
     /*
         创建仓库
         body: {
@@ -45,8 +48,8 @@ export default {
             `${prefix}/repo/page/${projectId}/${current}/${limit}`,
             {
                 params: {
-                    name,
-                    type
+                    name: name || undefined,
+                    type: type || undefined
                 }
             }
         ).then(res => ({
@@ -95,10 +98,22 @@ export default {
         ).then(res => {
             commit('SET_PROJECT_LIST', res.map(v => {
                 return {
+                    ...v,
                     id: v.name,
                     name: v.displayName
                 }
             }))
         })
+    },
+    logout () {
+        if (MODE_CONFIG === 'standalone') {
+            cookie.remove('bkrepo_ticket')
+            location.reload()
+        } else {
+            window.postMessage({
+                action: 'toggleLoginDialog'
+            }, '*')
+            location.href = window.getLoginUrl()
+        }
     }
 }

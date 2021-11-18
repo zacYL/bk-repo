@@ -1,7 +1,7 @@
 <template>
     <div class="repo-list-container" v-bkloading="{ isLoading }">
         <div class="ml20 mr20 mt10 flex-between-center">
-            <bk-button v-if="canCreate" icon="plus" theme="primary" @click="createRepo"><span class="mr5">{{ $t('create') }}</span></bk-button>
+            <bk-button icon="plus" theme="primary" @click="createRepo"><span class="mr5">{{ $t('create') }}</span></bk-button>
             <div class="flex-align-center">
                 <bk-input
                     v-model.trim="query.name"
@@ -13,6 +13,7 @@
                     right-icon="bk-icon icon-search">
                 </bk-input>
                 <bk-select
+                    v-if="MODE_CONFIG !== 'ci'"
                     v-model="query.type"
                     class="ml10 w250"
                     @change="handlerPaginationChange()"
@@ -33,11 +34,10 @@
             :outer-border="false"
             :row-border="false"
             size="small"
-            :row-style="({ row }) => ({ 'color': row.hasPermission ? '' : '#dcdee5 !important' })"
             @row-click="toPackageList">
             <template #empty>
                 <empty-data :search="Boolean(query.name || query.type)">
-                    <template v-if="!Boolean(query.name || query.type) && canCreate">
+                    <template v-if="!Boolean(query.name || query.type)">
                         <span class="ml10">暂无仓库数据，</span>
                         <bk-button text @click="createRepo">即刻创建</bk-button>
                     </template>
@@ -65,10 +65,10 @@
                 </template>
             </bk-table-column>
             <bk-table-column :label="$t('operation')" width="100">
-                <template #default="{ row }"><template v-if="row.hasPermission">
+                <template #default="{ row }">
                     <i class="mr10 devops-icon icon-cog hover-btn" @click.stop="toRepoConfig(row)"></i>
                     <i v-if="row.repoType !== 'generic'" class="devops-icon icon-delete hover-btn hover-danger" @click.stop="deleteRepo(row)"></i>
-                </template></template>
+                </template>
             </bk-table-column>
         </bk-table>
         <bk-pagination
@@ -96,9 +96,9 @@
         components: { createRepoDialog },
         data () {
             return {
+                MODE_CONFIG,
                 repoEnum,
                 isLoading: false,
-                canCreate: false,
                 repoList: [],
                 query: {
                     name: '',
@@ -125,19 +125,12 @@
         },
         created () {
             this.handlerPaginationChange()
-            this.getRepoPermission({
-                projectId: this.projectId,
-                action: 'create'
-            }).then(res => {
-                this.canCreate = res
-            })
         },
         methods: {
             formatDate,
             ...mapActions([
                 'getRepoList',
-                'deleteRepoList',
-                'getRepoPermission'
+                'deleteRepoList'
             ]),
             getListData () {
                 this.isLoading = true
@@ -160,8 +153,7 @@
             createRepo () {
                 this.$refs.createRepo.showDialogHandler()
             },
-            toPackageList ({ hasPermission, repoType, name }) {
-                if (!hasPermission) return
+            toPackageList ({ repoType, name }) {
                 this.$router.push({
                     name: repoType === 'generic' ? 'repoGeneric' : 'commonList',
                     params: {
@@ -173,8 +165,7 @@
                     }
                 })
             },
-            toRepoConfig ({ hasPermission, repoType, name }) {
-                if (!hasPermission) return
+            toRepoConfig ({ repoType, name }) {
                 this.$router.push({
                     name: 'repoConfig',
                     params: {
@@ -186,8 +177,7 @@
                     }
                 })
             },
-            deleteRepo ({ hasPermission, name }) {
-                if (!hasPermission) return
+            deleteRepo ({ name }) {
                 this.$confirm({
                     theme: 'danger',
                     message: this.$t('deleteRepoTitle', { name }),

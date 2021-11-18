@@ -74,7 +74,7 @@
         name: 'createRepo',
         data () {
             return {
-                repoEnum,
+                repoEnum: MODE_CONFIG === 'ci' ? ['generic'] : repoEnum,
                 show: false,
                 loading: false,
                 repoBaseInfo: {

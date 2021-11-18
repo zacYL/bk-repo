@@ -9,21 +9,18 @@
                 placeholder="请选择操作日期时间范围"
                 @change="handlerPaginationChange()">
             </bk-date-picker>
-            <bk-select
-                v-model="query.user"
+            <bk-tag-input
                 class="mr10 w250"
-                searchable
-                placeholder="请选择操作用户"
-                :enable-virtual-scroll="Object.values(userList).length > 3000"
-                :list="Object.values(userList)"
-                @change="handlerPaginationChange()">
-                <bk-option
-                    v-for="option in Object.values(userList)"
-                    :key="option.id"
-                    :id="option.id"
-                    :name="option.name">
-                </bk-option>
-            </bk-select>
+                v-model="query.user"
+                :list="Object.values(userList).filter(user => user.id !== 'anonymous')"
+                :search-key="['id', 'name']"
+                placeholder="请输入用户，按Enter键确认"
+                :max-data="1"
+                trigger="focus"
+                allow-create
+                @click.native.capture="query.user = []"
+                @select="handlerPaginationChange()">
+            </bk-tag-input>
         </div>
         <bk-table
             class="mt10"
@@ -33,8 +30,8 @@
             :row-border="false"
             size="small">
             <template #empty>
-                <empty-data :search="Boolean(query.time.length || query.user)">
-                    <template v-if="!Boolean(query.time.length || query.user)">
+                <empty-data :search="Boolean(isSearching)">
+                    <template v-if="!Boolean(isSearching)">
                         <span class="ml10">暂无操作记录</span>
                     </template>
                 </empty-data>
@@ -95,7 +92,7 @@
             return {
                 isLoading: false,
                 query: {
-                    user: '',
+                    user: [],
                     time: []
                 },
                 auditList: [],
@@ -138,9 +135,16 @@
             }
         },
         computed: {
-            ...mapState(['userList'])
+            ...mapState(['userList']),
+            isSearching () {
+                const { startTime, endTime, user } = this.$route.query
+                return startTime || endTime || user
+            }
         },
         created () {
+            const { startTime, endTime, user } = this.$route.query
+            startTime && endTime && (this.query.time = [new Date(startTime), new Date(endTime)])
+            user && this.query.user.push(user)
             this.handlerPaginationChange()
         },
         methods: {
@@ -151,15 +155,25 @@
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
                 this.pagination.current = current
                 this.pagination.limit = limit
-                this.getAuditListHandler()
+                let [startTime, endTime] = this.query.time
+                startTime = startTime instanceof Date ? startTime.toISOString() : undefined
+                endTime = endTime instanceof Date ? endTime.toISOString() : undefined
+                this.$router.replace({
+                    query: {
+                        ...this.$route.query,
+                        startTime,
+                        endTime,
+                        user: this.query.user[0]
+                    }
+                })
+                this.getAuditListHandler({ startTime, endTime })
             },
-            getAuditListHandler () {
+            getAuditListHandler ({ startTime, endTime }) {
                 this.isLoading = true
-                const [startTime, endTime] = this.query.time
                 this.getAuditList({
-                    startTime: startTime instanceof Date ? startTime.toISOString() : undefined,
-                    endTime: endTime instanceof Date ? endTime.toISOString() : undefined,
-                    operator: this.query.user || undefined,
+                    startTime,
+                    endTime,
+                    operator: this.query.user[0] || undefined,
                     current: this.pagination.current,
                     limit: this.pagination.limit
                 }).then(({ records, totalRecords }) => {

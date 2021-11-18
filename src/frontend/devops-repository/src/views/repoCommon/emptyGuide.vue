@@ -21,7 +21,7 @@
                 <div class="empty-guide-item-main flex-between-center">
                     <div class="ml20 empty-guide-item-subtitle">
                         {{ $t('tokenSubTitle') }}
-                        <router-link class="router-link" :to="{ name: 'repoToken' }">{{ $t('token') }}</router-link>
+                        <router-link class="router-link" :to="{ name: 'userCenter' }">{{ $t('token') }}</router-link>
                     </div>
                     <bk-button class="mt15" style="padding:0 8px;" theme="primary" @click="createToken">{{ $t('createToken') }}</bk-button>
                 </div>

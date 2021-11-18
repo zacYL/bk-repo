@@ -78,7 +78,7 @@
     import packageCard from '@/components/PackageCard'
     import InfiniteScroll from '@/components/InfiniteScroll'
     import typeSelect from './typeSelect'
-    import { mapState, mapActions } from 'vuex'
+    import { mapActions } from 'vuex'
     import { formatDate } from '@/utils'
     export default {
         name: 'repoSearch',
@@ -108,7 +108,6 @@
             }
         },
         computed: {
-            ...mapState(['userList']),
             projectId () {
                 return this.$route.params.projectId
             },

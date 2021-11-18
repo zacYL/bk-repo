@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset=UTF-8>
+        <meta name=viewport content="width=device-width,initial-scale=1">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="icon" href="/ui/favicon.ico" type="image/x-icon" />
+        <title>Devops制品库管理</title>
+    </head>
+<body>
+    <div id="app"></div>
+    <script>
+        var PAAS_SERVICE_URL = '__BK_HTTP_SCHEMA__://__BK_REPO_PAAS_FQDN__'
+        var DEVOPS_SITE_URL = '__BK_HTTP_SCHEMA__://__BK_CI_FQDN__'
+        var LOGIN_SERVICE_URL = PAAS_SERVICE_URL + '/login/'
+        // standalone: 独立部署模式
+        // ci: ci模式
+        var MODE_CONFIG = '__BK_REPO_DEPLOY_MODE__' || 'standalone'
+    </script>
+    <script>
+        window.getLoginUrl = function () {
+            const loginUrl = new URL(LOGIN_SERVICE_URL)
+            loginUrl.searchParams.append('c_url', location.origin)
+            return loginUrl.href
+        }
+    </script>
+</body>

@@ -1,45 +1,47 @@
 <template>
     <div class="bkrepo-user-container flex-align-center">
+        <div class="mr5 user-info-avatar">
+            <div :class="[
+                'avatar-letter',
+                `avatar-letter-${['green', 'yellow', 'red', 'blue'][(userInfo.name || userInfo.username).length % 4]}`
+            ]">
+                {{ (userInfo.name || userInfo.username)[0] }}
+            </div>
+        </div>
         <span>{{ userInfo.name || userInfo.username }}</span>
         <i class="ml5 bk-icon icon-angle-down"></i>
         <ul class="user-menu">
             <li class="flex-align-center" v-for="name in menuList" :key="name">
-                <router-link class="hover-btn" :to="{ name }">{{ $t(name) }}</router-link>
+                <router-link
+                    class="hover-btn flex-align-center"
+                    :to="{ name }">
+                    <Icon :name="name" size="14" />
+                    <span class="ml8 text-overflow">{{ $t(name) }}</span>
+                </router-link>
             </li>
-            <li class="flex-align-center">
-                <span class="hover-btn" @click="logout">{{ $t('logout') }}</span>
+            <li class="hover-btn flex-align-center">
+                <Icon name="repoLogout" size="14" />
+                <span class="ml8 text-overflow" @click="logout">{{ $t('logout') }}</span>
             </li>
         </ul>
     </div>
 </template>
 <script>
-    import { mapState, mapGetters, mapMutations, mapActions } from 'vuex'
-    import cookie from 'js-cookie'
+    import { mapState, mapActions } from 'vuex'
     export default {
         name: 'bkrepoUser',
         computed: {
             ...mapState(['userInfo']),
-            ...mapGetters(['masterNode']),
             menuList () {
                 return [
-                    this.userInfo.admin && this.isMasterNode && 'nodeManage',
-                    this.isMasterNode && 'planManage'
+                    'userCenter',
+                    'repoToken'
+                    // 'repoHelp'
                 ].filter(Boolean)
-            },
-            isMasterNode () {
-                return this.masterNode.url && this.masterNode.url.indexOf(location.origin) !== -1
             }
-        },
-        created () {
-            this.getClusterList()
         },
         methods: {
-            ...mapMutations(['SHOW_LOGIN_DIALOG']),
-            ...mapActions(['getClusterList']),
-            logout () {
-                cookie.remove('bkrepo_ticket')
-                this.SHOW_LOGIN_DIALOG()
-            }
+            ...mapActions(['logout'])
         }
     }
 </script>
@@ -55,13 +57,41 @@
         transition: all .3s;
         font-size: 22px;
     }
+    .user-info-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        font-size: 0;
+        overflow: hidden;
+        box-shadow: 0 0 5px 5px rgba(0, 0, 0, 0.1);
+        .avatar-letter {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            padding-bottom: 4px;
+            font-size: 16px;
+            color: white;
+            &-green {
+                background-color: #30D878;
+            }
+            &-yellow {
+                background-color: #FFB400;
+            }
+            &-red {
+                background-color: #FF5656;
+            }
+            &-blue {
+                background-color: #3a84ff;
+            }
+        }
+    }
     &:hover {
         .icon-angle-down {
             transform-origin: center;
             transform: rotate(-180deg);
         }
         .user-menu {
-            padding: 0 20px;
             display: initial;
         }
     }
@@ -70,20 +100,24 @@
         position: absolute;
         top: 50px;
         width: 100%;
-        border: solid var(--borderWeightColor);
+        padding: 10px 0 4px;
         box-shadow: 0 3px 6px rgba(51, 60, 72, 0.12);
         color: var(--fontPrimaryColor);
         background-color: white;
-        z-index: 11;
+        z-index: 3000;
         li {
-            height: 40px;
-            a {
-                color: var(--fontPrimaryColor);
-                cursor: pointer;
-                &:hover {
+            padding: 0 16px;
+            margin-bottom: 6px;
+            height: 30px;
+            &:hover {
+                a {
                     color: var(--primaryColor);
                 }
+                background-color: var(--bgHoverLighterColor);
             }
+        }
+        .ml8 {
+            margin-left: 8px;
         }
     }
 }

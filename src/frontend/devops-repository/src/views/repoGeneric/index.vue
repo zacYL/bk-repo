@@ -327,7 +327,8 @@
                     fullPath: this.searchFileName ? this.searchFullPath : this.selectedTreeNode.fullPath,
                     current: this.pagination.current,
                     limit: this.pagination.limit,
-                    sortType: this.sortType
+                    sortType: this.sortType,
+                    isPipeline: this.repoName === 'pipeline'
                 }).then(({ records, totalRecords }) => {
                     this.pagination.count = totalRecords
                     this.artifactoryList = records.map(v => {
@@ -542,13 +543,14 @@
                 return this.shareArtifactory({
                     projectId: this.projectId,
                     repoName: this.repoName,
-                    fullPath: this.selectedRow.fullPath,
-                    body: {
-                        // ...(data.ip.length ? { authorizedIpSet: data.ip } : {}),
-                        ...(data.user.length ? { authorizedUserSet: data.user } : {}),
-                        ...(Number(data.time) > 0 ? { expireSeconds: Number(data.time) * 86400 } : {})
-                        // ...(Number(data.permits) > 0 ? { permits: Number(data.permits) } : {})
-                    }
+                    fullPathSet: [this.selectedRow.fullPath],
+                    type: 'DOWNLOAD',
+                    host: `${location.origin}/web/generic`,
+                    needsNotify: true,
+                    ...(data.ip.length ? { authorizedIpSet: data.ip } : {}),
+                    ...(data.user.length ? { authorizedUserSet: data.user } : {}),
+                    ...(Number(data.time) > 0 ? { expireSeconds: Number(data.time) * 86400 } : {}),
+                    ...(Number(data.permits) > 0 ? { permits: Number(data.permits) } : {})
                 })
             },
             async deleteRes () {

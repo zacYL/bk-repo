@@ -162,8 +162,4 @@
         background-color: #FFE8C3;
     }
 }
-::v-deep .bk-sideslider-content {
-    height: calc(100% - 60px);
-    overflow: hidden;
-}
 </style>

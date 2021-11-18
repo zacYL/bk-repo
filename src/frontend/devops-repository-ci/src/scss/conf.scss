@@ -1,0 +1,30 @@
+// 存放常用变量
+:root {
+    // 主题色
+    --primaryColor: #3A84FF;
+    --successColor: #14AB5B;
+    --warningColor: #FFB549;
+    --dangerColor: #EA3736;
+    --subsidiaryColor: #7F96BC;
+    
+    // 字体色
+    --fontPrimaryColor: #081E40;
+    --fontSubsidiaryColor: #8797AA;
+    --fontTipColor: #CBD5E0;
+    --fontDisableColor: #CBD5E0;
+
+    // 边框色
+    --borderColor: #E5EAF0; // 50% #CBD5E0 相对较浅，常用于容器边框色
+    --borderWeightColor: #CBD5E0; // 相对较深，常用于输入框边框色
+    --boxShadowColor: #b1b1b1;
+    --primaryBoxShadowColor : #9cc1ff; // 50% #3A84FF
+    
+    // 背景色
+    --bgColor: #FAFBFD;
+    --bgHoverColor: #EBF2FF;
+    --bgLighterColor: #F9FBFF; // 3% 3a84ff
+    --bgHoverLighterColor: #EBF2FF; // 10% 3a84ff
+    --bgWeightColor: #F0F2F4;
+    --primaryHoverColor: #619DFF;
+}
+

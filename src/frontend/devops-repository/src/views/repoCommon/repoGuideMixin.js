@@ -573,6 +573,12 @@ export default {
                 }
             ]
         },
+        gitGuide () {
+            return []
+        },
+        gitInstall () {
+            return []
+        },
         nugetGuide () {
             return [
                 {

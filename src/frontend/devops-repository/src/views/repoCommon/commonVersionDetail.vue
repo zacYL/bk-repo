@@ -53,7 +53,7 @@
         </bk-tab-panel>
         <bk-tab-panel v-if="detail.metadata" name="versionMetaData" :label="$t('metaData')">
             <div class="version-metadata" data-title="元数据">
-                <div class="version-metadata-add" v-bk-clickoutside="hiddenAddMetadata">
+                <!-- <div class="version-metadata-add" v-bk-clickoutside="hiddenAddMetadata">
                     <i @click="metadata.show ? hiddenAddMetadata() : showAddMetadata()" class="devops-icon icon-plus flex-center hover-btn"></i>
                     <div class="version-metadata-add-board"
                         :style="{ height: metadata.show ? '180px' : '0' }">
@@ -70,7 +70,7 @@
                             </bk-form-item>
                         </bk-form>
                     </div>
-                </div>
+                </div> -->
                 <bk-table
                     :data="Object.entries(detail.metadata || {})"
                     :outer-border="false"

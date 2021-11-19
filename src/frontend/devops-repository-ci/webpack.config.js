@@ -16,7 +16,7 @@ module.exports = (env, argv) => {
             repository: './src/main.js'
         },
         publicPath: '/ui/',
-        dist: '/ui',
+        dist: '/ui-ci',
         port: 8086
     })
     config.plugins.pop()

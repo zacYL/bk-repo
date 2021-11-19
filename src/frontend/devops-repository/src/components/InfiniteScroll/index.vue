@@ -80,7 +80,7 @@
             justify-content: center;
             align-items: center;
             color: var(--fontTipColor);
-            .devops-icon {
+            .icon-circle-2-1 {
                 margin-right: 8px;
             }
         }

@@ -141,7 +141,7 @@
         flex: 1;
         height: 100%;
         background-image: url('/ui/bg_login.png');
-        background-position:center;
+        background-position: center left;
         background-size: cover;
     }
     .login-main {

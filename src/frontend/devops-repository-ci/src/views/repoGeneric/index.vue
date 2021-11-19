@@ -545,7 +545,7 @@
                     fullPath: this.selectedRow.fullPath,
                     body: {
                         // ...(data.ip.length ? { authorizedIpSet: data.ip } : {}),
-                        ...(data.user.length ? { authorizedUserSet: data.user } : {}),
+                        ...(data.user.length ? { authorizedUserList: data.user } : {}),
                         ...(Number(data.time) > 0 ? { expireSeconds: Number(data.time) * 86400 } : {})
                         // ...(Number(data.permits) > 0 ? { permits: Number(data.permits) } : {})
                     }

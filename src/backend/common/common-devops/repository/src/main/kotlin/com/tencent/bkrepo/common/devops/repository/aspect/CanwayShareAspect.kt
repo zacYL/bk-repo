@@ -4,16 +4,16 @@ import com.tencent.bkrepo.auth.api.ServiceUserResource
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
-import com.tencent.bkrepo.common.devops.api.conf.DevopsConf
 import com.tencent.bkrepo.common.devops.api.conf.CanwayMailConf
+import com.tencent.bkrepo.common.devops.api.conf.DevopsConf
 import com.tencent.bkrepo.common.devops.api.pojo.BkMailMessage
 import com.tencent.bkrepo.common.devops.api.pojo.DevopsMailMessage
-import com.tencent.bkrepo.common.devops.repository.mail.CanwayMailTemplate
 import com.tencent.bkrepo.common.devops.api.pojo.FileShareInfo
+import com.tencent.bkrepo.common.devops.api.repository
 import com.tencent.bkrepo.common.devops.api.service.BkUserService
 import com.tencent.bkrepo.common.devops.api.util.http.CanwayHttpUtils
-import com.tencent.bkrepo.common.devops.api.repository
 import com.tencent.bkrepo.common.devops.api.web
+import com.tencent.bkrepo.common.devops.repository.mail.CanwayMailTemplate
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.pojo.share.ShareRecordCreateRequest
 import com.tencent.bkrepo.repository.pojo.share.ShareRecordInfo
@@ -64,9 +64,8 @@ class CanwayShareAspect(
         try {
             if (result != null) {
                 val shareRecordInfo = result as ShareRecordInfo
-                val downloadUrl = with(shareRecordInfo) {
-                    "${bkrepoHost.removeSuffix("/")}$web$repository$shareUrl"
-                }
+                val shareUrl = shareRecordInfo.shareUrl.reversed().replaceFirst('?', '&').reversed()
+                val downloadUrl = "${bkrepoHost.removeSuffix("/")}?redirect=$web$repository$shareUrl"
                 val fileShareInfo = FileShareInfo(
                     fileName = fileName,
                     md5 = node.md5 ?: "Can not found md5 value",

@@ -91,3 +91,4 @@ const val AUTH_BUILTIN_VIEWER = "repo_viewer"
 const val PROJECT_MANAGE_PERMISSION = "project_manage_permission"
 const val PROJECT_VIEW_PERMISSION = "project_view_permission"
 
+const val BK_SOFTWARE = "bksoftware"

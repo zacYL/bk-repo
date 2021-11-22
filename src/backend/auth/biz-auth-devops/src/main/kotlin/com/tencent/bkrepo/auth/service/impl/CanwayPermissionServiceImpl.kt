@@ -110,7 +110,7 @@ class CanwayPermissionServiceImpl(
         }
         val result = permissionRepository.insert(
             TPermission(
-                resourceType = request.resourceType.name,
+                resourceType = request.resourceType,
                 projectId = request.projectId,
                 permName = request.permName,
                 repos = request.repos,

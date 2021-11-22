@@ -59,7 +59,7 @@ open class PermissionManager(
     private val httpAuthProperties: HttpAuthProperties
 ) {
 
-    private val permissionList = arrayOf(PermissionAction.ARTIFACT_READWRITE, PermissionAction.ARTIFACT_READ)
+    private val permissionList = arrayOf(PermissionAction.WRITE, PermissionAction.READ)
 
     /**
      * 校验项目权限
@@ -70,9 +70,7 @@ open class PermissionManager(
         action: PermissionAction,
         projectId: String
     ) {
-        //CI 项目权限交由权限中心管理
-        return
-//        checkPermission(ResourceType.PROJECT, action, projectId)
+        checkPermission(ResourceType.PROJECT, action, projectId)
     }
 
     /**
@@ -182,12 +180,7 @@ open class PermissionManager(
         repoName: String,
         public: Boolean? = null
     ): Boolean {
-        val permissionSet = setOf(
-            PermissionAction.READ,
-            PermissionAction.ARTIFACT_DOWNLOAD,
-            PermissionAction.ARTIFACT_READ
-        )
-        if (!permissionSet.contains(action)) {
+        if (action != PermissionAction.READ) {
             return false
         }
         return public ?: queryRepositoryInfo(projectId, repoName).public

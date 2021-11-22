@@ -119,7 +119,7 @@ class UserImpl @Autowired constructor(val dockerRepo: DockerV2LocalRepoService) 
         return ResponseBuilder.success(result)
     }
 
-    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_DELETE)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.DELETE)
     override fun deleteRepo(
         request: HttpServletRequest,
         userId: String?,
@@ -134,7 +134,7 @@ class UserImpl @Autowired constructor(val dockerRepo: DockerV2LocalRepoService) 
         return ResponseBuilder.success(result)
     }
 
-    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_DELETE)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.DELETE)
     override fun deleteRepoTag(
         request: HttpServletRequest,
         userId: String?,
@@ -150,7 +150,7 @@ class UserImpl @Autowired constructor(val dockerRepo: DockerV2LocalRepoService) 
         return ResponseBuilder.success(result)
     }
 
-    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_READ)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
     override fun getRepoTagDetail(
         request: HttpServletRequest,
         userId: String?,

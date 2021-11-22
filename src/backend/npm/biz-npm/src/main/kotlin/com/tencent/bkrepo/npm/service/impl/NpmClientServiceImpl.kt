@@ -45,8 +45,6 @@ import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
-import com.tencent.bkrepo.npm.handler.NpmDependentHandler
-import com.tencent.bkrepo.npm.handler.NpmPackageHandler
 import com.tencent.bkrepo.npm.constants.ATTRIBUTE_OCTET_STREAM_SHA1
 import com.tencent.bkrepo.npm.constants.CREATED
 import com.tencent.bkrepo.npm.constants.LATEST
@@ -59,12 +57,14 @@ import com.tencent.bkrepo.npm.exception.NpmArtifactExistException
 import com.tencent.bkrepo.npm.exception.NpmArtifactNotFoundException
 import com.tencent.bkrepo.npm.exception.NpmBadRequestException
 import com.tencent.bkrepo.npm.exception.NpmTagNotExistException
+import com.tencent.bkrepo.npm.handler.NpmDependentHandler
+import com.tencent.bkrepo.npm.handler.NpmPackageHandler
 import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
 import com.tencent.bkrepo.npm.model.metadata.NpmVersionMetadata
+import com.tencent.bkrepo.npm.model.properties.PackageProperties
 import com.tencent.bkrepo.npm.pojo.NpmSearchInfoMap
 import com.tencent.bkrepo.npm.pojo.NpmSearchResponse
 import com.tencent.bkrepo.npm.pojo.NpmSuccessResponse
-import com.tencent.bkrepo.npm.model.properties.PackageProperties
 import com.tencent.bkrepo.npm.pojo.enums.NpmOperationAction
 import com.tencent.bkrepo.npm.pojo.metadata.MetadataSearchRequest
 import com.tencent.bkrepo.npm.pojo.metadata.disttags.DistTags
@@ -91,7 +91,7 @@ class NpmClientServiceImpl(
     private val npmPackageHandler: NpmPackageHandler
 ) : NpmClientService, AbstractNpmService() {
 
-    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_READWRITE)
+    @Permission(ResourceType.REPO, PermissionAction.WRITE)
     @Transactional(rollbackFor = [Throwable::class])
     override fun publishOrUpdatePackage(
         userId: String,
@@ -158,7 +158,7 @@ class NpmClientServiceImpl(
         }
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_DOWNLOAD)
+    @Permission(ResourceType.REPO, PermissionAction.READ)
     @Transactional(rollbackFor = [Throwable::class])
     override fun download(artifactInfo: NpmArtifactInfo) {
         val context = ArtifactDownloadContext()
@@ -176,7 +176,7 @@ class NpmClientServiceImpl(
         return NpmSearchResponse(npmSearchInfoMapList)
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_READ)
+    @Permission(ResourceType.REPO, PermissionAction.READ)
     override fun getDistTags(artifactInfo: NpmArtifactInfo, name: String): DistTags {
         with(artifactInfo) {
             logger.info("handling get distTags request for package [$name] in repo [$projectId/$repoName]")
@@ -185,7 +185,7 @@ class NpmClientServiceImpl(
         }
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_READ)
+    @Permission(ResourceType.REPO, PermissionAction.READ)
     override fun addDistTags(userId: String, artifactInfo: NpmArtifactInfo, name: String, tag: String) {
         logger.info(
             "handling add distTags [$tag] request for package [$name] " +
@@ -199,7 +199,7 @@ class NpmClientServiceImpl(
         }
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_READ)
+    @Permission(ResourceType.REPO, PermissionAction.READ)
     override fun deleteDistTags(userId: String, artifactInfo: NpmArtifactInfo, name: String, tag: String) {
         logger.info(
             "handling delete distTags [$tag] request for package [$name] " +
@@ -217,7 +217,7 @@ class NpmClientServiceImpl(
         doPackageFileUpload(userId, artifactInfo, packageMetaData)
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_DELETE)
+    @Permission(ResourceType.REPO, PermissionAction.DELETE)
     override fun updatePackage(userId: String, artifactInfo: NpmArtifactInfo, name: String) {
         logger.info("handling update package request for package [$name] in repo [${artifactInfo.getRepoIdentify()}]")
         val packageMetadata =
@@ -225,7 +225,7 @@ class NpmClientServiceImpl(
         doPackageFileUpload(userId, artifactInfo, packageMetadata)
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_DELETE)
+    @Permission(ResourceType.REPO, PermissionAction.DELETE)
     override fun deleteVersion(
         artifactInfo: NpmArtifactInfo,
         name: String,
@@ -251,7 +251,7 @@ class NpmClientServiceImpl(
         }
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_DELETE)
+    @Permission(ResourceType.REPO, PermissionAction.DELETE)
     override fun deletePackage(userId: String, artifactInfo: NpmArtifactInfo, name: String) {
         logger.info("handling delete package request for package [$name]")
         val fullPathList = mutableListOf<String>()

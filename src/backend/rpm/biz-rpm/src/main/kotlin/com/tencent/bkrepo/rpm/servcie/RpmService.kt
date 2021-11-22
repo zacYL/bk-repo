@@ -40,9 +40,9 @@ import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.configuration.RepositoryConfiguration
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
 import com.tencent.bkrepo.common.artifact.repository.core.ArtifactRepository
 import com.tencent.bkrepo.common.artifact.repository.core.ArtifactService
 import com.tencent.bkrepo.common.security.permission.Permission
@@ -65,7 +65,7 @@ class RpmService(
     // groups 中不允许的元素
     private val rpmIndexSet = mutableSetOf(REPOMD_XML, FILELISTS_XML, OTHERS_XML, PRIMARY_XML)
 
-    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_READ)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
     fun install(rpmArtifactInfo: RpmArtifactInfo) {
         val context = ArtifactDownloadContext()
         if (rpmArtifactInfo.getArtifactFullPath().endsWith(REPOMD_XML)) {
@@ -87,13 +87,13 @@ class RpmService(
         }
     }
 
-    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_READWRITE)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
     fun deploy(rpmArtifactInfo: RpmArtifactInfo, file: ArtifactFile) {
         val context = ArtifactUploadContext(file)
         repository.upload(context)
     }
 
-    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_READWRITE)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
     fun addGroups(rpmArtifactInfo: RpmArtifactInfo, groups: MutableSet<String>) {
         val context = ArtifactSearchContext()
         groups.removeAll(rpmIndexSet)
@@ -110,7 +110,7 @@ class RpmService(
         (repository as RpmLocalRepository).flushAllRepoData(context)
     }
 
-    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_READWRITE)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
     fun deleteGroups(rpmArtifactInfo: RpmArtifactInfo, groups: MutableSet<String>) {
         val context = ArtifactSearchContext()
         val rpmConfiguration = getRpmRepoConf(context.projectId, context.repoName)

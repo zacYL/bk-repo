@@ -79,7 +79,7 @@ class UserRepositoryController(
         @ApiParam(value = "仓库类型", required = true)
         @PathVariable type: String? = null
     ): Response<RepositoryInfo?> {
-        permissionManager.checkPermission(ResourceType.REPO, PermissionAction.ARTIFACT_READ, projectId, repoName)
+        permissionManager.checkPermission(ResourceType.REPO, PermissionAction.READ, projectId, repoName)
         return ResponseBuilder.success(repositoryService.getRepoInfo(projectId, repoName))
     }
 
@@ -101,7 +101,7 @@ class UserRepositoryController(
         @RequestBody userRepoCreateRequest: UserRepoCreateRequest
     ): Response<Void> {
         val createRequest = with(userRepoCreateRequest) {
-//            permissionManager.checkProjectPermission(PermissionAction.MANAGE, projectId)
+            permissionManager.checkProjectPermission(PermissionAction.MANAGE, projectId)
             RepoCreateRequest(
                 projectId = projectId,
                 name = name,
@@ -201,7 +201,7 @@ class UserRepositoryController(
         @ApiParam(value = "是否强制删除", required = false)
         @RequestParam forced: Boolean = false
     ): Response<Void> {
-        permissionManager.checkPermission(ResourceType.REPO, PermissionAction.REPO_MANAGE, projectId, repoName)
+        permissionManager.checkPermission(ResourceType.REPO, PermissionAction.MANAGE, projectId, repoName)
         repositoryService.deleteRepo(RepoDeleteRequest(projectId, repoName, forced, userId))
         return ResponseBuilder.success()
     }
@@ -217,7 +217,7 @@ class UserRepositoryController(
         @PathVariable repoName: String,
         @RequestBody request: UserRepoUpdateRequest
     ): Response<Void> {
-        permissionManager.checkPermission(ResourceType.REPO, PermissionAction.REPO_MANAGE, projectId, repoName)
+        permissionManager.checkPermission(ResourceType.REPO, PermissionAction.MANAGE, projectId, repoName)
         val repoUpdateRequest = RepoUpdateRequest(
             projectId = projectId,
             name = repoName,

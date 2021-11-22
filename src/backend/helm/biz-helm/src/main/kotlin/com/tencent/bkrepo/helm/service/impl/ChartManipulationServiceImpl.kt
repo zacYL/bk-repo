@@ -41,7 +41,6 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadConte
 import com.tencent.bkrepo.common.artifact.resolve.file.multipart.MultipartArtifactFile
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.security.permission.Permission
-import com.tencent.bkrepo.helm.handler.HelmPackageHandler
 import com.tencent.bkrepo.helm.constants.CHART
 import com.tencent.bkrepo.helm.constants.CHART_PACKAGE_FILE_EXTENSION
 import com.tencent.bkrepo.helm.constants.FULL_PATH
@@ -49,6 +48,7 @@ import com.tencent.bkrepo.helm.constants.PROV
 import com.tencent.bkrepo.helm.constants.SIZE
 import com.tencent.bkrepo.helm.exception.HelmErrorInvalidProvenanceFileException
 import com.tencent.bkrepo.helm.exception.HelmFileNotFoundException
+import com.tencent.bkrepo.helm.handler.HelmPackageHandler
 import com.tencent.bkrepo.helm.listener.event.ChartDeleteEvent
 import com.tencent.bkrepo.helm.listener.event.ChartVersionDeleteEvent
 import com.tencent.bkrepo.helm.pojo.artifact.HelmArtifactInfo
@@ -135,7 +135,7 @@ class ChartManipulationServiceImpl(
         return Pair(nameMatch[1], versionMatch[1])
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_DELETE)
+    @Permission(ResourceType.REPO, PermissionAction.DELETE)
     @Transactional(rollbackFor = [Throwable::class])
     override fun deleteVersion(userId: String, artifactInfo: HelmDeleteArtifactInfo) {
         logger.info("handling delete chart version request: [$artifactInfo]")
@@ -152,7 +152,7 @@ class ChartManipulationServiceImpl(
         }
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_DELETE)
+    @Permission(ResourceType.REPO, PermissionAction.DELETE)
     @Transactional(rollbackFor = [Throwable::class])
     override fun deletePackage(userId: String, artifactInfo: HelmDeleteArtifactInfo) {
         logger.info("handling delete chart request: [$artifactInfo]")

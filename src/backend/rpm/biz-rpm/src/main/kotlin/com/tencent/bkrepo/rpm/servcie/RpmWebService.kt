@@ -38,8 +38,8 @@ import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchContext
 import com.tencent.bkrepo.common.artifact.repository.core.ArtifactService
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.rpm.artifact.RpmArtifactInfo
@@ -49,19 +49,19 @@ import org.springframework.stereotype.Service
 @Service
 class RpmWebService : ArtifactService() {
 
-    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_DELETE)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.DELETE)
     fun deletePackage(rpmArtifactInfo: RpmArtifactInfo, packageKey: String) {
         val context = ArtifactRemoveContext()
         repository.remove(context)
     }
 
-    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_DELETE)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.DELETE)
     fun delete(rpmArtifactInfo: RpmArtifactInfo, packageKey: String, version: String?) {
         val context = ArtifactRemoveContext()
         repository.remove(context)
     }
 
-    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_READ)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
     fun artifactDetail(rpmArtifactInfo: RpmArtifactInfo, packageKey: String, version: String?): Any? {
         val context = ArtifactQueryContext()
         return repository.query(context)

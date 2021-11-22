@@ -52,10 +52,10 @@ import com.tencent.bkrepo.helm.constants.NO_CHART_NAME_FOUND
 import com.tencent.bkrepo.helm.constants.PROJECT_ID
 import com.tencent.bkrepo.helm.constants.REPO_NAME
 import com.tencent.bkrepo.helm.exception.HelmFileNotFoundException
-import com.tencent.bkrepo.helm.pojo.metadata.HelmChartMetadata
-import com.tencent.bkrepo.helm.pojo.metadata.HelmIndexYamlMetadata
 import com.tencent.bkrepo.helm.pojo.HelmDomainInfo
 import com.tencent.bkrepo.helm.pojo.artifact.HelmArtifactInfo
+import com.tencent.bkrepo.helm.pojo.metadata.HelmChartMetadata
+import com.tencent.bkrepo.helm.pojo.metadata.HelmIndexYamlMetadata
 import com.tencent.bkrepo.helm.pojo.user.BasicInfo
 import com.tencent.bkrepo.helm.pojo.user.PackageVersionInfo
 import com.tencent.bkrepo.helm.service.ChartInfoService
@@ -170,7 +170,7 @@ class ChartInfoServiceImpl(
         response.status = status.value()
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_READ)
+    @Permission(ResourceType.REPO, PermissionAction.READ)
     override fun detailVersion(
         userId: String,
         artifactInfo: HelmArtifactInfo,

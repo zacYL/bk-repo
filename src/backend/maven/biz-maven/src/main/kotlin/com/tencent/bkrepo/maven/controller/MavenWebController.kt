@@ -46,13 +46,13 @@ class MavenWebController(
     private val mavenService: MavenService
 ) : MavenWebResource {
 
-    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_DELETE)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.DELETE)
     override fun deletePackage(mavenArtifactInfo: MavenArtifactInfo, packageKey: String): Response<Void> {
         mavenService.delete(mavenArtifactInfo, packageKey, null)
         return ResponseBuilder.success()
     }
 
-    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_DELETE)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.DELETE)
     override fun deleteVersion(
         mavenArtifactInfo: MavenArtifactInfo,
         packageKey: String,
@@ -62,7 +62,7 @@ class MavenWebController(
         return ResponseBuilder.success()
     }
 
-    @Permission(type = ResourceType.REPO, action = PermissionAction.ARTIFACT_READ)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
     override fun artifactDetail(
         mavenArtifactInfo: MavenArtifactInfo,
         packageKey: String,

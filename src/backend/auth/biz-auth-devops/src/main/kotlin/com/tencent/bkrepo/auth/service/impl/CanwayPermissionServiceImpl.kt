@@ -1,35 +1,30 @@
 package com.tencent.bkrepo.auth.service.impl
 
+import com.tencent.bkrepo.auth.ciApi
 import com.tencent.bkrepo.auth.ciPermission
-import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_ADMIN
-import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_USER
-import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_VIEWER
 import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.model.TPermission
+import com.tencent.bkrepo.auth.pojo.CanwayPermissionDepartment
+import com.tencent.bkrepo.auth.pojo.CanwayPermissionResult
+import com.tencent.bkrepo.auth.pojo.CanwayPermissionRole
+import com.tencent.bkrepo.auth.pojo.RegisterResourceRequest
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
+import com.tencent.bkrepo.auth.pojo.enums.RoleType
+import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
+import com.tencent.bkrepo.auth.pojo.permission.CreatePermissionRequest
+import com.tencent.bkrepo.auth.pojo.permission.ListRepoPermissionRequest
+import com.tencent.bkrepo.auth.pojo.permission.Permission
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionActionRequest
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionDepartmentRequest
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionPathRequest
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRepoRequest
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRoleRequest
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionUserRequest
 import com.tencent.bkrepo.auth.repository.PermissionRepository
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
 import com.tencent.bkrepo.auth.service.DepartmentService
-import com.tencent.bkrepo.auth.ciApi
-import com.tencent.bkrepo.auth.constant.AUTH_ADMIN
-import com.tencent.bkrepo.auth.pojo.ActionCollection
-import com.tencent.bkrepo.auth.pojo.RegisterResourceRequest
-import com.tencent.bkrepo.auth.pojo.CanwayPermissionDepartment
-import com.tencent.bkrepo.auth.pojo.CanwayPermissionResult
-import com.tencent.bkrepo.auth.pojo.CanwayPermissionRole
-import com.tencent.bkrepo.auth.pojo.enums.RoleType
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionPathRequest
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionActionRequest
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRepoRequest
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRoleRequest
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionUserRequest
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionDepartmentRequest
-import com.tencent.bkrepo.auth.pojo.permission.Permission
-import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
-import com.tencent.bkrepo.auth.pojo.permission.ListRepoPermissionRequest
-import com.tencent.bkrepo.auth.pojo.permission.CreatePermissionRequest
 import com.tencent.bkrepo.auth.service.local.PermissionServiceImpl
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
@@ -48,7 +43,6 @@ import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
@@ -97,51 +91,9 @@ class CanwayPermissionServiceImpl(
         if (checkUserHasProjectPermission(request.uid)) return true
         val canwayPermissionResult = canwayCheckPermission(request)
         if (!canwayPermissionResult.hasPermission) return false
-        val action = PermissionAction.valueOf(request.action)
-        if (ActionCollection.isCanwayAction(action)) {
-            val actions = ActionCollection.getActionsByCanway(action)
-            for (ac in actions) {
-                val tempRequest = request.copy(
-                    action = ac.name,
-                    role = canwayPermissionResult.roles,
-                    department = canwayPermissionResult.departments
-                )
-                val result = originCheckPermission(tempRequest)
-                if (!result) return false
-            }
-            return true
-        }
+        val result = originCheckPermission(request)
+        if (!result) return false
         return originCheckPermission(request)
-    }
-
-    override fun listBuiltinPermission(projectId: String, repoName: String): List<Permission> {
-        logger.info("list  builtin permission  projectId: [$projectId], repoName: [$repoName]")
-        val repoAdmin = getOnePermission(
-            projectId, repoName, AUTH_BUILTIN_ADMIN,
-            ActionCollection.getDefaultAdminBuiltinPermission(repoName)
-        )
-        val repoUser = getOnePermission(
-            projectId,
-            repoName,
-            AUTH_BUILTIN_USER,
-            ActionCollection.getDefaultUserBuiltinPermission(repoName)
-        )
-        val repoViewer = getOnePermission(
-            projectId, repoName, AUTH_BUILTIN_VIEWER,
-            ActionCollection.getDefaultViewerBuiltinPermission(repoName)
-        )
-        val permissions = listOf(repoAdmin, repoUser, repoViewer).map { transferPermission(it) }
-        // 过滤非业务权限
-        val targetPermissions = mutableListOf<Permission>()
-        for (permission in permissions) {
-            val actions = permission.actions
-            val targetActions = mutableSetOf<String>()
-            for (action in actions) {
-                if (ActionCollection.isCanwayAction(PermissionAction.valueOf(action))) targetActions.add(action)
-            }
-            targetPermissions.add(permission.copy(actions = targetActions.map { it }))
-        }
-        return targetPermissions
     }
 
     override fun createPermission(request: CreatePermissionRequest): Boolean {
@@ -205,7 +157,7 @@ class CanwayPermissionServiceImpl(
 
     fun listRepoPermission(request: ListRepoPermissionRequest): List<String> {
         logger.debug("list repo permission  request : [$request] ")
-        if (request.repoNames.isNullOrEmpty()) return emptyList()
+        if (request.repoNames.isEmpty()) return emptyList()
         val user = userRepository.findFirstByUserId(request.uid) ?: run {
             throw ErrorCodeException(AuthMessageCode.AUTH_USER_NOT_EXIST)
         }
@@ -379,47 +331,6 @@ class CanwayPermissionServiceImpl(
         return emptyList()
     }
 
-    private fun getOnePermission(
-        projectId: String,
-        repoName: String,
-        permName: String,
-        actions: List<PermissionAction>
-    ): TPermission {
-        logger.info("start check permission : $projectId, $repoName, $permName , $actions")
-        return findPermission(projectId, repoName, permName) ?: run {
-            val request = TPermission(
-                projectId = projectId,
-                repos = listOf(repoName),
-                permName = permName,
-                actions = actions.map { it.name },
-                resourceType = ResourceType.REPO.name,
-                createAt = LocalDateTime.now(),
-                updateAt = LocalDateTime.now(),
-                createBy = AUTH_ADMIN,
-                updatedBy = AUTH_ADMIN
-            )
-            if (logger.isDebugEnabled) {
-                logger.debug("create permission request [$request]")
-            }
-            try {
-                permissionRepository.insert(request)
-            } catch (exception: DuplicateKeyException) {
-                logger.error("insert permission [$request] error: [${exception.message}]")
-                findPermission(projectId, repoName, permName)!!
-            }
-        }
-    }
-
-    private fun findPermission(projectId: String, repoName: String, permName: String): TPermission? {
-        logger.info("find permission : $projectId, $repoName, $permName ")
-        return permissionRepository.findOneByProjectIdAndReposContainsAndPermNameAndResourceType(
-            projectId,
-            repoName,
-            permName,
-            ResourceType.REPO
-        )
-    }
-
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     private fun isBkrepoAdmin(request: CheckPermissionRequest): Boolean {
@@ -467,18 +378,7 @@ class CanwayPermissionServiceImpl(
         if (api.startsWith("api", ignoreCase = true)) {
             if (!checkPermissionById(request.permissionId)) throw PermissionException()
         }
-        val actions = request.actions
-        val targetActions = mutableSetOf<PermissionAction>()
-        for (action in actions) {
-            if (ActionCollection.isCanwayAction(action)) {
-                targetActions.addAll(ActionCollection.getActionsByCanway(action))
-            }
-            targetActions.add(action)
-        }
-        val targetRequest = request.copy(
-            actions = targetActions.map { it }
-        )
-        return super.updatePermissionAction(targetRequest)
+        return super.updatePermissionAction(request)
     }
 
     private fun checkUserHasProjectPermission(operator: String): Boolean {
@@ -534,7 +434,7 @@ class CanwayPermissionServiceImpl(
         val checkPermissionRequest = CheckPermissionRequest(
             uid = userId,
             resourceType = ResourceType.REPO.name,
-            action = PermissionAction.REPO_MANAGE.name,
+            action = PermissionAction.MANAGE.name,
             projectId = tPermission.projectId,
             repoName = tPermission.repos.first()
         )

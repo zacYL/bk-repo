@@ -34,9 +34,10 @@ package com.tencent.bkrepo.repository.listener
 import com.tencent.bkrepo.auth.api.ServiceRoleResource
 import com.tencent.bkrepo.auth.api.ServiceUserResource
 import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
+import com.tencent.bkrepo.common.artifact.event.project.ProjectCreatedEvent
+import com.tencent.bkrepo.common.artifact.event.repo.RepoCreatedEvent
 import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
-import com.tencent.bkrepo.common.artifact.event.repo.RepoCreatedEvent
 import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Component
@@ -55,17 +56,17 @@ class ResourcePermissionListener(
     /**
      * 创建项目时，为当前用户创建对应项目的管理员权限
      */
-//    @Async
-//    @EventListener(ProjectCreatedEvent::class)
-//    fun handle(event: ProjectCreatedEvent) {
-//        with(event) {
-//            if (isAuthedNormalUser(userId)) {
-//                permissionManager.registerProject(userId, projectId)
-//                val projectManagerRoleId = roleResource.createProjectManage(projectId).data!!
-//                userResource.addUserRole(userId, projectManagerRoleId)
-//            }
-//        }
-//    }
+    @Async
+    @EventListener(ProjectCreatedEvent::class)
+    fun handle(event: ProjectCreatedEvent) {
+        with(event) {
+            if (isAuthedNormalUser(userId)) {
+                //permissionManager.registerProject(userId, projectId)
+                //val projectManagerRoleId = roleResource.createProjectManage(projectId).data!!
+                //userResource.addUserRole(userId, projectManagerRoleId)
+            }
+        }
+    }
 
     /**
      * 创建仓库时，为当前用户创建对应仓库的管理员权限
@@ -75,9 +76,9 @@ class ResourcePermissionListener(
     fun handle(event: RepoCreatedEvent) {
         with(event) {
             if (isAuthedNormalUser(userId)) {
-//                permissionManager.registerRepo(userId, projectId, repoName)
-                val repoManagerRoleId = roleResource.createRepoManage(projectId, repoName).data!!
-                userResource.addUserRole(userId, repoManagerRoleId)
+                //permissionManager.registerRepo(userId, projectId, repoName)
+                //val repoManagerRoleId = roleResource.createRepoManage(projectId, repoName).data!!
+                //userResource.addUserRole(userId, repoManagerRoleId)
                 permissionManager.listRepoBuiltInPermission(projectId, repoName)
             }
         }

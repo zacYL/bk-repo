@@ -37,20 +37,7 @@ enum class PermissionAction {
     READ,
     VIEW,
     UPDATE,
-    DELETE,
-
-    // canway extend
-    REPO_MANAGE,
-    FOLDER_MANAGE,
-    ARTIFACT_COPY,
-    ARTIFACT_RENAME,
-    ARTIFACT_MOVE,
-    ARTIFACT_SHARE,
-    ARTIFACT_DOWNLOAD,
-    ARTIFACT_READWRITE,
-    ARTIFACT_READ,
-    ARTIFACT_DELETE,
-    ARTIFACT_UPDATE;
+    DELETE;
 
     fun id() = this.name.toLowerCase()
 }

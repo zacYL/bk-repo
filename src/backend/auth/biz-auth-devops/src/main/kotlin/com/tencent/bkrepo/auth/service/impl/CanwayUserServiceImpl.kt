@@ -1,8 +1,8 @@
 package com.tencent.bkrepo.auth.service.impl
 
 import com.mongodb.BasicDBObject
-import com.tencent.bkrepo.auth.ciPermission
 import com.tencent.bkrepo.auth.ciApi
+import com.tencent.bkrepo.auth.ciPermission
 import com.tencent.bkrepo.auth.ciUserManager
 import com.tencent.bkrepo.auth.constant.DEFAULT_PASSWORD
 import com.tencent.bkrepo.auth.message.AuthMessageCode
@@ -12,10 +12,10 @@ import com.tencent.bkrepo.auth.pojo.DevopsUser
 import com.tencent.bkrepo.auth.pojo.token.Token
 import com.tencent.bkrepo.auth.pojo.token.TokenResult
 import com.tencent.bkrepo.auth.pojo.user.CreateUserRequest
-import com.tencent.bkrepo.auth.pojo.user.CreateUserToRepoRequest
 import com.tencent.bkrepo.auth.pojo.user.CreateUserToProjectRequest
-import com.tencent.bkrepo.auth.pojo.user.User
+import com.tencent.bkrepo.auth.pojo.user.CreateUserToRepoRequest
 import com.tencent.bkrepo.auth.pojo.user.UpdateUserRequest
+import com.tencent.bkrepo.auth.pojo.user.User
 import com.tencent.bkrepo.auth.pojo.user.UserInfo
 import com.tencent.bkrepo.auth.pojo.user.UserResult
 import com.tencent.bkrepo.auth.repository.RoleRepository
@@ -23,8 +23,6 @@ import com.tencent.bkrepo.auth.repository.UserRepository
 import com.tencent.bkrepo.auth.service.local.UserServiceImpl
 import com.tencent.bkrepo.auth.util.DataDigestUtils
 import com.tencent.bkrepo.auth.util.IDUtil
-import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
-import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.sensitive.DesensitizedUtils
@@ -34,7 +32,6 @@ import com.tencent.bkrepo.common.devops.api.conf.DevopsConf
 import com.tencent.bkrepo.common.devops.api.pojo.response.CanwayResponse
 import com.tencent.bkrepo.common.devops.api.util.http.CanwayHttpUtils
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
-import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -143,7 +140,6 @@ class CanwayUserServiceImpl(
         logger.info("delete user userId : [$userId]")
         checkUserExist(userId)
         userRepository.deleteByUserId(userId)
-        val operator = HttpContextHolder.getRequest().getAttribute(USER_KEY) as? String ?: ANONYMOUS_USER
         return true
     }
 
@@ -249,7 +245,7 @@ class CanwayUserServiceImpl(
             val id = IDUtil.genRandomId()
             val now = LocalDateTime.now()
             var expiredTime: LocalDateTime? = null
-            if (expiredAt != null && expiredAt.length != 0) {
+            if (expiredAt != null && expiredAt.isNotEmpty()) {
                 val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
                 expiredTime = LocalDateTime.parse(expiredAt, dateTimeFormatter)
                 // conv time

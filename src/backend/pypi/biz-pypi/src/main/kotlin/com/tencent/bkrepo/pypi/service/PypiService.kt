@@ -34,12 +34,12 @@ package com.tencent.bkrepo.pypi.service
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.artifact.api.ArtifactFileMap
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactMigrateContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactMigrateContext
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.pypi.artifact.PypiArtifactInfo
 import com.tencent.bkrepo.pypi.artifact.repository.PypiLocalRepository
@@ -52,14 +52,14 @@ import org.springframework.stereotype.Service
 @Service
 class PypiService {
 
-    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_DOWNLOAD)
+    @Permission(ResourceType.REPO, PermissionAction.READ)
     fun packages(pypiArtifactInfo: PypiArtifactInfo) {
         val context = ArtifactDownloadContext()
         val repository = ArtifactContextHolder.getRepository(context.repositoryDetail.category)
         repository.download(context)
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_READ)
+    @Permission(ResourceType.REPO, PermissionAction.READ)
     fun simple(artifactInfo: PypiArtifactInfo): Any? {
         val context = ArtifactQueryContext()
         val repository = ArtifactContextHolder.getRepository(context.repositoryDetail.category)
@@ -75,7 +75,7 @@ class PypiService {
         return XmlConvertUtil.methodResponse2Xml(methodResponse)
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.ARTIFACT_READWRITE)
+    @Permission(ResourceType.REPO, PermissionAction.WRITE)
     fun upload(pypiArtifactInfo: PypiArtifactInfo, artifactFileMap: ArtifactFileMap) {
         val context = ArtifactUploadContext(artifactFileMap)
         val repository = ArtifactContextHolder.getRepository(context.repositoryDetail.category)

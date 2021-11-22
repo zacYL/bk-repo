@@ -136,8 +136,6 @@
                 roleList: {},
                 userList: {},
                 actionList: [
-                    { id: 'MANAGE', name: '管理' },
-                    { id: 'READ', name: '查看' },
                     { id: 'WRITE', name: '新增' },
                     { id: 'DELETE', name: '删除' },
                     { id: 'UPDATE', name: '修改' }

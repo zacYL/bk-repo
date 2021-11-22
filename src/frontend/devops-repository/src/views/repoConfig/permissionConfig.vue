@@ -5,7 +5,7 @@
                 <div class="flex-align-center">
                     <icon class="mr10" size="20" :name="section.icon"></icon>
                     <span>{{ section.title }}</span>
-                    <span class="mr10 permission-actions">（{{ getActions(section.actions.data) }}）</span>
+                    <span v-if="getActions(section.actions.data)" class="mr10 permission-actions">（{{ getActions(section.actions.data) }}）</span>
                     <i v-if="section === user" class="devops-icon icon-edit hover-btn" @click.stop="editActionsDialogHandler(section)"></i>
                 </div>
             </header>
@@ -136,9 +136,9 @@
                 roleList: {},
                 userList: {},
                 actionList: [
-                    { id: 'WRITE', name: '新增' },
-                    { id: 'DELETE', name: '删除' },
-                    { id: 'UPDATE', name: '修改' }
+                    { id: 'WRITE', name: '上传' },
+                    { id: 'UPDATE', name: '修改' },
+                    { id: 'DELETE', name: '删除' }
                 ]
             }
         },
@@ -161,7 +161,7 @@
             },
             getActions () {
                 return (actions) => {
-                    return actions.map(v => this.actionList.find(w => w.id === v).name).join('，')
+                    return actions.map(v => this.actionList.find(w => w.id === v)?.name).filter(Boolean).join('，')
                 }
             },
             filterDeleteTagList () {

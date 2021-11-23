@@ -35,13 +35,12 @@ import com.tencent.bkrepo.auth.constant.AUTH_API_USER_PREFIX
 import com.tencent.bkrepo.auth.constant.AUTH_SERVICE_USER_PREFIX
 import com.tencent.bkrepo.auth.pojo.token.Token
 import com.tencent.bkrepo.auth.pojo.token.TokenResult
-import com.tencent.bkrepo.auth.pojo.user.UserInfo
 import com.tencent.bkrepo.auth.pojo.user.CreateUserRequest
 import com.tencent.bkrepo.auth.pojo.user.CreateUserToProjectRequest
 import com.tencent.bkrepo.auth.pojo.user.CreateUserToRepoRequest
 import com.tencent.bkrepo.auth.pojo.user.UpdateUserRequest
 import com.tencent.bkrepo.auth.pojo.user.User
-import com.tencent.bkrepo.auth.pojo.user.UserResult
+import com.tencent.bkrepo.auth.pojo.user.UserInfo
 import com.tencent.bkrepo.common.api.constant.AUTH_SERVICE_NAME
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
@@ -64,7 +63,7 @@ import org.springframework.web.bind.annotation.RequestParam
 @Api(tags = ["SERVICE_USER"], description = "服务-用户接口")
 @Primary
 @FeignClient(AUTH_SERVICE_NAME, contextId = "ServiceUserResource")
-@RequestMapping(AUTH_SERVICE_USER_PREFIX, AUTH_API_USER_PREFIX)
+@RequestMapping(AUTH_SERVICE_USER_PREFIX)
 interface ServiceUserResource {
 
     @ApiOperation("创建项目用户")
@@ -244,20 +243,11 @@ interface ServiceUserResource {
     @GetMapping("/userinfo/{uid}")
     fun userInfoById(@PathVariable uid: String): Response<UserInfo?>
 
-    @ApiOperation("用户info ")
+    @ApiOperation("重置用户密码")
     @GetMapping("/reset/{uid}")
     fun resetPassword(@PathVariable uid: String): Response<Boolean>
 
     @ApiOperation("检验系统中是否存在同名userId ")
     @GetMapping("/repeat/{uid}")
     fun repeatUid(@PathVariable uid: String): Response<Boolean>
-
-    @ApiOperation("软件源--批量 添加/删除 管理员")
-    @PutMapping("/admin/batch/{admin}")
-    fun batchAdmin(
-        @ApiParam(value = "执行操作，true:代表添加为管理员；false: 删除管理员")
-        @PathVariable admin: Boolean,
-        @ApiParam(value = "uid 列表")
-        @RequestBody list: List<String>
-    ): Response<Boolean>
 }

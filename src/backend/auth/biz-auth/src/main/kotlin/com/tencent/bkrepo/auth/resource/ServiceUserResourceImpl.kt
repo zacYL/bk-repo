@@ -37,8 +37,6 @@ import com.tencent.bkrepo.auth.constant.PROJECT_MANAGE_ID
 import com.tencent.bkrepo.auth.constant.PROJECT_MANAGE_NAME
 import com.tencent.bkrepo.auth.constant.REPO_MANAGE_ID
 import com.tencent.bkrepo.auth.constant.REPO_MANAGE_NAME
-import com.tencent.bkrepo.auth.listener.event.admin.AdminAddEvent
-import com.tencent.bkrepo.auth.listener.event.admin.AdminDeleteEvent
 import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
@@ -57,19 +55,15 @@ import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.service.RoleService
 import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
-import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
-import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.security.exception.AuthenticationException
-import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.security.http.jwt.JwtAuthProperties
 import com.tencent.bkrepo.common.security.util.JwtUtils
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
-import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.RestController
@@ -307,23 +301,6 @@ class ServiceUserResourceImpl @Autowired constructor(
 
     override fun repeatUid(uid: String): Response<Boolean> {
         return ResponseBuilder.success(userService.repeatUid(uid))
-    }
-
-    override fun batchAdmin(admin: Boolean, list: List<String>): Response<Boolean> {
-        val operator = HttpContextHolder.getRequest().getAttribute(USER_KEY) as? String ?: ANONYMOUS_USER
-        val userInfo = userService.getUserById(operator) ?: throw AuthenticationException()
-        if (!userInfo.admin) throw PermissionException()
-        val successId = mutableSetOf<String>()
-        for (uid in list) {
-            userService.updateUserById(uid, UpdateUserRequest(admin = admin))
-            successId.add(uid)
-        }
-        if (admin) {
-            publishEvent(AdminAddEvent(resourceKey = successId.toList().toJsonString(), userId = operator))
-        } else {
-            publishEvent(AdminDeleteEvent(resourceKey = successId.toList().toJsonString(), userId = operator))
-        }
-        return ResponseBuilder.success()
     }
 
     companion object {

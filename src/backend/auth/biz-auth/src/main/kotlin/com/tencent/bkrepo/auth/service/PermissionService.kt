@@ -78,5 +78,6 @@ interface PermissionService {
 
     fun isProjectManager(userId: String): Boolean
 
+    fun findPermissionById(id: String): Permission?
 
 }

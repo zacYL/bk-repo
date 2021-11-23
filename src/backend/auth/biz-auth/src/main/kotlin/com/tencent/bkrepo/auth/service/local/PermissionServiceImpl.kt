@@ -31,11 +31,11 @@
 
 package com.tencent.bkrepo.auth.service.local
 
-import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_USER
-import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_ADMIN
-import com.tencent.bkrepo.auth.constant.PROJECT_VIEW_PERMISSION
-import com.tencent.bkrepo.auth.constant.PROJECT_MANAGE_PERMISSION
 import com.tencent.bkrepo.auth.constant.AUTH_ADMIN
+import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_ADMIN
+import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_USER
+import com.tencent.bkrepo.auth.constant.PROJECT_MANAGE_PERMISSION
+import com.tencent.bkrepo.auth.constant.PROJECT_VIEW_PERMISSION
 import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.model.TPermission
 import com.tencent.bkrepo.auth.pojo.RegisterResourceRequest
@@ -58,7 +58,6 @@ import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.util.query.PermissionQueryHelper
 import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
-import com.tencent.bkrepo.common.security.exception.AuthenticationException
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import org.slf4j.LoggerFactory
@@ -445,6 +444,12 @@ open class PermissionServiceImpl constructor(
             roles
         ).isNotEmpty()) return true
         return false
+    }
+
+    override fun findPermissionById(id: String): Permission? {
+        return permissionRepository.findFirstById(id)?.let {
+            transferPermission(it)
+        }
     }
 
     private fun checkPermissionExist(pId: String) {

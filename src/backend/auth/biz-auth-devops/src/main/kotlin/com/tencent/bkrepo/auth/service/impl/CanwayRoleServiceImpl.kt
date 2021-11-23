@@ -1,13 +1,13 @@
 package com.tencent.bkrepo.auth.service.impl
 
+import com.tencent.bkrepo.auth.ciApi
+import com.tencent.bkrepo.auth.ciPermission
+import com.tencent.bkrepo.auth.ciTenant
 import com.tencent.bkrepo.auth.model.TRole
+import com.tencent.bkrepo.auth.pojo.CanwayGroup
 import com.tencent.bkrepo.auth.pojo.enums.RoleType
 import com.tencent.bkrepo.auth.pojo.role.Role
 import com.tencent.bkrepo.auth.repository.RoleRepository
-import com.tencent.bkrepo.auth.ciApi
-import com.tencent.bkrepo.auth.ciTenant
-import com.tencent.bkrepo.auth.pojo.CanwayGroup
-import com.tencent.bkrepo.auth.ciPermission
 import com.tencent.bkrepo.auth.repository.UserRepository
 import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.auth.service.local.RoleServiceImpl
@@ -40,16 +40,14 @@ class CanwayRoleServiceImpl(
     private fun checkGroups(groups: List<CanwayGroup>?, projectId: String, repoName: String?) {
         groups ?: return
         for (group in groups) {
-            if (repoName?.let
-                { roleRepository.findFirstByRoleIdAndProjectIdAndRepoName(group.id, projectId, it) } == null
-            ) {
+            if (roleRepository.findTRoleById(group.id) == null) {
                 roleRepository.insert(
                     TRole(
+                        id = group.id,
                         roleId = group.id,
                         name = group.name,
-                        type = RoleType.REPO,
-                        projectId = projectId,
-                        repoName = repoName,
+                        type = RoleType.SYSTEM,
+                        projectId = null,
                         admin = false
                     )
                 )

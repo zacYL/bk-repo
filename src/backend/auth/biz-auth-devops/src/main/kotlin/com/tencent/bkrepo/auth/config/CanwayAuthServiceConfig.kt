@@ -7,6 +7,7 @@ import com.tencent.bkrepo.auth.service.DepartmentService
 import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.service.RoleService
 import com.tencent.bkrepo.auth.service.UserService
+import com.tencent.bkrepo.auth.service.impl.CanwayDepartmentServiceImpl
 import com.tencent.bkrepo.auth.service.impl.CanwayPermissionServiceImpl
 import com.tencent.bkrepo.auth.service.impl.CanwayRoleServiceImpl
 import com.tencent.bkrepo.auth.service.impl.CanwayUserServiceImpl
@@ -19,11 +20,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.AutoConfigureOrder
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
 import org.springframework.core.Ordered
 import org.springframework.data.mongodb.core.MongoTemplate
 
-@Configuration
 @AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE)
 class CanwayAuthServiceConfig {
 
@@ -85,6 +84,17 @@ class CanwayAuthServiceConfig {
             userRepository,
             roleRepository,
             mongoTemplate
+        )
+    }
+
+    @Bean
+    @ConditionalOnProperty(prefix = "auth", name = ["realm"], havingValue = "canway")
+    fun canwayDepartmentService(
+        @Autowired devopsConf: DevopsConf
+    ): DepartmentService {
+        logger.debug("init CanwayUserServiceImpl")
+        return CanwayDepartmentServiceImpl(
+            devopsConf
         )
     }
 

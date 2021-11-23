@@ -32,6 +32,7 @@ object UserUpdateHelper {
         request.phone?.let {
             update.set(TUser::phone.name, request.phone)
         }
+        request.admin?.let { update.set(TUser::admin.name, request.admin) }
         return update.set(TUser::lastModifiedDate.name, LocalDateTime.now())
     }
 

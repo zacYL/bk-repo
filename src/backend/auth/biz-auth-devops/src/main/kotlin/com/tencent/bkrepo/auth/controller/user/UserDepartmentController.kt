@@ -31,21 +31,23 @@
 
 package com.tencent.bkrepo.auth.controller.user
 
+import com.tencent.bkrepo.auth.DevopsAuthConfiguration
 import com.tencent.bkrepo.auth.constant.AUTH_API_DEPARTMENT_PREFIX
 import com.tencent.bkrepo.auth.service.DepartmentService
-import com.tencent.bkrepo.common.devops.api.pojo.BkChildrenDepartment
 import com.tencent.bkrepo.common.api.pojo.Response
+import com.tencent.bkrepo.common.devops.api.pojo.BkChildrenDepartment
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import io.swagger.annotations.ApiOperation
-import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
+@ConditionalOnBean(DevopsAuthConfiguration::class)
 @RequestMapping(AUTH_API_DEPARTMENT_PREFIX)
-class UserDepartmentController @Autowired constructor(
+class UserDepartmentController(
     val departmentService: DepartmentService
 ) {
 

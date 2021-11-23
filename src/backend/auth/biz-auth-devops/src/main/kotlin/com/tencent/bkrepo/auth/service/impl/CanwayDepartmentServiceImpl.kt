@@ -1,33 +1,31 @@
 package com.tencent.bkrepo.auth.service.impl
 
-import com.tencent.bkrepo.auth.service.DepartmentService
-import com.tencent.bkrepo.common.devops.api.pojo.BkResponse
-import com.tencent.bkrepo.common.devops.api.pojo.BkChildrenDepartment
-import com.tencent.bkrepo.common.devops.api.pojo.BkPage
-import com.tencent.bkrepo.common.devops.api.pojo.BkDepartment
 import com.tencent.bkrepo.auth.pojo.BkDepartmentUser
-import com.tencent.bkrepo.common.devops.api.pojo.BkParentDepartment
+import com.tencent.bkrepo.auth.service.DepartmentService
 import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.devops.api.conf.DevopsConf
 import com.tencent.bkrepo.common.devops.api.pojo.BkCertificate
+import com.tencent.bkrepo.common.devops.api.pojo.BkChildrenDepartment
+import com.tencent.bkrepo.common.devops.api.pojo.BkDepartment
+import com.tencent.bkrepo.common.devops.api.pojo.BkPage
+import com.tencent.bkrepo.common.devops.api.pojo.BkParentDepartment
+import com.tencent.bkrepo.common.devops.api.pojo.BkResponse
 import com.tencent.bkrepo.common.devops.api.pojo.CertType
 import com.tencent.bkrepo.common.devops.api.util.http.CanwayHttpUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.stereotype.Service
 
-@Service
 class CanwayDepartmentServiceImpl(
     devopsConf: DevopsConf
 ) : DepartmentService {
 
-    val paasHost = devopsConf.bkHost
-    val bkAppCode = devopsConf.appCode
-    val bkAppSecret = devopsConf.appSecret
+    private val paasHost = devopsConf.bkHost
+    private val bkAppCode = devopsConf.appCode
+    private val bkAppSecret = devopsConf.appSecret
 
     override fun listDepartmentById(username: String?, departmentId: Int?): List<BkChildrenDepartment>? {
         val bkCertificate = getBkCertificate(username)

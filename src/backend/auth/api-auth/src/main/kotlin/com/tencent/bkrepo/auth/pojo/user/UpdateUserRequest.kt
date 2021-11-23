@@ -47,5 +47,5 @@ data class UpdateUserRequest(
     @ApiModelProperty("联系电话")
     val phone: String? = null,
     @ApiModelProperty("admin")
-    val admin: Boolean? = false
+    val admin: Boolean? = null
 )

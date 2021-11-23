@@ -16,7 +16,6 @@ import com.tencent.bkrepo.auth.pojo.user.UpdateUserRequest
 import com.tencent.bkrepo.auth.pojo.user.User
 import com.tencent.bkrepo.auth.pojo.user.UserInfo
 import com.tencent.bkrepo.auth.pojo.user.UserResult
-import com.tencent.bkrepo.auth.resource.ServiceUserResourceImpl
 import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.service.RoleService
 import com.tencent.bkrepo.auth.service.UserService
@@ -35,8 +34,6 @@ import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.common.service.util.SpringContextUtils
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
-import org.bouncycastle.asn1.x500.style.RFC4519Style.name
-import org.bouncycastle.asn1.x500.style.RFC4519Style.uid
 import org.slf4j.LoggerFactory
 import org.springframework.web.bind.annotation.CookieValue
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -112,7 +109,6 @@ class UserUserController(
     fun allUser(
         @RequestAttribute userId: String
     ): Response<List<UserResult>> {
-        if(!permissionService.isProjectManager(userId)) throw PermissionException()
         val userList = userService.listUser(listOf())
         return ResponseBuilder.success(userList.map {
             UserResult(
@@ -162,6 +158,10 @@ class UserUserController(
         @ApiParam(value = "用户更新信息")
         @RequestBody request: UpdateUserRequest
     ): Response<Boolean> {
+        if (request.admin != null) {
+            val operator = userService.getUserById(userId)!!
+            if(!operator.admin) throw PermissionException()
+        }
         return ResponseBuilder.success(userService.updateUserById(uid, request))
     }
 

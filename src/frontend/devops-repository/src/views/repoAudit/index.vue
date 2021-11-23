@@ -1,6 +1,20 @@
 <template>
     <div class="audit-container" v-bkloading="{ isLoading }">
         <div class="ml20 mr20 mt10 flex-align-center">
+            <bk-select
+                v-model="query.projectId"
+                class="mr10 w250"
+                searchable
+                placeholder="查看单个项目日志"
+                @change="handlerPaginationChange()"
+                :enable-virtual-scroll="projectList && projectList.length > 3000"
+                :list="projectList">
+                <bk-option v-for="option in projectList"
+                    :key="option.id"
+                    :id="option.id"
+                    :name="option.name">
+                </bk-option>
+            </bk-select>
             <bk-date-picker
                 v-model="query.time"
                 class="mr10 w250"
@@ -36,6 +50,11 @@
                     </template>
                 </empty-data>
             </template>
+            <bk-table-column label="项目" width="200">
+                <template #default="{ row }">
+                    {{ getProjectName(row.content.projectId) }}
+                </template>
+            </bk-table-column>
             <bk-table-column label="操作时间" width="200">
                 <template #default="{ row }">
                     {{ formatDate(row.createdDate) }}
@@ -92,6 +111,7 @@
             return {
                 isLoading: false,
                 query: {
+                    projectId: '',
                     user: [],
                     time: []
                 },
@@ -135,7 +155,7 @@
             }
         },
         computed: {
-            ...mapState(['userList']),
+            ...mapState(['projectList', 'userList']),
             isSearching () {
                 const { startTime, endTime, user } = this.$route.query
                 return startTime || endTime || user
@@ -158,22 +178,24 @@
                 let [startTime, endTime] = this.query.time
                 startTime = startTime instanceof Date ? startTime.toISOString() : undefined
                 endTime = endTime instanceof Date ? endTime.toISOString() : undefined
+                const query = {
+                    projectId: this.query.projectId || undefined,
+                    startTime,
+                    endTime,
+                    user: this.query.user[0] || undefined
+                }
                 this.$router.replace({
                     query: {
                         ...this.$route.query,
-                        startTime,
-                        endTime,
-                        user: this.query.user[0]
+                        ...query
                     }
                 })
-                this.getAuditListHandler({ startTime, endTime })
+                this.getAuditListHandler(query)
             },
-            getAuditListHandler ({ startTime, endTime }) {
+            getAuditListHandler (query) {
                 this.isLoading = true
                 this.getAuditList({
-                    startTime,
-                    endTime,
-                    operator: this.query.user[0] || undefined,
+                    ...query,
                     current: this.pagination.current,
                     limit: this.pagination.limit
                 }).then(({ records, totalRecords }) => {
@@ -182,6 +204,9 @@
                 }).finally(() => {
                     this.isLoading = false
                 })
+            },
+            getProjectName (id) {
+                return this.projectList.find(project => project.id === id)?.name || '--'
             }
         }
     }

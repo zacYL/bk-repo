@@ -58,18 +58,20 @@
             xhr.onreadystatechange = function (e) {
                 const { readyState, status } = e.currentTarget
                 // 已登录
-                if (readyState === 4 && status === 200) {
-                    location.href = redirectUrl.href
-                } else if (status === 401) {
-                    if (MODE_CONFIG === 'standalone') {
-                        // 保存操作链接，登陆后调用
-                        sessionStorage.setItem('afterLogin', redirectUrl.href)
+                if (readyState === 4) {
+                    if (status === 200) {
+                        location.href = redirectUrl.href
+                    } else if (status === 401) {
+                        if (MODE_CONFIG === 'standalone') {
+                            // 保存操作链接，登陆后调用
+                            sessionStorage.setItem('afterLogin', redirectUrl.href)
+                        } else {
+                            // ci登录逻辑
+                            location.href = window.getLoginUrl(redirectUrl.href)
+                        }
                     } else {
-                        // ci登录逻辑
-                        location.href = window.getLoginUrl(redirectUrl.href)
+                        printError(status)
                     }
-                } else {
-                    printError(status)
                 }
             }
             xhr.withCredentials = true

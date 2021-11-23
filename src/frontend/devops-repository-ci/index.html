@@ -50,13 +50,15 @@
             xhr.onreadystatechange = function (e) {
                 const { readyState, status } = e.currentTarget
                 // 已登录
-                if (readyState === 4 && status === 200) {
-                    location.href = redirectUrl.href
-                } else if (status === 401) {
-                    // ci登录逻辑
-                    location.href = window.getLoginUrl(redirectUrl.href)
-                } else {
-                    printError(status)
+                if (readyState === 4) {
+                    if (status === 200) {
+                        location.href = redirectUrl.href
+                    } else if (status === 401) {
+                        // ci登录逻辑
+                        location.href = window.getLoginUrl(redirectUrl.href)
+                    } else {
+                        printError(status)
+                    }
                 }
             }
             xhr.withCredentials = true

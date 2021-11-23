@@ -27,12 +27,11 @@
 
 package com.tencent.bkrepo.repository.service.log.impl
 
-import com.tencent.bkrepo.auth.constant.BK_SOFTWARE
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.pojo.Page
+import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.event.base.EventType
-import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.repository.dao.OperateLogDao
 import com.tencent.bkrepo.repository.model.TOperateLog
@@ -230,11 +229,7 @@ class OperateLogServiceImpl(
             Criteria.where(TOperateLog::type.name).nin(nodeEvent)
         }
 
-        if (projectId == null) {
-            criteria.and(TOperateLog::projectId.name).`in`(BK_SOFTWARE, null)
-        } else {
-            criteria.and(TOperateLog::projectId.name).`in`(projectId, null)
-        }
+        projectId?.let { criteria.and(TOperateLog::projectId.name).`is`(projectId) }
 
         repoName?.let { criteria.and(TOperateLog::repoName.name).`is`(repoName) }
 

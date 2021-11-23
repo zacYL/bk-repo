@@ -36,6 +36,14 @@
         const search = new URL(location.href).searchParams
         const redirect = search.get('redirect')
         search.delete('redirect')
+        const redirectUrl = new URL(location.origin + redirect)
+        search.forEach((val, key) => {
+            redirectUrl.searchParams.set(key, val)
+        })
+        // 兼容之前的预览链接格式
+        if (!search.toString()) {
+            redirectUrl.searchParams.set('preview', true)
+        }
 
         if (redirect) {
             if (MODE_CONFIG === 'standalone') {
@@ -49,14 +57,6 @@
             const xhr = new XMLHttpRequest()
             xhr.onreadystatechange = function (e) {
                 const { readyState, status } = e.currentTarget
-                const redirectUrl = new URL(location.origin + redirect)
-                search.forEach((val, key) => {
-                    redirectUrl.searchParams.set(key, val)
-                })
-                // 兼容之前的预览链接格式
-                if (!search.toString()) {
-                    redirectUrl.searchParams.set('preview', true)
-                }
                 // 已登录
                 if (readyState === 4 && status === 200) {
                     location.href = redirectUrl.href
@@ -73,7 +73,7 @@
                 }
             }
             xhr.withCredentials = true
-            xhr.open('HEAD', redirect)
+            xhr.open('HEAD', redirectUrl.href)
             xhr.send()
         }
 

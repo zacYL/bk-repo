@@ -104,7 +104,7 @@
                         })
                     }
                     this.checkPM({ projectId: (projectId || urlProjectId || localProjectId) })
-                }).finally((projectId) => {
+                }).finally(() => {
                     this.isLoading = false
                 })
             }

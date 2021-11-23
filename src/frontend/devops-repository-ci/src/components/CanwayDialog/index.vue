@@ -38,7 +38,7 @@
         computed: {
             top () {
                 // 25 = ci顶部导航高度 / 2
-                const offset = MODE_CONFIG === 'ci' ? 25 : 0
+                const offset = 25
                 const top = (this.bodyHeight - this.heightNum) / 2 - offset
                 return top > 0 ? top : 0
             }

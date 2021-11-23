@@ -97,13 +97,18 @@
                             message: this.$t('login') + this.$t('success')
                         })
                         this.SHOW_LOGIN_DIALOG(false)
-                        location.href = ''
+                        location.href = this.getAfterLogin()
                         this.loginFailCounter = 0
                     } else {
                         this.loginFailed = true
                         this.loginFailCounter++
                     }
                 })
+            },
+            getAfterLogin () {
+                const afterLoginUrl = sessionStorage.getItem('afterLogin')
+                sessionStorage.removeItem('afterLogin')
+                return afterLoginUrl || ''
             },
             enterEvent (e) {
                 if (e.keyCode === 13 && this.formData.username && this.formData.password && !this.disableLogin) this.submitLogin()

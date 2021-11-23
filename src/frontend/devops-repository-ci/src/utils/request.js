@@ -22,14 +22,10 @@ function errorHandler (error) {
 request.interceptors.response.use(response => {
     const { data: { code, data, message, status }, status: httpStatus } = response
     if (httpStatus === 401 || httpStatus === 402) {
-        if (MODE_CONFIG === 'ci') {
-            window.postMessage({
-                action: 'toggleLoginDialog'
-            }, '*')
-            location.href = window.getLoginUrl()
-        } else if (MODE_CONFIG === 'standalone') {
-            window.repositoryVue.$store.commit('SHOW_LOGIN_DIALOG')
-        }
+        window.postMessage({
+            action: 'toggleLoginDialog'
+        }, '*')
+        location.href = window.getLoginUrl()
         return Promise.reject() // eslint-disable-line
     } else if (httpStatus === 403) {
         return Promise.reject({ // eslint-disable-line

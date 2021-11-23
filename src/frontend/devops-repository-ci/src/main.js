@@ -48,7 +48,6 @@ Vue.mixin({
 })
 
 window.repositoryVue = new Vue({
-    el: '#app',
     router: createRouter(store),
     i18n,
     store,
@@ -57,3 +56,5 @@ window.repositoryVue = new Vue({
     },
     template: '<App/>'
 })
+
+if (document.querySelector('#app')) window.repositoryVue.$mount('#app')

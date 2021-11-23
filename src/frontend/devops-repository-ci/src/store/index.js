@@ -6,7 +6,6 @@ Vue.use(Vuex)
 
 export default new Vuex.Store({
     state: {
-        showLoginDialog: false,
         genericTree: [
             {
                 name: '/',
@@ -91,9 +90,6 @@ export default new Vuex.Store({
         },
         SET_REPO_LIST_ALL (state, data) {
             state.repoListAll = data
-        },
-        SHOW_LOGIN_DIALOG (state, show = true) {
-            state.showLoginDialog = show
         }
     },
     actions

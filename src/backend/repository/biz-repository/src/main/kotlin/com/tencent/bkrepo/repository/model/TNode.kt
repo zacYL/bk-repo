@@ -54,7 +54,8 @@ import java.time.LocalDateTime
     CompoundIndex(name = FULL_PATH_IDX, def = FULL_PATH_IDX_DEF, unique = true, background = true),
     CompoundIndex(name = PATH_IDX, def = PATH_IDX_DEF, background = true),
     CompoundIndex(name = METADATA_IDX, def = METADATA_IDX_DEF, background = true),
-    CompoundIndex(name = SHA256_IDX, def = SHA256_IDX_DEF, background = true)
+    CompoundIndex(name = SHA256_IDX, def = SHA256_IDX_DEF, background = true),
+    CompoundIndex(name = "name_inx", def = "{'name':1}", background = true)
 )
 data class TNode(
     var id: String? = null,

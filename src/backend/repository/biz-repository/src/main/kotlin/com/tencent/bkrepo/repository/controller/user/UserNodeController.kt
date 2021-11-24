@@ -67,6 +67,7 @@ import io.swagger.annotations.ApiOperation
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestAttribute
 import org.springframework.web.bind.annotation.RequestBody
@@ -311,10 +312,19 @@ class UserNodeController(
         return ResponseBuilder.success(nodeSearchService.search(queryModel))
     }
 
+    @GetMapping("/search/{projectId}")
+    fun nodeGlobalSearch(
+        @PathVariable projectId: String,
+        @RequestParam name: String
+    ): Response<Page<Map<String, Any?>>> {
+        return ResponseBuilder.success(nodeSearchService.nodeGlobalSearch(projectId, name))
+    }
+
     /**
      * 校验跨仓库操作权限
      */
     private fun checkCrossRepoPermission(request: UserNodeMoveCopyRequest) {
+
         with(request) {
             permissionManager.checkNodePermission(PermissionAction.WRITE, srcProjectId, srcRepoName, srcFullPath)
             val toProjectId = request.destProjectId ?: srcProjectId

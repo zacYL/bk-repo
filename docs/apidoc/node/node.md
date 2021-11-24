@@ -562,3 +562,70 @@
     }
   }
   ```
+
+
+
+## 通用二进制文件跨仓库搜索
+
+- API: GET /repository/api/node/search/{projectId}?name={abc}
+
+- API 名称: search_node_global
+
+- 功能说明：
+
+  - 中文：通用二进制文件跨仓库搜索
+  - English：query node global
+
+- 请求体
+  此接口请求体为空
+
+- 请求字段说明
+
+  | 字段      | 类型   | 是否必须 | 默认值 | 说明             | Description  |
+  | --------- | ------ | -------- | ------ | ---------------- | ------------ |
+  | projectId | string | 是       | 无     | 项目名称         | project name |
+  | name      | string | 是       | 无     | 文件名(忽略大小) | repo name    |
+
+- 响应体
+
+  ```json
+  {
+      "code": 0,
+      "message": null,
+      "data": {
+          "pageNumber": 1,
+          "pageSize": 20,
+          "totalRecords": 2,
+          "totalPages": 1,
+          "records": [
+              {
+                  "createdBy": "admin",
+                  "createdDate": "2021-07-30T15:10:18.382",
+                  "lastModifiedBy": "admin",
+                  "lastModifiedDate": "2021-07-30T15:10:18.382",
+                  "name": "devopsApp.ipa",
+                  "fullPath": "/upload/devopsApp.ipa",
+                  "projectId": "test",
+                  "repoName": "custom"
+              }
+          ],
+          "page": 1,
+          "count": 2
+      },
+      "traceId": ""
+  }
+  ```
+
+- data字段说明
+
+  | 字段             | 类型   | 说明         | Description          |
+  | ---------------- | ------ | ------------ | -------------------- |
+  | projectId        | string | 节点所属项目 | node project id      |
+  | repoName         | string | 节点所属仓库 | node repository name |
+  | name             | string | 节点名称     | node name            |
+  | fullPath         | string | 节点完整路径 | node full path       |
+  | createdBy        | string | 创建者       | create user          |
+  | createdDate      | string | 创建时间     | create time          |
+  | lastModifiedBy   | string | 上次修改者   | last modify user     |
+  | lastModifiedDate | string | 上次修改时间 | last modify time     |
+

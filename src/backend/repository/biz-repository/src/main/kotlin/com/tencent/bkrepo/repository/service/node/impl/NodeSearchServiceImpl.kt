@@ -32,7 +32,13 @@
 package com.tencent.bkrepo.repository.service.node.impl
 
 import com.tencent.bkrepo.common.api.pojo.Page
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.query.enums.OperationType
+import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.common.query.model.QueryModel
+import com.tencent.bkrepo.common.query.model.Rule
+import com.tencent.bkrepo.common.query.model.Sort
+import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.dao.NodeDao
 import com.tencent.bkrepo.repository.model.TNode
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
@@ -43,7 +49,7 @@ import org.springframework.data.mongodb.core.query.Query
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.time.ZoneId
-import java.util.Date
+import java.util.*
 
 /**
  * 节点自定义查询服务实现类
@@ -52,12 +58,48 @@ import java.util.Date
 @Service
 class NodeSearchServiceImpl(
     private val nodeDao: NodeDao,
-    private val nodeQueryInterpreter: NodeQueryInterpreter
+    private val nodeQueryInterpreter: NodeQueryInterpreter,
+    private val repositoryClient: RepositoryClient
 ) : NodeSearchService {
 
     override fun search(queryModel: QueryModel): Page<Map<String, Any?>> {
         val context = nodeQueryInterpreter.interpret(queryModel) as NodeQueryContext
         return doQuery(context)
+    }
+
+    override fun nodeGlobalSearch(projectId: String, name: String): Page<Map<String, Any?>> {
+        // 获取项目下所有二进制仓库
+        val repos =
+            repositoryClient.allRepos(projectId, null).data?.filter { it?.type == RepositoryType.GENERIC }
+                ?.map { it?.name }
+        if(repos.isNullOrEmpty()) return Page(1, 20, 0, listOf())
+        val projectRule = Rule.QueryRule(field = "projectId", value = projectId, operation = OperationType.EQ)
+        val repoRule = Rule.QueryRule(field = "repoName", value = repos, operation = OperationType.IN)
+        val fileRule = Rule.QueryRule(field = "folder", value = false, operation = OperationType.EQ)
+        val nameRule = Rule.QueryRule(
+            field = "name",
+            value = "*$name*",
+            operation = OperationType.MATCH_I
+        )
+        val rule =
+            Rule.NestedRule(mutableListOf(projectRule, repoRule, nameRule, fileRule), Rule.NestedRule.RelationType.AND)
+        val queryModel = QueryModel(
+            page = PageLimit(),
+            sort = Sort(listOf("lastModifiedDate"), Sort.Direction.DESC),
+            select = mutableListOf(
+                "projectId",
+                "repoName",
+                "fullPath",
+                "createdBy",
+                "createdDate",
+                "lastModifiedBy",
+                "lastModifiedDate",
+                "fullPath",
+                "name"
+            ),
+            rule = rule
+        )
+        return search(queryModel)
     }
 
     private fun doQuery(context: NodeQueryContext): Page<Map<String, Any?>> {

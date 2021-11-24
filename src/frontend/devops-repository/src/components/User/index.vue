@@ -11,17 +11,18 @@
         <span>{{ userInfo.name || userInfo.username }}</span>
         <i class="ml5 bk-icon icon-angle-down"></i>
         <ul class="user-menu">
-            <li class="flex-align-center" v-for="name in menuList" :key="name">
+            <li class="flex-align-center" v-for="name in menuList" :key="name" @click="changeRoute(name)">
                 <router-link
                     class="hover-btn flex-align-center"
-                    :to="{ name }">
+                    :to="{ name }"
+                    @click.stop.prevent="() => {}">
                     <Icon :name="name" size="14" />
                     <span class="ml8 text-overflow">{{ $t(name) }}</span>
                 </router-link>
             </li>
-            <li class="hover-btn flex-align-center">
+            <li class="hover-btn flex-align-center" @click="logout">
                 <Icon name="repoLogout" size="14" />
-                <span class="ml8 text-overflow" @click="logout">{{ $t('logout') }}</span>
+                <span class="ml8 text-overflow">{{ $t('logout') }}</span>
             </li>
         </ul>
     </div>
@@ -41,7 +42,12 @@
             }
         },
         methods: {
-            ...mapActions(['logout'])
+            ...mapActions(['logout']),
+            changeRoute (route) {
+                this.$router.push({
+                    name: route
+                })
+            }
         }
     }
 </script>

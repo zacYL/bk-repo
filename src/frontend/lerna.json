@@ -1,8 +1,7 @@
 {
   "packages": [
     "devops-repository-ci",
-    "devops-repository",
-    "devops-source"
+    "devops-repository"
   ],
   "npmClient": "yarn",
   "version": "independent",

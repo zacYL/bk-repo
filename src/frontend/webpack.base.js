@@ -3,7 +3,6 @@ const webpack = require('webpack')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const VueLoaderPlugin = require('vue-loader/lib/plugin')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
-const BundleWebpackPlugin = require('./webpackPlugin/bundle-webpack-plugin')
 
 module.exports = ({ entry, publicPath, dist, port = 8080, argv, env }) => {
     const isDev = argv.mode === 'development'
@@ -75,18 +74,13 @@ module.exports = ({ entry, publicPath, dist, port = 8080, argv, env }) => {
                     test: /\.(woff2?|eot|ttf|otf)(\?.*)?$/,
                     loader: 'url-loader',
                     options: {
-                        esModule: false,
-                        limit: 10000
+                        esModule: false
                     }
                 }
             ]
         },
         plugins: [
             new VueLoaderPlugin(),
-            new BundleWebpackPlugin({
-                dist: envDist,
-                bundleName: 'assets_bundle'
-            }),
             new webpack.optimize.LimitChunkCountPlugin({
                 minChunkSize: 1000
             }),

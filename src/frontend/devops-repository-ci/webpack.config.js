@@ -8,7 +8,7 @@ module.exports = (env, argv) => {
     const urlPrefix = env && env.name ? `${env.name}` : ''
     const envDist = env && env.dist ? env.dist : 'frontend'
     const extUrlPrefix = env && env.name ? `${env.name}-` : ''
-    const dist = path.join(__dirname, `../${envDist}/ui-ci`)
+    const dist = path.join(__dirname, `../${envDist}/ui`)
     const config = webpackBaseConfig({
         env,
         argv,
@@ -16,7 +16,7 @@ module.exports = (env, argv) => {
             repository: './src/main.js'
         },
         publicPath: '/ui/',
-        dist: '/ui-ci',
+        dist: '/ui',
         port: 8086
     })
     config.plugins.pop()
@@ -30,7 +30,7 @@ module.exports = (env, argv) => {
             extUrlPrefix,
             timeStamp: +new Date()
         }),
-        new CopyWebpackPlugin([{ from: path.join(__dirname, './static'), to: dist }])
+        new CopyWebpackPlugin([{ from: path.resolve('../devops-repository/static'), to: dist }])
     ]
 
     config.devServer.historyApiFallback = {
@@ -38,5 +38,8 @@ module.exports = (env, argv) => {
             { from: /^\/ui/, to: '/ui/index.html' }
         ]
     }
+
+    config.resolve.alias['@root'] = path.resolve('../devops-repository/src')
+
     return config
 }

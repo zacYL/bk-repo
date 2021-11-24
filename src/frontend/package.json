@@ -24,7 +24,6 @@
     "babel-helper-vue-jsx-merge-props": "^2.0.3",
     "babel-loader": "^8.2.2",
     "babel-plugin-transform-vue-jsx": "4.0.1",
-    "node-sass": "yarn:dart-sass",
     "gulp": "^4.0.2",
     "husky": "^3.0.7",
     "lerna": "3.17.0",
@@ -52,7 +51,6 @@
   },
   "workspaces": [
     "devops-repository-ci",
-    "devops-repository",
-    "devops-source"
+    "devops-repository"
   ]
 }

@@ -106,7 +106,7 @@
     }
 </script>
 <style lang="scss">
-@import '@/scss/index';
+@import '@root/scss/index';
 .bkrepo-main {
     height: 100%;
     background-color: var(--bgColor);

@@ -29,7 +29,7 @@
     </canway-dialog>
 </template>
 <script>
-    import RepoTree from '@/components/RepoTree'
+    import RepoTree from '@repository/components/RepoTree'
     export default {
         name: 'genericTreeDialog',
         components: { RepoTree },

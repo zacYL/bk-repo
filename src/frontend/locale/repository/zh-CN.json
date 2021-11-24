@@ -121,7 +121,7 @@
     "password": "密码",
     "test": "测试",
     "abort": "中断",
-    "token": "个人访问令牌",
+    "token": "访问令牌",
     "createToken": "生成Token",
     "tokenSubTitle": "生成具有读写权限的个人访问令牌，替换<PERSONAL_ACCESS_TOKEN>值，管理请到",
     "tokenExpiressTip": "请选择过期时间，默认永久",

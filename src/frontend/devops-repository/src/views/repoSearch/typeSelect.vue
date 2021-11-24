@@ -20,7 +20,7 @@
     </div>
 </template>
 <script>
-    import { repoEnum } from '@/store/publicEnum'
+    import { repoEnum } from '@repository/store/publicEnum'
     export default {
         name: 'typeSelect',
         props: {

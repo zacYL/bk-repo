@@ -89,8 +89,8 @@
 <script>
     import createRepoDialog from './createRepoDialog'
     import { mapState, mapActions } from 'vuex'
-    import { repoEnum } from '@/store/publicEnum'
-    import { formatDate } from '@/utils'
+    import { repoEnum } from '@repository/store/publicEnum'
+    import { formatDate } from '@repository/utils'
     export default {
         name: 'repoList',
         components: { createRepoDialog },

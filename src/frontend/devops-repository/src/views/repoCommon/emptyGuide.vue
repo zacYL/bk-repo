@@ -21,7 +21,7 @@
                 <div class="empty-guide-item-main flex-between-center">
                     <div class="ml20 empty-guide-item-subtitle">
                         {{ $t('tokenSubTitle') }}
-                        <router-link class="router-link" :to="{ name: 'userCenter' }">{{ $t('token') }}</router-link>
+                        <router-link class="router-link" :to="{ name: 'repoToken' }">{{ $t('token') }}</router-link>
                     </div>
                     <bk-button class="mt15" style="padding:0 8px;" theme="primary" @click="createToken">{{ $t('createToken') }}</bk-button>
                 </div>
@@ -43,8 +43,8 @@
     </div>
 </template>
 <script>
-    import CodeArea from '@/components/CodeArea'
-    import createTokenDialog from '@/views/repoToken/createTokenDialog'
+    import CodeArea from '@repository/components/CodeArea'
+    import createTokenDialog from '@repository/views/repoToken/createTokenDialog'
     export default {
         name: 'emptyGuide',
         components: { CodeArea, createTokenDialog },

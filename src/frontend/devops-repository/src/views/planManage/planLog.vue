@@ -60,7 +60,7 @@
     </bk-sideslider>
 </template>
 <script>
-    import { formatDate } from '@/utils'
+    import { formatDate } from '@repository/utils'
     import { mapActions } from 'vuex'
     const statusMap = {
         'RUNNING': '执行中',

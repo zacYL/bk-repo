@@ -75,11 +75,11 @@
     </div>
 </template>
 <script>
-    import packageCard from '@/components/PackageCard'
-    import InfiniteScroll from '@/components/InfiniteScroll'
+    import packageCard from '@repository/components/PackageCard'
+    import InfiniteScroll from '@repository/components/InfiniteScroll'
     import typeSelect from './typeSelect'
     import { mapActions } from 'vuex'
-    import { formatDate } from '@/utils'
+    import { formatDate } from '@repository/utils'
     export default {
         name: 'repoSearch',
         components: { packageCard, InfiniteScroll, typeSelect },

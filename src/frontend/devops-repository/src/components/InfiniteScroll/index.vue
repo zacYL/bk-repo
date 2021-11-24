@@ -9,7 +9,7 @@
 </template>
 
 <script>
-    import { throttle } from '@/utils'
+    import { throttle } from '@repository/utils'
     const SCROLL_THRESHOLD = 100
     export default {
         name: 'InfiniteScroll',

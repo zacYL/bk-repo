@@ -21,19 +21,19 @@ const repoHome = () => import(/* webpackChunkName: "repoHome" */'@/views')
 
 const repoList = () => import(/* webpackChunkName: "repoList" */'@/views/repoList')
 const repoConfig = () => import(/* webpackChunkName: "repoConfig" */'@/views/repoConfig')
-const repoToken = () => import(/* webpackChunkName: "repoToken" */'@/views/repoToken')
-const repoAudit = () => import(/* webpackChunkName: "repoAudit" */'@/views/repoAudit')
-const nodeManage = () => import(/* webpackChunkName: "nodeManage" */'@/views/nodeManage')
-const planManage = () => import(/* webpackChunkName: "planManage" */'@/views/planManage')
-const createPlan = () => import(/* webpackChunkName: "createPlan" */'@/views/planManage/createPlan')
-const logDetail = () => import(/* webpackChunkName: "logDetail" */'@/views/planManage/logDetail')
+const repoToken = () => import(/* webpackChunkName: "repoToken" */'@repository/views/repoToken')
+const repoAudit = () => import(/* webpackChunkName: "repoAudit" */'@repository/views/repoAudit')
+const nodeManage = () => import(/* webpackChunkName: "nodeManage" */'@repository/views/nodeManage')
+const planManage = () => import(/* webpackChunkName: "planManage" */'@repository/views/planManage')
+const createPlan = () => import(/* webpackChunkName: "createPlan" */'@repository/views/planManage/createPlan')
+const logDetail = () => import(/* webpackChunkName: "logDetail" */'@repository/views/planManage/logDetail')
 
 const repoGeneric = () => import(/* webpackChunkName: "repoGeneric" */'@/views/repoGeneric')
 
-const commonPackageList = () => import(/* webpackChunkName: "repoCommon" */'@/views/repoCommon/commonPackageList')
-const commonPackageDetail = () => import(/* webpackChunkName: "repoCommon" */'@/views/repoCommon/commonPackageDetail')
+const commonPackageList = () => import(/* webpackChunkName: "repoCommon" */'@repository/views/repoCommon/commonPackageList')
+const commonPackageDetail = () => import(/* webpackChunkName: "repoCommon" */'@repository/views/repoCommon/commonPackageDetail')
 
-const repoSearch = () => import(/* webpackChunkName: "repoSearch" */'@/views/repoSearch')
+const repoSearch = () => import(/* webpackChunkName: "repoSearch" */'@repository/views/repoSearch')
 
 const routes = [
     {

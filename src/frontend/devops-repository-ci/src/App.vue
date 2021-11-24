@@ -13,10 +13,10 @@
 </template>
 
 <script>
-    import Breadcrumb from '@/components/Breadcrumb/topBreadcrumb'
-    import ConfirmDialog from '@/components/ConfirmDialog'
+    import Breadcrumb from '@repository/components/Breadcrumb/topBreadcrumb'
+    import ConfirmDialog from '@repository/components/ConfirmDialog'
     import Vue from 'vue'
-    import { mapState, mapMutations, mapActions } from 'vuex'
+    import { mapState, mapMutations } from 'vuex'
     export default {
         name: 'App',
         components: { Breadcrumb, ConfirmDialog },
@@ -94,7 +94,6 @@
         },
         methods: {
             ...mapMutations(['SET_USER_INFO', 'SET_USER_LIST', 'SET_PROJECT_LIST']),
-            ...mapActions(['getProjectList', 'ajaxUserInfo']),
             goHome (projectId) {
                 const params = projectId ? { projectId } : {}
                 this.$router.replace({
@@ -106,7 +105,7 @@
     }
 </script>
 <style lang="scss">
-@import '@root/scss/index';
+@import '@repository/scss/index';
 .bkrepo-main {
     height: 100%;
     background-color: var(--bgColor);

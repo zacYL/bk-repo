@@ -134,7 +134,7 @@
 </template>
 <script>
     import { mapState, mapActions } from 'vuex'
-    import Cron from '@/components/Cron'
+    import Cron from '@repository/components/Cron'
     import repositoryTable from './repositoryTable'
     import packageTable from './packageTable'
     import pathTable from './pathTable'

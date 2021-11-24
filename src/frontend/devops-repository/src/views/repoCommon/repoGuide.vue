@@ -2,14 +2,14 @@
     <bk-collapse v-model="activeName" class="repo-guide-container">
         <bk-collapse-item name="token">
             <header class="section-header">
-                <icon size="24" class="section-title-icon" name="guide-h-left"></icon>
+                <icon size="20" class="section-title-icon" name="guide-h-left"></icon>
                 {{ $t('token') }}
             </header>
             <div slot="content" class="section-main">
                 <div class="flex-column">
                     <span class="sub-title">
                         {{ $t('tokenSubTitle') }}
-                        <router-link class="router-link" :to="{ name: 'userCenter' }">{{ $t('token') }}</router-link>
+                        <router-link class="router-link" :to="{ name: 'repoToken' }">{{ $t('token') }}</router-link>
                     </span>
                     <div class="token-main">
                         <bk-button class="mt15" style="padding:0 8px;" theme="primary" @click="createToken">{{ $t('createToken') }}</bk-button>
@@ -20,7 +20,7 @@
         </bk-collapse-item>
         <bk-collapse-item v-for="(section, index) in article" :key="`section${index}`" :name="`section${index}`">
             <header v-if="section.title" class="section-header">
-                <icon size="24" class="section-title-icon" name="guide-h-left"></icon>
+                <icon size="20" class="section-title-icon" name="guide-h-left"></icon>
                 {{ section.title }}
             </header>
             <div slot="content" class="section-main">
@@ -33,8 +33,8 @@
     </bk-collapse>
 </template>
 <script>
-    import CodeArea from '@/components/CodeArea'
-    import createTokenDialog from '@/views/repoToken/createTokenDialog'
+    import CodeArea from '@repository/components/CodeArea'
+    import createTokenDialog from '@repository/views/repoToken/createTokenDialog'
     export default {
         name: 'repoGuide',
         components: { CodeArea, createTokenDialog },
@@ -58,6 +58,8 @@
 </script>
 <style lang="scss" scoped>
 .repo-guide-container {
+    height: 100%;
+    overflow-y: auto;
     ::v-deep .bk-collapse-item {
         margin-bottom: 20px;
         .bk-collapse-item-detail {

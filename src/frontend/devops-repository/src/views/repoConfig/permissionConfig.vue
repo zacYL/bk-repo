@@ -124,17 +124,10 @@
                         data: [],
                         addList: [],
                         deleteList: []
-                    // },
-                    // departments: {
-                    //     title: this.$t('department'),
-                    //     showAddArea: false,
-                    //     data: [],
-                    //     addList: [],
-                    //     deleteList: []
                     }
                 },
-                roleList: {},
                 userList: {},
+                roleList: {},
                 actionList: [
                     { id: 'WRITE', name: '上传' },
                     { id: 'UPDATE', name: '修改' },

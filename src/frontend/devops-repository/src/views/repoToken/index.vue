@@ -36,7 +36,7 @@
 </template>
 <script>
     import createTokenDialog from './createTokenDialog'
-    import { formatDate } from '@/utils'
+    import { formatDate } from '@repository/utils'
     import { mapState, mapActions } from 'vuex'
     export default {
         name: 'repoToken',

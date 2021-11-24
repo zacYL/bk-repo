@@ -21,6 +21,7 @@
                     <bk-tag-input
                         v-model="genericForm.user"
                         :list="Object.values(userList).filter(user => user.id !== 'anonymous')"
+                        :search-key="['id', 'name']"
                         placeholder="授权访问用户，为空则任意用户可访问，按Enter键确认"
                         trigger="focus"
                         allow-create
@@ -32,11 +33,10 @@
                         v-model="genericForm.ip"
                         placeholder="授权访问IP，为空则任意IP可访问，按Enter键确认"
                         trigger="focus"
-                        allow-create
-                        has-delete-icon>
+                        allow-create>
                     </bk-tag-input>
-                </bk-form-item> -->
-                <!-- <bk-form-item label="访问次数" property="permits" error-display-type="normal">
+                </bk-form-item>
+                <bk-form-item label="访问次数" property="permits" error-display-type="normal">
                     <bk-input v-model.trim="genericForm.permits" placeholder="请输入数字，小于等于0则永久有效"></bk-input>
                 </bk-form-item> -->
                 <bk-form-item :label="`${$t('validity')}(${$t('day')})`" property="time" error-display-type="normal">

@@ -141,15 +141,15 @@
     </div>
 </template>
 <script>
-    import Breadcrumb from '@/components/Breadcrumb'
-    import MoveSplitBar from '@/components/MoveSplitBar'
-    import RepoTree from '@/components/RepoTree'
-    import genericDetail from './genericDetail'
-    import genericUploadDialog from './genericUploadDialog'
+    import Breadcrumb from '@repository/components/Breadcrumb'
+    import MoveSplitBar from '@repository/components/MoveSplitBar'
+    import RepoTree from '@repository/components/RepoTree'
+    import genericDetail from '@repository/views/repoGeneric/genericDetail'
+    import genericUploadDialog from '@repository/views/repoGeneric/genericUploadDialog'
     import genericFormDialog from './genericFormDialog'
-    import genericTreeDialog from './genericTreeDialog'
-    import { convertFileSize, formatDate } from '@/utils'
-    import { getIconName } from '@/store/publicEnum'
+    import genericTreeDialog from '@repository/views/repoGeneric/genericTreeDialog'
+    import { convertFileSize, formatDate } from '@repository/utils'
+    import { getIconName } from '@repository/store/publicEnum'
     import { mapState, mapMutations, mapActions } from 'vuex'
     export default {
         name: 'repoGeneric',

@@ -5,7 +5,7 @@
                 <div class="flex-align-center">
                     <icon class="mr10" size="20" :name="section.icon"></icon>
                     <span>{{ section.title }}</span>
-                    <span class="mr10 permission-actions">（{{ getActions(section.actions.data) }}）</span>
+                    <span v-if="getActions(section.actions.data)" class="mr10 permission-actions">（{{ getActions(section.actions.data) }}）</span>
                     <i v-if="section === user" class="devops-icon icon-edit hover-btn" @click.stop="editActionsDialogHandler(section)"></i>
                 </div>
             </header>
@@ -42,20 +42,15 @@
                                 </bk-select>
                             </template>
                             <template v-else>
-                                <bk-select
+                                <bk-tag-input
                                     style="min-width: 250px"
                                     v-model="section[part].addList"
-                                    multiple
-                                    display-tag
-                                    searchable
-                                    :enable-virtual-scroll="filterSelectOptions(section[part], part).length > 3000"
-                                    :list="filterSelectOptions(section[part], part)">
-                                    <bk-option v-for="option in filterSelectOptions(section[part], part)"
-                                        :key="option.id"
-                                        :id="option.id"
-                                        :name="option.name">
-                                    </bk-option>
-                                </bk-select>
+                                    :list="filterSelectOptions(section[part], part)"
+                                    :search-key="['id', 'name']"
+                                    placeholder="请输入，按Enter键确认"
+                                    trigger="focus"
+                                    allow-create>
+                                </bk-tag-input>
                             </template>
                             <i v-if="section[part].addList.length"
                                 class="section-sub-add-btn devops-icon icon-check-1"
@@ -72,10 +67,6 @@
                                 <i class="devops-icon icon-close-circle-shape" @click="handleDeleteTag(tag, part, section)"></i>
                             </div>
                         </div>
-                        <!-- <div v-if="section[part].deleteList && section[part].deleteList.length">
-                            <bk-button :loading="section.loading" theme="primary" @click="submit('delete', part, section)">{{$t('save')}}</bk-button>
-                            <bk-button class="ml10" theme="default" @click="cancel(section[part])">{{$t('cancel')}}</bk-button>
-                        </div> -->
                     </div>
                 </template>
             </div>
@@ -115,21 +106,21 @@
                 admin: {
                     name: 'admin',
                     loading: false,
-                    title: '管理者',
+                    title: this.$t('admin'),
                     icon: 'perm-controller',
                     id: '',
                     actions: {
                         data: []
                     },
                     users: {
-                        title: '用户',
+                        title: this.$t('user'),
                         showAddArea: false,
                         data: [],
                         addList: [],
                         deleteList: []
                     },
                     roles: {
-                        title: '用户组',
+                        title: this.$t('userGroup'),
                         showAddArea: false,
                         data: [],
                         addList: [],
@@ -146,21 +137,21 @@
                 user: {
                     name: 'user',
                     loading: false,
-                    title: '使用者',
+                    title: this.$t('users'),
                     icon: 'perm-user',
                     id: '',
                     actions: {
                         data: []
                     },
                     users: {
-                        title: '用户',
+                        title: this.$t('user'),
                         showAddArea: false,
                         data: [],
                         addList: [],
                         deleteList: []
                     },
                     roles: {
-                        title: '用户组',
+                        title: this.$t('userGroup'),
                         showAddArea: false,
                         data: [],
                         addList: [],
@@ -205,7 +196,7 @@
                         deleteList: []
                     }
                 },
-                userList: {},
+                // userList: {},
                 roleList: {},
                 flatDepartment: {},
                 departmentTree: [],
@@ -213,7 +204,7 @@
             }
         },
         computed: {
-            ...mapState(['userInfo']),
+            ...mapState(['userList', 'userInfo']),
             projectId () {
                 return this.$route.params.projectId
             },
@@ -232,7 +223,7 @@
             },
             getActions () {
                 return (actions) => {
-                    return actions.map(v => this.actionList.find(w => w.id === v).name).join('，')
+                    return actions.map(v => this.actionList.find(w => w.id === v)?.name).filter(Boolean).join('，')
                 }
             },
             filterDeleteTagList () {
@@ -247,15 +238,6 @@
                 repoName: this.repoName
             }).then(res => {
                 this.actionList = res.map(v => ({ id: v.action, name: v.nickName }))
-            })
-            this.getRepoUserList().then(res => {
-                this.userList = res.reduce((target, item) => {
-                    target[item.userId] = {
-                        id: item.userId,
-                        name: item.name
-                    }
-                    return target
-                }, {})
             })
             this.getRepoRoleList({
                 projectId: this.projectId,
@@ -279,18 +261,19 @@
             ...mapActions([
                 'getPermissionDetail',
                 'getRepoActions',
-                'getRepoUserList',
                 'getRepoRoleList',
-                'getRepoDepartmentList',
                 'setUserPermission',
                 'setRolePermission',
-                'setDepartmentPermission',
                 'setActionPermission',
+                'getRepoDepartmentList',
+                'setDepartmentPermission',
                 'getRepoDepartmentDetail'
             ]),
             filterSelectOptions (target, part) {
                 const list = Object.values({ users: this.userList, roles: this.roleList }[part])
-                return list.filter(v => !target.data.find(w => w === v.id && v.id !== 'anonymous'))
+                return list
+                    .filter(v => v.id !== 'anonymous')
+                    .filter(v => !~target.data.findIndex(w => w === v.id))
             },
             handleShowAddArea (target) {
                 target.showAddArea = !target.showAddArea

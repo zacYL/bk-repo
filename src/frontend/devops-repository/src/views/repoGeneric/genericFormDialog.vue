@@ -24,7 +24,8 @@
                         :search-key="['id', 'name']"
                         placeholder="授权访问用户，为空则任意用户可访问，按Enter键确认"
                         trigger="focus"
-                        allow-create>
+                        allow-create
+                        has-delete-icon>
                     </bk-tag-input>
                 </bk-form-item>
                 <bk-form-item label="授权IP" property="ip">

@@ -4,7 +4,7 @@ import actions from './actions'
 
 Vue.use(Vuex)
 
-export default new Vuex.Store({
+const storeObject = {
     state: {
         showLoginDialog: Boolean(window.login),
         genericTree: [
@@ -88,7 +88,13 @@ export default new Vuex.Store({
             state.clusterList = data
         },
         SET_PROJECT_LIST (state, data) {
-            state.projectList = data
+            state.projectList = data.map(v => {
+                return {
+                    ...v,
+                    id: v.name || v.englishName,
+                    name: v.displayName || v.projectName
+                }
+            })
         },
         SET_REPO_LIST_ALL (state, data) {
             state.repoListAll = data
@@ -98,4 +104,27 @@ export default new Vuex.Store({
         }
     },
     actions
-})
+}
+
+export function createExtStore ({ state = {}, getters = {}, mutations = {}, actions = {} }) {
+    return new Vuex.Store({
+        state: {
+            ...storeObject.state,
+            ...state
+        },
+        getters: {
+            ...storeObject.getters,
+            ...getters
+        },
+        mutations: {
+            ...storeObject.mutations,
+            ...mutations
+        },
+        actions: {
+            ...storeObject.actions,
+            ...actions
+        }
+    })
+}
+
+export default new Vuex.Store(storeObject)

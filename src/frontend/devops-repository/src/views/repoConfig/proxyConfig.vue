@@ -39,7 +39,7 @@
     import draggable from 'vuedraggable'
     import proxyOriginDialog from './proxyOriginDialog'
     import { mapActions } from 'vuex'
-    import { debounce } from '@/utils'
+    import { debounce } from '@repository/utils'
     export default {
         name: 'proxyConfig',
         components: { draggable, proxyOriginDialog },

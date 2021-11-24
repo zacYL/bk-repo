@@ -104,7 +104,7 @@
 </template>
 <script>
     import { mapState, mapActions } from 'vuex'
-    import { formatDate } from '@/utils'
+    import { formatDate } from '@repository/utils'
     export default {
         name: 'audit',
         data () {
@@ -206,7 +206,8 @@
                 })
             },
             getProjectName (id) {
-                return this.projectList.find(project => project.id === id)?.name || '--'
+                const project = this.projectList.find(project => project.id === id)
+                return project ? project.name : '--'
             }
         }
     }

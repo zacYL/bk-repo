@@ -117,7 +117,7 @@
 </template>
 <script>
     import { mapState, mapActions } from 'vuex'
-    import { formatDate } from '@/utils'
+    import { formatDate } from '@repository/utils'
     export default {
         name: 'node',
         data () {

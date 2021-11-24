@@ -85,8 +85,8 @@
     </div>
 </template>
 <script>
-    import InfiniteScroll from '@/components/InfiniteScroll'
-    import VersionDetail from './commonVersionDetail'
+    import InfiniteScroll from '@repository/components/InfiniteScroll'
+    import VersionDetail from '@repository/views/repoCommon/commonVersionDetail'
     import { mapActions } from 'vuex'
     export default {
         name: 'commonPackageDetail',

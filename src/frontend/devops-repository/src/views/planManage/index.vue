@@ -137,7 +137,7 @@
 </template>
 <script>
     import { mapState, mapActions } from 'vuex'
-    import { formatDate } from '@/utils'
+    import { formatDate } from '@repository/utils'
     import planLog from './planLog'
     import planCopyDialog from './planCopyDialog'
     const statusMap = {

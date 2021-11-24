@@ -22,7 +22,7 @@
     </div>
 </template>
 <script>
-    import { formatDate } from '@/utils'
+    import { formatDate } from '@repository/utils'
     export default {
         name: 'packageCard',
         props: {

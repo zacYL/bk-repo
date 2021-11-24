@@ -39,7 +39,5 @@ module.exports = (env, argv) => {
         ]
     }
 
-    config.resolve.alias['@root'] = path.resolve('../devops-repository/src')
-
     return config
 }

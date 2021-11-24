@@ -21,7 +21,7 @@
 
 <script>
     import { mapState } from 'vuex'
-    import { throttle } from '@/utils'
+    import { throttle } from '@repository/utils'
     export default {
         name: 'repo-tree',
         props: {

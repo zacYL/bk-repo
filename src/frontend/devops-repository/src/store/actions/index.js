@@ -96,13 +96,7 @@ export default {
         return Vue.prototype.$ajax.get(
             `${prefix}/project/list`
         ).then(res => {
-            commit('SET_PROJECT_LIST', res.map(v => {
-                return {
-                    ...v,
-                    id: v.name,
-                    name: v.displayName
-                }
-            }))
+            commit('SET_PROJECT_LIST', res)
         })
     },
     logout () {

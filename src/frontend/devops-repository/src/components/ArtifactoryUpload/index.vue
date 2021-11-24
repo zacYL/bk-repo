@@ -32,8 +32,8 @@
     </div>
 </template>
 <script>
-    import { convertFileSize } from '@/utils'
-    import { getIconName } from '@/store/publicEnum'
+    import { convertFileSize } from '@repository/utils'
+    import { getIconName } from '@repository/store/publicEnum'
     export default {
         name: 'artifactoryUpload',
         props: {

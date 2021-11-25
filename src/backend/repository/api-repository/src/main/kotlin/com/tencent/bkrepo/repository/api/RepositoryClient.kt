@@ -34,6 +34,7 @@ package com.tencent.bkrepo.repository.api
 import com.tencent.bkrepo.common.api.constant.REPOSITORY_SERVICE_NAME
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.repository.pojo.project.RepoRangeQueryRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoDeleteRequest
@@ -171,7 +172,8 @@ interface RepositoryClient {
     @ApiOperation("返回符合条件所有仓库")
     @GetMapping("/all")
     fun allRepos(
-        @RequestParam projectId: String?,
-        @RequestParam repoName: String?
+        @RequestParam projectId: String? = null,
+        @RequestParam repoName: String? = null,
+        @RequestParam repoType: RepositoryType? = null
     ): Response<List<RepositoryInfo?>>
 }

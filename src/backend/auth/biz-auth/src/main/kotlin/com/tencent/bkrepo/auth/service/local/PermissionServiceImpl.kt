@@ -452,6 +452,56 @@ open class PermissionServiceImpl constructor(
         }
     }
 
+    @Suppress("TooGenericExceptionCaught")
+    override fun migHistoryPermissionData() {
+        //加载全部权限数据
+        val permissionList = permissionRepository.findAll()
+        logger.info("migrate: find permissions ${permissionList.size}")
+        var count = 0
+        for (permission in permissionList) {
+            val actions = permission.actions
+            val resultActions = migrateActions(actions)
+            try {
+                updatePermissionById(
+                    id = permission.id!!,
+                    key = TPermission::actions.name,
+                    value = resultActions
+                )
+                count++
+            } catch (e: Exception) {
+                logger.error("migrate: [${permission.id}] failed")
+                logger.error("$e")
+            }
+        }
+        logger.info("migrate: $count finish")
+    }
+
+    private fun migrateActions(actions: List<PermissionAction>): List<PermissionAction> {
+        val resultActions = mutableSetOf<PermissionAction>()
+        for (action in actions) {
+            resultActions.addAll(transAction(action))
+        }
+        return resultActions.toList()
+    }
+
+    private fun transAction(action: PermissionAction): Set<PermissionAction> {
+        return when (action) {
+            PermissionAction.REPO_MANAGE -> setOf(PermissionAction.MANAGE)
+            PermissionAction.FOLDER_MANAGE -> setOf(PermissionAction.WRITE, PermissionAction.DELETE)
+            PermissionAction.ARTIFACT_COPY -> setOf(PermissionAction.WRITE)
+            PermissionAction.ARTIFACT_RENAME -> setOf(PermissionAction.UPDATE)
+            PermissionAction.ARTIFACT_MOVE -> setOf(PermissionAction.WRITE)
+            PermissionAction.ARTIFACT_SHARE -> setOf()
+            PermissionAction.ARTIFACT_DOWNLOAD -> setOf(PermissionAction.READ)
+            PermissionAction.ARTIFACT_READWRITE -> setOf(PermissionAction.WRITE, PermissionAction.READ)
+            PermissionAction.ARTIFACT_READ -> setOf(PermissionAction.READ)
+            PermissionAction.ARTIFACT_UPDATE -> setOf(PermissionAction.UPDATE)
+            PermissionAction.ARTIFACT_DELETE -> setOf(PermissionAction.DELETE)
+            else -> setOf()
+        }
+    }
+
+
     private fun checkPermissionExist(pId: String) {
         permissionRepository.findFirstById(pId) ?: run {
             logger.warn("update permission repos [$pId]  not exist.")

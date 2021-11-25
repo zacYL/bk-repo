@@ -166,6 +166,7 @@
             changeRepoType (repoType) {
                 this.repoType = repoType
                 this.repoName = ''
+                this.packageName = ''
                 this.handlerPaginationChange()
             },
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}, load) {

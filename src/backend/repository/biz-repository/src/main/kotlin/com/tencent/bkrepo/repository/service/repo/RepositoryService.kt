@@ -28,6 +28,7 @@
 package com.tencent.bkrepo.repository.service.repo
 
 import com.tencent.bkrepo.common.api.pojo.Page
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.repository.pojo.project.RepoRangeQueryRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoDeleteRequest
@@ -155,5 +156,5 @@ interface RepositoryService {
      */
     fun deleteRepo(repoDeleteRequest: RepoDeleteRequest)
 
-    fun allRepos(projectId: String?, repoName: String?): List<RepositoryInfo?>
+    fun allRepos(projectId: String?, repoName: String?, repositoryType: RepositoryType?): List<RepositoryInfo?>
 }

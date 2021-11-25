@@ -34,16 +34,21 @@ package com.tencent.bkrepo.repository.controller.user
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
 import com.tencent.bkrepo.common.artifact.api.DefaultArtifactInfo.Companion.DEFAULT_MAPPING_URI
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.model.QueryModel
+import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
+import com.tencent.bkrepo.repository.pojo.bksoftware.NodeOverviewResponse
 import com.tencent.bkrepo.repository.pojo.node.NodeDeletedPoint
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
@@ -61,6 +66,7 @@ import com.tencent.bkrepo.repository.pojo.node.user.UserNodeRenameRequest
 import com.tencent.bkrepo.repository.pojo.node.user.UserNodeUpdateRequest
 import com.tencent.bkrepo.repository.service.node.NodeSearchService
 import com.tencent.bkrepo.repository.service.node.NodeService
+import com.tencent.bkrepo.repository.service.repo.RepositoryService
 import com.tencent.bkrepo.repository.util.PipelineRepoUtils
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
@@ -82,7 +88,8 @@ import java.time.LocalDateTime
 class UserNodeController(
     private val nodeService: NodeService,
     private val nodeSearchService: NodeSearchService,
-    private val permissionManager: PermissionManager
+    private val permissionManager: PermissionManager,
+    private val repositoryService: RepositoryService
 ) {
 
     @ApiOperation("根据路径查看节点详情")
@@ -305,11 +312,38 @@ class UserNodeController(
         return ResponseBuilder.success(nodeSearchService.search(queryModel))
     }
 
+    /*
+        该接口不传repoName是只查询二进制仓库数据节点，不对项目开发开放
+     */
     @Deprecated("replace with search")
     @ApiOperation("自定义查询节点")
     @PostMapping("/query")
     fun query(@RequestBody queryModel: QueryModel): Response<Page<Map<String, Any?>>> {
-        return ResponseBuilder.success(nodeSearchService.search(queryModel))
+        val rules = (queryModel.rule as Rule.NestedRule).rules
+        var containRepoKey = false
+        var projectId: String? = null
+        for (rule in rules) {
+            val queryRule = rule as Rule.QueryRule
+            if(queryRule.field == "repoName") containRepoKey = true
+            if(queryRule.field == "projectId") projectId = queryRule.value as String
+        }
+        projectId?.let { projectId
+            val genericRepos = repositoryService.allRepos(projectId, null, RepositoryType.GENERIC).map { it?.name }
+            if (!containRepoKey) {
+                rules.add(Rule.QueryRule(field = "repoName", value = genericRepos, operation = OperationType.IN))
+            }
+            return ResponseBuilder.success(nodeSearchService.search(queryModel))
+        }
+        throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING)
+    }
+
+    @ApiOperation("仓库 包数量 总览")
+    @GetMapping("/search/overview")
+    fun packageOverview(
+        @RequestParam projectId: String,
+        @RequestParam name: String
+    ): Response<NodeOverviewResponse> {
+        return ResponseBuilder.success(nodeSearchService.nodeOverview(projectId, name))
     }
 
     @GetMapping("/search/{projectId}")

@@ -33,6 +33,7 @@ package com.tencent.bkrepo.repository.service.node
 
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.query.model.QueryModel
+import com.tencent.bkrepo.repository.pojo.bksoftware.NodeOverviewResponse
 
 /**
  * 节点自定义查询服务接口
@@ -44,4 +45,6 @@ interface NodeSearchService {
     fun search(queryModel: QueryModel): Page<Map<String, Any?>>
 
     fun nodeGlobalSearch(projectId: String, name: String): Page<Map<String, Any?>>
+
+    fun nodeOverview(projectId: String, name: String): NodeOverviewResponse
 }

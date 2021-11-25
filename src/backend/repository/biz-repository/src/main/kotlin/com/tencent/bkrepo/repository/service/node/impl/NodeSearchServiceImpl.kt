@@ -38,13 +38,19 @@ import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.query.model.Sort
+import com.tencent.bkrepo.common.query.util.MongoEscapeUtils
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.dao.NodeDao
 import com.tencent.bkrepo.repository.model.TNode
+import com.tencent.bkrepo.repository.pojo.bksoftware.NodeOverviewResponse
+import com.tencent.bkrepo.repository.pojo.metric.CountResult
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.search.node.NodeQueryContext
 import com.tencent.bkrepo.repository.search.node.NodeQueryInterpreter
 import com.tencent.bkrepo.repository.service.node.NodeSearchService
+import com.tencent.bkrepo.repository.service.repo.RepositoryService
+import org.springframework.data.mongodb.core.aggregation.Aggregation
+import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
@@ -59,7 +65,8 @@ import java.util.*
 class NodeSearchServiceImpl(
     private val nodeDao: NodeDao,
     private val nodeQueryInterpreter: NodeQueryInterpreter,
-    private val repositoryClient: RepositoryClient
+    private val repositoryClient: RepositoryClient,
+    private val repositoryService: RepositoryService
 ) : NodeSearchService {
 
     override fun search(queryModel: QueryModel): Page<Map<String, Any?>> {
@@ -67,11 +74,38 @@ class NodeSearchServiceImpl(
         return doQuery(context)
     }
 
+    override fun nodeOverview(projectId: String, name: String): NodeOverviewResponse {
+        val genericRepos = repositoryService.allRepos(projectId, null, RepositoryType.GENERIC).map { it?.name }
+        val criteria = Criteria.where(TNode::repoName.name).`in`(genericRepos)
+        criteria.and(TNode::projectId.name).`is`(projectId)
+
+        val escapedValue = MongoEscapeUtils.escapeRegexExceptWildcard(name)
+        val regexPattern = escapedValue.replace("*", ".*")
+        criteria.and(TNode::name.name).regex("^$regexPattern$", "i")
+        val aggregation = Aggregation.newAggregation(
+            TNode::class.java,
+            Aggregation.match(criteria),
+            Aggregation.group("\$repoName").count().`as`("count")
+        )
+        val result = nodeDao.aggregate(aggregation, CountResult::class.java).mappedResults
+        var sum = 0L
+        val list = mutableListOf<NodeOverviewResponse.RepoNodeOverview>()
+        result.map {
+            list.add(
+                NodeOverviewResponse.RepoNodeOverview(
+                    repoName = it.id!!,
+                    nodes = it.count
+                )
+            )
+            sum += it.count
+        }
+        return NodeOverviewResponse(list = list, sum = sum)
+    }
+
     override fun nodeGlobalSearch(projectId: String, name: String): Page<Map<String, Any?>> {
         // 获取项目下所有二进制仓库
         val repos =
-            repositoryClient.allRepos(projectId, null).data?.filter { it?.type == RepositoryType.GENERIC }
-                ?.map { it?.name }
+            repositoryClient.allRepos(projectId = projectId, repoType = RepositoryType.GENERIC).data?.map { it?.name }
         if(repos.isNullOrEmpty()) return Page(1, 20, 0, listOf())
         val projectRule = Rule.QueryRule(field = "projectId", value = projectId, operation = OperationType.EQ)
         val repoRule = Rule.QueryRule(field = "repoName", value = repos, operation = OperationType.IN)

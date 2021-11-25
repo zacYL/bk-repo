@@ -567,25 +567,58 @@
 
 ## 通用二进制文件跨仓库搜索
 
-- API: GET /repository/api/node/search/{projectId}?name={abc}
+- API: GET /repository/api/node/search
 
 - API 名称: search_node_global
 
 - 功能说明：
 
-  - 中文：通用二进制文件跨仓库搜索
+  - 中文：通用二进制文件跨仓库搜索, 该接口不传repoName key时默认查询所有GENERIC仓库数据
   - English：query node global
 
 - 请求体
-  此接口请求体为空
-
+  
+  ```json
+  {
+      "page":{
+          "pageNumber":1,
+          "pageSize":10
+      },
+      "sort":{
+          "properties":[
+              "name"
+          ],
+          "direction":"DESC"
+      },
+      "rule":{
+          "rules":[
+              {
+                  "field":"projectId",
+                  "value":"test",
+                  "operation":"EQ"
+              },
+              {
+                  "field":"name",
+                  "value":"*{name}*",
+                  "operation":"MATCH_I"
+              },
+              {
+                  "field":"folder",
+                  "value":false,
+                  "operation":"EQ"
+              }
+          ],
+          "relation":"AND"
+      }
+  }
+  ```
+  
+  
+  
 - 请求字段说明
 
-  | 字段      | 类型   | 是否必须 | 默认值 | 说明             | Description  |
-  | --------- | ------ | -------- | ------ | ---------------- | ------------ |
-  | projectId | string | 是       | 无     | 项目名称         | project name |
-  | name      | string | 是       | 无     | 文件名(忽略大小) | repo name    |
-
+  
+  
 - 响应体
 
   ```json
@@ -594,23 +627,32 @@
       "message": null,
       "data": {
           "pageNumber": 1,
-          "pageSize": 20,
-          "totalRecords": 2,
+          "pageSize": 10,
+          "totalRecords": 3,
           "totalPages": 1,
           "records": [
               {
                   "createdBy": "admin",
-                  "createdDate": "2021-07-30T15:10:18.382",
+                  "createdDate": "2021-07-30T15:10:31.719",
                   "lastModifiedBy": "admin",
-                  "lastModifiedDate": "2021-07-30T15:10:18.382",
-                  "name": "devopsApp.ipa",
-                  "fullPath": "/upload/devopsApp.ipa",
+                  "lastModifiedDate": "2021-07-30T15:10:31.719",
+                  "folder": false,
+                  "path": "/ci/",
+                  "name": "devopsApp0716.ipa",
+                  "fullPath": "/ci/devopsApp0716.ipa",
+                  "size": 5637211,
+                  "sha256": "c57f0dc21ed9a5edb70ac99cec69e3fd69f71c3c8713291bdf9b332e1eb802d4",
+                  "md5": "1adc6a94c9b674121c53e5ac5cd9a6f7",
+                  "metadata": {
+                      "projectId": "test",
+                      "userId": "fzh"
+                  },
                   "projectId": "test",
                   "repoName": "custom"
               }
           ],
           "page": 1,
-          "count": 2
+          "count": 3
       },
       "traceId": ""
   }
@@ -618,14 +660,54 @@
 
 - data字段说明
 
-  | 字段             | 类型   | 说明         | Description          |
-  | ---------------- | ------ | ------------ | -------------------- |
-  | projectId        | string | 节点所属项目 | node project id      |
-  | repoName         | string | 节点所属仓库 | node repository name |
-  | name             | string | 节点名称     | node name            |
-  | fullPath         | string | 节点完整路径 | node full path       |
-  | createdBy        | string | 创建者       | create user          |
-  | createdDate      | string | 创建时间     | create time          |
-  | lastModifiedBy   | string | 上次修改者   | last modify user     |
-  | lastModifiedDate | string | 上次修改时间 | last modify time     |
+
+
+## 通用二进制文件跨仓库搜索总览
+
+- API: GET /repository/api/node/search/overview?projectId={projectId}&name={name}
+
+- API 名称: search_node_overview
+
+- 功能说明：
+
+  - 中文：通用二进制文件跨仓库搜索总览 , 
+  - English：query node overview
+
+- 请求体
+
+  请求体为空
+
+- 请求字段说明
+
+  
+
+  | 字段      | 类型   | 是否必须 | 默认值 | 说明               | Description  |
+  | --------- | ------ | -------- | ------ | ------------------ | ------------ |
+  | projectId | string | 是       | 无     | 项目名称           | project name |
+  | name      | string | 是       | 无     | 文件名(忽略大小写) | name         |
+
+- 响应体
+
+  ```json
+  {
+      "code": 0,
+      "message": null,
+      "data": {
+          "list": [
+              {
+                  "repoName": "custom",
+                  "nodes": 8
+              }
+          ],
+          "sum": 8
+      },
+      "traceId": ""
+  }
+  ```
+
+- data字段说明
+
+
+
+
 

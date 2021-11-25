@@ -33,6 +33,7 @@ package com.tencent.bkrepo.repository.controller.service
 
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.project.RepoRangeQueryRequest
@@ -114,7 +115,11 @@ class RepositoryController(
         return deleteRepo(request)
     }
 
-    override fun allRepos(projectId: String?, repoName: String?): Response<List<RepositoryInfo?>> {
-        return ResponseBuilder.success(repositoryService.allRepos(projectId, repoName))
+    override fun allRepos(
+        projectId: String?,
+        repoName: String?,
+        repoType: RepositoryType?
+    ): Response<List<RepositoryInfo?>> {
+        return ResponseBuilder.success(repositoryService.allRepos(projectId, repoName, repoType))
     }
 }

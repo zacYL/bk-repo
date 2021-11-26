@@ -99,7 +99,7 @@
 </template>
 <script>
     import { mapGetters, mapActions } from 'vuex'
-    import { formatDate } from '@/utils'
+    import { formatDate } from '@repository/utils'
     const statusMap = {
         'RUNNING': '执行中',
         'SUCCESS': '成功',

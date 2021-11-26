@@ -1,8 +1,8 @@
 <template>
     <bk-tab class="common-version-container" type="unborder-card" :active.sync="tabName" v-bkloading="{ isLoading }">
         <template #setting>
-            <bk-button outline class="mr10" @click="$emit('tag')">晋级</bk-button>
-            <bk-button outline class="mr10" @click="$emit('download')">下载</bk-button>
+            <bk-button :disabled="(detail.basic.stageTag || '').includes('@release')" outline class="mr10" @click="$emit('tag')">晋级</bk-button>
+            <bk-button v-if="repoType !== 'docker'" outline class="mr10" @click="$emit('download')">下载</bk-button>
             <bk-button outline class="mr20" @click="$emit('delete')">删除</bk-button>
         </template>
         <bk-tab-panel v-if="detail.basic" name="versionBaseInfo" :label="$t('baseInfo')">
@@ -53,7 +53,7 @@
         </bk-tab-panel>
         <bk-tab-panel v-if="detail.metadata" name="versionMetaData" :label="$t('metaData')">
             <div class="version-metadata" data-title="元数据">
-                <div class="version-metadata-add" v-bk-clickoutside="hiddenAddMetadata">
+                <!-- <div class="version-metadata-add" v-bk-clickoutside="hiddenAddMetadata">
                     <i @click="metadata.show ? hiddenAddMetadata() : showAddMetadata()" class="devops-icon icon-plus flex-center hover-btn"></i>
                     <div class="version-metadata-add-board"
                         :style="{ height: metadata.show ? '180px' : '0' }">
@@ -70,7 +70,7 @@
                             </bk-form-item>
                         </bk-form>
                     </div>
-                </div>
+                </div> -->
                 <bk-table
                     :data="Object.entries(detail.metadata || {})"
                     :outer-border="false"
@@ -146,10 +146,10 @@
     </bk-tab>
 </template>
 <script>
-    import CodeArea from '@/components/CodeArea'
+    import CodeArea from '@repository/components/CodeArea'
     import { mapState, mapActions } from 'vuex'
-    import { convertFileSize, formatDate } from '@/utils'
-    import repoGuideMixin from './repoGuideMixin'
+    import { convertFileSize, formatDate } from '@repository/utils'
+    import repoGuideMixin from '@repository/views/repoCommon/repoGuideMixin'
     export default {
         name: 'commonVersionDetail',
         components: { CodeArea },
@@ -236,6 +236,7 @@
                     packageKey: this.packageKey,
                     version: this.version
                 }).then(res => {
+                    if (!res) return
                     const basic = res.basic
                     this.detail = {
                         ...res,

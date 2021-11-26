@@ -36,7 +36,7 @@
 </template>
 <script>
     import createTokenDialog from './createTokenDialog'
-    import { formatDate } from '@/utils'
+    import { formatDate } from '@repository/utils'
     import { mapState, mapActions } from 'vuex'
     export default {
         name: 'repoToken',
@@ -80,14 +80,14 @@
                     this.isLoading = false
                 })
             },
-            deleteTokenHandler (row) {
+            deleteTokenHandler ({ name }) {
                 this.$confirm({
                     theme: 'danger',
-                    message: this.$t('deleteTokenTitle'),
+                    message: this.$t('deleteTokenTitle', { name }),
                     confirmFn: () => {
                         return this.deleteToken({
                             username: this.userInfo.username,
-                            name: row.name
+                            name
                         }).then(() => {
                             this.getToken()
                             this.$bkMessage({

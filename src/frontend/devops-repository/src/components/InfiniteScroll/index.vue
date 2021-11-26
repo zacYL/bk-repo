@@ -9,7 +9,7 @@
 </template>
 
 <script>
-    import { throttle } from '@/utils'
+    import { throttle } from '@repository/utils'
     const SCROLL_THRESHOLD = 100
     export default {
         name: 'InfiniteScroll',
@@ -80,7 +80,7 @@
             justify-content: center;
             align-items: center;
             color: var(--fontTipColor);
-            .devops-icon {
+            .icon-circle-2-1 {
                 margin-right: 8px;
             }
         }

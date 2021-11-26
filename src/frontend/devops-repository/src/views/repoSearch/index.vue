@@ -2,7 +2,7 @@
     <div class="repo-search-container">
         <div class="repo-search-tools flex-column">
             <div class="name-tool flex-center">
-                <type-select v-model="repoType" @change="handlerPaginationChange()"></type-select>
+                <type-select :repo-type="repoType" @change="changeRepoType"></type-select>
                 <bk-input
                     v-focus
                     style="width:390px"
@@ -75,11 +75,11 @@
     </div>
 </template>
 <script>
-    import packageCard from '@/components/PackageCard'
-    import InfiniteScroll from '@/components/InfiniteScroll'
+    import packageCard from '@repository/components/PackageCard'
+    import InfiniteScroll from '@repository/components/InfiniteScroll'
     import typeSelect from './typeSelect'
-    import { mapState, mapActions } from 'vuex'
-    import { formatDate } from '@/utils'
+    import { mapActions } from 'vuex'
+    import { formatDate } from '@repository/utils'
     export default {
         name: 'repoSearch',
         components: { packageCard, InfiniteScroll, typeSelect },
@@ -108,7 +108,6 @@
             }
         },
         computed: {
-            ...mapState(['userList']),
             projectId () {
                 return this.$route.params.projectId
             },
@@ -163,6 +162,12 @@
                         package: pkg.key
                     }
                 })
+            },
+            changeRepoType (repoType) {
+                this.repoType = repoType
+                this.repoName = ''
+                this.packageName = ''
+                this.handlerPaginationChange()
             },
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}, load) {
                 this.pagination.current = current

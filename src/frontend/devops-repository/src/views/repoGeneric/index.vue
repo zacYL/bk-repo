@@ -141,15 +141,15 @@
     </div>
 </template>
 <script>
-    import Breadcrumb from '@/components/Breadcrumb'
-    import MoveSplitBar from '@/components/MoveSplitBar'
-    import RepoTree from '@/components/RepoTree'
+    import Breadcrumb from '@repository/components/Breadcrumb'
+    import MoveSplitBar from '@repository/components/MoveSplitBar'
+    import RepoTree from '@repository/components/RepoTree'
     import genericDetail from './genericDetail'
     import genericUploadDialog from './genericUploadDialog'
     import genericFormDialog from './genericFormDialog'
     import genericTreeDialog from './genericTreeDialog'
-    import { convertFileSize, formatDate } from '@/utils'
-    import { getIconName } from '@/store/publicEnum'
+    import { convertFileSize, formatDate } from '@repository/utils'
+    import { getIconName } from '@repository/store/publicEnum'
     import { mapState, mapMutations, mapActions } from 'vuex'
     export default {
         name: 'repoGeneric',
@@ -327,7 +327,8 @@
                     fullPath: this.searchFileName ? this.searchFullPath : this.selectedTreeNode.fullPath,
                     current: this.pagination.current,
                     limit: this.pagination.limit,
-                    sortType: this.sortType
+                    sortType: this.sortType,
+                    isPipeline: this.repoName === 'pipeline'
                 }).then(({ records, totalRecords }) => {
                     this.pagination.count = totalRecords
                     this.artifactoryList = records.map(v => {
@@ -542,13 +543,14 @@
                 return this.shareArtifactory({
                     projectId: this.projectId,
                     repoName: this.repoName,
-                    fullPath: this.selectedRow.fullPath,
-                    body: {
-                        // ...(data.ip.length ? { authorizedIpSet: data.ip } : {}),
-                        ...(data.user.length ? { authorizedUserSet: data.user } : {}),
-                        ...(Number(data.time) > 0 ? { expireSeconds: Number(data.time) * 86400 } : {})
-                        // ...(Number(data.permits) > 0 ? { permits: Number(data.permits) } : {})
-                    }
+                    fullPathSet: [this.selectedRow.fullPath],
+                    type: 'DOWNLOAD',
+                    host: `${location.origin}/web/generic`,
+                    needsNotify: true,
+                    ...(data.ip.length ? { authorizedIpSet: data.ip } : {}),
+                    ...(data.user.length ? { authorizedUserSet: data.user } : {}),
+                    ...(Number(data.time) > 0 ? { expireSeconds: Number(data.time) * 86400 } : {}),
+                    ...(Number(data.permits) > 0 ? { permits: Number(data.permits) } : {})
                 })
             },
             async deleteRes () {

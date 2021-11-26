@@ -5,7 +5,7 @@
         height-num="280"
         title="创建访问令牌"
         @cancel="cancel">
-        <div v-if="token" class="mt20 mb20 flex-align-center">
+        <div v-if="token" class="flex-align-center">
             <i class="flex-center devops-icon icon-check-1"></i>
             <div>
                 <h3>{{ $t('create') + $t('success') }}</h3>

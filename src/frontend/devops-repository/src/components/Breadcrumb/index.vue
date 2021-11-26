@@ -13,11 +13,11 @@
 </template>
 <script>
     export default {
-        name: 'breadCrumb',
+        name: 'breadcrumb',
         props: {
             list: {
                 type: Array,
-                default: []
+                default: () => []
             }
         }
     }

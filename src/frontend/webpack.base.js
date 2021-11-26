@@ -3,7 +3,6 @@ const webpack = require('webpack')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const VueLoaderPlugin = require('vue-loader/lib/plugin')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
-const BundleWebpackPlugin = require('./webpackPlugin/bundle-webpack-plugin')
 
 module.exports = ({ entry, publicPath, dist, port = 8080, argv, env }) => {
     const isDev = argv.mode === 'development'
@@ -22,12 +21,12 @@ module.exports = ({ entry, publicPath, dist, port = 8080, argv, env }) => {
             rules: [
                 {
                     test: /\.vue$/,
-                    include: [path.resolve('src')],
+                    include: [path.resolve(__dirname, 'devops-repository/src'), path.resolve('src')],
                     loader: 'vue-loader'
                 },
                 {
                     test: /\.js$/,
-                    include: [path.resolve('src')],
+                    include: [path.resolve(__dirname, 'devops-repository/src'), path.resolve('src')],
                     use: [
                         {
                             loader: 'babel-loader'
@@ -46,6 +45,7 @@ module.exports = ({ entry, publicPath, dist, port = 8080, argv, env }) => {
                     test: /\.svg$/,
                     loader: 'svg-sprite-loader',
                     include: [
+                        path.resolve(__dirname, 'devops-repository/src/images'),
                         path.resolve('src/images')
                     ]
                 },
@@ -53,6 +53,7 @@ module.exports = ({ entry, publicPath, dist, port = 8080, argv, env }) => {
                     test: /\.(png|jpe?g|gif|svg|webp|cur)(\?.*)?$/,
                     loader: 'url-loader',
                     exclude: [
+                        path.resolve(__dirname, 'devops-repository/src/images'),
                         path.resolve('src/images')
                     ],
                     options: {
@@ -64,7 +65,7 @@ module.exports = ({ entry, publicPath, dist, port = 8080, argv, env }) => {
                     test: /\.(js|vue)$/,
                     loader: 'eslint-loader',
                     enforce: 'pre',
-                    include: [path.resolve('src')],
+                    include: [path.resolve(__dirname, 'devops-repository/src'), path.resolve('src')],
                     exclude: /node_modules/,
                     options: {
                         fix: true,
@@ -75,18 +76,13 @@ module.exports = ({ entry, publicPath, dist, port = 8080, argv, env }) => {
                     test: /\.(woff2?|eot|ttf|otf)(\?.*)?$/,
                     loader: 'url-loader',
                     options: {
-                        esModule: false,
-                        limit: 10000
+                        esModule: false
                     }
                 }
             ]
         },
         plugins: [
             new VueLoaderPlugin(),
-            new BundleWebpackPlugin({
-                dist: envDist,
-                bundleName: 'assets_bundle'
-            }),
             new webpack.optimize.LimitChunkCountPlugin({
                 minChunkSize: 1000
             }),
@@ -105,8 +101,9 @@ module.exports = ({ entry, publicPath, dist, port = 8080, argv, env }) => {
             extensions: ['.js', '.vue', '.json', '.ts', '.scss', '.css'],
             alias: {
                 '@': path.resolve('src'),
-                'vue$': 'vue/dist/vue.esm.js',
-                '@locale': path.resolve(__dirname, 'locale')
+                '@repository': path.resolve(__dirname, 'devops-repository/src'),
+                '@locale': path.resolve(__dirname, 'locale'),
+                'vue$': 'vue/dist/vue.esm.js'
             }
         },
         devServer: {

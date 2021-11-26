@@ -74,11 +74,11 @@
     </div>
 </template>
 <script>
-    import InfiniteScroll from '@/components/InfiniteScroll'
-    import packageCard from '@/components/PackageCard'
-    import repoGuide from './repoGuide'
-    import emptyGuide from './emptyGuide'
-    import repoGuideMixin from './repoGuideMixin'
+    import InfiniteScroll from '@repository/components/InfiniteScroll'
+    import packageCard from '@repository/components/PackageCard'
+    import repoGuide from '@repository/views/repoCommon/repoGuide'
+    import emptyGuide from '@repository/views/repoCommon/emptyGuide'
+    import repoGuideMixin from '@repository/views/repoCommon/repoGuideMixin'
     import { mapState, mapActions } from 'vuex'
     export default {
         name: 'commonPackageList',

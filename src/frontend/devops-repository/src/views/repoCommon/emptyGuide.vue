@@ -43,8 +43,8 @@
     </div>
 </template>
 <script>
-    import CodeArea from '@/components/CodeArea'
-    import createTokenDialog from '@/views/repoToken/createTokenDialog'
+    import CodeArea from '@repository/components/CodeArea'
+    import createTokenDialog from '@repository/views/repoToken/createTokenDialog'
     export default {
         name: 'emptyGuide',
         components: { CodeArea, createTokenDialog },

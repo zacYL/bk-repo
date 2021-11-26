@@ -1,6 +1,20 @@
 <template>
     <div class="audit-container" v-bkloading="{ isLoading }">
         <div class="ml20 mr20 mt10 flex-align-center">
+            <bk-select
+                v-model="query.projectId"
+                class="mr10 w250"
+                searchable
+                placeholder="查看单个项目日志"
+                @change="handlerPaginationChange()"
+                :enable-virtual-scroll="projectList && projectList.length > 3000"
+                :list="projectList">
+                <bk-option v-for="option in projectList"
+                    :key="option.id"
+                    :id="option.id"
+                    :name="option.name">
+                </bk-option>
+            </bk-select>
             <bk-date-picker
                 v-model="query.time"
                 class="mr10 w250"
@@ -9,21 +23,18 @@
                 placeholder="请选择操作日期时间范围"
                 @change="handlerPaginationChange()">
             </bk-date-picker>
-            <bk-select
-                v-model="query.user"
+            <bk-tag-input
                 class="mr10 w250"
-                searchable
-                placeholder="请选择操作用户"
-                :enable-virtual-scroll="Object.values(userList).length > 3000"
-                :list="Object.values(userList)"
-                @change="handlerPaginationChange()">
-                <bk-option
-                    v-for="option in Object.values(userList)"
-                    :key="option.id"
-                    :id="option.id"
-                    :name="option.name">
-                </bk-option>
-            </bk-select>
+                v-model="query.user"
+                :list="Object.values(userList).filter(user => user.id !== 'anonymous')"
+                :search-key="['id', 'name']"
+                placeholder="请输入用户，按Enter键确认"
+                :max-data="1"
+                trigger="focus"
+                allow-create
+                @click.native.capture="query.user = []"
+                @select="handlerPaginationChange()">
+            </bk-tag-input>
         </div>
         <bk-table
             class="mt10"
@@ -33,12 +44,17 @@
             :row-border="false"
             size="small">
             <template #empty>
-                <empty-data :search="Boolean(query.time.length || query.user)">
-                    <template v-if="!Boolean(query.time.length || query.user)">
+                <empty-data :search="Boolean(isSearching)">
+                    <template v-if="!Boolean(isSearching)">
                         <span class="ml10">暂无操作记录</span>
                     </template>
                 </empty-data>
             </template>
+            <bk-table-column label="项目" width="200">
+                <template #default="{ row }">
+                    {{ getProjectName(row.content.projectId) }}
+                </template>
+            </bk-table-column>
             <bk-table-column label="操作时间" width="200">
                 <template #default="{ row }">
                     {{ formatDate(row.createdDate) }}
@@ -88,14 +104,15 @@
 </template>
 <script>
     import { mapState, mapActions } from 'vuex'
-    import { formatDate } from '@/utils'
+    import { formatDate } from '@repository/utils'
     export default {
         name: 'audit',
         data () {
             return {
                 isLoading: false,
                 query: {
-                    user: '',
+                    projectId: '',
+                    user: [],
                     time: []
                 },
                 auditList: [],
@@ -138,9 +155,16 @@
             }
         },
         computed: {
-            ...mapState(['userList'])
+            ...mapState(['projectList', 'userList']),
+            isSearching () {
+                const { startTime, endTime, user } = this.$route.query
+                return startTime || endTime || user
+            }
         },
         created () {
+            const { startTime, endTime, user } = this.$route.query
+            startTime && endTime && (this.query.time = [new Date(startTime), new Date(endTime)])
+            user && this.query.user.push(user)
             this.handlerPaginationChange()
         },
         methods: {
@@ -151,15 +175,27 @@
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
                 this.pagination.current = current
                 this.pagination.limit = limit
-                this.getAuditListHandler()
+                let [startTime, endTime] = this.query.time
+                startTime = startTime instanceof Date ? startTime.toISOString() : undefined
+                endTime = endTime instanceof Date ? endTime.toISOString() : undefined
+                const query = {
+                    projectId: this.query.projectId || undefined,
+                    startTime,
+                    endTime,
+                    user: this.query.user[0] || undefined
+                }
+                this.$router.replace({
+                    query: {
+                        ...this.$route.query,
+                        ...query
+                    }
+                })
+                this.getAuditListHandler(query)
             },
-            getAuditListHandler () {
+            getAuditListHandler (query) {
                 this.isLoading = true
-                const [startTime, endTime] = this.query.time
                 this.getAuditList({
-                    startTime: startTime instanceof Date ? startTime.toISOString() : undefined,
-                    endTime: endTime instanceof Date ? endTime.toISOString() : undefined,
-                    operator: this.query.user || undefined,
+                    ...query,
                     current: this.pagination.current,
                     limit: this.pagination.limit
                 }).then(({ records, totalRecords }) => {
@@ -168,6 +204,10 @@
                 }).finally(() => {
                     this.isLoading = false
                 })
+            },
+            getProjectName (id) {
+                const project = this.projectList.find(project => project.id === id)
+                return project ? project.name : '--'
             }
         }
     }

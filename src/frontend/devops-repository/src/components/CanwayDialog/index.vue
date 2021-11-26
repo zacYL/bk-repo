@@ -19,7 +19,7 @@
     </bk-dialog>
 </template>
 <script>
-    import { debounce } from '@/utils'
+    import { debounce } from '@repository/utils'
     export default {
         name: 'canwayDialog',
         props: {

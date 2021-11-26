@@ -7,10 +7,10 @@
             </div>
             <div class="ml20 mr20 upload-file-info">
                 <bk-form :label-width="80" :model="file" :rules="rules" ref="fileName">
-                    <bk-form-item :label="$t('fileName')" :required="true" :property="'name'" error-display-type="normal">
+                    <bk-form-item :label="$t('fileName')" :required="true" property="name" error-display-type="normal">
                         <bk-input :disabled="Boolean(uploadProgress)" v-model.trim="file.name"></bk-input>
                     </bk-form-item>
-                    <bk-form-item :label="$t('overwrite')" :property="'overwrite'">
+                    <bk-form-item :label="$t('overwrite')" property="overwrite">
                         <bk-radio-group v-model="file.overwrite">
                             <bk-radio :disabled="Boolean(uploadProgress)" :value="true">{{ $t('allow') }}</bk-radio>
                             <bk-radio :disabled="Boolean(uploadProgress)" class="ml20" :value="false">{{ $t('notAllow') }}</bk-radio>
@@ -32,8 +32,8 @@
     </div>
 </template>
 <script>
-    import { convertFileSize } from '@/utils'
-    import { getIconName } from '@/store/publicEnum'
+    import { convertFileSize } from '@repository/utils'
+    import { getIconName } from '@repository/store/publicEnum'
     export default {
         name: 'artifactoryUpload',
         props: {

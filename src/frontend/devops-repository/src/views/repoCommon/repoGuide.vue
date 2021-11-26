@@ -33,8 +33,8 @@
     </bk-collapse>
 </template>
 <script>
-    import CodeArea from '@/components/CodeArea'
-    import createTokenDialog from '@/views/repoToken/createTokenDialog'
+    import CodeArea from '@repository/components/CodeArea'
+    import createTokenDialog from '@repository/views/repoToken/createTokenDialog'
     export default {
         name: 'repoGuide',
         components: { CodeArea, createTokenDialog },
@@ -58,6 +58,8 @@
 </script>
 <style lang="scss" scoped>
 .repo-guide-container {
+    height: 100%;
+    overflow-y: auto;
     ::v-deep .bk-collapse-item {
         margin-bottom: 20px;
         .bk-collapse-item-detail {

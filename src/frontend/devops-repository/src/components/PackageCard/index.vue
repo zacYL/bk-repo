@@ -22,8 +22,7 @@
     </div>
 </template>
 <script>
-    import { formatDate } from '@/utils'
-    import { mapState } from 'vuex'
+    import { formatDate } from '@repository/utils'
     export default {
         name: 'packageCard',
         props: {
@@ -35,9 +34,6 @@
                 type: Boolean,
                 default: false
             }
-        },
-        computed: {
-            ...mapState(['userList'])
         },
         methods: {
             formatDate,

@@ -7,17 +7,18 @@
                     :height="34"
                     style="fill: currentColor"
                 >
-                    <use xlink:href="#color-logo-bkrepo" />
+                    <use xlink:href="#repository" />
                 </svg>
                 <header class="ml10 bkrepo-title">{{ $t('bkrepo') }}</header>
             </router-link>
             <bk-select
-                class="w250 bkre-project-select"
+                class="bkre-project-select"
                 :value="projectId"
                 searchable
                 :clearable="false"
                 placeholder="请选择项目"
                 @change="changeProject"
+                size="small"
                 :enable-virtual-scroll="projectList && projectList.length > 3000"
                 :list="projectList">
                 <bk-option v-for="option in projectList"
@@ -32,7 +33,7 @@
 </template>
 <script>
     import User from '../User'
-    import { mapState } from 'vuex'
+    import { mapState, mapActions } from 'vuex'
     export default {
         name: 'bkrepoHeader',
         components: { User },
@@ -43,9 +44,11 @@
             }
         },
         methods: {
+            ...mapActions(['checkPM']),
             changeProject (projectId) {
                 localStorage.setItem('projectId', projectId)
                 if (this.projectId === projectId) return
+                this.checkPM({ projectId })
                 this.$router.push({
                     name: 'repoList',
                     params: {
@@ -65,6 +68,7 @@
     background-color:  var(--fontPrimaryColor);
     color: white;
     .bkre-project-select {
+        width: 300px;
         color: white;
         border-color: #FFFFFF33;
         background-color: #FFFFFF1A;

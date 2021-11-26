@@ -68,13 +68,13 @@
     </canway-dialog>
 </template>
 <script>
-    import { repoEnum } from '@/store/publicEnum'
+    import { repoEnum } from '@repository/store/publicEnum'
     import { mapActions } from 'vuex'
     export default {
         name: 'createRepo',
         data () {
             return {
-                repoEnum,
+                repoEnum: MODE_CONFIG === 'ci' ? ['generic'] : repoEnum,
                 show: false,
                 loading: false,
                 repoBaseInfo: {

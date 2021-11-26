@@ -9,6 +9,7 @@ const createRouter = (store) => {
         mode: 'history',
         routes: routerArr
     })
+    
     return router
 }
 

@@ -13,7 +13,7 @@
     </canway-dialog>
 </template>
 <script>
-    import ArtifactoryUpload from '@/components/ArtifactoryUpload'
+    import ArtifactoryUpload from '@repository/components/ArtifactoryUpload'
     import { mapActions } from 'vuex'
     export default {
         name: 'genericUpload',

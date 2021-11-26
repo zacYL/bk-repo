@@ -1,0 +1,334 @@
+<template>
+    <div class="user-container" v-bkloading="{ isLoading }">
+        <div class="mt10 flex-between-center">
+            <bk-button class="ml20" icon="plus" theme="primary" @click="showCreateUser"><span class="mr5">{{ $t('create') }}</span></bk-button>
+            <div class="mr20 flex-align-center">
+                <bk-input
+                    v-model.trim="userInput"
+                    class="w250"
+                    placeholder="请输入账号/中文名, 按Enter键搜索"
+                    clearable
+                    @enter="handlerPaginationChange()"
+                    @clear="handlerPaginationChange()"
+                    right-icon="bk-icon icon-search">
+                </bk-input>
+                <bk-select
+                    class="ml10 w250"
+                    v-model="showAdmin"
+                    placeholder="账号权限"
+                    @change="handlerPaginationChange()">
+                    <bk-option id="true" name="管理员"></bk-option>
+                    <bk-option id="false" name="普通用户"></bk-option>
+                </bk-select>
+            </div>
+        </div>
+        <bk-table
+            class="mt10"
+            height="calc(100% - 104px)"
+            :data="userList"
+            :outer-border="false"
+            :row-border="false"
+            row-key="userId"
+            size="small">
+            <template #empty>
+                <empty-data :search="Boolean(isSearching)">
+                    <template v-if="!Boolean(isSearching)">
+                        <span class="ml10">暂无用户数据，</span>
+                        <bk-button text @click="showCreateUser">即刻创建</bk-button>
+                    </template>
+                </empty-data>
+            </template>
+            <bk-table-column :label="$t('account')" prop="userId" width="200"></bk-table-column>
+            <bk-table-column :label="$t('chineseName')" prop="name"></bk-table-column>
+            <bk-table-column :label="$t('email')" prop="email"></bk-table-column>
+            <bk-table-column label="电话" prop="phone"></bk-table-column>
+            <bk-table-column :label="$t('createdDate')">
+                <span slot-scope="props">{{formatDate(props.row.createdDate)}}</span>
+            </bk-table-column>
+            <bk-table-column label="账号权限">
+                <div slot-scope="props" class="flex-align-center">
+                    <bk-switcher class="mr10" :key="props.row.id" v-model="props.row.admin" @change="changeAdminStatus(props.row)"></bk-switcher>
+                    <div>{{props.row.admin ? '系统管理员' : '普通用户'}}</div>
+                </div>
+            </bk-table-column>
+            <bk-table-column :label="$t('account') + $t('status')">
+                <div slot-scope="props" class="flex-align-center">
+                    <bk-switcher class="mr10" :key="props.row.id" v-model="props.row.locked" @change="changeUserStatus(props.row)"></bk-switcher>
+                    <div>{{`${props.row.locked ? '已' : '未'}锁定`}}</div>
+                </div>
+            </bk-table-column>
+            <bk-table-column :label="$t('operation')" width="100">
+                <div slot-scope="props" class="flex-align-center">
+                    <i class="mr20 devops-icon icon-edit hover-btn" @click="showEditUser(props.row)"></i>
+                    <i class="devops-icon icon-delete hover-btn" @click="deleteUserHandler(props.row)"></i>
+                </div>
+            </bk-table-column>
+        </bk-table>
+        <bk-pagination
+            class="m10"
+            size="small"
+            align="right"
+            show-total-count
+            @change="current => handlerPaginationChange({ current })"
+            @limit-change="limit => handlerPaginationChange({ limit })"
+            :current.sync="pagination.current"
+            :limit="pagination.limit"
+            :count="pagination.count"
+            :limit-list="pagination.limitList">
+        </bk-pagination>
+        <canway-dialog
+            v-model="editUserDialog.show"
+            :title="editUserDialog.add ? '创建用户' : '编辑用户'"
+            width="600"
+            @cancel="editUserDialog.show = false">
+            <bk-form class="mr50" :label-width="110" :model="editUserDialog" :rules="rules" ref="editUserDialog">
+                <bk-form-item :label="$t('account')" :required="true" property="userId" error-display-type="normal">
+                    <bk-input v-model.trim="editUserDialog.userId"
+                        :disabled="!editUserDialog.add"
+                        maxlength="32" show-word-limit
+                        :placeholder="$t('userIdPlacehodler')">
+                    </bk-input>
+                </bk-form-item>
+                <bk-form-item :label="$t('chineseName')" :required="true" property="name" error-display-type="normal">
+                    <bk-input v-model.trim="editUserDialog.name" maxlength="32" show-word-limit></bk-input>
+                </bk-form-item>
+                <bk-form-item :label="$t('email')" :required="true" property="email" error-display-type="normal">
+                    <bk-input v-model.trim="editUserDialog.email"></bk-input>
+                </bk-form-item>
+                <bk-form-item label="电话">
+                    <bk-input v-model.trim="editUserDialog.phone"></bk-input>
+                </bk-form-item>
+            </bk-form>
+            <div slot="footer">
+                <bk-button theme="default" @click.stop="editUserDialog.show = false">{{$t('cancel')}}</bk-button>
+                <bk-button class="ml10" :loading="editUserDialog.loading" theme="primary" @click="confirm">{{$t('confirm')}}</bk-button>
+            </div>
+        </canway-dialog>
+    </div>
+</template>
+<script>
+    import { mapState, mapActions } from 'vuex'
+    import { formatDate } from '@/utils'
+    export default {
+        name: 'user',
+        data () {
+            return {
+                isLoading: false,
+                showAdmin: '',
+                userInput: '',
+                userList: [],
+                pagination: {
+                    count: 0,
+                    current: 1,
+                    limit: 20,
+                    limitList: [10, 20, 40]
+                },
+                editUserDialog: {
+                    show: false,
+                    loading: false,
+                    add: true,
+                    userId: '',
+                    name: '',
+                    email: '',
+                    phone: ''
+                },
+                rules: {
+                    userId: [
+                        {
+                            required: true,
+                            message: this.$t('pleaseInput') + this.$t('account'),
+                            trigger: 'blur'
+                        },
+                        {
+                            regex: /^[a-zA-Z0-9]{1,32}$/,
+                            message: this.$t('account') + this.$t('include') + this.$t('userIdPlacehodler'),
+                            trigger: 'blur'
+                        },
+                        {
+                            validator: this.asynCheckUserId,
+                            message: this.$t('account') + this.$t('repeat'),
+                            trigger: 'blur'
+                        }
+                    ],
+                    name: [
+                        {
+                            required: true,
+                            message: this.$t('pleaseInput') + this.$t('chineseName'),
+                            trigger: 'blur'
+                        }
+                    ],
+                    email: [
+                        {
+                            required: true,
+                            message: this.$t('pleaseInput') + this.$t('email'),
+                            trigger: 'blur'
+                        },
+                        {
+                            regex: /\@/,
+                            message: this.$t('pleaseInput') + this.$t('legit') + this.$t('email'),
+                            trigger: 'blur'
+                        }
+                    ]
+                }
+            }
+        },
+        computed: {
+            ...mapState(['userInfo']),
+            isSearching () {
+                const { user, admin } = this.$route.query
+                return user || admin
+            }
+        },
+        created () {
+            const { user, admin } = this.$route.query
+            this.userInput = user
+            this.showAdmin = admin
+            this.handlerPaginationChange()
+        },
+        methods: {
+            formatDate,
+            ...mapActions([
+                'getUserList',
+                'createUser',
+                'editUser',
+                'deleteUser',
+                'checkUserId',
+                'getUserInfo'
+            ]),
+            asynCheckUserId () {
+                if (!this.editUserDialog.add) return true
+                return this.checkUserId({
+                    userId: this.editUserDialog.userId
+                }).then(res => !res)
+            },
+            handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
+                this.pagination.current = current
+                this.pagination.limit = limit
+                this.$router.replace({
+                    query: {
+                        ...this.$route.query,
+                        user: this.userInput,
+                        admin: this.showAdmin
+                    }
+                })
+                this.getUserListHandler()
+            },
+            getUserListHandler () {
+                this.isLoading = true
+                return this.getUserList({
+                    user: this.userInput || undefined,
+                    admin: this.showAdmin || undefined,
+                    current: this.pagination.current,
+                    limit: this.pagination.limit
+                }).then(({ records, totalRecords }) => {
+                    this.userList = records
+                    this.pagination.count = totalRecords
+                }).finally(() => {
+                    this.isLoading = false
+                })
+            },
+            showCreateUser () {
+                this.$refs.editUserDialog && this.$refs.editUserDialog.clearError()
+                this.editUserDialog = {
+                    show: true,
+                    loading: false,
+                    add: true,
+                    userId: '',
+                    name: '',
+                    email: '',
+                    phone: ''
+                }
+            },
+            async confirm () {
+                await this.$refs.editUserDialog.validate()
+                this.editUserDialog.loading = true
+                const { userId, name, email, phone } = this.editUserDialog
+                const fn = this.editUserDialog.add ? this.createUser : this.editUser
+                fn({
+                    body: {
+                        userId,
+                        name,
+                        email,
+                        phone
+                    }
+                }).then(res => {
+                    this.$bkMessage({
+                        theme: 'success',
+                        message: (this.editUserDialog.add ? '新建用户' : '编辑用户') + this.$t('success')
+                    })
+                    this.editUserDialog.show = false
+                    this.editUserDialog.userId === this.userInfo.username && this.getUserInfo({ userId: this.userInfo.username })
+                    this.getUserListHandler()
+                }).finally(() => {
+                    this.editUserDialog.loading = false
+                })
+            },
+            showEditUser (row) {
+                this.$refs.editUserDialog && this.$refs.editUserDialog.clearError()
+                this.editUserDialog = {
+                    show: true,
+                    loading: false,
+                    add: false,
+                    ...row
+                }
+            },
+            deleteUserHandler (row) {
+                this.$confirm({
+                    theme: 'danger',
+                    message: this.$t('deleteUserTitle', [row.name]),
+                    confirmFn: () => {
+                        return this.deleteUser(row.userId).then(() => {
+                            this.getUserListHandler()
+                            this.$bkMessage({
+                                theme: 'success',
+                                message: this.$t('delete') + this.$t('success')
+                            })
+                        })
+                    }
+                })
+            },
+            changeUserStatus ({ userId, locked }) {
+                this.editUser({
+                    body: {
+                        userId,
+                        locked
+                    }
+                }).then(() => {
+                    this.$bkMessage({
+                        theme: 'success',
+                        message: `${locked ? '已' : '未'}锁定`
+                    })
+                }).finally(() => {
+                    this.getUserListHandler()
+                })
+            },
+            changeAdminStatus ({ userId, admin }) {
+                this.editUser({
+                    body: {
+                        userId,
+                        admin
+                    }
+                }).then(res => {
+                    this.$bkMessage({
+                        theme: 'success',
+                        message: `设置为${admin ? '管理员' : '普通用户'}`
+                    })
+                }).finally(() => {
+                    this.getUserListHandler()
+                })
+            }
+        }
+    }
+</script>
+<style lang="scss" scoped>
+.user-container {
+    height: 100%;
+    overflow: hidden;
+    .icon-edit {
+        font-size: 14px;
+    }
+    .icon-delete {
+        font-size: 16px;
+    }
+}
+</style>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset=UTF-8>
+        <meta name=viewport content="width=device-width,initial-scale=1">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="icon" href="/ui/favicon.ico" type="image/x-icon" />
+        <title>制品管理CPack</title>
+    </head>
+<body>
+    <div id="app"></div>
+    <script>
+        var PAAS_SERVICE_URL = '__BK_HTTP_SCHEMA__://__BK_REPO_PAAS_FQDN__'
+        var DEVOPS_SITE_URL = '__BK_HTTP_SCHEMA__://__BK_CI_FQDN__'
+        var LOGIN_SERVICE_URL = PAAS_SERVICE_URL + '/login/'
+        var MODE_CONFIG = 'ci'
+    </script>
+    <script>
+        window.getLoginUrl = function (cUrl = location.origin) {
+            if (/\{+curl\}+/i.test(LOGIN_SERVICE_URL)) {
+                return LOGIN_SERVICE_URL.replace(/\{+curl\}+/i, encodeURIComponent(cUrl))
+            } else if (/=%s/.test(LOGIN_SERVICE_URL)) {
+                return LOGIN_SERVICE_URL.replace(/%s/, cUrl)
+            } else {
+                const loginUrl = new URL(LOGIN_SERVICE_URL)
+                if (/=$/.test(loginUrl.search)) {
+                    return LOGIN_SERVICE_URL + cUrl
+                } else {
+                    loginUrl.searchParams.set('c_url', cUrl)
+                    return loginUrl.href
+                }
+            }
+        }
+
+        const search = new URL(location.href).searchParams
+        const redirect = search.get('redirect')
+        search.delete('redirect')
+        const redirectUrl = new URL(location.origin + redirect)
+        search.forEach((val, key) => {
+            redirectUrl.searchParams.set(key, val)
+        })
+        // 兼容之前的预览链接格式
+        if (!search.toString()) {
+            redirectUrl.searchParams.set('preview', true)
+        }
+
+        if (redirect) {
+            // 跳转外部登录所以阻止加载页面
+            document.body.removeChild(document.querySelector('#app'))
+            const xhr = new XMLHttpRequest()
+            xhr.onreadystatechange = function (e) {
+                const { readyState, status } = e.currentTarget
+                // 已登录
+                if (readyState === 4) {
+                    if (status === 200) {
+                        location.href = redirectUrl.href
+                    } else if (status === 401) {
+                        // ci登录逻辑
+                        location.href = window.getLoginUrl(redirectUrl.href)
+                    } else {
+                        printError(status)
+                    }
+                }
+            }
+            xhr.withCredentials = true
+            xhr.open('HEAD', redirectUrl.href)
+            xhr.send()
+        }
+
+        function printError (status) {
+            let message
+            switch (status) {
+                case 403:
+                    message = '未获得文件的访问权限'
+                    break
+                case 404:
+                    message = '文件不存在'
+                    break
+                default:
+                    message = '服务异常，请稍后重试'
+            }
+            document.writeln(
+                '<div style="height: 100%; width: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column;">'
+                + '<img src="/ui/'
+                + status
+                + '.png" />'
+                + '<p style="font-size: 20px; color: #979797; margin: 32px 0;">'
+                + message
+                + '</p>'
+                + '</div>'
+            )
+        }
+    </script>
+</body>

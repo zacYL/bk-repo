@@ -31,6 +31,7 @@
 
 package com.tencent.bkrepo.repository.pojo.node
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
 
@@ -41,6 +42,7 @@ import io.swagger.annotations.ApiModelProperty
 data class NodeDetail(
     @ApiModelProperty("节点基本信息")
     @Deprecated("冗余信息，nodeInfo信息已包含在NodeDetail字段中，nodeInfo将来会删除")
+    @JsonIgnore
     val nodeInfo: NodeInfo,
 
     @ApiModelProperty("创建者")

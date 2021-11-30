@@ -66,14 +66,14 @@
 .infinite-scroll-container {
     height: 100%;
     overflow: hidden;
-    margin-right: -20px;
-    padding-right: 20px;
+    margin-right: -10px;
+    padding-right: 10px;
     .infinite-scroll-list {
         height: 100%;
         overflow-y: auto;
         &.need-scroll {
-            margin-right: -20px;
-            padding-right: 20px;
+            margin-right: -10px;
+            padding-right: 10px;
         }
         .loading-more {
             display: flex;

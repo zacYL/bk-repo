@@ -22,8 +22,9 @@
                 </template>
             </div>
         </div>
-        <div v-if="!readonly" class="card-operation flex-center">
-            <i class="devops-icon icon-delete flex-center package-card-delete" @click.stop="deleteCard"></i>
+        <div class="card-operation flex-center">
+            <i v-if="!readonly" class="devops-icon icon-delete flex-center operation-btn" @click.stop="deleteCard"></i>
+            <i v-if="!cardData.type" class="devops-icon icon-download flex-center operation-btn" @click.stop="download"></i>
         </div>
     </div>
 </template>
@@ -48,6 +49,20 @@
             getIconName,
             deleteCard () {
                 this.$emit('delete-card')
+            },
+            download () {
+                const url = `/generic/${this.cardData.projectId}/${this.cardData.repoName}/${this.cardData.fullPath}?download=true`
+                this.$ajax.head(url).then(() => {
+                    window.open(
+                        '/web' + url,
+                        '_self'
+                    )
+                }).catch(e => {
+                    this.$bkMessage({
+                        theme: 'error',
+                        message: e.status !== 404 ? e.message : this.$t('fileNotExist')
+                    })
+                })
             }
         }
     }
@@ -110,7 +125,7 @@
     }
     .card-operation {
         flex-basis: 50px;
-        .package-card-delete {
+        .operation-btn {
             width: 24px;
             height: 24px;
             font-size: 16px;
@@ -118,6 +133,12 @@
                 color: white;
                 background-color: var(--dangerColor);
                 border-radius: 4px;
+            }
+            &.icon-delete:hover {
+                background-color: var(--dangerColor);
+            }
+            &.icon-download:hover {
+                background-color: var(--primaryColor);
             }
         }
     }

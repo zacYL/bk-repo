@@ -99,6 +99,7 @@ class NodeSearchServiceImpl(
             )
             sum += it.count
         }
+        list.sortByDescending { it.nodes }
         return NodeOverviewResponse(list = list, sum = sum)
     }
 

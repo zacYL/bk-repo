@@ -85,6 +85,7 @@ class PackageStatisticsServiceImpl(
             )
             sum += it.count
         }
+        list.sortByDescending { it.packages }
         return PackageOverviewResponse(list = list, sum = sum)
     }
 

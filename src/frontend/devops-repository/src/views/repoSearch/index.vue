@@ -6,9 +6,10 @@
                 <bk-input
                     v-focus
                     style="width:390px"
-                    v-model.trim="packageNameInput"
+                    v-model.trim="packageName"
                     size="large"
                     :placeholder="$t('pleaseInput') + $t('packageName')"
+                    @change="repoName = ''"
                     @enter="handlerPaginationChange()">
                 </bk-input>
                 <i class="name-search devops-icon icon-search flex-center" @click="handlerPaginationChange()"></i>
@@ -97,7 +98,7 @@
                 isLoading: false,
                 property: this.$route.query.property || 'lastModifiedDate',
                 direction: this.$route.query.direction || 'ASC',
-                packageNameInput: this.$route.query.packageName || '',
+                packageName: this.$route.query.packageName || '',
                 repoType: this.$route.query.repoType || 'generic',
                 repoList: [{ repoName: '', total: 0 }],
                 repoName: this.$route.query.repoName || '',
@@ -148,7 +149,7 @@
                     projectId: this.projectId,
                     repoType: this.repoType,
                     repoName: this.repoName,
-                    packageName: this.packageNameInput,
+                    packageName: this.packageName,
                     property: this.property,
                     direction: this.direction,
                     current: this.pagination.current,
@@ -194,7 +195,7 @@
                         query: {
                             repoType: this.repoType,
                             repoName: this.repoName,
-                            packageName: this.packageNameInput,
+                            packageName: this.packageName,
                             property: this.property,
                             direction: this.direction
                         }

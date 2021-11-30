@@ -8,7 +8,7 @@
                 {{ (userInfo.name || userInfo.username)[0] }}
             </div>
         </div>
-        <span>{{ userInfo.name || userInfo.username }}</span>
+        <span class="flex-1 text-overflow" :title="userInfo.name || userInfo.username">{{ userInfo.name || userInfo.username }}</span>
         <i class="ml5 bk-icon icon-angle-down"></i>
         <ul class="user-menu">
             <li class="flex-align-center" v-for="name in menuList" :key="name" @click="changeRoute(name)">
@@ -55,7 +55,7 @@
 .bkrepo-user-container {
     justify-content: flex-end;
     position: relative;
-    width: 150px;
+    width: 130px;
     height: 100%;
     padding: 0 10px;
     cursor: pointer;

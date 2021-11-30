@@ -35,6 +35,7 @@ Vue.mixin({
     methods: {
         // 特殊仓库名称替换
         replaceRepoName (name) {
+            if (window.MODE_CONFIG !== 'ci') return name
             switch (name) {
                 case 'custom':
                     return '自定义仓库'

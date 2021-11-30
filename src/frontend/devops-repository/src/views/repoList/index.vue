@@ -48,7 +48,7 @@
                     <div class="flex-align-center" :title="replaceRepoName(row.name)">
                         <Icon size="20" :name="row.repoType" />
                         <span class="ml10 text-overflow hover-btn" style="max-width:250px">{{replaceRepoName(row.name)}}</span>
-                        <Icon v-if="row.name === 'custom' || row.name === 'pipeline'"
+                        <Icon v-if="MODE_CONFIG === 'ci' && (row.name === 'custom' || row.name === 'pipeline')"
                             class="ml10" style="color:#1F6ED4"
                             size="24" name="repo-tag-system" />
                     </div>

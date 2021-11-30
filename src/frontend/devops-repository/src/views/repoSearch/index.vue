@@ -9,10 +9,9 @@
                     v-model.trim="packageName"
                     size="large"
                     :placeholder="$t('pleaseInput') + $t('packageName')"
-                    @change="repoName = ''"
-                    @enter="handlerPaginationChange()">
+                    @enter="changePackageName()">
                 </bk-input>
-                <i class="name-search devops-icon icon-search flex-center" @click="handlerPaginationChange()"></i>
+                <i class="name-search devops-icon icon-search flex-center" @click="changePackageName()"></i>
             </div>
             <div v-if="pagination.count" class="mt20 flex-between-center">
                 <div class="result-count flex-align-center">
@@ -44,7 +43,7 @@
                         v-for="(repo, index) in repoList"
                         :key="repo.repoName || index"
                         :title="repo.repoName"
-                        @click="changeRepoInput(repo)">
+                        @click="changeRepoInput(repo.repoName)">
                         <span class="flex-1 text-overflow">{{ repo.repoName || '全部' }}</span>
                         <span class="ml5 repo-sum">{{ repo.total }}</span>
                     </div>
@@ -178,12 +177,6 @@
                     }
                 })
             },
-            changeRepoType (repoType) {
-                this.repoType = repoType
-                this.repoName = ''
-                this.packageName = ''
-                this.handlerPaginationChange()
-            },
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}, load) {
                 this.pagination.current = current
                 this.pagination.limit = limit
@@ -206,8 +199,17 @@
                 this.direction = this.direction === 'ASC' ? 'DESC' : 'ASC'
                 this.handlerPaginationChange()
             },
-            changeRepoInput (repo) {
-                this.repoName = repo.repoName
+            changeRepoType (repoType) {
+                this.repoType = repoType
+                this.packageName = ''
+                this.changePackageName()
+            },
+            changePackageName () {
+                this.repoName = ''
+                this.changeRepoInput()
+            },
+            changeRepoInput (repoName = '') {
+                this.repoName = repoName
                 this.handlerPaginationChange()
             },
             showDetail (pkg) {

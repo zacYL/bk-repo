@@ -91,21 +91,25 @@ export default {
     },
     // 包搜索-仓库数量
     searchRepoList (_, { projectId, repoType, packageName }) {
+        const isGeneric = repoType === 'generic'
         return Vue.prototype.$ajax.get(
-            `${prefix}/package/search/overview`,
+            `${prefix}/${isGeneric ? 'node' : 'package'}/search/overview`,
             {
                 params: {
                     projectId,
-                    repoType,
-                    packageName: '*' + packageName + '*'
+                    repoType: repoType.toUpperCase(),
+                    [isGeneric ? 'name' : 'packageName']: '*' + packageName + '*'
                 }
             }
-        )
+        ).then(({ list, sum }) => {
+            return [{ repoName: '', total: sum }, ...list.map(item => ({ repoName: item.repoName, total: item.packages || item.nodes }))]
+        })
     },
-    // 跨仓库搜索包
+    // 跨仓库搜索
     searchPackageList (_, { projectId, repoType, repoName, packageName, property = 'name', direction = 'ASC', current = 1, limit = 20 }) {
+        const isGeneric = repoType === 'generic'
         return Vue.prototype.$ajax.post(
-            `${prefix}/package/search`,
+            `${prefix}/${isGeneric ? 'node' : 'package'}/search`,
             {
                 page: {
                     pageNumber: current,
@@ -136,7 +140,13 @@ export default {
                             field: 'name',
                             value: '*' + packageName + '*',
                             operation: 'MATCH'
+                        }] : []),
+                        ...(isGeneric ? [{
+                            field: 'folder',
+                            value: false,
+                            operation: 'EQ'
                         }] : [])
+                        
                     ],
                     relation: 'AND'
                 }

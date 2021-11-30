@@ -138,7 +138,7 @@
                 this.getRepoInfo({
                     projectId: this.projectId,
                     repoName: this.repoName,
-                    repoType: this.repoType.toUpperCase()
+                    repoType: this.repoType
                 }).then(res => {
                     this.repoBaseInfo = {
                         ...this.repoBaseInfo,

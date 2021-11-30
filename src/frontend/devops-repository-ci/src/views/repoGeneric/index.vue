@@ -134,7 +134,7 @@
             </div>
         </div>
 
-        <generic-detail :detail-slider="detailSlider" @refresh="showDetail"></generic-detail>
+        <generic-detail :detail-slider="detailSlider" @refresh="getArtifactories"></generic-detail>
         <generic-form-dialog ref="genericFormDialog" @submit="submitGenericForm"></generic-form-dialog>
         <generic-tree-dialog ref="genericTreeDialog" @update="updateGenericTreeNode" @submit="submitGenericTree"></generic-tree-dialog>
         <generic-upload-dialog v-bind="uploadDialog" @update="getArtifactories" @cancel="uploadDialog.show = false"></generic-upload-dialog>

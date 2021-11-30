@@ -1,7 +1,7 @@
 <template>
     <div class="package-card-container flex-align-center">
         <div class="mr20 card-icon flex-center">
-            <Icon size="48" :name="cardData.type.toLowerCase()" />
+            <Icon size="48" :name="cardData.type ? cardData.type.toLowerCase() : getIconName(cardData.name)" />
         </div>
         <div class="mr20 package-card-main flex-column">
             <div class="flex-align-center">
@@ -10,10 +10,16 @@
             </div>
             <span class="package-card-description text-overflow" :title="cardData.description">{{ cardData.description }}</span>
             <div class="package-card-data flex-align-center">
-                <div class="flex-align-center" :title="`最新版本：${cardData.latest}`"></div>
-                <div class="flex-align-center" :title="`最后修改：${formatDate(cardData.lastModifiedDate)}`"></div>
-                <div class="flex-align-center" :title="`版本数：${cardData.versions}`"></div>
-                <div class="flex-align-center" :title="`下载统计：${cardData.downloads}`"></div>
+                <template v-if="cardData.type">
+                    <div class="flex-align-center" :title="`最新版本：${cardData.latest}`"></div>
+                    <div class="flex-align-center" :title="`最后修改：${formatDate(cardData.lastModifiedDate)}`"></div>
+                    <div class="flex-align-center" :title="`版本数：${cardData.versions}`"></div>
+                    <div class="flex-align-center" :title="`下载统计：${cardData.downloads}`"></div>
+                </template>
+                <template v-else>
+                    <div class="flex-align-center" :title="`文件大小：${convertFileSize(cardData.size)}`"></div>
+                    <div class="flex-align-center" :title="`最后修改：${formatDate(cardData.lastModifiedDate)}`"></div>
+                </template>
             </div>
         </div>
         <div v-if="!readonly" class="card-operation flex-center">
@@ -22,7 +28,8 @@
     </div>
 </template>
 <script>
-    import { formatDate } from '@repository/utils'
+    import { convertFileSize, formatDate } from '@repository/utils'
+    import { getIconName } from '@repository/store/publicEnum'
     export default {
         name: 'packageCard',
         props: {
@@ -36,7 +43,9 @@
             }
         },
         methods: {
+            convertFileSize,
             formatDate,
+            getIconName,
             deleteCard () {
                 this.$emit('delete-card')
             }

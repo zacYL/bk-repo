@@ -54,7 +54,9 @@ export default {
             }
         ).then(res => ({
             ...res,
-            records: res.records.filter(v => v.name !== 'report' && v.name !== 'log')
+            records: MODE_CONFIG === 'ci'
+                ? res.records.filter(v => v.name !== 'report' && v.name !== 'log')
+                : res.records
         })) // 前端隐藏report仓库/log仓库
     },
     // 查询仓库列表
@@ -69,7 +71,7 @@ export default {
     // 查询仓库信息
     getRepoInfo (_, { projectId, repoName, repoType }) {
         return Vue.prototype.$ajax.get(
-            `${prefix}/repo/info/${projectId}/${repoName}/${repoType}`
+            `${prefix}/repo/info/${projectId}/${repoName}/${repoType.toUpperCase()}`
         )
     },
     // 更新仓库信息
@@ -88,7 +90,7 @@ export default {
     // 查询公有源列表
     getPublicProxy (_, { repoType }) {
         return Vue.prototype.$ajax.get(
-            `${prefix}/proxy-channel/list/public/${repoType}`
+            `${prefix}/proxy-channel/list/public/${repoType.toUpperCase()}`
         )
     },
     // 查询项目列表

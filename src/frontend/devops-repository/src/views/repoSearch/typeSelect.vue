@@ -3,8 +3,7 @@
         :class="{ 'active': showDropdown }"
         @click="showDropdown = !showDropdown"
         v-bk-clickoutside="hiddenDropdown">
-        <Icon v-if="repoType" size="40" :name="repoType" />
-        <span v-else style="font-size:16px;">全部</span>
+        <Icon size="40" :name="repoType" />
         <i class="ml10 devops-icon" :class="showDropdown ? 'icon-up-shape' : 'icon-down-shape'"></i>
         <div v-show="showDropdown" class="dropdown-list" @click.stop="() => {}">
             <bk-radio-group :value="repoType" class="repo-type-radio-group" @change="changeType">
@@ -15,7 +14,6 @@
                     </div>
                 </bk-radio-button>
             </bk-radio-group>
-            <bk-button class="type-all" text @click="changeType('')">全部</bk-button>
         </div>
     </div>
 </template>
@@ -26,12 +24,12 @@
         props: {
             repoType: {
                 type: String,
-                default: ''
+                default: 'generic'
             }
         },
         data () {
             return {
-                repoEnum: repoEnum.filter(v => v !== 'generic'),
+                repoEnum,
                 showDropdown: false
             }
         },
@@ -88,11 +86,6 @@
                 width: 88px;
                 height: 66px;
             }
-        }
-        .type-all {
-            position: absolute;
-            bottom: 30px;
-            right: 30px;
         }
     }
 }

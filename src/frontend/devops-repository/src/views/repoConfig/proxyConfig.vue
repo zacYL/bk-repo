@@ -80,7 +80,7 @@
         },
         created () {
             this.getPublicProxy({
-                repoType: this.repoType.toUpperCase()
+                repoType: this.repoType
             }).then(res => {
                 this.publicProxy = res.map(v => {
                     return {

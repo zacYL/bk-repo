@@ -109,7 +109,7 @@
                 return this.$route.params.projectId
             },
             repoName () {
-                return this.$route.query.repoName
+                return this.detailSlider.data.repoName
             },
             detailInfoMap () {
                 return [
@@ -154,7 +154,7 @@
                         message: this.$t('add') + this.$t('success')
                     })
                     this.hiddenAddMetadata()
-                    this.$emit('refresh', true)
+                    this.$emit('refresh', this.detailSlider.data)
                 }).finally(() => {
                     this.metadata.loading = false
                 })
@@ -168,7 +168,7 @@
                         keyList: [row[0]]
                     }
                 }).finally(() => {
-                    this.$emit('refresh', true)
+                    this.$emit('refresh', this.detailSlider.data)
                 })
             }
         }

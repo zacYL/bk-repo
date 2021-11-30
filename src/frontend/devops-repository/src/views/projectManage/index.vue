@@ -70,7 +70,7 @@
                 <bk-form-item label="项目名称" :required="true" property="name" error-display-type="normal">
                     <bk-input v-model.trim="editProjectDialog.name" maxlength="32" show-word-limit></bk-input>
                 </bk-form-item>
-                <bk-form-item label="项目描述" :required="true" property="description" error-display-type="normal">
+                <bk-form-item label="项目描述" property="description">
                     <bk-input type="textarea" v-model.trim="editProjectDialog.description" maxlength="200" show-word-limit></bk-input>
                 </bk-form-item>
             </bk-form>

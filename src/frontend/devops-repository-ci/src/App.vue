@@ -108,7 +108,7 @@
 @import '@repository/scss/index';
 .bkrepo-main {
     height: 100%;
-    background-color: var(--bgColor);
+    background-color: var(--bgWeightColor);
     .repo-breadcrumb {
         height: 20px;
         margin: 10px 10px 0;

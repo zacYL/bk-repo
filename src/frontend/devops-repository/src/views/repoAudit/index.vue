@@ -33,7 +33,8 @@
                 trigger="focus"
                 allow-create
                 @click.native.capture="query.user = []"
-                @select="handlerPaginationChange()">
+                @select="handlerPaginationChange()"
+                @removeAll="handlerPaginationChange()">
             </bk-tag-input>
         </div>
         <bk-table
@@ -162,9 +163,10 @@
             }
         },
         created () {
-            const { startTime, endTime, user } = this.$route.query
+            const { startTime, endTime, user, projectId } = this.$route.query
             startTime && endTime && (this.query.time = [new Date(startTime), new Date(endTime)])
             user && this.query.user.push(user)
+            projectId && (this.query.projectId = projectId)
             this.handlerPaginationChange()
         },
         methods: {

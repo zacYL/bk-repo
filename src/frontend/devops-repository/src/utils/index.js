@@ -50,8 +50,7 @@ export function throttleMessage (fn, delay = 1000) {
         if (
             [
                 'property',
-                'defined',
-                'Avoided redundant navigation to current location'
+                'defined'
             ].find(ignore => !message.message || message.message.indexOf(ignore) !== -1)
         ) {
             throw new Error(message.message)

@@ -5,9 +5,7 @@ const webpackBaseConfig = require('../webpack.base')
 
 module.exports = (env, argv) => {
     const isProd = argv.mode === 'production'
-    const urlPrefix = env && env.name ? `${env.name}` : ''
     const envDist = env && env.dist ? env.dist : 'frontend'
-    const extUrlPrefix = env && env.name ? `${env.name}-` : ''
     const dist = path.join(__dirname, `../${envDist}/ui`)
     const config = webpackBaseConfig({
         env,
@@ -25,12 +23,11 @@ module.exports = (env, argv) => {
         new HtmlWebpackPlugin({
             filename: isProd ? `${dist}/frontend#ui#index.html` : `${dist}/index.html`,
             template: 'index.html',
-            inject: true,
-            urlPrefix,
-            extUrlPrefix,
-            timeStamp: +new Date()
+            inject: true
         }),
-        new CopyWebpackPlugin([{ from: path.join(__dirname, './static'), to: dist }])
+        new CopyWebpackPlugin({
+            patterns: [{ from: path.join(__dirname, './static'), to: dist }]
+        })
     ]
 
     config.devServer.historyApiFallback = {

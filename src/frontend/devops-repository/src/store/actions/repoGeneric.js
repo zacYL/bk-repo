@@ -135,19 +135,21 @@ export default {
                                 value: repoName,
                                 operation: 'EQ'
                             },
-                            ...(name ? [
-                                {
-                                    field: 'name',
-                                    value: `\*${name}\*`,
-                                    operation: 'MATCH'
-                                }
-                            ] : [
-                                {
-                                    field: 'path',
-                                    value: `${fullPath === '/' ? '' : fullPath}/`,
-                                    operation: 'EQ'
-                                }
-                            ])
+                            ...(name
+                                ? [
+                                    {
+                                        field: 'name',
+                                        value: `\*${name}\*`,
+                                        operation: 'MATCH'
+                                    }
+                                ]
+                                : [
+                                    {
+                                        field: 'path',
+                                        value: `${fullPath === '/' ? '' : fullPath}/`,
+                                        operation: 'EQ'
+                                    }
+                                ])
                         ],
                         relation: 'AND'
                     }
@@ -212,7 +214,7 @@ export default {
     // 分享文件
     shareArtifactory (_, body) {
         return Vue.prototype.$ajax.post(
-            `/generic/temporary/url/create`,
+            '/generic/temporary/url/create',
             body
         )
     },

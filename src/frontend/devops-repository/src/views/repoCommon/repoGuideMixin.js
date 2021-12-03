@@ -89,7 +89,7 @@ export default {
                             subTitle: '在项目根目录下（与package.json同级），添加文件.npmrc，拷贝如下信息',
                             codeList: [
                                 `registry=${this.domain.npm}/${this.projectId}/${this.repoName}/`,
-                                `always-auth=true`,
+                                'always-auth=true',
                                 `//${this.domain.npm.split('//')[1]}/${this.projectId}/${this.repoName}/:username=${this.userName}`,
                                 `//${this.domain.npm.split('//')[1]}/${this.projectId}/${this.repoName}/:_password=<BASE64_ENCODE_PERSONAL_ACCESS_TOKEN>`,
                                 `//${this.domain.npm.split('//')[1]}/${this.projectId}/${this.repoName}/:email=<EMAIL>`
@@ -101,7 +101,7 @@ export default {
                         {
                             subTitle: '1、在command/shell命令行窗口运行以下代码',
                             codeList: [
-                                `node -e "require('readline') .createInterface({input:process.stdin,output:process.stdout,historySize:0}) .question('PAT> ',p => { b64=Buffer.from(p.trim()).toString('base64');console.log(b64);process.exit(); })"`
+                                'node -e "require(\'readline\') .createInterface({input:process.stdin,output:process.stdout,historySize:0}) .question(\'PAT> \',p => { b64=Buffer.from(p.trim()).toString(\'base64\');console.log(b64);process.exit(); })"'
                             ]
                         },
                         {
@@ -121,7 +121,7 @@ export default {
                         },
                         {
                             codeList: [
-                                `npm login`
+                                'npm login'
                             ]
                         }
                     ]
@@ -130,7 +130,7 @@ export default {
                     title: '推送',
                     main: [
                         {
-                            codeList: [`npm publish`]
+                            codeList: ['npm publish']
                         }
                     ]
                 },
@@ -177,21 +177,21 @@ export default {
                         {
                             subTitle: '1、全局配置，conf/setting.xml中添加源地址',
                             codeList: [
-                                `<mirror>`,
+                                '<mirror>',
                                 `       <id>${this.projectId}-${this.repoName}</id>`,
                                 `       <name>${this.repoName}</name>`,
                                 `       <url>${this.repoUrl}/</url>`,
-                                `       <mirrorOf>central</mirrorOf>`,
-                                `</mirror>`
+                                '       <mirrorOf>central</mirrorOf>',
+                                '</mirror>'
                             ]
                         },
                         {
                             subTitle: '2、项目设置，项目pom.xml中添加源地址',
                             codeList: [
-                                `<repository>`,
+                                '<repository>',
                                 `       <id>${this.projectId}-${this.repoName}</id>`,
                                 `       <url>${this.repoUrl}/</url>`,
-                                `</repository>`
+                                '</repository>'
                             ]
                         }
                     ]
@@ -202,13 +202,13 @@ export default {
                         {
                             subTitle: '在配置文件 conf/settings.xml设置账户密码；项目内 settings.xml 也可以设置，高优先级',
                             codeList: [
-                                `<servers>`,
-                                `       <server>`,
+                                '<servers>',
+                                '       <server>',
                                 `               <id>${this.projectId}-${this.repoName}</id>`,
                                 `               <username>${this.userName}</username>`,
-                                `               <password><PERSONAL_ACCESS_TOKEN></password>`,
-                                `       </server>`,
-                                `</servers>`
+                                '               <password><PERSONAL_ACCESS_TOKEN></password>',
+                                '       </server>',
+                                '</servers>'
                             ]
                         }
                     ]
@@ -219,20 +219,20 @@ export default {
                         {
                             subTitle: '配置 pom.xml',
                             codeList: [
-                                `<distributionManagement>`,
-                                `       <repository>`,
-                                `               <!--id值与配置的server id 一致-->`,
+                                '<distributionManagement>',
+                                '       <repository>',
+                                '               <!--id值与配置的server id 一致-->',
                                 `               <id>${this.projectId}-${this.repoName}</id>`,
                                 `               <name>${this.repoName}</name>`,
                                 `               <url>${this.repoUrl}/</url>`,
-                                `       </repository>`,
-                                `</distributionManagement>`
+                                '       </repository>',
+                                '</distributionManagement>'
                             ]
                         },
                         {
                             subTitle: '推送制品',
                             codeList: [
-                                `mvn deploy`
+                                'mvn deploy'
                             ]
                         }
                     ]
@@ -243,33 +243,33 @@ export default {
                         {
                             subTitle: '在maven配置文件 conf/settings.xml配置',
                             codeList: [
-                                `<profiles>`,
-                                `       <profile>`,
-                                `               <id>repository proxy</id>`,
-                                `               <activation>`,
-                                `                       <activeByDefault>true</activeByDefault>`,
-                                `               </activation>`,
-                                `               <repositories>`,
-                                `                       <repository>`,
+                                '<profiles>',
+                                '       <profile>',
+                                '               <id>repository proxy</id>',
+                                '               <activation>',
+                                '                       <activeByDefault>true</activeByDefault>',
+                                '               </activation>',
+                                '               <repositories>',
+                                '                       <repository>',
                                 `                               <id>${this.projectId}-${this.repoName}</id>`,
                                 `                               <name>${this.repoName}</name>`,
                                 `                               <url>${this.repoUrl}/</url>`,
-                                `                               <releases>`,
-                                `                                       <enabled>true</enabled>`,
-                                `                               </releases>`,
-                                `                               <snapshots>`,
-                                `                                       <enabled>true</enabled>`,
-                                `                               </snapshots>`,
-                                `                       </repository>`,
-                                `               </repositories>`,
-                                `       </profile>`,
-                                `</profiles>`
+                                '                               <releases>',
+                                '                                       <enabled>true</enabled>',
+                                '                               </releases>',
+                                '                               <snapshots>',
+                                '                                       <enabled>true</enabled>',
+                                '                               </snapshots>',
+                                '                       </repository>',
+                                '               </repositories>',
+                                '       </profile>',
+                                '</profiles>'
                             ]
                         },
                         {
                             subTitle: '拉取maven制品',
                             codeList: [
-                                `mvn package`
+                                'mvn package'
                             ]
                         }
                     ]
@@ -283,11 +283,11 @@ export default {
                         {
                             subTitle: 'Apache Maven',
                             codeList: [
-                                `<dependency>`,
+                                '<dependency>',
                                 `   <groupId>${this.detail.basic.groupId}</groupId>`,
                                 `   <artifactId>${this.detail.basic.artifactId}</artifactId>`,
                                 `   <version>${this.versionLabel}</version>`,
-                                `</dependency>`
+                                '</dependency>'
                             ]
                         },
                         {
@@ -337,7 +337,7 @@ export default {
                         {
                             subTitle: '2、更新本地repo信息',
                             codeList: [
-                                `helm repo update`
+                                'helm repo update'
                             ]
                         },
                         {
@@ -363,7 +363,7 @@ export default {
                         {
                             subTitle: '2、更新本地的repo信息',
                             codeList: [
-                                `helm repo update`
+                                'helm repo update'
                             ]
                         },
                         {
@@ -388,9 +388,9 @@ export default {
                                 `name=${this.repoName}`,
                                 `baseurl=${this.repoUrl}`,
                                 `username=${this.userName}`,
-                                `password=<PERSONAL_ACCESS_TOKEN>`,
-                                `enabled=1`,
-                                `gpgcheck=0`
+                                'password=<PERSONAL_ACCESS_TOKEN>',
+                                'enabled=1',
+                                'gpgcheck=0'
                             ]
                         }
                     ]
@@ -458,12 +458,12 @@ export default {
                         {
                             subTitle: '配置文件目录：$HOME/.pypirc',
                             codeList: [
-                                `[distutils]`,
+                                '[distutils]',
                                 `index-servers = ${this.repoName}`,
                                 `[${this.repoName}]`,
                                 `repository: ${this.repoUrl}`,
                                 `username: ${this.userName}`,
-                                `password: <PERSONAL_ACCESS_TOKEN>`
+                                'password: <PERSONAL_ACCESS_TOKEN>'
                             ]
                         },
                         {
@@ -486,7 +486,7 @@ export default {
                         {
                             subTitle: 'Windows配置目录 :  %HOME%/pip/pip.ini',
                             codeList: [
-                                `[global]`,
+                                '[global]',
                                 `index-url = ${location.protocol}//${this.userName}:<PERSONAL_ACCESS_TOKEN>@${location.host}/${this.repoType}/${this.projectId}/${this.repoName}/simple`
                             ]
                         },
@@ -539,14 +539,14 @@ export default {
                         {
                             subTitle: '2、在 Composer 制品的文件目录添加 auth.json，配置仓库认证信息',
                             codeList: [
-                                `{`,
-                                `       "http-basic": {`,
+                                '{',
+                                '       "http-basic": {',
                                 `               "${location.host}": {`,
                                 `                       "username": "${this.userName}",`,
-                                `                       "password": "<PERSONAL_ACCESS_TOKEN>"`,
-                                `               }`,
-                                `       }`,
-                                `}`
+                                '                       "password": "<PERSONAL_ACCESS_TOKEN>"',
+                                '               }',
+                                '       }',
+                                '}'
                             ]
                         },
                         {

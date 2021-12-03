@@ -208,7 +208,7 @@
                     // { name: 'createdDate', label: this.$t('createdDate') },
                     { name: 'lastModifiedBy', label: this.$t('lastModifiedBy') },
                     { name: 'lastModifiedDate', label: this.$t('lastModifiedDate') }
-                ].filter(({ name }) => this.detail.basic.hasOwnProperty(name))
+                ].filter(({ name }) => Object.prototype.hasOwnProperty.call(this.detail.basic, name))
                     .map(item => ({ ...item, value: this.detail.basic[item.name] }))
             }
         },

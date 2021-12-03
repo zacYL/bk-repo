@@ -126,26 +126,34 @@ export default {
                             value: projectId,
                             operation: 'EQ'
                         },
-                        ...(repoType ? [{
-                            field: 'repoType',
-                            value: repoType.toUpperCase(),
-                            operation: 'EQ'
-                        }] : []),
-                        ...(repoName ? [{
-                            field: 'repoName',
-                            value: repoName,
-                            operation: 'EQ'
-                        }] : []),
-                        ...(packageName ? [{
-                            field: 'name',
-                            value: '*' + packageName + '*',
-                            operation: 'MATCH'
-                        }] : []),
-                        ...(isGeneric ? [{
-                            field: 'folder',
-                            value: false,
-                            operation: 'EQ'
-                        }] : [])
+                        ...(repoType
+                            ? [{
+                                field: 'repoType',
+                                value: repoType.toUpperCase(),
+                                operation: 'EQ'
+                            }]
+                            : []),
+                        ...(repoName
+                            ? [{
+                                field: 'repoName',
+                                value: repoName,
+                                operation: 'EQ'
+                            }]
+                            : []),
+                        ...(packageName
+                            ? [{
+                                field: 'name',
+                                value: '*' + packageName + '*',
+                                operation: 'MATCH'
+                            }]
+                            : []),
+                        ...(isGeneric
+                            ? [{
+                                field: 'folder',
+                                value: false,
+                                operation: 'EQ'
+                            }]
+                            : [])
                         
                     ],
                     relation: 'AND'
@@ -156,7 +164,7 @@ export default {
     // 获取docker域名
     getDockerDomain ({ commit }) {
         Vue.prototype.$ajax.get(
-            `docker/ext/addr`
+            'docker/ext/addr'
         ).then(domain => {
             commit('SET_DOMAIN', {
                 type: 'docker',
@@ -167,7 +175,7 @@ export default {
     // 获取npm域名
     getNpmDomain ({ commit }) {
         Vue.prototype.$ajax.get(
-            `npm/ext/address`
+            'npm/ext/address'
         ).then(({ domain }) => {
             commit('SET_DOMAIN', {
                 type: 'npm',

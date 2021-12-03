@@ -101,9 +101,9 @@
     import { mapGetters, mapActions } from 'vuex'
     import { formatDate } from '@repository/utils'
     const statusMap = {
-        'RUNNING': '执行中',
-        'SUCCESS': '成功',
-        'FAILED': '失败'
+        RUNNING: '执行中',
+        SUCCESS: '成功',
+        FAILED: '失败'
     }
     export default {
         name: 'logDetail',

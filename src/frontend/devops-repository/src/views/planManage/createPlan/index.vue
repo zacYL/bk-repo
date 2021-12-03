@@ -266,12 +266,16 @@
                         name,
                         executionStrategy: replicaType === 'REAL_TIME' ? 'REAL_TIME' : executionStrategy,
                         replicaObjectType,
-                        ...(executeTime ? {
-                            time: new Date(executeTime)
-                        } : {}),
-                        ...(cronExpression ? {
-                            cron: cronExpression
-                        } : {}),
+                        ...(executeTime
+                            ? {
+                                time: new Date(executeTime)
+                            }
+                            : {}),
+                        ...(cronExpression
+                            ? {
+                                cron: cronExpression
+                            }
+                            : {}),
                         conflictStrategy,
                         remoteClusterIds: remoteClusters.map(v => v.id),
                         description
@@ -307,20 +311,26 @@
                         includeMetadata: true, // 同步元数据
                         conflictStrategy: this.planForm.conflictStrategy,
                         errorStrategy: 'CONTINUE',
-                        ...(this.planForm.executionStrategy !== 'REAL_TIME' ? {
-                            executionStrategy: this.planForm.executionStrategy,
-                            executionPlan: {
-                                executeImmediately: this.planForm.executionStrategy === 'IMMEDIATELY',
-                                ...(this.planForm.executionStrategy === 'SPECIFIED_TIME' ? {
-                                    // executeTime: this.planForm.time.toISOString()
-                                    // 后端需要,中国时区
-                                    executeTime: new Date(this.planForm.time.getTime() + 8 * 3600 * 1000).toISOString().replace(/Z$/, '')
-                                } : {}),
-                                ...(this.planForm.executionStrategy === 'CRON_EXPRESSION' ? {
-                                    cronExpression: this.planForm.cron
-                                } : {})
+                        ...(this.planForm.executionStrategy !== 'REAL_TIME'
+                            ? {
+                                executionStrategy: this.planForm.executionStrategy,
+                                executionPlan: {
+                                    executeImmediately: this.planForm.executionStrategy === 'IMMEDIATELY',
+                                    ...(this.planForm.executionStrategy === 'SPECIFIED_TIME'
+                                        ? {
+                                            // executeTime: this.planForm.time.toISOString()
+                                            // 后端需要,中国时区
+                                            executeTime: new Date(this.planForm.time.getTime() + 8 * 3600 * 1000).toISOString().replace(/Z$/, '')
+                                        }
+                                        : {}),
+                                    ...(this.planForm.executionStrategy === 'CRON_EXPRESSION'
+                                        ? {
+                                            cronExpression: this.planForm.cron
+                                        }
+                                        : {})
+                                }
                             }
-                        } : {})
+                            : {})
                     },
                     remoteClusterIds: this.planForm.remoteClusterIds,
                     enabled: true,

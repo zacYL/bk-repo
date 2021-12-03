@@ -121,10 +121,12 @@
                         public: false,
                         name: data.name,
                         url: data.url,
-                        ...(data.ticket ? {
-                            username: data.username,
-                            password: data.password
-                        } : {})
+                        ...(data.ticket
+                            ? {
+                                username: data.username,
+                                password: data.password
+                            }
+                            : {})
                     })
                 // 编辑私有源
                 } else if (data.type === 'edit' && data.proxyType === 'privateProxy') {
@@ -132,10 +134,12 @@
                         public: false,
                         name: data.name,
                         url: data.url,
-                        ...(data.ticket ? {
-                            username: data.username,
-                            password: data.password
-                        } : {})
+                        ...(data.ticket
+                            ? {
+                                username: data.username,
+                                password: data.password
+                            }
+                            : {})
                     })
                 }
                 this.cancelProxy()

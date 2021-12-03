@@ -141,9 +141,9 @@
     import planLog from './planLog'
     import planCopyDialog from './planCopyDialog'
     const statusMap = {
-        'RUNNING': '执行中',
-        'SUCCESS': '成功',
-        'FAILED': '失败'
+        RUNNING: '执行中',
+        SUCCESS: '成功',
+        FAILED: '失败'
     }
     export default {
         name: 'plan',
@@ -190,11 +190,13 @@
                 'deletePlan'
             ]),
             getExecutionStrategy ({ replicaType, setting: { executionStrategy } }) {
-                return replicaType === 'REAL_TIME' ? '实时同步' : {
-                    'IMMEDIATELY': '立即执行',
-                    'SPECIFIED_TIME': '指定时间',
-                    'CRON_EXPRESSION': '定时执行'
-                }[executionStrategy]
+                return replicaType === 'REAL_TIME'
+                    ? '实时同步'
+                    : {
+                        IMMEDIATELY: '立即执行',
+                        SPECIFIED_TIME: '指定时间',
+                        CRON_EXPRESSION: '定时执行'
+                    }[executionStrategy]
             },
             renderHeader (h, { column }) {
                 return h('div', {

@@ -63,9 +63,9 @@
     import { formatDate } from '@repository/utils'
     import { mapActions } from 'vuex'
     const statusMap = {
-        'RUNNING': '执行中',
-        'SUCCESS': '成功',
-        'FAILED': '失败'
+        RUNNING: '执行中',
+        SUCCESS: '成功',
+        FAILED: '失败'
     }
     export default {
         name: 'planLog',

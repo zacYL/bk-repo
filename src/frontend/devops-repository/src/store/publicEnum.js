@@ -41,21 +41,21 @@ export const fileType = [
 export function getIconName (name) {
     let type = name.split('.').pop()
     type = {
-        'gif': 'png',
-        'jpg': 'png',
-        'psd': 'png',
-        'jpge': 'png',
-        'mov': 'mp4',
-        'avi': 'mp4',
-        'asf': 'mp4',
-        'wmv': 'mp4',
-        'rmvb': 'mp4',
-        'rm': 'mp4',
-        'jar': 'zip',
-        'rar': 'zip',
-        'map': 'js',
-        'pyc': 'py',
-        'xsd': 'xml'
+        gif: 'png',
+        jpg: 'png',
+        psd: 'png',
+        jpge: 'png',
+        mov: 'mp4',
+        avi: 'mp4',
+        asf: 'mp4',
+        wmv: 'mp4',
+        rmvb: 'mp4',
+        rm: 'mp4',
+        jar: 'zip',
+        rar: 'zip',
+        map: 'js',
+        pyc: 'py',
+        xsd: 'xml'
     }[type] || type
     return fileType.includes(type) ? type : 'file'
 }

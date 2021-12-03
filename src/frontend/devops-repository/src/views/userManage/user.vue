@@ -54,7 +54,7 @@
             <bk-table-column :label="$t('account') + $t('status')">
                 <div slot-scope="props" class="flex-align-center">
                     <bk-switcher class="mr10" :key="props.row.id" v-model="props.row.locked" @change="changeUserStatus(props.row)"></bk-switcher>
-                    <div>{{`${props.row.locked ? '已' : '未'}锁定`}}</div>
+                    <div>{{${props.row.locked ? '禁用' : '启用'}}}</div>
                 </div>
             </bk-table-column>
             <bk-table-column :label="$t('operation')" width="100">
@@ -296,7 +296,7 @@
                 }).then(() => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: `${locked ? '已' : '未'}锁定`
+                        message: locked ? '禁用' : '启用'
                     })
                 }).finally(() => {
                     this.getUserListHandler()

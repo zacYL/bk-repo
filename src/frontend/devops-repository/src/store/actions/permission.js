@@ -202,7 +202,7 @@ export default {
         )
     },
     // 审计日志
-    getAuditList (_, { projectId, startTime, endTime, operator, current, limit }) {
+    getAuditList (_, { projectId, startTime, endTime, user, current, limit }) {
         return Vue.prototype.$ajax.get(
             'repository/api/operate/log/page',
             {
@@ -212,7 +212,7 @@ export default {
                     projectId,
                     startTime,
                     endTime,
-                    operator
+                    operator: user
                 }
             }
         )

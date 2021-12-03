@@ -134,7 +134,7 @@
 @import '@/scss/index';
 .bkrepo-main {
     height: 100%;
-    background-color: var(--bgColor);
+    background-color: var(--bgWeightColor);
     .bkrepo-main-container {
         flex: 1;
         overflow: hidden;

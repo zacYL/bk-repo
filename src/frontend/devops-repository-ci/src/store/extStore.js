@@ -15,7 +15,7 @@ export default {
         // 查询所有角色
         getRepoRoleList (_, { projectId, repoName }) {
             return Vue.prototype.$ajax.get(
-                `auth/api/role/list`,
+                'auth/api/role/list',
                 {
                     params: {
                         projectId,
@@ -34,7 +34,7 @@ export default {
         // override
         getFolderList ({ commit }, { projectId, repoName, roadMap, fullPath = '', isPipeline = false }) {
             return Vue.prototype.$ajax.post(
-                `repository/api/node/query`,
+                'repository/api/node/query',
                 {
                     page: {
                         pageNumber: 1,
@@ -84,7 +84,7 @@ export default {
         // override
         getArtifactoryList (_, { projectId, repoName, name, fullPath, current, limit, sortType = 'lastModifiedDate' }) {
             return Vue.prototype.$ajax.post(
-                `repository/api/node/query`,
+                'repository/api/node/query',
                 {
                     page: {
                         pageNumber: current,
@@ -106,19 +106,22 @@ export default {
                                 value: repoName,
                                 operation: 'EQ'
                             },
-                            ...(name ? [
-                                {
-                                    field: 'name',
-                                    value: `\*${name}\*`,
-                                    operation: 'MATCH'
-                                }
-                            ] : [
-                                {
-                                    field: 'path',
-                                    value: `${fullPath === '/' ? '' : fullPath}/`,
-                                    operation: 'EQ'
-                                }
-                            ])
+                            ...(name
+                                ? [
+                                    {
+                                        field: 'name',
+                                        value: `\*${name}\*`,
+                                        operation: 'MATCH'
+                                    }
+                                ]
+                                : [
+                                    {
+                                        field: 'path',
+                                        value: `${fullPath === '/' ? '' : fullPath}/`,
+                                        operation: 'EQ'
+                                    }
+                                ]
+                            )
                         ],
                         relation: 'AND'
                     }

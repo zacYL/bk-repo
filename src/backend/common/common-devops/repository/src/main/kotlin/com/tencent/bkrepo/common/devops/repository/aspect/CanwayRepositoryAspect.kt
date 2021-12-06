@@ -18,6 +18,7 @@ import com.tencent.bkrepo.common.devops.api.exception.CanwayPermissionException
 import com.tencent.bkrepo.common.devops.api.pojo.BatchResourceInstance
 import com.tencent.bkrepo.common.devops.api.pojo.ResourceRegisterInfo
 import com.tencent.bkrepo.common.devops.api.util.http.CanwayHttpUtils
+import com.tencent.bkrepo.common.devops.repository.TENANTID
 import com.tencent.bkrepo.common.devops.repository.service.CanwayPermissionService
 import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
@@ -30,7 +31,6 @@ import org.aspectj.lang.annotation.Aspect
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import java.lang.Exception
 
 @Aspect
 class CanwayRepositoryAspect(
@@ -49,13 +49,20 @@ class CanwayRepositoryAspect(
     fun beforeCreateRepo(point: ProceedingJoinPoint): Any? {
         val args = point.args
         val repo = args.first() as RepoCreateRequest
+        // 兼容处理
+        val tenantId = try {
+            HttpContextHolder.getRequest().getHeader(TENANTID)
+        } catch (e: Exception) {
+            "bk_ci"
+        }
+        logger.debug("tenantId: [$tenantId]")
         val projectId = repo.projectId
         if (projectId == BK_SOFTWARE) {
             return point.proceed(args)
         } else {
             val userId = repo.operator
             if (!canwayPermissionService.checkCanwayPermission(
-                repo.projectId, repo.name, userId, CanwayPermissionType.CREATE
+                repo.projectId, repo.name, userId, CanwayPermissionType.CREATE, tenantId
             )
             ) throw CanwayPermissionException()
             logger.info("userId: $userId  ,   operator: ${repo.operator}")

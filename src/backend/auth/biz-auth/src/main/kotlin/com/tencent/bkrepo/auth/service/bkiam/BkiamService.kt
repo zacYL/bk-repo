@@ -31,6 +31,8 @@
 
 package com.tencent.bkrepo.auth.service.bkiam
 
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
+import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.auth.pojo.enums.SystemCode
 
 interface BkiamService {
@@ -38,8 +40,8 @@ interface BkiamService {
         userId: String,
         systemCode: SystemCode,
         projectId: String,
-        resourceType: String,
-        action: String,
+        resourceType: ResourceType,
+        action: PermissionAction,
         resourceId: String
     ): Boolean
 
@@ -47,15 +49,15 @@ interface BkiamService {
         userId: String,
         systemCode: SystemCode,
         projectId: String,
-        resourceType: String,
-        action: String
+        resourceType: ResourceType,
+        action: PermissionAction
     ): List<String>
 
     fun createResource(
         userId: String,
         systemCode: SystemCode,
         projectId: String,
-        resourceType: String,
+        resourceType: ResourceType,
         resourceId: String,
         resourceName: String
     )

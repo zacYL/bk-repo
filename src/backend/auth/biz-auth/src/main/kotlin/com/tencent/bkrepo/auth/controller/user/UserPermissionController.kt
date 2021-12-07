@@ -37,9 +37,9 @@ class UserPermissionController(
         val result = permissionService.checkPermission(
             CheckPermissionRequest(
                 uid = userId,
-                resourceType = ResourceType.PROJECT.name,
+                resourceType = ResourceType.PROJECT,
                 projectId = projectId,
-                action = PermissionAction.MANAGE.name
+                action = PermissionAction.MANAGE
             )
         )
         return ResponseBuilder.success(result)
@@ -118,8 +118,8 @@ class UserPermissionController(
         return permissionService.checkPermission(
             CheckPermissionRequest(
                 uid = userId,
-                resourceType = permission.resourceType.name,
-                action = PermissionAction.MANAGE.name,
+                resourceType = permission.resourceType,
+                action = PermissionAction.MANAGE,
                 projectId = permission.projectId!!,
                 repoName = repoName
             )

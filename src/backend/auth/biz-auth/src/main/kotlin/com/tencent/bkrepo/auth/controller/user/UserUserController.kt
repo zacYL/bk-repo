@@ -90,9 +90,9 @@ class UserUserController(
         val result = permissionService.checkPermission(
             CheckPermissionRequest(
                 uid = userId,
-                resourceType = ResourceType.PROJECT.name,
+                resourceType = ResourceType.PROJECT,
                 projectId = projectId,
-                action = PermissionAction.MANAGE.name
+                action = PermissionAction.MANAGE
             )
         )
         return ResponseBuilder.success(result)

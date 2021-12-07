@@ -34,9 +34,12 @@ package com.tencent.bkrepo.auth.util
 import com.tencent.bk.sdk.iam.constants.ExpressionOperationEnum
 import com.tencent.bk.sdk.iam.dto.expression.ExpressionDTO
 import com.tencent.bkrepo.auth.exception.BkiamException
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
+import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 
 object BkiamUtils {
-    fun buildAction(resourceType: String, action: String) = "${resourceType}_$action"
+    fun buildAction(resourceType: ResourceType, action: PermissionAction) = "${resourceType.id()}_${action.id()}"
+
     fun getProjects(content: ExpressionDTO): List<String> {
         if (content.field != "project.id") {
             if (content.operator != ExpressionOperationEnum.ANY) {
@@ -56,7 +59,7 @@ object BkiamUtils {
     fun getResourceInstance(
         content: List<ExpressionDTO>,
         projectId: String,
-        resourceType: String
+        resourceType: ResourceType
     ): Set<String> {
         val instantList = mutableSetOf<String>()
         content.map {
@@ -81,7 +84,7 @@ object BkiamUtils {
 
             // 选中了项目下某资源的 特定实例
             // 如 /project,projectA/pipeline,pipelineB/
-            if (value[1].substringBefore("/") != projectId || value[1].substringAfter("/") != resourceType) {
+            if (value[1].substringBefore("/") != projectId || value[1].substringAfter("/") != resourceType.id()) {
                 return@map
             }
             val instance = value[2].substringBefore("/")
@@ -95,7 +98,7 @@ object BkiamUtils {
     }
 
     // 无content怎么处理 一层怎么处理,二层怎么处理。 默认只有两层。
-    fun getResourceInstance(expression: ExpressionDTO, projectId: String, resourceType: String): Set<String> {
+    fun getResourceInstance(expression: ExpressionDTO, projectId: String, resourceType: ResourceType): Set<String> {
         val instantList = mutableSetOf<String>()
         // 项目下无限制 {"field":"pipeline._bk_iam_path_","op":"starts_with","value":"/project,test1/"}
         if (expression.content == null || expression.content.isEmpty()) {
@@ -129,7 +132,7 @@ object BkiamUtils {
         childExpression: List<ExpressionDTO>,
         parentExpression: ExpressionDTO,
         projectId: String,
-        resourceType: String
+        resourceType: ResourceType
     ): Set<String> {
         val instantList = mutableSetOf<String>()
         when (parentExpression.operator) {
@@ -158,7 +161,7 @@ object BkiamUtils {
     private fun getInstanceByContent(
         childExpression: List<ExpressionDTO>,
         projectId: String,
-        resourceType: String,
+        resourceType: ResourceType,
         type: ExpressionOperationEnum
     ): Set<String> {
         var cacheList = mutableSetOf<String>()
@@ -231,7 +234,7 @@ object BkiamUtils {
         }
     }
 
-    fun getInstanceByField(expression: ExpressionDTO, projectId: String, resourceType: String): Set<String> {
+    fun getInstanceByField(expression: ExpressionDTO, projectId: String, resourceType: ResourceType): Set<String> {
         val instanceList = mutableSetOf<String>()
         val value = expression.value
 
@@ -265,8 +268,8 @@ object BkiamUtils {
         return Pair(true, instanceList)
     }
 
-    private fun checkField(field: String, resourceType: String): Boolean {
-        if (field.contains(resourceType)) {
+    private fun checkField(field: String, resourceType: ResourceType): Boolean {
+        if (field.contains(resourceType.id())) {
             return true
         }
         return false

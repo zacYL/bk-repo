@@ -91,8 +91,8 @@ class ServiceUserResourceImpl @Autowired constructor(
             val checkRequest =
                 CheckPermissionRequest(
                     uid = userId,
-                    resourceType = ResourceType.SYSTEM.toString(),
-                    action = PermissionAction.WRITE.toString()
+                    resourceType = ResourceType.SYSTEM,
+                    action = PermissionAction.WRITE
                 )
             if (!permissionService.checkPermission(checkRequest)) {
                 logger.warn("check user permission error [$checkRequest]")
@@ -122,8 +122,8 @@ class ServiceUserResourceImpl @Autowired constructor(
             val checkRequest =
                 CheckPermissionRequest(
                     uid = userId,
-                    resourceType = ResourceType.PROJECT.toString(),
-                    action = PermissionAction.WRITE.toString(),
+                    resourceType = ResourceType.PROJECT,
+                    action = PermissionAction.WRITE,
                     projectId = request.projectId
                 )
             if (!permissionService.checkPermission(checkRequest)) {

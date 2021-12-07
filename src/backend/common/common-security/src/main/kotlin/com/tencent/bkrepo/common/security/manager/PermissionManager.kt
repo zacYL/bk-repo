@@ -162,12 +162,12 @@ open class PermissionManager(
     }
 
     fun registerProject(userId: String, projectId: String) {
-        val request = RegisterResourceRequest(userId, ResourceType.PROJECT.toString(), projectId)
+        val request = RegisterResourceRequest(userId, ResourceType.PROJECT, projectId)
         permissionResource.registerResource(request)
     }
 
     fun registerRepo(userId: String, projectId: String, repoName: String) {
-        val request = RegisterResourceRequest(userId, ResourceType.REPO.toString(), projectId, repoName)
+        val request = RegisterResourceRequest(userId, ResourceType.REPO, projectId, repoName)
         permissionResource.registerResource(request)
     }
 
@@ -220,8 +220,8 @@ open class PermissionManager(
         val checkRequest = CheckPermissionRequest(
             uid = userId,
             appId = platformId,
-            resourceType = type.toString(),
-            action = action.toString(),
+            resourceType = type,
+            action = action,
             projectId = projectId,
             repoName = repoName,
             path = path

@@ -42,14 +42,14 @@ open class AbstractPermissionResourceImpl {
     fun checkRequest(request: CheckPermissionRequest) {
         with(request) {
             when (resourceType) {
-                ResourceType.SYSTEM.toString() -> {
+                ResourceType.SYSTEM -> {
                 }
-                ResourceType.PROJECT.toString() -> {
+                ResourceType.PROJECT -> {
                     if (projectId.isNullOrBlank()) {
                         throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "projectId")
                     }
                 }
-                ResourceType.REPO.toString() -> {
+                ResourceType.REPO -> {
                     if (projectId.isNullOrBlank()) {
                         throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "projectId")
                     }
@@ -57,7 +57,7 @@ open class AbstractPermissionResourceImpl {
                         throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "repoName")
                     }
                 }
-                ResourceType.NODE.toString() -> {
+                ResourceType.NODE -> {
                     if (projectId.isNullOrBlank()) {
                         throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "projectId")
                     }

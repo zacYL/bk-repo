@@ -251,13 +251,13 @@ class CanwayPermissionServiceImpl(
                 var celeriac = buildCheckActionQuery(
                     projectId!!,
                     uid,
-                    PermissionAction.valueOf(action),
-                    ResourceType.valueOf(resourceType),
+                    action,
+                    resourceType,
                     resultRole,
                     department
                 )
 
-                if (request.resourceType == ResourceType.REPO.name) {
+                if (request.resourceType == ResourceType.REPO) {
                     celeriac = celeriac.and(TPermission::repos.name).`is`(request.repoName)
                 }
                 val query = Query.query(celeriac)
@@ -433,8 +433,8 @@ class CanwayPermissionServiceImpl(
         logger.info("CanwayPermissionService found tPermission: $tPermission")
         val checkPermissionRequest = CheckPermissionRequest(
             uid = userId,
-            resourceType = ResourceType.REPO.name,
-            action = PermissionAction.MANAGE.name,
+            resourceType = ResourceType.REPO,
+            action = PermissionAction.MANAGE,
             projectId = tPermission.projectId,
             repoName = tPermission.repos.first()
         )
@@ -447,8 +447,8 @@ class CanwayPermissionServiceImpl(
             ?: throw(ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "`projectId` is must not be null"))
         val repoName = request.repoName
 
-        val resourceType = ResourceType.valueOf(request.resourceType)
-        val action = PermissionAction.valueOf(request.action)
+        val resourceType = request.resourceType
+        val action = request.action
 
         val tPermissions = permissionRepository.findByProjectIdAndReposContainsAndResourceTypeAndActionsContains(
             projectId, repoName, resourceType, action

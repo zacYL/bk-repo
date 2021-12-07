@@ -262,7 +262,7 @@ open class PermissionServiceImpl constructor(
 
     private fun checkRepoAction(request: CheckPermissionRequest, roles: List<String>): Boolean {
         with(request) {
-            if (resourceType == ResourceType.REPO.toString() && repoName != null) {
+            if (resourceType == ResourceType.REPO && repoName != null) {
                 val query = PermissionQueryHelper.buildPermissionCheck(
                     projectId!!, repoName!!, uid, action, resourceType, roles
                 )

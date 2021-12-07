@@ -97,12 +97,12 @@ class BkciAuthService @Autowired constructor(
         projectCode: String,
         action: BkAuthPermission,
         resourceType: BkAuthResourceType,
-        permissionAction: String?
+        permissionAction: PermissionAction?
     ): Boolean {
 
         if (!enableSuperAdmin) return false
 
-        if (permissionAction != PermissionAction.READ.toString()) return false
+        if (permissionAction != PermissionAction.READ) return false
 
         val cacheKey = "superAdmin::$user::$projectCode"
         val cacheResult = resourcePermissionCache.getIfPresent(cacheKey)

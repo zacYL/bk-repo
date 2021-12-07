@@ -253,20 +253,6 @@ class UserUserController(
     }
 
     @ApiOperation("校验用户token")
-    @GetMapping("/token/{uid}/{token}")
-    @Deprecated("接口改为post方式")
-    fun checkUserToken(
-        @RequestAttribute userId: String,
-        @ApiParam(value = "用户id")
-        @PathVariable uid: String,
-        @ApiParam(value = "用户token")
-        @PathVariable token: String
-    ): Response<Boolean> {
-        val result = if(userService.findUserByUserToken(userId, token) == null) false else false
-        return ResponseBuilder.success(result)
-    }
-
-    @ApiOperation("校验用户token")
     @PostMapping("/token")
     fun checkToken(
         @RequestAttribute userId: String,
@@ -275,7 +261,7 @@ class UserUserController(
         @ApiParam(value = "用户token")
         @RequestParam token: String
     ): Response<Boolean> {
-        val result = if(userService.findUserByUserToken(userId, token) == null) false else false
+        val result = userService.findUserByUserToken(userId, token) == null
         return ResponseBuilder.success(result)
     }
 
@@ -287,9 +273,10 @@ class UserUserController(
         @ApiParam(value = "用户token")
         @RequestParam("token") token: String
     ): Response<Boolean> {
-        userService.findUserByUserToken(uid, token) ?: run {
+        val user = userService.findUserByUserToken(uid, token) ?: run {
             return ResponseBuilder.success(false)
         }
+        if(user.locked) return ResponseBuilder.success(false)
         val ticket = JwtUtils.generateToken(signingKey, jwtProperties.expiration, uid)
         val cookie = Cookie(BKREPO_TICKET, ticket)
         cookie.path = "/"
@@ -309,6 +296,9 @@ class UserUserController(
                 throw IllegalArgumentException("ticket can not be null")
             }
             val userId = JwtUtils.validateToken(signingKey, bkrepoToken).body.subject
+            val user = userService.getUserById(userId)
+                ?: throw AuthenticationException(AuthMessageCode.AUTH_LOGIN_TOKEN_CHECK_FAILED.name)
+            if(user.locked) throw AuthenticationException(AuthMessageCode.AUTH_USER_LOCKED.name)
             val result = mapOf("userId" to userId)
             return ResponseBuilder.success(result)
         } catch (ignored: Exception) {

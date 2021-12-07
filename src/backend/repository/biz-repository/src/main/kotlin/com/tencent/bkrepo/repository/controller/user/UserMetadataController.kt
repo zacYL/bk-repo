@@ -77,7 +77,7 @@ class UserMetadataController(
     }
 
     @ApiOperation("创建/更新元数据列表")
-    @Permission(type = ResourceType.NODE, action = PermissionAction.WRITE)
+    @Permission(type = ResourceType.NODE, action = PermissionAction.UPDATE)
     @PostMapping(DEFAULT_MAPPING_URI)
     fun save(
         @RequestAttribute userId: String,
@@ -97,7 +97,7 @@ class UserMetadataController(
     }
 
     @ApiOperation("删除元数据")
-    @Permission(type = ResourceType.NODE, action = PermissionAction.DELETE)
+    @Permission(type = ResourceType.NODE, action = PermissionAction.UPDATE)
     @DeleteMapping(DEFAULT_MAPPING_URI)
     fun delete(
         @RequestAttribute userId: String,

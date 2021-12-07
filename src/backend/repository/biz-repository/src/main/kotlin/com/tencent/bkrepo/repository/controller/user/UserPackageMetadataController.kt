@@ -77,7 +77,7 @@ class UserPackageMetadataController(
     }
 
     @ApiOperation("创建/更新元数据列表")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.UPDATE)
     @PostMapping("/{projectId}/{repoName}")
     fun save(
         @RequestAttribute userId: String,
@@ -99,7 +99,7 @@ class UserPackageMetadataController(
     }
 
     @ApiOperation("删除元数据")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.UPDATE)
     @DeleteMapping("/{projectId}/{repoName}")
     fun delete(
         @RequestAttribute userId: String,

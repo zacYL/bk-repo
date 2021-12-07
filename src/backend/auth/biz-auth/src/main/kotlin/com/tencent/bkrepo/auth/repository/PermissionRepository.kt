@@ -103,4 +103,13 @@ interface PermissionRepository : MongoRepository<TPermission, String> {
         permName: String,
         roleId: List<String>
     ): List<TPermission>
+
+    /**
+     * Canway 扩展
+     */
+    fun findAllByProjectIdAndResourceTypeAndUsersIn(
+        projectId: String,
+        type: ResourceType,
+        userId: String
+    ): List<TPermission>
 }

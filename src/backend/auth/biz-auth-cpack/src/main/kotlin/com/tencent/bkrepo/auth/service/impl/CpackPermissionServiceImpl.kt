@@ -29,7 +29,7 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.auth.service.local
+package com.tencent.bkrepo.auth.service.impl
 
 import com.tencent.bkrepo.auth.constant.AUTH_ADMIN
 import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_ADMIN
@@ -55,6 +55,7 @@ import com.tencent.bkrepo.auth.repository.PermissionRepository
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
 import com.tencent.bkrepo.auth.service.PermissionService
+import com.tencent.bkrepo.auth.service.local.AbstractServiceImpl
 import com.tencent.bkrepo.auth.util.query.PermissionQueryHelper
 import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
@@ -64,7 +65,10 @@ import org.slf4j.LoggerFactory
 import org.springframework.data.mongodb.core.MongoTemplate
 import java.time.LocalDateTime
 
-open class PermissionServiceImpl constructor(
+/**
+ * 产品权限实现类
+ */
+class CpackPermissionServiceImpl constructor(
     private val userRepository: UserRepository,
     private val roleRepository: RoleRepository,
     private val permissionRepository: PermissionRepository,
@@ -204,11 +208,10 @@ open class PermissionServiceImpl constructor(
         // check user locked
         if (user.locked) return false
 
-
         // check user admin permission
         if (user.admin) return true
 
-        //check user project admin
+        // check user project admin
         if (checkProjectUserAdmin(request)) return true
 
         // check role project admin
@@ -224,11 +227,11 @@ open class PermissionServiceImpl constructor(
     private fun checkProjectUserAdmin(request: CheckPermissionRequest): Boolean {
         request.projectId?.let {
             if (permissionRepository.findAllByResourceTypeAndPermNameAndProjectIdAndUsersIn(
-                    ResourceType.PROJECT,
-                    PROJECT_MANAGE_PERMISSION,
-                    it,
-                    listOf(request.uid)
-                ).isNotEmpty()
+                ResourceType.PROJECT,
+                PROJECT_MANAGE_PERMISSION,
+                it,
+                listOf(request.uid)
+            ).isNotEmpty()
             ) return true
         }
         return false
@@ -300,7 +303,7 @@ open class PermissionServiceImpl constructor(
         val roleList = roleRepository.findByIdIn(user.roles)
         roleList.forEach {
             if (it.admin && it.projectId != null) {
-                projectList.add(it.projectId)
+                projectList.add(it.projectId!!)
             } else {
                 noAdminRole.add(it.id!!)
             }
@@ -313,7 +316,7 @@ open class PermissionServiceImpl constructor(
     }
 
     private fun listProjectPublicRepo(projectId: String): List<String> {
-        return repositoryClient.listRepo(projectId).data?.filter{
+        return repositoryClient.listRepo(projectId).data?.filter {
             it.public
         }?.map { it.name } ?: listOf()
     }
@@ -332,17 +335,24 @@ open class PermissionServiceImpl constructor(
 
         val roles = user.roles
 
-        // 用户为项目管理员
+        // 用户为项目管理员或项目成员
         if (roles.isNotEmpty() &&
-            roleRepository.findByProjectIdAndTypeAndAdminAndIdIn(
+            roleRepository.findByProjectIdAndTypeAndIdIn(
                 projectId,
                 RoleType.PROJECT,
-                true,
                 roles
             ).isNotEmpty()
         ) {
             return getAllRepoByProjectId(projectId)
         }
+
+        // 用户为该项目成员
+        if (permissionRepository.findAllByProjectIdAndResourceTypeAndUsersIn(
+            projectId = projectId,
+            userId = userId,
+            type = ResourceType.PROJECT
+        ).isNotEmpty()
+        ) return getAllRepoByProjectId(projectId)
 
         val repoList = mutableListOf<String>()
 
@@ -359,7 +369,7 @@ open class PermissionServiceImpl constructor(
         val roleList = roleRepository.findByProjectIdAndTypeAndAdminAndIdIn(projectId, RoleType.REPO, true, roles)
         roleList.forEach {
             if (it.admin && it.repoName != null) {
-                repoList.add(it.repoName)
+                repoList.add(it.repoName!!)
             } else {
                 noAdminRole.add(it.id!!)
             }
@@ -431,18 +441,20 @@ open class PermissionServiceImpl constructor(
 
     override fun isProjectManager(userId: String): Boolean {
         val user = userRepository.findFirstByUserId(userId) ?: return false
-        if(user.admin) return true
+        if (user.admin) return true
         val roles = user.roles
-        if(permissionRepository.findAllByResourceTypeAndPermNameAndUsersIn(
+        if (permissionRepository.findAllByResourceTypeAndPermNameAndUsersIn(
             ResourceType.PROJECT,
             PROJECT_MANAGE_PERMISSION,
             listOf(userId)
-        ).isNotEmpty()) return true
-        if(permissionRepository.findAllByResourceTypeAndPermNameAndRolesIn(
+        ).isNotEmpty()
+        ) return true
+        if (permissionRepository.findAllByResourceTypeAndPermNameAndRolesIn(
             ResourceType.PROJECT,
             PROJECT_MANAGE_PERMISSION,
             roles
-        ).isNotEmpty()) return true
+        ).isNotEmpty()
+        ) return true
         return false
     }
 
@@ -527,6 +539,6 @@ open class PermissionServiceImpl constructor(
     }
 
     companion object {
-        private val logger = LoggerFactory.getLogger(PermissionServiceImpl::class.java)
+        private val logger = LoggerFactory.getLogger(CpackPermissionServiceImpl::class.java)
     }
 }

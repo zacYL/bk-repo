@@ -3,16 +3,12 @@ package com.tencent.bkrepo.auth.config
 import com.tencent.bkrepo.auth.repository.PermissionRepository
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
-import com.tencent.bkrepo.auth.service.DepartmentService
 import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.service.RoleService
 import com.tencent.bkrepo.auth.service.UserService
-import com.tencent.bkrepo.auth.service.impl.CanwayDepartmentServiceImpl
-import com.tencent.bkrepo.auth.service.impl.CanwayPermissionServiceImpl
-import com.tencent.bkrepo.auth.service.impl.CanwayRoleServiceImpl
-import com.tencent.bkrepo.auth.service.impl.CanwayUserServiceImpl
-import com.tencent.bkrepo.common.devops.api.conf.DevopsConf
-import com.tencent.bkrepo.common.devops.api.service.BkUserService
+import com.tencent.bkrepo.auth.service.impl.CpackPermissionServiceImpl
+import com.tencent.bkrepo.auth.service.impl.CpackRoleServiceImpl
+import com.tencent.bkrepo.auth.service.impl.CpackUserServiceImpl
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import org.slf4j.LoggerFactory
@@ -26,81 +22,62 @@ import org.springframework.data.mongodb.core.MongoTemplate
 
 @Configuration
 @AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE)
-class CanwayAuthServiceConfig {
+class CpackAuthServiceConfig {
 
     @Bean
-    @ConditionalOnProperty(prefix = "auth", name = ["realm"], havingValue = "canway")
-    fun canwayPermissionService(
+    @ConditionalOnProperty(prefix = "auth", name = ["realm"], havingValue = "cpack")
+    fun cpackPermissionService(
         @Autowired userRepository: UserRepository,
         @Autowired roleRepository: RoleRepository,
         @Autowired permissionRepository: PermissionRepository,
         @Autowired mongoTemplate: MongoTemplate,
         @Autowired repositoryClient: RepositoryClient,
-        @Autowired devopsConf: DevopsConf,
-        @Autowired departmentService: DepartmentService,
-        @Autowired bkUserService: BkUserService,
         @Autowired projectClient: ProjectClient
     ): PermissionService {
-        logger.debug("init CanwayPermissionServiceImpl")
-        return CanwayPermissionServiceImpl(
+        logger.debug("init cpackPermissionServiceImpl")
+        return CpackPermissionServiceImpl(
             userRepository,
             roleRepository,
             permissionRepository,
             mongoTemplate,
             repositoryClient,
-            devopsConf,
-            departmentService,
-            bkUserService,
             projectClient
         )
     }
 
     @Bean
-    @ConditionalOnProperty(prefix = "auth", name = ["realm"], havingValue = "canway")
-    fun canwayRoleService(
+    @ConditionalOnProperty(prefix = "auth", name = ["realm"], havingValue = "cpack")
+    fun cpackRoleService(
         @Autowired roleRepository: RoleRepository,
         @Autowired userRepository: UserRepository,
         @Autowired userService: UserService,
-        @Autowired mongoTemplate: MongoTemplate,
-        @Autowired devopsConf: DevopsConf
+        @Autowired mongoTemplate: MongoTemplate
     ): RoleService {
-        logger.debug("init CanwayRoleServiceImpl")
-        return CanwayRoleServiceImpl(
+        logger.debug("init cpackRoleServiceImpl")
+        return CpackRoleServiceImpl(
             roleRepository,
             userService,
             userRepository,
-            mongoTemplate,
-            devopsConf
+            mongoTemplate
         )
     }
 
     @Bean
-    @ConditionalOnProperty(prefix = "auth", name = ["realm"], havingValue = "canway")
-    fun canwayUserService(
+    @ConditionalOnProperty(prefix = "auth", name = ["realm"], havingValue = "cpack")
+    fun cpackUserService(
         @Autowired userRepository: UserRepository,
         @Autowired roleRepository: RoleRepository,
         @Autowired mongoTemplate: MongoTemplate
     ): UserService {
-        logger.debug("init CanwayUserServiceImpl")
-        return CanwayUserServiceImpl(
+        logger.debug("init cpackUserServiceImpl")
+        return CpackUserServiceImpl(
             userRepository,
             roleRepository,
             mongoTemplate
         )
     }
 
-    @Bean
-    @ConditionalOnProperty(prefix = "auth", name = ["realm"], havingValue = "canway")
-    fun canwayDepartmentService(
-        @Autowired devopsConf: DevopsConf
-    ): DepartmentService {
-        logger.debug("init CanwayUserServiceImpl")
-        return CanwayDepartmentServiceImpl(
-            devopsConf
-        )
-    }
-
     companion object {
-        private val logger = LoggerFactory.getLogger(CanwayAuthServiceConfig::class.java)
+        private val logger = LoggerFactory.getLogger(CpackAuthServiceConfig::class.java)
     }
 }

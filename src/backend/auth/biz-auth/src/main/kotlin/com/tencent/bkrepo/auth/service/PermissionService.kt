@@ -80,9 +80,6 @@ interface PermissionService {
 
     fun findPermissionById(id: String): Permission?
 
-    /**
-     * 迁移4.3版本之前的历史权限数据
-     */
-    fun migHistoryPermissionData()
+    fun updatePermissionById(id: String, key: String, value: Any): Boolean
 
 }

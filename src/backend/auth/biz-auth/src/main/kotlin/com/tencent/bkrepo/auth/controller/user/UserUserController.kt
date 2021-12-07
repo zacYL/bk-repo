@@ -66,13 +66,6 @@ class UserUserController(
         @PathVariable projectId: String,
         @RequestParam includeAdmin: Boolean = false
     ): Response<List<UserResult>> {
-        if (permissionService.isProjectManager(userId)) return ResponseBuilder.success(
-            userService.listUser(listOf()).map {
-                UserResult(
-                    userId = it.userId,
-                    name = it.name
-                )
-            })
         val permissions = permissionService.listProjectBuiltinPermission(projectId)
         val users = mutableSetOf<String>()
         val roles = mutableSetOf<String>()

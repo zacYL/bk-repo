@@ -31,6 +31,10 @@
 
 package com.tencent.bkrepo.repository.listener
 
+import com.tencent.bkrepo.auth.api.ServicePermissionResource
+import com.tencent.bkrepo.auth.api.ServiceUserResource
+import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_ADMIN
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionUserRequest
 import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
 import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
@@ -46,7 +50,8 @@ import org.springframework.stereotype.Component
  */
 @Component
 class ResourcePermissionListener(
-    private val permissionManager: PermissionManager
+    private val permissionManager: PermissionManager,
+    private val permissionResource: ServicePermissionResource
 ) {
 
     /**
@@ -75,10 +80,15 @@ class ResourcePermissionListener(
         with(event) {
             if (isAuthedNormalUser(userId)) {
                 //创建仓库级权限
-                permissionManager.lisRepoBuiltinPermission(projectId, repoName)
-//                permissionManager.registerRepo(userId, projectId, repoName)
-//                val repoManagerRoleId = roleResource.createRepoManage(projectId, repoName).data!!
-//                userResource.addUserRole(userId, repoManagerRoleId)
+                val repoManage = permissionManager.lisRepoBuiltinPermission(projectId, repoName)?.first {
+                    it.permName == AUTH_BUILTIN_ADMIN
+                }
+                if (repoManage != null) {
+                    permissionResource.updatePermissionUser(UpdatePermissionUserRequest(
+                        permissionId = repoManage.id!!,
+                        userId = listOf(userId)
+                    ))
+                }
             }
         }
     }

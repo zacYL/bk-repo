@@ -102,7 +102,6 @@ class CpackPermissionServiceImpl constructor(
             AUTH_BUILTIN_USER,
             listOf(PermissionAction.WRITE, PermissionAction.READ, PermissionAction.DELETE, PermissionAction.UPDATE)
         )
-//        val repoViewer = getOnePermission(projectId, repoName, AUTH_BUILTIN_VIEWER, listOf(PermissionAction.READ))
         return listOf(repoAdmin, repoUser).map { transferPermission(it) }
     }
 

@@ -37,6 +37,7 @@ import com.tencent.bkrepo.auth.pojo.RegisterResourceRequest
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
+import com.tencent.bkrepo.auth.pojo.permission.Permission
 import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
 import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
 import com.tencent.bkrepo.common.security.exception.AuthenticationException
@@ -135,7 +136,7 @@ open class PermissionManager(
         if (isReadPublicRepo(action, projectId, repoName, public)) {
             return
         }
-        checkPermission(ResourceType.NODE, action, projectId, repoName, path)
+        checkPermission(ResourceType.REPO, action, projectId, repoName, path)
     }
 
     /**
@@ -235,8 +236,8 @@ open class PermissionManager(
         }
     }
 
-    fun lisRepoBuiltinPermission(projectId: String, repoName: String) {
-        permissionResource.listRepoBuiltinPermission(projectId, repoName)
+    fun lisRepoBuiltinPermission(projectId: String, repoName: String): List<Permission>? {
+        return permissionResource.listRepoBuiltinPermission(projectId, repoName).data
     }
 
     fun listProjectBuiltinPermission(projectId: String) {

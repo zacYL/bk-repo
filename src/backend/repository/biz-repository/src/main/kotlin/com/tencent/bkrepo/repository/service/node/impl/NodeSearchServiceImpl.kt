@@ -78,6 +78,8 @@ class NodeSearchServiceImpl(
         val genericRepos = repositoryService.allRepos(projectId, null, RepositoryType.GENERIC).map { it?.name }
         val criteria = Criteria.where(TNode::repoName.name).`in`(genericRepos)
         criteria.and(TNode::projectId.name).`is`(projectId)
+            .and(TNode::deleted.name).`is`(null)
+            .and(TNode::folder.name).`is`(false)
 
         val escapedValue = MongoEscapeUtils.escapeRegexExceptWildcard(name)
         val regexPattern = escapedValue.replace("*", ".*")

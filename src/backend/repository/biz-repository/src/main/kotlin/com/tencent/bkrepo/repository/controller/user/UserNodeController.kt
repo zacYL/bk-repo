@@ -339,19 +339,11 @@ class UserNodeController(
 
     @ApiOperation("仓库 包数量 总览")
     @GetMapping("/search/overview")
-    fun packageOverview(
+    fun nodeGlobalSearchOverview(
         @RequestParam projectId: String,
         @RequestParam name: String
     ): Response<NodeOverviewResponse> {
         return ResponseBuilder.success(nodeSearchService.nodeOverview(projectId, name))
-    }
-
-    @GetMapping("/search/{projectId}")
-    fun nodeGlobalSearch(
-        @PathVariable projectId: String,
-        @RequestParam name: String
-    ): Response<Page<Map<String, Any?>>> {
-        return ResponseBuilder.success(nodeSearchService.nodeGlobalSearch(projectId, name))
     }
 
     /**

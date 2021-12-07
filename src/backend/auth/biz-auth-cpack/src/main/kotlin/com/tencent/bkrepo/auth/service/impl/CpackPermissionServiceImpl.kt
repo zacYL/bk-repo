@@ -220,6 +220,9 @@ class CpackPermissionServiceImpl constructor(
         // check role repo admin
         if (checkRepoAdmin(request, user.roles)) return true
 
+        //check project action
+        if(checkProjectAction(request, user.roles)) return true
+
         // check repo action action
         return checkRepoAction(request, user.roles)
     }
@@ -263,9 +266,27 @@ class CpackPermissionServiceImpl constructor(
         return false
     }
 
+    /**
+     * 仓库的READ 权限会落到仓库所属项目的READ
+     */
+    private fun checkProjectAction(request: CheckPermissionRequest, roles: List<String>): Boolean {
+        if (request.resourceType == ResourceType.PROJECT
+            || (request.resourceType == ResourceType.REPO && request.action == PermissionAction.READ)) {
+            val query = PermissionQueryHelper.buildProjectPermissionCheck(
+                projectId = request.projectId!!,
+                uid = request.uid,
+                action = request.action,
+                roles = roles
+            )
+            val result = mongoTemplate.count(query, TPermission::class.java)
+            if (result != 0L) return true
+        }
+        return false
+    }
+
     private fun checkRepoAction(request: CheckPermissionRequest, roles: List<String>): Boolean {
         with(request) {
-            if (resourceType == ResourceType.REPO.toString() && repoName != null) {
+            if (resourceType == ResourceType.REPO && repoName != null) {
                 val query = PermissionQueryHelper.buildPermissionCheck(
                     projectId!!, repoName!!, uid, action, resourceType, roles
                 )

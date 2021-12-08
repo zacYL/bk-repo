@@ -53,10 +53,10 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.RestController
 import javax.servlet.http.HttpServletRequest
 
-@Principal(PrincipalType.PLATFORM)
 @RestController
 class UserImpl @Autowired constructor(val dockerRepo: DockerV2LocalRepoService) : User {
 
+    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
     override fun getManifest(
         request: HttpServletRequest,
         userId: String?,
@@ -71,6 +71,7 @@ class UserImpl @Autowired constructor(val dockerRepo: DockerV2LocalRepoService) 
         return ResponseBuilder.success(result)
     }
 
+    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
     override fun getLayer(
         request: HttpServletRequest,
         userId: String?,
@@ -84,6 +85,7 @@ class UserImpl @Autowired constructor(val dockerRepo: DockerV2LocalRepoService) 
         return dockerRepo.buildLayerResponse(context, id)
     }
 
+    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
     override fun getRepo(
         request: HttpServletRequest,
         userId: String?,
@@ -101,6 +103,7 @@ class UserImpl @Autowired constructor(val dockerRepo: DockerV2LocalRepoService) 
         return ResponseBuilder.success(repoInfo)
     }
 
+    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
     override fun getRepoTag(
         request: HttpServletRequest,
         userId: String?,

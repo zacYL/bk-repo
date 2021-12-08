@@ -48,7 +48,8 @@ class ArtifactEventConsumer(
      */
     private val acceptTypes = setOf(
         EventType.NODE_CREATED,
-        EventType.VERSION_CREATED
+        EventType.VERSION_CREATED,
+        EventType.VERSION_UPDATED
     )
 
     override fun accept(event: ArtifactEvent) {

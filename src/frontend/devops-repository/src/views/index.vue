@@ -101,8 +101,9 @@
         }
         .split-line {
             height: 1px;
-            margin: 6px 0;
-            background-color: var(--borderWeightColor);
+            margin: 6px 16px;
+            background-color: white;
+            opacity: 0.2;
         }
         .nav-submain-item {
             height: 44px;

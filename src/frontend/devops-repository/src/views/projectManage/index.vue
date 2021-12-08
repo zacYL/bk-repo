@@ -1,5 +1,5 @@
 <template>
-    <div class="project-manage-container" v-bkloading="{ isLoading }">
+    <div class="project-manage-container">
         <div class="ml20 mr20 mt10 flex-between-center">
             <bk-button icon="plus" theme="primary" @click="showProjectDialog()"><span class="mr5">{{ $t('create') }}</span></bk-button>
             <bk-input
@@ -102,7 +102,6 @@
         components: { projectConfig },
         data () {
             return {
-                isLoading: false,
                 projectInput: '',
                 pagination: {
                     current: 1,

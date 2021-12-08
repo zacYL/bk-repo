@@ -1,5 +1,5 @@
 <template>
-    <div class="repo-search-container">
+    <div class="repo-search-container" v-bkloading="{ isLoading }">
         <div class="repo-search-tools flex-column">
             <div class="name-tool flex-center">
                 <type-select :repo-type="repoType" @change="changeRepoType"></type-select>
@@ -64,7 +64,7 @@
                     </package-card>
                 </infinite-scroll>
             </template>
-            <empty-data v-if="!resultList.length && !isLoading" class="flex-1" ex-style="align-self:start;margin-top:80px;"
+            <empty-data v-else :is-loading="isLoading" class="flex-1" ex-style="align-self:start;margin-top:80px;"
                 :config="{
                     imgSrc: '/ui/no-search.png',
                     title: '搜索结果为空',

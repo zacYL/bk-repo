@@ -31,7 +31,7 @@
             row-key="userId"
             size="small">
             <template #empty>
-                <empty-data :search="Boolean(isSearching)">
+                <empty-data :is-loading="isLoading" :search="Boolean(isSearching)">
                     <template v-if="!Boolean(isSearching)">
                         <span class="ml10">暂无用户数据，</span>
                         <bk-button text @click="showCreateUser">即刻创建</bk-button>

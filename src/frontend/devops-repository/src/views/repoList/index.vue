@@ -36,7 +36,7 @@
             size="small"
             @row-click="toPackageList">
             <template #empty>
-                <empty-data :search="Boolean(query.name || query.type)">
+                <empty-data :is-loading="isLoading" :search="Boolean(query.name || query.type)">
                     <template v-if="!Boolean(query.name || query.type)">
                         <span class="ml10">暂无仓库数据，</span>
                         <bk-button text @click="createRepo">即刻创建</bk-button>
@@ -101,8 +101,8 @@
                 isLoading: false,
                 repoList: [],
                 query: {
-                    name: '',
-                    type: ''
+                    name: this.$route.query.name,
+                    type: this.$route.query.type
                 },
                 pagination: {
                     count: 0,
@@ -148,6 +148,9 @@
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
                 this.pagination.current = current
                 this.pagination.limit = limit
+                this.$router.replace({
+                    query: this.query
+                })
                 this.getListData()
             },
             createRepo () {

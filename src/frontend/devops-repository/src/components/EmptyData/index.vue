@@ -1,5 +1,5 @@
 <template>
-    <div class="empty-data-container flex-center" :style="exStyle">
+    <div class="empty-data-container flex-center" :class="{ 'hidden': isLoading }" :style="exStyle">
         <template v-if="config">
             <div class="flex-column flex-center">
                 <img :src="config.imgSrc" width="250" />
@@ -29,12 +29,19 @@
             },
             config: {
                 type: Object
+            },
+            isLoading: {
+                type: Boolean,
+                default: false
             }
         }
     }
 </script>
 <style lang="scss" scoped>
 .empty-data-container {
+    &.hidden {
+        visibility: hidden;
+    }
     .empty-data-title {
         font-size: 14px;
         font-weight: bold;

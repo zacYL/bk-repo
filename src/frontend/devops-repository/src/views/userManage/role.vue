@@ -19,7 +19,7 @@
             size="small"
             @row-click="showUsers">
             <template #empty>
-                <empty-data :search="Boolean(role)">
+                <empty-data :is-loading="isLoading" :search="Boolean(role)">
                     <template v-if="!Boolean(role)">
                         <span class="ml10">暂无用户组数据，</span>
                         <bk-button text @click="createRoleHandler">即刻创建</bk-button>

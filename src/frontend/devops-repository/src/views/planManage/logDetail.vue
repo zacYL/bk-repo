@@ -29,7 +29,7 @@
             :row-border="false"
             size="small">
             <template #empty>
-                <empty-data :search="Boolean(searchGroup.length || status)">
+                <empty-data :is-loading="isLoading" :search="Boolean(searchGroup.length || status)">
                     <template v-if="!Boolean(searchGroup.length || status)">
                         <span class="ml10">暂无同步记录</span>
                     </template>

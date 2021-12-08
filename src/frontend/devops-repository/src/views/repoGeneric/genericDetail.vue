@@ -52,7 +52,7 @@
                         :row-border="false"
                         size="small">
                         <template #empty>
-                            <empty-data>
+                            <empty-data :is-loading="detailSlider.loading">
                                 <span class="ml10">暂无元数据，</span>
                                 <bk-button text @click="showAddMetadata">即刻添加</bk-button>
                             </empty-data>

@@ -18,54 +18,62 @@
                 </div>
             </div>
         </header>
-        <!-- 搜索中/有数据 -->
-        <div v-if="$route.query.packageName || packageList.length" class="package-search-tools flex-between-center">
-            <bk-input
-                class="w250"
-                v-model.trim="packageNameInput"
-                placeholder="请输入制品名称, 按Enter键搜索"
-                clearable
-                @enter="handlerPaginationChange()"
-                @clear="handlerPaginationChange()"
-                right-icon="bk-icon icon-search">
-            </bk-input>
-            <div class="sort-tool flex-align-center">
-                <bk-select
-                    style="width:150px;"
-                    v-model="property"
-                    :clearable="false"
-                    @change="handlerPaginationChange()">
-                    <bk-option id="name" name="名称排序"></bk-option>
-                    <bk-option id="lastModifiedDate" name="时间排序"></bk-option>
-                    <bk-option id="downloads" name="下载量排序"></bk-option>
-                </bk-select>
-                <div class="ml10 sort-order flex-center hover-btn" @click="changeDirection">
-                    <Icon :name="`order-${direction.toLowerCase()}`" size="16"></Icon>
+        <!-- 存在包, 加载中默认存在包 -->
+        <template v-if="packageList.length || $route.query.packageName || isLoading">
+            <div class="package-search-tools flex-between-center">
+                <bk-input
+                    class="w250"
+                    v-model.trim="packageName"
+                    placeholder="请输入制品名称, 按Enter键搜索"
+                    clearable
+                    @enter="handlerPaginationChange()"
+                    @clear="handlerPaginationChange()"
+                    right-icon="bk-icon icon-search">
+                </bk-input>
+                <div class="sort-tool flex-align-center">
+                    <bk-select
+                        style="width:150px;"
+                        v-model="property"
+                        :clearable="false"
+                        @change="handlerPaginationChange()">
+                        <bk-option id="name" name="名称排序"></bk-option>
+                        <bk-option id="lastModifiedDate" name="时间排序"></bk-option>
+                        <bk-option id="downloads" name="下载量排序"></bk-option>
+                    </bk-select>
+                    <div class="ml10 sort-order flex-center hover-btn" @click="changeDirection">
+                        <Icon :name="`order-${direction.toLowerCase()}`" size="16"></Icon>
+                    </div>
                 </div>
             </div>
-        </div>
-        <!-- 有数据 -->
-        <div v-if="packageList.length" class="common-package-list">
-            <infinite-scroll
-                ref="infiniteScroll"
-                :is-loading="isLoading"
-                :has-next="packageList.length < pagination.count"
-                @load="handlerPaginationChange({ current: pagination.current + 1 }, true)">
-                <div class="mb10 list-count">共计{{ pagination.count }}个制品</div>
-                <package-card
-                    class="mb10"
-                    v-for="pkg in packageList"
-                    :key="pkg.key"
-                    :card-data="pkg"
-                    @click.native="showCommonPackageDetail(pkg)"
-                    @delete-card="deletePackageHandler(pkg)">
-                </package-card>
-            </infinite-scroll>
-        </div>
-        <!-- 未搜索无数据 -->
-        <empty-guide v-if="!isLoading && !$route.query.packageName && !packageList.length" class="empty-guide" :article="articleGuide"></empty-guide>
-        <!-- 搜索无数据 -->
-        <empty-data v-if="$route.query.packageName && !packageList.length" ex-style="margin-top: 100px;" search></empty-data>
+            <div class="common-package-list">
+                <!-- 有数据 -->
+                <template v-if="packageList.length">
+                    <infinite-scroll
+                        ref="infiniteScroll"
+                        :is-loading="isLoading"
+                        :has-next="packageList.length < pagination.count"
+                        @load="handlerPaginationChange({ current: pagination.current + 1 }, true)">
+                        <div class="mb10 list-count">共计{{ pagination.count }}个制品</div>
+                        <package-card
+                            class="mb10"
+                            v-for="pkg in packageList"
+                            :key="pkg.key"
+                            :card-data="pkg"
+                            @click.native="showCommonPackageDetail(pkg)"
+                            @delete-card="deletePackageHandler(pkg)">
+                        </package-card>
+                    </infinite-scroll>
+                </template>
+                <!-- 无数据 -->
+                <template v-else>
+                    <empty-data :is-loading="isLoading" ex-style="padding-top: 100px;" search></empty-data>
+                </template>
+            </div>
+        </template>
+        <!-- 不存在包 -->
+        <template v-else>
+            <empty-guide class="empty-guide" :article="articleGuide"></empty-guide>
+        </template>
 
         <bk-sideslider :is-show.sync="showGuide" :quick-close="true" :width="600">
             <div slot="header" class="flex-align-center"><icon class="mr5" :name="repoType" size="32"></icon>{{ replaceRepoName(repoName) + $t('guide') }}</div>
@@ -87,7 +95,7 @@
         data () {
             return {
                 isLoading: false,
-                packageNameInput: '',
+                packageName: this.$route.query.packageName,
                 property: this.$route.query.property || 'lastModifiedDate',
                 direction: this.$route.query.direction || 'ASC',
                 packageList: [],
@@ -129,7 +137,7 @@
                     this.$router.replace({
                         query: {
                             ...this.$route.query,
-                            packageName: this.packageNameInput,
+                            packageName: this.packageName,
                             property: this.property,
                             direction: this.direction
                         }
@@ -143,7 +151,7 @@
                     projectId: this.projectId,
                     repoType: this.repoType,
                     repoName: this.repoName,
-                    packageName: this.packageNameInput,
+                    packageName: this.packageName,
                     property: this.property,
                     direction: this.direction,
                     current: this.pagination.current,

@@ -1,5 +1,5 @@
 <template>
-    <div class="bkrepo-main flex-column" v-bkloading="{ isLoading }">
+    <div class="bkrepo-main flex-column">
         <Header v-if="!iframeMode" />
         <router-view class="bkrepo-main-container"></router-view>
         <ConfirmDialog />
@@ -19,7 +19,6 @@
         components: { Header, ConfirmDialog, Login },
         data () {
             return {
-                isLoading: false,
                 iframeMode: MODE_CONFIG === 'ci'
             }
         },
@@ -87,7 +86,6 @@
                     }
                 })
             } else {
-                this.isLoading = true
                 Promise.all([this.ajaxUserInfo(), this.getProjectList(), this.getRepoUserList()]).then(() => {
                     let projectId = ''
                     if (!(urlProjectId && this.projectList.find(v => v.id === urlProjectId))) {
@@ -104,8 +102,6 @@
                         })
                     }
                     this.checkPM({ projectId: (projectId || urlProjectId || localProjectId) })
-                }).finally(() => {
-                    this.isLoading = false
                 })
             }
             const callback = e => {

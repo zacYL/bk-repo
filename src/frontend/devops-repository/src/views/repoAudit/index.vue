@@ -45,7 +45,7 @@
             :row-border="false"
             size="small">
             <template #empty>
-                <empty-data :search="Boolean(isSearching)">
+                <empty-data :is-loading="isLoading" :search="Boolean(isSearching)">
                     <template v-if="!Boolean(isSearching)">
                         <span class="ml10">暂无操作记录</span>
                     </template>

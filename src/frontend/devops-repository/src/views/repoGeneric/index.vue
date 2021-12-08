@@ -84,7 +84,7 @@
                     @row-click="selectRow"
                     @row-dblclick="openFolder">
                     <template #empty>
-                        <empty-data :search="Boolean(searchFileName)">
+                        <empty-data :is-loading="isLoading" :search="Boolean(searchFileName)">
                             <template v-if="!Boolean(searchFileName)">
                                 <span class="ml10">暂无文件，</span>
                                 <bk-button text @click="handlerUpload">即刻上传</bk-button>

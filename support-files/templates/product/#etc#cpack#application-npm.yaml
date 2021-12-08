@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: ${service.prefix}${service.name}${service.suffix}
+    desc: Npm Service
+server:
+  port: __CPACK_NPM_PORT__
+logging:
+  path: ${logging.path-common}/${service.name}
+npm:
+  domain: ${cluster.self.url}/npm
+  tarball:
+    # 自定义配置返回的tarball地址前缀
+    prefix: http://__CPACK_HOST__/npm/
+  migration:
+    remote_registry: __CPACK_NPM_MIGRATION_REMOTE_URL__
+    # 获取包的数据的URL地址
+    data_url: __CPACK_NPM_MIGRATION_DATA_URL__
+service:
+  name: npm

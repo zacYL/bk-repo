@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: ${service.prefix}${service.name}${service.suffix}
+    desc: Generic Service
+server:
+  port: __CPACK_GENERIC_PORT__
+logging:
+  path: ${logging.path-common}/${service.name}
+service:
+  name: generic
+generic:
+  domain: ${cluster.self.url}/generic

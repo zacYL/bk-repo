@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: ${service.prefix}${service.name}${service.suffix}
+    desc: Auth Service
+server:
+  port: __CPACK_AUTH_PORT__
+logging:
+  path: ${logging.path-common}/${service.name}
+# auth设置当前realm
+auth:
+  realm: canway
+  iam:
+    callbackUser: bk_iam
+service:
+  name: auth

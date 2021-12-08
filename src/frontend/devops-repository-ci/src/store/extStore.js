@@ -34,7 +34,7 @@ export default {
         // override
         getFolderList ({ commit }, { projectId, repoName, roadMap, fullPath = '', isPipeline = false }) {
             return Vue.prototype.$ajax.post(
-                'repository/api/node/query',
+                'repository/api/node/search',
                 {
                     page: {
                         pageNumber: 1,
@@ -84,7 +84,7 @@ export default {
         // override
         getArtifactoryList (_, { projectId, repoName, name, fullPath, current, limit, sortType = 'lastModifiedDate' }) {
             return Vue.prototype.$ajax.post(
-                'repository/api/node/query',
+                'repository/api/node/search',
                 {
                     page: {
                         pageNumber: current,

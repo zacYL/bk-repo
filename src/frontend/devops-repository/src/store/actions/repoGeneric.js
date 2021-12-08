@@ -6,7 +6,7 @@ export default {
     // 查询文件夹下的所有文件数量（递归）
     getFileNumOfFolder ({ commit }, { projectId, repoName, fullPath = '/' }) {
         return Vue.prototype.$ajax.post(
-            `${prefix}/node/query`,
+            `${prefix}/node/search`,
             {
                 page: {
                     pageNumber: 1,
@@ -51,7 +51,7 @@ export default {
             ).then(records => ({ records }))
         } else {
             request = Vue.prototype.$ajax.post(
-                `${prefix}/node/query`,
+                `${prefix}/node/search`,
                 {
                     page: {
                         pageNumber: 1,
@@ -113,7 +113,7 @@ export default {
             ).then(records => ({ records, totalRecords: 0 }))
         } else {
             return Vue.prototype.$ajax.post(
-                `${prefix}/node/query`,
+                `${prefix}/node/search`,
                 {
                     page: {
                         pageNumber: current,

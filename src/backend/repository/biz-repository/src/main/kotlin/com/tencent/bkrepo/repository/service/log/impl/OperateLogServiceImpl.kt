@@ -96,7 +96,7 @@ class OperateLogServiceImpl(
         endTime: String?,
         pageNumber: Int,
         pageSize: Int
-    ): Page<OperateLogResponse> {
+    ): Page<OperateLogResponse?> {
         val pageRequest = Pages.ofRequest(pageNumber, pageSize)
         val query = buildOperateLogPageQuery(type, projectId, repoName, operator, startTime, endTime)
         val totalRecords = operateLogDao.count(query)
@@ -179,7 +179,7 @@ class OperateLogServiceImpl(
         )
     }
 
-    private fun convert(tOperateLog: TOperateLog): OperateLogResponse {
+    private fun convert(tOperateLog: TOperateLog): OperateLogResponse? {
         val content = if (packageEvent.contains(tOperateLog.type)) {
             val packageName = tOperateLog.description["packageName"] as? String
             val version = tOperateLog.description["packageVersion"] as? String
@@ -201,18 +201,21 @@ class OperateLogServiceImpl(
             OperateLogResponse.Content(
                 resKey = list.joinToString("::")
             )
+        } else if (projectEvent.contains(tOperateLog.type)) {
+            OperateLogResponse.Content(resKey = tOperateLog.projectId!!)
         } else {
-            OperateLogResponse.Content(resKey = "")
+            null
         }
-
-        return OperateLogResponse(
-            createdDate = tOperateLog.createdDate,
-            operate = tOperateLog.type.nick,
-            userId = tOperateLog.userId,
-            clientAddress = tOperateLog.clientAddress,
-            result = true,
-            content = content
-        )
+        return content?.let {
+            OperateLogResponse(
+                createdDate = tOperateLog.createdDate,
+                operate = tOperateLog.type.nick,
+                userId = tOperateLog.userId,
+                clientAddress = tOperateLog.clientAddress,
+                result = true,
+                content = it
+            )
+        }
     }
 
     private fun buildOperateLogPageQuery(
@@ -262,6 +265,7 @@ class OperateLogServiceImpl(
             EventType.NODE_RENAMED, EventType.NODE_COPIED
         )
         private val adminEvent = listOf(EventType.ADMIN_ADD, EventType.ADMIN_DELETE)
+        private val projectEvent = listOf(EventType.PROJECT_CREATED)
         private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSz")
     }
 }

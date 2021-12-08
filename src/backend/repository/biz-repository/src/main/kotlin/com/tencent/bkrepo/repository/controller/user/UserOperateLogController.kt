@@ -38,7 +38,7 @@ class UserOperateLogController(
         @RequestParam pageNumber: Int?,
         @ApiParam("每页数量", required = false, defaultValue = "20")
         @RequestParam pageSize: Int?
-    ): Response<Page<OperateLogResponse>> {
+    ): Response<Page<OperateLogResponse?>> {
         val page = operateLogService.page(
             type, projectId, repoName,
             operator, startTime, endTime, pageNumber ?: 1, pageSize ?: 20

@@ -55,7 +55,7 @@ interface OperateLogService {
         endTime: String?,
         pageNumber: Int,
         pageSize: Int
-    ): Page<OperateLogResponse>
+    ): Page<OperateLogResponse?>
 
     fun uploads(
         projectId: String?,

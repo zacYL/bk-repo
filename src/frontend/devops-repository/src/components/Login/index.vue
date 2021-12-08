@@ -180,4 +180,9 @@
         }
     }
 }
+@media screen and (min-width: 1600px) {
+    .login-container .login-main {
+        width: 600px;
+    }
+}
 </style>

@@ -105,10 +105,14 @@
                 })
             }
             const callback = e => {
-                this.$bkMessage({
-                    message: (e.reason || e).message,
-                    theme: 'error'
-                })
+                if (e instanceof Error || e.reason instanceof Error) {
+                    console.error(e)
+                } else {
+                    this.$bkMessage({
+                        message: (e.reason || e).message,
+                        theme: 'error'
+                    })
+                }
             }
             window.addEventListener('unhandledrejection', callback)
             Vue.config.errorHandler = callback

@@ -86,7 +86,13 @@
         methods: {
             getIconName,
             async getFiles () {
-                if (!this.file.blob) throw new Error('请选择文件')
+                if (!this.file.blob) {
+                    this.$bkMessage({
+                        message: '请选择文件',
+                        theme: 'error'
+                    })
+                    return
+                }
                 await this.$refs.fileName.validate()
                 return this.file
             },

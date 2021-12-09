@@ -9,6 +9,6 @@ db.user.insert({
     "roles" : [],
     "asstUsers" : [],
     "group" : false,
-    "createdDate" : ISODate("2021-11-04T06:08:08.197Z"),
-    "lastModifiedDate" : ISODate("2021-11-04T06:08:08.197Z")
+    "createdDate" : new Date(),
+    "lastModifiedDate" : new Date()
 })

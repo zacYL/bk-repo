@@ -105,14 +105,15 @@
                 })
             }
             const callback = e => {
-                if (e instanceof Error || e.reason instanceof Error) {
+                const instance = (e.reason || e)
+                if (instance instanceof Error) {
                     console.error(e)
                 } else {
-                    if (e.content) {
+                    if (instance.content) {
                         // bk-form表单校验
                     } else {
                         this.$bkMessage({
-                            message: (e.reason || e).message,
+                            message: instance.message,
                             theme: 'error'
                         })
                     }

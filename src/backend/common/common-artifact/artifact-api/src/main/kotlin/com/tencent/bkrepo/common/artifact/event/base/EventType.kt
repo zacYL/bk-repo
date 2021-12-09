@@ -48,7 +48,7 @@ enum class EventType(val nick: String) {
 
     // METADATA
     METADATA_DELETED("删除元数据"),
-    METADATA_SAVED("保存元数据"),
+    METADATA_SAVED("添加元数据"),
 
     // PACKAGE
 

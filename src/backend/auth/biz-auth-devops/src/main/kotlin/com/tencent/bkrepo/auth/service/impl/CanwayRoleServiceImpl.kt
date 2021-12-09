@@ -24,9 +24,9 @@ import org.springframework.data.mongodb.core.MongoTemplate
 
 class CanwayRoleServiceImpl(
     private val roleRepository: RoleRepository,
-    private val userService: UserService,
-    private val userRepository: UserRepository,
-    private val mongoTemplate: MongoTemplate,
+    userService: UserService,
+    userRepository: UserRepository,
+    mongoTemplate: MongoTemplate,
     private val devopsConf: DevopsConf
 ) : RoleServiceImpl(roleRepository, userService, userRepository, mongoTemplate) {
     override fun listRoleByProject(projectId: String, repoName: String?): List<Role> {

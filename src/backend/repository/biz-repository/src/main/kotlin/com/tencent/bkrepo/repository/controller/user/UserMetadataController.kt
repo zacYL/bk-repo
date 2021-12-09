@@ -89,7 +89,8 @@ class UserMetadataController(
                 projectId = projectId,
                 repoName = repoName,
                 fullPath = getArtifactFullPath(),
-                metadata = metadataSaveRequest.metadata
+                metadata = metadataSaveRequest.metadata,
+                operator = userId
             )
             metadataService.saveMetadata(request)
             return ResponseBuilder.success()
@@ -109,7 +110,8 @@ class UserMetadataController(
                 projectId = projectId,
                 repoName = repoName,
                 fullPath = getArtifactFullPath(),
-                keyList = metadataDeleteRequest.keyList
+                keyList = metadataDeleteRequest.keyList,
+                operator = userId
             )
             metadataService.deleteMetadata(request)
             return ResponseBuilder.success()

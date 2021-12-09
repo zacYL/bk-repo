@@ -30,6 +30,7 @@ package com.tencent.bkrepo.repository.service.log.impl
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.readJsonString
+import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
@@ -203,6 +204,13 @@ class OperateLogServiceImpl(
             )
         } else if (projectEvent.contains(tOperateLog.type)) {
             OperateLogResponse.Content(resKey = tOperateLog.projectId!!)
+        } else if (metadataEvent.contains(tOperateLog.type)) {
+            OperateLogResponse.Content(
+                projectId = tOperateLog.projectId,
+                repoType = "GENERIC",
+                resKey = "${tOperateLog.repoName}::${tOperateLog.resourceKey}",
+                des = tOperateLog.description.toJsonString()
+            )
         } else {
             null
         }
@@ -266,6 +274,7 @@ class OperateLogServiceImpl(
         )
         private val adminEvent = listOf(EventType.ADMIN_ADD, EventType.ADMIN_DELETE)
         private val projectEvent = listOf(EventType.PROJECT_CREATED)
+        private val metadataEvent = listOf(EventType.METADATA_SAVED, EventType.METADATA_DELETED)
         private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSz")
     }
 }

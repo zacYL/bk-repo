@@ -13,9 +13,9 @@
             </div>
         </header>
         <div class="repo-generic-main flex-align-center"
-            :style="{ 'margin-left': `${searchFileName ? -sideBarLeft : 0}px` }">
+            :style="{ 'margin-left': `${searchFileName ? -(sideBarWidth + moveBarWidth) : 0}px` }">
             <div class="repo-generic-side"
-                :style="{ 'flex-basis': `${sideBarLeft - 10}px` }"
+                :style="{ 'flex-basis': `${sideBarWidth}px` }"
                 v-bkloading="{ isLoading: treeLoading }">
                 <div class="important-search">
                     <bk-input
@@ -37,7 +37,11 @@
                     @item-click="itemClickHandler">
                 </repo-tree>
             </div>
-            <move-split-bar v-model="sideBarLeft" :min-value="210" :width="10"></move-split-bar>
+            <move-split-bar
+                :left="sideBarWidth"
+                :width="moveBarWidth"
+                @change="changeSideBarWidth"
+            />
             <div class="repo-generic-table" v-bkloading="{ isLoading }">
                 <div class="m10 flex-between-center">
                     <bk-input
@@ -164,7 +168,8 @@
         },
         data () {
             return {
-                sideBarLeft: 310,
+                sideBarWidth: 300,
+                moveBarWidth: 10,
                 isLoading: false,
                 treeLoading: false,
                 importantSearch: this.$route.query.fileName,
@@ -288,6 +293,11 @@
                 'getFolderSize',
                 'getFileNumOfFolder'
             ]),
+            changeSideBarWidth (sideBarWidth) {
+                if (sideBarWidth > 200) {
+                    this.sideBarWidth = sideBarWidth
+                }
+            },
             renderHeader (h, { column }) {
                 return h('div', {
                     class: {

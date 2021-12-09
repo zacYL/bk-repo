@@ -108,10 +108,14 @@
                 if (e instanceof Error || e.reason instanceof Error) {
                     console.error(e)
                 } else {
-                    this.$bkMessage({
-                        message: (e.reason || e).message,
-                        theme: 'error'
-                    })
+                    if (e.content) {
+                        // bk-form表单校验
+                    } else {
+                        this.$bkMessage({
+                            message: (e.reason || e).message,
+                            theme: 'error'
+                        })
+                    }
                 }
             }
             window.addEventListener('unhandledrejection', callback)

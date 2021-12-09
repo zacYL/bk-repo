@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
 
 @Configuration
-@ConditionalOnProperty(prefix = "deploy", name = ["mode"], havingValue = "devops", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "auth", name = ["realm"], havingValue = "canway", matchIfMissing = true)
 @Import(
     CanwayPermissionAspect::class,
     CanwayPermissionService::class,

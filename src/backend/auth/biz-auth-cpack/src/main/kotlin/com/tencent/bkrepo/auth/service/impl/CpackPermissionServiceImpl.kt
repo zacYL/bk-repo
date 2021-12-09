@@ -68,7 +68,7 @@ import java.time.LocalDateTime
 /**
  * 产品权限实现类
  */
-class CpackPermissionServiceImpl constructor(
+open class CpackPermissionServiceImpl constructor(
     private val userRepository: UserRepository,
     private val roleRepository: RoleRepository,
     private val permissionRepository: PermissionRepository,
@@ -219,8 +219,8 @@ class CpackPermissionServiceImpl constructor(
         // check role repo admin
         if (checkRepoAdmin(request, user.roles)) return true
 
-        //check project action
-        if(checkProjectAction(request, user.roles)) return true
+        // check project action
+        if (checkProjectAction(request, user.roles)) return true
 
         // check repo action action
         return checkRepoAction(request, user.roles)
@@ -269,8 +269,9 @@ class CpackPermissionServiceImpl constructor(
      * 仓库的READ 权限会落到仓库所属项目的READ
      */
     private fun checkProjectAction(request: CheckPermissionRequest, roles: List<String>): Boolean {
-        if (request.resourceType == ResourceType.PROJECT
-            || (request.resourceType == ResourceType.REPO && request.action == PermissionAction.READ)) {
+        if (request.resourceType == ResourceType.PROJECT ||
+            (request.resourceType == ResourceType.REPO && request.action == PermissionAction.READ)
+        ) {
             val query = PermissionQueryHelper.buildProjectPermissionCheck(
                 projectId = request.projectId!!,
                 uid = request.uid,

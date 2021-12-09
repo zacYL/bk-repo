@@ -7,7 +7,6 @@ import com.tencent.bkrepo.auth.service.DepartmentService
 import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.service.RoleService
 import com.tencent.bkrepo.auth.service.UserService
-import com.tencent.bkrepo.auth.service.impl.CanwayDepartmentServiceImpl
 import com.tencent.bkrepo.auth.service.impl.CanwayPermissionServiceImpl
 import com.tencent.bkrepo.auth.service.impl.CanwayRoleServiceImpl
 import com.tencent.bkrepo.auth.service.impl.CanwayUserServiceImpl
@@ -86,17 +85,6 @@ class CanwayAuthServiceConfig {
             userRepository,
             roleRepository,
             mongoTemplate
-        )
-    }
-
-    @Bean
-    @ConditionalOnProperty(prefix = "auth", name = ["realm"], havingValue = "canway")
-    fun canwayDepartmentService(
-        @Autowired devopsConf: DevopsConf
-    ): DepartmentService {
-        logger.debug("init CanwayUserServiceImpl")
-        return CanwayDepartmentServiceImpl(
-            devopsConf
         )
     }
 

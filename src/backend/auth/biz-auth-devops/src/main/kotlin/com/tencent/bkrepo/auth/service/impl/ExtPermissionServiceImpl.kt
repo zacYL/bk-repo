@@ -35,6 +35,14 @@ class ExtPermissionServiceImpl(
                     // 迁移用户,用户组,部门
                     migrateUsers(permission)
                 }
+                // 迁移完成后移除原仓库级的访问者permission
+                if (builtinPermissions.map { it.permName }.contains(AUTH_BUILTIN_VIEWER)) {
+                    permissionService.deletePermission(
+                        builtinPermissions.first {
+                            it.permName == AUTH_BUILTIN_VIEWER
+                        }.id!!
+                    )
+                }
             }
         }
     }
@@ -74,10 +82,6 @@ class ExtPermissionServiceImpl(
                 )
             }
             else -> permissionService.deletePermission(permission.id!!)
-        }
-        // 迁移完成后移除原仓库级的访问者permission
-        if (permission.permName == AUTH_BUILTIN_VIEWER) {
-            permissionService.deletePermission(permission.id!!)
         }
     }
 

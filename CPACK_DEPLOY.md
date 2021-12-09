@@ -5,29 +5,18 @@
 
 ## 
 1. 独立部署模式
-application-auth.yaml
+common.yaml
 ```yaml
-auth: 
+auth:
   realm: cpack
 ```
 
-common.yaml
-```yaml
-deploy: 
-  mode: local
-```
-
 2. 集成CI部署
-application-auth.yaml
+   common.yaml
 ```yaml
 auth:
   realm: canway
-```
 
-common.yaml
-```yaml
-deploy: 
-  mode: devops
 devops:
   bkHost: http://paas.newcc.com   # 蓝鲸地址
   appCode: bk_ci                  # 制品库在注册蓝鲸的appCode

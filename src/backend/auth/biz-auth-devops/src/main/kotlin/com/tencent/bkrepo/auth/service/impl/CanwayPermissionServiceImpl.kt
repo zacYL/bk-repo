@@ -25,7 +25,6 @@ import com.tencent.bkrepo.auth.repository.PermissionRepository
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
 import com.tencent.bkrepo.auth.service.DepartmentService
-import com.tencent.bkrepo.auth.service.local.PermissionServiceImpl
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.readJsonString
@@ -59,7 +58,7 @@ class CanwayPermissionServiceImpl(
     private val departmentService: DepartmentService,
     private val bkUserService: BkUserService,
     projectClient: ProjectClient
-) : PermissionServiceImpl(
+) : CpackPermissionServiceImpl(
     userRepository,
     roleRepository,
     permissionRepository,

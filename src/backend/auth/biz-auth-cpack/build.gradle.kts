@@ -1,3 +1,3 @@
 dependencies {
-    api(project(":auth:biz-auth-devops"))
+    api(project(":auth:biz-auth"))
 }

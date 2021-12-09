@@ -10,7 +10,6 @@ import com.tencent.bkrepo.auth.pojo.role.Role
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
 import com.tencent.bkrepo.auth.service.UserService
-import com.tencent.bkrepo.auth.service.local.RoleServiceImpl
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.readJsonString
@@ -28,7 +27,7 @@ class CanwayRoleServiceImpl(
     userRepository: UserRepository,
     mongoTemplate: MongoTemplate,
     private val devopsConf: DevopsConf
-) : RoleServiceImpl(roleRepository, userService, userRepository, mongoTemplate) {
+) : CpackRoleServiceImpl(roleRepository, userService, userRepository, mongoTemplate) {
     override fun listRoleByProject(projectId: String, repoName: String?): List<Role> {
         // 插入用户组
         val tenantId = getTenantId()

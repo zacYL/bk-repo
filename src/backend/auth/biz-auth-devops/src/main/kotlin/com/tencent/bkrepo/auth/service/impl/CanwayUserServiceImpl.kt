@@ -20,7 +20,6 @@ import com.tencent.bkrepo.auth.pojo.user.UserInfo
 import com.tencent.bkrepo.auth.pojo.user.UserResult
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
-import com.tencent.bkrepo.auth.service.local.UserServiceImpl
 import com.tencent.bkrepo.auth.util.DataDigestUtils
 import com.tencent.bkrepo.auth.util.IDUtil
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
@@ -47,7 +46,7 @@ class CanwayUserServiceImpl(
     private val userRepository: UserRepository,
     roleRepository: RoleRepository,
     private val mongoTemplate: MongoTemplate
-) : UserServiceImpl(userRepository, roleRepository, mongoTemplate) {
+) : CpackUserServiceImpl(userRepository, roleRepository, mongoTemplate) {
 
     @Autowired
     lateinit var devopsConf: DevopsConf

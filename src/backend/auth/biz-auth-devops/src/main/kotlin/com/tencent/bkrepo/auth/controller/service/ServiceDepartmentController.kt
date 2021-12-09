@@ -31,20 +31,19 @@
 
 package com.tencent.bkrepo.auth.controller.service
 
-import com.tencent.bkrepo.auth.DevopsAuthConfiguration
 import com.tencent.bkrepo.auth.api.ServiceDepartmentResource
 import com.tencent.bkrepo.auth.service.DepartmentService
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.devops.api.pojo.BkChildrenDepartment
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@ConditionalOnBean(DevopsAuthConfiguration::class)
-class ServiceDepartmentController(
-    val departmentService: DepartmentService
-) : ServiceDepartmentResource {
+class ServiceDepartmentController : ServiceDepartmentResource {
+
+    @Autowired(required = false)
+    lateinit var departmentService: DepartmentService
 
     override fun listDepartment(username: String?, departmentId: Int?): Response<List<BkChildrenDepartment>?> {
         return ResponseBuilder.success(departmentService.listDepartmentById(username, departmentId))

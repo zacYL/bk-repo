@@ -8,6 +8,7 @@
         <bk-form class="repo-generic-form" :label-width="100" :model="genericForm" :rules="rules" ref="genericForm">
             <template v-if="genericForm.type === 'add'">
                 <bk-form-item :label="$t('createFolderLabel')" :required="true" property="path" error-display-type="normal">
+                    <label class="path-tip">支持 / 分隔符级联创建文件夹</label>
                     <bk-input v-model.trim="genericForm.path" :placeholder="$t('folderNamePlacehodler')"></bk-input>
                 </bk-form-item>
             </template>
@@ -78,8 +79,8 @@
                             trigger: 'blur'
                         },
                         {
-                            regex: /^(\/(\w|-|\.){1,50})+$/,
-                            message: this.$t('folder') + this.$t('path') + this.$t('include') + this.$t('folderNamePlacehodler'),
+                            regex: /^([^\\:*?"<>|]){1,50}$/,
+                            message: this.$t('folderNamePlacehodler'),
                             trigger: 'blur'
                         }
                     ],
@@ -90,8 +91,8 @@
                             trigger: 'blur'
                         },
                         {
-                            regex: /^(\w|-|\.){1,50}$/,
-                            message: this.$t('fileName') + this.$t('include') + this.$t('folderNamePlacehodler'),
+                            regex: /^([^\\/:*?"<>|]){1,50}$/,
+                            message: this.$t('folderNamePlacehodler'),
                             trigger: 'blur'
                         }
                     ],
@@ -134,3 +135,13 @@
         }
     }
 </script>
+<style lang="scss" scoped>
+.repo-generic-form {
+    .path-tip {
+        position: absolute;
+        margin-top: -26px;
+        font-size: 12px;
+        color: var(--fontSubsidiaryColor);
+    }
+}
+</style>

@@ -248,7 +248,7 @@
                         permissionId: section.id,
                         [key]: value
                     }
-                }).then(res => {
+                }).then(() => {
                     this.$bkMessage({
                         theme: 'success',
                         message: (type === 'add' ? this.$t('add') : this.$t('delete')) + this.$t('success')

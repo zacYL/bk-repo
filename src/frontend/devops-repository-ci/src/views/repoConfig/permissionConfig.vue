@@ -1,6 +1,6 @@
 <template>
     <bk-collapse class="permission-config-container" v-model="activeName" v-bkloading="{ isLoading }">
-        <bk-collapse-item v-for="section in [admin, user, viewer]" :key="section.name" :name="section.name">
+        <bk-collapse-item v-for="section in [admin, user]" :key="section.name" :name="section.name">
             <header class="section-header">
                 <div class="flex-align-center">
                     <icon class="mr10" size="20" :name="section.icon"></icon>
@@ -94,7 +94,7 @@
         data () {
             return {
                 isLoading: false,
-                activeName: ['admin', 'user', 'viewer'],
+                activeName: ['admin', 'user'],
                 editActionsDialog: {
                     show: false,
                     loading: false,
@@ -165,42 +165,15 @@
                         deleteList: []
                     }
                 },
-                viewer: {
-                    name: 'viewer',
-                    loading: false,
-                    title: '查看者',
-                    icon: 'perm-viewer',
-                    id: '',
-                    actions: {
-                        data: []
-                    },
-                    users: {
-                        title: '用户',
-                        showAddArea: false,
-                        data: [],
-                        addList: [],
-                        deleteList: []
-                    },
-                    roles: {
-                        title: '用户组',
-                        showAddArea: false,
-                        data: [],
-                        addList: [],
-                        deleteList: []
-                    },
-                    departments: {
-                        title: '组织',
-                        showAddArea: false,
-                        data: [],
-                        addList: [],
-                        deleteList: []
-                    }
-                },
                 // userList: {},
                 roleList: {},
                 flatDepartment: {},
                 departmentTree: [],
-                actionList: []
+                actionList: [
+                    { id: 'WRITE', name: '上传' },
+                    { id: 'UPDATE', name: '修改' },
+                    { id: 'DELETE', name: '删除' }
+                ]
             }
         },
         computed: {
@@ -233,12 +206,6 @@
             }
         },
         created () {
-            this.getRepoActions({
-                projectId: this.projectId,
-                repoName: this.repoName
-            }).then(res => {
-                this.actionList = res.map(v => ({ id: v.action, name: v.nickName }))
-            })
             this.getRepoRoleList({
                 projectId: this.projectId,
                 repoName: this.repoName
@@ -260,7 +227,6 @@
         methods: {
             ...mapActions([
                 'getPermissionDetail',
-                'getRepoActions',
                 'getRepoRoleList',
                 'setUserPermission',
                 'setRolePermission',
@@ -374,7 +340,7 @@
                         permissionId: section.id,
                         [key]: value
                     }
-                }).then(res => {
+                }).then(() => {
                     this.$bkMessage({
                         theme: 'success',
                         message: (type === 'add' ? this.$t('add') : this.$t('delete')) + this.$t('success')

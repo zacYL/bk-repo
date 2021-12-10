@@ -13,7 +13,6 @@
                     right-icon="bk-icon icon-search">
                 </bk-input>
                 <bk-select
-                    v-if="MODE_CONFIG !== 'ci'"
                     v-model="query.type"
                     class="ml10 w250"
                     @change="handlerPaginationChange()"

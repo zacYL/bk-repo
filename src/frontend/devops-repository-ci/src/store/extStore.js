@@ -24,12 +24,6 @@ export default {
                 }
             )
         },
-        // 查询所有动作
-        getRepoActions (_, { projectId, repoName }) {
-            return Vue.prototype.$ajax.get(
-                `auth/api/action/${projectId}/${repoName}/optional`
-            )
-        },
         // 请求文件夹下的子文件夹
         // override
         getFolderList ({ commit }, { projectId, repoName, roadMap, fullPath = '', isPipeline = false }) {
@@ -126,14 +120,6 @@ export default {
                         relation: 'AND'
                     }
                 }
-            )
-        },
-        // 分享文件
-        // override
-        shareArtifactory (_, { projectId, repoName, body, fullPath = '' }) {
-            return Vue.prototype.$ajax.post(
-                `repository/api/share/${projectId}/${repoName}/${encodeURIComponent(fullPath)}`,
-                body
             )
         }
     }

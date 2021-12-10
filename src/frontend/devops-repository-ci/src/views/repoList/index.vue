@@ -87,7 +87,7 @@
     </div>
 </template>
 <script>
-    import createRepoDialog from './createRepoDialog'
+    import createRepoDialog from '@repository/views/repoList/createRepoDialog'
     import { mapState, mapActions } from 'vuex'
     import { repoEnum } from '@repository/store/publicEnum'
     import { formatDate } from '@repository/utils'
@@ -155,6 +155,9 @@
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
                 this.pagination.current = current
                 this.pagination.limit = limit
+                this.$router.replace({
+                    query: this.query
+                })
                 this.getListData()
             },
             createRepo () {

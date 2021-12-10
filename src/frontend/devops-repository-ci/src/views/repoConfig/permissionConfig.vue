@@ -345,7 +345,7 @@
                             perm.actions.data = part.actions
                             departments = departments.concat(part.departments)
                         })
-                        departments = Array.from(new Set(departments)).filter(v => !this.flatDepartment.hasOwnProperty(v))
+                        departments = Array.from(new Set(departments)).filter(v => !(v in this.flatDepartment))
                         departments.length && this.getRepoDepartmentDetail({ body: departments }).then(this.handleFlatDepartment)
                     }
                 }).finally(() => {

@@ -84,10 +84,19 @@
                 }
             })
             const callback = e => {
-                this.$bkMessage({
-                    message: (e.reason || e).message,
-                    theme: 'error'
-                })
+                const instance = (e.reason || e)
+                if (instance instanceof Error) {
+                    console.error(e)
+                } else {
+                    if (instance.content) {
+                        // bk-form表单校验
+                    } else {
+                        this.$bkMessage({
+                            message: instance.message,
+                            theme: 'error'
+                        })
+                    }
+                }
             }
             window.addEventListener('unhandledrejection', callback)
             Vue.config.errorHandler = callback

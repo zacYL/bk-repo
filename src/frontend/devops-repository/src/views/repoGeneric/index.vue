@@ -115,10 +115,10 @@
                     <bk-table-column :label="$t('size')" width="100">
                         <template #default="{ row }">
                             <bk-button text
-                                v-show="row.folder && !row.hasOwnProperty('folderSize')"
+                                v-show="row.folder && !('folderSize' in row)"
                                 :disabled="row.sizeLoading"
                                 @click="calculateFolderSize(row)">{{ $t('calculate') }}</bk-button>
-                            <span v-show="!row.folder || row.hasOwnProperty('folderSize')">
+                            <span v-show="!row.folder || ('folderSize' in row)">
                                 {{ convertFileSize(row.size || row.folderSize || 0) }}
                             </span>
                         </template>

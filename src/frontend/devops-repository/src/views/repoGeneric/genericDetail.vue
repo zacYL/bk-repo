@@ -119,7 +119,7 @@
                     { name: 'createdDate', label: this.$t('createdDate') },
                     { name: 'lastModifiedBy', label: this.$t('lastModifiedBy') },
                     { name: 'lastModifiedDate', label: this.$t('lastModifiedDate') }
-                ].filter(({ name }) => Object.prototype.hasOwnProperty.call(this.detailSlider.data, name) && (name !== 'size' || !this.detailSlider.data.folder))
+                ].filter(({ name }) => name in this.detailSlider.data && (name !== 'size' || !this.detailSlider.data.folder))
                     .map(item => ({ ...item, value: this.detailSlider.data[item.name] }))
             }
         },

@@ -23,7 +23,7 @@
             <div class="package-search-tools flex-between-center">
                 <bk-input
                     class="w250"
-                    v-model.trim="packageName"
+                    v-model.trim="packageNameVal"
                     placeholder="请输入制品名称, 按Enter键搜索"
                     clearable
                     @enter="handlerPaginationChange()"
@@ -95,7 +95,7 @@
         data () {
             return {
                 isLoading: false,
-                packageName: this.$route.query.packageName,
+                packageNameVal: this.$route.query.packageName,
                 property: this.$route.query.property || 'lastModifiedDate',
                 direction: this.$route.query.direction || 'ASC',
                 packageList: [],
@@ -137,7 +137,7 @@
                     this.$router.replace({
                         query: {
                             ...this.$route.query,
-                            packageName: this.packageName,
+                            packageName: this.packageNameVal,
                             property: this.property,
                             direction: this.direction
                         }
@@ -151,7 +151,7 @@
                     projectId: this.projectId,
                     repoType: this.repoType,
                     repoName: this.repoName,
-                    packageName: this.packageName,
+                    packageName: this.packageNameVal,
                     property: this.property,
                     direction: this.direction,
                     current: this.pagination.current,

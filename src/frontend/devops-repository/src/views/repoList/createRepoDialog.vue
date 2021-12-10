@@ -178,18 +178,20 @@
                         public: this.repoBaseInfo.public,
                         description: this.repoBaseInfo.description,
                         category: this.repoBaseInfo.type === 'generic' ? 'LOCAL' : 'COMPOSITE',
-                        ...(this.repoBaseInfo.type === 'rpm'
-                            ? {
-                                configuration: {
-                                    type: 'composite',
-                                    settings: {
-                                        enabledFileLists: this.repoBaseInfo.enabledFileLists,
-                                        repodataDepth: this.repoBaseInfo.repodataDepth,
-                                        groupXmlSet: this.repoBaseInfo.groupXmlSet
+                        ...(
+                            this.repoBaseInfo.type === 'rpm'
+                                ? {
+                                    configuration: {
+                                        type: 'composite',
+                                        settings: {
+                                            enabledFileLists: this.repoBaseInfo.enabledFileLists,
+                                            repodataDepth: this.repoBaseInfo.repodataDepth,
+                                            groupXmlSet: this.repoBaseInfo.groupXmlSet
+                                        }
                                     }
                                 }
-                            }
-                            : {})
+                                : {}
+                        )
                     }
                 }).then(() => {
                     this.$bkMessage({

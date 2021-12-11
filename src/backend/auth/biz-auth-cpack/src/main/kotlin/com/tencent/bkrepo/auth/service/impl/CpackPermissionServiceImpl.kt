@@ -100,7 +100,7 @@ open class CpackPermissionServiceImpl constructor(
             projectId,
             repoName,
             AUTH_BUILTIN_USER,
-            listOf(PermissionAction.WRITE, PermissionAction.READ, PermissionAction.DELETE, PermissionAction.UPDATE)
+            listOf(PermissionAction.WRITE, PermissionAction.DELETE, PermissionAction.UPDATE)
         )
         return listOf(repoAdmin, repoUser).map { transferPermission(it) }
     }
@@ -498,12 +498,13 @@ open class CpackPermissionServiceImpl constructor(
         permName: String,
         actions: List<PermissionAction>
     ): TPermission {
-        permissionRepository.findOneByProjectIdAndReposAndPermNameAndResourceType(
+        val tPermission = permissionRepository.findOneByProjectIdAndReposAndPermNameAndResourceType(
             projectId,
             repoName,
             permName,
             ResourceType.REPO
-        ) ?: run {
+        )
+        if (tPermission == null) {
             val request = TPermission(
                 projectId = projectId,
                 repos = listOf(repoName),

@@ -55,7 +55,7 @@ class CanwayRepositoryAspect(
         } catch (e: Exception) {
             "bk_ci"
         }
-        logger.debug("tenantId: [$tenantId]")
+        logger.info("tenantId: [$tenantId]")
         val projectId = repo.projectId
         if (projectId == BK_SOFTWARE) {
             return point.proceed(args)
@@ -76,29 +76,10 @@ class CanwayRepositoryAspect(
                     logger.warn("create repo aspect ${exception.message}")
                     updateResource(repo.projectId, repo.name, repo.operator, ciDeleteResourceApi)
                 }
-                if (exception is ErrorCodeException && exception.messageCode == ArtifactMessageCode.REPOSITORY_EXISTED) {
-                    addUserIdToAdmin(userId, repo.projectId, repo.name)
-                }
                 throw exception
             }
-            addUserIdToAdmin(userId, repo.projectId, repo.name)
             return result
         }
-    }
-
-    private fun addUserIdToAdmin(userId: String, projectId: String, repoName: String) {
-        val permissions = permissionService.listRepoBuiltinPermission(projectId, repoName).data
-            ?: throw NotFoundException(CommonMessageCode.RESOURCE_NOT_FOUND, "Can not load buildin permission")
-        logger.info("Found permission size: ${permissions.size}")
-        for (permission in permissions) {
-            logger.info("Current permission: $permission")
-            if (permission.permName == "repo_admin") {
-                logger.info("Update Permission: $permission User with $userId")
-                permissionService.updatePermissionUser(UpdatePermissionUserRequest(permission.id!!, listOf(userId)))
-            }
-            return
-        }
-        throw NotFoundException(CommonMessageCode.RESOURCE_NOT_FOUND, "Can not load buildin admin permission")
     }
 
     @Around(value = "execution(* com.tencent.bkrepo.repository.service.repo.impl.RepositoryServiceImpl.listRepo(..))")

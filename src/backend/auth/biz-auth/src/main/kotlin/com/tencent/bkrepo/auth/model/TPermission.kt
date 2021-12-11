@@ -52,6 +52,8 @@ import java.time.LocalDateTime
     CompoundIndex(name = "users_action_idx", def = "{'users.action': 1}", background = true),
     CompoundIndex(name = "roles_iid_idx", def = "{'roles._id': 1}", background = true),
     CompoundIndex(name = "roles_action_idx", def = "{'roles.action': 1}", background = true)
+//    CompoundIndex(name = "unique_index", def = "{'resourceType':1, 'projectId':1, 'permName':1, 'repos':1 }"
+//        , background = true, unique = true)
 )
 
 data class TPermission(

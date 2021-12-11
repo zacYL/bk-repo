@@ -29,16 +29,18 @@ class ExtPermissionServiceImpl(
             for (repo in repoList) {
                 // 加载原仓库内置权限
                 val builtinPermissions = permissionService.listPermission(project.name, repo.name)
-                for (permission in builtinPermissions) {
+                //历史数据中存在历史数据，先对历史数据去重
+                val targetList = mergePermission(builtinPermissions)
+                for (permission in targetList) {
                     // 迁移权限
                     migrateActions(permission)
                     // 迁移用户,用户组,部门
                     migrateUsers(permission)
                 }
                 // 迁移完成后移除原仓库级的访问者permission
-                if (builtinPermissions.map { it.permName }.contains(AUTH_BUILTIN_VIEWER)) {
+                if (targetList.map { it.permName }.contains(AUTH_BUILTIN_VIEWER)) {
                     permissionService.deletePermission(
-                        builtinPermissions.first {
+                        targetList.first {
                             it.permName == AUTH_BUILTIN_VIEWER
                         }.id!!
                     )
@@ -47,6 +49,81 @@ class ExtPermissionServiceImpl(
         }
     }
 
+    /**
+     * [originPerm]  要保留的权限
+     * [permission]  要删除的权限
+     */
+    private fun mergePermissionData(originPerm: Permission, permission: Permission, isRepeat: Boolean) {
+        //合并用户
+        val targetUsers = originPerm.users.toMutableSet().apply {
+            addAll(permission.users.toSet())
+        }
+        permissionService.updatePermissionById(
+            id = originPerm.id!!,
+            key = TPermission::users.name,
+            value = targetUsers
+        )
+
+        //合并用户组
+        val targetRoles = originPerm.roles.toMutableSet().apply {
+            addAll(permission.roles)
+        }
+        permissionService.updatePermissionById(
+            id = originPerm.id!!,
+            key = TPermission::roles.name,
+            value = targetRoles
+        )
+
+        //合并部门
+        val targetDepartments = originPerm.departments.toMutableSet().apply {
+            addAll(permission.departments)
+        }
+        permissionService.updatePermissionById(
+            id = originPerm.id!!,
+            key = TPermission::departments.name,
+            value = targetDepartments
+        )
+
+        // 如果权限名 AUTH_BUILTIN_USER 则需要合并action
+        if (isRepeat && originPerm.permName == AUTH_BUILTIN_USER) {
+            val targetActions = originPerm.actions.toMutableSet().apply {
+                addAll(permission.actions)
+            }
+            permissionService.updatePermissionById(
+                id = originPerm.id!!,
+                key = TPermission::actions.name,
+                value = targetActions
+            )
+        }
+    }
+
+
+    /**
+     * permission 去重，去重之前合并数据
+     */
+    private fun mergePermission(permissionList: List<Permission>): List<Permission> {
+        val list = mutableListOf<Permission>()
+        val repeatList = mutableListOf<Permission>()
+        for (permission in permissionList) {
+            if (list.map { it.permName }.contains(permission.permName)) {
+                val originPerm = list.first { it.permName == permission.permName }
+                mergePermissionData(originPerm, permission, isRepeat = true)
+                repeatList.add(permission)
+            } else {
+                list.add(permission)
+            }
+        }
+
+        for (repeatPerm in repeatList) {
+            permissionService.deletePermission(repeatPerm.id!!)
+        }
+        return list
+    }
+
+    /**
+     * 将原仓库级permission 关联的用户全部添加到项目级permission
+     * 且删除不符合条件的permission
+     */
     private fun migrateUsers(permission: Permission) {
         val projectId = permission.projectId ?: return
         when (permission.permName) {
@@ -54,32 +131,7 @@ class ExtPermissionServiceImpl(
                 // 用户移动至项目用户
                 val projectView = permissionService.listProjectBuiltinPermission(projectId)
                     .first { it.permName == PROJECT_VIEW_PERMISSION }
-                val targetUsers = projectView.users.toMutableSet().apply {
-                    addAll(permission.users.toSet())
-                }
-                permissionService.updatePermissionById(
-                    id = projectView.id!!,
-                    key = TPermission::users.name,
-                    value = targetUsers
-                )
-
-                val targetRoles = projectView.roles.toMutableSet().apply {
-                    addAll(permission.roles)
-                }
-                permissionService.updatePermissionById(
-                    id = projectView.id!!,
-                    key = TPermission::roles.name,
-                    value = targetRoles
-                )
-
-                val targetDepartments = projectView.departments.toMutableSet().apply {
-                    addAll(permission.departments)
-                }
-                permissionService.updatePermissionById(
-                    id = projectView.id!!,
-                    key = TPermission::departments.name,
-                    value = targetDepartments
-                )
+                mergePermissionData(projectView, permission, isRepeat = false)
             }
             else -> permissionService.deletePermission(permission.id!!)
         }
@@ -87,9 +139,16 @@ class ExtPermissionServiceImpl(
 
     private fun migrateActions(permission: Permission) {
         val actions = permission.actions
-        val resultActions = mutableSetOf<PermissionAction>()
-        for (action in actions) {
-            resultActions.addAll(transAction(action))
+        val resultActions = when (permission.permName) {
+            AUTH_BUILTIN_ADMIN -> mutableSetOf(PermissionAction.MANAGE)
+            AUTH_BUILTIN_USER -> {
+                val set = mutableSetOf<PermissionAction>()
+                for (action in actions) {
+                    set.addAll(transAction(action))
+                }
+                set
+            }
+            else -> return
         }
         try {
             permissionService.updatePermissionById(
@@ -104,6 +163,7 @@ class ExtPermissionServiceImpl(
     }
 
     private fun transAction(action: PermissionAction): Set<PermissionAction> {
+        // PermissionAction.READ 全部落到项目级
         return when (action) {
             PermissionAction.REPO_MANAGE -> setOf(PermissionAction.MANAGE)
             PermissionAction.FOLDER_MANAGE -> setOf(PermissionAction.WRITE, PermissionAction.DELETE)
@@ -111,9 +171,10 @@ class ExtPermissionServiceImpl(
             PermissionAction.ARTIFACT_RENAME -> setOf(PermissionAction.UPDATE)
             PermissionAction.ARTIFACT_MOVE -> setOf(PermissionAction.WRITE)
             PermissionAction.ARTIFACT_SHARE -> setOf()
-            PermissionAction.ARTIFACT_DOWNLOAD -> setOf(PermissionAction.READ)
-            PermissionAction.ARTIFACT_READWRITE -> setOf(PermissionAction.WRITE, PermissionAction.READ)
-            PermissionAction.ARTIFACT_READ -> setOf(PermissionAction.READ)
+//            PermissionAction.ARTIFACT_DOWNLOAD -> setOf(PermissionAction.READ)
+//            PermissionAction.ARTIFACT_READWRITE -> setOf(PermissionAction.WRITE, PermissionAction.READ)
+            PermissionAction.ARTIFACT_READWRITE -> setOf(PermissionAction.WRITE)
+//            PermissionAction.ARTIFACT_READ -> setOf(PermissionAction.READ)
             PermissionAction.ARTIFACT_UPDATE -> setOf(PermissionAction.UPDATE)
             PermissionAction.ARTIFACT_DELETE -> setOf(PermissionAction.DELETE)
             else -> setOf()

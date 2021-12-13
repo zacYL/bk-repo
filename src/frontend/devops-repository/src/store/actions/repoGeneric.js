@@ -222,7 +222,7 @@ export default {
     sendEmail (_, url) {
         return Vue.prototype.$ajax.post(
             '/generic/notify/mail',
-            url
+            { url }
         )
     },
     // 统计节点大小信息

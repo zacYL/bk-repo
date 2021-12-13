@@ -6,7 +6,7 @@ import cn.hutool.extra.qrcode.QrConfig
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel.H
 import com.tencent.bkrepo.common.cpack.pojo.FileShareInfo
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
 
 object FileShareMailTemplate {
 

@@ -218,6 +218,13 @@ export default {
             body
         )
     },
+    // 发送邮件
+    sendEmail (_, url) {
+        return Vue.prototype.$ajax.post(
+            '/generic/notify/mail',
+            url
+        )
+    },
     // 统计节点大小信息
     getFolderSize (_, { projectId, repoName, fullPath }) {
         return Vue.prototype.$ajax.get(

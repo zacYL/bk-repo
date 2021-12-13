@@ -48,7 +48,7 @@
             </bk-form-item>
         </bk-form>
         <div slot="footer">
-            <bk-button theme="default" @click="shareUrl ? sendEmail() : cancel()">{{ shareUrl ? '发送邮件' : $t('cancel') }}</bk-button>
+            <bk-button theme="default" :loading="sending" @click="shareUrl ? sendEmailHandler() : cancel()">{{ shareUrl ? '发送邮件' : $t('cancel') }}</bk-button>
             <bk-button class="ml10" :loading="genericShare.loading" theme="primary" @click="shareUrl ? cancel() : submit()">{{$t('confirm')}}</bk-button>
         </div>
     </canway-dialog>
@@ -63,6 +63,7 @@
         data () {
             return {
                 shareUrl: '',
+                sending: false,
                 genericShare: {
                     show: false,
                     loading: false,
@@ -103,7 +104,7 @@
             }
         },
         methods: {
-            ...mapActions(['shareArtifactory']),
+            ...mapActions(['shareArtifactory', 'sendEmail']),
             setData (data) {
                 this.genericShare = {
                     ...this.genericShare,
@@ -160,7 +161,17 @@
                     clipboard.destroy()
                 })
             },
-            sendEmail () {}
+            sendEmailHandler () {
+                this.sending = true
+                this.sendEmail(this.shareUrl).then(() => {
+                    this.$bkMessage({
+                        theme: 'success',
+                        message: '发送邮件成功'
+                    })
+                }).finally(() => {
+                    this.sending = false
+                })
+            }
         }
     }
 </script>

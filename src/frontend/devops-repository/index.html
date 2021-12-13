@@ -36,7 +36,7 @@
         const search = new URL(location.href).searchParams
         const redirect = search.get('redirect')
         search.delete('redirect')
-        const redirectUrl = new URL(location.origin + redirect)
+        const redirectUrl = new URL(/^http(s)/.test(redirect) ? redirect : location.origin + redirect)
         search.forEach((val, key) => {
             redirectUrl.searchParams.set(key, val)
         })
@@ -83,7 +83,7 @@
             let message
             switch (status) {
                 case 403:
-                    message = '未获得文件的访问权限'
+                    message = '未获得文件访问权限或链接已失效'
                     break
                 case 404:
                     message = '文件不存在'

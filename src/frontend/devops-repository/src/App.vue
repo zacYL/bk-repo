@@ -8,8 +8,8 @@
 </template>
 
 <script>
-    import Header from '@/components/Header'
-    import Login from '@/components/Login'
+    import Header from '@repository/components/Header'
+    import Login from '@repository/components/Login'
     import { mapActions } from 'vuex'
     import cookies from 'js-cookie'
     import mixin from '@repository/AppMixin'
@@ -63,7 +63,7 @@
     }
 </script>
 <style lang="scss">
-@import '@/scss/index';
+@import '@repository/scss/index';
 .bkrepo-main {
     height: 100%;
     background-color: var(--bgWeightColor);

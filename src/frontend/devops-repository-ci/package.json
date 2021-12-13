@@ -1,7 +1,7 @@
 {
   "name": "devops-repository-ci",
   "version": "1.0.1",
-  "description": "devops-repository",
+  "description": "devops-repository-ci",
   "scripts": {
     "dev": "webpack-dev-server --mode development --progress",
     "public": "webpack --mode production",

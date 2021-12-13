@@ -96,7 +96,7 @@
 <script>
     import projectConfig from './projectConfig'
     import { mapState, mapActions } from 'vuex'
-    import { formatDate } from '@/utils'
+    import { formatDate } from '@repository/utils'
     export default {
         name: 'projectManage',
         components: { projectConfig },

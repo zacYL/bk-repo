@@ -1,4 +1,4 @@
-package com.tencent.bkrepo.common.devops.api.pojo
+package com.tencent.bkrepo.common.cpack.pojo
 
 data class FileShareInfo(
     val fileName: String,

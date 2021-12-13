@@ -1,22 +1,25 @@
-package com.tencent.bkrepo.common.devops.api.conf
+package com.tencent.bkrepo.common.cpack.conf
 
+import com.tencent.bkrepo.common.cpack.enums.MailNotifyType
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.NestedConfigurationProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.JavaMailSenderImpl
 import org.springframework.stereotype.Component
-import java.util.Properties
+import java.util.*
 
 @ConfigurationProperties("mail")
 @Component
-data class CanwayMailConf(
+data class CpackMailConf(
 
     var host: String = "smtp.exmail.qq.com",
 
     var port: Int = 465,
 
-    var protocol: String = "smtps",
+    var protocol: String = "smtp",
+
+    var mailNotifyType: MailNotifyType? = MailNotifyType.CPACK,
 
     var username: String = "undefined",
 

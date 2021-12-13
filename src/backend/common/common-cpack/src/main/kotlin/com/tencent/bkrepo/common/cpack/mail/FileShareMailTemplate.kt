@@ -1,27 +1,27 @@
-package com.tencent.bkrepo.common.devops.repository.mail
+package com.tencent.bkrepo.common.cpack.mail
 
 import cn.hutool.core.img.ImgUtil
 import cn.hutool.extra.qrcode.QrCodeUtil
 import cn.hutool.extra.qrcode.QrConfig
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel.H
-import com.tencent.bkrepo.common.devops.api.pojo.FileShareInfo
+import com.tencent.bkrepo.common.cpack.pojo.FileShareInfo
 import java.text.SimpleDateFormat
-import java.util.Date
+import java.util.*
 
-object CanwayMailTemplate {
+object FileShareMailTemplate {
 
     private const val QRCODE_HEIGHT = 100
     private const val QRCODE_WIDTH = 100
 
     fun getShareEmailTitle(cnName: String, fileName: String): String {
-        return "【蓝鲸DevOps平台版本仓库通知】${cnName}与你共享${fileName}文件"
+        return "【CPACK】${cnName}与你共享${fileName}文件"
     }
 
     fun getShareEmailBody(
         projectId: String,
         title: String,
         cnName: String,
-        days: Int,
+        days: String?,
         FileShareInfoList: List<FileShareInfo>
     ): String {
         val simpleDateFormat = SimpleDateFormat("yyyy年MM月dd日")
@@ -43,7 +43,7 @@ object CanwayMailTemplate {
         val template = stringBuffer.toString()
         return template
             .replace(HEADER_TITLE_TEMPLATE, title)
-            .replace(BODY_TITLE_TEMPLATE, "${cnName}与你共享以下文件，请在有效期（${days}天）内及时下载：")
+            .replace(BODY_TITLE_TEMPLATE, "${cnName}与你共享以下文件，请在有效期（$days）内及时下载：")
             .replace(BODY_PROJECT_TEMPLATE, projectId)
             .replace(BODY_DATE_TEMPLATE, date)
             .replace(TABLE_COLUMN1_TITLE, "文件名")
@@ -116,7 +116,7 @@ object CanwayMailTemplate {
         "                                        <td class=\"email-content\" style=\"padding: 0 36px; background: #fff;\">\n" +
         "                                            <table cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"font-size: 14px; mso-table-lspace: 0pt; mso-table-rspace: 0pt;\">\n" +
         "                                                <tr>\n" +
-        "                                                    <td class=\"email-source\" style=\"padding: 14px 0; color: #bebebe;\">来自Bkrepo制品库的通知</td>\n" +
+        "                                                    <td class=\"email-source\" style=\"padding: 14px 0; color: #bebebe;\">来自CPACK制品库的通知</td>\n" +
         "                                                </tr>\n" +
         "                                                <!-- 表格内容 -->\n" +
         "                                                <tr class=\"email-information\">\n" +
@@ -147,7 +147,7 @@ object CanwayMailTemplate {
             "                                                </tr>\n" +
             "\n" +
             "                                                <tr class=\"prompt-tips\">\n" +
-            "                                                    <td style=\"padding-top: 32px; padding-bottom: 10px; color: #707070;\">如有任何问题，可随时联系蓝盾助手。</td>\n" +
+            "                                                    <td style=\"padding-top: 32px; padding-bottom: 10px; color: #707070;\">如有任何问题，可随时联系CPACK助手。</td>\n" +
             "                                                </tr>\n" +
             "                                                <tr class=\"info-remark\">\n" +
             "                                                    <td style=\"padding: 20px 0; text-align: right; line-height: 24px; color: #707070;\">\n" +

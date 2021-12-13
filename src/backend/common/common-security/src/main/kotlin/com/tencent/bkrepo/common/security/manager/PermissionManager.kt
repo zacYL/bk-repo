@@ -240,8 +240,8 @@ open class PermissionManager(
         return permissionResource.listRepoBuiltinPermission(projectId, repoName).data
     }
 
-    fun listProjectBuiltinPermission(projectId: String) {
-        permissionResource.listProjectBuiltinPermission(projectId)
+    fun listProjectBuiltinPermission(projectId: String): List<Permission>? {
+        return permissionResource.listProjectBuiltinPermission(projectId).data
     }
 
     /**

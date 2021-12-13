@@ -31,9 +31,11 @@
 
 package com.tencent.bkrepo.generic.service
 
+import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
 import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.api.exception.TemporaryCodeException
 import com.tencent.bkrepo.common.api.util.Preconditions
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
@@ -46,6 +48,8 @@ import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
 import com.tencent.bkrepo.common.plugin.api.PluginManager
 import com.tencent.bkrepo.common.plugin.api.applyExtension
 import com.tencent.bkrepo.common.security.constant.AUTH_HEADER_UID
+import com.tencent.bkrepo.common.security.exception.AuthenticationException
+import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.generic.artifact.GenericArtifactInfo
@@ -202,9 +206,12 @@ class TemporaryAccessService(
     /**
      * 根据token生成url
      */
+
     private fun generateAccessUrl(tokenInfo: TemporaryTokenInfo, tokenType: TokenType, host: String?): String {
         val urlHost = if (!host.isNullOrBlank()) host else genericProperties.domain
-        val builder = StringBuilder(UrlFormatter.formatHost(urlHost))
+        val builder = StringBuilder(UrlFormatter.formatHost(urlHost).removeSuffix("/web/generic"))
+            .append("?redirect=")
+            .append("/web/generic")
         when (tokenType) {
             TokenType.DOWNLOAD -> builder.append(TEMPORARY_DOWNLOAD_ENDPOINT)
             TokenType.UPLOAD -> builder.append(TEMPORARY_UPLOAD_ENDPOINT)
@@ -217,18 +224,37 @@ class TemporaryAccessService(
             .append(tokenInfo.fullPath)
             .append("?token=")
             .append(tokenInfo.token)
+            .append("&download=true")
             .toString()
     }
+
+//    private fun generateAccessUrl(tokenInfo: TemporaryTokenInfo, tokenType: TokenType, host: String?): String {
+//        val urlHost = if (!host.isNullOrBlank()) host else genericProperties.domain
+//        val builder = StringBuilder(UrlFormatter.formatHost(urlHost))
+//        when (tokenType) {
+//            TokenType.DOWNLOAD -> builder.append(TEMPORARY_DOWNLOAD_ENDPOINT)
+//            TokenType.UPLOAD -> builder.append(TEMPORARY_UPLOAD_ENDPOINT)
+//            else -> builder.append(TEMPORARY_DOWNLOAD_ENDPOINT) // default use download
+//        }
+//        return builder.append(StringPool.SLASH)
+//            .append(tokenInfo.projectId)
+//            .append(StringPool.SLASH)
+//            .append(tokenInfo.repoName)
+//            .append(tokenInfo.fullPath)
+//            .append("?token=")
+//            .append(tokenInfo.token)
+//            .toString()
+//    }
 
     /**
      * 检查token并返回token信息
      */
     private fun checkToken(token: String): TemporaryTokenInfo {
         if (token.isBlank()) {
-            throw ErrorCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID)
+            throw TemporaryCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID)
         }
         return temporaryTokenClient.getTokenInfo(token).data
-            ?: throw ErrorCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID)
+            ?: throw TemporaryCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID)
     }
 
     /**
@@ -238,7 +264,7 @@ class TemporaryAccessService(
         expireDateString?.let {
             val expireDate = LocalDateTime.parse(it, DateTimeFormatter.ISO_DATE_TIME)
             if (expireDate.isBefore(LocalDateTime.now())) {
-                throw ErrorCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_EXPIRED)
+                throw TemporaryCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_EXPIRED)
             }
         }
     }
@@ -249,7 +275,7 @@ class TemporaryAccessService(
     private fun checkAccessPermits(permits: Int?) {
         permits?.let {
             if (it <= 0) {
-                throw ErrorCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_EXPIRED)
+                throw TemporaryCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_EXPIRED)
             }
         }
     }
@@ -259,7 +285,7 @@ class TemporaryAccessService(
      */
     private fun checkAccessType(grantedType: TokenType, accessType: TokenType) {
         if (grantedType != TokenType.ALL && grantedType != accessType) {
-            throw ErrorCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID)
+            throw TemporaryCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID)
         }
     }
 
@@ -269,11 +295,11 @@ class TemporaryAccessService(
     private fun checkAccessResource(tokenInfo: TemporaryTokenInfo, artifactInfo: ArtifactInfo) {
         // 校验项目/仓库
         if (tokenInfo.projectId != artifactInfo.projectId || tokenInfo.repoName != artifactInfo.repoName) {
-            throw ErrorCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID)
+            throw TemporaryCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID)
         }
         // 校验路径
         if (!PathUtils.isSubPath(artifactInfo.getArtifactFullPath(), tokenInfo.fullPath)) {
-            throw ErrorCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID)
+            throw TemporaryCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID)
         }
     }
 
@@ -284,9 +310,12 @@ class TemporaryAccessService(
         // 检查用户授权
         // 获取经过认证的uid
         val authenticatedUid = SecurityUtils.getUserId()
+        if (tokenInfo.authorizedUserList.isNotEmpty() && authenticatedUid == ANONYMOUS_USER) {
+            throw AuthenticationException()
+        }
         // 使用认证uid校验授权
         if (tokenInfo.authorizedUserList.isNotEmpty() && authenticatedUid !in tokenInfo.authorizedUserList) {
-            throw ErrorCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID)
+            throw PermissionException()
         }
         // 获取需要审计的uid
         val auditedUid = if (SecurityUtils.isAnonymous()) {
@@ -297,7 +326,7 @@ class TemporaryAccessService(
         // 校验ip授权
         val clientIp = HttpContextHolder.getClientAddress()
         if (tokenInfo.authorizedIpList.isNotEmpty() && clientIp !in tokenInfo.authorizedIpList) {
-            throw ErrorCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID)
+            throw TemporaryCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID)
         }
     }
 

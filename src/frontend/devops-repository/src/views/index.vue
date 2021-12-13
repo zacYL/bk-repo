@@ -43,7 +43,7 @@
     </div>
 </template>
 <script>
-    import Breadcrumb from '@/components/Breadcrumb/topBreadcrumb'
+    import Breadcrumb from '@repository/components/Breadcrumb/topBreadcrumb'
     import { mapState, mapGetters, mapMutations, mapActions } from 'vuex'
     export default {
         components: { Breadcrumb },
@@ -139,7 +139,7 @@
         }
     }
     .bkrepo-view-main {
-        height: calc(100% - 20px);
+        height: calc(100% - 20px); // margin
         .repo-breadcrumb {
             height: 20px;
         }

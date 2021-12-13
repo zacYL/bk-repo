@@ -20,7 +20,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 config = {
   static_dir = "__BK_REPO_HOME__/frontend",
   service_name = "",  -- 指定后台微服务名称，如果对接后端是boot-assembly的单体微服务，则该配置项为bk-ci, 否则请置空会自动路由相应微服务
-  service_prefix = "__CPACK_SERVICE_PREFIX__", -- 微服务前缀
+  service_prefix = "__BK_REPO_SERVICE_PREFIX__", -- 微服务前缀
   allow_hosts = {
     "__BK_REPO_GATEWAY_CORS_ALLOW_LIST__"
   },
@@ -36,17 +36,9 @@ config = {
     nodes_url = "/v1/catalog/nodes"
   },
   bkrepo = {
-    authorization = "__CPACK_AUTHORIZATION__"
+    authorization = "__BK_REPO_AUTHORIZATION__"
   },
-  mode = "__CPACK_DEPLOY_MODE__",
-  router = {
-    project = {
-      {
-        name = "devops",
-        tag = "devops"
-      }
-    }
-  }
+  mode = "__BK_REPO_DEPLOY_MODE__",
 }
   
 require("init_common")

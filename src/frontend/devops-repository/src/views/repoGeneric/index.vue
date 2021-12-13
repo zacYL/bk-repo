@@ -138,8 +138,9 @@
             </div>
         </div>
 
-        <generic-detail :detail-slider="detailSlider" @refresh="getArtifactories"></generic-detail>
-        <generic-form-dialog ref="genericFormDialog" @submit="submitGenericForm"></generic-form-dialog>
+        <generic-detail ref="genericDetail"></generic-detail>
+        <generic-form-dialog ref="genericFormDialog" @refresh="refreshNodeChange"></generic-form-dialog>
+        <generic-share-dialog ref="genericShareDialog"></generic-share-dialog>
         <generic-tree-dialog ref="genericTreeDialog" @update="updateGenericTreeNode" @submit="submitGenericTree"></generic-tree-dialog>
         <generic-upload-dialog v-bind="uploadDialog" @update="getArtifactories" @cancel="uploadDialog.show = false"></generic-upload-dialog>
     </div>
@@ -151,6 +152,7 @@
     import genericDetail from './genericDetail'
     import genericUploadDialog from './genericUploadDialog'
     import genericFormDialog from './genericFormDialog'
+    import genericShareDialog from './genericShareDialog'
     import genericTreeDialog from './genericTreeDialog'
     import { convertFileSize, formatDate } from '@repository/utils'
     import { getIconName } from '@repository/store/publicEnum'
@@ -164,6 +166,7 @@
             genericDetail,
             genericUploadDialog,
             genericFormDialog,
+            genericShareDialog,
             genericTreeDialog
         },
         data () {
@@ -194,13 +197,6 @@
                 rowClickCallback: null,
                 // table选中的行
                 selectedRow: {},
-                // 查看详情
-                detailSlider: {
-                    show: false,
-                    loading: false,
-                    folder: false,
-                    data: {}
-                },
                 // 上传制品
                 uploadDialog: {
                     show: false,
@@ -282,15 +278,11 @@
             ...mapMutations(['INIT_TREE']),
             ...mapActions([
                 'getRepoListAll',
-                'getNodeDetail',
                 'getFolderList',
                 'getArtifactoryList',
-                'createFolder',
                 'deleteArtifactory',
-                'renameNode',
                 'moveNode',
                 'copyNode',
-                'shareArtifactory',
                 'getFolderSize',
                 'getFileNumOfFolder'
             ]),
@@ -447,41 +439,26 @@
                 }, 300)
             },
             showDetail () {
-                this.detailSlider = {
+                this.$refs.genericDetail.setData({
                     show: true,
-                    loading: true,
+                    loading: false,
                     folder: this.selectedRow.folder,
+                    path: this.selectedRow.fullPath,
                     data: {}
-                }
-                this.getNodeDetail({
-                    projectId: this.projectId,
-                    repoName: this.repoName,
-                    fullPath: this.selectedRow.fullPath
-                }).then(data => {
-                    this.detailSlider.data = {
-                        ...data,
-                        name: data.name || this.repoName,
-                        size: convertFileSize(data.size),
-                        createdBy: this.userList[data.createdBy] ? this.userList[data.createdBy].name : data.createdBy,
-                        createdDate: formatDate(data.createdDate),
-                        lastModifiedBy: this.userList[data.lastModifiedBy] ? this.userList[data.lastModifiedBy].name : data.lastModifiedBy,
-                        lastModifiedDate: formatDate(data.lastModifiedDate)
-                    }
-                }).finally(() => {
-                    this.detailSlider.loading = false
                 })
             },
             renameRes () {
-                this.$refs.genericFormDialog.setFormData({
+                this.$refs.genericFormDialog.setData({
                     show: true,
                     loading: false,
                     type: 'rename',
                     name: this.selectedRow.name,
+                    path: this.selectedRow.fullPath,
                     title: `${this.$t('rename')} (${this.selectedRow.name})`
                 })
             },
             addFolder () {
-                this.$refs.genericFormDialog.setFormData({
+                this.$refs.genericFormDialog.setData({
                     show: true,
                     loading: false,
                     type: 'add',
@@ -489,79 +466,22 @@
                     title: `${this.$t('create') + this.$t('folder')}`
                 })
             },
+            refreshNodeChange () {
+                this.updateGenericTreeNode(this.selectedTreeNode)
+                this.selectRow(this.selectedTreeNode)
+                this.getArtifactories()
+            },
             handlerShare () {
-                this.$refs.genericFormDialog.setFormData({
+                this.$refs.genericShareDialog.setData({
                     show: true,
                     loading: false,
                     type: 'share',
                     title: `${this.$t('share')} (${this.selectedRow.name})`,
+                    path: this.selectedRow.fullPath,
                     user: [],
                     ip: [],
                     permits: 0,
                     time: 0
-                })
-            },
-            submitGenericForm (data) {
-                this.$refs.genericFormDialog.setFormData({ loading: true })
-                let message = ''
-                let fn = null
-                switch (data.type) {
-                    case 'add':
-                        fn = this.submitAddFolder(data).then(() => {
-                            this.updateGenericTreeNode(this.selectedTreeNode)
-                        })
-                        message = this.$t('create') + this.$t('folder')
-                        break
-                    case 'rename':
-                        fn = this.submitRenameNode(data).then(() => {
-                            this.updateGenericTreeNode(this.selectedTreeNode)
-                        })
-                        message = this.$t('rename')
-                        break
-                    case 'share':
-                        fn = this.submitShareArtifactory(data)
-                        message = this.$t('share')
-                        break
-                }
-                fn.then(() => {
-                    this.selectRow(this.selectedTreeNode)
-                    this.getArtifactories()
-                    this.$bkMessage({
-                        theme: 'success',
-                        message: message + this.$t('success')
-                    })
-                    this.$refs.genericFormDialog.setFormData({ show: false })
-                }).finally(() => {
-                    this.$refs.genericFormDialog.setFormData({ loading: false })
-                })
-            },
-            submitAddFolder (data) {
-                return this.createFolder({
-                    projectId: this.projectId,
-                    repoName: this.repoName,
-                    fullPath: data.path
-                })
-            },
-            submitRenameNode (data) {
-                return this.renameNode({
-                    projectId: this.projectId,
-                    repoName: this.repoName,
-                    fullPath: this.selectedRow.fullPath,
-                    newFullPath: this.selectedRow.fullPath.replace(/[^/]*$/, data.name)
-                })
-            },
-            submitShareArtifactory (data) {
-                return this.shareArtifactory({
-                    projectId: this.projectId,
-                    repoName: this.repoName,
-                    fullPathSet: [this.selectedRow.fullPath],
-                    type: 'DOWNLOAD',
-                    host: `${location.origin}/web/generic`,
-                    needsNotify: true,
-                    // ...(data.ip.length ? { authorizedIpSet: data.ip } : {}),
-                    ...(data.user.length ? { authorizedUserSet: data.user } : {}),
-                    ...(Number(data.time) > 0 ? { expireSeconds: Number(data.time) * 86400 } : {}),
-                    ...(Number(data.permits) > 0 ? { permits: Number(data.permits) } : {})
                 })
             },
             async deleteRes () {

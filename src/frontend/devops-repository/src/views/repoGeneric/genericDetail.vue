@@ -71,15 +71,20 @@
     </bk-sideslider>
 </template>
 <script>
-    import { mapActions } from 'vuex'
+    import { mapState, mapActions } from 'vuex'
+    import { convertFileSize, formatDate } from '@repository/utils'
     export default {
         name: 'genericDetail',
-        props: {
-            detailSlider: Object
-        },
         data () {
             return {
                 tabName: 'detailInfo',
+                detailSlider: {
+                    show: false,
+                    loading: false,
+                    folder: false,
+                    path: '',
+                    data: {}
+                },
                 metadata: {
                     show: false,
                     loading: false,
@@ -105,11 +110,12 @@
             }
         },
         computed: {
+            ...mapState(['userList']),
             projectId () {
                 return this.$route.params.projectId
             },
             repoName () {
-                return this.detailSlider.data.repoName
+                return this.$route.query.repoName
             },
             detailInfoMap () {
                 return [
@@ -124,7 +130,34 @@
             }
         },
         methods: {
-            ...mapActions(['addMetadata', 'deleteMetadata']),
+            ...mapActions(['getNodeDetail', 'addMetadata', 'deleteMetadata']),
+            setData (data) {
+                this.detailSlider = {
+                    ...this.detailSlider,
+                    ...data
+                }
+                this.getDetail()
+            },
+            getDetail () {
+                this.detailSlider.loading = true
+                this.getNodeDetail({
+                    projectId: this.projectId,
+                    repoName: this.repoName,
+                    fullPath: this.detailSlider.path
+                }).then(data => {
+                    this.detailSlider.data = {
+                        ...data,
+                        name: data.name || this.repoName,
+                        size: convertFileSize(data.size),
+                        createdBy: this.userList[data.createdBy] ? this.userList[data.createdBy].name : data.createdBy,
+                        createdDate: formatDate(data.createdDate),
+                        lastModifiedBy: this.userList[data.lastModifiedBy] ? this.userList[data.lastModifiedBy].name : data.lastModifiedBy,
+                        lastModifiedDate: formatDate(data.lastModifiedDate)
+                    }
+                }).finally(() => {
+                    this.detailSlider.loading = false
+                })
+            },
             showAddMetadata () {
                 this.metadata = {
                     show: true,
@@ -139,6 +172,7 @@
             },
             async addMetadataHandler () {
                 await this.$refs.metadatForm.validate()
+                this.metadata.loading = true
                 this.addMetadata({
                     projectId: this.projectId,
                     repoName: this.repoName,
@@ -154,7 +188,7 @@
                         message: this.$t('add') + this.$t('success')
                     })
                     this.hiddenAddMetadata()
-                    this.$emit('refresh', this.detailSlider.data)
+                    this.getDetail()
                 }).finally(() => {
                     this.metadata.loading = false
                 })
@@ -168,7 +202,7 @@
                         keyList: [row[0]]
                     }
                 }).finally(() => {
-                    this.$emit('refresh', this.detailSlider.data)
+                    this.getDetail()
                 })
             }
         }

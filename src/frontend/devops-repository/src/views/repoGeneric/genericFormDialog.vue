@@ -2,8 +2,8 @@
     <canway-dialog
         v-model="genericForm.show"
         :title="genericForm.title"
-        width="500"
-        :height-num="genericForm.type === 'share' ? 342 : 186"
+        width="450"
+        :height-num="186"
         @cancel="cancel">
         <bk-form class="repo-generic-form" :label-width="100" :model="genericForm" :rules="rules" ref="genericForm">
             <template v-if="genericForm.type === 'add'">
@@ -17,33 +17,6 @@
                     <bk-input v-model.trim="genericForm.name" :placeholder="$t('folderNamePlacehodler')" maxlength="50" show-word-limit></bk-input>
                 </bk-form-item>
             </template>
-            <template v-else-if="genericForm.type === 'share'">
-                <bk-form-item label="授权用户" property="user">
-                    <bk-tag-input
-                        v-model="genericForm.user"
-                        :list="Object.values(userList).filter(user => user.id !== 'anonymous')"
-                        :search-key="['id', 'name']"
-                        placeholder="授权访问用户，为空则任意用户可访问，按Enter键确认"
-                        trigger="focus"
-                        allow-create
-                        has-delete-icon>
-                    </bk-tag-input>
-                </bk-form-item>
-                <!-- <bk-form-item label="授权IP" property="ip">
-                    <bk-tag-input
-                        v-model="genericForm.ip"
-                        placeholder="授权访问IP，为空则任意IP可访问，按Enter键确认"
-                        trigger="focus"
-                        allow-create>
-                    </bk-tag-input>
-                </bk-form-item> -->
-                <bk-form-item label="访问次数" property="permits" error-display-type="normal">
-                    <bk-input v-model.trim="genericForm.permits" placeholder="请输入数字，小于等于0则永久有效"></bk-input>
-                </bk-form-item>
-                <bk-form-item :label="`${$t('validity')}(${$t('day')})`" property="time" error-display-type="normal">
-                    <bk-input v-model.trim="genericForm.time" placeholder="请输入数字，小于等于0则永久有效"></bk-input>
-                </bk-form-item>
-            </template>
         </bk-form>
         <div slot="footer">
             <bk-button theme="default" @click="cancel">{{$t('cancel')}}</bk-button>
@@ -52,29 +25,24 @@
     </canway-dialog>
 </template>
 <script>
-    import { mapState } from 'vuex'
+    import { mapActions } from 'vuex'
     export default {
-        name: 'genericgenericForm',
+        name: 'genericForm',
         data () {
             return {
-                // 新建文件夹、重命名、分享、制品晋级
                 genericForm: {
                     show: false,
                     loading: false,
                     title: '',
                     type: '',
                     path: '',
-                    name: '',
-                    user: [],
-                    ip: [],
-                    permits: 0,
-                    time: 0
+                    name: ''
                 },
                 // genericForm Rules
                 rules: {
                     path: [
                         {
-                            required: true,
+                            regex: /[^\\/:*?"<>|]$/,
                             message: this.$t('pleaseInput') + this.$t('folder') + this.$t('path'),
                             trigger: 'blur'
                         },
@@ -95,42 +63,74 @@
                             message: this.$t('folderNamePlacehodler'),
                             trigger: 'blur'
                         }
-                    ],
-                    permits: [
-                        {
-                            regex: /^-?[0-9]*$/,
-                            message: '请输入数字',
-                            trigger: 'blur'
-                        }
-                    ],
-                    time: [
-                        {
-                            regex: /^-?[0-9]*$/,
-                            message: '请输入数字',
-                            trigger: 'blur'
-                        }
                     ]
                 }
             }
         },
         computed: {
-            ...mapState(['userList'])
+            projectId () {
+                return this.$route.params.projectId
+            },
+            repoName () {
+                return this.$route.query.repoName
+            }
         },
         methods: {
-            setFormData (data) {
+            ...mapActions(['createFolder', 'renameNode']),
+            setData (data) {
                 this.genericForm = {
                     ...this.genericForm,
                     ...data
                 }
             },
-            submit () {
-                this.$refs.genericForm.validate().then(() => {
-                    this.$emit('submit', this.genericForm)
-                })
-            },
             cancel () {
                 this.$refs.genericForm.clearError()
                 this.genericForm.show = false
+            },
+            submit () {
+                this.$refs.genericForm.validate().then(() => {
+                    this.submitGenericForm()
+                })
+            },
+            submitAddFolder () {
+                return this.createFolder({
+                    projectId: this.projectId,
+                    repoName: this.repoName,
+                    fullPath: this.genericForm.path.replace(/\/+/g, '/')
+                })
+            },
+            submitRenameNode () {
+                return this.renameNode({
+                    projectId: this.projectId,
+                    repoName: this.repoName,
+                    fullPath: this.genericForm.path,
+                    newFullPath: this.genericForm.path.replace(/[^/]*$/, this.genericForm.name)
+                })
+            },
+            submitGenericForm () {
+                this.genericForm.loading = true
+                let message = ''
+                let fn = null
+                switch (this.genericForm.type) {
+                    case 'add':
+                        fn = this.submitAddFolder()
+                        message = this.$t('create') + this.$t('folder')
+                        break
+                    case 'rename':
+                        fn = this.submitRenameNode()
+                        message = this.$t('rename')
+                        break
+                }
+                fn.then(() => {
+                    this.$emit('refresh')
+                    this.$bkMessage({
+                        theme: 'success',
+                        message: message + this.$t('success')
+                    })
+                    this.genericForm.show = false
+                }).finally(() => {
+                    this.genericForm.loading = false
+                })
             }
         }
     }

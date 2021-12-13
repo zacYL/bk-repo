@@ -32,8 +32,8 @@
 package com.tencent.bkrepo.repository.listener
 
 import com.tencent.bkrepo.auth.api.ServicePermissionResource
-import com.tencent.bkrepo.auth.api.ServiceUserResource
 import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_ADMIN
+import com.tencent.bkrepo.auth.constant.PROJECT_MANAGE_PERMISSION
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionUserRequest
 import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
 import com.tencent.bkrepo.common.security.manager.PermissionManager
@@ -83,10 +83,18 @@ class ResourcePermissionListener(
                 val repoManage = permissionManager.lisRepoBuiltinPermission(projectId, repoName)?.first {
                     it.permName == AUTH_BUILTIN_ADMIN
                 }
+                //将创建用户和项目管理员都添加至仓库的管理员
+                val users = permissionManager.listProjectBuiltinPermission(projectId)?.first {
+                    it.permName == PROJECT_MANAGE_PERMISSION
+                }?.users?.toSet()
                 if (repoManage != null) {
                     permissionResource.updatePermissionUser(UpdatePermissionUserRequest(
                         permissionId = repoManage.id!!,
-                        userId = listOf(userId)
+                        userId = (mutableSetOf(userId).apply {
+                            if (users != null) {
+                                addAll(users)
+                            }
+                        }).toList()
                     ))
                 }
             }

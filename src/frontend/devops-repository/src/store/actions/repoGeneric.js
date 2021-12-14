@@ -219,10 +219,10 @@ export default {
         )
     },
     // 发送邮件
-    sendEmail (_, url) {
+    sendEmail (_, body) {
         return Vue.prototype.$ajax.post(
             '/generic/notify/mail',
-            { url }
+            body
         )
     },
     // 统计节点大小信息

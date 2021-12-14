@@ -11,15 +11,27 @@
                     <bk-input :value="shareUrl" readonly></bk-input>
                     <bk-button class="mt5" theme="primary" @click="copyShareUrl(shareUrl)">复制链接</bk-button>
                 </bk-form-item>
+                <bk-form-item label="邮件方式分享">
+                    <bk-tag-input
+                        v-model="genericShare.user"
+                        :list="Object.values(userList).filter(user => user.id !== 'anonymous')"
+                        :search-key="['id', 'name']"
+                        :title="genericShare.user.map(u => userList[u] ? userList[u].name : u)"
+                        placeholder="请输入用户"
+                        trigger="focus"
+                        allow-create
+                        has-delete-icon>
+                    </bk-tag-input>
+                    <bk-button class="mt5" :disabled="!Boolean(genericShare.user.length)" theme="primary" :loading="sending" @click="sendEmailHandler">发送邮件</bk-button>
+                </bk-form-item>
             </bk-form>
             <div class="ml20 flex-column">
                 <span class="qrcode-label">移动端二维码下载</span>
                 <QRCode class="share-qrcode" :text="shareUrl" :size="150" />
             </div>
         </div>
-        <bk-form v-else style="margin-top:-15px" ref="genericShareForm" :label-width="90"
-            :model="genericShare" :rules="rules" form-type="vertical">
-            <bk-form-item label="授权用户" property="user">
+        <bk-form v-else style="margin-top:-15px" ref="genericShareForm" :label-width="90" form-type="vertical">
+            <!-- <bk-form-item label="授权用户" property="user">
                 <bk-tag-input
                     v-model="genericShare.user"
                     :list="Object.values(userList).filter(user => user.id !== 'anonymous')"
@@ -29,7 +41,7 @@
                     allow-create
                     has-delete-icon>
                 </bk-tag-input>
-            </bk-form-item>
+            </bk-form-item> -->
             <!-- <bk-form-item label="授权IP" property="ip">
                 <bk-tag-input
                     v-model="genericShare.ip"
@@ -38,16 +50,23 @@
                     allow-create>
                 </bk-tag-input>
             </bk-form-item> -->
-            <bk-form-item label="访问次数" property="permits" error-display-type="normal">
-                <bk-input v-model.trim="genericShare.permits" placeholder="请输入数字，小于等于0则永久有效"></bk-input>
+            <bk-form-item label="访问次数">
+                <bk-input v-model="genericShare.permits" placeholder="请输入访问次数，为空则不限制"></bk-input>
             </bk-form-item>
-            <bk-form-item :label="`${$t('validity')}(${$t('day')})`" property="time" error-display-type="normal">
-                <bk-input v-model.trim="genericShare.time" placeholder="请输入数字，小于等于0则永久有效"></bk-input>
+            <bk-form-item :label="`${$t('validity')}(${$t('day')})`">
+                <bk-select
+                    v-model="genericShare.time"
+                    :clearable="false"
+                    placeholder="请选择过期时间">
+                    <bk-option :id="1" name="1"></bk-option>
+                    <bk-option :id="7" name="7"></bk-option>
+                    <bk-option :id="30" name="30"></bk-option>
+                    <bk-option :id="0" name="永久"></bk-option>
+                </bk-select>
             </bk-form-item>
         </bk-form>
         <div slot="footer">
             <bk-button v-if="!shareUrl" theme="default" @click="cancel">{{ $t('cancel') }}</bk-button>
-            <bk-button v-else-if="genericShare.user.length" theme="default" :loading="sending" @click="sendEmailHandler">发送邮件</bk-button>
             <bk-button class="ml10" :loading="genericShare.loading" theme="primary" @click="shareUrl ? cancel() : submit()">{{$t('confirm')}}</bk-button>
         </div>
     </canway-dialog>
@@ -67,29 +86,11 @@
                     show: false,
                     loading: false,
                     title: '',
-                    type: '',
                     path: '',
                     user: [],
                     ip: [],
-                    permits: 0,
+                    permits: '',
                     time: 0
-                },
-                // genericShare Rules
-                rules: {
-                    permits: [
-                        {
-                            regex: /^-?[0-9]*$/,
-                            message: '请输入数字',
-                            trigger: 'blur'
-                        }
-                    ],
-                    time: [
-                        {
-                            regex: /^-?[0-9]*$/,
-                            message: '请输入数字',
-                            trigger: 'blur'
-                        }
-                    ]
                 }
             }
         },
@@ -122,7 +123,7 @@
                 this.genericShare.show = false
             },
             submitShare () {
-                const { path, user, time, permits } = this.genericShare
+                const { path, time, permits } = this.genericShare
                 this.genericShare.loading = true
                 this.shareArtifactory({
                     projectId: this.projectId,
@@ -132,7 +133,7 @@
                     host: location.origin,
                     needsNotify: true,
                     // ...(data.ip.length ? { authorizedIpSet: data.ip } : {}),
-                    ...(user.length ? { authorizedUserSet: user } : {}),
+                    // ...(user.length ? { authorizedUserSet: user } : {}),
                     ...(Number(time) > 0 ? { expireSeconds: Number(time) * 86400 } : {}),
                     ...(Number(permits) > 0 ? { permits: Number(permits) } : {})
                 }).then(([{ url }]) => {
@@ -161,8 +162,13 @@
                 })
             },
             sendEmailHandler () {
+                const users = this.genericShare.user
+                if (this.sending || !users.length) return
                 this.sending = true
-                this.sendEmail(this.shareUrl).then(() => {
+                this.sendEmail({
+                    url: this.shareUrl,
+                    users
+                }).then(() => {
                     this.$bkMessage({
                         theme: 'success',
                         message: '发送邮件成功'
@@ -177,7 +183,7 @@
 <style lang="scss" scoped>
 .share-result {
     display: flex;
-    height: 196px;
+    height: 206px;
     margin-top: -15px;
     .qrcode-label {
         color: var(--fontPrimaryColor);

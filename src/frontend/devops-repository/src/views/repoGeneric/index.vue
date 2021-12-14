@@ -475,13 +475,12 @@
                 this.$refs.genericShareDialog.setData({
                     show: true,
                     loading: false,
-                    type: 'share',
                     title: `${this.$t('share')} (${this.selectedRow.name})`,
                     path: this.selectedRow.fullPath,
                     user: [],
                     ip: [],
-                    permits: 0,
-                    time: 0
+                    permits: '',
+                    time: 7
                 })
             },
             async deleteRes () {

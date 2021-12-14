@@ -63,10 +63,11 @@
             <template #content>
                 <div class="m10 flex-align-center">
                     <bk-tag-input
-                        class="w250"
+                        style="width: 300px"
                         v-model="editRoleUsers.addUsers"
                         :list="Object.values(selectList)"
                         :search-key="['id', 'name']"
+                        :title="editRoleUsers.addUsers.map(u => userList[u] ? userList[u].name : u)"
                         placeholder="添加用户，按Enter键确认"
                         trigger="focus"
                         allow-create>

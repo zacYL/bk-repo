@@ -19,10 +19,11 @@
                         </i>
                         <div v-show="section[part].showAddArea" :key="part + 'operation'" class="ml15 flex-align-center">
                             <bk-tag-input
-                                style="min-width: 250px"
+                                style="width: 300px"
                                 v-model="section[part].addList"
                                 :list="filterSelectOptions(section[part], part)"
                                 :search-key="['id', 'name']"
+                                :title="section[part].addList.map(u => userList[u] ? userList[u].name : u)"
                                 placeholder="请输入，按Enter键确认"
                                 trigger="focus"
                                 allow-create>

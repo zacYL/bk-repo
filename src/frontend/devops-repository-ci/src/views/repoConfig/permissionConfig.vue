@@ -43,10 +43,11 @@
                             </template>
                             <template v-else>
                                 <bk-tag-input
-                                    style="min-width: 250px"
+                                    style="width: 300px"
                                     v-model="section[part].addList"
                                     :list="filterSelectOptions(section[part], part)"
                                     :search-key="['id', 'name']"
+                                    :title="section[part].addList.map(u => userList[u] ? userList[u].name : u)"
                                     placeholder="请输入，按Enter键确认"
                                     trigger="focus"
                                     allow-create>

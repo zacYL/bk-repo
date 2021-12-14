@@ -39,12 +39,15 @@ import com.tencent.bkrepo.auth.constant.AUTH_PROJECT_SUFFIX
 import com.tencent.bkrepo.auth.constant.AUTH_REPO_SUFFIX
 import com.tencent.bkrepo.auth.constant.BASIC_AUTH_HEADER_PREFIX
 import com.tencent.bkrepo.auth.constant.BKREPO_TICKET
-import com.tencent.bkrepo.auth.exception.AuthFailedException
+import com.tencent.bkrepo.auth.constant.PLATFORM_AUTH_HEADER_PREFIX
 import com.tencent.bkrepo.auth.message.AuthMessageCode
+import com.tencent.bkrepo.auth.service.AccountService
 import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.common.api.constant.HttpStatus
+import com.tencent.bkrepo.common.api.constant.PLATFORM_KEY
 import com.tencent.bkrepo.common.api.constant.StringPool.COLON
 import com.tencent.bkrepo.common.api.constant.USER_KEY
+import com.tencent.bkrepo.common.security.constant.AUTH_HEADER_UID
 import com.tencent.bkrepo.common.security.exception.AuthenticationException
 import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.security.http.jwt.JwtAuthProperties
@@ -53,14 +56,17 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.servlet.HandlerInterceptor
 import java.security.Key
-import java.util.Base64
+import java.util.*
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 class AuthInterceptor : HandlerInterceptor {
 
     @Autowired
-    private lateinit var userService: UserService
+    lateinit var accountService: AccountService
+
+    @Autowired
+    lateinit var userService: UserService
 
     @Autowired
     lateinit var jwtProperties: JwtAuthProperties
@@ -92,6 +98,24 @@ class AuthInterceptor : HandlerInterceptor {
                 request.setAttribute(USER_KEY, parts[0])
                 return true
             }
+
+            if (basicAuthHeader.startsWith(PLATFORM_AUTH_HEADER_PREFIX)) {
+                logger.info("platform auth")
+                val encodedCredentials = basicAuthHeader.removePrefix(PLATFORM_AUTH_HEADER_PREFIX)
+                val decodedHeader = String(Base64.getDecoder().decode(encodedCredentials))
+                val parts = decodedHeader.split(COLON)
+                require(parts.size == 2)
+                val appId = accountService.checkCredential(parts[0], parts[1]) ?: run {
+                    logger.warn("find no account [$parts[0]]")
+                    throw IllegalArgumentException("check credential fail")
+                }
+                request.setAttribute(PLATFORM_KEY, appId)
+                val userId = request.getHeader(AUTH_HEADER_UID)
+                logger.info("platform auth userId: $userId")
+                request.setAttribute(USER_KEY, userId)
+                return true
+            }
+
             val cookies = request.cookies
                 ?: throw AuthenticationException(AuthMessageCode.AUTH_LOGIN_TOKEN_CHECK_FAILED.name)
             for (cookie in cookies) {

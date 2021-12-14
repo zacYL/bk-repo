@@ -3,7 +3,7 @@ spring:
     name: ${service.prefix}${service.name}${service.suffix}
     desc: Docker Service
 server:
-  port: __CPACK_DOCKER_PORT__
+  port: __BK_REPO_DOCKER_PORT__
 auth:
   enable: true
   url: http://${docker.domain}/v2/auth
@@ -12,7 +12,7 @@ logging:
     com.tencent.bkrepo.docker: DEBUG
   path: ${logging.path-common}/${service.name}
 docker:
-  domain: __CPACK_DOCKER_DOMAIN__
+  domain: __BK_REPO_DOCKER_HOST__
 
 service:
   name: docker

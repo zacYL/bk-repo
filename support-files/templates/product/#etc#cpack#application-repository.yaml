@@ -8,7 +8,7 @@ spring:
     overwriteExistingJobs: true
     schedulerName: bkrepo-scheduler
 server:
-  port: __CPACK_REPOSITORY_PORT__
+  port: __BK_REPO_REPOSITORY_PORT__
 logging:
   path: ${logging.path-common}/${service.name}
 service:

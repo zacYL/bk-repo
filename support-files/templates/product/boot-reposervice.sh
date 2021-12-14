@@ -5,12 +5,12 @@
 #-------------------------------------------------------------------------------------------------------------
 
 # 公共参数，不要修改
-PROJECT_NAME=bkrepo
+PROJECT_NAME=cpack
 
 # 服务相关修改
 SERVICE_NAME=bkreposervice
 # HTTP端口的是占位符号 需要根据application-bkreposervice.yml中设置的端口来替换
-HTTP_PORT=__BK_CI_BKREPOSERVICE_API_PORT__
+HTTP_PORT=__BK_REPO_BKREPOSERVICE_PORT__
 
 # 详细的日志console.log开关，放开注释即可打开
 NOHUPLOG=/dev/null

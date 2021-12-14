@@ -65,7 +65,7 @@ swagger:
 
 logging:
   config: classpath:logback-config.xml
-  path-common: __CPACK_LOGS_DIR__
+  path-common: __BK_REPO_LOGS_DIR__
 
 storage:
   type: filesystem

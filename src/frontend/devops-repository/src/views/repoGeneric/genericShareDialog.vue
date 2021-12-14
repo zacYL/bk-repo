@@ -9,9 +9,7 @@
             <bk-form class="flex-1" form-type="vertical">
                 <bk-form-item label="共享链接地址">
                     <bk-input :value="shareUrl" readonly></bk-input>
-                </bk-form-item>
-                <bk-form-item>
-                    <bk-button theme="primary" @click="copyShareUrl(shareUrl)">复制链接</bk-button>
+                    <bk-button class="mt5" theme="primary" @click="copyShareUrl(shareUrl)">复制链接</bk-button>
                 </bk-form-item>
             </bk-form>
             <div class="ml20 flex-column">
@@ -48,7 +46,8 @@
             </bk-form-item>
         </bk-form>
         <div slot="footer">
-            <bk-button theme="default" :loading="sending" @click="shareUrl ? sendEmailHandler() : cancel()">{{ shareUrl ? '发送邮件' : $t('cancel') }}</bk-button>
+            <bk-button v-if="!shareUrl" theme="default" @click="cancel">{{ $t('cancel') }}</bk-button>
+            <bk-button v-else-if="genericShare.user.length" theme="default" :loading="sending" @click="sendEmailHandler">发送邮件</bk-button>
             <bk-button class="ml10" :loading="genericShare.loading" theme="primary" @click="shareUrl ? cancel() : submit()">{{$t('confirm')}}</bk-button>
         </div>
     </canway-dialog>

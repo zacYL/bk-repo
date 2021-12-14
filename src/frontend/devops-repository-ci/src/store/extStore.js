@@ -12,18 +12,6 @@ export default {
                 { params: { repoName } }
             )
         },
-        // 查询所有角色
-        getRepoRoleList (_, { projectId, repoName }) {
-            return Vue.prototype.$ajax.get(
-                'auth/api/role/list',
-                {
-                    params: {
-                        projectId,
-                        repoName
-                    }
-                }
-            )
-        },
         // 请求文件夹下的子文件夹
         // override
         getFolderList ({ commit }, { projectId, repoName, roadMap, fullPath = '', isPipeline = false }) {

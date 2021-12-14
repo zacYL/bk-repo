@@ -165,7 +165,7 @@
                         deleteList: []
                     }
                 },
-                // userList: {},
+                userList: {},
                 roleList: {},
                 flatDepartment: {},
                 departmentTree: [],
@@ -177,7 +177,7 @@
             }
         },
         computed: {
-            ...mapState(['userList', 'userInfo']),
+            ...mapState(['userInfo']),
             projectId () {
                 return this.$route.params.projectId
             },
@@ -206,12 +206,22 @@
             }
         },
         created () {
-            this.getRepoRoleList({
-                projectId: this.projectId,
-                repoName: this.repoName
+            this.getProjectRoleList({
+                projectId: this.projectId
             }).then(res => {
                 this.roleList = res.reduce((target, item) => {
                     target[item.id] = item
+                    return target
+                }, {})
+            })
+            this.getProjectUserList({
+                projectId: this.projectId
+            }).then(res => {
+                this.userList = res.reduce((target, item) => {
+                    target[item.userId] = {
+                        id: item.userId,
+                        name: item.name
+                    }
                     return target
                 }, {})
             })
@@ -227,7 +237,8 @@
         methods: {
             ...mapActions([
                 'getPermissionDetail',
-                'getRepoRoleList',
+                'getProjectUserList',
+                'getProjectRoleList',
                 'setUserPermission',
                 'setRolePermission',
                 'setActionPermission',

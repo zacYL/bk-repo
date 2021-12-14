@@ -63,7 +63,7 @@
     </div>
 </template>
 <script>
-    import proxyConfig from './proxyConfig'
+    import proxyConfig from '@repository/views/repoConfig/proxyConfig'
     import permissionConfig from './permissionConfig'
     import { mapActions } from 'vuex'
     export default {

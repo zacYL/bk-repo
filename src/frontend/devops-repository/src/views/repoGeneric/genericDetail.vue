@@ -81,6 +81,8 @@
                 detailSlider: {
                     show: false,
                     loading: false,
+                    projectId: '',
+                    repoName: '',
                     folder: false,
                     path: '',
                     data: {}
@@ -111,12 +113,6 @@
         },
         computed: {
             ...mapState(['userList']),
-            projectId () {
-                return this.$route.params.projectId
-            },
-            repoName () {
-                return this.$route.query.repoName
-            },
             detailInfoMap () {
                 return [
                     { name: 'fullPath', label: this.$t('path') },
@@ -141,8 +137,8 @@
             getDetail () {
                 this.detailSlider.loading = true
                 this.getNodeDetail({
-                    projectId: this.projectId,
-                    repoName: this.repoName,
+                    projectId: this.detailSlider.projectId,
+                    repoName: this.detailSlider.repoName,
                     fullPath: this.detailSlider.path
                 }).then(data => {
                     this.detailSlider.data = {
@@ -174,8 +170,8 @@
                 await this.$refs.metadatForm.validate()
                 this.metadata.loading = true
                 this.addMetadata({
-                    projectId: this.projectId,
-                    repoName: this.repoName,
+                    projectId: this.detailSlider.projectId,
+                    repoName: this.detailSlider.repoName,
                     fullPath: this.detailSlider.data.fullPath,
                     body: {
                         metadata: {
@@ -195,8 +191,8 @@
             },
             deleteMetadataHandler (row) {
                 this.deleteMetadata({
-                    projectId: this.projectId,
-                    repoName: this.repoName,
+                    projectId: this.detailSlider.projectId,
+                    repoName: this.detailSlider.repoName,
                     fullPath: this.detailSlider.data.fullPath,
                     body: {
                         keyList: [row[0]]

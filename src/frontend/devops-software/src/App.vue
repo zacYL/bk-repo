@@ -8,7 +8,7 @@
 </template>
 
 <script>
-    import Header from '@repository/components/Header'
+    import Header from '@/components/Header'
     import Login from '@repository/components/Login'
     import { mapActions } from 'vuex'
     import cookies from 'js-cookie'

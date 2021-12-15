@@ -11,32 +11,16 @@
                 </svg>
                 <header class="ml10 bkrepo-title">{{ title }}</header>
             </router-link>
-            <a class="ml20 link" target="_self" href="/software/repoList">
+            <a class="ml20 link" target="_self" href="/ui">
                 <i class="devops-icon icon-sort"></i>
-                <span class="ml5">软件源</span>
+                <span class="ml5">制品管理</span>
             </a>
-            <bk-select
-                class="ml20 bkre-project-select"
-                :value="projectId"
-                searchable
-                :clearable="false"
-                placeholder="请选择项目"
-                @change="changeProject"
-                size="small"
-                :enable-virtual-scroll="projectList && projectList.length > 3000"
-                :list="projectList">
-                <bk-option v-for="option in projectList"
-                    :key="option.id"
-                    :id="option.id"
-                    :name="option.name">
-                </bk-option>
-            </bk-select>
         </div>
         <User />
     </div>
 </template>
 <script>
-    import User from '../User'
+    import User from '@repository/components/User'
     import { mapState, mapActions } from 'vuex'
     export default {
         name: 'bkrepoHeader',
@@ -74,12 +58,6 @@
     justify-content: space-between;
     background-color:  var(--fontPrimaryColor);
     color: white;
-    .bkre-project-select {
-        width: 300px;
-        color: white;
-        border-color: #FFFFFF33;
-        background-color: #FFFFFF1A;
-    }
     .bkrepo-logo {
         color: white;
     }

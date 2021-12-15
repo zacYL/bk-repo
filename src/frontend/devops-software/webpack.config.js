@@ -15,7 +15,7 @@ module.exports = (env, argv) => {
         },
         publicPath: '/software/',
         dist: '/software',
-        port: 8086
+        port: 8085
     })
     config.plugins.pop()
     config.plugins = [

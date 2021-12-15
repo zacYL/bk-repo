@@ -15,7 +15,7 @@
             </div>
             <div v-if="pagination.count" class="mt20 flex-between-center">
                 <div class="result-count flex-align-center">
-                    <span v-if="isSearching">搜索到到相关结果</span>
+                    <span v-if="isSearching">搜索到相关结果</span>
                     <span v-else>全部制品共</span>
                     <span>{{ pagination.count }}个</span>
                 </div>
@@ -72,14 +72,14 @@
                 }">
             </empty-data>
         </main>
-        <generic-detail :detail-slider="detailSlider" @refresh="showDetail"></generic-detail>
+        <generic-detail ref="genericDetail"></generic-detail>
     </div>
 </template>
 <script>
     import packageCard from '@repository/components/PackageCard'
     import InfiniteScroll from '@repository/components/InfiniteScroll'
     import genericDetail from '@repository/views/repoGeneric/genericDetail'
-    import typeSelect from './typeSelect'
+    import typeSelect from '@repository/views/repoSearch/typeSelect'
     import { mapState, mapActions } from 'vuex'
     import { convertFileSize, formatDate } from '@repository/utils'
     export default {
@@ -97,6 +97,7 @@
                 isLoading: false,
                 property: this.$route.query.property || 'lastModifiedDate',
                 direction: this.$route.query.direction || 'ASC',
+                projectId: this.$route.query.projectId || '',
                 packageName: this.$route.query.packageName || '',
                 repoType: this.$route.query.repoType || 'generic',
                 repoList: [{ repoName: '', total: 0 }],
@@ -106,21 +107,11 @@
                     limit: 20,
                     count: 0
                 },
-                resultList: [],
-                // 查看详情
-                detailSlider: {
-                    show: false,
-                    loading: false,
-                    folder: false,
-                    data: {}
-                }
+                resultList: []
             }
         },
         computed: {
             ...mapState(['userList']),
-            projectId () {
-                return this.$route.params.projectId
-            },
             isSearching () {
                 const { packageName, repoType, repoName } = this.$route.query
                 return Boolean(packageName || repoType || repoName)
@@ -131,12 +122,12 @@
         },
         methods: {
             formatDate,
-            ...mapActions(['searchPackageList', 'searchRepoList', 'getNodeDetail']),
+            ...mapActions(['searchPackageList', 'searchRepoList']),
             searchRepoHandler () {
                 this.searchRepoList({
                     projectId: this.projectId,
                     repoType: this.repoType,
-                    packageName: this.packageName || ''
+                    packageName: this.packageName
                 }).then(list => {
                     this.repoList = list
                 })
@@ -168,7 +159,7 @@
                 this.$router.push({
                     name: 'commonPackage',
                     params: {
-                        projectId: this.projectId,
+                        projectId: pkg.projectId,
                         repoType: pkg.type.toLowerCase()
                     },
                     query: {
@@ -213,28 +204,14 @@
                 this.handlerPaginationChange()
             },
             showDetail (pkg) {
-                this.detailSlider = {
+                this.$refs.genericDetail.setData({
                     show: true,
-                    loading: true,
-                    folder: false,
-                    data: {}
-                }
-                this.getNodeDetail({
-                    projectId: this.projectId,
+                    loading: false,
+                    projectId: pkg.projectId,
                     repoName: pkg.repoName,
-                    fullPath: pkg.fullPath
-                }).then(data => {
-                    this.detailSlider.data = {
-                        ...data,
-                        name: data.name || pkg.repoName,
-                        size: convertFileSize(data.size),
-                        createdBy: this.userList[data.createdBy] ? this.userList[data.createdBy].name : data.createdBy,
-                        createdDate: formatDate(data.createdDate),
-                        lastModifiedBy: this.userList[data.lastModifiedBy] ? this.userList[data.lastModifiedBy].name : data.lastModifiedBy,
-                        lastModifiedDate: formatDate(data.lastModifiedDate)
-                    }
-                }).finally(() => {
-                    this.detailSlider.loading = false
+                    folder: pkg.folder,
+                    path: pkg.fullPath,
+                    data: {}
                 })
             }
         }

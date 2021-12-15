@@ -1,20 +1,6 @@
 <template>
     <div class="repo-list-container" v-bkloading="{ isLoading }">
         <div class="ml20 mr20 mt10 flex-align-center">
-            <bk-select
-                v-model="query.projectId"
-                class="w250"
-                searchable
-                placeholder="请选择项目"
-                @change="handlerPaginationChange()"
-                :enable-virtual-scroll="projectList && projectList.length > 3000"
-                :list="projectList">
-                <bk-option v-for="option in projectList"
-                    :key="option.id"
-                    :id="option.id"
-                    :name="option.name">
-                </bk-option>
-            </bk-select>
             <bk-input
                 v-model.trim="query.name"
                 class="w250"
@@ -36,6 +22,20 @@
                     </div>
                 </bk-option>
             </bk-select>
+            <bk-select
+                v-model="query.projectId"
+                class="ml10 w250"
+                searchable
+                placeholder="请选择项目"
+                @change="handlerPaginationChange()"
+                :enable-virtual-scroll="projectList && projectList.length > 3000"
+                :list="projectList">
+                <bk-option v-for="option in projectList"
+                    :key="option.id"
+                    :id="option.id"
+                    :name="option.name">
+                </bk-option>
+            </bk-select>
         </div>
         <bk-table
             class="mt10"
@@ -48,23 +48,27 @@
             <template #empty>
                 <empty-data :is-loading="isLoading" :search="Boolean(query.name || query.type)"></empty-data>
             </template>
+            <bk-table-column label="所属项目" width="200">
+                <template #default="{ row }">
+                    {{ (projectList.find(p => p.id === row.projectId) || {}).name || '--' }}
+                </template>
+            </bk-table-column>
             <bk-table-column :label="$t('repoName')">
                 <template #default="{ row }">
                     <div class="flex-align-center" :title="replaceRepoName(row.name)">
                         <Icon size="20" :name="row.repoType" />
-                        <span class="ml10 text-overflow hover-btn" style="max-width:250px">{{replaceRepoName(row.name)}}</span>
-                        <Icon v-if="MODE_CONFIG === 'ci' && (row.name === 'custom' || row.name === 'pipeline')"
-                            class="ml10" style="color:#1F6ED4"
-                            size="24" name="repo-tag-system" />
+                        <span class="ml10 text-overflow hover-btn" style="max-width:400px">{{replaceRepoName(row.name)}}</span>
+                        <bk-tag v-if="row.public"
+                            class="ml10" type="filled" style="background-color: var(--warningColor);">公开</bk-tag>
                     </div>
                 </template>
             </bk-table-column>
-            <bk-table-column :label="$t('createdDate')">
+            <bk-table-column :label="$t('createdDate')" width="250">
                 <template #default="{ row }">
                     {{ formatDate(row.createdDate) }}
                 </template>
             </bk-table-column>
-            <bk-table-column :label="$t('createdBy')">
+            <bk-table-column :label="$t('createdBy')" width="200">
                 <template #default="{ row }">
                     {{ userList[row.createdBy] ? userList[row.createdBy].name : row.createdBy }}
                 </template>
@@ -110,7 +114,7 @@
             }
         },
         computed: {
-            ...mapState(['userList'])
+            ...mapState(['projectList', 'userList'])
         },
         created () {
             this.handlerPaginationChange()
@@ -122,7 +126,6 @@
             ]),
             getListData () {
                 this.isLoading = true
-                // TODO
                 this.getRepoList({
                     ...this.pagination,
                     ...this.query

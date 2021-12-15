@@ -26,11 +26,14 @@ const repoGeneric = () => import(/* webpackChunkName: "repoGeneric" */'@reposito
 const commonPackageList = () => import(/* webpackChunkName: "repoCommon" */'@repository/views/repoCommon/commonPackageList')
 const commonPackageDetail = () => import(/* webpackChunkName: "repoCommon" */'@repository/views/repoCommon/commonPackageDetail')
 
-const repoSearch = () => import(/* webpackChunkName: "repoSearch" */'@repository/views/repoSearch')
+const repoSearch = () => import(/* webpackChunkName: "repoSearch" */'@/views/repoSearch')
+
+const userCenter = () => import(/* webpackChunkName: "userCenter" */'@repository/views/userCenter')
+const repoToken = () => import(/* webpackChunkName: "repoToken" */'@repository/views/repoToken')
 
 const routes = [
     {
-        path: '/ui',
+        path: '/software',
         component: repoHome,
         redirect: { name: 'repoList' },
         children: [
@@ -85,6 +88,26 @@ const routes = [
                         { name: 'repoList', label: '仓库列表' },
                         { name: 'commonList', label: '{repoName}', template: '依赖仓库' },
                         { name: 'commonPackage', label: '{package}', template: '制品详情' }
+                    ]
+                }
+            },
+            {
+                path: 'repoToken',
+                name: 'repoToken',
+                component: repoToken,
+                meta: {
+                    breadcrumb: [
+                        { name: 'repoToken', label: '访问令牌' }
+                    ]
+                }
+            },
+            {
+                path: 'userCenter',
+                name: 'userCenter',
+                component: userCenter,
+                meta: {
+                    breadcrumb: [
+                        { name: 'userCenter', label: '个人中心' }
                     ]
                 }
             }

@@ -442,6 +442,8 @@
                 this.$refs.genericDetail.setData({
                     show: true,
                     loading: false,
+                    projectId: this.projectId,
+                    repoName: this.repoName,
                     folder: this.selectedRow.folder,
                     path: this.selectedRow.fullPath,
                     data: {}

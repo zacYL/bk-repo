@@ -12,7 +12,7 @@ export default {
     },
     watch: {
         '$route.fullPath' (val) { // 同步地址到蓝鲸Devops
-            this.$syncUrl && this.$syncUrl(val.replace(/^\/ui\//, '/'))
+            this.$syncUrl && this.$syncUrl(val.replace(/^\/[a-zA-Z0-9]+\//, '/'))
         }
     },
     created () {
@@ -50,7 +50,7 @@ export default {
             script.src = src
             document.getElementsByTagName('head')[0].appendChild(script)
             script.onload = () => {
-                this.$syncUrl(this.$route.fullPath.replace(/^\/ui\//, '/'))
+                this.$syncUrl(this.$route.fullPath.replace(/^\/[a-zA-Z0-9]+\//, '/'))
                 window.globalVue.$on('change::$currentProjectId', data => { // 蓝鲸Devops选择项目时切换
                     localStorage.setItem('projectId', data.currentProjectId)
                     if (this.projectId !== data.currentProjectId) {

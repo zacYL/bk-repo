@@ -9,7 +9,7 @@
                 >
                     <use xlink:href="#repository" />
                 </svg>
-                <header class="ml10 bkrepo-title">{{ $t('bkrepo') }}</header>
+                <header class="ml10 bkrepo-title">{{ title }}</header>
             </router-link>
             <bk-select
                 class="bkre-project-select"
@@ -41,6 +41,9 @@
             ...mapState(['projectList']),
             projectId () {
                 return this.$route.params.projectId
+            },
+            title () {
+                return document.title
             }
         },
         methods: {

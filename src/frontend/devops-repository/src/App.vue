@@ -25,7 +25,7 @@
             const username = cookies.get('bk_uid')
             username && this.SET_USER_INFO({ username })
 
-            const urlProjectId = (location.pathname.match(/\/ui\/([^/]+)/) || [])[1]
+            const urlProjectId = (location.pathname.match(/^\/[a-zA-Z0-9]+\/([^/]+)/) || [])[1]
             const localProjectId = localStorage.getItem('projectId')
             if (this.iframeMode) {
                 this.loadDevopsUtils('/ui/devops-utils.js')

@@ -147,17 +147,16 @@ label {
         background-color: var(--borderWeightColor);
     }
 }
-::-webkit-scrollbar-track {
-
-}
 
 .repo-tag {
     display: inline-block;
     padding: 0 10px;
+    font-size: 12px;
     line-height: 22px;
     border-radius: 10px;
     white-space: nowrap;
     background-color: var(--bgHoverColor);
+    transform: scale(1);
 }
 
 .break-all {

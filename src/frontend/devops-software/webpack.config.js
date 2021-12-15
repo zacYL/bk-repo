@@ -6,25 +6,25 @@ const webpackBaseConfig = require('../webpack.base')
 module.exports = (env, argv) => {
     const isProd = argv.mode === 'production'
     const envDist = env && env.dist ? env.dist : 'frontend'
-    const dist = path.join(__dirname, `../${envDist}/ui`)
+    const dist = path.join(__dirname, `../${envDist}/software`)
     const config = webpackBaseConfig({
         env,
         argv,
         entry: {
             repository: './src/main.js'
         },
-        publicPath: '/ui/',
-        dist: '/ui',
+        publicPath: '/software/',
+        dist: '/software',
         port: 8086
     })
     config.plugins.pop()
     config.plugins = [
         ...config.plugins,
         new HtmlWebpackPlugin({
-            filename: isProd ? `${dist}/frontend#ui#index.html` : `${dist}/index.html`,
+            filename: isProd ? `${dist}/frontend#software#index.html` : `${dist}/index.html`,
             template: path.resolve('../devops-repository/index.html'),
             inject: true,
-            title: '制品管理CPack'
+            title: '软件源CPack'
         }),
         new CopyWebpackPlugin({
             patterns: [{ from: path.resolve('../devops-repository/static'), to: dist }]
@@ -33,7 +33,7 @@ module.exports = (env, argv) => {
 
     config.devServer.historyApiFallback = {
         rewrites: [
-            { from: /^\/ui/, to: '/ui/index.html' }
+            { from: /^\/software/, to: '/software/index.html' }
         ]
     }
     return config

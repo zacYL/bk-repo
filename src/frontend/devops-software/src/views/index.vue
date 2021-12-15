@@ -12,20 +12,6 @@
                 </bk-popover>
                 <span v-if="!hiddenMenu" class="menu-name text-overflow">{{ $t(name) }}</span>
             </router-link>
-            <div class="split-line"></div>
-            <template v-if="userInfo.admin">
-                <router-link
-                    class="nav-submain-item flex-align-center"
-                    :class="{ 'active-link': $route.meta.breadcrumb.find(route => route.name === name) }"
-                    v-for="name in menuList.global"
-                    :key="name"
-                    :to="{ name }">
-                    <bk-popover class="menu-icon" :content="$t(name)" placement="right" :disabled="!hiddenMenu">
-                        <Icon :name="name" size="14" />
-                    </bk-popover>
-                    <span v-if="!hiddenMenu" class="menu-name text-overflow">{{ $t(name) }}</span>
-                </router-link>
-            </template>
             <Icon class="hidden-menu-btn"
                 @click.native="hiddenMenu = !hiddenMenu"
                 :size="14" :name="hiddenMenu ? 'dedent' : 'indent'" />
@@ -44,7 +30,6 @@
 </template>
 <script>
     import Breadcrumb from '@repository/components/Breadcrumb/topBreadcrumb'
-    import { mapState, mapGetters, mapActions } from 'vuex'
     export default {
         components: { Breadcrumb },
         data () {
@@ -53,34 +38,14 @@
             }
         },
         computed: {
-            ...mapState(['userInfo']),
-            ...mapGetters(['masterNode']),
             menuList () {
                 return {
                     project: [
                         'repoList',
-                        'repoSearch',
-                        MODE_CONFIG === 'ci' && 'repoToken',
-                        this.userInfo.admin && this.isMasterNode && 'planManage',
-                        this.userInfo.manage && 'projectConfig'
-                    ].filter(Boolean),
-                    global: [
-                        'projectManage',
-                        'userManage',
-                        this.isMasterNode && 'nodeManage',
-                        'repoAudit'
-                    ].filter(Boolean)
+                        'repoSearch'
+                    ]
                 }
-            },
-            isMasterNode () {
-                return this.masterNode.url && this.masterNode.url.indexOf(location.origin) !== -1
             }
-        },
-        created () {
-            this.getClusterList()
-        },
-        methods: {
-            ...mapActions(['getClusterList'])
         }
     }
 </script>
@@ -99,12 +64,6 @@
         transition: width .3s;
         &.hidden-menu {
            width: 46px;
-        }
-        .split-line {
-            height: 1px;
-            margin: 6px 16px;
-            background-color: white;
-            opacity: 0.2;
         }
         .nav-submain-item {
             height: 44px;

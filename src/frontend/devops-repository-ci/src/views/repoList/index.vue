@@ -163,12 +163,12 @@
             createRepo () {
                 this.$refs.createRepo.showDialogHandler()
             },
-            toPackageList ({ hasPermission, repoType, name }) {
+            toPackageList ({ hasPermission, projectId, repoType, name }) {
                 if (!hasPermission) return
                 this.$router.push({
                     name: repoType === 'generic' ? 'repoGeneric' : 'commonList',
                     params: {
-                        projectId: this.projectId,
+                        projectId,
                         repoType
                     },
                     query: {

@@ -115,14 +115,23 @@ cluster:
     username: __CPACK_CLUSTER_CENTER_USERNAME__
     password: __CPACK_CLUSTER_CENTER_PASSWORD__
 
-bk:
-  paas:
-    host: __BK_PAAS_PUBLIC_URL__
-    version: "__BK_PAAS_VERSION__"
+# 邮箱配置
+mail:
+  share: true
+  host: smtp.exmail.qq.com
+  port: 465
+  username: test@canway.net
+  password: password
+  protocol: smtps
+  smtp:
+    auth: true
+    starttls:
+      enable: true
+      required: true
 
-esb:
-  code: __BK_CI_APP_CODE__
-  secret: __BK_CI_APP_TOKEN__
+# 屏蔽 CI license , 禁止在客户环境配置
+ci:
+  license: false
 
 # 需要限制许可人数的时候
 devopsGateway:
@@ -132,9 +141,7 @@ devopsGateway:
 license:
   auth:
     host: __BK_HTTP_SCHEMA__://__CW_LICENSE_HOST__:__CW_LICENSE_PORT__
-devops:
-  bkHost: __BK_HTTP_SCHEMA__://__BK_PAAS_FQDN__
-  appCode: __APP_CODE__
-  appSecret: __APP_TOKEN__
-  devopsHost: __BK_HTTP_SCHEMA__://__BK_CI_FQDN__
-  bkrepoHost: __BK_HTTP_SCHEMA__://__BK_REPO_FQDN__
+
+# 独立部署模式固定该配置
+auth:
+  realm: cpack

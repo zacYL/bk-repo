@@ -5,7 +5,7 @@
 #-------------------------------------------------------------------------------------------------------------
 
 # 公共参数，不要修改
-PROJECT_NAME=cpack
+PROJECT_NAME=repo
 
 # 服务相关修改
 SERVICE_NAME=bkreposervice
@@ -184,7 +184,7 @@ function shutdown(){
     else
         echo "${PROJECT_NAME}-${SERVICE_NAME}: $($EXIT)"
     fi
-	. $CTRL_DIR/utils.fc
+	#. $CTRL_DIR/utils.fc
     ssh -o StrictHostKeyChecking=no $REDIS_IP redis-cli -h $REDIS_IP -p $REDIS_PORT -a "$REDIS_PASS" set ${SERVICE_NAME}Status 0 &> /dev/null
 }
 

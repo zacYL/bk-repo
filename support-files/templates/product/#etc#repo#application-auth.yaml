@@ -6,10 +6,5 @@ server:
   port: __BK_REPO_AUTH_PORT__
 logging:
   path: ${logging.path-common}/${service.name}
-# auth设置当前realm
-auth:
-  realm: canway
-  iam:
-    callbackUser: bk_iam
 service:
   name: auth

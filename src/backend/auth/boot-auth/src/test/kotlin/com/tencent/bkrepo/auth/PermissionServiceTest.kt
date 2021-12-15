@@ -159,8 +159,8 @@ class PermissionServiceTest {
         // check permission when user is admin
         val checkPermissionRequest = CheckPermissionRequest(
             uid = userId,
-            resourceType = ResourceType.PROJECT.toString(),
-            action = PermissionAction.READ.toString(),
+            resourceType = ResourceType.PROJECT,
+            action = PermissionAction.READ,
             projectId = "text",
             repoName = "test-local"
         )
@@ -185,8 +185,8 @@ class PermissionServiceTest {
         // check permission when user role is empty
         val checkRequest = CheckPermissionRequest(
             uid = userId,
-            resourceType = ResourceType.REPO.toString(),
-            action = PermissionAction.READ.toString(),
+            resourceType = ResourceType.REPO,
+            action = PermissionAction.READ,
             projectId = "test",
             repoName = "test-local"
         )
@@ -215,8 +215,8 @@ class PermissionServiceTest {
         // check permission when user role is empty
         val checkRequest = CheckPermissionRequest(
             uid = userId,
-            resourceType = ResourceType.PROJECT.toString(),
-            action = PermissionAction.READ.toString(),
+            resourceType = ResourceType.PROJECT,
+            action = PermissionAction.READ,
             projectId = "test",
             repoName = "test-local"
         )
@@ -246,8 +246,8 @@ class PermissionServiceTest {
         // check permission when user role is empty
         val checkRequest = CheckPermissionRequest(
             uid = userId,
-            resourceType = ResourceType.REPO.toString(),
-            action = PermissionAction.READ.toString(),
+            resourceType = ResourceType.REPO,
+            action = PermissionAction.READ,
             projectId = "test",
             repoName = "test-local"
         )

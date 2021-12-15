@@ -118,27 +118,5 @@ devopsGateway:
 license:
   auth:
     host: http://__CW_LICENSE_HOST__:__CW_LICENSE_PORT__
-
-# 邮箱配置
-mail:
-  share: true
-  host: smtp.exmail.qq.com
-  port: 465
-  username: test@canway.net
-  password: password
-  protocol: smtps
-  smtp:
-    auth: true
-    starttls:
-      enable: true
-      required: true
-
-# 屏蔽 CI license , 禁止在客户环境配置
-ci:
-  license: false
-
-# 独立固定该配置
-auth:
-  realm: cpack
   
   

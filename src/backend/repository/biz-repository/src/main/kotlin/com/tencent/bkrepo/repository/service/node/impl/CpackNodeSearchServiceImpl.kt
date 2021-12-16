@@ -32,25 +32,20 @@
 package com.tencent.bkrepo.repository.service.node.impl
 
 import com.tencent.bkrepo.common.api.pojo.Page
+import com.tencent.bkrepo.common.artifact.constant.PUBLIC_PROXY_PROJECT
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.query.enums.OperationType
-import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.query.model.Rule
-import com.tencent.bkrepo.common.query.model.Sort
-import com.tencent.bkrepo.common.query.util.MongoEscapeUtils
-import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.dao.NodeDao
 import com.tencent.bkrepo.repository.model.TNode
-import com.tencent.bkrepo.repository.pojo.metric.CountResult
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
+import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
 import com.tencent.bkrepo.repository.pojo.software.NodeOverviewResponse
+import com.tencent.bkrepo.repository.search.cpack.node.CpackNodeQueryInterpreter
 import com.tencent.bkrepo.repository.search.node.NodeQueryContext
-import com.tencent.bkrepo.repository.search.node.NodeQueryInterpreter
-import com.tencent.bkrepo.repository.service.node.NodeSearchService
-import com.tencent.bkrepo.repository.service.repo.RepositoryService
-import org.springframework.data.mongodb.core.aggregation.Aggregation
-import org.springframework.data.mongodb.core.query.Criteria
+import com.tencent.bkrepo.repository.service.node.CpackNodeSearchService
+import com.tencent.bkrepo.repository.service.repo.CpackRepositoryService
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
@@ -62,81 +57,68 @@ import java.util.*
  */
 @Suppress("UNCHECKED_CAST")
 @Service
-class NodeSearchServiceImpl(
+class CpackNodeSearchServiceImpl(
     private val nodeDao: NodeDao,
-    private val nodeQueryInterpreter: NodeQueryInterpreter,
-    private val repositoryClient: RepositoryClient,
-    private val repositoryService: RepositoryService
-) : NodeSearchService {
+    private val cpackNodeQueryInterpreter: CpackNodeQueryInterpreter,
+    private val cpackRepositoryService: CpackRepositoryService
+) : CpackNodeSearchService {
 
     override fun search(queryModel: QueryModel): Page<Map<String, Any?>> {
-        val context = nodeQueryInterpreter.interpret(queryModel) as NodeQueryContext
+        val rules = (queryModel.rule as Rule.NestedRule).rules
+        var repoName: String? = null
+        var projectId: String? = null
+        var repoType: RepositoryType? = null
+        val otherField = mutableListOf<Rule>()
+        for (rule in rules) {
+            val queryRule = rule as Rule.QueryRule
+            if (queryRule.field == "repoName") {
+                repoName = queryRule.value as String
+                continue
+            }
+            if (queryRule.field == "projectId") {
+                projectId = queryRule.value as String
+                continue
+            }
+            if (queryRule.field == "repoType") {
+                repoType = RepositoryType.valueOf(queryRule.value as String)
+                continue
+            }
+            otherField.add(rule)
+        }
+        if (projectId == null) {
+            val projectsRule = mutableListOf<Rule>()
+            val allSoftRepo = cpackRepositoryService.listRepo(type = repoType, includeGeneric = false)
+            val projectMap = transRepoTree(allSoftRepo)
+            projectMap.map { project ->
+                val projectRule = Rule.QueryRule(field = "projectId", value = project.key)
+                val reposRule = Rule.QueryRule(field = "repoName", value = project.value, operation = OperationType.IN)
+                val targetRule = otherField.apply {
+                    this.add(projectRule)
+                    this.add(reposRule)
+                }
+                val rule = Rule.NestedRule(
+                    targetRule, Rule.NestedRule.RelationType.AND
+                )
+                projectsRule.add(rule)
+            }
+            rules.apply {
+                this.clear()
+                this.addAll(projectsRule)
+            }
+
+        }
+        if (projectId != null && repoName == null) {
+            val genericRepos =
+                cpackRepositoryService.listRepo(projectId, type = repoType, includeGeneric = false).map { it.name }
+            rules.add(Rule.QueryRule(field = "repoName", value = genericRepos, operation = OperationType.IN))
+        }
+        queryModel.rule = Rule.NestedRule(rules, Rule.NestedRule.RelationType.OR)
+        val context = cpackNodeQueryInterpreter.interpret(queryModel) as NodeQueryContext
         return doQuery(context)
     }
 
     override fun nodeOverview(projectId: String, name: String): NodeOverviewResponse {
-        val genericRepos = repositoryService.allRepos(projectId, null, RepositoryType.GENERIC).map { it?.name }
-        val criteria = Criteria.where(TNode::repoName.name).`in`(genericRepos)
-        criteria.and(TNode::projectId.name).`is`(projectId)
-            .and(TNode::deleted.name).`is`(null)
-            .and(TNode::folder.name).`is`(false)
-
-        val escapedValue = MongoEscapeUtils.escapeRegexExceptWildcard(name)
-        val regexPattern = escapedValue.replace("*", ".*")
-        criteria.and(TNode::name.name).regex("^$regexPattern$", "i")
-        val aggregation = Aggregation.newAggregation(
-            TNode::class.java,
-            Aggregation.match(criteria),
-            Aggregation.group("\$repoName").count().`as`("count")
-        )
-        val result = nodeDao.aggregate(aggregation, CountResult::class.java).mappedResults
-        var sum = 0L
-        val list = mutableListOf<NodeOverviewResponse.RepoNodeOverview>()
-        result.map {
-            list.add(
-                NodeOverviewResponse.RepoNodeOverview(
-                    repoName = it.id!!,
-                    nodes = it.count
-                )
-            )
-            sum += it.count
-        }
-        list.sortByDescending { it.nodes }
-        return NodeOverviewResponse(list = list, sum = sum)
-    }
-
-    override fun nodeGlobalSearch(projectId: String, name: String): Page<Map<String, Any?>> {
-        // 获取项目下所有二进制仓库
-        val repos =
-            repositoryClient.allRepos(projectId = projectId, repoType = RepositoryType.GENERIC).data?.map { it?.name }
-        if(repos.isNullOrEmpty()) return Page(1, 20, 0, listOf())
-        val projectRule = Rule.QueryRule(field = "projectId", value = projectId, operation = OperationType.EQ)
-        val repoRule = Rule.QueryRule(field = "repoName", value = repos, operation = OperationType.IN)
-        val fileRule = Rule.QueryRule(field = "folder", value = false, operation = OperationType.EQ)
-        val nameRule = Rule.QueryRule(
-            field = "name",
-            value = "*$name*",
-            operation = OperationType.MATCH_I
-        )
-        val rule =
-            Rule.NestedRule(mutableListOf(projectRule, repoRule, nameRule, fileRule), Rule.NestedRule.RelationType.AND)
-        val queryModel = QueryModel(
-            page = PageLimit(),
-            sort = Sort(listOf("lastModifiedDate"), Sort.Direction.DESC),
-            select = mutableListOf(
-                "projectId",
-                "repoName",
-                "fullPath",
-                "createdBy",
-                "createdDate",
-                "lastModifiedBy",
-                "lastModifiedDate",
-                "fullPath",
-                "name"
-            ),
-            rule = rule
-        )
-        return search(queryModel)
+        TODO()
     }
 
     private fun doQuery(context: NodeQueryContext): Page<Map<String, Any?>> {
@@ -160,6 +142,18 @@ class NodeSearchServiceImpl(
         val pageNumber = if (query.limit == 0) 0 else (query.skip / query.limit).toInt()
 
         return Page(pageNumber + 1, query.limit, totalRecords, nodeList)
+    }
+
+    private fun transRepoTree(repos: List<RepositoryInfo>): Map<String, List<String>> {
+        val projectMap = mutableMapOf<String, MutableList<String>>()
+        repos.filter { it.projectId != PUBLIC_PROXY_PROJECT }.map {
+            if (projectMap.containsKey(it.projectId)) {
+                projectMap[it.projectId]?.add(it.name)
+            } else {
+                projectMap[it.projectId] = mutableListOf(it.name)
+            }
+        }
+        return projectMap
     }
 
     companion object {

@@ -38,11 +38,11 @@ import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
-import com.tencent.bkrepo.repository.pojo.bksoftware.PackageOverviewResponse
 import com.tencent.bkrepo.repository.pojo.packages.PackageListOption
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.VersionListOption
+import com.tencent.bkrepo.repository.pojo.software.PackageOverviewResponse
 import com.tencent.bkrepo.repository.service.packages.PackageService
 import com.tencent.bkrepo.repository.service.packages.PackageStatisticsService
 import io.swagger.annotations.ApiOperation
@@ -150,7 +150,7 @@ class UserPackageController(
     @GetMapping("/package/search/overview")
     fun packageOverview(
         @RequestParam repoType: String,
-        @RequestParam projectId: String?,
+        @RequestParam projectId: String,
         @RequestParam packageName: String?
     ): Response<PackageOverviewResponse> {
         return ResponseBuilder.success(packageStatisticsService.packageOverview(repoType, projectId, packageName))

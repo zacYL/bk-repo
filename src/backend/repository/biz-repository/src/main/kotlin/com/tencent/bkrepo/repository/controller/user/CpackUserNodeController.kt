@@ -1,7 +1,7 @@
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
- * Copyright (C) 2020 THL A29 Limited, a Tencent company.  All rights reserved.
+ * Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
  *
  * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
  *
@@ -29,22 +29,42 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.repository.service.node
+package com.tencent.bkrepo.repository.controller.user
 
 import com.tencent.bkrepo.common.api.pojo.Page
+import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.query.model.QueryModel
+import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.repository.pojo.software.NodeOverviewResponse
+import com.tencent.bkrepo.repository.service.node.CpackNodeSearchService
+import io.swagger.annotations.Api
+import io.swagger.annotations.ApiOperation
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RestController
 
-/**
- * 节点自定义查询服务接口
- */
-interface NodeSearchService {
-    /**
-     * 根据[queryModel]查询节点
-     */
-    fun search(queryModel: QueryModel): Page<Map<String, Any?>>
+@Api("节点用户接口")
+@RestController
+@RequestMapping("/api/node/software")
+class CpackUserNodeController(
+    private val cpackNodeSearchService: CpackNodeSearchService
+) {
 
-    fun nodeGlobalSearch(projectId: String, name: String): Page<Map<String, Any?>>
+    @ApiOperation("自定义查询节点")
+    @PostMapping("/node/search")
+    fun search(@RequestBody queryModel: QueryModel): Response<Page<Map<String, Any?>>> {
+        return ResponseBuilder.success(cpackNodeSearchService.search(queryModel))
+    }
 
-    fun nodeOverview(projectId: String, name: String): NodeOverviewResponse
+    @ApiOperation("仓库 包数量 总览")
+    @GetMapping("/node/search/overview")
+    fun nodeGlobalSearchOverview(
+        @RequestParam projectId: String,
+        @RequestParam name: String
+    ): Response<NodeOverviewResponse> {
+        return ResponseBuilder.success(cpackNodeSearchService.nodeOverview(projectId, name))
+    }
 }

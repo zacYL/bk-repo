@@ -29,22 +29,37 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.repository.service.node
+package com.tencent.bkrepo.repository.search.cpack.packages
 
-import com.tencent.bkrepo.common.api.pojo.Page
+import com.tencent.bkrepo.common.query.builder.MongoQueryInterpreter
+import com.tencent.bkrepo.common.query.interceptor.QueryContext
 import com.tencent.bkrepo.common.query.model.QueryModel
-import com.tencent.bkrepo.repository.pojo.software.NodeOverviewResponse
+import com.tencent.bkrepo.repository.search.common.MetadataRuleInterceptor
+import com.tencent.bkrepo.repository.search.common.ModelValidateInterceptor
+import com.tencent.bkrepo.repository.search.common.SelectFieldInterceptor
+import com.tencent.bkrepo.repository.search.cpack.interceptor.CpackRepoNameRuleInterceptor
+import com.tencent.bkrepo.repository.search.cpack.interceptor.CpackRepoTypeRuleInterceptor
+import com.tencent.bkrepo.repository.search.packages.PackageQueryContext
+import org.springframework.data.mongodb.core.query.Query
+import org.springframework.stereotype.Component
+import javax.annotation.PostConstruct
 
-/**
- * 节点自定义查询服务接口
- */
-interface NodeSearchService {
-    /**
-     * 根据[queryModel]查询节点
-     */
-    fun search(queryModel: QueryModel): Page<Map<String, Any?>>
+@Component
+class CpackPackageSearchInterpreter(
+    private val cpackRepoNameRuleInterceptor: CpackRepoNameRuleInterceptor,
+    private val cpackRepoTypeRuleInterceptor: CpackRepoTypeRuleInterceptor
+) : MongoQueryInterpreter() {
 
-    fun nodeGlobalSearch(projectId: String, name: String): Page<Map<String, Any?>>
+    @PostConstruct
+    fun init() {
+        addModelInterceptor(ModelValidateInterceptor())
+        addModelInterceptor(SelectFieldInterceptor())
+        addRuleInterceptor(cpackRepoTypeRuleInterceptor)
+        addRuleInterceptor(cpackRepoNameRuleInterceptor)
+        addRuleInterceptor(MetadataRuleInterceptor())
+    }
 
-    fun nodeOverview(projectId: String, name: String): NodeOverviewResponse
+    override fun initContext(queryModel: QueryModel, mongoQuery: Query): QueryContext {
+        return PackageQueryContext(queryModel, mongoQuery, this)
+    }
 }

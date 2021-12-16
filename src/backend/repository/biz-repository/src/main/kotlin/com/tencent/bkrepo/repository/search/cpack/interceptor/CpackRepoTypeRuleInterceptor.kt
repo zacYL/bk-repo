@@ -29,22 +29,38 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.repository.service.node
+package com.tencent.bkrepo.repository.search.cpack.interceptor
 
-import com.tencent.bkrepo.common.api.pojo.Page
-import com.tencent.bkrepo.common.query.model.QueryModel
-import com.tencent.bkrepo.repository.pojo.software.NodeOverviewResponse
+import com.tencent.bkrepo.common.query.enums.OperationType
+import com.tencent.bkrepo.common.query.interceptor.QueryContext
+import com.tencent.bkrepo.common.query.interceptor.QueryRuleInterceptor
+import com.tencent.bkrepo.common.query.model.Rule
+import com.tencent.bkrepo.repository.model.TPackage
+import com.tencent.bkrepo.repository.search.common.CommonQueryContext
+import com.tencent.bkrepo.repository.service.repo.RepositoryService
+import org.springframework.data.mongodb.core.query.Criteria
+import org.springframework.stereotype.Component
 
 /**
- * 节点自定义查询服务接口
+ * 仓库类型规则拦截器
+ *
+ * 条件构造器中传入条件是`repoType`，需要转换成对应的仓库列表
  */
-interface NodeSearchService {
-    /**
-     * 根据[queryModel]查询节点
-     */
-    fun search(queryModel: QueryModel): Page<Map<String, Any?>>
+@Component
+class CpackRepoTypeRuleInterceptor(
+    private val repositoryService: RepositoryService
+) : QueryRuleInterceptor {
 
-    fun nodeGlobalSearch(projectId: String, name: String): Page<Map<String, Any?>>
+    override fun match(rule: Rule): Boolean {
+        return rule is Rule.QueryRule && rule.field == "repoType"
+    }
 
-    fun nodeOverview(projectId: String, name: String): NodeOverviewResponse
+    override fun intercept(rule: Rule, context: QueryContext): Criteria {
+        require(rule is Rule.QueryRule)
+        with(rule) {
+            require(context is CommonQueryContext)
+            val queryRule = Rule.QueryRule(TPackage::type.name, rule.value, OperationType.EQ)
+            return context.interpreter.resolveRule(queryRule, context)
+        }
+    }
 }

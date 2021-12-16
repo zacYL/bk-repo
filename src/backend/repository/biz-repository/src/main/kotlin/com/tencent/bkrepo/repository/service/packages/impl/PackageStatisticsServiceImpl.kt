@@ -6,9 +6,9 @@ import com.tencent.bkrepo.repository.dao.PackageDao
 import com.tencent.bkrepo.repository.dao.PackageVersionDao
 import com.tencent.bkrepo.repository.model.TPackage
 import com.tencent.bkrepo.repository.model.TPackageVersion
-import com.tencent.bkrepo.repository.pojo.bksoftware.PackageOverviewResponse
 import com.tencent.bkrepo.repository.pojo.metric.CountResult
 import com.tencent.bkrepo.repository.pojo.metric.PackageDetail
+import com.tencent.bkrepo.repository.pojo.software.PackageOverviewResponse
 import com.tencent.bkrepo.repository.service.packages.PackageStatisticsService
 import org.springframework.data.mongodb.core.aggregation.Aggregation
 import org.springframework.data.mongodb.core.query.Criteria
@@ -60,9 +60,9 @@ class PackageStatisticsServiceImpl(
         return packageVersionDao.find(query.with(page)).map { convert(it) }
     }
 
-    override fun packageOverview(repoType: String, projectId: String?, packageName: String?): PackageOverviewResponse {
+    override fun packageOverview(repoType: String, projectId: String, packageName: String?): PackageOverviewResponse {
         val criteria = Criteria.where(TPackage::type.name).`is`(repoType)
-        projectId?.let { criteria.and(TPackage::projectId.name).`is`(projectId) }
+        projectId.let { criteria.and(TPackage::projectId.name).`is`(projectId) }
         packageName?.let {
             val escapedValue = MongoEscapeUtils.escapeRegexExceptWildcard(packageName)
             val regexPattern = escapedValue.replace("*", ".*")

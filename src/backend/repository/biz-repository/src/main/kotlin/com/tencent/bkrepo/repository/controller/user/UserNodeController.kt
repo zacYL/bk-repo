@@ -48,7 +48,6 @@ import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
-import com.tencent.bkrepo.repository.pojo.bksoftware.NodeOverviewResponse
 import com.tencent.bkrepo.repository.pojo.node.NodeDeletedPoint
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
@@ -64,6 +63,7 @@ import com.tencent.bkrepo.repository.pojo.node.service.NodeUpdateRequest
 import com.tencent.bkrepo.repository.pojo.node.user.UserNodeMoveCopyRequest
 import com.tencent.bkrepo.repository.pojo.node.user.UserNodeRenameRequest
 import com.tencent.bkrepo.repository.pojo.node.user.UserNodeUpdateRequest
+import com.tencent.bkrepo.repository.pojo.software.NodeOverviewResponse
 import com.tencent.bkrepo.repository.service.node.NodeSearchService
 import com.tencent.bkrepo.repository.service.node.NodeService
 import com.tencent.bkrepo.repository.service.repo.RepositoryService
@@ -73,7 +73,6 @@ import io.swagger.annotations.ApiOperation
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestAttribute
 import org.springframework.web.bind.annotation.RequestBody

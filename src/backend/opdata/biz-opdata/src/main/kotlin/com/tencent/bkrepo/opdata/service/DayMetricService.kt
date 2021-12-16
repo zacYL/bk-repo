@@ -1,8 +1,8 @@
 package com.tencent.bkrepo.opdata.service
 
 import com.tencent.bkrepo.common.artifact.event.base.EventType
-import com.tencent.bkrepo.repository.pojo.bksoftware.DayMetricRequest
-import com.tencent.bkrepo.repository.pojo.bksoftware.DayMetricsData
+import com.tencent.bkrepo.repository.pojo.software.DayMetricRequest
+import com.tencent.bkrepo.repository.pojo.software.DayMetricsData
 import java.time.LocalDate
 
 interface DayMetricService {

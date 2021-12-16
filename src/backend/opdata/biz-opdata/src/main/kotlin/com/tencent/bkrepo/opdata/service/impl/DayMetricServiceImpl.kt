@@ -4,9 +4,9 @@ import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.opdata.model.TDayMetric
 import com.tencent.bkrepo.opdata.repository.DayMetricDao
 import com.tencent.bkrepo.opdata.service.DayMetricService
-import com.tencent.bkrepo.repository.pojo.bksoftware.DayMetricRequest
-import com.tencent.bkrepo.repository.pojo.bksoftware.DayMetricSum
-import com.tencent.bkrepo.repository.pojo.bksoftware.DayMetricsData
+import com.tencent.bkrepo.repository.pojo.software.DayMetricRequest
+import com.tencent.bkrepo.repository.pojo.software.DayMetricSum
+import com.tencent.bkrepo.repository.pojo.software.DayMetricsData
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query

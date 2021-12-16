@@ -1,4 +1,4 @@
-package com.tencent.bkrepo.repository.pojo.bksoftware
+package com.tencent.bkrepo.repository.pojo.software
 
 import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType

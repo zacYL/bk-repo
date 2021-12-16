@@ -1,4 +1,4 @@
-package com.tencent.bkrepo.repository.pojo.bksoftware
+package com.tencent.bkrepo.repository.pojo.software
 
 class DayMetricSum(
     val projectId: String?,

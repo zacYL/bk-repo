@@ -18,8 +18,8 @@ import com.tencent.bkrepo.opdata.service.DayMetricService
 import com.tencent.bkrepo.opdata.service.RepositoryOpService
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
-import com.tencent.bkrepo.repository.pojo.bksoftware.DownloadMetric
-import com.tencent.bkrepo.repository.pojo.bksoftware.UploadMetric
+import com.tencent.bkrepo.repository.pojo.software.DownloadMetric
+import com.tencent.bkrepo.repository.pojo.software.UploadMetric
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query

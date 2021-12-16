@@ -3,7 +3,7 @@ package com.tencent.bkrepo.opdata.job
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.opdata.service.DayMetricService
 import com.tencent.bkrepo.repository.api.OperateLogClient
-import com.tencent.bkrepo.repository.pojo.bksoftware.DayMetricRequest
+import com.tencent.bkrepo.repository.pojo.software.DayMetricRequest
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component

@@ -7,8 +7,8 @@ import com.tencent.bkrepo.opdata.pojo.SortType
 import com.tencent.bkrepo.opdata.pojo.response.RepoCapacityData
 import com.tencent.bkrepo.opdata.pojo.response.RepoVisitData
 import com.tencent.bkrepo.opdata.pojo.response.RepositoryOpResponse
-import com.tencent.bkrepo.repository.pojo.bksoftware.DownloadMetric
-import com.tencent.bkrepo.repository.pojo.bksoftware.UploadMetric
+import com.tencent.bkrepo.repository.pojo.software.DownloadMetric
+import com.tencent.bkrepo.repository.pojo.software.UploadMetric
 
 interface RepositoryOpService {
 

@@ -12,8 +12,8 @@ import com.tencent.bkrepo.opdata.pojo.response.RepoVisitData
 import com.tencent.bkrepo.opdata.service.RepositoryOpService
 import com.tencent.bkrepo.opdata.service.VersionOpService
 import com.tencent.bkrepo.repository.api.OperateLogClient
-import com.tencent.bkrepo.repository.pojo.bksoftware.DownloadMetric
-import com.tencent.bkrepo.repository.pojo.bksoftware.UploadMetric
+import com.tencent.bkrepo.repository.pojo.software.DownloadMetric
+import com.tencent.bkrepo.repository.pojo.software.UploadMetric
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam

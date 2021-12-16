@@ -274,9 +274,17 @@ class UserUserController(
         @RequestParam("token") token: String
     ): Response<Boolean> {
         val user = userService.findUserByUserToken(uid, token) ?: run {
-            return ResponseBuilder.success(false)
+            return ResponseBuilder.build(
+                code = 1,
+                message = AuthMessageCode.AUTH_LOGIN_TOKEN_CHECK_FAILED.getKey(),
+                data = false
+            )
         }
-        if(user.locked) return ResponseBuilder.success(false)
+        if(user.locked) return ResponseBuilder.build(
+            code = 2,
+            message = AuthMessageCode.AUTH_USER_LOCKED.getKey(),
+            data = false
+        )
         val ticket = JwtUtils.generateToken(signingKey, jwtProperties.expiration, uid)
         val cookie = Cookie(BKREPO_TICKET, ticket)
         cookie.path = "/"

@@ -2,6 +2,74 @@
 
 [toc]
 
+## 批量创建用户
+
+- API: POST /auth/api/user/batch
+- API 名称: batch_create_user
+- 功能说明：
+  - 中文：批量创建用户
+  - English：batch create user
+
+- input body:
+
+``` json
+[
+    {
+        "userId":"BK-CICD",
+        "name":"BK-CICD",
+        "email": "onnt1997@outlook.com",
+        "phone": "11113451234"
+    },
+    {
+        "userId":"BK-CICD1",
+        "name":"BK-CICD1",
+        "email": "onnt1997@outlook.com",
+        "phone": "11113451234"
+    }
+]
+
+```
+
+
+- input 字段说明
+
+| 字段   | 类型   | 是否必须 | 默认值 | 说明     | Description  |
+| ------ | ------ | -------- | ------ | -------- | ------------ |
+| name   | string | 是       | 无     | 用户名   | the  name    |
+| userId | string | 是       | 无     | 用户id   | the user id  |
+| email  | string | 否       | 无     | 邮箱     | email        |
+| phone  | string | 否       | 无     | 联系电话 | phone number |
+
+- output:
+
+```
+{
+    "code": 0,
+    "message": null,
+    "data": {
+        "success": 2,
+        "failed": 0,
+        "failedUsers": []
+    },
+    "traceId": ""
+}
+```
+
+- output 字段说明
+
+| 字段             | 类型           | 说明                                    | Description               |
+| ---------------- | -------------- | --------------------------------------- | ------------------------- |
+| code             | bool           | 错误编码。 0表示success，>0表示失败错误 | 0:success, other: failure |
+| message          | result message | 错误消息                                | the failure message       |
+| data.success     | int            | 成功数量                                | Success count             |
+| data.failed      | int            | 失败数量                                | Failed count              |
+| data.failedUsers | list<String>   | 失败userId 集合                         | Failed userId list        |
+| traceId          | string         | 请求跟踪id                              | the trace id              |
+
+
+
+
+
 ## 全部用户
 
 - API: GET /auth/api/user/list

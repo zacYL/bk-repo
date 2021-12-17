@@ -6,6 +6,7 @@ import com.tencent.bkrepo.auth.constant.PROJECT_VIEW_PERMISSION
 import com.tencent.bkrepo.auth.listener.event.admin.AdminAddEvent
 import com.tencent.bkrepo.auth.listener.event.admin.AdminDeleteEvent
 import com.tencent.bkrepo.auth.message.AuthMessageCode
+import com.tencent.bkrepo.auth.pojo.BatchCreateUserResponse
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
@@ -119,6 +120,33 @@ class UserUserController(
         @RequestBody request: CreateUserRequest
     ): Response<Boolean> {
         return ResponseBuilder.success(userService.createUser(request))
+    }
+
+    @ApiOperation("批量创建用户")
+    @PostMapping("/batch")
+    @Principal(PrincipalType.ADMIN)
+    @Suppress("TooGenericExceptionCaught")
+    fun batchCreateUsers(
+        @RequestAttribute userId: String,
+        @RequestBody users: List<CreateUserRequest>
+    ): Response<BatchCreateUserResponse> {
+        var success = 0
+        var failed = 0
+        val failedUsers = mutableSetOf<String>()
+        users.map { user ->
+            try {
+                if (userService.createUser(user)) {
+                    success += 1
+                } else {
+                    failed += 1
+                    failedUsers.add(user.userId)
+                }
+            } catch (e: Exception) {
+                logger.error("Add user failed: [$user]", e)
+            }
+        }
+        val result = BatchCreateUserResponse(success, failed, failedUsers)
+        return ResponseBuilder.success(result)
     }
 
     @ApiOperation("删除用户")

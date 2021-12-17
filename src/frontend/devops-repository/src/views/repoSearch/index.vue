@@ -45,7 +45,7 @@
                         :title="repo.repoName"
                         @click="changeRepoInput(repo.repoName)">
                         <span class="flex-1 text-overflow">{{ repo.repoName || '全部' }}</span>
-                        <span class="ml5 repo-sum">{{ repo.total }}</span>
+                        <span class="repo-sum">{{ repo.total }}</span>
                     </div>
                 </div>
                 <infinite-scroll

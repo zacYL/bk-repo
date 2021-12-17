@@ -46,10 +46,10 @@
                     @icon-click="iconClickHandler"
                     @item-click="itemClickHandler">
                     <template #icon><span></span></template>
-                    <template #text="{ name, sum }">
-                        <div class="flex-between-center">
-                            <span>{{ name }}</span>
-                            <span>{{ sum }}</span>
+                    <template #text="{ item: { name, sum } }">
+                        <div class="flex-1 flex-between-center">
+                            <span class="text-overflow">{{ name }}</span>
+                            <span class="mr10">{{ sum }}</span>
                         </div>
                     </template>
                 </repo-tree>
@@ -133,28 +133,49 @@
         methods: {
             formatDate,
             ...mapActions(['searchPackageList', 'searchRepoList']),
-            iconClickHandler () {},
-            itemClickHandler () {},
+            iconClickHandler (node) {
+                const openList = this.openList
+                if (openList.includes(node.roadMap)) {
+                    openList.splice(0, openList.length, ...openList.filter(v => v !== node.roadMap))
+                } else {
+                    openList.push(node.roadMap)
+                }
+            },
+            itemClickHandler (node) {
+                this.selectedNode = node
+                this.projectId = node.projectId
+                this.repoName = node.repoName
+                this.openList.push(node.roadMap)
+                this.handlerPaginationChange()
+            },
             searchRepoHandler () {
                 this.searchRepoList({
                     projectId: this.projectId,
                     repoType: this.repoType,
                     packageName: this.packageName
                 }).then(list => {
-                    this.repoList = list.map((node, i) => {
-                        return {
-                            name: node.projectId,
-                            roadMap: '' + i,
-                            children: node.repos.map((child, j) => {
-                                return {
-                                    name: child.repoName,
-                                    roadMap: i + ',' + j,
-                                    sum: child.packages || child.nodes
-                                }
-                            }),
-                            sum: node.sum
-                        }
-                    })
+                    this.repoList = [{
+                        name: '全部',
+                        roadMap: '0',
+                        children: list.map((node, i) => {
+                            return {
+                                name: node.projectId,
+                                projectId: node.projectId,
+                                roadMap: '0,' + i,
+                                children: node.repos.map((child, j) => {
+                                    return {
+                                        name: child.repoName,
+                                        projectId: node.projectId,
+                                        repoName: child.repoName,
+                                        roadMap: '0,' + i + ',' + j,
+                                        leaf: true,
+                                        sum: child.packages || child.nodes
+                                    }
+                                }),
+                                sum: node.sum
+                            }
+                        })
+                    }]
                 })
             },
             searckPackageHandler (load) {
@@ -202,6 +223,7 @@
                     this.searchRepoHandler()
                     this.$router.replace({
                         query: {
+                            projectId: this.projectId,
                             repoType: this.repoType,
                             repoName: this.repoName,
                             packageName: this.packageName,

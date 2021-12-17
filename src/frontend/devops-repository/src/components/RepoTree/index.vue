@@ -5,10 +5,10 @@
                 <div class="repo-tree-title hover-btn"
                     :title="item.name"
                     :class="{ 'selected': selectedNode.roadMap === item.roadMap }"
-                    :style="{ 'padding-left': 20 * (computedDepth(item) + 1) + 'px' }"
+                    :style="{ 'padding-left': 20 * computedDepth(item) + 10 + 'px' }"
                     @click.stop="itemClickHandler(item)">
                     <i v-if="item.loading" class="mr5 loading spin-icon"></i>
-                    <i v-else class="mr5 devops-icon" @click.stop="iconClickHandler(item)"
+                    <i v-else-if="!item.leaf" class="mr5 devops-icon" @click.stop="iconClickHandler(item)"
                         :class="openList.includes(item.roadMap) ? 'icon-down-shape' : 'icon-right-shape'"></i>
                     <slot name="icon" :item="item" :open-list="openList">
                         <Icon class="mr5" size="14" :name="openList.includes(item.roadMap) ? 'folder-open' : 'folder'" />
@@ -28,7 +28,7 @@
     export default {
         name: 'repo-tree',
         props: {
-            tree: Array, // roadMap、name、children
+            tree: Array, // roadMap、name、children、leaf
             importantSearch: {
                 type: String,
                 default: ''

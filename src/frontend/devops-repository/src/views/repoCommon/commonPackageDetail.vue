@@ -42,11 +42,12 @@
                             <bk-popover class="version-operation" placement="bottom-end" theme="light" ext-cls="operation-container">
                                 <i class="devops-icon icon-more flex-center"></i>
                                 <ul class="operation-list" slot="content">
-                                    <li class="operation-item hover-btn"
+                                    <li v-if="permission.edit"
+                                        class="operation-item hover-btn"
                                         :class="{ 'disabled': ($version.stageTag || '').includes('@release') }"
                                         @click.stop="changeStageTagHandler($version)">晋级</li>
                                     <li v-if="repoType !== 'docker'" class="operation-item hover-btn" @click.stop="downloadPackageHandler($version)">下载</li>
-                                    <li class="operation-item hover-btn" @click.stop="deleteVersionHandler($version)">删除</li>
+                                    <li v-if="permission.delete" class="operation-item hover-btn" @click.stop="deleteVersionHandler($version)">删除</li>
                                 </ul>
                             </bk-popover>
                         </div>
@@ -87,7 +88,7 @@
 <script>
     import InfiniteScroll from '@repository/components/InfiniteScroll'
     import VersionDetail from '@repository/views/repoCommon/commonVersionDetail'
-    import { mapActions } from 'vuex'
+    import { mapState, mapActions } from 'vuex'
     export default {
         name: 'commonPackageDetail',
         components: { InfiniteScroll, VersionDetail },
@@ -132,6 +133,7 @@
             }
         },
         computed: {
+            ...mapState(['permission']),
             projectId () {
                 return this.$route.params.projectId || ''
             },

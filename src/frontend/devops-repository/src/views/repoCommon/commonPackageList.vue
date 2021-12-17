@@ -59,6 +59,7 @@
                             v-for="pkg in packageList"
                             :key="pkg.key"
                             :card-data="pkg"
+                            :readonly="!permission.delete"
                             @click.native="showCommonPackageDetail(pkg)"
                             @delete-card="deletePackageHandler(pkg)">
                         </package-card>
@@ -109,7 +110,7 @@
             }
         },
         computed: {
-            ...mapState(['repoListAll']),
+            ...mapState(['repoListAll', 'permission']),
             currentRepo () {
                 return this.repoListAll.find(repo => repo.name === this.repoName) || {}
             }

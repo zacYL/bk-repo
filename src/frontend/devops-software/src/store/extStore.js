@@ -1,7 +1,13 @@
 import Vue from 'vue'
 
 export default {
-    state: {},
+    state: {
+        permission: {
+            write: false,
+            edit: false,
+            delete: false
+        }
+    },
     getters: {},
     mutations: {},
     actions: {

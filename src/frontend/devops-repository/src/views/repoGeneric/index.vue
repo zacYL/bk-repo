@@ -207,7 +207,7 @@
             }
         },
         computed: {
-            ...mapState(['repoListAll', 'userList', 'genericTree']),
+            ...mapState(['repoListAll', 'userList', 'permission', 'genericTree']),
             projectId () {
                 return this.$route.params.projectId
             },
@@ -227,13 +227,13 @@
                 // 是否选中的是文件夹
                 const isFolder = this.selectedRow.folder
                 return [
-                    isSelectedRow && !isLimit && { clickEvent: this.renameRes, label: this.$t('rename') },
-                    isSelectedRow && !isLimit && { clickEvent: this.moveRes, label: this.$t('move') },
-                    isSelectedRow && !isLimit && { clickEvent: this.copyRes, label: this.$t('copy') },
-                    isSelectedRow && !isLimit && { clickEvent: this.deleteRes, label: this.$t('delete') },
+                    this.permission.edit && isSelectedRow && !isLimit && { clickEvent: this.renameRes, label: this.$t('rename') },
+                    this.permission.write && isSelectedRow && !isLimit && { clickEvent: this.moveRes, label: this.$t('move') },
+                    this.permission.write && isSelectedRow && !isLimit && { clickEvent: this.copyRes, label: this.$t('copy') },
+                    this.permission.delete && isSelectedRow && !isLimit && { clickEvent: this.deleteRes, label: this.$t('delete') },
                     isSelectedRow && !isFolder && { clickEvent: this.handlerShare, label: this.$t('share') },
-                    !isSelectedRow && !isLimit && !isSearch && { clickEvent: this.addFolder, label: this.$t('create') },
-                    !isSelectedRow && !isLimit && !isSearch && { clickEvent: this.handlerUpload, label: this.$t('upload') },
+                    this.permission.write && !isSelectedRow && !isLimit && !isSearch && { clickEvent: this.addFolder, label: this.$t('create') },
+                    this.permission.write && !isSelectedRow && !isLimit && !isSearch && { clickEvent: this.handlerUpload, label: this.$t('upload') },
                     !isSelectedRow && !isSearch && { clickEvent: this.getArtifactories, label: this.$t('refresh') }
                 ].filter(Boolean)
             },

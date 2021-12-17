@@ -3,7 +3,7 @@
         v-model="genericTreeData.show"
         :title="genericTreeData.title"
         width="600"
-        height-num="616"
+        height-num="623"
         @cancel="genericTreeData.show = false">
         <bk-input
             class="w250"
@@ -23,10 +23,10 @@
                 @item-click="itemClickHandler">
             </repo-tree>
         </div>
-        <div slot="footer">
+        <template #footer>
             <bk-button @click="genericTreeData.show = false">{{ $t('cancel') }}</bk-button>
             <bk-button class="ml10" :loading="genericTreeData.loading" theme="primary" @click="submit">{{ $t('confirm') }}</bk-button>
-        </div>
+        </template>
     </canway-dialog>
 </template>
 <script>

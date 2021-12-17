@@ -5,7 +5,7 @@
         @click.native.stop="() => {}"
         :quick-close="true"
         :width="720">
-        <bk-tab class="detail-container" slot="content" type="unborder-card" :active.sync="tabName">
+        <template #content><bk-tab class="detail-container" type="unborder-card" :active.sync="tabName">
             <bk-tab-panel name="detailInfo" :label="$t('baseInfo')">
                 <div class="version-base-info base-info" :data-title="$t('baseInfo')" v-bkloading="{ isLoading: detailSlider.loading }">
                     <div class="grid-item"
@@ -67,7 +67,7 @@
                     </bk-table>
                 </div>
             </bk-tab-panel>
-        </bk-tab>
+        </bk-tab></template>
     </bk-sideslider>
 </template>
 <script>

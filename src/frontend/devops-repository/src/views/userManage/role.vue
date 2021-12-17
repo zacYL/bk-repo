@@ -39,6 +39,7 @@
             v-model="editRoleConfig.show"
             theme="primary"
             width="500"
+            height-num="301"
             :title="editRoleConfig.id ? '编辑用户组' : '创建用户组'"
             @cancel="editRoleConfig.show = false">
             <bk-form :label-width="80" :model="editRoleConfig" :rules="rules" ref="roleForm">
@@ -49,10 +50,10 @@
                     <bk-input type="textarea" v-model.trim="editRoleConfig.description" maxlength="200"></bk-input>
                 </bk-form-item>
             </bk-form>
-            <div slot="footer">
+            <template #footer>
                 <bk-button @click="editRoleConfig.show = false">{{ $t('cancel') }}</bk-button>
                 <bk-button class="ml10" theme="primary" @click="confirm">{{ $t('confirm') }}</bk-button>
-            </div>
+            </template>
         </canway-dialog>
         <bk-sideslider
             class="show-userlist-sideslider"

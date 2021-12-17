@@ -77,8 +77,12 @@
         </template>
 
         <bk-sideslider :is-show.sync="showGuide" :quick-close="true" :width="600">
-            <div slot="header" class="flex-align-center"><icon class="mr5" :name="repoType" size="32"></icon>{{ replaceRepoName(repoName) + $t('guide') }}</div>
-            <repo-guide class="pt20 pb20 pl10 pr10" slot="content" :article="articleGuide"></repo-guide>
+            <template #header>
+                <div class="flex-align-center"><icon class="mr5" :name="repoType" size="32"></icon>{{ replaceRepoName(repoName) + $t('guide') }}</div>
+            </template>
+            <template #content>
+                <repo-guide class="pt20 pb20 pl10 pr10" :article="articleGuide"></repo-guide>
+            </template>
         </bk-sideslider>
     </div>
 </template>

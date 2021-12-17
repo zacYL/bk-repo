@@ -2,7 +2,7 @@
     <canway-dialog
         v-model="show"
         width="380"
-        height-num="275"
+        height-num="221"
         title="操作确认"
         @cancel="cancel">
         <div class="confirm-body">

@@ -57,7 +57,7 @@
             v-model="editProjectDialog.show"
             :title="editProjectDialog.add ? '新建项目' : '编辑项目'"
             width="500"
-            height-num="350"
+            height-num="354"
             @cancel="editProjectDialog.show = false">
             <bk-form class="ml10 mr10" :label-width="75" :model="editProjectDialog" :rules="rules" ref="editProjectDialog">
                 <bk-form-item label="项目标识" :required="true" property="id" error-display-type="normal">

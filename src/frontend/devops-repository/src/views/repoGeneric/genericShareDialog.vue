@@ -3,7 +3,7 @@
         v-model="genericShare.show"
         :title="genericShare.title"
         width="520"
-        :height-num="342"
+        :height-num="shareUrl ? 352 : 282"
         @cancel="cancel">
         <div v-if="shareUrl" class="share-result">
             <bk-form class="flex-1" form-type="vertical">
@@ -65,10 +65,10 @@
                 </bk-select>
             </bk-form-item>
         </bk-form>
-        <div slot="footer">
+        <template #footer>
             <bk-button v-if="!shareUrl" theme="default" @click="cancel">{{ $t('cancel') }}</bk-button>
             <bk-button class="ml10" :loading="genericShare.loading" theme="primary" @click="shareUrl ? cancel() : submit()">{{$t('confirm')}}</bk-button>
-        </div>
+        </template>
     </canway-dialog>
 </template>
 <script>

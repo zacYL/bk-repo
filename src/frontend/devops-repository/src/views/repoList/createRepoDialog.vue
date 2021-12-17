@@ -2,7 +2,7 @@
     <canway-dialog
         v-model="show"
         width="800"
-        :height-num="repoBaseInfo.type === 'rpm' ? 754 : 598"
+        :height-num="repoBaseInfo.type === 'rpm' ? 759 : 603"
         title="创建仓库"
         @cancel="cancel">
         <bk-form class="mr10 repo-base-info" :label-width="130" :model="repoBaseInfo" :rules="rules" ref="repoBaseInfo">

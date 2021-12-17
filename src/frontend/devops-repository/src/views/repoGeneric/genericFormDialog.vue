@@ -3,7 +3,7 @@
         v-model="genericForm.show"
         :title="genericForm.title"
         width="450"
-        :height-num="186"
+        :height-num="193"
         @cancel="cancel">
         <bk-form class="repo-generic-form" :label-width="100" :model="genericForm" :rules="rules" ref="genericForm">
             <template v-if="genericForm.type === 'add'">
@@ -18,10 +18,10 @@
                 </bk-form-item>
             </template>
         </bk-form>
-        <div slot="footer">
+        <template #footer>
             <bk-button theme="default" @click="cancel">{{$t('cancel')}}</bk-button>
             <bk-button class="ml10" :loading="genericForm.loading" theme="primary" @click="submit">{{$t('confirm')}}</bk-button>
-        </div>
+        </template>
     </canway-dialog>
 </template>
 <script>

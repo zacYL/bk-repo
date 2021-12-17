@@ -9,7 +9,7 @@
                     <i v-if="section === user" class="devops-icon icon-edit hover-btn" @click.stop="editActionsDialogHandler(section)"></i>
                 </div>
             </header>
-            <div slot="content" class="section-main">
+            <template #content><div class="section-main">
                 <template v-for="part in ['users', 'roles']">
                     <header :key="part + 'header'" class="section-sub-title flex-align-center">
                         <span>{{section[part].title}}</span>
@@ -45,20 +45,20 @@
                         </div>
                     </div>
                 </template>
-            </div>
+            </div></template>
         </bk-collapse-item>
         <canway-dialog
             :value="editActionsDialog.show"
-            width="410"
-            height-num="274"
+            width="400"
+            height-num="199"
             :title="editActionsDialog.title"
             @cancel="editActionsDialog.show = false">
             <bk-checkbox-group v-model="editActionsDialog.actions">
-                <bk-checkbox v-for="action in actionList" :key="action.id" class="m10" :value="action.id">{{ action.name }}</bk-checkbox>
+                <bk-checkbox v-for="action in actionList" :key="action.id" class="m20" :value="action.id">{{ action.name }}</bk-checkbox>
             </bk-checkbox-group>
             <template #footer>
                 <bk-button theme="default" @click.stop="editActionsDialog.show = false">{{$t('cancel')}}</bk-button>
-                <bk-button :loading="editActionsDialog.loading" theme="primary" @click.stop.prevent="handleActionPermission">{{$t('submit')}}</bk-button>
+                <bk-button class="ml10" :loading="editActionsDialog.loading" theme="primary" @click.stop.prevent="handleActionPermission">{{$t('submit')}}</bk-button>
             </template>
         </canway-dialog>
     </bk-collapse>

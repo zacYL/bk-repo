@@ -69,14 +69,14 @@
                         </bk-button>
                         <bk-popover v-if="operationBtns.length" placement="bottom-end" theme="light" ext-cls="operation-container">
                             <bk-button @click.stop="() => {}" icon="ellipsis"></bk-button>
-                            <ul class="operation-list" slot="content">
+                            <template #content><ul class="operation-list">
                                 <li class="operation-item hover-btn"
                                     v-for="btn in operationBtns"
                                     :key="btn.label"
                                     @click.stop="btn.clickEvent()">
                                     {{ btn.label }}
                                 </li>
-                            </ul>
+                            </ul></template>
                         </bk-popover>
                     </div>
                 </div>

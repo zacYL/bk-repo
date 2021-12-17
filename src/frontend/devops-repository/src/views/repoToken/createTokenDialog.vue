@@ -2,7 +2,7 @@
     <canway-dialog
         v-model="show"
         width="540"
-        height-num="280"
+        height-num="245"
         title="创建访问令牌"
         @cancel="cancel">
         <div v-if="token" class="flex-align-center">

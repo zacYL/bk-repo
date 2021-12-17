@@ -26,7 +26,10 @@
             username && this.SET_USER_INFO({ username })
 
             if (this.iframeMode) {
-                this.loadDevopsUtils('/ui/devops-utils.js')
+                const url = /^http(s)/.test(DEVOPS_SITE_URL)
+                    ? DEVOPS_SITE_URL + '/console/static/devops-utils.js'
+                    : '/ui/devops-utils.js'
+                this.loadDevopsUtils(url)
             } else {
                 this.ajaxUserInfo()
                 this.getRepoUserList()

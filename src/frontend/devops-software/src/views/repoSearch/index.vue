@@ -2,7 +2,7 @@
     <div class="repo-search-container" v-bkloading="{ isLoading }">
         <div class="repo-search-tools flex-column">
             <div class="name-tool flex-center">
-                <type-select :repo-type="repoType" @change="changeRepoType"></type-select>
+                <type-select :repo-list="repoEnum.filter(r => r !== 'generic')" :repo-type="repoType" @change="changeRepoType"></type-select>
                 <bk-input
                     v-focus
                     style="width:390px"
@@ -37,17 +37,22 @@
         </div>
         <main class="repo-search-result flex-align-center">
             <template v-if="resultList.length">
-                <div class="mr20 repo-list">
-                    <div class="repo-item flex-between-center"
-                        :class="{ 'selected': repo.repoName === repoName }"
-                        v-for="(repo, index) in repoList"
-                        :key="repo.repoName || index"
-                        :title="repo.repoName"
-                        @click="changeRepoInput(repo.repoName)">
-                        <span class="flex-1 text-overflow">{{ repo.repoName || '全部' }}</span>
-                        <span class="ml5 repo-sum">{{ repo.total }}</span>
-                    </div>
-                </div>
+                <repo-tree
+                    class="mr20 repo-tree"
+                    ref="dialogTree"
+                    :tree="repoList"
+                    :open-list="openList"
+                    :selected-node="selectedNode"
+                    @icon-click="iconClickHandler"
+                    @item-click="itemClickHandler">
+                    <template #icon><span></span></template>
+                    <template #text="{ name, sum }">
+                        <div class="flex-between-center">
+                            <span>{{ name }}</span>
+                            <span>{{ sum }}</span>
+                        </div>
+                    </template>
+                </repo-tree>
                 <infinite-scroll
                     ref="infiniteScroll"
                     class="package-list flex-1"
@@ -76,15 +81,17 @@
     </div>
 </template>
 <script>
+    import repoTree from '@repository/components/RepoTree'
     import packageCard from '@repository/components/PackageCard'
     import InfiniteScroll from '@repository/components/InfiniteScroll'
     import genericDetail from '@repository/views/repoGeneric/genericDetail'
     import typeSelect from '@repository/views/repoSearch/typeSelect'
     import { mapState, mapActions } from 'vuex'
-    import { convertFileSize, formatDate } from '@repository/utils'
+    import { formatDate } from '@repository/utils'
+    import { repoEnum } from '@repository/store/publicEnum'
     export default {
         name: 'repoSearch',
-        components: { packageCard, InfiniteScroll, typeSelect, genericDetail },
+        components: { repoTree, packageCard, InfiniteScroll, typeSelect, genericDetail },
         directives: {
             focus: {
                 inserted (el) {
@@ -94,13 +101,16 @@
         },
         data () {
             return {
+                repoEnum,
                 isLoading: false,
                 property: this.$route.query.property || 'lastModifiedDate',
                 direction: this.$route.query.direction || 'ASC',
                 projectId: this.$route.query.projectId || '',
                 packageName: this.$route.query.packageName || '',
-                repoType: this.$route.query.repoType || 'generic',
-                repoList: [{ repoName: '', total: 0 }],
+                repoType: this.$route.query.repoType || 'docker',
+                repoList: [],
+                selectedNode: {},
+                openList: [],
                 repoName: this.$route.query.repoName || '',
                 pagination: {
                     current: 1,
@@ -123,13 +133,28 @@
         methods: {
             formatDate,
             ...mapActions(['searchPackageList', 'searchRepoList']),
+            iconClickHandler () {},
+            itemClickHandler () {},
             searchRepoHandler () {
                 this.searchRepoList({
                     projectId: this.projectId,
                     repoType: this.repoType,
                     packageName: this.packageName
                 }).then(list => {
-                    this.repoList = list
+                    this.repoList = list.map((node, i) => {
+                        return {
+                            name: node.projectId,
+                            roadMap: '' + i,
+                            children: node.repos.map((child, j) => {
+                                return {
+                                    name: child.repoName,
+                                    roadMap: i + ',' + j,
+                                    sum: child.packages || child.nodes
+                                }
+                            }),
+                            sum: node.sum
+                        }
+                    })
                 })
             },
             searckPackageHandler (load) {
@@ -262,27 +287,10 @@
     }
     .repo-search-result {
         height: calc(100% - 110px);
-        .repo-list {
+        .repo-tree {
             width: 200px;
             height: 100%;
-            overflow-y: auto;
-            .repo-item {
-                padding: 0 10px;
-                border-radius: 2px;
-                line-height: 42px;
-                background-color: var(--bgLighterColor);
-                cursor: pointer;
-                .repo-sum {
-                    color: var(--fontTipColor);
-                }
-                &.selected {
-                    color: white;
-                    background-color: var(--primaryColor);
-                    .repo-sum {
-                        color: white;
-                    }
-                }
-            }
+            overflow: auto;
         }
         .package-list {
             height: 100%;

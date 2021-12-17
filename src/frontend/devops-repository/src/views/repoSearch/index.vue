@@ -2,7 +2,7 @@
     <div class="repo-search-container" v-bkloading="{ isLoading }">
         <div class="repo-search-tools flex-column">
             <div class="name-tool flex-center">
-                <type-select :repo-type="repoType" @change="changeRepoType"></type-select>
+                <type-select :repo-list="repoEnum" :repo-type="repoType" @change="changeRepoType"></type-select>
                 <bk-input
                     v-focus
                     style="width:390px"
@@ -82,6 +82,7 @@
     import typeSelect from './typeSelect'
     import { mapState, mapActions } from 'vuex'
     import { formatDate } from '@repository/utils'
+    import { repoEnum } from '@repository/store/publicEnum'
     export default {
         name: 'repoSearch',
         components: { packageCard, InfiniteScroll, typeSelect, genericDetail },
@@ -94,6 +95,7 @@
         },
         data () {
             return {
+                repoEnum,
                 isLoading: false,
                 property: this.$route.query.property || 'lastModifiedDate',
                 direction: this.$route.query.direction || 'ASC',

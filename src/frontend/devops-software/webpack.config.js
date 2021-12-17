@@ -1,6 +1,5 @@
 const path = require('path')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
-const CopyWebpackPlugin = require('copy-webpack-plugin')
 const webpackBaseConfig = require('../webpack.base')
 
 module.exports = (env, argv) => {
@@ -25,9 +24,6 @@ module.exports = (env, argv) => {
             template: path.resolve('../devops-repository/index.html'),
             inject: true,
             title: '软件源CPack'
-        }),
-        new CopyWebpackPlugin({
-            patterns: [{ from: path.resolve('../devops-repository/static'), to: dist }]
         })
     ]
 

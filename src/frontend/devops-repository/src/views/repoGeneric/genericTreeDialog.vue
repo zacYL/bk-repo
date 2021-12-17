@@ -15,6 +15,7 @@
         <div class="mt10 dialog-tree-container">
             <repo-tree
                 ref="dialogTree"
+                :tree="genericTree"
                 :important-search="importantSearch"
                 :open-list="genericTreeData.openList"
                 :selected-node="genericTreeData.selectedNode"
@@ -29,6 +30,7 @@
     </canway-dialog>
 </template>
 <script>
+    import { mapState } from 'vuex'
     import RepoTree from '@repository/components/RepoTree'
     export default {
         name: 'genericTreeDialog',
@@ -45,6 +47,9 @@
                     selectedNode: {}
                 }
             }
+        },
+        computed: {
+            ...mapState(['genericTree'])
         },
         methods: {
             // 树组件选中文件夹

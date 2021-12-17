@@ -30,6 +30,7 @@
                 <repo-tree
                     class="repo-generic-tree"
                     ref="repoTree"
+                    :tree="genericTree"
                     :important-search="importantSearch"
                     :open-list="sideTreeOpenList"
                     :selected-node="selectedTreeNode"
@@ -555,7 +556,7 @@
                     this.getArtifactories()
                     this.$bkMessage({
                         theme: 'success',
-                        message: data.type + this.$t('success')
+                        message: this.$t(data.type) + this.$t('success')
                     })
                 }).finally(() => {
                     this.$refs.genericTreeDialog.setTreeData({ loading: false })

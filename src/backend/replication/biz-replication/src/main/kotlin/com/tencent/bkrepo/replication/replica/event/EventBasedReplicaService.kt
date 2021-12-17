@@ -54,7 +54,7 @@ class EventBasedReplicaService(
                     val pathConstraint = PathConstraint(event.resourceKey)
                     replicaByPathConstraint(this, pathConstraint)
                 }
-                EventType.VERSION_CREATED -> {
+                EventType.VERSION_CREATED, EventType.VERSION_UPDATED -> {
                     val packageKey = event.data["packageKey"].toString()
                     val packageVersion = event.data["packageVersion"].toString()
                     val packageConstraint = PackageConstraint(packageKey, listOf(packageVersion))

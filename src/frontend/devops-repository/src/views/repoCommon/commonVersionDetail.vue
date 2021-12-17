@@ -433,8 +433,8 @@
             display: flex;
             overflow: hidden;
             label {
+                padding-left: 10px;
                 flex-basis: 600px;
-                text-align: right;
             }
         }
         .block-header {

@@ -18,13 +18,13 @@ import org.springframework.web.bind.annotation.RestController
 
 @Api("软件源包接口")
 @RestController
-@RequestMapping("/api/package/software")
+@RequestMapping("/api/software/package")
 class CpackUserPackageController(
     private val cpackPackageService: CpackPackageService
 ) {
 
     @ApiOperation("软件源包查询接口")
-    @PostMapping("/package/search")
+    @PostMapping("/search")
     fun searchPackage(
         @RequestBody queryModel: QueryModel
     ): Response<Page<MutableMap<*, *>>> {
@@ -32,7 +32,7 @@ class CpackUserPackageController(
     }
 
     @ApiOperation("仓库 包数量 总览")
-    @GetMapping("/package/search/overview")
+    @GetMapping("/search/overview")
     fun packageOverview(
         @RequestParam repoType: RepositoryType,
         @RequestParam projectId: String?,

@@ -35,8 +35,8 @@ import com.tencent.bkrepo.common.query.builder.MongoQueryInterpreter
 import com.tencent.bkrepo.common.query.interceptor.QueryContext
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.repository.search.common.MetadataRuleInterceptor
-import com.tencent.bkrepo.repository.search.common.ModelValidateInterceptor
 import com.tencent.bkrepo.repository.search.common.SelectFieldInterceptor
+import com.tencent.bkrepo.repository.search.cpack.interceptor.CpackModelValidateInterceptor
 import com.tencent.bkrepo.repository.search.cpack.interceptor.CpackRepoNameRuleInterceptor
 import com.tencent.bkrepo.repository.search.cpack.interceptor.CpackRepoTypeRuleInterceptor
 import com.tencent.bkrepo.repository.search.packages.PackageQueryContext
@@ -52,7 +52,7 @@ class CpackPackageSearchInterpreter(
 
     @PostConstruct
     fun init() {
-        addModelInterceptor(ModelValidateInterceptor())
+        addModelInterceptor(CpackModelValidateInterceptor())
         addModelInterceptor(SelectFieldInterceptor())
         addRuleInterceptor(cpackRepoTypeRuleInterceptor)
         addRuleInterceptor(cpackRepoNameRuleInterceptor)

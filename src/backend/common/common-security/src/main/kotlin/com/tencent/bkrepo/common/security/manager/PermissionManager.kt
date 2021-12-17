@@ -89,6 +89,9 @@ open class PermissionManager(
         if (isReadPublicRepo(action, projectId, repoName, public)) {
             return
         }
+        if (isReadSystemRepo(action, projectId, repoName)) {
+            return
+        }
         checkPermission(ResourceType.REPO, action, projectId, repoName)
     }
 
@@ -185,6 +188,33 @@ open class PermissionManager(
             return false
         }
         return public ?: queryRepositoryInfo(projectId, repoName).public
+    }
+
+    /**
+     * 判断是否为系统级公开仓库且为READ操作
+     */
+    @Suppress("TooGenericExceptionCaught")
+    private fun isReadSystemRepo(
+        action: PermissionAction,
+        projectId: String,
+        repoName: String
+    ): Boolean {
+        if (action != PermissionAction.READ) {
+            return false
+        }
+        val userId = SecurityUtils.getUserId()
+        val platformId = SecurityUtils.getPlatformId()
+        checkAnonymous(userId, platformId)
+        // 加载仓库信息
+        val repo = repositoryClient.getRepoDetail(projectId, repoName).data!!
+        val systemValue = repo.configuration.settings["system"]
+        val system = try {
+            systemValue as? Boolean
+        } catch (e: Exception) {
+            logger.error("Repo configuration system field trans failed: $systemValue", e)
+            false
+        }
+        return true == system
     }
 
     /**

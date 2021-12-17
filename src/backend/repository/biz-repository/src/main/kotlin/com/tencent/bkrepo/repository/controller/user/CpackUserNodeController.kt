@@ -48,19 +48,19 @@ import org.springframework.web.bind.annotation.RestController
 
 @Api("节点用户接口")
 @RestController
-@RequestMapping("/api/node/software")
+@RequestMapping("/api/software/node")
 class CpackUserNodeController(
     private val cpackNodeSearchService: CpackNodeSearchService
 ) {
 
     @ApiOperation("自定义查询节点")
-    @PostMapping("/node/search")
+    @PostMapping("/search")
     fun search(@RequestBody queryModel: QueryModel): Response<Page<Map<String, Any?>>> {
         return ResponseBuilder.success(cpackNodeSearchService.search(queryModel))
     }
 
     @ApiOperation("仓库 包数量 总览")
-    @GetMapping("/node/search/overview")
+    @GetMapping("/search/overview")
     fun nodeGlobalSearchOverview(
         @RequestParam projectId: String,
         @RequestParam name: String

@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @Api("软件源仓库接口")
 @RestController
-@RequestMapping("/api/repo/software")
+@RequestMapping("/api/software/repo")
 class CpackUserRepositoryController(
     private val cpackRepositoryService: CpackRepositoryService
 ) {
@@ -36,14 +36,15 @@ class CpackUserRepositoryController(
         @ApiParam(value = "仓库名", required = false)
         @RequestParam name: String?,
         @ApiParam(value = "仓库类型", required = false)
-        @RequestParam type: RepositoryType?
+        @RequestParam type: String?
     ): Response<Page<RepositoryInfo>> {
+        val repoType = type?.let { RepositoryType.valueOf(it.toUpperCase()) }
         val page = cpackRepositoryService.listRepoPage(
             projectId,
             pageNumber,
             pageSize,
             name,
-            type
+            repoType
         )
         return ResponseBuilder.success(page)
     }

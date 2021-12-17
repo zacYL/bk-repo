@@ -63,7 +63,7 @@ import com.tencent.bkrepo.repository.pojo.node.service.NodeUpdateRequest
 import com.tencent.bkrepo.repository.pojo.node.user.UserNodeMoveCopyRequest
 import com.tencent.bkrepo.repository.pojo.node.user.UserNodeRenameRequest
 import com.tencent.bkrepo.repository.pojo.node.user.UserNodeUpdateRequest
-import com.tencent.bkrepo.repository.pojo.software.NodeOverviewResponse
+import com.tencent.bkrepo.repository.pojo.software.ProjectPackageOverview
 import com.tencent.bkrepo.repository.service.node.NodeSearchService
 import com.tencent.bkrepo.repository.service.node.NodeService
 import com.tencent.bkrepo.repository.service.repo.RepositoryService
@@ -341,7 +341,7 @@ class UserNodeController(
     fun nodeGlobalSearchOverview(
         @RequestParam projectId: String,
         @RequestParam name: String
-    ): Response<NodeOverviewResponse> {
+    ): Response<List<ProjectPackageOverview>> {
         return ResponseBuilder.success(nodeSearchService.nodeOverview(projectId, name))
     }
 

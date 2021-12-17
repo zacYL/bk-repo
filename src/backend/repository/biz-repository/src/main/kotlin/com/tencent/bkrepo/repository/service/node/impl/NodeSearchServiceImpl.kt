@@ -44,7 +44,7 @@ import com.tencent.bkrepo.repository.dao.NodeDao
 import com.tencent.bkrepo.repository.model.TNode
 import com.tencent.bkrepo.repository.pojo.metric.CountResult
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
-import com.tencent.bkrepo.repository.pojo.software.NodeOverviewResponse
+import com.tencent.bkrepo.repository.pojo.software.ProjectPackageOverview
 import com.tencent.bkrepo.repository.search.node.NodeQueryContext
 import com.tencent.bkrepo.repository.search.node.NodeQueryInterpreter
 import com.tencent.bkrepo.repository.service.node.NodeSearchService
@@ -74,7 +74,7 @@ class NodeSearchServiceImpl(
         return doQuery(context)
     }
 
-    override fun nodeOverview(projectId: String, name: String): NodeOverviewResponse {
+    override fun nodeOverview(projectId: String, name: String): List<ProjectPackageOverview> {
         val genericRepos = repositoryService.allRepos(projectId, null, RepositoryType.GENERIC).map { it?.name }
         val criteria = Criteria.where(TNode::repoName.name).`in`(genericRepos)
         criteria.and(TNode::projectId.name).`is`(projectId)
@@ -90,19 +90,27 @@ class NodeSearchServiceImpl(
             Aggregation.group("\$repoName").count().`as`("count")
         )
         val result = nodeDao.aggregate(aggregation, CountResult::class.java).mappedResults
-        var sum = 0L
-        val list = mutableListOf<NodeOverviewResponse.RepoNodeOverview>()
-        result.map {
-            list.add(
-                NodeOverviewResponse.RepoNodeOverview(
-                    repoName = it.id!!,
-                    nodes = it.count
-                )
+        return transTree(projectId, result)
+    }
+
+    private fun transTree(projectId: String, list: List<CountResult>): List<ProjectPackageOverview> {
+        val projectSet = mutableSetOf<ProjectPackageOverview>()
+        projectSet.add(
+            ProjectPackageOverview(
+                projectId = projectId,
+                repos = mutableSetOf(),
+                sum = 0L
             )
-            sum += it.count
+        )
+        list.map { pojo ->
+            val repoOverview = ProjectPackageOverview.RepoPackageOverview(
+                repoName = pojo.id,
+                packages = pojo.count
+            )
+            projectSet.first().repos.add(repoOverview)
+            projectSet.first().sum += pojo.count
         }
-        list.sortByDescending { it.nodes }
-        return NodeOverviewResponse(list = list, sum = sum)
+        return projectSet.toList()
     }
 
     override fun nodeGlobalSearch(projectId: String, name: String): Page<Map<String, Any?>> {

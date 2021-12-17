@@ -140,14 +140,13 @@ class CpackPackageServiceImpl(
                 this.clear()
                 this.addAll(projectsRule)
             }
-
+            queryModel.rule = Rule.NestedRule(rules, Rule.NestedRule.RelationType.OR)
         }
         if (projectId != null && repoName == null) {
             val genericRepos =
                 cpackRepositoryService.listRepo(projectId, type = repoType, includeGeneric = false).map { it.name }
             rules.add(Rule.QueryRule(field = "repoName", value = genericRepos, operation = OperationType.IN))
         }
-        queryModel.rule = Rule.NestedRule(rules, Rule.NestedRule.RelationType.OR)
         val context = cpackPackageSearchInterpreter.interpret(queryModel)
         val query = context.mongoQuery
         val countQuery = Query.of(query).limit(0).skip(0)

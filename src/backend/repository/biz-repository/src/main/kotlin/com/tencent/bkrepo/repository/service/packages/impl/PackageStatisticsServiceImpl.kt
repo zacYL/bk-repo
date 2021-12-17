@@ -8,7 +8,7 @@ import com.tencent.bkrepo.repository.model.TPackage
 import com.tencent.bkrepo.repository.model.TPackageVersion
 import com.tencent.bkrepo.repository.pojo.metric.CountResult
 import com.tencent.bkrepo.repository.pojo.metric.PackageDetail
-import com.tencent.bkrepo.repository.pojo.software.PackageOverviewResponse
+import com.tencent.bkrepo.repository.pojo.software.ProjectPackageOverview
 import com.tencent.bkrepo.repository.service.packages.PackageStatisticsService
 import org.springframework.data.mongodb.core.aggregation.Aggregation
 import org.springframework.data.mongodb.core.query.Criteria
@@ -60,8 +60,12 @@ class PackageStatisticsServiceImpl(
         return packageVersionDao.find(query.with(page)).map { convert(it) }
     }
 
-    override fun packageOverview(repoType: String, projectId: String, packageName: String?): PackageOverviewResponse {
-        val criteria = Criteria.where(TPackage::type.name).`is`(repoType)
+    override fun packageOverview(
+        repoType: String,
+        projectId: String,
+        packageName: String?
+    ): List<ProjectPackageOverview> {
+        val criteria = Criteria.where(TPackage::type.name).`is`(repoType.toUpperCase())
         projectId.let { criteria.and(TPackage::projectId.name).`is`(projectId) }
         packageName?.let {
             val escapedValue = MongoEscapeUtils.escapeRegexExceptWildcard(packageName)
@@ -74,19 +78,27 @@ class PackageStatisticsServiceImpl(
             Aggregation.group("\$repoName").count().`as`("count")
         )
         val result = packageDao.aggregate(aggregation, CountResult::class.java).mappedResults
-        var sum = 0L
-        val list = mutableListOf<PackageOverviewResponse.RepoPackageOverview>()
-        result.map {
-            list.add(
-                PackageOverviewResponse.RepoPackageOverview(
-                    repoName = it.id!!,
-                    packages = it.count
-                )
+        return transTree(projectId, result)
+    }
+
+    private fun transTree(projectId: String, list: List<CountResult>): List<ProjectPackageOverview> {
+        val projectSet = mutableSetOf<ProjectPackageOverview>()
+        projectSet.add(
+            ProjectPackageOverview(
+                projectId = projectId,
+                repos = mutableSetOf(),
+                sum = 0L
             )
-            sum += it.count
+        )
+        list.map { pojo ->
+            val repoOverview = ProjectPackageOverview.RepoPackageOverview(
+                repoName = pojo.id,
+                packages = pojo.count
+            )
+            projectSet.first().repos.add(repoOverview)
+            projectSet.first().sum += pojo.count
         }
-        list.sortByDescending { it.packages }
-        return PackageOverviewResponse(list = list, sum = sum)
+        return projectSet.toList()
     }
 
     private fun convert(tPackageVersion: TPackageVersion?): PackageDetail? {

@@ -1,7 +1,7 @@
 package com.tencent.bkrepo.repository.service.packages
 
-import com.tencent.bkrepo.repository.pojo.software.PackageOverviewResponse
 import com.tencent.bkrepo.repository.pojo.metric.PackageDetail
+import com.tencent.bkrepo.repository.pojo.software.ProjectPackageOverview
 import java.time.LocalDateTime
 
 interface PackageStatisticsService {
@@ -9,7 +9,7 @@ interface PackageStatisticsService {
     /**
      * 包搜索总览
      */
-    fun packageOverview(repoType: String, projectId: String, packageName: String?): PackageOverviewResponse
+    fun packageOverview(repoType: String, projectId: String, packageName: String?): List<ProjectPackageOverview>
 
     /**
      * 制品总数

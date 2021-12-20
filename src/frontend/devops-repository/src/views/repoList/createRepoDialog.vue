@@ -171,6 +171,7 @@
                     type: 'generic',
                     name: '',
                     public: false,
+                    system: false,
                     enabledFileLists: false,
                     repodataDepth: 0,
                     groupXmlSet: [],

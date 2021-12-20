@@ -9,12 +9,12 @@
             :key="value"
             :value="value"
             :disabled="disabled">
-            <div class="card-radio" :class="{ 'checked': value === $attrs.value }">
-                <label class="card-label">{{ label }}</label>
-                <div class="card-tip">{{ tip }}</div>
-                <div v-show="value === $attrs.value" class="top-right-selected">
+            <div class="card-radio flex-column" :class="{ 'checked': value === $attrs.value }">
+                <span class="card-label">{{ label }}</span>
+                <span class="card-tip">{{ tip }}</span>
+                <span v-show="value === $attrs.value" class="top-right-selected">
                     <i class="devops-icon icon-check-1"></i>
-                </div>
+                </span>
             </div>
         </bk-radio-button>
     </bk-radio-group>

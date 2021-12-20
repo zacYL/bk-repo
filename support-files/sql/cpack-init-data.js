@@ -35,3 +35,28 @@ db.project.updateOne(
     },
     { upsert: true }
 );
+
+// 初始化custom仓库
+db.repository.updateOne(
+    {
+        projectId: "demo",
+        name: "custom"
+    },
+    {
+        $setOnInsert: {
+            projectId: "demo",
+            name: "custom",
+            type: "GENERIC",
+            category: "LOCAL",
+            public: false,
+            description: "generic custom repository",
+            configuration: "{}",
+            display: true,
+            createdBy: "admin",
+            createdDate: new Date(),
+            lastModifiedBy: "admin",
+            lastModifiedDate: new Date()
+        }
+    },
+    { upsert: true }
+);

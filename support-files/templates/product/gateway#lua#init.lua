@@ -36,7 +36,7 @@ config = {
     nodes_url = "/v1/catalog/nodes"
   },
   bkrepo = {
-    authorization = "__BK_REPO_AUTHORIZATION__"
+    --authorization = "__BK_REPO_AUTHORIZATION__"
   },
   mode = "__BK_REPO_DEPLOY_MODE__",
 }

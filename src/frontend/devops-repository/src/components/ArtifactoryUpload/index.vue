@@ -146,13 +146,5 @@
         top: 10px;
         right: 10px;
     }
-    input[type=file] {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        z-index: 10;
-        opacity: 0;
-        cursor: pointer;
-    }
 }
 </style>

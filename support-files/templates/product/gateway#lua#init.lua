@@ -33,6 +33,7 @@ config = {
     http_port = "__BK_REPO_CONSUL_SERVER_PORT__",
     domain = "__BK_REPO_CONSUL_DOMAIN__",
     tag = "__BK_REPO_CONSUL_TAG__",
+    suffix = "",
     nodes_url = "/v1/catalog/nodes"
   },
   bkrepo = {

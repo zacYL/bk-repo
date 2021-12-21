@@ -67,7 +67,48 @@ class MailServiceImpl(
             val user = userService.userInfoById(shareUserId).data!!
             user.email?.let { receivers.add(it) }
         }
-        // 获取发送用户中文名
+        val expireDays = temporaryToken.expireDate
+        when (mailConf.mailNotifyType) {
+            MailNotifyType.CPACK -> sendMimeMail(userId, fileShareInfo, receivers.toList(), expireDays)
+            MailNotifyType.BK -> bkMailMessage(userId, fileShareInfo, receivers.toList(), expireDays)
+            MailNotifyType.DEVOPS -> devopsMailMessage(userId, fileShareInfo, receivers.toList(), expireDays)
+        }
+    }
+
+    override fun fileShare(userId: String, content: String, users: List<String>) {
+        val artifactInfo = resolveArtifactInfo(content)
+        val nodeDetail =
+            nodeClient.getNodeDetail(
+                artifactInfo.projectId,
+                artifactInfo.repoName,
+                artifactInfo.getArtifactFullPath()
+            ).data ?: throw RuntimeException("$artifactInfo is delete")
+        val fileShareInfo = FileShareInfo(
+            fileName = nodeDetail.name,
+            md5 = nodeDetail.md5 ?: "Can not found md5 value",
+            projectId = artifactInfo.projectId,
+            repoName = artifactInfo.repoName,
+            downloadUrl = content,
+            qrCodeBase64 = if (nodeDetail.name.endsWith("apk") || nodeDetail.name.endsWith("ipa")) {
+                FileShareMailTemplate.getQRCodeBase64(content)
+            } else "null"
+        )
+
+        val token = content.substringAfterLast("?token=").removeSuffix("&download=true")
+        if (token.isBlank()) {
+            throw ErrorCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID)
+        }
+        val temporaryToken = temporaryTokenClient.getTokenInfo(token).data
+            ?: throw ErrorCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID)
+        val shareUsers = temporaryToken.authorizedUserList
+        val receivers = mutableSetOf<String>()
+        //链接中分享人为空时，取传递过来的参数
+        if (shareUsers.isEmpty()) {
+            for (shareUserId in users) {
+                val user = userService.userInfoById(shareUserId).data!!
+                user.email?.let { receivers.add(it) }
+            }
+        }
         val expireDays = temporaryToken.expireDate
         when (mailConf.mailNotifyType) {
             MailNotifyType.CPACK -> sendMimeMail(userId, fileShareInfo, receivers.toList(), expireDays)

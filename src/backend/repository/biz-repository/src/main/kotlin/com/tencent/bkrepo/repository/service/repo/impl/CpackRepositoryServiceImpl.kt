@@ -35,7 +35,12 @@ class CpackRepositoryServiceImpl(
         return Pages.ofResponse(pageRequest, totalRecords, records)
     }
 
-    override fun listRepo(projectId: String?, name: String?, type: RepositoryType?, includeGeneric: Boolean): List<RepositoryInfo> {
+    override fun listRepo(
+        projectId: String?,
+        name: String?,
+        type: RepositoryType?,
+        includeGeneric: Boolean
+    ): List<RepositoryInfo> {
         val query = buildListQuery(projectId, name, type, includeGeneric)
         return repositoryDao.find(query).map { convertToInfo(it)!! }
     }

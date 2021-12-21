@@ -33,8 +33,6 @@ class UserSysRoleController(
         @RequestAttribute userId: String,
         @PathVariable projectId: String
     ): Response<List<Role>> {
-        if (permissionService.isProjectManager(userId)) return ResponseBuilder.success(
-            roleService.systemRoles())
         val permissions = permissionService.listPermission(projectId, null)
         val roles = mutableSetOf<String>()
         for (permission in permissions) {

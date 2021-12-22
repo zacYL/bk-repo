@@ -92,6 +92,7 @@ const routes = [
                 component: projectConfig,
                 meta: {
                     breadcrumb: [
+                        { name: 'projectManage', label: '项目管理' },
                         { name: 'projectConfig', label: '项目设置' }
                     ]
                 }

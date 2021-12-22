@@ -12,8 +12,8 @@
                     <bk-form-item label="项目描述">
                         <span>{{ currentProject.description }}</span>
                     </bk-form-item>
-                    <bk-form-item v-if="$route.name === 'projectManage'">
-                        <bk-button theme="primary" @click="$emit('edit-basic', currentProject)">修改</bk-button>
+                    <bk-form-item>
+                        <bk-button theme="primary" @click="showProjectDialog">修改</bk-button>
                     </bk-form-item>
                 </bk-form>
             </bk-tab-panel>
@@ -56,17 +56,15 @@
                 </bk-table>
             </bk-tab-panel>
         </bk-tab>
+        <project-info-dialog ref="projectInfoDialog"></project-info-dialog>
     </div>
 </template>
 <script>
+    import projectInfoDialog from './projectInfoDialog'
     import { mapState, mapActions } from 'vuex'
     export default {
         name: 'projectConfig',
-        props: {
-            project: {
-                type: Object
-            }
-        },
+        components: { projectInfoDialog },
         data () {
             return {
                 tabName: 'basic',
@@ -103,10 +101,10 @@
         computed: {
             ...mapState(['userList', 'projectList']),
             projectId () {
-                return this.$route.params.projectId
+                return this.$route.query.projectId || this.$route.params.projectId
             },
             currentProject () {
-                return this.project || this.projectList.find(project => project.id === this.projectId) || {}
+                return this.projectList.find(project => project.id === this.projectId) || {}
             }
         },
         watch: {
@@ -185,6 +183,17 @@
                     tab[type] = []
                 }).finally(() => {
                     tab.loading = false
+                })
+            },
+            showProjectDialog () {
+                const { id = '', name = '', description = '' } = this.currentProject
+                this.$refs.projectInfoDialog.setData({
+                    show: true,
+                    loading: false,
+                    add: !id,
+                    id,
+                    name,
+                    description
                 })
             }
         }

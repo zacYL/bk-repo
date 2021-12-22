@@ -32,6 +32,7 @@ class CanwayPermissionService(
         return checkInstance("bk_ci", canwayPermissionResponse)
     }
 
+    @Suppress("TooGenericExceptionCaught")
     fun checkCanwayPermission(
         projectId: String,
         repoName: String?,
@@ -40,10 +41,15 @@ class CanwayPermissionService(
         tenantId: String? = null
     ): Boolean {
         if (checkUserHasProjectPermission(operator, tenantId)) return true
-        val canwayPermissionResponse = getCanwayPermissionInstance(
-            projectId, operator, action, BELONGCODE, RESOURCECODE
-        )
-        return checkInstance(repoName, canwayPermissionResponse)
+        return try {
+            val canwayPermissionResponse = getCanwayPermissionInstance(
+                projectId, operator, action, BELONGCODE, RESOURCECODE
+            )
+            checkInstance(repoName, canwayPermissionResponse)
+        } catch (e: Exception) {
+            logger.error("Devops permission request failed: ", e)
+            false
+        }
     }
 
     private fun checkInstance(repoName: String?, canwayPermission: CanwayPermissionResponse?): Boolean {

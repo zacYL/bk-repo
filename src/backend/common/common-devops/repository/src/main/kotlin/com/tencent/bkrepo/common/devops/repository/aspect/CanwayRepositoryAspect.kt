@@ -1,12 +1,8 @@
 package com.tencent.bkrepo.common.devops.repository.aspect
 
-import com.tencent.bkrepo.auth.api.ServicePermissionResource
 import com.tencent.bkrepo.auth.constant.BK_SOFTWARE
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionUserRequest
 import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
-import com.tencent.bkrepo.common.api.exception.NotFoundException
-import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
@@ -38,20 +34,19 @@ class CanwayRepositoryAspect(
 ) {
 
     @Autowired
-    lateinit var permissionService: ServicePermissionResource
-
-    @Autowired
     lateinit var canwayPermissionService: CanwayPermissionService
 
     private val devopsHost = devopsConf.devopsHost.removeSuffix("/")
 
+    @Suppress("TooGenericExceptionCaught", "SwallowedException")
     @Around(value = "execution(* com.tencent.bkrepo.repository.service.repo.impl.RepositoryServiceImpl.createRepo(..))")
     fun beforeCreateRepo(point: ProceedingJoinPoint): Any? {
         val args = point.args
         val repo = args.first() as RepoCreateRequest
         // 兼容处理
         val tenantId = try {
-            HttpContextHolder.getRequest().getHeader(TENANTID)
+            val tenant = HttpContextHolder.getRequest().getHeader(TENANTID)
+            if (tenant.isNullOrBlank()) "bk_ci" else tenant
         } catch (e: Exception) {
             "bk_ci"
         }
@@ -62,8 +57,8 @@ class CanwayRepositoryAspect(
         } else {
             val userId = repo.operator
             if (!canwayPermissionService.checkCanwayPermission(
-                repo.projectId, repo.name, userId, CanwayPermissionType.CREATE, tenantId
-            )
+                    repo.projectId, repo.name, userId, CanwayPermissionType.CREATE, tenantId
+                )
             ) throw CanwayPermissionException()
             logger.info("userId: $userId  ,   operator: ${repo.operator}")
             updateResource(repo.projectId, repo.name, userId, ciAddResourceApi)

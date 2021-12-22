@@ -31,7 +31,6 @@
 
 package com.tencent.bkrepo.repository.pojo.project
 
-import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
 
@@ -42,7 +41,5 @@ data class ProjectUpdateRequest(
     @ApiModelProperty("显示名", required = false)
     val displayName: String? = null,
     @ApiModelProperty("描述", required = false)
-    val description: String? = null,
-    @ApiModelProperty("操作用户", required = false)
-    val operator: String = SYSTEM_USER
+    val description: String? = null
 ) : ProjectRequest

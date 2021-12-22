@@ -74,7 +74,7 @@ interface ProjectService {
      */
     fun createProject(request: ProjectCreateRequest): ProjectInfo
 
-    fun updateProject(request: ProjectUpdateRequest): Boolean
+    fun updateProject(projectId: String, request: ProjectUpdateRequest): Boolean
 
     /**
      * 判断项目信息是否存在

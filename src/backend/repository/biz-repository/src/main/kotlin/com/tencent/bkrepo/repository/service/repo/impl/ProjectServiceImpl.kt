@@ -43,7 +43,11 @@ import com.tencent.bkrepo.repository.service.repo.ProjectService
 import com.tencent.bkrepo.repository.util.ProjectEventFactory.buildCreatedEvent
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
-import org.springframework.data.mongodb.core.query.*
+import org.springframework.data.mongodb.core.query.Criteria
+import org.springframework.data.mongodb.core.query.Query
+import org.springframework.data.mongodb.core.query.Update
+import org.springframework.data.mongodb.core.query.inValues
+import org.springframework.data.mongodb.core.query.where
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -133,7 +137,7 @@ class ProjectServiceImpl(
         return false
     }
 
-    override fun updateProject(request: ProjectUpdateRequest): Boolean {
+    override fun updateProject(projectId: String, request: ProjectUpdateRequest): Boolean {
         with(request) {
             if (!checkExist(name)) {
                 throw ErrorCodeException(ArtifactMessageCode.PROJECT_NOT_FOUND, name)
@@ -143,8 +147,9 @@ class ProjectServiceImpl(
                     throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, request::displayName.name)
                 }
             }
-            val query = Query.query(Criteria.where(TProject::name.name).`is`(request.name))
+            val query = Query.query(Criteria.where(TProject::id.name).`is`(projectId))
             val update = Update().apply {
+                this.set(TProject::name.name, request.name)
                 request.displayName?.let { this.set(TProject::displayName.name, it) }
                 request.description?.let { this.set(TProject::description.name, it) }
             }

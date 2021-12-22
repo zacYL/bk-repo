@@ -4,6 +4,7 @@ import com.tencent.bkrepo.auth.api.ServiceUserResource
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.cpack.conf.CpackMailConf
 import com.tencent.bkrepo.common.cpack.enums.MailNotifyType
@@ -43,7 +44,7 @@ class MailServiceImpl(
                 artifactInfo.projectId,
                 artifactInfo.repoName,
                 artifactInfo.getArtifactFullPath()
-            ).data ?: throw RuntimeException("$artifactInfo is delete")
+            ).data ?: throw ArtifactNotFoundException(artifactInfo.getArtifactFullPath())
         val fileShareInfo = FileShareInfo(
             fileName = nodeDetail.name,
             md5 = nodeDetail.md5 ?: "Can not found md5 value",
@@ -82,7 +83,7 @@ class MailServiceImpl(
                 artifactInfo.projectId,
                 artifactInfo.repoName,
                 artifactInfo.getArtifactFullPath()
-            ).data ?: throw RuntimeException("$artifactInfo is delete")
+            ).data ?: throw throw ArtifactNotFoundException(artifactInfo.getArtifactFullPath())
         val fileShareInfo = FileShareInfo(
             fileName = nodeDetail.name,
             md5 = nodeDetail.md5 ?: "Can not found md5 value",

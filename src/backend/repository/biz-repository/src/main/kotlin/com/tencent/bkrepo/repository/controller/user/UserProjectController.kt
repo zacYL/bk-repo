@@ -33,7 +33,10 @@ import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.common.security.permission.Principal
 import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
-import com.tencent.bkrepo.repository.pojo.project.*
+import com.tencent.bkrepo.repository.pojo.project.ProjectCreateRequest
+import com.tencent.bkrepo.repository.pojo.project.ProjectInfo
+import com.tencent.bkrepo.repository.pojo.project.ProjectUpdateRequest
+import com.tencent.bkrepo.repository.pojo.project.UserProjectCreateRequest
 import com.tencent.bkrepo.repository.service.repo.ProjectService
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
@@ -42,7 +45,6 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RequestAttribute
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -86,15 +88,14 @@ class UserProjectController(
     }
 
     @ApiOperation("查询项目是否存在")
-    @GetMapping("/exist")
-    fun checkProjectExist(
+    @PutMapping("/{projectId}")
+    fun updateProject(
         @RequestAttribute userId: String,
         @ApiParam(value = "项目ID", required = false)
-        @RequestParam name: String?,
-        @ApiParam(value = "项目displayName", required = false)
-        @RequestParam displayName: String?
+        @PathVariable projectId: String,
+        @RequestBody projectUpdateRequest: ProjectUpdateRequest
     ): Response<Boolean> {
-        return ResponseBuilder.success(projectService.checkProjectExist(name, displayName))
+        return ResponseBuilder.success(projectService.updateProject(projectId, projectUpdateRequest))
     }
 
     @ApiOperation("项目列表")

@@ -75,18 +75,22 @@ class HttpAuthSecurityConfiguration(
         unifiedCustomizer.stream().forEach {
             it.customize(httpAuthSecurity)
         }
+
         httpAuthSecurity.customizers.forEach {
             it.customize(httpAuthSecurity)
         }
+
         if (httpAuthSecurity.basicAuthEnabled) {
             httpAuthSecurity.addHttpAuthHandler(BasicAuthHandler(authenticationManager))
         }
+
+        httpAuthSecurity.addHttpAuthHandler(CookieAuthHandler(jwtAuthProperties))
+
         if (httpAuthSecurity.platformAuthEnabled) {
             httpAuthSecurity.addHttpAuthHandler(PlatformAuthHandler(authenticationManager))
         }
         if (httpAuthSecurity.jwtAuthEnabled) {
             httpAuthSecurity.addHttpAuthHandler(JwtAuthHandler(jwtAuthProperties))
         }
-        httpAuthSecurity.addHttpAuthHandler(CookieAuthHandler(jwtAuthProperties))
     }
 }

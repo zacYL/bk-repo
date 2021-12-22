@@ -32,27 +32,14 @@
 package com.tencent.bkrepo.common.security.http.cookie
 
 import com.tencent.bkrepo.auth.constant.BKREPO_TICKET
-import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
-import com.tencent.bkrepo.common.api.constant.CharPool.COLON
-import com.tencent.bkrepo.common.api.constant.HttpHeaders
-import com.tencent.bkrepo.common.api.constant.PLATFORM_KEY
-import com.tencent.bkrepo.common.api.constant.USER_KEY
-import com.tencent.bkrepo.common.security.constant.AUTH_HEADER_UID
-import com.tencent.bkrepo.common.security.constant.BEARER_AUTH_PREFIX
-import com.tencent.bkrepo.common.security.constant.PLATFORM_AUTH_PREFIX
 import com.tencent.bkrepo.common.security.exception.AuthenticationException
 import com.tencent.bkrepo.common.security.http.core.HttpAuthHandler
 import com.tencent.bkrepo.common.security.http.credentials.AnonymousCredentials
 import com.tencent.bkrepo.common.security.http.credentials.HttpAuthCredentials
-import com.tencent.bkrepo.common.security.http.jwt.JwtAuthCredentials
 import com.tencent.bkrepo.common.security.http.jwt.JwtAuthProperties
-import com.tencent.bkrepo.common.security.manager.AuthenticationManager
 import com.tencent.bkrepo.common.security.util.JwtUtils
 import io.jsonwebtoken.ExpiredJwtException
 import io.jsonwebtoken.JwtException
-import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Autowired
-import java.util.Base64
 import javax.servlet.http.HttpServletRequest
 
 /**
@@ -65,13 +52,14 @@ open class CookieAuthHandler(properties: JwtAuthProperties) : HttpAuthHandler {
     override fun extractAuthCredentials(request: HttpServletRequest): HttpAuthCredentials {
         val cookies = request.cookies?: return AnonymousCredentials()
         for (cookie in cookies) {
-            return if (cookie.name == BKREPO_TICKET) {
-                CookieAuthCredentials(cookie.value)
-            } else AnonymousCredentials()
+            if (cookie.name == BKREPO_TICKET) {
+                return CookieAuthCredentials(cookie.value)
+            }
         }
         return AnonymousCredentials()
     }
 
+    @Suppress("SwallowedException")
     override fun onAuthenticate(request: HttpServletRequest, authCredentials: HttpAuthCredentials): String {
         require(authCredentials is CookieAuthCredentials)
         try {

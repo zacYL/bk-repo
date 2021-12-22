@@ -27,6 +27,11 @@
                 </empty-data>
             </template>
             <bk-table-column label="用户组名称" prop="name" width="200"></bk-table-column>
+            <bk-table-column label="关联用户数" width="200">
+                <template #default="{ row }">
+                    {{ row.users.length }}
+                </template>
+            </bk-table-column>
             <bk-table-column label="描述" prop="description"></bk-table-column>
             <bk-table-column :label="$t('operation')" width="150">
                 <div slot-scope="props" class="flex-align-center">

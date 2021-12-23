@@ -1,9 +1,7 @@
 package com.tencent.bkrepo.common.devops.repository.aspect
 
 import com.tencent.bkrepo.auth.constant.BK_SOFTWARE
-import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
-import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.devops.api.BELONGCODE
@@ -16,11 +14,9 @@ import com.tencent.bkrepo.common.devops.api.pojo.ResourceRegisterInfo
 import com.tencent.bkrepo.common.devops.api.util.http.CanwayHttpUtils
 import com.tencent.bkrepo.common.devops.repository.TENANTID
 import com.tencent.bkrepo.common.devops.repository.service.CanwayPermissionService
-import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoDeleteRequest
-import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
@@ -72,154 +68,6 @@ class CanwayRepositoryAspect(
                     updateResource(repo.projectId, repo.name, repo.operator, ciDeleteResourceApi)
                 }
                 throw exception
-            }
-            return result
-        }
-    }
-
-    @Around(value = "execution(* com.tencent.bkrepo.repository.service.repo.impl.RepositoryServiceImpl.listRepo(..))")
-    fun afterListRepo(point: ProceedingJoinPoint): Any {
-        val args = point.args
-        val result = point.proceed(args)
-        val projectId = args.first() as String
-        if (projectId == BK_SOFTWARE) {
-            return result
-        } else {
-            val request = HttpContextHolder.getRequest()
-            val api = request.requestURI.removePrefix("/").removePrefix("web/")
-            if (api.startsWith("api", ignoreCase = true)) {
-                result?.let {
-                    val userId = request.getAttribute(USER_KEY) ?: throw PermissionException()
-                    val resultRepos = mutableListOf<RepositoryInfo>()
-                    val repoInfos = result as List<RepositoryInfo>
-                    val hasPermissionRepos = getDevopsRepos(projectId, userId as String)
-                    for (repo in repoInfos) {
-                        if (hasPermissionRepos.contains(repo.name)) resultRepos.add(repo)
-                    }
-                    return resultRepos
-                }
-            }
-            return result
-        }
-    }
-
-    /**
-     * 获取用户在 CI 权限中心有权限的仓库
-     */
-    private fun getDevopsRepos(projectId: String, userId: String): Set<String> {
-        val canwayPermissionResponse = canwayPermissionService.getCanwayPermissionInstance(
-            projectId = projectId,
-            operator = userId,
-            action = CanwayPermissionType.ACCESS,
-            belongCode = BELONGCODE,
-            resourceCode = RESOURCECODE
-        )
-        return canwayPermissionResponse?.instanceCodes?.first()?.resourceInstance ?: setOf()
-    }
-
-    @Around(value = "execution(* com.tencent.bkrepo.repository.service.repo.impl.RepositoryServiceImpl.listRepoPage(..))")
-    fun afterPageRepo(point: ProceedingJoinPoint): Any {
-        val args = point.args
-        val result = point.proceed(args)
-        val projectId = args.first() as String
-        if (projectId == BK_SOFTWARE) {
-            return result
-        } else {
-            val request = HttpContextHolder.getRequest()
-            val api = request.requestURI.removePrefix("/").removePrefix("web/")
-            if (api.startsWith("api", ignoreCase = true)) {
-                result?.let {
-                    val userId = request.getAttribute(USER_KEY) ?: throw PermissionException()
-                    val resultRepos = mutableListOf<RepositoryInfo>()
-                    val page = (result as Page<RepositoryInfo>)
-                    val repoInfos = page.records
-                    val hasPermissionRepos = getDevopsRepos(projectId, userId as String)
-                    for (repo in repoInfos) {
-                        if (hasPermissionRepos.contains(repo.name)) {
-                            resultRepos.add(
-                                repo.copy(
-                                    hasPermission = true
-                                )
-                            )
-                        } else {
-                            resultRepos.add(repo)
-                        }
-                    }
-                    return result.copy(
-                        records = resultRepos
-                    )
-                }
-            }
-            return result
-        }
-    }
-
-    @Around(value = "execution(* com.tencent.bkrepo.repository.service.repo.impl.RepositoryServiceImpl.listPermissionRepoPage(..))")
-    fun afterListPermissionRepoPage(point: ProceedingJoinPoint): Any {
-        val args = point.args
-        val result = point.proceed(args)
-        val userId = args.first() as String
-        val projectId = args[1] as String
-        if (projectId == BK_SOFTWARE) {
-            return result
-        } else {
-            val request = HttpContextHolder.getRequest()
-            val api = request.requestURI.removePrefix("/").removePrefix("web/")
-            if (api.startsWith("api", ignoreCase = true)) {
-                result?.let {
-                    val resultRepos = mutableListOf<RepositoryInfo>()
-                    val page = (result as Page<RepositoryInfo>)
-                    val repoInfos = page.records
-                    val hasPermissionRepos = getDevopsRepos(projectId, userId)
-                    for (repo in repoInfos) {
-                        if (hasPermissionRepos.contains(repo.name)) {
-                            resultRepos.add(
-                                repo.copy(
-                                    hasPermission = true
-                                )
-                            )
-                        } else {
-                            resultRepos.add(repo)
-                        }
-                    }
-                    return result.copy(
-                        records = resultRepos
-                    )
-                }
-            }
-            return result
-        }
-    }
-
-    @Around(value = "execution(* com.tencent.bkrepo.repository.service.repo.impl.RepositoryServiceImpl.listPermissionRepo(..))")
-    fun afterListPermissionRepo(point: ProceedingJoinPoint): Any {
-        val args = point.args
-        val result = point.proceed(args)
-        val userId = args.first() as String
-        val projectId = args[1] as String
-        if (projectId == BK_SOFTWARE) {
-            return result
-        } else {
-            val request = HttpContextHolder.getRequest()
-            val api = request.requestURI.removePrefix("/").removePrefix("web/")
-            if (api.startsWith("api", ignoreCase = true)) {
-                result?.let {
-                    val resultRepos = mutableListOf<RepositoryInfo>()
-                    val page = (result as List<RepositoryInfo>)
-                    val hasPermissionRepos = getDevopsRepos(projectId, userId)
-                    for (repo in page) {
-                        if (hasPermissionRepos.contains(repo.name)) {
-                            resultRepos.add(
-                                repo.copy(
-                                    hasPermission = true
-                                )
-                            )
-                        } else {
-                            resultRepos.add(repo)
-                        }
-                    }
-                    return resultRepos
-                }
             }
             return result
         }

@@ -66,7 +66,7 @@
 <script>
     import OperationList from '@repository/components/OperationList'
     import projectInfoDialog from './projectInfoDialog'
-    import { mapState, mapActions } from 'vuex'
+    import { mapState } from 'vuex'
     import { formatDate } from '@repository/utils'
     export default {
         name: 'projectManage',
@@ -91,12 +91,6 @@
         },
         methods: {
             formatDate,
-            ...mapActions([
-                'getProjectList',
-                'createProject',
-                'editProject',
-                'checkProject'
-            ]),
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
                 this.pagination.current = current
                 this.pagination.limit = limit

@@ -65,7 +65,7 @@
                             trigger: 'blur'
                         },
                         {
-                            validator: name => this.asynCheck({ id: this.editProjectDialog.id, name }),
+                            validator: name => this.asynCheck({ name }),
                             message: '项目名称已存在',
                             trigger: 'blur'
                         }
@@ -75,6 +75,12 @@
         },
         computed: {
             ...mapState(['projectList'])
+        },
+        mounted () {
+            const breadcrumb = this.$router.getRoutes().find(r => r.name === 'projectConfig').meta.breadcrumb
+            if (breadcrumb.length === 1) {
+                breadcrumb.unshift({ name: 'projectManage', label: '项目管理' })
+            }
         },
         methods: {
             ...mapActions([
@@ -94,7 +100,6 @@
                 if (!this.editProjectDialog.add) {
                     const project = this.projectList.find(v => v.id === this.editProjectDialog.id)
                     if (!name || project.name === name) return true
-                    return false
                 }
                 return this.checkProject({ id, name }).then(res => !res)
             },

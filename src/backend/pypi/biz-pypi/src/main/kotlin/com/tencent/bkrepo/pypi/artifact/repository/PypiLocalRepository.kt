@@ -31,10 +31,8 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.constant.ensureSuffix
-import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
-import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactMigrateContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
@@ -55,7 +53,6 @@ import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.query.model.Sort
-import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.pypi.artifact.PypiProperties
@@ -347,17 +344,14 @@ class PypiLocalRepository(
             return null
         }
         with(artifactInfo) {
-            val node = nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data
-                ?: throw ErrorCodeException(ArtifactMessageCode.NODE_NOT_FOUND, getArtifactFullPath())
+            val node = nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data?:return null
             // 请求不带包名，返回包名列表.
             if (getArtifactFullPath() == "/") {
                 if (node.folder) {
                     val nodeList = nodeClient.listNode(
                         projectId, repoName, getArtifactFullPath(), includeFolder = true,
-                        deep =
-                            true
-                    ).data
-                        ?: throw ErrorCodeException(ArtifactMessageCode.NODE_NOT_FOUND, getArtifactFullPath())
+                        deep = true
+                    ).data ?: return null
                     // 过滤掉'根节点',
                     return buildPackageListContent(
                         artifactInfo.projectId,
@@ -372,8 +366,7 @@ class PypiLocalRepository(
                     val packageNode = nodeClient.listNode(
                         projectId, repoName, getArtifactFullPath(), includeFolder = false,
                         deep = true
-                    ).data
-                        ?: throw ErrorCodeException(ArtifactMessageCode.NODE_NOT_FOUND, getArtifactFullPath())
+                    ).data ?: return null
                     return buildPypiPageContent(
                         buildPackageFileNodeListContent(packageNode)
                     )

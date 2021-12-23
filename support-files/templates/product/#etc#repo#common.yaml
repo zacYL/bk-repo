@@ -24,7 +24,7 @@ spring:
       ### 单机情况下关闭事物，否则报错
       transaction:
         enabled: false
-      uri: mongodb://__CPACK_MONGODB_USER__:__CPACK_MONGODB_PASSWORD__@__CPACK_MONGODB_ADDR__/__CPACK_MONGODB_DB_NAME__?maxPoolSize=50&replicaSet=rs0&slaveOk=true&safe=true&w=__MONGODB_RES__&wtimeoutMS=2000
+      uri: mongodb://__CPACK_MONGODB_USER__:__CPACK_MONGODB_PASSWORD__@__CPACK_MONGODB_ADDR__/__CPACK_MONGODB_DB_NAME__?maxPoolSize=50&replicaSet=rs&slaveOk=true&safe=true&w=__MONGODB_RES__&readPreference=secondaryPreferred&wtimeoutMS=2000
 
 feign:
   okhttp:
@@ -98,9 +98,6 @@ service:
   suffix: "__CPACK_SERVICE_SUFFIX__"
   prefix: "__CPACK_SERVICE_PREFIX__"
 
-# 许可需要的配置  
-service-suffix: "-devops"
-
 # 自身节点信息配置
 cluster:
   self:
@@ -129,18 +126,13 @@ mail:
       enable: true
       required: true
 
-# 屏蔽 CI license , 禁止在客户环境配置
-ci:
-  license: false
+# 许可需要的配置
+service-suffix: "-devops"
 
-# 需要限制许可人数的时候
-devopsGateway:
-  host: __BK_CI_PUBLIC_URL__
-
-# canway certificate
-license:
-  auth:
-    host: __BK_HTTP_SCHEMA__://__CW_LICENSE_HOST__:__CW_LICENSE_PORT__
+bk:
+  paas:
+    host: http://paas.canwayrepo.com
+    version: "3.0.0"
 
 # 独立部署模式固定该配置
 auth:

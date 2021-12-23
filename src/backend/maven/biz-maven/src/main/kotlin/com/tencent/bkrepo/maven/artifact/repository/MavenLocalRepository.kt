@@ -41,7 +41,6 @@ import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
-import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.maven.PACKAGE_SUFFIX_REGEX
 import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
@@ -61,6 +60,7 @@ import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateR
 import org.apache.commons.lang.StringUtils
 import org.apache.maven.artifact.repository.metadata.io.xpp3.MetadataXpp3Reader
 import org.apache.maven.artifact.repository.metadata.io.xpp3.MetadataXpp3Writer
+import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -97,11 +97,7 @@ class MavenLocalRepository(private val stageClient: StageClient) : LocalReposito
                 if (StringUtils.isNotBlank(mavenPomModel.version) &&
                     mavenPomModel.packaging.equals("pom", ignoreCase = true)
                 ) {
-                    val mavenPom = MavenGAVC(
-                        groupId = mavenPomModel.groupId,
-                        artifactId = mavenPomModel.artifactId,
-                        version = mavenPomModel.version
-                    )
+                    val mavenPom = modelToGAVC(mavenPomModel)
                     val node = buildMavenArtifactNode(context, packaging)
                     storageManager.storeArtifactFile(node, context.getArtifactFile(), context.storageCredentials)
                     createMavenVersion(context, mavenPom)
@@ -118,6 +114,33 @@ class MavenLocalRepository(private val stageClient: StageClient) : LocalReposito
             super.onUpload(context)
         }
     }
+
+    @Suppress("TooGenericExceptionCaught")
+    private fun modelToGAVC(model: Model): MavenGAVC {
+        val groupId = try {
+            model.groupId
+        } catch (e: Exception) {
+            model.parent.groupId
+        }
+        val artifactId = try {
+            model.artifactId
+        } catch (e: Exception) {
+            model.parent.artifactId
+        }
+
+        val version = try {
+            model.version
+        } catch (e: Exception) {
+            model.parent.version
+        }
+
+        return MavenGAVC(
+            groupId = groupId,
+            artifactId = artifactId,
+            version = version
+        )
+    }
+
 
     private fun createMavenVersion(context: ArtifactUploadContext, mavenGAVC: MavenGAVC) {
         packageClient.createVersion(

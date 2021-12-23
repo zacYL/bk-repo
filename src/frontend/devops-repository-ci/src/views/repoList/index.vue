@@ -47,28 +47,35 @@
                 <template #default="{ row }">
                     <div class="flex-align-center" :title="replaceRepoName(row.name)">
                         <Icon size="20" :name="row.repoType" />
-                        <span class="ml10 text-overflow hover-btn" style="max-width:250px">{{replaceRepoName(row.name)}}</span>
-                        <Icon v-if="row.name === 'custom' || row.name === 'pipeline'"
-                            class="ml10" style="color:#1F6ED4"
-                            size="24" name="repo-tag-system" />
+                        <span class="ml10 text-overflow hover-btn" style="max-width:400px">{{replaceRepoName(row.name)}}</span>
+                        <bk-tag v-if="row.name === 'custom' || row.name === 'pipeline' || row.name === 'docker-local'"
+                            class="ml10" type="filled" style="background-color: var(--successColor);">内置</bk-tag>
+                        <bk-tag v-if="row.configuration.settings.system"
+                            class="ml10" type="filled" style="background-color: var(--primaryHoverColor);">系统</bk-tag>
+                        <bk-tag v-if="row.public"
+                            class="ml10" type="filled" style="background-color: var(--warningColor);">公开</bk-tag>
                     </div>
                 </template>
             </bk-table-column>
-            <bk-table-column :label="$t('createdDate')">
+            <bk-table-column :label="$t('createdDate')" width="250">
                 <template #default="{ row }">
                     {{ formatDate(row.createdDate) }}
                 </template>
             </bk-table-column>
-            <bk-table-column :label="$t('createdBy')">
+            <bk-table-column :label="$t('createdBy')" width="200">
                 <template #default="{ row }">
                     {{ userList[row.createdBy] ? userList[row.createdBy].name : row.createdBy }}
                 </template>
             </bk-table-column>
-            <bk-table-column :label="$t('operation')" width="100">
-                <template #default="{ row }"><template v-if="row.hasPermission">
-                    <i class="mr10 devops-icon icon-cog hover-btn" @click.stop="toRepoConfig(row)"></i>
-                    <i v-if="row.repoType !== 'generic'" class="devops-icon icon-delete hover-btn hover-danger" @click.stop="deleteRepo(row)"></i>
-                </template></template>
+            <bk-table-column :label="$t('operation')" width="70">
+                <template v-if="row.hasPermission" #default="{ row }">
+                    <operation-list
+                        :list="[
+                            { label: '设置', clickEvent: () => toRepoConfig(row) },
+                            row.repoType !== 'generic' && row.name !== 'docker-local' && { label: $t('delete'), clickEvent: () => deleteRepo(row) }
+                        ].filter(Boolean)">
+                    </operation-list>
+                </template>
             </bk-table-column>
         </bk-table>
         <bk-pagination
@@ -87,13 +94,14 @@
     </div>
 </template>
 <script>
+    import OperationList from '@repository/components/OperationList'
     import createRepoDialog from '@repository/views/repoList/createRepoDialog'
     import { mapState, mapActions } from 'vuex'
     import { repoEnum } from '@repository/store/publicEnum'
     import { formatDate } from '@repository/utils'
     export default {
         name: 'repoList',
-        components: { createRepoDialog },
+        components: { OperationList, createRepoDialog },
         data () {
             return {
                 repoEnum,
@@ -101,8 +109,8 @@
                 canCreate: false,
                 repoList: [],
                 query: {
-                    name: '',
-                    type: ''
+                    name: this.$route.query.name,
+                    type: this.$route.query.type
                 },
                 pagination: {
                     count: 0,

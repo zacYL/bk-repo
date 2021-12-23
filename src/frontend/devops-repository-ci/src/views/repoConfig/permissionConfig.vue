@@ -74,7 +74,7 @@
         </bk-collapse-item>
         <canway-dialog
             :value="editActionsDialog.show"
-            width="410"
+            width="400"
             height-num="199"
             :title="editActionsDialog.title"
             @cancel="editActionsDialog.show = false">
@@ -83,7 +83,7 @@
             </bk-checkbox-group>
             <template #footer>
                 <bk-button theme="default" @click.stop="editActionsDialog.show = false">{{$t('cancel')}}</bk-button>
-                <bk-button :loading="editActionsDialog.loading" theme="primary" @click.stop.prevent="handleActionPermission">{{$t('submit')}}</bk-button>
+                <bk-button class="ml10" :loading="editActionsDialog.loading" theme="primary" @click.stop.prevent="handleActionPermission">{{$t('submit')}}</bk-button>
             </template>
         </canway-dialog>
     </bk-collapse>

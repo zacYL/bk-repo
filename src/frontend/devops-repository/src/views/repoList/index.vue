@@ -94,7 +94,7 @@
 </template>
 <script>
     import OperationList from '@repository/components/OperationList'
-    import createRepoDialog from './createRepoDialog'
+    import createRepoDialog from '@repository/views/repoList/createRepoDialog'
     import { mapState, mapActions } from 'vuex'
     import { repoEnum } from '@repository/store/publicEnum'
     import { formatDate } from '@repository/utils'

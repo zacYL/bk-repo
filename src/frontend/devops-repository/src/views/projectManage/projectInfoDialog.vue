@@ -76,12 +76,6 @@
         computed: {
             ...mapState(['projectList'])
         },
-        mounted () {
-            const breadcrumb = this.$router.getRoutes().find(r => r.name === 'projectConfig').meta.breadcrumb
-            if (breadcrumb.length === 1) {
-                breadcrumb.unshift({ name: 'projectManage', label: '项目管理' })
-            }
-        },
         methods: {
             ...mapActions([
                 'getProjectList',

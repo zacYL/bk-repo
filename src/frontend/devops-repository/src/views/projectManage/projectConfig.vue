@@ -33,7 +33,7 @@
                         </bk-option>
                     </bk-select>
                     <bk-button icon="plus" theme="primary" class="ml10" @click="confirmHandler(tab, 'add')"><span class="mr5">{{ $t('add') }}</span></bk-button>
-                    <bk-button v-show="tab.delete.length" theme="warning" class="ml10" @click="confirmHandler(tab, 'delete')"><span class="mr5">批量删除</span></bk-button>
+                    <bk-button :disabled="!tab.delete.length" theme="warning" class="ml10" @click="confirmHandler(tab, 'delete')"><span class="mr5">批量删除</span></bk-button>
                 </div>
                 <bk-table
                     class="mt10"
@@ -111,6 +111,15 @@
             currentProject () {
                 this.initProjectConfig()
             }
+        },
+        beforeRouteEnter (to, from, next) {
+            const breadcrumb = to.meta.breadcrumb
+            if (to.query.projectId) {
+                breadcrumb.splice(0, breadcrumb.length, { name: 'projectManage', label: to.query.projectId }, { name: 'projectConfig', label: '项目设置' })
+            } else {
+                breadcrumb.splice(0, breadcrumb.length, { name: 'projectConfig', label: '项目设置' })
+            }
+            next()
         },
         created () {
             this.currentProject.id && this.initProjectConfig()

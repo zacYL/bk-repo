@@ -34,9 +34,9 @@ package com.tencent.bkrepo.auth.service.local
 import com.tencent.bkrepo.auth.exception.RoleUpdateException
 import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.model.TRole
+import com.tencent.bkrepo.auth.pojo.enums.RoleType
 import com.tencent.bkrepo.auth.pojo.role.CreateRoleRequest
 import com.tencent.bkrepo.auth.pojo.role.Role
-import com.tencent.bkrepo.auth.pojo.enums.RoleType
 import com.tencent.bkrepo.auth.pojo.role.UpdateRoleRequest
 import com.tencent.bkrepo.auth.pojo.user.UserResult
 import com.tencent.bkrepo.auth.repository.RoleRepository
@@ -45,7 +45,6 @@ import com.tencent.bkrepo.auth.service.RoleService
 import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.auth.util.IDUtil
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
-import org.bson.types.ObjectId
 import org.slf4j.LoggerFactory
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
@@ -187,6 +186,10 @@ open class RoleServiceImpl constructor(
     override fun systemRoles(): List<Role> {
         val roles = roleRepository.findByType(RoleType.SYSTEM)
         return roles.map { transfer(it) }
+    }
+
+    override fun systemRolesByProjectId(projectId: String): List<Role> {
+        TODO("Not yet implemented")
     }
 
     override fun listRoleByProject(projectId: String, repoName: String?): List<Role> {

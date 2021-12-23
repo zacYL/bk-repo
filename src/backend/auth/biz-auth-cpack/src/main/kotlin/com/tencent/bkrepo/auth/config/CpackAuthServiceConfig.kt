@@ -51,14 +51,16 @@ class CpackAuthServiceConfig {
         @Autowired roleRepository: RoleRepository,
         @Autowired userRepository: UserRepository,
         @Autowired userService: UserService,
-        @Autowired mongoTemplate: MongoTemplate
+        @Autowired mongoTemplate: MongoTemplate,
+        @Autowired permissionService: PermissionService
     ): RoleService {
         logger.debug("init cpackRoleServiceImpl")
         return CpackRoleServiceImpl(
             roleRepository,
             userService,
             userRepository,
-            mongoTemplate
+            mongoTemplate,
+            permissionService
         )
     }
 
@@ -67,13 +69,15 @@ class CpackAuthServiceConfig {
     fun cpackUserService(
         @Autowired userRepository: UserRepository,
         @Autowired roleRepository: RoleRepository,
-        @Autowired mongoTemplate: MongoTemplate
+        @Autowired mongoTemplate: MongoTemplate,
+        @Autowired permissionService: PermissionService
     ): UserService {
         logger.debug("init cpackUserServiceImpl")
         return CpackUserServiceImpl(
             userRepository,
             roleRepository,
-            mongoTemplate
+            mongoTemplate,
+            permissionService
         )
     }
 

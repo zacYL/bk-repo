@@ -1,6 +1,5 @@
 package com.tencent.bkrepo.auth.job
 
-import com.tencent.bkrepo.auth.DevopsAuthConfiguration
 import com.tencent.bkrepo.auth.constant.DEFAULT_PASSWORD
 import com.tencent.bkrepo.auth.pojo.user.CreateUserRequest
 import com.tencent.bkrepo.auth.pojo.user.UpdateUserRequest
@@ -12,19 +11,19 @@ import com.tencent.bkrepo.common.devops.api.service.BkUserService
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import org.springframework.util.StopWatch
 
 @Component
-@ConditionalOnBean(DevopsAuthConfiguration::class)
+@ConditionalOnProperty(prefix = "auth", name = ["realm"], havingValue = "canway", matchIfMissing = true)
 class BkUserSync(
     private val bkUserService: BkUserService,
     private val userService: UserService
 ) {
 
-    @Scheduled(fixedDelay = 300 * 1000, initialDelay = 300 * 1000)
+    @Scheduled(fixedDelay = 300 * 1000, initialDelay = 30 * 1000)
     @SchedulerLock(name = "BkUserSync", lockAtMostFor = "PT60M")
     fun execute() {
         val sw = StopWatch()

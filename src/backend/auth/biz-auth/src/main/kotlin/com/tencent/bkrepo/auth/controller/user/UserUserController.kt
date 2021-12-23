@@ -1,8 +1,6 @@
 package com.tencent.bkrepo.auth.controller.user
 
 import com.tencent.bkrepo.auth.constant.BKREPO_TICKET
-import com.tencent.bkrepo.auth.constant.PROJECT_MANAGE_PERMISSION
-import com.tencent.bkrepo.auth.constant.PROJECT_VIEW_PERMISSION
 import com.tencent.bkrepo.auth.listener.event.admin.AdminAddEvent
 import com.tencent.bkrepo.auth.listener.event.admin.AdminDeleteEvent
 import com.tencent.bkrepo.auth.message.AuthMessageCode
@@ -18,7 +16,6 @@ import com.tencent.bkrepo.auth.pojo.user.User
 import com.tencent.bkrepo.auth.pojo.user.UserInfo
 import com.tencent.bkrepo.auth.pojo.user.UserResult
 import com.tencent.bkrepo.auth.service.PermissionService
-import com.tencent.bkrepo.auth.service.RoleService
 import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.pojo.Page
@@ -55,7 +52,6 @@ import javax.servlet.http.Cookie
 class UserUserController(
     private val permissionService: PermissionService,
     private val userService: UserService,
-    private val roleService: RoleService,
     private val jwtProperties: JwtAuthProperties
 ) {
 
@@ -67,21 +63,7 @@ class UserUserController(
         @PathVariable projectId: String,
         @RequestParam includeAdmin: Boolean = false
     ): Response<List<UserResult>> {
-        val permissions = permissionService.listProjectBuiltinPermission(projectId)
-        val users = mutableSetOf<String>()
-        val roles = mutableSetOf<String>()
-        for (permission in permissions) {
-            logger.info("$permission")
-            if (projectBuiltinPermission.contains(permission.permName)) users.addAll(permission.users)
-            if (permission.permName == PROJECT_VIEW_PERMISSION) roles.addAll(permission.roles)
-        }
-        for (role in roles) {
-            users.addAll(roleService.listUserByRoleId(role).map{ it.userId })
-        }
-        if(includeAdmin) users.addAll(userService.listAdminUser().map { it.userId })
-        val userList = userService.listUser(listOf()).filter { users.contains(it.userId) }
-        val result =  userList.map { UserResult(userId = it.userId, name = it.name) }
-        return ResponseBuilder.success(result)
+        return ResponseBuilder.success(userService.listUserByProjectId(projectId, includeAdmin))
     }
 
     @GetMapping("/admin/{projectId}")
@@ -451,6 +433,5 @@ class UserUserController(
 
     companion object{
         private val logger = LoggerFactory.getLogger(UserUserController::class.java)
-        val projectBuiltinPermission = listOf(PROJECT_MANAGE_PERMISSION, PROJECT_VIEW_PERMISSION)
     }
 }

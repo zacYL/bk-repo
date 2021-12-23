@@ -32,6 +32,8 @@
 package com.tencent.bkrepo.auth.service.impl
 
 import com.tencent.bkrepo.auth.constant.DEFAULT_PASSWORD
+import com.tencent.bkrepo.auth.constant.PROJECT_MANAGE_PERMISSION
+import com.tencent.bkrepo.auth.constant.PROJECT_VIEW_PERMISSION
 import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.model.TUser
 import com.tencent.bkrepo.auth.pojo.token.Token
@@ -45,6 +47,8 @@ import com.tencent.bkrepo.auth.pojo.user.UserInfo
 import com.tencent.bkrepo.auth.pojo.user.UserResult
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
+import com.tencent.bkrepo.auth.service.PermissionService
+import com.tencent.bkrepo.auth.service.RoleService
 import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.auth.service.local.AbstractServiceImpl
 import com.tencent.bkrepo.auth.util.DataDigestUtils
@@ -70,7 +74,8 @@ import java.time.format.DateTimeParseException
 open class CpackUserServiceImpl constructor(
     private val userRepository: UserRepository,
     roleRepository: RoleRepository,
-    private val mongoTemplate: MongoTemplate
+    private val mongoTemplate: MongoTemplate,
+    private val permissionService: PermissionService
 ) : UserService, AbstractServiceImpl(mongoTemplate, userRepository, roleRepository) {
 
     @Autowired
@@ -402,7 +407,35 @@ open class CpackUserServiceImpl constructor(
         return userRepository.findAllByAdmin(true).map { transferUser(it) }
     }
 
+    override fun listUserByProjectId(projectId: String, includeAdmin: Boolean): List<UserResult> {
+        val permissions = permissionService.listProjectBuiltinPermission(projectId)
+        val users = mutableSetOf<String>()
+        val roles = mutableSetOf<String>()
+        for (permission in permissions) {
+            logger.info("$permission")
+            if (projectBuiltinPermission.contains(permission.permName)) users.addAll(permission.users)
+            if (permission.permName == PROJECT_VIEW_PERMISSION) roles.addAll(permission.roles)
+        }
+        for (role in roles) {
+            users.addAll(listUserByRoleId(role).map{ it.userId })
+        }
+        if(includeAdmin) users.addAll(listAdminUser().map { it.userId })
+        val userList = listUser(listOf()).filter { users.contains(it.userId) }
+        return userList.map { UserResult(userId = it.userId, name = it.name) }
+    }
+
+    private fun listUserByRoleId(id: String): Set<UserResult> {
+        val result = mutableSetOf<UserResult>()
+        userRepository.findAllByRolesIn(listOf(id)).let { users ->
+            for (user in users) {
+                result.add(UserResult(user.userId, user.name))
+            }
+        }
+        return result
+    }
+
     companion object {
         private val logger = LoggerFactory.getLogger(CpackUserServiceImpl::class.java)
+        val projectBuiltinPermission = listOf(PROJECT_MANAGE_PERMISSION, PROJECT_VIEW_PERMISSION)
     }
 }

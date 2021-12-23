@@ -88,7 +88,6 @@ class CanwayPermissionServiceImpl(
         // 校验用户是否属于对应部门、用户组和已添加用户
         if (isBkrepoAdmin(request)) return true
         //校验用户是否为CI 超级管理员或项目管理员
-        if (isCIAdmin(request.uid)) return true
         if (isCIAdmin(request.uid, projectId = request.projectId)) return true
 
         if(checkCIReadPermission(request)) return true
@@ -335,6 +334,116 @@ class CanwayPermissionServiceImpl(
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+    override fun listPermissionProject(userId: String): List<String> {
+        logger.debug("list permission project request : $userId ")
+        if (userId.isEmpty()) return emptyList()
+        val user = userRepository.findFirstByUserId(userId) ?: run {
+            return listOf()
+//            throw AuthenticationException(AuthMessageCode.AUTH_USER_NOT_EXIST.name)
+        }
+        // 用户为系统管理员
+        if (user.admin) {
+            return projectClient.listProject().data?.map { it.name } ?: emptyList()
+        }
+
+        //用户为CI 管理员
+        if (isCIAdmin(user.userId)) {
+            return projectClient.listProject().data?.map { it.name } ?: emptyList()
+        }
+
+        val projectList = mutableListOf<String>()
+
+        // 非管理员用户关联权限
+        projectList.addAll(getNoAdminUserProject(userId))
+
+        if (user.roles.isEmpty()) {
+            return projectList.distinct()
+        }
+
+        val noAdminRole = mutableListOf<String>()
+
+        // 管理员角色关联权限
+        val roleList = roleRepository.findByIdIn(user.roles)
+        roleList.forEach {
+            if (it.admin && it.projectId != null) {
+                projectList.add(it.projectId!!)
+            } else {
+                noAdminRole.add(it.id!!)
+            }
+        }
+
+        // 非管理员角色关联权限
+        projectList.addAll(getNoAdminRoleProject(noAdminRole))
+
+        return projectList.distinct()
+    }
+
+    override fun listPermissionRepo(projectId: String, userId: String, appId: String?): List<String> {
+        logger.debug("list repo permission request : [$projectId, $userId] ")
+        val user = userRepository.findFirstByUserId(userId) ?: run {
+            return listProjectPublicRepo(projectId)
+//            throw ErrorCodeException(AuthMessageCode.AUTH_USER_NOT_EXIST)
+        }
+
+        // 用户为系统管理员
+        if (user.admin) {
+            return getAllRepoByProjectId(projectId)
+        }
+
+        //用户为CI 项目成员
+        if (isCIProjectUser(user.userId, projectId)) {
+            return getAllRepoByProjectId(projectId)
+        }
+
+        val roles = user.roles
+
+        // 用户为项目管理员或项目成员
+        if (roles.isNotEmpty() &&
+            roleRepository.findByProjectIdAndTypeAndIdIn(
+                projectId,
+                RoleType.PROJECT,
+                roles
+            ).isNotEmpty()
+        ) {
+            return getAllRepoByProjectId(projectId)
+        }
+
+        // 用户为该项目成员
+        if (permissionRepository.findAllByProjectIdAndResourceTypeAndUsersIn(
+                projectId = projectId,
+                userId = userId,
+                type = ResourceType.PROJECT
+            ).isNotEmpty()
+        ) return getAllRepoByProjectId(projectId)
+
+        val repoList = mutableListOf<String>()
+
+        // 非管理员用户关联权限
+        repoList.addAll(getNoAdminUserRepo(projectId, userId))
+
+        if (user.roles.isEmpty()) {
+            return repoList.distinct()
+        }
+
+        val noAdminRole = mutableListOf<String>()
+
+        // 仓库管理员角色关联权限
+        val roleList = roleRepository.findByProjectIdAndTypeAndAdminAndIdIn(projectId, RoleType.REPO, true, roles)
+        roleList.forEach {
+            if (it.admin && it.repoName != null) {
+                repoList.add(it.repoName!!)
+            } else {
+                noAdminRole.add(it.id!!)
+            }
+        }
+
+        // 非仓库管理员角色关联权限
+        repoList.addAll(getNoAdminRoleRepo(projectId, noAdminRole))
+
+        return repoList.distinct()
+    }
 
     private fun isBkrepoAdmin(request: CheckPermissionRequest): Boolean {
         logger.debug("check permission  request : [$request] ")

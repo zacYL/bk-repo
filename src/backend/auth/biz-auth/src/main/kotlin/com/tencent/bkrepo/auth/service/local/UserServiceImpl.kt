@@ -403,6 +403,10 @@ open class UserServiceImpl constructor(
         return userRepository.findAllByAdmin(true).map { transferUser(it) }
     }
 
+    override fun listUserByProjectId(projectId: String, includeAdmin: Boolean): List<UserResult> {
+        TODO("Not yet implemented")
+    }
+
     companion object {
         private val logger = LoggerFactory.getLogger(UserServiceImpl::class.java)
     }

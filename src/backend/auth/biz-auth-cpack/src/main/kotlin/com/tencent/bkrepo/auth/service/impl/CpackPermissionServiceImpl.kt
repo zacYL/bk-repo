@@ -74,7 +74,7 @@ open class CpackPermissionServiceImpl constructor(
     private val permissionRepository: PermissionRepository,
     private val mongoTemplate: MongoTemplate,
     private val repositoryClient: RepositoryClient,
-    private val projectClient: ProjectClient
+    val projectClient: ProjectClient
 ) : PermissionService, AbstractServiceImpl(mongoTemplate, userRepository, roleRepository) {
 
     override fun deletePermission(id: String): Boolean {
@@ -336,7 +336,7 @@ open class CpackPermissionServiceImpl constructor(
         return projectList.distinct()
     }
 
-    private fun listProjectPublicRepo(projectId: String): List<String> {
+    fun listProjectPublicRepo(projectId: String): List<String> {
         return repositoryClient.listRepo(projectId).data?.filter {
             it.public
         }?.map { it.name } ?: listOf()
@@ -406,7 +406,7 @@ open class CpackPermissionServiceImpl constructor(
         return repositoryClient.listRepo(projectId).data?.map { it.name } ?: emptyList()
     }
 
-    private fun getNoAdminUserProject(userId: String): List<String> {
+    fun getNoAdminUserProject(userId: String): List<String> {
         val projectList = mutableListOf<String>()
         permissionRepository.findByUsers(userId).forEach {
             if (it.actions.isNotEmpty() && it.projectId != null) {
@@ -416,7 +416,7 @@ open class CpackPermissionServiceImpl constructor(
         return projectList
     }
 
-    private fun getNoAdminRoleProject(roles: List<String>): List<String> {
+    fun getNoAdminRoleProject(roles: List<String>): List<String> {
         val project = mutableListOf<String>()
         if (roles.isNotEmpty()) {
             permissionRepository.findByRolesIn(roles).forEach {
@@ -428,7 +428,7 @@ open class CpackPermissionServiceImpl constructor(
         return project
     }
 
-    private fun getNoAdminUserRepo(projectId: String, userId: String): List<String> {
+    fun getNoAdminUserRepo(projectId: String, userId: String): List<String> {
         val repoList = mutableListOf<String>()
         permissionRepository.findByProjectIdAndUsers(projectId, userId).forEach {
             if (it.actions.isNotEmpty() && it.repos.isNotEmpty()) {
@@ -438,7 +438,7 @@ open class CpackPermissionServiceImpl constructor(
         return repoList
     }
 
-    private fun getNoAdminRoleRepo(project: String, role: List<String>): List<String> {
+    fun getNoAdminRoleRepo(project: String, role: List<String>): List<String> {
         val repoList = mutableListOf<String>()
         if (role.isNotEmpty()) {
             permissionRepository.findByProjectIdAndRolesIn(project, role).forEach {

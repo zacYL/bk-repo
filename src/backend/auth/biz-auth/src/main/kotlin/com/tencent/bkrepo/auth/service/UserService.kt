@@ -33,12 +33,12 @@ package com.tencent.bkrepo.auth.service
 
 import com.tencent.bkrepo.auth.pojo.token.Token
 import com.tencent.bkrepo.auth.pojo.token.TokenResult
-import com.tencent.bkrepo.auth.pojo.user.User
-import com.tencent.bkrepo.auth.pojo.user.UserInfo
 import com.tencent.bkrepo.auth.pojo.user.CreateUserRequest
 import com.tencent.bkrepo.auth.pojo.user.CreateUserToProjectRequest
 import com.tencent.bkrepo.auth.pojo.user.CreateUserToRepoRequest
 import com.tencent.bkrepo.auth.pojo.user.UpdateUserRequest
+import com.tencent.bkrepo.auth.pojo.user.User
+import com.tencent.bkrepo.auth.pojo.user.UserInfo
 import com.tencent.bkrepo.auth.pojo.user.UserResult
 import com.tencent.bkrepo.common.api.pojo.Page
 
@@ -89,4 +89,8 @@ interface UserService {
     fun repeatUid(userId: String): Boolean
 
     fun listAdminUser(): List<User>
+
+    //cpack ext
+
+    fun listUserByProjectId(projectId: String, includeAdmin: Boolean): List<UserResult>
 }

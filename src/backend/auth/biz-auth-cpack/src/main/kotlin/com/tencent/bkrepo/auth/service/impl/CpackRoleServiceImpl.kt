@@ -31,16 +31,18 @@
 
 package com.tencent.bkrepo.auth.service.impl
 
+import com.tencent.bkrepo.auth.constant.PROJECT_VIEW_PERMISSION
 import com.tencent.bkrepo.auth.exception.RoleUpdateException
 import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.model.TRole
+import com.tencent.bkrepo.auth.pojo.enums.RoleType
 import com.tencent.bkrepo.auth.pojo.role.CreateRoleRequest
 import com.tencent.bkrepo.auth.pojo.role.Role
-import com.tencent.bkrepo.auth.pojo.enums.RoleType
 import com.tencent.bkrepo.auth.pojo.role.UpdateRoleRequest
 import com.tencent.bkrepo.auth.pojo.user.UserResult
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
+import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.service.RoleService
 import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.auth.util.IDUtil
@@ -55,7 +57,8 @@ open class CpackRoleServiceImpl constructor(
     private val roleRepository: RoleRepository,
     private val userService: UserService,
     private val userRepository: UserRepository,
-    private val mongoTemplate: MongoTemplate
+    private val mongoTemplate: MongoTemplate,
+    private val permissionService: PermissionService
 ) : RoleService {
 
     override fun createRole(request: CreateRoleRequest): String? {
@@ -186,6 +189,15 @@ open class CpackRoleServiceImpl constructor(
     override fun systemRoles(): List<Role> {
         val roles = roleRepository.findByType(RoleType.SYSTEM)
         return roles.map { transfer(it) }
+    }
+
+    override fun systemRolesByProjectId(projectId: String): List<Role> {
+        val permissions = permissionService.listPermission(projectId, null)
+        val roles = mutableSetOf<String>()
+        for (permission in permissions) {
+            if (permission.permName == PROJECT_VIEW_PERMISSION) roles.addAll(permission.roles)
+        }
+        return systemRoles().filter { roles.contains(it.id) }
     }
 
     override fun listRoleByProject(projectId: String, repoName: String?): List<Role> {

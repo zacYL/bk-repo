@@ -29,34 +29,9 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.auth.service
+package com.tencent.bkrepo.auth.exception
 
-import com.tencent.bkrepo.auth.pojo.role.CreateRoleRequest
-import com.tencent.bkrepo.auth.pojo.role.Role
-import com.tencent.bkrepo.auth.pojo.role.UpdateRoleRequest
-import com.tencent.bkrepo.auth.pojo.user.UserResult
-
-interface RoleService {
-
-    fun createRole(request: CreateRoleRequest): String?
-
-    fun deleteRoleByid(id: String): Boolean
-
-    fun listRoleByProject(projectId: String, repoName: String?): List<Role>
-
-    fun detail(id: String): Role?
-
-    fun detail(rid: String, projectId: String): Role?
-
-    fun detail(rid: String, projectId: String, repoName: String): Role?
-
-    fun updateRoleInfo(id: String, updateRoleRequest: UpdateRoleRequest): Boolean
-
-    fun listUserByRoleId(id: String): Set<UserResult>
-
-    fun systemRoles(): List<Role>
-
-    //cpack ext
-
-    fun systemRolesByProjectId(projectId: String): List<Role>
-}
+class DevopsExceptionResponse(
+    val status: String,
+    val error: String?
+)

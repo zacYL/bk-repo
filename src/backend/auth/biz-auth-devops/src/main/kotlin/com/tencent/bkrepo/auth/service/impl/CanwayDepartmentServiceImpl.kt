@@ -18,7 +18,11 @@ import com.tencent.bkrepo.common.devops.api.util.http.CanwayHttpUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.stereotype.Service
 
+@Service
+@ConditionalOnProperty(prefix = "auth", name = ["realm"], havingValue = "canway", matchIfMissing = true)
 class CanwayDepartmentServiceImpl(
     devopsConf: DevopsConf
 ) : DepartmentService {

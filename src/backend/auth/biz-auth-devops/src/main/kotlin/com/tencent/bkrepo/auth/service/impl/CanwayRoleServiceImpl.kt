@@ -9,6 +9,8 @@ import com.tencent.bkrepo.auth.pojo.enums.RoleType
 import com.tencent.bkrepo.auth.pojo.role.Role
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
+import com.tencent.bkrepo.auth.service.DevopsUserService
+import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
@@ -19,6 +21,7 @@ import com.tencent.bkrepo.common.devops.api.util.http.CanwayHttpUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.mongodb.core.MongoTemplate
 
 class CanwayRoleServiceImpl(
@@ -26,8 +29,15 @@ class CanwayRoleServiceImpl(
     userService: UserService,
     userRepository: UserRepository,
     mongoTemplate: MongoTemplate,
-    private val devopsConf: DevopsConf
-) : CpackRoleServiceImpl(roleRepository, userService, userRepository, mongoTemplate) {
+    permissionService: PermissionService
+) : CpackRoleServiceImpl(roleRepository, userService, userRepository, mongoTemplate, permissionService) {
+
+    @Autowired
+    lateinit var devopsConf: DevopsConf
+
+    @Autowired
+    lateinit var devopsUserService: DevopsUserService
+
     override fun listRoleByProject(projectId: String, repoName: String?): List<Role> {
         // 插入用户组
         val tenantId = getTenantId()
@@ -81,6 +91,13 @@ class CanwayRoleServiceImpl(
     private fun getRequestUrl(uri: String): String {
         val devopsHost = devopsConf.devopsHost
         return "${devopsHost.removeSuffix("/")}$ciPermission$ciApi$uri"
+    }
+
+    override fun systemRolesByProjectId(projectId: String): List<Role> {
+        val projectGroups = devopsUserService.groupsByProjectId(projectId) ?: listOf()
+        checkGroups(projectGroups, projectId, null)
+        val projectGroupIds = projectGroups.map { it.id }
+        return systemRoles().filter { projectGroupIds.contains(it.id) }
     }
 
     companion object {

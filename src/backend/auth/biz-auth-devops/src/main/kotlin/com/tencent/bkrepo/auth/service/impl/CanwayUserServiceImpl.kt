@@ -20,6 +20,8 @@ import com.tencent.bkrepo.auth.pojo.user.UserInfo
 import com.tencent.bkrepo.auth.pojo.user.UserResult
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
+import com.tencent.bkrepo.auth.service.DevopsUserService
+import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.util.DataDigestUtils
 import com.tencent.bkrepo.auth.util.IDUtil
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
@@ -45,11 +47,15 @@ import java.time.format.DateTimeParseException
 class CanwayUserServiceImpl(
     private val userRepository: UserRepository,
     roleRepository: RoleRepository,
-    private val mongoTemplate: MongoTemplate
-) : CpackUserServiceImpl(userRepository, roleRepository, mongoTemplate) {
+    private val mongoTemplate: MongoTemplate,
+    permissionService: PermissionService
+) : CpackUserServiceImpl(userRepository, roleRepository, mongoTemplate, permissionService) {
 
     @Autowired
     lateinit var devopsConf: DevopsConf
+
+    @Autowired
+    lateinit var devopsUserService: DevopsUserService
 
     override fun createUser(request: CreateUserRequest): Boolean {
         // todo 校验
@@ -368,6 +374,12 @@ class CanwayUserServiceImpl(
                 super.listUserResult(rids)
             }
         }
+    }
+
+    override fun listUserByProjectId(projectId: String, includeAdmin: Boolean): List<UserResult> {
+        val localUsers = listUserResult(emptyList())
+        val projectUsers = devopsUserService.usersByProjectId(projectId) ?: listOf()
+        return localUsers.filter { projectUsers.contains(it.userId) }
     }
 
     companion object {

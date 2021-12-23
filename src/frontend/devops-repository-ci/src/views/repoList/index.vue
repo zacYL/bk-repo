@@ -68,8 +68,9 @@
                 </template>
             </bk-table-column>
             <bk-table-column :label="$t('operation')" width="70">
-                <template v-if="row.hasPermission" #default="{ row }">
+                <template #default="{ row }">
                     <operation-list
+                        v-if="row.hasPermission"
                         :list="[
                             { label: '设置', clickEvent: () => toRepoConfig(row) },
                             row.repoType !== 'generic' && row.name !== 'docker-local' && { label: $t('delete'), clickEvent: () => deleteRepo(row) }

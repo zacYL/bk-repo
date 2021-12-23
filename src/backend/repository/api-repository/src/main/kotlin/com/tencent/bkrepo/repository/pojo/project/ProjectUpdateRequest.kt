@@ -36,10 +36,8 @@ import io.swagger.annotations.ApiModelProperty
 
 @ApiModel("编辑项目请求")
 data class ProjectUpdateRequest(
-    @ApiModelProperty("项目名", required = true)
-    override val name: String,
     @ApiModelProperty("显示名", required = false)
     val displayName: String? = null,
     @ApiModelProperty("描述", required = false)
     val description: String? = null
-) : ProjectRequest
+)

@@ -48,6 +48,7 @@ import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestAttribute
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @Api("项目用户接口")
@@ -87,15 +88,28 @@ class UserProjectController(
         return ResponseBuilder.success(projectService.checkExist(projectId))
     }
 
-    @ApiOperation("查询项目是否存在")
-    @PutMapping("/{projectId}")
+
+    @ApiOperation("校验项目参数是否存在")
+    @GetMapping("/exist")
+    fun checkProjectExist(
+        @RequestAttribute userId: String,
+        @ApiParam(value = "项目ID", required = false)
+        @RequestParam name: String?,
+        @ApiParam(value = "项目ID", required = false)
+        @RequestParam displayName: String?
+    ): Response<Boolean> {
+        return ResponseBuilder.success(projectService.checkProjectExist(name, displayName))
+    }
+
+    @ApiOperation("编辑项目")
+    @PutMapping("/{name}")
     fun updateProject(
         @RequestAttribute userId: String,
         @ApiParam(value = "项目ID", required = false)
-        @PathVariable projectId: String,
+        @PathVariable name: String,
         @RequestBody projectUpdateRequest: ProjectUpdateRequest
     ): Response<Boolean> {
-        return ResponseBuilder.success(projectService.updateProject(projectId, projectUpdateRequest))
+        return ResponseBuilder.success(projectService.updateProject(name, projectUpdateRequest))
     }
 
     @ApiOperation("项目列表")

@@ -137,7 +137,7 @@ class ProjectServiceImpl(
         return false
     }
 
-    override fun updateProject(projectId: String, request: ProjectUpdateRequest): Boolean {
+    override fun updateProject(name: String, request: ProjectUpdateRequest): Boolean {
         with(request) {
             if (!checkExist(name)) {
                 throw ErrorCodeException(ArtifactMessageCode.PROJECT_NOT_FOUND, name)
@@ -147,9 +147,8 @@ class ProjectServiceImpl(
                     throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, request::displayName.name)
                 }
             }
-            val query = Query.query(Criteria.where(TProject::id.name).`is`(projectId))
+            val query = Query.query(Criteria.where(TProject::name.name).`is`(name))
             val update = Update().apply {
-                this.set(TProject::name.name, request.name)
                 request.displayName?.let { this.set(TProject::displayName.name, it) }
                 request.description?.let { this.set(TProject::description.name, it) }
             }

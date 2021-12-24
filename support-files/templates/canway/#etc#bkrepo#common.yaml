@@ -139,4 +139,8 @@ devops:
   devopsHost: __BK_HTTP_SCHEMA__://__BK_CI_FQDN__
   bkrepoHost: __BK_HTTP_SCHEMA__://__BK_REPO_FQDN__
 
+# CI集成模式固定该配置
+auth:
+  realm: canway
+
   

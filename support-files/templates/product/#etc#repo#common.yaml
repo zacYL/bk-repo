@@ -90,7 +90,7 @@ security:
   # 微服务认证相关配置
   service:
     # 默认开始
-    enabled: false
+    enabled: true
     # 默认值
     secretKey: secret@key
 

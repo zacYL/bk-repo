@@ -2,29 +2,6 @@ spring:
   application:
     name: ${service.prefix}${service.name}${service.suffix}
     desc: Replication Service
-  cloud:
-    stream:
-      bindings:
-        artifactEvent-in-0:
-          destination: artifact-event
-          group: replication
-        artifactEvent-out-0:
-          destination: artifact-event
-      function:
-        definition: artifactEvent
-      binders:
-        file:
-          type: file
-        memory:
-          type: memory
-      file:
-        default:
-          path: __CPACK_STREAM_FILE_DEFAULT_PATH__
-      memory:
-        default:
-          queue-size: 2048
-          worker-pool-size: 1
-      default-binder: file
 server:
   port: __BK_REPO_REPLICATION_PORT__
 logging:

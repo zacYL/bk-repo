@@ -71,27 +71,6 @@ object PackageEventFactory {
         }
     }
 
-    fun buildUpdatedEvent(
-        request: PackageUpdateRequest,
-        packageType: String,
-        packageName: String,
-        createdBy: String,
-        realIpAddress: String?
-    ): VersionUpdatedEvent {
-        with(request) {
-            return VersionUpdatedEvent(
-                projectId = projectId,
-                repoName = repoName,
-                packageType = packageType,
-                packageKey = packageKey,
-                packageName = packageName,
-                packageVersion = null,
-                userId = createdBy,
-                realIpAddress = realIpAddress
-            )
-        }
-    }
-
     /**
      * 包版本下载事件
      */

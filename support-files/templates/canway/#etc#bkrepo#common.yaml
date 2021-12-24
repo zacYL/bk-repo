@@ -15,6 +15,28 @@ spring:
         query-passing: true
         preferIpAddress: true
       port: __DEVOPS_CONSUL_PORT__
+    stream:
+      bindings:
+        artifactEvent-in-0:
+          destination: artifact-event
+          group: replication
+        artifactEvent-out-0:
+          destination: artifact-event
+      function:
+        definition: artifactEvent
+      binders:
+        file:
+          type: file
+        memory:
+          type: memory
+      file:
+        default:
+          path: /data/bkee/repo/streams
+      memory:
+        default:
+          queue-size: 2048
+          worker-pool-size: 1
+      default-binder: file
   data:
     mongodb:
       socket-keep-alive: true

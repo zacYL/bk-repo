@@ -173,6 +173,9 @@ class TemporaryAccessService(
      * 如果[tokenInfo]访问次数 <= 1，则直接删除
      */
     fun decrementPermits(tokenInfo: TemporaryTokenInfo) {
+        if (HttpContextHolder.getRequest().method.equals("HEAD", ignoreCase = true)) {
+            return
+        }
         if (tokenInfo.permits == null) {
             return
         }

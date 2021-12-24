@@ -12,8 +12,15 @@
 </template>
 <script>
     import Breadcrumb from '@repository/components/Breadcrumb/topBreadcrumb'
+    import { mapActions } from 'vuex'
     export default {
-        components: { Breadcrumb }
+        components: { Breadcrumb },
+        created () {
+            this.getClusterList()
+        },
+        methods: {
+            ...mapActions(['getClusterList'])
+        }
     }
 </script>
 <style lang="scss" scoped>

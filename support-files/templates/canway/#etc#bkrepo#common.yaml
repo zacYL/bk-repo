@@ -164,5 +164,8 @@ devops:
 # CI集成模式固定该配置
 auth:
   realm: canway
+# CI集成模式消息通知
+mail:
+  mailNotifyType: devops
 
   

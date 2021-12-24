@@ -113,8 +113,8 @@ class MailServiceImpl(
         val expireDays = temporaryToken.expireDate
         when (mailConf.mailNotifyType) {
             MailNotifyType.CPACK -> sendMimeMail(userId, fileShareInfo, receivers.toList(), expireDays)
-            MailNotifyType.BK -> bkMailMessage(userId, fileShareInfo, receivers.toList(), expireDays)
-            MailNotifyType.DEVOPS -> devopsMailMessage(userId, fileShareInfo, receivers.toList(), expireDays)
+            MailNotifyType.BK -> bkMailMessage(userId, fileShareInfo, users, expireDays)
+            MailNotifyType.DEVOPS -> devopsMailMessage(userId, fileShareInfo, users, expireDays)
         }
     }
 

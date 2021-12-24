@@ -6,7 +6,7 @@
         ext-cls="operation-container"
         v-bind="$attrs">
         <slot>
-            <i class="devops-icon icon-more flex-center"></i>
+            <i @click.stop="() => {}" class="devops-icon icon-more flex-center"></i>
         </slot>
         <template #content><ul class="operation-list">
             <li v-for="li in list" :key="li.label"

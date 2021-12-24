@@ -70,10 +70,10 @@ logging:
 storage:
   type: filesystem
   filesystem:
-    path: __CPACK_FILE_PATH__
+    path: __CPACK_FILE_PATH_COMMON__/store
   cache:
     enabled: false
-    path: /data/cpack/repo/filesystem/cached
+    path: __CPACK_FILE_PATH_COMMON__/cached
     expireHours: 12
 
 security:

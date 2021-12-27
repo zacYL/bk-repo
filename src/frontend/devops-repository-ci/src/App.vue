@@ -10,18 +10,7 @@
     export default {
         mixins: [mixin],
         created () {
-            const urlProjectId = (location.pathname.match(/^\/[a-zA-Z0-9]+\/([^/]+)/) || [])[1]
-            const localProjectId = localStorage.getItem('projectId')
-
             this.loadDevopsUtils(DEVOPS_SITE_URL + '/console/static/devops-utils.js')
-
-            localStorage.setItem('projectId', urlProjectId || localProjectId || '')
-            !urlProjectId && this.$router.replace({
-                name: 'repoList',
-                params: {
-                    projectId: urlProjectId || localProjectId || ''
-                }
-            })
         }
     }
 </script>

@@ -29,7 +29,7 @@ class ExtPermissionServiceImpl(
             for (repo in repoList) {
                 // 加载原仓库内置权限
                 val builtinPermissions = permissionService.listPermission(project.name, repo.name)
-                //历史数据中存在历史数据，先对历史数据去重
+                // 历史数据中存在历史数据，先对历史数据去重
                 val targetList = mergePermission(builtinPermissions)
                 for (permission in targetList) {
                     // 迁移权限
@@ -54,7 +54,7 @@ class ExtPermissionServiceImpl(
      * [permission]  要删除的权限
      */
     private fun mergePermissionData(originPerm: Permission, permission: Permission, isRepeat: Boolean) {
-        //合并用户
+        // 合并用户
         val targetUsers = originPerm.users.toMutableSet().apply {
             addAll(permission.users.toSet())
         }
@@ -64,7 +64,7 @@ class ExtPermissionServiceImpl(
             value = targetUsers
         )
 
-        //合并用户组
+        // 合并用户组
         val targetRoles = originPerm.roles.toMutableSet().apply {
             addAll(permission.roles)
         }
@@ -74,7 +74,7 @@ class ExtPermissionServiceImpl(
             value = targetRoles
         )
 
-        //合并部门
+        // 合并部门
         val targetDepartments = originPerm.departments.toMutableSet().apply {
             addAll(permission.departments)
         }
@@ -96,7 +96,6 @@ class ExtPermissionServiceImpl(
             )
         }
     }
-
 
     /**
      * permission 去重，去重之前合并数据

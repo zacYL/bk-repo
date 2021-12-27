@@ -56,7 +56,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.servlet.HandlerInterceptor
 import java.security.Key
-import java.util.*
+import java.util.Base64
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
@@ -86,7 +86,7 @@ class AuthInterceptor : HandlerInterceptor {
             basicAuthApiList.forEach {
                 isBasicAuthUri = isBasicAuthUri || request.requestURI.contains(it)
             }
-            if (basicAuthHeader.startsWith(BASIC_AUTH_HEADER_PREFIX) ) {
+            if (basicAuthHeader.startsWith(BASIC_AUTH_HEADER_PREFIX)) {
                 val encodedCredentials = basicAuthHeader.removePrefix(BASIC_AUTH_HEADER_PREFIX)
                 val decodedHeader = String(Base64.getDecoder().decode(encodedCredentials))
                 val parts = decodedHeader.split(COLON)

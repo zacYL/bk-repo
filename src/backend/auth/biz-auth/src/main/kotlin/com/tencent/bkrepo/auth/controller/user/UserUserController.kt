@@ -69,7 +69,8 @@ class UserUserController(
     @GetMapping("/admin/{projectId}")
     fun isProjectAdmin(
         @RequestAttribute userId: String,
-        @PathVariable projectId: String): Response<Boolean> {
+        @PathVariable projectId: String
+    ): Response<Boolean> {
         val result = permissionService.checkPermission(
             CheckPermissionRequest(
                 uid = userId,
@@ -86,12 +87,14 @@ class UserUserController(
         @RequestAttribute userId: String
     ): Response<List<UserResult>> {
         val userList = userService.listUser(listOf())
-        return ResponseBuilder.success(userList.map {
-            UserResult(
-                userId = it.userId,
-                name = it.name
-            )
-        })
+        return ResponseBuilder.success(
+            userList.map {
+                UserResult(
+                    userId = it.userId,
+                    name = it.name
+                )
+            }
+        )
     }
 
     @ApiOperation("创建用户")
@@ -163,7 +166,7 @@ class UserUserController(
     ): Response<Boolean> {
         if (request.admin != null) {
             val operator = userService.getUserById(userId)!!
-            if(!operator.admin) throw PermissionException()
+            if (!operator.admin) throw PermissionException()
         }
         return ResponseBuilder.success(userService.updateUserById(uid, request))
     }
@@ -290,7 +293,7 @@ class UserUserController(
                 data = false
             )
         }
-        if(user.locked) return ResponseBuilder.build(
+        if (user.locked) return ResponseBuilder.build(
             code = 2,
             message = AuthMessageCode.AUTH_USER_LOCKED.getKey(),
             data = false
@@ -316,7 +319,7 @@ class UserUserController(
             val userId = JwtUtils.validateToken(signingKey, bkrepoToken).body.subject
             val user = userService.getUserById(userId)
                 ?: throw AuthenticationException(AuthMessageCode.AUTH_LOGIN_TOKEN_CHECK_FAILED.name)
-            if(user.locked) throw AuthenticationException(AuthMessageCode.AUTH_USER_LOCKED.name)
+            if (user.locked) throw AuthenticationException(AuthMessageCode.AUTH_USER_LOCKED.name)
             val result = mapOf("userId" to userId)
             return ResponseBuilder.success(result)
         } catch (ignored: Exception) {
@@ -431,7 +434,7 @@ class UserUserController(
         return ResponseBuilder.success()
     }
 
-    companion object{
+    companion object {
         private val logger = LoggerFactory.getLogger(UserUserController::class.java)
     }
 }

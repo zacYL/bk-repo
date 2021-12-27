@@ -204,11 +204,10 @@ open class PermissionServiceImpl constructor(
         // check user locked
         if (user.locked) return false
 
-
         // check user admin permission
         if (user.admin) return true
 
-        //check user project admin
+        // check user project admin
         if (checkProjectUserAdmin(request)) return true
 
         // check role project admin
@@ -224,11 +223,11 @@ open class PermissionServiceImpl constructor(
     private fun checkProjectUserAdmin(request: CheckPermissionRequest): Boolean {
         request.projectId?.let {
             if (permissionRepository.findAllByResourceTypeAndPermNameAndProjectIdAndUsersIn(
-                    ResourceType.PROJECT,
-                    PROJECT_MANAGE_PERMISSION,
-                    it,
-                    listOf(request.uid)
-                ).isNotEmpty()
+                ResourceType.PROJECT,
+                PROJECT_MANAGE_PERMISSION,
+                it,
+                listOf(request.uid)
+            ).isNotEmpty()
             ) return true
         }
         return false
@@ -313,7 +312,7 @@ open class PermissionServiceImpl constructor(
     }
 
     private fun listProjectPublicRepo(projectId: String): List<String> {
-        return repositoryClient.listRepo(projectId).data?.filter{
+        return repositoryClient.listRepo(projectId).data?.filter {
             it.public
         }?.map { it.name } ?: listOf()
     }
@@ -431,18 +430,20 @@ open class PermissionServiceImpl constructor(
 
     override fun isProjectManager(userId: String): Boolean {
         val user = userRepository.findFirstByUserId(userId) ?: return false
-        if(user.admin) return true
+        if (user.admin) return true
         val roles = user.roles
-        if(permissionRepository.findAllByResourceTypeAndPermNameAndUsersIn(
+        if (permissionRepository.findAllByResourceTypeAndPermNameAndUsersIn(
             ResourceType.PROJECT,
             PROJECT_MANAGE_PERMISSION,
             listOf(userId)
-        ).isNotEmpty()) return true
-        if(permissionRepository.findAllByResourceTypeAndPermNameAndRolesIn(
+        ).isNotEmpty()
+        ) return true
+        if (permissionRepository.findAllByResourceTypeAndPermNameAndRolesIn(
             ResourceType.PROJECT,
             PROJECT_MANAGE_PERMISSION,
             roles
-        ).isNotEmpty()) return true
+        ).isNotEmpty()
+        ) return true
         return false
     }
 

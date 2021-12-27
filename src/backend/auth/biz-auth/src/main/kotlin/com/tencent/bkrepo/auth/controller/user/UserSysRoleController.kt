@@ -39,7 +39,7 @@ class UserSysRoleController(
     fun allRole(
         @RequestAttribute userId: String
     ): Response<List<Role>> {
-        if(!permissionService.isProjectManager(userId)) throw PermissionException()
+        if (!permissionService.isProjectManager(userId)) throw PermissionException()
         return ResponseBuilder.success(roleService.systemRoles())
     }
 

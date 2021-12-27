@@ -33,7 +33,6 @@ package com.tencent.bkrepo.auth.pojo
 
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 
-
 open class ResourceBaseRequest(
     open var resourceType: ResourceType,
     open var projectId: String? = null,

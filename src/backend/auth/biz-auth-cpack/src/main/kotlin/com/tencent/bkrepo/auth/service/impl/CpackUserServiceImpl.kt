@@ -48,7 +48,6 @@ import com.tencent.bkrepo.auth.pojo.user.UserResult
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
 import com.tencent.bkrepo.auth.service.PermissionService
-import com.tencent.bkrepo.auth.service.RoleService
 import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.auth.service.local.AbstractServiceImpl
 import com.tencent.bkrepo.auth.util.DataDigestUtils
@@ -417,9 +416,9 @@ open class CpackUserServiceImpl constructor(
             if (permission.permName == PROJECT_VIEW_PERMISSION) roles.addAll(permission.roles)
         }
         for (role in roles) {
-            users.addAll(listUserByRoleId(role).map{ it.userId })
+            users.addAll(listUserByRoleId(role).map { it.userId })
         }
-        if(includeAdmin) users.addAll(listAdminUser().map { it.userId })
+        if (includeAdmin) users.addAll(listAdminUser().map { it.userId })
         val userList = listUser(listOf()).filter { users.contains(it.userId) }
         return userList.map { UserResult(userId = it.userId, name = it.name) }
     }

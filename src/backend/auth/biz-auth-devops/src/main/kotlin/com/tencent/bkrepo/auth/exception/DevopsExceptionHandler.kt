@@ -21,7 +21,7 @@ class DevopsExceptionHandler {
         return DevopsExceptionResponse(HttpStatus.BAD_REQUEST.name, exception.message)
     }
 
-    companion object{
+    companion object {
         val logger: Logger = LoggerFactory.getLogger(DevopsExceptionHandler::class.java)
     }
 }

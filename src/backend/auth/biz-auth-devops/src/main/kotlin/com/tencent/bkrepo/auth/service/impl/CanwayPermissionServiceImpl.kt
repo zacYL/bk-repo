@@ -87,10 +87,10 @@ class CanwayPermissionServiceImpl(
         logger.info("check permission  request : [$request] ")
         // 校验用户是否属于对应部门、用户组和已添加用户
         if (isBkrepoAdmin(request)) return true
-        //校验用户是否为CI 超级管理员或项目管理员
+        // 校验用户是否为CI 超级管理员或项目管理员
         if (isCIAdmin(request.uid, projectId = request.projectId)) return true
 
-        if(checkCIReadPermission(request)) return true
+        if (checkCIReadPermission(request)) return true
         val canwayPermissionResult = canwayCheckPermission(request)
         if (!canwayPermissionResult.hasPermission) return false
         val result = originCheckPermission(request)
@@ -335,7 +335,6 @@ class CanwayPermissionServiceImpl(
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
     override fun listPermissionProject(userId: String): List<String> {
         logger.debug("list permission project request : $userId ")
         if (userId.isEmpty()) return emptyList()
@@ -348,7 +347,7 @@ class CanwayPermissionServiceImpl(
             return projectClient.listProject().data?.map { it.name } ?: emptyList()
         }
 
-        //用户为CI 管理员
+        // 用户为CI 管理员
         if (isCIAdmin(user.userId)) {
             return projectClient.listProject().data?.map { it.name } ?: emptyList()
         }
@@ -392,7 +391,7 @@ class CanwayPermissionServiceImpl(
             return getAllRepoByProjectId(projectId)
         }
 
-        //用户为CI 项目成员
+        // 用户为CI 项目成员
         if (isCIProjectUser(user.userId, projectId)) {
             return getAllRepoByProjectId(projectId)
         }
@@ -412,10 +411,10 @@ class CanwayPermissionServiceImpl(
 
         // 用户为该项目成员
         if (permissionRepository.findAllByProjectIdAndResourceTypeAndUsersIn(
-                projectId = projectId,
-                userId = userId,
-                type = ResourceType.PROJECT
-            ).isNotEmpty()
+            projectId = projectId,
+            userId = userId,
+            type = ResourceType.PROJECT
+        ).isNotEmpty()
         ) return getAllRepoByProjectId(projectId)
 
         val repoList = mutableListOf<String>()
@@ -539,7 +538,7 @@ class CanwayPermissionServiceImpl(
             logger.error("query CI project users failed: [$requestUrl]", e)
             null
         }
-        return users?.contains(userId)?:false
+        return users?.contains(userId) ?: false
     }
 
     /**
@@ -547,28 +546,28 @@ class CanwayPermissionServiceImpl(
      */
     @Deprecated("replace with isCIAdmin")
     private fun getCanwayPermissionInstance(operator: String):
-            CanwayPermissionResponse? {
-        val canwayCheckPermissionRequest = CanwayPermissionRequest(
-            userId = operator,
-            belongCode = "system",
-            belongInstance = "bk_ci",
-            resourcesActions = setOf(
-                CanwayPermissionRequest.CanwayAction(
-                    actionCode = CanwayPermissionType.CREATE,
-                    resourceCode = "project",
-                    resourceInstance = setOf(
-                        CanwayPermissionRequest.CanwayAction.CanwayInstance(
-                            resourceCode = "project"
+        CanwayPermissionResponse? {
+            val canwayCheckPermissionRequest = CanwayPermissionRequest(
+                userId = operator,
+                belongCode = "system",
+                belongInstance = "bk_ci",
+                resourcesActions = setOf(
+                    CanwayPermissionRequest.CanwayAction(
+                        actionCode = CanwayPermissionType.CREATE,
+                        resourceCode = "project",
+                        resourceInstance = setOf(
+                            CanwayPermissionRequest.CanwayAction.CanwayInstance(
+                                resourceCode = "project"
+                            )
                         )
                     )
                 )
-            )
-        ).toJsonString()
-        val ciAddResourceUrl = getPermissionUrl(ciCheckPermissionApi)
-        val responseContent = CanwayHttpUtils.doPost(ciAddResourceUrl, canwayCheckPermissionRequest).content
+            ).toJsonString()
+            val ciAddResourceUrl = getPermissionUrl(ciCheckPermissionApi)
+            val responseContent = CanwayHttpUtils.doPost(ciAddResourceUrl, canwayCheckPermissionRequest).content
 
-        return responseContent.readJsonString<CanwayResponse<CanwayPermissionResponse>>().data
-    }
+            return responseContent.readJsonString<CanwayResponse<CanwayPermissionResponse>>().data
+        }
 
     private fun checkInstance(canwayPermission: CanwayPermissionResponse?): Boolean {
         canwayPermission?.let {

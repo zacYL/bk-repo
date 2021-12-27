@@ -72,7 +72,7 @@ class UserPermissionController(
         @RequestBody request: UpdatePermissionUserRequest
     ): Response<Boolean> {
         val permission = permissionService.findPermissionById(request.permissionId)!!
-        if(!isPermissionManager(permission.id!!, userId)) throw PermissionException()
+        if (!isPermissionManager(permission.id!!, userId)) throw PermissionException()
         return ResponseBuilder.success(permissionService.updatePermissionUser(request))
     }
 
@@ -83,7 +83,7 @@ class UserPermissionController(
         @RequestBody request: UpdatePermissionRoleRequest
     ): Response<Boolean> {
         val permission = permissionService.findPermissionById(request.permissionId)!!
-        if(!isPermissionManager(permission.id!!, userId)) throw PermissionException()
+        if (!isPermissionManager(permission.id!!, userId)) throw PermissionException()
         return ResponseBuilder.success(permissionService.updatePermissionRole(request))
     }
 
@@ -94,7 +94,7 @@ class UserPermissionController(
         @RequestBody request: UpdatePermissionDepartmentRequest
     ): Response<Boolean> {
         val permission = permissionService.findPermissionById(request.permissionId)!!
-        if(!isPermissionManager(permission.id!!, userId)) throw PermissionException()
+        if (!isPermissionManager(permission.id!!, userId)) throw PermissionException()
         return ResponseBuilder.success(permissionService.updatePermissionDepartment(request))
     }
 
@@ -105,7 +105,7 @@ class UserPermissionController(
         @RequestBody request: UpdatePermissionActionRequest
     ): Response<Boolean> {
         val permission = permissionService.findPermissionById(request.permissionId)!!
-        if(!isPermissionManager(permission.id!!, userId)) throw PermissionException()
+        if (!isPermissionManager(permission.id!!, userId)) throw PermissionException()
         return ResponseBuilder.success(permissionService.updatePermissionAction(request))
     }
 
@@ -125,5 +125,4 @@ class UserPermissionController(
             )
         )
     }
-
 }

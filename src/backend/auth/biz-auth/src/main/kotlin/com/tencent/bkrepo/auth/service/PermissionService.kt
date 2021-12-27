@@ -81,5 +81,4 @@ interface PermissionService {
     fun findPermissionById(id: String): Permission?
 
     fun updatePermissionById(id: String, key: String, value: Any): Boolean
-
 }

@@ -33,7 +33,6 @@
             :outer-border="false"
             :row-border="false"
             size="small"
-            :row-style="({ row }) => ({ 'color': row.hasPermission ? '' : '#dcdee5 !important' })"
             @row-click="toPackageList">
             <template #empty>
                 <empty-data :is-loading="isLoading" :search="Boolean(query.name || query.type)">
@@ -70,7 +69,6 @@
             <bk-table-column :label="$t('operation')" width="70">
                 <template #default="{ row }">
                     <operation-list
-                        v-if="row.hasPermission"
                         :list="[
                             { label: '设置', clickEvent: () => toRepoConfig(row) },
                             row.repoType !== 'generic' && row.name !== 'docker-local' && { label: $t('delete'), clickEvent: () => deleteRepo(row) }
@@ -172,8 +170,7 @@
             createRepo () {
                 this.$refs.createRepo.showDialogHandler()
             },
-            toPackageList ({ hasPermission, projectId, repoType, name }) {
-                if (!hasPermission) return
+            toPackageList ({ projectId, repoType, name }) {
                 this.$router.push({
                     name: repoType === 'generic' ? 'repoGeneric' : 'commonList',
                     params: {
@@ -185,8 +182,7 @@
                     }
                 })
             },
-            toRepoConfig ({ hasPermission, repoType, name }) {
-                if (!hasPermission) return
+            toRepoConfig ({ repoType, name }) {
                 this.$router.push({
                     name: 'repoConfig',
                     params: {
@@ -198,8 +194,7 @@
                     }
                 })
             },
-            deleteRepo ({ hasPermission, name }) {
-                if (!hasPermission) return
+            deleteRepo ({ name }) {
                 this.$confirm({
                     theme: 'danger',
                     message: this.$t('deleteRepoTitle', { name }),

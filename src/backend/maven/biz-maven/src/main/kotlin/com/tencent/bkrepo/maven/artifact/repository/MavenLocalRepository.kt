@@ -60,7 +60,6 @@ import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateR
 import org.apache.commons.lang.StringUtils
 import org.apache.maven.artifact.repository.metadata.io.xpp3.MetadataXpp3Reader
 import org.apache.maven.artifact.repository.metadata.io.xpp3.MetadataXpp3Writer
-import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -97,7 +96,7 @@ class MavenLocalRepository(private val stageClient: StageClient) : LocalReposito
                 if (StringUtils.isNotBlank(mavenPomModel.version) &&
                     mavenPomModel.packaging.equals("pom", ignoreCase = true)
                 ) {
-                    val mavenPom = modelToGAVC(mavenPomModel)
+                    val mavenPom = (context.artifactInfo as MavenArtifactInfo).toMavenJar()
                     val node = buildMavenArtifactNode(context, packaging)
                     storageManager.storeArtifactFile(node, context.getArtifactFile(), context.storageCredentials)
                     createMavenVersion(context, mavenPom)
@@ -113,32 +112,6 @@ class MavenLocalRepository(private val stageClient: StageClient) : LocalReposito
         } else {
             super.onUpload(context)
         }
-    }
-
-    @Suppress("TooGenericExceptionCaught")
-    private fun modelToGAVC(model: Model): MavenGAVC {
-        val groupId = try {
-            model.groupId
-        } catch (e: Exception) {
-            model.parent.groupId
-        }
-        val artifactId = try {
-            model.artifactId
-        } catch (e: Exception) {
-            model.parent.artifactId
-        }
-
-        val version = try {
-            model.version
-        } catch (e: Exception) {
-            model.parent.version
-        }
-
-        return MavenGAVC(
-            groupId = groupId,
-            artifactId = artifactId,
-            version = version
-        )
     }
 
 

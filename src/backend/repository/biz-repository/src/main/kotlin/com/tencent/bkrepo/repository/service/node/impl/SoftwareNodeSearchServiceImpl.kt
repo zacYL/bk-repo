@@ -42,10 +42,10 @@ import com.tencent.bkrepo.repository.model.TNode
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
 import com.tencent.bkrepo.repository.pojo.software.NodeOverviewResponse
-import com.tencent.bkrepo.repository.search.cpack.node.CpackNodeQueryInterpreter
 import com.tencent.bkrepo.repository.search.node.NodeQueryContext
-import com.tencent.bkrepo.repository.service.node.CpackNodeSearchService
-import com.tencent.bkrepo.repository.service.repo.CpackRepositoryService
+import com.tencent.bkrepo.repository.search.software.node.SoftwareNodeQueryInterpreter
+import com.tencent.bkrepo.repository.service.node.SoftwareNodeSearchService
+import com.tencent.bkrepo.repository.service.repo.SoftwareRepositoryService
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
@@ -57,11 +57,11 @@ import java.util.Date
  */
 @Suppress("UNCHECKED_CAST")
 @Service
-class CpackNodeSearchServiceImpl(
+class SoftwareNodeSearchServiceImpl(
     private val nodeDao: NodeDao,
-    private val cpackNodeQueryInterpreter: CpackNodeQueryInterpreter,
-    private val cpackRepositoryService: CpackRepositoryService
-) : CpackNodeSearchService {
+    private val softwareNodeQueryInterpreter: SoftwareNodeQueryInterpreter,
+    private val softwareRepositoryService: SoftwareRepositoryService
+) : SoftwareNodeSearchService {
 
     override fun search(queryModel: QueryModel): Page<Map<String, Any?>> {
         val rules = (queryModel.rule as Rule.NestedRule).rules
@@ -87,7 +87,7 @@ class CpackNodeSearchServiceImpl(
         }
         if (projectId == null) {
             val projectsRule = mutableListOf<Rule>()
-            val allSoftRepo = cpackRepositoryService.listRepo(type = repoType, includeGeneric = false)
+            val allSoftRepo = softwareRepositoryService.listRepo(type = repoType, includeGeneric = false)
             val projectMap = transRepoTree(allSoftRepo)
             projectMap.map { project ->
                 val projectRule = Rule.QueryRule(field = "projectId", value = project.key)
@@ -108,11 +108,11 @@ class CpackNodeSearchServiceImpl(
         }
         if (projectId != null && repoName == null) {
             val genericRepos =
-                cpackRepositoryService.listRepo(projectId, type = repoType, includeGeneric = false).map { it.name }
+                softwareRepositoryService.listRepo(projectId, type = repoType, includeGeneric = false).map { it.name }
             rules.add(Rule.QueryRule(field = "repoName", value = genericRepos, operation = OperationType.IN))
         }
         queryModel.rule = Rule.NestedRule(rules, Rule.NestedRule.RelationType.OR)
-        val context = cpackNodeQueryInterpreter.interpret(queryModel) as NodeQueryContext
+        val context = softwareNodeQueryInterpreter.interpret(queryModel) as NodeQueryContext
         return doQuery(context)
     }
 

@@ -6,7 +6,7 @@ import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.repository.pojo.software.ProjectPackageOverview
-import com.tencent.bkrepo.repository.service.packages.CpackPackageService
+import com.tencent.bkrepo.repository.service.packages.GlobalPackageService
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import org.springframework.web.bind.annotation.GetMapping
@@ -19,8 +19,8 @@ import org.springframework.web.bind.annotation.RestController
 @Api("软件源包接口")
 @RestController
 @RequestMapping("/api/software/package")
-class CpackUserPackageController(
-    private val cpackPackageService: CpackPackageService
+class UserGlobalPackageController(
+    private val globalPackageService: GlobalPackageService
 ) {
 
     @ApiOperation("软件源包查询接口")
@@ -28,7 +28,7 @@ class CpackUserPackageController(
     fun searchPackage(
         @RequestBody queryModel: QueryModel
     ): Response<Page<MutableMap<*, *>>> {
-        return ResponseBuilder.success(cpackPackageService.searchPackage(queryModel))
+        return ResponseBuilder.success(globalPackageService.searchPackage(queryModel))
     }
 
     @ApiOperation("仓库 包数量 总览")
@@ -39,6 +39,6 @@ class CpackUserPackageController(
         @RequestParam repoName: String?,
         @RequestParam packageName: String?
     ): Response<List<ProjectPackageOverview>> {
-        return ResponseBuilder.success(cpackPackageService.packageOverview(repoType, projectId, repoName, packageName))
+        return ResponseBuilder.success(globalPackageService.packageOverview(repoType, projectId, repoName, packageName))
     }
 }

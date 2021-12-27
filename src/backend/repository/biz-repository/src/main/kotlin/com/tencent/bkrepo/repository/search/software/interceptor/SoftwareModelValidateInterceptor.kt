@@ -29,33 +29,38 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.repository.search.cpack.interceptor
+package com.tencent.bkrepo.repository.search.software.interceptor
 
-import com.tencent.bkrepo.common.query.enums.OperationType
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.query.interceptor.QueryContext
-import com.tencent.bkrepo.common.query.interceptor.QueryRuleInterceptor
+import com.tencent.bkrepo.common.query.interceptor.QueryModelInterceptor
+import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.query.model.Rule
-import com.tencent.bkrepo.repository.model.TPackage
-import com.tencent.bkrepo.repository.search.common.CommonQueryContext
-import org.springframework.data.mongodb.core.query.Criteria
-import org.springframework.stereotype.Component
 
 /**
- * 仓库类型规则拦截器
- *
- * 条件构造器中传入条件是`repoType`，需要转换成对应的仓库列表
+ * 规则验证
  */
-@Component
-class CpackRepoTypeRuleInterceptor : QueryRuleInterceptor {
+open class SoftwareModelValidateInterceptor : QueryModelInterceptor {
 
-    override fun match(rule: Rule): Boolean {
-        return rule is Rule.QueryRule && rule.field == "repoType"
+    override fun intercept(queryModel: QueryModel, context: QueryContext): QueryModel {
+        // 校验query model的格式
+        validateModel(queryModel)
+
+        return queryModel
     }
 
-    override fun intercept(rule: Rule, context: QueryContext): Criteria {
-        require(rule is Rule.QueryRule)
-        require(context is CommonQueryContext)
-        val queryRule = Rule.QueryRule(TPackage::type.name, rule.value, OperationType.EQ)
-        return context.interpreter.resolveRule(queryRule, context)
+    /**
+     * 校验[queryModel]格式，查询条件必须满足以下格式：
+     *   1. rule必须为AND类型的嵌套查询
+     *   2. rule嵌套查询规则列表中，必须指定projectId条件，且为EQ操作
+     *   对于rule嵌套查询规则列表中的其它规则，不做限定
+     */
+    private fun validateModel(queryModel: QueryModel) {
+        val rule = queryModel.rule
+        // rule必须为AND类型的嵌套查询
+        if (rule !is Rule.NestedRule) {
+            throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "relation")
+        }
     }
 }

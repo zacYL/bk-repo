@@ -29,7 +29,7 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.repository.search.cpack.interceptor
+package com.tencent.bkrepo.repository.search.software.interceptor
 
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.common.query.enums.OperationType
@@ -51,7 +51,7 @@ import org.springframework.stereotype.Component
  * 条件构造器中传入条件是`repoName`，过滤无权限的仓库
  */
 @Component
-class CpackRepoNameRuleInterceptor(
+class SoftwareRepoNameRuleInterceptor(
     private val permissionManager: PermissionManager
 ) : QueryRuleInterceptor {
 

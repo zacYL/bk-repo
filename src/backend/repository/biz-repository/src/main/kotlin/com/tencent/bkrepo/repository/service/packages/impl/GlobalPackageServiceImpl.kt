@@ -10,22 +10,22 @@ import com.tencent.bkrepo.common.query.util.MongoEscapeUtils
 import com.tencent.bkrepo.repository.dao.PackageDao
 import com.tencent.bkrepo.repository.model.TPackage
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
-import com.tencent.bkrepo.repository.pojo.software.CpackGlobalSearchPojo
+import com.tencent.bkrepo.repository.pojo.software.SoftwareGlobalSearchPojo
 import com.tencent.bkrepo.repository.pojo.software.ProjectPackageOverview
-import com.tencent.bkrepo.repository.search.cpack.packages.CpackPackageSearchInterpreter
-import com.tencent.bkrepo.repository.service.packages.CpackPackageService
-import com.tencent.bkrepo.repository.service.repo.CpackRepositoryService
+import com.tencent.bkrepo.repository.search.software.packages.SoftwarePackageSearchInterpreter
+import com.tencent.bkrepo.repository.service.packages.GlobalPackageService
+import com.tencent.bkrepo.repository.service.repo.SoftwareRepositoryService
 import org.springframework.data.mongodb.core.aggregation.Aggregation
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.stereotype.Service
 
 @Service
-class CpackPackageServiceImpl(
+class GlobalPackageServiceImpl(
     private val packageDao: PackageDao,
-    private val cpackRepositoryService: CpackRepositoryService,
-    private val cpackPackageSearchInterpreter: CpackPackageSearchInterpreter
-) : CpackPackageService {
+    private val softwareRepositoryService: SoftwareRepositoryService,
+    private val softwarePackageSearchInterpreter: SoftwarePackageSearchInterpreter
+) : GlobalPackageService {
 
     override fun packageOverview(
         repoType: RepositoryType,
@@ -39,7 +39,7 @@ class CpackPackageServiceImpl(
             if (repoName != null) {
                 criteria.and(TPackage::repoName.name).`is`(repoName)
             } else {
-                val allSoftRepo = cpackRepositoryService.listRepo(projectId, includeGeneric = false)
+                val allSoftRepo = softwareRepositoryService.listRepo(projectId, includeGeneric = false)
                 val repoNames = allSoftRepo.map { it.name }
                 criteria.and(TPackage::repoName.name).`in`(repoNames)
             }
@@ -56,13 +56,13 @@ class CpackPackageServiceImpl(
             Aggregation.match(criteria),
             Aggregation.group("\$projectId", "\$repoName").sum("\$versions").`as`("count")
         )
-        val result = packageDao.aggregate(aggregation, CpackGlobalSearchPojo::class.java).mappedResults
+        val result = packageDao.aggregate(aggregation, SoftwareGlobalSearchPojo::class.java).mappedResults
 
         return transTree(result)
     }
 
     private fun transCri(criteria: Criteria, repoType: RepositoryType) {
-        val allSoftRepo = cpackRepositoryService.listRepo(type = repoType, includeGeneric = false)
+        val allSoftRepo = softwareRepositoryService.listRepo(type = repoType, includeGeneric = false)
         val projectMap = transRepoTree(allSoftRepo)
         val criteriaSet = mutableSetOf<Criteria>()
         projectMap.map {
@@ -85,7 +85,7 @@ class CpackPackageServiceImpl(
         return projectMap
     }
 
-    private fun transTree(list: List<CpackGlobalSearchPojo>): List<ProjectPackageOverview> {
+    private fun transTree(list: List<SoftwareGlobalSearchPojo>): List<ProjectPackageOverview> {
         val projectSet = mutableSetOf<ProjectPackageOverview>()
         list.map { pojo ->
             val repoOverview = ProjectPackageOverview.RepoPackageOverview(
@@ -127,7 +127,7 @@ class CpackPackageServiceImpl(
         }
         if (projectId == null) {
             val projectsRule = mutableListOf<Rule>()
-            val allSoftRepo = cpackRepositoryService.listRepo(type = repoType, includeGeneric = false)
+            val allSoftRepo = softwareRepositoryService.listRepo(type = repoType, includeGeneric = false)
             val projectMap = transRepoTree(allSoftRepo)
             projectMap.map { project ->
                 val projectRule = Rule.QueryRule(field = "projectId", value = project.key)
@@ -150,10 +150,10 @@ class CpackPackageServiceImpl(
         }
         if (projectId != null && repoName == null) {
             val genericRepos =
-                cpackRepositoryService.listRepo(projectId, type = repoType, includeGeneric = false).map { it.name }
+                softwareRepositoryService.listRepo(projectId, type = repoType, includeGeneric = false).map { it.name }
             rules.add(Rule.QueryRule(field = "repoName", value = genericRepos, operation = OperationType.IN))
         }
-        val context = cpackPackageSearchInterpreter.interpret(queryModel)
+        val context = softwarePackageSearchInterpreter.interpret(queryModel)
         val query = context.mongoQuery
         val countQuery = Query.of(query).limit(0).skip(0)
         val totalRecords = packageDao.count(countQuery)

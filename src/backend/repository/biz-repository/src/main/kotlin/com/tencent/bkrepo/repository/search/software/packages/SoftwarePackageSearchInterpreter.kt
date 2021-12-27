@@ -29,33 +29,33 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.repository.search.cpack.packages
+package com.tencent.bkrepo.repository.search.software.packages
 
 import com.tencent.bkrepo.common.query.builder.MongoQueryInterpreter
 import com.tencent.bkrepo.common.query.interceptor.QueryContext
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.repository.search.common.MetadataRuleInterceptor
 import com.tencent.bkrepo.repository.search.common.SelectFieldInterceptor
-import com.tencent.bkrepo.repository.search.cpack.interceptor.CpackModelValidateInterceptor
-import com.tencent.bkrepo.repository.search.cpack.interceptor.CpackRepoNameRuleInterceptor
-import com.tencent.bkrepo.repository.search.cpack.interceptor.CpackRepoTypeRuleInterceptor
 import com.tencent.bkrepo.repository.search.packages.PackageQueryContext
+import com.tencent.bkrepo.repository.search.software.interceptor.SoftwareModelValidateInterceptor
+import com.tencent.bkrepo.repository.search.software.interceptor.SoftwareRepoNameRuleInterceptor
+import com.tencent.bkrepo.repository.search.software.interceptor.SoftwareRepoTypeRuleInterceptor
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.stereotype.Component
 import javax.annotation.PostConstruct
 
 @Component
-class CpackPackageSearchInterpreter(
-    private val cpackRepoNameRuleInterceptor: CpackRepoNameRuleInterceptor,
-    private val cpackRepoTypeRuleInterceptor: CpackRepoTypeRuleInterceptor
+class SoftwarePackageSearchInterpreter(
+    private val softwareRepoNameRuleInterceptor: SoftwareRepoNameRuleInterceptor,
+    private val softwareRepoTypeRuleInterceptor: SoftwareRepoTypeRuleInterceptor
 ) : MongoQueryInterpreter() {
 
     @PostConstruct
     fun init() {
-        addModelInterceptor(CpackModelValidateInterceptor())
+        addModelInterceptor(SoftwareModelValidateInterceptor())
         addModelInterceptor(SelectFieldInterceptor())
-        addRuleInterceptor(cpackRepoTypeRuleInterceptor)
-        addRuleInterceptor(cpackRepoNameRuleInterceptor)
+        addRuleInterceptor(softwareRepoTypeRuleInterceptor)
+        addRuleInterceptor(softwareRepoNameRuleInterceptor)
         addRuleInterceptor(MetadataRuleInterceptor())
     }
 

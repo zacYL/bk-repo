@@ -5,7 +5,7 @@ import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
-import com.tencent.bkrepo.repository.service.repo.CpackRepositoryService
+import com.tencent.bkrepo.repository.service.repo.SoftwareRepositoryService
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
@@ -19,8 +19,8 @@ import org.springframework.web.bind.annotation.RestController
 @Api("软件源仓库接口")
 @RestController
 @RequestMapping("/api/software/repo")
-class CpackUserRepositoryController(
-    private val cpackRepositoryService: CpackRepositoryService
+class UserSoftwareRepositoryController(
+    private val softwareRepositoryService: SoftwareRepositoryService
 ) {
 
     @ApiOperation("软件源仓库列表")
@@ -39,7 +39,7 @@ class CpackUserRepositoryController(
         @RequestParam type: String?
     ): Response<Page<RepositoryInfo>> {
         val repoType = type?.let { RepositoryType.valueOf(it.toUpperCase()) }
-        val page = cpackRepositoryService.listRepoPage(
+        val page = softwareRepositoryService.listRepoPage(
             projectId,
             pageNumber,
             pageSize,

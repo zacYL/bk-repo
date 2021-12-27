@@ -1,6 +1,6 @@
 package com.tencent.bkrepo.repository.pojo.software
 
-data class CpackGlobalSearchPojo(
+data class SoftwareGlobalSearchPojo(
     val id: RepoInfo,
     val count: Long
 ) {

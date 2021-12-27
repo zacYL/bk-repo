@@ -36,7 +36,7 @@ import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.repository.pojo.software.NodeOverviewResponse
-import com.tencent.bkrepo.repository.service.node.CpackNodeSearchService
+import com.tencent.bkrepo.repository.service.node.SoftwareNodeSearchService
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import org.springframework.web.bind.annotation.GetMapping
@@ -49,14 +49,14 @@ import org.springframework.web.bind.annotation.RestController
 @Api("节点用户接口")
 @RestController
 @RequestMapping("/api/software/node")
-class CpackUserNodeController(
-    private val cpackNodeSearchService: CpackNodeSearchService
+class UserSoftwareNodeController(
+    private val softwareNodeSearchService: SoftwareNodeSearchService
 ) {
 
     @ApiOperation("自定义查询节点")
     @PostMapping("/search")
     fun search(@RequestBody queryModel: QueryModel): Response<Page<Map<String, Any?>>> {
-        return ResponseBuilder.success(cpackNodeSearchService.search(queryModel))
+        return ResponseBuilder.success(softwareNodeSearchService.search(queryModel))
     }
 
     @ApiOperation("仓库 包数量 总览")
@@ -65,6 +65,6 @@ class CpackUserNodeController(
         @RequestParam projectId: String,
         @RequestParam name: String
     ): Response<NodeOverviewResponse> {
-        return ResponseBuilder.success(cpackNodeSearchService.nodeOverview(projectId, name))
+        return ResponseBuilder.success(softwareNodeSearchService.nodeOverview(projectId, name))
     }
 }

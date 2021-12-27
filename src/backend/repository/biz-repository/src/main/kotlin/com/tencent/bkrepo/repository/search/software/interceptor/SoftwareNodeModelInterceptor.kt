@@ -29,33 +29,31 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.repository.search.cpack.node
+package com.tencent.bkrepo.repository.search.software.interceptor
 
-import com.tencent.bkrepo.common.query.builder.MongoQueryInterpreter
+import com.tencent.bkrepo.common.api.constant.StringPool
+import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.interceptor.QueryContext
 import com.tencent.bkrepo.common.query.model.QueryModel
-import com.tencent.bkrepo.repository.search.common.MetadataRuleInterceptor
-import com.tencent.bkrepo.repository.search.common.SelectFieldInterceptor
-import com.tencent.bkrepo.repository.search.cpack.interceptor.CpackRepoNameRuleInterceptor
-import com.tencent.bkrepo.repository.search.node.NodeQueryContext
-import org.springframework.data.mongodb.core.query.Query
-import org.springframework.stereotype.Component
-import javax.annotation.PostConstruct
+import com.tencent.bkrepo.common.query.model.Rule
+import com.tencent.bkrepo.repository.model.TNode
 
-@Component
-class CpackNodeQueryInterpreter(
-    private val cpackRepoNameRuleInterceptor: CpackRepoNameRuleInterceptor
-) : MongoQueryInterpreter() {
+/**
+ * 节点自定义查询规则拦截器
+ */
+class SoftwareNodeModelInterceptor : SoftwareModelValidateInterceptor() {
 
-    @PostConstruct
-    fun init() {
-//        addModelInterceptor(CpackNodeModelInterceptor())
-        addModelInterceptor(SelectFieldInterceptor())
-        addRuleInterceptor(cpackRepoNameRuleInterceptor)
-        addRuleInterceptor(MetadataRuleInterceptor())
+    override fun intercept(queryModel: QueryModel, context: QueryContext): QueryModel {
+        super.intercept(queryModel, context)
+        // 添加deleted属性为null的查询条件
+        setDeletedNull(queryModel)
+        return queryModel
     }
 
-    override fun initContext(queryModel: QueryModel, mongoQuery: Query): QueryContext {
-        return NodeQueryContext(queryModel, mongoQuery, this)
+    /**
+     * 添加deleted属性为null的查询条件到[queryModel]中
+     */
+    private fun setDeletedNull(queryModel: QueryModel) {
+        queryModel.addQueryRule(Rule.QueryRule(TNode::deleted.name, StringPool.EMPTY, OperationType.NULL))
     }
 }

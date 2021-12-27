@@ -5,7 +5,7 @@ import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.repository.pojo.software.ProjectPackageOverview
 
-interface CpackPackageService {
+interface GlobalPackageService {
     /**
      * 包搜索总览
      */

@@ -7,7 +7,7 @@ import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.repository.dao.RepositoryDao
 import com.tencent.bkrepo.repository.model.TRepository
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
-import com.tencent.bkrepo.repository.service.repo.CpackRepositoryService
+import com.tencent.bkrepo.repository.service.repo.SoftwareRepositoryService
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
@@ -18,9 +18,9 @@ import org.springframework.stereotype.Service
 import java.time.format.DateTimeFormatter
 
 @Service
-class CpackRepositoryServiceImpl(
+class SoftwareRepositoryServiceImpl(
     private val repositoryDao: RepositoryDao
-) : CpackRepositoryService {
+) : SoftwareRepositoryService {
     override fun listRepoPage(
         projectId: String?,
         pageNumber: Int,

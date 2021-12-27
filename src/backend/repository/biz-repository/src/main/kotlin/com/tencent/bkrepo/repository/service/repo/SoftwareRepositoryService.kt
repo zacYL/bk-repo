@@ -4,7 +4,7 @@ import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
 
-interface CpackRepositoryService {
+interface SoftwareRepositoryService {
 
     fun listRepoPage(
         projectId: String? = null,

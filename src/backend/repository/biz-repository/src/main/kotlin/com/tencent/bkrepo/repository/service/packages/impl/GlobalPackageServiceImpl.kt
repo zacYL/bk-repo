@@ -10,8 +10,8 @@ import com.tencent.bkrepo.common.query.util.MongoEscapeUtils
 import com.tencent.bkrepo.repository.dao.PackageDao
 import com.tencent.bkrepo.repository.model.TPackage
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
-import com.tencent.bkrepo.repository.pojo.software.SoftwareGlobalSearchPojo
 import com.tencent.bkrepo.repository.pojo.software.ProjectPackageOverview
+import com.tencent.bkrepo.repository.pojo.software.SoftwareGlobalSearchPojo
 import com.tencent.bkrepo.repository.search.software.packages.SoftwarePackageSearchInterpreter
 import com.tencent.bkrepo.repository.service.packages.GlobalPackageService
 import com.tencent.bkrepo.repository.service.repo.SoftwareRepositoryService
@@ -128,6 +128,7 @@ class GlobalPackageServiceImpl(
         if (projectId == null) {
             val projectsRule = mutableListOf<Rule>()
             val allSoftRepo = softwareRepositoryService.listRepo(type = repoType, includeGeneric = false)
+            if(allSoftRepo.isEmpty()) return Page(1, queryModel.page.pageSize, 0, listOf())
             val projectMap = transRepoTree(allSoftRepo)
             projectMap.map { project ->
                 val projectRule = Rule.QueryRule(field = "projectId", value = project.key)

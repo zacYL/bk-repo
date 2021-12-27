@@ -108,7 +108,11 @@
                 projectId: this.$route.query.projectId || '',
                 packageName: this.$route.query.packageName || '',
                 repoType: this.$route.query.repoType || 'docker',
-                repoList: [],
+                repoList: [{
+                    name: '全部',
+                    roadMap: '0',
+                    children: []
+                }],
                 selectedNode: {},
                 openList: [],
                 repoName: this.$route.query.repoName || '',
@@ -129,6 +133,7 @@
         },
         created () {
             this.handlerPaginationChange()
+            this.itemClickHandler(this.repoList[0]) // 重置树
         },
         methods: {
             formatDate,
@@ -144,9 +149,8 @@
             itemClickHandler (node) {
                 this.selectedNode = node
                 this.projectId = node.projectId
-                this.repoName = node.repoName
                 this.openList.push(node.roadMap)
-                this.handlerPaginationChange()
+                this.changeRepoInput(node.repoName)
             },
             searchRepoHandler () {
                 this.searchRepoList({
@@ -176,9 +180,6 @@
                             }
                         })
                     }]
-                    if (this.selectedNode.roadMap !== '0') {
-                        this.itemClickHandler(this.repoList[0])
-                    }
                 })
             },
             searckPackageHandler (load) {
@@ -246,8 +247,7 @@
                 this.changePackageName()
             },
             changePackageName () {
-                this.repoName = ''
-                this.changeRepoInput()
+                this.itemClickHandler(this.repoList[0]) // 重置树
             },
             changeRepoInput (repoName = '') {
                 this.repoName = repoName

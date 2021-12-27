@@ -148,12 +148,12 @@ mail:
       enable: true
       required: true
 
-# 许可需要的配置
+# 集成许可配置
 service-suffix: "-devops"
 
 bk:
   paas:
-    host: http://paas.canwayrepo.com
+    host: http://paas.__CPACK_DOMAIN__
     version: "3.0.0"
 
 # 独立部署模式固定该配置

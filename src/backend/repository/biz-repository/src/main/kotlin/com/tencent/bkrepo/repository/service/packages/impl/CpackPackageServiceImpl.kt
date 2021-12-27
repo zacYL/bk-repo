@@ -54,7 +54,7 @@ class CpackPackageServiceImpl(
         val aggregation = Aggregation.newAggregation(
             TPackage::class.java,
             Aggregation.match(criteria),
-            Aggregation.group("\$projectId","\$repoName").sum("\$versions").`as`("count")
+            Aggregation.group("\$projectId", "\$repoName").sum("\$versions").`as`("count")
         )
         val result = packageDao.aggregate(aggregation, CpackGlobalSearchPojo::class.java).mappedResults
 
@@ -115,11 +115,15 @@ class CpackPackageServiceImpl(
         var repoName: String? = null
         var projectId: String? = null
         var repoType: RepositoryType? = null
+        val projectSubRule = mutableListOf<Rule>()
         for (rule in rules) {
             val queryRule = rule as Rule.QueryRule
-            if(queryRule.field == "repoName") repoName = queryRule.value as String
-            if(queryRule.field == "projectId") projectId = queryRule.value as String
-            if(queryRule.field == "repoType") repoType = RepositoryType.valueOf(queryRule.value as String)
+            when (queryRule.field) {
+                "repoName" -> repoName = queryRule.value as String
+                "projectId" -> projectId = queryRule.value as String
+                "repoType" -> repoType = RepositoryType.valueOf(queryRule.value as String)
+                else -> projectSubRule.add(queryRule)
+            }
         }
         if (projectId == null) {
             val projectsRule = mutableListOf<Rule>()
@@ -132,7 +136,9 @@ class CpackPackageServiceImpl(
                     mutableListOf(
                         projectRule,
                         reposRule,
-                        rules.first { (it as Rule.QueryRule).field == "repoType" }), Rule.NestedRule.RelationType.AND
+                        rules.first { (it as Rule.QueryRule).field == "repoType" }
+                    ).apply { this.addAll(projectSubRule) },
+                    Rule.NestedRule.RelationType.AND
                 )
                 projectsRule.add(rule)
             }

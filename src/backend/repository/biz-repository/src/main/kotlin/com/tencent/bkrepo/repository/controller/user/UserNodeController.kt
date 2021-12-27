@@ -323,8 +323,8 @@ class UserNodeController(
         var projectId: String? = null
         for (rule in rules) {
             val queryRule = rule as Rule.QueryRule
-            if(queryRule.field == "repoName") containRepoKey = true
-            if(queryRule.field == "projectId") projectId = queryRule.value as String
+            if (queryRule.field == "repoName") containRepoKey = true
+            if (queryRule.field == "projectId") projectId = queryRule.value as String
         }
         projectId?.let { project ->
             val genericRepos = repositoryService.allRepos(project, null, RepositoryType.GENERIC).map { it?.name }

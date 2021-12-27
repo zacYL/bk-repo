@@ -20,5 +20,4 @@ interface CpackRepositoryService {
         type: RepositoryType? = null,
         includeGeneric: Boolean
     ): List<RepositoryInfo>
-
 }

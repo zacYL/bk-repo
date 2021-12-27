@@ -68,7 +68,7 @@ class CpackRepositoryServiceImpl(
         return Query(criteria).with(Sort.by(Sort.Direction.DESC, TRepository::createdDate.name))
     }
 
-    companion object{
+    companion object {
         private fun convertToInfo(tRepository: TRepository?): RepositoryInfo? {
             return tRepository?.let {
                 RepositoryInfo(

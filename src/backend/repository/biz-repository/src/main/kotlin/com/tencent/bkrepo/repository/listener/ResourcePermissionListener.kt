@@ -63,7 +63,7 @@ class ResourcePermissionListener(
         with(event) {
             if (isAuthedNormalUser(userId)) {
                 permissionManager.listProjectBuiltinPermission(projectId)
-                //创建项目级权限
+                // 创建项目级权限
 //                permissionManager.registerProject(userId, projectId)
 //                val projectManagerRoleId = roleResource.createProjectManage(projectId).data!!
 //                userResource.addUserRole(userId, projectManagerRoleId)
@@ -79,23 +79,27 @@ class ResourcePermissionListener(
     fun handle(event: RepoCreatedEvent) {
         with(event) {
             if (isAuthedNormalUser(userId)) {
-                //创建仓库级权限
+                // 创建仓库级权限
                 val repoManage = permissionManager.lisRepoBuiltinPermission(projectId, repoName)?.first {
                     it.permName == AUTH_BUILTIN_ADMIN
                 }
-                //将创建用户和项目管理员都添加至仓库的管理员
+                // 将创建用户和项目管理员都添加至仓库的管理员
                 val users = permissionManager.listProjectBuiltinPermission(projectId)?.first {
                     it.permName == PROJECT_MANAGE_PERMISSION
                 }?.users?.toSet()
                 if (repoManage != null) {
-                    permissionResource.updatePermissionUser(UpdatePermissionUserRequest(
-                        permissionId = repoManage.id!!,
-                        userId = (mutableSetOf(userId).apply {
-                            if (users != null) {
-                                addAll(users)
-                            }
-                        }).toList()
-                    ))
+                    permissionResource.updatePermissionUser(
+                        UpdatePermissionUserRequest(
+                            permissionId = repoManage.id!!,
+                            userId = (
+                                mutableSetOf(userId).apply {
+                                    if (users != null) {
+                                        addAll(users)
+                                    }
+                                }
+                                ).toList()
+                        )
+                    )
                 }
             }
         }

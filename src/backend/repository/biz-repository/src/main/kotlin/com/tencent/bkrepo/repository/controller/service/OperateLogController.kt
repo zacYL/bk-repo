@@ -29,8 +29,8 @@ class OperateLogController(
     }
 
     override fun operateLogLimitByTime(time: LocalDateTime, pageNumber: Int, pageSize: Int):
-            Response<List<OperateLogPojo>> {
-        val result = operateLogService.operateLogLimitByTime(time, pageNumber, pageSize)
-        return ResponseBuilder.success(result)
-    }
+        Response<List<OperateLogPojo>> {
+            val result = operateLogService.operateLogLimitByTime(time, pageNumber, pageSize)
+            return ResponseBuilder.success(result)
+        }
 }

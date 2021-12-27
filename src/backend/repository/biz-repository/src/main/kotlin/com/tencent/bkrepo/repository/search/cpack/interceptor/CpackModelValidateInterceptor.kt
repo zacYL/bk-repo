@@ -59,7 +59,7 @@ open class CpackModelValidateInterceptor : QueryModelInterceptor {
     private fun validateModel(queryModel: QueryModel) {
         val rule = queryModel.rule
         // rule必须为AND类型的嵌套查询
-        if (rule !is Rule.NestedRule ) {
+        if (rule !is Rule.NestedRule) {
             throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "relation")
         }
     }

@@ -46,7 +46,7 @@ import org.springframework.stereotype.Component
  * 条件构造器中传入条件是`repoType`，需要转换成对应的仓库列表
  */
 @Component
-class CpackRepoTypeRuleInterceptor: QueryRuleInterceptor {
+class CpackRepoTypeRuleInterceptor : QueryRuleInterceptor {
 
     override fun match(rule: Rule): Boolean {
         return rule is Rule.QueryRule && rule.field == "repoType"

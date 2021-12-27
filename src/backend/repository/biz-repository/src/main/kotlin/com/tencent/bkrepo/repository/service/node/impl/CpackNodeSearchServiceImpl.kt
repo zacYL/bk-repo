@@ -50,7 +50,7 @@ import org.springframework.data.mongodb.core.query.Query
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.time.ZoneId
-import java.util.*
+import java.util.Date
 
 /**
  * 节点自定义查询服务实现类
@@ -105,7 +105,6 @@ class CpackNodeSearchServiceImpl(
                 this.clear()
                 this.addAll(projectsRule)
             }
-
         }
         if (projectId != null && repoName == null) {
             val genericRepos =

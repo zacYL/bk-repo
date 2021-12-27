@@ -88,7 +88,6 @@ class UserProjectController(
         return ResponseBuilder.success(projectService.checkExist(projectId))
     }
 
-
     @ApiOperation("校验项目参数是否存在")
     @GetMapping("/exist")
     fun checkProjectExist(

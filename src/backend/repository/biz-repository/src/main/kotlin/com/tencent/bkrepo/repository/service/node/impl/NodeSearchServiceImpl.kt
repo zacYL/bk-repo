@@ -55,7 +55,7 @@ import org.springframework.data.mongodb.core.query.Query
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.time.ZoneId
-import java.util.*
+import java.util.Date
 
 /**
  * 节点自定义查询服务实现类
@@ -117,7 +117,7 @@ class NodeSearchServiceImpl(
         // 获取项目下所有二进制仓库
         val repos =
             repositoryClient.allRepos(projectId = projectId, repoType = RepositoryType.GENERIC).data?.map { it?.name }
-        if(repos.isNullOrEmpty()) return Page(1, 20, 0, listOf())
+        if (repos.isNullOrEmpty()) return Page(1, 20, 0, listOf())
         val projectRule = Rule.QueryRule(field = "projectId", value = projectId, operation = OperationType.EQ)
         val repoRule = Rule.QueryRule(field = "repoName", value = repos, operation = OperationType.IN)
         val fileRule = Rule.QueryRule(field = "folder", value = false, operation = OperationType.EQ)

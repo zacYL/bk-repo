@@ -32,8 +32,6 @@
 package com.tencent.bkrepo.repository.util
 
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
-import com.tencent.bkrepo.common.artifact.constant.PIPELINE
-import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import org.slf4j.LoggerFactory
 
 /**
@@ -50,10 +48,10 @@ object PipelineRepoUtils {
     fun checkPipeline(repoName: String) {
 //        if (repoName == PIPELINE) {
 //            logger.warn("Pipeline repo query is forbidden")
-            // throw ErrorCodeException(
-            //     status = HttpStatus.FORBIDDEN,
-            //     messageCode = ArtifactMessageCode.PIPELINE_BANNED
-            // )
+        // throw ErrorCodeException(
+        //     status = HttpStatus.FORBIDDEN,
+        //     messageCode = ArtifactMessageCode.PIPELINE_BANNED
+        // )
 //        }
     }
 }

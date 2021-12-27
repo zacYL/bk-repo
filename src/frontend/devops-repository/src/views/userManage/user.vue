@@ -269,13 +269,15 @@
                     return
                 }
                 const reader = new FileReader()
-                reader.onload = (e) => {
-                    const ab = e.target.result
+                reader.onload = (f) => {
+                    const ab = f.target.result
                     const wb = XLSX.read(new Uint8Array(ab), { type: 'array' })
                     const wsname = wb.SheetNames[0]
                     const ws = wb.Sheets[wsname]
                     const data = XLSX.utils.sheet_to_json(ws, { header: ['userId', 'name', 'email', 'phone'], range: 1 })
-                    this.requestImportUsers(data)
+                    this.requestImportUsers(data).finally(() => {
+                        e.target.value = ''
+                    })
                 }
                 reader.readAsArrayBuffer(file)
             },
@@ -312,9 +314,10 @@
                         theme: 'error',
                         message
                     })
+                    return Promise.resolve()
                 } else {
                     this.isLoading = true
-                    this.importUsers({ body: data }).then(() => {
+                    return this.importUsers({ body: data }).then(() => {
                         this.$bkMessage({
                             theme: 'success',
                             message: '用户导入' + this.$t('success')

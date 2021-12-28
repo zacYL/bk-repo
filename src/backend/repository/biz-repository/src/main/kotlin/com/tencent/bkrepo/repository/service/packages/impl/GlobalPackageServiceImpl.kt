@@ -44,7 +44,9 @@ class GlobalPackageServiceImpl(
                 criteria.and(TPackage::repoName.name).`in`(repoNames)
             }
         } else {
-            transCri(criteria, repoType)
+            val allSoftRepo = softwareRepositoryService.listRepo(type = repoType, includeGeneric = false)
+            if(allSoftRepo.isEmpty()) return listOf()
+            transCri(criteria, allSoftRepo)
         }
         packageName?.let {
             val escapedValue = MongoEscapeUtils.escapeRegexExceptWildcard(packageName)
@@ -61,9 +63,8 @@ class GlobalPackageServiceImpl(
         return transTree(result)
     }
 
-    private fun transCri(criteria: Criteria, repoType: RepositoryType) {
-        val allSoftRepo = softwareRepositoryService.listRepo(type = repoType, includeGeneric = false)
-        val projectMap = transRepoTree(allSoftRepo)
+    private fun transCri(criteria: Criteria, repos: List<RepositoryInfo>) {
+        val projectMap = transRepoTree(repos)
         val criteriaSet = mutableSetOf<Criteria>()
         projectMap.map {
             val singleCri = Criteria.where(TPackage::projectId.name).`is`(it.key)

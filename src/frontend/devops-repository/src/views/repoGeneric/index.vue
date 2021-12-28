@@ -471,6 +471,8 @@
             },
             handlerShare () {
                 this.$refs.genericShareDialog.setData({
+                    projectId: this.projectId,
+                    repoName: this.repoName,
                     show: true,
                     loading: false,
                     title: `${this.$t('share')} (${this.selectedRow.name})`,

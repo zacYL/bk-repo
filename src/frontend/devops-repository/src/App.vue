@@ -67,12 +67,14 @@
                             projectId = (this.projectList[0] || {}).id
                         }
                         localStorage.setItem('projectId', projectId)
-                        this.$router.replace({
+
+                        projectId !== urlProjectId && this.$router.replace({
                             name: 'repoList',
                             params: {
                                 projectId
                             }
                         })
+
                         this.checkPM({ projectId })
                     }
                 })

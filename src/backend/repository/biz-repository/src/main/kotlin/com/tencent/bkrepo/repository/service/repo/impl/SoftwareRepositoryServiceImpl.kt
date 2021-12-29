@@ -2,6 +2,7 @@ package com.tencent.bkrepo.repository.service.repo.impl
 
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.readJsonString
+import com.tencent.bkrepo.common.artifact.constant.PUBLIC_PROXY_PROJECT
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.repository.dao.RepositoryDao
@@ -57,8 +58,12 @@ class SoftwareRepositoryServiceImpl(
         val publicCriteria = where(TRepository::public).`is`(true)
         val systemCriteria = where(TRepository::configuration).regex("\\\"system\\\"( )?:( )?true")
         val criteria = Criteria()
-        projectId?.takeIf { it.isNotBlank() }?.apply { criteria.and(TRepository::projectId).`is`(this) }
-        criteria.and(TRepository::display).ne(false)
+        if (projectId != null && projectId.isNotBlank()) {
+            criteria.and(TRepository::projectId).`is`(projectId)
+        } else {
+            criteria.and(TRepository::projectId).ne(PUBLIC_PROXY_PROJECT)
+        }
+        criteria.and (TRepository::display).ne(false)
         if (repoType == null && !includeGeneric) criteria.and(TRepository::type).ne(RepositoryType.GENERIC)
         if (repoType != null) {
             criteria.and(TRepository::type).isEqualTo(repoType)

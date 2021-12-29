@@ -56,7 +56,8 @@ class GlobalPackageServiceImpl(
         val aggregation = Aggregation.newAggregation(
             TPackage::class.java,
             Aggregation.match(criteria),
-            Aggregation.group("\$projectId", "\$repoName").sum("\$versions").`as`("count")
+            Aggregation.group("\$${TPackage::projectId.name}",
+                "\$${TPackage::repoName.name}").count().`as`("count")
         )
         val result = packageDao.aggregate(aggregation, SoftwareGlobalSearchPojo::class.java).mappedResults
 

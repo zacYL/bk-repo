@@ -28,9 +28,11 @@
 package com.tencent.bkrepo.generic.controller
 
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
+import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.security.manager.PermissionManager
+import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.generic.artifact.GenericArtifactInfo
 import com.tencent.bkrepo.generic.artifact.GenericArtifactInfo.Companion.GENERIC_MAPPING_URI
@@ -57,6 +59,7 @@ class TemporaryAccessController(
 ) {
 
     @PostMapping("/token/create")
+    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
     fun createToken(@RequestBody request: TemporaryTokenCreateRequest): Response<List<TemporaryAccessToken>> {
         with(request) {
             fullPathSet.forEach {
@@ -67,6 +70,7 @@ class TemporaryAccessController(
     }
 
     @PostMapping("/url/create")
+    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
     fun createUrl(@RequestBody request: TemporaryUrlCreateRequest): Response<List<TemporaryAccessUrl>> {
         with(request) {
             fullPathSet.forEach {

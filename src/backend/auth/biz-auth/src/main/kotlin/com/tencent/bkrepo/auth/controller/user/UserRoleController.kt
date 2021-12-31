@@ -32,6 +32,7 @@
 package com.tencent.bkrepo.auth.controller.user
 
 import com.tencent.bkrepo.auth.constant.AUTH_API_ROLE_PREFIX
+import com.tencent.bkrepo.auth.pojo.role.CreateRoleRequest
 import com.tencent.bkrepo.auth.pojo.role.Role
 import com.tencent.bkrepo.auth.pojo.role.UpdateRoleRequest
 import com.tencent.bkrepo.auth.pojo.user.UserResult
@@ -45,6 +46,7 @@ import io.swagger.annotations.ApiParam
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestAttribute
 import org.springframework.web.bind.annotation.RequestBody
@@ -96,5 +98,16 @@ class UserRoleController(
         @RequestBody updateRoleRequest: UpdateRoleRequest
     ): Response<Boolean> {
         return ResponseBuilder.success(roleService.updateRoleInfo(id, updateRoleRequest))
+    }
+
+    @ApiOperation("创建角色")
+    @PostMapping("/create")
+    @Principal(PrincipalType.ADMIN)
+    fun createRole(
+        @RequestAttribute userId: String,
+        @RequestBody request: CreateRoleRequest
+    ): Response<String?> {
+        val id = roleService.createRole(request)
+        return ResponseBuilder.success(id)
     }
 }

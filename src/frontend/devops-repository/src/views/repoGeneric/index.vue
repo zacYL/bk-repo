@@ -576,7 +576,7 @@
                 }).catch(e => {
                     this.$bkMessage({
                         theme: 'error',
-                        message: e.status !== 404 ? e.message : this.$t('fileNotExist')
+                        message: this.$t('fileError')
                     })
                 })
             },

@@ -47,7 +47,6 @@
 
         const search = new URL(location.href).searchParams // redirect/token/download/?preview
         const redirect = search.get('redirect')
-
         if (redirect) {
             search.delete('redirect')
 
@@ -67,11 +66,12 @@
                 // 已登录
                 if (readyState === 4) {
                     if (status === 200) {
-                        location.href = redirectUrl.href
+                        window.open(redirectUrl.href, '_self')
+                        mountApp()
                     } else if (status === 401) {
                         if (MODE_CONFIG === 'ci') {
                             // ci登录逻辑
-                            location.href = window.getLoginUrl(redirectUrl.href)
+                            location.href = window.getLoginUrl(location.href)
                         } else {
                             // 保存操作链接，登陆后调用
                             sessionStorage.setItem('afterLogin', redirectUrl.href)

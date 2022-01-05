@@ -203,7 +203,9 @@ class OperateLogServiceImpl(
                 resKey = list.joinToString("::")
             )
         } else if (projectEvent.contains(tOperateLog.type)) {
-            OperateLogResponse.Content(resKey = tOperateLog.projectId!!)
+            OperateLogResponse.Content(
+                projectId = tOperateLog.projectId!!,
+                resKey = tOperateLog.projectId!!)
         } else if (metadataEvent.contains(tOperateLog.type)) {
             OperateLogResponse.Content(
                 projectId = tOperateLog.projectId,

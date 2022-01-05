@@ -112,4 +112,12 @@ interface PermissionRepository : MongoRepository<TPermission, String> {
         type: ResourceType,
         userId: String
     ): List<TPermission>
+
+    fun findAllByProjectIdAndResourceTypeAndPermNameAndReposInAndActionsIn(
+        projectId: String,
+        resourceType: ResourceType,
+        permName: String,
+        repoName: String,
+        action: PermissionAction
+    ): List<TPermission>
 }

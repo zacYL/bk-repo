@@ -213,6 +213,9 @@ open class CpackPermissionServiceImpl constructor(
         // check user project admin
         if (checkProjectUserAdmin(request)) return true
 
+        // check user repo admin
+        if (checkRepoUserAdmin(request)) return true
+
         // check role project admin
         if (checkProjectAdmin(request, user.roles)) return true
 
@@ -222,8 +225,21 @@ open class CpackPermissionServiceImpl constructor(
         // check project action
         if (checkProjectAction(request, user.roles)) return true
 
-        // check repo action action
+        // check repo action
         return checkRepoAction(request, user.roles)
+    }
+
+    private fun checkRepoUserAdmin(request: CheckPermissionRequest): Boolean {
+        if (request.projectId != null && request.repoName != null) {
+            if(permissionRepository.findAllByProjectIdAndResourceTypeAndPermNameAndReposInAndActionsIn(
+                projectId = request.projectId!!,
+                resourceType = ResourceType.REPO,
+                permName = AUTH_BUILTIN_ADMIN,
+                repoName = request.repoName!!,
+                action = PermissionAction.MANAGE
+            ).isNotEmpty()) return true
+        }
+        return false
     }
 
     private fun checkProjectUserAdmin(request: CheckPermissionRequest): Boolean {

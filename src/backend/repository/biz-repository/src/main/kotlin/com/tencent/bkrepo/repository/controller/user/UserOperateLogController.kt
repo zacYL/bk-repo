@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/api/operate/log")
+@RequestMapping("/api/log")
 class UserOperateLogController(
     private val operateLogService: OperateLogService
 ) {

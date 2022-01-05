@@ -19,22 +19,22 @@ project_list=($(awk '{print $0}' projects))
 addCustomRepository(){
     curl -k -X POST  -u$username:$password $cpackUrl/repository/api/repo/create \
     -H 'Content-Type: application/json' \
-    -d '{ "projectId": "'$1'", "name":"custom", "type":"GENERIC", "category": "LOCAL", "description":"create by ci"}'
+    -d '{ "projectId": "'$1'", "name":"custom", "type":"GENERIC", "category": "LOCAL"}'
 }
 addPipelineRepository(){
     curl -k -X POST  -u$username:$password $cpackUrl/repository/api/repo/create \
     -H 'Content-Type: application/json' \
-    -d '{ "projectId": "'$1'", "name":"pipeline", "type":"GENERIC", "category": "LOCAL", "description":"create by ci"}'
+    -d '{ "projectId": "'$1'", "name":"pipeline", "type":"GENERIC", "category": "LOCAL"}'
 }
 addReportRepository(){
     curl -k -X POST  -u$username:$password $cpackUrl/repository/api/repo/create \
     -H 'Content-Type: application/json' \
-    -d '{ "projectId": "'$1'", "name":"report", "type":"GENERIC", "category": "LOCAL", "description":"create by ci" }'
+    -d '{ "projectId": "'$1'", "name":"report", "type":"GENERIC", "category": "LOCAL" }'
 }
 addDockerRepository(){
     curl -k -X POST  -u$username:$password $cpackUrl/repository/api/repo/create \
     -H 'Content-Type: application/json' \
-    -d '{ "projectId": "'$1'", "name":"docker-local", "type":"DOCKER", "description":"create by ci"}'
+    -d '{ "projectId": "'$1'", "name":"docker-local", "type":"DOCKER", "category": "LOCAL"}'
 }
 
 addProject(){

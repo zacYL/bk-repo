@@ -28,8 +28,10 @@
 package com.tencent.bkrepo.generic.controller
 
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
+import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
+import com.tencent.bkrepo.common.security.exception.AuthenticationException
 import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.generic.artifact.GenericArtifactInfo
@@ -44,6 +46,7 @@ import org.springframework.web.bind.annotation.CrossOrigin
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestAttribute
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -78,10 +81,12 @@ class TemporaryAccessController(
 
     @GetMapping("/download/$GENERIC_MAPPING_URI")
     fun downloadByToken(
+        @RequestAttribute userId: String,
         artifactInfo: GenericArtifactInfo,
         @RequestParam token: String
     ) {
         val tokenInfo = temporaryAccessService.validateToken(token, artifactInfo, TokenType.DOWNLOAD)
+        require(userId != ANONYMOUS_USER) {throw AuthenticationException() }
         temporaryAccessService.download(artifactInfo)
         temporaryAccessService.decrementPermits(tokenInfo)
     }

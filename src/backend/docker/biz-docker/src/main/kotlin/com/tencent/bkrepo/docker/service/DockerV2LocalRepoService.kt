@@ -510,7 +510,14 @@ class DockerV2LocalRepoService @Autowired constructor(
                 DOCKER_DIGEST_SHA256 to DockerDigest(manifest.config.digest).hex,
                 DOCKER_OS to configBlob.os
             )
-            return DockerTagDetail(basic, configBlob.history, nodeDetail.metadata, layers)
+            val packageMetadata = versionDetail.metadata
+            return DockerTagDetail(
+                basic = basic,
+                history = configBlob.history,
+                manifest = nodeDetail.metadata,
+                layers = layers,
+                metadata = packageMetadata
+            )
         } catch (ignored: Exception) {
             return null
         }

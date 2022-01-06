@@ -36,10 +36,10 @@ import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_ADMIN
 import com.tencent.bkrepo.auth.constant.PROJECT_MANAGE_PERMISSION
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionUserRequest
 import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
-import com.tencent.bkrepo.common.security.manager.PermissionManager
-import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.common.artifact.event.project.ProjectCreatedEvent
 import com.tencent.bkrepo.common.artifact.event.repo.RepoCreatedEvent
+import com.tencent.bkrepo.common.security.manager.PermissionManager
+import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Component
@@ -79,7 +79,8 @@ class ResourcePermissionListener(
     fun handle(event: RepoCreatedEvent) {
         with(event) {
             if (isAuthedNormalUser(userId)) {
-                // 创建仓库级权限
+                // 创建仓库级权限, 预加载一次
+                permissionManager.lisRepoBuiltinPermissionNoBack(projectId, repoName)
                 val repoManage = permissionManager.lisRepoBuiltinPermission(projectId, repoName)?.first {
                     it.permName == AUTH_BUILTIN_ADMIN
                 }

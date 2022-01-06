@@ -102,6 +102,10 @@ open class PermissionServiceImpl constructor(
         return listOf(repoAdmin, repoUser).map { transferPermission(it) }
     }
 
+    override fun listBuiltinPermissionNoBack(projectId: String, repoName: String) {
+        TODO("Not yet implemented")
+    }
+
     override fun createPermission(request: CreatePermissionRequest): Boolean {
         logger.info("create  permission request : [$request]")
         // todo check request

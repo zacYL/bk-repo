@@ -81,4 +81,6 @@ interface PermissionService {
     fun findPermissionById(id: String): Permission?
 
     fun updatePermissionById(id: String, key: String, value: Any): Boolean
+
+    fun listBuiltinPermissionNoBack(projectId: String, repoName: String)
 }

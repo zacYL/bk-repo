@@ -105,6 +105,17 @@ open class CpackPermissionServiceImpl constructor(
         return listOf(repoAdmin, repoUser).map { transferPermission(it) }
     }
 
+    override fun listBuiltinPermissionNoBack(projectId: String, repoName: String) {
+        logger.debug("list  builtin permission  projectId: [$projectId], repoName: [$repoName]")
+        getOnePermissionNoBack(projectId, repoName, AUTH_BUILTIN_ADMIN, listOf(PermissionAction.MANAGE))
+        getOnePermissionNoBack(
+            projectId,
+            repoName,
+            AUTH_BUILTIN_USER,
+            listOf(PermissionAction.WRITE, PermissionAction.DELETE, PermissionAction.UPDATE)
+        )
+    }
+
     override fun createPermission(request: CreatePermissionRequest): Boolean {
         logger.info("create  permission request : [$request]")
         // todo check request
@@ -505,6 +516,34 @@ open class CpackPermissionServiceImpl constructor(
         permissionRepository.findFirstById(pId) ?: run {
             logger.warn("update permission repos [$pId]  not exist.")
             throw ErrorCodeException(AuthMessageCode.AUTH_PERMISSION_NOT_EXIST)
+        }
+    }
+
+    private fun getOnePermissionNoBack(
+        projectId: String,
+        repoName: String,
+        permName: String,
+        actions: List<PermissionAction>
+    ) {
+        val tPermission = permissionRepository.findOneByProjectIdAndReposAndPermNameAndResourceType(
+            projectId,
+            repoName,
+            permName,
+            ResourceType.REPO
+        )
+        if (tPermission == null) {
+            val request = TPermission(
+                projectId = projectId,
+                repos = listOf(repoName),
+                permName = permName,
+                actions = actions,
+                resourceType = ResourceType.REPO,
+                createAt = LocalDateTime.now(),
+                updateAt = LocalDateTime.now(),
+                createBy = AUTH_ADMIN,
+                updatedBy = AUTH_ADMIN
+            )
+            permissionRepository.insert(request)
         }
     }
 

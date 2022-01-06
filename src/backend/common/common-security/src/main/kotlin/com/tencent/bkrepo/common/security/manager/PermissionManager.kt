@@ -270,6 +270,10 @@ open class PermissionManager(
         return permissionResource.listRepoBuiltinPermission(projectId, repoName).data
     }
 
+    fun lisRepoBuiltinPermissionNoBack(projectId: String, repoName: String) {
+        permissionResource.listRepoBuiltinPermissionNoBack(projectId, repoName)
+    }
+
     fun listProjectBuiltinPermission(projectId: String): List<Permission>? {
         return permissionResource.listProjectBuiltinPermission(projectId).data
     }

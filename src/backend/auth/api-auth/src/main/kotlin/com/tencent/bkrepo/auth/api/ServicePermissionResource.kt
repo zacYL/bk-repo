@@ -182,4 +182,13 @@ interface ServicePermissionResource {
         @ApiParam(value = "注册资源请求")
         @RequestBody request: RegisterResourceRequest
     ): Response<Boolean>
+
+    @ApiOperation("获取仓库内置权限列表")
+    @GetMapping("/list/inrepoNoBack")
+    fun listRepoBuiltinPermissionNoBack(
+        @ApiParam(value = "项目ID")
+        @RequestParam projectId: String,
+        @ApiParam(value = "仓库名称")
+        @RequestParam repoName: String
+    )
 }

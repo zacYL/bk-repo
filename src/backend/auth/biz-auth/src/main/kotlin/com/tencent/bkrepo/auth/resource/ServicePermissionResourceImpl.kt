@@ -130,4 +130,8 @@ class ServicePermissionResourceImpl @Autowired constructor(
     override fun listProjectBuiltinPermission(projectId: String): Response<List<Permission>> {
         return ResponseBuilder.success(permissionService.listProjectBuiltinPermission(projectId))
     }
+
+    override fun listRepoBuiltinPermissionNoBack(projectId: String, repoName: String) {
+        permissionService.listBuiltinPermissionNoBack(projectId, repoName)
+    }
 }

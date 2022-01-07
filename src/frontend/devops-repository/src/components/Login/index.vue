@@ -100,6 +100,7 @@
                         const afterLoginUrl = sessionStorage.getItem('afterLogin')
                         sessionStorage.removeItem('afterLogin')
                         afterLoginUrl && window.open(afterLoginUrl, '_self')
+                        location.href = ''
                         this.loginFailCounter = 0
                     } else {
                         this.loginFailed = true

@@ -242,13 +242,14 @@ open class CpackPermissionServiceImpl constructor(
 
     private fun checkRepoUserAdmin(request: CheckPermissionRequest): Boolean {
         if (request.projectId != null && request.repoName != null) {
-            if(permissionRepository.findAllByProjectIdAndResourceTypeAndPermNameAndReposInAndActionsIn(
+            val permission = permissionRepository.findAllByProjectIdAndResourceTypeAndPermNameAndReposInAndActionsIn(
                 projectId = request.projectId!!,
                 resourceType = ResourceType.REPO,
                 permName = AUTH_BUILTIN_ADMIN,
                 repoName = request.repoName!!,
                 action = PermissionAction.MANAGE
-            ).isNotEmpty()) return true
+            )
+            if(permission.isNotEmpty() && permission.any { it.users.contains(request.uid) }) return true
         }
         return false
     }

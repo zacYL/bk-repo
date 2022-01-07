@@ -96,7 +96,6 @@
                             theme: 'success',
                             message: this.$t('login') + this.$t('success')
                         })
-                        this.SHOW_LOGIN_DIALOG(false)
                         const afterLoginUrl = sessionStorage.getItem('afterLogin')
                         sessionStorage.removeItem('afterLogin')
                         afterLoginUrl && window.open(afterLoginUrl, '_self')

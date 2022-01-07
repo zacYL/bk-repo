@@ -155,4 +155,16 @@ class UserPackageController(
     ): Response<List<ProjectPackageOverview>> {
         return ResponseBuilder.success(packageStatisticsService.packageOverview(repoType, projectId, packageName))
     }
+
+    @ApiOperation("查询所有版本")
+    @PostMapping("/version/list/{projectId}/{repoName}")
+    fun listAllVersion(
+        @PathVariable projectId: String,
+        @PathVariable repoName: String,
+        @RequestParam packageKey: String,
+        @RequestBody option: VersionListOption = VersionListOption()
+    ): Response<List<PackageVersion>>{
+        val versions = packageService.listAllVersion(projectId, repoName, packageKey, option)
+        return ResponseBuilder.success(versions)
+    }
 }

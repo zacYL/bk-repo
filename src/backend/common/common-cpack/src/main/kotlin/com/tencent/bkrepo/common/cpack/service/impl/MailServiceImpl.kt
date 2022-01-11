@@ -56,7 +56,7 @@ class MailServiceImpl(
             } else "null"
         )
 
-        val token = content.substringAfterLast("?token=").removeSuffix("&download=true")
+        val token = content.substringAfterLast("&token=").removeSuffix("&download=true")
         if (token.isBlank()) {
             throw ErrorCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID)
         }
@@ -95,7 +95,7 @@ class MailServiceImpl(
             } else "null"
         )
 
-        val token = content.substringAfterLast("?token=").removeSuffix("&download=true")
+        val token = content.substringAfterLast("&token=").removeSuffix("&download=true")
         if (token.isBlank()) {
             throw ErrorCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID)
         }
@@ -103,7 +103,7 @@ class MailServiceImpl(
             ?: throw ErrorCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID)
         val shareUsers = temporaryToken.authorizedUserList
         val receivers = mutableSetOf<String>()
-        //链接中分享人为空时，取传递过来的参数
+        // 链接中分享人为空时，取传递过来的参数
         if (shareUsers.isEmpty()) {
             for (shareUserId in users) {
                 val user = userService.userInfoById(shareUserId).data!!
@@ -160,10 +160,10 @@ class MailServiceImpl(
 
     private fun resolveArtifactInfo(content: String): ArtifactInfo {
         val pathList = content.substringAfterLast("?redirect=")
-            .substringBeforeLast("?token=").trim('/').split('/')
+            .substringBeforeLast("&token=").trim('/').split('/')
         val projectId = pathList[4]
         val repoName = pathList[5]
-        val artifactUri = StringUtils.join(pathList.subList(6, pathList.size), '.')
+        val artifactUri = StringUtils.join(pathList.subList(6, pathList.size), '/')
         return ArtifactInfo(projectId, repoName, artifactUri)
     }
 

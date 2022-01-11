@@ -384,23 +384,21 @@ open class CpackPermissionServiceImpl constructor(
 
         val roles = user.roles
 
-        // 用户为项目管理员或项目成员
-        if (roles.isNotEmpty() &&
-            roleRepository.findByProjectIdAndTypeAndIdIn(
-                projectId,
-                RoleType.PROJECT,
-                roles
-            ).isNotEmpty()
-        ) {
-            return getAllRepoByProjectId(projectId)
-        }
-
         // 用户为该项目成员
         if (permissionRepository.findAllByProjectIdAndResourceTypeAndUsersIn(
-            projectId = projectId,
-            userId = userId,
-            type = ResourceType.PROJECT
-        ).isNotEmpty()
+                projectId = projectId,
+                userId = userId,
+                type = ResourceType.PROJECT
+            ).isNotEmpty()
+        ) return getAllRepoByProjectId(projectId)
+
+
+        // 用户为该项目关联用户组成员
+        if (permissionRepository.findAllByProjectIdAndResourceTypeAndRolesIn(
+                projectId = projectId,
+                roles = roles,
+                type = ResourceType.PROJECT
+            ).isNotEmpty()
         ) return getAllRepoByProjectId(projectId)
 
         val repoList = mutableListOf<String>()

@@ -67,7 +67,7 @@ class ProjectServiceImpl(
     }
 
     override fun getProjectInfoByDisplayName(displayName: String): ProjectInfo? {
-        return convert(projectDao.findByName(displayName))
+        return convert(projectDao.findByDisplayName(displayName))
     }
 
     override fun listProject(): List<ProjectInfo> {
@@ -132,34 +132,32 @@ class ProjectServiceImpl(
      * true:资源已存在, false: 资源不存在
      */
     override fun checkProjectExist(name: String?, displayName: String?): Boolean {
-        name?.let { return getProjectInfo(it) != null }
-        displayName?.let { return getProjectInfoByDisplayName(it) != null }
-        return false
+        val nameResult = name?.let { getProjectInfo(it) != null } ?: false
+        val displayNameResult = displayName?.let { getProjectInfoByDisplayName(it) != null } ?: false
+        return nameResult || displayNameResult
     }
 
     override fun updateProject(name: String, request: ProjectUpdateRequest): Boolean {
-        with(request) {
-            if (!checkExist(name)) {
-                throw ErrorCodeException(ArtifactMessageCode.PROJECT_NOT_FOUND, name)
+        if (!checkExist(name)) {
+            throw ErrorCodeException(ArtifactMessageCode.PROJECT_NOT_FOUND, name)
+        }
+        request.displayName?.let {
+            if (it.length < DISPLAY_NAME_LENGTH_MIN || it.length > DISPLAY_NAME_LENGTH_MAX) {
+                throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, request::displayName.name)
             }
-            request.displayName?.let {
-                if (it.length < DISPLAY_NAME_LENGTH_MIN || it.length > DISPLAY_NAME_LENGTH_MAX) {
-                    throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, request::displayName.name)
-                }
-            }
-            val query = Query.query(Criteria.where(TProject::name.name).`is`(name))
-            val update = Update().apply {
-                request.displayName?.let { this.set(TProject::displayName.name, it) }
-                request.description?.let { this.set(TProject::description.name, it) }
-            }
-            val updateResult = projectDao.updateFirst(query, update)
-            return if (updateResult.modifiedCount == 1L) {
-                logger.info("Update project [$name] success.")
-                true
-            } else {
-                logger.error("Update project fail : $request")
-                false
-            }
+        }
+        val query = Query.query(Criteria.where(TProject::name.name).`is`(name))
+        val update = Update().apply {
+            request.displayName?.let { this.set(TProject::displayName.name, it) }
+            request.description?.let { this.set(TProject::description.name, it) }
+        }
+        val updateResult = projectDao.updateFirst(query, update)
+        return if (updateResult.modifiedCount == 1L) {
+            logger.info("Update project [$name] success.")
+            true
+        } else {
+            logger.error("Update project fail : $request")
+            false
         }
     }
 

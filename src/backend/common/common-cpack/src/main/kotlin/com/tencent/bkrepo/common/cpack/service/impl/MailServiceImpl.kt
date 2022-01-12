@@ -16,10 +16,9 @@ import com.tencent.bkrepo.common.devops.api.pojo.BkMailMessage
 import com.tencent.bkrepo.common.devops.api.pojo.DevopsMailMessage
 import com.tencent.bkrepo.common.devops.api.util.http.CanwayHttpUtils
 import com.tencent.bkrepo.repository.api.NodeClient
+import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.TemporaryTokenClient
 import org.apache.commons.lang.StringUtils
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.MimeMessageHelper
@@ -31,7 +30,8 @@ class MailServiceImpl(
     private val nodeClient: NodeClient,
     private val temporaryTokenClient: TemporaryTokenClient,
     private val userService: ServiceUserResource,
-    private val mailConf: CpackMailConf
+    private val mailConf: CpackMailConf,
+    private val projectClient: ProjectClient
 ) : NotifyService {
 
     @Autowired(required = false)
@@ -45,10 +45,11 @@ class MailServiceImpl(
                 artifactInfo.repoName,
                 artifactInfo.getArtifactFullPath()
             ).data ?: throw ArtifactNotFoundException(artifactInfo.getArtifactFullPath())
+        val projectDisplayName = projectClient.getProjectInfo(artifactInfo.projectId).data!!.displayName
         val fileShareInfo = FileShareInfo(
             fileName = nodeDetail.name,
             md5 = nodeDetail.md5 ?: "Can not found md5 value",
-            projectId = artifactInfo.projectId,
+            projectId = projectDisplayName,
             repoName = artifactInfo.repoName,
             downloadUrl = content,
             qrCodeBase64 = if (nodeDetail.name.endsWith("apk") || nodeDetail.name.endsWith("ipa")) {
@@ -69,10 +70,11 @@ class MailServiceImpl(
             user.email?.let { receivers.add(it) }
         }
         val expireDays = temporaryToken.expireDate
+        val sender = userService.detail(userId).data!!.name
         when (mailConf.mailNotifyType) {
-            MailNotifyType.CPACK -> sendMimeMail(userId, fileShareInfo, receivers.toList(), expireDays)
-            MailNotifyType.BK -> bkMailMessage(userId, fileShareInfo, receivers.toList(), expireDays)
-            MailNotifyType.DEVOPS -> devopsMailMessage(userId, fileShareInfo, receivers.toList(), expireDays)
+            MailNotifyType.CPACK -> sendMimeMail(sender, fileShareInfo, receivers.toList(), expireDays)
+            MailNotifyType.BK -> bkMailMessage(sender, fileShareInfo, receivers.toList(), expireDays)
+            MailNotifyType.DEVOPS -> devopsMailMessage(sender, fileShareInfo, receivers.toList(), expireDays)
         }
     }
 
@@ -84,10 +86,11 @@ class MailServiceImpl(
                 artifactInfo.repoName,
                 artifactInfo.getArtifactFullPath()
             ).data ?: throw throw ArtifactNotFoundException(artifactInfo.getArtifactFullPath())
+        val projectDisplayName = projectClient.getProjectInfo(artifactInfo.projectId).data!!.displayName
         val fileShareInfo = FileShareInfo(
             fileName = nodeDetail.name,
             md5 = nodeDetail.md5 ?: "Can not found md5 value",
-            projectId = artifactInfo.projectId,
+            projectId = projectDisplayName,
             repoName = artifactInfo.repoName,
             downloadUrl = content,
             qrCodeBase64 = if (nodeDetail.name.endsWith("apk") || nodeDetail.name.endsWith("ipa")) {
@@ -111,48 +114,48 @@ class MailServiceImpl(
             }
         }
         val expireDays = temporaryToken.expireDate
+        val sender = userService.detail(userId).data!!.name
         when (mailConf.mailNotifyType) {
-            MailNotifyType.CPACK -> sendMimeMail(userId, fileShareInfo, receivers.toList(), expireDays)
-            MailNotifyType.BK -> bkMailMessage(userId, fileShareInfo, users, expireDays)
-            MailNotifyType.DEVOPS -> devopsMailMessage(userId, fileShareInfo, users, expireDays)
+            MailNotifyType.CPACK -> sendMimeMail(sender, fileShareInfo, receivers.toList(), expireDays)
+            MailNotifyType.BK -> bkMailMessage(sender, fileShareInfo, users, expireDays)
+            MailNotifyType.DEVOPS -> devopsMailMessage(sender, fileShareInfo, users, expireDays)
         }
     }
 
     private fun sendMimeMail(sender: String, file: FileShareInfo, receivers: List<String>, expireDays: String?) {
-        val user = userService.detail(sender).data!!
         require(receivers.isNotEmpty())
         val mailMessage = mailSender.createMimeMessage()
         val mimeMailMessage = MimeMessageHelper(mailMessage, true)
         mimeMailMessage.setFrom(mailConf.username)
         mimeMailMessage.setTo(receivers.toTypedArray())
-        val title = FileShareMailTemplate.getShareEmailTitle(user.name, file.fileName)
+        val title = FileShareMailTemplate.getShareEmailTitle(sender, file.fileName)
         mimeMailMessage.setSubject(title)
         val body = FileShareMailTemplate.getShareEmailBody(file.projectId, title, sender, expireDays, listOf(file))
         mimeMailMessage.setText(body, true)
         mailSender.send(mailMessage)
     }
 
-    private fun bkMailMessage(chname: String, file: FileShareInfo, receivers: List<String>, expireDays: String?) {
-        val title = FileShareMailTemplate.getShareEmailTitle(chname, file.fileName)
+    private fun bkMailMessage(sender: String, file: FileShareInfo, receivers: List<String>, expireDays: String?) {
+        val title = FileShareMailTemplate.getShareEmailTitle(sender, file.fileName)
         val bkMailMessage = BkMailMessage(
             bkAppCode = devopsConf.appCode,
             bkAppSecret = devopsConf.appSecret,
-            bkUsername = chname,
+            bkUsername = sender,
             receiverUsername = StringUtils.join(receivers, ","),
             title = title,
-            content = FileShareMailTemplate.getShareEmailBody(file.projectId, title, chname, expireDays, listOf(file))
+            content = FileShareMailTemplate.getShareEmailBody(file.projectId, title, sender, expireDays, listOf(file))
         )
         val requestUrl = "${devopsConf.bkHost.removeSuffix("/")}$bkMailApi"
         CanwayHttpUtils.doPost(requestUrl, bkMailMessage.toJsonString()).content
     }
 
-    private fun devopsMailMessage(userId: String, file: FileShareInfo, receivers: List<String>, expireDays: String?) {
-        val title = FileShareMailTemplate.getShareEmailTitle(userId, file.fileName)
+    private fun devopsMailMessage(sender: String, file: FileShareInfo, receivers: List<String>, expireDays: String?) {
+        val title = FileShareMailTemplate.getShareEmailTitle(sender, file.fileName)
         val devopsMailMessage = DevopsMailMessage(
             receivers = receivers.toSet(),
-            body = FileShareMailTemplate.getShareEmailBody(file.projectId, title, userId, expireDays, listOf(file)),
+            body = FileShareMailTemplate.getShareEmailBody(file.projectId, title, sender, expireDays, listOf(file)),
             title = title,
-            sender = userId
+            sender = sender
         )
         val requestUrl = "${devopsConf.devopsHost.removeSuffix("/")}$devopsMailApi"
         CanwayHttpUtils.doPost(requestUrl, devopsMailMessage.toJsonString()).content
@@ -168,7 +171,6 @@ class MailServiceImpl(
     }
 
     companion object {
-        private val logger: Logger = LoggerFactory.getLogger(MailServiceImpl::class.java)
         const val devopsMailApi = "/ms/notify/api/service/notifies/email/"
         const val bkMailApi = "/api/c/compapi/cmsi/send_mail/"
     }

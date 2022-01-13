@@ -157,7 +157,7 @@
                             trigger: 'blur'
                         },
                         {
-                            regex: /^[a-zA-Z0-9]{1,32}$/,
+                            regex: /^[a-zA-Z][a-zA-Z0-9_-]{1,31}$/,
                             message: this.$t('account') + this.$t('include') + this.$t('userIdPlacehodler'),
                             trigger: 'blur'
                         },
@@ -292,7 +292,7 @@
                 }
                 const catchUser = new Set()
                 data.forEach(({ userId, name, email }, index) => {
-                    if (catchUser.has(userId)) {
+                    if (catchUser.has(userId) || !(/^[a-zA-Z][a-zA-Z0-9_-]{1,31}$/.test(userId))) {
                         errMessage.repeat.add(userId)
                     } else {
                         catchUser.add(userId)
@@ -309,7 +309,7 @@
                 })
                 if (errMessage.userId.length || errMessage.name.length || errMessage.email.length) {
                     const message = (errMessage.repeat.length ? `${Array.from(errMessage.repeat)}重复导入` : '')
-                        + (errMessage.userId.length ? `第${errMessage.userId}行账号已被占用` : '')
+                        + (errMessage.userId.length ? `第${errMessage.userId}行账号已被占用或格式错误` : '')
                         + (errMessage.name.length ? `第${errMessage.name}行中文名未填写` : '')
                         + (errMessage.email.length ? `第${errMessage.email}行邮箱格式错误` : '')
                     this.$bkMessage({

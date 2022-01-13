@@ -90,7 +90,7 @@ class PackageStatisticsServiceImpl(
                 sum = 0L
             )
         )
-        list.map { pojo ->
+        list.sortedByDescending { it.count }.map { pojo ->
             val repoOverview = ProjectPackageOverview.RepoPackageOverview(
                 repoName = pojo.id,
                 packages = pojo.count

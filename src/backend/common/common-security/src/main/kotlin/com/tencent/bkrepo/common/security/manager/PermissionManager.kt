@@ -39,6 +39,7 @@ import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.Permission
 import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
+import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
 import com.tencent.bkrepo.common.security.exception.AuthenticationException
 import com.tencent.bkrepo.common.security.exception.PermissionException
@@ -47,6 +48,7 @@ import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.repository.api.RepositoryClient
+import com.tencent.bkrepo.repository.pojo.repo.RepoListOption
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
 import org.slf4j.LoggerFactory
 
@@ -287,6 +289,26 @@ open class PermissionManager(
 
     fun listRepoBuiltInPermission(projectId: String, repoName: String) {
         permissionResource.listRepoBuiltinPermission(projectId, repoName)
+    }
+
+    fun listPermissionRepo(
+        userId: String,
+        projectId: String,
+        option: RepoListOption
+    ): Response<List<RepositoryInfo>> {
+        return repositoryClient.listPermissionRepo(userId, projectId, option)
+    }
+
+    fun listRepo(
+        projectId: String,
+        name: String? = null,
+        type: String? = null
+    ): Response<List<RepositoryInfo>> {
+        return repositoryClient.listRepo(projectId, name, type)
+    }
+
+    fun enableAuth(): Boolean {
+        return httpAuthProperties.enabled
     }
 
     companion object {

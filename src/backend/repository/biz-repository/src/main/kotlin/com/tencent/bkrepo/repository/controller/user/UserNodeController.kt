@@ -34,17 +34,13 @@ package com.tencent.bkrepo.repository.controller.user
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
-import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
 import com.tencent.bkrepo.common.artifact.api.DefaultArtifactInfo.Companion.DEFAULT_MAPPING_URI
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
-import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
-import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.model.QueryModel
-import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
@@ -66,10 +62,10 @@ import com.tencent.bkrepo.repository.pojo.node.user.UserNodeUpdateRequest
 import com.tencent.bkrepo.repository.pojo.software.ProjectPackageOverview
 import com.tencent.bkrepo.repository.service.node.NodeSearchService
 import com.tencent.bkrepo.repository.service.node.NodeService
-import com.tencent.bkrepo.repository.service.repo.RepositoryService
 import com.tencent.bkrepo.repository.util.PipelineRepoUtils
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
+import io.swagger.annotations.ApiParam
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -87,8 +83,7 @@ import java.time.LocalDateTime
 class UserNodeController(
     private val nodeService: NodeService,
     private val nodeSearchService: NodeSearchService,
-    private val permissionManager: PermissionManager,
-    private val repositoryService: RepositoryService
+    private val permissionManager: PermissionManager
 ) {
 
     @ApiOperation("根据路径查看节点详情")
@@ -318,31 +313,27 @@ class UserNodeController(
     @ApiOperation("自定义查询节点")
     @PostMapping("/query")
     fun query(@RequestBody queryModel: QueryModel): Response<Page<Map<String, Any?>>> {
-        val rules = (queryModel.rule as Rule.NestedRule).rules
-        var containRepoKey = false
-        var projectId: String? = null
-        for (rule in rules) {
-            val queryRule = rule as Rule.QueryRule
-            if (queryRule.field == "repoName") containRepoKey = true
-            if (queryRule.field == "projectId") projectId = queryRule.value as String
-        }
-        projectId?.let { project ->
-            val genericRepos = repositoryService.allRepos(project, null, RepositoryType.GENERIC).map { it?.name }
-            if (!containRepoKey) {
-                rules.add(Rule.QueryRule(field = "repoName", value = genericRepos, operation = OperationType.IN))
-            }
-            return ResponseBuilder.success(nodeSearchService.search(queryModel))
-        }
-        throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING)
+        return ResponseBuilder.success(nodeSearchService.search(queryModel))
     }
 
     @ApiOperation("仓库 包数量 总览")
     @GetMapping("/search/overview")
     fun nodeGlobalSearchOverview(
+        @RequestAttribute userId: String,
         @RequestParam projectId: String,
-        @RequestParam name: String
+        @ApiParam(value = "文件名", required = true)
+        @RequestParam name: String,
+        @ApiParam(value = "仓库名 多个仓库以 `,` 分隔", required = false, example = "report,log")
+        @RequestParam exRepo: String?
     ): Response<List<ProjectPackageOverview>> {
-        return ResponseBuilder.success(nodeSearchService.nodeOverview(projectId, name))
+        return ResponseBuilder.success(
+            nodeSearchService.nodeOverview(
+                userId,
+                projectId,
+                name,
+                exRepo
+            )
+        )
     }
 
     /**

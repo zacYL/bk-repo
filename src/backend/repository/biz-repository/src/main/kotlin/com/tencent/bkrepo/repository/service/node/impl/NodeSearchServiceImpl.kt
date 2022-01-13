@@ -74,9 +74,19 @@ class NodeSearchServiceImpl(
         return doQuery(context)
     }
 
-    override fun nodeOverview(projectId: String, name: String): List<ProjectPackageOverview> {
-        val genericRepos = repositoryService.allRepos(projectId, null, RepositoryType.GENERIC).map { it?.name }
-        val criteria = Criteria.where(TNode::repoName.name).`in`(genericRepos)
+    override fun nodeOverview(
+        userId: String,
+        projectId: String,
+        name: String,
+        exRepo: String?
+    ): List<ProjectPackageOverview> {
+        val genericRepos = repositoryService.allRepos(projectId, null, RepositoryType.GENERIC)
+            .map { it?.name }
+        val exRepos = exRepo?.split(',')
+        val filterRepos = if (exRepos != null) {
+            genericRepos.filter { !exRepos.contains(it) }
+        } else genericRepos
+        val criteria = Criteria.where(TNode::repoName.name).`in`(filterRepos)
         criteria.and(TNode::projectId.name).`is`(projectId)
             .and(TNode::deleted.name).`is`(null)
             .and(TNode::folder.name).`is`(false)
@@ -87,7 +97,7 @@ class NodeSearchServiceImpl(
         val aggregation = Aggregation.newAggregation(
             TNode::class.java,
             Aggregation.match(criteria),
-            Aggregation.group("\$repoName").count().`as`("count")
+            Aggregation.group("\$${TNode::repoName.name}").count().`as`("count")
         )
         val result = nodeDao.aggregate(aggregation, CountResult::class.java).mappedResults
         return transTree(projectId, result)
@@ -102,7 +112,7 @@ class NodeSearchServiceImpl(
                 sum = 0L
             )
         )
-        list.map { pojo ->
+        list.sortedByDescending { it.count }.map { pojo ->
             val repoOverview = ProjectPackageOverview.RepoPackageOverview(
                 repoName = pojo.id,
                 packages = pojo.count

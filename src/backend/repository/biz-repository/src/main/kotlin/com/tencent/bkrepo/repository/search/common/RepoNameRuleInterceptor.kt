@@ -71,6 +71,11 @@ class RepoNameRuleInterceptor(
                     require(listValue is List<*>)
                     handleRepoNameIn(projectId, listValue, context)
                 }
+                OperationType.NIN -> {
+                    val listValue = value
+                    require(listValue is List<*>)
+                    handleRepoNameNin(projectId, listValue, context)
+                }
                 else -> throw IllegalArgumentException("RepoName only support EQ and IN operation type.")
             }.toFixed()
             return context.interpreter.resolveRule(queryRule, context)
@@ -101,6 +106,21 @@ class RepoNameRuleInterceptor(
             Rule.QueryRule(NodeInfo::repoName.name, repoNameList.first(), OperationType.EQ)
         } else {
             Rule.QueryRule(NodeInfo::repoName.name, repoNameList, OperationType.IN)
+        }
+    }
+
+    private fun handleRepoNameNin(
+        projectId: String,
+        value: List<*>,
+        context: CommonQueryContext
+    ): Rule.QueryRule {
+        val repoNameList = value.map { it.toString() }
+        return if (repoNameList.isEmpty()) {
+            Rule.QueryRule(NodeInfo::repoName.name, repoNameList.first(), OperationType.NOT_NULL)
+        } else if (repoNameList.size == 1) {
+            Rule.QueryRule(NodeInfo::repoName.name, repoNameList.first(), OperationType.NE)
+        } else {
+            Rule.QueryRule(NodeInfo::repoName.name, repoNameList, OperationType.NIN)
         }
     }
 

@@ -39,6 +39,7 @@ import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.project.RepoRangeQueryRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoDeleteRequest
+import com.tencent.bkrepo.repository.pojo.repo.RepoListOption
 import com.tencent.bkrepo.repository.pojo.repo.RepoUpdateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
@@ -121,5 +122,13 @@ class RepositoryController(
         repoType: RepositoryType?
     ): Response<List<RepositoryInfo?>> {
         return ResponseBuilder.success(repositoryService.allRepos(projectId, repoName, repoType))
+    }
+
+    override fun listPermissionRepo(
+        userId: String,
+        projectId: String,
+        option: RepoListOption
+    ): Response<List<RepositoryInfo>> {
+        return ResponseBuilder.success(repositoryService.listPermissionRepo(userId, projectId, option))
     }
 }

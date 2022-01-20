@@ -86,9 +86,9 @@ class TemporaryAccessController(
         @RequestParam token: String
     ) {
         val tokenInfo = temporaryAccessService.validateToken(token, artifactInfo, TokenType.DOWNLOAD)
-        require(userId != ANONYMOUS_USER) {throw AuthenticationException() }
-        temporaryAccessService.download(artifactInfo)
+        require(userId != ANONYMOUS_USER) { throw AuthenticationException() }
         temporaryAccessService.decrementPermits(tokenInfo)
+        temporaryAccessService.download(artifactInfo)
     }
 
     @CrossOrigin

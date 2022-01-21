@@ -1,9 +1,6 @@
 package com.tencent.bkrepo.auth.controller.user
 
 import com.tencent.bkrepo.auth.constant.BKREPO_TICKET
-import com.tencent.bkrepo.auth.exception.AuthFailedException
-import com.tencent.bkrepo.auth.exception.TokenCheckFailException
-import com.tencent.bkrepo.auth.exception.UserLockedException
 import com.tencent.bkrepo.auth.listener.event.admin.AdminAddEvent
 import com.tencent.bkrepo.auth.listener.event.admin.AdminDeleteEvent
 import com.tencent.bkrepo.auth.message.AuthMessageCode

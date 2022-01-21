@@ -1,6 +1,9 @@
 package com.tencent.bkrepo.auth.controller.user
 
 import com.tencent.bkrepo.auth.constant.BKREPO_TICKET
+import com.tencent.bkrepo.auth.exception.AuthFailedException
+import com.tencent.bkrepo.auth.exception.TokenCheckFailException
+import com.tencent.bkrepo.auth.exception.UserLockedException
 import com.tencent.bkrepo.auth.listener.event.admin.AdminAddEvent
 import com.tencent.bkrepo.auth.listener.event.admin.AdminDeleteEvent
 import com.tencent.bkrepo.auth.message.AuthMessageCode
@@ -287,17 +290,9 @@ class UserUserController(
         @RequestParam("token") token: String
     ): Response<Boolean> {
         val user = userService.findUserByUserToken(uid, token) ?: run {
-            return ResponseBuilder.build(
-                code = 1,
-                message = AuthMessageCode.AUTH_LOGIN_TOKEN_CHECK_FAILED.getKey(),
-                data = false
-            )
+            throw AuthenticationException(messageCode = AuthMessageCode.AUTH_LOGIN_TOKEN_CHECK_FAILED)
         }
-        if (user.locked) return ResponseBuilder.build(
-            code = 2,
-            message = AuthMessageCode.AUTH_USER_LOCKED.getKey(),
-            data = false
-        )
+        if (user.locked) throw AuthenticationException (messageCode = AuthMessageCode.AUTH_USER_LOCKED)
         val ticket = JwtUtils.generateToken(signingKey, jwtProperties.expiration, uid)
         val cookie = Cookie(BKREPO_TICKET, ticket)
         cookie.path = "/"

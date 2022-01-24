@@ -164,10 +164,9 @@ class UserUserController(
         @ApiParam(value = "用户更新信息")
         @RequestBody request: UpdateUserRequest
     ): Response<Boolean> {
-        if (request.admin != null) {
-            val operator = userService.getUserById(userId)!!
-            if (!operator.admin) throw PermissionException()
-        }
+        val operator = userService.getUserById(userId)!!
+        if (request.admin != null && !operator.admin) { throw PermissionException() }
+        if(!operator.admin || operator.userId != uid) { throw PermissionException() }
         return ResponseBuilder.success(userService.updateUserById(uid, request))
     }
 
@@ -362,6 +361,7 @@ class UserUserController(
         @RequestParam oldPwd: String,
         @RequestParam newPwd: String
     ): Response<Boolean> {
+        require(uid == userId) { throw PermissionException() }
         return ResponseBuilder.success(userService.updatePassword(uid, oldPwd, newPwd))
     }
 
@@ -376,6 +376,7 @@ class UserUserController(
 
     @ApiOperation("重置用户密码 ")
     @GetMapping("/reset/{uid}")
+    @Principal(PrincipalType.ADMIN)
     fun resetPassword(
         @RequestAttribute userId: String,
         @PathVariable uid: String

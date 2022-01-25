@@ -91,7 +91,7 @@ open class PermissionManager(
         if (isReadPublicRepo(action, projectId, repoName, public)) {
             return
         }
-        if (isReadSystemRepo(action, projectId, repoName)) {
+        if (httpAuthProperties.enabled && isReadSystemRepo(action, projectId, repoName)) {
             return
         }
         checkPermission(ResourceType.REPO, action, projectId, repoName)

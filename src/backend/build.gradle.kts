@@ -63,8 +63,11 @@ allprojects {
         }
     }
 
-    repositories{
-        maven { setUrl("http://artifact.canway.net/maven-public/")}
+    repositories {
+        maven {
+            isAllowInsecureProtocol = true
+            setUrl("http://artifact.canway.net/maven-public/")
+        }
     }
 }
 

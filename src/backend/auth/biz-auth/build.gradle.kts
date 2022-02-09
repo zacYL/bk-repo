@@ -37,4 +37,5 @@ dependencies {
     api(project(":repository:api-repository"))
     implementation("com.google.guava:guava")
     api(project(":common:common-plugin:plugin-service"))
+    implementation("cn.hutool:hutool-crypto:5.5.4")
 }

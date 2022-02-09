@@ -1,5 +1,6 @@
 package com.tencent.bkrepo.auth.controller.user
 
+import cn.hutool.crypto.CryptoException
 import com.tencent.bkrepo.auth.constant.BKREPO_TICKET
 import com.tencent.bkrepo.auth.listener.event.admin.AdminAddEvent
 import com.tencent.bkrepo.auth.listener.event.admin.AdminDeleteEvent
@@ -17,6 +18,7 @@ import com.tencent.bkrepo.auth.pojo.user.UserInfo
 import com.tencent.bkrepo.auth.pojo.user.UserResult
 import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.service.UserService
+import com.tencent.bkrepo.auth.util.RsaUtils
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
@@ -277,6 +279,12 @@ class UserUserController(
         return ResponseBuilder.success(result)
     }
 
+    @ApiOperation("获取公钥")
+    @GetMapping("/key")
+    fun getPublicKey(): Response<String?> {
+        return ResponseBuilder.success(RsaUtils.publicKey)
+    }
+
     @ApiOperation("校验用户会话token")
     @PostMapping("/login")
     fun loginUser(
@@ -285,6 +293,11 @@ class UserUserController(
         @ApiParam(value = "用户token")
         @RequestParam("token") token: String
     ): Response<Boolean> {
+        try {
+            val token = RsaUtils.decrypt(token)
+        }catch (e: CryptoException) {
+            throw AuthenticationException(messageCode = AuthMessageCode.AUTH_LOGIN_TOKEN_ENCRYPT_FAILED)
+        }
         val user = userService.findUserByUserToken(uid, token) ?: run {
             throw AuthenticationException(messageCode = AuthMessageCode.AUTH_LOGIN_TOKEN_CHECK_FAILED)
         }

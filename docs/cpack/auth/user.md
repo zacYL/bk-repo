@@ -1,3 +1,5 @@
+
+
 # Auth接口
 
 [toc]
@@ -200,3 +202,36 @@
   | ---- | ------- | ------------------------------------ | ----------- |
   | data | boolean | true:项目管理员，false: 非项目管理员 | User name   |
 
+## 获取公钥
+
+- API：GET /auth/api/key
+
+- API 名称: get_public_key
+
+- 功能说明：
+
+  - 中文：获取公钥
+  - English：get public key
+
+- 请求体
+  此接口请求体为空
+
+- 请求字段说明
+  请求字段为空
+
+- 响应体
+
+  ```json
+  {
+      "code": 0,
+      "message": null,
+      "data": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDnn7+FI7eu5iOhFv6hGz1MtUnh6gIXsCGrgjEFAnvehzYjiEK4gGic/5TillkatPm3sNnTh4KXDMLagJHSbOvfth5Ml9vJYIXeNz3pXuA2EFfr6JDaftvLYLXNGJOS++JohwJjZ3x7Y1dswYAuUga2YTElSRNZWwPmGzrDqp7WzwIDAQAB",
+      "traceId": ""
+  }
+  ```
+
+- data字段说明
+
+  | 字段 | 类型   | 说明 | Description |
+  | ---- | ------ | ---- | ----------- |
+  | data | String | 公钥 | publicKey   |

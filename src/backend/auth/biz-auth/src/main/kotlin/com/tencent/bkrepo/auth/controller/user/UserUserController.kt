@@ -167,8 +167,12 @@ class UserUserController(
         @RequestBody request: UpdateUserRequest
     ): Response<Boolean> {
         val operator = userService.getUserById(userId)!!
-        if (request.admin != null && !operator.admin) { throw PermissionException() }
-        if(!operator.admin || operator.userId != uid) { throw PermissionException() }
+        if (request.admin != null && !operator.admin) {
+            throw PermissionException()
+        }
+        if (!operator.admin || operator.userId != uid) {
+            throw PermissionException()
+        }
         return ResponseBuilder.success(userService.updateUserById(uid, request))
     }
 
@@ -293,15 +297,16 @@ class UserUserController(
         @ApiParam(value = "用户token")
         @RequestParam("token") token: String
     ): Response<Boolean> {
+        val decryptToken: String?
         try {
-            val token = RsaUtils.decrypt(token)
-        }catch (e: CryptoException) {
+            decryptToken = RsaUtils.decrypt(token)
+        } catch (e: CryptoException) {
             throw AuthenticationException(messageCode = AuthMessageCode.AUTH_LOGIN_TOKEN_ENCRYPT_FAILED)
         }
-        val user = userService.findUserByUserToken(uid, token) ?: run {
+        val user = userService.findUserByUserToken(uid, decryptToken) ?: run {
             throw AuthenticationException(messageCode = AuthMessageCode.AUTH_LOGIN_TOKEN_CHECK_FAILED)
         }
-        if (user.locked) throw AuthenticationException (messageCode = AuthMessageCode.AUTH_USER_LOCKED)
+        if (user.locked) throw AuthenticationException(messageCode = AuthMessageCode.AUTH_USER_LOCKED)
         val ticket = JwtUtils.generateToken(signingKey, jwtProperties.expiration, uid)
         val cookie = Cookie(BKREPO_TICKET, ticket)
         cookie.path = "/"

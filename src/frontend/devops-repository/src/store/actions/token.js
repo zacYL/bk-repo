@@ -31,7 +31,7 @@ export default {
     // 登录
     getRSAKey () {
         return Vue.prototype.$ajax.get(
-            `${prefix}/rsa`
+            `${prefix}/user/rsa`
         ).then(rsa => {
             localStorage.setItem('rsaKey', rsa)
         })

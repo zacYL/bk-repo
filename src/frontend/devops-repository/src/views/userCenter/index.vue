@@ -204,8 +204,10 @@
             async confirmModifyPwd () {
                 await this.$refs.modifyPwdForm.validate()
                 const formData = new FormData()
-                formData.append('oldPwd', this.pwdDialog.oldPwd)
-                formData.append('newPwd', this.pwdDialog.newPwd)
+                const encrypt = new window.JSEncrypt()
+                encrypt.setPublicKey(localStorage.getItem('rsaKey'))
+                formData.append('oldPwd', encrypt.encrypt(this.pwdDialog.oldPwd))
+                formData.append('newPwd', encrypt.encrypt(this.pwdDialog.newPwd))
                 this.pwdDialog.loading = true
                 this.modifyPwd({
                     userId: this.userInfo.username,

@@ -90,7 +90,9 @@
                 this.loginFailed = false
                 const formData = new FormData()
                 formData.append('uid', this.loginForm.username)
-                formData.append('token', this.loginForm.password)
+                const encrypt = new window.JSEncrypt()
+                encrypt.setPublicKey(localStorage.getItem('rsaKey'))
+                formData.append('token', encrypt.encrypt(this.loginForm.password))
                 this.bkrepoLogin(formData).then(res => {
                     if (res) {
                         this.$bkMessage({

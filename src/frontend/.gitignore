@@ -6,4 +6,3 @@ yarn-error.log
 .yarnrc
 /.vscode
 */webpack_cache
-sprite.svg

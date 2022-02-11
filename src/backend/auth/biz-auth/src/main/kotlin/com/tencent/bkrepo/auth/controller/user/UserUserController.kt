@@ -284,7 +284,7 @@ class UserUserController(
     }
 
     @ApiOperation("获取公钥")
-    @GetMapping("/key")
+    @GetMapping("/rsa")
     fun getPublicKey(): Response<String?> {
         return ResponseBuilder.success(RsaUtils.publicKey)
     }
@@ -301,7 +301,7 @@ class UserUserController(
         try {
             decryptToken = RsaUtils.decrypt(token)
         } catch (e: CryptoException) {
-            throw AuthenticationException(messageCode = AuthMessageCode.AUTH_LOGIN_TOKEN_ENCRYPT_FAILED)
+            throw AuthenticationException(messageCode = AuthMessageCode.AUTH_TOKEN_ENCRYPT_FAILED)
         }
         val user = userService.findUserByUserToken(uid, decryptToken) ?: run {
             throw AuthenticationException(messageCode = AuthMessageCode.AUTH_LOGIN_TOKEN_CHECK_FAILED)
@@ -379,8 +379,16 @@ class UserUserController(
         @RequestParam oldPwd: String,
         @RequestParam newPwd: String
     ): Response<Boolean> {
+        val decryptOldPwd: String?
+        val decryptNewPwd: String?
+        try {
+            decryptOldPwd = RsaUtils.decrypt(oldPwd)
+            decryptNewPwd = RsaUtils.decrypt(newPwd)
+        } catch (e: CryptoException) {
+            throw AuthenticationException(messageCode = AuthMessageCode.AUTH_TOKEN_ENCRYPT_FAILED)
+        }
         require(uid == userId) { throw PermissionException() }
-        return ResponseBuilder.success(userService.updatePassword(uid, oldPwd, newPwd))
+        return ResponseBuilder.success(userService.updatePassword(uid, decryptOldPwd, decryptNewPwd))
     }
 
     @ApiOperation("用户info ")

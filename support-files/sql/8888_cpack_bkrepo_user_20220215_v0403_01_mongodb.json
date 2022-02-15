@@ -1,0 +1,16 @@
+{
+  "_id": {"$oid": "620b5a1a99f36f0925410928"},
+  "userId": "xujian",
+  "name": "xujian",
+  "pwd": "ed424c8ee8955e30b9975ed83fdfef61",
+  "admin": true,
+  "locked": false,
+  "tokens": [],
+  "roles": [],
+  "asstUsers": [],
+  "group": "false",
+  "email": "",
+  "phone": "",
+  "createdDate": "2022-01-12 09:10:05.171Z",
+  "lastModifiedDate": "2022-01-12 09:10:05.171Z"
+}

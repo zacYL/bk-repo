@@ -204,14 +204,14 @@
 
 ## 获取公钥
 
-- API：GET /auth/api/key
+- API：GET /auth/api/user/rsa
 
-- API 名称: get_public_key
+- API 名称: get_rsa_public_key
 
 - 功能说明：
 
-  - 中文：获取公钥
-  - English：get public key
+  - 中文：获取rsa公钥
+  - English：get rsa public key
 
 - 请求体
   此接口请求体为空

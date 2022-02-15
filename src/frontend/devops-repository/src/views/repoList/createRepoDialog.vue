@@ -2,7 +2,7 @@
     <canway-dialog
         v-model="show"
         width="800"
-        :height-num="repoBaseInfo.type === 'rpm' ? 759 : 603"
+        height-num="603"
         title="创建仓库"
         @cancel="cancel">
         <bk-form class="mr10 repo-base-info" :label-width="130" :model="repoBaseInfo" :rules="rules" ref="repoBaseInfo">
@@ -30,6 +30,25 @@
                     :list="availableList">
                 </card-radio-group>
             </bk-form-item>
+            <template v-if="repoBaseInfo.type === 'generic'">
+                <bk-form-item v-for="type in ['mobile', 'web']" :key="type"
+                    :label="$t(`${type}Download`)" :property="`${type}.enable`">
+                    <bk-radio-group v-model="repoBaseInfo[type].enable">
+                        <bk-radio class="mr20" :value="true">{{ $t('open') }}</bk-radio>
+                        <bk-radio :value="false">{{ $t('close') }}</bk-radio>
+                    </bk-radio-group>
+                    <template v-if="repoBaseInfo[type].enable">
+                        <bk-form-item :label="$t('fileName')" :label-width="60" class="mt10"
+                            :property="`${type}.filename`" required error-display-type="normal">
+                            <bk-input class="w250" v-model.trim="repoBaseInfo[type].filename"></bk-input>
+                        </bk-form-item>
+                        <bk-form-item :label="$t('metadata')" :label-width="60"
+                            :property="`${type}.metadata`" required error-display-type="normal">
+                            <bk-input class="w250" v-model.trim="repoBaseInfo[type].metadata"></bk-input>
+                        </bk-form-item>
+                    </template>
+                </bk-form-item>
+            </template>
             <template v-if="repoBaseInfo.type === 'rpm'">
                 <bk-form-item :label="$t('enabledFileLists')">
                     <bk-checkbox v-model="repoBaseInfo.enabledFileLists"></bk-checkbox>
@@ -74,6 +93,31 @@
     import CardRadioGroup from '@repository/components/CardRadioGroup'
     import { repoEnum } from '@repository/store/publicEnum'
     import { mapActions } from 'vuex'
+
+    const getRepoBaseInfo = () => {
+        return {
+            type: 'generic',
+            name: '',
+            public: false,
+            system: false,
+            enabledFileLists: false,
+            repodataDepth: 0,
+            interceptors: [],
+            groupXmlSet: [],
+            description: '',
+            mobile: {
+                enable: false,
+                filename: '',
+                metadata: ''
+            },
+            web: {
+                enable: false,
+                filename: '',
+                metadata: ''
+            }
+        }
+    }
+
     export default {
         name: 'createRepo',
         components: { CardRadioGroup },
@@ -82,16 +126,7 @@
                 repoEnum,
                 show: false,
                 loading: false,
-                repoBaseInfo: {
-                    type: 'generic',
-                    name: '',
-                    public: false,
-                    system: false,
-                    enabledFileLists: false,
-                    repodataDepth: 0,
-                    groupXmlSet: [],
-                    description: ''
-                }
+                repoBaseInfo: getRepoBaseInfo()
             }
         },
         computed: {
@@ -99,6 +134,25 @@
                 return this.$route.params.projectId
             },
             rules () {
+                const filenameRule = [
+                    {
+                        required: true,
+                        message: this.$t('pleaseFileName'),
+                        trigger: 'blur'
+                    }
+                ]
+                const metadataRule = [
+                    {
+                        required: true,
+                        message: this.$t('pleaseMetadata'),
+                        trigger: 'blur'
+                    },
+                    {
+                        regex: /^[^\s]+:[^\s]+/,
+                        message: this.$t('metadataRule'),
+                        trigger: 'blur'
+                    }
+                ]
                 return {
                     type: [
                         {
@@ -141,7 +195,11 @@
                             message: this.$t('pleaseInput') + this.$t('legit') + this.$t('groupXmlSet') + `(.xml${this.$t('type')})`,
                             trigger: 'change'
                         }
-                    ]
+                    ],
+                    'mobile.filename': filenameRule,
+                    'mobile.metadata': metadataRule,
+                    'web.filename': filenameRule,
+                    'web.metadata': metadataRule
                 }
             },
             available: {
@@ -159,7 +217,7 @@
                 return [
                     { label: '项目内公开', value: 'project', tip: '项目内成员可以使用' },
                     { label: '系统内公开', value: 'system', tip: '系统内成员可以使用' },
-                    { label: '对外公开', value: 'public', tip: '所有用户都可以使用' }
+                    { label: '可匿名下载', value: 'public', tip: '不鉴权，任意终端都可下载' }
                 ]
             }
         },
@@ -167,16 +225,7 @@
             ...mapActions(['createRepo', 'checkRepoName']),
             showDialogHandler () {
                 this.show = true
-                this.repoBaseInfo = {
-                    type: 'generic',
-                    name: '',
-                    public: false,
-                    system: false,
-                    enabledFileLists: false,
-                    repodataDepth: 0,
-                    groupXmlSet: [],
-                    description: ''
-                }
+                this.repoBaseInfo = getRepoBaseInfo()
                 this.$refs.repoBaseInfo && this.$refs.repoBaseInfo.clearError()
             },
             cancel () {
@@ -194,6 +243,16 @@
             },
             async confirm () {
                 await this.$refs.repoBaseInfo.validate()
+                const interceptors = []
+                if (this.repoBaseInfo.type === 'generic') {
+                    ['mobile', 'web'].forEach(type => {
+                        const { enable, filename, metadata } = this.repoBaseInfo[type]
+                        enable && interceptors.push({
+                            type: type.toUpperCase(),
+                            rules: { filename, metadata }
+                        })
+                    })
+                }
                 this.loading = true
                 this.createRepo({
                     body: {
@@ -207,6 +266,7 @@
                             type: 'composite',
                             settings: {
                                 system: this.repoBaseInfo.system,
+                                interceptors: interceptors.length ? interceptors : undefined,
                                 ...(
                                     this.repoBaseInfo.type === 'rpm'
                                         ? {
@@ -235,6 +295,8 @@
 </script>
 <style lang="scss" scoped>
 .repo-base-info {
+    max-height: 442px;
+    overflow-y: auto;
     .repo-type-radio-group {
         display: grid;
         grid-template: auto / repeat(6, 80px);

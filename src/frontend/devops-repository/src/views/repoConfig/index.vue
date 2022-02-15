@@ -18,6 +18,25 @@
                             :list="availableList">
                         </card-radio-group>
                     </bk-form-item>
+                    <template v-if="repoType === 'generic'">
+                        <bk-form-item v-for="type in ['mobile', 'web']" :key="type"
+                            :label="$t(`${type}Download`)" :property="`${type}.enable`">
+                            <bk-radio-group v-model="repoBaseInfo[type].enable">
+                                <bk-radio class="mr20" :value="true">{{ $t('open') }}</bk-radio>
+                                <bk-radio :value="false">{{ $t('close') }}</bk-radio>
+                            </bk-radio-group>
+                            <template v-if="repoBaseInfo[type].enable">
+                                <bk-form-item :label="$t('fileName')" :label-width="60" class="mt10"
+                                    :property="`${type}.filename`" required error-display-type="normal">
+                                    <bk-input class="w250" v-model.trim="repoBaseInfo[type].filename"></bk-input>
+                                </bk-form-item>
+                                <bk-form-item :label="$t('metadata')" :label-width="60"
+                                    :property="`${type}.metadata`" required error-display-type="normal">
+                                    <bk-input class="w250" v-model.trim="repoBaseInfo[type].metadata"></bk-input>
+                                </bk-form-item>
+                            </template>
+                        </bk-form-item>
+                    </template>
                     <template v-if="repoType === 'rpm'">
                         <bk-form-item :label="$t('enabledFileLists')">
                             <bk-checkbox v-model="repoBaseInfo.enabledFileLists"></bk-checkbox>
@@ -73,6 +92,25 @@
         name: 'repoConfig',
         components: { CardRadioGroup, proxyConfig, permissionConfig },
         data () {
+            const filenameRule = [
+                {
+                    required: true,
+                    message: this.$t('pleaseFileName'),
+                    trigger: 'blur'
+                }
+            ]
+            const metadataRule = [
+                {
+                    required: true,
+                    message: this.$t('pleaseMetadata'),
+                    trigger: 'blur'
+                },
+                {
+                    regex: /^[^\s]+:[^\s]+/,
+                    message: this.$t('metadataRule'),
+                    trigger: 'blur'
+                }
+            ]
             return {
                 tabName: 'baseInfo',
                 isLoading: false,
@@ -85,7 +123,17 @@
                     enabledFileLists: false,
                     repodataDepth: 0,
                     groupXmlSet: [],
-                    description: ''
+                    description: '',
+                    mobile: {
+                        enable: false,
+                        filename: '',
+                        metadata: ''
+                    },
+                    web: {
+                        enable: false,
+                        filename: '',
+                        metadata: ''
+                    }
                 },
                 rules: {
                     repodataDepth: [
@@ -105,7 +153,11 @@
                             message: this.$t('pleaseInput') + this.$t('legit') + this.$t('groupXmlSet') + `(.xml${this.$t('type')})`,
                             trigger: 'change'
                         }
-                    ]
+                    ],
+                    'mobile.filename': filenameRule,
+                    'mobile.metadata': metadataRule,
+                    'web.filename': filenameRule,
+                    'web.metadata': metadataRule
                 }
             }
         },
@@ -140,7 +192,7 @@
                 return [
                     { label: '项目内公开', value: 'project', tip: '项目内成员可以使用' },
                     { label: '系统内公开', value: 'system', tip: '系统内成员可以使用' },
-                    { label: '对外公开', value: 'public', tip: '所有用户都可以使用' }
+                    { label: '可匿名下载', value: 'public', tip: '不鉴权，任意终端都可下载' }
                 ]
             }
         },
@@ -168,12 +220,32 @@
                         ...res.configuration.settings,
                         repoType: res.type.toLowerCase()
                     }
+                    
+                    const { interceptors } = res.configuration.settings
+                    if (interceptors instanceof Array) {
+                        interceptors.forEach(i => {
+                            this.repoBaseInfo[i.type.toLowerCase()] = {
+                                enable: true,
+                                ...i.rules
+                            }
+                        })
+                    }
                 }).finally(() => {
                     this.isLoading = false
                 })
             },
             async saveBaseInfo () {
-                this.repoType === 'rpm' && await this.$refs.repoBaseInfo.validate()
+                ['generic', 'rpm'].includes(this.repoType) && await this.$refs.repoBaseInfo.validate()
+                const interceptors = []
+                if (this.repoType === 'generic') {
+                    ['mobile', 'web'].forEach(type => {
+                        const { enable, filename, metadata } = this.repoBaseInfo[type]
+                        enable && interceptors.push({
+                            type: type.toUpperCase(),
+                            rules: { filename, metadata }
+                        })
+                    })
+                }
                 const body = {
                     public: this.repoBaseInfo.public,
                     description: this.repoBaseInfo.description,
@@ -181,6 +253,7 @@
                         ...this.repoBaseInfo.configuration,
                         settings: {
                             system: this.repoBaseInfo.system,
+                            interceptors: interceptors.length ? interceptors : undefined,
                             ...(
                                 this.repoType === 'rpm'
                                     ? {

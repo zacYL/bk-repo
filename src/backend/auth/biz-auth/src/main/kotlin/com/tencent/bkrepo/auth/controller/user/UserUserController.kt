@@ -167,13 +167,15 @@ class UserUserController(
         @RequestBody request: UpdateUserRequest
     ): Response<Boolean> {
         val operator = userService.getUserById(userId)!!
+        // 将用户设置为管理员，要求操作人为管理员
         if (request.admin != null && !operator.admin) {
             throw PermissionException()
         }
-        if (!operator.admin || operator.userId != uid) {
-            throw PermissionException()
+        // 操作人为管理员或者操作人为自己，可以修改用户信息
+        if (operator.admin || operator.userId == uid) {
+            return ResponseBuilder.success(userService.updateUserById(uid, request))
         }
-        return ResponseBuilder.success(userService.updateUserById(uid, request))
+        throw PermissionException()
     }
 
     @ApiOperation("新增用户所属角色")

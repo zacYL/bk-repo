@@ -160,6 +160,7 @@
                 'logout',
                 'editUser',
                 'getUserInfo',
+                'getRSAKey',
                 'modifyPwd'
             ]),
             editUserInfo (item) {
@@ -205,7 +206,8 @@
                 await this.$refs.modifyPwdForm.validate()
                 const formData = new FormData()
                 const encrypt = new window.JSEncrypt()
-                encrypt.setPublicKey(localStorage.getItem('rsaKey'))
+                const rsaKey = await this.getRSAKey()
+                encrypt.setPublicKey(rsaKey)
                 formData.append('oldPwd', encrypt.encrypt(this.pwdDialog.oldPwd))
                 formData.append('newPwd', encrypt.encrypt(this.pwdDialog.newPwd))
                 this.pwdDialog.loading = true

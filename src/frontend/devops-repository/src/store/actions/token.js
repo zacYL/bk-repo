@@ -32,9 +32,7 @@ export default {
     getRSAKey () {
         return Vue.prototype.$ajax.get(
             `${prefix}/user/rsa`
-        ).then(rsa => {
-            localStorage.setItem('rsaKey', rsa)
-        })
+        )
     },
     // 登录
     bkrepoLogin (_, formData) {

@@ -24,8 +24,6 @@
         created () {
             const username = cookies.get('bk_uid')
             username && this.SET_USER_INFO({ username })
-            
-            this.getRSAKey()
 
             if (this.iframeMode) {
                 this.loadDevopsUtils('/ui/devops-utils.js')
@@ -90,8 +88,7 @@
                 'ajaxUserInfo',
                 'checkPM',
                 'getRepoUserList',
-                'getClusterList',
-                'getRSAKey'
+                'getClusterList'
             ])
         }
     }

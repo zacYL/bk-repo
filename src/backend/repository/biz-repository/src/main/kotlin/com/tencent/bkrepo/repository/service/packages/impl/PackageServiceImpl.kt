@@ -44,6 +44,7 @@ import com.tencent.bkrepo.common.artifact.util.version.SemVersion
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.security.util.SecurityUtils
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
 import com.tencent.bkrepo.repository.dao.PackageDao
 import com.tencent.bkrepo.repository.dao.PackageVersionDao
@@ -339,6 +340,7 @@ class PackageServiceImpl(
         )
     }
 
+    @Suppress("TooGenericExceptionCaught")
     override fun downloadVersion(
         projectId: String,
         repoName: String,
@@ -354,18 +356,25 @@ class PackageServiceImpl(
         val artifactInfo = DefaultArtifactInfo(projectId, repoName, tPackageVersion.artifactPath!!)
         val context = ArtifactDownloadContext(artifact = artifactInfo, useDisposition = true)
         ArtifactContextHolder.getRepository().download(context)
-        publishEvent(
-            buildDownloadEvent(
-                projectId = projectId,
-                repoName = repoName,
-                packageType = tPackage.type,
-                packageKey = packageKey,
-                packageName = tPackage.name,
-                versionName = versionName,
-                createdBy = SecurityUtils.getUserId(),
-                realIpAddress = realIpAddress
+        if (HttpContextHolder.getRequest().method.equals("get", ignoreCase = true)) {
+            try {
+                addDownloadRecord(projectId, repoName, packageKey, versionName)
+            } catch (e: Exception) {
+                logger.warn("Failed to record package download record", e)
+            }
+            publishEvent(
+                buildDownloadEvent(
+                    projectId = projectId,
+                    repoName = repoName,
+                    packageType = tPackage.type,
+                    packageKey = packageKey,
+                    packageName = tPackage.name,
+                    versionName = versionName,
+                    createdBy = SecurityUtils.getUserId(),
+                    realIpAddress = realIpAddress
+                )
             )
-        )
+        }
     }
 
     override fun addDownloadRecord(projectId: String, repoName: String, packageKey: String, versionName: String) {

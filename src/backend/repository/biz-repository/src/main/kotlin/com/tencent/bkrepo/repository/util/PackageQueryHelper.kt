@@ -31,6 +31,7 @@
 
 package com.tencent.bkrepo.repository.util
 
+import com.tencent.bkrepo.common.query.util.MongoEscapeUtils
 import com.tencent.bkrepo.repository.model.TPackage
 import com.tencent.bkrepo.repository.model.TPackageVersion
 import org.springframework.data.domain.Sort
@@ -89,14 +90,20 @@ object PackageQueryHelper {
         return where(TPackage::projectId).isEqualTo(projectId)
             .and(TPackage::repoName).isEqualTo(repoName)
             .apply {
-                packageName?.let { and(TPackage::name).regex("^$packageName") }
+                packageName?.let {
+                    val escapedValue = MongoEscapeUtils.escapeRegexExceptWildcard(it)
+                    val regexPattern = escapedValue.replace("*", ".*")
+                    and(TPackage::name).regex("^$regexPattern") }
             }
     }
 
     private fun versionListCriteria(packageId: String, name: String? = null, stageTag: List<String>? = null): Criteria {
         return where(TPackageVersion::packageId).isEqualTo(packageId)
             .apply {
-                name?.let { and(TPackageVersion::name).regex("^$it") }
+                name?.let {
+                    val escapedValue = MongoEscapeUtils.escapeRegexExceptWildcard(it)
+                    val regexPattern = escapedValue.replace("*", ".*")
+                    and(TPackageVersion::name).regex("^$regexPattern") }
             }.apply {
                 if (!stageTag.isNullOrEmpty()) {
                     and(TPackageVersion::stageTag).all(stageTag)

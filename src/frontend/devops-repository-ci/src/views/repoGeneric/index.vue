@@ -144,7 +144,7 @@
     import Breadcrumb from '@repository/components/Breadcrumb'
     import MoveSplitBar from '@repository/components/MoveSplitBar'
     import RepoTree from '@repository/components/RepoTree'
-    import genericDetail from '@repository/views/repoGeneric/genericDetail'
+    import genericDetail from './genericDetail'
     import genericUploadDialog from '@repository/views/repoGeneric/genericUploadDialog'
     import genericFormDialog from '@repository/views/repoGeneric/genericFormDialog'
     import genericShareDialog from '@repository/views/repoGeneric/genericShareDialog'

@@ -28,10 +28,10 @@ const planManage = () => import(/* webpackChunkName: "planManage" */'@repository
 const createPlan = () => import(/* webpackChunkName: "createPlan" */'@repository/views/planManage/createPlan')
 const logDetail = () => import(/* webpackChunkName: "logDetail" */'@repository/views/planManage/logDetail')
 
-const repoGeneric = () => import(/* webpackChunkName: "repoGeneric" */'@repository/views/repoGeneric')
+const repoGeneric = () => import(/* webpackChunkName: "repoGeneric" */'@/views/repoGeneric')
 
 const commonPackageList = () => import(/* webpackChunkName: "repoCommon" */'@repository/views/repoCommon/commonPackageList')
-const commonPackageDetail = () => import(/* webpackChunkName: "repoCommon" */'@repository/views/repoCommon/commonPackageDetail')
+const commonPackageDetail = () => import(/* webpackChunkName: "repoCommon" */'@/views/repoCommon/commonPackageDetail')
 
 const repoSearch = () => import(/* webpackChunkName: "repoSearch" */'@repository/views/repoSearch')
 

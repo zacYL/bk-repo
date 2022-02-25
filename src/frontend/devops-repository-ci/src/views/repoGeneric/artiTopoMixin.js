@@ -1,0 +1,110 @@
+import { formatDate } from '@repository/utils'
+const CTeamTypeMap = {
+    DEMAND: {
+        content: '需求',
+        type: 'WARNING'
+    },
+    TASK: {
+        content: '任务'
+    },
+    BUG: {
+        content: '缺陷',
+        type: 'FAILED'
+    }
+}
+export default {
+    computed: {
+        rootNode () {
+            const { name, size, lastModifiedDate } = this.detailSlider.data
+            return {
+                title: name,
+                metadata: [
+                    size && `文件大小: ${size}`,
+                    lastModifiedDate && `更新时间: ${formatDate(lastModifiedDate)}`
+                ]
+            }
+        },
+        leftTree () {
+            const metadata = this.detailSlider.data.metadata
+            return {
+                children: [
+                    {
+                        title: '工作项',
+                        children: Object.keys(metadata || {}).map(key => {
+                            const [type, CTeamId] = key.split('-')
+                            if (CTeamTypeMap[type]) {
+                                return {
+                                    title: metadata[key],
+                                    leftTag: CTeamTypeMap[type],
+                                    metadata: [
+                                        `编号: ${CTeamId}`
+                                    ]
+                                }
+                            } else return false
+                        }).filter(Boolean)
+                    },
+                    {
+                        title: '代码',
+                        children: metadata.commit
+                            ? [
+                                {
+                                    title: metadata.commit,
+                                    metadata: [
+                                        `提交人: ${this.userList[metadata.commituser]?.name || metadata.commituser}`,
+                                        `提交信息: ${metadata.commitid}`
+                                    ]
+                                }
+                            ]
+                            : []
+                    }
+                ]
+            }
+        },
+        rightTree () {
+            const metadata = this.detailSlider.data.metadata
+            return {
+                children: [
+                    {
+                        title: '构建',
+                        children: metadata.pipelineName
+                            ? [
+                                {
+                                    title: metadata.pipelineName,
+                                    metadata: [
+                                        `流水线编号: ${metadata.buildNo}`,
+                                        `流水线用户: ${this.userList[metadata.userId]?.name || metadata.userId}`
+                                    ]
+                                }
+                            ]
+                            : []
+                    },
+                    {
+                        title: '测试',
+                        children: metadata.reportUrl
+                            ? [
+                                {
+                                    title: '测试报告',
+                                    url: metadata.reportUrl
+                                }
+                            ]
+                            : []
+                    },
+                    {
+                        title: '部署',
+                        children: metadata['env.info']
+                            ? [
+                                {
+                                    title: metadata['env.info'],
+                                    metadata: [
+                                        `机器IP: ${JSON.parse(metadata['target.ips'])}`,
+                                        `时间: ${formatDate(metadata['update.time'])}`
+                                    ]
+                                }
+                            ]
+                            : []
+                    }
+                ]
+            }
+        }
+    }
+}

@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.replication.util
 
+import com.tencent.bkrepo.common.api.util.MongoEscapeUtils
 import com.tencent.bkrepo.replication.model.TReplicaObject
 import com.tencent.bkrepo.replication.model.TReplicaTask
 import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus
@@ -57,7 +58,13 @@ object TaskQueryHelper {
         sortType: TaskSortType?
     ): Query {
         val criteria = where(TReplicaTask::projectId).isEqualTo(projectId)
-        name?.takeIf { it.isNotBlank() }?.apply { criteria.and(TReplicaTask::name).regex("^$this") }
+        name?.takeIf { it.isNotBlank() }?.apply {
+            val escapedValue = MongoEscapeUtils.escapeRegexExceptWildcard(this)
+            val regexPattern = StringBuilder(escapedValue)
+                .insert(0, "*")
+                .append("*").toString()
+                .replace("*", ".*")
+            criteria.and(TReplicaTask::name).regex("^$regexPattern") }
         lastExecutionStatus?.apply { criteria.and(TReplicaTask::lastExecutionStatus).isEqualTo(this) }
         enabled?.apply { criteria.and(TReplicaTask::enabled).isEqualTo(this) }
         return Query(criteria).with(Sort.by(Sort.Direction.DESC, sortType?.key))

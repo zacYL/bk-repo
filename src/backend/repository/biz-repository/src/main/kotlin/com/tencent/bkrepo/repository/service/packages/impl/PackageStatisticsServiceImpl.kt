@@ -1,7 +1,7 @@
 package com.tencent.bkrepo.repository.service.packages.impl
 
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
-import com.tencent.bkrepo.common.query.util.MongoEscapeUtils
+import com.tencent.bkrepo.common.api.util.MongoEscapeUtils
 import com.tencent.bkrepo.repository.dao.PackageDao
 import com.tencent.bkrepo.repository.dao.PackageVersionDao
 import com.tencent.bkrepo.repository.model.TPackage

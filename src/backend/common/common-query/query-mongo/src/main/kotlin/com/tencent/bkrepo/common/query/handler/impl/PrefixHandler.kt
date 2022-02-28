@@ -34,7 +34,7 @@ package com.tencent.bkrepo.common.query.handler.impl
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.handler.MongoQueryRuleHandler
 import com.tencent.bkrepo.common.query.model.Rule
-import com.tencent.bkrepo.common.query.util.MongoEscapeUtils
+import com.tencent.bkrepo.common.api.util.MongoEscapeUtils
 import org.springframework.data.mongodb.core.query.Criteria
 
 class PrefixHandler : MongoQueryRuleHandler {

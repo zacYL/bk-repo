@@ -31,7 +31,7 @@
 
 package com.tencent.bkrepo.repository.util
 
-import com.tencent.bkrepo.common.query.util.MongoEscapeUtils
+import com.tencent.bkrepo.common.api.util.MongoEscapeUtils
 import com.tencent.bkrepo.repository.model.TPackage
 import com.tencent.bkrepo.repository.model.TPackageVersion
 import org.springframework.data.domain.Sort

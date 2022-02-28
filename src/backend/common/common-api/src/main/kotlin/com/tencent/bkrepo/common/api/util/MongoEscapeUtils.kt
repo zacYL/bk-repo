@@ -29,7 +29,7 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.common.query.util
+package com.tencent.bkrepo.common.api.util
 
 object MongoEscapeUtils {
 

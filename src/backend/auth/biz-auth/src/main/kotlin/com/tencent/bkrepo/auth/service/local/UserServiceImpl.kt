@@ -407,6 +407,10 @@ open class UserServiceImpl constructor(
         TODO("Not yet implemented")
     }
 
+    override fun resetPassword(userId: String, newPwd: String?): Boolean {
+        TODO("Not yet implemented")
+    }
+
     companion object {
         private val logger = LoggerFactory.getLogger(UserServiceImpl::class.java)
     }

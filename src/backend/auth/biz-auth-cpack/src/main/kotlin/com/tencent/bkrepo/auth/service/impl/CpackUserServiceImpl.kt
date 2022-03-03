@@ -406,6 +406,18 @@ open class CpackUserServiceImpl constructor(
         return userRepository.findAllByAdmin(true).map { transferUser(it) }
     }
 
+    override fun resetPassword(userId: String, newPwd: String?): Boolean {
+        val targetPwd = if (newPwd != null && newPwd.isNotBlank()) {
+            DataDigestUtils.md5FromStr(newPwd)
+        } else {
+            DataDigestUtils.md5FromStr(DEFAULT_PASSWORD)
+        }
+        val query = UserQueryHelper.getUserById(userId)
+        val update = Update().set(TUser::pwd.name, targetPwd)
+        val record = mongoTemplate.updateFirst(query, update, TUser::class.java)
+        return record.modifiedCount == 1L && record.matchedCount == 1L
+    }
+
     override fun listUserByProjectId(projectId: String, includeAdmin: Boolean): List<UserResult> {
         val permissions = permissionService.listProjectBuiltinPermission(projectId)
         val users = mutableSetOf<String>()

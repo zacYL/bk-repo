@@ -1,5 +1,7 @@
 ## bkrepo 用户相关接口
 
+[toc]
+
 ### 创建用户
 
 - API: POST /auth/api/user/create

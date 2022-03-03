@@ -92,5 +92,7 @@ interface UserService {
 
     // cpack ext
 
+    fun resetPassword(userId: String, newPwd: String?): Boolean
+
     fun listUserByProjectId(projectId: String, includeAdmin: Boolean): List<UserResult>
 }

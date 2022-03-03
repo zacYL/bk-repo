@@ -403,13 +403,16 @@ class UserUserController(
     }
 
     @ApiOperation("重置用户密码 ")
-    @GetMapping("/reset/{uid}")
     @Principal(PrincipalType.ADMIN)
+    @PostMapping("/reset/{uid}")
     fun resetPassword(
         @RequestAttribute userId: String,
-        @PathVariable uid: String
+        @ApiParam(value = "需要重置密码用户id")
+        @PathVariable uid: String,
+        @ApiParam(value = "重置密码, 为空重设为默认密码", required = false)
+        @RequestParam newPwd: String? = null
     ): Response<Boolean> {
-        return ResponseBuilder.success(userService.resetPassword(uid))
+        return ResponseBuilder.success(userService.resetPassword(uid, newPwd))
     }
 
     @ApiOperation("检验系统中是否存在同名userId ")

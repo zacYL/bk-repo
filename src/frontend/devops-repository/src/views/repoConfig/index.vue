@@ -18,7 +18,7 @@
                             :list="availableList">
                         </card-radio-group>
                     </bk-form-item>
-                    <template v-if="repoType === 'generic'">
+                    <!-- <template v-if="repoType === 'generic'">
                         <bk-form-item v-for="type in ['mobile', 'web']" :key="type"
                             :label="$t(`${type}Download`)" :property="`${type}.enable`">
                             <bk-radio-group v-model="repoBaseInfo[type].enable">
@@ -36,7 +36,7 @@
                                 </bk-form-item>
                             </template>
                         </bk-form-item>
-                    </template>
+                    </template> -->
                     <template v-if="repoType === 'rpm'">
                         <bk-form-item :label="$t('enabledFileLists')">
                             <bk-checkbox v-model="repoBaseInfo.enabledFileLists"></bk-checkbox>

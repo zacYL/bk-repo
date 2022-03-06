@@ -59,6 +59,7 @@ import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.sensitive.DesensitizedUtils
+import com.tencent.bkrepo.common.cpack.service.NotifyService
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
@@ -83,6 +84,10 @@ open class CpackUserServiceImpl constructor(
     @Autowired
     lateinit var projectClient: ProjectClient
 
+    @Autowired
+    lateinit var notifyService: NotifyService
+
+    @Suppress("TooGenericExceptionCaught")
     override fun createUser(request: CreateUserRequest): Boolean {
         // todo 校验
         logger.info("create user request : [${DesensitizedUtils.toString(request)}]")
@@ -120,6 +125,13 @@ open class CpackUserServiceImpl constructor(
                 lastModifiedDate = LocalDateTime.now()
             )
         )
+        try {
+            if (request.email != null && request.email!!.isNotBlank()) {
+                notifyService.newAccountMessage(request.userId, request.name, listOf(request.email!!))
+            }
+        } catch (e: Exception) {
+            logger.warn("send email failed", e)
+        }
         return true
     }
 
@@ -406,6 +418,7 @@ open class CpackUserServiceImpl constructor(
         return userRepository.findAllByAdmin(true).map { transferUser(it) }
     }
 
+    @Suppress("TooGenericExceptionCaught")
     override fun resetPassword(userId: String, newPwd: String?): Boolean {
         val targetPwd = if (newPwd != null && newPwd.isNotBlank()) {
             DataDigestUtils.md5FromStr(newPwd)
@@ -415,7 +428,16 @@ open class CpackUserServiceImpl constructor(
         val query = UserQueryHelper.getUserById(userId)
         val update = Update().set(TUser::pwd.name, targetPwd)
         val record = mongoTemplate.updateFirst(query, update, TUser::class.java)
-        return record.modifiedCount == 1L && record.matchedCount == 1L
+        getUserInfoById(userId)?.let { user ->
+            try {
+                if (user.email != null && user.email!!.isNotBlank()) {
+                    notifyService.resetPwdMessage(user.userId, user.name, listOf(user.email!!))
+                }
+            } catch (e: Exception) {
+                logger.warn("send email failed", e)
+            }
+        }
+        return true
     }
 
     override fun listUserByProjectId(projectId: String, includeAdmin: Boolean): List<UserResult> {

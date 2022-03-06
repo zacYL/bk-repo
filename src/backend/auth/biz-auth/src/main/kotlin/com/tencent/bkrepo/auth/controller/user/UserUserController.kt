@@ -402,7 +402,7 @@ class UserUserController(
         return ResponseBuilder.success(userService.getUserInfoById(uid))
     }
 
-    @ApiOperation("重置用户密码 ")
+    @ApiOperation("重置用户密码")
     @Principal(PrincipalType.ADMIN)
     @PostMapping("/reset/{uid}")
     fun resetPassword(

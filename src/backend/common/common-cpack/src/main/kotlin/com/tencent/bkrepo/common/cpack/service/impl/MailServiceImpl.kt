@@ -6,9 +6,11 @@ import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
+import com.tencent.bkrepo.common.cpack.conf.CpackConf
 import com.tencent.bkrepo.common.cpack.conf.CpackMailConf
 import com.tencent.bkrepo.common.cpack.enums.MailNotifyType
-import com.tencent.bkrepo.common.cpack.mail.FileShareMailTemplate
+import com.tencent.bkrepo.common.cpack.mail.MailTemplate
+import com.tencent.bkrepo.common.cpack.mail.QRUtils
 import com.tencent.bkrepo.common.cpack.pojo.FileShareInfo
 import com.tencent.bkrepo.common.cpack.service.NotifyService
 import com.tencent.bkrepo.common.devops.api.conf.DevopsConf
@@ -31,7 +33,8 @@ class MailServiceImpl(
     private val temporaryTokenClient: TemporaryTokenClient,
     private val userService: ServiceUserResource,
     private val mailConf: CpackMailConf,
-    private val projectClient: ProjectClient
+    private val projectClient: ProjectClient,
+    private val cpackConf: CpackConf
 ) : NotifyService {
 
     @Autowired(required = false)
@@ -53,7 +56,7 @@ class MailServiceImpl(
             repoName = artifactInfo.repoName,
             downloadUrl = content,
             qrCodeBase64 = if (nodeDetail.name.endsWith("apk") || nodeDetail.name.endsWith("ipa")) {
-                FileShareMailTemplate.getQRCodeBase64(content)
+                QRUtils.getQRCodeBase64(content)
             } else "null"
         )
 
@@ -94,7 +97,7 @@ class MailServiceImpl(
             repoName = artifactInfo.repoName,
             downloadUrl = content,
             qrCodeBase64 = if (nodeDetail.name.endsWith("apk") || nodeDetail.name.endsWith("ipa")) {
-                FileShareMailTemplate.getQRCodeBase64(content)
+                QRUtils.getQRCodeBase64(content)
             } else "null"
         )
 
@@ -122,40 +125,102 @@ class MailServiceImpl(
         }
     }
 
+    override fun newAccountMessage(userId: String, cnName: String, receivers: List<String>) {
+        val mainBody = MailTemplate.newAccountHtml(
+            cnName = cnName,
+            userId = userId,
+            url = cpackConf.host
+        )
+        textMimeMail(receivers, "【CPACK】账号创建通知", mainBody)
+    }
+
+    override fun resetPwdMessage(userId: String, cnName: String, receivers: List<String>) {
+        val mainBody = MailTemplate.resetPwdHtml(
+            cnName = cnName,
+            userId = userId,
+            url = cpackConf.host
+        )
+        textMimeMail(receivers, "【CPACK】账号密码重置通知", mainBody)
+    }
+
+    private fun textMimeMail(receivers: List<String>, title: String, mainBody: String) {
+        require(receivers.isNotEmpty())
+        val mailMessage = mailSender.createMimeMessage()
+        val mimeMailMessage = MimeMessageHelper(mailMessage, true)
+        mimeMailMessage.setFrom(mailConf.username)
+        mimeMailMessage.setTo(receivers.toTypedArray())
+        mimeMailMessage.setSubject(title)
+        val body = MailTemplate.mailCommonHtml2(
+            nest = MailTemplate.mainBodyHtml(mainBody)
+        )
+        mimeMailMessage.setText(body, true)
+        mailSender.send(mailMessage)
+    }
+
     private fun sendMimeMail(sender: String, file: FileShareInfo, receivers: List<String>, expireDays: String?) {
         require(receivers.isNotEmpty())
         val mailMessage = mailSender.createMimeMessage()
         val mimeMailMessage = MimeMessageHelper(mailMessage, true)
         mimeMailMessage.setFrom(mailConf.username)
         mimeMailMessage.setTo(receivers.toTypedArray())
-        val title = FileShareMailTemplate.getShareEmailTitle(sender, file.fileName)
+        val title = "【CPACK】${sender}与你共享${file.fileName}文件"
         mimeMailMessage.setSubject(title)
-        val body = FileShareMailTemplate.getShareEmailBody(file.projectId, title, sender, expireDays, listOf(file))
+        val body = MailTemplate.mailCommonHtml(
+            cnName = sender,
+            projectId = file.projectId,
+            nest = MailTemplate.mainBodyHtml(
+                MailTemplate.fileTableHtml(
+                    cnName = sender,
+                    expireDays = expireDays,
+                    shareFileList = listOf(file)
+                )
+            )
+        )
         mimeMailMessage.setText(body, true)
         mailSender.send(mailMessage)
     }
 
     private fun bkMailMessage(sender: String, file: FileShareInfo, receivers: List<String>, expireDays: String?) {
-        val title = FileShareMailTemplate.getShareEmailTitle(sender, file.fileName)
+        val title = "【CPACK】${sender}与你共享${file.fileName}文件"
         val bkMailMessage = BkMailMessage(
             bkAppCode = devopsConf.appCode,
             bkAppSecret = devopsConf.appSecret,
             bkUsername = sender,
             receiverUsername = StringUtils.join(receivers, ","),
             title = title,
-            content = FileShareMailTemplate.getShareEmailBody(file.projectId, title, sender, expireDays, listOf(file))
+            content = MailTemplate.mailCommonHtml(
+                cnName = sender,
+                projectId = file.projectId,
+                nest = MailTemplate.mainBodyHtml(
+                    MailTemplate.fileTableHtml(
+                        cnName = sender,
+                        expireDays = expireDays,
+                        shareFileList = listOf(file)
+                    )
+                )
+            )
         )
         val requestUrl = "${devopsConf.bkHost.removeSuffix("/")}$bkMailApi"
         CanwayHttpUtils.doPost(requestUrl, bkMailMessage.toJsonString()).content
     }
 
     private fun devopsMailMessage(sender: String, file: FileShareInfo, receivers: List<String>, expireDays: String?) {
-        val title = FileShareMailTemplate.getShareEmailTitle(sender, file.fileName)
+        val title = "【CPACK】${sender}与你共享${file.fileName}文件"
         val devopsMailMessage = DevopsMailMessage(
             receivers = receivers.toSet(),
-            body = FileShareMailTemplate.getShareEmailBody(file.projectId, title, sender, expireDays, listOf(file)),
             title = title,
-            sender = sender
+            sender = sender,
+            body = MailTemplate.mailCommonHtml(
+                cnName = sender,
+                projectId = file.projectId,
+                nest = MailTemplate.mainBodyHtml(
+                    MailTemplate.fileTableHtml(
+                        cnName = sender,
+                        expireDays = expireDays,
+                        shareFileList = listOf(file)
+                    )
+                )
+            )
         )
         val requestUrl = "${devopsConf.devopsHost.removeSuffix("/")}$devopsMailApi"
         CanwayHttpUtils.doPost(requestUrl, devopsMailMessage.toJsonString()).content

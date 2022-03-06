@@ -6,13 +6,13 @@ import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.devops.api.BKUSERNAME
 import com.tencent.bkrepo.common.devops.api.conf.DevopsConf
+import com.tencent.bkrepo.common.devops.api.pojo.BkCertificate
+import com.tencent.bkrepo.common.devops.api.pojo.BkPage
+import com.tencent.bkrepo.common.devops.api.pojo.BkResponse
+import com.tencent.bkrepo.common.devops.api.pojo.BkUser
 import com.tencent.bkrepo.common.devops.api.pojo.BkUserData
 import com.tencent.bkrepo.common.devops.api.pojo.BkUserInfo
-import com.tencent.bkrepo.common.devops.api.pojo.BkCertificate
 import com.tencent.bkrepo.common.devops.api.pojo.CertType
-import com.tencent.bkrepo.common.devops.api.pojo.BkPage
-import com.tencent.bkrepo.common.devops.api.pojo.BkUser
-import com.tencent.bkrepo.common.devops.api.pojo.BkResponse
 import com.tencent.bkrepo.common.devops.api.util.http.CanwayHttpUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import org.slf4j.Logger
@@ -70,7 +70,7 @@ class BkUserService(
     companion object {
         val logger: Logger = LoggerFactory.getLogger(BkUserService::class.java)
         const val bkUserInfoApi = "/api/c/compapi/v2/bk_login/get_user/?bk_app_code=%s&bk_app_secret=%s&%s=%s"
-        const val bkUserApi =
-            "/api/c/compapi/v2/usermanage/list_users/?bk_app_code=%s&username=admin&bk_app_secret=%s&fields=username,display_name&page=%d&page_size=%d"
+        const val bkUserApi = "/api/c/compapi/v2/usermanage/list_users/" +
+            "?bk_app_code=%s&username=admin&bk_app_secret=%s&fields=username,display_name&page=%d&page_size=%d"
     }
 }

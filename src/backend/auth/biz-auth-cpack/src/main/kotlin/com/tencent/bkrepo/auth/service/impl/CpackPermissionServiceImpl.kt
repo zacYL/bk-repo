@@ -249,7 +249,7 @@ open class CpackPermissionServiceImpl constructor(
                 repoName = request.repoName!!,
                 action = PermissionAction.MANAGE
             )
-            if(permission.isNotEmpty() && permission.any { it.users.contains(request.uid) }) return true
+            if (permission.isNotEmpty() && permission.any { it.users.contains(request.uid) }) return true
         }
         return false
     }
@@ -257,11 +257,11 @@ open class CpackPermissionServiceImpl constructor(
     private fun checkProjectUserAdmin(request: CheckPermissionRequest): Boolean {
         request.projectId?.let {
             if (permissionRepository.findAllByResourceTypeAndPermNameAndProjectIdAndUsersIn(
-                ResourceType.PROJECT,
-                PROJECT_MANAGE_PERMISSION,
-                it,
-                listOf(request.uid)
-            ).isNotEmpty()
+                    ResourceType.PROJECT,
+                    PROJECT_MANAGE_PERMISSION,
+                    it,
+                    listOf(request.uid)
+                ).isNotEmpty()
             ) return true
         }
         return false
@@ -269,7 +269,7 @@ open class CpackPermissionServiceImpl constructor(
 
     private fun checkProjectAdmin(request: CheckPermissionRequest, roles: List<String>): Boolean {
         if (roles.isNotEmpty() && request.projectId != null) {
-            roles.filter { !it.isNullOrEmpty() }.forEach {
+            roles.filter { it.isNotEmpty() }.forEach {
                 val role = roleRepository.findFirstByIdAndProjectIdAndType(it, request.projectId!!, RoleType.PROJECT)
                 if (role != null && role.admin) return true
             }
@@ -280,7 +280,7 @@ open class CpackPermissionServiceImpl constructor(
     private fun checkRepoAdmin(request: CheckPermissionRequest, roles: List<String>): Boolean {
         // check role repo admin
         if (roles.isNotEmpty() && request.projectId != null && request.repoName != null) {
-            roles.filter { !it.isNullOrEmpty() }.forEach {
+            roles.filter { it.isNotEmpty() }.forEach {
                 val rRole = roleRepository.findFirstByIdAndProjectIdAndTypeAndRepoName(
                     it,
                     request.projectId!!,
@@ -392,7 +392,6 @@ open class CpackPermissionServiceImpl constructor(
             ).isNotEmpty()
         ) return getAllRepoByProjectId(projectId)
 
-
         // 用户为该项目关联用户组成员
         if (permissionRepository.findAllByProjectIdAndResourceTypeAndRolesIn(
                 projectId = projectId,
@@ -491,16 +490,16 @@ open class CpackPermissionServiceImpl constructor(
         if (user.admin) return true
         val roles = user.roles
         if (permissionRepository.findAllByResourceTypeAndPermNameAndUsersIn(
-            ResourceType.PROJECT,
-            PROJECT_MANAGE_PERMISSION,
-            listOf(userId)
-        ).isNotEmpty()
+                ResourceType.PROJECT,
+                PROJECT_MANAGE_PERMISSION,
+                listOf(userId)
+            ).isNotEmpty()
         ) return true
         if (permissionRepository.findAllByResourceTypeAndPermNameAndRolesIn(
-            ResourceType.PROJECT,
-            PROJECT_MANAGE_PERMISSION,
-            roles
-        ).isNotEmpty()
+                ResourceType.PROJECT,
+                PROJECT_MANAGE_PERMISSION,
+                roles
+            ).isNotEmpty()
         ) return true
         return false
     }

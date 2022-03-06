@@ -154,12 +154,16 @@ devopsGateway:
 license:
   auth:
     host: __BK_HTTP_SCHEMA__://__CW_LICENSE_HOST__:__CW_LICENSE_PORT__
+
+# cpack 对外服务域名
+cpack:
+  host: __BK_HTTP_SCHEMA__://__BK_REPO_FQDN__
+  
 devops:
   bkHost: __BK_HTTP_SCHEMA__://__BK_PAAS_FQDN__
   appCode: __APP_CODE__
   appSecret: __APP_TOKEN__
   devopsHost: __BK_HTTP_SCHEMA__://__BK_CI_FQDN__
-  bkrepoHost: __BK_HTTP_SCHEMA__://__BK_REPO_FQDN__
 
 # CI集成模式固定该配置
 auth:

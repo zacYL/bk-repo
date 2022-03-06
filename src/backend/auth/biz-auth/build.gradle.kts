@@ -35,6 +35,7 @@ dependencies {
     api(project(":common:common-job"))
     api(project(":common:common-security"))
     api(project(":repository:api-repository"))
+    api(project(":common:common-cpack"))
     implementation("com.google.guava:guava")
     api(project(":common:common-plugin:plugin-service"))
     implementation("cn.hutool:hutool-crypto:5.5.4")

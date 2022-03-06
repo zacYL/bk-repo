@@ -134,6 +134,10 @@ cluster:
     username: __CPACK_CLUSTER_CENTER_USERNAME__
     password: __CPACK_CLUSTER_CENTER_PASSWORD__
 
+# cpack 对外服务域名
+cpack:
+  host: __BK_HTTP_SCHEMA__://__BK_REPO_FQDN__
+
 # 邮箱配置
 mail:
   share: true

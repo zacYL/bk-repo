@@ -303,10 +303,11 @@ class UserUserController(
         try {
             decryptToken = RsaUtils.decrypt(token)
         } catch (e: CryptoException) {
-            throw AuthenticationException(messageCode = AuthMessageCode.AUTH_TOKEN_ENCRYPT_FAILED)
+            logger.warn("token decrypt failed token")
+            throw AuthenticationException(messageCode = AuthMessageCode.AUTH_LOGIN_FAILED)
         }
         val user = userService.findUserByUserToken(uid, decryptToken) ?: run {
-            throw AuthenticationException(messageCode = AuthMessageCode.AUTH_LOGIN_TOKEN_CHECK_FAILED)
+            throw AuthenticationException(messageCode = AuthMessageCode.AUTH_LOGIN_FAILED)
         }
         if (user.locked) throw AuthenticationException(messageCode = AuthMessageCode.AUTH_USER_LOCKED)
         val ticket = JwtUtils.generateToken(signingKey, jwtProperties.expiration, uid)
@@ -387,7 +388,8 @@ class UserUserController(
             decryptOldPwd = RsaUtils.decrypt(oldPwd)
             decryptNewPwd = RsaUtils.decrypt(newPwd)
         } catch (e: CryptoException) {
-            throw AuthenticationException(messageCode = AuthMessageCode.AUTH_TOKEN_ENCRYPT_FAILED)
+            logger.warn("token decrypt failed")
+            throw AuthenticationException(messageCode = AuthMessageCode.AUTH_LOGIN_TOKEN_CHECK_FAILED)
         }
         require(uid == userId) { throw PermissionException() }
         return ResponseBuilder.success(userService.updatePassword(uid, decryptOldPwd, decryptNewPwd))

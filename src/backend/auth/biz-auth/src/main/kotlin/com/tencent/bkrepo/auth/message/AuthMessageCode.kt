@@ -59,7 +59,7 @@ enum class AuthMessageCode(private val businessCode: Int, private val key: Strin
     AUTH_ROLE_USER_NOT_EMPTY(22, "auth.role.user.notempty"),
     AUTH_USER_TOKEN_TIME_ERROR(23, "auth.user.token.time.error"),
     AUTH_USER_LOCKED(24, "auth.user.locked"),
-    AUTH_TOKEN_ENCRYPT_FAILED(25, "auth.token.decryptfail");
+    AUTH_LOGIN_FAILED(25, "auth.login.failed");
 
     override fun getBusinessCode() = businessCode
     override fun getKey() = key

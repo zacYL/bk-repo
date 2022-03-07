@@ -73,7 +73,9 @@ data class BasicInfo(
     @ApiModelProperty("修改者")
     val lastModifiedBy: String,
     @ApiModelProperty("修改时间")
-    val lastModifiedDate: String
+    val lastModifiedDate: String,
+    @ApiModelProperty("README.md文件的内容")
+    val readme: String?
 )
 
 @Api("版本的依赖信息")

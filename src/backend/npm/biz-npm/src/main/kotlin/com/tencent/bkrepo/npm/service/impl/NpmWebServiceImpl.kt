@@ -81,6 +81,12 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
         if (!packageMetadata.versions.map.keys.contains(version)) {
             throw NpmArtifactNotFoundException("version [$version] don't found in package [$name].")
         }
+        //获取readme文档
+        val versionMetaData = packageMetadata.versions.map[version]
+        val other = versionMetaData!!.any()
+        val readme: String?
+        val readmeFilename = other["readmeFilename"]
+        readme = if (readmeFilename != null) other["readme"]?.toString() else null
         val pathWithDash = packageMetadata.versions.map[version]?.dist?.tarball?.substringAfter(name)
             ?.contains(TGZ_FULL_PATH_WITH_DASH_SEPARATOR) ?: true
         val fullPath = NpmUtils.getTgzPath(name, version, pathWithDash)
@@ -94,7 +100,7 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
                 logger.warn("packageKey [$packageKey] don't found.")
                 throw NpmArtifactNotFoundException("packageKey [$packageKey] don't found.")
             }
-            val basicInfo = buildBasicInfo(nodeDetail, packageVersion)
+            val basicInfo = buildBasicInfo(nodeDetail, packageVersion, readme)
             val versionDependenciesInfo =
                 queryVersionDependenciesInfo(artifactInfo, packageMetadata.versions.map[version]!!, name)
             return PackageVersionInfo(basicInfo, emptyMap(), versionDependenciesInfo)
@@ -250,7 +256,7 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
 
         val logger: Logger = LoggerFactory.getLogger(NpmWebServiceImpl::class.java)
 
-        fun buildBasicInfo(nodeDetail: NodeDetail, packageVersion: PackageVersion): BasicInfo {
+        fun buildBasicInfo(nodeDetail: NodeDetail, packageVersion: PackageVersion, readmeInfo: String?): BasicInfo {
             with(nodeDetail) {
                 return BasicInfo(
                     packageVersion.name,
@@ -265,7 +271,8 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
                     createdBy,
                     createdDate,
                     lastModifiedBy,
-                    lastModifiedDate
+                    lastModifiedDate,
+                    readme = readmeInfo
                 )
             }
         }

@@ -31,13 +31,13 @@
                     : '/ui/devops-utils.js'
                 this.loadDevopsUtils(url)
             } else {
-                this.ajaxUserInfo()
+                this.getUserInfo()
                 this.getRepoUserList()
                 this.getProjectList()
             }
         },
         methods: {
-            ...mapActions(['getProjectList', 'ajaxUserInfo', 'getRepoUserList'])
+            ...mapActions(['getProjectList', 'getUserInfo', 'getRepoUserList'])
         }
     }
 </script>

@@ -51,7 +51,7 @@
             ...mapState(['userInfo'])
         },
         watch: {
-            userInfo () {
+            'userInfo.username' () {
                 this.getToken()
             }
         },
@@ -72,9 +72,7 @@
             },
             getToken () {
                 this.isLoading = true
-                this.getTokenList({
-                    username: this.userInfo.username
-                }).then(list => {
+                this.getTokenList().then(list => {
                     this.tokenList = list
                 }).finally(() => {
                     this.isLoading = false
@@ -86,7 +84,6 @@
                     message: this.$t('deleteTokenTitle', { name }),
                     confirmFn: () => {
                         return this.deleteToken({
-                            username: this.userInfo.username,
                             name
                         }).then(() => {
                             this.getToken()

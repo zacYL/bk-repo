@@ -4,15 +4,15 @@ const prefix = 'auth/api'
 
 export default {
     // 用户token列表
-    getTokenList (_, { username }) {
+    getTokenList () {
         return Vue.prototype.$ajax.get(
-            `${prefix}/user/list/token/${username}`
+            `${prefix}/user/list/token`
         )
     },
     // 新增用户token
-    addToken (_, { projectId, username, name, expiredAt = '' }) {
-        return Vue.prototype.$ajax.post(
-            `${prefix}/user/token/${username}/${name}`,
+    addToken (_, { projectId, name, expiredAt = '' }) {
+        return Vue.prototype.$ajax.put(
+            `${prefix}/user/token/${name}`,
             null,
             {
                 params: {
@@ -23,9 +23,9 @@ export default {
         )
     },
     // 删除用户token
-    deleteToken (_, { username, name }) {
+    deleteToken (_, { name }) {
         return Vue.prototype.$ajax.delete(
-            `${prefix}/user/token/${username}/${name}`
+            `${prefix}/user/token/${name}`
         )
     },
     // 登录

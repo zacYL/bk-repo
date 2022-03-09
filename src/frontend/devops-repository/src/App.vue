@@ -30,7 +30,7 @@
             } else {
                 const urlProjectId = (location.pathname.match(/^\/[a-zA-Z0-9]+\/([^/]+)/) || [])[1]
                 const localProjectId = localStorage.getItem('projectId')
-                Promise.all([this.ajaxUserInfo(), this.getProjectList(), this.getRepoUserList()]).then(([userInfo]) => {
+                Promise.all([this.getUserInfo(), this.getProjectList(), this.getRepoUserList()]).then(([userInfo]) => {
                     if (!this.iframeMode && !this.projectList.length) {
                         if (userInfo.admin) {
                             // TODO: 管理员创建项目引导页
@@ -85,7 +85,7 @@
         methods: {
             ...mapActions([
                 'getProjectList',
-                'ajaxUserInfo',
+                'getUserInfo',
                 'checkPM',
                 'getRepoUserList',
                 'getClusterList'

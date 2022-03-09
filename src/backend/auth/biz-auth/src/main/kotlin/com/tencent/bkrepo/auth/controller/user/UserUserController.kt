@@ -227,7 +227,7 @@ class UserUserController(
     }
 
     @ApiOperation("创建用户token")
-    @PostMapping("/token/{uid}")
+    @PutMapping("/token")
     fun createToken(
         @RequestAttribute userId: String
     ): Response<Token?> {
@@ -235,11 +235,9 @@ class UserUserController(
     }
 
     @ApiOperation("新加用户token")
-    @PostMapping("/token/{uid}/{name}")
+    @PutMapping("/token/{name}")
     fun addUserToken(
         @RequestAttribute userId: String,
-        @ApiParam(value = "用户id")
-        @PathVariable("uid") uid: String,
         @ApiParam(value = "name")
         @PathVariable("name") name: String,
         @ApiParam(value = "expiredAt", required = false)
@@ -251,21 +249,17 @@ class UserUserController(
     }
 
     @ApiOperation("查询用户token列表")
-    @GetMapping("/list/token/{uid}")
+    @GetMapping("/list/token")
     fun listUserToken(
-        @RequestAttribute userId: String,
-        @ApiParam(value = "用户id")
-        @PathVariable("uid") uid: String
+        @RequestAttribute userId: String
     ): Response<List<TokenResult>> {
         return ResponseBuilder.success(userService.listUserToken(userId))
     }
 
     @ApiOperation("删除用户token")
-    @DeleteMapping("/token/{uid}/{name}")
+    @DeleteMapping("/token/{name}")
     fun deleteToken(
         @RequestAttribute userId: String,
-        @ApiParam(value = "用户id")
-        @PathVariable uid: String,
         @ApiParam(value = "用户token")
         @PathVariable name: String
     ): Response<Boolean> {
@@ -276,8 +270,6 @@ class UserUserController(
     @PostMapping("/token")
     fun checkToken(
         @RequestAttribute userId: String,
-        @ApiParam(value = "用户id")
-        @RequestParam uid: String,
         @ApiParam(value = "用户token")
         @RequestParam token: String
     ): Response<Boolean> {
@@ -396,12 +388,11 @@ class UserUserController(
     }
 
     @ApiOperation("用户info ")
-    @GetMapping("/userinfo/{uid}")
+    @GetMapping("/userinfo")
     fun userInfoById(
-        @RequestAttribute userId: String,
-        @PathVariable uid: String
+        @RequestAttribute userId: String
     ): Response<UserInfo?> {
-        return ResponseBuilder.success(userService.getUserInfoById(uid))
+        return ResponseBuilder.success(userService.getUserInfoById(userId))
     }
 
     @ApiOperation("重置用户密码")

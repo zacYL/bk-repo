@@ -1,11 +1,14 @@
 <template>
-    <div class="topo-view" ondragstart="return false" :style="{
-        cursor: startMove ? 'grabbing' : 'grab'
-    }">
-        <div ref="topoMain" class="topo-main flex-center">
-            <topo-left-node :node="leftTree" ckey="title" :node-content="nodeContent" root></topo-left-node>
-            <node-content style="background-color:var(--bgLightColor);" :node="rootNode"></node-content>
-            <topo-node :node="rightTree" ckey="title" :node-content="nodeContent" root></topo-node>
+    <div class="topo-container">
+        <i class="devops-icon icon-full-screen hover-btn topo-full-screen" @click.stop="fullScreen"></i>
+        <div class="topo-view" ondragstart="return false" :style="{
+            cursor: startMove ? 'grabbing' : 'grab'
+        }">
+            <div class="topo-main flex-center">
+                <topo-left-node :node="leftTree" ckey="title" :node-content="nodeContent" root></topo-left-node>
+                <node-content style="background-color:var(--bgLightColor);" :node="rootNode"></node-content>
+                <topo-node :node="rightTree" ckey="title" :node-content="nodeContent" root></topo-node>
+            </div>
         </div>
     </div>
 </template>
@@ -37,16 +40,18 @@
                 startPosition: {
                     left: 0,
                     top: 0
-                }
+                },
+                isFullScreen: false
             }
         },
         mounted () {
-            const { scrollHeight, clientHeight, scrollWidth, clientWidth } = this.$el
-            this.$el.scrollTop = (scrollHeight - clientHeight) / 2
-            this.$el.scrollLeft = (scrollWidth - clientWidth) / 2
+            const dom = this.$el.querySelector('.topo-view')
+            const { scrollHeight, clientHeight, scrollWidth, clientWidth } = dom
+            dom.scrollTop = (scrollHeight - clientHeight) / 2
+            dom.scrollLeft = (scrollWidth - clientWidth) / 2
 
-            this.$el.addEventListener('mousedown', this.moveStart)
-            this.$el.addEventListener('mousemove', this.moving)
+            dom.addEventListener('mousedown', this.moveStart)
+            dom.addEventListener('mousemove', this.moving)
             window.addEventListener('mouseup', this.moveEnd)
         },
         beforeDestroy () {
@@ -56,7 +61,7 @@
             moveStart (e) {
                 this.startMove = true
                 // 确定起始位置
-                const { scrollTop, scrollLeft } = this.$el
+                const { scrollTop, scrollLeft } = this.$el.querySelector('.topo-view')
                 this.startPosition = {
                     scrollTop,
                     scrollLeft,
@@ -66,7 +71,8 @@
             },
             moving (e) {
                 if (!this.startMove) return
-                const { scrollHeight, clientHeight, scrollWidth, clientWidth } = this.$el
+                const dom = this.$el.querySelector('.topo-view')
+                const { scrollHeight, clientHeight, scrollWidth, clientWidth } = dom
                 const maxScrollTop = scrollHeight - clientHeight
                 const maxScrollLeft = scrollWidth - clientWidth
 
@@ -74,25 +80,49 @@
                 const moveY = e.clientY - this.startPosition.top
                 const endX = this.startPosition.scrollLeft - moveX
                 const endY = this.startPosition.scrollTop - moveY
-                this.$el.scrollLeft = moveX < 0 ? Math.min(endX, maxScrollLeft) : Math.max(0, endX)
-                this.$el.scrollTop = moveY < 0 ? Math.min(endY, maxScrollTop) : Math.max(0, endY)
+                dom.scrollLeft = moveX < 0 ? Math.min(endX, maxScrollLeft) : Math.max(0, endX)
+                dom.scrollTop = moveY < 0 ? Math.min(endY, maxScrollTop) : Math.max(0, endY)
             },
             moveEnd () {
                 this.startMove = false
+            },
+            fullScreen () {
+                this.isFullScreen = !this.isFullScreen
+                if (this.isFullScreen) {
+                    this.$el.requestFullscreen()
+                } else {
+                    document.exitFullscreen()
+                }
             }
         }
     }
 </script>
 <style lang="scss" scoped>
-.topo-view {
+.topo-container {
     position: relative;
     height: 100%;
-    padding: 10px;
-    overflow: auto;
-    .topo-main {
+    background-color: white;
+    .topo-full-screen {
         position: absolute;
-        min-width: 100%;
-        min-height: 100%;
+        z-index: 1;
+        top: 10px;
+        right: 20px;
+        padding: 5px;
+        cursor: pointer;
+        &:hover {
+            background-color: var(--bgHoverLighterColor);
+        }
+    }
+    .topo-view {
+        position: relative;
+        height: 100%;
+        padding: 10px;
+        overflow: auto;
+        .topo-main {
+            position: absolute;
+            min-width: 100%;
+            min-height: 100%;
+        }
     }
 }
 </style>

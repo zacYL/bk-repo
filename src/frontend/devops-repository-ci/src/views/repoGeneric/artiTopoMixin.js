@@ -45,17 +45,15 @@ export default {
                     },
                     {
                         title: '代码',
-                        children: metadata.commit
-                            ? [
-                                {
-                                    title: metadata.commit,
-                                    metadata: [
-                                        `提交人: ${this.userList[metadata.commituser]?.name || metadata.commituser}`,
-                                        `提交信息: ${metadata.commitid}`
-                                    ]
-                                }
-                            ]
-                            : []
+                        children: [
+                            {
+                                title: '提交信息',
+                                metadata: [
+                                    `lastCommit: ${metadata.lastCommit || '--'}`,
+                                    `newCommit: ${metadata.newCommit || '--'}`
+                                ]
+                            }
+                        ]
                     }
                 ]
             }

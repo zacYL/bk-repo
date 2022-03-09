@@ -165,7 +165,7 @@
                             trigger: 'blur'
                         },
                         {
-                            regex: /^https?:\/\//,
+                            regex: /^https?:\/\/[^/]+$/,
                             message: this.$t('pleaseInput') + this.$t('legit') + this.$t('address'),
                             trigger: 'blur'
                         }
@@ -259,7 +259,7 @@
                     body: {
                         type,
                         name,
-                        url,
+                        url: `${url}/replication`,
                         username,
                         password
                     }

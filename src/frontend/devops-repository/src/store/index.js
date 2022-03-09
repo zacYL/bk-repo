@@ -91,7 +91,10 @@ const storeObject = {
             }
         },
         SET_CLUSTER_LIST (state, data) {
-            state.clusterList = data
+            state.clusterList = data.map(c => ({
+                ...c,
+                url: c.url.replace('/replication', '')
+            }))
         },
         SET_PROJECT_LIST (state, data) {
             state.projectList = data.map(v => {

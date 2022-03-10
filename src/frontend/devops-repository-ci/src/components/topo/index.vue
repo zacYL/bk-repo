@@ -105,9 +105,9 @@
     .topo-full-screen {
         position: absolute;
         z-index: 1;
-        top: 10px;
-        right: 20px;
-        padding: 5px;
+        top: 0px;
+        right: 0px;
+        padding: 10px;
         cursor: pointer;
         &:hover {
             background-color: var(--bgHoverLighterColor);
@@ -116,12 +116,12 @@
     .topo-view {
         position: relative;
         height: 100%;
-        padding: 10px;
         overflow: auto;
         .topo-main {
             position: absolute;
             min-width: 100%;
             min-height: 100%;
+            padding: 10px;
         }
     }
 }

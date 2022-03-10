@@ -1,5 +1,5 @@
 <template>
-    <div class="repo-generic-container" @click="() => selectRow(selectedTreeNode)">
+    <div class="repo-generic-container">
         <header class="mb10 pl20 pr20 generic-header flex-align-center">
             <Icon class="generic-img" size="70" name="generic" />
             <div class="ml20 generic-title flex-column">
@@ -17,7 +17,7 @@
             <div class="repo-generic-side"
                 :style="{ 'flex-basis': `${sideBarWidth}px` }"
                 v-bkloading="{ isLoading: treeLoading }">
-                <div class="important-search">
+                <div class="p10">
                     <bk-input
                         v-model.trim="importantSearch"
                         placeholder="请输入关键字，按Enter键搜索"
@@ -36,6 +36,16 @@
                     :selected-node="selectedTreeNode"
                     @icon-click="iconClickHandler"
                     @item-click="itemClickHandler">
+                    <template #operation="{ item }">
+                        <operation-list
+                            v-if="item.roadMap === selectedTreeNode.roadMap"
+                            :list="[
+                                item.roadMap !== '0' && { clickEvent: () => showDetail(item), label: $t('detail') },
+                                permission.write && repoName !== 'pipeline' && { clickEvent: () => addFolder(item), label: '新建文件夹' },
+                                permission.write && repoName !== 'pipeline' && { clickEvent: () => handlerUpload(item), label: '上传文件' }
+                            ].filter(Boolean)">
+                        </operation-list>
+                    </template>
                 </repo-tree>
             </div>
             <move-split-bar
@@ -44,7 +54,7 @@
                 @change="changeSideBarWidth"
             />
             <div class="repo-generic-table" v-bkloading="{ isLoading }">
-                <div class="m10 flex-between-center">
+                <div class="p10 multi-operation flex-between-center">
                     <bk-input
                         class="w250"
                         v-if="searchFileName"
@@ -58,19 +68,14 @@
                     <breadcrumb v-else :list="breadcrumb"></breadcrumb>
                     <div class="repo-generic-actions bk-button-group">
                         <bk-button
-                            v-if="!searchFileName || selectedRow.fullPath !== selectedTreeNode.fullPath"
-                            @click.stop="showDetail()">
-                            {{ $t('detail') }}
+                            v-if="multiSelect.length"
+                            @click="handlerMultiDelete()">
+                            批量删除
                         </bk-button>
                         <bk-button class="ml10"
-                            v-if="selectedRow.fullPath !== selectedTreeNode.fullPath"
-                            @click.stop="handlerDownload()">
-                            {{ $t('download') }}
+                            @click="getArtifactories">
+                            {{ $t('refresh') }}
                         </bk-button>
-                        <operation-list class="ml10"
-                            :list="operationBtns">
-                            <bk-button @click.stop="() => {}" icon="ellipsis"></bk-button>
-                        </operation-list>
                     </div>
                 </div>
                 <bk-table
@@ -79,8 +84,8 @@
                     :outer-border="false"
                     :row-border="false"
                     size="small"
-                    @row-click="selectRow"
-                    @row-dblclick="openFolder">
+                    @row-dblclick="openFolder"
+                    @selection-change="selectMultiRow">
                     <template #empty>
                         <empty-data :is-loading="isLoading" :search="Boolean(searchFileName)">
                             <template v-if="!Boolean(searchFileName)">
@@ -89,6 +94,7 @@
                             </template>
                         </empty-data>
                     </template>
+                    <bk-table-column type="selection" width="60"></bk-table-column>
                     <bk-table-column :label="$t('fileName')" prop="name" show-overflow-tooltip :render-header="renderHeader">
                         <template #default="{ row }">
                             <div class="flex-align-center flex-inline">
@@ -121,6 +127,22 @@
                             </span>
                         </template>
                     </bk-table-column>
+                    <bk-table-column :label="$t('operation')" width="70">
+                        <template #default="{ row }">
+                            <operation-list
+                                :list="[
+                                    { clickEvent: () => handlerDownload(row), label: $t('download') },
+                                    !row.folder && { clickEvent: () => handlerShare(row), label: $t('share') },
+                                    { clickEvent: () => showDetail(row), label: $t('detail') },
+                                    permission.edit && repoName !== 'pipeline' && { clickEvent: () => renameRes(row), label: $t('rename') },
+                                    permission.write && repoName !== 'pipeline' && { clickEvent: () => moveRes(row), label: $t('move') },
+                                    permission.write && repoName !== 'pipeline' && { clickEvent: () => copyRes(row), label: $t('copy') },
+                                    !row.folder && /\.(ipa)|(apk)$/.test(row.name) && { clickEvent: () => handlerScan(row), label: '安全扫描' },
+                                    permission.delete && { clickEvent: () => deleteRes(row), label: $t('delete') }
+                                ].filter(Boolean)">
+                            </operation-list>
+                        </template>
+                    </bk-table-column>
                 </bk-table>
                 <bk-pagination
                     class="p10"
@@ -139,7 +161,7 @@
         <generic-detail ref="genericDetail"></generic-detail>
         <generic-form-dialog ref="genericFormDialog" @refresh="refreshNodeChange"></generic-form-dialog>
         <generic-share-dialog ref="genericShareDialog"></generic-share-dialog>
-        <generic-tree-dialog ref="genericTreeDialog" @update="updateGenericTreeNode" @submit="submitGenericTree"></generic-tree-dialog>
+        <generic-tree-dialog ref="genericTreeDialog" @update="updateGenericTreeNode" @refresh="refreshNodeChange"></generic-tree-dialog>
         <generic-upload-dialog ref="genericUploadDialog" @update="getArtifactories"></generic-upload-dialog>
     </div>
 </template>
@@ -186,6 +208,7 @@
                 sortType: 'lastModifiedDate',
                 // 中间展示的table数据
                 artifactoryList: [],
+                multiSelect: [],
                 // 左侧树选中的节点
                 selectedTreeNode: {},
                 // 分页信息
@@ -194,11 +217,7 @@
                     current: 1,
                     limit: 20,
                     'limit-list': [10, 20, 40]
-                },
-                // table单击事件，debounce
-                rowClickCallback: null,
-                // table选中的行
-                selectedRow: {}
+                }
             }
         },
         computed: {
@@ -211,29 +230,6 @@
             },
             currentRepo () {
                 return this.repoListAll.find(repo => repo.name === this.repoName) || {}
-            },
-            operationBtns () {
-                // 是否搜索中
-                const isSearch = Boolean(this.searchFileName)
-                // 是否选中了行
-                const isSelectedRow = this.selectedRow.fullPath !== this.selectedTreeNode.fullPath
-                // 是否是限制操作仓库，report/log已被过滤
-                const isLimit = this.repoName === 'pipeline'
-                // 是否选中的是文件夹
-                const isFolder = this.selectedRow.folder
-                // 安装包
-                const isMobilePkg = /\.(ipa)|(apk)$/.test(this.selectedRow.name)
-                return [
-                    this.permission.edit && isSelectedRow && !isLimit && { clickEvent: this.renameRes, label: this.$t('rename') },
-                    this.permission.write && isSelectedRow && !isLimit && { clickEvent: this.moveRes, label: this.$t('move') },
-                    this.permission.write && isSelectedRow && !isLimit && { clickEvent: this.copyRes, label: this.$t('copy') },
-                    isSelectedRow && !isFolder && { clickEvent: this.handlerShare, label: this.$t('share') },
-                    this.permission.write && !isSelectedRow && !isLimit && !isSearch && { clickEvent: this.addFolder, label: this.$t('create') },
-                    this.permission.write && !isSelectedRow && !isLimit && !isSearch && { clickEvent: this.handlerUpload, label: this.$t('upload') },
-                    !isFolder && isMobilePkg && { clickEvent: this.handlerScan, label: '安全扫描' },
-                    this.permission.delete && isSelectedRow && { clickEvent: this.deleteRes, label: this.$t('delete') },
-                    !isSelectedRow && !isSearch && { clickEvent: this.getArtifactories, label: this.$t('refresh') }
-                ].filter(Boolean)
             },
             breadcrumb () {
                 if (!this.selectedTreeNode.roadMap) return
@@ -281,13 +277,11 @@
                 'getFolderList',
                 'getArtifactoryList',
                 'deleteArtifactory',
-                'moveNode',
-                'copyNode',
                 'getFolderSize',
                 'getFileNumOfFolder'
             ]),
             changeSideBarWidth (sideBarWidth) {
-                if (sideBarWidth > 200) {
+                if (sideBarWidth > 250) {
                     this.sideBarWidth = sideBarWidth
                 }
             },
@@ -346,8 +340,15 @@
                 this.getArtifactoryList({
                     projectId: this.projectId,
                     repoName: this.repoName,
-                    name: this.searchFullPath ? '' : this.searchFileName,
-                    fullPath: this.searchFileName ? this.searchFullPath : this.selectedTreeNode.fullPath,
+                    fullPath: this.selectedTreeNode.fullPath,
+                    ...(this.searchFullPath
+                        ? {
+                            fullPath: this.searchFullPath
+                        }
+                        : {
+                            name: this.searchFileName
+                        }
+                    ),
                     current: this.pagination.current,
                     limit: this.pagination.limit,
                     sortType: this.sortType,
@@ -385,10 +386,7 @@
             // 树组件选中文件夹
             itemClickHandler (node) {
                 this.selectedTreeNode = node
-                // 取消table行选中样式
-                this.selectedRow.element && this.selectedRow.element.classList.remove('selected-row')
-                // 初始化table选中行、数据
-                this.selectedRow = node
+                
                 this.handlerPaginationChange()
                 // 更新已展开文件夹数据
                 const reg = new RegExp(`^${node.roadMap}`)
@@ -431,10 +429,8 @@
                 })
             },
             // 双击table打开文件夹
-            openFolder (row, $event) {
+            openFolder (row) {
                 if (!row.folder) return
-                $event.stopPropagation()
-                this.rowClickCallback && clearTimeout(this.rowClickCallback)
                 if (this.searchFileName) {
                     // 搜索中打开文件夹
                     this.searchFullPath = row.fullPath
@@ -444,103 +440,86 @@
                     this.itemClickHandler(node)
                 }
             },
-            // 控制选中的行
-            selectRow (row, $event) {
-                $event && $event.stopPropagation()
-                const element = $event ? $event.currentTarget : null
-                this.rowClickCallback && clearTimeout(this.rowClickCallback)
-                this.rowClickCallback = window.setTimeout(() => {
-                    this.selectedRow.element && this.selectedRow.element.classList.remove('selected-row')
-                    element && element.classList.add('selected-row')
-                    this.selectedRow = {
-                        ...row,
-                        element
-                    }
-                }, 300)
-            },
-            showDetail () {
+            showDetail ({ folder, fullPath }) {
                 this.$refs.genericDetail.setData({
                     show: true,
                     loading: false,
                     projectId: this.projectId,
                     repoName: this.repoName,
-                    folder: this.selectedRow.folder,
-                    path: this.selectedRow.fullPath,
+                    folder,
+                    path: fullPath,
                     data: {}
                 })
             },
-            renameRes () {
+            renameRes ({ name, fullPath }) {
                 this.$refs.genericFormDialog.setData({
                     show: true,
                     loading: false,
                     type: 'rename',
-                    name: this.selectedRow.name,
-                    path: this.selectedRow.fullPath,
-                    title: `${this.$t('rename')} (${this.selectedRow.name})`
+                    name,
+                    path: fullPath,
+                    title: `${this.$t('rename')} (${name})`
                 })
             },
-            addFolder () {
+            addFolder ({ fullPath }) {
                 this.$refs.genericFormDialog.setData({
                     show: true,
                     loading: false,
                     type: 'add',
-                    path: this.selectedRow.fullPath + '/',
+                    path: fullPath + '/',
                     title: `${this.$t('create') + this.$t('folder')}`
                 })
             },
-            handlerScan () {
+            handlerScan ({ name, fullPath }) {
                 this.$refs.genericFormDialog.setData({
                     show: true,
                     loading: false,
                     title: '安全扫描',
                     type: 'scan',
                     id: '',
-                    name: this.selectedRow.name,
-                    path: this.selectedRow.fullPath
+                    name,
+                    path: fullPath
                 })
             },
             refreshNodeChange () {
                 this.updateGenericTreeNode(this.selectedTreeNode)
-                this.selectRow(this.selectedTreeNode)
                 this.getArtifactories()
             },
-            handlerShare () {
+            handlerShare ({ name, fullPath }) {
                 this.$refs.genericShareDialog.setData({
                     projectId: this.projectId,
                     repoName: this.repoName,
                     show: true,
                     loading: false,
-                    title: `${this.$t('share')} (${this.selectedRow.name})`,
-                    path: this.selectedRow.fullPath,
+                    title: `${this.$t('share')} (${name})`,
+                    path: fullPath,
                     user: [],
                     ip: [],
                     permits: '',
                     time: 7
                 })
             },
-            async deleteRes () {
-                if (!this.selectedRow.fullPath) return
+            async deleteRes ({ name, folder, fullPath }) {
+                if (!fullPath) return
                 let totalRecords
-                if (this.selectedRow.folder) {
+                if (folder) {
                     totalRecords = await this.getFileNumOfFolder({
                         projectId: this.projectId,
                         repoName: this.repoName,
-                        fullPath: this.selectedRow.fullPath
+                        fullPath
                     })
                 }
                 this.$confirm({
                     theme: 'danger',
-                    message: `${this.$t('confirm') + this.$t('delete')}${this.selectedRow.folder ? this.$t('folder') : this.$t('file')} ${this.selectedRow.name} ？`,
-                    subMessage: `${this.selectedRow.folder && totalRecords ? `当前文件夹下存在${totalRecords}个文件` : ''}`,
+                    message: `${this.$t('confirm') + this.$t('delete')}${folder ? this.$t('folder') : this.$t('file')} ${name} ？`,
+                    subMessage: `${folder && totalRecords ? `当前文件夹下存在${totalRecords}个文件` : ''}`,
                     confirmFn: () => {
                         return this.deleteArtifactory({
                             projectId: this.projectId,
                             repoName: this.repoName,
-                            fullPath: this.selectedRow.fullPath
+                            fullPath
                         }).then(() => {
-                            this.selectRow(this.selectedTreeNode)
-                            this.updateGenericTreeNode(this.selectedTreeNode)
-                            this.getArtifactories()
+                            this.refreshNodeChange()
                             this.$bkMessage({
                                 theme: 'success',
                                 message: this.$t('delete') + this.$t('success')
@@ -549,60 +528,31 @@
                     }
                 })
             },
-            moveRes () {
+            moveRes ({ name, fullPath }) {
                 this.$refs.genericTreeDialog.setTreeData({
                     show: true,
                     type: 'move',
-                    title: `${this.$t('move')} (${this.selectedRow.name})`,
-                    openList: ['0'],
-                    selectedNode: this.genericTree[0]
+                    title: `${this.$t('move')} (${name})`,
+                    path: fullPath
                 })
             },
-            copyRes () {
+            copyRes ({ name, fullPath }) {
                 this.$refs.genericTreeDialog.setTreeData({
                     show: true,
                     type: 'copy',
-                    title: `${this.$t('copy')} (${this.selectedRow.name})`,
-                    openList: ['0'],
-                    selectedNode: this.genericTree[0]
+                    title: `${this.$t('copy')} (${name})`,
+                    path: fullPath
                 })
             },
-            submitGenericTree (data) {
-                this.$refs.genericTreeDialog.setTreeData({ loading: true })
-                this[data.type + 'Node']({
-                    body: {
-                        srcProjectId: this.projectId,
-                        srcRepoName: this.repoName,
-                        srcFullPath: this.selectedRow.fullPath,
-                        destProjectId: this.projectId,
-                        destRepoName: this.repoName,
-                        destFullPath: `${data.selectedNode.fullPath || '/'}`,
-                        overwrite: false
-                    }
-                }).then(() => {
-                    this.$refs.genericTreeDialog.setTreeData({ show: false })
-                    this.selectRow(this.selectedTreeNode)
-                    // 更新源和目的的节点信息
-                    this.updateGenericTreeNode(this.selectedTreeNode)
-                    this.updateGenericTreeNode(data.selectedNode)
-                    this.getArtifactories()
-                    this.$bkMessage({
-                        theme: 'success',
-                        message: this.$t(data.type) + this.$t('success')
-                    })
-                }).finally(() => {
-                    this.$refs.genericTreeDialog.setTreeData({ loading: false })
-                })
-            },
-            handlerUpload () {
+            handlerUpload ({ fullPath }) {
                 this.$refs.genericUploadDialog.setData({
                     show: true,
-                    title: `${this.$t('upload')} (${this.selectedTreeNode.fullPath || '/'})`,
-                    fullPath: this.selectedTreeNode.fullPath
+                    title: `${this.$t('upload')} (${fullPath || '/'})`,
+                    fullPath: fullPath
                 })
             },
-            handlerDownload () {
-                const url = `/generic/${this.projectId}/${this.repoName}/${this.selectedRow.fullPath}?download=true`
+            handlerDownload ({ fullPath }) {
+                const url = `/generic/${this.projectId}/${this.repoName}/${fullPath}?download=true`
                 this.$ajax.head(url).then(() => {
                     window.open(
                         '/web' + url,
@@ -627,6 +577,12 @@
                 }).finally(() => {
                     this.$set(row, 'sizeLoading', false)
                 })
+            },
+            selectMultiRow (selects) {
+                this.multiSelect = selects
+            },
+            handlerMultiDelete () {
+                console.log(this.multiSelect)
             }
         }
     }
@@ -662,19 +618,20 @@
         user-select: none;
         .repo-generic-side {
             height: 100%;
+            overflow: hidden;
             background-color: white;
-            .important-search {
-                padding: 9px 10px;
-                border-bottom: 1px solid var(--borderColor);
-            }
             .repo-generic-tree {
-                height: calc(100% - 53px);
+                border-top: 1px solid var(--borderColor);
+                height: calc(100% - 52px);
             }
         }
         .repo-generic-table {
             flex: 1;
             height: 100%;
             background-color: white;
+            .multi-operation {
+                height: 52px;
+            }
             ::v-deep .selected-header {
                 color: var(--fontPrimaryColor);
                 .icon-down-shape {

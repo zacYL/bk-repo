@@ -231,7 +231,7 @@
                     this.permission.write && !isSelectedRow && !isLimit && !isSearch && { clickEvent: this.addFolder, label: this.$t('create') },
                     this.permission.write && !isSelectedRow && !isLimit && !isSearch && { clickEvent: this.handlerUpload, label: this.$t('upload') },
                     !isFolder && isMobilePkg && { clickEvent: this.handlerScan, label: '安全扫描' },
-                    this.permission.delete && isSelectedRow && !isLimit && { clickEvent: this.deleteRes, label: this.$t('delete') },
+                    this.permission.delete && isSelectedRow && { clickEvent: this.deleteRes, label: this.$t('delete') },
                     !isSelectedRow && !isSearch && { clickEvent: this.getArtifactories, label: this.$t('refresh') }
                 ].filter(Boolean)
             },

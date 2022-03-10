@@ -73,7 +73,7 @@
                     <operation-list
                         :list="[
                             { label: '设置', clickEvent: () => toRepoConfig(row) },
-                            row.repoType !== 'generic' && { label: $t('delete'), clickEvent: () => deleteRepo(row) }
+                            { label: $t('delete'), clickEvent: () => deleteRepo(row) }
                         ].filter(Boolean)">
                     </operation-list>
                 </template>

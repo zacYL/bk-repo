@@ -162,9 +162,6 @@
                             <div class="version-dependencies-key text-overflow" :key="name" :title="name">{{ name }}</div>
                             <div v-if="type !== 'dependents'" class="version-dependencies-value text-overflow" :key="name + version" :title="version">{{ version }}</div>
                         </template>
-                        <div class="version-dependencies-more" v-if="type === 'dependents' && dependentsPage">
-                            <bk-button text title="primary" @click="loadMore">{{ $t('loadMore') }}</bk-button>
-                        </div>
                     </template>
                     <empty-data v-else class="version-dependencies-empty"></empty-data>
                 </section>
@@ -193,14 +190,6 @@
                     }
                 },
                 readmeContent: '',
-                // 当前已请求页数，0代表没有更多
-                dependentsPage: 1,
-                pagination: {
-                    count: 0,
-                    current: 1,
-                    limit: 20,
-                    'limit-list': [10, 20, 40]
-                },
                 selectedHistory: {},
                 metadata: {
                     show: false,
@@ -271,7 +260,6 @@
             convertFileSize,
             ...mapActions([
                 'getVersionDetail',
-                'getNpmDependents',
                 'addPackageMetadata'
             ]),
             getDetail () {
@@ -296,32 +284,9 @@
                             lastModifiedDate: basic.lastModifiedDate && formatDate(basic.lastModifiedDate)
                         }
                     }
-                    if (this.repoType === 'npm') {
-                        const dependents = res.dependencyInfo.dependents
-                        this.detail.dependencyInfo.dependents = dependents.records
-                        if (dependents.totalRecords < 20) {
-                            this.dependentsPage = 0
-                        }
-                    }
                     if (this.repoType === 'docker') {
                         this.selectedHistory = res.history[0] || {}
                     }
-                }).finally(() => {
-                    this.isLoading = false
-                })
-            },
-            loadMore () {
-                if (this.isLoading) return
-                this.isLoading = true
-                this.getNpmDependents({
-                    projectId: this.projectId,
-                    repoName: this.repoName,
-                    packageKey: this.packageKey,
-                    current: this.dependentsPage + 1
-                }).then(({ records }) => {
-                    this.detail.dependencyInfo.dependents.push(...records)
-                    this.dependentsPage++
-                    if (records.length < 20) this.dependentsPage = 0
                 }).finally(() => {
                     this.isLoading = false
                 })

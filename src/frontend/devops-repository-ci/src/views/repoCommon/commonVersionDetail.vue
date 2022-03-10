@@ -1,9 +1,11 @@
 <template>
     <bk-tab class="common-version-container" type="unborder-card" :active.sync="tabName" v-bkloading="{ isLoading }">
         <template #setting>
-            <bk-button v-if="permission.edit" :disabled="(detail.basic.stageTag || '').includes('@release')" outline class="mr10" @click="$emit('tag')">晋级</bk-button>
             <bk-button v-if="repoType !== 'docker'" outline class="mr10" @click="$emit('download')">下载</bk-button>
-            <bk-button v-if="permission.delete" outline class="mr20" @click="$emit('delete')">删除</bk-button>
+            <operation-list class="mr10"
+                :list="operationBtns">
+                <bk-button @click.stop="() => {}" icon="ellipsis"></bk-button>
+            </operation-list>
         </template>
         <bk-tab-panel v-if="detail.basic" name="basic" :label="$t('baseInfo')">
             <div class="version-base-info base-info display-block" :data-title="$t('baseInfo')">
@@ -26,6 +28,7 @@
                                 :key="tag">
                                 {{ tag }}
                             </span>
+                            <scan-tag v-if="detail.basic.scanStatus" class="ml10" :status="detail.basic.scanStatus"></scan-tag>
                         </template>
                     </span>
                 </div>
@@ -51,7 +54,7 @@
                 </div>
             </div>
         </bk-tab-panel>
-        <bk-tab-panel v-if="detail.basic.readme" name="readme" label="详细信息">
+        <bk-tab-panel v-if="detail.basic.readme" name="readme" label="详细描述">
             <div class="version-detail-readme" v-html="readmeContent"></div>
         </bk-tab-panel>
         <bk-tab-panel v-if="detail.metadata" name="metadata" :label="$t('metaData')">
@@ -177,6 +180,8 @@
 </template>
 <script>
     import CodeArea from '@repository/components/CodeArea'
+    import OperationList from '@repository/components/OperationList'
+    import ScanTag from '@repository/views/repoScan/ScanTag'
     import { mapState, mapActions } from 'vuex'
     import { convertFileSize, formatDate } from '@repository/utils'
     import repoGuideMixin from '@repository/views/repoCommon/repoGuideMixin'
@@ -184,7 +189,7 @@
     import topoDataMixin from './artiTopoMixin'
     export default {
         name: 'commonVersionDetail',
-        components: { CodeArea, topo },
+        components: { CodeArea, OperationList, ScanTag, topo },
         mixins: [repoGuideMixin, topoDataMixin],
         data () {
             return {
@@ -246,6 +251,13 @@
                     { name: 'lastModifiedDate', label: this.$t('lastModifiedDate') }
                 ].filter(({ name }) => name in this.detail.basic)
                     .map(item => ({ ...item, value: this.detail.basic[item.name] }))
+            },
+            operationBtns () {
+                return [
+                    this.permission.edit && { clickEvent: () => this.$emit('tag'), label: '晋级', disabled: (this.detail.basic.stageTag || '').includes('@release') },
+                    this.repoType === 'maven' && { clickEvent: () => this.$emit('scan'), label: '安全扫描' },
+                    this.permission.delete && { clickEvent: () => this.$emit('delete'), label: this.$t('delete') }
+                ].filter(Boolean)
             }
         },
         watch: {
@@ -376,7 +388,7 @@
             height: 40px;
             overflow: hidden;
             > * {
-                padding-left: 10px;
+                padding: 0 10px;
             }
             > label {
                 line-height: 40px;
@@ -386,7 +398,7 @@
         }
         &.base-info {
             display: grid;
-            grid-template: auto / repeat(3, 1fr);
+            grid-template: auto / repeat(2, 1fr);
             border: solid var(--borderColor);
             border-width: 1px 0 0 1px;
             .grid-item {
@@ -399,7 +411,7 @@
             }
             .package-name,
             .package-description {
-                grid-column: 1 / 4;
+                grid-column: 1 / 3;
             }
         }
         &.base-info-guide {

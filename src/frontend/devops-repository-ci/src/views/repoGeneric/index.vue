@@ -89,11 +89,15 @@
                             </template>
                         </empty-data>
                     </template>
-                    <bk-table-column :label="$t('fileName')" prop="name" :render-header="renderHeader">
+                    <bk-table-column :label="$t('fileName')" prop="name" show-overflow-tooltip :render-header="renderHeader">
                         <template #default="{ row }">
-                            <div class="flex-align-center">
+                            <div class="flex-align-center flex-inline">
                                 <Icon size="20" :name="row.folder ? 'folder' : getIconName(row.name)" />
                                 <div class="ml10 flex-1 text-overflow" :title="row.name">{{row.name}}</div>
+                                <scan-tag v-if="row.scanStatus" class="ml10"
+                                    :status="row.scanStatus"
+                                    :full-path="row.fullPath">
+                                </scan-tag>
                             </div>
                         </template>
                     </bk-table-column>
@@ -144,6 +148,7 @@
     import Breadcrumb from '@repository/components/Breadcrumb'
     import MoveSplitBar from '@repository/components/MoveSplitBar'
     import RepoTree from '@repository/components/RepoTree'
+    import ScanTag from '@repository/views/repoScan/ScanTag'
     import genericDetail from './genericDetail'
     import genericUploadDialog from '@repository/views/repoGeneric/genericUploadDialog'
     import genericFormDialog from '@repository/views/repoGeneric/genericFormDialog'
@@ -159,6 +164,7 @@
             Breadcrumb,
             MoveSplitBar,
             RepoTree,
+            ScanTag,
             genericDetail,
             genericUploadDialog,
             genericFormDialog,
@@ -215,14 +221,17 @@
                 const isLimit = this.repoName === 'pipeline'
                 // 是否选中的是文件夹
                 const isFolder = this.selectedRow.folder
+                // 安装包
+                const isMobilePkg = /\.(ipa)|(apk)$/.test(this.selectedRow.name)
                 return [
                     this.permission.edit && isSelectedRow && !isLimit && { clickEvent: this.renameRes, label: this.$t('rename') },
                     this.permission.write && isSelectedRow && !isLimit && { clickEvent: this.moveRes, label: this.$t('move') },
                     this.permission.write && isSelectedRow && !isLimit && { clickEvent: this.copyRes, label: this.$t('copy') },
-                    this.permission.delete && isSelectedRow && !isLimit && { clickEvent: this.deleteRes, label: this.$t('delete') },
                     isSelectedRow && !isFolder && { clickEvent: this.handlerShare, label: this.$t('share') },
                     this.permission.write && !isSelectedRow && !isLimit && !isSearch && { clickEvent: this.addFolder, label: this.$t('create') },
                     this.permission.write && !isSelectedRow && !isLimit && !isSearch && { clickEvent: this.handlerUpload, label: this.$t('upload') },
+                    !isFolder && isMobilePkg && { clickEvent: this.handlerScan, label: '安全扫描' },
+                    this.permission.delete && isSelectedRow && !isLimit && { clickEvent: this.deleteRes, label: this.$t('delete') },
                     !isSelectedRow && !isSearch && { clickEvent: this.getArtifactories, label: this.$t('refresh') }
                 ].filter(Boolean)
             },
@@ -477,6 +486,17 @@
                     type: 'add',
                     path: this.selectedRow.fullPath + '/',
                     title: `${this.$t('create') + this.$t('folder')}`
+                })
+            },
+            handlerScan () {
+                this.$refs.genericFormDialog.setData({
+                    show: true,
+                    loading: false,
+                    title: '安全扫描',
+                    type: 'scan',
+                    id: '',
+                    name: this.selectedRow.name,
+                    path: this.selectedRow.fullPath
                 })
             },
             refreshNodeChange () {

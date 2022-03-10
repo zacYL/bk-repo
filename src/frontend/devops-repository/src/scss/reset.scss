@@ -21,6 +21,9 @@ body {
             &:last-child > .cell {
                 padding-right: 30px;
             }
+            &.is-right .cell {
+                padding-right: 30px;
+            }
         }
         th {
             :hover {

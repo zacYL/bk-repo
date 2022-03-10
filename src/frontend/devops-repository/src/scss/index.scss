@@ -105,6 +105,10 @@ body {
     overflow: hidden;
 }
 
+.flex-inline {
+    display: inline-flex;
+}
+
 .text-overflow {
     overflow: hidden;
     text-overflow: ellipsis;

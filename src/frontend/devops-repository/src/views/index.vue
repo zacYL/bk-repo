@@ -61,6 +61,7 @@
                         (MODE_CONFIG === 'ci' || this.projectList.length) && 'repoList',
                         (MODE_CONFIG === 'ci' || this.projectList.length) && 'repoSearch',
                         MODE_CONFIG === 'ci' && 'repoToken',
+                        (MODE_CONFIG === 'ci' || this.projectList.length) && this.userInfo.manage && 'repoScan',
                         (MODE_CONFIG === 'ci' || this.projectList.length) && this.userInfo.admin && this.isMasterNode && 'planManage',
                         (MODE_CONFIG === 'ci' || this.projectList.length) && !this.userInfo.admin && this.userInfo.manage && 'projectConfig'
                     ].filter(Boolean),

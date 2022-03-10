@@ -44,6 +44,8 @@ interface OperateLogService {
      */
     fun saveEventAsync(event: ArtifactEvent, address: String)
 
+    fun saveMultiEventAsync(events: List<ArtifactEvent>, address: String)
+
     fun saveEventRequest(request: EventCreateRequest)
 
     fun page(

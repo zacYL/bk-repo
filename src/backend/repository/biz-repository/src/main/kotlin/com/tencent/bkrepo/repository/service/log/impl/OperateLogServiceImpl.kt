@@ -75,6 +75,22 @@ class OperateLogServiceImpl(
     }
 
     @Async
+    override fun saveMultiEventAsync(events: List<ArtifactEvent>, address: String) {
+        val logs = events.map { event ->
+            TOperateLog(
+                type = event.type,
+                resourceKey = event.resourceKey,
+                projectId = event.projectId,
+                repoName = event.repoName,
+                description = event.data,
+                userId = event.userId,
+                clientAddress = address
+            )
+        }
+        operateLogDao.insert(logs)
+    }
+
+    @Async
     override fun saveEventRequest(request: EventCreateRequest) {
         val log = TOperateLog(
             type = request.type,

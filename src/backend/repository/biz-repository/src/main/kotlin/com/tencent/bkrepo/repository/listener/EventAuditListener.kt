@@ -51,4 +51,15 @@ class EventAuditListener(
             event.data["realIpAddress"] as? String ?: HttpContextHolder.getClientAddress()
         )
     }
+
+    /**
+     * 将需要审计记录的事件持久化
+     */
+    @EventListener(List::class)
+    fun handleMulti(events: List<ArtifactEvent>) {
+        operateLogService.saveMultiEventAsync(
+            events,
+            events.first().data["realIpAddress"] as? String ?: HttpContextHolder.getClientAddress()
+        )
+    }
 }

@@ -577,10 +577,6 @@
         margin-top: 0;
         margin-bottom: 16px;
     }
-    h1, h2 {
-        border-bottom: 1px solid var(--borderColor);
-        padding-bottom: .3em;
-    }
     h1 {
         font-size: 2rem;
     }
@@ -591,19 +587,7 @@
         font-size: 1.25rem;
     }
 
-    li + li {
-        margin-top: .25em;
-    }
-
-    img {
-        max-width: 90%;
-        display: block;
-        margin: 40px auto;
-        border-radius: 5px;
-    }
-
     table {
-        width: 100%;
         overflow: auto;
         word-break: normal;
         word-break: keep-all;

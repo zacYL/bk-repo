@@ -73,6 +73,7 @@
                     <operation-list
                         :list="[
                             { label: '编辑', clickEvent: () => showEditUser(row) },
+                            { label: '重置密码', clickEvent: () => resetUserPwd(row) },
                             { label: '删除', clickEvent: () => deleteUserHandler(row) }
                         ]"></operation-list>
                 </template>
@@ -210,6 +211,7 @@
                 'createUser',
                 'editUser',
                 'deleteUser',
+                'resetPwd',
                 'checkUserId',
                 'getUserInfo',
                 'importUsers'
@@ -375,6 +377,20 @@
                             this.$bkMessage({
                                 theme: 'success',
                                 message: this.$t('delete') + this.$t('success')
+                            })
+                        })
+                    }
+                })
+            },
+            resetUserPwd (row) {
+                this.$confirm({
+                    theme: 'danger',
+                    message: `确认重置账户 ${row.name} 的密码为默认密码？`,
+                    confirmFn: () => {
+                        return this.resetPwd(row.userId).then(() => {
+                            this.$bkMessage({
+                                theme: 'success',
+                                message: '重置密码' + this.$t('success')
                             })
                         })
                     }

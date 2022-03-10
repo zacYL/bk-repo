@@ -12,7 +12,7 @@
             <!-- <i class="devops-icon icon-filter-shape" @click="filter.show = true"></i> -->
             <bk-button class="report-filter" theme="default" @click="filter.show = true">筛选</bk-button>
             <bk-table
-                height="calc(100% - 42px)"
+                height="calc(100% - 62px)"
                 :data="scanList"
                 :outer-border="false"
                 :row-border="false"
@@ -113,7 +113,7 @@
                     </bk-form-item>
                     <bk-form-item label="风险等级">
                         <bk-select
-                            v-model="filter.level">
+                            v-model="filter.highestLeakLevel">
                             <bk-option v-for="[id, name] in Object.entries(leakLevelEnum)" :key="id" :id="id" :name="name"></bk-option>
                         </bk-select>
                     </bk-form-item>
@@ -176,7 +176,7 @@
                     show: false,
                     name: '',
                     repoName: '',
-                    level: '',
+                    highestLeakLevel: '',
                     status: '',
                     time: []
                 },
@@ -261,12 +261,14 @@
                 let [startTime, endTime] = this.filter.time
                 startTime = startTime instanceof Date ? startTime.toISOString() : undefined
                 endTime = endTime instanceof Date ? endTime.toISOString() : undefined
+                const { name, highestLeakLevel, repoName, status } = this.filter
                 return this.scanReportList({
                     id: this.planId,
-                    name: this.filter.name,
-                    highestLeakLevel: this.filter.level,
+                    name,
+                    highestLeakLevel,
                     projectId: this.projectId,
-                    repoName: this.filter.repoName,
+                    repoName,
+                    status,
                     current: this.pagination.current,
                     limit: this.pagination.limit,
                     startTime,
@@ -287,8 +289,9 @@
                     show: false,
                     name: '',
                     repoName: '',
-                    level: '',
-                    status: ''
+                    highestLeakLevel: '',
+                    status: '',
+                    time: []
                 }
             },
             stopScanHandler ({ recordId }) {

@@ -61,7 +61,11 @@ export default {
         )
     },
     // 报告制品列表
-    scanReportList (_, { projectId, id, name, repoType, repoName, highestLeakLevel, startTime, endTime, current = 1, limit = 20 }) {
+    scanReportList (_, {
+        projectId, id, name, repoType, repoName,
+        highestLeakLevel, status, startTime, endTime,
+        current = 1, limit = 20
+    }) {
         return Vue.prototype.$ajax.get(
             `${prefix}/plan/artifact`,
             {
@@ -72,6 +76,7 @@ export default {
                     projectId,
                     repoType: repoType || undefined,
                     repoName: repoName || undefined,
+                    status,
                     startTime,
                     endTime,
                     pageNumber: current,

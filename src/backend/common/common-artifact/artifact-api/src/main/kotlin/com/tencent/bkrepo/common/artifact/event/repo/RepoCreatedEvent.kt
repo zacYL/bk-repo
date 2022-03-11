@@ -37,11 +37,13 @@ import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 data class RepoCreatedEvent(
     override val projectId: String,
     override val repoName: String,
-    override val userId: String
+    override val userId: String,
+    val repoType: RepositoryType
 ) : ArtifactEvent(
     type = EventType.REPO_CREATED,
     projectId = projectId,
     repoName = repoName,
     resourceKey = repoName,
-    userId = userId
+    userId = userId,
+    data = mapOf("repoType" to repoType)
 )

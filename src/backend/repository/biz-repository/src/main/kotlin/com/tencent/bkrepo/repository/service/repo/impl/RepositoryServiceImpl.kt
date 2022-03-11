@@ -260,10 +260,10 @@ class RepositoryServiceImpl(
 
     @Transactional(rollbackFor = [Throwable::class])
     override fun updateRepo(repoUpdateRequest: RepoUpdateRequest) {
+        val repository = checkRepository(repoUpdateRequest.projectId, repoUpdateRequest.name)
         repoUpdateRequest.apply {
             Preconditions.checkArgument((description?.length ?: 0) < REPO_DESC_MAX_LENGTH, this::description.name)
             Preconditions.checkArgument(checkInterceptorConfig(configuration), this::description.name)
-            val repository = checkRepository(projectId, name)
             quota?.let {
                 Preconditions.checkArgument(it >= (repository.used ?: 0), this::quota.name)
                 repository.quota = it
@@ -279,14 +279,14 @@ class RepositoryServiceImpl(
             }
             repositoryDao.save(repository)
         }
-        publishEvent(buildUpdatedEvent(repoUpdateRequest))
+        publishEvent(buildUpdatedEvent(repoUpdateRequest, repository.type))
         logger.info("Update repository[$repoUpdateRequest] success.")
     }
 
     @Transactional(rollbackFor = [Throwable::class])
     override fun deleteRepo(repoDeleteRequest: RepoDeleteRequest) {
+        val repository = checkRepository(repoDeleteRequest.projectId, repoDeleteRequest.name)
         repoDeleteRequest.apply {
-            val repository = checkRepository(projectId, name)
             // 当仓库为依赖源仓库时，如果仓库下没有包则删除仓库下所有节点
             if (repoDeleteRequest.forced ||
                 (repository.type != RepositoryType.GENERIC
@@ -314,7 +314,7 @@ class RepositoryServiceImpl(
                 }
             }
         }
-        publishEvent(buildDeletedEvent(repoDeleteRequest))
+        publishEvent(buildDeletedEvent(repoDeleteRequest, repository.type))
         logger.info("Delete repository [$repoDeleteRequest] success.")
     }
 

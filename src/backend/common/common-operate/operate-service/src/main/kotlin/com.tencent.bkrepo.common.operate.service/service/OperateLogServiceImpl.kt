@@ -28,6 +28,7 @@
 package com.tencent.bkrepo.common.operate.service.service
 
 import com.tencent.bkrepo.common.api.pojo.Page
+import com.tencent.bkrepo.common.api.util.TimeUtils
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
@@ -233,15 +234,16 @@ open class OperateLogServiceImpl(
 
         operator?.let { criteria.and(TOperateLog::userId.name).`is`(operator) }
         val localStart = if (startTime != null && startTime.isNotBlank()) {
-            LocalDateTime.parse(startTime, formatter)
+            TimeUtils.toSystemZoneTime(startTime)
         } else {
-            LocalDateTime.now()
+            TimeUtils.toSystemZoneTime(LocalDateTime.now().minusMonths(1))
         }
         val localEnd = if (endTime != null && endTime.isNotBlank()) {
-            LocalDateTime.parse(endTime, formatter)
+            TimeUtils.toSystemZoneTime(endTime)
         } else {
-            LocalDateTime.now().minusMonths(3L)
+            TimeUtils.toSystemZoneTime(LocalDateTime.now())
         }
+        require(localStart.isBefore(localEnd)) { throw IllegalArgumentException("startTime must before endTime") }
         criteria.and(TOperateLog::createdDate.name).gte(localStart).lte(localEnd)
         return Query(criteria).with(Sort.by(TOperateLog::createdDate.name).descending())
     }

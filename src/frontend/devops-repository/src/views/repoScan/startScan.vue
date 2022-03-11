@@ -12,7 +12,6 @@
                     ref="repoConfig"
                     :init-data="config.repoNameList"
                     :scan-type="config.type"
-                    :disabled="!config.autoScan"
                     @clearError="clearError">
                 </repo-table>
             </bk-form-item>
@@ -21,7 +20,6 @@
                     ref="artiConfig"
                     :init-data="config.artifactRules"
                     :scan-type="config.type"
-                    :disabled="!config.autoScan"
                     @clearError="clearError">
                 </arti-table>
             </bk-form-item>

@@ -29,6 +29,7 @@ package com.tencent.bkrepo.repository.service.log.impl
 
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.pojo.Page
+import com.tencent.bkrepo.common.api.util.TimeUtils
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
@@ -50,7 +51,6 @@ import org.springframework.stereotype.Service
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 
 /**
  * OperateLogService 实现类
@@ -264,16 +264,16 @@ class OperateLogServiceImpl(
 
         operator?.let { criteria.and(TOperateLog::userId.name).`is`(operator) }
         if (startTime != null && endTime != null) {
-            val localStart = LocalDateTime.parse(startTime, formatter)
-            val localEnd = LocalDateTime.parse(endTime, formatter)
+            val localStart = TimeUtils.toSystemZoneTime(startTime)
+            val localEnd = TimeUtils.toSystemZoneTime(endTime)
             criteria.and(TOperateLog::createdDate.name).gte(localStart).lte(localEnd)
         }
         if (startTime != null && endTime == null) {
-            val localStart = LocalDateTime.parse(startTime, formatter)
+            val localStart = TimeUtils.toSystemZoneTime(startTime)
             criteria.and(TOperateLog::createdDate.name).gte(localStart)
         }
         if (startTime == null && endTime != null) {
-            val localEnd = LocalDateTime.parse(endTime, formatter)
+            val localEnd = TimeUtils.toSystemZoneTime(endTime)
             criteria.and(TOperateLog::createdDate.name).lte(localEnd)
         }
 
@@ -293,6 +293,5 @@ class OperateLogServiceImpl(
         private val adminEvent = listOf(EventType.ADMIN_ADD, EventType.ADMIN_DELETE)
         private val projectEvent = listOf(EventType.PROJECT_CREATED)
         private val metadataEvent = listOf(EventType.METADATA_SAVED, EventType.METADATA_DELETED)
-        private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSz")
     }
 }

@@ -178,7 +178,7 @@
 <script>
     import CodeArea from '@repository/components/CodeArea'
     import OperationList from '@repository/components/OperationList'
-    import ScanTag from '@repository/views/repoScan/ScanTag'
+    import ScanTag from '@repository/views/repoScan/scanTag'
     import { mapState, mapActions } from 'vuex'
     import { convertFileSize, formatDate } from '@repository/utils'
     import repoGuideMixin from '@repository/views/repoCommon/repoGuideMixin'

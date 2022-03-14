@@ -170,7 +170,7 @@
     import Breadcrumb from '@repository/components/Breadcrumb'
     import MoveSplitBar from '@repository/components/MoveSplitBar'
     import RepoTree from '@repository/components/RepoTree'
-    import ScanTag from '@repository/views/repoScan/ScanTag'
+    import ScanTag from '@repository/views/repoScan/scanTag'
     import genericDetail from './genericDetail'
     import genericUploadDialog from '@repository/views/repoGeneric/genericUploadDialog'
     import genericFormDialog from '@repository/views/repoGeneric/genericFormDialog'

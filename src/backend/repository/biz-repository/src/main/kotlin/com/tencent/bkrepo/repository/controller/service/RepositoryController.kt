@@ -66,6 +66,10 @@ class RepositoryController(
         return ResponseBuilder.success(repositoryService.listRepo(projectId, name, type))
     }
 
+    override fun listUserRepo(projectId: String, userId: String, name: String?, type: String?): Response<List<RepositoryInfo>> {
+        return ResponseBuilder.success(repositoryService.listPermissionRepo(userId, projectId, RepoListOption(name, type)))
+    }
+
     override fun rangeQuery(request: RepoRangeQueryRequest): Response<Page<RepositoryInfo?>> {
         return ResponseBuilder.success(repositoryService.rangeQuery(request))
     }

@@ -96,6 +96,19 @@ interface RepositoryClient {
         @RequestParam type: String? = null
     ): Response<List<RepositoryInfo>>
 
+    @ApiOperation("查询有权限的仓库列表")
+    @GetMapping("/list/{projectId}/{userId}")
+    fun listUserRepo(
+        @ApiParam(value = "项目id", required = true)
+        @PathVariable projectId: String,
+        @ApiParam(value = "用户", required = true)
+        @PathVariable userId: String,
+        @ApiParam("仓库名称", required = false)
+        @RequestParam name: String? = null,
+        @ApiParam("仓库类型", required = false)
+        @RequestParam type: String? = null
+    ): Response<List<RepositoryInfo>>
+
     @ApiOperation("仓库分页查询")
     @PostMapping("/rangeQuery")
     fun rangeQuery(@RequestBody request: RepoRangeQueryRequest): Response<Page<RepositoryInfo?>>

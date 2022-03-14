@@ -32,6 +32,7 @@
 package com.tencent.bkrepo.repository.service.node.impl
 
 import com.tencent.bkrepo.common.api.pojo.Page
+import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.model.PageLimit
@@ -49,6 +50,8 @@ import com.tencent.bkrepo.repository.search.node.NodeQueryContext
 import com.tencent.bkrepo.repository.search.node.NodeQueryInterpreter
 import com.tencent.bkrepo.repository.service.node.NodeSearchService
 import com.tencent.bkrepo.repository.service.repo.RepositoryService
+import com.tencent.bkrepo.scanner.api.ScanPlanClient
+import org.slf4j.LoggerFactory
 import org.springframework.data.mongodb.core.aggregation.Aggregation
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
@@ -66,7 +69,8 @@ class NodeSearchServiceImpl(
     private val nodeDao: NodeDao,
     private val nodeQueryInterpreter: NodeQueryInterpreter,
     private val repositoryClient: RepositoryClient,
-    private val repositoryService: RepositoryService
+    private val repositoryService: RepositoryService,
+    private val scanPlanClient: ScanPlanClient
 ) : NodeSearchService {
 
     override fun search(queryModel: QueryModel): Page<Map<String, Any?>> {
@@ -172,6 +176,20 @@ class NodeSearchServiceImpl(
             it[NodeInfo::metadata.name]?.let { metadata ->
                 it[NodeInfo::metadata.name] = convert(metadata as List<Map<String, Any>>)
             }
+            //获取制品关联方案状态
+            val fullPath = it[NodeInfo::fullPath.name]!!.toString()
+            if (fullPath.endsWith(".apk") || fullPath.endsWith(".ipa")) {
+                val scanStatus = scanPlanClient.artifactPlanStatus(
+                    projectId = it[NodeInfo::projectId.name]!!.toString(),
+                    repoName = it[NodeInfo::repoName.name]!!.toString(),
+                    repoType = RepositoryType.GENERIC,
+                    packageKey = null,
+                    version = null,
+                    fullPath = fullPath
+                ).data
+                it["scanStatus"] = scanStatus
+            }
+            logger.info("nodeInfo result:${it.toJsonString()}")
         }
         val countQuery = Query.of(query).limit(0).skip(0)
         val totalRecords = nodeDao.count(countQuery)
@@ -181,6 +199,8 @@ class NodeSearchServiceImpl(
     }
 
     companion object {
+        private val logger = LoggerFactory.getLogger(NodeSearchServiceImpl::class.java)
+
         fun convert(metadataList: List<Map<String, Any>>): Map<String, Any> {
             return metadataList.filter { it.containsKey("key") && it.containsKey("value") }
                 .map { it.getValue("key").toString() to it.getValue("value") }

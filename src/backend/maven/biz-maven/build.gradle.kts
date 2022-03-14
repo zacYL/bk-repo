@@ -31,6 +31,7 @@
 
 dependencies{
     api(project(":maven:api-maven"))
+    api(project(":scanner:api-scanner"))
     api(project(":common:common-artifact:artifact-service"))
     implementation("org.apache.maven:maven-repository-metadata:3.8.2")
     implementation("org.apache.maven:maven-model:3.8.2")

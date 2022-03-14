@@ -32,6 +32,7 @@
 package com.tencent.bkrepo.maven.artifact.repository
 
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
@@ -57,6 +58,7 @@ import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
+import com.tencent.bkrepo.scanner.api.ScanPlanClient
 import org.apache.commons.lang.StringUtils
 import org.apache.maven.artifact.repository.metadata.io.xpp3.MetadataXpp3Reader
 import org.apache.maven.artifact.repository.metadata.io.xpp3.MetadataXpp3Writer
@@ -69,7 +71,10 @@ import java.io.ByteArrayOutputStream
 import java.util.regex.Pattern
 
 @Component
-class MavenLocalRepository(private val stageClient: StageClient) : LocalRepository() {
+class MavenLocalRepository(
+    private val stageClient: StageClient,
+    private val scanPlanClient: ScanPlanClient
+) : LocalRepository() {
 
     /**
      * 获取MAVEN节点创建请求
@@ -290,6 +295,14 @@ class MavenLocalRepository(private val stageClient: StageClient) : LocalReposito
                 projectId, repoName, packageKey, version
             ).data
             val count = packageVersion?.downloads ?: 0
+            val scanStatus = scanPlanClient.artifactPlanStatus(
+                projectId = projectId,
+                repoName = repoName,
+                repoType = RepositoryType.MAVEN,
+                packageKey = packageKey,
+                version = version,
+                fullPath = null
+            ).data
             val mavenArtifactBasic = Basic(
                 groupId,
                 artifactId,
@@ -301,7 +314,8 @@ class MavenLocalRepository(private val stageClient: StageClient) : LocalReposito
                 jarNode.sha256,
                 jarNode.md5,
                 stageTag,
-                null
+                null,
+                scanStatus = scanStatus
             )
             return MavenArtifactVersionData(mavenArtifactBasic, mavenArtifactMetadata)
         }

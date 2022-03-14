@@ -40,6 +40,7 @@ import com.tencent.bkrepo.repository.cpack.pojo.node.service.NodeBatchDeleteRequ
 import com.tencent.bkrepo.repository.cpack.service.NodeCpackService
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
+import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -47,10 +48,12 @@ import org.springframework.web.bind.annotation.RequestAttribute
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import javax.validation.constraints.Size
 
 @Api("CPack节点用户接口")
 @RestController
 @RequestMapping("/api/node")
+@Validated
 class UserCpackNodeController(
     private val nodeCpackService: NodeCpackService
 ) {
@@ -62,7 +65,7 @@ class UserCpackNodeController(
         @RequestAttribute userId: String,
         @PathVariable projectId: String,
         @PathVariable repoName: String,
-        @RequestBody fullPaths: List<String>
+        @RequestBody @Size(max = 20, message = "操作个数必须在0和20之间") fullPaths: List<String>
     ): Response<Void> {
         val nodeBatchDeleteRequest = NodeBatchDeleteRequest(
             projectId = projectId,

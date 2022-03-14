@@ -36,6 +36,7 @@ import com.tencent.bkrepo.common.api.constant.HttpStatus
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Response
+import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.http.converter.HttpMessageNotReadableException
@@ -45,6 +46,8 @@ import org.springframework.web.bind.MissingRequestHeaderException
 import org.springframework.web.bind.MissingServletRequestParameterException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import javax.validation.ConstraintViolationException
+import javax.validation.ValidationException
 
 /**
  * 全局统一异常处理
@@ -117,5 +120,12 @@ class GlobalExceptionHandler : AbstractExceptionHandler() {
     @ExceptionHandler(Exception::class)
     fun handleException(exception: Exception): Response<Void> {
         return response(exception)
+    }
+
+    @ExceptionHandler(ValidationException::class)
+    fun handleException(exception: ValidationException): Response<Void> {
+        return ResponseBuilder.fail(CommonMessageCode.PARAMETER_INVALID.getCode(),
+            (exception as ConstraintViolationException).constraintViolations.first().message
+        )
     }
 }

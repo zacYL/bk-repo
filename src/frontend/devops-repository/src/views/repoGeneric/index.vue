@@ -216,7 +216,7 @@
                     count: 0,
                     current: 1,
                     limit: 20,
-                    'limit-list': [10, 20, 40]
+                    limitList: [10, 20, 40]
                 }
             }
         },

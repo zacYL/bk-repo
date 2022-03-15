@@ -216,7 +216,7 @@
                     count: 0,
                     current: 1,
                     limit: 20,
-                    'limit-list': [10, 20, 40]
+                    limitList: [10, 20, 40]
                 }
             }
         },
@@ -277,8 +277,10 @@
                 'getFolderList',
                 'getArtifactoryList',
                 'deleteArtifactory',
+                'deleteMultiArtifactory',
                 'getFolderSize',
-                'getFileNumOfFolder'
+                'getFileNumOfFolder',
+                'getMultiFileNumOfFolder'
             ]),
             changeSideBarWidth (sideBarWidth) {
                 if (sideBarWidth > 250) {
@@ -581,8 +583,31 @@
             selectMultiRow (selects) {
                 this.multiSelect = selects
             },
-            handlerMultiDelete () {
-                console.log(this.multiSelect)
+            async handlerMultiDelete () {
+                const paths = this.multiSelect.map(r => r.fullPath)
+                const totalRecords = await this.getMultiFileNumOfFolder({
+                    projectId: this.projectId,
+                    repoName: this.repoName,
+                    paths
+                })
+                this.$confirm({
+                    theme: 'danger',
+                    message: `确认批量删除已选中的 ${this.multiSelect.length} 项？`,
+                    subMessage: `选中文件夹和文件共计包含 ${totalRecords} 个文件`,
+                    confirmFn: () => {
+                        return this.deleteMultiArtifactory({
+                            projectId: this.projectId,
+                            repoName: this.repoName,
+                            paths
+                        }).then(() => {
+                            this.refreshNodeChange()
+                            this.$bkMessage({
+                                theme: 'success',
+                                message: this.$t('delete') + this.$t('success')
+                            })
+                        })
+                    }
+                })
             }
         }
     }

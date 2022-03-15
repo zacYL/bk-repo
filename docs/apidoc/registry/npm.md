@@ -47,6 +47,8 @@ NPM节点接口使用统一接口协议，公共部分请参照[通用接口协�
             "createdDate": "2020-09-28T17:29:04.814",
             "lastModifiedBy": "admin",
             "lastModifiedDate": "2020-09-28T17:29:04.814"
+            "readme": "\n <h1 class=\"curproject-name\"> CPack-4.3.7 </h1> \n\n\n\n# 项目/仓库\n\n## 创建仓库\n<a id=创建仓库> </a>\n### 基本信息\n\n**Path：** /repository/api/project/create\n\n**Method：** POST\n\n**接口描述：**\n\n\n### 请求参数\n**Headers**\n\n| 参数名称  | 参数值  |  是否必须 | 示例  | 备注  |\n| ------------ | ------------ | ------------ | ------------ | ------------ |\n| Content-Type  |  application/x-www-form-urlencoded | 是  |   |   |\n\n​            "
+        },
         },
         "metadata": {},
         "dependencyInfo": {
@@ -98,46 +100,47 @@ NPM节点接口使用统一接口协议，公共部分请参照[通用接口协�
 
   - Basic字段
 
-  | 字段             | 类型   | 说明             | Description          |
-  | ---------------- | ------ | ---------------- | -------------------- |
-  | version          | string | 包对应版本       | project id           |
-  | fullPath         | string | 包对应仓库全路径 | fullPath             |
-  | size             | string | 包大小           | file size            |
-  | sha256           | string | 包的sha256值     | file sha256          |
-  | md5              | string | 节点md5值        | file md5             |
-  | stageTag         | string | 晋级状态标签     | stage status tag     |
-  | projectId        | string | 节点所属项目     | node project id      |
-  | repoName         | string | 节点所属仓库     | node repository name |
-  | downloadCount    | string | 简要描述         | download times       |
-  | createdBy        | string | 创建者           | create user          |
-  | createdDate      | string | 创建时间         | create time          |
-  | lastModifiedBy   | string | 上次修改者       | last modify user     |
-  | lastModifiedDate | string | 上次修改时间     | last modify time     |
-
-  - Metadata字段：
-
+  | 字段             | 类型   | 说明              | Description            |
+  | ---------------- | ------ | ----------------- | ---------------------- |
+  | version          | string | 包对应版本        | project id             |
+  | fullPath         | string | 包对应仓库全路径  | fullPath               |
+  | size             | string | 包大小            | file size              |
+  | sha256           | string | 包的sha256值      | file sha256            |
+  | md5              | string | 节点md5值         | file md5               |
+  | stageTag         | string | 晋级状态标签      | stage status tag       |
+  | projectId        | string | 节点所属项目      | node project id        |
+  | repoName         | string | 节点所属仓库      | node repository name   |
+  | downloadCount    | string | 简要描述          | download times         |
+  | createdBy        | string | 创建者            | create user            |
+  | createdDate      | string | 创建时间          | create time            |
+  | lastModifiedBy   | string | 上次修改者        | last modify user       |
+  | lastModifiedDate | string | 上次修改时间      | last modify time       |
+| readme           | string | README.md文件内容 | README.md file content |
+  
+- Metadata字段：
+  
   | 字段 | 类型 | 说明 | Description |
   | ---- | ---- | ---- | ----------- |
-  |      |      |      |             |
-
-  - dependencyInfo字段：
-
-    - dependencies: 依赖信息
-
+|      |      |      |             |
+  
+- dependencyInfo字段：
+  
+  - dependencies: 依赖信息
+  
     | 字段 | 类型 | 说明 | Description |
     | ----    | ----   | ----        | -----------                  |
     | name    | string | 依赖的包名称  | dependencies package name    |
-    | version | string | 依赖的包版本  | dependencies package version |
-
-    - devDependencies: 开发依赖信息
-
+  | version | string | 依赖的包版本  | dependencies package version |
+  
+  - devDependencies: 开发依赖信息
+  
     | 字段 | 类型 | 说明 | Description |
     | ----    | ----   | ----           | -----------                     |
     | name    | string | 开发依赖的包名称  | devDependencies package name    |
-    | version | string | 开发依赖的包版本  | devDependencies package version |
-
-    - dependents: 被依赖信息
-
+  | version | string | 开发依赖的包版本  | devDependencies package version |
+  
+  - dependents: 被依赖信息
+  
     | 字段        | 类型   | 说明           | Description            |
     | ----------- | ------ | -------------- | ---------------------- |
     | name        | string | 包名称         | package name           |

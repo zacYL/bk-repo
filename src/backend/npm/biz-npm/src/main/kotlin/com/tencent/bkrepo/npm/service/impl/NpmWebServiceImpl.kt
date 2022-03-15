@@ -83,10 +83,8 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
         }
         //获取readme文档
         val versionMetaData = packageMetadata.versions.map[version]
-        val other = versionMetaData!!.any()
-        val readme: String?
-        val readmeFilename = other["readmeFilename"]
-        readme = if (readmeFilename != null) other["readme"]?.toString() else null
+        val readmeFileName = versionMetaData?.readmeFilename
+        val readme = readmeFileName?.let { versionMetaData.readme.orEmpty() }
         val pathWithDash = packageMetadata.versions.map[version]?.dist?.tarball?.substringAfter(name)
             ?.contains(TGZ_FULL_PATH_WITH_DASH_SEPARATOR) ?: true
         val fullPath = NpmUtils.getTgzPath(name, version, pathWithDash)

@@ -54,6 +54,8 @@ class NpmVersionMetadata : Serializable {
     var bugs: JsonNode? = null
     var engines: JsonNode? = null
     var main: JsonNode? = null
+    var readmeFilename: String? = null
+    var readme: String? = null
 
     @JsonProperty("_id")
     var id: String? = null
@@ -107,10 +109,13 @@ class NpmVersionMetadata : Serializable {
     @JsonProperty("private")
     var privatePackage: JsonNode? = null
     var publishConfig: JsonNode? = null
+
     @JsonProperty("_from")
     var from: JsonNode? = null
+
     @JsonProperty("_npmVersion")
     var npmVersion: JsonNode? = null
+
     @JsonProperty("_npmUser")
     var npmUser: JsonNode? = null
 

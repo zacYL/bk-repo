@@ -65,7 +65,7 @@ class UserCpackNodeController(
         @RequestAttribute userId: String,
         @PathVariable projectId: String,
         @PathVariable repoName: String,
-        @RequestBody @Size(max = 20, message = "操作个数必须在0和20之间") fullPaths: List<String>
+        @RequestBody @Size(max = 200, message = "操作个数必须在0和200之间") fullPaths: List<String>
     ): Response<Void> {
         val nodeBatchDeleteRequest = NodeBatchDeleteRequest(
             projectId = projectId,
@@ -84,7 +84,7 @@ class UserCpackNodeController(
         @RequestAttribute userId: String,
         @PathVariable projectId: String,
         @PathVariable repoName: String,
-        @RequestBody fullPaths: List<String>
+        @RequestBody @Size(max = 200, message = "操作个数必须在0和200之间") fullPaths: List<String>
     ): Response<Long> {
         val nodeBatchDeleteRequest = NodeBatchDeleteRequest(
             projectId = projectId,

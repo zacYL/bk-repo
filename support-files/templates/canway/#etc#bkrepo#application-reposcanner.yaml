@@ -1,0 +1,54 @@
+spring:
+  application:
+    name: ${service.prefix}${service.name}${service.suffix}
+    desc: Scanner Service
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration,com.tencent.bkrepo.common.job.JobAutoConfiguration
+  quartz:
+    mongo: true
+    startupDelay: 60s
+    overwriteExistingJobs: true
+    schedulerName: bkrepo-scheduler
+server:
+  port: __BK_REPO_SCANNER_PORT__
+logging:
+  path: ${logging.path-common}/${service.name}
+service:
+  name: scanner
+  
+executor:
+  # 存放报告的文件地址
+  uri: mongodb://{user}:{password}@localhost:27017/bkrepo?maxPoolSize=50
+  scan: 
+    # 工作目录
+    rootDir: /data/example
+    # 执行模板文件存放地址
+    configTemplateDir: /data/example/standalone.toml
+    # 模板文件名臣
+    configName: standalone.toml
+    # 输出文件相对地址
+    outputDir: /output/
+    # 输入文件相对地址
+    inputDir: /package/
+    # 是否在进程启动时开启全量扫描，默认为false
+    full: false 
+    # 是否在任务执行完成之后清理工作空间
+    clean: false
+container:
+  api: 
+    # 此配置一般不用修改
+    host: unix:///var/run/docker.sock
+    # api版本，一般不用修改
+    version: 1.23   
+  run: 
+    # 启动容器entrypoint的 args
+    args: /data/standalone.toml
+    # 执行任务的镜像名称
+    imageName: csighub.tencentyun.com/sysauditor_development/arrowhead:latest
+    # 容器内的执行目录
+    dir: /data
+security: 
+  # HTTP认证相关配置
+  auth: 
+    # 默认开启
+    enabled: false  

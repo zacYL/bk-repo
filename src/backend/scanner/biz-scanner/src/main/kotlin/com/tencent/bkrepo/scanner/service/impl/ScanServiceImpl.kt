@@ -674,7 +674,7 @@ class ScanServiceImpl(
         val versions = packageSummary.historyVersion.filter { version ->
             matchRule(versionRegex, version)
         }
-        logger.info("Eligible historical versions:$versions")
+        logger.info("Matched historical version:$versions")
         return versions.map { version ->
             convertToPlanRecord(
                 userId = userId,

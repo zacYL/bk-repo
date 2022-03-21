@@ -36,6 +36,7 @@ import com.tencent.bkrepo.common.api.constant.HttpStatus
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Response
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
@@ -124,6 +125,7 @@ class GlobalExceptionHandler : AbstractExceptionHandler() {
 
     @ExceptionHandler(ValidationException::class)
     fun handleException(exception: ValidationException): Response<Void> {
+        HttpContextHolder.getResponse().status = HttpStatus.BAD_REQUEST.value
         return ResponseBuilder.fail(CommonMessageCode.PARAMETER_INVALID.getCode(),
             (exception as ConstraintViolationException).constraintViolations.first().message
         )

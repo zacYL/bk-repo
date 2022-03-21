@@ -640,7 +640,6 @@
     }
     .repo-generic-main {
         height: calc(100% - 100px);
-        user-select: none;
         .repo-generic-side {
             height: 100%;
             overflow: hidden;

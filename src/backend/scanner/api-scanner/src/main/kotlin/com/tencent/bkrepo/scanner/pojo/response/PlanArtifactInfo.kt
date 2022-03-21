@@ -25,11 +25,41 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.scanner.dao
+package com.tencent.bkrepo.scanner.pojo.response
 
-import com.tencent.bkrepo.common.mongo.dao.simple.SimpleMongoDao
-import com.tencent.bkrepo.scanner.model.TScanPlan
-import org.springframework.stereotype.Repository
+import io.swagger.annotations.ApiModel
+import io.swagger.annotations.ApiModelProperty
+import java.time.LocalDateTime
 
-@Repository
-class ScanPlanDao : SimpleMongoDao<TScanPlan>()
+@ApiModel("扫描制品信息")
+data class PlanArtifactInfo(
+    @ApiModelProperty("子扫描任务id")
+    @Deprecated("仅用于兼容旧接口", replaceWith = ReplaceWith("subTaskId"))
+    val recordId: String,
+    @ApiModelProperty("子扫描任务id")
+    val subTaskId: String,
+    @ApiModelProperty("制品名")
+    val name: String,
+    @ApiModelProperty("packageKey")
+    val packageKey: String? = null,
+    @ApiModelProperty("制品版本")
+    val version: String? = null,
+    @ApiModelProperty("制品路径")
+    val fullPath: String? = null,
+    @ApiModelProperty("仓库类型")
+    val repoType: String,
+    @ApiModelProperty("仓库名")
+    val repoName: String,
+    @ApiModelProperty("最高漏洞等级")
+    val highestLeakLevel: String? = null,
+    @ApiModelProperty("扫描时长")
+    val duration: Long,
+    @ApiModelProperty("完成时间")
+    val finishTime: LocalDateTime?,
+    @ApiModelProperty("状态")
+    val status: String,
+    @ApiModelProperty("创建者")
+    val createdBy: String,
+    @ApiModelProperty("创建时间")
+    val createdDate: LocalDateTime
+)

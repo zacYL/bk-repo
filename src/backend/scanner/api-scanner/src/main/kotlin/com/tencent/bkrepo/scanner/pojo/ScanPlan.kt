@@ -25,11 +25,38 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.scanner.dao
+package com.tencent.bkrepo.scanner.pojo
 
-import com.tencent.bkrepo.common.mongo.dao.simple.SimpleMongoDao
-import com.tencent.bkrepo.scanner.model.TScanPlan
-import org.springframework.stereotype.Repository
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.tencent.bkrepo.common.query.model.Rule
+import io.swagger.annotations.ApiModel
+import io.swagger.annotations.ApiModelProperty
 
-@Repository
-class ScanPlanDao : SimpleMongoDao<TScanPlan>()
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@ApiModel("扫描方案")
+data class ScanPlan(
+    @ApiModelProperty("方案ID")
+    val id: String? = null,
+    @ApiModelProperty("项目ID")
+    val projectId: String? = null,
+    @ApiModelProperty("方案名称")
+    val name: String? = null,
+    @ApiModelProperty("方案类型")
+    val type: String? = null,
+    @ApiModelProperty("方案描述")
+    val description: String? = null,
+    @ApiModelProperty("是否有新制品上传时自动扫描")
+    val scanOnNewArtifact: Boolean? = null,
+    @ApiModelProperty("自动扫描仓库")
+    val repoNames: List<String>? = null,
+    @ApiModelProperty("自动扫描规则")
+    val rule: Rule? = null,
+    @ApiModelProperty("创建者")
+    val createdBy: String? = null,
+    @ApiModelProperty("创建时间")
+    val createdDate: String? = null,
+    @ApiModelProperty("修改者")
+    val lastModifiedBy: String? = null,
+    @ApiModelProperty("修改时间")
+    val lastModifiedDate: String? = null
+)

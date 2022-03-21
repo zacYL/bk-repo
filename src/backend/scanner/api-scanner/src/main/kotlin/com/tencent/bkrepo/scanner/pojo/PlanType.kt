@@ -25,11 +25,19 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.scanner.dao
+package com.tencent.bkrepo.scanner.pojo
 
-import com.tencent.bkrepo.common.mongo.dao.simple.SimpleMongoDao
-import com.tencent.bkrepo.scanner.model.TScanPlan
-import org.springframework.stereotype.Repository
+/**
+ * 方案类型
+ */
+enum class PlanType {
+    /**
+     * 移动端安装包质量扫描
+     */
+    MOBILE,
 
-@Repository
-class ScanPlanDao : SimpleMongoDao<TScanPlan>()
+    /**
+     * 依赖包扫描
+     */
+    DEPENDENT
+}

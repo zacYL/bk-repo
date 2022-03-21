@@ -25,69 +25,44 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.scanner.model
+package com.tencent.bkrepo.scanner.pojo.request
 
-import org.springframework.data.mongodb.core.index.CompoundIndex
-import org.springframework.data.mongodb.core.index.CompoundIndexes
-import org.springframework.data.mongodb.core.mapping.Document
-import java.time.LocalDateTime
+import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_NUMBER
+import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_SIZE
+import io.swagger.annotations.ApiModel
+import io.swagger.annotations.ApiModelProperty
 
-/**
- * 扫描方案
- */
-@Document("scan_plan")
-@CompoundIndexes(
-    CompoundIndex(
-        name = "unique_index",
-        def = "{'projectId': 1, 'name': 1, 'type': 1, 'deleted': 1}",
-        unique = true, background = true
-    )
-)
-data class TScanPlan(
-    var id: String? = null,
-    var createdBy: String,
-    var createdDate: LocalDateTime,
-    var lastModifiedBy: String,
-    var lastModifiedDate: LocalDateTime,
-    val deleted: LocalDateTime? = null,
-
-    /**
-     * 扫描方案名
-     */
-    val name: String,
-
-    /**
-     * 扫描方案所属项目
-     */
+@ApiModel("请求指定扫描方案扫描过的制品扫描结果信息")
+data class PlanArtifactRequest(
+    @ApiModelProperty("扫描方案所属项目id", required = true)
     val projectId: String,
-
+    @ApiModelProperty("扫描方案id", required = true)
+    val id: String,
+    @ApiModelProperty("制品名关键字，只要制品名包含该关键字则匹配")
+    val name: String? = null,
     /**
-     * 自动扫描仓库
+     * [com.tencent.bkrepo.scanner.pojo.LeakType]
      */
-    val repoNameList: List<String> = emptyList(),
-
+    @ApiModelProperty("制品最高等级漏洞")
+    val highestLeakLevel: String? = null,
     /**
-     * 使用的扫描器名
+     * [com.tencent.bkrepo.common.artifact.pojo.RepositoryType]
      */
-    val scanner: String,
-
+    @ApiModelProperty("制品所属仓库类型")
+    val repoType: String? = null,
+    @ApiModelProperty("制品所属仓库名")
+    val repoName: String? = null,
     /**
-     * 扫描方案类型
+     * [com.tencent.bkrepo.scanner.pojo.ScanStatus]
      */
-    val type: String,
-
-    /**
-     * 扫描方案描述
-     */
-    val description: String,
-
-    /**
-     * 有满足规则的制品上传时触发扫描
-     */
-    val scanOnNewArtifact: Boolean = false,
-
-    /**
-     * 自动扫描规则
-     */
-    val rule: String?
+    @ApiModelProperty("制品扫描状态")
+    val status: String? = null,
+    @ApiModelProperty("制品开始扫描时间")
+    val startTime: String? = null,
+    @ApiModelProperty("制品扫描结束时间")
+    val endTime: String? = null,
+    @ApiModelProperty("页码")
+    val pageNumber: Int = DEFAULT_PAGE_NUMBER,
+    @ApiModelProperty("页大小")
+    val pageSize: Int = DEFAULT_PAGE_SIZE
 )

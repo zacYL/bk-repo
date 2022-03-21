@@ -1,27 +1,55 @@
+/*
+ * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
+ *
+ * Copyright (C) 2022 THL A29 Limited, a Tencent company.  All rights reserved.
+ *
+ * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
+ *
+ * A copy of the MIT License is included in this file.
+ *
+ *
+ * Terms of the MIT License:
+ * ---------------------------------------------------
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+ * documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of
+ * the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+ * LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+ * NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package com.tencent.bkrepo.scanner.controller.user
 
+import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_NUMBER
+import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_SIZE
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
-import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.security.permission.Principal
+import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
-import com.tencent.bkrepo.scanner.pojo.ArtifactRelationPlan
-import com.tencent.bkrepo.scanner.pojo.ScanArtifactInfo
-import com.tencent.bkrepo.scanner.pojo.ScanPlanBase
-import com.tencent.bkrepo.scanner.pojo.ScanPlanInfo
-import com.tencent.bkrepo.scanner.pojo.context.ArtifactPlanContext
-import com.tencent.bkrepo.scanner.pojo.context.PlanArtifactContext
-import com.tencent.bkrepo.scanner.pojo.enums.LeakType
-import com.tencent.bkrepo.scanner.pojo.enums.PlanType
-import com.tencent.bkrepo.scanner.pojo.enums.ScanStatus
-import com.tencent.bkrepo.scanner.pojo.request.ScanPlanRequest
+import com.tencent.bkrepo.scanner.pojo.ScanPlan
+import com.tencent.bkrepo.scanner.pojo.request.ArtifactPlanRelationRequest
+import com.tencent.bkrepo.scanner.pojo.request.CreateScanPlanRequest
+import com.tencent.bkrepo.scanner.pojo.request.PlanArtifactRequest
+import com.tencent.bkrepo.scanner.pojo.request.UpdateScanPlanRequest
+import com.tencent.bkrepo.scanner.pojo.response.ArtifactPlanRelation
+import com.tencent.bkrepo.scanner.pojo.response.PlanArtifactInfo
+import com.tencent.bkrepo.scanner.pojo.response.ScanPlanInfo
 import com.tencent.bkrepo.scanner.service.ScanPlanService
+import com.tencent.bkrepo.scanner.utils.Converter
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestAttribute
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -29,71 +57,77 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/scan/plan")
+@Principal(PrincipalType.ADMIN)
 class UserScanPlanController(
     private val scanPlanService: ScanPlanService
 ) {
 
     @ApiOperation("创建扫描方案")
     @PostMapping("/create")
-    fun createScanPlan(
-        @RequestAttribute userId: String,
-        @RequestBody request: ScanPlanRequest
-    ): Response<Boolean> {
-        return ResponseBuilder.success(scanPlanService.createScanPlan(userId, request))
+    fun createScanPlan(@RequestBody request: CreateScanPlanRequest): Response<Boolean> {
+        val scanPlan = Converter.convert(request)
+        scanPlanService.create(scanPlan)
+        return ResponseBuilder.success(true)
     }
 
     @ApiOperation("查询扫描方案基础信息")
     @GetMapping("/detail/{projectId}/{id}")
     fun getScanPlan(
         @ApiParam(value = "projectId")
-        @PathVariable projectId: String,
+        @PathVariable
+        projectId: String,
         @ApiParam(value = "方案id")
-        @PathVariable id: String
-    ): Response<ScanPlanBase?> {
-        return ResponseBuilder.success(scanPlanService.getScanPlanBase(projectId, id))
+        @PathVariable
+        id: String
+    ): Response<ScanPlan?> {
+        return ResponseBuilder.success(scanPlanService.find(projectId, id))
     }
 
     @ApiOperation("删除扫描方案")
     @DeleteMapping("/delete/{projectId}/{id}")
     fun deleteScanPlan(
-        @RequestAttribute userId: String,
         @ApiParam(value = "projectId")
         @PathVariable projectId: String,
         @ApiParam(value = "方案id")
         @PathVariable id: String
     ): Response<Boolean> {
-        return ResponseBuilder.success(scanPlanService.updateStatus(userId, projectId, id))
+        scanPlanService.delete(projectId, id)
+        return ResponseBuilder.success(true)
     }
 
     @ApiOperation("更新扫描方案")
     @PostMapping("/update")
-    fun updateScanPlan(
-        @RequestAttribute userId: String,
-        @RequestBody request: ScanPlanRequest
-    ): Response<Boolean> {
-        return ResponseBuilder.success(scanPlanService.updateScanPlan(userId, request))
+    fun updateScanPlan(@RequestBody request: UpdateScanPlanRequest): Response<Boolean> {
+        val scanPlan = Converter.convert(request)
+        scanPlanService.update(scanPlan)
+        return ResponseBuilder.success(true)
     }
 
     @ApiOperation("扫描方案列表-分页")
     @GetMapping("/list/{projectId}")
     fun scanPlanList(
         @ApiParam(value = "projectId", required = true)
-        @PathVariable projectId: String,
+        @PathVariable
+        projectId: String,
+
         @ApiParam(value = "方案类型(DEPENDENT/MOBILE)")
-        @RequestParam type: PlanType?,
+        @RequestParam
+        type: String?,
+
         @ApiParam(value = "方案名")
-        @RequestParam name: String?,
+        @RequestParam
+        name: String?,
+
         @ApiParam("页数", required = false, defaultValue = "1")
-        @RequestParam pageNumber: Int?,
+        @RequestParam
+        pageNumber: Int = DEFAULT_PAGE_NUMBER,
+
         @ApiParam("每页数量", required = false, defaultValue = "20")
-        @RequestParam pageSize: Int?
-    ): Response<Page<ScanPlanInfo?>> {
-        val page = scanPlanService.scanPlanList(
-            projectId = projectId,
-            type = type,
-            name = name,
-            pageNumber = pageNumber ?: 1,
-            pageSize = pageSize ?: 20
+        @RequestParam
+        pageSize: Int = DEFAULT_PAGE_SIZE
+    ): Response<Page<ScanPlanInfo>> {
+        val page = scanPlanService.page(
+            projectId = projectId, type = type, name = name, pageNumber = pageNumber, pageSize = pageSize
         )
         return ResponseBuilder.success(page)
     }
@@ -102,97 +136,41 @@ class UserScanPlanController(
     @GetMapping("/all/{projectId}")
     fun scanPlanList(
         @ApiParam(value = "projectId", required = true)
-        @PathVariable projectId: String,
+        @PathVariable
+        projectId: String,
+
         @ApiParam(value = "方案类型(DEPENDENT/MOBILE)")
-        @RequestParam type: PlanType?
-    ): Response<List<ScanPlanBase>> {
-        return ResponseBuilder.success(scanPlanService.scanPlanList(projectId, type))
+        @RequestParam
+        type: String?
+    ): Response<List<ScanPlan>> {
+        return ResponseBuilder.success(scanPlanService.list(projectId, type))
     }
 
     @ApiOperation("方案详情-统计数据")
     @GetMapping("/count/{projectId}/{id}")
     fun planDetailCount(
         @ApiParam(value = "projectId")
-        @PathVariable projectId: String,
+        @PathVariable
+        projectId: String,
+
         @ApiParam(value = "方案id")
-        @PathVariable id: String
+        @PathVariable
+        id: String
     ): Response<ScanPlanInfo?> {
-        return ResponseBuilder.success(scanPlanService.countInfo(projectId, id))
+        return ResponseBuilder.success(scanPlanService.latestScanTask(projectId, id))
     }
 
     @ApiOperation("方案详情-制品信息")
     @GetMapping("/artifact")
-    fun planArtifactList(
-        @ApiParam(value = "项目id", required = true)
-        @RequestParam projectId: String,
-        @ApiParam(value = "方案id", required = true)
-        @RequestParam id: String,
-        @ApiParam(value = "制品名称", required = false)
-        @RequestParam name: String?,
-        @ApiParam(value = "最高漏洞等级", required = false)
-        @RequestParam highestLeakLevel: LeakType?,
-        @ApiParam(value = "仓库类型", required = false)
-        @RequestParam repoType: RepositoryType?,
-        @ApiParam(value = "仓库名, required = false")
-        @RequestParam repoName: String?,
-        @ApiParam(value = "扫描状态, required = false")
-        @RequestParam status: ScanStatus?,
-        @ApiParam(value = "扫描开始时间, required = false")
-        @RequestParam startTime: String?,
-        @ApiParam(value = "扫描结束时间, required = false")
-        @RequestParam endTime: String?,
-        @ApiParam("页数", required = false, defaultValue = "1")
-        @RequestParam pageNumber: Int?,
-        @ApiParam("每页数量", required = false, defaultValue = "20")
-        @RequestParam pageSize: Int?
-    ): Response<Page<ScanArtifactInfo?>> {
-        return ResponseBuilder.success(
-            scanPlanService.planArtifactList(
-                PlanArtifactContext(
-                    projectId = projectId,
-                    planId = id,
-                    artifactName = name,
-                    highestLeakLevel = highestLeakLevel?.name,
-                    repoType = repoType?.name,
-                    repoName = repoName,
-                    status = status?.name,
-                    startTime = startTime,
-                    endTime = endTime,
-                    pageNumber = pageNumber ?: 1,
-                    pageSize = pageSize ?: 20
-                )
-            )
-        )
+    fun planArtifactList(planArtifactRequest: PlanArtifactRequest): Response<Page<PlanArtifactInfo>> {
+        return ResponseBuilder.success(scanPlanService.planArtifactPage(planArtifactRequest))
     }
 
     @ApiOperation("文件/包关联的扫描方案列表")
     @GetMapping("/relation/artifact/{projectId}")
     fun artifactPlanList(
-        @ApiParam(value = "projectId", required = true)
-        @PathVariable projectId: String,
-        @ApiParam(value = "repoName", required = true)
-        @RequestParam repoName: String,
-        @ApiParam(value = "repoType", required = true)
-        @RequestParam repoType: RepositoryType,
-        @ApiParam(value = "packageKey")
-        @RequestParam packageKey: String?,
-        @ApiParam(value = "version")
-        @RequestParam version: String?,
-        @ApiParam(value = "fullPath")
-        @RequestParam fullPath: String?
-    ): Response<List<ArtifactRelationPlan>?> {
-        return ResponseBuilder.success(
-            scanPlanService.artifactPlanList(
-                ArtifactPlanContext(
-                    projectId = projectId,
-                    repoName = repoName,
-                    repoType = repoType,
-                    packageKey = packageKey,
-                    version = version,
-                    fullPath = fullPath
-                )
-            )
-        )
+        artifactRequest: ArtifactPlanRelationRequest
+    ): Response<List<ArtifactPlanRelation>> {
+        return ResponseBuilder.success(scanPlanService.artifactPlanList(artifactRequest))
     }
-
 }

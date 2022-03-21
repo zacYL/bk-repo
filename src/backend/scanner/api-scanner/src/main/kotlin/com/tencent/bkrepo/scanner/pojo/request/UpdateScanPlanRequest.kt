@@ -25,11 +25,26 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.scanner.dao
+package com.tencent.bkrepo.scanner.pojo.request
 
-import com.tencent.bkrepo.common.mongo.dao.simple.SimpleMongoDao
-import com.tencent.bkrepo.scanner.model.TScanPlan
-import org.springframework.stereotype.Repository
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.tencent.bkrepo.scanner.pojo.rule.ArtifactRule
+import io.swagger.annotations.ApiModelProperty
 
-@Repository
-class ScanPlanDao : SimpleMongoDao<TScanPlan>()
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class UpdateScanPlanRequest(
+    @ApiModelProperty("方案ID")
+    val id: String? = null,
+    @ApiModelProperty("项目ID")
+    val projectId: String? = null,
+    @ApiModelProperty("方案名称")
+    val name: String? = null,
+    @ApiModelProperty("描述")
+    val description: String? = null,
+    @ApiModelProperty("是否自动扫描")
+    val autoScan: Boolean? = null,
+    @ApiModelProperty("自动扫描仓库")
+    val repoNameList: List<String>? = null,
+    @ApiModelProperty("自动扫描规则")
+    val artifactRules: List<ArtifactRule>? = null
+)

@@ -25,11 +25,18 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.scanner.dao
+package com.tencent.bkrepo.scanner.pojo.rule
 
-import com.tencent.bkrepo.common.mongo.dao.simple.SimpleMongoDao
-import com.tencent.bkrepo.scanner.model.TScanPlan
-import org.springframework.stereotype.Repository
-
-@Repository
-class ScanPlanDao : SimpleMongoDao<TScanPlan>()
+/**
+ * 制品匹配规则
+ */
+data class ArtifactRule(
+    /**
+     * 制品名规则
+     */
+    val nameRule: Rule? = null,
+    /**
+     * 制品版本规则
+     */
+    val versionRule: Rule? = null
+)

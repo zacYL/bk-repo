@@ -54,6 +54,7 @@ import com.tencent.bkrepo.maven.util.StringUtils.formatSeparator
 import com.tencent.bkrepo.repository.api.StageClient
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
+import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
@@ -295,14 +296,13 @@ class MavenLocalRepository(
                 projectId, repoName, packageKey, version
             ).data
             val count = packageVersion?.downloads ?: 0
-            val scanStatus = scanPlanClient.artifactPlanStatus(
+
+            val scanStatus = getScanStatus(
                 projectId = projectId,
                 repoName = repoName,
-                repoType = RepositoryType.MAVEN,
                 packageKey = packageKey,
-                version = version,
-                fullPath = null
-            ).data
+                version = version
+            )
             val mavenArtifactBasic = Basic(
                 groupId,
                 artifactId,
@@ -318,6 +318,25 @@ class MavenLocalRepository(
                 scanStatus = scanStatus
             )
             return MavenArtifactVersionData(mavenArtifactBasic, mavenArtifactMetadata)
+        }
+    }
+
+    private fun getScanStatus(projectId: String, repoName: String, packageKey: String, version: String): String? {
+        return try {
+            scanPlanClient.artifactPlanStatus(
+                projectId = projectId,
+                repoName = repoName,
+                repoType = RepositoryType.MAVEN,
+                packageKey = packageKey,
+                version = version,
+                fullPath = null
+            ).data
+        } catch (exception: Exception) {
+            logger.error(
+                "projectId[$projectId], repoType[MAVEN], repo[$repoName], packageKey[$packageKey], " +
+                    "version[$version], message: $exception"
+            )
+            null
         }
     }
 

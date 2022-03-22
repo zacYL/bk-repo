@@ -179,15 +179,7 @@ class NodeSearchServiceImpl(
             //获取制品关联方案状态
             val fullPath = it[NodeInfo::fullPath.name]!!.toString()
             if (fullPath.endsWith(".apk") || fullPath.endsWith(".ipa")) {
-                val scanStatus = scanPlanClient.artifactPlanStatus(
-                    projectId = it[NodeInfo::projectId.name]!!.toString(),
-                    repoName = it[NodeInfo::repoName.name]!!.toString(),
-                    repoType = RepositoryType.GENERIC,
-                    packageKey = null,
-                    version = null,
-                    fullPath = fullPath
-                ).data
-                it["scanStatus"] = scanStatus
+                it["scanStatus"] = getScanStatus(fullPath, it)
             }
             logger.info("nodeInfo result:${it.toJsonString()}")
         }
@@ -196,6 +188,25 @@ class NodeSearchServiceImpl(
         val pageNumber = if (query.limit == 0) 0 else (query.skip / query.limit).toInt()
 
         return Page(pageNumber + 1, query.limit, totalRecords, nodeList)
+    }
+
+    private fun getScanStatus(fullPath: String, it: MutableMap<String, Any?>): String? {
+        return try {
+            scanPlanClient.artifactPlanStatus(
+                projectId = it[NodeInfo::projectId.name]!!.toString(),
+                repoName = it[NodeInfo::repoName.name]!!.toString(),
+                repoType = RepositoryType.GENERIC,
+                packageKey = null,
+                version = null,
+                fullPath = fullPath
+            ).data
+        } catch (exception: Exception) {
+            logger.error(
+                "projectId[${it[NodeInfo::projectId.name]}], repoType[GENERIC], " +
+                    "repo[${it[NodeInfo::repoName.name]}], fullPath[$fullPath], message:$exception"
+            )
+            null
+        }
     }
 
     companion object {

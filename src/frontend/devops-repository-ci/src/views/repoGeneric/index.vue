@@ -80,7 +80,7 @@
                 </div>
                 <bk-table
                     :data="artifactoryList"
-                    height="calc(100% - 104px)"
+                    height="calc(100% - 102px)"
                     :outer-border="false"
                     :row-border="false"
                     size="small"

@@ -12,7 +12,7 @@
             <!-- <i class="devops-icon icon-filter-shape" @click="filter.show = true"></i> -->
             <bk-button class="report-filter" theme="default" @click="filter.show = true">筛选</bk-button>
             <bk-table
-                height="calc(100% - 62px)"
+                height="calc(100% - 60px)"
                 :data="scanList"
                 :outer-border="false"
                 :row-border="false"

@@ -40,7 +40,7 @@
             </div>
             <bk-table
                 class="mt10 leak-table"
-                height="calc(100% - 84px)"
+                height="calc(100% - 82px)"
                 :data="leakList"
                 :outer-border="false"
                 :row-border="false"

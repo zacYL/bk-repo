@@ -34,7 +34,7 @@
 .operation-trigger {
     width: 24px;
     height: 24px;
-    border-radius: 50%;
+    border-radius: 2px;
     cursor: pointer;
     .bk-tooltip-ref,
     .icon-more {

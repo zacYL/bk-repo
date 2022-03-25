@@ -90,7 +90,7 @@
                         <empty-data :is-loading="isLoading" :search="Boolean(searchFileName)">
                             <template v-if="!Boolean(searchFileName) && permission.write && repoName !== 'pipeline'">
                                 <span class="ml10">暂无文件，</span>
-                                <bk-button text @click="handlerUpload">即刻上传</bk-button>
+                                <bk-button text @click="handlerUpload(selectedTreeNode)">即刻上传</bk-button>
                             </template>
                         </empty-data>
                     </template>

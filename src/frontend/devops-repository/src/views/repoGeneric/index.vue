@@ -2,14 +2,14 @@
     <div class="repo-generic-container">
         <header class="mb10 pl20 pr20 generic-header flex-align-center">
             <Icon class="generic-img" size="70" name="generic" />
-            <div class="ml20 generic-title flex-column">
-                <span class="mb10 repo-title text-overflow" :title="replaceRepoName(repoName)">
+            <div class="ml20 generic-title">
+                <div class="mb10 repo-title text-overflow" :title="replaceRepoName(repoName)">
                     {{ replaceRepoName(repoName) }}
-                </span>
-                <span class="repo-description text-overflow"
+                </div>
+                <div class="repo-description text-overflow"
                     :title="currentRepo.description">
                     {{ currentRepo.description || '【仓库描述】' }}
-                </span>
+                </div>
             </div>
         </header>
         <div class="repo-generic-main flex-align-center"
@@ -632,7 +632,7 @@
             }
             .repo-description {
                 max-width: 70vw;
-                padding-left: 6px;
+                padding: 5px 15px;
                 background-color: var(--bgWeightColor);
                 border-radius: 2px;
             }

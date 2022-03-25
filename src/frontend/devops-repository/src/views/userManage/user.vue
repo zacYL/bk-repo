@@ -2,7 +2,7 @@
     <div class="user-container" v-bkloading="{ isLoading }">
         <div class="mt10 flex-between-center">
             <bk-popover class="ml20" placement="bottom-start" theme="light" ext-cls="operation-container">
-                <bk-button icon="plus" theme="primary" @click="showCreateUser"><span class="mr5">{{ $t('create') }}</span></bk-button>
+                <bk-button icon="plus" theme="primary" @click="showCreateUser">{{ $t('create') }}</bk-button>
                 <template #content><ul class="operation-list">
                     <li class="operation-item hover-btn">
                         <label for="importUsersInput" class="hover-btn">批量导入</label>

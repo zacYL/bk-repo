@@ -86,11 +86,10 @@
                     {{formatDate(row.createdDate)}}
                 </template>
             </bk-table-column>
-            <bk-table-column label="计划状态" width="120">
+            <bk-table-column label="启用计划" width="70">
                 <template #default="{ row }">
                     <div class="flex-align-center" @click.stop="() => {}">
                         <bk-switcher class="mr10" v-model="row.enabled" size="small" theme="primary" @change="changeEnabledHandler(row)"></bk-switcher>
-                        <div>{{row.enabled ? '启用' : '停用'}}</div>
                     </div>
                 </template>
             </bk-table-column>

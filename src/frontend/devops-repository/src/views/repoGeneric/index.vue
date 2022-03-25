@@ -100,7 +100,8 @@
                             <div class="flex-align-center flex-inline">
                                 <Icon size="20" :name="row.folder ? 'folder' : getIconName(row.name)" />
                                 <div class="ml10 flex-1 text-overflow" :title="row.name">{{row.name}}</div>
-                                <scan-tag v-if="row.scanStatus" class="ml10"
+                                <scan-tag class="ml10"
+                                    v-if="/\.(ipa)|(apk)$/.test(row.name)"
                                     :status="row.scanStatus"
                                     :full-path="row.fullPath">
                                 </scan-tag>

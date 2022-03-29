@@ -103,6 +103,7 @@
                                 <scan-tag class="ml10"
                                     v-if="/\.(ipa)|(apk)$/.test(row.name)"
                                     :status="row.scanStatus"
+                                    repo-type="generic"
                                     :full-path="row.fullPath">
                                 </scan-tag>
                             </div>

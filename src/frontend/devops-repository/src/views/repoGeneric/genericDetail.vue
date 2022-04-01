@@ -138,9 +138,9 @@
                     .map(item => ({ ...item, value: this.detailSlider.data[item.name] }))
             },
             codeList () {
-                const { projectId, repoName, path } = this.detailSlider
+                const { projectId, repoName, path, data: { name } } = this.detailSlider
                 return [
-                    `curl -u ${this.userInfo.username}:<PERSONAL_ACCESS_TOKEN> ${location.origin}/generic/${projectId}/${repoName}${path}`
+                    `curl -u ${this.userInfo.username}:<PERSONAL_ACCESS_TOKEN> ${location.origin}/generic/${projectId}/${repoName}${path} -o ${name}`
                 ]
             }
         },

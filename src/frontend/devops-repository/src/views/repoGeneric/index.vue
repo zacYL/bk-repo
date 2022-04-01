@@ -97,12 +97,12 @@
                     <bk-table-column type="selection" width="60"></bk-table-column>
                     <bk-table-column :label="$t('fileName')" prop="name" show-overflow-tooltip :render-header="renderHeader">
                         <template #default="{ row }">
-                            <scan-tag class="mr5"
+                            <!-- <scan-tag class="mr5"
                                 v-if="!row.folder && /\.(ipa)|(apk)$/.test(row.name)"
                                 :status="row.scanStatus"
                                 repo-type="generic"
                                 :full-path="row.fullPath">
-                            </scan-tag>
+                            </scan-tag> -->
                             <Icon class="table-svg" size="16" :name="row.folder ? 'folder' : getIconName(row.name)" />
                             <span class="ml10">{{row.name}}</span>
                         </template>
@@ -137,7 +137,7 @@
                                     permission.edit && repoName !== 'pipeline' && { clickEvent: () => renameRes(row), label: $t('rename') },
                                     permission.write && repoName !== 'pipeline' && { clickEvent: () => moveRes(row), label: $t('move') },
                                     permission.write && repoName !== 'pipeline' && { clickEvent: () => copyRes(row), label: $t('copy') },
-                                    !row.folder && /\.(ipa)|(apk)$/.test(row.name) && { clickEvent: () => handlerScan(row), label: '安全扫描' },
+                                    // !row.folder && /\.(ipa)|(apk)$/.test(row.name) && { clickEvent: () => handlerScan(row), label: '安全扫描' },
                                     permission.delete && { clickEvent: () => deleteRes(row), label: $t('delete') }
                                 ].filter(Boolean)">
                             </operation-list>
@@ -170,7 +170,7 @@
     import Breadcrumb from '@repository/components/Breadcrumb'
     import MoveSplitBar from '@repository/components/MoveSplitBar'
     import RepoTree from '@repository/components/RepoTree'
-    import ScanTag from '@repository/views/repoScan/scanTag'
+    // import ScanTag from '@repository/views/repoScan/scanTag'
     import genericDetail from '@repository/views/repoGeneric/genericDetail'
     import genericUploadDialog from '@repository/views/repoGeneric/genericUploadDialog'
     import genericFormDialog from '@repository/views/repoGeneric/genericFormDialog'
@@ -186,7 +186,7 @@
             Breadcrumb,
             MoveSplitBar,
             RepoTree,
-            ScanTag,
+            // ScanTag,
             genericDetail,
             genericUploadDialog,
             genericFormDialog,

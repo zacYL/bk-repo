@@ -28,7 +28,7 @@
                                 :key="tag">
                                 {{ tag }}
                             </span>
-                            <scan-tag v-if="repoType === 'maven'" class="ml10" :status="detail.basic.scanStatus"></scan-tag>
+                            <!-- <scan-tag v-if="repoType === 'maven'" class="ml10" :status="detail.basic.scanStatus"></scan-tag> -->
                         </template>
                     </span>
                 </div>
@@ -157,7 +157,7 @@
 <script>
     import CodeArea from '@repository/components/CodeArea'
     import OperationList from '@repository/components/OperationList'
-    import ScanTag from '@repository/views/repoScan/scanTag'
+    // import ScanTag from '@repository/views/repoScan/scanTag'
     import { mapState, mapActions } from 'vuex'
     import { convertFileSize, formatDate } from '@repository/utils'
     import repoGuideMixin from '@repository/views/repoCommon/repoGuideMixin'
@@ -165,7 +165,12 @@
     import topoDataMixin from './artiTopoMixin'
     export default {
         name: 'commonVersionDetail',
-        components: { CodeArea, OperationList, ScanTag, topo },
+        components: {
+            CodeArea,
+            OperationList,
+            // ScanTag,
+            topo
+        },
         mixins: [repoGuideMixin, topoDataMixin],
         data () {
             return {
@@ -223,7 +228,7 @@
             operationBtns () {
                 return [
                     this.permission.edit && { clickEvent: () => this.$emit('tag'), label: '晋级', disabled: (this.detail.basic.stageTag || '').includes('@release') },
-                    this.repoType === 'maven' && { clickEvent: () => this.$emit('scan'), label: '安全扫描' },
+                    // this.repoType === 'maven' && { clickEvent: () => this.$emit('scan'), label: '安全扫描' },
                     this.permission.delete && { clickEvent: () => this.$emit('delete'), label: this.$t('delete') }
                 ].filter(Boolean)
             }

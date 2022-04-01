@@ -31,7 +31,7 @@ spring:
           type: memory
       file:
         default:
-          path: /data/bkee/repo/streams
+          path: __BK_CI_DATA_SHARE_DIR__/repo/streams
       memory:
         default:
           queue-size: 2048
@@ -87,15 +87,15 @@ swagger:
 
 logging:
   config: classpath:logback-config.xml
-  path-common: __BK_REPO_LOGS_DIR__
+  path-common: __BK_CI_DATA_SHARE_DIR__/logs/bkrepo
 
 storage:
   type: filesystem
   filesystem:
-    path: __BK_REPO_FILE_PATH__
+    path: __BK_CI_DATA_SHARE_DIR__/repo/filesystem/store
   cache:
     enabled: false
-    path: /data/bkee/repo/filesystem/cached
+    path: __BK_CI_DATA_SHARE_DIR__/repo/filesystem/cached
     expireHours: 12
 
 security:

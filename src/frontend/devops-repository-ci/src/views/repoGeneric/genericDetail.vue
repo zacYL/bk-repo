@@ -70,7 +70,8 @@
                         <bk-table-column :label="$t('value')" prop="1" show-overflow-tooltip></bk-table-column>
                         <bk-table-column width="60">
                             <template #default="{ row }">
-                                <i class="devops-icon icon-delete hover-btn hover-danger inline-block" @click="deleteMetadataHandler(row)"></i>
+                                <Icon class="hover-btn flex-align-center" size="24" name="icon-delete"
+                                    @click.native.stop="deleteMetadataHandler(row)" />
                             </template>
                         </bk-table-column>
                     </bk-table>

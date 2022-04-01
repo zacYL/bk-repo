@@ -23,7 +23,8 @@
             </bk-table-column>
             <bk-table-column :label="$t('operation')" width="100">
                 <template #default="{ row }">
-                    <i class="devops-icon icon-delete hover-btn hover-danger inline-block" @click="deleteTokenHandler(row)"></i>
+                    <Icon class="hover-btn flex-align-center" size="24" name="icon-delete"
+                        @click.native.stop="deleteTokenHandler(row)" />
                 </template>
             </bk-table-column>
         </bk-table>

@@ -467,6 +467,14 @@ open class CpackUserServiceImpl constructor(
         return result
     }
 
+    override fun addUserAccount(userId: String, accountId: String): Boolean {
+        TODO("Not yet implemented")
+    }
+
+    override fun removeUserAccount(userId: String, accountId: String): Boolean {
+        TODO("Not yet implemented")
+    }
+
     companion object {
         private val logger = LoggerFactory.getLogger(CpackUserServiceImpl::class.java)
         val projectBuiltinPermission = listOf(PROJECT_MANAGE_PERMISSION, PROJECT_VIEW_PERMISSION)

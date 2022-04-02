@@ -59,7 +59,6 @@ open class RoleServiceImpl constructor(
 ) : RoleService {
 
     override fun createRole(request: CreateRoleRequest): String? {
-
         val role: TRole? = when (request.type) {
             RoleType.SYSTEM -> roleRepository.findFirstByTypeAndName(RoleType.SYSTEM, request.name)
             RoleType.PROJECT -> roleRepository.findFirstByTypeAndNameAndProjectId(
@@ -74,20 +73,6 @@ open class RoleServiceImpl constructor(
                 request.repoName!!
             )
         }
-
-//        val role: TRole? = when (request.type == RoleType.REPO) {
-//            roleRepository.findFirstByRoleIdAndProjectIdAndRepoName(
-//                request.roleId!!,
-//                request.projectId,
-//                request.repoName!!
-//            )
-//        } else {
-//            roleRepository.findFirstByProjectIdAndTypeAndName(
-//                projectId = request.projectId,
-//                type = RoleType.PROJECT,
-//                name = request.name
-//            )
-//        }
 
         role?.let {
             logger.warn("create role [${request.roleId} , ${request.projectId} ]  is exist.")

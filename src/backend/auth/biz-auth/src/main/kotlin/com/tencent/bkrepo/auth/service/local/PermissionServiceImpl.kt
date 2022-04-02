@@ -220,7 +220,7 @@ open class PermissionServiceImpl constructor(
         // check role repo admin
         if (checkRepoAdmin(request, user.roles)) return true
 
-        // check repo action action
+        // check repo action
         return checkRepoAction(request, user.roles)
     }
 

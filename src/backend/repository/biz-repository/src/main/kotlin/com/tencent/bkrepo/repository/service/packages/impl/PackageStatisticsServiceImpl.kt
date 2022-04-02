@@ -1,13 +1,13 @@
 package com.tencent.bkrepo.repository.service.packages.impl
 
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
-import com.tencent.bkrepo.common.api.util.MongoEscapeUtils
 import com.tencent.bkrepo.repository.dao.PackageDao
 import com.tencent.bkrepo.repository.dao.PackageVersionDao
 import com.tencent.bkrepo.repository.model.TPackage
 import com.tencent.bkrepo.repository.model.TPackageVersion
-import com.tencent.bkrepo.repository.pojo.metric.CountResult
 import com.tencent.bkrepo.repository.pojo.metric.PackageDetail
+import com.tencent.bkrepo.common.query.util.MongoEscapeUtils
+import com.tencent.bkrepo.repository.pojo.software.CountResult
 import com.tencent.bkrepo.repository.pojo.software.ProjectPackageOverview
 import com.tencent.bkrepo.repository.service.packages.PackageStatisticsService
 import org.springframework.data.mongodb.core.aggregation.Aggregation
@@ -75,7 +75,7 @@ class PackageStatisticsServiceImpl(
         val aggregation = Aggregation.newAggregation(
             TPackage::class.java,
             Aggregation.match(criteria),
-            Aggregation.group("\$repoName").count().`as`("count")
+            Aggregation.group("\$${TPackage::repoName.name}").count().`as`("count")
         )
         val result = packageDao.aggregate(aggregation, CountResult::class.java).mappedResults
         return transTree(projectId, result)
@@ -90,7 +90,7 @@ class PackageStatisticsServiceImpl(
                 sum = 0L
             )
         )
-        list.sortedByDescending { it.count }.map { pojo ->
+        list.map { pojo ->
             val repoOverview = ProjectPackageOverview.RepoPackageOverview(
                 repoName = pojo.id,
                 packages = pojo.count

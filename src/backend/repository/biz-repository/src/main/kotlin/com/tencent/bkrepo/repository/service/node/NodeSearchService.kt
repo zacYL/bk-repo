@@ -44,8 +44,6 @@ interface NodeSearchService {
      */
     fun search(queryModel: QueryModel): Page<Map<String, Any?>>
 
-    fun nodeGlobalSearch(projectId: String, name: String): Page<Map<String, Any?>>
-
     fun nodeOverview(
         userId: String,
         projectId: String,

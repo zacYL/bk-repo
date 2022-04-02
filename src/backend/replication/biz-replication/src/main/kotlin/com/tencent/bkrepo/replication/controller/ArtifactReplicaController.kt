@@ -30,7 +30,6 @@ package com.tencent.bkrepo.replication.controller
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.security.permission.Principal
 import com.tencent.bkrepo.common.security.permission.PrincipalType
-import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.replication.api.ArtifactReplicaClient

@@ -61,10 +61,8 @@ import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionUpdateR
 import com.tencent.bkrepo.repository.search.packages.PackageSearchInterpreter
 import com.tencent.bkrepo.repository.service.packages.PackageService
 import com.tencent.bkrepo.repository.util.MetadataUtils
+import com.tencent.bkrepo.repository.util.PackageEventFactory
 import com.tencent.bkrepo.repository.util.PackageEventFactory.buildCreatedEvent
-import com.tencent.bkrepo.repository.util.PackageEventFactory.buildDeletedEvent
-import com.tencent.bkrepo.repository.util.PackageEventFactory.buildDownloadEvent
-import com.tencent.bkrepo.repository.util.PackageEventFactory.buildUpdatedEvent
 import com.tencent.bkrepo.repository.util.PackageQueryHelper
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
@@ -181,7 +179,8 @@ class PackageServiceImpl(
             val tPackage = findOrCreatePackage(request)
             // 检查版本是否存在
             val oldVersion = packageVersionDao.findByName(tPackage.id!!, versionName)
-            var isOverride: Boolean = false
+            //检查本次上传是创建还是覆盖。
+            var isOverride = false
             val newVersion = if (oldVersion != null) {
                 if (!overwrite) {
                     throw ErrorCodeException(ArtifactMessageCode.VERSION_EXISTED, packageName, versionName)
@@ -221,12 +220,6 @@ class PackageServiceImpl(
                 )
             }
             packageVersionDao.save(newVersion)
-            if (!isOverride) {
-                publishEvent((buildCreatedEvent(request, realIpAddress)))
-            } else {
-                publishEvent((buildUpdatedEvent(request, realIpAddress)))
-            }
-
             // 更新包
             tPackage.lastModifiedBy = newVersion.lastModifiedBy
             tPackage.lastModifiedDate = newVersion.lastModifiedDate
@@ -236,6 +229,13 @@ class PackageServiceImpl(
             tPackage.versionTag = mergeVersionTag(tPackage.versionTag, versionTag)
             tPackage.historyVersion = tPackage.historyVersion.toMutableSet().apply { add(versionName) }
             packageDao.save(tPackage)
+
+            if (!isOverride) {
+                publishEvent((buildCreatedEvent(request, realIpAddress ?: HttpContextHolder.getClientAddress())))
+            } else {
+                publishEvent((PackageEventFactory.buildUpdatedEvent(
+                    request, realIpAddress ?: HttpContextHolder.getClientAddress())))
+            }
             logger.info("Create package version[$newVersion] success")
         }
     }
@@ -245,7 +245,7 @@ class PackageServiceImpl(
         packageVersionDao.deleteByPackageId(tPackage.id!!)
         packageDao.deleteByKey(projectId, repoName, packageKey)
         publishEvent(
-            buildDeletedEvent(
+            PackageEventFactory.buildDeletedEvent(
                 projectId = projectId,
                 repoName = repoName,
                 packageType = tPackage.type,
@@ -253,7 +253,7 @@ class PackageServiceImpl(
                 packageName = tPackage.name,
                 versionName = null,
                 createdBy = SecurityUtils.getUserId(),
-                realIpAddress = realIpAddress
+                realIpAddress = realIpAddress ?: HttpContextHolder.getClientAddress()
             )
         )
         logger.info("Delete package [$projectId/$repoName/$packageKey] success")
@@ -281,7 +281,7 @@ class PackageServiceImpl(
             packageDao.save(tPackage)
         }
         publishEvent(
-            buildDeletedEvent(
+            PackageEventFactory.buildDeletedEvent(
                 projectId = projectId,
                 repoName = repoName,
                 packageType = tPackage.type,
@@ -289,7 +289,7 @@ class PackageServiceImpl(
                 packageName = tPackage.name,
                 versionName = versionName,
                 createdBy = SecurityUtils.getUserId(),
-                realIpAddress = realIpAddress
+                realIpAddress = realIpAddress ?: HttpContextHolder.getClientAddress()
             )
         )
         logger.info("Delete package version[$projectId/$repoName/$packageKey-$versionName] success")
@@ -330,17 +330,16 @@ class PackageServiceImpl(
         }
         packageVersionDao.save(tPackageVersion)
         publishEvent(
-            buildUpdatedEvent(
+            PackageEventFactory.buildUpdatedEvent(
                 request = request,
                 packageType = tPackage.type.name,
                 packageName = tPackage.name,
                 createdBy = SecurityUtils.getUserId(),
-                realIpAddress = realIpAddress
+                realIpAddress = realIpAddress ?: HttpContextHolder.getClientAddress()
             )
         )
     }
 
-    @Suppress("TooGenericExceptionCaught")
     override fun downloadVersion(
         projectId: String,
         repoName: String,
@@ -363,7 +362,7 @@ class PackageServiceImpl(
                 logger.warn("Failed to record package download record", e)
             }
             publishEvent(
-                buildDownloadEvent(
+                PackageEventFactory.buildDownloadEvent(
                     projectId = projectId,
                     repoName = repoName,
                     packageType = tPackage.type,
@@ -371,7 +370,7 @@ class PackageServiceImpl(
                     packageName = tPackage.name,
                     versionName = versionName,
                     createdBy = SecurityUtils.getUserId(),
-                    realIpAddress = realIpAddress
+                    realIpAddress = realIpAddress ?: HttpContextHolder.getClientAddress()
                 )
             )
         }

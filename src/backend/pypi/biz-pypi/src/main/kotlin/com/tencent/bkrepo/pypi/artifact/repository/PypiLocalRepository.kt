@@ -31,6 +31,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.constant.ensureSuffix
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext

@@ -90,7 +90,7 @@ class GenericLocalRepository : LocalRepository() {
         // 校验md5
         val calculatedMd5 = context.getArtifactMd5()
         val uploadMd5 = HeaderUtils.getHeader(HEADER_MD5)
-        if (uploadMd5 != null && !calculatedMd5.equals(calculatedMd5, true)) {
+        if (uploadMd5 != null && !calculatedMd5.equals(uploadMd5, true)) {
             throw ErrorCodeException(ArtifactMessageCode.DIGEST_CHECK_FAILED, "md5")
         }
     }
@@ -115,23 +115,32 @@ class GenericLocalRepository : LocalRepository() {
         }
     }
 
+    override fun onDownloadBefore(context: ArtifactDownloadContext) {
+        super.onDownloadBefore(context)
+        // 文件默认下载，设置Content-Dispostition响应头
+        // preview == true时不设置Content-Dispostition响应头
+        val preview = context.request.getParameter(PARAM_PREVIEW)?.toBoolean()
+        context.useDisposition = preview == null || preview == false
+        if (context.repo.name == REPORT) {
+            context.useDisposition = false
+        }
+    }
+
     /**
      * 支持目录下载
      * 目录下载会以zip包形式将目录下的文件打包下载
      */
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         with(context) {
-            val node = nodeClient.getNodeDetail(projectId, repoName, artifactInfo.getArtifactFullPath()).data
-            if (node?.folder == true) {
+            val node =
+                nodeClient.getNodeDetail(projectId, repoName, artifactInfo.getArtifactFullPath()).data ?: return null
+            if (node.folder) {
                 return downloadFolder(this, node)
             }
+            downloadIntercept(this, node)
             val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials) ?: return null
             val responseName = artifactInfo.getResponseName()
 
-            // 文件默认下载，设置Content-Dispostition响应头
-            // preview == true时不设置Content-Dispostition响应头
-            val preview = context.request.getParameter(PARAM_PREVIEW)?.toBoolean()
-            useDisposition = preview == null || preview == false
             return ArtifactResource(inputStream, responseName, node, ArtifactChannel.LOCAL, useDisposition)
         }
     }
@@ -154,6 +163,10 @@ class GenericLocalRepository : LocalRepository() {
         ).data.orEmpty()
         // 检查目录大小
         checkFolderSize(nodes)
+        nodes.forEach {
+            val nodeDetail = NodeDetail(it)
+            downloadIntercept(context, nodeDetail)
+        }
         // 构造name-node map
         val prefix = "${node.fullPath}/"
         val nodeMap = nodes.associate {
@@ -162,6 +175,11 @@ class GenericLocalRepository : LocalRepository() {
             name to inputStream
         }
         return ArtifactResource(nodeMap, node, useDisposition = true)
+    }
+
+    private fun downloadIntercept(context: ArtifactDownloadContext, nodeDetail: NodeDetail) {
+        val interceptors = context.getInterceptors()
+        interceptors.forEach { it.intercept(nodeDetail) }
     }
 
     /**
@@ -246,7 +264,7 @@ class GenericLocalRepository : LocalRepository() {
         val headerNames = request.headerNames
         for (headerName in headerNames) {
             if (headerName.startsWith(BKREPO_META_PREFIX, true)) {
-                val key = headerName.substring(BKREPO_META_PREFIX.length).trim()
+                val key = headerName.substring(BKREPO_META_PREFIX.length).trim().toLowerCase()
                 if (key.isNotBlank()) {
                     metadata[key] = HeaderUtils.getUrlDecodedHeader(headerName)!!
                 }
@@ -288,5 +306,7 @@ class GenericLocalRepository : LocalRepository() {
          * 目录下载，目录大小阈值
          */
         private val BATCH_DOWNLOAD_SIZE_THRESHOLD = DataSize.ofGigabytes(10).toBytes()
+
+        private const val REPORT = "report"
     }
 }

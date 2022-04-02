@@ -51,7 +51,6 @@ import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.nuget.artifact.NugetArtifactInfo
 import com.tencent.bkrepo.nuget.constant.NUGET_V3_NOT_FOUND
 import com.tencent.bkrepo.nuget.constant.NugetMessageCode
-import com.tencent.bkrepo.nuget.constant.VERSION
 import com.tencent.bkrepo.nuget.handler.NugetPackageHandler
 import com.tencent.bkrepo.nuget.pojo.artifact.NugetDeleteArtifactInfo
 import com.tencent.bkrepo.nuget.pojo.artifact.NugetPublishArtifactInfo
@@ -102,13 +101,13 @@ class NugetLocalRepository(
                     .header(HttpHeaders.CONTENT_TYPE, MediaTypes.APPLICATION_XML)
                     .body(NUGET_V3_NOT_FOUND)
             }
-            val metadataList = packageVersionList.map { it.metadata }.stream()
-                .sorted { o1, o2 -> NugetVersionUtils.compareSemVer(o1[VERSION] as String, o2[VERSION] as String) }
-                .toList()
+            val sortedVersionList = packageVersionList.stream().sorted { o1, o2 ->
+                NugetVersionUtils.compareSemVer(o1.name, o2.name)
+            }.toList()
             try {
                 val v3RegistrationUrl = NugetUtils.getV3Url(artifactInfo) + '/' + registrationPath
                 return ResponseEntity.ok(
-                    NugetV3RegistrationUtils.metadataToRegistrationIndex(metadataList, v3RegistrationUrl)
+                    NugetV3RegistrationUtils.metadataToRegistrationIndex(sortedVersionList, v3RegistrationUrl)
                 )
             } catch (ignored: JsonProcessingException) {
                 logger.error("failed to deserialize metadata to registration index json")
@@ -130,14 +129,14 @@ class NugetLocalRepository(
                     .header(HttpHeaders.CONTENT_TYPE, MediaTypes.APPLICATION_XML)
                     .body(NUGET_V3_NOT_FOUND)
             }
-            val metadataList = packageVersionList.map { it.metadata }.stream()
-                .sorted { o1, o2 -> NugetVersionUtils.compareSemVer(o1[VERSION] as String, o2[VERSION] as String) }
-                .toList()
+            val sortedVersionList = packageVersionList.stream().sorted { o1, o2 ->
+                NugetVersionUtils.compareSemVer(o1.name, o2.name)
+            }.toList()
             try {
                 val v3RegistrationUrl = NugetUtils.getV3Url(artifactInfo) + '/' + registrationPath
                 return ResponseEntity.ok(
                     NugetV3RegistrationUtils.metadataToRegistrationPage(
-                        metadataList, packageName, lowerVersion, upperVersion, v3RegistrationUrl
+                        sortedVersionList, packageName, lowerVersion, upperVersion, v3RegistrationUrl
                     )
                 )
             } catch (ignored: JsonProcessingException) {

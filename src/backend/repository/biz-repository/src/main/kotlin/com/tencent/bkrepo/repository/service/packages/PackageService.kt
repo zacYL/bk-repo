@@ -155,6 +155,7 @@ interface PackageService {
      * 如果包不存在，会自动创建包
      *
      * @param request 包版本创建请求
+     * [realIpAddress]: 由调用方传递真实的请求来源IP, 否则记录的是微服务调用机器的IP
      */
     fun createPackageVersion(request: PackageVersionCreateRequest, realIpAddress: String? = null)
 

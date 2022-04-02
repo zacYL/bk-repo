@@ -30,6 +30,7 @@ package com.tencent.bkrepo.repository.service.repo
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.repository.pojo.project.ProjectCreateRequest
 import com.tencent.bkrepo.repository.pojo.project.ProjectInfo
+import com.tencent.bkrepo.repository.pojo.project.ProjectListOption
 import com.tencent.bkrepo.repository.pojo.project.ProjectRangeQueryRequest
 import com.tencent.bkrepo.repository.pojo.project.ProjectUpdateRequest
 
@@ -56,8 +57,9 @@ interface ProjectService {
     /**
      * 查询用户有权限的项目列表
      * @param userId 用户id
+     * @param option 项目列表选项
      */
-    fun listPermissionProject(userId: String): List<ProjectInfo>
+    fun listPermissionProject(userId: String, option: ProjectListOption?): List<ProjectInfo>
 
     /**
      * 分页查询项目列表

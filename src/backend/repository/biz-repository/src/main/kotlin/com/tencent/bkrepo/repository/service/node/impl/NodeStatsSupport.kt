@@ -40,7 +40,9 @@ import com.tencent.bkrepo.repository.pojo.node.NodeListOption
 import com.tencent.bkrepo.repository.pojo.node.NodeSizeInfo
 import com.tencent.bkrepo.repository.service.node.NodeStatsOperation
 import com.tencent.bkrepo.repository.util.NodeQueryHelper
-import org.springframework.data.mongodb.core.aggregation.Aggregation
+import org.springframework.data.mongodb.core.aggregation.Aggregation.group
+import org.springframework.data.mongodb.core.aggregation.Aggregation.match
+import org.springframework.data.mongodb.core.aggregation.Aggregation.newAggregation
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 
@@ -83,18 +85,10 @@ open class NodeStatsSupport(
         }
     }
 
-    override fun capacity(projectId: String, repoName: String?): Long {
-        val criteria = Criteria.where(TNode::folder.name).`is`(false)
-            .and(TNode::deleted.name).`is`(null)
-            .and(TNode::projectId.name).`is`(projectId)
-        repoName?.let { criteria.and(TNode::repoName.name).`is`(repoName) }
-        return aggregateComputeSize(criteria)
-    }
-
     override fun aggregateComputeSize(criteria: Criteria): Long {
-        val aggregation = Aggregation.newAggregation(
-            Aggregation.match(criteria),
-            Aggregation.group().sum(TNode::size.name).`as`(NodeSizeInfo::size.name)
+        val aggregation = newAggregation(
+            match(criteria),
+            group().sum(TNode::size.name).`as`(NodeSizeInfo::size.name)
         )
         val aggregateResult = nodeDao.aggregate(aggregation, HashMap::class.java)
         return aggregateResult.mappedResults.firstOrNull()?.get(NodeSizeInfo::size.name) as? Long ?: 0

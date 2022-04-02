@@ -28,8 +28,8 @@
 package com.tencent.bkrepo.repository.listener
 
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
+import com.tencent.bkrepo.common.operate.api.OperateLogService
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
-import com.tencent.bkrepo.repository.service.log.OperateLogService
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
 
@@ -57,7 +57,7 @@ class EventAuditListener(
      */
     @EventListener(List::class)
     fun handleMulti(events: List<ArtifactEvent>) {
-        operateLogService.saveMultiEventAsync(
+        operateLogService.saveEventsAsync(
             events,
             events.first().data["realIpAddress"] as? String ?: HttpContextHolder.getClientAddress()
         )

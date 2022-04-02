@@ -75,7 +75,7 @@ class BkiamServiceImpl @Autowired constructor(
         val instanceDTO = InstanceDTO()
         instanceDTO.system = systemCode.id()
         instanceDTO.id = resourceId
-        instanceDTO.type = resourceType.id()
+        instanceDTO.type = resourceType.toString()
 
         val path = PathInfoDTO()
         path.type = ResourceType.PROJECT.id()
@@ -112,7 +112,7 @@ class BkiamServiceImpl @Autowired constructor(
         } else {
             val instancesList = BkiamUtils.getResourceInstance(expression, projectId, resourceType)
             logger.debug(
-                "getUserResourceByPermission getInstance project[$projectId], type[${resourceType.id()}]," +
+                "getUserResourceByPermission getInstance project[$projectId], type[$resourceType]," +
                     " instances[$instancesList]"
             )
             if (!instancesList.contains("*")) {
@@ -149,7 +149,7 @@ class BkiamServiceImpl @Autowired constructor(
             creator = userId,
             name = resourceName,
             id = resourceId,
-            type = resourceType.id(),
+            type = resourceType,
             system = iamConfiguration.systemId,
             ancestors = ancestors,
             bk_app_code = "",

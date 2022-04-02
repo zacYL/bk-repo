@@ -156,5 +156,5 @@ interface RepositoryService {
      */
     fun deleteRepo(repoDeleteRequest: RepoDeleteRequest)
 
-    fun allRepos(projectId: String?, repoName: String?, repositoryType: RepositoryType?): List<RepositoryInfo?>
+    fun allRepos(projectId: String?, repoName: String?, repoType: RepositoryType?): List<RepositoryInfo?>
 }

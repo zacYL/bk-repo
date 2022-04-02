@@ -34,7 +34,6 @@ package com.tencent.bkrepo.docker.artifact
 import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
-import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.docker.context.RequestContext
 import com.tencent.bkrepo.repository.api.OperateLogClient
@@ -66,7 +65,7 @@ class DockerPackageRepo @Autowired constructor(
     }
 
     /**
-     * populalate package
+     * populate package
      * @param request the request to populate version
      * @return Boolean is the package version create success
      */

@@ -35,6 +35,7 @@ import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.repository.pojo.project.ProjectCreateRequest
 import com.tencent.bkrepo.repository.pojo.project.ProjectInfo
+import com.tencent.bkrepo.repository.pojo.project.ProjectListOption
 import com.tencent.bkrepo.repository.pojo.project.ProjectUpdateRequest
 import com.tencent.bkrepo.repository.pojo.project.UserProjectCreateRequest
 import com.tencent.bkrepo.repository.service.repo.ProjectService
@@ -55,76 +56,83 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/project")
 class UserProjectController(
-    private val permissionManager: PermissionManager,
-    private val projectService: ProjectService
+	private val permissionManager: PermissionManager,
+	private val projectService: ProjectService
 ) {
-    @ApiOperation("创建项目")
-    @Principal(PrincipalType.PLATFORM)
-    @PostMapping("/create")
-    fun createProject(
-        @RequestAttribute userId: String,
-        @RequestBody userProjectRequest: UserProjectCreateRequest
-    ): Response<Void> {
-        val createRequest = with(userProjectRequest) {
-            ProjectCreateRequest(
-                name = name,
-                displayName = displayName,
-                description = description,
-                operator = userId
-            )
-        }
-        projectService.createProject(createRequest)
-        return ResponseBuilder.success()
-    }
+	@ApiOperation("创建项目")
+	@Principal(PrincipalType.PLATFORM)
+	@PostMapping("/create")
+	fun createProject(
+		@RequestAttribute userId: String,
+		@RequestBody userProjectRequest: UserProjectCreateRequest
+	): Response<Void> {
+		val createRequest = with(userProjectRequest) {
+			ProjectCreateRequest(
+				name = name,
+				displayName = displayName,
+				description = description,
+				operator = userId
+			)
+		}
+		projectService.createProject(createRequest)
+		return ResponseBuilder.success()
+	}
 
-    @ApiOperation("查询项目是否存在")
-    @GetMapping("/exist/{projectId}")
-    fun checkExist(
-        @RequestAttribute userId: String,
-        @ApiParam(value = "项目ID", required = true)
-        @PathVariable projectId: String
-    ): Response<Boolean> {
-        permissionManager.checkProjectPermission(PermissionAction.READ, projectId)
-        return ResponseBuilder.success(projectService.checkExist(projectId))
-    }
+	@ApiOperation("查询项目是否存在")
+	@GetMapping("/exist/{projectId}")
+	fun checkExist(
+		@RequestAttribute userId: String,
+		@ApiParam(value = "项目ID", required = true)
+		@PathVariable projectId: String
+	): Response<Boolean> {
+		permissionManager.checkProjectPermission(PermissionAction.READ, projectId)
+		return ResponseBuilder.success(projectService.checkExist(projectId))
+	}
 
-    @ApiOperation("校验项目参数是否存在")
-    @GetMapping("/exist")
-    fun checkProjectExist(
-        @RequestAttribute userId: String,
-        @ApiParam(value = "项目ID", required = false)
-        @RequestParam name: String?,
-        @ApiParam(value = "项目ID", required = false)
-        @RequestParam displayName: String?
-    ): Response<Boolean> {
-        return ResponseBuilder.success(projectService.checkProjectExist(name, displayName))
-    }
+	@ApiOperation("校验项目参数是否存在")
+	@GetMapping("/exist")
+	fun checkProjectExist(
+		@RequestAttribute userId: String,
+		@ApiParam(value = "项目ID", required = false)
+		@RequestParam name: String?,
+		@ApiParam(value = "项目ID", required = false)
+		@RequestParam displayName: String?
+	): Response<Boolean> {
+		return ResponseBuilder.success(projectService.checkProjectExist(name, displayName))
+	}
 
-    @ApiOperation("编辑项目")
-    @PutMapping("/{name}")
-    fun updateProject(
-        @RequestAttribute userId: String,
-        @ApiParam(value = "项目ID", required = false)
-        @PathVariable name: String,
-        @RequestBody projectUpdateRequest: ProjectUpdateRequest
-    ): Response<Boolean> {
-        return ResponseBuilder.success(projectService.updateProject(name, projectUpdateRequest))
-    }
+	@ApiOperation("编辑项目")
+	@PutMapping("/{name}")
+	fun updateProject(
+		@RequestAttribute userId: String,
+		@ApiParam(value = "项目ID", required = true)
+		@PathVariable name: String,
+		@RequestBody projectUpdateRequest: ProjectUpdateRequest
+	): Response<Boolean> {
+		return ResponseBuilder.success(projectService.updateProject(name, projectUpdateRequest))
+	}
 
-    @ApiOperation("项目列表")
-    @GetMapping("/list")
-    fun listProject(@RequestAttribute userId: String): Response<List<ProjectInfo>> {
-        return ResponseBuilder.success(projectService.listPermissionProject(userId))
-    }
+	@ApiOperation("项目列表")
+	@GetMapping("/list")
+	fun listProject(
+		@RequestAttribute userId: String,
+		@RequestParam pageNumber: Int?,
+		@RequestParam pageSize: Int?,
+		@RequestParam names: List<String>?,
+		@RequestParam displayNames: List<String>?
+	): Response<List<ProjectInfo>> {
+		val option = ProjectListOption(pageNumber, pageSize, names, displayNames)
+		return ResponseBuilder.success(projectService.listPermissionProject(userId, option))
+	}
 
-    @Deprecated("waiting kb-ci", replaceWith = ReplaceWith("createProject"))
-    @ApiOperation("创建项目")
-    @Principal(PrincipalType.PLATFORM)
-    @PostMapping
-    fun create(
-        @RequestAttribute userId: String,
-        @RequestBody userProjectRequest: UserProjectCreateRequest
-    ): Response<Void> {
-        return this.createProject(userId, userProjectRequest)
-    }
+	@Deprecated("waiting kb-ci", replaceWith = ReplaceWith("createProject"))
+	@ApiOperation("创建项目")
+	@Principal(PrincipalType.PLATFORM)
+	@PostMapping
+	fun create(
+		@RequestAttribute userId: String,
+		@RequestBody userProjectRequest: UserProjectCreateRequest
+	): Response<Void> {
+		return this.createProject(userId, userProjectRequest)
+	}
 }

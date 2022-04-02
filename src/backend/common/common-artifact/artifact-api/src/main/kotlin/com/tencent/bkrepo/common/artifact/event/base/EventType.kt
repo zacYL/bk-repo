@@ -45,6 +45,7 @@ enum class EventType(val nick: String) {
     NODE_MOVED("移动节点"),
     NODE_COPIED("复制节点"),
     NODE_DELETED("删除节点"),
+    NODE_DOWNLOADED("下载节点"),
 
     // METADATA
     METADATA_DELETED("删除元数据"),
@@ -66,5 +67,7 @@ enum class EventType(val nick: String) {
     //USER
     USER_ADD("新增用户"),
     USER_DELETE("删除用户"),
-    USER_UPDATE("更新用户")
+    USER_UPDATE("更新用户"),
+    // WebHook
+    WEBHOOK_TEST("webhook测试")
 }

@@ -38,13 +38,13 @@ import io.swagger.annotations.ApiModel
 
 @ApiModel("校验权限请求")
 data class CheckPermissionRequest(
-    val uid: String,
-    override var resourceType: ResourceType,
-    val action: PermissionAction,
-    override var projectId: String? = null,
-    override var repoName: String? = null,
-    override var path: String? = null,
-    val role: String? = null,
-    val appId: String? = null,
-    val department: String? = null
+	val uid: String,
+	override var resourceType: ResourceType,
+	val action: PermissionAction,
+	override var projectId: String? = null,
+	override var repoName: String? = null,
+	override var path: String? = null,
+	val role: String? = null,
+	val appId: String? = null,
+	val department: String? = null
 ) : ResourceBaseRequest(resourceType, projectId, repoName, path)

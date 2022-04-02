@@ -80,7 +80,7 @@ class UserRepositoryController(
         @PathVariable type: String? = null
     ): Response<RepositoryInfo?> {
         permissionManager.checkPermission(ResourceType.REPO, PermissionAction.READ, projectId, repoName)
-        return ResponseBuilder.success(repositoryService.getRepoInfo(projectId, repoName))
+        return ResponseBuilder.success(repositoryService.getRepoInfo(projectId, repoName, type))
     }
 
     @ApiOperation("根据名称查询仓库是否存在")
@@ -207,7 +207,7 @@ class UserRepositoryController(
     }
 
     @ApiOperation("更新仓库")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.UPDATE)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.MANAGE)
     @PostMapping("/update/{projectId}/{repoName}")
     fun updateRepo(
         @RequestAttribute userId: String,

@@ -33,7 +33,8 @@ package com.tencent.bkrepo.maven.artifact
 
 import com.tencent.bkrepo.common.artifact.resolve.path.ArtifactInfoResolver
 import com.tencent.bkrepo.common.artifact.resolve.path.Resolver
-import com.tencent.bkrepo.maven.PACKAGE_SUFFIX_REGEX
+import com.tencent.bkrepo.maven.constants.PACKAGE_SUFFIX_REGEX
+import com.tencent.bkrepo.maven.exception.MavenBadRequestException
 import org.apache.commons.lang.StringUtils
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -51,13 +52,12 @@ class MavenArtifactInfoResolver : ArtifactInfoResolver {
         val mavenArtifactInfo = MavenArtifactInfo(projectId, repoName, artifactUri)
         val fileName = artifactUri.substringAfterLast("/")
         if (fileName.matches(Regex(PACKAGE_SUFFIX_REGEX))) {
-            val paths = artifactUri.removePrefix("/").removeSuffix("/").split("/")
+            val paths = artifactUri.trim('/').split("/")
             if (paths.size < pathMinLimit) {
-                logger.debug(
-                    "Cannot build MavenArtifactInfo from '{}'. The groupId, artifactId and version are unreadable.",
-                    artifactUri
-                )
-                return MavenArtifactInfo("", "", "")
+                val message = "Cannot build MavenArtifactInfo from '$artifactUri'. " +
+                    "The groupId, artifactId and version are unreadable."
+                logger.warn(message)
+                throw MavenBadRequestException(message)
             }
             var pos = paths.size - groupMark
             mavenArtifactInfo.jarName = paths.last()
@@ -71,7 +71,7 @@ class MavenArtifactInfoResolver : ArtifactInfoResolver {
             mavenArtifactInfo.groupId = StringUtils.join(groupCollection, ".")
 
             require(mavenArtifactInfo.isValid()) {
-                throw IllegalArgumentException("Invalid unit info for '${mavenArtifactInfo.getArtifactFullPath()}'.")
+                throw MavenBadRequestException("Invalid unit info for '${mavenArtifactInfo.getArtifactFullPath()}'.")
             }
         }
         return mavenArtifactInfo

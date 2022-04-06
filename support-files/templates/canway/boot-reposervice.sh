@@ -125,8 +125,6 @@ function startup() {
         echo "$($RUNNING) PID=$PID"
 
     fi
-	. $CTRL_DIR/utils.fc
-    ssh -o StrictHostKeyChecking=no $REDIS_IP redis-cli -h $REDIS_IP -p $REDIS_PORT -a "$REDIS_PASS" set ${SERVICE_NAME}Status 1 &> /dev/null
 }
 
 function checkPortStatus() {
@@ -182,8 +180,6 @@ function shutdown(){
     else
         echo "${PROJECT_NAME}-${SERVICE_NAME}: $($EXIT)"
     fi
-	. $CTRL_DIR/utils.fc
-    ssh -o StrictHostKeyChecking=no $REDIS_IP redis-cli -h $REDIS_IP -p $REDIS_PORT -a "$REDIS_PASS" set ${SERVICE_NAME}Status 0 &> /dev/null
 }
 
 function getServerStatus(){

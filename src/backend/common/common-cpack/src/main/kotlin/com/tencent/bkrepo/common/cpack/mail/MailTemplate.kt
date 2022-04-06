@@ -138,6 +138,7 @@ object MailTemplate {
 
     fun fileTableHtml(
         cnName: String,
+        projectId: String,
         expireDays: String?,
         shareFileList: List<FileShareInfo>
     ): String {
@@ -230,7 +231,7 @@ object MailTemplate {
                                                 )
                                                 p {
                                                     "style"("margin: 0px")
-                                                    +"test.txt"
+                                                    +it.fileName
                                                 }
                                                 p {
                                                     "style"("margin: 0px;color: #c7c7c7")
@@ -244,7 +245,7 @@ object MailTemplate {
                                                         "text-align: left; " +
                                                         "font-weight: normal"
                                                 )
-                                                +it.fileName
+                                                +projectId
                                             }
                                             td {
                                                 "style"(

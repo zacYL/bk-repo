@@ -171,6 +171,7 @@ class MailServiceImpl(
             nest = MailTemplate.mainBodyHtml(
                 MailTemplate.fileTableHtml(
                     cnName = sender,
+                    projectId = file.projectId,
                     expireDays = expireDays,
                     shareFileList = listOf(file)
                 )
@@ -194,6 +195,7 @@ class MailServiceImpl(
                 nest = MailTemplate.mainBodyHtml(
                     MailTemplate.fileTableHtml(
                         cnName = sender,
+                        projectId = file.projectId,
                         expireDays = expireDays,
                         shareFileList = listOf(file)
                     )
@@ -216,6 +218,7 @@ class MailServiceImpl(
                 nest = MailTemplate.mainBodyHtml(
                     MailTemplate.fileTableHtml(
                         cnName = sender,
+                        projectId = file.projectId,
                         expireDays = expireDays,
                         shareFileList = listOf(file)
                     )

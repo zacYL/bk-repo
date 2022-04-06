@@ -40,6 +40,7 @@ import com.tencent.bkrepo.common.security.http.jwt.JwtAuthProperties
 import com.tencent.bkrepo.common.security.util.JwtUtils
 import io.jsonwebtoken.ExpiredJwtException
 import io.jsonwebtoken.JwtException
+import org.slf4j.LoggerFactory
 import javax.servlet.http.HttpServletRequest
 
 /**
@@ -50,12 +51,14 @@ open class CookieAuthHandler(properties: JwtAuthProperties) : HttpAuthHandler {
     private val signingKey = JwtUtils.createSigningKey(properties.secretKey)
 
     override fun extractAuthCredentials(request: HttpServletRequest): HttpAuthCredentials {
-        val cookies = request.cookies?: return AnonymousCredentials()
+        val cookies = request.cookies ?: return AnonymousCredentials()
         for (cookie in cookies) {
             if (cookie.name == BKREPO_TICKET) {
+                logger.debug("found cookie [${cookie.name} : ${cookie.value}]")
                 return CookieAuthCredentials(cookie.value)
             }
         }
+        logger.debug("not found cookie [${BKREPO_TICKET}]")
         return AnonymousCredentials()
     }
 
@@ -71,5 +74,9 @@ open class CookieAuthHandler(properties: JwtAuthProperties) : HttpAuthHandler {
         } catch (exception: IllegalArgumentException) {
             throw AuthenticationException("Empty token")
         }
+    }
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(CookieAuthHandler::class.java)
     }
 }

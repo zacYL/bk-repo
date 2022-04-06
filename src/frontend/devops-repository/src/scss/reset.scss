@@ -1,6 +1,6 @@
 @charset 'utf-8';
 body {
-    /*  */
+    /* 分页 */
     .bk-page.bk-page-small {
         display: flex;
         align-items: center;
@@ -36,9 +36,16 @@ body {
     .bk-table {
         /* 列边距 */
         .cell {
-            display: flex;
-            align-items: center;
             padding: 0 10px;
+        }
+        /* 替换图标 */ 
+        .bk-table-column-expand .bk-table-expand-icon .bk-icon {
+            font-size: 20px;
+            color: var(--fontSubsidiaryColor);
+            margin: -10px 0 0 -10px;
+            &:before {
+                content: '\e107'
+            }
         }
         /* 行高 */
         td, th {
@@ -180,6 +187,7 @@ body {
     .bk-button,
     .bk-date-picker-rel .bk-date-picker-editor,
     .bk-form-checkbox .bk-checkbox,
+    .bk-tag-selector .bk-tag-input,
     .bk-form-radio input[type=radio] {
         border-color: var(--borderWeightColor);
     }
@@ -257,18 +265,44 @@ body {
         height: calc(100% - 60px);
         overflow: hidden;
     }
+
     .bk-tag-selector{
         .bk-tag-input {
             height: 32px;
             .tag-list {
-                position: absolute;
-                width: calc(100% - 25px);
-                height: 100%;
                 float: none;
+                height: 100%;
+                overflow-y: hidden;
+                .key-node {
+                    background-color: transparent;
+                    border-color: transparent;
+                    .tag {
+                        color: var(--primaryColor);
+                        background-color: var(--bgLightColor);
+                        &:hover {
+                            background-color: var(--bgHoverLighterColor);
+                        }
+                    }
+                }
             }
             .clear-icon {
                 position: absolute;
                 right: 0;
+            }
+        }
+    }
+
+    .bk-select-tag-container {
+        &.is-small-size .bk-select-tag {
+            line-height: 20px;
+        }
+        &.is-available {
+            .bk-select-tag {
+                color: var(--primaryColor);
+                background-color: var(--bgLightColor);
+                &:hover {
+                    background-color: var(--bgHoverLighterColor);
+                }
             }
         }
     }
@@ -288,6 +322,48 @@ body {
             .content {
                 max-height: initial;
                 margin: initial;
+                .bk-select {
+                    .icon-close-circle-shape {
+                        font-size: 14px;
+                    }
+                    .icon-angle-down {
+                        font-size: 22px;
+                    }
+                    .icon-close {
+                        font-size: 18px;
+                    }
+                }
+            }
+        }
+    }
+
+    .bk-form {
+        .bk-form-item {
+            .bk-label {
+                padding-right: 10px;
+            }
+            &.is-required {
+                .bk-label {
+                    &:before {
+                        content: '*';
+                        margin-right: 3px;
+                        vertical-align: middle;
+                    }
+                    &:after {
+                        display: none;
+                    }
+                }
+            }
+        }
+    }
+
+    .bk-select-dropdown-content.show-select-all {
+        .bk-option:first-child {
+            .bk-option-name {
+                text-align: right;
+            }
+            &:hover {
+                background-color: transparent;
             }
         }
     }

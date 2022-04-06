@@ -73,13 +73,10 @@ function startup() {
     WEB_BASEDIR=${SERVICE_HOME}/rundata
     #	说明：以下最小内存和最大内存 当配置时最好配置成一样的,32GB机器上配置16GB内存，64GB机器配置32GB内存
     JAVA_OPTS="$JAVA_OPTS -Xms2g -Xmx2g"
-#    JAVA_OPTS="-Dserver.address=__LAN_IP__"
     JAVA_OPTS="$JAVA_OPTS -XX:NewRatio=1 -XX:SurvivorRatio=8 -XX:+UseConcMarkSweepGC"
 #    JAVA_OPTS="$JAVA_OPTS -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+PrintGCTimeStamps -Xloggc:$LOGS_HOME/gc_${SERVICE_NAME}.log "
-    JAVA_OPTS="$JAVA_OPTS -server -Dcertificate.file=${CERT_PATH}/bkci_platform.cert -Dfile.encoding=UTF-8 -Djava.security.egd=file:/dev/./urandom"
     JAVA_OPTS="$JAVA_OPTS -Dspring.config.location=file:${CONF_HOME}/common.yaml,file:${CONF_HOME}/application-${SERVICE_NAME}.yaml"
     JAVA_OPTS="$JAVA_OPTS -Dservice.log.dir=${LOGS_HOME} -Dmanagement.endpoint.logfile.external-file=${LOGS_HOME}${ORIGIN_SERVICE_NAME}/${ORIGIN_SERVICE_NAME}.log"
-    JAVA_OPTS="$JAVA_OPTS -Ddevops_gateway=__HTTP_SCHEMA__://__BKCI_FQDN__"
 
     export JAVA_OPTS
 
@@ -128,8 +125,6 @@ function startup() {
         echo "$($RUNNING) PID=$PID"
 
     fi
-	. $CTRL_DIR/utils.fc
-    ssh -o StrictHostKeyChecking=no $REDIS_IP redis-cli -h $REDIS_IP -p $REDIS_PORT -a "$REDIS_PASS" set ${SERVICE_NAME}Status 1 &> /dev/null
 }
 
 function checkPortStatus() {
@@ -185,8 +180,6 @@ function shutdown(){
     else
         echo "${PROJECT_NAME}-${SERVICE_NAME}: $($EXIT)"
     fi
-	. $CTRL_DIR/utils.fc
-    ssh -o StrictHostKeyChecking=no $REDIS_IP redis-cli -h $REDIS_IP -p $REDIS_PORT -a "$REDIS_PASS" set ${SERVICE_NAME}Status 0 &> /dev/null
 }
 
 function getServerStatus(){

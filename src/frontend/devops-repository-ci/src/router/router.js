@@ -1,26 +1,26 @@
-const repoHome = () => import(/* webpackChunkName: "repoHome" */'@/views')
+const repoHome = () => import('@/views')
 
-const repoList = () => import(/* webpackChunkName: "repoList" */'@/views/repoList')
-const repoConfig = () => import(/* webpackChunkName: "repoConfig" */'@/views/repoConfig')
-const repoToken = () => import(/* webpackChunkName: "repoToken" */'@repository/views/repoToken')
-const repoAudit = () => import(/* webpackChunkName: "repoAudit" */'@repository/views/repoAudit')
-const nodeManage = () => import(/* webpackChunkName: "nodeManage" */'@repository/views/nodeManage')
-const planManage = () => import(/* webpackChunkName: "planManage" */'@repository/views/planManage')
-const createPlan = () => import(/* webpackChunkName: "createPlan" */'@repository/views/planManage/createPlan')
-const logDetail = () => import(/* webpackChunkName: "logDetail" */'@repository/views/planManage/logDetail')
+const repoList = () => import('@/views/repoList')
+const repoConfig = () => import('@/views/repoConfig')
+const repoToken = () => import('@repository/views/repoToken')
+const repoAudit = () => import('@repository/views/repoAudit')
+const nodeManage = () => import('@repository/views/nodeManage')
+const planManage = () => import('@repository/views/planManage')
+const createPlan = () => import('@repository/views/planManage/createPlan')
+const logDetail = () => import('@repository/views/planManage/logDetail')
 
-const repoGeneric = () => import(/* webpackChunkName: "repoGeneric" */'@/views/repoGeneric')
+const repoGeneric = () => import('@/views/repoGeneric')
 
-const commonPackageList = () => import(/* webpackChunkName: "repoCommon" */'@repository/views/repoCommon/commonPackageList')
-const commonPackageDetail = () => import(/* webpackChunkName: "repoCommon" */'@/views/repoCommon/commonPackageDetail')
+const commonPackageList = () => import('@repository/views/repoCommon/commonPackageList')
+const commonPackageDetail = () => import('@/views/repoCommon/commonPackageDetail')
 
-const repoSearch = () => import(/* webpackChunkName: "repoSearch" */'@repository/views/repoSearch')
+const repoSearch = () => import('@repository/views/repoSearch')
 
-const repoScan = () => import(/* webpackChunkName: "repoScan" */'@repository/views/repoScan')
-const scanReport = () => import(/* webpackChunkName: "scanReport" */'@repository/views/repoScan/scanReport')
-const artiReport = () => import(/* webpackChunkName: "artiReport" */'@repository/views/repoScan/artiReport')
-const scanConfig = () => import(/* webpackChunkName: "scanConfig" */'@repository/views/repoScan/scanConfig')
-const startScan = () => import(/* webpackChunkName: "scanConfig" */'@repository/views/repoScan/startScan')
+const repoScan = () => import('@repository/views/repoScan')
+const scanReport = () => import('@repository/views/repoScan/scanReport')
+const artiReport = () => import('@repository/views/repoScan/artiReport')
+const scanConfig = () => import('@repository/views/repoScan/scanConfig')
+const startScan = () => import('@repository/views/repoScan/startScan')
 
 const routes = [
     {

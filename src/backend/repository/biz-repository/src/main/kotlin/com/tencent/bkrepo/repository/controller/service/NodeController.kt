@@ -150,20 +150,6 @@ class NodeController(
         return ResponseBuilder.success(nodeService.listNode(artifactInfo, nodeListOption))
     }
 
-    override fun capacity(projectId: String?, repoName: String?): Response<Long> {
-        val count = if (projectId == null) {
-            val projectList = projectService.listProject()
-            var temp = 0L
-            for (project in projectList) {
-                temp += nodeService.capacity(project.name, null)
-            }
-            temp
-        } else {
-            nodeService.capacity(projectId, repoName)
-        }
-        return ResponseBuilder.success(count)
-    }
-
     companion object {
         private val logger: Logger = LoggerFactory.getLogger(NodeController::class.java)
     }

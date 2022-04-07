@@ -163,11 +163,4 @@ interface NodeClient {
         @ApiParam(value = "是否深度查询文件", required = false, defaultValue = "false")
         @RequestParam deep: Boolean = false
     ): Response<List<NodeInfo>>
-
-    @ApiOperation("统计占用空间大小")
-    @GetMapping("/capacity")
-    fun capacity(
-        @RequestParam projectId: String?,
-        @RequestParam repoName: String?
-    ): Response<Long>
 }

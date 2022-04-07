@@ -110,10 +110,6 @@ class NodeServiceImpl(
         return NodeDeleteSupport(this).deleteBeforeDate(projectId, repoName, date, operator)
     }
 
-    override fun deleteBeforeDate(projectId: String, repoName: String, date: LocalDateTime, operator: String) {
-        NodeDeleteSupport(this).deleteBeforeDate(projectId, repoName, date, operator)
-    }
-
     @Transactional(rollbackFor = [Throwable::class])
     override fun moveNode(moveRequest: NodeMoveCopyRequest) {
         NodeMoveCopySupport(this).moveNode(moveRequest)
@@ -136,9 +132,5 @@ class NodeServiceImpl(
 
     override fun listDeletedPoint(artifact: ArtifactInfo): List<NodeDeletedPoint> {
         return NodeRestoreSupport(this).listDeletedPoint(artifact)
-    }
-
-    override fun capacity(projectId: String, repoName: String?): Long {
-        return NodeStatsSupport(this).capacity(projectId, repoName)
     }
 }

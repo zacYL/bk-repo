@@ -146,5 +146,9 @@ export default {
                 }
             }
         )
+    },
+    // 获取扫描器列表
+    getScannerList () {
+        return Vue.prototype.$ajax.get('/scanner/api/scanners')
     }
 }

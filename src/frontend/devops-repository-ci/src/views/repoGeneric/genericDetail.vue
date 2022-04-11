@@ -294,8 +294,5 @@
             }
         }
     }
-    .code-tip {
-        color: var(--fontSubsidiaryColor);
-    }
 }
 </style>

@@ -61,6 +61,13 @@ class HelmExceptionHandler {
         helmResponse(responseObject, exception)
     }
 
+    @ExceptionHandler(HelmBadRequestException::class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    fun handlerBadRequestException(exception: HelmBadRequestException) {
+        val responseObject = HelmErrorResponse(exception.message)
+        helmResponse(responseObject, exception)
+    }
+
     @ExceptionHandler(AuthenticationException::class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     fun handlerClientAuthException(exception: AuthenticationException) {
@@ -109,7 +116,7 @@ class HelmExceptionHandler {
         val userId = HttpContextHolder.getRequest().getAttribute(USER_KEY) ?: ANONYMOUS_USER
         val uri = HttpContextHolder.getRequest().requestURI
         logger.warn(
-            "User[$userId] access resource[$uri] failed[${exception.javaClass.simpleName}]: ${exception.message}"
+            "User[$userId] access helm resource[$uri] failed[${exception.javaClass.simpleName}]: ${exception.message}"
         )
     }
 

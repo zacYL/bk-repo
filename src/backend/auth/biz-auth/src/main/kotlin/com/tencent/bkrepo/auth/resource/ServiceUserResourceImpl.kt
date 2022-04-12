@@ -31,6 +31,7 @@
 
 package com.tencent.bkrepo.auth.resource
 
+import cn.hutool.crypto.CryptoException
 import com.tencent.bkrepo.auth.api.ServiceUserResource
 import com.tencent.bkrepo.auth.constant.BKREPO_TICKET
 import com.tencent.bkrepo.auth.constant.PROJECT_MANAGE_ID
@@ -54,6 +55,7 @@ import com.tencent.bkrepo.auth.pojo.user.UserInfo
 import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.service.RoleService
 import com.tencent.bkrepo.auth.service.UserService
+import com.tencent.bkrepo.auth.util.RsaUtils
 import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.pojo.Page
@@ -88,12 +90,13 @@ class ServiceUserResourceImpl @Autowired constructor(
         val userId = SecurityUtils.getUserId()
         // check 用户权限,非匿名用户
         if (ANONYMOUS_USER != userId) {
-            val checkRequest =
-                CheckPermissionRequest(
-                    uid = userId,
-                    resourceType = ResourceType.SYSTEM,
-                    action = PermissionAction.WRITE
-                )
+            val checkRequest = CheckPermissionRequest(
+                uid = userId,
+                resourceType = ResourceType.PROJECT,
+                action = PermissionAction.WRITE,
+                projectId = request.projectId,
+                appId = SecurityUtils.getPlatformId()
+            )
             if (!permissionService.checkPermission(checkRequest)) {
                 logger.warn("check user permission error [$checkRequest]")
                 throw ErrorCodeException(AuthMessageCode.AUTH_PERMISSION_FAILED)
@@ -101,15 +104,13 @@ class ServiceUserResourceImpl @Autowired constructor(
         }
 
         userService.createUserToProject(request)
-        val createRoleRequest =
-            CreateRoleRequest(
-                PROJECT_MANAGE_ID,
-                PROJECT_MANAGE_NAME,
-                RoleType.PROJECT,
-                request.projectId,
-                null,
-                true
-            )
+        val createRoleRequest = CreateRoleRequest(
+            roleId = PROJECT_MANAGE_ID,
+            name = PROJECT_MANAGE_NAME,
+            type = RoleType.PROJECT,
+            projectId = request.projectId,
+            admin = true
+        )
         val roleId = roleService.createRole(createRoleRequest)
         userService.addUserToRole(request.userId, roleId!!)
         return ResponseBuilder.success(true)
@@ -119,43 +120,31 @@ class ServiceUserResourceImpl @Autowired constructor(
         val userId = SecurityUtils.getUserId()
         // check 用户权限,非匿名用户
         if (ANONYMOUS_USER != userId) {
-            val checkRequest =
-                CheckPermissionRequest(
-                    uid = userId,
-                    resourceType = ResourceType.PROJECT,
-                    action = PermissionAction.WRITE,
-                    projectId = request.projectId
-                )
+            val checkRequest = CheckPermissionRequest(
+                uid = userId,
+                resourceType = ResourceType.PROJECT,
+                action = PermissionAction.WRITE,
+                projectId = request.projectId,
+                appId = SecurityUtils.getPlatformId()
+            )
             if (!permissionService.checkPermission(checkRequest)) {
                 logger.warn("check user permission error [$checkRequest]")
                 throw ErrorCodeException(AuthMessageCode.AUTH_PERMISSION_FAILED)
             }
         }
         userService.createUserToRepo(request)
-        val createRoleRequest =
-            CreateRoleRequest(
-                REPO_MANAGE_ID,
-                REPO_MANAGE_NAME,
-                RoleType.REPO,
-                request.projectId,
-                request.repoName,
-                true
-            )
+        val createRoleRequest = CreateRoleRequest(
+            roleId = REPO_MANAGE_ID,
+            name = REPO_MANAGE_NAME,
+            type = RoleType.REPO,
+            projectId = request.projectId,
+            repoName = request.repoName,
+            admin = true
+        )
         val roleId = roleService.createRole(createRoleRequest)
         userService.addUserToRole(request.userId, roleId!!)
         return ResponseBuilder.success(true)
     }
-
-//    override fun listUser(rids: List<String>?): Response<List<UserResult>> {
-//        val result = userService.listUser(rids.orEmpty()).map {
-//            UserResult(it.userId, it.name)
-//        }
-//        return ResponseBuilder.success(result)
-//    }
-//
-//    override fun listAllUser(rids: List<String>?): Response<List<User>> {
-//        return ResponseBuilder.success(userService.listUser(rids.orEmpty()))
-//    }
 
     override fun deleteById(uid: String): Response<Boolean> {
         userService.deleteById(uid)
@@ -192,11 +181,18 @@ class ServiceUserResourceImpl @Autowired constructor(
     }
 
     override fun createToken(uid: String): Response<Token?> {
+        checkUserId(uid)
         val result = userService.createToken(uid)
         return ResponseBuilder.success(result)
     }
 
-    override fun addUserToken(uid: String, name: String, expiredAt: String?, projectId: String?): Response<Token?> {
+    override fun addUserToken(
+        uid: String,
+        name: String,
+        expiredAt: String?,
+        projectId: String?
+    ): Response<Token?> {
+        checkUserId(uid)
         // add user to project first
         projectId?.let {
             val createRoleRequest = CreateRoleRequest(
@@ -216,18 +212,15 @@ class ServiceUserResourceImpl @Autowired constructor(
     }
 
     override fun listUserToken(uid: String): Response<List<TokenResult>> {
+        checkUserId(uid)
         val result = userService.listUserToken(uid)
         return ResponseBuilder.success(result)
     }
 
     override fun deleteToken(uid: String, name: String): Response<Boolean> {
+        checkUserId(uid)
         val result = userService.removeToken(uid, name)
         return ResponseBuilder.success(result)
-    }
-
-    override fun checkUserToken(uid: String, token: String): Response<Boolean> {
-        userService.findUserByUserToken(uid, token) ?: return ResponseBuilder.success(false)
-        return ResponseBuilder.success(true)
     }
 
     override fun checkToken(uid: String, token: String): Response<Boolean> {
@@ -235,8 +228,19 @@ class ServiceUserResourceImpl @Autowired constructor(
         return ResponseBuilder.success(true)
     }
 
+    override fun getPublicKey(): Response<String?> {
+        return ResponseBuilder.success(RsaUtils.publicKey)
+    }
+
     override fun loginUser(uid: String, token: String): Response<Boolean> {
-        userService.findUserByUserToken(uid, token) ?: run {
+        val decryptToken: String?
+        try {
+            decryptToken = RsaUtils.decrypt(token)
+        } catch (e: CryptoException) {
+            logger.warn("token decrypt failed token [$uid]")
+            throw AuthenticationException(messageCode = AuthMessageCode.AUTH_LOGIN_FAILED)
+        }
+        userService.findUserByUserToken(uid, decryptToken) ?: run {
             logger.info("user not match [$uid]")
             return ResponseBuilder.success(false)
         }
@@ -292,7 +296,16 @@ class ServiceUserResourceImpl @Autowired constructor(
     }
 
     override fun updatePassword(uid: String, oldPwd: String, newPwd: String): Response<Boolean> {
-        return ResponseBuilder.success(userService.updatePassword(uid, oldPwd, newPwd))
+        val decryptOldPwd: String?
+        val decryptNewPwd: String?
+        try {
+            decryptOldPwd = RsaUtils.decrypt(oldPwd)
+            decryptNewPwd = RsaUtils.decrypt(newPwd)
+        } catch (e: CryptoException) {
+            logger.warn("token decrypt failed [$uid]")
+            throw AuthenticationException(messageCode = AuthMessageCode.AUTH_LOGIN_TOKEN_CHECK_FAILED)
+        }
+        return ResponseBuilder.success(userService.updatePassword(uid, decryptOldPwd, decryptNewPwd))
     }
 
     override fun resetPassword(uid: String): Response<Boolean> {
@@ -301,6 +314,14 @@ class ServiceUserResourceImpl @Autowired constructor(
 
     override fun repeatUid(uid: String): Response<Boolean> {
         return ResponseBuilder.success(userService.repeatUid(uid))
+    }
+
+    private fun checkUserId(uid: String) {
+        val userId = SecurityUtils.getUserId()
+        if (userId.isNotEmpty() && userId != uid) {
+            logger.warn("use not match [$userId, $uid]")
+            throw ErrorCodeException(AuthMessageCode.AUTH_USER_TOKEN_EXIST)
+        }
     }
 
     companion object {

@@ -14,18 +14,19 @@ import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionUpdateR
 object PackageEventFactory {
 
     /**
-     * 包版本创建事件-upload 新包
+     * 包版本创建事件
+     * [realIpAddress]: 由调用方传递真实的请求来源IP, 否则记录的是微服务调用机器的IP
      */
     fun buildCreatedEvent(request: PackageVersionCreateRequest, realIpAddress: String?): VersionCreatedEvent {
         with(request) {
             return VersionCreatedEvent(
                 projectId = projectId,
                 repoName = repoName,
-                packageType = packageType.name,
                 packageKey = packageKey,
-                packageName = packageName,
                 packageVersion = versionName,
                 userId = createdBy,
+                packageType = packageType.name,
+                packageName = packageName,
                 realIpAddress = realIpAddress
             )
         }
@@ -49,6 +50,9 @@ object PackageEventFactory {
         }
     }
 
+    /**
+     * 包版本更新事件-update 请求
+     */
     fun buildUpdatedEvent(
         request: PackageVersionUpdateRequest,
         packageType: String,
@@ -96,7 +100,7 @@ object PackageEventFactory {
     }
 
     /**
-     * 包版本下载事件
+     * 包版本删除事件
      */
     fun buildDeletedEvent(
         projectId: String,

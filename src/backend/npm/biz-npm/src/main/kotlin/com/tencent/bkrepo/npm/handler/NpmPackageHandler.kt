@@ -33,7 +33,6 @@ package com.tencent.bkrepo.npm.handler
 
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
-import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
 import com.tencent.bkrepo.npm.constants.NPM_PKG_TGZ_FULL_PATH
@@ -185,7 +184,7 @@ class NpmPackageHandler {
     fun deletePackage(userId: String, name: String, artifactInfo: NpmArtifactInfo) {
         val packageKey = PackageKeys.ofNpm(name)
         with(artifactInfo) {
-            packageClient.deletePackage(projectId, repoName, packageKey).apply {
+            packageClient.deletePackage(projectId, repoName, packageKey, HttpContextHolder.getClientAddress()).apply {
                 logger.info("user: [$userId] delete package [$name] in repo [$projectId/$repoName] success!")
             }
         }

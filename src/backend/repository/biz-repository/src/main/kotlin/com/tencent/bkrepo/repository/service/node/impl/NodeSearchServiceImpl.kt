@@ -32,26 +32,20 @@
 package com.tencent.bkrepo.repository.service.node.impl
 
 import com.tencent.bkrepo.common.api.pojo.Page
-import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
-import com.tencent.bkrepo.common.query.enums.OperationType
-import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.common.query.model.QueryModel
-import com.tencent.bkrepo.common.query.model.Rule
-import com.tencent.bkrepo.common.query.model.Sort
-import com.tencent.bkrepo.common.api.util.MongoEscapeUtils
-import com.tencent.bkrepo.repository.api.RepositoryClient
+import com.tencent.bkrepo.common.query.util.MongoEscapeUtils
+import com.tencent.bkrepo.common.security.http.core.HttpAuthProperties
 import com.tencent.bkrepo.repository.dao.NodeDao
 import com.tencent.bkrepo.repository.model.TNode
-import com.tencent.bkrepo.repository.pojo.metric.CountResult
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
+import com.tencent.bkrepo.repository.pojo.repo.RepoListOption
+import com.tencent.bkrepo.repository.pojo.software.CountResult
 import com.tencent.bkrepo.repository.pojo.software.ProjectPackageOverview
 import com.tencent.bkrepo.repository.search.node.NodeQueryContext
 import com.tencent.bkrepo.repository.search.node.NodeQueryInterpreter
 import com.tencent.bkrepo.repository.service.node.NodeSearchService
 import com.tencent.bkrepo.repository.service.repo.RepositoryService
-import com.tencent.bkrepo.scanner.api.ScanPlanClient
-import org.slf4j.LoggerFactory
 import org.springframework.data.mongodb.core.aggregation.Aggregation
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
@@ -68,9 +62,8 @@ import java.util.Date
 class NodeSearchServiceImpl(
     private val nodeDao: NodeDao,
     private val nodeQueryInterpreter: NodeQueryInterpreter,
-    private val repositoryClient: RepositoryClient,
     private val repositoryService: RepositoryService,
-    private val scanPlanClient: ScanPlanClient
+    private val httpAuthProperties: HttpAuthProperties
 ) : NodeSearchService {
 
     override fun search(queryModel: QueryModel): Page<Map<String, Any?>> {
@@ -84,13 +77,26 @@ class NodeSearchServiceImpl(
         name: String,
         exRepo: String?
     ): List<ProjectPackageOverview> {
-        val genericRepos = repositoryService.allRepos(projectId, null, RepositoryType.GENERIC)
-            .map { it?.name }
-        val exRepos = exRepo?.split(',')
-        val filterRepos = if (exRepos != null) {
-            genericRepos.filter { !exRepos.contains(it) }
-        } else genericRepos
-        val criteria = Criteria.where(TNode::repoName.name).`in`(filterRepos)
+        val repos = if (httpAuthProperties.enabled) {
+            repositoryService.listPermissionRepo(
+                userId = userId,
+                projectId = projectId,
+                option = RepoListOption(
+                    type = RepositoryType.GENERIC.name
+                )
+            ).map { it.name }
+        } else {
+            repositoryService.listRepo(
+                projectId = projectId,
+                type = RepositoryType.GENERIC.name
+            ).map { it.name }
+        }
+        val genericRepos = if (exRepo != null && exRepo.isNotBlank()) {
+            repos.filter { it !in (exRepo.split(',')) }
+        } else repos
+
+        if (genericRepos.isEmpty()) return listOf()
+        val criteria = Criteria.where(TNode::repoName.name).`in`(genericRepos)
         criteria.and(TNode::projectId.name).`is`(projectId)
             .and(TNode::deleted.name).`is`(null)
             .and(TNode::folder.name).`is`(false)
@@ -127,40 +133,6 @@ class NodeSearchServiceImpl(
         return projectSet.toList()
     }
 
-    override fun nodeGlobalSearch(projectId: String, name: String): Page<Map<String, Any?>> {
-        // 获取项目下所有二进制仓库
-        val repos =
-            repositoryClient.allRepos(projectId = projectId, repoType = RepositoryType.GENERIC).data?.map { it?.name }
-        if (repos.isNullOrEmpty()) return Page(1, 20, 0, listOf())
-        val projectRule = Rule.QueryRule(field = "projectId", value = projectId, operation = OperationType.EQ)
-        val repoRule = Rule.QueryRule(field = "repoName", value = repos, operation = OperationType.IN)
-        val fileRule = Rule.QueryRule(field = "folder", value = false, operation = OperationType.EQ)
-        val nameRule = Rule.QueryRule(
-            field = "name",
-            value = "*$name*",
-            operation = OperationType.MATCH_I
-        )
-        val rule =
-            Rule.NestedRule(mutableListOf(projectRule, repoRule, nameRule, fileRule), Rule.NestedRule.RelationType.AND)
-        val queryModel = QueryModel(
-            page = PageLimit(),
-            sort = Sort(listOf("lastModifiedDate"), Sort.Direction.DESC),
-            select = mutableListOf(
-                "projectId",
-                "repoName",
-                "fullPath",
-                "createdBy",
-                "createdDate",
-                "lastModifiedBy",
-                "lastModifiedDate",
-                "fullPath",
-                "name"
-            ),
-            rule = rule
-        )
-        return search(queryModel)
-    }
-
     private fun doQuery(context: NodeQueryContext): Page<Map<String, Any?>> {
         val query = context.mongoQuery
         val nodeList = nodeDao.find(query, MutableMap::class.java) as List<MutableMap<String, Any?>>
@@ -173,15 +145,12 @@ class NodeSearchServiceImpl(
             it[NodeInfo::lastModifiedDate.name]?.let { lastModifiedDate ->
                 it[TNode::lastModifiedDate.name] = convertDateTime(lastModifiedDate)
             }
+            it[NodeInfo::deleted.name]?.let { deleted ->
+                it[TNode::deleted.name] = convertDateTime(deleted)
+            }
             it[NodeInfo::metadata.name]?.let { metadata ->
                 it[NodeInfo::metadata.name] = convert(metadata as List<Map<String, Any>>)
             }
-            //获取制品关联方案状态
-            val fullPath = it[NodeInfo::fullPath.name]!!.toString()
-            if (fullPath.endsWith(".apk") || fullPath.endsWith(".ipa")) {
-                it["scanStatus"] = getScanStatus(fullPath, it)
-            }
-            logger.info("nodeInfo result:${it.toJsonString()}")
         }
         val countQuery = Query.of(query).limit(0).skip(0)
         val totalRecords = nodeDao.count(countQuery)
@@ -190,28 +159,7 @@ class NodeSearchServiceImpl(
         return Page(pageNumber + 1, query.limit, totalRecords, nodeList)
     }
 
-    private fun getScanStatus(fullPath: String, it: MutableMap<String, Any?>): String? {
-        return try {
-            scanPlanClient.artifactPlanStatus(
-                projectId = it[NodeInfo::projectId.name]!!.toString(),
-                repoName = it[NodeInfo::repoName.name]!!.toString(),
-                repoType = RepositoryType.GENERIC,
-                packageKey = null,
-                version = null,
-                fullPath = fullPath
-            ).data
-        } catch (exception: Exception) {
-            logger.error(
-                "projectId[${it[NodeInfo::projectId.name]}], repoType[GENERIC], " +
-                    "repo[${it[NodeInfo::repoName.name]}], fullPath[$fullPath], message:$exception"
-            )
-            null
-        }
-    }
-
     companion object {
-        private val logger = LoggerFactory.getLogger(NodeSearchServiceImpl::class.java)
-
         fun convert(metadataList: List<Map<String, Any>>): Map<String, Any> {
             return metadataList.filter { it.containsKey("key") && it.containsKey("value") }
                 .map { it.getValue("key").toString() to it.getValue("value") }

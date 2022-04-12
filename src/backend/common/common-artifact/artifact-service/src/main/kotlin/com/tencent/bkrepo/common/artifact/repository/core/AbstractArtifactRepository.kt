@@ -33,6 +33,7 @@ import com.tencent.bkrepo.common.artifact.event.ArtifactDownloadedEvent
 import com.tencent.bkrepo.common.artifact.event.ArtifactResponseEvent
 import com.tencent.bkrepo.common.artifact.event.ArtifactUploadedEvent
 import com.tencent.bkrepo.common.artifact.event.base.EventType
+import com.tencent.bkrepo.common.artifact.event.packages.VersionDownloadEvent
 import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
 import com.tencent.bkrepo.common.artifact.exception.ArtifactResponseException
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
@@ -128,7 +129,12 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
             val artifactInfo = context.artifactInfo
             val message = LocaleMessageUtils.getLocalizedMessage(exception.messageCode, exception.params)
             val code = exception.messageCode.getCode()
-            logger.warn("User[$principal] download artifact[$artifactInfo] failed[$code]$message")
+            val clientAddress = HttpContextHolder.getClientAddress()
+            val xForwardedFor = HttpContextHolder.getXForwardedFor()
+            logger.warn(
+                "User[$principal],ip[$clientAddress] download artifact[$artifactInfo] failed[$code]$message" +
+                    " X_FORWARDED_FOR: $xForwardedFor"
+            )
         } catch (exception: Exception) {
             this.onDownloadFailed(context, exception)
         } finally {
@@ -234,13 +240,14 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
                 } catch (e: Exception) {
                     logger.warn("Event: download request: [$it] publish failed")
                 }
+                publishDownloadEvent(context, it)
             }
         }
         if (throughput != Throughput.EMPTY) {
             publisher.publishEvent(ArtifactResponseEvent(artifactResource, throughput, context.storageCredentials))
+            publisher.publishEvent(ArtifactDownloadedEvent(context))
+            logger.info("User[${SecurityUtils.getPrincipal()}] download artifact[${context.artifactInfo}] success")
         }
-        publisher.publishEvent(ArtifactDownloadedEvent(context))
-        logger.info("User[${SecurityUtils.getPrincipal()}] download artifact[${context.artifactInfo}] success")
     }
 
     /**
@@ -276,6 +283,23 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
      */
     open fun onDownloadFinished(context: ArtifactDownloadContext) {
         artifactMetrics.downloadingCount.decrementAndGet()
+    }
+
+    private fun publishDownloadEvent(context: ArtifactDownloadContext, record: PackageDownloadRecord) {
+        if (context.repositoryDetail.type != RepositoryType.GENERIC) {
+            val packageType = context.repositoryDetail.type.name
+            val packageName = PackageKeys.resolveName(packageType.toLowerCase(), record.packageKey)
+            publisher.publishEvent(VersionDownloadEvent(
+                projectId = record.projectId,
+                repoName = record.repoName,
+                userId = SecurityUtils.getUserId(),
+                packageKey = record.packageKey,
+                packageVersion = record.packageVersion,
+                packageName = packageName,
+                packageType = packageType,
+                realIpAddress = HttpContextHolder.getClientAddress()
+            ))
+        }
     }
 
     companion object {

@@ -87,7 +87,7 @@ class PackageController(
     }
 
     override fun createVersion(request: PackageVersionCreateRequest, realIpAddress: String?): Response<Void> {
-        packageService.createPackageVersion(request)
+        packageService.createPackageVersion(request, realIpAddress)
         return ResponseBuilder.success()
     }
 
@@ -97,7 +97,7 @@ class PackageController(
         packageKey: String,
         realIpAddress: String?
     ): Response<Void> {
-        packageService.deletePackage(projectId, repoName, packageKey)
+        packageService.deletePackage(projectId, repoName, packageKey, realIpAddress)
         return ResponseBuilder.success()
     }
 
@@ -108,17 +108,17 @@ class PackageController(
         version: String,
         realIpAddress: String?
     ): Response<Void> {
-        packageService.deleteVersion(projectId, repoName, packageKey, version)
+        packageService.deleteVersion(projectId, repoName, packageKey, version, realIpAddress)
         return ResponseBuilder.success()
     }
 
     override fun updatePackage(request: PackageUpdateRequest, realIpAddress: String?): Response<Void> {
-        packageService.updatePackage(request)
+        packageService.updatePackage(request, realIpAddress)
         return ResponseBuilder.success()
     }
 
     override fun updateVersion(request: PackageVersionUpdateRequest, realIpAddress: String?): Response<Void> {
-        packageService.updateVersion(request)
+        packageService.updateVersion(request, realIpAddress)
         return ResponseBuilder.success()
     }
 

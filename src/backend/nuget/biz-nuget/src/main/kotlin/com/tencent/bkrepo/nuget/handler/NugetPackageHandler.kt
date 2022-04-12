@@ -3,17 +3,20 @@ package com.tencent.bkrepo.nuget.handler
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
-import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.nuget.artifact.NugetArtifactInfo
+import com.tencent.bkrepo.nuget.constant.DEPENDENCY
+import com.tencent.bkrepo.nuget.constant.FRAMEWORKS
+import com.tencent.bkrepo.nuget.constant.ID
 import com.tencent.bkrepo.nuget.constant.PACKAGE
+import com.tencent.bkrepo.nuget.constant.REFERENCE
+import com.tencent.bkrepo.nuget.constant.VERSION
+import com.tencent.bkrepo.nuget.pojo.artifact.NugetPublishArtifactInfo
 import com.tencent.bkrepo.nuget.pojo.nuspec.Dependency
 import com.tencent.bkrepo.nuget.pojo.nuspec.DependencyGroup
 import com.tencent.bkrepo.nuget.pojo.nuspec.FrameworkAssembly
-import com.tencent.bkrepo.nuget.pojo.nuspec.NuspecMetadata
 import com.tencent.bkrepo.nuget.pojo.nuspec.Reference
 import com.tencent.bkrepo.nuget.pojo.nuspec.ReferenceGroup
-import com.tencent.bkrepo.nuget.pojo.artifact.NugetPublishArtifactInfo
 import com.tencent.bkrepo.repository.api.PackageClient
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
@@ -22,7 +25,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import java.util.StringJoiner
-import kotlin.system.measureTimeMillis
+import kotlin.collections.HashSet
 
 @Component
 class NugetPackageHandler {
@@ -38,17 +41,23 @@ class NugetPackageHandler {
     ) {
         with(context.artifactInfo as NugetPublishArtifactInfo) {
             nuspecPackage.metadata.apply {
-                var metadata: Map<String, Any>? = null
                 logger.info(
                     "start index nuget metadata for package [$id] and version [$version] " +
                         "in repo [${getRepoIdentify()}]"
                 )
-                measureTimeMillis { metadata = indexMetadata(this) }.apply {
-                    logger.info(
-                        "finished index nuget metadata for package [$id] and version [$version] " +
-                            "in repo [${getRepoIdentify()}], elapse [$this] ms."
-                    )
-                }
+                val metadata = mutableMapOf<String, Any>()
+                metadata[ID] = id
+                metadata[VERSION] = version
+                dependencies?.let { metadata[DEPENDENCY] = buildDependencies(it) }
+                references?.let { metadata[REFERENCE] = buildReferences(it) }
+                frameworkAssemblies?.let { metadata[FRAMEWORKS] = buildFrameworks(it) }
+
+//                measureTimeMillis { metadata = indexMetadata(this) }.apply {
+//                    logger.info(
+//                        "finished index nuget metadata for package [$id] and version [$version] " +
+//                            "in repo [${getRepoIdentify()}], elapse [$this] ms."
+//                    )
+//                }
                 // versionExtension
                 val versionExtension = mutableMapOf<String, Any>(
                     PACKAGE to this.toJsonString()
@@ -78,36 +87,36 @@ class NugetPackageHandler {
         }
     }
 
-    private fun indexMetadata(nuspecMetadata: NuspecMetadata): Map<String, Any> {
-        val metadata: MutableMap<String, Any> = mutableMapOf()
-        if (nuspecMetadata.isValid()) {
-            with(nuspecMetadata) {
-                metadata["id"] = id
-                metadata["version"] = version
-                metadata["authors"] = authors
-                metadata["description"] = description
-                /**owners?.let { metadata["owners"] = it }
-                projectUrl?.let { metadata["projectUrl"] = it }
-                licenseUrl?.let { metadata["licenseUrl"] = it }
-                license?.let { metadata["license"] = it }
-                iconUrl?.let { metadata["iconUrl"] = it }
-                icon?.let { metadata["icon"] = it }
-                requireLicenseAcceptance?.let { metadata["requireLicenseAcceptance"] = it }
-                developmentDependency?.let { metadata["developmentDependency"] = it }
-                summary?.let { metadata["summary"] = it }
-                releaseNotes?.let { metadata["releaseNotes"] = it }
-                copyright?.let { metadata["copyright"] = it }
-                language?.let { metadata["language"] = it }
-                tags?.let { metadata["tags"] = it }
-                serviceable?.let { metadata["serviceable"] = it }
-                title?.let { metadata["title"] = it }**/
-                dependencies?.let { metadata["dependency"] = buildDependencies(it) }
-                references?.let { metadata["reference"] = buildReferences(it) }
-                frameworkAssemblies?.let { metadata["frameworks"] = buildFrameworks(it) }
-            }
-        }
-        return metadata
+    /**private fun indexMetadata(nuspecMetadata: NuspecMetadata): Map<String, Any> {
+    val metadata: MutableMap<String, Any> = mutableMapOf()
+    if (nuspecMetadata.isValid()) {
+    with(nuspecMetadata) {
+    metadata["id"] = id
+    metadata["version"] = version
+    metadata["authors"] = authors
+    metadata["description"] = description
+    owners?.let { metadata["owners"] = it }
+    projectUrl?.let { metadata["projectUrl"] = it }
+    licenseUrl?.let { metadata["licenseUrl"] = it }
+    license?.let { metadata["license"] = it }
+    iconUrl?.let { metadata["iconUrl"] = it }
+    icon?.let { metadata["icon"] = it }
+    requireLicenseAcceptance?.let { metadata["requireLicenseAcceptance"] = it }
+    developmentDependency?.let { metadata["developmentDependency"] = it }
+    summary?.let { metadata["summary"] = it }
+    releaseNotes?.let { metadata["releaseNotes"] = it }
+    copyright?.let { metadata["copyright"] = it }
+    language?.let { metadata["language"] = it }
+    tags?.let { metadata["tags"] = it }
+    serviceable?.let { metadata["serviceable"] = it }
+    title?.let { metadata["title"] = it }
+    dependencies?.let { metadata["dependency"] = buildDependencies(it) }
+    references?.let { metadata["reference"] = buildReferences(it) }
+    frameworkAssemblies?.let { metadata["frameworks"] = buildFrameworks(it) }
     }
+    }
+    return metadata
+    }**/
 
     /**
      * 构造Frameworks

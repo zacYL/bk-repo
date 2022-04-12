@@ -81,12 +81,15 @@ open class PermissionManager(
      * @param action 动作
      * @param projectId 项目id
      * @param repoName 仓库名称
+     * @param public 仓库是否为public
+     * @param anonymous 是否允许匿名
      */
     open fun checkRepoPermission(
         action: PermissionAction,
         projectId: String,
         repoName: String,
-        public: Boolean? = null
+        public: Boolean? = null,
+        anonymous: Boolean = false
     ) {
         if (isReadPublicRepo(action, projectId, repoName, public)) {
             return
@@ -94,7 +97,7 @@ open class PermissionManager(
         if (httpAuthProperties.enabled && isReadSystemRepo(action, projectId, repoName)) {
             return
         }
-        checkPermission(ResourceType.REPO, action, projectId, repoName)
+        checkPermission(ResourceType.REPO, action, projectId, repoName, anonymous = anonymous)
     }
 
     /**
@@ -130,18 +133,20 @@ open class PermissionManager(
      * @param repoName 仓库名称
      * @param path 节点路径
      * @param public 仓库是否为public
+     * @param anonymous 是否允许匿名
      */
     open fun checkNodePermission(
         action: PermissionAction,
         projectId: String,
         repoName: String,
         path: String,
-        public: Boolean? = null
+        public: Boolean? = null,
+        anonymous: Boolean = false
     ) {
         if (isReadPublicRepo(action, projectId, repoName, public)) {
             return
         }
-        checkPermission(ResourceType.REPO, action, projectId, repoName, path)
+        checkPermission(ResourceType.NODE, action, projectId, repoName, path, anonymous)
     }
 
     /**
@@ -234,7 +239,8 @@ open class PermissionManager(
         action: PermissionAction,
         projectId: String? = null,
         repoName: String? = null,
-        path: String? = null
+        path: String? = null,
+        anonymous: Boolean = false
     ) {
         // 判断是否开启认证
         if (!httpAuthProperties.enabled) {
@@ -243,10 +249,19 @@ open class PermissionManager(
         val userId = SecurityUtils.getUserId()
         val platformId = SecurityUtils.getPlatformId()
         checkAnonymous(userId, platformId)
-
         if (userId == ANONYMOUS_USER) {
-            logger.warn("anonymous user, platform id[$platformId], " +
-                "requestUri: ${HttpContextHolder.getRequest().requestURI}")
+            val request = HttpContextHolder.getRequest()
+            logger.warn("anonymous user, platform id[$platformId], project[$projectId], repoName[$repoName]" +
+                "requestMethod: ${request.method}, requestUri: ${request.requestURI}")
+        }
+        if (userId == ANONYMOUS_USER && platformId != null && anonymous) {
+            return
+        }
+
+        // 校验Oauth token对应权限
+        val authorities = SecurityUtils.getAuthorities()
+        if (authorities.isNotEmpty() && !authorities.contains(type.toString())) {
+            throw PermissionException()
         }
 
         // 去auth微服务校验资源权限
@@ -261,7 +276,9 @@ open class PermissionManager(
         )
         if (permissionResource.checkPermission(checkRequest).data != true) {
             // 无权限，响应403错误
-            throw PermissionException()
+            var reason = "user[$userId] does not have $action permission in project[$projectId]"
+            repoName?.let { reason += " repo[$repoName]" }
+            throw PermissionException(reason)
         }
         if (logger.isDebugEnabled) {
             logger.debug("User[${SecurityUtils.getPrincipal()}] check permission success.")

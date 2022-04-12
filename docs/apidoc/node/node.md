@@ -70,27 +70,29 @@
 
 ## 分页查询节点
 
-- API: GET /repository/api/node/page/{projectId}/{repoName}/{fullPath}?pageNumber=0&pageSize=20&includeFolder=true&includeMetadata=true&deep=false&sort=false
+- API: GET /repository/api/node/page/{projectId}/{repoName}/{fullPath}?pageNumber=0&pageSize=20&includeFolder=true&includeMetadata=true&deep=false&sort=false&sortProperty=xx&direction=ASC&sortProperty=xx&direction=DESC
 - API 名称: list_node_page
 - 功能说明：
-  - 中文：分页查询节点，返回的结果列表中目录在前，文件在后，并按照文件名称排序
+  - 中文：分页查询节点，返回的结果列表中目录在前，文件在后，并按照文件名称排序, 同时支持自定义排序
   - English：list node page
 - 请求体
   此接口请求体为空
 
 - 请求字段说明
 
-  |字段|类型|是否必须|默认值|说明|Description|
-  |---|---|---|---|---|---|
-  |projectId|string|是|无|项目名称|project name|
-  |repoName|string|是|无|仓库名称|repo name|
-  |fullPath|string|是|无|完整路径|full path|
-  |pageNumber|int|否|1|当前页|current page|
-  |pageSize|int|否|20|分页大小|page size|
-  |includeFolder|boolean|否|true|是否包含目录|include folder|
-  |includeMetadata|boolean|否|false|是否包含元数据|include  metadata|
-  |deep|boolean|否|false|是否查询子目录节点|deep query|
-  |sort|boolean|否|false|是否排序输出结果|sort result|
+  |字段|类型|是否必须|默认值| 说明                                                            |Description|
+  |---|---|---|---------------------------------------------------------------|---|---|
+  |projectId|string|是|无| 项目名称                                                          |project name|
+  |repoName|string|是|无| 仓库名称                                                          |repo name|
+  |fullPath|string|是|无| 完整路径                                                          |full path|
+  |pageNumber|int|否|1| 当前页                                                           |current page|
+  |pageSize|int|否|20| 分页大小                                                          |page size|
+  |includeFolder|boolean|否|true| 是否包含目录                                                        |include folder|
+  |includeMetadata|boolean|否|false| 是否包含元数据                                                       |include  metadata|
+  |deep|boolean|否|false| 是否查询子目录节点                                                     |deep query|
+  |sort|boolean|否|false| 是否排序输出结果                                                      |sort result|
+  |sortProperty|string|否|false| 自定义排序字段,可添加多个。自定义排序字段优先级高于sort=true时的排序规则。多个自定义排序字段优先级与参数顺序相同 |sort property|
+  |direction|string|否|false| 自定义排序方向,可添加多个，与排序字段一一对应                                       |sort direction|
 
 - 响应体
 
@@ -618,7 +620,6 @@
 - 请求字段说明
 
   
-  
 - 响应体
 
   ```json
@@ -709,5 +710,94 @@
 
 
 
+## 查询节点总览
 
+- API: GET /repository/api/node/search/overview?projectId={projectId}&name={name}&exRepo={reponames}
+
+- API 名称: query_node_overview
+
+- 功能说明：
+
+  - 中文：查询节点总览
+    - English：query node overview
+
+- 请求体
+  此接口请求体为空
+
+- 请求字段说明
+
+  | 字段      | 类型   | 是否必须 | 默认值 | 说明                             | Description  |
+  | --------- | ------ | -------- | ------ | -------------------------------- | ------------ |
+  | projectId | string | 是       | 无     | 项目名称                         | project name |
+  | name      | string | 是       | 无     | 查询文件名                       | file name    |
+  | exRepo    | string | 否       | null   | 排除的仓库，多个仓库以 `,` 分隔" | repo name    |
+
+- 响应体
+
+  ```json
+  {
+      "code": 0,
+      "message": null,
+      "data": [
+          {
+              "projectId": "test",
+              "repos": [
+                  {
+                      "repoName": "custom",
+                      "packages": 10
+                  },
+                  {
+                      "repoName": "scan_test",
+                      "packages": 2
+                  }
+              ],
+              "sum": 20
+          }
+      ],
+      "traceId": ""
+  }
+  ```
+
+- data字段说明
+
+  | 字段      | 类型   | 说明         | Description          |
+  | --------- | ------ | ------------ | -------------------- |
+  | projectId | string | 节点所属项目 | node project id      |
+  | repoName  | string | 节点所属仓库 | node repository name |
+  | packages  | Int    | 节点数量     | node count           |
+
+
+
+## 清理创建时间早于{date}的文件节点
+
+- API: DELETE /repository/api/node/clean/{projectId}/{repoName}?date=yyyy-MM-dd'T'HH:mm:ss.SSSXXX
+
+- API 名称: delete_node_created_before_date
+
+- 功能说明：
+
+  - 中文：清理创建时间早于{date}的文件节点
+  - English：delete node created before date
+
+- 请求体
+  此接口请求体为空
+
+- 请求字段说明
+
+  | 字段      | 类型   | 是否必须 | 默认值 | 说明     | Description  |
+  | --------- | ------ | -------- | ------ | -------- | ------------ |
+  | projectId | string | 是       | 无     | 项目名称 | project name |
+  | repoName  | string | 是       | 无     | 仓库名称 | repo name    |
+  | date      | string | 是       | 无     | 日期     | date time    |
+
+- 响应体
+
+  ```json
+  {
+    "code": 0,
+    "message": null,
+    "data": null,
+    "traceId": null
+  }
+  ```
 

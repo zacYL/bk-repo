@@ -49,7 +49,6 @@ import com.tencent.bkrepo.common.plugin.api.PluginManager
 import com.tencent.bkrepo.common.plugin.api.applyExtension
 import com.tencent.bkrepo.common.security.constant.AUTH_HEADER_UID
 import com.tencent.bkrepo.common.security.exception.AuthenticationException
-import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.generic.artifact.GenericArtifactInfo
@@ -230,24 +229,6 @@ class TemporaryAccessService(
             .toString()
     }
 
-//    private fun generateAccessUrl(tokenInfo: TemporaryTokenInfo, tokenType: TokenType, host: String?): String {
-//        val urlHost = if (!host.isNullOrBlank()) host else genericProperties.domain
-//        val builder = StringBuilder(UrlFormatter.formatHost(urlHost))
-//        when (tokenType) {
-//            TokenType.DOWNLOAD -> builder.append(TEMPORARY_DOWNLOAD_ENDPOINT)
-//            TokenType.UPLOAD -> builder.append(TEMPORARY_UPLOAD_ENDPOINT)
-//            else -> builder.append(TEMPORARY_DOWNLOAD_ENDPOINT) // default use download
-//        }
-//        return builder.append(StringPool.SLASH)
-//            .append(tokenInfo.projectId)
-//            .append(StringPool.SLASH)
-//            .append(tokenInfo.repoName)
-//            .append(tokenInfo.fullPath)
-//            .append("?token=")
-//            .append(tokenInfo.token)
-//            .toString()
-//    }
-
     /**
      * 检查token并返回token信息
      */
@@ -297,11 +278,11 @@ class TemporaryAccessService(
     private fun checkAccessResource(tokenInfo: TemporaryTokenInfo, artifactInfo: ArtifactInfo) {
         // 校验项目/仓库
         if (tokenInfo.projectId != artifactInfo.projectId || tokenInfo.repoName != artifactInfo.repoName) {
-            throw TemporaryCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID)
+            throw ErrorCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID)
         }
         // 校验路径
         if (!PathUtils.isSubPath(artifactInfo.getArtifactFullPath(), tokenInfo.fullPath)) {
-            throw TemporaryCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID)
+            throw ErrorCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID)
         }
     }
 
@@ -317,7 +298,7 @@ class TemporaryAccessService(
         }
         // 使用认证uid校验授权
         if (tokenInfo.authorizedUserList.isNotEmpty() && authenticatedUid !in tokenInfo.authorizedUserList) {
-            throw PermissionException()
+            throw ErrorCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID)
         }
         // 获取需要审计的uid
         val auditedUid = if (SecurityUtils.isAnonymous()) {
@@ -328,7 +309,7 @@ class TemporaryAccessService(
         // 校验ip授权
         val clientIp = HttpContextHolder.getClientAddress()
         if (tokenInfo.authorizedIpList.isNotEmpty() && clientIp !in tokenInfo.authorizedIpList) {
-            throw TemporaryCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID)
+            throw ErrorCodeException(ArtifactMessageCode.TEMPORARY_TOKEN_INVALID)
         }
     }
 

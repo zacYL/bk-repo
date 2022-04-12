@@ -95,4 +95,8 @@ interface UserService {
     fun resetPassword(userId: String, newPwd: String?): Boolean
 
     fun listUserByProjectId(projectId: String, includeAdmin: Boolean): List<UserResult>
+
+    fun addUserAccount(userId: String, accountId: String): Boolean
+
+    fun removeUserAccount(userId: String, accountId: String): Boolean
 }

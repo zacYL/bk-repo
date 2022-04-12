@@ -48,16 +48,16 @@ import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
 import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.context.annotation.Primary
-import org.springframework.web.bind.annotation.CookieValue
-import org.springframework.web.bind.annotation.DeleteMapping
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PatchMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.CookieValue
 
 @Api(tags = ["SERVICE_USER"], description = "服务-用户接口")
 @Primary
@@ -179,16 +179,6 @@ interface ServiceUserResource {
     ): Response<Boolean>
 
     @ApiOperation("校验用户token")
-    @GetMapping("/token/{uid}/{token}")
-    @Deprecated("接口改为post方式")
-    fun checkUserToken(
-        @ApiParam(value = "用户id")
-        @PathVariable uid: String,
-        @ApiParam(value = "用户token")
-        @PathVariable token: String
-    ): Response<Boolean>
-
-    @ApiOperation("校验用户token")
     @PostMapping("/token")
     fun checkToken(
         @ApiParam(value = "用户id")
@@ -196,6 +186,10 @@ interface ServiceUserResource {
         @ApiParam(value = "用户token")
         @RequestParam token: String
     ): Response<Boolean>
+
+    @ApiOperation("获取公钥")
+    @GetMapping("/rsa")
+    fun getPublicKey(): Response<String?>
 
     @ApiOperation("校验用户会话token")
     @PostMapping("/login")
@@ -242,7 +236,7 @@ interface ServiceUserResource {
     @GetMapping("/userinfo/{uid}")
     fun userInfoById(@PathVariable uid: String): Response<UserInfo?>
 
-    @ApiOperation("重置用户密码")
+    @ApiOperation("用户info ")
     @GetMapping("/reset/{uid}")
     fun resetPassword(@PathVariable uid: String): Response<Boolean>
 

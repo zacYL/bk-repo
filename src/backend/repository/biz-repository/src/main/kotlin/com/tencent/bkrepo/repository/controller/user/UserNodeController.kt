@@ -40,10 +40,14 @@ import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
 import com.tencent.bkrepo.common.artifact.api.DefaultArtifactInfo.Companion.DEFAULT_MAPPING_URI
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
+import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.common.security.permission.Permission
+import com.tencent.bkrepo.common.security.permission.Principal
+import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
+import com.tencent.bkrepo.repository.pojo.node.NodeDeleteResult
 import com.tencent.bkrepo.repository.pojo.node.NodeDeletedPoint
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
@@ -125,7 +129,7 @@ class UserNodeController(
     fun deleteNode(
         @RequestAttribute userId: String,
         @ArtifactPathVariable artifactInfo: ArtifactInfo
-    ): Response<Void> {
+    ): Response<NodeDeleteResult> {
         with(artifactInfo) {
             val deleteRequest = NodeDeleteRequest(
                 projectId = projectId,
@@ -133,8 +137,7 @@ class UserNodeController(
                 fullPath = getArtifactFullPath(),
                 operator = userId
             )
-            nodeService.deleteNode(deleteRequest)
-            return ResponseBuilder.success()
+            return ResponseBuilder.success(nodeService.deleteNode(deleteRequest))
         }
     }
 
@@ -145,9 +148,10 @@ class UserNodeController(
         @RequestAttribute userId: String,
         @ArtifactPathVariable artifactInfo: ArtifactInfo,
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) date: LocalDateTime
-    ): Response<Void> {
-        nodeService.deleteBeforeDate(artifactInfo.projectId, artifactInfo.repoName, date, userId)
-        return ResponseBuilder.success()
+    ): Response<NodeDeleteResult> {
+        return ResponseBuilder.success(
+            nodeService.deleteBeforeDate(artifactInfo.projectId, artifactInfo.repoName, date, userId)
+        )
     }
 
     @ApiOperation("更新节点")
@@ -283,6 +287,18 @@ class UserNodeController(
         return ResponseBuilder.success(nodePage)
     }
 
+    @ApiOperation("按sha256分页查询节点")
+    @Principal(PrincipalType.ADMIN)
+    @GetMapping("/page", params = ["sha256"])
+    fun listPageNodeBySha256(
+        @RequestParam("sha256", required = true) sha256: String,
+        nodeListOption: NodeListOption
+    ): Response<Page<NodeInfo>> {
+        return nodeService
+            .listNodePageBySha256(sha256, nodeListOption)
+            .let { ResponseBuilder.success(it) }
+    }
+
     @ApiOperation("查询节点删除点")
     @Permission(type = ResourceType.NODE, action = PermissionAction.READ)
     @GetMapping("/list-deleted/$DEFAULT_MAPPING_URI")
@@ -342,10 +358,20 @@ class UserNodeController(
     private fun checkCrossRepoPermission(request: UserNodeMoveCopyRequest) {
 
         with(request) {
-            permissionManager.checkNodePermission(PermissionAction.WRITE, srcProjectId, srcRepoName, srcFullPath)
+            permissionManager.checkNodePermission(
+                action = PermissionAction.WRITE,
+                projectId = srcProjectId,
+                repoName = srcRepoName,
+                path = PathUtils.normalizeFullPath(srcFullPath)
+            )
             val toProjectId = request.destProjectId ?: srcProjectId
             val toRepoName = request.destRepoName ?: srcRepoName
-            permissionManager.checkNodePermission(PermissionAction.WRITE, toProjectId, toRepoName, destFullPath)
+            permissionManager.checkNodePermission(
+                action = PermissionAction.WRITE,
+                projectId = toProjectId,
+                repoName = toRepoName,
+                path = PathUtils.normalizeFullPath(destFullPath)
+            )
         }
     }
 }

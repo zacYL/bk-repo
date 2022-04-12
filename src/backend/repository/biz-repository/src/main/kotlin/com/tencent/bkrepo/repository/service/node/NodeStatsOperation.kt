@@ -50,7 +50,6 @@ interface NodeStatsOperation {
      */
     fun countFileNode(artifact: ArtifactInfo): Long
 
-    fun capacity(projectId: String, repoName: String?): Long
     /**
      * 聚合查询节点大小
      */

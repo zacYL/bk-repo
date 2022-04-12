@@ -5,6 +5,7 @@ metadata:
   name: {{ include "common.names.fullname" . }}-docker
   labels: {{- include "common.labels.standard" . | nindent 4 }}
     app.kubernetes.io/component: docker
+    {{ include "bkrepo.labelValues.scope" . }}: {{ include "bkrepo.labelValues.scope.backend" . }}
     {{- if .Values.commonLabels }}
       {{- include "common.tplvalues.render" (dict "value" .Values.commonLabels "context" $) | nindent 4 }}
     {{- end }}
@@ -20,6 +21,7 @@ spec:
     metadata:
       labels: {{- include "common.labels.standard" . | nindent 8 }}
         app.kubernetes.io/component: docker
+        {{ include "bkrepo.labelValues.scope" . }}: {{ include "bkrepo.labelValues.scope.backend" . }}
         {{- if .Values.docker.podLabels }}
         {{- include "common.tplvalues.render" (dict "value" .Values.docker.podLabels "context" $) | nindent 8 }}
         {{- end }}
@@ -97,7 +99,11 @@ spec:
               mountPath: {{ .Values.common.mountPath }}
       volumes:
         - name: storage
-          {{- if .Values.persistence.enabled }}
+          {{- if .Values.common.config.storage.nfs.enabled }}
+          nfs:
+            path: {{ .Values.common.config.storage.nfs.path }}
+            server: {{ .Values.common.config.storage.nfs.server }}
+          {{- else if .Values.persistence.enabled }}
           persistentVolumeClaim:
             claimName: {{ if .Values.persistence.existingClaim }}{{ .Values.persistence.existingClaim }}{{- else }}{{ template "common.names.fullname" . }}-storage{{- end }}
           {{- else }}

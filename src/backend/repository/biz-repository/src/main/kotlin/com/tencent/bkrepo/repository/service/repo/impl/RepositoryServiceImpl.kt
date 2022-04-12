@@ -28,6 +28,7 @@
 package com.tencent.bkrepo.repository.service.repo.impl
 
 import com.tencent.bkrepo.auth.api.ServicePermissionResource
+import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Page
@@ -36,8 +37,6 @@ import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.DefaultArtifactInfo
 import com.tencent.bkrepo.common.artifact.constant.PRIVATE_PROXY_REPO_NAME
-import com.tencent.bkrepo.common.artifact.constant.PUBLIC_PROXY_PROJECT
-import com.tencent.bkrepo.common.artifact.constant.PUBLIC_PROXY_REPO_NAME
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode.REPOSITORY_NOT_FOUND
 import com.tencent.bkrepo.common.artifact.path.PathUtils.ROOT
@@ -57,7 +56,6 @@ import com.tencent.bkrepo.repository.config.RepositoryProperties
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.dao.RepositoryDao
 import com.tencent.bkrepo.repository.model.TRepository
-import com.tencent.bkrepo.repository.pojo.project.ProjectCreateRequest
 import com.tencent.bkrepo.repository.pojo.project.RepoRangeQueryRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoDeleteRequest
@@ -115,6 +113,7 @@ class RepositoryServiceImpl(
 
     override fun updateStorageCredentialsKey(projectId: String, repoName: String, storageCredentialsKey: String) {
         repositoryDao.findByNameAndType(projectId, repoName, null)?.run {
+            oldCredentialsKey = credentialsKey
             credentialsKey = storageCredentialsKey
             repositoryDao.save(this)
         }
@@ -196,6 +195,7 @@ class RepositoryServiceImpl(
         with(repoCreateRequest) {
             Preconditions.matchPattern(name, REPO_NAME_PATTERN, this::name.name)
             Preconditions.checkArgument((description?.length ?: 0) <= REPO_DESC_MAX_LENGTH, this::description.name)
+            Preconditions.checkArgument(checkInterceptorConfig(configuration), this::description.name)
             // 确保项目一定存在
             if (!projectService.checkExist(projectId)) {
                 throw ErrorCodeException(ArtifactMessageCode.PROJECT_NOT_FOUND, name)
@@ -251,6 +251,7 @@ class RepositoryServiceImpl(
     override fun updateRepo(repoUpdateRequest: RepoUpdateRequest) {
         repoUpdateRequest.apply {
             Preconditions.checkArgument((description?.length ?: 0) < REPO_DESC_MAX_LENGTH, this::description.name)
+            Preconditions.checkArgument(checkInterceptorConfig(configuration), this::description.name)
             val repository = checkRepository(projectId, name)
             quota?.let {
                 Preconditions.checkArgument(it >= (repository.used ?: 0), this::quota.name)
@@ -266,8 +267,8 @@ class RepositoryServiceImpl(
                 repository.configuration = it.toJsonString()
             }
             repositoryDao.save(repository)
-            publishEvent(buildUpdatedEvent(repoUpdateRequest, repository.type))
         }
+        publishEvent(buildUpdatedEvent(repoUpdateRequest))
         logger.info("Update repository[$repoUpdateRequest] success.")
     }
 
@@ -292,8 +293,8 @@ class RepositoryServiceImpl(
                     deleteProxyRepo(repository.projectId, repository.name, it.name!!)
                 }
             }
-            publishEvent(buildDeletedEvent(repoDeleteRequest, repository.type))
         }
+        publishEvent(buildDeletedEvent(repoDeleteRequest))
         logger.info("Delete repository [$repoDeleteRequest] success.")
     }
 
@@ -374,31 +375,6 @@ class RepositoryServiceImpl(
                     proxyChannelService.checkExistById(it.channelId!!, repository.type),
                     "channelId"
                 )
-                // 创建公有源代理项目
-                if (!projectService.checkExist(PUBLIC_PROXY_PROJECT)) {
-                    projectService.createProject(
-                        ProjectCreateRequest(
-                            name = PUBLIC_PROXY_PROJECT,
-                            displayName = PUBLIC_PROXY_PROJECT,
-                            description = PUBLIC_PROXY_PROJECT
-                        )
-                    )
-                }
-                val proxyRepoName = PUBLIC_PROXY_REPO_NAME.format(repository.type, it.name)
-                if (!checkExist(PUBLIC_PROXY_PROJECT, proxyRepoName)) {
-                    createRepo(
-                        RepoCreateRequest(
-                            projectId = PUBLIC_PROXY_PROJECT,
-                            name = proxyRepoName,
-                            type = repository.type,
-                            category = RepositoryCategory.REMOTE,
-                            public = true,
-                            configuration = RemoteConfiguration(
-                                url = it.url!!
-                            )
-                        )
-                    )
-                }
             } else {
                 Preconditions.checkNotBlank(it.name, "name")
                 Preconditions.checkNotBlank(it.url, "url")
@@ -484,7 +460,10 @@ class RepositoryServiceImpl(
         val query = Query(TRepository::type.isEqualTo(type)).with(Sort.by(TRepository::name.name))
         val count = repositoryDao.count(query)
         val pageQuery = query.with(PageRequest.of(pageNumber, pageSize))
-        val data = repositoryDao.find(pageQuery).map { convertToDetail(it)!! }
+        val data = repositoryDao.find(pageQuery).map {
+            val storageCredentials = it.credentialsKey?.let { key -> storageCredentialService.findByKey(key) }
+            convertToDetail(it, storageCredentials)!!
+        }
 
         return Page(pageNumber, pageSize, count, data)
     }
@@ -511,10 +490,38 @@ class RepositoryServiceImpl(
         }
     }
 
+    /**
+     * 检查下载拦截器配置
+     * 规则：
+     *  filename不为空字符串
+     *  metadata是键值对形式
+     */
+    @Suppress("UNCHECKED_CAST")
+    private fun checkInterceptorConfig(configuration: RepositoryConfiguration?): Boolean {
+        val config = configuration?.getSetting<List<Map<String, Any>>>(INTERCEPTORS)
+        config?.forEach {
+            val rules = it[RULES] as Map<String, String>
+            val filename = rules[FILENAME]
+            if (filename != null && filename.isBlank()) {
+                return false
+            }
+            val metadata = rules[METADATA]
+            if (metadata != null && metadata.split(StringPool.COLON).size != 2) {
+                return false
+            }
+        }
+        return true
+    }
+
     companion object {
         private val logger = LoggerFactory.getLogger(RepositoryServiceImpl::class.java)
         private const val REPO_NAME_PATTERN = "[a-zA-Z_][a-zA-Z0-9\\.\\-_]{1,63}"
-        private const val REPO_DESC_MAX_LENGTH = 201
+        private const val REPO_DESC_MAX_LENGTH = 200
+        private const val INTERCEPTORS = "interceptors"
+        private const val RULES = "rules"
+        private const val FILENAME = "filename"
+        private const val METADATA = "metadata"
+
         private fun convertToDetail(
             tRepository: TRepository?,
             storageCredentials: StorageCredentials? = null
@@ -534,7 +541,8 @@ class RepositoryServiceImpl(
                     lastModifiedBy = it.lastModifiedBy,
                     lastModifiedDate = it.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME),
                     quota = it.quota,
-                    used = it.used
+                    used = it.used,
+                    oldCredentialsKey = it.oldCredentialsKey
                 )
             }
         }

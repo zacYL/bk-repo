@@ -38,8 +38,10 @@ dependencies {
     api(project(":common:common-artifact:artifact-api"))
     api(project(":common:common-plugin:plugin-service"))
     api(project(":common:common-storage:storage-service"))
+    api(project(":common:common-operate:operate-service"))
 
     api("org.springframework.boot:spring-boot-starter-aop")
+    api("io.micrometer:micrometer-registry-prometheus")
     api("org.influxdb:influxdb-java")
 
 }

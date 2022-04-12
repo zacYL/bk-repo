@@ -100,11 +100,12 @@
             },
             submitScanForm () {
                 this.scanForm.loading = true
-                const { type, name, description } = this.scanForm
+                const { scanner, type, name, description } = this.scanForm
                 this.createScan({
                     projectId: this.projectId,
                     type,
                     name,
+                    scanner,
                     description
                 }).then(() => {
                     this.$emit('refresh')

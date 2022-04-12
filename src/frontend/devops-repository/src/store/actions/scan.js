@@ -4,10 +4,10 @@ const prefix = 'scanner/api/scan'
 
 export default {
     // 创建扫描方案
-    createScan (_, { projectId, name, type, description }) {
+    createScan (_, body) {
         return Vue.prototype.$ajax.post(
             `${prefix}/plan/create`,
-            { projectId, name, type, description }
+            body
         )
     },
     // 扫描方案列表

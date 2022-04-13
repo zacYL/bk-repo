@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.tencent.bkrepo.common.devops.api.DevopsCommonAutoConfiguration
+com.tencent.bkrepo.common.devops.DevopsCommonAutoConfiguration

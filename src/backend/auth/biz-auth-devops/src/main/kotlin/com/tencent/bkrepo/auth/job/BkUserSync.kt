@@ -5,9 +5,9 @@ import com.tencent.bkrepo.auth.pojo.user.CreateUserRequest
 import com.tencent.bkrepo.auth.pojo.user.UpdateUserRequest
 import com.tencent.bkrepo.auth.pojo.user.User
 import com.tencent.bkrepo.auth.service.UserService
-import com.tencent.bkrepo.common.devops.api.pojo.BkPage
-import com.tencent.bkrepo.common.devops.api.pojo.BkUser
-import com.tencent.bkrepo.common.devops.api.service.BkUserService
+import com.tencent.bkrepo.common.devops.pojo.BkPage
+import com.tencent.bkrepo.common.devops.pojo.BkUser
+import com.tencent.bkrepo.common.devops.service.BkUserService
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

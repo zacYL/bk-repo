@@ -10,8 +10,8 @@ import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.auth.service.impl.CanwayPermissionServiceImpl
 import com.tencent.bkrepo.auth.service.impl.CanwayRoleServiceImpl
 import com.tencent.bkrepo.auth.service.impl.CanwayUserServiceImpl
-import com.tencent.bkrepo.common.devops.api.conf.DevopsConf
-import com.tencent.bkrepo.common.devops.api.service.BkUserService
+import com.tencent.bkrepo.common.devops.conf.DevopsConf
+import com.tencent.bkrepo.common.devops.service.BkUserService
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import org.slf4j.LoggerFactory

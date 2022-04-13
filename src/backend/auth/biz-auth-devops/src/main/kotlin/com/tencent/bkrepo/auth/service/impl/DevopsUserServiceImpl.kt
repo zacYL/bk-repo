@@ -8,14 +8,15 @@ import com.tencent.bkrepo.auth.pojo.CanwayGroup
 import com.tencent.bkrepo.auth.pojo.DevopsDepartment
 import com.tencent.bkrepo.auth.service.DevopsUserService
 import com.tencent.bkrepo.common.api.util.readJsonString
-import com.tencent.bkrepo.common.devops.api.conf.DevopsConf
-import com.tencent.bkrepo.common.devops.api.pojo.response.CanwayResponse
-import com.tencent.bkrepo.common.devops.api.util.http.CanwayHttpUtils
+import com.tencent.bkrepo.common.devops.DEPLOY_CANWAY
+import com.tencent.bkrepo.common.devops.conf.DevopsConf
+import com.tencent.bkrepo.common.devops.pojo.response.CanwayResponse
+import com.tencent.bkrepo.common.devops.util.http.CanwayHttpUtils
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Service
 
 @Service
-@ConditionalOnProperty(prefix = "auth", name = ["realm"], havingValue = "canway", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "auth", name = ["realm"], havingValue = DEPLOY_CANWAY, matchIfMissing = true)
 class DevopsUserServiceImpl(
     devopsConf: DevopsConf
 ) : DevopsUserService {

@@ -6,15 +6,16 @@ import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.readJsonString
-import com.tencent.bkrepo.common.devops.api.conf.DevopsConf
-import com.tencent.bkrepo.common.devops.api.pojo.BkCertificate
-import com.tencent.bkrepo.common.devops.api.pojo.BkChildrenDepartment
-import com.tencent.bkrepo.common.devops.api.pojo.BkDepartment
-import com.tencent.bkrepo.common.devops.api.pojo.BkPage
-import com.tencent.bkrepo.common.devops.api.pojo.BkParentDepartment
-import com.tencent.bkrepo.common.devops.api.pojo.BkResponse
-import com.tencent.bkrepo.common.devops.api.pojo.CertType
-import com.tencent.bkrepo.common.devops.api.util.http.CanwayHttpUtils
+import com.tencent.bkrepo.common.devops.DEPLOY_CANWAY
+import com.tencent.bkrepo.common.devops.conf.DevopsConf
+import com.tencent.bkrepo.common.devops.pojo.BkCertificate
+import com.tencent.bkrepo.common.devops.pojo.BkChildrenDepartment
+import com.tencent.bkrepo.common.devops.pojo.BkDepartment
+import com.tencent.bkrepo.common.devops.pojo.BkPage
+import com.tencent.bkrepo.common.devops.pojo.BkParentDepartment
+import com.tencent.bkrepo.common.devops.pojo.BkResponse
+import com.tencent.bkrepo.common.devops.pojo.CertType
+import com.tencent.bkrepo.common.devops.util.http.CanwayHttpUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -22,7 +23,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Service
 
 @Service
-@ConditionalOnProperty(prefix = "auth", name = ["realm"], havingValue = "canway", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "auth", name = ["realm"], havingValue = DEPLOY_CANWAY, matchIfMissing = true)
 class CanwayDepartmentServiceImpl(
     devopsConf: DevopsConf
 ) : DepartmentService {

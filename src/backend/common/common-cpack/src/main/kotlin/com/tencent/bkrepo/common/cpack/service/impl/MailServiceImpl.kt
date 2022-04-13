@@ -13,10 +13,10 @@ import com.tencent.bkrepo.common.cpack.mail.MailTemplate
 import com.tencent.bkrepo.common.cpack.mail.QRUtils
 import com.tencent.bkrepo.common.cpack.pojo.FileShareInfo
 import com.tencent.bkrepo.common.cpack.service.NotifyService
-import com.tencent.bkrepo.common.devops.api.conf.DevopsConf
-import com.tencent.bkrepo.common.devops.api.pojo.BkMailMessage
-import com.tencent.bkrepo.common.devops.api.pojo.DevopsMailMessage
-import com.tencent.bkrepo.common.devops.api.util.http.CanwayHttpUtils
+import com.tencent.bkrepo.common.devops.conf.DevopsConf
+import com.tencent.bkrepo.common.devops.pojo.BkMailMessage
+import com.tencent.bkrepo.common.devops.pojo.DevopsMailMessage
+import com.tencent.bkrepo.common.devops.util.http.CanwayHttpUtils
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.TemporaryTokenClient

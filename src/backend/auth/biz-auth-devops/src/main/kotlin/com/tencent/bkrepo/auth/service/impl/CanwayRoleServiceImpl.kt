@@ -15,9 +15,9 @@ import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.readJsonString
-import com.tencent.bkrepo.common.devops.api.conf.DevopsConf
-import com.tencent.bkrepo.common.devops.api.pojo.response.CanwayResponse
-import com.tencent.bkrepo.common.devops.api.util.http.CanwayHttpUtils
+import com.tencent.bkrepo.common.devops.conf.DevopsConf
+import com.tencent.bkrepo.common.devops.pojo.response.CanwayResponse
+import com.tencent.bkrepo.common.devops.util.http.CanwayHttpUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

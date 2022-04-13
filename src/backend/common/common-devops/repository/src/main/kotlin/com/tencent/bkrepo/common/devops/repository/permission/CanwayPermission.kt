@@ -1,6 +1,6 @@
 package com.tencent.bkrepo.common.devops.repository.permission
 
-import com.tencent.bkrepo.common.devops.api.enums.CanwayPermissionType
+import com.tencent.bkrepo.common.devops.enums.CanwayPermissionType
 import java.lang.annotation.Inherited
 
 @Target(AnnotationTarget.FUNCTION)

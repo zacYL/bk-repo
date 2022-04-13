@@ -34,7 +34,7 @@ package com.tencent.bkrepo.auth.controller.service
 import com.tencent.bkrepo.auth.api.ServiceDepartmentResource
 import com.tencent.bkrepo.auth.service.DepartmentService
 import com.tencent.bkrepo.common.api.pojo.Response
-import com.tencent.bkrepo.common.devops.api.pojo.BkChildrenDepartment
+import com.tencent.bkrepo.common.devops.pojo.BkChildrenDepartment
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.RestController

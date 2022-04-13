@@ -29,9 +29,9 @@ import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.sensitive.DesensitizedUtils
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.artifact.path.PathUtils
-import com.tencent.bkrepo.common.devops.api.conf.DevopsConf
-import com.tencent.bkrepo.common.devops.api.pojo.response.CanwayResponse
-import com.tencent.bkrepo.common.devops.api.util.http.CanwayHttpUtils
+import com.tencent.bkrepo.common.devops.conf.DevopsConf
+import com.tencent.bkrepo.common.devops.pojo.response.CanwayResponse
+import com.tencent.bkrepo.common.devops.util.http.CanwayHttpUtils
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

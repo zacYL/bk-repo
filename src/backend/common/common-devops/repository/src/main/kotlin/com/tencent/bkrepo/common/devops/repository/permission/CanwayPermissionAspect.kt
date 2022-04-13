@@ -3,8 +3,8 @@ package com.tencent.bkrepo.common.devops.repository.permission
 import com.tencent.bkrepo.auth.constant.BK_SOFTWARE
 import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
-import com.tencent.bkrepo.common.devops.api.CANWAY_PERMISSION
-import com.tencent.bkrepo.common.devops.api.exception.CanwayPermissionException
+import com.tencent.bkrepo.common.devops.CANWAY_PERMISSION
+import com.tencent.bkrepo.common.devops.exception.CanwayPermissionException
 import com.tencent.bkrepo.common.devops.repository.service.CanwayPermissionService
 import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
@@ -30,8 +30,8 @@ class CanwayPermissionAspect(
             val api = request.requestURI.removePrefix("/").removePrefix("web/")
             if (api.startsWith("api", ignoreCase = true)) {
                 if (!canwayPermissionService.checkCanwayPermission(
-                    repoDetail.projectId, repoDetail.name, userId as String, canwayPermission.type
-                )
+                        repoDetail.projectId, repoDetail.name, userId as String, canwayPermission.type
+                    )
                 ) throw CanwayPermissionException(CANWAY_PERMISSION)
             }
         }

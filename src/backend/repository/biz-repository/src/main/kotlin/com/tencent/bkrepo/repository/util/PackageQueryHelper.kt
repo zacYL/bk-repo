@@ -103,7 +103,7 @@ object PackageQueryHelper {
                 name?.let {
                     val escapedValue = MongoEscapeUtils.escapeRegexExceptWildcard(it)
                     val regexPattern = escapedValue.replace("*", ".*")
-                    and(TPackageVersion::name).regex("^$regexPattern") }
+                    and(TPackageVersion::name).regex(regexPattern) }
             }.apply {
                 if (!stageTag.isNullOrEmpty()) {
                     and(TPackageVersion::stageTag).all(stageTag)

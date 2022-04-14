@@ -191,6 +191,11 @@ body {
     .bk-form-radio input[type=radio] {
         border-color: var(--borderWeightColor);
     }
+
+    .bk-form-radio:focus input[type=radio],
+    .bk-form-radio-button:focus {
+        box-shadow: none;
+    }
     .bk-form-radio input[type=radio] {
         width: 14px;
         height: 14px;

@@ -31,13 +31,15 @@
 
 package com.tencent.bkrepo.repository.listener
 
-import com.tencent.bkrepo.auth.api.ServiceRoleResource
-import com.tencent.bkrepo.auth.api.ServiceUserResource
+import com.tencent.bkrepo.auth.api.ServicePermissionResource
+import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_ADMIN
+import com.tencent.bkrepo.auth.constant.PROJECT_MANAGE_PERMISSION
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionUserRequest
 import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
-import com.tencent.bkrepo.common.security.manager.PermissionManager
-import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.common.artifact.event.project.ProjectCreatedEvent
 import com.tencent.bkrepo.common.artifact.event.repo.RepoCreatedEvent
+import com.tencent.bkrepo.common.security.manager.PermissionManager
+import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Component
@@ -49,8 +51,7 @@ import org.springframework.stereotype.Component
 @Component
 class ResourcePermissionListener(
     private val permissionManager: PermissionManager,
-    private val roleResource: ServiceRoleResource,
-    private val userResource: ServiceUserResource
+    private val permissionResource: ServicePermissionResource
 ) {
 
     /**
@@ -61,9 +62,7 @@ class ResourcePermissionListener(
     fun handle(event: ProjectCreatedEvent) {
         with(event) {
             if (isAuthedNormalUser(userId)) {
-                permissionManager.registerProject(userId, projectId)
-                val projectManagerRoleId = roleResource.createProjectManage(projectId).data!!
-                userResource.addUserRole(userId, projectManagerRoleId)
+                permissionManager.listProjectBuiltinPermission(projectId)
             }
         }
     }
@@ -76,9 +75,29 @@ class ResourcePermissionListener(
     fun handle(event: RepoCreatedEvent) {
         with(event) {
             if (isAuthedNormalUser(userId)) {
-                permissionManager.registerRepo(userId, projectId, repoName)
-                val repoManagerRoleId = roleResource.createRepoManage(projectId, repoName).data!!
-                userResource.addUserRole(userId, repoManagerRoleId)
+                // 创建仓库级权限, 预加载一次
+                permissionManager.lisRepoBuiltinPermissionNoBack(projectId, repoName)
+                val repoManage = permissionManager.lisRepoBuiltinPermission(projectId, repoName)?.first {
+                    it.permName == AUTH_BUILTIN_ADMIN
+                }
+                // 将创建用户和项目管理员都添加至仓库的管理员
+                val users = permissionManager.listProjectBuiltinPermission(projectId)?.first {
+                    it.permName == PROJECT_MANAGE_PERMISSION
+                }?.users?.toSet()
+                if (repoManage != null) {
+                    permissionResource.updatePermissionUser(
+                        UpdatePermissionUserRequest(
+                            permissionId = repoManage.id!!,
+                            userId = (
+                                mutableSetOf(userId).apply {
+                                    if (users != null) {
+                                        addAll(users)
+                                    }
+                                }
+                                ).toList()
+                        )
+                    )
+                }
             }
         }
     }

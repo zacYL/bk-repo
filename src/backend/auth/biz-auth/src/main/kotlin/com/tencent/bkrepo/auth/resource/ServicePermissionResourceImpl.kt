@@ -135,7 +135,7 @@ class ServicePermissionResourceImpl @Autowired constructor(
         permissionService.listBuiltinPermissionNoBack(projectId, repoName)
     }
 
-    override fun isAdmin(uid: String): Response<Boolean> {
-        return ResponseBuilder.success(permissionService.isAdmin(uid))
+    override fun isAdmin(userId: String, projectId: String?, tenantId: String?): Response<Boolean> {
+        return ResponseBuilder.success(permissionService.isAdmin(userId, projectId, tenantId))
     }
 }

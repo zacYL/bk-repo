@@ -106,8 +106,8 @@ open class PermissionServiceImpl constructor(
         TODO("Not yet implemented")
     }
 
-    override fun isAdmin(userId: String): Boolean {
-        return userRepository.findFirstByUserId(userId)?.admin ?: false
+    override fun isAdmin(userId: String, projectId: String?, tenantId: String?): Boolean {
+        TODO("Not yet implemented")
     }
 
     override fun createPermission(request: CreatePermissionRequest): Boolean {

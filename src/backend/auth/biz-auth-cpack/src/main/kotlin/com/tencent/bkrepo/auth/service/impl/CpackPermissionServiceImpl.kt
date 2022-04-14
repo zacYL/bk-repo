@@ -116,7 +116,7 @@ open class CpackPermissionServiceImpl constructor(
         )
     }
 
-    override fun isAdmin(userId: String): Boolean {
+    override fun isAdmin(userId: String, projectId: String?, tenantId: String?): Boolean {
         return userRepository.findFirstByUserId(userId)?.admin ?: false
     }
 

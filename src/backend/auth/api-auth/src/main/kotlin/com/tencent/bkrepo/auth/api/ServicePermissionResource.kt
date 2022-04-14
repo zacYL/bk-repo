@@ -193,9 +193,13 @@ interface ServicePermissionResource {
     )
 
     @ApiOperation("查询用户是否为管理员")
-    @GetMapping("/isAdmin/{uid}")
+    @GetMapping("/isAdmin/{userId}")
     fun isAdmin(
         @ApiParam(value = "用户id")
-        @PathVariable uid: String
+        @PathVariable userId: String,
+        @ApiParam(value = "项目id")
+        @RequestParam projectId: String? = null,
+        @ApiParam(value = "租户id")
+        @RequestParam tenantId: String? = null
     ): Response<Boolean>
 }

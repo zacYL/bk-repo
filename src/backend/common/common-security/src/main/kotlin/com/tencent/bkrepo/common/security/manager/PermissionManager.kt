@@ -301,7 +301,18 @@ open class PermissionManager(
      * 判断是否为管理员
      */
     private fun isAdminUser(userId: String): Boolean {
-        return permissionResource.isAdmin(userId).data ?: false
+        val cookies = HttpContextHolder.getRequest().cookies
+        var ciProjectId: String? = null
+        var ciTenantId: String? = null
+        cookies.forEach {
+            if (it.name == "X-DEVOPS-PROJECT-ID") {
+                ciProjectId = it.value
+            }
+            if (it.name == "X-DEVOPS-TENANT-ID") {
+                ciTenantId = it.value
+            }
+        }
+        return permissionResource.isAdmin(userId = userId, projectId = ciProjectId, tenantId = ciTenantId).data ?: false
     }
 
     fun listRepoBuiltInPermission(projectId: String, repoName: String) {

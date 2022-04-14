@@ -2,8 +2,6 @@ package com.tencent.bkrepo.auth.service.impl
 
 import com.tencent.bkrepo.auth.ciApi
 import com.tencent.bkrepo.auth.ciPermission
-import com.tencent.bkrepo.auth.ciProject
-import com.tencent.bkrepo.auth.ciTenant
 import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.model.TPermission
 import com.tencent.bkrepo.auth.pojo.CanwayPermissionDepartment
@@ -55,7 +53,7 @@ class CanwayPermissionServiceImpl(
     private val roleRepository: RoleRepository,
     private val permissionRepository: PermissionRepository,
     private val mongoTemplate: MongoTemplate,
-    private val repositoryClient: RepositoryClient,
+    repositoryClient: RepositoryClient,
     private val devopsConf: DevopsConf,
     private val departmentService: DepartmentService,
     private val bkUserService: BkUserService,
@@ -266,25 +264,14 @@ class CanwayPermissionServiceImpl(
         }
     }
 
-    override fun isAdmin(userId: String): Boolean {
-        if (super.isAdmin(userId)) return true
+    override fun isAdmin(userId: String, projectId: String?, tenantId: String?): Boolean {
+        if (super.isAdmin(userId, null, null)) return true
         // CI超级管理员
         if (isCIAdmin(userId)) return true
-
-        val cookies = HttpContextHolder.getRequest().cookies ?: return false
-
         // CI项目管理员
-        cookies.forEach {
-            if (it.name.equals(ciProject, ignoreCase = true)) {
-                if (isCIAdmin(userId, projectId = it.value)) return true
-            }
-        }
+        if (isCIAdmin(userId, projectId = projectId)) return true
         // CI租户管理员
-        cookies.forEach {
-            if (it.name.equals(ciTenant, ignoreCase = true)) {
-                if (isCIAdmin(userId, tenantId = it.value)) return true
-            }
-        }
+        if (isCIAdmin(userId, tenantId = tenantId)) return true
         return false
     }
 
@@ -445,12 +432,6 @@ class CanwayPermissionServiceImpl(
             if (!checkPermissionById(request.permissionId)) throw PermissionException()
         }
         return super.updatePermissionAction(request)
-    }
-
-    @Deprecated("")
-    private fun checkUserHasProjectPermission(operator: String): Boolean {
-        val canwayPermissionResponse = getCanwayPermissionInstance(operator)
-        return checkInstance(canwayPermissionResponse)
     }
 
     /**

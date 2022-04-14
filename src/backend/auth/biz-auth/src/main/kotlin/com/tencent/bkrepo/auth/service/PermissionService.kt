@@ -84,5 +84,10 @@ interface PermissionService {
 
     fun listBuiltinPermissionNoBack(projectId: String, repoName: String)
 
-    fun isAdmin(userId: String): Boolean
+    /**
+     * 查询用户是否为管理员
+     * @param projectId 项目ID
+     * @param tenantId 租户ID
+     */
+    fun isAdmin(userId: String, projectId: String?, tenantId: String?): Boolean
 }

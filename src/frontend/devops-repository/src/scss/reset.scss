@@ -142,11 +142,18 @@ body {
     .bk-form-radio,
     .bk-tab-header,
     .bk-form-control,
+    .bk-form-control .bk-limit-box .strong,
+    .bk-form-control.control-active .bk-limit-box .strong,
     .bk-button,
     .bk-select,
     .bk-sideslider-title,
     .bk-breadcrumb-item-inner.is-link {
         color: var(--fontPrimaryColor);
+    }
+
+    .bk-form-control .bk-limit-box,
+    .bk-form-control.control-active .bk-limit-box {
+        color: var(--fontDisableColor);
     }
 
     .bk-breadcrumb .bk-breadcrumb-item:last-child .bk-breadcrumb-item-inner.is-link,

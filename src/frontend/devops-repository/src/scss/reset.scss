@@ -155,6 +155,9 @@ body {
     .bk-form-control.control-active .bk-limit-box {
         color: var(--fontDisableColor);
     }
+    ::placeholder {
+        color: var(--fontDisableColor)!important;
+    }
 
     .bk-breadcrumb .bk-breadcrumb-item:last-child .bk-breadcrumb-item-inner.is-link,
     .bk-page .bk-page-total-count,

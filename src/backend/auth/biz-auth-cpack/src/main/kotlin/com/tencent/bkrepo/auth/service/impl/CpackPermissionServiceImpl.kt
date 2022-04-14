@@ -116,6 +116,10 @@ open class CpackPermissionServiceImpl constructor(
         )
     }
 
+    override fun isAdmin(userId: String): Boolean {
+        return userRepository.findFirstByUserId(userId)?.admin ?: false
+    }
+
     override fun createPermission(request: CreatePermissionRequest): Boolean {
         logger.info("create  permission request : [$request]")
         // todo check request
@@ -257,11 +261,11 @@ open class CpackPermissionServiceImpl constructor(
     private fun checkProjectUserAdmin(request: CheckPermissionRequest): Boolean {
         request.projectId?.let {
             if (permissionRepository.findAllByResourceTypeAndPermNameAndProjectIdAndUsersIn(
-                    ResourceType.PROJECT,
-                    PROJECT_MANAGE_PERMISSION,
-                    it,
-                    listOf(request.uid)
-                ).isNotEmpty()
+                ResourceType.PROJECT,
+                PROJECT_MANAGE_PERMISSION,
+                it,
+                listOf(request.uid)
+            ).isNotEmpty()
             ) return true
         }
         return false
@@ -386,18 +390,18 @@ open class CpackPermissionServiceImpl constructor(
 
         // 用户为该项目成员
         if (permissionRepository.findAllByProjectIdAndResourceTypeAndUsersIn(
-                projectId = projectId,
-                userId = userId,
-                type = ResourceType.PROJECT
-            ).isNotEmpty()
+            projectId = projectId,
+            userId = userId,
+            type = ResourceType.PROJECT
+        ).isNotEmpty()
         ) return getAllRepoByProjectId(projectId)
 
         // 用户为该项目关联用户组成员
         if (permissionRepository.findAllByProjectIdAndResourceTypeAndRolesIn(
-                projectId = projectId,
-                roles = roles,
-                type = ResourceType.PROJECT
-            ).isNotEmpty()
+            projectId = projectId,
+            roles = roles,
+            type = ResourceType.PROJECT
+        ).isNotEmpty()
         ) return getAllRepoByProjectId(projectId)
 
         val repoList = mutableListOf<String>()
@@ -490,16 +494,16 @@ open class CpackPermissionServiceImpl constructor(
         if (user.admin) return true
         val roles = user.roles
         if (permissionRepository.findAllByResourceTypeAndPermNameAndUsersIn(
-                ResourceType.PROJECT,
-                PROJECT_MANAGE_PERMISSION,
-                listOf(userId)
-            ).isNotEmpty()
+            ResourceType.PROJECT,
+            PROJECT_MANAGE_PERMISSION,
+            listOf(userId)
+        ).isNotEmpty()
         ) return true
         if (permissionRepository.findAllByResourceTypeAndPermNameAndRolesIn(
-                ResourceType.PROJECT,
-                PROJECT_MANAGE_PERMISSION,
-                roles
-            ).isNotEmpty()
+            ResourceType.PROJECT,
+            PROJECT_MANAGE_PERMISSION,
+            roles
+        ).isNotEmpty()
         ) return true
         return false
     }

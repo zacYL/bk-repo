@@ -2,6 +2,8 @@ package com.tencent.bkrepo.auth.service.impl
 
 import com.tencent.bkrepo.auth.ciApi
 import com.tencent.bkrepo.auth.ciPermission
+import com.tencent.bkrepo.auth.ciProject
+import com.tencent.bkrepo.auth.ciTenant
 import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.model.TPermission
 import com.tencent.bkrepo.auth.pojo.CanwayPermissionDepartment
@@ -13,7 +15,6 @@ import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.auth.pojo.enums.RoleType
 import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.CreatePermissionRequest
-import com.tencent.bkrepo.auth.pojo.permission.ListRepoPermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.Permission
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionActionRequest
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionDepartmentRequest
@@ -29,8 +30,10 @@ import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.api.util.toJsonString
+import com.tencent.bkrepo.common.devops.client.DevopsAuthClient
 import com.tencent.bkrepo.common.devops.conf.DevopsConf
 import com.tencent.bkrepo.common.devops.enums.CanwayPermissionType
+import com.tencent.bkrepo.common.devops.enums.InstanceType
 import com.tencent.bkrepo.common.devops.pojo.request.CanwayPermissionRequest
 import com.tencent.bkrepo.common.devops.pojo.response.CanwayPermissionResponse
 import com.tencent.bkrepo.common.devops.pojo.response.CanwayResponse
@@ -46,7 +49,6 @@ import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import java.time.LocalDateTime
-import java.util.stream.Collectors
 
 class CanwayPermissionServiceImpl(
     private val userRepository: UserRepository,
@@ -57,7 +59,8 @@ class CanwayPermissionServiceImpl(
     private val devopsConf: DevopsConf,
     private val departmentService: DepartmentService,
     private val bkUserService: BkUserService,
-    projectClient: ProjectClient
+    projectClient: ProjectClient,
+    private val devopsAuthClient: DevopsAuthClient
 ) : CpackPermissionServiceImpl(
     userRepository,
     roleRepository,
@@ -100,7 +103,6 @@ class CanwayPermissionServiceImpl(
 
     override fun createPermission(request: CreatePermissionRequest): Boolean {
         logger.info("create  permission request : [$request]")
-        // todo check request
         val permission = permissionRepository.findOneByPermNameAndProjectIdAndResourceType(
             request.permName,
             request.projectId,
@@ -154,41 +156,6 @@ class CanwayPermissionServiceImpl(
         with(request) {
             checkPermissionExist(permissionId)
             return updatePermissionById(permissionId, TPermission::repos.name, repos)
-        }
-    }
-
-    fun listRepoPermission(request: ListRepoPermissionRequest): List<String> {
-        logger.debug("list repo permission  request : [$request] ")
-        if (request.repoNames.isEmpty()) return emptyList()
-        val user = userRepository.findFirstByUserId(request.uid) ?: run {
-            throw ErrorCodeException(AuthMessageCode.AUTH_USER_NOT_EXIST)
-        }
-        if (user.admin || !request.appId.isNullOrBlank()) {
-            // 查询该项目下的所有仓库并过滤返回
-            val repoList = repositoryClient.listRepo(request.projectId).data?.map { it.name } ?: emptyList()
-            return filterRepos(repoList, request.repoNames)
-        }
-        val roles = user.roles
-
-        // check project admin
-        if (roles.isNotEmpty() && request.resourceType == ResourceType.PROJECT) {
-            return listProjectPermissions(roles, request)
-        }
-
-        val reposList = mutableListOf<String>()
-        // check repo admin
-        if (roles.isNotEmpty() && request.resourceType == ResourceType.REPO) {
-            return listRepoPermissions(roles, request, reposList)
-        }
-
-        // check repo permission
-        with(request) {
-            val celeriac = buildCheckActionQuery(projectId, uid, action, request.resourceType, roles, null)
-            val query = Query.query(celeriac)
-            val result = mongoTemplate.find(query, TPermission::class.java)
-            val permissionRepoList = result.stream().flatMap { it.repos.stream() }.collect(Collectors.toList())
-            reposList.addAll(permissionRepoList)
-            return filterRepos(reposList, request.repoNames)
         }
     }
 
@@ -299,38 +266,26 @@ class CanwayPermissionServiceImpl(
         }
     }
 
-    private fun listProjectPermissions(roles: List<String>, request: ListRepoPermissionRequest): List<String> {
-        roles.forEach { role ->
-            val tRole = roleRepository.findFirstByIdAndProjectIdAndType(role, request.projectId, RoleType.PROJECT)
-            if (tRole != null && tRole.admin) {
-                val repoList = repositoryClient.listRepo(request.projectId).data?.map { it.name } ?: emptyList()
-                return filterRepos(repoList, request.repoNames)
-            }
-        }
-        return emptyList()
-    }
+    override fun isAdmin(userId: String): Boolean {
+        if (super.isAdmin(userId)) return true
+        // CI超级管理员
+        if (isCIAdmin(userId)) return true
 
-    private fun listRepoPermissions(
-        roles: List<String>,
-        request: ListRepoPermissionRequest,
-        reposList: MutableList<String>
-    ): List<String> {
-        roles.forEach { role ->
-            // check project admin first
-            val pRole = roleRepository.findFirstByIdAndProjectIdAndType(role, request.projectId, RoleType.PROJECT)
-            if (pRole != null && pRole.admin) {
-                val repoList = repositoryClient.listRepo(request.projectId).data?.map { it.name } ?: emptyList()
-                return filterRepos(repoList, request.repoNames)
+        val cookies = HttpContextHolder.getRequest().cookies ?: return false
+
+        // CI项目管理员
+        cookies.forEach {
+            if (it.name.equals(ciProject, ignoreCase = true)) {
+                if (isCIAdmin(userId, projectId = it.value)) return true
             }
-            // check repo admin then
-            val rRole = roleRepository.findFirstByIdAndProjectIdAndType(
-                role,
-                request.projectId,
-                RoleType.REPO
-            )
-            if (rRole != null && rRole.admin) reposList.add(rRole.repoName!!)
         }
-        return emptyList()
+        // CI租户管理员
+        cookies.forEach {
+            if (it.name.equals(ciTenant, ignoreCase = true)) {
+                if (isCIAdmin(userId, tenantId = it.value)) return true
+            }
+        }
+        return false
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -499,31 +454,23 @@ class CanwayPermissionServiceImpl(
     }
 
     /**
-     * 用户是否为CI 超级管理员
+     * 用户是否为CI 管理员
+     * @param userId: 用户id
+     * @param projectId: 项目id
+     * @param tenantId: 租户id
      */
     @Suppress("TooGenericExceptionCaught")
     private fun isCIAdmin(userId: String, projectId: String? = null, tenantId: String? = null): Boolean {
-
-        val requestUrl = if (projectId != null && tenantId == null) {
-            getPermissionUrl(
-                "${String.format(ciAdminTypeApi, userId, 2)}${String.format(ciAdminTypeApiQuery, projectId)}"
-            )
+        return if (projectId != null && tenantId == null) {
+            logger.info("check user $userId is CI admin of project $projectId")
+            devopsAuthClient.isAdmin(userId, InstanceType.PROJECT, projectId) ?: false
         } else if (projectId == null && tenantId != null) {
-            getPermissionUrl(
-                "${String.format(ciAdminTypeApi, userId, 3)}${String.format(ciAdminTypeApiQuery, tenantId)}"
-            )
+            logger.info("check user $userId is CI admin of tenant $tenantId")
+            devopsAuthClient.isAdmin(userId, InstanceType.TENANT, tenantId) ?: false
         } else {
-            getPermissionUrl(String.format(ciAdminTypeApi, userId, 1))
+            logger.info("check user $userId is CI super admin ")
+            devopsAuthClient.isAdmin(userId, InstanceType.SUPER) ?: false
         }
-
-        val result = try {
-            val responseContent = CanwayHttpUtils.doGet(requestUrl).content
-            responseContent.readJsonString<CanwayResponse<Boolean>>().data
-        } catch (e: Exception) {
-            logger.error("check CI admin failed: [$requestUrl]", e)
-            false
-        }
-        return result ?: false
     }
 
     /**

@@ -83,4 +83,6 @@ interface PermissionService {
     fun updatePermissionById(id: String, key: String, value: Any): Boolean
 
     fun listBuiltinPermissionNoBack(projectId: String, repoName: String)
+
+    fun isAdmin(userId: String): Boolean
 }

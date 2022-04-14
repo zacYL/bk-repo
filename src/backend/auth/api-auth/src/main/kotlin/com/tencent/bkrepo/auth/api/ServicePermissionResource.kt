@@ -191,4 +191,11 @@ interface ServicePermissionResource {
         @ApiParam(value = "仓库名称")
         @RequestParam repoName: String
     )
+
+    @ApiOperation("查询用户是否为管理员")
+    @GetMapping("/isAdmin/{uid}")
+    fun isAdmin(
+        @ApiParam(value = "用户id")
+        @PathVariable uid: String
+    ): Response<Boolean>
 }

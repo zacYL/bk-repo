@@ -47,6 +47,11 @@ spring:
       transaction:
         enabled: false
       uri: mongodb://__BK_REPO_MONGODB_USER__:__BK_REPO_MONGODB_PASSWORD__@__BK_REPO_MONGODB_ADDR__/__BK_REPO_MONGODB_DB_NAME__?maxPoolSize=50&replicaSet=rs0&slaveOk=true&safe=true&w=__MONGODB_RES__&wtimeoutMS=2000
+  redis:
+    host: __BK_CI_REDIS_HOST__
+    port: __BK_CI_REDIS_PORT__
+    password: __BK_CI_REDIS_PASSWORD__
+    timeout: 900
 
 feign:
   okhttp:

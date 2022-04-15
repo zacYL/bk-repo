@@ -2,9 +2,9 @@
     <div class="virtual-tree" @scroll="scrollTree($event)">
         <ul class="repo-tree-list">
             <li class="repo-tree-item" :key="item.roadMap" v-for="item of treeList">
-                <div class="repo-tree-title hover-btn"
+                <div class="repo-tree-title"
                     :class="{ 'selected': selectedNode.roadMap === item.roadMap }"
-                    :style="{ 'padding-left': 20 * computedDepth(item) + 10 + 'px' }"
+                    :style="{ 'padding-left': 20 * computedDepth(item) + 'px' }"
                     @click.stop="itemClickHandler(item)">
                     <i v-if="item.loading" class="mr5 loading spin-icon"></i>
                     <i v-else-if="!item.leaf" class="mr5 devops-icon" @click.stop="iconClickHandler(item)"
@@ -117,7 +117,7 @@
                 }, 400)
             },
             computedDepth (node) {
-                return node.roadMap.split(',').length - 1
+                return node.roadMap.split(',').length
             },
             /**
              *  点击icon的回调函数
@@ -210,12 +210,12 @@
                 visibility: visible;
             }
         }
-        &:hover {
-            background-color: var(--bgLightColor);
-        }
         &.selected {
-            background-color: var(--bgHoverLighterColor);
+            background-color: var(--bgLightColor);
             color: var(--primaryColor);
+        }
+        &:hover {
+            background-color: var(--bgHoverLighterColor);
         }
     }
 }

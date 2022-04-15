@@ -49,7 +49,7 @@
                     <template #text="{ item: { name, sum } }">
                         <div class="flex-1 flex-between-center">
                             <span class="text-overflow">{{ name }}</span>
-                            <span class="mr10">{{ sum }}</span>
+                            <span class="mr10" style="color:var(--fontSubsidiaryColor);">{{ sum }}</span>
                         </div>
                     </template>
                 </repo-tree>

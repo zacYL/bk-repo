@@ -32,8 +32,6 @@
 package com.tencent.bkrepo.common.security.manager
 
 import com.tencent.bkrepo.auth.api.ServicePermissionResource
-import com.tencent.bkrepo.auth.api.ServiceUserResource
-import com.tencent.bkrepo.auth.pojo.RegisterResourceRequest
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
@@ -58,7 +56,6 @@ import org.slf4j.LoggerFactory
 open class PermissionManager(
     private val repositoryClient: RepositoryClient,
     private val permissionResource: ServicePermissionResource,
-    private val userResource: ServiceUserResource,
     private val httpAuthProperties: HttpAuthProperties
 ) {
 
@@ -170,16 +167,6 @@ open class PermissionManager(
                 throw PermissionException()
             }
         }
-    }
-
-    fun registerProject(userId: String, projectId: String) {
-        val request = RegisterResourceRequest(userId, ResourceType.PROJECT, projectId)
-        permissionResource.registerResource(request)
-    }
-
-    fun registerRepo(userId: String, projectId: String, repoName: String) {
-        val request = RegisterResourceRequest(userId, ResourceType.REPO, projectId, repoName)
-        permissionResource.registerResource(request)
     }
 
     /**
@@ -304,7 +291,7 @@ open class PermissionManager(
         val cookies = HttpContextHolder.getRequest().cookies
         var ciProjectId: String? = null
         var ciTenantId: String? = null
-        cookies.forEach {
+        cookies?.forEach {
             if (it.name == "X-DEVOPS-PROJECT-ID") {
                 ciProjectId = it.value
             }
@@ -313,10 +300,6 @@ open class PermissionManager(
             }
         }
         return permissionResource.isAdmin(userId = userId, projectId = ciProjectId, tenantId = ciTenantId).data ?: false
-    }
-
-    fun listRepoBuiltInPermission(projectId: String, repoName: String) {
-        permissionResource.listRepoBuiltinPermission(projectId, repoName)
     }
 
     fun listPermissionRepo(

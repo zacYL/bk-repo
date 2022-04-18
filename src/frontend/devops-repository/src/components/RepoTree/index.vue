@@ -8,7 +8,7 @@
                     @click.stop="itemClickHandler(item)">
                     <i v-if="item.loading" class="mr5 loading spin-icon"></i>
                     <i v-else-if="!item.leaf" class="mr5 devops-icon" @click.stop="iconClickHandler(item)"
-                        :class="openList.includes(item.roadMap) ? 'icon-down-shape' : 'icon-right-shape'"></i>
+                        :class="openList.includes(item.roadMap) ? 'icon-angle-down' : 'icon-angle-right'"></i>
                     <slot name="icon" :item="item" :open-list="openList">
                         <Icon class="mr5" size="14" :name="openList.includes(item.roadMap) ? 'folder-open' : 'folder'" />
                     </slot>
@@ -176,8 +176,8 @@
         align-items: center;
         .loading {
             display: inline-block;
-            width: 14px;
-            height: 14px;
+            width: 12px;
+            height: 12px;
             border: 1px solid;
             border-right-color: transparent;
             border-radius: 50%;
@@ -186,6 +186,12 @@
         .devops-icon {
             color: var(--fontSubsidiaryColor);
             z-index: 1;
+            &.icon-angle-right,
+            &.icon-angle-down {
+                font-size: 12px;
+                font-weight: bold;
+                transform: scale(0.8)
+            }
         }
         .node-text {
             flex: 1;

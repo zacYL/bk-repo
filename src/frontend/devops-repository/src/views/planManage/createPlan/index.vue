@@ -44,14 +44,9 @@
             </bk-form-item>
             <bk-form-item label="冲突策略" property="conflictStrategy">
                 <bk-radio-group v-model="planForm.conflictStrategy">
-                    <bk-radio v-for="strategy in conflictStrategyList" :key="strategy.value" :value="strategy.value" :disabled="disabled">
-                        <div class="flex-align-center">
-                            {{ strategy.label }}
-                            <i v-if="planForm.conflictStrategy === strategy.value" class="ml5 devops-icon icon-question-circle-shape" v-bk-tooltips="{
-                                content: strategy.tip,
-                                placements: ['bottom']
-                            }"></i>
-                        </div>
+                    <bk-radio v-for="strategy in conflictStrategyList" :key="strategy.value"
+                        :value="strategy.value" :disabled="disabled">
+                        <span v-bk-tooltips="{ content: strategy.tip, placements: ['top'] }">{{ strategy.label }}</span>
                     </bk-radio>
                 </bk-radio-group>
             </bk-form-item>

@@ -60,6 +60,10 @@ export default {
         },
         rightTree () {
             const metadata = this.detailSlider.data.metadata
+            const ips = [...metadata['target.ips']
+                .toString()
+                .matchAll(/([0-9]+\.){3}[0-9]+/)]
+                .map(match => match[0])
             return {
                 children: [
                     {
@@ -94,7 +98,7 @@ export default {
                                 {
                                     title: metadata['env.info'],
                                     metadata: [
-                                        `机器IP: ${JSON.parse(metadata['target.ips'])}`,
+                                        `机器IP: ${ips}`,
                                         `时间: ${formatDate(metadata['update.time'])}`
                                     ]
                                 }

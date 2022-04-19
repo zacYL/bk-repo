@@ -234,8 +234,9 @@ class ArrowheadScanExecutor @Autowired constructor(
         val cveMap = HashMap<String, CveSecItem>()
         readJsonString<List<CveSecItem>>(File(outputDir, RESULT_FILE_NAME_CVE_SEC_ITEMS))
             ?.forEach {
-                // 按（组件-CVE）对漏洞去重
-                val cveSecItem = cveMap.getOrPut("${it.component}-${it.cveId}") { CveSecItem.normalize(it) }
+                // 按（组件-POC_ID）对漏洞去重
+                // POC_ID为arrowhead使用的漏洞库内部漏洞编号，与CVE_ID、CNNVD_ID、CNVD_ID一一对应
+                val cveSecItem = cveMap.getOrPut("${it.component}-${it.pocId}") { CveSecItem.normalize(it) }
                 cveSecItem.versions.add(cveSecItem.version)
             }
         val cveSecItems = cveMap.values.toList()

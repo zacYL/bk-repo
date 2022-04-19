@@ -5,7 +5,8 @@
                 <bk-input class="w480" v-model.trim="planForm.name" maxlength="32" show-word-limit :disabled="disabled"></bk-input>
             </bk-form-item>
             <bk-form-item label="同步策略"
-                :property="{ 'SPECIFIED_TIME': 'time', 'CRON_EXPRESSION': 'cron' }[planForm.executionStrategy]">
+                :property="{ 'SPECIFIED_TIME': 'time', 'CRON_EXPRESSION': 'cron' }[planForm.executionStrategy]"
+                error-display-type="normal">
                 <bk-radio-group
                     class="radio-flex"
                     v-model="planForm.executionStrategy"

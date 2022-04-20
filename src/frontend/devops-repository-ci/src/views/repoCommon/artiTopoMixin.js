@@ -26,12 +26,12 @@ export default {
             }
         },
         leftTree () {
-            const metadata = this.detail.metadata
+            const metadata = this.detail.metadata || {}
             return {
                 children: [
                     {
                         title: '工作项',
-                        children: Object.keys(metadata || {}).map(key => {
+                        children: Object.keys(metadata).map(key => {
                             const [type, CTeamId] = key.split('-')
                             if (CTeamTypeMap[type]) {
                                 return {
@@ -60,11 +60,12 @@ export default {
             }
         },
         rightTree () {
-            const metadata = this.detail.metadata
-            const ips = [...metadata['target.ips']
-                .toString()
-                .matchAll(/([0-9]+\.){3}[0-9]+/)]
-                .map(match => match[0])
+            const metadata = this.detail.metadata || {}
+            const ips = [
+                ...(metadata['target.ips'] || '')
+                    .toString()
+                    .matchAll(/([0-9]+\.){3}[0-9]+/g)
+            ].map(match => match[0])
             return {
                 children: [
                     {

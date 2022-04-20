@@ -60,7 +60,7 @@
         <bk-tab-panel v-if="detail.metadata" name="metadata" :label="$t('metaData')">
             <div class="version-metadata display-block" :data-title="$t('metaData')">
                 <bk-table
-                    :data="Object.entries(detail.metadata || {})"
+                    :data="Object.entries(detail.metadata)"
                     :outer-border="false"
                     :row-border="false"
                     size="small">
@@ -180,7 +180,8 @@
                 detail: {
                     basic: {
                         readme: ''
-                    }
+                    },
+                    metadata: {}
                 },
                 readmeContent: '',
                 selectedHistory: {},

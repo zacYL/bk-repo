@@ -8,7 +8,7 @@ data class Dependency(
     val isVirtual: Boolean,
     val license: String?,
     val md5: String,
-    val packages: List<Package>,
+    val packages: List<Package>?,
     val sha1: String,
     val sha256: String,
     val vulnerabilities: List<Vulnerability>?,

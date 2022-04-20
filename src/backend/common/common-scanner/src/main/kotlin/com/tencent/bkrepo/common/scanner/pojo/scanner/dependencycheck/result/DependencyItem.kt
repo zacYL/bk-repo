@@ -25,26 +25,64 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.common.scanner.pojo.scanner
+package com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.result
 
-import com.fasterxml.jackson.annotation.JsonSubTypes
-import com.fasterxml.jackson.annotation.JsonTypeInfo
-import com.tencent.bkrepo.common.scanner.pojo.scanner.arrowhead.ArrowheadScanner
-import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.scanner.DependencyScanner
+import com.fasterxml.jackson.annotation.JsonAlias
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.tencent.bkrepo.common.checker.pojo.Cvssv2
+import com.tencent.bkrepo.common.checker.pojo.Cvssv3
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
 
-@ApiModel("扫描器配置")
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type")
-@JsonSubTypes(
-    JsonSubTypes.Type(value = ArrowheadScanner::class, name = ArrowheadScanner.TYPE),
-    JsonSubTypes.Type(value = DependencyScanner::class, name = DependencyScanner.TYPE)
-)
-open class Scanner(
-    @ApiModelProperty("扫描器名")
-    open val name: String,
-    @ApiModelProperty("扫描器类型")
-    val type: String,
-    @ApiModelProperty("扫描器版本")
-    open val version: String
-)
+@ApiModel("DependencyCheck漏洞信息")
+data class DependencyItem(
+    /**
+     * CVE-2017-18349
+     */
+    @ApiModelProperty("cve id")
+    val cveId: String,
+
+    /**
+     * CVE-2017-18349
+     */
+    @ApiModelProperty("漏洞名/漏洞标题")
+    val name: String,
+
+    @ApiModelProperty("所属依赖")
+    val dependency: String,
+
+    @ApiModelProperty("引入版本")
+    val version: String,
+
+    /**
+     * CRITICAL,HIGH,MEDIUM,LOW
+     */
+    @ApiModelProperty("等级")
+    val severity: String,
+
+
+    @ApiModelProperty("漏洞描述")
+    @JsonAlias("description")
+    val description: String,
+
+    @ApiModelProperty("官方解决方案")
+    @JsonAlias("official_solution")
+    val officialSolution: String?,
+
+    @ApiModelProperty("解决方案")
+    @JsonAlias("defense_solution")
+    val defenseSolution: String?,
+
+    @ApiModelProperty("相关链接")
+    val references: List<String>?,
+
+    @ApiModelProperty("cvss V2 漏洞影响评价")
+    val cvssV2Vector: Cvssv2?,
+
+    @ApiModelProperty("cvss V3 漏洞影响评价")
+    val cvssV3: Cvssv3?
+) {
+    companion object {
+        const val TYPE = "DEPENDENCY_ITEM"
+    }
+}

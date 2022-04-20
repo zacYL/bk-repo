@@ -32,6 +32,7 @@ import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.scanner.pojo.request.MatchPlanSingleScanRequest
 import com.tencent.bkrepo.scanner.service.ScanService
+import com.tencent.bkrepo.scanner.utils.ScanParamUtil
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.io.File
@@ -66,8 +67,8 @@ class ScanEventConsumer(
             val request = when (type) {
                 EventType.NODE_CREATED -> {//GENERIC仓库
                     val artifactName = File(resourceKey).name
-                    //只支持ipa/apk类型包
-                    if (!artifactName.endsWith(".apk") && !artifactName.endsWith(".ipa")) {
+                    //支持ipa/apk/apks/aab/jar类型包
+                    if (!ScanParamUtil.checkPackage(artifactName)) {
                         return
                     }
                     MatchPlanSingleScanRequest(

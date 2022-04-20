@@ -25,26 +25,17 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.common.scanner.pojo.scanner
+package com.tencent.bkrepo.scanner.component.manager.dependencycheck.model
 
-import com.fasterxml.jackson.annotation.JsonSubTypes
-import com.fasterxml.jackson.annotation.JsonTypeInfo
-import com.tencent.bkrepo.common.scanner.pojo.scanner.arrowhead.ArrowheadScanner
-import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.scanner.DependencyScanner
-import io.swagger.annotations.ApiModel
-import io.swagger.annotations.ApiModelProperty
+import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.result.DependencyItem
+import com.tencent.bkrepo.scanner.component.manager.arrowhead.model.ResultItem
+import org.springframework.data.mongodb.core.mapping.Document
 
-@ApiModel("扫描器配置")
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type")
-@JsonSubTypes(
-    JsonSubTypes.Type(value = ArrowheadScanner::class, name = ArrowheadScanner.TYPE),
-    JsonSubTypes.Type(value = DependencyScanner::class, name = DependencyScanner.TYPE)
-)
-open class Scanner(
-    @ApiModelProperty("扫描器名")
-    open val name: String,
-    @ApiModelProperty("扫描器类型")
-    val type: String,
-    @ApiModelProperty("扫描器版本")
-    open val version: String
-)
+@Document("dependency_item")
+class TDependencyItem(
+    id: String? = null,
+    credentialsKey: String?,
+    sha256: String,
+    scanner: String,
+    data: DependencyItem
+) : ResultItem<DependencyItem>(id, credentialsKey, sha256, scanner, data)

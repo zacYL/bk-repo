@@ -25,26 +25,23 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.common.scanner.pojo.scanner
+package com.tencent.bkrepo.scanner.pojo.request.dependencecheck
 
-import com.fasterxml.jackson.annotation.JsonSubTypes
-import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.common.scanner.pojo.scanner.arrowhead.ArrowheadScanner
 import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.scanner.DependencyScanner
+import com.tencent.bkrepo.scanner.pojo.request.LoadResultArguments
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
 
-@ApiModel("扫描器配置")
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type")
-@JsonSubTypes(
-    JsonSubTypes.Type(value = ArrowheadScanner::class, name = ArrowheadScanner.TYPE),
-    JsonSubTypes.Type(value = DependencyScanner::class, name = DependencyScanner.TYPE)
-)
-open class Scanner(
-    @ApiModelProperty("扫描器名")
-    open val name: String,
-    @ApiModelProperty("扫描器类型")
-    val type: String,
-    @ApiModelProperty("扫描器版本")
-    open val version: String
-)
+@ApiModel("DependencyCheck扫描结果拉取参数")
+data class DependencyLoadResultArguments(
+    @ApiModelProperty("需要的cve列表")
+    val vulIds: List<String> = emptyList(),
+    @ApiModelProperty("需要的漏洞严重性等级列表")
+    val vulnerabilityLevels: List<String> = emptyList(),
+    @ApiModelProperty("扫描结果类型")
+    val reportType: String,
+    @ApiModelProperty("分页参数")
+    val pageLimit: PageLimit = PageLimit()
+) : LoadResultArguments(DependencyScanner.TYPE)

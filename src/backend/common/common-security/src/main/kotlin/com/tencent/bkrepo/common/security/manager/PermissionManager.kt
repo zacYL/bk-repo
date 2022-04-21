@@ -143,7 +143,7 @@ open class PermissionManager(
         if (isReadPublicRepo(action, projectId, repoName, public)) {
             return
         }
-        checkPermission(ResourceType.NODE, action, projectId, repoName, path, anonymous)
+        checkPermission(ResourceType.REPO, action, projectId, repoName, path, anonymous)
     }
 
     /**
@@ -262,10 +262,7 @@ open class PermissionManager(
             path = path
         )
         if (permissionResource.checkPermission(checkRequest).data != true) {
-            // 无权限，响应403错误
-            var reason = "user[$userId] does not have $action permission in project[$projectId]"
-            repoName?.let { reason += " repo[$repoName]" }
-            throw PermissionException(reason)
+            throw PermissionException()
         }
         if (logger.isDebugEnabled) {
             logger.debug("User[${SecurityUtils.getPrincipal()}] check permission success.")

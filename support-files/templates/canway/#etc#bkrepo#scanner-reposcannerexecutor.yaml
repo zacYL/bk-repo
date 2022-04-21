@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: ${service.prefix}${service.name}${service.suffix}
+    desc: ScannerExecutor Service
+server:
+  port: __BK_REPO_SCANNER_EXECUTOR_PORT__
+logging:
+  path: ${logging.path-common}/${service.name}
+service:
+  name: scannerexecutor
+
+scanner:
+  executor:
+    work-dir: __BK_REPO_SCANNER_EXECUTOR_WORK_DIR__
+    docker:
+      enabled: __BK_REPO_SCANNER_EXECUTOR_DOCKER_ENABLED__
+      host: __BK_REPO_SCANNER_EXECUTOR_DOCKER_HOST__
+      version: __BK_REPO_SCANNER_EXECUTOR_DOCKER_VERSION__
+      connect-timeout: __BK_REPO_SCANNER_EXECUTOR_DOCKER_CONNECT_TIMEOUT__
+      read-timeout: __BK_REPO_SCANNER_EXECUTOR_DOCKER_READ_TIMEOUT__

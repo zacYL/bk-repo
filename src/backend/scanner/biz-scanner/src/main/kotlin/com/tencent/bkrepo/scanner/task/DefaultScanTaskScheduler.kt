@@ -39,6 +39,7 @@ import com.tencent.bkrepo.common.scanner.pojo.scanner.Scanner
 import com.tencent.bkrepo.common.scanner.pojo.scanner.SubScanTaskStatus
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
+import com.tencent.bkrepo.scanner.configuration.ScannerProperties
 import com.tencent.bkrepo.scanner.dao.FileScanResultDao
 import com.tencent.bkrepo.scanner.dao.PlanArtifactLatestSubScanTaskDao
 import com.tencent.bkrepo.scanner.dao.ProjectScanConfigurationDao
@@ -87,7 +88,8 @@ class DefaultScanTaskScheduler @Autowired constructor(
     private val executor: ThreadPoolTaskExecutor,
     private val scannerMetrics: ScannerMetrics,
     private val redisOperation: RedisOperation,
-    private val publisher: ApplicationEventPublisher
+    private val publisher: ApplicationEventPublisher,
+    private val scannerProperties: ScannerProperties
 ) : ScanTaskScheduler {
 
     private val logger = LoggerFactory.getLogger(javaClass)
@@ -120,7 +122,7 @@ class DefaultScanTaskScheduler @Autowired constructor(
         lock.use {
             it.lock()
             val subtaskCountLimit = projectScanConfigurationDao.findByProjectId(projectId)?.subScanTaskCountLimit
-                ?: TProjectScanConfiguration.DEFAULT_SUB_SCAN_TASK_COUNT_LIMIT
+                ?: scannerProperties.defaultProjectSubScanTaskCountLimit
             val countToUpdate = (subtaskCountLimit - subScanTaskDao.scanningCount(projectId)).toInt()
             return if (countToUpdate > 0) {
                 val notifiedCount = subScanTaskDao.notify(projectId, countToUpdate)?.modifiedCount?.toInt() ?: 0
@@ -186,16 +188,20 @@ class DefaultScanTaskScheduler @Autowired constructor(
     private fun submit(scanTask: ScanTask): Pair<Long, Long> {
         val scanner = scannerService.get(scanTask.scanner)
         val projectId = scanTask.scanPlan?.projectId
-        val projectScanConfiguration = projectId?.let { projectScanConfigurationDao.findByProjectId(it) }
+        var projectScanConfiguration = projectId?.let { projectScanConfigurationDao.findByProjectId(it) }
         logger.info("submitting sub tasks of task[${scanTask.taskId}], scanner: [${scanner.name}]")
 
-        var scanningCount = projectId?.let { subScanTaskDao.scanningCount(it) } ?: 0L
+        var scanningCount = projectId?.let { subScanTaskDao.scanningCount(it) }
         var submittedSubTaskCount = 0L
         var reuseResultTaskCount = 0L
         val subScanTasks = ArrayList<TSubScanTask>()
         val finishedSubScanTasks = ArrayList<TPlanArtifactLatestSubScanTask>()
         val nodeIterator = iteratorManager.createNodeIterator(scanTask, false)
         for (node in nodeIterator) {
+            projectScanConfiguration = projectScanConfiguration
+                ?: projectScanConfigurationDao.findByProjectId(node.projectId)
+            scanningCount = scanningCount ?: subScanTaskDao.scanningCount(node.projectId)
+
             val storageCredentialsKey = repoInfoCache
                 .get(generateKey(node.projectId, node.repoName))
                 .storageCredentialsKey
@@ -446,7 +452,7 @@ class DefaultScanTaskScheduler @Autowired constructor(
         projectConfiguration: TProjectScanConfiguration?
     ): SubScanTaskStatus {
         val limitSubScanTaskCount = projectConfiguration?.subScanTaskCountLimit
-            ?: TProjectScanConfiguration.DEFAULT_SUB_SCAN_TASK_COUNT_LIMIT
+            ?: scannerProperties.defaultProjectSubScanTaskCountLimit
         if (projectId != null && scanningCount >= limitSubScanTaskCount.toLong()) {
             return SubScanTaskStatus.BLOCKED
         }

@@ -36,19 +36,18 @@ import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.common.scanner.pojo.scanner.Scanner
 import com.tencent.bkrepo.common.scanner.pojo.scanner.arrowhead.ArrowheadScanner
 import com.tencent.bkrepo.common.scanner.pojo.scanner.arrowhead.CveSecItem
-import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.result.DependencyItem
-import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.scanner.DependencyScanner
-import com.tencent.bkrepo.scanner.pojo.request.LoadResultArguments
-import com.tencent.bkrepo.scanner.pojo.request.ArrowheadLoadResultArguments
+import com.tencent.bkrepo.scanner.model.TProjectScanConfiguration
 import com.tencent.bkrepo.scanner.model.TScanPlan
 import com.tencent.bkrepo.scanner.model.TScanTask
 import com.tencent.bkrepo.scanner.model.TSubScanTask
+import com.tencent.bkrepo.scanner.pojo.ProjectScanConfiguration
 import com.tencent.bkrepo.scanner.pojo.ScanTask
 import com.tencent.bkrepo.scanner.pojo.ScanTriggerType
 import com.tencent.bkrepo.scanner.pojo.SubScanTask
+import com.tencent.bkrepo.scanner.pojo.request.ArrowheadLoadResultArguments
 import com.tencent.bkrepo.scanner.pojo.request.ArtifactVulnerabilityRequest
 import com.tencent.bkrepo.scanner.pojo.request.BatchScanRequest
-import com.tencent.bkrepo.scanner.pojo.request.MatchPlanSingleScanRequest
+import com.tencent.bkrepo.scanner.pojo.request.LoadResultArguments
 import com.tencent.bkrepo.scanner.pojo.request.ScanRequest
 import com.tencent.bkrepo.scanner.pojo.request.SingleScanRequest
 import com.tencent.bkrepo.scanner.pojo.response.ArtifactVulnerabilityInfo
@@ -116,30 +115,28 @@ object Converter {
         }
     }
 
-    fun convert(request: MatchPlanSingleScanRequest, scanPlan: TScanPlan): ScanRequest {
-        with(request) {
-            // 创建rule
-            val rule = if (fullPath != null) {
-                RuleConverter.convert(projectId, repoName, fullPath!!)
-            } else {
-                RuleConverter.convert(projectId, repoName, packageKey!!, version!!)
-            }
-            return ScanRequest(planId = scanPlan.id, rule = rule)
+    fun convert(projectScanConfiguration: TProjectScanConfiguration): ProjectScanConfiguration {
+        return with(projectScanConfiguration) {
+            ProjectScanConfiguration(
+                projectId = projectId,
+                priority = priority,
+                scanTaskCountLimit = scanTaskCountLimit,
+                subScanTaskCountLimit = subScanTaskCountLimit,
+                autoScanConfiguration = autoScanConfiguration
+            )
         }
     }
 
     fun convertToLoadArguments(request: ArtifactVulnerabilityRequest, scannerType: String): LoadResultArguments? {
-        return when (scannerType) {
-            ArrowheadScanner.TYPE, DependencyScanner.TYPE -> {
-                ArrowheadLoadResultArguments(
-                    vulnerabilityLevels = request.leakType?.let { listOf(it) } ?: emptyList(),
-                    vulIds = request.vulId?.let { listOf(it) } ?: emptyList(),
-                    reportType = request.reportType,
-                    pageLimit = PageLimit(request.pageNumber, request.pageSize)
-                )
-            }
-            else -> null
+        if (scannerType == ArrowheadScanner.TYPE) {
+            return ArrowheadLoadResultArguments(
+                vulnerabilityLevels = request.leakType?.let { listOf(it) } ?: emptyList(),
+                vulIds = request.vulId?.let { listOf(it) } ?: emptyList(),
+                reportType = request.reportType,
+                pageLimit = PageLimit(request.pageNumber, request.pageSize)
+            )
         }
+        return null
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -163,23 +160,6 @@ object Converter {
                     vulnerabilityName = it.name,
                     description = it.description,
                     officialSolution = it.officialSolution.ifEmpty { it.defenseSolution },
-                    reference = it.references
-                )
-            }.toList()
-            return Pages.ofResponse(pageRequest, detailReport.totalRecords, reports)
-        }
-        if (scannerType == DependencyScanner.TYPE && reportType == DependencyItem.TYPE && detailReport != null) {
-            detailReport as Page<DependencyItem>
-            val reports = detailReport.records.mapTo(HashSet(detailReport.records.size)) {
-                ArtifactVulnerabilityInfo(
-                    vulId = it.cveId,
-                    severity = ScanPlanConverter.convertToLeakLevel(it.severity),
-                    pkgName = it.dependency,
-                    installedVersion = setOf(it.version),
-                    title = it.name,
-                    vulnerabilityName = it.name,
-                    description = it.description,
-                    officialSolution = it.officialSolution?.ifEmpty { it.defenseSolution },
                     reference = it.references
                 )
             }.toList()

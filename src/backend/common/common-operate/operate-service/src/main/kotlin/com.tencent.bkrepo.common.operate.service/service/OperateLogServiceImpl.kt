@@ -38,6 +38,7 @@ import com.tencent.bkrepo.common.operate.api.OperateLogService
 import com.tencent.bkrepo.common.operate.api.pojo.OpLogListOption
 import com.tencent.bkrepo.common.operate.api.pojo.OperateLog
 import com.tencent.bkrepo.common.operate.api.pojo.OperateLogResponse
+import com.tencent.bkrepo.common.operate.api.pojo.event.EventCreateRequest
 import com.tencent.bkrepo.common.operate.service.config.OperateProperties
 import com.tencent.bkrepo.common.operate.service.dao.OperateLogDao
 import com.tencent.bkrepo.common.operate.service.model.TOperateLog
@@ -143,6 +144,20 @@ open class OperateLogServiceImpl(
         val totalRecords = operateLogDao.count(query)
         val records = operateLogDao.find(query.with(pageRequest)).map { convert(it) }
         return Pages.ofResponse(pageRequest, totalRecords, records)
+    }
+
+    @Async
+    override fun saveEventRequest(request: EventCreateRequest) {
+        val log = TOperateLog(
+            type = request.type,
+            resourceKey = request.resourceKey,
+            projectId = request.projectId,
+            repoName = request.repoName,
+            description = request.data,
+            userId = request.userId,
+            clientAddress = request.address
+        )
+        operateLogDao.save(log)
     }
 
     private fun notNeedRecord(event: ArtifactEvent): Boolean {

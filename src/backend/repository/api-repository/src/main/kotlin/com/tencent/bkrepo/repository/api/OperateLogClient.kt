@@ -33,7 +33,7 @@ import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.operate.api.pojo.OpLogListOption
 import com.tencent.bkrepo.common.operate.api.pojo.OperateLog
-import com.tencent.bkrepo.repository.pojo.event.EventCreateRequest
+import com.tencent.bkrepo.common.operate.api.pojo.event.EventCreateRequest
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import org.springframework.cloud.openfeign.FeignClient

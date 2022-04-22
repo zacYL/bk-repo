@@ -30,7 +30,7 @@ package com.tencent.bkrepo.auth.listener
 import com.tencent.bkrepo.auth.listener.event.AuthEvent
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.repository.api.OperateLogClient
-import com.tencent.bkrepo.repository.pojo.event.EventCreateRequest
+import com.tencent.bkrepo.common.operate.api.pojo.event.EventCreateRequest
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
 

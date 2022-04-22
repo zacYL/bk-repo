@@ -1,4 +1,4 @@
-package com.tencent.bkrepo.repository.pojo.event
+package com.tencent.bkrepo.common.operate.api.pojo.event
 
 import com.tencent.bkrepo.common.artifact.event.base.EventType
 

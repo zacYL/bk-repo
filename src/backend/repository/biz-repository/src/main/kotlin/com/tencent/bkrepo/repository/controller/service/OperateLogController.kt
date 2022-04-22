@@ -36,7 +36,7 @@ import com.tencent.bkrepo.common.operate.api.pojo.OperateLog
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.repository.api.OperateLogClient
-import com.tencent.bkrepo.repository.pojo.event.EventCreateRequest
+import com.tencent.bkrepo.common.operate.api.pojo.event.EventCreateRequest
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -59,7 +59,7 @@ class OperateLogController(
     }
 
     override fun saveEvent(request: EventCreateRequest): Response<Boolean> {
-        TODO()
-//        operateLogService.saveEventRequest(request)
+        operateLogService.saveEventRequest(request)
+        return ResponseBuilder.success()
     }
 }

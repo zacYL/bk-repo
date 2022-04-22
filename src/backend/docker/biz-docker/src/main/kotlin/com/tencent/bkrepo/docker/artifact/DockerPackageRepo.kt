@@ -40,13 +40,13 @@ import com.tencent.bkrepo.repository.api.OperateLogClient
 import com.tencent.bkrepo.repository.api.PackageClient
 import com.tencent.bkrepo.repository.api.PackageDownloadsClient
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
-import com.tencent.bkrepo.repository.pojo.event.EventCreateRequest
+import com.tencent.bkrepo.common.operate.api.pojo.event.EventCreateRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.request.PackagePopulateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import java.security.Security
 
 @Service
 class DockerPackageRepo @Autowired constructor(
@@ -136,23 +136,33 @@ class DockerPackageRepo @Autowired constructor(
                 version
             )
             val realIpAddress = HttpContextHolder.getClientAddress()
-            operateLogClient.saveEvent(
-                EventCreateRequest(
-                    type = EventType.VERSION_DOWNLOAD,
-                    projectId = projectId,
-                    repoName = repoName,
-                    resourceKey = "$packageKey-$version",
-                    userId = context.userId,
-                    data = mapOf(
-                        "packageKey" to packageKey,
-                        "packageType" to RepositoryType.DOCKER.name,
-                        "packageName" to artifactName,
-                        "packageVersion" to version
-                    ),
-                    address = realIpAddress
+            try {
+                operateLogClient.saveEvent(
+                    EventCreateRequest(
+                        type = EventType.VERSION_DOWNLOAD,
+                        projectId = projectId,
+                        repoName = repoName,
+                        resourceKey = "$packageKey-$version",
+                        userId = context.userId,
+                        data = mapOf(
+                            "packageKey" to packageKey,
+                            "packageType" to RepositoryType.DOCKER.name,
+                            "packageName" to artifactName,
+                            "packageVersion" to version
+                        ),
+                        address = realIpAddress
+                    )
                 )
-            )
+            } catch (e: Exception) {
+                logger.error(
+                    "Event: request[${EventType.VERSION_DOWNLOAD}, $projectId, $repoName, $realIpAddress] failed"
+                )
+            }
             return packageDownloadsClient.record(request).isOk()
         }
+    }
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(DockerPackageRepo::class.java)
     }
 }

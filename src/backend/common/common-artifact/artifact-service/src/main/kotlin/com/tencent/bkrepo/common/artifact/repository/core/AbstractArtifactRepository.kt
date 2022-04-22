@@ -57,7 +57,7 @@ import com.tencent.bkrepo.common.storage.core.StorageService
 import com.tencent.bkrepo.common.storage.monitor.Throughput
 import com.tencent.bkrepo.repository.api.*
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
-import com.tencent.bkrepo.repository.pojo.event.EventCreateRequest
+import com.tencent.bkrepo.common.operate.api.pojo.event.EventCreateRequest
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationEventPublisher

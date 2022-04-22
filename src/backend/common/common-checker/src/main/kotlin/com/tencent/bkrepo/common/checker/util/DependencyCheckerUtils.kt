@@ -10,8 +10,8 @@ object DependencyCheckerUtils {
      * @param path 指定路径
      * @return 字符串返回
      */
-    fun scan(path: String): String{
-        return ScanUtils.startScan(path, false)
+    fun scan(path: String): String {
+        return ScanUtils.startScan(path)
     }
 
     /**
@@ -20,6 +20,6 @@ object DependencyCheckerUtils {
      * @return DependencyInfo
      */
     fun scanWithInfo(path: String): DependencyInfo {
-        return ScanUtils.startScan(path, false).readJsonString()
+        return ScanUtils.startScan(path).readJsonString()
     }
 }

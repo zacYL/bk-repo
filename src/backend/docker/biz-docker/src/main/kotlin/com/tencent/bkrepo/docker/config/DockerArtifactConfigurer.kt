@@ -31,6 +31,7 @@
 
 package com.tencent.bkrepo.docker.config
 
+import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.artifact.config.ArtifactConfigurerSupport
 import com.tencent.bkrepo.common.artifact.exception.ExceptionResponseTranslator
@@ -69,6 +70,11 @@ class DockerArtifactConfigurer : ArtifactConfigurerSupport() {
     }
     override fun getExceptionResponseTranslator() = object : ExceptionResponseTranslator {
         override fun translate(payload: Response<*>, request: ServerHttpRequest, response: ServerHttpResponse): Any {
+            if (payload.code >= CommonMessageCode.SUCCESS.getCode() &&
+                payload.code <= CommonMessageCode.MODIFY_PASSWORD_FAILED.getCode()
+            ) {
+                return payload
+            }
             return DockerV2Errors.internalError(payload.message)
         }
     }

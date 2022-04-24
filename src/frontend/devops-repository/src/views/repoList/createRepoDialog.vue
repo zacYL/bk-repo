@@ -29,7 +29,8 @@
                 </card-radio-group>
             </bk-form-item>
             <template v-if="repoBaseInfo.type === 'generic'">
-                <bk-form-item v-for="type in ['mobile', 'web']" :key="type"
+                <!-- <bk-form-item v-for="type in ['mobile', 'web']" :key="type" -->
+                <bk-form-item v-for="type in ['web']" :key="type"
                     :label="$t(`${type}Download`)" :property="`${type}.enable`">
                     <bk-radio-group v-model="repoBaseInfo[type].enable">
                         <bk-radio class="mr20" :value="true">{{ $t('open') }}</bk-radio>

@@ -84,4 +84,10 @@ class UserOperateLogController(
         )
         return ResponseBuilder.success(page)
     }
+
+    @GetMapping("/migrate")
+    @ApiOperation("历史审计历史数据迁移接口")
+    fun opLogsMigrate() {
+        operateLogService.opLogsMigrate()
+    }
 }

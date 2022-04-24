@@ -30,6 +30,7 @@ package com.tencent.bkrepo.common.operate.service
 import com.tencent.bkrepo.common.operate.api.OperateLogService
 import com.tencent.bkrepo.common.operate.service.config.OperateProperties
 import com.tencent.bkrepo.common.operate.service.dao.OperateLogDao
+import com.tencent.bkrepo.common.operate.service.dao.OperateLogMigrateDao
 import com.tencent.bkrepo.common.operate.service.service.OperateLogServiceImpl
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -40,11 +41,15 @@ import org.springframework.context.annotation.Import
 @Configuration
 @EnableConfigurationProperties(OperateProperties::class)
 @ConditionalOnWebApplication
-@Import(OperateLogDao::class)
+@Import(OperateLogDao::class, OperateLogMigrateDao::class)
 class OperateAutoConfiguration {
 
     @Bean
-    fun operateLogService(operateProperties: OperateProperties, operateLogDao: OperateLogDao): OperateLogService {
-        return OperateLogServiceImpl(operateProperties, operateLogDao)
+    fun operateLogService(
+        operateProperties: OperateProperties,
+        operateLogDao: OperateLogDao,
+        operateLogMigrateDao: OperateLogMigrateDao
+    ): OperateLogService {
+        return OperateLogServiceImpl(operateProperties, operateLogDao, operateLogMigrateDao)
     }
 }

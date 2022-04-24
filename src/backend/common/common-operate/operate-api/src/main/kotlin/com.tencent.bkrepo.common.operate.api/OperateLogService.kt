@@ -59,4 +59,9 @@ interface OperateLogService {
     ): Page<OperateLogResponse?>
 
     fun saveEventRequest(request: EventCreateRequest)
+
+    /**
+     * 历史审计历史数据迁移
+     */
+    fun opLogsMigrate()
 }

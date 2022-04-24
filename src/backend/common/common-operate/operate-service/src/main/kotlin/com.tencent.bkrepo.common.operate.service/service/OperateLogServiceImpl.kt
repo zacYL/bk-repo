@@ -41,7 +41,9 @@ import com.tencent.bkrepo.common.operate.api.pojo.OperateLogResponse
 import com.tencent.bkrepo.common.operate.api.pojo.event.EventCreateRequest
 import com.tencent.bkrepo.common.operate.service.config.OperateProperties
 import com.tencent.bkrepo.common.operate.service.dao.OperateLogDao
+import com.tencent.bkrepo.common.operate.service.dao.OperateLogMigrateDao
 import com.tencent.bkrepo.common.operate.service.model.TOperateLog
+import com.tencent.bkrepo.common.operate.service.model.TOperateLogMig
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
@@ -59,7 +61,8 @@ import java.time.format.DateTimeFormatter
 
 open class OperateLogServiceImpl(
     private val operateProperties: OperateProperties,
-    private val operateLogDao: OperateLogDao
+    private val operateLogDao: OperateLogDao,
+    private val operatorLogMigrateDao: OperateLogMigrateDao
 ) : OperateLogService {
 
     @Async
@@ -158,6 +161,27 @@ open class OperateLogServiceImpl(
             clientAddress = request.address
         )
         operateLogDao.save(log)
+    }
+
+    override fun opLogsMigrate() {
+        while (true) {
+            val logs = operatorLogMigrateDao.find(
+                Query(Criteria.where(TOperateLogMig::projectId.name).ne(null)).limit(2)
+            ).onEach { log ->
+                val operateLog = TOperateLog(
+                    type = log.type,
+                    resourceKey = log.resourceKey,
+                    projectId = log.projectId,
+                    repoName = log.repoName,
+                    description = log.description,
+                    userId = log.userId,
+                    clientAddress = log.clientAddress
+                )
+                operateLogDao.save(operateLog)
+                operatorLogMigrateDao.removeById(log.id!!)
+            }
+            if (logs.isEmpty()) break
+        }
     }
 
     private fun notNeedRecord(event: ArtifactEvent): Boolean {

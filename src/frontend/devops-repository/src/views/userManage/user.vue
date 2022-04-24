@@ -50,7 +50,9 @@
             <bk-table-column :label="$t('account')" prop="userId"></bk-table-column>
             <bk-table-column :label="$t('chineseName')" prop="name"></bk-table-column>
             <bk-table-column :label="$t('email')" prop="email"></bk-table-column>
-            <bk-table-column label="电话" prop="phone"></bk-table-column>
+            <bk-table-column label="电话" prop="phone">
+                <template #default="{ row }">{{row.phone || '--'}}</template>
+            </bk-table-column>
             <bk-table-column :label="$t('createdDate')">
                 <template #default="{ row }">{{formatDate(row.createdDate)}}</template>
             </bk-table-column>

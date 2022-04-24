@@ -50,10 +50,10 @@ body {
 }
 :is(.devops-icon, svg) {
     font-size: 14px;
-    color: var(--fontSubsidiaryColor);
     &.hover-btn {
         padding: 5px;
         border-radius: 2px;
+        color: var(--fontSubsidiaryColor);
         &:not(.disabled):hover {
             background-color: var(--bgHoverColor);
         }

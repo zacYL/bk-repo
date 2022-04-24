@@ -30,48 +30,33 @@ body {
     }
 }
 
-.devops-icon {
-    font-size: 14px;
+.hover-btn {
+    user-select: none;
+    cursor: pointer;
     &.disabled {
         color: var(--fontDisableColor);
         cursor: not-allowed;
     }
-    &.hover-btn {
-        padding: 5px;
-        border-radius: 2px;
-        &:not(.disabled):hover {
-            background-color: var(--bgHoverColor);
-        }
+    &:not(.disabled):hover {
+        color: var(--primaryWeightColor);
+    }
+    &:not(.disabled).hover-danger:hover {
+        color: var(--dangerColor);
     }
 }
 
 .cell svg.hover-btn {
     display: inherit;
 }
-svg {
-    &.disabled {
-        color: var(--fontDisableColor);
-        cursor: not-allowed;
-    }
+:is(.devops-icon, svg) {
+    font-size: 14px;
+    color: var(--fontSubsidiaryColor);
     &.hover-btn {
         padding: 5px;
         border-radius: 2px;
-        color: var(--fontSubsidiaryColor);
         &:not(.disabled):hover {
-            color: var(--primaryColor);
-            background-color: var(--bgHoverLighterColor);
+            background-color: var(--bgHoverColor);
         }
-    }
-}
-
-.hover-btn {
-    user-select: none;
-    cursor: pointer;
-    &:hover {
-        color: var(--primaryWeightColor);
-    }
-    &.hover-danger:hover {
-        color: var(--dangerColor);
     }
 }
 

@@ -226,15 +226,19 @@ body {
             position: relative;
             width: 90px;
             padding: 0 14px;
-            line-height: 2.5;
+            height: 40px;
+            line-height: 40px;
             text-align: center;
+            color: var(--fontPrimaryColor);
+            user-select: none;
             cursor: pointer;
-            &:not(.disabled):hover {
-                background-color: var(--bgHoverColor);
-            }
             &.disabled {
                 color: var(--fontDisableColor);
                 cursor: not-allowed;
+            }
+            &:not(.disabled):hover {
+                color: var(--primaryWeightColor);
+                background-color: var(--bgHoverColor);
             }
         }
     }

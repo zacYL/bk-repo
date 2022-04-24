@@ -45,6 +45,9 @@ body {
     }
 }
 
+.cell svg.hover-btn {
+    display: inherit;
+}
 svg {
     &.disabled {
         color: var(--fontDisableColor);
@@ -53,8 +56,10 @@ svg {
     &.hover-btn {
         padding: 5px;
         border-radius: 2px;
+        color: var(--fontSubsidiaryColor);
         &:not(.disabled):hover {
-            background-color: var(--bgHoverColor);
+            color: var(--primaryColor);
+            background-color: var(--bgHoverLighterColor);
         }
     }
 }

@@ -383,8 +383,16 @@ body {
                 max-height: initial;
                 margin: initial;
                 li {
+                    padding: 0 10px 0 20px;
                     color: var(--fontPrimaryColor);
                     font-size: 12px;
+                    // todo
+                    > div > .bk-icon {
+                        visibility: hidden;
+                    }
+                    &:hover .bk-icon {
+                        visibility: visible;
+                    }
                 }
                 .bk-select {
                     .icon-close-circle-shape {

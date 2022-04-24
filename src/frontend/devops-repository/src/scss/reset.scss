@@ -281,10 +281,6 @@ body {
         }
     }
 
-    .bk-message-icon {
-        min-width: 20px !important;
-    }
-
     .bk-option-name {
         width: 100%;
         overflow: hidden;
@@ -557,6 +553,33 @@ body {
                     width: 286px!important;
                 }
             }
+        }
+    }
+}
+
+.bk-message {
+    min-width: 220px;
+    padding: 10px 16px;
+    .bk-message-icon {
+        margin-right: 4px;
+    }
+    .bk-message-content {
+        min-width: initial;
+        max-width: 512px;
+    }
+    .bk-message-close .bk-icon {
+        color: var(--fontSubsidiaryColor);
+    }
+    &.bk-message-success {
+        background-color: var(--successBgColor);
+        .bk-message-content {
+            color: var(--successColor);
+        }
+    }
+    &.bk-message-error {
+        background-color: var(--dangerBgColor);
+        .bk-message-content {
+            color: var(--dangerColor);
         }
     }
 }

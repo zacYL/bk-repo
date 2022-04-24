@@ -250,6 +250,9 @@ input[type=file] {
     z-index: 10;
     opacity: 0;
     cursor: pointer;
+    &::-webkit-file-upload-button {
+        cursor: pointer;
+    }
 }
 
 // 内容块标题展示

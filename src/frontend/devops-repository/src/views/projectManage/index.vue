@@ -29,7 +29,7 @@
             <bk-table-column label="项目标识" prop="id" show-overflow-tooltip></bk-table-column>
             <bk-table-column label="项目名称" prop="name" show-overflow-tooltip></bk-table-column>
             <bk-table-column label="项目描述" show-overflow-tooltip>
-                <template #default="{ row }">{{row.description || '--'}}</template>
+                <template #default="{ row }">{{row.description || '/'}}</template>
             </bk-table-column>
             <bk-table-column :label="$t('createdDate')">
                 <template #default="{ row }">{{ formatDate(row.createdDate) }}</template>

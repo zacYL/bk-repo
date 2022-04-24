@@ -49,8 +49,8 @@ export default {
                             {
                                 title: '提交信息',
                                 metadata: [
-                                    `lastCommit: ${metadata.lastCommit || '--'}`,
-                                    `newCommit: ${metadata.newCommit || '--'}`
+                                    `lastCommit: ${metadata.lastCommit || '/'}`,
+                                    `newCommit: ${metadata.newCommit || '/'}`
                                 ]
                             }
                         ]

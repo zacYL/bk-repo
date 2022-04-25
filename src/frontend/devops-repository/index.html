@@ -116,6 +116,9 @@
                             case 404:
                                 message = '文件不存在'
                                 break
+                            case 423:
+                                message = '文件被禁止下载'
+                                break
                             default:
                                 message = '服务异常，请稍后重试'
                         }

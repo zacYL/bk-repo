@@ -101,7 +101,7 @@
                     }).catch(e => {
                         if (e.status === 404) {
                             this.uploadFile(file)
-                        } else if (e.status === 403) {
+                        } else if (e.status === 423) {
                             this.$bkMessage({
                                 theme: 'error',
                                 message: e.message

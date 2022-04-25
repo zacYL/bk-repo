@@ -19,16 +19,17 @@ import com.tencent.bkrepo.common.devops.conf.DevopsConf
 import com.tencent.bkrepo.common.devops.pojo.response.CanwayResponse
 import com.tencent.bkrepo.common.devops.util.http.CanwayHttpUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.mongodb.core.MongoTemplate
+import org.springframework.data.mongodb.core.query.Criteria
+import org.springframework.data.mongodb.core.query.Query
+import org.springframework.data.mongodb.core.query.Update
 
 class CanwayRoleServiceImpl(
     private val roleRepository: RoleRepository,
     userService: UserService,
     userRepository: UserRepository,
-    mongoTemplate: MongoTemplate,
+    private val mongoTemplate: MongoTemplate,
     permissionService: PermissionService
 ) : CpackRoleServiceImpl(roleRepository, userService, userRepository, mongoTemplate, permissionService) {
 
@@ -42,24 +43,32 @@ class CanwayRoleServiceImpl(
         // 插入用户组
         val tenantId = getTenantId()
         val groups = getGroupByTenantId(tenantId)
-        checkGroups(groups, projectId, repoName)
+        checkGroups(groups)
         return super.listRoleByProject(projectId, repoName)
     }
 
-    private fun checkGroups(groups: List<CanwayGroup>?, projectId: String, repoName: String?) {
-        groups ?: return
-        for (group in groups) {
-            if (roleRepository.findTRoleById(group.id) == null) {
-                roleRepository.insert(
-                    TRole(
-                        id = group.id,
-                        roleId = group.id,
-                        name = group.name,
-                        type = RoleType.SYSTEM,
-                        projectId = null,
-                        admin = false
+    private fun checkGroups(groups: List<CanwayGroup>?) {
+        groups?.forEach { group ->
+            roleRepository.findTRoleById(group.id).apply {
+                if (this == null) {
+                    roleRepository.insert(
+                        TRole(
+                            id = group.id,
+                            roleId = group.id,
+                            name = group.name,
+                            type = RoleType.SYSTEM,
+                            projectId = null,
+                            admin = false
+                        )
                     )
-                )
+                }
+                if (this != null && this.name != group.name) {
+                    mongoTemplate.updateFirst(
+                        Query(Criteria.where(TRole::roleId.name).`is`(group.id)),
+                        Update().set(TRole::name.name, group.name),
+                        TRole::class.java
+                    )
+                }
             }
         }
     }
@@ -95,13 +104,12 @@ class CanwayRoleServiceImpl(
 
     override fun systemRolesByProjectId(projectId: String): List<Role> {
         val projectGroups = devopsUserService.groupsByProjectId(projectId) ?: listOf()
-        checkGroups(projectGroups, projectId, null)
+        checkGroups(projectGroups)
         val projectGroupIds = projectGroups.map { it.id }
         return systemRoles().filter { projectGroupIds.contains(it.id) }
     }
 
     companion object {
-        val logger: Logger = LoggerFactory.getLogger(CanwayRoleServiceImpl::class.java)
         const val groupApi = "/service/tenant/%s/group"
     }
 }

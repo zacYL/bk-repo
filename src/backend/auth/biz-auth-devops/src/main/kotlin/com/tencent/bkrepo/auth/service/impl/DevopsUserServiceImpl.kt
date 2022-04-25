@@ -46,7 +46,7 @@ class DevopsUserServiceImpl(
 
     @Throws(DevopsRequestException::class)
     override fun childrenDepartments(departmentId: String): List<DevopsDepartment>? {
-        val requestUrl = "s$devopsHost$ciUserManager$ciApi$childrenDepartmentApi$departmentId"
+        val requestUrl = "$devopsHost$ciUserManager$ciApi$childrenDepartmentApi$departmentId"
         val response = CanwayHttpUtils.doGet(requestUrl)
         return response.content.readJsonString<CanwayResponse<List<DevopsDepartment>>>().data
     }

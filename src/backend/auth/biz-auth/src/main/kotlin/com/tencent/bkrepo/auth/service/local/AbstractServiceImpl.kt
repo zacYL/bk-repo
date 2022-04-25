@@ -157,6 +157,7 @@ open class AbstractServiceImpl constructor(
             excludePattern = permission.excludePattern,
             users = permission.users,
             roles = permission.roles,
+            departments = permission.departments,
             actions = permission.actions,
             createBy = permission.createBy,
             createAt = permission.createAt,

@@ -79,8 +79,5 @@ interface RoleRepository : MongoRepository<TRole, String> {
         repoName: String
     ): TRole?
 
-    /**
-     * 以下为canway 扩展
-     */
     fun findByProjectIdAndTypeAndIdIn(projectId: String, type: RoleType, roles: List<String>): List<TRole>
 }

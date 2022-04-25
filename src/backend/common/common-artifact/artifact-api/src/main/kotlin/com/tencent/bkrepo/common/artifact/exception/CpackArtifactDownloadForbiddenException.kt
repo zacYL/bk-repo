@@ -25,49 +25,19 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.common.artifact.interceptor
+package com.tencent.bkrepo.common.artifact.exception
 
-import com.tencent.bkrepo.common.artifact.exception.CpackArtifactDownloadForbiddenException
-import com.tencent.bkrepo.repository.pojo.node.NodeDetail
-import org.slf4j.LoggerFactory
+import com.tencent.bkrepo.common.api.constant.HttpStatus
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 
 /**
- * 下载拦截器
+ * 构件禁止下载异常,表示构件由制品库业务功能禁止下载，如质量规则，手动禁止等
  */
-abstract class DownloadInterceptor<T>(
-    open val rules: Map<String, Any>
-) {
-    abstract fun parseRule(): T
-
-    abstract fun matcher(node: NodeDetail, rule: T): Boolean
-
-    open fun intercept(node: NodeDetail) {
-        val rule = try {
-            parseRule()
-        } catch (e: Exception) {
-            logger.warn("fail to parse repo[${node.projectId}/${node.repoName}] rule[$rules]: $e")
-            return
-        }
-        val match = matcher(node, rule)
-        val forbidden = (allowed() && !match) || (!allowed() && match)
-        if (forbidden) {
-            throw CpackArtifactDownloadForbiddenException("download node[${node.fullPath}] is forbidden by rule[$rule]")
-        }
-    }
-
-    /**
-     * allowed表示拦截器规则是允许或禁止
-     * allowed=true 允许
-     * allowed=false 禁止
-     *
-     * @return 默认true
-     */
-    private fun allowed(): Boolean {
-        return rules[ALLOWED] as? Boolean ?: true
-    }
-
-    companion object {
-        private val logger = LoggerFactory.getLogger(DownloadInterceptor::class.java)
-        private const val ALLOWED = "allowed"
-    }
-}
+class CpackArtifactDownloadForbiddenException(
+    reason: String
+) : ErrorCodeException(
+    ArtifactMessageCode.ARTIFACT_DOWNLOAD_FORBIDDEN,
+    reason,
+    status = HttpStatus.LOCKED
+)

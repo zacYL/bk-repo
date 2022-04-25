@@ -92,11 +92,7 @@ class CanwayPermissionServiceImpl(
         if (isCIAdmin(request.uid, projectId = request.projectId)) return true
 
         if (checkCIReadPermission(request)) return true
-        val canwayPermissionResult = canwayCheckPermission(request)
-        if (!canwayPermissionResult.hasPermission) return false
-        val result = originCheckPermission(request)
-        if (!result) return false
-        return originCheckPermission(request)
+        return super.checkPermission(request)
     }
 
     override fun createPermission(request: CreatePermissionRequest): Boolean {

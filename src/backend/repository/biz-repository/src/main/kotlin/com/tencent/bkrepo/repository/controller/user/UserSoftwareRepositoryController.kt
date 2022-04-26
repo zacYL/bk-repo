@@ -27,9 +27,9 @@ class UserSoftwareRepositoryController(
     @GetMapping("/page/{pageNumber}/{pageSize}")
     fun softwareRepoPage(
         @RequestAttribute userId: String,
-        @ApiParam(value = "当前页", required = true, example = "0")
+        @ApiParam(value = "当前页", required = true)
         @PathVariable pageNumber: Int,
-        @ApiParam(value = "分页大小", required = true, example = "20")
+        @ApiParam(value = "分页大小", required = true)
         @PathVariable pageSize: Int,
         @ApiParam(value = "项目id", required = false)
         @RequestParam projectId: String?,

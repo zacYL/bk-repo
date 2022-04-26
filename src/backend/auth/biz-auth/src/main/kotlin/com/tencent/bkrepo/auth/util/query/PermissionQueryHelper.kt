@@ -14,14 +14,17 @@ object PermissionQueryHelper {
         uid: String,
         action: PermissionAction,
         resourceType: ResourceType,
-        roles: List<String>
+        roles: List<String>,
+        departments: List<String>? = null
     ): Query {
         val criteria = Criteria()
-        var celeriac = criteria.orOperator(
-            Criteria.where(TPermission::users.name).`in`(uid),
-            Criteria.where(TPermission::roles.name).`in`(roles)
-        ).and(TPermission::resourceType.name).`is`(resourceType).and(TPermission::actions.name)
-            .`in`(action)
+        val orQuery = mutableListOf<Criteria>()
+        orQuery.add(Criteria.where(TPermission::users.name).`in`(uid))
+        if(roles.isNotEmpty()) orQuery.add(Criteria.where(TPermission::roles.name).`in`(roles))
+        if( departments != null && departments.isNotEmpty())
+            orQuery.add(Criteria.where(TPermission::departments.name).`in`(departments))
+        var celeriac = criteria.orOperator(*orQuery.toTypedArray())
+                .and(TPermission::resourceType.name).`is`(resourceType).and(TPermission::actions.name).`in`(action)
         if (resourceType != ResourceType.SYSTEM) {
             celeriac = celeriac.and(TPermission::projectId.name).`is`(projectId)
         }

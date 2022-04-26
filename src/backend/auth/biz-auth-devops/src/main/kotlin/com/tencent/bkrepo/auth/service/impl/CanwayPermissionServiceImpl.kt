@@ -23,9 +23,11 @@ import com.tencent.bkrepo.auth.repository.PermissionRepository
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
 import com.tencent.bkrepo.auth.service.DevopsUserService
+import com.tencent.bkrepo.auth.util.query.PermissionQueryHelper
+import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.util.readJsonString
-import com.tencent.bkrepo.common.devops.client.DevopsAuthClient
+import com.tencent.bkrepo.common.devops.client.DevopsClient
 import com.tencent.bkrepo.common.devops.conf.DevopsConf
 import com.tencent.bkrepo.common.devops.enums.InstanceType
 import com.tencent.bkrepo.common.devops.pojo.response.CanwayResponse
@@ -45,12 +47,11 @@ class CanwayPermissionServiceImpl(
     private val userRepository: UserRepository,
     private val roleRepository: RoleRepository,
     private val permissionRepository: PermissionRepository,
-    mongoTemplate: MongoTemplate,
+    private val mongoTemplate: MongoTemplate,
     repositoryClient: RepositoryClient,
     private val devopsConf: DevopsConf,
     private val bkUserService: BkUserService,
-    projectClient: ProjectClient,
-    private val devopsAuthClient: DevopsAuthClient
+    projectClient: ProjectClient
 ) : CpackPermissionServiceImpl(
     userRepository,
     roleRepository,
@@ -62,6 +63,9 @@ class CanwayPermissionServiceImpl(
 
     @Autowired
     lateinit var devopsUserService: DevopsUserService
+
+    @Autowired
+    lateinit var devopsClient: DevopsClient
 
     override fun deletePermission(id: String): Boolean {
         logger.info("delete  permission  repoName: [$id]")
@@ -81,12 +85,52 @@ class CanwayPermissionServiceImpl(
 
     override fun checkPermission(request: CheckPermissionRequest): Boolean {
         logger.info("check permission  request : [$request] ")
+
+        if (request.uid == ANONYMOUS_USER) return false
         // 校验用户是否属于对应部门、用户组和已添加用户
         if (isBkrepoAdmin(request)) return true
         // 校验用户是否为CI 超级管理员或项目管理员
         if (isCIAdmin(request.uid, projectId = request.projectId)) return true
         if (checkCIReadPermission(request)) return true
-        return super.checkPermission(request)
+        // 查询用户在CI所属组织/部门
+        val departments = devopsClient.departmentsByUserId(request.uid)?.map { it.id }
+        return canwayCheckPermission(request, departments)
+    }
+
+    fun canwayCheckPermission(request: CheckPermissionRequest, departments: List<String>?): Boolean {
+        logger.debug("check permission  request : [$request] ")
+
+        val user = userRepository.findFirstByUserId(request.uid) ?: run {
+            throw ErrorCodeException(AuthMessageCode.AUTH_USER_NOT_EXIST)
+        }
+
+        // check user repo admin
+        if (checkRepoUserAdmin(request)) return true
+
+        // check role project admin
+        if (checkProjectAdmin(request, user.roles)) return true
+
+        // check role repo admin
+        if (checkRepoAdmin(request, user.roles)) return true
+
+        // check project action
+        if (checkProjectAction(request, user.roles)) return true
+
+        // check repo action
+        return checkRepoAction(request, user.roles, departments)
+    }
+
+    override fun checkRepoAction(request: CheckPermissionRequest, roles: List<String>, departments: List<String>?): Boolean {
+        with(request) {
+            if (resourceType == ResourceType.REPO && repoName != null) {
+                val query = PermissionQueryHelper.buildPermissionCheck(
+                        projectId!!, repoName!!, uid, action, resourceType, roles, departments
+                )
+                val result = mongoTemplate.count(query, TPermission::class.java)
+                if (result != 0L) return true
+            }
+        }
+        return false
     }
 
     override fun createPermission(request: CreatePermissionRequest): Boolean {
@@ -346,13 +390,13 @@ class CanwayPermissionServiceImpl(
     private fun isCIAdmin(userId: String, projectId: String? = null, tenantId: String? = null): Boolean {
         return if (projectId != null && tenantId == null) {
             logger.info("check user $userId is CI admin of project $projectId")
-            devopsAuthClient.isAdmin(userId, InstanceType.PROJECT, projectId) ?: false
+            devopsClient.isAdmin(userId, InstanceType.PROJECT, projectId) ?: false
         } else if (projectId == null && tenantId != null) {
             logger.info("check user $userId is CI admin of tenant $tenantId")
-            devopsAuthClient.isAdmin(userId, InstanceType.TENANT, tenantId) ?: false
+            devopsClient.isAdmin(userId, InstanceType.TENANT, tenantId) ?: false
         } else {
             logger.info("check user $userId is CI super admin ")
-            devopsAuthClient.isAdmin(userId, InstanceType.SUPER) ?: false
+            devopsClient.isAdmin(userId, InstanceType.SUPER) ?: false
         }
     }
 

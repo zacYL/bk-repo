@@ -9,7 +9,6 @@ import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.auth.service.impl.CanwayPermissionServiceImpl
 import com.tencent.bkrepo.auth.service.impl.CanwayRoleServiceImpl
 import com.tencent.bkrepo.auth.service.impl.CanwayUserServiceImpl
-import com.tencent.bkrepo.common.devops.client.DevopsAuthClient
 import com.tencent.bkrepo.common.devops.conf.DevopsConf
 import com.tencent.bkrepo.common.devops.service.BkUserService
 import com.tencent.bkrepo.repository.api.ProjectClient
@@ -37,8 +36,7 @@ class CanwayAuthServiceConfig {
         @Autowired repositoryClient: RepositoryClient,
         @Autowired devopsConf: DevopsConf,
         @Autowired bkUserService: BkUserService,
-        @Autowired projectClient: ProjectClient,
-        @Autowired devopsAuthClient: DevopsAuthClient
+        @Autowired projectClient: ProjectClient
     ): PermissionService {
         logger.debug("init CanwayPermissionServiceImpl")
         return CanwayPermissionServiceImpl(
@@ -49,8 +47,7 @@ class CanwayAuthServiceConfig {
             repositoryClient,
             devopsConf,
             bkUserService,
-            projectClient,
-            devopsAuthClient
+            projectClient
         )
     }
 

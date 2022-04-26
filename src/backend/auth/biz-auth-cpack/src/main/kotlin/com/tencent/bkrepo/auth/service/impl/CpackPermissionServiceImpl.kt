@@ -244,7 +244,7 @@ open class CpackPermissionServiceImpl constructor(
         return checkRepoAction(request, user.roles)
     }
 
-    private fun checkRepoUserAdmin(request: CheckPermissionRequest): Boolean {
+    fun checkRepoUserAdmin(request: CheckPermissionRequest): Boolean {
         if (request.projectId != null && request.repoName != null) {
             val permission = permissionRepository.findAllByProjectIdAndResourceTypeAndPermNameAndReposInAndActionsIn(
                 projectId = request.projectId!!,
@@ -258,7 +258,7 @@ open class CpackPermissionServiceImpl constructor(
         return false
     }
 
-    private fun checkProjectUserAdmin(request: CheckPermissionRequest): Boolean {
+    fun checkProjectUserAdmin(request: CheckPermissionRequest): Boolean {
         request.projectId?.let {
             if (permissionRepository.findAllByResourceTypeAndPermNameAndProjectIdAndUsersIn(
                     ResourceType.PROJECT,
@@ -271,7 +271,7 @@ open class CpackPermissionServiceImpl constructor(
         return false
     }
 
-    private fun checkProjectAdmin(request: CheckPermissionRequest, roles: List<String>): Boolean {
+    fun checkProjectAdmin(request: CheckPermissionRequest, roles: List<String>): Boolean {
         if (roles.isNotEmpty() && request.projectId != null) {
             roles.filter { it.isNotEmpty() }.forEach {
                 val role = roleRepository.findFirstByIdAndProjectIdAndType(it, request.projectId!!, RoleType.PROJECT)
@@ -281,7 +281,7 @@ open class CpackPermissionServiceImpl constructor(
         return false
     }
 
-    private fun checkRepoAdmin(request: CheckPermissionRequest, roles: List<String>): Boolean {
+    fun checkRepoAdmin(request: CheckPermissionRequest, roles: List<String>): Boolean {
         // check role repo admin
         if (roles.isNotEmpty() && request.projectId != null && request.repoName != null) {
             roles.filter { it.isNotEmpty() }.forEach {
@@ -300,7 +300,7 @@ open class CpackPermissionServiceImpl constructor(
     /**
      * 仓库的READ 权限会落到仓库所属项目的READ
      */
-    private fun checkProjectAction(request: CheckPermissionRequest, roles: List<String>): Boolean {
+    fun checkProjectAction(request: CheckPermissionRequest, roles: List<String>): Boolean {
         if (request.resourceType == ResourceType.PROJECT ||
             (request.resourceType == ResourceType.REPO && request.action == PermissionAction.READ)
         ) {
@@ -316,11 +316,13 @@ open class CpackPermissionServiceImpl constructor(
         return false
     }
 
-    private fun checkRepoAction(request: CheckPermissionRequest, roles: List<String>): Boolean {
+    open fun checkRepoAction(request: CheckPermissionRequest,
+                             roles: List<String>,
+                             departments: List<String>? = null): Boolean {
         with(request) {
             if (resourceType == ResourceType.REPO && repoName != null) {
                 val query = PermissionQueryHelper.buildPermissionCheck(
-                    projectId!!, repoName!!, uid, action, resourceType, roles
+                        projectId!!, repoName!!, uid, action, resourceType, roles
                 )
                 val result = mongoTemplate.count(query, TPermission::class.java)
                 if (result != 0L) return true

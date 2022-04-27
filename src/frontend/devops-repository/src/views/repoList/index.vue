@@ -70,7 +70,7 @@
                         :list="[
                             { label: '设置', clickEvent: () => toRepoConfig(row) },
                             { label: $t('delete'), clickEvent: () => deleteRepo(row) }
-                        ].filter(Boolean)">
+                        ]">
                     </operation-list>
                 </template>
             </bk-table-column>

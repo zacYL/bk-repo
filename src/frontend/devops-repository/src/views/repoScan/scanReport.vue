@@ -56,10 +56,10 @@
                     <template #default="{ row }">
                         <operation-list
                             :list="[
-                                (row.status === 'INIT' || row.status === 'RUNNING') && { label: '中止', clickEvent: () => stopScanHandler(row) },
-                                row.status === 'SUCCESS' && { label: '详情', clickEvent: () => showArtiReport(row) },
-                                (row.status === 'SUCCESS' || row.status === 'STOP' || row.status === 'FAILED') && { label: '扫描', clickEvent: () => startScanSingleHandler(row) }
-                            ].filter(Boolean)"></operation-list>
+                                { label: '详情', clickEvent: () => showArtiReport(row), disabled: row.status !== 'SUCCESS' },
+                                { label: '中止', clickEvent: () => stopScanHandler(row), disabled: row.status !== 'INIT' && row.status !== 'RUNNING' },
+                                { label: '扫描', clickEvent: () => startScanSingleHandler(row), disabled: row.status !== 'SUCCESS' && row.status !== 'STOP' && row.status !== 'FAILED' }
+                            ]"></operation-list>
                     </template>
                 </bk-table-column>
             </bk-table>

@@ -180,7 +180,7 @@ const routes = [
                         to.meta.breadcrumb = [
                             { name: 'repoList', label: '仓库列表' },
                             { name: 'commonList', label: '{repoName}', template: '依赖仓库' },
-                            { name: 'commonPackage', label: '{package}', template: '制品详情' },
+                            { name: 'commonPackage', label: '{packageKey}', template: '制品详情' },
                             { name: 'artiReport', label: '制品扫描结果' }
                         ]
                     } else if (repoType) {
@@ -246,7 +246,7 @@ const routes = [
                     breadcrumb: [
                         { name: 'repoList', label: '仓库列表' },
                         { name: 'commonList', label: '{repoName}', template: '依赖仓库' },
-                        { name: 'commonPackage', label: '{package}', template: '制品详情' }
+                        { name: 'commonPackage', label: '{packageKey}', template: '制品详情' }
                     ]
                 }
             }

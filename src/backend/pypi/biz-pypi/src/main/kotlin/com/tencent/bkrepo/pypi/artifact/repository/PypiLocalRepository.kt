@@ -728,7 +728,8 @@ class PypiLocalRepository(
             val packageKey = PackageKeys.ofPypi(pypiPackagePojo.name)
             return PackageDownloadRecord(
                 projectId, repoName,
-                packageKey, pypiPackagePojo.version
+                packageKey, pypiPackagePojo.version,
+                userId
             )
         }
     }

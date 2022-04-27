@@ -117,7 +117,8 @@ class NpmRegistryLocalRepository(
                 projectId = projectId,
                 repoName = repoName,
                 packageKey = packageName,
-                packageVersion = version
+                packageVersion = version,
+                userId = context.userId
             )
         }
     }

@@ -120,7 +120,7 @@ object ObjectBuilderUtil {
         // 下载index.yaml不进行下载次数统计
         if (name.isEmpty() && version.isEmpty()) return null
         with(context) {
-            return PackageDownloadRecord(projectId, repoName, PackageKeys.ofRds(name), version)
+            return PackageDownloadRecord(projectId, repoName, PackageKeys.ofRds(name), version, userId)
         }
     }
     fun buildIndexYamlRequest(): ArtifactInfo {

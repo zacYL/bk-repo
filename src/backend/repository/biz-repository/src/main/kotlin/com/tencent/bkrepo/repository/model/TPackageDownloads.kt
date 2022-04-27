@@ -52,5 +52,6 @@ data class TPackageDownloads(
     var name: String,
     var version: String,
     var date: String,
-    var count: Long
+    var count: Long,
+    var users: Set<String>? = null
 )

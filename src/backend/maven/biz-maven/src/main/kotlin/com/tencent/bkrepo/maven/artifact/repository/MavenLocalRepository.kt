@@ -1097,7 +1097,7 @@ class MavenLocalRepository(
                 val artifactId = mavenGAVC.artifactId
                 val groupId = mavenGAVC.groupId.formatSeparator("/", ".")
                 val packageKey = PackageKeys.ofGav(groupId, artifactId)
-                PackageDownloadRecord(projectId, repoName, packageKey, version)
+                PackageDownloadRecord(projectId, repoName, packageKey, version, userId)
             } else {
                 null
             }

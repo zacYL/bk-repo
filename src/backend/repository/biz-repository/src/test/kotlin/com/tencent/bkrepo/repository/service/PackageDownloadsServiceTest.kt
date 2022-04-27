@@ -31,10 +31,7 @@
 
 package com.tencent.bkrepo.repository.service
 
-import com.tencent.bkrepo.repository.UT_PACKAGE_KEY
-import com.tencent.bkrepo.repository.UT_PACKAGE_VERSION
-import com.tencent.bkrepo.repository.UT_PROJECT_ID
-import com.tencent.bkrepo.repository.UT_REPO_NAME
+import com.tencent.bkrepo.repository.*
 import com.tencent.bkrepo.repository.dao.PackageDao
 import com.tencent.bkrepo.repository.dao.PackageDownloadsDao
 import com.tencent.bkrepo.repository.dao.PackageVersionDao
@@ -132,13 +129,15 @@ class PackageDownloadsServiceTest @Autowired constructor(
         projectId: String = UT_PROJECT_ID,
         repoName: String = UT_REPO_NAME,
         packageKey: String = UT_PACKAGE_KEY,
-        version: String = UT_PACKAGE_VERSION
+        version: String = UT_PACKAGE_VERSION,
+        user: String = UT_USER
     ): PackageDownloadRecord {
         return PackageDownloadRecord(
             projectId = projectId,
             repoName = repoName,
             packageKey = packageKey,
-            packageVersion = version
+            packageVersion = version,
+            userId = user
         )
     }
 }

@@ -133,7 +133,8 @@ class DockerPackageRepo @Autowired constructor(
                 projectId,
                 repoName,
                 packageKey,
-                version
+                version,
+                userId
             )
             val realIpAddress = HttpContextHolder.getClientAddress()
             try {

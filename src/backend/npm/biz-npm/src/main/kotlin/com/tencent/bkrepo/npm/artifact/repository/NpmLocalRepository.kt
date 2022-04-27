@@ -144,7 +144,7 @@ class NpmLocalRepository(
         with(context) {
             val packageInfo = NpmUtils.parseNameAndVersionFromFullPath(artifactInfo.getArtifactFullPath())
             with(packageInfo) {
-                return PackageDownloadRecord(projectId, repoName, PackageKeys.ofNpm(first), second)
+                return PackageDownloadRecord(projectId, repoName, PackageKeys.ofNpm(first), second, userId)
             }
         }
     }

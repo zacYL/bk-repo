@@ -57,7 +57,6 @@ import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.query.model.Sort
-import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HeaderUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
@@ -498,7 +497,7 @@ class RpmLocalRepository(
                     fullPath.toRpmPackagePojo()
                 }
                 val packageKey = PackageKeys.ofRpm(rpmPackagePojo.path, rpmPackagePojo.name)
-                return PackageDownloadRecord(projectId, repoName, packageKey, rpmPackagePojo.version)
+                return PackageDownloadRecord(projectId, repoName, packageKey, rpmPackagePojo.version, userId)
             } else {
                 null
             }

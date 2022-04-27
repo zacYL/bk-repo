@@ -483,7 +483,8 @@ class ComposerLocalRepository(private val stageClient: StageClient) : LocalRepos
                 return PackageDownloadRecord(
                     projectId, repoName,
                     packageKey.toString(),
-                    version.toString()
+                    version.toString(),
+                    userId
                 )
             } else {
                 null

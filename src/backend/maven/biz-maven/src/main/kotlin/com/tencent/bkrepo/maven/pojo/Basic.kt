@@ -45,6 +45,5 @@ data class Basic(
     val sha256: String?,
     val md5: String?,
     val stageTag: List<String>?,
-    val description: String?,
-    val scanStatus: String? = null //扫描状态
+    val description: String?
 )

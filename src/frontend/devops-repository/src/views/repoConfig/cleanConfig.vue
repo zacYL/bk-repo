@@ -1,5 +1,5 @@
 <template>
-    <bk-form class="clean-config-container" :label-width="150" :model="config" :rules="rules" ref="cleanForm">
+    <bk-form class="clean-config-container" :label-width="120" :model="config" :rules="rules" ref="cleanForm">
         <bk-form-item label="自动清理">
             <bk-switcher v-model="config.autoClean" size="small" theme="primary" @change="clearError"></bk-switcher>
             <div class="form-tip">制品版本数量超过保留版本数，且在保留时间内没有使用过的制品版本将会被清理</div>
@@ -54,14 +54,14 @@
                 rules: {
                     reserveVersions: [
                         {
-                            validator: v => /^[0-9]+$/.test(v),
+                            regex: /^[0-9]+$/,
                             message: '请填写非负整数',
                             trigger: 'blur'
                         }
                     ],
                     reserveDays: [
                         {
-                            validator: v => /^[0-9]+$/.test(v),
+                            regex: /^[0-9]+$/,
                             message: '请填写非负整数',
                             trigger: 'blur'
                         }

@@ -444,7 +444,6 @@
         color: var(--fontPrimaryColor);
         background-color: var(--bgColor);
         border: 1px solid var(--borderColor);
-        font-weight: bold;
         .permission-actions {
             font-size: 12px;
             font-weight: normal;
@@ -452,7 +451,6 @@
         }
     }
     .section-main {
-        padding: 10px;
         border: solid var(--borderColor);
         border-width: 0 1px 1px;
         ::v-deep .bk-select-empty {

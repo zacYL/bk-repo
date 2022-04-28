@@ -107,23 +107,21 @@ object ScanPlanConverter {
         }
     }
 
-    fun convert(scanPlanRequest: UpdateScanPlanRequest, curRepoNames: List<String>, curRule: Rule): ScanPlan {
+    fun convert(scanPlanRequest: UpdateScanPlanRequest): ScanPlan {
         return with(scanPlanRequest) {
-            val rule = if (repoNameList == null && artifactRules == null) {
-                null
+            val (repoNames, filterRule) = if (scanOnNewArtifact != null && scanOnNewArtifact!!) {
+                Pair(RuleMatcher.getRepoNames(rule), RuleConverter.convert(projectId!!, rule))
             } else {
-                val repoNames = repoNameList ?: curRepoNames
-                val artifactRules = artifactRules ?: RuleConverter.convert(curRule)
-                RuleConverter.convert(projectId!!, repoNames, artifactRules)
+                Pair(null, null)
             }
             ScanPlan(
                 id = id,
                 projectId = projectId,
                 name = name,
                 description = description,
-                scanOnNewArtifact = autoScan,
-                repoNames = repoNameList,
-                rule = rule
+                scanOnNewArtifact = scanOnNewArtifact,
+                repoNames = repoNames,
+                rule = filterRule
             )
         }
     }
@@ -137,8 +135,8 @@ object ScanPlanConverter {
                 scanner = scanner,
                 description = description,
                 scanOnNewArtifact = autoScan,
-                repoNames = repoNameList,
-                rule = RuleConverter.convert(projectId, repoNameList, artifactRules, type)
+                repoNames = emptyList(),
+                rule = RuleConverter.convert(projectId, emptyList(), emptyList(), type)
             )
         }
     }

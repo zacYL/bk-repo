@@ -62,6 +62,18 @@ object RuleMatcher {
         return true
     }
 
+    fun getRepoNames(rule: Rule?): List<String> {
+        if (rule == null) return emptyList()
+
+        require(rule is Rule.NestedRule)
+        val repoRule = getQueryRule(rule, "repoName")
+        return if (repoRule == null) {
+            emptyList()
+        } else {
+            repoRule.value as List<String>
+        }
+    }
+
     private fun matchAnd(name: String?, version: String?, rule: Rule.NestedRule): Boolean {
         require(rule.relation == Rule.NestedRule.RelationType.AND)
 

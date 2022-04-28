@@ -87,10 +87,8 @@ class UserScanPlanController(
         @ApiParam(value = "方案id")
         @PathVariable
         id: String
-    ): Response<ScanPlanBase?> {
-        return ResponseBuilder.success(
-            scanPlanService.find(projectId, id)?.let { ScanPlanConverter.convert(it) }
-        )
+    ): Response<ScanPlan?> {
+        return ResponseBuilder.success(scanPlanService.find(projectId, id))
     }
 
     @ApiOperation("删除扫描方案")

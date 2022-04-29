@@ -12,12 +12,12 @@ import org.springframework.web.bind.annotation.RequestParam
 @FeignClient(MAVEN_SERVICE_NAME, contextId = "mavenClient")
 @RequestMapping("/service")
 interface MavenClient {
-    @DeleteMapping("/{projectId}/{repoName}/{packageKey}/{version}")
+    @DeleteMapping("/{projectId}/{repoName}")
     fun deleteVersion(
         @PathVariable projectId: String,
         @PathVariable repoName: String,
-        @PathVariable packageKey: String,
-        @PathVariable version: String,
+        @RequestParam packageKey: String,
+        @RequestParam version: String,
         @RequestParam operator: String
     ): Boolean
 }

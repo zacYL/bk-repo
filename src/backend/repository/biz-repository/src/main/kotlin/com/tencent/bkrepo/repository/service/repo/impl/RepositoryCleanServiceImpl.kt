@@ -1,8 +1,6 @@
 package com.tencent.bkrepo.repository.service.repo.impl
 
 import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_SIZE
-import com.tencent.bkrepo.common.artifact.pojo.configuration.clean.MetadataRule
-import com.tencent.bkrepo.common.artifact.pojo.configuration.clean.OperationType
 import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.query.model.Rule
@@ -193,39 +191,6 @@ class RepositoryCleanServiceImpl(
         versions.forEach {
             artifactRegistryService.deleteVersion(projectId,repoName,packageKey,it.name)
         }
-    }
-
-    /**
-     * 元数据规则匹配
-     */
-    private fun matchRule(rules: List<MetadataRule>, versionMetadata: Map<String, Any>): Boolean {
-        var match = false
-        rules.forEach {
-            val ruleName = it.name
-            val ruleValue = it.value
-            val operationType = it.type
-            //【制品包版本的元数据中的key集合】 包含 【当前规则的key】，则进行匹配
-            if (versionMetadata.keys.contains(ruleName)) {
-                //取出与【清理策略元数据规则的key】相同的【制品包版本元数据的value】
-                val versionValue = versionMetadata[ruleName].toString()
-                //根据操作类型，进行判断
-                match = when (operationType) {
-                    OperationType.EQ -> {
-                        ruleValue == versionValue
-                    }
-                    OperationType.REGEX -> {
-                        val regex = Regex(ruleValue)
-                        regex.containsMatchIn(versionValue)
-                    }
-                    OperationType.IN -> {
-                        versionValue.contains(ruleValue)
-                    }
-                }
-                //匹配到一个，直接返回
-                if (match) return match
-            }
-        }
-        return match
     }
 
     companion object {

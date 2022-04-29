@@ -9,9 +9,6 @@ import com.tencent.bkrepo.maven.pojo.MavenVersion
 import com.tencent.bkrepo.maven.util.MavenStringUtils.resolverName
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.data.mongodb.core.FindAndModifyOptions
@@ -19,6 +16,9 @@ import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Update
 import org.springframework.stereotype.Service
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 
 @Service
 class MavenMetadataService(
@@ -115,6 +115,25 @@ class MavenMetadataService(
             )
             val criteria = Criteria.where(TMavenMetadataRecord::projectId.name).`is`(mavenArtifactInfo.projectId)
                 .and(TMavenMetadataRecord::repoName.name).`is`(mavenArtifactInfo.repoName)
+                .and(TMavenMetadataRecord::groupId.name).`is`(groupId)
+                .and(TMavenMetadataRecord::artifactId.name).`is`(artifactId)
+                .and(TMavenMetadataRecord::version.name).`is`(version)
+            val query = Query(criteria)
+            mavenMetadataDao.remove(query)
+        }
+    }
+
+
+    fun delete(projectId: String, repoName: String, mavenGavc: MavenGAVC) {
+        mavenGavc.let {
+            val groupId = mavenGavc.groupId
+            val artifactId = mavenGavc.artifactId
+            val version = mavenGavc.version
+            logger.info(
+                "Node info: groupId[$groupId], artifactId[$artifactId], version[$version]"
+            )
+            val criteria = Criteria.where(TMavenMetadataRecord::projectId.name).`is`(projectId)
+                .and(TMavenMetadataRecord::repoName.name).`is`(repoName)
                 .and(TMavenMetadataRecord::groupId.name).`is`(groupId)
                 .and(TMavenMetadataRecord::artifactId.name).`is`(artifactId)
                 .and(TMavenMetadataRecord::version.name).`is`(version)

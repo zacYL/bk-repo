@@ -62,6 +62,11 @@ const val CI_MS_REQUEST_KEY = "CIMSRequest"
 const val ANONYMOUS_USER = "anonymous"
 
 /**
+ * 仓库清理用户
+ */
+const val REPO_CLEAN_USER = "repoCleanUser"
+
+/**
  * common logger name
  */
 const val EXCEPTION_LOGGER_NAME = "ExceptionLogger"
@@ -80,4 +85,11 @@ const val DEFAULT_PAGE_SIZE = 20
 const val REPOSITORY_SERVICE_NAME = "\${service.prefix:repo-}repository\${service.suffix:}"
 const val AUTH_SERVICE_NAME = "\${service.prefix:repo-}auth\${service.suffix:}"
 const val REPLICATION_SERVICE_NAME = "\${service.prefix:repo-}replication\${service.suffix:}"
+const val DOCKER_SERVICE_NAME = "\${service.prefix:repo-}docker\${service.suffix:}"
+const val MAVEN_SERVICE_NAME = "\${service.prefix:repo-}maven\${service.suffix:}"
+const val PYPI_SERVICE_NAME = "\${service.prefix:repo-}pipy\${service.suffix:}"
+const val NPM_SERVICE_NAME = "\${service.prefix:repo-}npm\${service.suffix:}"
+const val HELM_SERVICE_NAME = "\${service.prefix:repo-}helm\${service.suffix:}"
+const val COMPOSER_SERVICE_NAME = "\${service.prefix:repo-}composer\${service.suffix:}"
+const val RPM_SERVICE_NAME = "\${service.prefix:repo-}rpm\${service.suffix:}"
 const val SCANNER_SERVICE_NAME = "\${service.prefix:repo-}scanner\${service.suffix:}"

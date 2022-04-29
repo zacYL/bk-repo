@@ -31,6 +31,7 @@
 
 package com.tencent.bkrepo.common.artifact.pojo.configuration.composite
 
+import com.tencent.bkrepo.common.artifact.pojo.configuration.clean.RepositoryCleanStrategy
 import com.tencent.bkrepo.common.artifact.pojo.configuration.local.LocalConfiguration
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
@@ -38,7 +39,9 @@ import io.swagger.annotations.ApiModelProperty
 @ApiModel("组合类型仓库配置")
 data class CompositeConfiguration(
     @ApiModelProperty("代理配置", required = false)
-    val proxy: ProxyConfiguration = ProxyConfiguration()
+    val proxy: ProxyConfiguration = ProxyConfiguration(),
+    @ApiModelProperty("清理配置", required = false)
+    var cleanStrategy: RepositoryCleanStrategy? = null
 ) : LocalConfiguration() {
     companion object {
         const val type = "composite"

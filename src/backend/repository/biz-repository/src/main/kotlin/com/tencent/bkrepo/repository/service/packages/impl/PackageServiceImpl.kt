@@ -177,6 +177,18 @@ class PackageServiceImpl(
         return packageVersionDao.find(query).map { convert(it)!! }
     }
 
+    override fun searchVersion(queryModel: QueryModel): Page<PackageVersion> {
+        val context = packageSearchInterpreter.interpret(queryModel)
+        val query = context.mongoQuery
+        val countQuery = Query.of(query).limit(0).skip(0)
+        val totalRecords = packageVersionDao.count(countQuery)
+        val versionList = packageVersionDao.find(query, TPackageVersion::class.java).map { convert(it)!! }
+        val pageNumber = if (query.limit == 0) 0 else (query.skip / query.limit).toInt()
+        return Page(pageNumber + 1, query.limit, totalRecords, versionList)
+    }
+
+
+
     override fun createPackageVersion(request: PackageVersionCreateRequest, realIpAddress: String?) {
         with(request) {
             Preconditions.checkNotBlank(packageKey, this::packageKey.name)
@@ -598,6 +610,7 @@ class PackageServiceImpl(
         private fun convert(tPackage: TPackage?): PackageSummary? {
             return tPackage?.let {
                 PackageSummary(
+                    id = it.id,
                     createdBy = it.createdBy,
                     createdDate = it.createdDate,
                     lastModifiedBy = it.lastModifiedBy,
@@ -632,7 +645,8 @@ class PackageServiceImpl(
                     metadata = MetadataUtils.toMap(it.metadata),
                     tags = it.tags.orEmpty(),
                     extension = it.extension.orEmpty(),
-                    contentPath = it.artifactPath
+                    contentPath = it.artifactPath,
+                    ordinal = it.ordinal
                 )
             }
         }

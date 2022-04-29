@@ -3,11 +3,12 @@ package com.tencent.bkrepo.maven.api
 import com.tencent.bkrepo.maven.constants.MAVEN_SERVICE_NAME
 import io.swagger.annotations.ApiOperation
 import org.springframework.cloud.openfeign.FeignClient
+import org.springframework.context.annotation.Primary
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
-
+@Primary
 @ApiOperation("Maven client")
 @FeignClient(MAVEN_SERVICE_NAME, contextId = "mavenClient")
 @RequestMapping("/service")

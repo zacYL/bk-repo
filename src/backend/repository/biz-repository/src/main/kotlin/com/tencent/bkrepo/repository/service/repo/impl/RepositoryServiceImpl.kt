@@ -43,6 +43,8 @@ import com.tencent.bkrepo.common.artifact.path.PathUtils.ROOT
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.pojo.configuration.RepositoryConfiguration
+import com.tencent.bkrepo.common.artifact.pojo.configuration.clean.CleanStatus
+import com.tencent.bkrepo.common.artifact.pojo.configuration.clean.RepositoryCleanStrategy
 import com.tencent.bkrepo.common.artifact.pojo.configuration.composite.CompositeConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.composite.ProxyChannelSetting
 import com.tencent.bkrepo.common.artifact.pojo.configuration.local.LocalConfiguration
@@ -52,17 +54,15 @@ import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
+import com.tencent.bkrepo.repository.api.PackageClient
 import com.tencent.bkrepo.repository.config.RepositoryProperties
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.dao.RepositoryDao
+import com.tencent.bkrepo.repository.job.clean.CleanRepoTaskScheduler
+import com.tencent.bkrepo.repository.job.clean.CleanTaskReloadManger
 import com.tencent.bkrepo.repository.model.TRepository
 import com.tencent.bkrepo.repository.pojo.project.RepoRangeQueryRequest
-import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
-import com.tencent.bkrepo.repository.pojo.repo.RepoDeleteRequest
-import com.tencent.bkrepo.repository.pojo.repo.RepoListOption
-import com.tencent.bkrepo.repository.pojo.repo.RepoUpdateRequest
-import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
-import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
+import com.tencent.bkrepo.repository.pojo.repo.*
 import com.tencent.bkrepo.repository.service.node.NodeService
 import com.tencent.bkrepo.repository.service.repo.ProjectService
 import com.tencent.bkrepo.repository.service.repo.ProxyChannelService
@@ -71,16 +71,13 @@ import com.tencent.bkrepo.repository.service.repo.StorageCredentialService
 import com.tencent.bkrepo.repository.util.RepoEventFactory.buildCreatedEvent
 import com.tencent.bkrepo.repository.util.RepoEventFactory.buildDeletedEvent
 import com.tencent.bkrepo.repository.util.RepoEventFactory.buildUpdatedEvent
+import org.quartz.Trigger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
-import org.springframework.data.mongodb.core.query.Criteria
-import org.springframework.data.mongodb.core.query.Query
-import org.springframework.data.mongodb.core.query.and
-import org.springframework.data.mongodb.core.query.inValues
-import org.springframework.data.mongodb.core.query.isEqualTo
-import org.springframework.data.mongodb.core.query.where
+import org.springframework.data.mongodb.core.query.*
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -99,6 +96,14 @@ class RepositoryServiceImpl(
     private val repositoryProperties: RepositoryProperties,
     private val servicePermissionResource: ServicePermissionResource
 ) : RepositoryService {
+    @Autowired
+    lateinit var cleanRepoTaskScheduler: CleanRepoTaskScheduler
+
+    @Autowired
+    lateinit var packageService: PackageClient
+
+    @Autowired
+    lateinit var cleanTaskReloadManger: CleanTaskReloadManger
 
     override fun getRepoInfo(projectId: String, name: String, type: String?): RepositoryInfo? {
         val tRepository = repositoryDao.findByNameAndType(projectId, name, type)
@@ -267,6 +272,8 @@ class RepositoryServiceImpl(
                 repository.configuration = it.toJsonString()
             }
             repositoryDao.save(repository)
+            // 创建清理job
+            cleanTaskReloadManger.createCleanJob(projectId, name)
         }
         publishEvent(buildUpdatedEvent(repoUpdateRequest))
         logger.info("Update repository[$repoUpdateRequest] success.")
@@ -305,6 +312,40 @@ class RepositoryServiceImpl(
         repoType?.let { criteria.and(TRepository::type.name).`is`(repoType) }
         val result = repositoryDao.find(Query(criteria))
         return result.map { convertToInfo(it) }
+    }
+
+    override fun getRepoCleanStrategy(projectId: String, repoName: String): RepositoryCleanStrategy? {
+        val configuration = getRepoInfo(projectId, repoName)?.configuration
+        requireNotNull(configuration) { "configuration is null at repository: [$repoName] " }
+        if (configuration is CompositeConfiguration) {
+            configuration.cleanStrategy?.let {
+                return it
+            }
+        }
+        return null
+    }
+
+    override fun updateRepoCleanStrategyStatus(projectId: String, repoName: String) {
+        val repoInfo = getRepoInfo(projectId, repoName)
+        val repository = checkRepository(projectId, repoName)
+        val configuration = repoInfo?.configuration
+        if (configuration is CompositeConfiguration) {
+            val repoCleanStrategy = getRepoCleanStrategy(projectId, repoName)
+            repoCleanStrategy?.let {
+                if (it.status == CleanStatus.RUNNING) {
+                    it.status = CleanStatus.WAITING
+                } else {
+                    it.status = CleanStatus.RUNNING
+                }
+                configuration.cleanStrategy = it
+                repository.configuration = configuration.toJsonString()
+                repositoryDao.save(repository)
+                logger.info(
+                    "update clean strategy status[${it.status}] success " +
+                            "at project:[$projectId] repoName:[$repoName] "
+                )
+            }
+        }
     }
 
     /**
@@ -354,6 +395,36 @@ class RepositoryServiceImpl(
         }
         if (new is CompositeConfiguration && old is CompositeConfiguration) {
             updateCompositeConfiguration(new, old, repository, operator)
+
+            logger.info("new clean strategy is [${new.cleanStrategy}], old is [${old.cleanStrategy}]")
+            //当【旧策略】不为null时，需要处理新策略
+            val oldCleanStrategy = old.cleanStrategy
+            val newCleanStrategy = new.cleanStrategy
+            if (oldCleanStrategy != null) {
+                if (newCleanStrategy != null) {
+                    if (cleanRepoTaskScheduler.getState(repository.id!!) == Trigger.TriggerState.BLOCKED)
+                    //TODO 提示 当前任务正在执行，本次修改将在下次执行生效
+                        throw ErrorCodeException(CommonMessageCode.CLEAN_JOB_MODIFY_TIPS, repository.id!!)
+                    //校验清理策略参数
+                    Preconditions.checkArgument(newCleanStrategy.reserveVersions >= 0, "reserveVersions")
+                    Preconditions.checkArgument(newCleanStrategy.reserveDays >= 0, "reserveDays")
+                    //更新策略，将【旧策略】的status 赋值给【新策略】，避免status被赋值为默认值
+                    newCleanStrategy.status = oldCleanStrategy.status
+                } else {
+                    //【新策略】为空，则不更新策略，直接将旧策略赋值给新策略
+                    new.cleanStrategy = old.cleanStrategy
+                }
+            } else {
+                if (newCleanStrategy != null) {
+                    //校验清理策略参数
+                    Preconditions.checkArgument(newCleanStrategy.reserveVersions >= 0, "reserveVersions")
+                    Preconditions.checkArgument(newCleanStrategy.reserveDays >= 0, "reserveDays")
+                } else {
+                    logger.info("clean startegy no update ,old clean strategy is [${oldCleanStrategy}] " +
+                            "and new clean strategy is [${newCleanStrategy}]")
+                }
+            }
+            logger.info("final clean strategy is [${new.cleanStrategy}] ")
         }
     }
 

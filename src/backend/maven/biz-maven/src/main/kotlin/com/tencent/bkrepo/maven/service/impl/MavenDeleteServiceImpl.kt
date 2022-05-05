@@ -138,7 +138,7 @@ class MavenDeleteServiceImpl(
             folder = false,
             overwrite = true,
             size = metadataArtifact.getSize(),
-            sha256 = metadataArtifact.getFileSha1(),
+            sha256 = metadataArtifact.getFileSha256(),
             md5 = metadataArtifact.getFileMd5(),
             operator = operator
         )

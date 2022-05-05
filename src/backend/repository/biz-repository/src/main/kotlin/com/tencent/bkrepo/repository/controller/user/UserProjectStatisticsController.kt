@@ -1,10 +1,6 @@
 package com.tencent.bkrepo.repository.controller.user
 
-import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
-import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.pojo.Response
-import com.tencent.bkrepo.common.security.manager.PermissionManager
-import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.repository.pojo.metric.PackageDownloadCount
 import com.tencent.bkrepo.repository.pojo.project.ProjectStatisticsSummary
@@ -22,8 +18,7 @@ import java.time.LocalDate
 @RestController
 @RequestMapping("/api/project/statistics")
 class UserProjectStatisticsController(
-    private val projectStatisticsService: ProjectStatisticsService,
-    private val permissionManager: PermissionManager
+    private val projectStatisticsService: ProjectStatisticsService
 ) {
     @ApiOperation("查询项目数据统计总览--时间段内版本上传下载数和相关用户数")
     @GetMapping("/summary")
@@ -32,7 +27,6 @@ class UserProjectStatisticsController(
         @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") fromDate: LocalDate,
         @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") toDate: LocalDate
     ): Response<ProjectStatisticsSummary> {
-        permissionManager.checkProjectPermission(PermissionAction.READ, projectId)
         return ResponseBuilder.success(projectStatisticsService.querySummary(projectId, fromDate, toDate))
     }
 
@@ -43,7 +37,6 @@ class UserProjectStatisticsController(
         @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") fromDate: LocalDate,
         @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") toDate: LocalDate
     ): Response<List<PackageDownloadCount>> {
-        permissionManager.checkProjectPermission(PermissionAction.READ, projectId)
         return ResponseBuilder.success(projectStatisticsService.queryPackageDownloadRank(projectId, fromDate, toDate))
     }
 }

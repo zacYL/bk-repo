@@ -115,7 +115,7 @@
                             artifactRules.length
                                 ? {
                                     rules: artifactRules,
-                                    operation: 'OR'
+                                    relation: 'OR'
                                 }
                                 : undefined
                         ].filter(Boolean),

@@ -79,7 +79,7 @@
             <bk-tab-panel v-if="showProxyConfigTab" name="proxyConfig" :label="$t('proxyConfig')">
                 <proxy-config :base-data="repoBaseInfo" @refresh="getRepoInfoHandler"></proxy-config>
             </bk-tab-panel>
-            <bk-tab-panel name="cleanConfig" label="自动清理设置">
+            <bk-tab-panel render-directive="if" name="cleanConfig" label="自动清理设置">
                 <clean-config :base-data="repoBaseInfo" @refresh="getRepoInfoHandler"></clean-config>
             </bk-tab-panel>
             <bk-tab-panel render-directive="if" name="permissionConfig" :label="$t('permissionConfig')">

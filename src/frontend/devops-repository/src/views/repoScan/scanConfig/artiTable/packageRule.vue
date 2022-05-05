@@ -47,7 +47,7 @@
             return {
                 typeList: [
                     { id: 'EQ', name: '等于' },
-                    { id: 'IN', name: '包含' },
+                    { id: 'MATCH', name: '包含' },
                     { id: 'REGEX', name: '正则匹配' }
                 ]
             }
@@ -70,9 +70,10 @@
 <style lang="scss" scoped>
 .rule-item {
     &:not(:nth-child(1)):before {
-        content: '或者';
+        content: '或';
         position: absolute;
-        margin-left: -30px;
+        margin-left: -22px;
+        color: var(--fontSubsidiaryColor);
     }
 }
 </style>

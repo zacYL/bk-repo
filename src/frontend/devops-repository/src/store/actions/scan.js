@@ -176,7 +176,7 @@ export default {
                                     relation: 'AND'
                                 }
                             ],
-                            operation: 'OR'
+                            relation: 'OR'
                         }
                     ],
                     relation: 'AND'

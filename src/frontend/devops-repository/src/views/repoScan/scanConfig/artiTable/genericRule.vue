@@ -3,9 +3,9 @@
         <span>制品名称满足规则</span>
         <select-input
             class="ml5"
-            :select="nameRule.type"
+            :select="name.operation"
             :select-list="typeList"
-            :input="nameRule.value"
+            :input="name.value"
             :disabled="disabled"
             @change="r => change(r)">
         </select-input>
@@ -19,10 +19,10 @@
         components: { SelectInput },
         props: {
             disabled: Boolean,
-            nameRule: {
+            name: {
                 type: Object,
                 default: () => ({
-                    type: 'EQ',
+                    operation: 'EQ',
                     value: ''
                 })
             }
@@ -39,8 +39,9 @@
         methods: {
             change (rule) {
                 this.$emit('change', {
-                    nameRule: {
-                        type: rule.select,
+                    name: {
+                        field: 'name',
+                        operation: rule.select,
                         value: rule.input
                     }
                 })

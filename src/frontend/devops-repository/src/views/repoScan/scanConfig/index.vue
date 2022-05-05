@@ -47,9 +47,10 @@
                     type: '',
                     scanner: '',
                     description: '',
-                    autoScan: false,
-                    repoNameList: [],
-                    artifactRules: []
+                    scanOnNewArtifact: false,
+                    rule: {
+                        rules: []
+                    }
                 }
             }
         },

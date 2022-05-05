@@ -43,10 +43,11 @@
                             <bk-checkbox v-model="repoBaseInfo.enabledFileLists"></bk-checkbox>
                         </bk-form-item>
                         <bk-form-item :label="$t('repodataDepth')" property="repodataDepth" error-display-type="normal">
-                            <bk-input v-model.trim="repoBaseInfo.repodataDepth"></bk-input>
+                            <bk-input class="w480" v-model.trim="repoBaseInfo.repodataDepth"></bk-input>
                         </bk-form-item>
                         <bk-form-item :label="$t('groupXmlSet')" property="groupXmlSet" error-display-type="normal">
                             <bk-tag-input
+                                class="w480"
                                 :value="repoBaseInfo.groupXmlSet"
                                 @change="(val) => {
                                     repoBaseInfo.groupXmlSet = val.map(v => {

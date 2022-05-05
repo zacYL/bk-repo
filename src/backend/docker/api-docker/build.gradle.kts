@@ -34,5 +34,6 @@ dependencies {
     implementation(project(":common:common-artifact:artifact-api"))
     compileOnly("javax.servlet:javax.servlet-api")
     compileOnly("org.springframework:spring-web")
+    compileOnly("org.springframework.cloud:spring-cloud-openfeign-core")
 }
 

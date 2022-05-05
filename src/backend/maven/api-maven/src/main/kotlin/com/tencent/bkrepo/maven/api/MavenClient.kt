@@ -1,6 +1,6 @@
 package com.tencent.bkrepo.maven.api
 
-import com.tencent.bkrepo.maven.constants.MAVEN_SERVICE_NAME
+import com.tencent.bkrepo.common.api.constant.MAVEN_SERVICE_NAME
 import io.swagger.annotations.ApiOperation
 import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.context.annotation.Primary

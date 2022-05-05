@@ -45,6 +45,3 @@ const val PACKAGE_SUFFIX_REGEX =
 const val ARTIFACT_FORMAT = "^%s-%s-?(SNAPSHOT|[0-9]{8}\\.[0-9]{6}-[0-9]+)?-?(.+)?.%s\$"
 
 const val TIMESTAMP_FORMAT = "([0-9]{8}\\.[0-9]{6})-([0-9]+)"
-
-
-const val MAVEN_SERVICE_NAME = "\${service.prefix:repo-}maven\${service.suffix:}"

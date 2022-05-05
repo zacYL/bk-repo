@@ -61,7 +61,7 @@ class ProjectStatisticsServiceImpl(
         val downloadRecordQuery = PackageQueryHelper.recordQuery(projectId, fromDate, toDate)
         val downloadRecord = packageDownloadsDao.find(downloadRecordQuery)
         // 查询结果分组统计并构建结果对象
-        val result = downloadRecord.groupingBy { it.name }
+        return downloadRecord.groupingBy { it.name }
             .aggregate { key, accumulator: PackageDownloadCount?, element, first ->
                 if (first)
                     PackageDownloadCount(key, element.count)
@@ -70,7 +70,6 @@ class ProjectStatisticsServiceImpl(
             }.values
             .filterNotNull()
             .sortedByDescending { it.downloadCount }
-        return result
     }
 
     private fun buildDayDetailList(fromDate: LocalDate, toDate: LocalDate): List<DayDetail> {

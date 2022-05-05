@@ -26,7 +26,6 @@ class UserProjectStatisticsController(
     private val permissionManager: PermissionManager
 ) {
     @ApiOperation("查询项目数据统计总览--时间段内版本上传下载数和相关用户数")
-    @Permission(type = ResourceType.PROJECT, action = PermissionAction.READ)
     @GetMapping("/summary")
     fun queryStatisticsSummary(
         @RequestParam projectId: String,
@@ -38,7 +37,6 @@ class UserProjectStatisticsController(
     }
 
     @ApiOperation("查询时间段内制品包(包含所有版本)下载量排行")
-    @Permission(type = ResourceType.PROJECT, action = PermissionAction.READ)
     @GetMapping("/download/rank")
     fun queryPackageDownloadRank(
         @RequestParam projectId: String,

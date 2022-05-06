@@ -17,8 +17,12 @@ object CleanThreadPoolExecutor {
     private fun buildThreadPoolExecutor(): ThreadPoolExecutor {
         val namedThreadFactory = ThreadFactoryBuilder().setNameFormat("clean-worker-%d").build()
         return ThreadPoolExecutor(
-            20, 100, 30, TimeUnit.SECONDS,
-            ArrayBlockingQueue(10), namedThreadFactory, ThreadPoolExecutor.AbortPolicy()
+            0,
+            Runtime.getRuntime().availableProcessors(),
+            30,
+            TimeUnit.SECONDS,
+            ArrayBlockingQueue(10), namedThreadFactory,
+            ThreadPoolExecutor.AbortPolicy()
         )
     }
 }

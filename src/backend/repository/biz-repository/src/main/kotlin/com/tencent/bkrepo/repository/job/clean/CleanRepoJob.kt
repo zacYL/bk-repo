@@ -1,6 +1,7 @@
 package com.tencent.bkrepo.repository.job.clean
 
 import com.tencent.bkrepo.common.service.util.SpringContextUtils
+import com.tencent.bkrepo.repository.service.repo.RepositoryService
 import net.javacrumbs.shedlock.core.LockConfiguration
 import net.javacrumbs.shedlock.core.LockingTaskExecutor
 import org.quartz.InterruptableJob
@@ -12,13 +13,12 @@ class CleanRepoJob : InterruptableJob {
     private val lockingTaskExecutor = SpringContextUtils.getBean(LockingTaskExecutor::class.java)
     private val cleanRepoJobExecutor = SpringContextUtils.getBean(CleanRepoJobExecutor::class.java)
 
-
     override fun execute(context: JobExecutionContext) {
-//        currentThread = Thread.currentThread()
+        currentThread = Thread.currentThread()
         val taskId = context.jobDetail.key.name
-//        val lockName = buildLockName(taskId)
-//        val lockConfiguration = LockConfiguration(lockName, lockAtMostFor, lockAtLeastFor)
-//        lockingTaskExecutor.executeWithLock(Runnable { cleanRepoJobExecutor.execute(taskId) },lockConfiguration)
+        val lockName = buildLockName(taskId)
+        val lockConfiguration = LockConfiguration(lockName, lockAtMostFor, lockAtLeastFor)
+        lockingTaskExecutor.executeWithLock(Runnable { cleanRepoJobExecutor.execute(taskId) },lockConfiguration)
         cleanRepoJobExecutor.execute(taskId)
     }
 

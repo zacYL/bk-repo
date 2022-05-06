@@ -24,11 +24,11 @@ class CleanRepoJobExecutor(
     fun execute(taskId: String) {
         logger.info("Start to execute clean repo task[$taskId].")
         try {
-//            threadPoolExecutor.submit {
-            repositoryCleanService.cleanRepo(taskId)
-//            }
+            threadPoolExecutor.submit {
+                repositoryCleanService.cleanRepo(taskId)
+            }
         } catch (exception: Exception) {
-            logger.error("clean repository job [taskId:$taskId] exception ,exception [${exception}]")
+            logger.error("clean repository job [taskId:$taskId] exception ,exception:[$exception]")
         }
 
 

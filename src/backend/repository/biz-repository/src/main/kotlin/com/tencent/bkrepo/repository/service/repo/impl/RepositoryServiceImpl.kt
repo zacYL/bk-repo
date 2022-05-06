@@ -58,8 +58,7 @@ import com.tencent.bkrepo.repository.api.PackageClient
 import com.tencent.bkrepo.repository.config.RepositoryProperties
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.dao.RepositoryDao
-import com.tencent.bkrepo.repository.job.clean.CleanRepoTaskScheduler
-import com.tencent.bkrepo.repository.job.clean.CleanTaskReloadManger
+import com.tencent.bkrepo.repository.job.clean.CleanTaskManger
 import com.tencent.bkrepo.repository.model.TRepository
 import com.tencent.bkrepo.repository.pojo.project.RepoRangeQueryRequest
 import com.tencent.bkrepo.repository.pojo.repo.*
@@ -71,7 +70,6 @@ import com.tencent.bkrepo.repository.service.repo.StorageCredentialService
 import com.tencent.bkrepo.repository.util.RepoEventFactory.buildCreatedEvent
 import com.tencent.bkrepo.repository.util.RepoEventFactory.buildDeletedEvent
 import com.tencent.bkrepo.repository.util.RepoEventFactory.buildUpdatedEvent
-import org.quartz.Trigger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.DuplicateKeyException
@@ -97,13 +95,10 @@ class RepositoryServiceImpl(
     private val servicePermissionResource: ServicePermissionResource
 ) : RepositoryService {
     @Autowired
-    lateinit var cleanRepoTaskScheduler: CleanRepoTaskScheduler
-
-    @Autowired
     lateinit var packageService: PackageClient
 
     @Autowired
-    lateinit var cleanTaskReloadManger: CleanTaskReloadManger
+    lateinit var cleanTaskReloadManger: CleanTaskManger
 
     override fun getRepoInfo(projectId: String, name: String, type: String?): RepositoryInfo? {
         val tRepository = repositoryDao.findByNameAndType(projectId, name, type)
@@ -325,25 +320,36 @@ class RepositoryServiceImpl(
         return null
     }
 
-    override fun updateRepoCleanStrategyStatus(projectId: String, repoName: String) {
-        val repoInfo = getRepoInfo(projectId, repoName)
+    override fun updateCleanStatusRunning(projectId: String, repoName: String) {
         val repository = checkRepository(projectId, repoName)
-        val configuration = repoInfo?.configuration
+        val configuration = repository.configuration.readJsonString<RepositoryConfiguration>()
         if (configuration is CompositeConfiguration) {
             val repoCleanStrategy = getRepoCleanStrategy(projectId, repoName)
             repoCleanStrategy?.let {
-                if (it.status == CleanStatus.RUNNING) {
-                    it.status = CleanStatus.WAITING
-                } else {
-                    it.status = CleanStatus.RUNNING
+                require(it.status == CleanStatus.WAITING) {
+                    "update clean status to running fail original status is [${it.status}]"
                 }
+                it.status = CleanStatus.RUNNING
                 configuration.cleanStrategy = it
                 repository.configuration = configuration.toJsonString()
                 repositoryDao.save(repository)
-                logger.info(
-                    "update clean strategy status[${it.status}] success " +
-                            "at project:[$projectId] repoName:[$repoName] "
-                )
+            }
+        }
+    }
+
+    override fun updateCleanStatusWaiting(projectId: String, repoName: String) {
+        val repository = checkRepository(projectId, repoName)
+        val configuration = repository.configuration.readJsonString<RepositoryConfiguration>()
+        if (configuration is CompositeConfiguration) {
+            val repoCleanStrategy = getRepoCleanStrategy(projectId, repoName)
+            repoCleanStrategy?.let {
+                require(it.status == CleanStatus.RUNNING) {
+                    "update clean status to waiting fail original status is [${it.status}]"
+                }
+                it.status = CleanStatus.WAITING
+                configuration.cleanStrategy = it
+                repository.configuration = configuration.toJsonString()
+                repositoryDao.save(repository)
             }
         }
     }
@@ -395,36 +401,30 @@ class RepositoryServiceImpl(
         }
         if (new is CompositeConfiguration && old is CompositeConfiguration) {
             updateCompositeConfiguration(new, old, repository, operator)
-
-            logger.info("new clean strategy is [${new.cleanStrategy}], old is [${old.cleanStrategy}]")
-            //当【旧策略】不为null时，需要处理新策略
-            val oldCleanStrategy = old.cleanStrategy
+            logger.info(
+                "projectId:[${repository.projectId}] repoName:[${repository.name}] " +
+                        "new clean strategy is [${new.cleanStrategy}], old is [${old.cleanStrategy}]"
+            )
             val newCleanStrategy = new.cleanStrategy
-            if (oldCleanStrategy != null) {
-                if (newCleanStrategy != null) {
-                    if (cleanRepoTaskScheduler.getState(repository.id!!) == Trigger.TriggerState.BLOCKED)
-                    //TODO 提示 当前任务正在执行，本次修改将在下次执行生效
-                        throw ErrorCodeException(CommonMessageCode.CLEAN_JOB_MODIFY_TIPS, repository.id!!)
-                    //校验清理策略参数
-                    Preconditions.checkArgument(newCleanStrategy.reserveVersions >= 0, "reserveVersions")
-                    Preconditions.checkArgument(newCleanStrategy.reserveDays >= 0, "reserveDays")
-                    //更新策略，将【旧策略】的status 赋值给【新策略】，避免status被赋值为默认值
-                    newCleanStrategy.status = oldCleanStrategy.status
-                } else {
-                    //【新策略】为空，则不更新策略，直接将旧策略赋值给新策略
-                    new.cleanStrategy = old.cleanStrategy
+            val oldCleanStrategy = old.cleanStrategy
+            if (newCleanStrategy != null) {
+                //TODO 提示 当前任务正在执行，本次修改将在下次执行生效，任务状态处理
+                if (oldCleanStrategy != null && oldCleanStrategy.status == CleanStatus.RUNNING) {
+                    logger.warn(
+                        "projectId:[${repository.projectId}] repoName:[${repository.name}]," +
+                                "清理任务：[${repository.id}]正在执行，修改将在下一次执行生效"
+                    )
                 }
+                Preconditions.checkArgument(newCleanStrategy.reserveVersions >= 0, "reserveVersions")
+                Preconditions.checkArgument(newCleanStrategy.reserveDays >= 0, "reserveDays")
             } else {
-                if (newCleanStrategy != null) {
-                    //校验清理策略参数
-                    Preconditions.checkArgument(newCleanStrategy.reserveVersions >= 0, "reserveVersions")
-                    Preconditions.checkArgument(newCleanStrategy.reserveDays >= 0, "reserveDays")
-                } else {
-                    logger.info("clean startegy no update ,old clean strategy is [${oldCleanStrategy}] " +
-                            "and new clean strategy is [${newCleanStrategy}]")
-                }
+                //新清理策略为null，将旧清理策略赋值给新的
+                logger.warn(
+                    "projectId:[${repository.projectId}] " +
+                            "repoName:[${repository.name}] new clean strategy is null"
+                )
+                new.cleanStrategy = old.cleanStrategy
             }
-            logger.info("final clean strategy is [${new.cleanStrategy}] ")
         }
     }
 

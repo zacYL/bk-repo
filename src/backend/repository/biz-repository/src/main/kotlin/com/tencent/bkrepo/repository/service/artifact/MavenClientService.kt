@@ -1,14 +1,14 @@
 package com.tencent.bkrepo.repository.service.artifact
 
-import com.tencent.bkrepo.common.api.constant.REPO_CLEAN_USER
 import com.tencent.bkrepo.maven.api.MavenClient
+import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import org.springframework.stereotype.Service
 
 @Service
-class MavenArtifactRegistryService(
+class MavenClientService(
     private val mavenClient: MavenClient
-) : ArtifactRegistryService{
+) : ArtifactClientService{
     override fun deleteVersion(projectId: String, repoName: String, packageKey: String, version: String) {
-        mavenClient.deleteVersion(projectId, repoName, packageKey, version, REPO_CLEAN_USER)
+        mavenClient.deleteVersion(projectId, repoName, packageKey, version, SYSTEM_USER)
     }
 }

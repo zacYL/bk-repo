@@ -159,10 +159,15 @@ interface RepositoryService {
 
     /**
      * 更新仓库清理策略中的清理任务状态
-     * RUNNING--->WAITING
      * WAITING--->RUNNING
      */
-    fun updateRepoCleanStrategyStatus(projectId: String, repoName: String)
+    fun updateCleanStatusRunning(projectId: String, repoName: String)
+
+    /**
+     * 更新仓库清理策略中的清理任务状态
+     * RUNNING--->WAITING
+     */
+    fun updateCleanStatusWaiting(projectId: String, repoName: String)
 
     fun allRepos(projectId: String?, repoName: String?, repoType: RepositoryType?): List<RepositoryInfo?>
 }

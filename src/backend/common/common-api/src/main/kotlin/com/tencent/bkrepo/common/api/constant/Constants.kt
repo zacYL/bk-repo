@@ -62,11 +62,6 @@ const val CI_MS_REQUEST_KEY = "CIMSRequest"
 const val ANONYMOUS_USER = "anonymous"
 
 /**
- * 仓库清理用户
- */
-const val REPO_CLEAN_USER = "repoCleanUser"
-
-/**
  * common logger name
  */
 const val EXCEPTION_LOGGER_NAME = "ExceptionLogger"

@@ -201,6 +201,7 @@ class DefaultScanTaskScheduler @Autowired constructor(
         val finishedSubScanTasks = ArrayList<TPlanArtifactLatestSubScanTask>()
         val nodeIterator = iteratorManager.createNodeIterator(scanTask, false)
         for (node in nodeIterator) {
+            // 未使用扫描方案的情况直接取node的projectId
             projectScanConfiguration = projectScanConfiguration
                 ?: projectScanConfigurationDao.findByProjectId(node.projectId)
             scanningCount = scanningCount ?: subScanTaskDao.scanningCount(node.projectId)
@@ -218,8 +219,8 @@ class DefaultScanTaskScheduler @Autowired constructor(
                 finishedSubScanTasks.add(finishedSubtask)
             } else {
                 // 添加到扫描任务队列
-                val status = status(scanningCount, projectId, projectScanConfiguration)
-                subScanTasks.add(createSubTask(scanTask, node, storageCredentialsKey, status))
+                val status = status(scanningCount, projectScanConfiguration)
+                subScanTasks.add(createSubTask(scanTask, scanner, node, storageCredentialsKey, status))
                 if (status == SubScanTaskStatus.CREATED) {
                     scanningCount++
                 }
@@ -286,6 +287,7 @@ class DefaultScanTaskScheduler @Autowired constructor(
 
     fun createSubTask(
         scanTask: ScanTask,
+        scanner: Scanner,
         node: Node,
         credentialKey: String? = null,
         status: SubScanTaskStatus = SubScanTaskStatus.CREATED
@@ -456,18 +458,16 @@ class DefaultScanTaskScheduler @Autowired constructor(
      * 根据扫描数量是否超过限制返回扫描状态
      *
      * @param scanningCount 正在扫描的任务数量
-     * @param projectId 扫描配置的项目id，为null时表示无限制
      * @param projectConfiguration 项目扫描配置
      *
      */
     private fun status(
         scanningCount: Long,
-        projectId: String?,
         projectConfiguration: TProjectScanConfiguration?
     ): SubScanTaskStatus {
         val limitSubScanTaskCount = projectConfiguration?.subScanTaskCountLimit
             ?: scannerProperties.defaultProjectSubScanTaskCountLimit
-        if (projectId != null && scanningCount >= limitSubScanTaskCount.toLong()) {
+        if (scanningCount >= limitSubScanTaskCount.toLong()) {
             return SubScanTaskStatus.BLOCKED
         }
         return SubScanTaskStatus.CREATED

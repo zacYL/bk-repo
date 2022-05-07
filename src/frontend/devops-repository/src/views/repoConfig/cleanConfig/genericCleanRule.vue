@@ -1,7 +1,23 @@
 <template>
     <div class="rule-item flex-align-center">
-        <span class="mr5">制品元数据满足</span>
         <bk-input
+            style="width:180px;"
+            :value="path.value"
+            @input="path => change({ path })"
+            :disabled="disabled"
+            placeholder="请输入目录路径">
+        </bk-input>
+        <bk-select
+            style="width:100px;"
+            v-model="type"
+            :clearable="false"
+            :disabled="disabled">
+            <bk-option id="name" name="文件名称"></bk-option>
+            <bk-option id="metadata" name="元数据"></bk-option>
+            <bk-option id="all" name="全部"></bk-option>
+        </bk-select>
+        <bk-input
+            v-show="type === 'metadata'"
             style="width:180px;"
             :value="defaultValue.field.replace(/^metadata\.(.*)$/, '$1')"
             @input="field => change({ field: `metadata.${field}` })"
@@ -9,11 +25,11 @@
             placeholder="属性键">
         </bk-input>
         <select-input
+            v-show="type !== 'all'"
             :select="defaultValue.operation"
             :select-list="typeList"
             :input="defaultValue.value"
             :disabled="disabled"
-            placeholder="属性值"
             @change="r => change(r)">
         </select-input>
         <Icon v-show="!disabled" class="ml10 hover-btn" size="24" name="icon-delete" @click.native="$emit('delete')" />
@@ -25,7 +41,15 @@
         name: 'metadataRule',
         components: { SelectInput },
         props: {
-            disabled: Boolean
+            disabled: Boolean,
+            path: {
+                type: Object,
+                default: () => ({
+                    field: 'path',
+                    operation: 'EQ',
+                    value: ''
+                })
+            }
         },
         data () {
             return {
@@ -41,6 +65,21 @@
                 ]
             }
         },
+        computed: {
+            type: {
+                get () {
+                    if (this.defaultValue.field === 'name') return 'name'
+                    if (this.defaultValue.field) return 'metadata'
+                    return 'all'
+                },
+                set (val) {
+                    let field = ''
+                    if (val === 'name') field = 'name'
+                    if (val === 'metadata') field = 'metadata.'
+                    this.change({ field, input: '' })
+                }
+            }
+        },
         watch: {
             $attrs: {
                 handler (val) {
@@ -49,7 +88,7 @@
                         operation: 'EQ',
                         value: ''
                     }
-                    const meta = Object.values(val).find(meta => /^metadata\./.test(meta.field))
+                    const meta = Object.values(val).find(meta => meta.field)
                     meta && (this.defaultValue = { ...meta })
                 },
                 immediate: true,
@@ -58,17 +97,16 @@
         },
         methods: {
             change ({
+                path = this.path.value,
                 field = this.defaultValue.field,
                 select: operation = this.defaultValue.operation,
                 input: value = this.defaultValue.value
             }) {
-                this.$emit('change', {
-                    [field]: {
-                        field,
-                        operation,
-                        value
-                    }
-                })
+                const data = {
+                    path: { field: 'path', operation: 'EQ', value: path }
+                }
+                field && (data[field] = { field, operation, value })
+                this.$emit('change', data)
             }
         }
     }

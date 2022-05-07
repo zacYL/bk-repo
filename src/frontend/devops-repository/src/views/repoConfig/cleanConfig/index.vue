@@ -17,7 +17,8 @@
             </div>
             <div class="form-tip">满足保留规则的制品将不会被清理</div>
             <div class="rule-list">
-                <package-clean-rule
+                <component
+                    :is="repoType === 'generic' ? 'generic-clean-rule' : 'package-clean-rule'"
                     class="mt10"
                     v-for="(rule, ind) in config.rules"
                     :key="ind"
@@ -25,7 +26,7 @@
                     v-bind="rule"
                     @change="r => config.rules.splice(ind, 1, r)"
                     @delete="config.rules.splice(ind, 1)">
-                </package-clean-rule>
+                </component>
             </div>
         </bk-form-item>
         <bk-form-item>
@@ -35,11 +36,13 @@
 </template>
 <script>
     import packageCleanRule from './packageCleanRule'
+    import genericCleanRule from './genericCleanRule.vue'
     import { mapActions } from 'vuex'
     export default {
         name: 'cleanConfig',
         components: {
-            packageCleanRule
+            packageCleanRule,
+            genericCleanRule
         },
         props: {
             baseData: Object
@@ -74,6 +77,9 @@
         computed: {
             projectId () {
                 return this.$route.params.projectId
+            },
+            repoType () {
+                return this.$route.params.repoType
             },
             repoName () {
                 return this.$route.query.repoName
@@ -121,13 +127,13 @@
                     return {
                         relation: 'AND',
                         rules: Object.values(rs).map(i => {
-                            return i.value && {
+                            return i.field.replace(/^metadata\./, '') && i.value && {
                                 ...i,
                                 value: i.operation === 'MATCH' ? `*${i.value}*` : i.value
                             }
                         }).filter(Boolean)
                     }
-                })
+                }).filter(rs => rs.rules.length)
                 this.loading = true
                 this.updateRepoInfo({
                     projectId: this.projectId,

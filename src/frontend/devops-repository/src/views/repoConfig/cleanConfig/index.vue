@@ -17,15 +17,15 @@
             </div>
             <div class="form-tip">满足保留规则的制品将不会被清理</div>
             <div class="rule-list">
-                <metadata-rule
+                <package-clean-rule
                     class="mt10"
-                    v-for="(rule, ind) in config.metadataReserveRules"
+                    v-for="(rule, ind) in config.rules"
                     :key="ind"
                     :disabled="!config.autoClean"
-                    :rule="rule"
-                    @change="r => config.metadataReserveRules.splice(ind, 1, r)"
-                    @delete="config.metadataReserveRules.splice(ind, 1)">
-                </metadata-rule>
+                    v-bind="rule"
+                    @change="r => config.rules.splice(ind, 1, r)"
+                    @delete="config.rules.splice(ind, 1)">
+                </package-clean-rule>
             </div>
         </bk-form-item>
         <bk-form-item>
@@ -34,11 +34,13 @@
     </bk-form>
 </template>
 <script>
-    import metadataRule from './metadataRule'
+    import packageCleanRule from './packageCleanRule'
     import { mapActions } from 'vuex'
     export default {
         name: 'cleanConfig',
-        components: { metadataRule },
+        components: {
+            packageCleanRule
+        },
         props: {
             baseData: Object
         },
@@ -49,7 +51,7 @@
                     autoClean: false,
                     reserveVersions: 20,
                     reserveDays: 30,
-                    metadataReserveRules: []
+                    rules: []
                 },
                 rules: {
                     reserveVersions: [
@@ -78,31 +80,53 @@
             }
         },
         watch: {
-            baseData () {
-                this.config = {
-                    ...this.config,
-                    ...this.baseData.configuration.cleanStrategy
-                }
-                this.clearError()
+            baseData: {
+                handler (val) {
+                    if (!val.configuration.cleanStrategy) return
+                    const {
+                        autoClean = false,
+                        reserveVersions = 20,
+                        reserveDays = 30,
+                        rule = { rules: [] }
+                    } = val.configuration.cleanStrategy
+                    this.config = { ...this.config, autoClean, reserveVersions, reserveDays }
+                    this.config.rules = rule.rules.map(r => {
+                        return r.rules?.reduce((target, item) => {
+                            target[item.field] = {
+                                ...item,
+                                value: item.operation === 'MATCH' ? item.value.replace(/^\*(.*)\*$/, '$1') : item.value
+                            }
+                            return target
+                        }, {})
+                    })
+                },
+                deep: true,
+                immediate: true
             }
         },
         methods: {
             ...mapActions(['updateRepoInfo']),
             addRule () {
                 if (!this.config.autoClean) return
-                this.config.metadataReserveRules.push({
-                    metadataName: '',
-                    metadataValue: '',
-                    operationType: 'EQ'
-                })
+                this.config.rules.push({})
             },
             clearError () {
                 this.$refs.cleanForm.clearError()
             },
             async save () {
                 await this.$refs.cleanForm.validate()
-                this.config.metadataReserveRules = this.config.metadataReserveRules.filter(v => {
-                    return v.metadataName && v.metadataValue && v.operationType
+                const { autoClean, reserveVersions, reserveDays } = this.config
+                let rules = this.config.rules
+                rules = rules.map(rs => {
+                    return {
+                        relation: 'AND',
+                        rules: Object.values(rs).map(i => {
+                            return i.value && {
+                                ...i,
+                                value: i.operation === 'MATCH' ? `*${i.value}*` : i.value
+                            }
+                        }).filter(Boolean)
+                    }
                 })
                 this.loading = true
                 this.updateRepoInfo({
@@ -111,7 +135,15 @@
                     body: {
                         configuration: {
                             ...this.baseData.configuration,
-                            cleanStrategy: this.config
+                            cleanStrategy: {
+                                autoClean,
+                                reserveVersions,
+                                reserveDays,
+                                rule: {
+                                    relation: 'OR',
+                                    rules
+                                }
+                            }
                         }
                     }
                 }).then(() => {

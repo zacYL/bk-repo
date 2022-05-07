@@ -120,7 +120,7 @@ export default {
     // 批量扫描
     startScan (_, body) {
         return Vue.prototype.$ajax.post(
-            `${prefix}/batch`,
+            `${prefix}`,
             body
         )
     },
@@ -131,13 +131,17 @@ export default {
         //     body
         // )
         return Vue.prototype.$ajax.post(
-            `${prefix}/batch`,
+            `${prefix}`,
             {
-                projectId,
                 id,
                 force: true,
                 rule: {
                     rules: [
+                        {
+                            field: 'projectId',
+                            value: projectId,
+                            operation: 'EQ'
+                        },
                         {
                             field: 'repoName',
                             value: [repoName],
@@ -173,7 +177,7 @@ export default {
                                                 value: fullPath
                                             }
                                             : undefined
-                                    ],
+                                    ].filter(Boolean),
                                     relation: 'AND'
                                 }
                             ],

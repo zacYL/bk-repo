@@ -68,7 +68,8 @@
                     })
                     this.showAddBtn = Boolean(data.length)
                 },
-                immediate: true
+                immediate: true,
+                deep: true
             }
         },
         methods: {
@@ -79,13 +80,13 @@
                         const rules = this.defaultRules
                             .map(rs => {
                                 return {
-                                    rules: Object.keys(rs).map(k => {
-                                        return rs[k].value && {
-                                            ...rs[k],
-                                            value: rs[k].operation === 'MATCH' ? `*${rs[k].value}*` : rs[k].value
+                                    relation: 'AND',
+                                    rules: Object.values(rs).map(i => {
+                                        return i.value && {
+                                            ...i,
+                                            value: i.operation === 'MATCH' ? `*${i.value}*` : i.value
                                         }
-                                    }).filter(Boolean),
-                                    relation: 'AND'
+                                    }).filter(Boolean)
                                 }
                             })
                             .filter(rule => Boolean(rule.rules.length))

@@ -115,6 +115,10 @@ class RepositoryCleanServiceImpl(
             )
             // 删除版本集合
             if (deleteVersions.isNotEmpty()) {
+                logger.info(
+                    "delete package version, projectId:[$projectId] repoName:[$repoName]" +
+                            " packageKey:[$packageKey],delete version collection: $deleteVersions"
+                )
                 deleteVersion(deleteVersions, it.key, it.type, it.projectId, it.repoName)
             }
         }
@@ -188,7 +192,7 @@ class RepositoryCleanServiceImpl(
         val artifactClientService = ArtifactClientServiceFactory.getArtifactClientService(type)
         versions.forEach {
             try {
-                logger.error(
+                logger.info(
                     "delete package version begin, projectId:[$projectId] repoName:[$repoName] packageKey:[$packageKey]"
                 )
                 artifactClientService.deleteVersion(projectId, repoName, packageKey, it.name)

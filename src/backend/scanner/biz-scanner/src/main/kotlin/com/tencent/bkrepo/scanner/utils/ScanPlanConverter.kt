@@ -112,7 +112,7 @@ object ScanPlanConverter {
     fun convert(scanPlanRequest: UpdateScanPlanRequest): ScanPlan {
         return with(scanPlanRequest) {
             val (repoNames, filterRule) = if (scanOnNewArtifact != null && scanOnNewArtifact!!) {
-                Pair(RuleMatcher.getRepoNames(rule), rule)
+                Pair(RuleUtil.getRepoNames(rule), rule)
             } else {
                 Pair(null, null)
             }

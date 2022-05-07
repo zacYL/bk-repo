@@ -188,6 +188,9 @@ class RepositoryCleanServiceImpl(
         val artifactClientService = ArtifactClientServiceFactory.getArtifactClientService(type)
         versions.forEach {
             try {
+                logger.error(
+                    "delete package version begin, projectId:[$projectId] repoName:[$repoName] packageKey:[$packageKey]"
+                )
                 artifactClientService.deleteVersion(projectId, repoName, packageKey, it.name)
             } catch (ex: Exception) {
                 logger.error(

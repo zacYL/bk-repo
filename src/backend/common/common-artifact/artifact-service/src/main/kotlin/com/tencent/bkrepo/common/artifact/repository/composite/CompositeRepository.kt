@@ -107,13 +107,29 @@ class CompositeRepository(
         localRepository.onDownloadSuccess(context, artifactResource, throughput)
     }
 
+    @Suppress("TooGenericExceptionCaught")
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
-        return localRepository.onDownload(context) ?: run {
+        var artifactResource: ArtifactResource? = null
+        try {
+            artifactResource = localRepository.onDownload(context)
+        } catch (exception: Exception) {
             mapFirstProxyRepo(context) {
                 require(it is ArtifactDownloadContext)
-                remoteRepository.onDownload(it)
+                // 这里只会返回空，异常不会抛出
+                artifactResource = remoteRepository.onDownload(it)
+            }
+            // 这里是为了保留各依赖源实现的异常
+            if (artifactResource == null) {
+                throw exception
             }
         }
+        if(artifactResource == null) {
+            mapFirstProxyRepo(context) {
+                require(it is ArtifactDownloadContext)
+                artifactResource = remoteRepository.onDownload(it)
+            }
+        }
+        return artifactResource
     }
 
     override fun query(context: ArtifactQueryContext): Any? {
@@ -140,7 +156,10 @@ class CompositeRepository(
         val proxyChannelList = getProxyChannelList(context)
         for (setting in proxyChannelList) {
             try {
-                action(getContextFromProxyChannel(context, setting))?.let { return it }
+                action(getContextFromProxyChannel(context, setting))?.let {
+                    if (it != Unit) {
+                        return it
+                    } }
             } catch (ignored: Exception) {
                 logger.warn("Failed to execute map with channel ${setting.name}", ignored)
             }

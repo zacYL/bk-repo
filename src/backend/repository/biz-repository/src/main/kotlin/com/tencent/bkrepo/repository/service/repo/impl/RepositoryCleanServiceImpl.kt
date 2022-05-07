@@ -186,16 +186,9 @@ class RepositoryCleanServiceImpl(
         projectId: String,
         repoName: String
     ) {
-        //TODO 删除日志
-        logger.info(
-            "delete package version before"
-        )
         val artifactClientService = ArtifactClientServiceFactory.getArtifactClientService(type)
         versions.forEach {
             try {
-                logger.info(
-                    "delete package version begin, projectId:[$projectId] repoName:[$repoName] packageKey:[$packageKey]"
-                )
                 artifactClientService.deleteVersion(projectId, repoName, packageKey, it.name)
             } catch (ex: Exception) {
                 logger.error(

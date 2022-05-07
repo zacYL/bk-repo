@@ -35,6 +35,10 @@ class ServiceNpmClientImpl(
         nodeClient.deleteNode(NodeDeleteRequest(projectId, repoName, tgzPath, operator))
         nodeClient.deleteNode(NodeDeleteRequest(projectId, repoName, metadataPath, operator))
         updatePackageJson(projectId, repoName, packageKey, version, operator)
+        logger.info(
+            "delete package version success, projectId:[$projectId] " +
+                    "repoName:[$repoName] packageKey:[$packageKey] version:[$version]"
+        )
     }
 
     // 更新package.json文件的内容
@@ -55,7 +59,7 @@ class ServiceNpmClientImpl(
             val packageMetaData = JsonUtils.objectMapper.readValue(it, NpmPackageMetaData::class.java)
             val latest = NpmUtils.getLatestVersionFormDistTags(packageMetaData.distTags)
             if (version != latest) {
-                deleteNpmVersion(packageMetaData,version)
+                deleteNpmVersion(packageMetaData, version)
             } else {
                 val newLatest = packageClient.findPackageByKey(projectId, repoName, packageKey).data?.latest
                 newLatest?.let {
@@ -85,7 +89,7 @@ class ServiceNpmClientImpl(
         }
     }
 
-    private fun deleteNpmVersion(packageMetaData: NpmPackageMetaData,version: String) {
+    private fun deleteNpmVersion(packageMetaData: NpmPackageMetaData, version: String) {
         packageMetaData.versions.map.remove(version)
         packageMetaData.time.getMap().remove(version)
         val iterator = packageMetaData.distTags.getMap().entries.iterator()

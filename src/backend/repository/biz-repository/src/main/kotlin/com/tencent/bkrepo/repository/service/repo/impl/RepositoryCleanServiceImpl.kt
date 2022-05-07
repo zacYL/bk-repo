@@ -125,6 +125,10 @@ class RepositoryCleanServiceImpl(
      */
     private fun metadataRuleQuery(rule: Rule, packageId: String): List<PackageVersion> {
         val versionList = mutableListOf<PackageVersion>()
+        // rules is null
+        if (rule is Rule.NestedRule && rule.rules.isEmpty()){
+            return versionList
+        }
         var pageNumber = 1
         val packageIdRule = Rule.QueryRule("packageId", packageId)
         val queryRule = Rule.NestedRule(mutableListOf(packageIdRule, rule), Rule.NestedRule.RelationType.AND)

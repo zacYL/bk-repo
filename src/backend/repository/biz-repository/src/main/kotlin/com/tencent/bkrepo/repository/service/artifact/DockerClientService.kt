@@ -2,7 +2,9 @@ package com.tencent.bkrepo.repository.service.artifact
 
 import com.tencent.bkrepo.docker.api.DockerClient
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
+import org.springframework.stereotype.Service
 
+@Service
 class DockerClientService(
     private val dockerClient: DockerClient
 ) : ArtifactClientService {

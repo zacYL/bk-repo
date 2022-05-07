@@ -1,2 +1,4 @@
 server:
   port: __BK_REPO_REPOSITORY_PORT__
+repository:
+  cleanStrategyTime: 0 30 19 * * ?

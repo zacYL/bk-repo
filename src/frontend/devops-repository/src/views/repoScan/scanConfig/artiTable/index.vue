@@ -59,7 +59,10 @@
                 handler (data) {
                     this.defaultRules = data.map(r => {
                         return r.rules?.reduce((target, item) => {
-                            target[item.field] = item
+                            target[item.field] = {
+                                ...item,
+                                value: item.operation === 'MATCH' ? item.value.replace(/^\*(.*)\*$/, '$1') : item.value
+                            }
                             return target
                         }, {})
                     })
@@ -74,12 +77,14 @@
                     if (!this.showAddBtn) resolve([])
                     else {
                         const rules = this.defaultRules
-                            .map(({ name, version }) => {
+                            .map(rs => {
                                 return {
-                                    rules: [
-                                        name?.value ? name : undefined,
-                                        version?.value ? version : undefined
-                                    ].filter(Boolean),
+                                    rules: Object.keys(rs).map(k => {
+                                        return rs[k].value && {
+                                            ...rs[k],
+                                            value: rs[k].operation === 'MATCH' ? `*${rs[k].value}*` : rs[k].value
+                                        }
+                                    }).filter(Boolean),
                                     relation: 'AND'
                                 }
                             })

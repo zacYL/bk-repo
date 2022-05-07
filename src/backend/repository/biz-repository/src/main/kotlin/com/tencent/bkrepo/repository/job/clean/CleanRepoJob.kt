@@ -19,7 +19,6 @@ class CleanRepoJob : InterruptableJob {
         val lockName = buildLockName(taskId)
         val lockConfiguration = LockConfiguration(lockName, lockAtMostFor, lockAtLeastFor)
         lockingTaskExecutor.executeWithLock(Runnable { cleanRepoJobExecutor.execute(taskId) },lockConfiguration)
-        cleanRepoJobExecutor.execute(taskId)
     }
 
     override fun interrupt() {

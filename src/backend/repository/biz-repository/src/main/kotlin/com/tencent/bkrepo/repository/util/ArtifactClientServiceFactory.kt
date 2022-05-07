@@ -1,12 +1,8 @@
 package com.tencent.bkrepo.repository.util
 
 import com.tencent.bkrepo.common.service.util.SpringContextUtils
-import com.tencent.bkrepo.docker.api.DockerClient
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
-import com.tencent.bkrepo.repository.service.artifact.ArtifactClientService
-import com.tencent.bkrepo.repository.service.artifact.DockerClientService
-import com.tencent.bkrepo.repository.service.artifact.MavenClientService
-import com.tencent.bkrepo.repository.service.artifact.NpmClientService
+import com.tencent.bkrepo.repository.service.artifact.*
 
 object ArtifactClientServiceFactory {
 
@@ -20,6 +16,10 @@ object ArtifactClientServiceFactory {
     }
 
     fun getArtifactClientService(packageType: PackageType): ArtifactClientService {
-        return map[packageType]!!
+        val clientService = map[packageType]
+        clientService?.let {
+            return clientService
+        }?:return SpringContextUtils.getBean(OtherClientService::class.java)
+
     }
 }

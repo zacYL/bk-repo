@@ -31,7 +31,7 @@ class RepositoryCleanServiceImpl(
         val tRepository = repositoryDao.findById(repoId)
         tRepository?.let { repo ->
             val cleanStrategy = repositoryService.getRepoCleanStrategy(repo.projectId, repo.name)
-            logger.info("projectId:[$repo.projectId] repoName:[$repo.name] clean strategy: [$cleanStrategy] excute")
+            logger.info("projectId:[${repo.projectId}] repoName:[${repo.name}] clean strategy: [$cleanStrategy] excute")
             cleanStrategy?.let {
                 //自动清理关闭，状态为 WAITING，删除job
                 if (!it.autoClean && it.status == CleanStatus.WAITING) {
@@ -66,10 +66,10 @@ class RepositoryCleanServiceImpl(
                 try {
                     repositoryService.updateCleanStatusWaiting(repo.projectId, repo.name)
                 } catch (ex: IllegalArgumentException) {
-                    logger.warn("projectId:[$repo.projectId] repoName:[$repo.name] " +
+                    logger.warn("projectId:[${repo.projectId}] repoName:[${repo.name}] " +
                             "update clean strategy illegal argument exception:[$ex]")
                 }
-            } ?: logger.warn("projectId:[$repo.projectId] repoName:[$repo.name] clean strategy is null")
+            } ?: logger.warn("projectId:[${repo.projectId}] repoName:[${repo.name}] clean strategy is null")
         } ?: logger.error("clean repo illegal argument exception tRepository is null, tRepository:[$tRepository]")
     }
 

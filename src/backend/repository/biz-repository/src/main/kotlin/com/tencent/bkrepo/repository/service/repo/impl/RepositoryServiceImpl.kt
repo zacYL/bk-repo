@@ -333,6 +333,7 @@ class RepositoryServiceImpl(
                 configuration.cleanStrategy = it
                 repository.configuration = configuration.toJsonString()
                 repositoryDao.save(repository)
+                logger.info("projectId:[$projectId] repoName:[$repoName] update clean strategy status to [RUNNING] success")
             }
         }
     }
@@ -350,6 +351,7 @@ class RepositoryServiceImpl(
                 configuration.cleanStrategy = it
                 repository.configuration = configuration.toJsonString()
                 repositoryDao.save(repository)
+                logger.info("projectId:[$projectId] repoName:[$repoName] update clean strategy status to [WAITING] success")
             }
         }
     }

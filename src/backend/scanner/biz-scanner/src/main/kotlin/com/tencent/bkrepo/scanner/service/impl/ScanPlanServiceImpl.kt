@@ -159,8 +159,6 @@ class ScanPlanServiceImpl(
             if (id.isNullOrEmpty()) {
                 throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "planId is empty")
             }
-            val plan = scanPlanDao.find(projectId!!, id!!)
-                ?: throw NotFoundException(CommonMessageCode.RESOURCE_NOT_FOUND, request.toString())
 
             scanPlanDao.update(ScanPlanConverter.convert(request))
             return scanPlanDao.findById(request.id!!)!!.let { ScanPlanConverter.convert(it) }

@@ -42,6 +42,7 @@ import com.tencent.bkrepo.scanner.pojo.ScanPlan
 import com.tencent.bkrepo.scanner.pojo.ScanTask
 import com.tencent.bkrepo.scanner.pojo.rule.RuleArtifact
 import com.tencent.bkrepo.scanner.utils.Request
+import com.tencent.bkrepo.scanner.utils.RuleMatcher
 import org.springframework.stereotype.Component
 
 /**
@@ -80,7 +81,8 @@ class IteratorManager(
     private fun modifyRule(scanPlan: ScanPlan, scanTask: ScanTask): Rule {
         val rule = scanTask.rule ?: scanPlan.rule!!
         if (scanPlan.type == RepositoryType.GENERIC.name) {
-            if (scanPlan.repoNames.isNullOrEmpty()) {
+            val repoNames = RuleMatcher.getRepoNames(rule)
+            if (repoNames.isNullOrEmpty()) {
                 addRepoNames(rule as Rule.NestedRule, scanPlan.projectId!!)
             }
             return addMobilePackageRule(rule)

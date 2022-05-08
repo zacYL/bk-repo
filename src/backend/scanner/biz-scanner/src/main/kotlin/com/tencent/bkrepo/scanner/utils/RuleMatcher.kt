@@ -30,6 +30,7 @@ package com.tencent.bkrepo.scanner.utils
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.query.util.MongoEscapeUtils
+import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.scanner.pojo.rule.RuleArtifact
 import java.io.File
 
@@ -66,7 +67,8 @@ object RuleMatcher {
         if (rule == null) return emptyList()
 
         require(rule is Rule.NestedRule)
-        val repoRule = getQueryRule(rule, "repoName")
+        if (rule.rules.isEmpty()) return emptyList()
+        val repoRule = getQueryRule(rule, NodeInfo::repoName.name)
         return if (repoRule == null) {
             emptyList()
         } else {

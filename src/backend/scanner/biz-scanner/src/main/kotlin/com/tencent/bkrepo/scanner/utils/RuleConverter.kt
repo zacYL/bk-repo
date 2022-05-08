@@ -49,6 +49,7 @@ object RuleConverter {
         if (rule == null) return filterRule
 
         require(rule is NestedRule)
+        if (rule.rules.isEmpty()) return filterRule
         if (rule.relation == OR) {
             filterRule.rules.add(rule)
         } else {

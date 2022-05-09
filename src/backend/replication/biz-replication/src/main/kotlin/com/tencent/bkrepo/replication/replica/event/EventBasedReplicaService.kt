@@ -47,6 +47,8 @@ class EventBasedReplicaService(
 
     override fun replica(context: ReplicaContext) {
         with(context) {
+            //同步项目
+            replicator.replicaProject(this)
             // 同步仓库
             replicator.replicaRepo(this)
             when (event.type) {

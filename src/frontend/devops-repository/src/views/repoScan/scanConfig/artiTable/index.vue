@@ -4,10 +4,7 @@
             <bk-radio :disabled="disabled" :value="false">所有制品的最新版本</bk-radio>
             <bk-radio :disabled="disabled" class="mt10" :value="true">
                 <span>满足规则的制品</span>
-                <div v-show="showAddBtn && !disabled" class="ml10 rule-add flex-center" @click="addRule()">
-                    <i class="mr5 devops-icon icon-plus-circle"></i>
-                    添加规则
-                </div>
+                <bk-button v-show="showAddBtn && !disabled" class="ml10" icon="plus" @click="addRule()">添加规则</bk-button>
             </bk-radio>
         </bk-radio-group>
         <div v-show="showAddBtn" class="rule-list">
@@ -118,13 +115,6 @@
             margin-bottom: -10px;
             color: var(--fontSubsidiaryColor);
         }
-    }
-    .rule-add {
-        width: 120px;
-        height: 32px;
-        color: var(--primaryColor);
-        background-color: var(--bgHoverColor);
-        cursor: pointer;
     }
 }
 </style>

@@ -125,7 +125,7 @@ export default {
         )
     },
     // 单个扫描
-    startScanSingle (_, { projectId, id, repoName, name, version, packageKey, fullPath }) {
+    startScanSingle (_, { projectId, id, repoName, version, packageKey, fullPath }) {
         // return Vue.prototype.$ajax.post(
         //     `${prefix}/single`,
         //     body
@@ -151,12 +151,7 @@ export default {
                             rules: [
                                 {
                                     rules: [
-                                        {
-                                            field: 'name',
-                                            operation: 'EQ',
-                                            value: name
-                                        },
-                                        version
+                                        packageKey
                                             ? {
                                                 field: 'version',
                                                 operation: 'EQ',
@@ -170,7 +165,7 @@ export default {
                                                 value: packageKey
                                             }
                                             : undefined,
-                                        fullPath
+                                        !packageKey
                                             ? {
                                                 field: 'fullPath',
                                                 operation: 'EQ',

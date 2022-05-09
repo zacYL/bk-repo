@@ -56,7 +56,6 @@ import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
-import com.tencent.bkrepo.repository.api.PackageClient
 import com.tencent.bkrepo.repository.config.RepositoryProperties
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.dao.RepositoryDao
@@ -64,8 +63,14 @@ import com.tencent.bkrepo.repository.job.clean.CleanTaskManger
 import com.tencent.bkrepo.repository.model.TRepository
 import com.tencent.bkrepo.repository.pojo.project.ProjectCreateRequest
 import com.tencent.bkrepo.repository.pojo.project.RepoRangeQueryRequest
-import com.tencent.bkrepo.repository.pojo.repo.*
+import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
+import com.tencent.bkrepo.repository.pojo.repo.RepoDeleteRequest
+import com.tencent.bkrepo.repository.pojo.repo.RepoListOption
+import com.tencent.bkrepo.repository.pojo.repo.RepoUpdateRequest
+import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
+import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
 import com.tencent.bkrepo.repository.service.node.NodeService
+import com.tencent.bkrepo.repository.service.packages.PackageService
 import com.tencent.bkrepo.repository.service.repo.ProjectService
 import com.tencent.bkrepo.repository.service.repo.ProxyChannelService
 import com.tencent.bkrepo.repository.service.repo.RepositoryService
@@ -78,7 +83,12 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
-import org.springframework.data.mongodb.core.query.*
+import org.springframework.data.mongodb.core.query.Criteria
+import org.springframework.data.mongodb.core.query.Query
+import org.springframework.data.mongodb.core.query.and
+import org.springframework.data.mongodb.core.query.inValues
+import org.springframework.data.mongodb.core.query.isEqualTo
+import org.springframework.data.mongodb.core.query.where
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -95,10 +105,9 @@ class RepositoryServiceImpl(
     private val storageCredentialService: StorageCredentialService,
     private val proxyChannelService: ProxyChannelService,
     private val repositoryProperties: RepositoryProperties,
-    private val servicePermissionResource: ServicePermissionResource
+    private val servicePermissionResource: ServicePermissionResource,
+    private val packageService: PackageService
 ) : RepositoryService {
-    @Autowired
-    lateinit var packageService: PackageClient
 
     @Autowired
     lateinit var cleanTaskReloadManger: CleanTaskManger
@@ -281,7 +290,10 @@ class RepositoryServiceImpl(
     override fun deleteRepo(repoDeleteRequest: RepoDeleteRequest) {
         repoDeleteRequest.apply {
             val repository = checkRepository(projectId, name)
-            if (repoDeleteRequest.forced) {
+            // 当仓库为依赖源仓库时，如果仓库下没有包则删除仓库下所有节点
+            if (repoDeleteRequest.forced ||
+                    (repository.type != RepositoryType.GENERIC
+                            && packageService.getPackageCount(projectId, name) == 0L)) {
                 nodeService.deleteByPath(projectId, name, ROOT, operator)
             } else {
                 val artifactInfo = DefaultArtifactInfo(projectId, name, ROOT)

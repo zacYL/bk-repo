@@ -92,12 +92,6 @@ import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
-import java.util.regex.Pattern
 import org.apache.commons.lang.StringUtils
 import org.apache.maven.artifact.repository.metadata.Snapshot
 import org.apache.maven.artifact.repository.metadata.SnapshotVersion
@@ -109,6 +103,12 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.util.regex.Pattern
 
 @Component
 class MavenLocalRepository(
@@ -317,7 +317,12 @@ class MavenLocalRepository(
             val fileSuffix = packaging
             if (packaging == "pom") {
                 val mavenPomModel = context.getArtifactFile().getInputStream().use { MavenXpp3Reader().read(it) }
-                val verNotBlank = StringUtils.isNotBlank(mavenPomModel.version)
+                val version = if(mavenPomModel.version == null) {
+                    mavenPomModel.parent.version
+                } else {
+                    mavenPomModel.version
+                }
+                val verNotBlank = StringUtils.isNotBlank(version)
                 val isPom = mavenPomModel.packaging.equals("pom", ignoreCase = true)
                 if (!verNotBlank || !isPom) {
                     packaging = mavenPomModel.packaging

@@ -117,6 +117,9 @@ class CompositeRepository(
                 require(it is ArtifactDownloadContext)
                 // 这里只会返回空，异常不会抛出
                 artifactResource = remoteRepository.onDownload(it)
+                if (artifactResource != null) {
+                    return@mapFirstProxyRepo artifactResource
+                } else { }
             }
             // 这里是为了保留各依赖源实现的异常
             if (artifactResource == null) {
@@ -127,6 +130,9 @@ class CompositeRepository(
             mapFirstProxyRepo(context) {
                 require(it is ArtifactDownloadContext)
                 artifactResource = remoteRepository.onDownload(it)
+                if (artifactResource != null) {
+                    return@mapFirstProxyRepo artifactResource
+                } else { }
             }
         }
         return artifactResource

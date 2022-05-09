@@ -177,7 +177,6 @@
                         lastModifiedBy: this.userList[data.lastModifiedBy] ? this.userList[data.lastModifiedBy].name : data.lastModifiedBy,
                         lastModifiedDate: formatDate(data.lastModifiedDate)
                     }
-                    Reflect.deleteProperty(this.detailSlider.data.metadata, 'scanStatus')
                 }).finally(() => {
                     this.detailSlider.loading = false
                 })

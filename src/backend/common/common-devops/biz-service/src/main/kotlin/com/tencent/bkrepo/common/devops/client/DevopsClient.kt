@@ -4,6 +4,7 @@ import com.tencent.bkrepo.common.devops.DEPLOY_CANWAY
 import com.tencent.bkrepo.common.devops.conf.DevopsConf
 import com.tencent.bkrepo.common.devops.enums.InstanceType
 import com.tencent.bkrepo.common.devops.inter.DevopsInterface
+import com.tencent.bkrepo.common.devops.pojo.CanwayGroup
 import com.tencent.bkrepo.common.devops.pojo.DevopsDepartment
 import com.tencent.bkrepo.common.devops.util.http.CertTrustManager
 import okhttp3.OkHttpClient
@@ -42,6 +43,15 @@ class DevopsClient(
     fun departmentsByUserId(userId: String): List<DevopsDepartment>? {
         return devopsApi.departmentsByUserId(userId = userId).execute().body()?.data
     }
+
+    /**
+     * 查询项目下所有用户组
+     * [projectId] 项目
+     */
+    fun groupsByProjectId(projectId: String): List<CanwayGroup>? {
+        return devopsApi.groupsByProjectId(projectId = projectId).execute().body()?.data
+    }
+
 
     companion object {
         val okHttpClient: OkHttpClient = OkHttpClient.Builder()

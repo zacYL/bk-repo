@@ -1,5 +1,6 @@
 package com.tencent.bkrepo.common.devops.inter
 
+import com.tencent.bkrepo.common.devops.pojo.CanwayGroup
 import com.tencent.bkrepo.common.devops.pojo.DevopsDepartment
 import com.tencent.bkrepo.common.devops.pojo.response.CanwayResponse
 import feign.Param
@@ -16,9 +17,9 @@ interface DevopsInterface {
      */
     @GET("/ms/permission/api/service/administrator/{userId}/{type}")
     fun isAdmin(
-        @Path("userId") userId: String,
-        @Path("type") type: Int,
-        @Query("instanceCode") instanceCode: String? = null
+            @Path("userId") userId: String,
+            @Path("type") type: Int,
+            @Query("instanceCode") instanceCode: String? = null
     ): Call<CanwayResponse<Boolean>>
 
     /**
@@ -49,6 +50,14 @@ interface DevopsInterface {
      */
     @GET("/ms/usermanager/api/service/organization/departments/{userId}")
     fun departmentsByUserId(@Path("userId") userId: String): Call<CanwayResponse<List<DevopsDepartment>>?>
+
+    /**
+     * 查询项目下所有用户组
+     * [projectId] 项目
+     */
+    @GET("/ms/permission/api/service/resource_instance/view/group/project/{projectId}")
+    fun groupsByProjectId(@Path("projectId") projectId: String): Call<CanwayResponse<List<CanwayGroup>>?>
+
 
 
 }

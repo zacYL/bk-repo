@@ -92,12 +92,10 @@ class CanwayPermissionServiceImpl(
         // 校验用户是否为CI 超级管理员或项目管理员
         if (isCIAdmin(request.uid, projectId = request.projectId)) return true
         if (checkCIReadPermission(request)) return true
-        // 查询用户在CI所属组织/部门
-        val departments = devopsClient.departmentsByUserId(request.uid)?.map { it.id }
-        return canwayCheckPermission(request, departments)
+        return canwayCheckPermission(request)
     }
 
-    fun canwayCheckPermission(request: CheckPermissionRequest, departments: List<String>?): Boolean {
+    fun canwayCheckPermission(request: CheckPermissionRequest): Boolean {
         logger.debug("check permission  request : [$request] ")
 
         val user = userRepository.findFirstByUserId(request.uid) ?: run {
@@ -116,8 +114,16 @@ class CanwayPermissionServiceImpl(
         // check project action
         if (checkProjectAction(request, user.roles)) return true
 
+        // 查询用户在CI所属组织/部门
+        val departments = devopsClient.departmentsByUserId(request.uid)?.map { it.id }
+
+        // 查询项目下所有用户组
+        val ciRoles = request.projectId?.let { devopsClient.groupsByProjectId(it)
+                ?.filter { canwayGroup -> canwayGroup.users.contains(request.uid) }
+                ?.map { canwayGroup -> canwayGroup.id } } ?: emptyList()
+
         // check repo action
-        return checkRepoAction(request, user.roles, departments)
+        return checkRepoAction(request, ciRoles, departments)
     }
 
     override fun checkRepoAction(request: CheckPermissionRequest, roles: List<String>, departments: List<String>?): Boolean {

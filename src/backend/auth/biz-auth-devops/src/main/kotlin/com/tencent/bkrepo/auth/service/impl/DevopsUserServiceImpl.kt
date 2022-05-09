@@ -4,7 +4,7 @@ import com.tencent.bkrepo.auth.ciApi
 import com.tencent.bkrepo.auth.ciPermission
 import com.tencent.bkrepo.auth.ciUserManager
 import com.tencent.bkrepo.auth.exception.DevopsRequestException
-import com.tencent.bkrepo.auth.pojo.CanwayGroup
+import com.tencent.bkrepo.common.devops.pojo.CanwayGroup
 import com.tencent.bkrepo.auth.pojo.DevopsDepartment
 import com.tencent.bkrepo.auth.service.DevopsUserService
 import com.tencent.bkrepo.common.api.util.readJsonString

@@ -3,7 +3,7 @@
         <bk-form-item label="自动清理">
             <bk-switcher v-model="config.autoClean" size="small" theme="primary" @change="clearError"></bk-switcher>
         </bk-form-item>
-        <bk-form-item label="最少保留版本" required property="reserveVersions" error-display-type="normal">
+        <bk-form-item v-if="repoType !== 'generic'" label="最少保留版本" required property="reserveVersions" error-display-type="normal">
             <bk-input class="w250" v-model="config.reserveVersions" :disabled="!config.autoClean"></bk-input>
             <div class="form-tip">制品版本数量超过保留版本数，且在保留时间内没有使用过的制品版本将会被清理</div>
         </bk-form-item>
@@ -140,7 +140,7 @@
                             ...this.baseData.configuration,
                             cleanStrategy: {
                                 autoClean,
-                                reserveVersions,
+                                ...(this.repoType === 'generic' ? {} : { reserveVersions }),
                                 reserveDays,
                                 rule: {
                                     relation: 'OR',

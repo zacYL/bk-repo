@@ -58,8 +58,10 @@ import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publi
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.repository.config.RepositoryProperties
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
+import com.tencent.bkrepo.repository.dao.PackageDao
 import com.tencent.bkrepo.repository.dao.RepositoryDao
 import com.tencent.bkrepo.repository.job.clean.CleanTaskManger
+import com.tencent.bkrepo.repository.model.TPackage
 import com.tencent.bkrepo.repository.model.TRepository
 import com.tencent.bkrepo.repository.pojo.project.ProjectCreateRequest
 import com.tencent.bkrepo.repository.pojo.project.RepoRangeQueryRequest
@@ -70,7 +72,6 @@ import com.tencent.bkrepo.repository.pojo.repo.RepoUpdateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
 import com.tencent.bkrepo.repository.service.node.NodeService
-import com.tencent.bkrepo.repository.service.packages.PackageService
 import com.tencent.bkrepo.repository.service.repo.ProjectService
 import com.tencent.bkrepo.repository.service.repo.ProxyChannelService
 import com.tencent.bkrepo.repository.service.repo.RepositoryService
@@ -106,7 +107,7 @@ class RepositoryServiceImpl(
     private val proxyChannelService: ProxyChannelService,
     private val repositoryProperties: RepositoryProperties,
     private val servicePermissionResource: ServicePermissionResource,
-    private val packageService: PackageService
+    private val packageDao: PackageDao
 ) : RepositoryService {
 
     @Autowired
@@ -293,7 +294,10 @@ class RepositoryServiceImpl(
             // 当仓库为依赖源仓库时，如果仓库下没有包则删除仓库下所有节点
             if (repoDeleteRequest.forced ||
                     (repository.type != RepositoryType.GENERIC
-                            && packageService.getPackageCount(projectId, name) == 0L)) {
+                            && packageDao.count(Query(
+                            Criteria.where(TPackage::projectId.name).`is`(projectId)
+                                    .and(TPackage::repoName.name).`is`(name)
+                            )) == 0L)) {
                 nodeService.deleteByPath(projectId, name, ROOT, operator)
             } else {
                 val artifactInfo = DefaultArtifactInfo(projectId, name, ROOT)

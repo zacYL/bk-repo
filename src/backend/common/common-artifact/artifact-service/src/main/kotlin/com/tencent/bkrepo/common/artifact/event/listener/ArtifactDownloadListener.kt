@@ -58,7 +58,7 @@ class ArtifactDownloadListener(
             operateLogService.saveEventAsync(downloadedEvent, HttpContextHolder.getClientAddress())
         } else if (node.folder) {
             val nodeList =
-                nodeClient.listNode(projectId, repoName, node.path, includeFolder = false, deep = true).data!!
+                nodeClient.listNode(projectId, repoName, node.fullPath, includeFolder = false, deep = true).data!!
             val eventList = nodeList.map { buildDownloadEvent(NodeDetail(it), userId) }
             operateLogService.saveEventsAsync(eventList, HttpContextHolder.getClientAddress())
         } else {

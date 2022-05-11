@@ -1,7 +1,13 @@
-//初始管理员账号，userId:admin , password：bkrepo
-
-db.getCollection('package_version').find({}).forEach(
+//自动清理功能统一刷新【package_version】表的【lastModifiedDate】时间
+db.package_version.find({}).forEach(
     function(item){
-        db.getCollection('package_version').update({'_id':item._id},{$set:{'lastModifiedDate':new ISODate()}})
+        db.package_version.update({
+            _id:item._id
+        },
+        {
+            $set:{
+                lastModifiedDate:new ISODate()
+            }
+        })
     }
 );

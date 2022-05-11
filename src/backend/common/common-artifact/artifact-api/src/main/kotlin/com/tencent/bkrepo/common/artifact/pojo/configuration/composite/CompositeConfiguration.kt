@@ -39,9 +39,7 @@ import io.swagger.annotations.ApiModelProperty
 @ApiModel("组合类型仓库配置")
 data class CompositeConfiguration(
     @ApiModelProperty("代理配置", required = false)
-    val proxy: ProxyConfiguration = ProxyConfiguration(),
-    @ApiModelProperty("清理配置", required = false)
-    var cleanStrategy: RepositoryCleanStrategy? = null
+    val proxy: ProxyConfiguration = ProxyConfiguration()
 ) : LocalConfiguration() {
     companion object {
         const val type = "composite"

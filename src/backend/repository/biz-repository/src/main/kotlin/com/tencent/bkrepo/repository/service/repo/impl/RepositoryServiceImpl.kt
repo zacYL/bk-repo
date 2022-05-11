@@ -53,6 +53,8 @@ import com.tencent.bkrepo.common.artifact.pojo.configuration.local.LocalConfigur
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.virtual.VirtualConfiguration
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
+import com.tencent.bkrepo.common.query.enums.OperationType
+import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
@@ -79,6 +81,7 @@ import com.tencent.bkrepo.repository.service.repo.StorageCredentialService
 import com.tencent.bkrepo.repository.util.RepoEventFactory.buildCreatedEvent
 import com.tencent.bkrepo.repository.util.RepoEventFactory.buildDeletedEvent
 import com.tencent.bkrepo.repository.util.RepoEventFactory.buildUpdatedEvent
+import com.tencent.bkrepo.repository.util.RuleUtils
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.DuplicateKeyException
@@ -94,6 +97,8 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.regex.Pattern
+import java.util.regex.PatternSyntaxException
 
 /**
  * 仓库服务实现类
@@ -293,11 +298,14 @@ class RepositoryServiceImpl(
             val repository = checkRepository(projectId, name)
             // 当仓库为依赖源仓库时，如果仓库下没有包则删除仓库下所有节点
             if (repoDeleteRequest.forced ||
-                    (repository.type != RepositoryType.GENERIC
-                            && packageDao.count(Query(
-                            Criteria.where(TPackage::projectId.name).`is`(projectId)
-                                    .and(TPackage::repoName.name).`is`(name)
-                            )) == 0L)) {
+                (repository.type != RepositoryType.GENERIC
+                        && packageDao.count(
+                    Query(
+                        Criteria.where(TPackage::projectId.name).`is`(projectId)
+                            .and(TPackage::repoName.name).`is`(name)
+                    )
+                ) == 0L)
+            ) {
                 nodeService.deleteByPath(projectId, name, ROOT, operator)
             } else {
                 val artifactInfo = DefaultArtifactInfo(projectId, name, ROOT)
@@ -328,7 +336,10 @@ class RepositoryServiceImpl(
         return result.map { convertToInfo(it) }
     }
 
-    override fun getRepoCleanStrategy(projectId: String, repoName: String): RepositoryCleanStrategy? {
+    override fun getRepoCleanStrategy(
+        projectId: String,
+        repoName: String
+    ): RepositoryCleanStrategy? {
         val configuration = getRepoInfo(projectId, repoName)?.configuration
         requireNotNull(configuration) { "configuration is null at repository: [$repoName] " }
         if (configuration is CompositeConfiguration) {
@@ -339,7 +350,10 @@ class RepositoryServiceImpl(
         return null
     }
 
-    override fun updateCleanStatusRunning(projectId: String, repoName: String) {
+    override fun updateCleanStatusRunning(
+        projectId: String,
+        repoName: String
+    ) {
         val repository = checkRepository(projectId, repoName)
         val configuration = repository.configuration.readJsonString<RepositoryConfiguration>()
         if (configuration is CompositeConfiguration) {
@@ -352,12 +366,18 @@ class RepositoryServiceImpl(
                 configuration.cleanStrategy = it
                 repository.configuration = configuration.toJsonString()
                 repositoryDao.save(repository)
-                logger.info("projectId:[$projectId] repoName:[$repoName] update clean strategy status to [RUNNING] success")
+                logger.info(
+                    "projectId:[$projectId] repoName:[$repoName] " +
+                            "update clean strategy status to [RUNNING] success"
+                )
             }
         }
     }
 
-    override fun updateCleanStatusWaiting(projectId: String, repoName: String) {
+    override fun updateCleanStatusWaiting(
+        projectId: String,
+        repoName: String
+    ) {
         val repository = checkRepository(projectId, repoName)
         val configuration = repository.configuration.readJsonString<RepositoryConfiguration>()
         if (configuration is CompositeConfiguration) {
@@ -370,7 +390,10 @@ class RepositoryServiceImpl(
                 configuration.cleanStrategy = it
                 repository.configuration = configuration.toJsonString()
                 repositoryDao.save(repository)
-                logger.info("projectId:[$projectId] repoName:[$repoName] update clean strategy status to [WAITING] success")
+                logger.info(
+                    "projectId:[$projectId] repoName:[$repoName] " +
+                            "update clean strategy status to [WAITING] success"
+                )
             }
         }
     }
@@ -422,6 +445,8 @@ class RepositoryServiceImpl(
         }
         if (new is CompositeConfiguration && old is CompositeConfiguration) {
             updateCompositeConfiguration(new, old, repository, operator)
+        }
+        if (new is LocalConfiguration && old is LocalConfiguration) {
             logger.info(
                 "projectId:[${repository.projectId}] repoName:[${repository.name}] " +
                         "new clean strategy is [${new.cleanStrategy}], old is [${old.cleanStrategy}]"
@@ -429,25 +454,46 @@ class RepositoryServiceImpl(
             val newCleanStrategy = new.cleanStrategy
             val oldCleanStrategy = old.cleanStrategy
             if (newCleanStrategy != null) {
-                //TODO 提示 当前任务正在执行，本次修改将在下次执行生效，任务状态处理
                 if (oldCleanStrategy != null && oldCleanStrategy.status == CleanStatus.RUNNING) {
                     logger.warn(
-                        "projectId:[${repository.projectId}] repoName:[${repository.name}]," +
-                                "清理任务：[${repository.id}]正在执行，修改将在下一次执行生效"
+                        "projectId:[${repository.projectId}] repoName:[${repository.name}], clean job:" +
+                                "[${repository.id}] is running, the modification will take  effect at the next execution"
                     )
                 }
                 Preconditions.checkArgument(newCleanStrategy.reserveVersions >= 0, "reserveVersions")
                 Preconditions.checkArgument(newCleanStrategy.reserveDays >= 0, "reserveDays")
+                // 校验元数据保留规则中包含的正则表达式
+                checkMetadataRule(newCleanStrategy.rule)
             } else {
                 //新清理策略为null，将旧清理策略赋值给新的
                 logger.warn(
-                    "projectId:[${repository.projectId}] " +
-                            "repoName:[${repository.name}] new clean strategy is null"
+                    "projectId:[${repository.projectId}] repoName:[${repository.name}] new clean strategy is null"
                 )
                 new.cleanStrategy = old.cleanStrategy
             }
         }
     }
+
+    /**
+     * 检查元数据规则 正则表达式
+     */
+    private fun checkMetadataRule(rule: Rule?) {
+        if (rule is Rule.NestedRule && rule.rules.isNotEmpty()) {
+            rule.rules.forEach {
+                when (it) {
+                    is Rule.NestedRule -> return checkMetadataRule(it)
+                    is Rule.QueryRule -> {
+                        RuleUtils.checkRuleRegex(it)
+                    }
+                    is Rule.FixedRule -> {
+                        val queryRule = it.wrapperRule
+                        RuleUtils.checkRuleRegex(queryRule)
+                    }
+                }
+            }
+        }
+    }
+
 
     /**
      * 更新Composite类型仓库配置
@@ -469,7 +515,8 @@ class RepositoryServiceImpl(
                 )
                 // 创建公有源代理项目
                 if (!projectService.checkExist(PUBLIC_PROXY_PROJECT)) {
-                    projectService.createProject(ProjectCreateRequest(
+                    projectService.createProject(
+                        ProjectCreateRequest(
                             name = PUBLIC_PROXY_PROJECT,
                             displayName = PUBLIC_PROXY_PROJECT,
                             description = PUBLIC_PROXY_PROJECT
@@ -478,7 +525,8 @@ class RepositoryServiceImpl(
                 }
                 val proxyRepoName = PUBLIC_PROXY_REPO_NAME.format(repository.type, it.name)
                 if (!checkExist(PUBLIC_PROXY_PROJECT, proxyRepoName)) {
-                    createRepo(RepoCreateRequest(
+                    createRepo(
+                        RepoCreateRequest(
                             projectId = PUBLIC_PROXY_PROJECT,
                             name = proxyRepoName,
                             type = repository.type,

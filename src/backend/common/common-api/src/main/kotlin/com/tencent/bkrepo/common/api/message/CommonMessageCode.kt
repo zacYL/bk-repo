@@ -53,7 +53,7 @@ enum class CommonMessageCode(private val key: String) : MessageCode {
     MEDIA_TYPE_UNSUPPORTED("system.media-type.unsupported"),
     REQUEST_RANGE_INVALID("system.request-range.invalid"),
     MODIFY_PASSWORD_FAILED("modify.password.failed"),
-    CLEAN_JOB_MODIFY_TIPS("clean.job.modify.tips")
+    REGEX_EXPRESSION_PATTERN_ERROR("regex.expression.pattern.error")
     ;
 
     override fun getBusinessCode() = ordinal + 1

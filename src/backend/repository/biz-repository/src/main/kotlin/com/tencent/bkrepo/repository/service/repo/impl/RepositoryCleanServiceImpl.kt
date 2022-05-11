@@ -31,7 +31,7 @@ class RepositoryCleanServiceImpl(
         val tRepository = repositoryDao.findById(repoId)
         tRepository?.let { repo ->
             val cleanStrategy = repositoryService.getRepoCleanStrategy(repo.projectId, repo.name)
-            logger.info("projectId:[${repo.projectId}] repoName:[${repo.name}] clean strategy: [$cleanStrategy] excute")
+            logger.info("projectId:[${repo.projectId}] repoName:[${repo.name}] clean strategy:[$cleanStrategy] execute")
             cleanStrategy?.let {
                 //自动清理关闭，状态为 WAITING，删除job
                 if (!it.autoClean && it.status == CleanStatus.WAITING) {
@@ -42,8 +42,10 @@ class RepositoryCleanServiceImpl(
                 try {
                     repositoryService.updateCleanStatusRunning(repo.projectId, repo.name)
                 } catch (ex: IllegalArgumentException) {
-                    logger.error("projectId:[${repo.projectId}] repoName:[${repo.name}] " +
-                            "update clean strategy illegal argument exception:[$ex],clean repo fail")
+                    logger.error(
+                        "projectId:[${repo.projectId}] repoName:[${repo.name}] " +
+                                "update clean strategy illegal argument exception:[$ex],clean repo fail"
+                    )
                     return
                 }
                 var pageNumber = 1
@@ -66,8 +68,10 @@ class RepositoryCleanServiceImpl(
                 try {
                     repositoryService.updateCleanStatusWaiting(repo.projectId, repo.name)
                 } catch (ex: IllegalArgumentException) {
-                    logger.warn("projectId:[${repo.projectId}] repoName:[${repo.name}] " +
-                            "update clean strategy illegal argument exception:[$ex]")
+                    logger.warn(
+                        "projectId:[${repo.projectId}] repoName:[${repo.name}] " +
+                                "update clean strategy illegal argument exception:[$ex]"
+                    )
                 }
             } ?: logger.warn("projectId:[${repo.projectId}] repoName:[${repo.name}] clean strategy is null")
         } ?: logger.error("clean repo illegal argument exception tRepository is null, tRepository:[$tRepository]")
@@ -80,14 +84,7 @@ class RepositoryCleanServiceImpl(
         var deleteVersions: MutableList<PackageVersion>
         var ruleQueryList = mutableListOf<PackageVersion>()
         packageList.forEach {
-            try {
-                requireNotNull(it.id)
-            } catch (ex: IllegalArgumentException) {
-                logger.error(
-                    "clean repo execute error projectId:[${it.projectId}] " +
-                            "repoName:[${it.repoName}] [packageName:${it.name} package id is null"
-                )
-            }
+            requireNotNull(it.id)
             //包的版本数 < 保留版本数，直接跳过
             with(cleanStrategy) {
                 if (it.versions < reserveVersions) return@forEach
@@ -101,6 +98,7 @@ class RepositoryCleanServiceImpl(
                 rule?.let { rule ->
                     ruleQueryList = metadataRuleQuery(rule, it.id!!).toMutableList()
                 }
+                logger.info("projectId:[${it.projectId}] repoName:[${it.repoName}] rule query result:[$ruleQueryList]")
                 deleteVersions = listVersion.toMutableList()
                 deleteVersions.removeAll(ruleQueryList)
                 deleteVersions = reserveVersionsAndDaysFilter(
@@ -115,7 +113,6 @@ class RepositoryCleanServiceImpl(
             )
             // 删除版本集合
             if (deleteVersions.isNotEmpty()) {
-                logger.info("delete version begin....")
                 deleteVersion(deleteVersions, it.key, it.type, it.projectId, it.repoName)
             }
         }
@@ -127,12 +124,12 @@ class RepositoryCleanServiceImpl(
     private fun metadataRuleQuery(rule: Rule, packageId: String): List<PackageVersion> {
         val versionList = mutableListOf<PackageVersion>()
         // rules is null
-        if (rule is Rule.NestedRule && rule.rules.isEmpty()){
+        if (rule is Rule.NestedRule && rule.rules.isEmpty()) {
             return versionList
         }
         var pageNumber = 1
         val packageIdRule = Rule.QueryRule("packageId", packageId)
-        val queryRule = Rule.NestedRule(mutableListOf(packageIdRule, rule), Rule.NestedRule.RelationType.AND)
+        val queryRule = Rule.NestedRule(mutableListOf(packageIdRule, rule))
         val queryModel = QueryModel(
             page = PageLimit(pageNumber, DEFAULT_PAGE_SIZE),
             sort = null,

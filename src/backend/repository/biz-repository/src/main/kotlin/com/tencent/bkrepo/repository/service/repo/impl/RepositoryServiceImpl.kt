@@ -481,7 +481,7 @@ class RepositoryServiceImpl(
         if (rule is Rule.NestedRule && rule.rules.isNotEmpty()) {
             rule.rules.forEach {
                 when (it) {
-                    is Rule.NestedRule -> return checkMetadataRule(it)
+                    is Rule.NestedRule -> checkMetadataRule(it)
                     is Rule.QueryRule -> {
                         RuleUtils.checkRuleRegex(it)
                     }

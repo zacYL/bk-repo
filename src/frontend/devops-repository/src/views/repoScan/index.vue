@@ -37,20 +37,6 @@
                 <template #default="{ row }">{{ scanTypeEnum[row.planType] }}</template>
             </bk-table-column>
             <!-- <bk-table-column label="扫描器" prop="scanner" show-overflow-tooltip></bk-table-column> -->
-            <!-- <bk-table-column
-                v-for="column in [
-                    { label: '累计扫描制品', prop: 'artifactCount' },
-                    { label: '危急漏洞', prop: 'critical' },
-                    { label: '高风险漏洞', prop: 'high' },
-                    { label: '中风险漏洞', prop: 'medium' },
-                    { label: '低风险漏洞', prop: 'low' }
-                ]"
-                :key="column.prop"
-                :label="column.label"
-                :prop="column.prop"
-                align="right">
-                <template #default="{ row }">{{ segmentNumberThree(row[column.prop]) }}</template>
-            </bk-table-column> -->
             <bk-table-column label="扫描状态">
                 <template #default="{ row }">
                     <span class="repo-tag" :class="row.status">{{scanStatusEnum[row.status]}}</span>
@@ -91,7 +77,7 @@
     import OperationList from '@repository/components/OperationList'
     import createScanDialog from './createScanDialog'
     import { mapState, mapActions } from 'vuex'
-    import { formatDate, segmentNumberThree } from '@repository/utils'
+    import { formatDate } from '@repository/utils'
     import { scanTypeEnum, scanStatusEnum } from '@repository/store/publicEnum'
     export default {
         name: 'plan',
@@ -123,7 +109,6 @@
         },
         methods: {
             formatDate,
-            segmentNumberThree,
             ...mapActions([
                 'getScanList',
                 'deleteScan'

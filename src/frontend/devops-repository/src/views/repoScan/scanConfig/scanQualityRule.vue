@@ -6,7 +6,7 @@
         <bk-form-item label="" v-for="[id, name] in Object.entries(leakLevelEnum)" :key="id"
             :property="id.toLowerCase()" error-display-type="normal">
             <div class="flex-align-center">
-                <div :class="`status-sign ${id}`" style="width: 100px;" :data-name="`${name}漏洞`"></div>
+                <div :class="`status-sign ${id}`" :data-name="`${name}漏洞≦`"></div>
                 <bk-input class="ml10 mr10" style="width: 80px;" v-model.trim="rule[id.toLowerCase()]"></bk-input>
                 <span>个</span>
             </div>

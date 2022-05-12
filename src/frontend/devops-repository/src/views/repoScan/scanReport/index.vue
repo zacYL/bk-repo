@@ -118,11 +118,11 @@
                 leakLevelEnum,
                 baseInfoList: [
                     { key: 'artifactCount', label: '扫描制品数量' },
-                    { key: 'total', label: '漏洞总数量' },
+                    { key: 'total', label: '漏洞总量' },
                     { key: 'critical', label: '危急漏洞', color: '#EA3736' },
-                    { key: 'high', label: '高风险漏洞', color: '#FFB549' },
-                    { key: 'medium', label: '中风险漏洞', color: '#3A84FF' },
-                    { key: 'low', label: '低风险漏洞', color: '#979BA5' }
+                    { key: 'high', label: '高级漏洞', color: '#FFB549' },
+                    { key: 'medium', label: '中级漏洞', color: '#3A84FF' },
+                    { key: 'low', label: '低级漏洞', color: '#979BA5' }
                 ],
                 baseInfo: {},
                 isLoading: false,

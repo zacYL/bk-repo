@@ -80,7 +80,7 @@
                         if (typeof value === 'string' && value.length > 0) {
                             target[key] = Number(value)
                         }
-                        if (typeof value === 'boolean') {
+                        if (typeof value === 'boolean' || typeof value === 'number') {
                             target[key] = value
                         }
                         return target

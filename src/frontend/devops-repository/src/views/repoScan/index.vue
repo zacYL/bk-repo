@@ -65,7 +65,7 @@
                         :list="[
                             { label: '报告', clickEvent: () => showScanReport(row) },
                             { label: '设置', clickEvent: () => showScanConfig(row) },
-                            { label: '中止', clickEvent: () => stopScanHandler(row) },
+                            // { label: '中止', clickEvent: () => stopScanHandler(row) },
                             { label: '扫描', clickEvent: () => startScanHandler(row) },
                             { label: '删除', clickEvent: () => deleteScanHandler(row) }
                         ]"></operation-list>
@@ -211,8 +211,22 @@
                     }
                 })
             },
-            stopScanHandler ({ id }) {
-
+            stopScanHandler ({ id, name }) {
+                this.$confirm({
+                    theme: 'danger',
+                    message: `确认中止扫描计划 ${name} 的全部扫描任务?`,
+                    confirmFn: () => {
+                        // return this.deletePlan({
+                        //     id
+                        // }).then(() => {
+                        //     this.handlerPaginationChange()
+                        //     this.$bkMessage({
+                        //         theme: 'success',
+                        //         message: '删除计划' + this.$t('success')
+                        //     })
+                        // })
+                    }
+                })
             }
         }
     }

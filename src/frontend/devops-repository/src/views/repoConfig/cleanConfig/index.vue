@@ -12,7 +12,9 @@
         </bk-form-item>
         <bk-form-item label="保留规则">
             <bk-button :disabled="!config.autoClean" icon="plus" @click="addRule()">添加规则</bk-button>
-            <div class="form-tip">满足保留规则的制品将不会被清理</div>
+            <div class="form-tip">
+                {{ repoType === 'generic' ? '在目录（包含子目录）下符合规则的文件将不会被自动清理' : '符合规则的制品将不会被自动清理' }}
+            </div>
             <div class="rule-list">
                 <component
                     :is="repoType === 'generic' ? 'generic-clean-rule' : 'package-clean-rule'"

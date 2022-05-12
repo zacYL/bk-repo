@@ -88,7 +88,7 @@
 </template>
 <script>
     import { mapActions } from 'vuex'
-    import { formatDate, segmentNumberThree } from '@repository/utils'
+    import { formatDate, segmentNumberThree, formatDuration } from '@repository/utils'
     import { leakLevelEnum } from '@repository/store/publicEnum'
     export default {
         name: 'artiReport',
@@ -96,6 +96,7 @@
             return {
                 leakLevelEnum,
                 metaBase: [
+                    { key: 'duration', label: '持续时间' },
                     { key: 'finishTime', label: '完成时间' },
                     { key: 'repoName', label: '所属仓库' },
                     { key: 'groupId', label: 'GroupId' },
@@ -144,6 +145,7 @@
                 this.baseInfo = {
                     ...res,
                     highestLeakLevel: leakLevelEnum[res.highestLeakLevel],
+                    duration: formatDuration(res.duration / 1000),
                     finishTime: formatDate(res.finishTime)
                 }
             })

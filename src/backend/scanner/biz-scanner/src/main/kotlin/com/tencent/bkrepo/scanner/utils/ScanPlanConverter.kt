@@ -32,7 +32,6 @@ package com.tencent.bkrepo.scanner.utils
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.readJsonString
-import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.scanner.pojo.scanner.Level
 import com.tencent.bkrepo.common.scanner.pojo.scanner.SubScanTaskStatus
 import com.tencent.bkrepo.common.scanner.pojo.scanner.arrowhead.ArrowheadScanExecutorResult
@@ -79,7 +78,8 @@ object ScanPlanConverter {
                 createdBy = createdBy,
                 createdDate = createdDate.format(DateTimeFormatter.ISO_DATE_TIME),
                 lastModifiedBy = lastModifiedBy,
-                lastModifiedDate = lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME)
+                lastModifiedDate = lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME),
+                scanQuality = scanQuality
             )
         }
     }
@@ -185,11 +185,6 @@ object ScanPlanConverter {
 
     fun convertToPlanArtifactInfo(subScanTask: SubScanTaskDefinition): PlanArtifactInfo {
         return with(subScanTask) {
-            val duration = if (startDateTime != null && finishedDateTime != null) {
-                Duration.between(startDateTime, finishedDateTime).toMillis()
-            } else {
-                0L
-            }
             PlanArtifactInfo(
                 recordId = id!!,
                 subTaskId = id!!,
@@ -200,12 +195,21 @@ object ScanPlanConverter {
                 repoType = repoType,
                 repoName = repoName,
                 highestLeakLevel = scanResultOverview?.let { highestLeakLevel(scannerType, it) },
-                duration = duration,
+                duration = duration(startDateTime, finishedDateTime),
                 finishTime = finishedDateTime?.format(DateTimeFormatter.ISO_DATE_TIME),
                 status = convertToScanStatus(status).name,
                 createdBy = createdBy,
-                createdDate = createdDate.format(DateTimeFormatter.ISO_DATE_TIME)
+                createdDate = createdDate.format(DateTimeFormatter.ISO_DATE_TIME),
+                qualityRedLine = qualityRedLine
             )
+        }
+    }
+
+    fun duration(startDateTime: LocalDateTime?, finishedDateTime: LocalDateTime?): Long {
+        return if (startDateTime != null && finishedDateTime != null) {
+            Duration.between(startDateTime, finishedDateTime).toMillis()
+        } else {
+            0L
         }
     }
 
@@ -231,7 +235,10 @@ object ScanPlanConverter {
                 medium = medium,
                 low = low,
                 total = critical + high + medium + low,
-                finishTime = finishedDateTime?.format(DateTimeFormatter.ISO_DATE_TIME)
+                finishTime = finishedDateTime?.format(DateTimeFormatter.ISO_DATE_TIME),
+                qualityRedLine = qualityRedLine,
+                scanQuality = scanQuality,
+                duration = duration(startDateTime, finishedDateTime)
             )
         }
     }

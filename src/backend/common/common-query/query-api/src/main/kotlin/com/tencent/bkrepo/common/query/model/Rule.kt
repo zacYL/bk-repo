@@ -70,7 +70,7 @@ sealed class Rule {
         @ApiModelProperty("字段")
         val field: String,
         @ApiModelProperty("值")
-        val value: Any,
+        var value: Any,
         @ApiModelProperty("操作类型")
         val operation: OperationType = OperationType.DEFAULT
     ) : Rule() {

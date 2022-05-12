@@ -60,11 +60,13 @@ import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publi
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.repository.config.RepositoryProperties
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
+import com.tencent.bkrepo.repository.dao.NodeDao
 import com.tencent.bkrepo.repository.dao.PackageDao
 import com.tencent.bkrepo.repository.dao.RepositoryDao
 import com.tencent.bkrepo.repository.job.clean.CleanTaskManger
 import com.tencent.bkrepo.repository.model.TPackage
 import com.tencent.bkrepo.repository.model.TRepository
+import com.tencent.bkrepo.repository.pojo.node.NodeListOption
 import com.tencent.bkrepo.repository.pojo.project.ProjectCreateRequest
 import com.tencent.bkrepo.repository.pojo.project.RepoRangeQueryRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
@@ -78,6 +80,7 @@ import com.tencent.bkrepo.repository.service.repo.ProjectService
 import com.tencent.bkrepo.repository.service.repo.ProxyChannelService
 import com.tencent.bkrepo.repository.service.repo.RepositoryService
 import com.tencent.bkrepo.repository.service.repo.StorageCredentialService
+import com.tencent.bkrepo.repository.util.NodeQueryHelper
 import com.tencent.bkrepo.repository.util.RepoEventFactory.buildCreatedEvent
 import com.tencent.bkrepo.repository.util.RepoEventFactory.buildDeletedEvent
 import com.tencent.bkrepo.repository.util.RepoEventFactory.buildUpdatedEvent
@@ -475,10 +478,11 @@ class RepositoryServiceImpl(
     }
 
     /**
-     * 检查元数据规则 正则表达式
+     * 检查元数据规则
      */
     private fun checkMetadataRule(rule: Rule?) {
         if (rule is Rule.NestedRule && rule.rules.isNotEmpty()) {
+            if (! rule.toString().contains("REGEX")) return
             rule.rules.forEach {
                 when (it) {
                     is Rule.NestedRule -> checkMetadataRule(it)
@@ -486,14 +490,12 @@ class RepositoryServiceImpl(
                         RuleUtils.checkRuleRegex(it)
                     }
                     is Rule.FixedRule -> {
-                        val queryRule = it.wrapperRule
-                        RuleUtils.checkRuleRegex(queryRule)
+                        RuleUtils.checkRuleRegex(it.wrapperRule)
                     }
                 }
             }
         }
     }
-
 
     /**
      * 更新Composite类型仓库配置

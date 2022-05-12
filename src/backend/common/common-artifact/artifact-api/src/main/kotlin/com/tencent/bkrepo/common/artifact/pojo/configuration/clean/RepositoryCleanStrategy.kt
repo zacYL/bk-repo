@@ -10,13 +10,13 @@ data class RepositoryCleanStrategy(
     var status: CleanStatus = CleanStatus.WAITING,
 
     @ApiModelProperty("是否开启自动清理", required = true)
-    val autoClean: Boolean,
+    val autoClean: Boolean = false,
 
-    @ApiModelProperty("保留版本数", required = true)
-    val reserveVersions: Long,
+    @ApiModelProperty("保留版本数", required = false)
+    val reserveVersions: Long = 20,
 
     @ApiModelProperty("保留天数", required = true)
-    val reserveDays: Long,
+    val reserveDays: Long = 30,
 
     @ApiModelProperty("元数据保留规则", required = false)
     val rule: Rule?

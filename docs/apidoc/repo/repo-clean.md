@@ -16,6 +16,8 @@
 
 - 请求体
 
+  - 依赖源
+  
   ```json
   {
       "configuration":{
@@ -38,22 +40,58 @@
               "rule":{
                   "relation": "OR",
                   "rules":[
-             
-                      {
-                          rules: [
-                              {"field": "metadata.groupId", "value":"com", "operation": "EQ"},
-                              {"field": "metadata.groupId", "value":"comx", "operation": "EQ"}
-                          ],
-                          "relation": "AND",
-                      },
-                     
-                      {"field": "metadata.groupId", "value":"com.xj.yyy", "operation": "EQ"}
+                      {"field": "metadata.groupId", "value":"com", "operation": "EQ"},
+                      {"field": "metadata.groupId", "value":"comx", "operation": "EQ"}
                   ]
               }
           }
       }
   }
   ```
+  
+  - Generic
+  
+  ```
+  {
+      "configuration":{
+          "proxy":{
+              "channelList": []
+          },
+          "settings":{
+              "system": true
+          },
+          "type":"composite",
+          "webHook":{
+              "webHookList": []
+          },
+          "description":"",
+          "public":"false",
+          "cleanStrategy":{
+              "autoClean":"true",
+              "reserveVersions":"5",
+              "reserveDays":"1",
+              "rule":{
+                  "relation": "AND",
+                  "rules":[
+                  	{"field" : "projectId","value" : "test","operation" : "EQ"}, 
+                  	{"field" : "repoName","value" : "rrreert","operation" : "EQ"},
+                  	
+              		{
+              			"rules" : [ 
+              				{"rules" : [ {"field" : "fullpath","value" : "^/","operation" : "REGEX"} ],"relation" : "AND"}, 
+              				{"rules" : [ {"field" : "fullpath","value" : "^/","operation" : "REGEX"}, {"field" : "name","value" : "aaaaa","operation" : "EQ"} ],"relation" : "AND"}, 
+              				{"rules" : [ {"field" : "fullpath","value" : "^/","operation" : "REGEX"}, {"field" : "metadata.key","value" : "*value*","operation" : "MATCH"} ],"relation" : "AND"}
+              		 	],
+              			"relation" : "OR"
+            			}
+                  ]
+              }
+          }
+      }
+  }
+  ```
+  
+  
   
 - 请求字段说明
 

@@ -61,14 +61,7 @@
             }
         },
         created () {
-            this.getQualityRule({
-                id: this.planId
-            }).then(res => {
-                this.rule = {
-                    ...this.rule,
-                    ...res
-                }
-            })
+            this.getRules()
         },
         methods: {
             ...mapActions(['getQualityRule', 'saveQualityRule']),
@@ -85,6 +78,22 @@
                         }
                         return target
                     }, {})
+                }).then(() => {
+                    this.$bkMessage({
+                        theme: 'success',
+                        message: this.$t('save') + this.$t('success')
+                    })
+                    this.getRules()
+                })
+            },
+            getRules () {
+                this.getQualityRule({
+                    id: this.planId
+                }).then(res => {
+                    this.rule = {
+                        ...this.rule,
+                        ...res
+                    }
                 })
             }
         }

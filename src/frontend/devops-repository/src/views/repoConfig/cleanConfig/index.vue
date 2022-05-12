@@ -93,7 +93,8 @@
                         rule = { rules: [] }
                     } = val.configuration.cleanStrategy
                     this.config = { ...this.config, autoClean, reserveVersions, reserveDays }
-                    this.config.rules = rule.rules.map(r => {
+                    const rules = rule.rules.find(r => r.rules)?.rules || []
+                    this.config.rules = rules.map(r => {
                         return r.rules?.reduce((target, item) => {
                             target[item.field] = {
                                 ...item,

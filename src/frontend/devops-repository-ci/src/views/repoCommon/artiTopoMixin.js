@@ -1,13 +1,13 @@
 import { formatDate } from '@repository/utils'
 const CTeamTypeMap = {
-    DEMAND: {
+    demand: {
         content: '需求',
         type: 'WARNING'
     },
-    TASK: {
+    task: {
         content: '任务'
     },
-    BUG: {
+    bug: {
         content: '缺陷',
         type: 'FAILED'
     }
@@ -33,10 +33,11 @@ export default {
                         title: '工作项',
                         children: Object.keys(metadata).map(key => {
                             const [type, CTeamId] = key.split('-')
-                            if (CTeamTypeMap[type]) {
+                            const typeLabel = CTeamTypeMap[type.toLowerCase()]
+                            if (typeLabel) {
                                 return {
                                     title: metadata[key],
-                                    leftTag: CTeamTypeMap[type],
+                                    leftTag: typeLabel,
                                     metadata: [
                                         `编号: ${CTeamId}`
                                     ]
@@ -50,8 +51,8 @@ export default {
                             {
                                 title: '提交信息',
                                 metadata: [
-                                    `lastCommit: ${metadata.lastCommit || '/'}`,
-                                    `newCommit: ${metadata.newCommit || '/'}`
+                                    `lastCommit: ${metadata.lastCommit || metadata.lastcommit || '/'}`,
+                                    `newCommit: ${metadata.newCommit || metadata.newcommit || '/'}`
                                 ]
                             }
                         ]
@@ -66,17 +67,21 @@ export default {
                     .toString()
                     .matchAll(/([0-9]+\.){3}[0-9]+/g)
             ].map(match => match[0])
+            const pipelineName = metadata.pipelineName || metadata.pipelinename
+            const buildNo = metadata.buildNo || metadata.buildno
+            const userId = metadata.userId || metadata.userid
+            const reportUrl = metadata.reportUrl || metadata.reporturl
             return {
                 children: [
                     {
                         title: '构建',
-                        children: metadata.pipelineName
+                        children: pipelineName
                             ? [
                                 {
-                                    title: metadata.pipelineName,
+                                    title: pipelineName,
                                     metadata: [
-                                        `流水线编号: ${metadata.buildNo}`,
-                                        `流水线用户: ${this.userList[metadata.userId]?.name || metadata.userId}`
+                                        `流水线编号: ${buildNo}`,
+                                        `流水线用户: ${this.userList[userId]?.name || userId}`
                                     ]
                                 }
                             ]
@@ -84,11 +89,11 @@ export default {
                     },
                     {
                         title: '测试',
-                        children: metadata.reportUrl
+                        children: reportUrl
                             ? [
                                 {
                                     title: '测试报告',
-                                    url: metadata.reportUrl
+                                    url: reportUrl
                                 }
                             ]
                             : []

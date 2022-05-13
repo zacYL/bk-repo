@@ -90,10 +90,9 @@
                 this.getQualityRule({
                     id: this.planId
                 }).then(res => {
-                    this.rule = {
-                        ...this.rule,
-                        ...res
-                    }
+                    Object.keys(res).forEach(k => {
+                        res[k] !== null && (this.rule[k] = res[k])
+                    })
                 })
             }
         }

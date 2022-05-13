@@ -5,7 +5,7 @@
             :value="path.value"
             @input="path => change({ path })"
             :disabled="disabled"
-            placeholder="请输入文件所在目录的绝对路径">
+            placeholder="请输入文件目录的绝对路径">
         </bk-input>
         <bk-select
             style="width:100px;"

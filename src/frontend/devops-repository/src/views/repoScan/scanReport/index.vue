@@ -53,7 +53,7 @@
                     <template #default="{ row }">
                         <span v-if="row.qualityRedLine === true" class="repo-tag SUCCESS">通过</span>
                         <span v-else-if="row.qualityRedLine === false" class="repo-tag FAILED">不通过</span>
-                        <span v-else>--</span>
+                        <span v-else>/</span>
                     </template>
                 </bk-table-column>
                 <bk-table-column label="风险等级">
@@ -61,7 +61,7 @@
                         <div v-if="row.highestLeakLevel" class="status-sign" :class="row.highestLeakLevel"
                             :data-name="leakLevelEnum[row.highestLeakLevel]">
                         </div>
-                        <span v-else>--</span>
+                        <span v-else>/</span>
                     </template>
                 </bk-table-column>
                 <bk-table-column label="扫描状态">

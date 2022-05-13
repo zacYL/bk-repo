@@ -55,11 +55,11 @@ export default {
         )
     },
     // 报告基本信息
-    scanReportOverview (_, { projectId, id, ...restquery }) {
+    scanReportOverview (_, params) {
         return Vue.prototype.$ajax.get(
-            `${prefix}/plan/count/${projectId}/${id}`,
+            `${prefix}/plan/count`,
             {
-                params: restquery
+                params
             }
         )
     },
@@ -69,8 +69,8 @@ export default {
             `${prefix}/plan/artifact`,
             {
                 params: {
-                    id,
                     projectId,
+                    id,
                     ...query,
                     pageNumber: current,
                     pageSize: limit

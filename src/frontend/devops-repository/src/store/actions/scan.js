@@ -55,9 +55,12 @@ export default {
         )
     },
     // 报告基本信息
-    scanReportOverview (_, { projectId, id }) {
+    scanReportOverview (_, { projectId, id, ...restquery }) {
         return Vue.prototype.$ajax.get(
-            `${prefix}/plan/count/${projectId}/${id}`
+            `${prefix}/plan/count/${projectId}/${id}`,
+            {
+                params: restquery
+            }
         )
     },
     // 报告制品列表

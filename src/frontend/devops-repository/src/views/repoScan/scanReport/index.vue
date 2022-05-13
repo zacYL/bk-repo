@@ -162,6 +162,13 @@
             },
             planId () {
                 return this.$route.params.planId
+            },
+            formatISO () {
+                const [startTime, endTime] = this.filterTime
+                return {
+                    ...(startTime instanceof Date ? { startTime: startTime.toISOString() } : {}),
+                    ...(endTime instanceof Date ? { endTime: endTime.toISOString() } : {})
+                }
             }
         },
         created () {
@@ -184,13 +191,11 @@
             },
             getReportListHandler (filter = {}) {
                 this.isLoading = true
-                const [startTime, endTime] = this.filterTime
                 return this.scanReportList({
                     id: this.planId,
                     projectId: this.projectId,
                     query: {
-                        ...(startTime instanceof Date ? { startTime: startTime.toISOString() } : {}),
-                        ...(endTime instanceof Date ? { endTime: endTime.toISOString() } : {}),
+                        ...this.formatISO,
                         ...filter
                     },
                     current: this.pagination.current,
@@ -205,7 +210,8 @@
             getScanReportOverview () {
                 this.scanReportOverview({
                     projectId: this.projectId,
-                    id: this.planId
+                    id: this.planId,
+                    ...this.formatISO
                 }).then(res => {
                     this.baseInfo = res
                 })

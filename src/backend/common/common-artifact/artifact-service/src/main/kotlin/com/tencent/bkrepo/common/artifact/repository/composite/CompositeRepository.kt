@@ -158,7 +158,7 @@ class CompositeRepository(
     /**
      * 遍历代理仓库列表，执行[action]操作，当遇到代理仓库[action]操作返回非`null`时，立即返回结果[R]
      */
-    private fun <R> mapFirstProxyRepo(context: ArtifactContext, action: (ArtifactContext) -> R?): R? {
+    protected fun <R> mapFirstProxyRepo(context: ArtifactContext, action: (ArtifactContext) -> R?): R? {
         val proxyChannelList = getProxyChannelList(context)
         for (setting in proxyChannelList) {
             try {

@@ -74,14 +74,39 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         return getCacheArtifactResource(context) ?: run {
             val remoteConfiguration = context.getRemoteConfiguration()
+            logger.info("Remote download: not found artifact in cache, download from remote repository: $remoteConfiguration")
             val httpClient = createHttpClient(remoteConfiguration)
             val downloadUrl = createRemoteDownloadUrl(context)
             val request = Request.Builder().url(downloadUrl).build()
-            val response = httpClient.newCall(request).execute()
-            return if (checkResponse(response)) {
+            logger.info("Remote download: download url: $downloadUrl")
+            val response = downloadRetry(request, httpClient)
+            return if (response != null && checkResponse(response)) {
                 onDownloadResponse(context, response)
             } else null
         }
+    }
+
+    private fun downloadRetry(request: Request, okHttpClient: OkHttpClient): Response? {
+        var response: Response? = null
+        outer@ for (i in 1..4) {
+            try {
+                val startTime = System.currentTimeMillis()
+                response = okHttpClient.newCall(request).execute()
+                val endTime = System.currentTimeMillis()
+                logger.info("Remote download: download retry: $i, url: ${request.url()}, cost: ${endTime - startTime}ms, code: ${response.code()}")
+                if (response.isSuccessful) {
+                    break@outer
+                }
+                Thread.sleep(i * 500L)
+            } catch (e: Exception) {
+                if (i >= 4) {
+                    break@outer
+                }
+                logger.error("Remote download: request failed: $request", e)
+                Thread.sleep(i * 100L)
+            }
+        }
+        return response
     }
 
     override fun search(context: ArtifactSearchContext): List<Any> {

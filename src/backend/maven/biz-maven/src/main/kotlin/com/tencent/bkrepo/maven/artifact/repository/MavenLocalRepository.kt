@@ -34,6 +34,7 @@ package com.tencent.bkrepo.maven.artifact.repository
 import com.tencent.bkrepo.common.api.exception.NotFoundException
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
+import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
 import com.tencent.bkrepo.common.artifact.exception.VersionNotFoundException
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
@@ -702,7 +703,7 @@ class MavenLocalRepository(
             // 剔除文件夹路径
             if (checksumType == null) {
                 if (!fullPath.matches(Regex(PACKAGE_SUFFIX_REGEX))) {
-                    throw MavenArtifactNotFoundException("Artifact $fullPath could not find..")
+                    throw ArtifactNotFoundException("Artifact $fullPath could not find..")
                 }
             }
             val mavenArtifactInfo = context.artifactInfo as MavenArtifactInfo

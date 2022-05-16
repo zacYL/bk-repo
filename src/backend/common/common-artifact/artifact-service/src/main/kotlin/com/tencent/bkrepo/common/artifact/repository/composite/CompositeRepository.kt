@@ -31,6 +31,7 @@
 
 package com.tencent.bkrepo.common.artifact.repository.composite
 
+import com.tencent.bkrepo.common.api.exception.NotFoundException
 import com.tencent.bkrepo.common.artifact.constant.PRIVATE_PROXY_REPO_NAME
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_PROXY_PROJECT
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_PROXY_REPO_NAME
@@ -112,7 +113,7 @@ class CompositeRepository(
         var artifactResource: ArtifactResource? = null
         try {
             artifactResource = localRepository.onDownload(context)
-        } catch (exception: Exception) {
+        } catch (notFoundException: NotFoundException) {
             mapFirstProxyRepo(context) {
                 require(it is ArtifactDownloadContext)
                 // 这里只会返回空，异常不会抛出
@@ -123,7 +124,7 @@ class CompositeRepository(
             }
             // 这里是为了保留各依赖源实现的异常
             if (artifactResource == null) {
-                throw exception
+                throw notFoundException
             }
         }
         if(artifactResource == null) {
@@ -163,9 +164,8 @@ class CompositeRepository(
         for (setting in proxyChannelList) {
             try {
                 action(getContextFromProxyChannel(context, setting))?.let {
-                    if (it != Unit) {
-                        return it
-                    } }
+                    // 无论请求是否成功, 都会返回kotlin.Unit
+                    if (it != Unit) { return it } }
             } catch (ignored: Exception) {
                 logger.warn("Failed to execute map with channel ${setting.name}", ignored)
             }

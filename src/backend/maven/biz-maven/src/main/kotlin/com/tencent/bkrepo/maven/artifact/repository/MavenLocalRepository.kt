@@ -62,7 +62,6 @@ import com.tencent.bkrepo.maven.enum.HashType
 import com.tencent.bkrepo.maven.enum.MavenMessageCode
 import com.tencent.bkrepo.maven.enum.SnapshotBehaviorType
 import com.tencent.bkrepo.maven.exception.ConflictException
-import com.tencent.bkrepo.maven.exception.MavenArtifactNotFoundException
 import com.tencent.bkrepo.maven.exception.MavenRequestForbiddenException
 import com.tencent.bkrepo.maven.model.TMavenMetadataRecord
 import com.tencent.bkrepo.maven.pojo.Basic
@@ -957,20 +956,26 @@ class MavenLocalRepository(
             // 如果删除单个文件不能删除metadata.xml文件, 如果文件删除了对应的校验文件也要删除
             if (fullPath.endsWith(MAVEN_METADATA_FILE_NAME) && !forceDeleted)
                 throw MavenRequestForbiddenException("$MAVEN_METADATA_FILE_NAME can not be deleted.")
-            nodeClient.getNodeDetail(projectId, repoName, fullPath).data?.let {
-                if (checksumType(it.fullPath) == null) {
-                    deleteArtifactCheckSums(context, it)
+            val node  = nodeClient.getNodeDetail(projectId, repoName, fullPath).data
+            if (node != null) {
+                if (checksumType(node.fullPath) == null) {
+                    deleteArtifactCheckSums(context, node)
                 }
                 // 需要删除对应的metadata表记录
-                mavenMetadataService.delete(context.artifactInfo, it)
+                mavenMetadataService.delete(context.artifactInfo, node)
                 val request = NodeDeleteRequest(
-                    projectId = projectId,
-                    repoName = repoName,
-                    fullPath = fullPath,
-                    operator = userId
+                        projectId = projectId,
+                        repoName = repoName,
+                        fullPath = fullPath,
+                        operator = userId
                 )
                 nodeClient.deleteNode(request)
-            } ?: throw MavenArtifactNotFoundException("Artifact $fullPath could not be found.")
+            } else {
+                // 同样尝试删除对应的metadata表记录
+                mavenMetadataService.delete(context.artifactInfo, node)
+                // 抛异常改为error日志
+                logger.error("Can not find node $fullPath in repo $artifactInfo")
+            }
         }
     }
 

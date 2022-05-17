@@ -24,6 +24,7 @@ import com.tencent.bkrepo.repository.util.ArtifactClientServiceFactory
 import com.tencent.bkrepo.repository.util.RuleUtils
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.lang.IllegalArgumentException
 import java.time.Duration
 import java.time.LocalDateTime
 
@@ -42,7 +43,6 @@ class RepositoryCleanServiceImpl(
         val tRepository = repositoryDao.findById(repoId)
         tRepository?.let { repo ->
             val cleanStrategy = repositoryService.getRepoCleanStrategy(repo.projectId, repo.name)
-
             logger.info("projectId:[${repo.projectId}] repoName:[${repo.name}] clean strategy:[$cleanStrategy] execute")
             cleanStrategy?.let {
                 // 自动清理关闭，状态为 WAITING，删除job
@@ -86,17 +86,13 @@ class RepositoryCleanServiceImpl(
         repoName: String,
         cleanStrategy: RepositoryCleanStrategy
     ) {
-        var pageNumber = 1
-        var packageOption = PackageListOption(
-            pageNumber,
-            DEFAULT_PAGE_SIZE
-        )
-        var packagePage = packageService.listPackagePage(projectId, repoName, packageOption)
-        while (packagePage.records.isNotEmpty()) {
+        var skip: Long = 0
+        var packageList = packageService.listPackagePage(projectId, repoName, DEFAULT_PAGE_SIZE, skip)
+        while (packageList.isNotEmpty()) {
             // 执行规则过滤，并删除
             var deleteVersions: MutableList<PackageVersion>
             var ruleQueryList = mutableListOf<PackageVersion>()
-            packagePage.records.forEach {
+            packageList.forEach {
                 requireNotNull(it.id)
                 //包的版本数 < 保留版本数，直接跳过
                 with(cleanStrategy) {
@@ -111,11 +107,10 @@ class RepositoryCleanServiceImpl(
                     rule?.let { rule ->
                         ruleQueryList = metadataRuleQuery(rule, it.id!!).toMutableList()
                     }
-                    if (logger.isDebugEnabled) {
-                        logger.debug(
-                            "projectId:[${it.projectId}] repoName:[${it.repoName}] rule query result:[$ruleQueryList]"
-                        )
-                    }
+                    logger.info(
+                        "projectId:[${it.projectId}] repoName:[${it.repoName}] " +
+                                "packageName:[${it.name}] rule query result:[$ruleQueryList]"
+                    )
                     deleteVersions = listVersion.toMutableList()
                     deleteVersions.removeAll(ruleQueryList)
                     deleteVersions = reserveVersionsAndDaysFilter(
@@ -123,24 +118,21 @@ class RepositoryCleanServiceImpl(
                         reserveVersions,
                         reserveDays
                     ).toMutableList()
-                }
-                if (logger.isDebugEnabled) {
-                    logger.debug(
+
+                    logger.info(
                         "projectId:[${it.projectId}] repoName:[${it.repoName}] clean [packageName:${it.name}] " +
                                 "delete version collection: $deleteVersions"
                     )
-                }
-                // 删除版本集合
-                if (deleteVersions.isNotEmpty()) {
-                    deleteVersion(deleteVersions, it.key, it.type, it.projectId, it.repoName)
+                    // 删除版本集合
+                    if (deleteVersions.isNotEmpty()) {
+                        if (!deleteVersions.containsAll(listVersion)) skip++
+                        deleteVersion(deleteVersions, it.key, it.type, it.projectId, it.repoName)
+                    } else {
+                        skip++
+                    }
                 }
             }
-            pageNumber += 1
-            packageOption = PackageListOption(
-                pageNumber,
-                DEFAULT_PAGE_SIZE
-            )
-            packagePage = packageService.listPackagePage(projectId, repoName, option = packageOption)
+            packageList = packageService.listPackagePage(projectId, repoName, DEFAULT_PAGE_SIZE, skip)
         }
     }
 
@@ -287,6 +279,7 @@ class RepositoryCleanServiceImpl(
         //截取超过【保留版本数】的版本，接下来进行保留天数过滤
         val reserveDaysFilter =
             sortedByDesc.subList(reserveVersions.toInt(), versions.size).sortedByDescending { it.lastModifiedDate }
+        logger.info("reverse version number filter result:[$reserveDaysFilter]")
         val nowDate = LocalDateTime.now()
         val size = reserveDaysFilter.size
         for (i in 0 until (size)) {

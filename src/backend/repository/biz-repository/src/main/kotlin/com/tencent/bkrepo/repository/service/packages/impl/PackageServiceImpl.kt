@@ -134,6 +134,17 @@ class PackageServiceImpl(
         return Pages.ofResponse(pageRequest, totalRecords, records)
     }
 
+    override fun listPackagePage(
+        projectId: String,
+        repoName: String,
+        limit: Int,
+        skip: Long
+    ): List<PackageSummary> {
+        val query = PackageQueryHelper.packageListQuery(projectId, repoName, null)
+        val countQuery = Query.of(query).skip(skip).limit(limit)
+        return packageDao.find(countQuery).map { convert(it)!! }
+    }
+
     override fun listAllPackageName(projectId: String, repoName: String): List<String> {
         val query = PackageQueryHelper.packageListQuery(projectId, repoName, null)
         query.fields().include(TPackage::key.name)
@@ -186,7 +197,6 @@ class PackageServiceImpl(
         val pageNumber = if (query.limit == 0) 0 else (query.skip / query.limit).toInt()
         return Page(pageNumber + 1, query.limit, totalRecords, versionList)
     }
-
 
 
     override fun createPackageVersion(request: PackageVersionCreateRequest, realIpAddress: String?) {
@@ -269,8 +279,11 @@ class PackageServiceImpl(
             if (!isOverride) {
                 publishEvent((buildCreatedEvent(request, realIpAddress ?: HttpContextHolder.getClientAddress())))
             } else {
-                publishEvent((PackageEventFactory.buildUpdatedEvent(
-                    request, realIpAddress ?: HttpContextHolder.getClientAddress())))
+                publishEvent(
+                    (PackageEventFactory.buildUpdatedEvent(
+                        request, realIpAddress ?: HttpContextHolder.getClientAddress()
+                    ))
+                )
             }
             logger.info("Create package version[$newVersion] success")
         }

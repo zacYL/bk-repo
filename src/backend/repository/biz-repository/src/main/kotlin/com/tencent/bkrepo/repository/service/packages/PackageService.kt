@@ -114,6 +114,18 @@ interface PackageService {
     ): Page<PackageSummary>
 
     /**
+     * 仓库清理 分页查询package
+     * @param limit 限制返回文档的数量
+     * @param skip 在返回结果之前设置要跳过的文档数
+     */
+    fun listPackagePage(
+        projectId: String,
+        repoName: String,
+        limit: Int,
+        skip: Long
+    ): List<PackageSummary>
+
+    /**
      * 查询所有包名称
      *
      * @param projectId 项目id
@@ -154,7 +166,7 @@ interface PackageService {
     /**
      * 根据条件搜索package version
      */
-    fun searchVersion(queryModel: QueryModel):Page<PackageVersion>
+    fun searchVersion(queryModel: QueryModel): Page<PackageVersion>
 
     /**
      * 创建包版本

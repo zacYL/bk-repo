@@ -1,8 +1,14 @@
 package com.tencent.bkrepo.common.checker.pojo
 
+import com.fasterxml.jackson.annotation.JsonAlias
+
 data class Credits(
-    val NPM: String,
-    val NVD: String,
-    val OSSINDEX: String,
-    val RETIREJS: String
+    @JsonAlias("NPM")
+    val npm: String,
+    @JsonAlias("NVD")
+    val nvd: String,
+    @JsonAlias("OSSINDEX")
+    val ossIndex: String,
+    @JsonAlias("RETIREJS")
+    val retireJs: String
 )

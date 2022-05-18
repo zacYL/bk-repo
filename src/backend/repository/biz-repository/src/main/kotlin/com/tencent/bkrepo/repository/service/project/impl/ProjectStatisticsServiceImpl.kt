@@ -1,6 +1,7 @@
 package com.tencent.bkrepo.repository.service.project.impl
 
 import com.tencent.bkrepo.common.artifact.event.base.EventType
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.operate.service.dao.OperateLogDao
 import com.tencent.bkrepo.common.operate.service.model.TOperateLog
@@ -12,6 +13,7 @@ import com.tencent.bkrepo.repository.pojo.metric.PackageDownloadCount
 import com.tencent.bkrepo.repository.pojo.node.NodeStatisticsSummary
 import com.tencent.bkrepo.repository.pojo.project.ProjectStatisticsSummary
 import com.tencent.bkrepo.repository.service.project.ProjectStatisticsService
+import com.tencent.bkrepo.repository.service.repo.impl.RepositoryServiceImpl
 import com.tencent.bkrepo.repository.util.PackageQueryHelper
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
@@ -23,7 +25,8 @@ import java.time.temporal.ChronoUnit
 class ProjectStatisticsServiceImpl(
     private val packageDownloadsDao: PackageDownloadsDao,
     private val packageUploadsDao: PackageUploadsDao,
-    private val operateLogDao: OperateLogDao
+    private val operateLogDao: OperateLogDao,
+    private val repositoryServiceImpl: RepositoryServiceImpl
 ) : ProjectStatisticsService {
 
     override fun queryVersionSummary(
@@ -99,8 +102,7 @@ class ProjectStatisticsServiceImpl(
 
         // 查询上传和下载数据并统计
         val logQuery = nodeOperateLogQuery(projectId, "SUMMARY", fromDate, toDate)
-        val pageRequest = Pages.ofRequest(1, MAX_QUERY_COUNT)
-        operateLogDao.find(logQuery.with(pageRequest)).forEach {
+        queryNodeRecords(logQuery).forEach {
             val day = daysDetail[ChronoUnit.DAYS.between(fromDate, it.createdDate.toLocalDate()).toInt()]
             if (it.type == EventType.NODE_DOWNLOADED) {
                 downloadedUsers.add(it.userId)
@@ -126,16 +128,19 @@ class ProjectStatisticsServiceImpl(
         toDate: LocalDate
     ): List<NodeDownloadCount> {
         val logQuery = nodeOperateLogQuery(projectId, "DOWNLOAD", fromDate, toDate)
-        val pageRequest = Pages.ofRequest(1, MAX_QUERY_COUNT)
-        val downloadLogs = operateLogDao.find(logQuery.with(pageRequest))
         val result = mutableListOf<NodeDownloadCount>()
-        downloadLogs.groupBy { it.resourceKey }.forEach {
+        queryNodeRecords(logQuery).groupBy { it.resourceKey }.forEach {
             val element = it.value.first()
             val fullPath = element.resourceKey
             val name = fullPath.split("/").last()
             result.add(NodeDownloadCount(element.repoName.toString(), fullPath, name, it.value.size.toLong()))
         }
         return result.sortedByDescending { it.downloadCount }
+    }
+
+    private fun queryNodeRecords(query: Query): List<TOperateLog> {
+        val pageRequest = Pages.ofRequest(1, MAX_QUERY_COUNT)
+        return operateLogDao.find(query.with(pageRequest))
     }
 
     private fun buildDayDetailList(fromDate: LocalDate, toDate: LocalDate): List<DayDetail> {
@@ -158,12 +163,20 @@ class ProjectStatisticsServiceImpl(
         val criteria = Criteria
             .where(TOperateLog::type.name).`in`(getEventTypeList(type))
             .and(TOperateLog::projectId.name).`is`(projectId)
+            .and(TOperateLog::repoName.name).`in`(getGenericRepoNameList(projectId))
 
         val localStartTime = startTime.atStartOfDay()
         val localEndTime = endTime.plusDays(1).atStartOfDay()
 
         criteria.and(TOperateLog::createdDate.name).gte(localStartTime).lt(localEndTime)
         return Query(criteria)
+    }
+
+    private fun getGenericRepoNameList(projectId: String): List<String> {
+        return repositoryServiceImpl.listRepo(
+            projectId = projectId,
+            type = RepositoryType.GENERIC.toString()
+        ).map { it.name }
     }
 
     private fun getEventTypeList(type: String): List<EventType> {

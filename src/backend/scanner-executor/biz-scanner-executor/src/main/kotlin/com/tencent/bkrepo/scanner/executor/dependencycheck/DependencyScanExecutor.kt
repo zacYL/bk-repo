@@ -75,7 +75,12 @@ class DependencyScanExecutor @Autowired constructor(
             throw e
         }
     }
-
+    
+    override fun stop(taskId: String): Boolean {
+        //DependencyCheck停止任务暂不做处理
+        return true
+    }
+    
     /**
      * 解析扫描结果
      */

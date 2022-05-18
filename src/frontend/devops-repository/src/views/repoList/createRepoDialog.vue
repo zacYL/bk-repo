@@ -39,7 +39,7 @@
                     <template v-if="repoBaseInfo[type].enable">
                         <bk-form-item :label="$t('fileName')" :label-width="60" class="mt10"
                             :property="`${type}.filename`" required error-display-type="normal">
-                            <bk-input class="w250" v-model.trim="repoBaseInfo[type].filename"></bk-input>
+                            <bk-input class="w250" v-model.trim="repoBaseInfo[type].filename" :placeholder="$t('fileNameRule')"></bk-input>
                         </bk-form-item>
                         <bk-form-item :label="$t('metadata')" :label-width="60"
                             :property="`${type}.metadata`" required error-display-type="normal">

@@ -32,6 +32,7 @@
 package com.tencent.bkrepo.common.artifact.repository.remote
 
 import com.tencent.bkrepo.common.api.constant.HttpHeaders
+import com.tencent.bkrepo.common.api.constant.HttpStatus
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.NetworkProxyConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
@@ -61,6 +62,7 @@ import okhttp3.ResponseBody
 import org.slf4j.LoggerFactory
 import java.net.InetSocketAddress
 import java.net.Proxy
+import java.net.UnknownHostException
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -94,19 +96,40 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
                 response = okHttpClient.newCall(request).execute()
                 val endTime = System.currentTimeMillis()
                 logger.info("Remote download: download retry: $i, url: ${request.url()}, cost: ${endTime - startTime}ms, code: ${response.code()}")
-                if (response.isSuccessful) {
-                    break@outer
-                }
-                Thread.sleep(i * 500L)
+                if (checkRetry(response)) { break@outer }
+            } catch (unKnownHostException: UnknownHostException) {
+                logger.error("Remote download: download retry: $i, url: ${request.url()}, error: ${unKnownHostException.message}")
+                break@outer
+            } catch (ie: IllegalArgumentException) {
+                logger.error("Remote download: download retry: $i, url: ${request.url()}, error: ${ie.message}")
+                break@outer
             } catch (e: Exception) {
-                if (i >= 4) {
-                    break@outer
-                }
+                if (i >= 4) { break@outer }
                 logger.error("Remote download: request failed: $request", e)
-                Thread.sleep(i * 100L)
             }
         }
         return response
+    }
+
+    /**
+     * 校验远程情求是否具有重试的价值，此处不代表下载成功
+     * 200、201、202、
+     * 401、402、403、404、
+     * 500、502
+     * 以上状态码都定义为无需重试
+     */
+    private fun checkRetry(response: Response): Boolean {
+        if (response.isSuccessful) {
+            return true
+        }
+        if (resourceNotReach.contains(response.code())
+            || serverStatusError.contains(response.code())
+        ) {
+            logger.warn("Remote download: download failed: ${response.code()}, url: ${response.request().url()}")
+            return true
+        }
+        logger.error("Remote download: download failed: ${response.code()}, url: ${response.request().url()}")
+        return false
     }
 
     override fun search(context: ArtifactSearchContext): List<Any> {
@@ -300,5 +323,15 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
 
     companion object {
         private val logger = LoggerFactory.getLogger(RemoteRepository::class.java)
+        private val resourceNotReach = intArrayOf(
+            HttpStatus.NOT_FOUND.value,
+            HttpStatus.UNAUTHORIZED.value,
+            HttpStatus.PAYMENT_REQUIRED.value,
+            HttpStatus.FORBIDDEN.value
+        )
+        private val serverStatusError = intArrayOf(
+            HttpStatus.BAD_GATEWAY.value,
+            HttpStatus.INTERNAL_SERVER_ERROR.value
+        )
     }
 }

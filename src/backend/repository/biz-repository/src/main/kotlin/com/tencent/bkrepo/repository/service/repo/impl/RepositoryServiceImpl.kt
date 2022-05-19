@@ -54,20 +54,16 @@ import com.tencent.bkrepo.common.artifact.pojo.configuration.local.LocalConfigur
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.virtual.VirtualConfiguration
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
-import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.repository.config.RepositoryProperties
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
-import com.tencent.bkrepo.repository.dao.NodeDao
 import com.tencent.bkrepo.repository.dao.PackageDao
 import com.tencent.bkrepo.repository.dao.RepositoryDao
-import com.tencent.bkrepo.repository.job.clean.CleanTaskManger
 import com.tencent.bkrepo.repository.model.TPackage
 import com.tencent.bkrepo.repository.model.TRepository
-import com.tencent.bkrepo.repository.pojo.node.NodeListOption
 import com.tencent.bkrepo.repository.pojo.project.ProjectCreateRequest
 import com.tencent.bkrepo.repository.pojo.project.RepoRangeQueryRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
@@ -81,13 +77,11 @@ import com.tencent.bkrepo.repository.service.repo.ProjectService
 import com.tencent.bkrepo.repository.service.repo.ProxyChannelService
 import com.tencent.bkrepo.repository.service.repo.RepositoryService
 import com.tencent.bkrepo.repository.service.repo.StorageCredentialService
-import com.tencent.bkrepo.repository.util.NodeQueryHelper
 import com.tencent.bkrepo.repository.util.RepoEventFactory.buildCreatedEvent
 import com.tencent.bkrepo.repository.util.RepoEventFactory.buildDeletedEvent
 import com.tencent.bkrepo.repository.util.RepoEventFactory.buildUpdatedEvent
 import com.tencent.bkrepo.repository.util.RuleUtils
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
@@ -101,8 +95,6 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.regex.Pattern
-import java.util.regex.PatternSyntaxException
 
 /**
  * 仓库服务实现类
@@ -118,9 +110,6 @@ class RepositoryServiceImpl(
     private val servicePermissionResource: ServicePermissionResource,
     private val packageDao: PackageDao
 ) : RepositoryService {
-
-    @Autowired
-    lateinit var cleanTaskReloadManger: CleanTaskManger
 
     override fun getRepoInfo(projectId: String, name: String, type: String?): RepositoryInfo? {
         val tRepository = repositoryDao.findByNameAndType(projectId, name, type)
@@ -363,7 +352,7 @@ class RepositoryServiceImpl(
             repoCleanStrategy?.let {
                 require(it.status == CleanStatus.WAITING) {
                     "projectId:[$projectId] repoName:[$repoName] " +
-                            "update clean status to running fail original status is [${it.status}]"
+                            "update status to running fail original status is [${it.status}]"
                 }
                 it.status = CleanStatus.RUNNING
                 configuration.cleanStrategy = it
@@ -386,10 +375,6 @@ class RepositoryServiceImpl(
         if (configuration is CompositeConfiguration) {
             val repoCleanStrategy = getRepoCleanStrategy(projectId, repoName)
             repoCleanStrategy?.let {
-                require(it.status == CleanStatus.RUNNING) {
-                    "projectId:[$projectId] repoName:[$repoName] " +
-                            "update clean status to waiting fail original status is [${it.status}]"
-                }
                 it.status = CleanStatus.WAITING
                 configuration.cleanStrategy = it
                 repository.configuration = configuration.toJsonString()
@@ -459,10 +444,12 @@ class RepositoryServiceImpl(
             updateCompositeConfiguration(new, old, repository, operator)
         }
         if (new is LocalConfiguration && old is LocalConfiguration) {
-            logger.info(
-                "projectId:[${repository.projectId}] repoName:[${repository.name}] " +
-                        "new clean strategy is [${new.cleanStrategy}], old is [${old.cleanStrategy}]"
-            )
+            if(logger.isDebugEnabled){
+                logger.debug(
+                    "projectId:[${repository.projectId}] repoName:[${repository.name}] " +
+                            "new clean strategy is [${new.cleanStrategy}], old is [${old.cleanStrategy}]"
+                )
+            }
             val newCleanStrategy = new.cleanStrategy
             val oldCleanStrategy = old.cleanStrategy
             if (newCleanStrategy != null) {
@@ -477,7 +464,6 @@ class RepositoryServiceImpl(
                 // 校验元数据保留规则中包含的正则表达式
                 checkMetadataRule(newCleanStrategy.rule)
             } else {
-                //新清理策略为null，将旧清理策略赋值给新的
                 logger.warn(
                     "projectId:[${repository.projectId}] repoName:[${repository.name}] new clean strategy is null"
                 )

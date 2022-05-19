@@ -12,6 +12,7 @@ import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.dao.RepositoryDao
 import com.tencent.bkrepo.repository.job.clean.CleanRepoTaskScheduler
 import com.tencent.bkrepo.repository.model.TNode
+import com.tencent.bkrepo.repository.model.TPackageVersion
 import com.tencent.bkrepo.repository.pojo.node.NodeDelete
 import com.tencent.bkrepo.repository.pojo.packages.*
 import com.tencent.bkrepo.repository.service.node.NodeDeleteOperation
@@ -44,46 +45,37 @@ class RepositoryCleanServiceImpl(
         val tRepository = repositoryDao.findById(repoId)
         tRepository?.let { repo ->
             val cleanStrategy = repositoryService.getRepoCleanStrategy(repo.projectId, repo.name)
-            logger.info("projectId:[${repo.projectId}] repoName:[${repo.name}] clean strategy:[$cleanStrategy] execute")
             cleanStrategy?.let {
-                // 自动清理关闭，状态为 WAITING，删除job
                 logger.info(
                     "projectId:[${repo.projectId}] repoName:[${repo.name}] " +
                             "clean strategy autoClean:[${it.autoClean}] status:[${it.status}]"
                 )
+                // 自动清理关闭，状态为 WAITING，删除job
                 if (!it.autoClean && it.status == CleanStatus.WAITING) {
                     taskScheduler.deleteJob(repoId)
                     return
                 }
                 try {
                     repositoryService.updateCleanStatusRunning(repo.projectId, repo.name)
-                } catch (ex: IllegalArgumentException) {
-                    logger.error(
-                        "projectId:[${repo.projectId}] repoName:[${repo.name}] " +
-                                "update clean strategy illegal argument exception:[$ex],clean repo fail"
-                    )
-                    return
-                }
-                if (repo.type == RepositoryType.GENERIC) {
-                    executeNodeClean(repo.projectId, repo.name, it)
-                } else {
-                    executeClean(repo.projectId, repo.name, it)
-                }
-                try {
+                    if (repo.type == RepositoryType.GENERIC) {
+                        executeNodeClean(repo.projectId, repo.name, it)
+                    } else {
+                        executeClean(repo.projectId, repo.name, it)
+                    }
                     repositoryService.updateCleanStatusWaiting(repo.projectId, repo.name)
                 } catch (ex: IllegalArgumentException) {
-                    logger.warn(
-                        "projectId:[${repo.projectId}] repoName:[${repo.name}] " +
-                                "update clean strategy illegal argument exception:[$ex]"
-                    )
+                    logger.error("repo clean fail exception:[$ex]")
+                } catch (ex: Exception) {
+                    repositoryService.updateCleanStatusWaiting(repo.projectId, repo.name)
+                    logger.error("projectId:[${repo.projectId}] repoName:[${repo.name}] clean error [$ex]")
                 }
             } ?: logger.warn("projectId:[${repo.projectId}] repoName:[${repo.name}] clean strategy is null")
-        } ?: logger.error("clean repo illegal argument exception tRepository is null, tRepository:[$tRepository]")
+        } ?: logger.error("argument exception tRepository is null, tRepository:[$tRepository]")
     }
 
     /**
      * 执行规则过滤，并删除
-     * TODO 嵌套太深
+     * TODO 日志恢复debug
      */
     private fun executeClean(
         projectId: String,
@@ -94,42 +86,52 @@ class RepositoryCleanServiceImpl(
         var skip: Long = 0
         var packageList = packageService.listPackagePage(projectId, repoName, DEFAULT_PAGE_SIZE, skip)
         while (packageList.isNotEmpty()) {
-            var deleteVersions: MutableList<PackageVersion>
-            var ruleQueryList = mutableListOf<PackageVersion>()
             packageList.forEach {
+                val deleteVersions: MutableList<PackageVersion>
+                var ruleQueryList = mutableListOf<PackageVersion>()
                 requireNotNull(it.id)
                 //包的版本数 < 保留版本数，直接跳过
-                with(cleanStrategy) {
-                    if (it.versions < reserveVersions) return@forEach
-                    val listVersion = packageService.listAllVersion(
-                        it.projectId,
-                        it.repoName,
-                        it.key,
-                        VersionListOption()
-                    ).toMutableList()
-                    rule?.let { rule ->
-                        ruleQueryList = metadataRuleQuery(rule, it.id!!).toMutableList()
-                    }
-                    logger.info(
-                        "projectId:[${it.projectId}] repoName:[${it.repoName}] " +
-                                "packageName:[${it.name}] rule query result:[$ruleQueryList]"
-                    )
-                    listVersion.removeAll(ruleQueryList)
-                    deleteVersions = reserveVersionsAndDaysFilter(
-                        listVersion,
-                        reserveVersions,
-                        reserveDays
-                    ).toMutableList()
-                    logger.info(
-                        "projectId:[${it.projectId}] repoName:[${it.repoName}] clean [packageName:${it.name}] " +
-                                "delete version collection: $deleteVersions"
-                    )
-                    if (deleteVersions.isNotEmpty()) {
-                        if (!deleteVersions.containsAll(listVersion)) skip++
-                        deleteVersion(deleteVersions, it.key, it.type, it.projectId, it.repoName)
-                    } else {
-                        skip++
-                    }
+                if (it.versions < cleanStrategy.reserveVersions) return@forEach
+                val listVersion = packageService.listAllVersion(
+                    it.projectId,
+                    it.repoName,
+                    it.key,
+                    VersionListOption()
+                ).toMutableList()
+                cleanStrategy.rule?.let { rule ->
+                    ruleQueryList = metadataRuleQuery(rule, it.id!!).toMutableList()
+                }
+//                if (logger.isDebugEnabled){
+//                    logger.debug(
+//                        "projectId:[${it.projectId}] repoName:[${it.repoName}] " +
+//                                "packageName:[${it.name}] rule query result:[$ruleQueryList]"
+//                    )
+//                }
+                logger.info(
+                    "projectId:[${it.projectId}] repoName:[${it.repoName}] " +
+                            "packageName:[${it.name}] rule query result:[$ruleQueryList]"
+                )
+                listVersion.removeAll(ruleQueryList)
+                deleteVersions = reserveVersionsAndDaysFilter(
+                    listVersion,
+                    cleanStrategy.reserveVersions,
+                    cleanStrategy.reserveDays
+                ).toMutableList()
+//                if (logger.isDebugEnabled){
+//                    logger.debug(
+//                        "projectId:[${it.projectId}] repoName:[${it.repoName}] clean [packageName:${it.name}] " +
+//                                "delete version collection: $deleteVersions"
+//                    )
+//                }
+                logger.info(
+                    "projectId:[${it.projectId}] repoName:[${it.repoName}] clean [packageName:${it.name}] " +
+                            "delete version collection: $deleteVersions"
+                )
+                if (deleteVersions.isNotEmpty()) {
+                    if (!deleteVersions.containsAll(listVersion)) skip++
+                    deleteVersion(deleteVersions, it.key, it.type, it.projectId, it.repoName)
+                } else {
+                    skip++
                 }
             }
             packageList = packageService.listPackagePage(projectId, repoName, DEFAULT_PAGE_SIZE, skip)
@@ -148,7 +150,7 @@ class RepositoryCleanServiceImpl(
             return versionList
         }
         var pageNumber = 1
-        val packageIdRule = Rule.QueryRule("packageId", packageId)
+        val packageIdRule = Rule.QueryRule(TPackageVersion::packageId.name, packageId)
         val queryRule = Rule.NestedRule(mutableListOf(packageIdRule, rule))
         val queryModel = QueryModel(
             page = PageLimit(pageNumber, DEFAULT_PAGE_SIZE),
@@ -168,6 +170,7 @@ class RepositoryCleanServiceImpl(
 
     /**
      * 执行 Generic 仓库清理
+     * TODO 日志恢复debug
      */
     private fun executeNodeClean(
         projectId: String,
@@ -178,24 +181,25 @@ class RepositoryCleanServiceImpl(
         val repoNameRule = Rule.QueryRule("repoName", repoName)
         val allNodeQueryRule = Rule.NestedRule(mutableListOf(projectIdRule, repoNameRule))
         val allNodeList = nodeRuleQuery(allNodeQueryRule)
-        // 保留规则查询节点集合
         var reserveNodeList = mutableListOf<NodeDelete>()
         var deleteNodeList: MutableList<NodeDelete>
         with(cleanStrategy) {
             rule?.let {
                 reserveNodeList = nodeRuleQuery(it)
             }
-            if (logger.isDebugEnabled) {
-                logger.debug("project:[$projectId] repoName[$repoName] reverseNodeList:[$reserveNodeList]")
-            }
+//            if (logger.isDebugEnabled) {
+//                logger.debug("project:[$projectId] repoName[$repoName] reverseNodeList:[$reserveNodeList]")
+//            }
+            logger.info("project:[$projectId] repoName[$repoName] reverseNodeList:[$reserveNodeList]")
             // 取【所有节点集合】 与 【保留规则集合】 的差集
             allNodeList.removeAll(reserveNodeList)
             // 保留天数过滤
             deleteNodeList = nodeReserveDaysFilter(allNodeList, reserveDays)
         }
-        if (logger.isDebugEnabled) {
-            logger.debug("projectId:[$projectId] repoName:[$repoName] delete list [$deleteNodeList]")
-        }
+//        if (logger.isDebugEnabled) {
+//            logger.debug("projectId:[$projectId] repoName:[$repoName] delete list [$deleteNodeList]")
+//        }
+        logger.info("projectId:[$projectId] repoName:[$repoName] delete list [$deleteNodeList]")
         deleteNodeList.forEach {
             // 判断文件夹下是否有文件
             if (it.folder) {
@@ -268,6 +272,7 @@ class RepositoryCleanServiceImpl(
 
     /**
      * 保留版本数，保留天数过滤
+     * TODO 日志恢复debug
      */
     private fun reserveVersionsAndDaysFilter(
         versions: List<PackageVersion>,
@@ -277,12 +282,13 @@ class RepositoryCleanServiceImpl(
         val filterVersions: MutableList<PackageVersion> = mutableListOf()
         //根据 【版本序列号】 降序排序
         val sortedByDesc = versions.sortedByDescending { it.ordinal }
-        //截取超过【保留版本数】的版本，接下来进行保留天数过滤
+        //截取超过【保留版本数】的版本，进行保留天数过滤
         val reserveDaysFilter =
             sortedByDesc.subList(reserveVersions.toInt(), versions.size).sortedByDescending { it.recentlyUseDate }
-        if (logger.isDebugEnabled) {
-            logger.info("reverse version number filter result:[$reserveDaysFilter]")
-        }
+//        if (logger.isDebugEnabled) {
+//            logger.info("reverse version number filter result:[$reserveDaysFilter]")
+//        }
+        logger.info("reverse version number filter result:[$reserveDaysFilter]")
         val nowDate = LocalDateTime.now()
         val size = reserveDaysFilter.size
         for (i in 0 until (size)) {
@@ -318,7 +324,7 @@ class RepositoryCleanServiceImpl(
             } catch (ex: Exception) {
                 logger.error(
                     "delete package version fail, exception is [$ex], projectId:[$projectId] " +
-                            "repoName:[$repoName] packageKey:[$packageKey] version:[$versions] "
+                            "repoName:[$repoName] packageKey:[$packageKey] version:[$it] "
                 )
             }
         }

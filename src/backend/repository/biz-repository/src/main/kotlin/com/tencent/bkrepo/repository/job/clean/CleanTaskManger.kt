@@ -2,7 +2,6 @@ package com.tencent.bkrepo.repository.job.clean
 
 import com.tencent.bkrepo.common.artifact.pojo.configuration.clean.CleanStatus
 import com.tencent.bkrepo.repository.config.RepositoryProperties
-import com.tencent.bkrepo.repository.dao.RepositoryDao
 import com.tencent.bkrepo.repository.model.TRepository
 import com.tencent.bkrepo.repository.service.repo.RepositoryService
 import org.quartz.*
@@ -17,8 +16,7 @@ import org.springframework.stereotype.Service
 @Service
 class CleanTaskManger(
     private val repositoryService: RepositoryService,
-    private val taskScheduler: CleanRepoTaskScheduler,
-    private val repositoryDao: RepositoryDao
+    private val taskScheduler: CleanRepoTaskScheduler
 ) {
     @Autowired
     lateinit var repositoryProperties: RepositoryProperties
@@ -31,6 +29,8 @@ class CleanTaskManger(
      *      false：判断job是否存在，存在，删除；不存在，不处理
      */
     @Scheduled(initialDelay = RELOAD_INITIAL_DELAY, fixedDelay = RELOAD_FIXED_DELAY)
+    //@Scheduled(cron = "0 0 23 * * ?")
+    //TODO 修改Scheduled
     fun reloadCleanTask() {
         var skip = 0L
         var repoList = repositoryService.allRepoPage(skip)
@@ -61,39 +61,7 @@ class CleanTaskManger(
             if (!it.autoClean && taskScheduler.exist(repoId) && it.status == CleanStatus.WAITING) {
                 taskScheduler.deleteJob(repoId)
             }
-        } ?: logger.info("projectId:[${repo.projectId}] repoName:[${repo.name}] clean strategy is null")
-    }
-
-    /**
-     * 创建仓库清理job
-     */
-    fun createCleanJob(projectId: String, repoName: String) {
-        val tRepository = repositoryDao.findByNameAndType(projectId, repoName)
-        try {
-            requireNotNull(tRepository) { "repository:[$repoName] does not exist in projectId:[$projectId]" }
-            requireNotNull(tRepository.id) { "projectId:[$projectId] repoName:[$repoName] TRepository id is null" }
-        } catch (ex: IllegalArgumentException) {
-            logger.error(
-                "projectId:[$projectId] repoName:[$repoName] " +
-                        "create repo clean job error illegal argument exception:[$ex]"
-            )
-            return
         }
-        val id = tRepository.id!!
-        val cleanStrategy = repositoryService.getRepoCleanStrategy(projectId, repoName)
-        cleanStrategy?.let {
-            //开启,不存在，创建
-            if (it.autoClean && !taskScheduler.exist(id)) {
-                val jobDetail = createJobDetail(id)
-                val trigger = createTrigger(id, repositoryProperties.cleanStrategyTime)
-                taskScheduler.scheduleJob(jobDetail, trigger)
-            }
-            // 关闭，存在，任务状态为 WAITING，则删除；
-            // 任务状态为 RUNNING，这里不做处理
-            if (!it.autoClean && taskScheduler.exist(id) && it.status == CleanStatus.WAITING) {
-                taskScheduler.deleteJob(id)
-            }
-        } ?: logger.warn("projectId:[$projectId] repoName:[$repoName] clean strategy is null")
     }
 
     /**

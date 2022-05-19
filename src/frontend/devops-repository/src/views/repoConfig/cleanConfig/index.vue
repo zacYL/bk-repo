@@ -147,24 +147,28 @@
                                 reserveDays,
                                 rule: {
                                     relation: 'AND',
-                                    rules: [
-                                        this.repoType === 'generic'
-                                            ?? {
-                                                field: 'projectId',
-                                                value: this.projectId,
-                                                operation: 'EQ'
-                                            },
-                                        this.repoType === 'generic'
-                                            ?? {
-                                                field: 'repoName',
-                                                value: this.repoName,
-                                                operation: 'EQ'
-                                            },
-                                        rules.length ?? {
-                                            relation: 'OR',
-                                            rules
-                                        }
-                                    ].filter(Boolean)
+                                    rules: rules.length
+                                        ? [
+                                            this.repoType === 'generic'
+                                                ? {
+                                                    field: 'projectId',
+                                                    value: this.projectId,
+                                                    operation: 'EQ'
+                                                }
+                                                : undefined,
+                                            this.repoType === 'generic'
+                                                ? {
+                                                    field: 'repoName',
+                                                    value: this.repoName,
+                                                    operation: 'EQ'
+                                                }
+                                                : undefined,
+                                            {
+                                                relation: 'OR',
+                                                rules
+                                            }
+                                        ].filter(Boolean)
+                                        : []
                                 }
                             }
                         }

@@ -49,7 +49,7 @@ data class NodeInfo(
     @ApiModelProperty("修改时间")
     val lastModifiedDate: String,
     @ApiModelProperty("最近使用时间")
-    val recentlyUseDate: String?,
+    val recentlyUseDate: String? = null,
 
     @ApiModelProperty("是否为文件夹")
     val folder: Boolean,

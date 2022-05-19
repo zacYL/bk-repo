@@ -65,4 +65,3 @@ data class CheckSecItem(
         const val TYPE = "CHECK_SEC_ITEM"
     }
 }
-

@@ -28,7 +28,6 @@
 package com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.result
 
 import com.fasterxml.jackson.annotation.JsonAlias
-import com.fasterxml.jackson.annotation.JsonProperty
 import com.tencent.bkrepo.common.checker.pojo.Cvssv2
 import com.tencent.bkrepo.common.checker.pojo.Cvssv3
 import io.swagger.annotations.ApiModel
@@ -59,7 +58,6 @@ data class DependencyItem(
      */
     @ApiModelProperty("等级")
     val severity: String,
-
 
     @ApiModelProperty("漏洞描述")
     @JsonAlias("description")

@@ -50,5 +50,4 @@ object RuleUtil {
             it is Rule.QueryRule && it.field == field
         } as Rule.QueryRule?
     }
-
 }

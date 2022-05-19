@@ -30,7 +30,6 @@ package com.tencent.bkrepo.scanner.executor
 import com.tencent.bkrepo.common.service.condition.MicroService
 import org.springframework.boot.runApplication
 
-
 @MicroService
 class ScannerExecutorApplication
 

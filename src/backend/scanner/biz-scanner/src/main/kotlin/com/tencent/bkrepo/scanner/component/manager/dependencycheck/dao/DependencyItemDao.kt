@@ -44,8 +44,8 @@ class DependencyItemDao : ResultItemDao<TDependencyItem>() {
             criteria.and(dataKey(DependencyItem::severity.name)).inValues(arguments.vulnerabilityLevels)
         }
         if (arguments.vulIds.isNotEmpty()) {
-            //todo
-            //criteria.andOperator(buildVulIdCriteria(arguments.vulIds))
+            // todo
+            // criteria.andOperator(buildVulIdCriteria(arguments.vulIds))
             criteria.and(dataKey(DependencyItem::cveId.name)).inValues(arguments.vulIds)
         }
         logger.info("DependencyItemDao customizePageBy criteria:${criteria.toJsonString()}")

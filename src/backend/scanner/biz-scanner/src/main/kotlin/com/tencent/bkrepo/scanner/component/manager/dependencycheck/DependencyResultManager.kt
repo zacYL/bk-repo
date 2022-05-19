@@ -72,8 +72,8 @@ class DependencyResultManager @Autowired constructor(
             .map { convert<DependencyItem, TDependencyItem>(credentialsKey, sha256, scannerName, it) }
             .run { replace(credentialsKey, sha256, scannerName, dependencyItemDao, this) }
 
-        //todo:
-        //replaceCveItems(credentialsKey, sha256, scannerName, result.cveSecItems)
+        // todo:
+        // replaceCveItems(credentialsKey, sha256, scannerName, result.cveSecItems)
     }
 
     override fun load(

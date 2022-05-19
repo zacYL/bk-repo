@@ -56,7 +56,7 @@ object ScanParamUtil {
                 if (fullPath.isNullOrEmpty()) {
                     throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "fullPath[$fullPath]")
                 }
-                //支持ipa/apk/apks/aab/jar类型包
+                // 支持ipa/apk/apks/aab/jar类型包
                 if (!checkPackage(fullPath)) {
                     throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "fullPath[$fullPath]")
                 }

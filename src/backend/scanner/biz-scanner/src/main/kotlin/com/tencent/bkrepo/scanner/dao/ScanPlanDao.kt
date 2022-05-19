@@ -136,7 +136,7 @@ class ScanPlanDao : ScannerSimpleMongoDao<TScanPlan>() {
             rule?.let { update.set(TScanPlan::rule.name, it.toJsonString()) }
 
             val query = Query(criteria)
-            logger.info("update scan plan query:${query}, update:${update.toJsonString()}")
+            logger.info("update scan plan query:$query, update:${update.toJsonString()}")
             return updateFirst(query, update)
         }
     }

@@ -44,6 +44,5 @@ data class DependencyScanExecutorResult(
         fun overviewKeyOfCve(level: String): String {
             return "cve${level.capitalize()}Count"
         }
-
     }
 }

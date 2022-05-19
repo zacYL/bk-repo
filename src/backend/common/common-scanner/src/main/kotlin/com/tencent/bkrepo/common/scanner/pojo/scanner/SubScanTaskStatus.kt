@@ -66,11 +66,11 @@ enum class SubScanTaskStatus {
          * 判断[status]是否是已结束的状态
          */
         fun finishedStatus(status: SubScanTaskStatus): Boolean {
-            return status == BLOCK_TIMEOUT
-                || status == TIMEOUT
-                || status == FAILED
-                || status == STOPPED
-                || status == SUCCESS
+            return status == BLOCK_TIMEOUT ||
+                status == TIMEOUT ||
+                status == FAILED ||
+                status == STOPPED ||
+                status == SUCCESS
         }
 
         /**

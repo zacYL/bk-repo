@@ -188,13 +188,17 @@
 
 ## 分页查询包版本
 
-- API: GET /repository/api/version/page/{projectId}/{repoName}?packageKey=gav://com.tencent:test&version=0.0.1&stageTag=release&pageNumber=0&pageSize=20
+- API: GET /repository/api/version/page/{projectId}/{repoName}
+
 - API 名称: list_version_page
+
 - 功能说明：
   - 中文：分页查询版本列表
   - English：list version page
+  
 - 请求体
   此接口请求体为空
+  
 - 请求字段说明
 
   |字段|类型|是否必须|默认值|说明|Description|
@@ -211,45 +215,37 @@
 
   ```json
   {
-    "code": 0,
-    "message": null,
-    "data": {
-      "pageNumber": 0,
-      "pageSize": 1,
-      "totalRecords": 18,
-      "totalPages": 18,
-      "records": [
-        {
-          "name" : "0.0.9",
-          "size" : 1024,
-          "downloads" : 18,
-          "stageTag" : ["@prerelease", "@release"],
-          "createdBy" : "admin",
-          "createdDate" : "2020-07-27T16:02:31.394",
-          "lastModifiedBy" : "admin",
-          "lastModifiedDate" : "2020-07-27T16:02:31.394",
-          "metadata": {
-                  "apiVersion": "v1",
-                  "appVersion": "7.0",
-                  "description": "Deploy a basic tomcat application server with sidecar as web archive container",
-                  "home": "https://github.com/yahavb",
-                  "icon": "http://tomcat.apache.org/res/images/tomcat.png",
-                  "keywords": [],
-                  "maintainers": [
-                      {
-                          "name": "yahavb",
-                          "email": "ybiran@ananware.systems"
-                      }
-                  ],
-                  "name": "tomcat",
-                  "sources": [],
-                  "urls": [],
-                  "version": "0.4.2"
-              }
-        }
-      ]
+    "code" : 0,
+    "message" : null,
+    "data" : {
+      "pageNumber" : 1,
+      "pageSize" : 20,
+      "totalRecords" : 1,
+      "totalPages" : 1,
+      "records" : [ {
+        "createdBy" : "admin",
+        "createdDate" : "2022-04-12T16:04:20.598",
+        "lastModifiedBy" : "admin",
+        "lastModifiedDate" : "2022-05-06T19:07:01.266",
+        "recentlyUseDate" : null,
+        "name" : "7.0.4",
+        "size" : 1038847,
+        "downloads" : 0,
+        "stageTag" : [ "@prerelease" ],
+        "metadata" : {
+          "groupId" : "org.owasp",
+          "artifactId" : "dependency-check-core-sha256",
+          "version" : "7.0.4"
+        },
+        "tags" : [ ],
+        "extension" : { },
+        "contentPath" : "/org/owasp/dependency-check-core-sha256/7.0.4/dependency-check-core-sha256-7.0.4.jar",
+        "ordinal" : 7000000049999
+      } ],
+      "count" : 1,
+      "page" : 1
     },
-    "traceId":  null
+    "traceId" : ""
   }
   ```
 
@@ -266,6 +262,10 @@
   |createdDate|string|创建时间|create time|
   |lastModifiedBy|string|上次修改者|last modify user|
   |lastModifiedDate|string|上次修改时间|last modify time|
+  |tags|list[string]|标签|tags|
+  |extension|object|扩展字段，key-value键值对|extended field|
+  |contentPath|string|文件路径|file path|
+  |ordinal|long|版本序数|ordinal|
 
 ## 删除版本
 

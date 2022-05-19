@@ -127,7 +127,7 @@ interface PackageClient {
     ): Response<Void>
 
     @ApiOperation("更新包版本最近使用时间")
-    @PostMapping("/version/update")
+    @PostMapping("/version/update/recentlyUserDate")
     fun updateRecentlyUseDate(
         @RequestParam projectId: String,
         @RequestParam repoName: String,

@@ -344,6 +344,16 @@ class PackageServiceImpl(
         logger.info("Delete package version[$projectId/$repoName/$packageKey-$versionName] success")
     }
 
+    override fun updateRecentlyUseDate(projectId: String, repoName: String, packageKey: String, versionName: String) {
+        val tPackage = checkPackage(projectId, repoName, packageKey)
+        val packageId = tPackage.id.orEmpty()
+        val tPackageVersion = checkPackageVersion(packageId, versionName)
+        val now = LocalDateTime.now()
+        tPackageVersion.recentlyUseDate = now
+        tPackageVersion.lastModifiedDate = now
+        packageVersionDao.save(tPackageVersion)
+    }
+
     override fun updatePackage(request: PackageUpdateRequest, realIpAddress: String?) {
         val projectId = request.projectId
         val repoName = request.repoName
@@ -651,6 +661,7 @@ class PackageServiceImpl(
                     createdDate = it.createdDate,
                     lastModifiedBy = it.lastModifiedBy,
                     lastModifiedDate = it.lastModifiedDate,
+                    recentlyUseDate = it.recentlyUseDate,
                     name = it.name,
                     size = it.size,
                     downloads = it.downloads,

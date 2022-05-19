@@ -48,6 +48,8 @@ data class PackageVersion(
     val lastModifiedBy: String,
     @ApiModelProperty("修改时间")
     val lastModifiedDate: LocalDateTime,
+    @ApiModelProperty("最近使用时间时间")
+    var recentlyUseDate: LocalDateTime?,
 
     @ApiModelProperty("包版本")
     val name: String,

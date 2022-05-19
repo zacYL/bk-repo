@@ -286,6 +286,7 @@ abstract class NodeBaseService(
                     createdDate = it.createdDate.format(DateTimeFormatter.ISO_DATE_TIME),
                     lastModifiedBy = it.lastModifiedBy,
                     lastModifiedDate = it.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME),
+                    recentlyUseDate = it.recentlyUseDate?.format(DateTimeFormatter.ISO_DATE_TIME),
                     projectId = it.projectId,
                     repoName = it.repoName,
                     folder = it.folder,

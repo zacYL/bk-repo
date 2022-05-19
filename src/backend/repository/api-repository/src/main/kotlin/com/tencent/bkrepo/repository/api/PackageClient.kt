@@ -126,6 +126,15 @@ interface PackageClient {
         @RequestParam realIpAddress: String? = null
     ): Response<Void>
 
+    @ApiOperation("更新包版本最近使用时间")
+    @PostMapping("/version/update")
+    fun updateRecentlyUseDate(
+        @RequestParam projectId: String,
+        @RequestParam repoName: String,
+        @RequestParam packageKey: String,
+        @RequestParam version: String
+    ): Response<Void>
+
     @ApiOperation("更新版本")
     @PostMapping("/version/update")
     fun updateVersion(

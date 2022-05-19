@@ -140,7 +140,7 @@ class GenericLocalRepository : LocalRepository() {
             downloadIntercept(this, node)
             val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials) ?: return null
             val responseName = artifactInfo.getResponseName()
-
+            nodeClient.updateRecentlyUseDate(node.projectId, node.repoName, node.fullPath, context.userId)
             return ArtifactResource(inputStream, responseName, node, ArtifactChannel.LOCAL, useDisposition)
         }
     }
@@ -164,6 +164,7 @@ class GenericLocalRepository : LocalRepository() {
         // 检查目录大小
         checkFolderSize(nodes)
         nodes.forEach {
+            nodeClient.updateRecentlyUseDate(it.projectId, it.repoName, it.fullPath, context.userId)
             val nodeDetail = NodeDetail(it)
             downloadIntercept(context, nodeDetail)
         }

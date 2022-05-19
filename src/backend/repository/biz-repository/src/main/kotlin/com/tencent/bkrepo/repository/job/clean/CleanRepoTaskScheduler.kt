@@ -1,6 +1,7 @@
 package com.tencent.bkrepo.repository.job.clean
 
 import org.quartz.*
+import org.quartz.impl.matchers.GroupMatcher
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
@@ -45,6 +46,10 @@ class CleanRepoTaskScheduler(
             logger.error("Failed to check exist job[$id].", exception)
             false
         }
+    }
+
+    fun listJobKeys(): Set<JobKey> {
+        return scheduler.getJobKeys(GroupMatcher.jobGroupEquals(CLEAN_JOB_GROUP))
     }
 
     companion object {

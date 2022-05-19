@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service
 import java.lang.IllegalArgumentException
 import java.time.Duration
 import java.time.LocalDateTime
+import java.util.*
 
 @Service
 class RepositoryCleanServiceImpl(
@@ -46,11 +47,14 @@ class RepositoryCleanServiceImpl(
             logger.info("projectId:[${repo.projectId}] repoName:[${repo.name}] clean strategy:[$cleanStrategy] execute")
             cleanStrategy?.let {
                 // 自动清理关闭，状态为 WAITING，删除job
+                logger.info(
+                    "projectId:[${repo.projectId}] repoName:[${repo.name}] " +
+                            "clean strategy autoClean:[${it.autoClean}] status:[${it.status}]"
+                )
                 if (!it.autoClean && it.status == CleanStatus.WAITING) {
                     taskScheduler.deleteJob(repoId)
                     return
                 }
-                // 更新【清理策略】状态为 【RUNNING】
                 try {
                     repositoryService.updateCleanStatusRunning(repo.projectId, repo.name)
                 } catch (ex: IllegalArgumentException) {
@@ -65,7 +69,6 @@ class RepositoryCleanServiceImpl(
                 } else {
                     executeClean(repo.projectId, repo.name, it)
                 }
-                // 更新【清理策略】状态为 【WAITING】
                 try {
                     repositoryService.updateCleanStatusWaiting(repo.projectId, repo.name)
                 } catch (ex: IllegalArgumentException) {
@@ -80,16 +83,17 @@ class RepositoryCleanServiceImpl(
 
     /**
      * 执行规则过滤，并删除
+     * TODO 嵌套太深
      */
     private fun executeClean(
         projectId: String,
         repoName: String,
         cleanStrategy: RepositoryCleanStrategy
     ) {
+        // 记录没有被删除的 package 数量，并在分页查询时跳过
         var skip: Long = 0
         var packageList = packageService.listPackagePage(projectId, repoName, DEFAULT_PAGE_SIZE, skip)
         while (packageList.isNotEmpty()) {
-            // 执行规则过滤，并删除
             var deleteVersions: MutableList<PackageVersion>
             var ruleQueryList = mutableListOf<PackageVersion>()
             packageList.forEach {
@@ -102,8 +106,7 @@ class RepositoryCleanServiceImpl(
                         it.repoName,
                         it.key,
                         VersionListOption()
-                    )
-                    // 元数据规则不为null，根据规则查询
+                    ).toMutableList()
                     rule?.let { rule ->
                         ruleQueryList = metadataRuleQuery(rule, it.id!!).toMutableList()
                     }
@@ -111,19 +114,16 @@ class RepositoryCleanServiceImpl(
                         "projectId:[${it.projectId}] repoName:[${it.repoName}] " +
                                 "packageName:[${it.name}] rule query result:[$ruleQueryList]"
                     )
-                    deleteVersions = listVersion.toMutableList()
-                    deleteVersions.removeAll(ruleQueryList)
+                    listVersion.removeAll(ruleQueryList)
                     deleteVersions = reserveVersionsAndDaysFilter(
-                        deleteVersions,
+                        listVersion,
                         reserveVersions,
                         reserveDays
                     ).toMutableList()
-
                     logger.info(
                         "projectId:[${it.projectId}] repoName:[${it.repoName}] clean [packageName:${it.name}] " +
                                 "delete version collection: $deleteVersions"
                     )
-                    // 删除版本集合
                     if (deleteVersions.isNotEmpty()) {
                         if (!deleteVersions.containsAll(listVersion)) skip++
                         deleteVersion(deleteVersions, it.key, it.type, it.projectId, it.repoName)
@@ -177,7 +177,6 @@ class RepositoryCleanServiceImpl(
         val projectIdRule = Rule.QueryRule("projectId", projectId)
         val repoNameRule = Rule.QueryRule("repoName", repoName)
         val allNodeQueryRule = Rule.NestedRule(mutableListOf(projectIdRule, repoNameRule))
-        // 仓库下所有节点集合
         val allNodeList = nodeRuleQuery(allNodeQueryRule)
         // 保留规则查询节点集合
         var reserveNodeList = mutableListOf<NodeDelete>()
@@ -193,18 +192,15 @@ class RepositoryCleanServiceImpl(
             allNodeList.removeAll(reserveNodeList)
             // 保留天数过滤
             deleteNodeList = nodeReserveDaysFilter(allNodeList, reserveDays)
-            if (logger.isDebugEnabled) {
-                logger.debug("project:[$projectId] repoName[$repoName] deleteNodeList:[$reserveNodeList]")
-            }
         }
         if (logger.isDebugEnabled) {
-            logger.debug("projectId:[$projectId] repoName:[$repoName] delete list [$deleteNodeList]");
+            logger.debug("projectId:[$projectId] repoName:[$repoName] delete list [$deleteNodeList]")
         }
         deleteNodeList.forEach {
             // 判断文件夹下是否有文件
             if (it.folder) {
                 val countFileNode =
-                    nodeStatsOperation.countFileNode(ArtifactInfo(it.projectId, it.repoName, it.fullPath))//TODO 数量有差异
+                    nodeStatsOperation.countFileNode(ArtifactInfo(it.projectId, it.repoName, it.fullPath))
                 if (countFileNode > 0) return@forEach
             }
             nodeDeleteOperation.deleteByPath(it.projectId, it.repoName, it.fullPath, SYSTEM_USER)
@@ -218,14 +214,13 @@ class RepositoryCleanServiceImpl(
     private fun nodeRuleQuery(rule: Rule): MutableList<NodeDelete> {
         val result = mutableListOf<NodeDelete>()
         if (rule is Rule.NestedRule && rule.rules.isEmpty()) return result
-        // 处理 fullPath 条件
-        RuleUtils.ruleFullPathToRegex(rule)
+        val newRule = RuleUtils.ruleFullPathToRegex(rule)
         var pageNumber = 1
         val queryModel = QueryModel(
             page = PageLimit(pageNumber, DEFAULT_PAGE_SIZE),
             sort = null,
             select = null,
-            rule = rule
+            rule = newRule
         )
         var nodePage = nodeSearchService.search(queryModel)
         while (nodePage.records.isNotEmpty()) {
@@ -234,8 +229,8 @@ class RepositoryCleanServiceImpl(
                 val repoName = it[TNode::repoName.name] as String
                 val fullPath = it[TNode::fullPath.name] as String
                 val folder = it[TNode::folder.name] as Boolean
-                val lastModifiedDate = it[TNode::lastModifiedDate.name] as LocalDateTime
-                val node = NodeDelete(projectId, repoName, folder, fullPath, lastModifiedDate)
+                val recentlyUseDate = it[TNode::recentlyUseDate.name] as? LocalDateTime
+                val node = NodeDelete(projectId, repoName, folder, fullPath, recentlyUseDate)
                 result.add(node)
             }
             pageNumber += 1
@@ -251,16 +246,22 @@ class RepositoryCleanServiceImpl(
      */
     private fun nodeReserveDaysFilter(nodeList: List<NodeDelete>, reserveDays: Long): MutableList<NodeDelete> {
         val deleteNodeList: MutableList<NodeDelete> = mutableListOf()
-        // 根据【lastModifyDate】降序排序
-        val nodeSortList = nodeList.sortedByDescending { it.lastModifiedDate }
+        val nodeSortList = nodeList.sortedByDescending { it.recentlyUseDate }
         val nowDate = LocalDateTime.now()
         val size = nodeSortList.size
         for (i in 0 until (size)) {
-            val days = Duration.between(nodeSortList[i].lastModifiedDate, nowDate).toDays()
-            if (days > reserveDays) {
+            val recentlyUseDate = nodeSortList[i].recentlyUseDate
+            if (recentlyUseDate == null) {
                 deleteNodeList.addAll(nodeSortList.subList(i, size))
-                break
+                return deleteNodeList
+            } else {
+                val days = Duration.between(recentlyUseDate, nowDate).toDays()
+                if (days > reserveDays) {
+                    deleteNodeList.addAll(nodeSortList.subList(i, size))
+                    return deleteNodeList
+                }
             }
+
         }
         return deleteNodeList
     }
@@ -278,15 +279,23 @@ class RepositoryCleanServiceImpl(
         val sortedByDesc = versions.sortedByDescending { it.ordinal }
         //截取超过【保留版本数】的版本，接下来进行保留天数过滤
         val reserveDaysFilter =
-            sortedByDesc.subList(reserveVersions.toInt(), versions.size).sortedByDescending { it.lastModifiedDate }
-        logger.info("reverse version number filter result:[$reserveDaysFilter]")
+            sortedByDesc.subList(reserveVersions.toInt(), versions.size).sortedByDescending { it.recentlyUseDate }
+        if (logger.isDebugEnabled) {
+            logger.info("reverse version number filter result:[$reserveDaysFilter]")
+        }
         val nowDate = LocalDateTime.now()
         val size = reserveDaysFilter.size
         for (i in 0 until (size)) {
-            val days = Duration.between(reserveDaysFilter[i].lastModifiedDate, nowDate).toDays()
-            if (days > reserveDays) {
+            val recentlyUseDate = reserveDaysFilter[i].recentlyUseDate
+            if (recentlyUseDate == null) {
                 filterVersions.addAll(reserveDaysFilter.subList(i, size))
-                break
+                return filterVersions
+            } else {
+                val days = Duration.between(reserveDaysFilter[i].recentlyUseDate, nowDate).toDays()
+                if (days > reserveDays) {
+                    filterVersions.addAll(reserveDaysFilter.subList(i, size))
+                    return filterVersions
+                }
             }
         }
         return filterVersions

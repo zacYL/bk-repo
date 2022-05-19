@@ -28,6 +28,7 @@
 package com.tencent.bkrepo.repository.service.repo.impl
 
 import com.tencent.bkrepo.auth.api.ServicePermissionResource
+import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_SIZE
 import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
@@ -288,8 +289,6 @@ class RepositoryServiceImpl(
                 repository.configuration = it.toJsonString()
             }
             repositoryDao.save(repository)
-            // 创建清理job
-            cleanTaskReloadManger.createCleanJob(projectId, name)
         }
         publishEvent(buildUpdatedEvent(repoUpdateRequest))
         logger.info("Update repository[$repoUpdateRequest] success.")
@@ -363,7 +362,8 @@ class RepositoryServiceImpl(
             val repoCleanStrategy = getRepoCleanStrategy(projectId, repoName)
             repoCleanStrategy?.let {
                 require(it.status == CleanStatus.WAITING) {
-                    "update clean status to running fail original status is [${it.status}]"
+                    "projectId:[$projectId] repoName:[$repoName] " +
+                            "update clean status to running fail original status is [${it.status}]"
                 }
                 it.status = CleanStatus.RUNNING
                 configuration.cleanStrategy = it
@@ -387,7 +387,8 @@ class RepositoryServiceImpl(
             val repoCleanStrategy = getRepoCleanStrategy(projectId, repoName)
             repoCleanStrategy?.let {
                 require(it.status == CleanStatus.RUNNING) {
-                    "update clean status to waiting fail original status is [${it.status}]"
+                    "projectId:[$projectId] repoName:[$repoName] " +
+                            "update clean status to waiting fail original status is [${it.status}]"
                 }
                 it.status = CleanStatus.WAITING
                 configuration.cleanStrategy = it
@@ -399,6 +400,14 @@ class RepositoryServiceImpl(
                 )
             }
         }
+    }
+
+    override fun allRepoPage(skip: Long): List<TRepository> {
+        val query = Query.query(
+            Criteria.where(TRepository::category.name)
+                .`in`(RepositoryCategory.COMPOSITE, RepositoryCategory.LOCAL)
+        ).skip(skip).limit(DEFAULT_PAGE_SIZE)
+        return repositoryDao.find(query, TRepository::class.java)
     }
 
     /**
@@ -460,7 +469,7 @@ class RepositoryServiceImpl(
                 if (oldCleanStrategy != null && oldCleanStrategy.status == CleanStatus.RUNNING) {
                     logger.warn(
                         "projectId:[${repository.projectId}] repoName:[${repository.name}], clean job:" +
-                                "[${repository.id}] is running, the modification will take  effect at the next execution"
+                                "[${repository.id}] is running, the modification will take effect at the next execution"
                     )
                 }
                 Preconditions.checkArgument(newCleanStrategy.reserveVersions >= 0, "reserveVersions")
@@ -482,7 +491,7 @@ class RepositoryServiceImpl(
      */
     private fun checkMetadataRule(rule: Rule?) {
         if (rule is Rule.NestedRule && rule.rules.isNotEmpty()) {
-            if (! rule.toString().contains("REGEX")) return
+            if (!rule.toString().contains("REGEX")) return
             rule.rules.forEach {
                 when (it) {
                     is Rule.NestedRule -> checkMetadataRule(it)

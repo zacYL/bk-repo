@@ -30,6 +30,7 @@ package com.tencent.bkrepo.repository.service.repo
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.pojo.configuration.clean.RepositoryCleanStrategy
+import com.tencent.bkrepo.repository.model.TRepository
 import com.tencent.bkrepo.repository.pojo.project.RepoRangeQueryRequest
 import com.tencent.bkrepo.repository.pojo.repo.*
 
@@ -168,6 +169,13 @@ interface RepositoryService {
      * RUNNING--->WAITING
      */
     fun updateCleanStatusWaiting(projectId: String, repoName: String)
+
+    /**
+     * 分页查询所有【组合仓库】、【本地仓库】
+     * 默认分页大小
+     * 仓库清理使用
+     */
+    fun allRepoPage(skip: Long): List<TRepository>
 
     fun allRepos(projectId: String?, repoName: String?, repoType: RepositoryType?): List<RepositoryInfo?>
 }

@@ -13,6 +13,6 @@ data class NodeDelete(
     @ApiModelProperty("完整路径")
     val fullPath: String,
     @ApiModelProperty("修改时间")
-    val lastModifiedDate: LocalDateTime
+    val recentlyUseDate: LocalDateTime?
 
 )

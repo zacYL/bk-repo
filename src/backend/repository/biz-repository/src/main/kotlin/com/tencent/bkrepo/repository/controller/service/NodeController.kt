@@ -48,9 +48,9 @@ import com.tencent.bkrepo.repository.pojo.node.service.NodeRenameRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeUpdateRequest
 import com.tencent.bkrepo.repository.service.node.NodeSearchService
 import com.tencent.bkrepo.repository.service.node.NodeService
+import com.tencent.bkrepo.repository.service.repo.ProjectService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import com.tencent.bkrepo.repository.service.repo.ProjectService
 import org.springframework.web.bind.annotation.RestController
 
 /**
@@ -66,6 +66,16 @@ class NodeController(
     override fun getNodeDetail(projectId: String, repoName: String, fullPath: String): Response<NodeDetail?> {
         val artifactInfo = DefaultArtifactInfo(projectId, repoName, fullPath)
         return ResponseBuilder.success(nodeService.getNodeDetail(artifactInfo))
+    }
+
+    override fun updateRecentlyUseDate(
+        projectId: String,
+        repoName: String,
+        fullPath: String,
+        operator: String
+    ): Response<Void> {
+        nodeService.updateRecentlyUseDate(projectId, repoName, fullPath, operator)
+        return ResponseBuilder.success()
     }
 
     override fun checkExist(projectId: String, repoName: String, fullPath: String): Response<Boolean> {

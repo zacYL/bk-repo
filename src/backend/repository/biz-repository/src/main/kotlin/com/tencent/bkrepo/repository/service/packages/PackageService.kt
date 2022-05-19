@@ -209,6 +209,19 @@ interface PackageService {
     )
 
     /**
+     * 更新包版本的【最近使用时间】
+     * @param projectId 项目id
+     * @param repoName 项目id
+     * @param packageKey 包唯一标识
+     */
+    fun updateRecentlyUseDate(
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        versionName: String
+    )
+
+    /**
      * 更新包
      *
      * @param request 包更新请求

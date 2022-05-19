@@ -112,6 +112,16 @@ class PackageController(
         return ResponseBuilder.success()
     }
 
+    override fun updateRecentlyUseDate(
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        version: String
+    ): Response<Void> {
+        packageService.updateRecentlyUseDate(projectId, repoName, packageKey, version)
+        return ResponseBuilder.success()
+    }
+
     override fun updatePackage(request: PackageUpdateRequest, realIpAddress: String?): Response<Void> {
         packageService.updatePackage(request, realIpAddress)
         return ResponseBuilder.success()

@@ -74,6 +74,15 @@ interface NodeClient {
         @RequestParam fullPath: String
     ): Response<NodeDetail?>
 
+    @ApiOperation("更新最近使用时间")
+    @GetMapping("/update/{projectId}/{repoName}")
+    fun updateRecentlyUseDate(
+        @PathVariable projectId: String,
+        @PathVariable repoName: String,
+        @RequestParam fullPath: String,
+        @RequestParam operator:String
+    ): Response<Void>
+
     @ApiOperation("根据路径查看节点是否存在")
     @GetMapping("/exist/{projectId}/{repoName}")
     fun checkExist(

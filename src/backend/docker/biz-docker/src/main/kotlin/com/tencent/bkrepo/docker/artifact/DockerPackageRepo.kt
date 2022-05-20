@@ -137,6 +137,7 @@ class DockerPackageRepo @Autowired constructor(
                 userId
             )
             val realIpAddress = HttpContextHolder.getClientAddress()
+            packageClient.updateRecentlyUseDate(projectId, repoName, packageKey, version)
             try {
                 operateLogClient.saveEvent(
                     EventCreateRequest(

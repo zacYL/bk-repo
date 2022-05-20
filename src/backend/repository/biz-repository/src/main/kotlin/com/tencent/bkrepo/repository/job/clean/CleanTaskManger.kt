@@ -95,12 +95,11 @@ class CleanTaskManger(
         /**
          * 进程启动后加载任务延迟时间
          */
-        private const val RELOAD_INITIAL_DELAY = 20 * 1000L
+        private const val RELOAD_INITIAL_DELAY = 10 * 1000L
 
         /**
-         * 重新加载任务固定延迟时间
+         * 重新加载任务固定延迟时间 30分钟
          */
-        //TODO 间隔加载时间大小设置
-        private const val RELOAD_FIXED_DELAY = 300 * 1000L
+        private const val RELOAD_FIXED_DELAY = 1800 * 1000L
     }
 }

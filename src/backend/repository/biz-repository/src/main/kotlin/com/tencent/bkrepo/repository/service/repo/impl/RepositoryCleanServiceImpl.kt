@@ -75,7 +75,6 @@ class RepositoryCleanServiceImpl(
 
     /**
      * 执行规则过滤，并删除
-     * TODO 日志恢复debug
      */
     private fun executeClean(
         projectId: String,
@@ -101,32 +100,24 @@ class RepositoryCleanServiceImpl(
                 cleanStrategy.rule?.let { rule ->
                     ruleQueryList = metadataRuleQuery(rule, it.id!!).toMutableList()
                 }
-//                if (logger.isDebugEnabled){
-//                    logger.debug(
-//                        "projectId:[${it.projectId}] repoName:[${it.repoName}] " +
-//                                "packageName:[${it.name}] rule query result:[$ruleQueryList]"
-//                    )
-//                }
-                logger.info(
-                    "projectId:[${it.projectId}] repoName:[${it.repoName}] " +
-                            "packageName:[${it.name}] rule query result:[$ruleQueryList]"
-                )
+                if (logger.isDebugEnabled){
+                    logger.debug(
+                        "projectId:[${it.projectId}] repoName:[${it.repoName}] " +
+                                "packageName:[${it.name}] rule query result:[$ruleQueryList]"
+                    )
+                }
                 listVersion.removeAll(ruleQueryList)
                 deleteVersions = reserveVersionsAndDaysFilter(
                     listVersion,
                     cleanStrategy.reserveVersions,
                     cleanStrategy.reserveDays
                 ).toMutableList()
-//                if (logger.isDebugEnabled){
-//                    logger.debug(
-//                        "projectId:[${it.projectId}] repoName:[${it.repoName}] clean [packageName:${it.name}] " +
-//                                "delete version collection: $deleteVersions"
-//                    )
-//                }
-                logger.info(
-                    "projectId:[${it.projectId}] repoName:[${it.repoName}] clean [packageName:${it.name}] " +
-                            "delete version collection: $deleteVersions"
-                )
+                if (logger.isDebugEnabled){
+                    logger.debug(
+                        "projectId:[${it.projectId}] repoName:[${it.repoName}] clean [packageName:${it.name}] " +
+                                "delete version collection: $deleteVersions"
+                    )
+                }
                 if (deleteVersions.isNotEmpty()) {
                     if (!deleteVersions.containsAll(listVersion)) skip++
                     deleteVersion(deleteVersions, it.key, it.type, it.projectId, it.repoName)
@@ -170,7 +161,6 @@ class RepositoryCleanServiceImpl(
 
     /**
      * 执行 Generic 仓库清理
-     * TODO 日志恢复debug
      */
     private fun executeNodeClean(
         projectId: String,
@@ -187,19 +177,17 @@ class RepositoryCleanServiceImpl(
             rule?.let {
                 reserveNodeList = nodeRuleQuery(it)
             }
-//            if (logger.isDebugEnabled) {
-//                logger.debug("project:[$projectId] repoName[$repoName] reverseNodeList:[$reserveNodeList]")
-//            }
-            logger.info("project:[$projectId] repoName[$repoName] reverseNodeList:[$reserveNodeList]")
+            if (logger.isDebugEnabled) {
+                logger.debug("project:[$projectId] repoName[$repoName] reverseNodeList:[$reserveNodeList]")
+            }
             // 取【所有节点集合】 与 【保留规则集合】 的差集
             allNodeList.removeAll(reserveNodeList)
             // 保留天数过滤
             deleteNodeList = nodeReserveDaysFilter(allNodeList, reserveDays)
         }
-//        if (logger.isDebugEnabled) {
-//            logger.debug("projectId:[$projectId] repoName:[$repoName] delete list [$deleteNodeList]")
-//        }
-        logger.info("projectId:[$projectId] repoName:[$repoName] delete list [$deleteNodeList]")
+        if (logger.isDebugEnabled) {
+            logger.debug("projectId:[$projectId] repoName:[$repoName] delete list [$deleteNodeList]")
+        }
         deleteNodeList.forEach {
             // 判断文件夹下是否有文件
             if (it.folder) {
@@ -272,7 +260,6 @@ class RepositoryCleanServiceImpl(
 
     /**
      * 保留版本数，保留天数过滤
-     * TODO 日志恢复debug
      */
     private fun reserveVersionsAndDaysFilter(
         versions: List<PackageVersion>,
@@ -285,10 +272,9 @@ class RepositoryCleanServiceImpl(
         //截取超过【保留版本数】的版本，进行保留天数过滤
         val reserveDaysFilter =
             sortedByDesc.subList(reserveVersions.toInt(), versions.size).sortedByDescending { it.recentlyUseDate }
-//        if (logger.isDebugEnabled) {
-//            logger.info("reverse version number filter result:[$reserveDaysFilter]")
-//        }
-        logger.info("reverse version number filter result:[$reserveDaysFilter]")
+        if (logger.isDebugEnabled) {
+            logger.info("reverse version number filter result:[$reserveDaysFilter]")
+        }
         val nowDate = LocalDateTime.now()
         val size = reserveDaysFilter.size
         for (i in 0 until (size)) {

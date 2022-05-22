@@ -8,6 +8,7 @@ import com.tencent.bkrepo.common.artifact.pojo.configuration.clean.RepositoryCle
 import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.query.model.Rule
+import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.dao.RepositoryDao
 import com.tencent.bkrepo.repository.job.clean.CleanRepoTaskScheduler
@@ -36,9 +37,9 @@ class RepositoryCleanServiceImpl(
     private val repositoryService: RepositoryService,
     private val taskScheduler: CleanRepoTaskScheduler,
     private val packageService: PackageService,
-    private val nodeSearchService: NodeSearchService,
     private val nodeDeleteOperation: NodeDeleteOperation,
-    private val nodeStatsOperation: NodeStatsOperation
+    private val nodeStatsOperation: NodeStatsOperation,
+    private val nodeClient: NodeClient
 ) : RepositoryCleanService {
 
     override fun cleanRepo(repoId: String) {
@@ -214,20 +215,22 @@ class RepositoryCleanServiceImpl(
             select = null,
             rule = newRule
         )
-        var nodePage = nodeSearchService.search(queryModel)
-        while (nodePage.records.isNotEmpty()) {
-            nodePage.records.map {
-                val projectId = it[TNode::projectId.name] as String
-                val repoName = it[TNode::repoName.name] as String
-                val fullPath = it[TNode::fullPath.name] as String
-                val folder = it[TNode::folder.name] as Boolean
-                val recentlyUseDate = it[TNode::recentlyUseDate.name] as? LocalDateTime
-                val node = NodeDelete(projectId, repoName, folder, fullPath, recentlyUseDate)
-                result.add(node)
+        var nodePage = nodeClient.search(queryModel).data
+        nodePage?.let {
+            while (nodePage!!.records.isNotEmpty()) {
+                nodePage!!.records.map {
+                    val projectId = it[TNode::projectId.name] as String
+                    val repoName = it[TNode::repoName.name] as String
+                    val fullPath = it[TNode::fullPath.name] as String
+                    val folder = it[TNode::folder.name] as Boolean
+                    val recentlyUseDate = it[TNode::recentlyUseDate.name] as? LocalDateTime
+                    val node = NodeDelete(projectId, repoName, folder, fullPath, recentlyUseDate)
+                    result.add(node)
+                }
+                pageNumber += 1
+                queryModel.page = PageLimit(pageNumber, DEFAULT_PAGE_SIZE)
+                nodePage = nodeClient.search(queryModel).data
             }
-            pageNumber += 1
-            queryModel.page = PageLimit(pageNumber, DEFAULT_PAGE_SIZE)
-            nodePage = nodeSearchService.search(queryModel)
         }
         return result
     }

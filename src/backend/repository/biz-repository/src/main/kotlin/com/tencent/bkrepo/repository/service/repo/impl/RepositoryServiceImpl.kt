@@ -333,7 +333,7 @@ class RepositoryServiceImpl(
     ): RepositoryCleanStrategy? {
         val configuration = getRepoInfo(projectId, repoName)?.configuration
         requireNotNull(configuration) { "configuration is null at repository: [$repoName] " }
-        if (configuration is CompositeConfiguration) {
+        if (configuration is LocalConfiguration) {
             configuration.cleanStrategy?.let {
                 return it
             }
@@ -347,7 +347,7 @@ class RepositoryServiceImpl(
     ) {
         val repository = checkRepository(projectId, repoName)
         val configuration = repository.configuration.readJsonString<RepositoryConfiguration>()
-        if (configuration is CompositeConfiguration) {
+        if (configuration is LocalConfiguration) {
             val repoCleanStrategy = getRepoCleanStrategy(projectId, repoName)
             repoCleanStrategy?.let {
                 require(it.status == CleanStatus.WAITING) {
@@ -372,7 +372,7 @@ class RepositoryServiceImpl(
     ) {
         val repository = checkRepository(projectId, repoName)
         val configuration = repository.configuration.readJsonString<RepositoryConfiguration>()
-        if (configuration is CompositeConfiguration) {
+        if (configuration is LocalConfiguration) {
             val repoCleanStrategy = getRepoCleanStrategy(projectId, repoName)
             repoCleanStrategy?.let {
                 it.status = CleanStatus.WAITING

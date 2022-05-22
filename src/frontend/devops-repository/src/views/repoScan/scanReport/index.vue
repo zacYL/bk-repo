@@ -105,7 +105,7 @@
     import { mapActions } from 'vuex'
     import { formatDate, segmentNumberThree } from '@repository/utils'
     import { scanStatusEnum, leakLevelEnum } from '@repository/store/publicEnum'
-    const nowTime = new Date()
+    const nowTime = new Date(new Date().toLocaleString().replace(/([0-9]{2}:?){3}$/, '23:59:59'))
     export default {
         name: 'scanReport',
         components: {

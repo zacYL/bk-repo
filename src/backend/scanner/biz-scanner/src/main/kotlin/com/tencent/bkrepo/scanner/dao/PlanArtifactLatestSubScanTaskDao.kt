@@ -35,6 +35,7 @@ import com.tencent.bkrepo.common.scanner.pojo.scanner.SubScanTaskStatus
 import com.tencent.bkrepo.scanner.model.SubScanTaskDefinition
 import com.tencent.bkrepo.scanner.model.TPlanArtifactLatestSubScanTask
 import com.tencent.bkrepo.scanner.model.TSubScanTask
+import com.tencent.bkrepo.scanner.pojo.ScanTaskStatus
 import com.tencent.bkrepo.scanner.pojo.request.PlanArtifactRequest
 import com.tencent.bkrepo.scanner.pojo.request.PlanCountRequest
 import com.tencent.bkrepo.scanner.utils.Converter
@@ -137,6 +138,22 @@ class PlanArtifactLatestSubScanTaskDao(
             val records = find(query.with(pageRequest))
             return Pages.ofResponse(pageRequest, count, records)
         }
+    }
+
+    /**
+     * 获取指定扫描方案可停用的扫描记录
+     *
+     * @param projectId
+     * @param planId
+     *
+     * @return 扫描方案最新的制品扫描结果
+     */
+    fun findToStop(projectId: String, planId: String): List<TPlanArtifactLatestSubScanTask> {
+        val criteria = Criteria
+            .where(SubScanTaskDefinition::projectId.name).isEqualTo(projectId)
+            .and(SubScanTaskDefinition::planId.name).isEqualTo(planId)
+            .and(SubScanTaskDefinition::status.name).`in`(TO_STOP_STATUS)
+        return find(Query(criteria))
     }
 
     /**
@@ -311,5 +328,14 @@ class PlanArtifactLatestSubScanTaskDao(
             .where(SubScanTaskDefinition::projectId.name).isEqualTo(projectId)
             .and(SubScanTaskDefinition::repoName.name).isEqualTo(repoName)
             .and(SubScanTaskDefinition::fullPath.name).isEqualTo(fullPath)
+    }
+
+    companion object {
+        // 可停止扫描记录状态
+        val TO_STOP_STATUS = listOf(
+            SubScanTaskStatus.BLOCKED.name, SubScanTaskStatus.CREATED.name, SubScanTaskStatus.PULLED.name,
+            SubScanTaskStatus.ENQUEUED.name, ScanTaskStatus.PENDING.name, SubScanTaskStatus.EXECUTING.name,
+            ScanTaskStatus.SCANNING_SUBMITTING.name, ScanTaskStatus.SCANNING_SUBMITTED.name
+        )
     }
 }

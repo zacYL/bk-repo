@@ -172,6 +172,20 @@ class ScanServiceImpl @Autowired constructor(
     }
 
     @Transactional(rollbackFor = [Throwable::class])
+    override fun stopScanPlan(projectId: String, planId: String): Boolean {
+        val subTasks = planArtifactLatestSubScanTaskDao.findToStop(projectId, planId)
+        logger.info("stopScanPlan:${subTasks.toJsonString()}")
+        subTasks.forEach { subTask ->
+            try {
+                subTask.latestSubScanTaskId?.let { stopSubtask(subTask.projectId, it) }
+            } catch (e: NotFoundException) {
+                logger.error("stop subTask[${subTask.latestSubScanTaskId}] error", e)
+            }
+        }
+        return true
+    }
+
+    @Transactional(rollbackFor = [Throwable::class])
     override fun stopSubtask(projectId: String, subtaskId: String): Boolean {
         val subtask = subScanTaskDao.find(projectId, subtaskId)
             ?: throw NotFoundException(CommonMessageCode.RESOURCE_NOT_FOUND)

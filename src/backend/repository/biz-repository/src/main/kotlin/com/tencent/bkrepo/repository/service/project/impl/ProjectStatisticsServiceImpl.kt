@@ -100,18 +100,26 @@ class ProjectStatisticsServiceImpl(
         var downloadCountSum = 0L
         var uploadCountSum = 0L
 
-        // 查询上传和下载数据并统计
         val logQuery = nodeOperateLogQuery(projectId, "SUMMARY", fromDate, toDate)
-        queryNodeRecords(logQuery).forEach {
-            val day = daysDetail[ChronoUnit.DAYS.between(fromDate, it.createdDate.toLocalDate()).toInt()]
-            if (it.type == EventType.NODE_DOWNLOADED) {
-                downloadedUsers.add(it.userId)
-                day.downloadCount ++
-                downloadCountSum ++
-            } else {
-                uploadedUsers.add(it.userId)
-                day.uploadCount ++
-                uploadCountSum ++
+        var page = 1
+        // 分页查询待统计的操作记录直到没有结果为止
+        while (true) {
+            val pageRecords = queryNodeRecords(logQuery, page++)
+            if (pageRecords.isEmpty()) {
+                break
+            }
+            // 统计本页的每条记录
+            pageRecords.forEach {
+                val day = daysDetail[ChronoUnit.DAYS.between(fromDate, it.createdDate.toLocalDate()).toInt()]
+                if (it.type == EventType.NODE_DOWNLOADED) {
+                    downloadedUsers.add(it.userId)
+                    day.downloadCount++
+                    downloadCountSum++
+                } else {
+                    uploadedUsers.add(it.userId)
+                    day.uploadCount++
+                    uploadCountSum++
+                }
             }
         }
 
@@ -129,17 +137,30 @@ class ProjectStatisticsServiceImpl(
     ): List<NodeDownloadCount> {
         val logQuery = nodeOperateLogQuery(projectId, "DOWNLOAD", fromDate, toDate)
         val result = mutableListOf<NodeDownloadCount>()
-        queryNodeRecords(logQuery).groupBy { it.resourceKey }.forEach {
-            val element = it.value.first()
-            val fullPath = element.resourceKey
-            val name = fullPath.split("/").last()
-            result.add(NodeDownloadCount(element.repoName.toString(), fullPath, name, it.value.size.toLong()))
+        var page = 1
+        // 分页查询直到没有结果为止
+        while (true) {
+            val pageRecords = queryNodeRecords(logQuery, page++)
+            if (pageRecords.isEmpty()) {
+                break
+            }
+            // 把每一页的结果先统计好并放到结果list，一个文件可能会有分布在不同页的多个统计结果
+            pageRecords.groupBy { it.resourceKey }.forEach {
+                val element = it.value.first()
+                val fullPath = element.resourceKey
+                val name = fullPath.split("/").last()
+                result.add(NodeDownloadCount(element.repoName.toString(), fullPath, name, it.value.size.toLong()))
+            }
+        }
+        // 将相同的文件的统计结果聚合起来
+        result.groupBy { it.fullPath }.values.forEach {
+            it.reduce { acc, element -> acc.apply { downloadCount += element.downloadCount } }
         }
         return result.sortedByDescending { it.downloadCount }
     }
 
-    private fun queryNodeRecords(query: Query): List<TOperateLog> {
-        val pageRequest = Pages.ofRequest(1, MAX_QUERY_COUNT)
+    private fun queryNodeRecords(query: Query, page: Int): List<TOperateLog> {
+        val pageRequest = Pages.ofRequest(page, PAGE_SIZE)
         return operateLogDao.find(query.with(pageRequest))
     }
 
@@ -188,6 +209,6 @@ class ProjectStatisticsServiceImpl(
     }
 
     companion object {
-        private const val MAX_QUERY_COUNT = 9999999
+        private const val PAGE_SIZE = 10
     }
 }

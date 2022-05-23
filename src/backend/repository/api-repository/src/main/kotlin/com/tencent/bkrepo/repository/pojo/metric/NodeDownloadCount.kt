@@ -12,5 +12,5 @@ data class NodeDownloadCount(
     @ApiModelProperty("文件名")
     val name: String,
     @ApiModelProperty("下载量")
-    val downloadCount: Long
+    var downloadCount: Long
 )

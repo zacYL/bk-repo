@@ -136,6 +136,7 @@ class ProjectStatisticsServiceImpl(
         toDate: LocalDate
     ): List<NodeDownloadCount> {
         val logQuery = nodeOperateLogQuery(projectId, "DOWNLOAD", fromDate, toDate)
+        val countList = mutableListOf<NodeDownloadCount>()
         val result = mutableListOf<NodeDownloadCount>()
         var page = 1
         // 分页查询直到没有结果为止
@@ -144,17 +145,17 @@ class ProjectStatisticsServiceImpl(
             if (pageRecords.isEmpty()) {
                 break
             }
-            // 把每一页的结果先统计好并放到结果list，一个文件可能会有分布在不同页的多个统计结果
+            // 把每一页的结果先统计好并放到countList，一个文件可能会有分布在不同页的多个统计结果
             pageRecords.groupBy { it.resourceKey }.forEach {
                 val element = it.value.first()
                 val fullPath = element.resourceKey
                 val name = fullPath.split("/").last()
-                result.add(NodeDownloadCount(element.repoName.toString(), fullPath, name, it.value.size.toLong()))
+                countList.add(NodeDownloadCount(element.repoName.toString(), fullPath, name, it.value.size.toLong()))
             }
         }
-        // 将相同的文件的统计结果聚合起来
-        result.groupBy { it.fullPath }.values.forEach {
-            it.reduce { acc, element -> acc.apply { downloadCount += element.downloadCount } }
+        // 将相同的文件的统计结果聚合起来，聚合结果存放到result
+        countList.groupBy { it.fullPath }.values.forEach {
+            result.add(it.reduce { acc, element -> acc.apply { downloadCount += element.downloadCount } })
         }
         return result.sortedByDescending { it.downloadCount }
     }
@@ -209,6 +210,6 @@ class ProjectStatisticsServiceImpl(
     }
 
     companion object {
-        private const val PAGE_SIZE = 10
+        private const val PAGE_SIZE = 1000
     }
 }

@@ -223,7 +223,9 @@ class RepositoryCleanServiceImpl(
                     val repoName = it[TNode::repoName.name] as String
                     val fullPath = it[TNode::fullPath.name] as String
                     val folder = it[TNode::folder.name] as Boolean
-                    val recentlyUseDate = it[TNode::recentlyUseDate.name] as? LocalDateTime
+                    val recentlyUseDate = it[TNode::recentlyUseDate.name]?.let { date ->
+                        LocalDateTime.parse(date.toString())
+                    }
                     val node = NodeDelete(projectId, repoName, folder, fullPath, recentlyUseDate)
                     result.add(node)
                 }

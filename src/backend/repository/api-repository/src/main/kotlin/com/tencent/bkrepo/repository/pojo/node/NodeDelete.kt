@@ -12,7 +12,9 @@ data class NodeDelete(
     val folder: Boolean,
     @ApiModelProperty("完整路径")
     val fullPath: String,
-    @ApiModelProperty("修改时间")
+    @ApiModelProperty("创建时间")
+    val createdDate: LocalDateTime,
+    @ApiModelProperty("最近使用时间")
     val recentlyUseDate: LocalDateTime?
 
 )

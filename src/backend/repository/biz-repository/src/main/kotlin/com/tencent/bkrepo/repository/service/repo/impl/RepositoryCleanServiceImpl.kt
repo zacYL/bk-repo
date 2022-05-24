@@ -17,7 +17,6 @@ import com.tencent.bkrepo.repository.model.TPackageVersion
 import com.tencent.bkrepo.repository.pojo.node.NodeDelete
 import com.tencent.bkrepo.repository.pojo.packages.*
 import com.tencent.bkrepo.repository.service.node.NodeDeleteOperation
-import com.tencent.bkrepo.repository.service.node.NodeSearchService
 import com.tencent.bkrepo.repository.service.node.NodeStatsOperation
 import com.tencent.bkrepo.repository.service.packages.PackageService
 import com.tencent.bkrepo.repository.service.repo.RepositoryCleanService
@@ -26,7 +25,6 @@ import com.tencent.bkrepo.repository.util.ArtifactClientServiceFactory
 import com.tencent.bkrepo.repository.util.RuleUtils
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.lang.IllegalArgumentException
 import java.time.Duration
 import java.time.LocalDateTime
 import java.util.*
@@ -101,7 +99,7 @@ class RepositoryCleanServiceImpl(
                 cleanStrategy.rule?.let { rule ->
                     ruleQueryList = metadataRuleQuery(rule, it.id!!).toMutableList()
                 }
-                if (logger.isDebugEnabled){
+                if (logger.isDebugEnabled) {
                     logger.debug(
                         "projectId:[${it.projectId}] repoName:[${it.repoName}] " +
                                 "packageName:[${it.name}] rule query result:[$ruleQueryList]"
@@ -113,7 +111,7 @@ class RepositoryCleanServiceImpl(
                     cleanStrategy.reserveVersions,
                     cleanStrategy.reserveDays
                 ).toMutableList()
-                if (logger.isDebugEnabled){
+                if (logger.isDebugEnabled) {
                     logger.debug(
                         "projectId:[${it.projectId}] repoName:[${it.repoName}] clean [packageName:${it.name}] " +
                                 "delete version collection: $deleteVersions"
@@ -223,10 +221,11 @@ class RepositoryCleanServiceImpl(
                     val repoName = it[TNode::repoName.name] as String
                     val fullPath = it[TNode::fullPath.name] as String
                     val folder = it[TNode::folder.name] as Boolean
+                    val createdDate = LocalDateTime.parse(it[TNode::createdDate.name].toString())
                     val recentlyUseDate = it[TNode::recentlyUseDate.name]?.let { date ->
                         LocalDateTime.parse(date.toString())
                     }
-                    val node = NodeDelete(projectId, repoName, folder, fullPath, recentlyUseDate)
+                    val node = NodeDelete(projectId, repoName, folder, fullPath, createdDate, recentlyUseDate)
                     result.add(node)
                 }
                 pageNumber += 1
@@ -243,22 +242,16 @@ class RepositoryCleanServiceImpl(
      */
     private fun nodeReserveDaysFilter(nodeList: List<NodeDelete>, reserveDays: Long): MutableList<NodeDelete> {
         val deleteNodeList: MutableList<NodeDelete> = mutableListOf()
-        val nodeSortList = nodeList.sortedByDescending { it.recentlyUseDate }
         val nowDate = LocalDateTime.now()
-        val size = nodeSortList.size
-        for (i in 0 until (size)) {
-            val recentlyUseDate = nodeSortList[i].recentlyUseDate
-            if (recentlyUseDate == null) {
-                deleteNodeList.addAll(nodeSortList.subList(i, size))
-                return deleteNodeList
-            } else {
-                val days = Duration.between(recentlyUseDate, nowDate).toDays()
-                if (days > reserveDays) {
-                    deleteNodeList.addAll(nodeSortList.subList(i, size))
-                    return deleteNodeList
-                }
+        nodeList.forEach {
+            var useDays = Long.MAX_VALUE
+            if (it.recentlyUseDate != null){
+                useDays = Duration.between(it.recentlyUseDate, nowDate).toDays()
             }
-
+            val createdDays = Duration.between(it.createdDate, nowDate).toDays()
+            if (createdDays > reserveDays && useDays > reserveDays){
+                deleteNodeList.add(it)
+            }
         }
         return deleteNodeList
     }
@@ -278,21 +271,17 @@ class RepositoryCleanServiceImpl(
         val reserveDaysFilter =
             sortedByDesc.subList(reserveVersions.toInt(), versions.size).sortedByDescending { it.recentlyUseDate }
         if (logger.isDebugEnabled) {
-            logger.info("reverse version number filter result:[$reserveDaysFilter]")
+            logger.debug("reverse version number filter result:[$reserveDaysFilter]")
         }
         val nowDate = LocalDateTime.now()
-        val size = reserveDaysFilter.size
-        for (i in 0 until (size)) {
-            val recentlyUseDate = reserveDaysFilter[i].recentlyUseDate
-            if (recentlyUseDate == null) {
-                filterVersions.addAll(reserveDaysFilter.subList(i, size))
-                return filterVersions
-            } else {
-                val days = Duration.between(reserveDaysFilter[i].recentlyUseDate, nowDate).toDays()
-                if (days > reserveDays) {
-                    filterVersions.addAll(reserveDaysFilter.subList(i, size))
-                    return filterVersions
-                }
+        reserveDaysFilter.forEach {
+            var useDays = Long.MAX_VALUE
+            if (it.recentlyUseDate != null){
+                useDays = Duration.between(it.recentlyUseDate, nowDate).toDays()
+            }
+            val createdDays = Duration.between(it.createdDate, nowDate).toDays()
+            if (createdDays > reserveDays && useDays > reserveDays){
+                filterVersions.add(it)
             }
         }
         return filterVersions

@@ -10,6 +10,7 @@ object ArtifactClientServiceFactory {
         map[PackageType.NPM] = SpringContextUtils.getBean(NpmClientService::class.java)
         map[PackageType.MAVEN] = SpringContextUtils.getBean(MavenClientService::class.java)
         map[PackageType.DOCKER] = SpringContextUtils.getBean(DockerClientService::class.java)
+        map[PackageType.HELM] = SpringContextUtils.getBean(HelmClientService::class.java)
         //TODO 其他依赖源
     }
 
@@ -17,7 +18,7 @@ object ArtifactClientServiceFactory {
         val clientService = map[packageType]
         clientService?.let {
             return clientService
-        }?:return SpringContextUtils.getBean(OtherClientService::class.java)
+        }?:return SpringContextUtils.getBean(DefaultClientService::class.java)
 
     }
 }

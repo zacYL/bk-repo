@@ -69,7 +69,7 @@ class DependencyScanExecutor @Autowired constructor(
             logger.info("scan file path:$filePath")
             // 执行扫描
             val dependencyInfo = DependencyCheckerUtils.scanWithInfo(filePath)
-            return result(dependencyInfo)
+            return result(dependencyInfo, filePath)
         } catch (e: Exception) {
             logger.error(logMsg(task, "scan failed"), e)
             throw e
@@ -84,7 +84,7 @@ class DependencyScanExecutor @Autowired constructor(
     /**
      * 解析扫描结果
      */
-    private fun result(dependencyInfo: DependencyInfo): DependencyScanExecutorResult {
+    private fun result(dependencyInfo: DependencyInfo, prefix: String): DependencyScanExecutorResult {
         logger.info("dependencyInfo:${dependencyInfo.toJsonString()}")
         val dependencyItems = mutableListOf<DependencyItem>()
         // 遍历依赖
@@ -107,7 +107,7 @@ class DependencyScanExecutor @Autowired constructor(
                             references = vulnerability.references.map { reference -> reference.url },
                             cvssV2Vector = vulnerability.cvssv2,
                             cvssV3 = vulnerability.cvssv3,
-                            path = dependency.filePath
+                            path = dependency.filePath.removePrefix(prefix)
                         )
                     )
                 }

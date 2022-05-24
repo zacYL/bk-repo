@@ -51,7 +51,7 @@
                         :list="[
                             { label: '报告', clickEvent: () => showScanReport(row) },
                             { label: '设置', clickEvent: () => showScanConfig(row) },
-                            // { label: '中止', clickEvent: () => stopScanHandler(row) },
+                            { label: '中止', clickEvent: () => stopScanHandler(row) },
                             { label: '扫描', clickEvent: () => startScanHandler(row) },
                             { label: '删除', clickEvent: () => deleteScanHandler(row) }
                         ]"></operation-list>
@@ -111,7 +111,8 @@
             formatDate,
             ...mapActions([
                 'getScanList',
-                'deleteScan'
+                'deleteScan',
+                'stopScan'
             ]),
             showCreateDialog () {
                 this.$refs.createScanDialog.setData({
@@ -199,17 +200,18 @@
             stopScanHandler ({ id, name }) {
                 this.$confirm({
                     theme: 'danger',
-                    message: `确认中止扫描计划 ${name} 的全部扫描任务?`,
+                    message: `确认中止扫描方案 ${name} 的所有扫描任务?`,
                     confirmFn: () => {
-                        // return this.deletePlan({
-                        //     id
-                        // }).then(() => {
-                        //     this.handlerPaginationChange()
-                        //     this.$bkMessage({
-                        //         theme: 'success',
-                        //         message: '删除计划' + this.$t('success')
-                        //     })
-                        // })
+                        return this.stopScan({
+                            projectId: this.projectId,
+                            id
+                        }).then(() => {
+                            this.handlerPaginationChange()
+                            this.$bkMessage({
+                                theme: 'success',
+                                message: '中止方案' + this.$t('success')
+                            })
+                        })
                     }
                 })
             }

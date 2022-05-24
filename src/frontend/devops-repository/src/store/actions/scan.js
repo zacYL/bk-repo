@@ -79,12 +79,13 @@ export default {
         )
     },
     // 中止扫描
-    stopScan (_, { projectId, recordId }) {
+    stopScan (_, { projectId, id, recordId }) {
         return Vue.prototype.$ajax.post(
             `${prefix}/${projectId}/stop`,
             null,
             {
                 params: {
+                    id,
                     recordId
                 }
             }

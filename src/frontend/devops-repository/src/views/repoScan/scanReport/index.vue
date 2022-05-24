@@ -10,7 +10,7 @@
                 placeholder="请选择日期范围"
                 @change="changeFilterTime">
             </bk-date-picker>
-            <!-- <bk-button class="mr10" theme="default" @click="stopScanHandler">中止扫描</bk-button> -->
+            <bk-button class="mr10" theme="default" @click="stopScanHandler">中止扫描</bk-button>
             <bk-button class="mr10" theme="default" @click="startScanHandler">立即扫描</bk-button>
             <bk-button theme="default" @click="scanSettingHandler">设置</bk-button>
         </div>
@@ -242,17 +242,18 @@
                 if (!recordId) {
                     this.$confirm({
                         theme: 'danger',
-                        message: `确认中止扫描计划 ${this.baseInfo.name} 的全部扫描任务?`,
+                        message: `确认中止扫描方案 ${this.baseInfo.name} 的所有扫描任务?`,
                         confirmFn: () => {
-                            // return this.deletePlan({
-                            //     id
-                            // }).then(() => {
-                            //     this.handlerPaginationChange()
-                            //     this.$bkMessage({
-                            //         theme: 'success',
-                            //         message: '删除计划' + this.$t('success')
-                            //     })
-                            // })
+                            return this.stopScan({
+                                projectId: this.projectId,
+                                id: this.planId
+                            }).then(() => {
+                                this.$bkMessage({
+                                    theme: 'success',
+                                    message: '中止方案' + this.$t('success')
+                                })
+                                this.getReportListHandler()
+                            })
                         }
                     })
                 } else {

@@ -352,6 +352,8 @@ class PackageServiceImpl(
         tPackageVersion.recentlyUseDate = now
         tPackageVersion.lastModifiedDate = now
         packageVersionDao.save(tPackageVersion)
+        logger.info("update package version [$projectId/$repoName/$packageKey-$versionName] " +
+                "recentlyUseDate and lastModifiedDate success")
     }
 
     override fun updatePackage(request: PackageUpdateRequest, realIpAddress: String?) {
@@ -416,6 +418,7 @@ class PackageServiceImpl(
         ArtifactContextHolder.getRepository().download(context)
         val userId = SecurityUtils.getUserId()
         if (HttpContextHolder.getRequest().method.equals("get", ignoreCase = true)) {
+            updateRecentlyUseDate(projectId, repoName, packageKey, versionName)
             try {
                 val downloadRecord = PackageDownloadRecord(projectId, repoName, packageKey, versionName, userId)
                 packageDownloadsService.record(downloadRecord)

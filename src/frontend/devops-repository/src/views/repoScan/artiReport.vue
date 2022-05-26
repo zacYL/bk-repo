@@ -265,6 +265,8 @@
     overflow: hidden;
     background-color: white;
     .base-info {
+        height: 100%;
+        overflow-y: auto;
         padding: 0 20px;
         flex-basis: 300px;
         border: 1px solid var(--borderColor);

@@ -55,6 +55,13 @@ open class CookieAuthHandler(properties: JwtAuthProperties) : HttpAuthHandler {
         for (cookie in cookies) {
             if (cookie.name == BKREPO_TICKET) {
                 logger.debug("found cookie [${cookie.name} : ${cookie.value}]")
+                logger.debug("session id: ${request.session.id}")
+                val ticket = request.session.getAttribute(BKREPO_TICKET)
+                    ?: throw AuthenticationException()
+                // 当服务器上token 与请求token不一致时，有可能为非法攻击请求
+                if (ticket != cookie.value) {
+                    throw AuthenticationException()
+                }
                 return CookieAuthCredentials(cookie.value)
             }
         }

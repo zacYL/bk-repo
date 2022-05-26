@@ -48,6 +48,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import javax.servlet.http.Cookie
+import javax.servlet.http.HttpSession
 
 @RestController
 @RequestMapping("/api/user")
@@ -289,7 +290,8 @@ class UserUserController(
         @ApiParam(value = "用户id")
         @RequestParam("uid") uid: String,
         @ApiParam(value = "用户token")
-        @RequestParam("token") token: String
+        @RequestParam("token") token: String,
+        session: HttpSession
     ): Response<Boolean> {
         val decryptToken: String?
         try {
@@ -303,10 +305,12 @@ class UserUserController(
         }
         if (user.locked) throw AuthenticationException(messageCode = AuthMessageCode.AUTH_USER_LOCKED)
         val ticket = JwtUtils.generateToken(signingKey, jwtProperties.expiration, uid)
-        val cookie = Cookie(BKREPO_TICKET, ticket)
-        cookie.path = "/"
-        cookie.maxAge = 60 * 60 * 24
+        val cookie = Cookie(BKREPO_TICKET, ticket).apply {
+            path = "/"
+            maxAge = 60 * 60 * 24
+        }
         HttpContextHolder.getResponse().addCookie(cookie)
+        session.setAttribute(BKREPO_TICKET, ticket)
         return ResponseBuilder.success(true)
     }
 

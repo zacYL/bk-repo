@@ -105,6 +105,14 @@ class AuthInterceptor : HandlerInterceptor {
                 ?: throw AuthenticationException(AuthMessageCode.AUTH_LOGIN_TOKEN_CHECK_FAILED.name)
             for (cookie in cookies) {
                 if (cookie.name == BKREPO_TICKET) {
+                    // 获取session id
+                    logger.debug("session id: ${request.session.id}")
+                    val ticket = request.session.getAttribute(BKREPO_TICKET)
+                        ?: throw AuthenticationException()
+                    // 当服务器上token 与请求token不一致时，有可能为非法攻击请求
+                    if (ticket != cookie.value) {
+                        throw AuthenticationException()
+                    }
                     // 读取用户信息
                     val signingKey: Key = JwtUtils.createSigningKey(jwtProperties.secretKey)
                     val userId = JwtUtils.validateToken(signingKey, cookie.value).body.subject

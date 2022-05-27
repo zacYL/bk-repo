@@ -30,7 +30,9 @@ package com.tencent.bkrepo.replication.dao
 import com.tencent.bkrepo.common.mongo.dao.simple.SimpleMongoDao
 import com.tencent.bkrepo.replication.model.TReplicaTask
 import org.springframework.data.mongodb.core.query.Query
+import org.springframework.data.mongodb.core.query.and
 import org.springframework.data.mongodb.core.query.isEqualTo
+import org.springframework.data.mongodb.core.query.where
 import org.springframework.stereotype.Repository
 
 /**
@@ -47,10 +49,13 @@ class ReplicaTaskDao : SimpleMongoDao<TReplicaTask>() {
     }
 
     /**
-     * 根据[name]查找任务
+     * 根据[projectId] & [name]查找任务
      */
-    fun findByName(name: String): TReplicaTask? {
-        return this.findOne(Query(TReplicaTask::name.isEqualTo(name)))
+    fun findByName(name: String, projectId: String): TReplicaTask? {
+
+        val criteria = where(TReplicaTask::projectId).isEqualTo(projectId)
+            .and(TReplicaTask::name).isEqualTo(name)
+        return this.findOne(Query(criteria))
     }
 
     /**

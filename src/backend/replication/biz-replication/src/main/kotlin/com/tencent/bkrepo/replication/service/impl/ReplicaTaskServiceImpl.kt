@@ -189,7 +189,7 @@ class ReplicaTaskServiceImpl(
     private fun validateRequest(request: ReplicaTaskCreateRequest) {
         with(request) {
             // 验证任务是否存在
-            replicaTaskDao.findByName(name)?.let {
+            replicaTaskDao.findByName(name, localProjectId)?.let {
                 throw ErrorCodeException(CommonMessageCode.RESOURCE_EXISTED, name)
             }
             Preconditions.checkNotBlank(name, this::name.name)
@@ -286,13 +286,13 @@ class ReplicaTaskServiceImpl(
 
     override fun copy(request: ReplicaTaskCopyRequest) {
         with(request) {
-            // 校验同名任务冲突
-            replicaTaskDao.findByName(name)?.let {
-                throw ErrorCodeException(CommonMessageCode.RESOURCE_EXISTED, name)
-            }
             // 获取任务
             val tReplicaTask = replicaTaskDao.findByKey(key)
                 ?: throw ErrorCodeException(ReplicationMessageCode.REPLICA_TASK_NOT_FOUND, key)
+            // 校验同名任务冲突
+            replicaTaskDao.findByName(name, tReplicaTask.projectId)?.let {
+                throw ErrorCodeException(CommonMessageCode.RESOURCE_EXISTED, name)
+            }
             // 初始化任务状态设置
             val copyKey = uniqueId()
             val userId = SecurityUtils.getUserId()

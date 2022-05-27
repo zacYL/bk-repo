@@ -160,7 +160,7 @@ const routes = [
                 meta: {
                     breadcrumb: [
                         { name: 'repoScan', label: '制品扫描' },
-                        { name: 'scanReport', label: '{scanName}', template: '扫描报告' }
+                        { name: 'scanReport', label: '{scanName}', template: '扫描详情' }
                     ]
                 }
             },
@@ -173,7 +173,7 @@ const routes = [
                     if (to.query.scanName) {
                         to.meta.breadcrumb = [
                             { name: 'repoScan', label: '制品扫描' },
-                            { name: 'scanReport', label: '{scanName}', template: '扫描报告' },
+                            { name: 'scanReport', label: '{scanName}', template: '扫描详情' },
                             { name: 'artiReport', label: '{artiName}', template: '制品扫描结果' }
                         ]
                     } else if (repoType === 'generic') {
@@ -211,7 +211,7 @@ const routes = [
                 meta: {
                     breadcrumb: [
                         { name: 'repoScan', label: '制品扫描' },
-                        { name: 'scanReport', label: '{scanName}', template: '扫描报告' },
+                        { name: 'scanReport', label: '{scanName}', template: '扫描详情' },
                         { name: 'startScan', label: '立即扫描' }
                     ]
                 }

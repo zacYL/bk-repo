@@ -14,14 +14,14 @@
             <bk-button class="mr10" theme="default" @click="startScanHandler">立即扫描</bk-button>
             <bk-button theme="default" @click="scanSettingHandler">设置</bk-button>
         </div>
-        <div class="report-overview flex-align-center display-block" data-title="报告总览">
+        <div class="report-overview flex-align-center display-block" data-title="方案总览">
             <div class="base-info-item flex-column"
                 v-for="item in baseInfoList" :key="item.key">
                 <span class="base-info-key">{{ item.label }}</span>
                 <span class="base-info-value" :style="{ color: item.color }">{{ segmentNumberThree(baseInfo[item.key] || 0) }}</span>
             </div>
         </div>
-        <div class="report-list display-block" data-title="扫描制品列表" v-bkloading="{ isLoading }">
+        <div class="report-list display-block" data-title="扫描记录" v-bkloading="{ isLoading }">
             <!-- <i class="devops-icon icon-filter-shape" @click="filter.show = true"></i> -->
             <bk-button class="report-filter" theme="default" @click="showFilterForm">筛选</bk-button>
             <bk-table

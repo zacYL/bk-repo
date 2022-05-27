@@ -64,7 +64,11 @@
                 row-key="leakKey"
                 size="small">
                 <template #empty>
-                    <empty-data :is-loading="isLoading"></empty-data>
+                    <empty-data
+                        :is-loading="isLoading"
+                        :search="Boolean(filter.vulId || filter.severity)"
+                        title="未扫描到漏洞">
+                    </empty-data>
                 </template>
                 <bk-table-column type="expand" width="30">
                     <template #default="{ row }">

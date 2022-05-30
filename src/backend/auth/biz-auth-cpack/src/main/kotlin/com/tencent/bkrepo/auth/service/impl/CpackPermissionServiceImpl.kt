@@ -182,9 +182,41 @@ open class CpackPermissionServiceImpl constructor(
         logger.info("update permission user request:[$request]")
         with(request) {
             checkPermissionExist(permissionId)
+            findPermissionById(permissionId)?.let { permission ->
+                if(permission.resourceType == ResourceType.PROJECT) {
+                    deleteRepoPermissionUserId(permission, request.userId)
+                }
+            }
             return updatePermissionById(permissionId, TPermission::users.name, userId)
         }
     }
+
+    private fun deleteRepoPermissionUserId(permission: Permission, userList: List<String>) {
+        val deleteUsers = permission.users.filter { !userList.contains(it)}
+        if(deleteUsers.isEmpty()) { return }
+        for(userId in deleteUsers) {
+            userRepository.findFirstByUserId(userId)?.let { tUser ->
+                val query = PermissionQueryHelper.buildProjectUserCheck(
+                    projectId = permission.projectId!!,
+                    uid = userId,
+                    roles = tUser.roles
+                )
+                val result = mongoTemplate.find(query, TPermission::class.java)
+                    .filter { it.id != permission.id }
+                if (result.isNotEmpty()) { return }
+                val permissions = permissionRepository.findAllByProjectIdAndResourceTypeAndUsersIn(
+                    permission.projectId!!,
+                    ResourceType.REPO,
+                    userId
+                )
+                for(p in permissions) {
+                    updatePermissionById(p.id!!, TPermission::users.name, p.users.filter { it != userId })
+                }
+            }
+        }
+    }
+
+
 
     override fun updatePermissionRole(request: UpdatePermissionRoleRequest): Boolean {
         logger.info("update permission role request:[$request]")
@@ -228,11 +260,14 @@ open class CpackPermissionServiceImpl constructor(
         // check user project admin
         if (checkProjectUserAdmin(request)) return true
 
-        // check user repo admin
-        if (checkRepoUserAdmin(request)) return true
-
         // check role project admin
         if (checkProjectAdmin(request, user.roles)) return true
+
+        // check user is project user, 如果用户不是项目成员，则不能访问项目下仓库
+        if (!checkProjectUser(request, user.roles)) return false
+
+        // check user repo admin
+        if (checkRepoUserAdmin(request)) return true
 
         // check role repo admin
         if (checkRepoAdmin(request, user.roles)) return true
@@ -271,9 +306,22 @@ open class CpackPermissionServiceImpl constructor(
         return false
     }
 
+    /**
+     * 查询用户是否为当前项目成员
+     */
+    private fun checkProjectUser(request: CheckPermissionRequest, roles: List<String>): Boolean {
+        val query = PermissionQueryHelper.buildProjectUserCheck(
+            projectId = request.projectId!!,
+            uid = request.uid,
+            roles = roles
+        )
+        val result = mongoTemplate.count(query, TPermission::class.java)
+        return result != 0L
+    }
+
     fun checkProjectAdmin(request: CheckPermissionRequest, roles: List<String>): Boolean {
         if (roles.isNotEmpty() && request.projectId != null) {
-            roles.filter { it.isNotEmpty() }.forEach {
+            roles.filter { it != null && it.isNotBlank() }.forEach {
                 val role = roleRepository.findFirstByIdAndProjectIdAndType(it, request.projectId!!, RoleType.PROJECT)
                 if (role != null && role.admin) return true
             }
@@ -284,7 +332,7 @@ open class CpackPermissionServiceImpl constructor(
     fun checkRepoAdmin(request: CheckPermissionRequest, roles: List<String>): Boolean {
         // check role repo admin
         if (roles.isNotEmpty() && request.projectId != null && request.repoName != null) {
-            roles.filter { it.isNotEmpty() }.forEach {
+            roles.filter { it != null && it.isNotEmpty() }.forEach {
                 val rRole = roleRepository.findFirstByIdAndProjectIdAndTypeAndRepoName(
                     it,
                     request.projectId!!,

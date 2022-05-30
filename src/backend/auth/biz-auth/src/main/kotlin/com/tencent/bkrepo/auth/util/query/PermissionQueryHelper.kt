@@ -41,11 +41,25 @@ object PermissionQueryHelper {
         roles: List<String>
     ): Query {
         val criteria = Criteria()
-        var celeriac = criteria.orOperator(
+        val celeriac = criteria.orOperator(
             Criteria.where(TPermission::users.name).`in`(uid),
             Criteria.where(TPermission::roles.name).`in`(roles)
         ).and(TPermission::resourceType.name).`is`(ResourceType.PROJECT)
             .and(TPermission::actions.name).`in`(action)
+            .and(TPermission::projectId.name).`is`(projectId)
+        return Query(celeriac)
+    }
+
+    fun buildProjectUserCheck(
+        projectId: String,
+        uid: String,
+        roles: List<String>
+    ): Query {
+        val criteria = Criteria()
+        val celeriac = criteria.orOperator(
+            Criteria.where(TPermission::users.name).`in`(uid),
+            Criteria.where(TPermission::roles.name).`in`(roles)
+        ).and(TPermission::resourceType.name).`is`(ResourceType.PROJECT)
             .and(TPermission::projectId.name).`is`(projectId)
         return Query(celeriac)
     }

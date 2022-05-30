@@ -148,8 +148,10 @@ mail:
   share: true
   host: smtp.exmail.qq.com
   port: 465
-  username: test@canway.net
-  password: password
+  # 邮箱账号，公司环境固定该配置
+  username: bkrepo@canway.net
+  # 邮箱密码，公司环境固定该配置
+  password: e9grYCisezhhaPCp
   protocol: smtps
   smtp:
     auth: true

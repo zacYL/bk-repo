@@ -160,7 +160,7 @@ abstract class NodeBaseService(
                 lastModifiedDate = lastModifiedDate ?: LocalDateTime.now()
             )
             doCreate(node)
-            if (isGenericRepo(repo)) {
+            if (isGenericRepo(repo) && !folder) {
                 publishEvent(buildCreatedEvent(node))
             }
             logger.info("Create node[/$projectId/$repoName$fullPath], sha256[$sha256] success.")

@@ -105,7 +105,9 @@
     import { mapActions } from 'vuex'
     import { formatDate, segmentNumberThree } from '@repository/utils'
     import { scanStatusEnum, leakLevelEnum } from '@repository/store/publicEnum'
-    const nowTime = new Date(`${new Date().getFullYear()}-${new Date().getMonth() + 1}-${new Date().getDate() + 1}`)
+    const nowTime = new Date(
+        `${new Date().getFullYear()}-${new Date().getMonth() + 1}-${new Date().getDate()}`
+    ).getTime() + 3600 * 1000 * 24
     export default {
         name: 'scanReport',
         components: {
@@ -133,24 +135,24 @@
                     limit: 20,
                     limitList: [10, 20, 40]
                 },
-                filterTime: [new Date(nowTime.getTime() - 3600 * 1000 * 24 * 30), nowTime],
+                filterTime: [new Date(nowTime - 3600 * 1000 * 24 * 30), new Date(nowTime)],
                 shortcuts: [
                     {
                         text: '近7天',
                         value () {
-                            return [new Date(nowTime.getTime() - 3600 * 1000 * 24 * 7), nowTime]
+                            return [new Date(nowTime - 3600 * 1000 * 24 * 7), new Date(nowTime)]
                         }
                     },
                     {
                         text: '近15天',
                         value () {
-                            return [new Date(nowTime.getTime() - 3600 * 1000 * 24 * 15), nowTime]
+                            return [new Date(nowTime - 3600 * 1000 * 24 * 15), new Date(nowTime)]
                         }
                     },
                     {
                         text: '近30天',
                         value () {
-                            return [new Date(nowTime.getTime() - 3600 * 1000 * 24 * 30), nowTime]
+                            return [new Date(nowTime - 3600 * 1000 * 24 * 30), new Date(nowTime)]
                         }
                     }
                 ]

@@ -16,6 +16,7 @@ import com.tencent.bkrepo.auth.pojo.user.UpdateUserRequest
 import com.tencent.bkrepo.auth.pojo.user.User
 import com.tencent.bkrepo.auth.pojo.user.UserInfo
 import com.tencent.bkrepo.auth.pojo.user.UserResult
+import com.tencent.bkrepo.auth.resource.ServiceUserResourceImpl
 import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.auth.util.RsaUtils
@@ -55,7 +56,8 @@ import javax.servlet.http.HttpSession
 class UserUserController(
     private val permissionService: PermissionService,
     private val userService: UserService,
-    private val jwtProperties: JwtAuthProperties
+    private val jwtProperties: JwtAuthProperties,
+    private val rsaUtils: RsaUtils
 ) {
 
     private val signingKey = JwtUtils.createSigningKey(jwtProperties.secretKey)
@@ -281,7 +283,7 @@ class UserUserController(
     @ApiOperation("获取公钥")
     @GetMapping("/rsa")
     fun getPublicKey(): Response<String?> {
-        return ResponseBuilder.success(RsaUtils.publicKey)
+        return ResponseBuilder.success(rsaUtils.getPublicKey())
     }
 
     @ApiOperation("校验用户会话token")
@@ -295,9 +297,10 @@ class UserUserController(
     ): Response<Boolean> {
         val decryptToken: String?
         try {
-            decryptToken = RsaUtils.decrypt(token)
+            decryptToken = rsaUtils.decrypt(token)
         } catch (e: CryptoException) {
-            logger.warn("token decrypt failed token")
+            logger.error("token decrypt failed token [$uid] exception:[$e]")
+            rsaUtils.generateRsa()
             throw AuthenticationException(messageCode = AuthMessageCode.AUTH_LOGIN_FAILED)
         }
         val user = userService.findUserByUserToken(uid, decryptToken) ?: run {
@@ -381,10 +384,11 @@ class UserUserController(
         val decryptOldPwd: String?
         val decryptNewPwd: String?
         try {
-            decryptOldPwd = RsaUtils.decrypt(oldPwd)
-            decryptNewPwd = RsaUtils.decrypt(newPwd)
+            decryptOldPwd = rsaUtils.decrypt(oldPwd)
+            decryptNewPwd = rsaUtils.decrypt(newPwd)
         } catch (e: CryptoException) {
             logger.warn("token decrypt failed")
+            rsaUtils.generateRsa()
             throw AuthenticationException(messageCode = AuthMessageCode.AUTH_LOGIN_TOKEN_CHECK_FAILED)
         }
         require(uid == userId) { throw PermissionException() }

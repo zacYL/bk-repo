@@ -96,3 +96,6 @@ const val PROJECT_MANAGE_PERMISSION = "project_manage_permission"
 const val PROJECT_VIEW_PERMISSION = "project_view_permission"
 
 const val BK_SOFTWARE = "bksoftware"
+
+const val PRIVATE_KEY = "private_key"
+const val PUBLIC_KEY = "public_key"

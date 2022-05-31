@@ -76,7 +76,10 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         return getCacheArtifactResource(context) ?: run {
             val remoteConfiguration = context.getRemoteConfiguration()
-            logger.info("Remote download: not found artifact in cache, download from remote repository: $remoteConfiguration")
+            logger.info(
+                "Remote download: not found artifact in cache, " +
+                    "download from remote repository: $remoteConfiguration"
+            )
             val httpClient = createHttpClient(remoteConfiguration)
             val downloadUrl = createRemoteDownloadUrl(context)
             val request = Request.Builder().url(downloadUrl).build()
@@ -88,23 +91,30 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
         }
     }
 
+    @Suppress("TooGenericExceptionCaught")
     private fun downloadRetry(request: Request, okHttpClient: OkHttpClient): Response? {
         var response: Response? = null
-        outer@ for (i in 1..4) {
+        outer@ for (i in 1..downloadRetryLimit) {
             try {
                 val startTime = System.currentTimeMillis()
                 response = okHttpClient.newCall(request).execute()
                 val endTime = System.currentTimeMillis()
-                logger.info("Remote download: download retry: $i, url: ${request.url()}, cost: ${endTime - startTime}ms, code: ${response.code()}")
+                logger.info(
+                    "Remote download: download retry: $i, url: ${request.url()}," +
+                        " cost: ${endTime - startTime}ms, code: ${response.code()}"
+                )
                 if (checkRetry(response)) { break@outer }
             } catch (unKnownHostException: UnknownHostException) {
-                logger.error("Remote download: download retry: $i, url: ${request.url()}, error: ${unKnownHostException.message}")
+                logger.error(
+                    "Remote download: download retry: $i, url: ${request.url()}, " +
+                        "error: ${unKnownHostException.message}"
+                )
                 break@outer
             } catch (ie: IllegalArgumentException) {
                 logger.error("Remote download: download retry: $i, url: ${request.url()}, error: ${ie.message}")
                 break@outer
             } catch (e: Exception) {
-                if (i >= 4) { break@outer }
+                if (i >= downloadRetryLimit) { break@outer }
                 logger.error("Remote download: request failed: $request", e)
             }
         }
@@ -122,14 +132,8 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
         if (response.isSuccessful) {
             return true
         }
-        if (resourceNotReach.contains(response.code())
-            || serverStatusError.contains(response.code())
-        ) {
-            logger.warn("Remote download: download failed: ${response.code()}, url: ${response.request().url()}")
-            return true
-        }
-        logger.error("Remote download: download failed: ${response.code()}, url: ${response.request().url()}")
-        return false
+        logger.warn("Remote download: download failed: ${response.code()}, url: ${response.request().url()}")
+        return resourceNotReach.contains(response.code()) || serverStatusError.contains(response.code())
     }
 
     override fun search(context: ArtifactSearchContext): List<Any> {
@@ -333,5 +337,6 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
             HttpStatus.BAD_GATEWAY.value,
             HttpStatus.INTERNAL_SERVER_ERROR.value
         )
+        const val downloadRetryLimit = 4
     }
 }

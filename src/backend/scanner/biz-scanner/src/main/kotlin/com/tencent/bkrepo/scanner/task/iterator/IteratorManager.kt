@@ -82,11 +82,11 @@ class IteratorManager(
     }
 
     private fun modifyRule(scanPlan: ScanPlan, rule: Rule.NestedRule): Rule {
+        if (fieldValueFromRule(rule, NodeDetail::repoName.name).isEmpty()) {
+            // 扫描所有仓库
+            addRepoNames(rule, scanPlan.projectId!!, scanPlan.type!!)
+        }
         if (scanPlan.type == RepositoryType.GENERIC.name) {
-            if (fieldValueFromRule(rule, NodeDetail::repoName.name).isEmpty()) {
-                // 未指定要扫描的仓库时限制只扫描GENERIC类型仓库
-                addRepoNames(rule, scanPlan.projectId!!)
-            }
             // 限制待扫描文件后缀
             return addMobilePackageRule(rule)
         }
@@ -138,9 +138,9 @@ class IteratorManager(
         return fieldValues
     }
 
-    private fun addRepoNames(rule: Rule, projectId: String): Rule {
+    private fun addRepoNames(rule: Rule, projectId: String, repoType: String): Rule {
         val repoNames = Request
-            .request { repositoryClient.listRepo(projectId, null, RepositoryType.GENERIC.name) }
+            .request { repositoryClient.listRepo(projectId, null, repoType) }
             ?.map { it.name }
             ?: return rule
 

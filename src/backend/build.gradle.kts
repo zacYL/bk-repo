@@ -49,6 +49,8 @@ allprojects {
             dependency("com.google.code.gson:gson:2.8.6")
             dependency("org.eclipse.jgit:org.eclipse.jgit.http.server:5.11.0.202103091610-r")
             dependency("org.eclipse.jgit:org.eclipse.jgit:5.11.0.202103091610-r")
+            dependency("ch.qos.logback:logback-classic:1.2.10")
+            dependency("ch.qos.logback:logback-core:1.2.10")
         }
     }
     configurations.all {

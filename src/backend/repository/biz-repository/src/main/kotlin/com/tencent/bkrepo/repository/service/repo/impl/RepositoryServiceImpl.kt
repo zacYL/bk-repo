@@ -488,11 +488,11 @@ class RepositoryServiceImpl(
                 when (it) {
                     is Rule.NestedRule -> checkMetadataRule(it, projectId, repoName)
                     is Rule.QueryRule -> {
-                        checkPath(it,projectId,repoName)
+                        checkPath(it, projectId, repoName)
                         RuleUtils.checkRuleRegex(it)
                     }
                     is Rule.FixedRule -> {
-                        checkPath(it.wrapperRule,projectId,repoName)
+                        checkPath(it.wrapperRule, projectId, repoName)
                         RuleUtils.checkRuleRegex(it.wrapperRule)
                     }
                 }
@@ -501,20 +501,22 @@ class RepositoryServiceImpl(
     }
 
     /**
-     * 检查文件路径 path 在当前 projectId  repoName 是否存在
+     * 检查页面填写的【目录】 在当前 projectId  repoName 是否存在
      */
     private fun checkPath(queryRule: Rule.QueryRule, projectId: String, repoName: String) {
         if (queryRule.field == TNode::path.name) {
+            val path = queryRule.value.toString()
+            if (path == "/") return
             val projectIdRule = Rule.QueryRule(TNode::projectId.name, projectId)
             val repoNameRule = Rule.QueryRule(TNode::repoName.name, repoName)
-            val path = queryRule.value
-            val pathRule = Rule.QueryRule(queryRule.field, "^${queryRule.value}.*", queryRule.operation)
-            val queryPath = Rule.NestedRule(mutableListOf(projectIdRule, repoNameRule, pathRule))
+            val folderRule = Rule.QueryRule(TNode::folder.name, true)
+            val fullPathRule = Rule.QueryRule(TNode::fullPath.name, path)
+            val queryFullPath = Rule.NestedRule(mutableListOf(projectIdRule, repoNameRule, folderRule, fullPathRule))
             val queryModel = QueryModel(
                 page = PageLimit(1, DEFAULT_PAGE_SIZE),
                 sort = null,
                 select = null,
-                rule = queryPath
+                rule = queryFullPath
             )
             val queryResult = nodeClient.search(queryModel).data?.records
             if (queryResult == null || queryResult.isEmpty())

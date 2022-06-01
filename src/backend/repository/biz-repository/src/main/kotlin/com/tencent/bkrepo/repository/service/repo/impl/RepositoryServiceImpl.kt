@@ -54,14 +54,18 @@ import com.tencent.bkrepo.common.artifact.pojo.configuration.local.LocalConfigur
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.virtual.VirtualConfiguration
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
+import com.tencent.bkrepo.common.query.model.PageLimit
+import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
+import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.config.RepositoryProperties
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.dao.PackageDao
 import com.tencent.bkrepo.repository.dao.RepositoryDao
+import com.tencent.bkrepo.repository.model.TNode
 import com.tencent.bkrepo.repository.model.TPackage
 import com.tencent.bkrepo.repository.model.TRepository
 import com.tencent.bkrepo.repository.pojo.project.ProjectCreateRequest
@@ -108,7 +112,8 @@ class RepositoryServiceImpl(
     private val proxyChannelService: ProxyChannelService,
     private val repositoryProperties: RepositoryProperties,
     private val servicePermissionResource: ServicePermissionResource,
-    private val packageDao: PackageDao
+    private val packageDao: PackageDao,
+    private val nodeClient: NodeClient
 ) : RepositoryService {
 
     override fun getRepoInfo(projectId: String, name: String, type: String?): RepositoryInfo? {
@@ -444,7 +449,7 @@ class RepositoryServiceImpl(
             updateCompositeConfiguration(new, old, repository, operator)
         }
         if (new is LocalConfiguration && old is LocalConfiguration) {
-            if(logger.isDebugEnabled){
+            if (logger.isDebugEnabled) {
                 logger.debug(
                     "projectId:[${repository.projectId}] repoName:[${repository.name}] " +
                             "new clean strategy is [${new.cleanStrategy}], old is [${old.cleanStrategy}]"
@@ -462,7 +467,7 @@ class RepositoryServiceImpl(
                 Preconditions.checkArgument(newCleanStrategy.reserveVersions >= 0, "reserveVersions")
                 Preconditions.checkArgument(newCleanStrategy.reserveDays >= 0, "reserveDays")
                 // 校验元数据保留规则中包含的正则表达式
-                checkMetadataRule(newCleanStrategy.rule)
+                checkMetadataRule(newCleanStrategy.rule, repository.projectId, repository.name)
             } else {
                 logger.warn(
                     "projectId:[${repository.projectId}] repoName:[${repository.name}] new clean strategy is null"
@@ -473,24 +478,50 @@ class RepositoryServiceImpl(
     }
 
     /**
-     * 检查元数据规则
+     * 检查元数据保留规则
+     * 1.检查规则中的正则表达式是否符合语法规则
+     * 2.检查规则中的目录是否存在
      */
-    private fun checkMetadataRule(rule: Rule?) {
+    private fun checkMetadataRule(rule: Rule?, projectId: String, repoName: String) {
         if (rule is Rule.NestedRule && rule.rules.isNotEmpty()) {
-            if (!rule.toString().contains("REGEX")) return
             rule.rules.forEach {
                 when (it) {
-                    is Rule.NestedRule -> checkMetadataRule(it)
+                    is Rule.NestedRule -> checkMetadataRule(it, projectId, repoName)
                     is Rule.QueryRule -> {
+                        checkPath(it,projectId,repoName)
                         RuleUtils.checkRuleRegex(it)
                     }
                     is Rule.FixedRule -> {
+                        checkPath(it.wrapperRule,projectId,repoName)
                         RuleUtils.checkRuleRegex(it.wrapperRule)
                     }
                 }
             }
         }
     }
+
+    /**
+     * 检查文件路径 path 在当前 projectId  repoName 是否存在
+     */
+    private fun checkPath(queryRule: Rule.QueryRule, projectId: String, repoName: String) {
+        if (queryRule.field == TNode::path.name) {
+            val projectIdRule = Rule.QueryRule(TNode::projectId.name, projectId)
+            val repoNameRule = Rule.QueryRule(TNode::repoName.name, repoName)
+            val path = queryRule.value
+            val pathRule = Rule.QueryRule(queryRule.field, "^${queryRule.value}.*", queryRule.operation)
+            val queryPath = Rule.NestedRule(mutableListOf(projectIdRule, repoNameRule, pathRule))
+            val queryModel = QueryModel(
+                page = PageLimit(1, DEFAULT_PAGE_SIZE),
+                sort = null,
+                select = null,
+                rule = queryPath
+            )
+            val queryResult = nodeClient.search(queryModel).data?.records
+            if (queryResult == null || queryResult.isEmpty())
+                throw ErrorCodeException(CommonMessageCode.DIRECTORY_NOT_EXIST, path)
+        }
+    }
+
 
     /**
      * 更新Composite类型仓库配置

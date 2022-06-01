@@ -22,25 +22,25 @@ object RuleUtils {
     }
 
     /**
-     * 将 rule 规则中的 fullPath 条件转化为 【前缀匹配正则表达式】
+     * 将 rule 规则中的 path 条件转化为 【前缀匹配正则表达式】
      */
-    fun ruleFullPathToRegex(rule: Rule): Rule {
+    fun rulePathToRegex(rule: Rule): Rule {
         when (rule) {
             is Rule.NestedRule -> {
                 val rules = ArrayList<Rule>(rule.rules.size)
                 rule.rules.forEach {
-                    rules.add(ruleFullPathToRegex(it))
+                    rules.add(rulePathToRegex(it))
                 }
                 return rule.copy(rules = rules)
             }
             is Rule.QueryRule -> {
-                if (rule.field == NodeDetail::fullPath.name) {
+                if (rule.field == NodeDetail::path.name) {
                     return Rule.QueryRule(rule.field, "^${rule.value}.*", rule.operation)
                 }
                 return rule
             }
             is Rule.FixedRule -> {
-                if (rule.wrapperRule.field == NodeDetail::fullPath.name) {
+                if (rule.wrapperRule.field == NodeDetail::path.name) {
                     return Rule.QueryRule(
                         rule.wrapperRule.field,
                         "^${rule.wrapperRule.value}.*",

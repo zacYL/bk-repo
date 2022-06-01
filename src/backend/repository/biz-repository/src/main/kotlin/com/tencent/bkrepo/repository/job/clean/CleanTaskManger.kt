@@ -4,7 +4,12 @@ import com.tencent.bkrepo.common.artifact.pojo.configuration.clean.CleanStatus
 import com.tencent.bkrepo.repository.config.RepositoryProperties
 import com.tencent.bkrepo.repository.model.TRepository
 import com.tencent.bkrepo.repository.service.repo.RepositoryService
-import org.quartz.*
+import org.quartz.CronScheduleBuilder
+import org.quartz.JobBuilder
+import org.quartz.JobDetail
+import org.quartz.Trigger
+import org.quartz.TriggerBuilder
+
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.scheduling.annotation.Scheduled

@@ -1,6 +1,12 @@
 package com.tencent.bkrepo.repository.job.clean
 
-import org.quartz.*
+
+import org.quartz.JobDetail
+import org.quartz.JobKey
+import org.quartz.Scheduler
+import org.quartz.SchedulerException
+import org.quartz.Trigger
+import org.quartz.UnableToInterruptJobException
 import org.quartz.impl.matchers.GroupMatcher
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service

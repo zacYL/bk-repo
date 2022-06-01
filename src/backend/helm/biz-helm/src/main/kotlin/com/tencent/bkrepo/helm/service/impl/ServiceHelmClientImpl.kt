@@ -9,6 +9,8 @@ import com.tencent.bkrepo.helm.utils.ObjectBuilderUtil
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.PackageClient
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
@@ -36,7 +38,7 @@ class ServiceHelmClientImpl(
                 nodeClient.deleteNode(NodeDeleteRequest(projectId, repoName, provPath, operator))
             }
             updatePackageExtension(projectId,repoName,packageKey)
-        }
+        }?: logger.warn("[$projectId/$repoName/$packageKey/$version] version not found")
     }
 
     private fun updatePackageExtension(
@@ -58,6 +60,9 @@ class ServiceHelmClientImpl(
             )
             packageClient.updatePackage(packageUpdateRequest)
         }
+    }
 
+    companion object {
+        val logger: Logger = LoggerFactory.getLogger(HelmOperationService::class.java)
     }
 }

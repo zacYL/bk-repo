@@ -150,7 +150,12 @@ class BkAuthPermissionServiceImpl constructor(
         }
     }
 
-    private fun pipelinePermission(uid: String, projectId: String, pipelineId: String, action: PermissionAction): Boolean {
+    private fun pipelinePermission(
+        uid: String,
+        projectId: String,
+        pipelineId: String,
+        action: PermissionAction
+    ): Boolean {
         logger.debug("pipelinePermission, uid: $uid, projectId: $projectId, pipelineId: $pipelineId, action: $action")
         return bkAuthPipelineService.hasPermission(uid, projectId, pipelineId, action)
     }

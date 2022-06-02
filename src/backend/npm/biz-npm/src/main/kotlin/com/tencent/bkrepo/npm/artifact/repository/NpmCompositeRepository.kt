@@ -19,31 +19,34 @@ import java.io.InputStream
 @Component
 @Primary
 class NpmCompositeRepository(
-	private val localRepository: LocalRepository,
-	private val remoteRepository: RemoteRepository,
-	proxyChannelClient: ProxyChannelClient
+    private val localRepository: LocalRepository,
+    private val remoteRepository: RemoteRepository,
+    proxyChannelClient: ProxyChannelClient
 ) : CompositeRepository(localRepository, remoteRepository, proxyChannelClient) {
 
-	override fun query(context: ArtifactQueryContext): InputStream? {
-		val localQueryResult = localRepository.query(context) as? InputStream
-		val remoteQueryResult = mapFirstProxyRepo(context) {
-			require(it is ArtifactQueryContext)
-			remoteRepository.query(it) as? InputStream
-		} ?: return localQueryResult
+    override fun query(context: ArtifactQueryContext): InputStream? {
+        val localQueryResult = localRepository.query(context) as? InputStream
+        val remoteQueryResult = mapFirstProxyRepo(context) {
+            require(it is ArtifactQueryContext)
+            remoteRepository.query(it) as? InputStream
+        } ?: return localQueryResult
 
-		localQueryResult?.use { it ->
-			// 将远程结果与本地结果合并进行返回
-			val localPackageMetaData = JsonUtils.objectMapper.readValue(it, NpmPackageMetaData::class.java)
-			val remotePackageMetaData = remoteQueryResult.use { JsonUtils.objectMapper.readValue(it, NpmPackageMetaData::class.java) }
-			remotePackageMetaData.versions.map.putAll(localPackageMetaData.versions.map)
-			val packageMetadata = JsonUtils.objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(remotePackageMetaData)
-			val artifactFile = ArtifactFileFactory.build(packageMetadata.byteInputStream())
-			return artifactFile.getInputStream()
-		}
-		return remoteQueryResult
-	}
+        localQueryResult?.use { it ->
+            // 将远程结果与本地结果合并进行返回
+            val localPackageMetaData = JsonUtils.objectMapper.readValue(it, NpmPackageMetaData::class.java)
+            val remotePackageMetaData = remoteQueryResult.use {
+                JsonUtils.objectMapper.readValue(it, NpmPackageMetaData::class.java)
+            }
+            remotePackageMetaData.versions.map.putAll(localPackageMetaData.versions.map)
+            val packageMetadata =
+                JsonUtils.objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(remotePackageMetaData)
+            val artifactFile = ArtifactFileFactory.build(packageMetadata.byteInputStream())
+            return artifactFile.getInputStream()
+        }
+        return remoteQueryResult
+    }
 
-	companion object {
-		private val logger = LoggerFactory.getLogger(NpmCompositeRepository::class.java)
-	}
+    companion object {
+        private val logger = LoggerFactory.getLogger(NpmCompositeRepository::class.java)
+    }
 }

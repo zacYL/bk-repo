@@ -787,8 +787,8 @@ export default {
         }
     },
     created () {
-        !this.domain.docker && this.getDockerDomain()
-        !this.domain.npm && this.getNpmDomain()
+        this.repoType === 'docker' && !this.domain.docker && this.getDockerDomain()
+        this.repoType === 'npm' && !this.domain.npm && this.getNpmDomain()
     },
     methods: {
         ...mapActions(['getDockerDomain', 'getNpmDomain'])

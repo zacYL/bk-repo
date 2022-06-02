@@ -216,7 +216,7 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
         val node = cacheArtifactFile(context, artifactFile)
         val size = artifactFile.getSize()
         val artifactStream = artifactFile.getInputStream().artifactStream(Range.full(size))
-        return ArtifactResource(artifactStream, context.artifactInfo.getResponseName(), node, ArtifactChannel.LOCAL)
+        return ArtifactResource(artifactStream, context.artifactInfo.getResponseName(), node, ArtifactChannel.PROXY)
     }
 
     /**

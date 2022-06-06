@@ -16,7 +16,6 @@ import com.tencent.bkrepo.auth.pojo.user.UpdateUserRequest
 import com.tencent.bkrepo.auth.pojo.user.User
 import com.tencent.bkrepo.auth.pojo.user.UserInfo
 import com.tencent.bkrepo.auth.pojo.user.UserResult
-import com.tencent.bkrepo.auth.resource.ServiceUserResourceImpl
 import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.auth.util.RsaUtils
@@ -49,7 +48,6 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import javax.servlet.http.Cookie
-import javax.servlet.http.HttpSession
 
 @RestController
 @RequestMapping("/api/user")
@@ -292,8 +290,7 @@ class UserUserController(
         @ApiParam(value = "用户id")
         @RequestParam("uid") uid: String,
         @ApiParam(value = "用户token")
-        @RequestParam("token") token: String,
-        session: HttpSession
+        @RequestParam("token") token: String
     ): Response<Boolean> {
         val decryptToken: String?
         try {
@@ -310,10 +307,9 @@ class UserUserController(
         val ticket = JwtUtils.generateToken(signingKey, jwtProperties.expiration, uid)
         val cookie = Cookie(BKREPO_TICKET, ticket).apply {
             path = "/"
-            maxAge = 60 * 60 * 24
+            maxAge = cookieExpired
         }
         HttpContextHolder.getResponse().addCookie(cookie)
-        session.setAttribute(BKREPO_TICKET, ticket)
         return ResponseBuilder.success(true)
     }
 
@@ -461,5 +457,6 @@ class UserUserController(
 
     companion object {
         private val logger = LoggerFactory.getLogger(UserUserController::class.java)
+        private const val cookieExpired = 60 * 60 * 24
     }
 }

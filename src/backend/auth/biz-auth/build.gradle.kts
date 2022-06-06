@@ -40,5 +40,4 @@ dependencies {
     api(project(":common:common-plugin:plugin-service"))
     api(project(":common:common-redis"))
     implementation("cn.hutool:hutool-crypto:5.5.4")
-    implementation("org.springframework.session:spring-session-data-mongodb")
 }

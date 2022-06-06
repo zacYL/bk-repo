@@ -32,6 +32,7 @@
 package com.tencent.bkrepo.common.security.http.cookie
 
 import com.tencent.bkrepo.auth.constant.BKREPO_TICKET
+import com.tencent.bkrepo.common.api.constant.HttpHeaders.X_CSRF_TOKEN
 import com.tencent.bkrepo.common.security.exception.AuthenticationException
 import com.tencent.bkrepo.common.security.http.core.HttpAuthHandler
 import com.tencent.bkrepo.common.security.http.credentials.AnonymousCredentials
@@ -55,13 +56,9 @@ open class CookieAuthHandler(properties: JwtAuthProperties) : HttpAuthHandler {
         for (cookie in cookies) {
             if (cookie.name == BKREPO_TICKET) {
                 logger.debug("found cookie [${cookie.name} : ${cookie.value}]")
-                logger.debug("session id: ${request.session.id}")
-                val ticket = request.session.getAttribute(BKREPO_TICKET)
-                    ?: throw AuthenticationException()
-                // 当服务器上token 与请求token不一致时，有可能为非法攻击请求
-                if (ticket != cookie.value) {
-                    throw AuthenticationException()
-                }
+                // 当以cookies 方式鉴权时，检查请求中是否有对应请求头，并对值做校验, 防CSRF攻击
+                val xCSRFToken = request.getHeader(X_CSRF_TOKEN) ?: throw AuthenticationException()
+                if (xCSRFToken != cookie.value) { throw AuthenticationException() }
                 return CookieAuthCredentials(cookie.value)
             }
         }

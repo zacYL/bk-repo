@@ -39,6 +39,7 @@ import com.tencent.bkrepo.auth.constant.PLATFORM_AUTH_HEADER_PREFIX
 import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.service.AccountService
 import com.tencent.bkrepo.auth.service.UserService
+import com.tencent.bkrepo.common.api.constant.HttpHeaders.X_CSRF_TOKEN
 import com.tencent.bkrepo.common.api.constant.HttpStatus
 import com.tencent.bkrepo.common.api.constant.PLATFORM_KEY
 import com.tencent.bkrepo.common.api.constant.StringPool.COLON
@@ -105,14 +106,9 @@ class AuthInterceptor : HandlerInterceptor {
                 ?: throw AuthenticationException(AuthMessageCode.AUTH_LOGIN_TOKEN_CHECK_FAILED.name)
             for (cookie in cookies) {
                 if (cookie.name == BKREPO_TICKET) {
-                    // 获取session id
-                    logger.debug("session id: ${request.session.id}")
-                    val ticket = request.session.getAttribute(BKREPO_TICKET)
-                        ?: throw AuthenticationException()
-                    // 当服务器上token 与请求token不一致时，有可能为非法攻击请求
-                    if (ticket != cookie.value) {
-                        throw AuthenticationException()
-                    }
+                    // 当以cookies 方式鉴权时，检查请求中是否有对应请求头，并对值做校验，防CSRF攻击
+                    val xCSRFToken = request.getHeader(X_CSRF_TOKEN) ?: throw AuthenticationException()
+                    if (xCSRFToken != cookie.value) { throw AuthenticationException() }
                     // 读取用户信息
                     val signingKey: Key = JwtUtils.createSigningKey(jwtProperties.secretKey)
                     val userId = JwtUtils.validateToken(signingKey, cookie.value).body.subject

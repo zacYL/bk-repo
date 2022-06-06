@@ -786,11 +786,15 @@ export default {
             return this[`${this.$route.params.repoType}Install`]
         }
     },
-    created () {
-        this.repoType === 'docker' && !this.domain.docker && this.getDockerDomain()
-        this.repoType === 'npm' && !this.domain.npm && this.getNpmDomain()
+    watch: {
+        repoType: {
+            handler (type) {
+                type && this.getDomain(type)
+            },
+            immediate: true
+        }
     },
     methods: {
-        ...mapActions(['getDockerDomain', 'getNpmDomain'])
+        ...mapActions(['getDomain'])
     }
 }

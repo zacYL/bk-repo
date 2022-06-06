@@ -62,6 +62,7 @@ import com.tencent.bkrepo.maven.enum.HashType
 import com.tencent.bkrepo.maven.enum.MavenMessageCode
 import com.tencent.bkrepo.maven.enum.SnapshotBehaviorType
 import com.tencent.bkrepo.maven.exception.ConflictException
+import com.tencent.bkrepo.maven.exception.MavenArtifactNotFoundException
 import com.tencent.bkrepo.maven.exception.MavenRequestForbiddenException
 import com.tencent.bkrepo.maven.model.TMavenMetadataRecord
 import com.tencent.bkrepo.maven.pojo.Basic
@@ -1101,7 +1102,6 @@ class MavenLocalRepository(
             ).data ?: return null
             val stageTag = stageClient.query(projectId, repoName, packageKey, version).data
             val mavenArtifactMetadata = jarNode.metadata
-            val mavenSystemMetadata = jarNode.systemMetadata
             val packageVersion = packageClient.findVersionByName(
                 projectId, repoName, packageKey, version
             ).data
@@ -1119,7 +1119,7 @@ class MavenLocalRepository(
                 stageTag,
                 null
             )
-            return MavenArtifactVersionData(mavenArtifactBasic, mavenArtifactMetadata, mavenSystemMetadata)
+            return MavenArtifactVersionData(mavenArtifactBasic, mavenArtifactMetadata)
         }
     }
 

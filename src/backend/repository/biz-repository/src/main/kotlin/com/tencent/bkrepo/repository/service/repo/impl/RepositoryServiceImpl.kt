@@ -586,9 +586,10 @@ class RepositoryServiceImpl(
         // 查找要添加的代理库
         newPrivateProxyRepoMap.forEach { (name, channel) ->
             existPrivateProxyRepoMap[name]?.let {
-                // 确保用户未修改name和url，以及添加同名channel
+                // 修改url时以删除旧代理库+添加新代理库的步骤完成修改
                 if (channel.url != it.url) {
-                    throw ErrorCodeException(CommonMessageCode.RESOURCE_EXISTED, channel.name.orEmpty())
+                    toCreateList.add(channel)
+                    toDeleteList.add(it)
                 }
             } ?: run { toCreateList.add(channel) }
         }
@@ -598,6 +599,10 @@ class RepositoryServiceImpl(
                 toDeleteList.add(channel)
             }
         }
+        // 删除旧的代理库
+        toDeleteList.forEach {
+            deleteProxyRepo(repository.projectId, repository.name, it.name!!)
+        }
         // 创建新的代理库
         toCreateList.forEach {
             val proxyRepoName = PRIVATE_PROXY_REPO_NAME.format(repository.name, it.name)
@@ -605,10 +610,6 @@ class RepositoryServiceImpl(
                 logger.error("[$proxyRepoName] exist in project[${repository.projectId}], skip creating proxy repo.")
             }
             createProxyRepo(repository, proxyRepoName, operator)
-        }
-        // 删除旧的代理库
-        toDeleteList.forEach {
-            deleteProxyRepo(repository.projectId, repository.name, it.name!!)
         }
     }
 

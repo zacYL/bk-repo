@@ -68,7 +68,11 @@ allprojects {
     repositories {
         maven {
             isAllowInsecureProtocol = true
-            setUrl("http://artifact.canway.net/maven-public/")
+            setUrl("https://vpack.canway.net/maven/devops/devops-maven/")
+            credentials {
+                username = "admin"
+                password = "bkrepo"
+            }
         }
     }
 }

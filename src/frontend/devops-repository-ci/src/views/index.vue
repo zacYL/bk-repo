@@ -17,9 +17,10 @@
         components: { Breadcrumb },
         created () {
             this.getClusterList()
+            this.getModuleInfo()
         },
         methods: {
-            ...mapActions(['getClusterList'])
+            ...mapActions(['getClusterList', 'getModuleInfo'])
         }
     }
 </script>

@@ -93,7 +93,7 @@
                     <bk-table-column :label="$t('fileName')" prop="name" show-overflow-tooltip :render-header="renderHeader">
                         <template #default="{ row }">
                             <scan-tag class="mr5"
-                                v-if="!row.folder && /\.(ipa)|(apk)|(jar)$/.test(row.name)"
+                                v-if="isEnterprise && !row.folder && /\.(ipa)|(apk)|(jar)$/.test(row.name)"
                                 :status="row.systemMetadata.scanStatus"
                                 repo-type="generic"
                                 :full-path="row.fullPath">
@@ -132,7 +132,7 @@
                                     permission.edit && repoName !== 'pipeline' && { clickEvent: () => renameRes(row), label: $t('rename') },
                                     permission.write && repoName !== 'pipeline' && { clickEvent: () => moveRes(row), label: $t('move') },
                                     permission.write && repoName !== 'pipeline' && { clickEvent: () => copyRes(row), label: $t('copy') },
-                                    !row.folder && /\.(ipa)|(apk)|(jar)$/.test(row.name) && { clickEvent: () => handlerScan(row), label: '安全扫描' },
+                                    isEnterprise && !row.folder && /\.(ipa)|(apk)|(jar)$/.test(row.name) && { clickEvent: () => handlerScan(row), label: '安全扫描' },
                                     permission.delete && { clickEvent: () => deleteRes(row), label: $t('delete') }
                                 ].filter(Boolean)">
                             </operation-list>
@@ -173,7 +173,7 @@
     import genericTreeDialog from '@repository/views/repoGeneric/genericTreeDialog'
     import { convertFileSize, formatDate } from '@repository/utils'
     import { getIconName } from '@repository/store/publicEnum'
-    import { mapState, mapMutations, mapActions } from 'vuex'
+    import { mapState, mapGetters, mapMutations, mapActions } from 'vuex'
     export default {
         name: 'repoGeneric',
         components: {
@@ -217,6 +217,7 @@
         },
         computed: {
             ...mapState(['repoListAll', 'userList', 'permission', 'genericTree']),
+            ...mapGetters(['isEnterprise']),
             projectId () {
                 return this.$route.params.projectId
             },

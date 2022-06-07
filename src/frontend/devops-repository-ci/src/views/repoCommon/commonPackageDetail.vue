@@ -43,7 +43,7 @@
                                 class="version-operation"
                                 :list="[
                                     permission.edit && { label: '晋级', clickEvent: () => changeStageTagHandler($version), disabled: ($version.stageTag || '').includes('@release') },
-                                    repoType === 'maven' && { label: '安全扫描', clickEvent: () => scanPackageHandler($version) },
+                                    isEnterprise && repoType === 'maven' && { label: '安全扫描', clickEvent: () => scanPackageHandler($version) },
                                     repoType !== 'docker' && { label: '下载', clickEvent: () => downloadPackageHandler($version) },
                                     permission.delete && { label: '删除', clickEvent: () => deleteVersionHandler($version) }
                                 ].filter(Boolean)"></operation-list>
@@ -70,7 +70,7 @@
     import InfiniteScroll from '@repository/components/InfiniteScroll'
     import VersionDetail from './commonVersionDetail'
     import commonFormDialog from '@repository/views/repoCommon/commonFormDialog'
-    import { mapState, mapActions } from 'vuex'
+    import { mapState, mapGetters, mapActions } from 'vuex'
     export default {
         name: 'commonPackageDetail',
         components: { OperationList, InfiniteScroll, VersionDetail, commonFormDialog },
@@ -116,6 +116,7 @@
         },
         computed: {
             ...mapState(['permission']),
+            ...mapGetters(['isEnterprise']),
             projectId () {
                 return this.$route.params.projectId || ''
             },

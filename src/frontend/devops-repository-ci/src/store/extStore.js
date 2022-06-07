@@ -1,9 +1,23 @@
 import Vue from 'vue'
 
 export default {
-    state: {},
-    getters: {},
-    mutations: {},
+    state: {
+        license: {
+            // STANDARD: 标准版
+            // ENTERPRISE: 企业版
+            versionType: 'STANDARD'
+        }
+    },
+    getters: {
+        isEnterprise (state) {
+            return state.license.versionType === 'ENTERPRISE'
+        }
+    },
+    mutations: {
+        UPDATE_LICENSE (state, data) {
+            state.license = data
+        }
+    },
     actions: {
         // 查询仓库级别权限
         getRepoPermission (_, { projectId, action, repoName }) {
@@ -109,6 +123,13 @@ export default {
                     }
                 }
             )
+        },
+        // 获取许可信息
+        getModuleInfo ({ commit }) {
+            Vue.prototype.$ajax.get('/platform/api/user/module-info/modules').then(res => {
+                const cpack = res.find(m => m.name === 'CPack')
+                commit('UPDATE_LICENSE', cpack)
+            })
         }
     }
 }

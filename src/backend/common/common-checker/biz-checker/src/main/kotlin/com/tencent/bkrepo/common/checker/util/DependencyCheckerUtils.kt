@@ -20,6 +20,6 @@ object DependencyCheckerUtils {
      * @return DependencyInfo
      */
     fun scanWithInfo(path: String): DependencyInfo {
-        return ScanUtils.startScan(path).readJsonString()
+        return scan(path).readJsonString()
     }
 }

@@ -34,6 +34,7 @@
                                     expand-icon="bk-icon icon-angle-down"
                                     collapse-icon="bk-icon icon-angle-right"
                                     :lazy-method="(node) => handleDepartmentTreeNode(node, $refs[`${section.name}Tree`][0], section[part])"
+                                    :lazy-disabled="(node) => !node.data.has_children"
                                     @check-change="ids => changeAddDepartments(section[part], ids)">
                                 </bk-big-tree>
                             </bk-select>
@@ -207,16 +208,6 @@
             repoName () {
                 return this.$route.query.repoName
             },
-            getName () {
-                return (part, tag) => {
-                    const map = {
-                        users: this.userList,
-                        roles: this.roleList,
-                        departments: this.flatDepartment
-                    }[part]
-                    return map[tag] ? map[tag].name : tag
-                }
-            },
             filterDeleteTagList () {
                 return (target) => {
                     return target.data.filter(v => !target.deleteList.find(w => w === v))
@@ -248,7 +239,7 @@
                 username: this.userInfo.username
             }).then(res => {
                 this.handleFlatDepartment(res)
-                this.departmentTree = res.map(v => ({ ...v, has_children: true }))
+                this.departmentTree = res
             })
             this.handlePermissionDetail()
         },
@@ -264,6 +255,14 @@
                 'setDepartmentPermission',
                 'getRepoDepartmentDetail'
             ]),
+            getName (part, tag) {
+                const map = {
+                    users: this.userList,
+                    roles: this.roleList,
+                    departments: this.flatDepartment
+                }[part]
+                return map[tag] ? map[tag].name : tag
+            },
             getActions (name) {
                 const actionsName = ['READ', ...this[name].actions.data].map(id => this.actionList.find(action => action.id === id)?.name)
                 switch (name) {
@@ -302,30 +301,26 @@
                 })
             },
             async handleDepartmentTreeNode (node, root, data) {
-                // 叶节点
-                if (!node.data.has_children) return ({ data: [], leaf: [] })
-                // 枝节点
                 const res = await this.getRepoDepartmentList({
                     username: this.userInfo.username,
                     departmentId: node.id
                 })
-                this.handleFlatDepartment(res)
-                this.$nextTick(() => {
-                    let target = this.departmentTree
-                    node.parents.forEach(parent => {
-                        target = (target.children || target).find(v => v.id === parent.id).children
-                    })
-                    target = target.find(v => v.id === node.id)
-                    target.children = res
-                    if (root) {
+                if (!res.length) {
+                    this.$set(node.data, 'has_children', false)
+                } else {
+                    this.handleFlatDepartment(res)
+                    this.$nextTick(() => {
+                        let target = this.departmentTree
+                        node.parents.forEach(parent => {
+                            target = (target.children || target).find(v => v.id === parent.id).children
+                        })
+                        target = target.find(v => v.id === node.id)
+                        target.children = res
                         this.initTree(root, data)
-                        root.setExpanded([node.id])
-                    }
-                })
-                return {
-                    data: [],
-                    leaf: res.filter(v => !v.has_children).map(w => w.id)
+                        root.setExpanded(node.id)
+                    })
                 }
+                return {}
             },
             handlePermissionDetail (target, origin, id) {
                 this.isLoading = true

@@ -148,7 +148,7 @@ export default {
                     departmentId
                 }
             }
-        )
+        ).then(res => res.map(v => ({ ...v, has_children: true })))
     },
     // 查询仓库所有权限
     getPermissionDetail (_, { projectId, repoName }) {

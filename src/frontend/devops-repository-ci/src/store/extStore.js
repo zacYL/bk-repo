@@ -126,9 +126,8 @@ export default {
         },
         // 获取许可信息
         getModuleInfo ({ commit }) {
-            Vue.prototype.$ajax.get('/platform/api/user/module-info/modules').then(res => {
-                const cpack = res.find(m => m.name === 'CPack')
-                commit('UPDATE_LICENSE', cpack)
+            Vue.prototype.$ajax.get('/platform/api/user/module-info/modules').then(data => {
+                commit('UPDATE_LICENSE', data)
             })
         }
     }

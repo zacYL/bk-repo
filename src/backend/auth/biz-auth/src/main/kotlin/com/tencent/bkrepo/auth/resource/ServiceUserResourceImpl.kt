@@ -31,7 +31,6 @@
 
 package com.tencent.bkrepo.auth.resource
 
-import cn.hutool.crypto.CryptoException
 import com.tencent.bkrepo.auth.api.ServiceUserResource
 import com.tencent.bkrepo.auth.constant.BKREPO_TICKET
 import com.tencent.bkrepo.auth.constant.PROJECT_MANAGE_ID
@@ -66,6 +65,7 @@ import com.tencent.bkrepo.common.security.util.JwtUtils
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
+import org.bouncycastle.crypto.CryptoException
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.RestController

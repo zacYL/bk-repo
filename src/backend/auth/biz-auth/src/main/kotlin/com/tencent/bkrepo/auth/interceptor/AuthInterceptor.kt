@@ -77,10 +77,11 @@ class AuthInterceptor : HandlerInterceptor {
                 val decodedHeader = String(Base64.getDecoder().decode(encodedCredentials))
                 val parts = decodedHeader.split(COLON)
                 require(parts.size == 2)
-                userService.findUserByUserToken(parts[0], parts[1]) ?: run {
+                val user = userService.findUserByUserToken(parts[0], parts[1]) ?: run {
                     logger.warn("find no user [${parts[0]}]")
                     throw IllegalArgumentException("check credential fail")
                 }
+
                 request.setAttribute(USER_KEY, parts[0])
                 return true
             }
@@ -123,7 +124,7 @@ class AuthInterceptor : HandlerInterceptor {
         } catch (e: IllegalArgumentException) {
             response.status = HttpStatus.UNAUTHORIZED.value
             response.writer.print(authFailStr)
-            logger.warn("check account exception [$e]")
+            logger.warn("check exception [$e]")
             return false
         }
     }

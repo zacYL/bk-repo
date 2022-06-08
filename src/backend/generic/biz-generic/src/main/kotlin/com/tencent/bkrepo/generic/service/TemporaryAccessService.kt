@@ -39,6 +39,7 @@ import com.tencent.bkrepo.common.api.exception.TemporaryCodeException
 import com.tencent.bkrepo.common.api.util.Preconditions
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.constant.REPO_KEY
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
@@ -64,6 +65,7 @@ import com.tencent.bkrepo.repository.pojo.token.TemporaryTokenCreateRequest
 import com.tencent.bkrepo.repository.pojo.token.TemporaryTokenInfo
 import com.tencent.bkrepo.repository.pojo.token.TokenType
 import org.springframework.stereotype.Service
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -75,7 +77,8 @@ class TemporaryAccessService(
     private val temporaryTokenClient: TemporaryTokenClient,
     private val repositoryClient: RepositoryClient,
     private val genericProperties: GenericProperties,
-    private val pluginManager: PluginManager
+    private val pluginManager: PluginManager,
+    private val deltaSyncService: DeltaSyncService
 ) {
 
     /**
@@ -203,6 +206,39 @@ class TemporaryAccessService(
         checkAuthorization(temporaryToken)
         checkAccessPermits(temporaryToken.permits)
         return temporaryToken
+    }
+
+    /**
+     * 增量签名
+     * */
+    fun sign(artifactInfo: GenericArtifactInfo, md5: String?) {
+        with(artifactInfo) {
+            val repo = repositoryClient.getRepoDetail(projectId, repoName).data
+                ?: throw ErrorCodeException(ArtifactMessageCode.REPOSITORY_NOT_FOUND, repoName)
+            val request = HttpContextHolder.getRequest()
+            request.setAttribute(REPO_KEY, repo)
+            deltaSyncService.downloadSignFile(md5)
+        }
+    }
+
+    /**
+     * 合并
+     * */
+    fun patch(artifactInfo: GenericArtifactInfo, oldFilePath: String, deltaFile: ArtifactFile): SseEmitter {
+        with(artifactInfo) {
+            val repo = repositoryClient.getRepoDetail(projectId, repoName).data
+                ?: throw ErrorCodeException(ArtifactMessageCode.REPOSITORY_NOT_FOUND, repoName)
+            val request = HttpContextHolder.getRequest()
+            request.setAttribute(REPO_KEY, repo)
+            return deltaSyncService.patch(oldFilePath, deltaFile)
+        }
+    }
+
+    /**
+     * 上传sign file
+     * */
+    fun uploadSignFile(signFile: ArtifactFile, artifactInfo: GenericArtifactInfo, md5: String) {
+        deltaSyncService.uploadSignFile(signFile, artifactInfo, md5)
     }
 
     /**

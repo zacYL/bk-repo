@@ -38,6 +38,7 @@ import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
 import com.tencent.bkrepo.common.artifact.api.DefaultArtifactInfo.Companion.DEFAULT_MAPPING_URI
 import com.tencent.bkrepo.common.security.permission.Permission
+import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataDeleteRequest
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataSaveRequest
@@ -90,7 +91,8 @@ class UserMetadataController(
                 repoName = repoName,
                 fullPath = getArtifactFullPath(),
                 metadata = metadataSaveRequest.metadata,
-                operator = userId
+                nodeMetadata = metadataSaveRequest.nodeMetadata,
+                operator = SecurityUtils.getUserId()
             )
             metadataService.saveMetadata(request)
             return ResponseBuilder.success()
@@ -111,7 +113,7 @@ class UserMetadataController(
                 repoName = repoName,
                 fullPath = getArtifactFullPath(),
                 keyList = metadataDeleteRequest.keyList,
-                operator = userId
+                operator = SecurityUtils.getUserId()
             )
             metadataService.deleteMetadata(request)
             return ResponseBuilder.success()

@@ -86,6 +86,7 @@ import com.tencent.bkrepo.maven.util.MavenStringUtils.resolverName
 import com.tencent.bkrepo.maven.util.MavenUtil
 import com.tencent.bkrepo.repository.api.StageClient
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
+import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
@@ -102,6 +103,7 @@ import org.apache.maven.model.io.xpp3.MavenXpp3Reader
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.dao.DuplicateKeyException
 import org.springframework.stereotype.Component
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -126,7 +128,7 @@ class MavenLocalRepository(
         val request = super.buildNodeCreateRequest(context)
         return request.copy(
             overwrite = true,
-            metadata = createNodeMetaData(context)
+            nodeMetadata = createNodeMetaData(context)
         )
     }
 
@@ -141,11 +143,11 @@ class MavenLocalRepository(
         return request.copy(
             fullPath = combineUrl,
             overwrite = true,
-            metadata = createNodeMetaData(context)
+            nodeMetadata = createNodeMetaData(context)
         )
     }
 
-    private fun createNodeMetaData(context: ArtifactUploadContext): Map<String, String> {
+    private fun createNodeMetaData(context: ArtifactUploadContext): List<MetadataModel> {
         with(context) {
             val md5 = getArtifactMd5()
             val sha1 = getArtifactSha1()
@@ -159,7 +161,9 @@ class MavenLocalRepository(
                 HashType.SHA1.ext to sha1,
                 HashType.SHA256.ext to sha256,
                 HashType.SHA512.ext to sha512
-            )
+            ).map {
+                MetadataModel(key = it.key, value = it.value)
+            }.toMutableList()
         }
     }
 
@@ -228,12 +232,12 @@ class MavenLocalRepository(
         mavenGavc: MavenGAVC
     ): NodeCreateRequest {
         val request = buildMavenArtifactNodeCreateRequest(context)
-        val metadata = request.metadata as? MutableMap
-        metadata?.set("packaging", packaging)
-        metadata?.set("groupId", mavenGavc.groupId)
-        metadata?.set("artifactId", mavenGavc.artifactId)
-        metadata?.set("version", mavenGavc.version)
-        mavenGavc.classifier?.let { metadata?.set("classifier", it) }
+        val metadata = request.nodeMetadata as? MutableList
+        metadata?.add(MetadataModel(key = "packaging", value = packaging))
+        metadata?.add(MetadataModel(key = "groupId", value = mavenGavc.groupId))
+        metadata?.add(MetadataModel(key = "artifactId", value = mavenGavc.artifactId))
+        metadata?.add(MetadataModel(key = "version", value = mavenGavc.version))
+        mavenGavc.classifier?.let { metadata?.add(MetadataModel(key = "classifier", value = it)) }
         return request
     }
 
@@ -241,7 +245,7 @@ class MavenLocalRepository(
         super.onUploadBefore(context)
         val noOverwrite = HeaderUtils.getBooleanHeader("X-BKREPO-NO-OVERWRITE")
         val path = context.artifactInfo.getArtifactFullPath()
-        logger.info("The File $path does not want to overwrite: $noOverwrite")
+        logger.info("The File $path does not want to be overwritten: $noOverwrite")
         if (noOverwrite) {
             // -SNAPSHOT/** 路径下的metadata.xml 文件不做判断
             if (!path.endsWith(MAVEN_METADATA_FILE_NAME)) {
@@ -341,7 +345,15 @@ class MavenLocalRepository(
             if (isArtifact) createMavenVersion(context, mavenGavc, node.fullPath)
             // 更新包各模块版本最新记录
             logger.info("Prepare to create maven metadata....")
-            mavenMetadataService.update(node)
+            try {
+                mavenMetadataService.update(node)
+            } catch (e: DuplicateKeyException) {
+                logger.warn(
+                    "DuplicateKeyException occurred during updating metadata for " +
+                        "${context.artifactInfo.getArtifactFullPath()} " +
+                        "in repo ${context.artifactInfo.getRepoIdentify()}"
+                )
+            }
         } else {
             val artifactFullPath = context.artifactInfo.getArtifactFullPath()
             val isSnapShotUri = artifactFullPath.isSnapshotUri()
@@ -705,6 +717,10 @@ class MavenLocalRepository(
                     throw ArtifactNotFoundException("Artifact $fullPath could not find..")
                 }
             }
+            // 剔除类似-20190917.073536-2.jar路径，实际不存在的
+            if (!fullPath.isSnapshotNonUniqueUri()) {
+                throw MavenArtifactNotFoundException("Artifact $fullPath could not find..")
+            }
             val mavenArtifactInfo = context.artifactInfo as MavenArtifactInfo
             try {
                 mavenArtifactInfo.isSnapshot()
@@ -846,6 +862,11 @@ class MavenLocalRepository(
             mavenVersion.buildNo = this.buildNo
         }
         val uniqueName = mavenVersion.combineToUnique()
+        val nonUniqueName = mavenVersion.combineToNonUnique()
+        // 针对非正常路径： 获取后缀为-1.0.0-SNAPSHOT.jar， 但是版本和versionId不一致的
+        if (nonUniqueName != name) {
+            throw MavenArtifactNotFoundException("Artifact $fullPath could not find..")
+        }
         return fullPath.replace(name, uniqueName)
     }
 
@@ -855,22 +876,29 @@ class MavenLocalRepository(
             "artifactId" to mavenGAVC.artifactId,
             "version" to mavenGAVC.version
         )
-        mavenGAVC.classifier?.let { metadata["classifier"] = it }
-        packageClient.createVersion(
-            PackageVersionCreateRequest(
-                context.projectId,
-                context.repoName,
-                packageName = mavenGAVC.artifactId,
-                packageKey = PackageKeys.ofGav(mavenGAVC.groupId, mavenGAVC.artifactId),
-                packageType = PackageType.MAVEN,
-                versionName = mavenGAVC.version,
-                size = context.getArtifactFile().getSize(),
-                artifactPath = fullPath,
-                overwrite = true,
-                createdBy = context.userId,
-                metadata = metadata
+        try {
+            mavenGAVC.classifier?.let { metadata["classifier"] = it }
+            packageClient.createVersion(
+                PackageVersionCreateRequest(
+                    context.projectId,
+                    context.repoName,
+                    packageName = mavenGAVC.artifactId,
+                    packageKey = PackageKeys.ofGav(mavenGAVC.groupId, mavenGAVC.artifactId),
+                    packageType = PackageType.MAVEN,
+                    versionName = mavenGAVC.version,
+                    size = context.getArtifactFile().getSize(),
+                    artifactPath = fullPath,
+                    overwrite = true,
+                    createdBy = context.userId,
+                    packageMetadata = metadata.map { MetadataModel(key = it.key, value = it.value) }
+                )
             )
-        )
+        } catch (ignore: DuplicateKeyException) {
+            logger.warn(
+                "The package info has been created for version[${mavenGAVC.version}] " +
+                    "and package[${mavenGAVC.artifactId}] in repo ${context.artifactInfo.getRepoIdentify()}"
+            )
+        }
     }
 
     fun updateMetadata(fullPath: String, metadataArtifact: ArtifactFile) {

@@ -37,6 +37,7 @@ import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.Preconditions
 import com.tencent.bkrepo.common.artifact.api.DefaultArtifactInfo
+import com.tencent.bkrepo.common.artifact.constant.ARTIFACT_INFO_KEY
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
@@ -68,12 +69,12 @@ import com.tencent.bkrepo.repository.util.MetadataUtils
 import com.tencent.bkrepo.repository.util.PackageEventFactory
 import com.tencent.bkrepo.repository.util.PackageEventFactory.buildCreatedEvent
 import com.tencent.bkrepo.repository.util.PackageQueryHelper
+import java.time.LocalDateTime
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.stereotype.Service
 import java.time.LocalDate
-import java.time.LocalDateTime
 
 @Service
 class PackageServiceImpl(
@@ -208,7 +209,7 @@ class PackageServiceImpl(
             val tPackage = findOrCreatePackage(request)
             // 检查版本是否存在
             val oldVersion = packageVersionDao.findByName(tPackage.id!!, versionName)
-            //检查本次上传是创建还是覆盖。
+            // 检查本次上传是创建还是覆盖。
             var isOverride = false
             val newVersion = if (oldVersion != null) {
                 if (!overwrite) {
@@ -223,7 +224,7 @@ class PackageServiceImpl(
                     manifestPath = request.manifestPath
                     artifactPath = request.artifactPath
                     stageTag = request.stageTag.orEmpty()
-                    metadata = MetadataUtils.fromMap(request.metadata)
+                    metadata = MetadataUtils.compatibleFromAndCheck(request.metadata, packageMetadata, createdBy)
                     tags = request.tags?.filter { it.isNotBlank() }.orEmpty()
                     extension = request.extension.orEmpty()
                 }
@@ -243,7 +244,7 @@ class PackageServiceImpl(
                     manifestPath = manifestPath,
                     artifactPath = artifactPath,
                     stageTag = stageTag.orEmpty(),
-                    metadata = MetadataUtils.fromMap(metadata),
+                    metadata = MetadataUtils.compatibleFromAndCheck(metadata, packageMetadata, createdBy),
                     tags = request.tags?.filter { it.isNotBlank() }.orEmpty(),
                     extension = request.extension.orEmpty()
                 )
@@ -285,7 +286,6 @@ class PackageServiceImpl(
                     ))
                 )
             }
-            logger.info("Create package version[$newVersion] success")
         }
     }
 
@@ -372,10 +372,16 @@ class PackageServiceImpl(
     }
 
     override fun updateVersion(request: PackageVersionUpdateRequest, realIpAddress: String?) {
+        val operator = SecurityUtils.getUserId()
         val projectId = request.projectId
         val repoName = request.repoName
         val packageKey = request.packageKey
         val versionName = request.versionName
+        val newMetadata = if (request.metadata != null || request.packageMetadata != null) {
+            MetadataUtils.compatibleFromAndCheck(request.metadata, request.packageMetadata, operator)
+        } else {
+            null
+        }
         val tPackage = checkPackage(projectId, repoName, packageKey)
         val packageId = tPackage.id.orEmpty()
         val tPackageVersion = checkPackageVersion(packageId, versionName).apply {
@@ -383,10 +389,10 @@ class PackageServiceImpl(
             manifestPath = request.manifestPath ?: manifestPath
             artifactPath = request.artifactPath ?: artifactPath
             stageTag = request.stageTag ?: stageTag
-            metadata = request.metadata?.let { MetadataUtils.fromMap(it) } ?: metadata
+            metadata = newMetadata ?: metadata
             tags = request.tags ?: tags
             extension = request.extension ?: extension
-            lastModifiedBy = SecurityUtils.getUserId()
+            lastModifiedBy = operator
             lastModifiedDate = LocalDateTime.now()
         }
         packageVersionDao.save(tPackageVersion)
@@ -415,6 +421,8 @@ class PackageServiceImpl(
         }
         val artifactInfo = DefaultArtifactInfo(projectId, repoName, tPackageVersion.artifactPath!!)
         val context = ArtifactDownloadContext(artifact = artifactInfo, useDisposition = true)
+        // context 复制时会从request map中获取对应的artifactInfo， 而artifactInfo设置到map中是在接口url解析时
+        HttpContextHolder.getRequestOrNull()?.setAttribute(ARTIFACT_INFO_KEY, artifactInfo)
         ArtifactContextHolder.getRepository().download(context)
         val userId = SecurityUtils.getUserId()
         if (HttpContextHolder.getRequest().method.equals("get", ignoreCase = true)) {
@@ -495,7 +503,7 @@ class PackageServiceImpl(
                     manifestPath = it.manifestPath,
                     artifactPath = it.artifactPath,
                     stageTag = it.stageTag.orEmpty(),
-                    metadata = MetadataUtils.fromMap(it.metadata),
+                    metadata = MetadataUtils.compatibleFromAndCheck(it.metadata, it.packageMetadata, it.createdBy),
                     extension = it.extension.orEmpty()
                 )
                 packageVersionDao.save(newVersion)
@@ -670,6 +678,7 @@ class PackageServiceImpl(
                     downloads = it.downloads,
                     stageTag = it.stageTag,
                     metadata = MetadataUtils.toMap(it.metadata),
+                    packageMetadata = MetadataUtils.toList(it.metadata),
                     tags = it.tags.orEmpty(),
                     extension = it.extension.orEmpty(),
                     contentPath = it.artifactPath,

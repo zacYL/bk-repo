@@ -39,12 +39,14 @@ allprojects {
     version = "1.0.0-SNAPSHOT"
 
     apply(plugin = "com.tencent.devops.boot")
+    apply(plugin = "jacoco")
     dependencyManagement {
         dependencies {
             dependency("com.github.zafarkhaja:java-semver:0.9.0")
             dependency("org.apache.skywalking:apm-toolkit-logback-1.x:6.6.0")
             dependency("org.apache.skywalking:apm-toolkit-trace:6.6.0")
             dependency("net.javacrumbs.shedlock:shedlock-spring:4.12.0")
+            dependency("org.springframework.cloud:spring-cloud-stream:3.0.11.RELEASE")
             dependency("net.javacrumbs.shedlock:shedlock-provider-mongo:4.12.0")
             dependency("com.google.code.gson:gson:2.8.6")
             dependency("org.eclipse.jgit:org.eclipse.jgit.http.server:5.11.0.202103091610-r")
@@ -75,7 +77,28 @@ allprojects {
             }
         }
     }
+
+    tasks.withType<JacocoReport> {
+        reports {
+            xml.isEnabled = true
+            html.isEnabled = true
+        }
+        dependsOn(tasks.getByName("test"))
+    }
+
+    if (isBootProject(this)) {
+        tasks.named("copyToRelease") {
+            dependsOn(tasks.named("bootJar"))
+        }
+    }
+
 }
+
+fun isBootProject(project: Project): Boolean {
+    return project.name.startsWith("boot-") || project.findProperty("devops.boot") == "true"
+}
+
+
 
 apply(from = rootProject.file("gradle/publish-api.gradle.kts"))
 apply(from = rootProject.file("gradle/publish-all.gradle.kts"))

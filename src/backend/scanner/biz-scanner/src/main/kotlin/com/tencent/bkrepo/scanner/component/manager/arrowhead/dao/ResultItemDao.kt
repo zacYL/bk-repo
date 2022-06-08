@@ -30,8 +30,8 @@ package com.tencent.bkrepo.scanner.component.manager.arrowhead.dao
 import com.mongodb.client.result.DeleteResult
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.query.model.PageLimit
+import com.tencent.bkrepo.scanner.component.manager.ResultItem
 import com.tencent.bkrepo.scanner.pojo.request.ArrowheadLoadResultArguments
-import com.tencent.bkrepo.scanner.component.manager.arrowhead.model.ResultItem
 import com.tencent.bkrepo.scanner.dao.ScannerSimpleMongoDao
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.mongodb.core.query.Criteria

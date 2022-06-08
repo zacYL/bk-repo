@@ -27,34 +27,27 @@
 
 package com.tencent.bkrepo.scanner.component.manager.dependencycheck.dao
 
-import com.tencent.bkrepo.common.api.util.toJsonString
-import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.result.DependencyItem
-import com.tencent.bkrepo.scanner.component.manager.arrowhead.dao.ResultItemDao
+import com.tencent.bkrepo.scanner.component.manager.ResultItemDao
 import com.tencent.bkrepo.scanner.component.manager.dependencycheck.model.TDependencyItem
-import com.tencent.bkrepo.scanner.pojo.request.ArrowheadLoadResultArguments
-import org.slf4j.LoggerFactory
+import com.tencent.bkrepo.scanner.component.manager.dependencycheck.model.TDependencyItemData
+import com.tencent.bkrepo.scanner.pojo.request.LoadResultArguments
+import com.tencent.bkrepo.scanner.pojo.request.dependencecheck.DependencyLoadResultArguments
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.inValues
 import org.springframework.stereotype.Repository
 
 @Repository
 class DependencyItemDao : ResultItemDao<TDependencyItem>() {
-    override fun customizePageBy(criteria: Criteria, arguments: ArrowheadLoadResultArguments): Criteria {
+    override fun customizePageBy(criteria: Criteria, arguments: LoadResultArguments): Criteria {
+        require(arguments is DependencyLoadResultArguments)
         if (arguments.vulnerabilityLevels.isNotEmpty()) {
-            criteria.and(dataKey(DependencyItem::severity.name)).inValues(arguments.vulnerabilityLevels)
+            criteria.and(dataKey(TDependencyItemData::severity.name)).inValues(arguments.vulnerabilityLevels)
         }
         if (arguments.vulIds.isNotEmpty()) {
-            // todo
-            // criteria.andOperator(buildVulIdCriteria(arguments.vulIds))
-            criteria.and(dataKey(DependencyItem::cveId.name)).inValues(arguments.vulIds)
+            criteria.and(dataKey(TDependencyItemData::cveId.name)).inValues(arguments.vulIds)
         }
-        logger.info("DependencyItemDao customizePageBy criteria:${criteria.toJsonString()}")
         return criteria
     }
 
     private fun dataKey(name: String) = "${TDependencyItem::data.name}.$name"
-
-    companion object {
-        private val logger = LoggerFactory.getLogger(DependencyItemDao::class.java)
-    }
 }

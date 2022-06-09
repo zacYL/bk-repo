@@ -1,7 +1,8 @@
 package net.devops.canway.common.lse.feign
 
+import com.tencent.bkrepo.common.api.constant.LICENSE_SERVICE_NAME
 import net.canway.license.api.LicenseApi
 import org.springframework.cloud.openfeign.FeignClient
 
-@FeignClient("license\${service-suffix:#{null}}")
+@FeignClient(LICENSE_SERVICE_NAME, configuration = [FeignConfiguration::class])
 interface LicenseFeign : LicenseApi

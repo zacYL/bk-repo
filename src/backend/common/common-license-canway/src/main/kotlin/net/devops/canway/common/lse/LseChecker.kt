@@ -90,11 +90,11 @@ class LseChecker @Autowired constructor(
         }
         try {
             val response = LicenseAuthService.verify(data)
-            logger.info(result.toString())
+            logger.info("$response")
             return response
         } catch (e: LicenseException) {
             logger.error("License Verification Failed: ${e.message}")
-            logger.info(e.response().toString())
+            logger.info("${e.response()}")
             throw e
         }
     }

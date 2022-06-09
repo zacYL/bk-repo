@@ -26,18 +26,28 @@
 
 package net.devops.canway.common.lse
 
-import net.canway.license.bean.Result
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.api.message.CommonMessageCode
+import net.canway.license.bean.AuthRequest
+import net.canway.license.bean.AuthResponse
+import net.canway.license.exception.LicenseException
 import net.canway.license.service.LicenseAuthService
 import net.canway.license.utils.LicenseProperties
+import net.devops.canway.common.lse.feign.LicenseFeign
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 
-class LseChecker constructor(
-    private val licenseAuthService: LicenseAuthService
+class LseChecker @Autowired constructor(
+    private val licenseFeign: LicenseFeign
 ) {
     private var monitorTh: Thread? = null
-    private var vo: Result<Any>? = null
+    private var authResponse: AuthResponse? = null
     private var run = true
+
+    @Value("\${bk.paas.host:}")
+    private val domain: String = ""
 
     init {
         if (monitorTh == null || !monitorTh!!.isAlive) {
@@ -46,7 +56,7 @@ class LseChecker constructor(
                 override fun run() {
                     logger.info(LicenseProperties().toString())
                     while (run) {
-                        vo = checkCwLseImmediately()
+                        authResponse = checkCwLseImmediately()
                         try {
                             sleep(sleepTime)
                         } catch (ignored: InterruptedException) {
@@ -59,23 +69,38 @@ class LseChecker constructor(
         }
     }
 
-    fun checkLse(): Result<Any> {
-        if (vo == null) {
+    fun checkLse(): AuthResponse {
+        if (authResponse == null) {
             synchronized(this::class.java) {
-                if (vo == null) {
-                    vo = checkCwLseImmediately()
+                if (authResponse == null) {
+                    authResponse = checkCwLseImmediately()
                 }
             }
         }
-        return vo!!
+        return authResponse!!
     }
 
-    private fun checkCwLseImmediately(): Result<Any> {
-        return licenseAuthService.requestAuth(MODULE_NAME, false)
+    private fun checkCwLseImmediately(): AuthResponse {
+        val request = LicenseAuthService.getRequest(AuthRequest(domain, MODULE_NAME, System.currentTimeMillis()))
+        val result = licenseFeign.auth(request)
+        val data = result.data()
+        if (result.code() != 0 || data.isNullOrEmpty()) {
+            logger.warn("License Access Failed")
+            throw ErrorCodeException(CommonMessageCode.LICENSE_ACCESS_FAILED)
+        }
+        try {
+            val response = LicenseAuthService.verify(data)
+            logger.info(result.toString())
+            return response
+        } catch (e: LicenseException) {
+            logger.error("License Verification Failed: ${e.message}")
+            logger.info(e.response().toString())
+            throw e
+        }
     }
 
     companion object {
         val logger: Logger = LoggerFactory.getLogger(LseChecker::class.java)
-        const val MODULE_NAME = "LIBRARY"
+        const val MODULE_NAME = "CPACK"
     }
 }

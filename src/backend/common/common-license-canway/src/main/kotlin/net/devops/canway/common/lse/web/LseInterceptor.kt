@@ -1,7 +1,5 @@
 package net.devops.canway.common.lse.web
 
-import io.undertow.util.BadRequestException
-import net.canway.license.utils.Constant
 import net.devops.canway.common.lse.LseChecker
 import org.apache.http.HttpStatus
 import org.slf4j.LoggerFactory
@@ -14,18 +12,14 @@ class LseInterceptor constructor(
 ) : HandlerInterceptorAdapter() {
 
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
-        try {
-            lseChecker.checkLse().let {
-                return if (it.code == Constant.SUCCESS)
-                    true
-                else
-                    throw BadRequestException("${it.message}:${it.code}")
-            }
+        return try {
+            lseChecker.checkLse()
+            true
         } catch (e: Exception) {
             logger.warn("check license fail ${e.message}")
             response.status = HttpStatus.SC_BAD_REQUEST
             response.writer.print(e.message)
-            return false
+            false
         }
     }
 

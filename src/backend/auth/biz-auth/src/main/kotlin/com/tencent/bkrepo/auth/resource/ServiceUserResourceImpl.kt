@@ -54,7 +54,6 @@ import com.tencent.bkrepo.auth.pojo.user.UserInfo
 import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.service.RoleService
 import com.tencent.bkrepo.auth.service.UserService
-import com.tencent.bkrepo.auth.util.RsaUtils
 import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.pojo.Page
@@ -62,6 +61,7 @@ import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.security.exception.AuthenticationException
 import com.tencent.bkrepo.common.security.http.jwt.JwtAuthProperties
 import com.tencent.bkrepo.common.security.util.JwtUtils
+import com.tencent.bkrepo.common.security.util.RsaUtils
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
@@ -76,8 +76,7 @@ class ServiceUserResourceImpl @Autowired constructor(
     private val userService: UserService,
     private val roleService: RoleService,
     private val permissionService: PermissionService,
-    private val jwtProperties: JwtAuthProperties,
-    private val rsaUtils: RsaUtils
+    private val jwtProperties: JwtAuthProperties
 ) : ServiceUserResource {
 
     private val signingKey = JwtUtils.createSigningKey(jwtProperties.secretKey)
@@ -230,16 +229,15 @@ class ServiceUserResourceImpl @Autowired constructor(
     }
 
     override fun getPublicKey(): Response<String?> {
-        return ResponseBuilder.success(rsaUtils.getPublicKey())
+        return ResponseBuilder.success(RsaUtils.publicKey)
     }
 
     override fun loginUser(uid: String, token: String): Response<Boolean> {
         val decryptToken: String?
         try {
-            decryptToken = rsaUtils.decrypt(token)
+            decryptToken = RsaUtils.decrypt(token)
         } catch (e: CryptoException) {
             logger.error("token decrypt failed token [$uid] exception:[$e]")
-            rsaUtils.generateRsa()
             throw AuthenticationException(messageCode = AuthMessageCode.AUTH_LOGIN_FAILED)
         }
         userService.findUserByUserToken(uid, decryptToken) ?: run {
@@ -301,11 +299,10 @@ class ServiceUserResourceImpl @Autowired constructor(
         val decryptOldPwd: String?
         val decryptNewPwd: String?
         try {
-            decryptOldPwd = rsaUtils.decrypt(oldPwd)
-            decryptNewPwd = rsaUtils.decrypt(newPwd)
+            decryptOldPwd = RsaUtils.decrypt(oldPwd)
+            decryptNewPwd = RsaUtils.decrypt(newPwd)
         } catch (e: CryptoException) {
             logger.warn("token decrypt failed [$uid]")
-            rsaUtils.generateRsa()
             throw AuthenticationException(messageCode = AuthMessageCode.AUTH_LOGIN_TOKEN_CHECK_FAILED)
         }
         return ResponseBuilder.success(userService.updatePassword(uid, decryptOldPwd, decryptNewPwd))

@@ -23,19 +23,21 @@
                 placeholder="请选择日期范围"
                 @change="handlerPaginationChange()">
             </bk-date-picker>
-            <bk-tag-input
+            <bk-select
                 class="mr10 w250"
                 v-model="query.user"
-                :list="Object.values(userList).filter(user => user.id !== 'anonymous')"
-                :search-key="['id', 'name']"
-                placeholder="请输入用户，按Enter键确认"
-                :max-data="1"
-                trigger="focus"
-                allow-create
-                @click.native.capture="query.user = []"
-                @select="handlerPaginationChange()"
-                @removeAll="handlerPaginationChange()">
-            </bk-tag-input>
+                clearable
+                searchable
+                placeholder="请选择用户"
+                @change="handlerPaginationChange()"
+                :enable-virtual-scroll="Object.values(userList).length > 3000"
+                :list="Object.values(userList).filter(user => user.id !== 'anonymous')">
+                <bk-option v-for="option in Object.values(userList).filter(user => user.id !== 'anonymous')"
+                    :key="option.id"
+                    :id="option.id"
+                    :name="option.name">
+                </bk-option>
+            </bk-select>
         </div>
         <bk-table
             class="mt10"
@@ -104,7 +106,7 @@
                 isLoading: false,
                 query: {
                     projectId: this.$route.params.projectId,
-                    user: [],
+                    user: '',
                     time: [new Date(nowTime - 3600 * 1000 * 24 * 7), new Date(nowTime)]
                 },
                 auditList: [],
@@ -147,7 +149,7 @@
         created () {
             const { startTime, endTime, user, projectId } = this.$route.query
             startTime && endTime && (this.query.time = [new Date(startTime), new Date(endTime)])
-            user && this.query.user.push(user)
+            user && (this.query.user = user)
             projectId && (this.query.projectId = projectId)
             this.handlerPaginationChange()
         },
@@ -166,7 +168,7 @@
                     projectId: this.query.projectId || undefined,
                     startTime,
                     endTime,
-                    user: this.query.user[0] || undefined
+                    user: this.query.user || undefined
                 }
                 this.$router.replace({
                     query: {

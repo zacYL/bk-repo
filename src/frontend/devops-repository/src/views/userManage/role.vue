@@ -66,16 +66,22 @@
             :width="500">
             <template #content>
                 <div class="m10 flex-align-center">
-                    <bk-tag-input
+                    <bk-select
                         style="width: 300px"
                         v-model="editRoleUsers.addUsers"
-                        :list="Object.values(selectList)"
-                        :search-key="['id', 'name']"
+                        multiple
+                        clearable
+                        searchable
+                        placeholder="请选择用户"
                         :title="editRoleUsers.addUsers.map(u => userList[u] ? userList[u].name : u)"
-                        placeholder="添加用户，按Enter键确认"
-                        trigger="focus"
-                        allow-create>
-                    </bk-tag-input>
+                        :enable-virtual-scroll="Object.values(selectList).length > 3000"
+                        :list="Object.values(selectList)">
+                        <bk-option v-for="option in Object.values(selectList)"
+                            :key="option.id"
+                            :id="option.id"
+                            :name="option.name">
+                        </bk-option>
+                    </bk-select>
                     <bk-button :disabled="!editRoleUsers.addUsers.length" theme="primary" class="ml10" @click="handleAddUsers">添加</bk-button>
                     <bk-button :disabled="!editRoleUsers.deleteUsers.length" theme="default" class="ml10" @click="handleDeleteUsers">批量移除</bk-button>
                 </div>

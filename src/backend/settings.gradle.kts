@@ -49,9 +49,6 @@ fun includeAll(module: String) {
     }
 }
 
-include("dockerapi")
-include("dockerapi:biz-dockerapi")
-include("dockerapi:boot-dockerapi")
 include(":common:common-license-canway")
 include(":boot-assembly")
 includeAll(":auth")
@@ -64,6 +61,7 @@ includeAll(":common:common-plugin")
 includeAll(":common:common-devops")
 include(":common:common-cpack")
 includeAll(":common:common-operate")
+includeAll(":common:common-checker")
 includeAll(":composer")
 includeAll(":docker")
 includeAll(":generic")
@@ -85,4 +83,3 @@ includeAll(":webhook")
 includeAll(":job")
 includeAll(":scanner")
 includeAll(":scanner-executor")
-includeAll(":common:common-checker")

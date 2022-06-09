@@ -84,7 +84,9 @@ class LseChecker {
     }
 
     private fun checkCwLseImmediately(): AuthResponse {
-        val request = LicenseAuthService.getRequest(AuthRequest(domain, MODULE_NAME, System.currentTimeMillis()))
+        val authRequest = AuthRequest(domain, MODULE_NAME, System.currentTimeMillis())
+        logger.info("$authRequest")
+        val request = LicenseAuthService.getRequest(authRequest)
         val result = licenseFeign.auth(request)
         val data = result.data()
         if (result.code() != 0 || data.isNullOrEmpty()) {
@@ -103,6 +105,6 @@ class LseChecker {
 
     companion object {
         val logger: Logger = LoggerFactory.getLogger(LseChecker::class.java)
-        const val MODULE_NAME = "CPACK"
+        const val MODULE_NAME = "CPack"
     }
 }

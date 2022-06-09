@@ -29,5 +29,5 @@ class WebConfiguration {
     fun lseInterceptor(lseChecker: LseChecker) = LseInterceptor(lseChecker)
 
     @Bean
-    fun lseChecker(licenseFeign: LicenseFeign) = LseChecker(licenseFeign)
+    fun lseChecker() = LseChecker()
 }

@@ -39,15 +39,16 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 
-class LseChecker @Autowired constructor(
-    private val licenseFeign: LicenseFeign
-) {
+class LseChecker {
     private var monitorTh: Thread? = null
     private var authResponse: AuthResponse? = null
     private var run = true
 
     @Value("\${bk.paas.host:}")
     private val domain: String = ""
+
+    @Autowired
+    private lateinit var licenseFeign: LicenseFeign
 
     init {
         if (monitorTh == null || !monitorTh!!.isAlive) {
@@ -93,8 +94,7 @@ class LseChecker @Autowired constructor(
             logger.info("$response")
             return response
         } catch (e: LicenseException) {
-            logger.error("License Verification Failed: ${e.message}")
-            logger.info("${e.response()}")
+            logger.error("License Verification Failed: $e")
             throw e
         }
     }

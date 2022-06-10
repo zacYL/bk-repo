@@ -45,7 +45,7 @@ import org.springframework.context.annotation.Import
 @Configuration
 @ConditionalOnMicroService
 @Import(FeignClientsConfiguration::class)
-@EnableFeignClients(basePackages = ["com.tencent.bkrepo"])
+@EnableFeignClients(basePackages = ["com.tencent.bkrepo", "net.canway.devops"])
 class ClientConfiguration {
 
     @Bean

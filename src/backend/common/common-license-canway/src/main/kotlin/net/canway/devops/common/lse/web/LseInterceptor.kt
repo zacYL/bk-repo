@@ -1,6 +1,6 @@
-package net.devops.canway.common.lse.web
+package net.canway.devops.common.lse.web
 
-import net.devops.canway.common.lse.LseChecker
+import net.canway.devops.common.lse.LseChecker
 import org.apache.http.HttpStatus
 import org.slf4j.LoggerFactory
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter

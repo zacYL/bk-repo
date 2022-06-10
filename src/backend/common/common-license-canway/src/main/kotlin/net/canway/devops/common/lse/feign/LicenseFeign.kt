@@ -1,4 +1,4 @@
-package net.devops.canway.common.lse.feign
+package net.canway.devops.common.lse.feign
 
 import com.tencent.bkrepo.common.api.constant.LICENSE_SERVICE_NAME
 import net.canway.license.api.LicenseApi

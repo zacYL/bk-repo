@@ -1,4 +1,4 @@
-package net.devops.canway.common.lse.feign
+package net.canway.devops.common.lse.feign
 
 import feign.jaxrs.JAXRSContract
 import org.springframework.context.annotation.Bean

@@ -24,16 +24,16 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.devops.canway.common.lse
+package net.canway.devops.common.lse
 
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
+import net.canway.devops.common.lse.feign.LicenseFeign
 import net.canway.license.bean.AuthRequest
 import net.canway.license.bean.AuthResponse
 import net.canway.license.exception.LicenseException
 import net.canway.license.service.LicenseAuthService
 import net.canway.license.utils.LicenseProperties
-import net.devops.canway.common.lse.feign.LicenseFeign
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -94,7 +94,7 @@ class LseChecker {
         }
         try {
             val response = LicenseAuthService.verify(data)
-            logger.info("$response")
+            logger.info("License Verify Response: $response")
             return response
         } catch (e: LicenseException) {
             logger.error("License Verification Failed: $e")

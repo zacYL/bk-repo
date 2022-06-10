@@ -452,7 +452,13 @@ body {
 
     .bk-date-picker {
         .bk-date-picker-rel {
+            .icon-wrapper {
+                width: 30px;
+                height: 30px;
+            }
             .bk-date-picker-editor {
+                height: 30px;
+                line-height: 30px;
                 color: var(--fontPrimaryColor);
                 border-color: var(--borderWeightColor);
             }

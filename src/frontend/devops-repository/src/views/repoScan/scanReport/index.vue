@@ -1,31 +1,39 @@
 <template>
     <div class="scan-report-container">
-        <div class="report-operation flex-align-center">
-            <bk-date-picker
-                class="mr10 w250"
-                v-model="filterTime"
-                :shortcuts="shortcuts"
-                type="daterange"
-                transfer
-                placeholder="请选择日期范围"
-                @change="changeFilterTime">
-            </bk-date-picker>
-            <bk-button class="mr10" theme="default" @click="stopScanHandler">中止扫描</bk-button>
-            <bk-button class="mr10" theme="default" @click="startScanHandler">立即扫描</bk-button>
-            <bk-button theme="default" @click="scanSettingHandler">设置</bk-button>
-        </div>
-        <div class="report-overview flex-align-center display-block" data-title="方案总览">
-            <div class="base-info-item flex-column"
-                v-for="item in baseInfoList" :key="item.key">
-                <span class="base-info-key">{{ item.label }}</span>
-                <span class="base-info-value" :style="{ color: item.color }">{{ segmentNumberThree(baseInfo[item.key] || 0) }}</span>
+        <div class="report-overview">
+            <div class="flex-between-center">
+                <span class="report-title flex-align-center">方案总览</span>
+                <div class="flex-align-center">
+                    <bk-date-picker
+                        class="mr10 w250"
+                        v-model="filterTime"
+                        :shortcuts="shortcuts"
+                        type="daterange"
+                        transfer
+                        placeholder="请选择日期范围"
+                        @change="changeFilterTime">
+                    </bk-date-picker>
+                    <bk-button class="mr10" theme="default" @click="stopScanHandler">中止扫描</bk-button>
+                    <bk-button class="mr10" theme="default" @click="startScanHandler">立即扫描</bk-button>
+                    <bk-button theme="default" @click="scanSettingHandler">设置</bk-button>
+                </div>
+            </div>
+            <div class="mt10 flex-align-center">
+                <div class="base-info-item flex-column"
+                    v-for="item in baseInfoList" :key="item.key">
+                    <span class="base-info-key">{{ item.label }}</span>
+                    <span class="base-info-value" :style="{ color: item.color }">{{ segmentNumberThree(baseInfo[item.key] || 0) }}</span>
+                </div>
             </div>
         </div>
-        <div class="report-list display-block" data-title="扫描记录" v-bkloading="{ isLoading }">
-            <!-- <i class="devops-icon icon-filter-shape" @click="filter.show = true"></i> -->
-            <bk-button class="report-filter" theme="default" @click="showFilterForm">筛选</bk-button>
+        <div class="report-list" v-bkloading="{ isLoading }">
+            <div class="flex-between-center">
+                <span class="report-title flex-align-center">扫描记录</span>
+                <bk-button theme="default" @click="showFilterForm">筛选</bk-button>
+            </div>
             <bk-table
-                height="calc(100% - 60px)"
+                class="mt10"
+                height="calc(100% - 80px)"
                 :data="scanList"
                 :outer-border="false"
                 :row-border="false"
@@ -314,15 +322,25 @@
 .scan-report-container {
     position: relative;
     height: 100%;
-    padding: 0 20px 10px;
     overflow: hidden;
-    background-color: white;
+    .report-title {
+        font-size: 14px;
+        font-weight: 600;
+        &:before {
+            content: '';
+            width: 3px;
+            height: 12px;
+            margin-right: 7px;
+            border-radius: 1px;
+            background-color: var(--primaryColor);
+        }
+    }
     .report-overview {
-        height: 130px;
-        padding-bottom: 10px;
+        padding: 10px;
+        background-color: white;
         .base-info-item {
             position: relative;
-            height: 100%;
+            height: 80px;
             padding: 20px;
             flex: 1;
             justify-content: space-around;
@@ -330,7 +348,7 @@
             border-width: 1px 0;
             background-color: var(--bgColor);
             .base-info-value {
-                font-size: 30px;
+                font-size: 20px;
                 font-weight: 600;
             }
             &:first-child {
@@ -347,9 +365,9 @@
                 content: '';
                 position: absolute;
                 width: 1px;
-                height: calc(100% - 40px);
+                height: calc(100% - 30px);
                 left: 0;
-                top: 20px;
+                top: 15px;
                 background-color: var(--borderColor);
             }
             &:nth-child(2):before {
@@ -365,18 +383,10 @@
         }
     }
     .report-list {
-        height: calc(100% - 220px);
-        &:before {
-            top: -30px;
-        }
-        &:after {
-            top: -35px
-        }
-        .report-filter {
-            position: absolute;
-            top: -40px;
-            right: 0;
-        }
+        height: calc(100% - 150px);
+        margin-top: 10px;
+        padding: 10px;
+        background-color: white;
         .icon-filter-shape {
             position: absolute;
             padding: 5px;
@@ -389,11 +399,6 @@
                 color: var(--primaryColor);
             }
         }
-    }
-    .report-operation {
-        position: absolute;
-        top: 15px;
-        right: 20px;
     }
 }
 </style>

@@ -95,7 +95,7 @@ const routes = [
                 component: planManage,
                 meta: {
                     breadcrumb: [
-                        { name: 'planManage', label: '分发计划' }
+                        { name: 'planManage', label: '制品分发' }
                     ]
                 }
             },
@@ -105,7 +105,7 @@ const routes = [
                 component: createPlan,
                 meta: {
                     breadcrumb: [
-                        { name: 'planManage', label: '分发计划' },
+                        { name: 'planManage', label: '制品分发' },
                         { name: 'createPlan', label: '创建计划' }
                     ]
                 }
@@ -116,7 +116,7 @@ const routes = [
                 component: createPlan,
                 meta: {
                     breadcrumb: [
-                        { name: 'planManage', label: '{planName}', template: '分发计划' },
+                        { name: 'planManage', label: '{planName}', template: '制品分发' },
                         { name: 'createPlan', label: '编辑计划' }
                     ]
                 }
@@ -127,7 +127,7 @@ const routes = [
                 component: createPlan,
                 meta: {
                     breadcrumb: [
-                        { name: 'planManage', label: '{planName}', template: '分发计划' },
+                        { name: 'planManage', label: '{planName}', template: '制品分发' },
                         { name: 'createPlan', label: '计划详情' }
                     ]
                 }
@@ -138,7 +138,7 @@ const routes = [
                 component: logDetail,
                 meta: {
                     breadcrumb: [
-                        { name: 'planManage', label: '{planName}', template: '分发计划' },
+                        { name: 'planManage', label: '{planName}', template: '制品分发' },
                         { name: 'logDetail', label: '日志详情' }
                     ]
                 }
@@ -179,14 +179,14 @@ const routes = [
                     } else if (repoType === 'generic') {
                         to.meta.breadcrumb = [
                             { name: 'repoList', label: '仓库列表' },
-                            { name: 'commonList', label: '{repoName}', template: '依赖仓库' },
-                            { name: 'commonPackage', label: '{packageKey}', template: '制品详情' },
+                            { name: 'repoGeneric', label: '{repoName}', template: '二进制仓库' },
                             { name: 'artiReport', label: '制品扫描结果' }
                         ]
                     } else if (repoType) {
                         to.meta.breadcrumb = [
                             { name: 'repoList', label: '仓库列表' },
-                            { name: 'repoGeneric', label: '{repoName}', template: '二进制仓库' },
+                            { name: 'commonList', label: '{repoName}', template: '依赖仓库' },
+                            { name: 'commonPackage', label: '{packageKey}', template: '制品详情' },
                             { name: 'artiReport', label: '制品扫描结果' }
                         ]
                     }

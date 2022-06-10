@@ -27,8 +27,6 @@
 
 package com.tencent.bkrepo.scanner.utils
 
-import com.tencent.bkrepo.common.api.exception.SystemErrorException
-import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.scanner.pojo.scanner.CveOverviewKey
 import com.tencent.bkrepo.common.scanner.pojo.scanner.Level
@@ -40,7 +38,6 @@ import com.tencent.bkrepo.scanner.model.TScanTask
 import com.tencent.bkrepo.scanner.model.TSubScanTask
 import com.tencent.bkrepo.scanner.pojo.ProjectScanConfiguration
 import com.tencent.bkrepo.scanner.pojo.ScanTask
-import com.tencent.bkrepo.scanner.pojo.ScanTriggerType
 import com.tencent.bkrepo.scanner.pojo.SubScanTask
 import com.tencent.bkrepo.scanner.pojo.response.SubtaskInfo
 import com.tencent.bkrepo.scanner.pojo.response.SubtaskResultOverview

@@ -16,48 +16,48 @@ import org.springframework.context.annotation.Bean
 import java.util.concurrent.TimeUnit
 
 class FeignConfiguration(
-    private val objectMapper: ObjectMapper,
-    private val errorCodeDecoder: ErrorCodeDecoder,
-    private val requestInterceptor: RequestInterceptor
+//    private val objectMapper: ObjectMapper,
+//    private val errorCodeDecoder: ErrorCodeDecoder,
+//    private val requestInterceptor: RequestInterceptor
 ) {
-    @Bean
-    fun client(): Client {
-        return feign.okhttp.OkHttpClient(okHttpClient)
-    }
+//    @Bean
+//    fun client(): Client {
+//        return feign.okhttp.OkHttpClient(okHttpClient)
+//    }
 
     @Bean
-    fun contract(): Contract {
+    fun contract(): JAXRSContract {
         return JAXRSContract()
     }
 
-    @Bean
-    fun encoder(): Encoder {
-        return JacksonEncoder()
-    }
+//    @Bean
+//    fun encoder(): Encoder {
+//        return JacksonEncoder()
+//    }
+//
+//    @Bean
+//    fun decoder(): Decoder {
+//        return JacksonDecoder()
+//    }
 
-    @Bean
-    fun decoder(): Decoder {
-        return JacksonDecoder()
-    }
+//    private val okHttpClient = OkHttpClient.Builder()
+//        .sslSocketFactory(
+//            CertTrustManager.disableValidationSSLSocketFactory,
+//            CertTrustManager.disableValidationTrustManager
+//        )
+//        .hostnameVerifier(CertTrustManager.trustAllHostname)
+//        .connectTimeout(3L, TimeUnit.SECONDS)
+//        .readTimeout(5L, TimeUnit.SECONDS)
+//        .writeTimeout(5L, TimeUnit.SECONDS)
+//        .build()
 
-    private val okHttpClient = OkHttpClient.Builder()
-        .sslSocketFactory(
-            CertTrustManager.disableValidationSSLSocketFactory,
-            CertTrustManager.disableValidationTrustManager
-        )
-        .hostnameVerifier(CertTrustManager.trustAllHostname)
-        .connectTimeout(3L, TimeUnit.SECONDS)
-        .readTimeout(5L, TimeUnit.SECONDS)
-        .writeTimeout(5L, TimeUnit.SECONDS)
-        .build()
+//    @Bean
+//    fun errorDecoder(): ErrorDecoder {
+//        return errorCodeDecoder
+//    }
 
-    @Bean
-    fun errorDecoder(): ErrorDecoder {
-        return errorCodeDecoder
-    }
-
-    @Bean
-    fun requestInterceptor(): RequestInterceptor {
-        return requestInterceptor
-    }
+//    @Bean
+//    fun requestInterceptor(): RequestInterceptor {
+//        return requestInterceptor
+//    }
 }

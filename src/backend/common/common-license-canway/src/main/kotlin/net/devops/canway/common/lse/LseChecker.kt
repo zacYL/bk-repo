@@ -26,7 +26,6 @@
 
 package net.devops.canway.common.lse
 
-import com.tencent.bkrepo.common.api.constant.LICENSE_SERVICE_NAME
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import net.canway.license.bean.AuthRequest
@@ -86,8 +85,6 @@ class LseChecker {
 
     private fun checkCwLseImmediately(): AuthResponse {
         val authRequest = AuthRequest(domain, MODULE_NAME, System.currentTimeMillis())
-        logger.info(LICENSE_SERVICE_NAME)
-        logger.info("$authRequest")
         val request = LicenseAuthService.getRequest(authRequest)
         val result = licenseFeign.auth(request)
         val data = result.data()

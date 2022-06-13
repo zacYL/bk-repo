@@ -126,7 +126,7 @@ export default {
         },
         // 获取许可信息
         getModuleInfo ({ commit }) {
-            Vue.prototype.$ajax.get('/platform/api/user/module-info/modules').then(data => {
+            Vue.prototype.$ajax.get('repository/api/license').then(data => {
                 commit('UPDATE_LICENSE', data)
             })
         }

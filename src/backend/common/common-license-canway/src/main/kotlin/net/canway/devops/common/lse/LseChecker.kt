@@ -24,30 +24,33 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.devops.canway.common.lse
+package net.canway.devops.common.lse
 
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
+import net.canway.devops.common.lse.feign.LicenseFeign
 import net.canway.license.bean.AuthRequest
 import net.canway.license.bean.AuthResponse
 import net.canway.license.exception.LicenseException
 import net.canway.license.service.LicenseAuthService
 import net.canway.license.utils.LicenseProperties
-import net.devops.canway.common.lse.feign.LicenseFeign
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.annotation.Lazy
 
-class LseChecker @Autowired constructor(
-    private val licenseFeign: LicenseFeign
-) {
+class LseChecker {
     private var monitorTh: Thread? = null
     private var authResponse: AuthResponse? = null
     private var run = true
 
     @Value("\${bk.paas.host:}")
     private val domain: String = ""
+
+    @Autowired
+    @Lazy
+    private lateinit var licenseFeign: LicenseFeign
 
     init {
         if (monitorTh == null || !monitorTh!!.isAlive) {
@@ -81,7 +84,8 @@ class LseChecker @Autowired constructor(
     }
 
     private fun checkCwLseImmediately(): AuthResponse {
-        val request = LicenseAuthService.getRequest(AuthRequest(domain, MODULE_NAME, System.currentTimeMillis()))
+        val authRequest = AuthRequest(domain, MODULE_NAME, System.currentTimeMillis())
+        val request = LicenseAuthService.getRequest(authRequest)
         val result = licenseFeign.auth(request)
         val data = result.data()
         if (result.code() != 0 || data.isNullOrEmpty()) {
@@ -90,17 +94,16 @@ class LseChecker @Autowired constructor(
         }
         try {
             val response = LicenseAuthService.verify(data)
-            logger.info("$response")
+            logger.info("License Verify Response: $response")
             return response
         } catch (e: LicenseException) {
-            logger.error("License Verification Failed: ${e.message}")
-            logger.info("${e.response()}")
+            logger.error("License Verification Failed: $e")
             throw e
         }
     }
 
     companion object {
         val logger: Logger = LoggerFactory.getLogger(LseChecker::class.java)
-        const val MODULE_NAME = "CPACK"
+        const val MODULE_NAME = "CPack"
     }
 }

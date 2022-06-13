@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-net.devops.canway.common.lse.web.WebConfiguration
+net.canway.devops.common.lse.web.WebConfiguration

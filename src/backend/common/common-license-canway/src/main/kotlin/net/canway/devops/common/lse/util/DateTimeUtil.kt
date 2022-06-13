@@ -24,7 +24,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.devops.canway.common.lse.util
+package net.canway.devops.common.lse.util
 
 import org.slf4j.LoggerFactory
 import java.text.SimpleDateFormat

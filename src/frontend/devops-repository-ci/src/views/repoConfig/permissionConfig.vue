@@ -40,16 +40,21 @@
                             </bk-select>
                         </template>
                         <template v-else>
-                            <bk-tag-input
+                            <bk-select
                                 style="width: 300px"
                                 v-model="section[part].addList"
-                                :list="filterSelectOptions(section[part], part)"
-                                :search-key="['id', 'name']"
+                                multiple
+                                clearable
+                                searchable
                                 :title="section[part].addList.map(u => userList[u] ? userList[u].name : u)"
-                                placeholder="请输入，按Enter键确认"
-                                trigger="focus"
-                                allow-create>
-                            </bk-tag-input>
+                                :enable-virtual-scroll="filterSelectOptions(section[part], part).length > 3000"
+                                :list="filterSelectOptions(section[part], part)">
+                                <bk-option v-for="option in filterSelectOptions(section[part], part)"
+                                    :key="option.id"
+                                    :id="option.id"
+                                    :name="option.name">
+                                </bk-option>
+                            </bk-select>
                         </template>
                         <i v-if="section[part].addList.length"
                             class="section-sub-add-btn devops-icon icon-check-1"

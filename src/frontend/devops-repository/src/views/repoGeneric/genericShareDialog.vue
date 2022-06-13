@@ -12,16 +12,21 @@
                     <bk-button class="mt5" theme="primary" @click="copyShareUrl(shareUrl)">复制链接</bk-button>
                 </bk-form-item>
                 <bk-form-item label="邮件方式分享">
-                    <bk-tag-input
+                    <bk-select
                         v-model="genericShare.user"
-                        :list="Object.values(userList).filter(user => user.id !== 'anonymous')"
-                        :search-key="['id', 'name']"
+                        multiple
+                        clearable
+                        searchable
+                        placeholder="请选择用户"
                         :title="genericShare.user.map(u => userList[u] ? userList[u].name : u)"
-                        placeholder="请输入用户"
-                        trigger="focus"
-                        allow-create
-                        has-delete-icon>
-                    </bk-tag-input>
+                        :enable-virtual-scroll="Object.values(userList).length > 3000"
+                        :list="Object.values(userList).filter(user => user.id !== 'anonymous')">
+                        <bk-option v-for="option in Object.values(userList).filter(user => user.id !== 'anonymous')"
+                            :key="option.id"
+                            :id="option.id"
+                            :name="option.name">
+                        </bk-option>
+                    </bk-select>
                     <bk-button class="mt5" :disabled="!Boolean(genericShare.user.length)" theme="primary" :loading="sending" @click="sendEmailHandler">发送邮件</bk-button>
                 </bk-form-item>
             </bk-form>
@@ -31,25 +36,6 @@
             </div>
         </div>
         <bk-form v-else style="margin-top:-15px" ref="genericShareForm" :label-width="90" form-type="vertical">
-            <!-- <bk-form-item label="授权用户" property="user">
-                <bk-tag-input
-                    v-model="genericShare.user"
-                    :list="Object.values(userList).filter(user => user.id !== 'anonymous')"
-                    :search-key="['id', 'name']"
-                    placeholder="授权访问用户，为空则任意用户可访问，按Enter键确认"
-                    trigger="focus"
-                    allow-create
-                    has-delete-icon>
-                </bk-tag-input>
-            </bk-form-item> -->
-            <!-- <bk-form-item label="授权IP" property="ip">
-                <bk-tag-input
-                    v-model="genericShare.ip"
-                    placeholder="授权访问IP，为空则任意IP可访问，按Enter键确认"
-                    trigger="focus"
-                    allow-create>
-                </bk-tag-input>
-            </bk-form-item> -->
             <bk-form-item label="访问次数">
                 <bk-input v-model="genericShare.permits" placeholder="请输入访问次数，为空则不限制"></bk-input>
             </bk-form-item>

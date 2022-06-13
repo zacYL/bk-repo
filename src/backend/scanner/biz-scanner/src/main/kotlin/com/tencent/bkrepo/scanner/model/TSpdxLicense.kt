@@ -1,10 +1,14 @@
 package com.tencent.bkrepo.scanner.model
 
+import org.springframework.data.mongodb.core.index.CompoundIndex
+import org.springframework.data.mongodb.core.index.CompoundIndexes
 import org.springframework.data.mongodb.core.mapping.Document
 import java.time.LocalDateTime
 
 @Document("spdx_license")
-//TODO 设置索引
+@CompoundIndexes(
+    CompoundIndex(name = "license_idx", def = "{'licenseId': 1, 'name': 1}", unique = true)
+)
 data class TSpdxLicense(
     var id: String? = null,
     var createdBy: String,

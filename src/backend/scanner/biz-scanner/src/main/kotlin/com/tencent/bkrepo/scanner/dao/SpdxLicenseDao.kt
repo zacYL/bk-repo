@@ -18,11 +18,11 @@ class SpdxLicenseDao : SimpleMongoDao<TSpdxLicense>() {
     }
 
     fun page(
-        name:String?,
+        name: String?,
         isDeprecatedLicenseId: Boolean?,
         isTrust: Boolean?,
         pageLimit: PageLimit
-    ): Page<TSpdxLicense>{
+    ): Page<TSpdxLicense> {
         val criteria = Criteria()
         name?.let {
             criteria.orOperator(

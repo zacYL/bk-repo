@@ -6,7 +6,6 @@ import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.query.model.PageLimit
-import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.scanner.pojo.license.SpdxLicenseInfo
 import com.tencent.bkrepo.scanner.pojo.license.UpdateLicenseRequest
@@ -18,12 +17,10 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestAttribute
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import java.io.File
 
 @Api("许可证接口")
 @RestController
@@ -89,5 +86,14 @@ class UserLicenseController(
         @RequestBody request: UpdateLicenseRequest
     ): Response<Boolean> {
         return ResponseBuilder.success(licenseService.updateLicense(licenseId, request))
+    }
+
+    @ApiOperation("根据许可证唯一标识列表查询许可证信息")
+    @GetMapping("/licenseIds")
+    fun update(
+        @ApiParam(value = "许可证唯一标识集合")
+        @RequestBody licenseIds: List<String>
+    ): Response<Map<String, SpdxLicenseInfo>> {
+        return ResponseBuilder.success(licenseService.listLicenseByIds(licenseIds))
     }
 }

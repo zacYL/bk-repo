@@ -13,6 +13,8 @@ import com.tencent.bkrepo.scanner.pojo.license.UpdateLicenseRequest
 import com.tencent.bkrepo.scanner.service.SpdxLicenseService
 import org.slf4j.LoggerFactory
 import org.springframework.data.mongodb.core.MongoTemplate
+import org.springframework.data.mongodb.core.query.Criteria
+import org.springframework.data.mongodb.core.query.Query
 import org.springframework.stereotype.Service
 import java.io.File
 import java.time.LocalDateTime
@@ -20,7 +22,8 @@ import java.time.format.DateTimeFormatter
 
 @Service
 class SpdxLicenseServiceImpl(
-    private val licenseDao: SpdxLicenseDao
+    private val licenseDao: SpdxLicenseDao,
+    private val mongoTemplate: MongoTemplate
 ) : SpdxLicenseService {
     override fun importLicense(path: String): Boolean {
         val operator = SecurityUtils.getUserId()
@@ -105,9 +108,25 @@ class SpdxLicenseServiceImpl(
         return true
     }
 
-    private fun checkLicenseExist(licenseId: String):TSpdxLicense {
-        val license =  licenseDao.findByLicenseId(licenseId)
-        license?: run {
+    override fun listLicenseByIds(licenseIds: List<String>): Map<String, SpdxLicenseInfo> {
+        val licenseMap = mutableMapOf<String, SpdxLicenseInfo>()
+        val licenseList = mongoTemplate.find(
+            Query.query(
+                Criteria.where(TSpdxLicense::licenseId.name)
+                    .`in`(licenseIds)
+            ), TSpdxLicense::class.java
+        ).map { convert(it) }
+        licenseList.forEach {
+            if (it != null) {
+                licenseMap[it.licenseId] = it
+            }
+        }
+        return licenseMap
+    }
+
+    private fun checkLicenseExist(licenseId: String): TSpdxLicense {
+        val license = licenseDao.findByLicenseId(licenseId)
+        license ?: run {
             logger.warn("license [$licenseId] not exist")
             throw LicenseNotFoundException(licenseId)
         }

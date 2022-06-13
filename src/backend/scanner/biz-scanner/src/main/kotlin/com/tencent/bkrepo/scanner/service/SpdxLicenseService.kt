@@ -41,4 +41,6 @@ interface SpdxLicenseService {
      * 根据许可证唯一标识更新许可证信息
      */
     fun updateLicense(licenseId: String, request: UpdateLicenseRequest): Boolean
+
+    fun listLicenseByIds(licenseIds: List<String>): Map<String, SpdxLicenseInfo>
 }

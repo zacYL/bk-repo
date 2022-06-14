@@ -2,7 +2,7 @@
     <bk-tab class="common-version-container" type="unborder-card" :active.sync="tabName" v-bkloading="{ isLoading }">
         <template #setting>
             <bk-button v-if="repoType !== 'docker'" outline class="mr10" @click="$emit('download')">下载</bk-button>
-            <operation-list class="mr10"
+            <operation-list class="mr20"
                 :list="operationBtns">
                 <bk-button @click.stop="() => {}" icon="ellipsis"></bk-button>
             </operation-list>
@@ -28,7 +28,7 @@
                                 :key="tag">
                                 {{ tag }}
                             </span>
-                            <scan-tag v-if="repoType === 'maven'" class="ml10" :status="(detail.systemMetadata || {}).scanStatus"></scan-tag>
+                            <scan-tag v-if="repoType === 'maven'" class="ml10" :status="(detail.metadata || {}).scanStatus"></scan-tag>
                         </template>
                     </span>
                 </div>

@@ -94,7 +94,7 @@
                         <template #default="{ row }">
                             <scan-tag class="mr5"
                                 v-if="isEnterprise && !row.folder && /\.(ipa)|(apk)|(jar)$/.test(row.name)"
-                                :status="row.systemMetadata.scanStatus"
+                                :status="row.metadata.scanStatus"
                                 repo-type="generic"
                                 :full-path="row.fullPath">
                             </scan-tag>
@@ -355,7 +355,7 @@
                     this.pagination.count = totalRecords
                     this.artifactoryList = records.map(v => {
                         return {
-                            systemMetadata: {},
+                            metadata: {},
                             ...v,
                             // 流水线文件夹名称替换
                             name: v.metadata?.displayName || v.name

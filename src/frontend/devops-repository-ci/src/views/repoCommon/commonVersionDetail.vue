@@ -28,7 +28,7 @@
                                 :key="tag">
                                 {{ tag }}
                             </span>
-                            <scan-tag v-if="isEnterprise && repoType === 'maven'" class="ml10" :status="(detail.systemMetadata || {}).scanStatus"></scan-tag>
+                            <scan-tag v-if="isEnterprise && repoType === 'maven'" class="ml10" :status="(detail.metadata || {}).scanStatus"></scan-tag>
                         </template>
                     </span>
                 </div>

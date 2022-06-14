@@ -56,15 +56,15 @@
                         </div>
                     </div>
                     <bk-table
-                        :data="Object.entries(detailSlider.data.metadata)"
+                        :data="detailSlider.data.nodeMetadata.filter(m => !m.system)"
                         :outer-border="false"
                         :row-border="false"
                         size="small">
                         <template #empty>
                             <empty-data :is-loading="detailSlider.loading"></empty-data>
                         </template>
-                        <bk-table-column :label="$t('key')" prop="0" show-overflow-tooltip></bk-table-column>
-                        <bk-table-column :label="$t('value')" prop="1" show-overflow-tooltip></bk-table-column>
+                        <bk-table-column :label="$t('key')" prop="key" show-overflow-tooltip></bk-table-column>
+                        <bk-table-column :label="$t('value')" prop="value" show-overflow-tooltip></bk-table-column>
                         <bk-table-column width="60">
                             <template #default="{ row }">
                                 <Icon class="hover-btn" size="24" name="icon-delete"
@@ -105,7 +105,9 @@
                     repoName: '',
                     folder: false,
                     path: '',
-                    data: {}
+                    data: {
+                        nodeMetadata: []
+                    }
                 },
                 metadata: {
                     show: false,
@@ -168,7 +170,7 @@
                     fullPath: this.detailSlider.path
                 }).then(data => {
                     this.detailSlider.data = {
-                        metadata: {},
+                        nodeMetadata: [],
                         ...data,
                         name: data.name || this.repoName,
                         size: convertFileSize(data.size),
@@ -225,7 +227,7 @@
                     repoName: this.detailSlider.repoName,
                     fullPath: this.detailSlider.data.fullPath,
                     body: {
-                        keyList: [row[0]]
+                        keyList: [row.key]
                     }
                 }).then(() => {
                     this.$bkMessage({

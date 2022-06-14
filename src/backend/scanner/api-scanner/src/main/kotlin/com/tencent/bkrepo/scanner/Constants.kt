@@ -13,3 +13,6 @@ const val FORBID_SCAN_UNFINISHED = "forbidScanUnFinished"
 const val FORBID_QUALITY_UNPASS = "forbidQualityUnPass"
 
 const val QUALITY_RED_LINE = "qualityRedLine"
+
+const val PUBLIC_GLOBAL = "public-global"
+const val SPDX_LICENSE = "spdx-license"

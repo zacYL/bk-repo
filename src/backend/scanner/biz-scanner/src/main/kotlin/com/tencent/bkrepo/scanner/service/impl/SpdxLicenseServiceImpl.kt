@@ -9,14 +9,18 @@ import com.tencent.bkrepo.scanner.exception.LicenseNotFoundException
 import com.tencent.bkrepo.scanner.model.TSpdxLicense
 import com.tencent.bkrepo.scanner.pojo.license.SpdxLicenseInfo
 import com.tencent.bkrepo.scanner.pojo.license.SpdxLicenseJsonInfo
+import com.tencent.bkrepo.scanner.pojo.license.SpdxLicenseObject
 import com.tencent.bkrepo.scanner.pojo.license.UpdateLicenseRequest
 import com.tencent.bkrepo.scanner.service.SpdxLicenseService
 import org.slf4j.LoggerFactory
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
+import org.springframework.data.mongodb.core.query.Update
 import org.springframework.stereotype.Service
 import java.io.File
+import java.io.FileNotFoundException
+import java.io.IOException
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -27,12 +31,17 @@ class SpdxLicenseServiceImpl(
 ) : SpdxLicenseService {
     override fun importLicense(path: String): Boolean {
         val operator = SecurityUtils.getUserId()
-        logger.info("userId:$operator, import license data")
-        //TODO try catch
-        val licenseJsonInfo =
-            JsonUtils.objectMapper.readValue(File("D:\\xxx\\licenses.json"), SpdxLicenseJsonInfo::class.java)
-        val licenses = licenseJsonInfo.licenses
-        val licenseList = mutableListOf<TSpdxLicense>()
+        val licenses: List<SpdxLicenseObject>
+        try {
+            val licenseJsonInfo = JsonUtils.objectMapper.readValue(File(path), SpdxLicenseJsonInfo::class.java)
+            licenses = licenseJsonInfo.licenses
+        } catch (e: FileNotFoundException) {
+            logger.error("import license data exception:[$e], file path [$path] not found ")
+            return false
+        }catch (ex:IOException){
+            logger.error("import license data exception:[${ex}]")
+            return false
+        }
         licenses.forEach {
             val result = licenseDao.findByLicenseId(it.licenseId)
             if (result == null) {
@@ -50,28 +59,23 @@ class SpdxLicenseServiceImpl(
                     isFsfLibre = it.isFsfLibre,
                     detailsUrl = it.detailsUrl
                 )
-                licenseList.add(license)
+                licenseDao.save(license)
             } else {
-                val license = TSpdxLicense(
-                    createdBy = operator,
-                    createdDate = LocalDateTime.now(),
-                    lastModifiedBy = operator,
-                    lastModifiedDate = LocalDateTime.now(),
-                    name = it.name,
-                    licenseId = it.licenseId,
-                    seeAlso = it.seeAlso,
-                    reference = it.reference,
-                    isDeprecatedLicenseId = it.isDeprecatedLicenseId,
-                    isOsiApproved = it.isOsiApproved,
-                    isFsfLibre = it.isFsfLibre,
-                    detailsUrl = it.detailsUrl,
-                    isTrust = result.isTrust,
-                    risk = result.risk
-                )
-                licenseList.add(license)
+                result.createdBy = operator
+                result.createdDate = LocalDateTime.now()
+                result.lastModifiedBy = operator
+                result.lastModifiedDate = LocalDateTime.now()
+                result.name = it.name
+                result.licenseId = it.licenseId
+                result.seeAlso = it.seeAlso
+                result.reference = it.reference
+                result.isDeprecatedLicenseId = it.isDeprecatedLicenseId
+                result.isOsiApproved = it.isOsiApproved
+                result.isFsfLibre = it.isFsfLibre
+                result.detailsUrl = it.detailsUrl
+                licenseDao.save(result)
             }
         }
-        licenseDao.insert(licenseList)
         return true
     }
 

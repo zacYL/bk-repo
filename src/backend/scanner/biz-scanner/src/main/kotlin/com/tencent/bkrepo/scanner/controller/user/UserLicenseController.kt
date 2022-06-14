@@ -29,7 +29,7 @@ class UserLicenseController(
     private val licenseService: SpdxLicenseService
 ) {
     @ApiOperation("导入许可证数据")
-    @PutMapping("/import")
+    @PostMapping("/import")
     fun importLicense(
         @RequestParam path: String
     ): Response<Boolean> {

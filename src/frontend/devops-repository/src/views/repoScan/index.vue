@@ -50,10 +50,10 @@
                     <operation-list
                         :list="[
                             { label: '详情', clickEvent: () => showScanReport(row) },
-                            { label: '设置', clickEvent: () => showScanConfig(row) },
+                            !row.readOnly && { label: '设置', clickEvent: () => showScanConfig(row) },
                             { label: '中止', clickEvent: () => stopScanHandler(row) },
-                            { label: '扫描', clickEvent: () => startScanHandler(row) },
-                            { label: '删除', clickEvent: () => deleteScanHandler(row) }
+                            !row.readOnly && { label: '扫描', clickEvent: () => startScanHandler(row) },
+                            !row.readOnly && { label: '删除', clickEvent: () => deleteScanHandler(row) }
                         ]"></operation-list>
                 </template>
             </bk-table-column>

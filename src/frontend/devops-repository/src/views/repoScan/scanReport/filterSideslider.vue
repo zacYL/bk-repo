@@ -5,51 +5,53 @@
         @click.native.stop="() => {}"
         :quick-close="true">
         <template #content>
-            <bk-form class="p20" form-type="vertical">
-                <bk-form-item label="制品名称">
-                    <bk-input v-model="filter.name"></bk-input>
-                </bk-form-item>
-                <bk-form-item label="所属仓库">
-                    <bk-select
-                        v-model="filter.repoName"
-                        searchable>
-                        <bk-option-group
-                            v-for="(list, type) in repoGroupList"
-                            :name="type.toLowerCase()"
-                            :key="type"
-                            show-collapse>
-                            <bk-option v-for="option in list"
-                                :key="option.name"
-                                :id="option.name"
-                                :name="option.name">
-                            </bk-option>
-                        </bk-option-group>
-                    </bk-select>
-                </bk-form-item>
-                <bk-form-item label="风险等级">
-                    <bk-select
-                        v-model="filter.highestLeakLevel">
-                        <bk-option v-for="[id, name] in Object.entries(leakLevelEnum)" :key="id" :id="id" :name="name"></bk-option>
-                    </bk-select>
-                </bk-form-item>
-                <bk-form-item label="扫描状态">
-                    <bk-select
-                        v-model="filter.status">
-                        <bk-option v-for="[id, name] in Object.entries(scanStatusEnum)" :key="id" :id="id" :name="name"></bk-option>
-                    </bk-select>
-                </bk-form-item>
-                <bk-form-item label="质量规则状态">
-                    <bk-select
-                        v-model="filter.qualityRedLine">
-                        <bk-option :id="true" name="通过"></bk-option>
-                        <bk-option :id="false" name="不通过"></bk-option>
-                    </bk-select>
-                </bk-form-item>
-                <bk-form-item>
-                    <bk-button class="mt10" theme="primary" @click="filterHandler()">筛选</bk-button>
-                    <bk-button class="ml20 mt10" theme="default" @click="reset()">重置</bk-button>
-                </bk-form-item>
-            </bk-form>
+            <div class="sideslider-content flex-column">
+                <bk-form class="p20 flex-1" form-type="vertical">
+                    <bk-form-item label="制品名称">
+                        <bk-input v-model="filter.name"></bk-input>
+                    </bk-form-item>
+                    <bk-form-item label="所属仓库">
+                        <bk-select
+                            v-model="filter.repoName"
+                            searchable>
+                            <bk-option-group
+                                v-for="(list, type) in repoGroupList"
+                                :name="type.toLowerCase()"
+                                :key="type"
+                                show-collapse>
+                                <bk-option v-for="option in list"
+                                    :key="option.name"
+                                    :id="option.name"
+                                    :name="option.name">
+                                </bk-option>
+                            </bk-option-group>
+                        </bk-select>
+                    </bk-form-item>
+                    <bk-form-item label="风险等级">
+                        <bk-select
+                            v-model="filter.highestLeakLevel">
+                            <bk-option v-for="[id, name] in Object.entries(leakLevelEnum)" :key="id" :id="id" :name="name"></bk-option>
+                        </bk-select>
+                    </bk-form-item>
+                    <bk-form-item label="扫描状态">
+                        <bk-select
+                            v-model="filter.status">
+                            <bk-option v-for="[id, name] in Object.entries(scanStatusEnum)" :key="id" :id="id" :name="name"></bk-option>
+                        </bk-select>
+                    </bk-form-item>
+                    <bk-form-item label="质量规则状态">
+                        <bk-select
+                            v-model="filter.qualityRedLine">
+                            <bk-option :id="true" name="通过"></bk-option>
+                            <bk-option :id="false" name="不通过"></bk-option>
+                        </bk-select>
+                    </bk-form-item>
+                </bk-form>
+                <div class="pr30 sideslider-footer flex-end-center">
+                    <bk-button class="mr10" theme="default" @click="reset()">重置</bk-button>
+                    <bk-button theme="primary" @click="filterHandler()">筛选</bk-button>
+                </div>
+            </div>
         </template>
     </bk-sideslider>
 </template>
@@ -119,3 +121,13 @@
         }
     }
 </script>
+<style lang="scss" scoped>
+.sideslider-content {
+    height: 100%;
+    .sideslider-footer {
+        height: 60px;
+        background-color: var(--bgColor);
+        border-top: 1px solid var(--borderColor);
+    }
+}
+</style>

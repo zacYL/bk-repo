@@ -205,5 +205,35 @@ export default {
     // 更新质量规则
     saveQualityRule (_, { id, body }) {
         return Vue.prototype.$ajax.post(`/scanner/api/scan/quality/${id}`, body)
+    },
+    // 查询任务列表
+    getScanTaskList (_, { projectId, id, current = 1, limit = 20 }) {
+        return Vue.prototype.$ajax.get(
+            `${prefix}/tasks`,
+            {
+                params: {
+                    projectId,
+                    planId: id,
+                    pageNumber: current,
+                    pageSize: limit
+                }
+            }
+        )
+    },
+    // 任务制品列表
+    scanTaskReportList (_, { projectId, taskId, id, query, current = 1, limit = 20 }) {
+        if (!taskId) return Promise.resolve({ records: [], totalRecords: 0 })
+        return Vue.prototype.$ajax.get(
+            `${prefix}/tasks/${taskId}/subtasks`,
+            {
+                params: {
+                    projectId,
+                    id,
+                    ...query,
+                    pageNumber: current,
+                    pageSize: limit
+                }
+            }
+        )
     }
 }

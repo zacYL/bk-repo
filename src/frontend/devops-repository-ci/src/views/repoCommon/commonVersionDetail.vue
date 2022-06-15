@@ -244,8 +244,7 @@
         methods: {
             convertFileSize,
             ...mapActions([
-                'getVersionDetail',
-                'addPackageMetadata'
+                'getVersionDetail'
             ]),
             getDetail () {
                 this.isLoading = true
@@ -274,42 +273,6 @@
                     }
                 }).finally(() => {
                     this.isLoading = false
-                })
-            },
-            showAddMetadata () {
-                this.$refs.metadatForm && this.$refs.metadatForm.clearError()
-                this.metadata = {
-                    show: true,
-                    loading: false,
-                    key: '',
-                    value: ''
-                }
-            },
-            hiddenAddMetadata () {
-                this.metadata.show = false
-                this.$refs.metadatForm.clearError()
-            },
-            async addMetadataHandler () {
-                await this.$refs.metadatForm.validate()
-                this.addPackageMetadata({
-                    projectId: this.projectId,
-                    repoName: this.repoName,
-                    body: {
-                        packageKey: this.packageKey,
-                        version: this.version,
-                        metadata: {
-                            [this.metadata.key]: this.metadata.value
-                        }
-                    }
-                }).then(() => {
-                    this.$bkMessage({
-                        theme: 'success',
-                        message: this.$t('add') + this.$t('success')
-                    })
-                    this.hiddenAddMetadata()
-                    this.getDetail()
-                }).finally(() => {
-                    this.metadata.loading = false
                 })
             }
         }

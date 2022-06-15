@@ -1,0 +1,46 @@
+package com.tencent.bkrepo.scanner.service
+
+import com.tencent.bkrepo.common.api.pojo.Page
+import com.tencent.bkrepo.common.query.model.PageLimit
+import com.tencent.bkrepo.common.query.model.QueryModel
+import com.tencent.bkrepo.scanner.pojo.license.SpdxLicenseInfo
+import com.tencent.bkrepo.scanner.pojo.license.UpdateLicenseRequest
+import java.io.File
+
+/**
+ * 许可证服务
+ */
+interface SpdxLicenseService {
+    /**
+     * 导入 SPDX 许可证列表
+     * @param path SPDX 许可证列表 JSON 文件
+     */
+    fun importLicense(path: String): Boolean
+
+    /**
+     * 分页查询许可证信息
+     */
+    fun listLicensePage(
+        name: String?,
+        isDeprecatedLicenseId: Boolean?,
+        isTrust: Boolean?,
+        pageLimit: PageLimit
+    ): Page<SpdxLicenseInfo>
+
+    /**
+     * 查询所有许可证信息
+     */
+    fun listLicense(): List<SpdxLicenseInfo>
+
+    /**
+     * 查询许可证详细信息
+     */
+    fun getLicenseInfo(licenseId: String): SpdxLicenseInfo?
+
+    /**
+     * 根据许可证唯一标识更新许可证信息
+     */
+    fun updateLicense(licenseId: String, request: UpdateLicenseRequest): Boolean
+
+    fun listLicenseByIds(licenseIds: List<String>): Map<String, SpdxLicenseInfo>
+}

@@ -8,6 +8,7 @@ import com.tencent.bkrepo.repository.model.TPackageUploadRecord
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.service.packages.PackageDownloadsService
 import org.springframework.context.event.EventListener
+import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Component
 import java.time.LocalDate
 
@@ -20,6 +21,7 @@ class VersionTransferListener(
     /**
      * 创建包版本时创建或覆盖上传记录到数据库
      */
+    @Async
     @EventListener(VersionCreatedEvent::class)
     fun handle(event: VersionCreatedEvent) {
         with(event) {
@@ -30,6 +32,7 @@ class VersionTransferListener(
     /**
      * 覆盖原有的包版本时创建或覆盖上传记录
      */
+    @Async
     @EventListener(VersionUpdatedEvent::class)
     fun handle(event: VersionUpdatedEvent) {
         with(event) {
@@ -40,7 +43,8 @@ class VersionTransferListener(
     /**
      * 页面操作下载包版本时创建下载记录
      */
-    @EventListener
+    @Async
+    @EventListener(VersionDownloadEvent::class)
     fun handle(event: VersionDownloadEvent) {
         with(event) {
             val downloadRecord = PackageDownloadRecord(projectId, repoName, packageKey, packageVersion, userId)

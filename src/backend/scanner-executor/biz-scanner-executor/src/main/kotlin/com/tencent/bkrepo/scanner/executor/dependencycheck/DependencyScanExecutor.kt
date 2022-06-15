@@ -29,6 +29,8 @@ package com.tencent.bkrepo.scanner.executor.dependencycheck
 
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.api.util.toJsonString
+import com.tencent.bkrepo.common.artifact.constant.DEPENDENCY_CHECKER_REPO
+import com.tencent.bkrepo.common.artifact.constant.PUBLIC_GLOBAL_PROJECT
 import com.tencent.bkrepo.common.checker.pojo.DependencyInfo
 import com.tencent.bkrepo.common.checker.util.DependencyCheckerUtils
 import com.tencent.bkrepo.common.scanner.pojo.scanner.ScanExecutorResult
@@ -39,25 +41,27 @@ import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.result.Dep
 import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.scanner.DependencyScanner
 import com.tencent.bkrepo.common.scanner.pojo.scanner.utils.normalizedLevel
 import com.tencent.bkrepo.common.storage.core.StorageProperties
+import com.tencent.bkrepo.common.storage.core.locator.HashFileLocator
+import com.tencent.bkrepo.repository.api.NodeClient
+import com.tencent.bkrepo.repository.pojo.search.NodeQueryBuilder
 import com.tencent.bkrepo.scanner.executor.ScanExecutor
 import com.tencent.bkrepo.scanner.executor.pojo.ScanExecutorTask
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import java.io.File
 
 @Component(DependencyScanner.TYPE)
-class DependencyScanExecutor @Autowired constructor(
-    private val storageProperties: StorageProperties
+class DependencyScanExecutor(
+    private val storageProperties: StorageProperties,
+    private val nodeClient: NodeClient
 ) : ScanExecutor {
 
+    @Suppress("TooGenericExceptionCaught")
     override fun scan(task: ScanExecutorTask): ScanExecutorResult {
         logger.info("task:${task.toJsonString()}")
         require(task.scanner is DependencyScanner)
         try {
             val sha256 = task.sha256
-            val first = sha256.substring(0, 2)
-            val second = sha256.substring(2, 4)
             logger.info("storageProperties:${storageProperties.toJsonString()}")
             val path = storageProperties.filesystem.path
             val storePath = if (!path.startsWith("/")) {
@@ -65,15 +69,39 @@ class DependencyScanExecutor @Autowired constructor(
             } else {
                 path.removeSuffix("/")
             }
-            val filePath = "$storePath/$first/$second/$sha256"
+            val filePath = "$storePath${locator.locate(sha256)}$sha256"
             logger.info("scan file path:$filePath")
             // 执行扫描
-            val dependencyInfo = DependencyCheckerUtils.scanWithInfo(filePath)
+            val (dbDir, dbName) = latestDependencyCheckerDB(storePath)
+            val dependencyInfo = DependencyCheckerUtils.scanDynamicDBWithInfo(
+                scanPath = filePath,
+                dbName = dbName,
+                dbDir = dbDir
+            )
             return result(dependencyInfo, filePath)
         } catch (e: Exception) {
             logger.error(logMsg(task, "scan failed"), e)
             throw e
         }
+    }
+
+    fun latestDependencyCheckerDB(storePath: String): Pair<String?, String?> {
+        val records = nodeClient.search(
+            NodeQueryBuilder()
+                .select("sha256")
+                .sortByDesc("lastModifiedDate")
+                .page(1, 1)
+                .projectId(PUBLIC_GLOBAL_PROJECT)
+                .repoName(DEPENDENCY_CHECKER_REPO)
+                .and()
+                .path("/")
+                .excludeFolder()
+                .build()
+        ).data?.records ?: return Pair(null, null)
+        return if (records.isNotEmpty()) {
+            val dbSha256 = records.first()["sha256"]?.toString() ?: return Pair(null, null)
+            Pair("$storePath${locator.locate(dbSha256)}".removeSuffix("/"), dbSha256)
+        } else { Pair(null, null) }
     }
 
     override fun stop(taskId: String): Boolean {
@@ -157,5 +185,6 @@ class DependencyScanExecutor @Autowired constructor(
 
     companion object {
         private val logger = LoggerFactory.getLogger(DependencyScanExecutor::class.java)
+        private val locator = HashFileLocator()
     }
 }

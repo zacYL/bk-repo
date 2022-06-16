@@ -57,7 +57,7 @@
             </div>
             <bk-table
                 class="mt10 leak-table"
-                height="calc(100% - 82px)"
+                height="calc(100% - 80px)"
                 :data="leakList"
                 :outer-border="false"
                 :row-border="false"
@@ -82,7 +82,7 @@
                         <div class="leak-tip">{{ row.officialSolution || '/' }}</div>
                         <template v-if="row.reference && row.reference.length">
                             <div class="leak-title">相关资料</div>
-                            <div class="leak-tip" display v-for="url in row.reference" :key="url">
+                            <div class="leak-tip" v-for="url in row.reference" :key="url">
                                 <a :href="url" target="_blank">{{ url }}</a>
                             </div>
                         </template>

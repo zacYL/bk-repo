@@ -80,7 +80,7 @@
                 </div>
                 <bk-table
                     :data="artifactoryList"
-                    height="calc(100% - 102px)"
+                    height="calc(100% - 100px)"
                     :outer-border="false"
                     :row-border="false"
                     size="small"
@@ -650,7 +650,7 @@
             background-color: white;
             .repo-generic-tree {
                 border-top: 1px solid var(--borderColor);
-                height: calc(100% - 52px);
+                height: calc(100% - 50px);
             }
         }
         .repo-generic-table {
@@ -658,7 +658,7 @@
             height: 100%;
             background-color: white;
             .multi-operation {
-                height: 52px;
+                height: 50px;
                 padding: 10px 20px;
             }
             ::v-deep .selected-header {

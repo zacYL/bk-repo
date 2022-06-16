@@ -207,13 +207,14 @@ export default {
         return Vue.prototype.$ajax.post(`/scanner/api/scan/quality/${id}`, body)
     },
     // 查询任务列表
-    getScanTaskList (_, { projectId, id, current = 1, limit = 20 }) {
+    getScanTaskList (_, { projectId, id, triggerType, current = 1, limit = 20 }) {
         return Vue.prototype.$ajax.get(
             `${prefix}/tasks`,
             {
                 params: {
                     projectId,
                     planId: id,
+                    triggerType,
                     pageNumber: current,
                     pageSize: limit
                 }
@@ -233,6 +234,29 @@ export default {
                     pageNumber: current,
                     pageSize: limit
                 }
+            }
+        )
+    },
+    // 查询许可证列表
+    getLicenseList (_, { name, isTrust, current = 1, limit = 20 }) {
+        return Vue.prototype.$ajax.get(
+            'scanner/api/license/list',
+            {
+                params: {
+                    name,
+                    isTrust,
+                    pageNumber: current,
+                    pageSize: limit
+                }
+            }
+        )
+    },
+    // 设置许可证
+    editLicense (_, { licenseId, isTrust }) {
+        return Vue.prototype.$ajax.post(
+            `scanner/api/license/${licenseId}`,
+            {
+                isTrust
             }
         )
     }

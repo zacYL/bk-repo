@@ -19,6 +19,8 @@ const artiReport = () => import('@repository/views/repoScan/artiReport')
 const scanConfig = () => import('@repository/views/repoScan/scanConfig')
 const startScan = () => import('@repository/views/repoScan/startScan')
 
+const securityConfig = () => import('@repository/views/repoScan/securityConfig')
+
 const repoGeneric = () => import('@repository/views/repoGeneric')
 
 const commonPackageList = () => import('@repository/views/repoCommon/commonPackageList')
@@ -257,6 +259,17 @@ const routes = [
                         { name: 'repoScan', label: '制品扫描' },
                         { name: 'scanReport', label: '{scanName}', template: '扫描详情' },
                         { name: 'startScan', label: '立即扫描' }
+                    ]
+                }
+            },
+            {
+                path: 'securityConfig',
+                name: 'securityConfig',
+                component: securityConfig,
+                meta: {
+                    breadcrumb: [
+                        { name: 'repoScan', label: '制品扫描' },
+                        { name: 'securityConfig', label: '安全设置' }
                     ]
                 }
             },

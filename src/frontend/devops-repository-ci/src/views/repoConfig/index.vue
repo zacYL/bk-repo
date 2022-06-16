@@ -315,7 +315,7 @@
     .repo-config-tab {
         height: 100%;
         ::v-deep .bk-tab-section {
-            height: calc(100% - 52px);
+            height: calc(100% - 60px);
             overflow-y: auto;
         }
         .repo-base-info {

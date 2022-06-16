@@ -164,7 +164,7 @@
                     OVERVIEW: '总览视图',
                     TASKVIEW: '任务视图'
                 },
-                viewType: 'TASKVIEW',
+                viewType: 'OVERVIEW',
                 taskLoading: false,
                 taskNameSearch: '',
                 taskIdSelected: '',
@@ -304,6 +304,7 @@
                 this.getScanTaskList({
                     planId: this.planId,
                     projectId: this.projectId,
+                    triggerType: this.baseInfo.readOnly ? 'PIPELINE' : 'MANUAL',
                     current: this.pagination.current,
                     limit: this.pagination.limit
                 }).then(({ records, totalRecords }) => {
@@ -366,7 +367,7 @@
             }
             .task-list {
                 padding: 0 20px 10px;
-                height:calc(100% - 112px);
+                height:calc(100% - 110px);
                 .task-item {
                     border-radius: 2px;
                     background-color: var(--bgLightColor);

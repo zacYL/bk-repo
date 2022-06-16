@@ -1,7 +1,10 @@
 <template>
     <div class="scan-container" v-bkloading="{ isLoading }">
         <div class="ml20 mr20 mt10 flex-between-center">
-            <bk-button icon="plus" theme="primary" @click="showCreateDialog">{{ $t('create') }}</bk-button>
+            <div class="flex-align-center">
+                <bk-button icon="plus" theme="primary" @click="showCreateDialog">{{ $t('create') }}</bk-button>
+                <bk-button class="ml10" @click="() => $router.push({ name: 'securityConfig' })">安全设置</bk-button>
+            </div>
             <div class="flex-align-center">
                 <bk-input
                     class="w250"
@@ -23,7 +26,7 @@
         </div>
         <bk-table
             class="mt10 scan-table"
-            height="calc(100% - 102px)"
+            height="calc(100% - 100px)"
             :data="scanList"
             :outer-border="false"
             :row-border="false"

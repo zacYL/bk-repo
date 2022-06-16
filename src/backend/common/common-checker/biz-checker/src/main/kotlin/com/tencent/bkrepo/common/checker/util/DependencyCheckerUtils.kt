@@ -6,12 +6,12 @@ import net.canway.devops.bkrepo.dependencycheck.ScanUtils
 
 object DependencyCheckerUtils {
 
-    fun scanDynamicDB(scanPath: String, dbName: String?, dbDir: String?): String {
+    fun scanDynamicDB(scanPath: String, dbName: String?, dbDir: String?): String? {
         return ScanUtils.startScanDynamicDB(scanPath, dbName, dbDir)
     }
 
-    fun scanDynamicDBWithInfo(scanPath: String, dbName: String?, dbDir: String?): DependencyInfo {
-        return scanDynamicDB(scanPath, dbName, dbDir).readJsonString()
+    fun scanDynamicDBWithInfo(scanPath: String, dbName: String?, dbDir: String?): DependencyInfo? {
+        return scanDynamicDB(scanPath, dbName, dbDir)?.readJsonString()
     }
 
     /**

@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.scanner.executor.dependencycheck
 
+import com.tencent.bkrepo.common.api.exception.SystemErrorException
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.constant.DEPENDENCY_CHECKER_REPO
@@ -77,7 +78,7 @@ class DependencyScanExecutor(
                 scanPath = filePath,
                 dbName = dbName,
                 dbDir = dbDir
-            )
+            ) ?: throw SystemErrorException()
             return result(dependencyInfo, filePath)
         } catch (e: Exception) {
             logger.error(logMsg(task, "scan failed"), e)

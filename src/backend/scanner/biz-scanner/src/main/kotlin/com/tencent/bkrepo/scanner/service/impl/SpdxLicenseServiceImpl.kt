@@ -2,7 +2,7 @@ package com.tencent.bkrepo.scanner.service.impl
 
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.JsonUtils
-import com.tencent.bkrepo.common.query.model.PageLimit
+import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.scanner.dao.SpdxLicenseDao
 import com.tencent.bkrepo.scanner.exception.LicenseNotFoundException
@@ -10,13 +10,12 @@ import com.tencent.bkrepo.scanner.model.TSpdxLicense
 import com.tencent.bkrepo.scanner.pojo.license.SpdxLicenseInfo
 import com.tencent.bkrepo.scanner.pojo.license.SpdxLicenseJsonInfo
 import com.tencent.bkrepo.scanner.pojo.license.SpdxLicenseObject
-import com.tencent.bkrepo.scanner.pojo.license.UpdateLicenseRequest
 import com.tencent.bkrepo.scanner.service.SpdxLicenseService
 import org.slf4j.LoggerFactory
+import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
-import org.springframework.data.mongodb.core.query.Update
 import org.springframework.stereotype.Service
 import java.io.File
 import java.io.FileNotFoundException
@@ -38,7 +37,7 @@ class SpdxLicenseServiceImpl(
         } catch (e: FileNotFoundException) {
             logger.error("import license data exception:[$e], file path [$path] not found ")
             return false
-        }catch (ex:IOException){
+        } catch (ex: IOException) {
             logger.error("import license data exception:[${ex}]")
             return false
         }
@@ -81,13 +80,23 @@ class SpdxLicenseServiceImpl(
 
     override fun listLicensePage(
         name: String?,
-        isDeprecatedLicenseId: Boolean?,
         isTrust: Boolean?,
-        pageLimit: PageLimit
+        pageNumber: Int,
+        pageSize: Int
     ): Page<SpdxLicenseInfo> {
-        val page = licenseDao.page(name, isDeprecatedLicenseId, isTrust, pageLimit)
-        val licenseList = page.records.map { convert(it)!! }
-        return Page(page.pageNumber, page.pageSize, page.totalRecords, licenseList)
+        val criteria = Criteria()
+        name?.let {
+            criteria.orOperator(
+                Criteria.where(TSpdxLicense::name.name).regex(".*$name.*"),
+                Criteria.where(TSpdxLicense::licenseId.name).regex(".*$name.*")
+            )
+        }
+        isTrust?.let { criteria.and(TSpdxLicense::isTrust.name).`is`(it) }
+        val query = Query(criteria).with(Sort.by(TSpdxLicense::createdDate.name).descending())
+        val pageRequest = Pages.ofRequest(pageNumber, pageSize)
+        val totalRecords = mongoTemplate.count(query, TSpdxLicense::class.java)
+        val records = mongoTemplate.find(query.with(pageRequest), TSpdxLicense::class.java).map { convert(it)!! }
+        return Pages.ofResponse(pageRequest, totalRecords, records)
     }
 
 
@@ -99,15 +108,10 @@ class SpdxLicenseServiceImpl(
         return convert(licenseDao.findByLicenseId(licenseId))
     }
 
-    override fun updateLicense(licenseId: String, request: UpdateLicenseRequest): Boolean {
-        logger.info("update license by [${SecurityUtils.getUserId()}] ,request: [$request]")
+    override fun updateLicense(licenseId: String, isTrust: Boolean): Boolean {
+        logger.info("update license by [${SecurityUtils.getUserId()}] ,isTrust: [$isTrust]")
         val tLicense = checkLicenseExist(licenseId)
-        request.isTrust?.let {
-            tLicense.isTrust = it
-        }
-        request.risk?.let {
-            tLicense.risk = it
-        }
+        tLicense.isTrust = isTrust
         licenseDao.save(tLicense)
         return true
     }

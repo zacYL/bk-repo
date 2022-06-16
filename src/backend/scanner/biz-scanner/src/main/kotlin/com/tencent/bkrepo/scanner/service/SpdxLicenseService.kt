@@ -22,9 +22,9 @@ interface SpdxLicenseService {
      */
     fun listLicensePage(
         name: String?,
-        isDeprecatedLicenseId: Boolean?,
         isTrust: Boolean?,
-        pageLimit: PageLimit
+        pageNumber: Int,
+        pageSize: Int
     ): Page<SpdxLicenseInfo>
 
     /**
@@ -40,7 +40,10 @@ interface SpdxLicenseService {
     /**
      * 根据许可证唯一标识更新许可证信息
      */
-    fun updateLicense(licenseId: String, request: UpdateLicenseRequest): Boolean
+    fun updateLicense(licenseId: String, isTrust: Boolean): Boolean
 
+    /**
+     * 根据唯一标识集合查询许可证信息（scancode使用）
+     */
     fun listLicenseByIds(licenseIds: List<String>): Map<String, SpdxLicenseInfo>
 }

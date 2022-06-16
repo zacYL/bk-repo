@@ -30,8 +30,8 @@ package com.tencent.bkrepo.scanner.executor.dependencycheck
 import com.tencent.bkrepo.common.api.exception.SystemErrorException
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.api.util.toJsonString
-import com.tencent.bkrepo.common.artifact.constant.DEPENDENCY_CHECKER_REPO
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_GLOBAL_PROJECT
+import com.tencent.bkrepo.common.artifact.constant.PUBLIC_VULDB_REPO
 import com.tencent.bkrepo.common.checker.pojo.DependencyInfo
 import com.tencent.bkrepo.common.checker.util.DependencyCheckerUtils
 import com.tencent.bkrepo.common.scanner.pojo.scanner.ScanExecutorResult
@@ -73,7 +73,7 @@ class DependencyScanExecutor(
             val filePath = "$storePath${locator.locate(sha256)}$sha256"
             logger.info("scan file path:$filePath")
             // 执行扫描
-            val (dbDir, dbName) = latestDependencyCheckerDB(storePath)
+            val (dbDir, dbName) = latestDependencyCheckerDB(storePath, task.scanner.type)
             val dependencyInfo = DependencyCheckerUtils.scanDynamicDBWithInfo(
                 scanPath = filePath,
                 dbName = dbName,
@@ -86,16 +86,16 @@ class DependencyScanExecutor(
         }
     }
 
-    fun latestDependencyCheckerDB(storePath: String): Pair<String?, String?> {
+    fun latestDependencyCheckerDB(storePath: String, scannerType: String): Pair<String?, String?> {
         val records = nodeClient.search(
             NodeQueryBuilder()
                 .select("sha256")
                 .sortByDesc("lastModifiedDate")
                 .page(1, 1)
                 .projectId(PUBLIC_GLOBAL_PROJECT)
-                .repoName(DEPENDENCY_CHECKER_REPO)
+                .repoName(PUBLIC_VULDB_REPO)
                 .and()
-                .path("/")
+                .path("/$scannerType/")
                 .excludeFolder()
                 .build()
         ).data?.records ?: return Pair(null, null)

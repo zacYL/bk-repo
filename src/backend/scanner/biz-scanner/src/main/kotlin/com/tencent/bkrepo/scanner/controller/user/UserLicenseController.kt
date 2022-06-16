@@ -4,11 +4,8 @@ import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_NUMBER
 import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_SIZE
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
-import com.tencent.bkrepo.common.artifact.api.ArtifactFile
-import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.scanner.pojo.license.SpdxLicenseInfo
-import com.tencent.bkrepo.scanner.pojo.license.UpdateLicenseRequest
 import com.tencent.bkrepo.scanner.service.SpdxLicenseService
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
@@ -16,8 +13,6 @@ import io.swagger.annotations.ApiParam
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -41,8 +36,6 @@ class UserLicenseController(
     fun listLicensePage(
         @ApiParam(value = "许可证唯一标识或许可证名称")
         @RequestParam name: String?,
-        @ApiParam(value = "是否推荐使用")
-        @RequestParam isDeprecatedLicenseId: Boolean?,
         @ApiParam(value = "是否可信")
         @RequestParam isTrust: Boolean?,
         @ApiParam("页数", required = false, defaultValue = "1")
@@ -55,9 +48,9 @@ class UserLicenseController(
         return ResponseBuilder.success(
             licenseService.listLicensePage(
                 name,
-                isDeprecatedLicenseId,
                 isTrust,
-                PageLimit(pageNumber, pageSize)
+                pageNumber,
+                pageSize
             )
         )
     }
@@ -82,18 +75,8 @@ class UserLicenseController(
     fun update(
         @ApiParam(value = "许可证唯一标识")
         @PathVariable licenseId: String,
-        @ApiParam(value = "更新许可证信息")
-        @RequestBody request: UpdateLicenseRequest
+        @RequestParam isTrust: Boolean
     ): Response<Boolean> {
-        return ResponseBuilder.success(licenseService.updateLicense(licenseId, request))
-    }
-
-    @ApiOperation("根据许可证唯一标识列表查询许可证信息")
-    @GetMapping("/licenseIds")
-    fun update(
-        @ApiParam(value = "许可证唯一标识集合")
-        @RequestBody licenseIds: List<String>
-    ): Response<Map<String, SpdxLicenseInfo>> {
-        return ResponseBuilder.success(licenseService.listLicenseByIds(licenseIds))
+        return ResponseBuilder.success(licenseService.updateLicense(licenseId, isTrust))
     }
 }

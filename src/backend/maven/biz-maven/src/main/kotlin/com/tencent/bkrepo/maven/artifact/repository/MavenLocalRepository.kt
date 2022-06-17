@@ -1102,17 +1102,15 @@ class MavenLocalRepository(
     ): PackageDownloadRecord? {
         with(context) {
             val fullPath = artifactInfo.getArtifactFullPath()
-            val node = nodeClient.getNodeDetail(projectId, repoName, fullPath).data
-            return if (node != null && node.metadata["packaging"] != null) {
-                val mavenGAVC = fullPath.mavenGAVC()
-                val version = mavenGAVC.version
-                val artifactId = mavenGAVC.artifactId
-                val groupId = mavenGAVC.groupId.formatSeparator("/", ".")
-                val packageKey = PackageKeys.ofGav(groupId, artifactId)
-                PackageDownloadRecord(projectId, repoName, packageKey, version, userId)
-            } else {
-                null
-            }
+            val node = nodeClient.getNodeDetail(projectId, repoName, fullPath).data ?: return null
+            val packaging = node.metadata["packaging"] ?: return null
+            if (node.name.endsWith(".pom") && packaging != "pom") { return null }
+            val mavenGAVC = fullPath.mavenGAVC()
+            val version = mavenGAVC.version
+            val artifactId = mavenGAVC.artifactId
+            val groupId = mavenGAVC.groupId.formatSeparator("/", ".")
+            val packageKey = PackageKeys.ofGav(groupId, artifactId)
+            return PackageDownloadRecord(projectId, repoName, packageKey, version, userId)
         }
     }
 

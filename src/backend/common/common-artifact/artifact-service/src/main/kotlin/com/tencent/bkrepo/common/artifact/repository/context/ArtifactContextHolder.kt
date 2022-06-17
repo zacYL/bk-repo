@@ -39,6 +39,7 @@ import com.tencent.bkrepo.common.artifact.constant.ARTIFACT_CONFIGURER
 import com.tencent.bkrepo.common.artifact.constant.ARTIFACT_INFO_KEY
 import com.tencent.bkrepo.common.artifact.constant.PROJECT_ID
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_GLOBAL_PROJECT
+import com.tencent.bkrepo.common.artifact.constant.PUBLIC_VULDB_REPO
 import com.tencent.bkrepo.common.artifact.constant.REPO_KEY
 import com.tencent.bkrepo.common.artifact.constant.REPO_NAME
 import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
@@ -191,10 +192,13 @@ class ArtifactContextHolder(
         }
 
         /**
-         * 如果[PUBLIC_GLOBAL_PROJECT] 项目和仓库不存在则创建相应的项目和仓库
+         * 如果[PUBLIC_GLOBAL_PROJECT]项目下[PUBLIC_VULDB_REPO]仓库不存在则创建相应的项目和仓库
          */
         private fun publicGlobalRepoHandler(projectId: String, repoName: String, repoType: String) {
-            if (projectId == PUBLIC_GLOBAL_PROJECT) {
+            if (projectId == PUBLIC_GLOBAL_PROJECT &&
+                repoName == PUBLIC_VULDB_REPO &&
+                repoType == RepositoryType.GENERIC.name
+            ) {
                 checkProjectExists(projectId)
                 checkRepoExists(projectId, repoName, repoType)
             }

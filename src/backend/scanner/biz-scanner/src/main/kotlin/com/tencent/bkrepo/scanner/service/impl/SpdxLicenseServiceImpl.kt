@@ -60,8 +60,6 @@ class SpdxLicenseServiceImpl(
                 )
                 licenseDao.save(license)
             } else {
-                result.createdBy = operator
-                result.createdDate = LocalDateTime.now()
                 result.lastModifiedBy = operator
                 result.lastModifiedDate = LocalDateTime.now()
                 result.name = it.name

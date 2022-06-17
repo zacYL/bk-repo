@@ -40,7 +40,7 @@
 
 ## 导入许可证数据（页面功能使用）
 
-- API：PUT /generic/public-global/spdx-license/{fileName}
+- API：PUT /generic/public-global/vuldb-repo/spdx-license/{fileName}
 - API 名称：import_license_data
 - 功能说明：
   - 中文：导入许可证数据，调用二进制仓库上传接口，文件上传后在对文件做解析处理

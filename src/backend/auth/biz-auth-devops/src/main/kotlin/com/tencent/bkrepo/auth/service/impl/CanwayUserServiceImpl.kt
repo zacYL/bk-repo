@@ -31,7 +31,7 @@ import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.devops.conf.DevopsConf
 import com.tencent.bkrepo.common.devops.pojo.response.CanwayResponse
-import com.tencent.bkrepo.common.devops.util.http.CanwayHttpUtils
+import com.tencent.bkrepo.common.devops.util.http.SimpleHttpUtils
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -353,7 +353,7 @@ class CanwayUserServiceImpl(
         val devopsHost = devopsConf.devopsHost.removeSuffix("/")
         var request = "$devopsHost$ciUserManager$ciApi$userListApi_4300"
         return try {
-            val response = CanwayHttpUtils.doGet(request).content
+            val response = SimpleHttpUtils.doGet(request).content
             val canwayUserList = response.readJsonString<CanwayResponse<List<DevopsUser>>>().data
                 ?: return listOf()
             canwayUserList.map {
@@ -363,7 +363,7 @@ class CanwayUserServiceImpl(
             logger.warn("CI 用户管理用户列表接头调用失败: $request")
             try {
                 request = "$devopsHost$ciPermission$ciApi$userListApi"
-                val response = CanwayHttpUtils.doGet(request).content
+                val response = SimpleHttpUtils.doGet(request).content
                 val canwayUserList = response.readJsonString<CanwayResponse<List<CanwayUser>>>().data
                     ?: return listOf()
                 canwayUserList.map {

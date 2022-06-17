@@ -17,7 +17,7 @@ import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.devops.conf.DevopsConf
 import com.tencent.bkrepo.common.devops.pojo.CanwayGroup
 import com.tencent.bkrepo.common.devops.pojo.response.CanwayResponse
-import com.tencent.bkrepo.common.devops.util.http.CanwayHttpUtils
+import com.tencent.bkrepo.common.devops.util.http.SimpleHttpUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.mongodb.core.MongoTemplate
@@ -93,7 +93,7 @@ class CanwayRoleServiceImpl(
     private fun getGroupByTenantId(tenantId: String): List<CanwayGroup>? {
         val uri = String.format(groupApi, tenantId)
         val requestUrl = getRequestUrl(uri)
-        val responseContent = CanwayHttpUtils.doGet(requestUrl).content
+        val responseContent = SimpleHttpUtils.doGet(requestUrl).content
         return responseContent.readJsonString<CanwayResponse<List<CanwayGroup>>>().data
     }
 

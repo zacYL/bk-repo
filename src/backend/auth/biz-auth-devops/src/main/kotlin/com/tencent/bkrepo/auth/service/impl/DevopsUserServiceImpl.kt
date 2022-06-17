@@ -4,14 +4,14 @@ import com.tencent.bkrepo.auth.ciApi
 import com.tencent.bkrepo.auth.ciPermission
 import com.tencent.bkrepo.auth.ciUserManager
 import com.tencent.bkrepo.auth.exception.DevopsRequestException
-import com.tencent.bkrepo.common.devops.pojo.CanwayGroup
 import com.tencent.bkrepo.auth.pojo.DevopsDepartment
 import com.tencent.bkrepo.auth.service.DevopsUserService
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.devops.DEPLOY_CANWAY
 import com.tencent.bkrepo.common.devops.conf.DevopsConf
+import com.tencent.bkrepo.common.devops.pojo.CanwayGroup
 import com.tencent.bkrepo.common.devops.pojo.response.CanwayResponse
-import com.tencent.bkrepo.common.devops.util.http.CanwayHttpUtils
+import com.tencent.bkrepo.common.devops.util.http.SimpleHttpUtils
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Service
 
@@ -26,28 +26,28 @@ class DevopsUserServiceImpl(
     @Throws(DevopsRequestException::class)
     override fun usersByProjectId(projectId: String): List<String>? {
         val requestUrl = "$devopsHost$ciPermission$ciApi$userApi$projectId"
-        val response = CanwayHttpUtils.doGet(requestUrl)
+        val response = SimpleHttpUtils.doGet(requestUrl)
         return response.content.readJsonString<CanwayResponse<List<String>>>().data
     }
 
     @Throws(DevopsRequestException::class)
     override fun groupsByProjectId(projectId: String): List<CanwayGroup>? {
         val requestUrl = "$devopsHost$ciPermission$ciApi$groupApi$projectId"
-        val response = CanwayHttpUtils.doGet(requestUrl)
+        val response = SimpleHttpUtils.doGet(requestUrl)
         return response.content.readJsonString<CanwayResponse<List<CanwayGroup>>>().data
     }
 
     @Throws(DevopsRequestException::class)
     override fun departmentsByProjectId(projectId: String): List<DevopsDepartment>? {
         val requestUrl = "$devopsHost$ciPermission$ciApi$departmentApi$projectId"
-        val response = CanwayHttpUtils.doGet(requestUrl)
+        val response = SimpleHttpUtils.doGet(requestUrl)
         return response.content.readJsonString<CanwayResponse<List<DevopsDepartment>>>().data
     }
 
     @Throws(DevopsRequestException::class)
     override fun childrenDepartments(departmentId: String): List<DevopsDepartment>? {
         val requestUrl = "$devopsHost$ciUserManager$ciApi$childrenDepartmentApi$departmentId"
-        val response = CanwayHttpUtils.doGet(requestUrl)
+        val response = SimpleHttpUtils.doGet(requestUrl)
         return response.content.readJsonString<CanwayResponse<List<DevopsDepartment>>>().data
     }
 

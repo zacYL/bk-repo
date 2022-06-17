@@ -15,7 +15,7 @@ import com.tencent.bkrepo.common.devops.pojo.BkPage
 import com.tencent.bkrepo.common.devops.pojo.BkParentDepartment
 import com.tencent.bkrepo.common.devops.pojo.BkResponse
 import com.tencent.bkrepo.common.devops.pojo.CertType
-import com.tencent.bkrepo.common.devops.util.http.CanwayHttpUtils
+import com.tencent.bkrepo.common.devops.util.http.SimpleHttpUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -44,7 +44,7 @@ class CanwayDepartmentServiceImpl(
                 departmentId
             )
             val requestUrl = "${paasHost.removeSuffix("/")}$paasBatchDepartmentUrl"
-            val responseContent = CanwayHttpUtils.doPost(requestUrl, json).content
+            val responseContent = SimpleHttpUtils.doPost(requestUrl, json).content
             val departments = responseContent.readJsonString<BkResponse<List<BkParentDepartment>>>()
             return departments.data?.first()?.children
         } else {
@@ -63,7 +63,7 @@ class CanwayDepartmentServiceImpl(
                 bkCertificate.certType.value, bkCertificate.value,
                 departmentId, listDepartmentField
             )
-            val responseContent = CanwayHttpUtils.doGet(requestUrl).content
+            val responseContent = SimpleHttpUtils.doGet(requestUrl).content
             val department = responseContent.readJsonString<BkResponse<BkPage<BkDepartment>>>().data?.results?.first()
                 ?: throw ErrorCodeException(
                     CommonMessageCode.RESOURCE_NOT_FOUND,
@@ -118,7 +118,7 @@ class CanwayDepartmentServiceImpl(
             bkCertificate.certType.value,
             bkCertificate.value
         )
-        val responseContent = CanwayHttpUtils.doGet(requestUrl).content
+        val responseContent = SimpleHttpUtils.doGet(requestUrl).content
         return responseContent.readJsonString<BkResponse<BkPage<BkDepartment>>>().data?.results?.first()
     }
 
@@ -133,7 +133,7 @@ class CanwayDepartmentServiceImpl(
             departmentId
         )
         val requestUrl = "${paasHost.removeSuffix("/")}$uri"
-        val responseContent = CanwayHttpUtils.doGet(requestUrl).content
+        val responseContent = SimpleHttpUtils.doGet(requestUrl).content
         return responseContent.readJsonString<BkResponse<Set<BkDepartmentUser>>>().data
     }
 

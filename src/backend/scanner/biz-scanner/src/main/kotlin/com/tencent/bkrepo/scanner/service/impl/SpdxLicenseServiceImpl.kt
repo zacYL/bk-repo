@@ -106,12 +106,12 @@ class SpdxLicenseServiceImpl(
         return convert(licenseDao.findByLicenseId(licenseId))
     }
 
-    override fun updateLicense(licenseId: String, isTrust: Boolean): Boolean {
-        logger.info("update license by [${SecurityUtils.getUserId()}] ,isTrust: [$isTrust]")
+    override fun toggleStatus(licenseId: String) {
         val tLicense = checkLicenseExist(licenseId)
-        tLicense.isTrust = isTrust
+        tLicense.isTrust = !tLicense.isTrust
+        tLicense.lastModifiedBy = SecurityUtils.getUserId()
+        tLicense.lastModifiedDate = LocalDateTime.now()
         licenseDao.save(tLicense)
-        return true
     }
 
     override fun listLicenseByIds(licenseIds: List<String>): Map<String, SpdxLicenseInfo> {

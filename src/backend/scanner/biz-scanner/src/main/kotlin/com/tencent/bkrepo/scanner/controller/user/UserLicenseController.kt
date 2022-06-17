@@ -13,6 +13,7 @@ import io.swagger.annotations.ApiParam
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -70,13 +71,13 @@ class UserLicenseController(
         return ResponseBuilder.success(licenseService.getLicenseInfo(licenseId))
     }
 
-    @ApiOperation("更新许可证信息")
+    @ApiOperation("切换许可证合规/不合规")
     @PostMapping("/{licenseId}")
     fun update(
         @ApiParam(value = "许可证唯一标识")
-        @PathVariable licenseId: String,
-        @RequestParam isTrust: Boolean
-    ): Response<Boolean> {
-        return ResponseBuilder.success(licenseService.updateLicense(licenseId, isTrust))
+        @PathVariable licenseId: String
+    ): Response<Void> {
+        licenseService.toggleStatus(licenseId)
+        return ResponseBuilder.success()
     }
 }

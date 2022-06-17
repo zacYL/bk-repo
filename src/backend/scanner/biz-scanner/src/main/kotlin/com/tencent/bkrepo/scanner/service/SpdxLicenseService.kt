@@ -38,9 +38,9 @@ interface SpdxLicenseService {
     fun getLicenseInfo(licenseId: String): SpdxLicenseInfo?
 
     /**
-     * 根据许可证唯一标识更新许可证信息
+     * 根据许可证唯一标识切换合规状态
      */
-    fun updateLicense(licenseId: String, isTrust: Boolean): Boolean
+    fun toggleStatus(licenseId: String)
 
     /**
      * 根据唯一标识集合查询许可证信息（scancode使用）

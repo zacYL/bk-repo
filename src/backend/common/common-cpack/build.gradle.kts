@@ -7,4 +7,5 @@ dependencies {
     implementation("cn.hutool:hutool-extra:5.5.4")
     implementation("cn.hutool:hutool-core:5.5.4")
     implementation("com.google.zxing:core:3.4.1")
+    implementation("org.apache.commons:commons-lang3")
 }

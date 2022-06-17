@@ -1,11 +1,7 @@
 package com.tencent.bkrepo.scanner.service
 
 import com.tencent.bkrepo.common.api.pojo.Page
-import com.tencent.bkrepo.common.query.model.PageLimit
-import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.scanner.pojo.license.SpdxLicenseInfo
-import com.tencent.bkrepo.scanner.pojo.license.UpdateLicenseRequest
-import java.io.File
 
 /**
  * 许可证服务
@@ -38,9 +34,9 @@ interface SpdxLicenseService {
     fun getLicenseInfo(licenseId: String): SpdxLicenseInfo?
 
     /**
-     * 根据许可证唯一标识更新许可证信息
+     * 根据许可证唯一标识切换合规状态
      */
-    fun updateLicense(licenseId: String, isTrust: Boolean): Boolean
+    fun toggleStatus(licenseId: String)
 
     /**
      * 根据唯一标识集合查询许可证信息（scancode使用）

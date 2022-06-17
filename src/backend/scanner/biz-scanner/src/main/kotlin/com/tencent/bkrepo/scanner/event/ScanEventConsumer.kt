@@ -30,6 +30,8 @@ package com.tencent.bkrepo.scanner.event
 import com.tencent.bkrepo.common.api.constant.CharPool
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.api.util.toJsonString
+import com.tencent.bkrepo.common.artifact.constant.PUBLIC_GLOBAL_PROJECT
+import com.tencent.bkrepo.common.artifact.constant.PUBLIC_VULDB_REPO
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.common.artifact.event.packages.VersionCreatedEvent
@@ -41,8 +43,6 @@ import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
-import com.tencent.bkrepo.scanner.PUBLIC_GLOBAL
-import com.tencent.bkrepo.scanner.SPDX_LICENSE
 import com.tencent.bkrepo.scanner.configuration.ScannerProperties
 import com.tencent.bkrepo.scanner.dao.ProjectScanConfigurationDao
 import com.tencent.bkrepo.scanner.dao.ScanPlanDao
@@ -102,27 +102,29 @@ class ScanEventConsumer(
     }
 
     /**
-     * 当【public-global】项目下的【spdx-license】仓库中上传license.json文件时
+     * 当【public-global】项目下的【vuldb-repo】仓库中的【/spdx-license/】文件夹下上传license.json文件时
      * 触发导入license数据
      */
     private fun importLicenseEvent(event: ArtifactEvent) {
-        if (event.projectId == PUBLIC_GLOBAL && event.repoName == SPDX_LICENSE) {
-            nodeClient.getNodeDetail(event.projectId, event.repoName, event.resourceKey).data?.let {
-                val sha256 = it.sha256!!
-                val first = sha256.substring(0, 2)
-                val second = sha256.substring(2, 4)
-                val path = storageProperties.filesystem.path
-                val storePath = if (!path.startsWith("/")) {
-                    "${System.getProperties()["user.dir"]}/$path".removeSuffix("/")
-                } else {
-                    path.removeSuffix("/")
-                }
-                val filePath = "$storePath/$first/$second/$sha256"
-                if (spdxLicenseService.importLicense(filePath)){
-                    logger.info("import license json file success ")
-                }
-            } ?: logger.warn("node detail is null in license event [$event]")
-        }
+        require(event.projectId == PUBLIC_GLOBAL_PROJECT && event.repoName == PUBLIC_VULDB_REPO) { return }
+        require(
+            event.resourceKey.endsWith(".json") && event.resourceKey.startsWith("/spdx-license/")
+        ) { return }
+        nodeClient.getNodeDetail(event.projectId, event.repoName, event.resourceKey).data?.let {
+            val sha256 = it.sha256!!
+            val first = sha256.substring(0, 2)
+            val second = sha256.substring(2, 4)
+            val path = storageProperties.filesystem.path
+            val storePath = if (!path.startsWith("/")) {
+                "${System.getProperties()["user.dir"]}/$path".removeSuffix("/")
+            } else {
+                path.removeSuffix("/")
+            }
+            val filePath = "$storePath/$first/$second/$sha256"
+            if (spdxLicenseService.importLicense(filePath)) {
+                logger.info("import license json file success")
+            }
+        } ?: logger.warn("node detail is null in license event [$event]")
     }
 
     /**

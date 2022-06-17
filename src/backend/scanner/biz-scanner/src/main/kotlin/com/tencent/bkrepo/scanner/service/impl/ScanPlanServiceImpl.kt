@@ -36,6 +36,7 @@ import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.query.model.PageLimit
+import com.tencent.bkrepo.scanner.pojo.ScanSchemeType
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.repository.api.PackageClient
 import com.tencent.bkrepo.scanner.dao.PlanArtifactLatestSubScanTaskDao
@@ -53,10 +54,13 @@ import com.tencent.bkrepo.scanner.pojo.request.PlanCountRequest
 import com.tencent.bkrepo.scanner.pojo.request.UpdateScanPlanRequest
 import com.tencent.bkrepo.scanner.pojo.response.ArtifactPlanRelation
 import com.tencent.bkrepo.scanner.pojo.response.ArtifactScanResultOverview
+import com.tencent.bkrepo.scanner.pojo.response.FileLicensesResultOverview
+import com.tencent.bkrepo.scanner.pojo.response.ScanLicensePlanInfo
 import com.tencent.bkrepo.scanner.pojo.response.PlanArtifactInfo
 import com.tencent.bkrepo.scanner.pojo.response.ScanPlanInfo
 import com.tencent.bkrepo.scanner.service.ScanPlanService
 import com.tencent.bkrepo.scanner.utils.Request
+import com.tencent.bkrepo.scanner.utils.ScanLicenseConverter
 import com.tencent.bkrepo.scanner.utils.ScanParamUtil
 import com.tencent.bkrepo.scanner.utils.ScanPlanConverter
 import org.slf4j.LoggerFactory
@@ -80,7 +84,7 @@ class ScanPlanServiceImpl(
                 throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "name cannot be empty or length > 32")
             }
 
-            if (!RepositoryType.values().map { it.name }.contains(type)) {
+            if (!ScanSchemeType.values().map { it.name }.contains(type)) {
                 throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "invalid scan plan type[$type]")
             }
 
@@ -200,10 +204,17 @@ class ScanPlanServiceImpl(
         return ScanPlanConverter.convert(subtask)
     }
 
+    override fun planLicensesArtifact(projectId: String, subScanTaskId: String): FileLicensesResultOverview {
+        val subtask = planArtifactLatestSubScanTaskDao.find(projectId, subScanTaskId)
+            ?: throw NotFoundException(CommonMessageCode.RESOURCE_NOT_FOUND, projectId, subScanTaskId)
+        permissionCheckHandler.checkSubtaskPermission(subtask, PermissionAction.READ)
+        return ScanLicenseConverter.convert(subtask)
+    }
+
     override fun artifactPlanList(request: ArtifactPlanRelationRequest): List<ArtifactPlanRelation> {
         with(request) {
             ScanParamUtil.checkParam(
-                repoType = RepositoryType.valueOf(repoType),
+                repoType = ScanSchemeType.ofRepositoryType(repoType),
                 packageKey = packageKey,
                 version = version,
                 fullPath = fullPath
@@ -235,6 +246,21 @@ class ScanPlanServiceImpl(
         }
 
         return ScanPlanConverter.artifactStatus(relations.map { it.status })
+    }
+
+    override fun scanLicensePlanInfo(request: PlanCountRequest): ScanLicensePlanInfo? {
+        with(request) {
+            val scanPlan = scanPlanDao.find(projectId, id)
+                ?: throw throw NotFoundException(CommonMessageCode.RESOURCE_NOT_FOUND, projectId, id)
+            return if (startTime != null && endTime != null) {
+                val subScanTasks = planArtifactLatestSubScanTaskDao.findBy(request)
+                ScanLicenseConverter.convert(scanPlan, subScanTasks)
+            } else {
+                val scanTask = scanPlan.latestScanTaskId?.let { scanTaskDao.findById(it) }
+                val artifactCount = planArtifactLatestSubScanTaskDao.planArtifactCount(scanPlan.id!!)
+                ScanLicenseConverter.convert(scanPlan, scanTask, artifactCount)
+            }
+        }
     }
 
     private fun checkRunning(planId: String) {

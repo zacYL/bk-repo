@@ -40,7 +40,9 @@ import com.tencent.bkrepo.scanner.pojo.request.ReportResultRequest
 import com.tencent.bkrepo.scanner.pojo.request.ScanRequest
 import com.tencent.bkrepo.scanner.pojo.request.ScanTaskQuery
 import com.tencent.bkrepo.scanner.pojo.request.SingleScanRequest
+import com.tencent.bkrepo.scanner.pojo.request.scancodetoolkit.ArtifactLicensesDetailRequest
 import com.tencent.bkrepo.scanner.pojo.response.ArtifactVulnerabilityInfo
+import com.tencent.bkrepo.scanner.pojo.response.FileLicensesResultDetail
 import com.tencent.bkrepo.scanner.pojo.response.FileScanResultDetail
 import com.tencent.bkrepo.scanner.pojo.response.FileScanResultOverview
 
@@ -141,6 +143,11 @@ interface ScanService {
      * 获取文件扫描报告详情
      */
     fun resultDetail(request: ArtifactVulnerabilityRequest): Page<ArtifactVulnerabilityInfo>
+
+    /**
+     * 获取文件扫描报告详情
+     */
+    fun resultDetail(request: ArtifactLicensesDetailRequest): Page<FileLicensesResultDetail>
 
     /**
      * 更新子扫描任务状态

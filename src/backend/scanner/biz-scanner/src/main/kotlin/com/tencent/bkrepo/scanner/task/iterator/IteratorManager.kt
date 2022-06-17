@@ -30,6 +30,7 @@ package com.tencent.bkrepo.scanner.task.iterator
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.model.Rule
+import com.tencent.bkrepo.scanner.pojo.ScanSchemeType
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.PackageClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
@@ -73,7 +74,8 @@ class IteratorManager(
         val projectIds = fieldValueFromRule(rule, NodeDetail::projectId.name)
         val projectIdIterator = projectIds.iterator()
 
-        val isPackageScanPlanType = scanTask.scanPlan != null && scanTask.scanPlan!!.type != RepositoryType.GENERIC.name
+        val isPackageScanPlanType = scanTask.scanPlan != null &&
+            ScanSchemeType.ofRepositoryType(scanTask.scanPlan!!.type)!= RepositoryType.GENERIC
         return if (isPackageScanPlanType || packageRule(rule)) {
             PackageIterator(packageClient, nodeClient, PackageIterator.PackageIteratePosition(rule))
         } else {
@@ -86,7 +88,7 @@ class IteratorManager(
             // 扫描所有仓库
             addRepoNames(rule, scanPlan.projectId!!, scanPlan.type!!)
         }
-        if (scanPlan.type == RepositoryType.GENERIC.name) {
+        if (ScanSchemeType.ofRepositoryType(scanPlan.type) == RepositoryType.GENERIC) {
             // 限制待扫描文件后缀
             return addMobilePackageRule(rule)
         }

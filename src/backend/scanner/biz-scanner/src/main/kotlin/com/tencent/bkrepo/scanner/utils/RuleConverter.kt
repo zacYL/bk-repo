@@ -35,6 +35,7 @@ import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.query.model.Rule.NestedRule
 import com.tencent.bkrepo.common.query.model.Rule.NestedRule.RelationType.AND
 import com.tencent.bkrepo.common.query.model.Rule.NestedRule.RelationType.OR
+import com.tencent.bkrepo.scanner.pojo.ScanSchemeType
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
 import com.tencent.bkrepo.scanner.pojo.rule.ArtifactRule
@@ -143,7 +144,7 @@ object RuleConverter {
             Rule.QueryRule(NodeDetail::projectId.name, projectId, OperationType.EQ)
         )
 
-        if (repoType != null && repoType != RepositoryType.GENERIC.name) {
+        if (repoType != null && ScanSchemeType.ofRepositoryType(repoType) != RepositoryType.GENERIC) {
             rules.add(Rule.QueryRule(PackageSummary::type.name, repoType, OperationType.EQ))
         }
 

@@ -38,6 +38,8 @@ import com.tencent.bkrepo.common.scanner.pojo.scanner.arrowhead.ArrowheadScanExe
 import com.tencent.bkrepo.common.scanner.pojo.scanner.arrowhead.ArrowheadScanner
 import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.result.DependencyScanExecutorResult
 import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.scanner.DependencyScanner
+import com.tencent.bkrepo.common.scanner.pojo.scanner.scanCodeCheck.result.ScanCodeToolkitScanExecutorResult
+import com.tencent.bkrepo.common.scanner.pojo.scanner.scanCodeCheck.scanner.ScancodeToolkitScanner
 import com.tencent.bkrepo.common.scanner.pojo.scanner.utils.normalizedLevel
 import com.tencent.bkrepo.scanner.model.SubScanTaskDefinition
 import com.tencent.bkrepo.scanner.model.TPlanArtifactLatestSubScanTask
@@ -398,6 +400,7 @@ object ScanPlanConverter {
         return when (scannerType) {
             ArrowheadScanner.TYPE -> ArrowheadScanExecutorResult.overviewKeyOfCve(level)
             DependencyScanner.TYPE -> DependencyScanExecutorResult.overviewKeyOfCve(level)
+            ScancodeToolkitScanner.TYPE -> ScanCodeToolkitScanExecutorResult.overviewKeyOf(level)
             else -> throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, scannerType, level)
         }
     }

@@ -68,7 +68,9 @@ import com.tencent.bkrepo.scanner.pojo.request.ReportResultRequest
 import com.tencent.bkrepo.scanner.pojo.request.ScanRequest
 import com.tencent.bkrepo.scanner.pojo.request.ScanTaskQuery
 import com.tencent.bkrepo.scanner.pojo.request.SingleScanRequest
+import com.tencent.bkrepo.scanner.pojo.request.scancodetoolkit.ArtifactLicensesDetailRequest
 import com.tencent.bkrepo.scanner.pojo.response.ArtifactVulnerabilityInfo
+import com.tencent.bkrepo.scanner.pojo.response.FileLicensesResultDetail
 import com.tencent.bkrepo.scanner.pojo.response.FileScanResultDetail
 import com.tencent.bkrepo.scanner.pojo.response.FileScanResultOverview
 import com.tencent.bkrepo.scanner.service.ScanQualityService
@@ -76,6 +78,7 @@ import com.tencent.bkrepo.scanner.service.ScanService
 import com.tencent.bkrepo.scanner.service.ScannerService
 import com.tencent.bkrepo.scanner.task.ScanTaskScheduler
 import com.tencent.bkrepo.scanner.utils.Converter
+import com.tencent.bkrepo.scanner.utils.ScanLicenseConverter
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationEventPublisher
@@ -477,6 +480,23 @@ class ScanServiceImpl @Autowired constructor(
                 SubScanTaskStatus.SUCCESS.name
             }
             return FileScanResultDetail(status, node.sha256!!, scanResultDetail)
+        }
+    }
+
+    override fun resultDetail(request: ArtifactLicensesDetailRequest): Page<FileLicensesResultDetail> {
+        with(request) {
+            val subtask = planArtifactLatestSubScanTaskDao.findById(subScanTaskId!!)
+                ?: throw ErrorCodeException(CommonMessageCode.RESOURCE_NOT_FOUND, subScanTaskId!!)
+            permissionCheckHandler.checkSubtaskPermission(subtask, PermissionAction.READ)
+            val scanner = scannerService.get(subtask.scanner)
+            val arguments = ScanLicenseConverter.convertToLoadArguments(request, scanner.type)
+            val scanResultManager = scanExecutorResultManagers[subtask.scannerType]
+            val detailReport = scanResultManager?.load(
+                subtask.credentialsKey,
+                subtask.sha256,
+                scannerService.get(subtask.scanner),
+                arguments)
+            return ScanLicenseConverter.convert(detailReport, subtask.scannerType, reportType, pageNumber, pageSize)
         }
     }
 

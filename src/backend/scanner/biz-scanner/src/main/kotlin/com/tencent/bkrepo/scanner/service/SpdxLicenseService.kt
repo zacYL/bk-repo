@@ -1,11 +1,7 @@
 package com.tencent.bkrepo.scanner.service
 
 import com.tencent.bkrepo.common.api.pojo.Page
-import com.tencent.bkrepo.common.query.model.PageLimit
-import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.scanner.pojo.license.SpdxLicenseInfo
-import com.tencent.bkrepo.scanner.pojo.license.UpdateLicenseRequest
-import java.io.File
 
 /**
  * 许可证服务

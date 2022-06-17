@@ -314,7 +314,7 @@
 
 
 
-## 更新许可证信息
+## 更新许可证信息(切换【合规】/【不合规】)
 
 - API：POST /scanner/api/license/{licenseId}
 - API 名称：update_license_info
@@ -323,10 +323,9 @@
   - English：update license info
 - 请求参数说明：
 
-| 字段      | 类型    | 是否必须 | 默认值 | 说明                       | DESCRIPTION |
-| --------- | ------- | -------- | ------ | -------------------------- | ----------- |
-| licenseId | String  | 是       | 无     | 许可证唯一标识（路径参数） | license id  |
-| isTrust   | Boolean | 否       | 无     | 是否可信                   | is trust    |
+| 字段      | 类型   | 是否必须 | 默认值 | 说明                       | DESCRIPTION |
+| --------- | ------ | -------- | ------ | -------------------------- | ----------- |
+| licenseId | String | 是       | 无     | 许可证唯一标识（路径参数） | license id  |
 
 - 响应体：
 
@@ -334,7 +333,7 @@
 {
     "code": 0,
     "message": null,
-    "data": true,
+    "data": null,
     "traceId": ""
 }
 ```

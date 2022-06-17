@@ -10,3 +10,6 @@ service:
   name: generic
 generic:
   domain: ${cluster.self.url}/generic
+  delta:
+    projectId: bkrepo-internal
+    repoName: sign

@@ -16,27 +16,23 @@ spring:
         preferIpAddress: true
       port: __CPACK_CONSUL_PORT__
     stream:
-      bindings:
-        artifactEvent-in-0:
-          destination: artifact-event
-          group: replication
-        artifactEvent-out-0:
-          destination: artifact-event
-      function:
-        definition: artifactEvent
       binders:
+        noop:
+          type: noop
         file:
           type: file
-        memory:
-          type: memory
-      file:
-        default:
-          path: __CPACK_STREAM_FILE_DEFAULT_PATH__
-      memory:
-        default:
-          queue-size: 2048
-          worker-pool-size: 1
-      default-binder: file
+        pulsar:
+          type: pulsar
+          environment:
+            spring:
+              pulsar:
+                serviceUrl: http://your.pulsar.com:8080
+                tokenAuthValue: your-jwt
+                tenant: your-pulsar-tenant
+                namespace: your-pulsar-namespace
+      function:
+        autodetect: false
+      default-binder: noop
   data:
     mongodb:
       socket-keep-alive: true
@@ -114,6 +110,22 @@ security:
       secretKey: secret@key
       # spring Duration配置格式，可以带时间单位，为0表示永不过期，默认为0
       expiration: 0
+  crypto:
+    rsaAlgorithm: RSA/ECB/PKCS1Padding
+    privateKeyStr: "MIICdwIBADANBgkqhkiG9w0BAQEFAASCAmEwggJdAgEAAoGBAMaoDhrj
+                    +Da2tGpawrE8et6vHBjprVj0UiCEza7JVymYTo9gd/pxNJRnbf6NehUL1WP8D6f5e2XZEDNfqXOqyEjPqOKtWIYI6ZLQeQIuAXgyGE5aP3
+                    /KVHFnxk+IuzcJtvqTAthfeuVXGel9ATP8hlEyDuCJe7/orBjIVYFk3p+PAgMBAAECgYAGYwLJFIk3YRpdzPszbYlZvXF
+                    +z4x2LqyxRPPD6c82lCH6dBSHZbpWBxk/NNc29AFxTHpIYTn5ZUgjDrFI+bWkqxvgqWS/oyfB6rxajIQjTeorsGvt
+                    /oumxQA7hvUE2XXLi218RXCURWgz/FZnvNhGhPYUOJWHoPeNlVx3V5mG8QJBAOzP9iSPcw1YJkv6uAgY4MRv1GqPu3NcMif
+                    +DQVPOZCNPq7ynSg15Zl3HMpl6jAZNJ/AUXRby3tLhO8WiWr6C8cCQQDWwKbhy4AZ5SDigFIPtk
+                    /655Uzprm2JaZSvGkBeOSB9EYCUC1ApKeImrufPZpSj3Ood/fbMyA6cl8Bswl2z335AkBTNa
+                    +ToSQYKEUspWhM0BEKdRD6cI65NkgZbVc96lybwkWoS2+VVXrbtdLT+4OSawjmqTj13dtd82c
+                    +a3jVsg65AkEAn1kiO0caDZzj8s2OlpQL8rwmDMZ45Lw5FwkwzWPcAsWzsQG3IlFK8uUFtRoryXkiM
+                    +6Y3nCoSFYXQxaLPjqmWQJBAI2tn28XAHFcSd0UnS8L6exJuMdjCw4huI5
+                    FOeZ0arf5NrWDFoKU30Crw2ozmRBcDvtjDVH9sn8oLC2ObCFItlM="
+    publicKeyStr: "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDGqA4a4
+                    /g2trRqWsKxPHrerxwY6a1Y9FIghM2uyVcpmE6PYHf6cTSUZ23+jXoVC9Vj/A+n+Xtl2RAzX6lzqshIz6jirViGCOmS0HkCLgF4MhhOWj9
+                    /ylRxZ8ZPiLs3Cbb6kwLYX3rlVxnpfQEz/IZRMg7giXu/6KwYyFWBZN6fjwIDAQAB"
   # 微服务认证相关配置
   service:
     # 默认开始

@@ -13,7 +13,7 @@ import com.tencent.bkrepo.common.devops.pojo.BkUser
 import com.tencent.bkrepo.common.devops.pojo.BkUserData
 import com.tencent.bkrepo.common.devops.pojo.BkUserInfo
 import com.tencent.bkrepo.common.devops.pojo.CertType
-import com.tencent.bkrepo.common.devops.util.http.CanwayHttpUtils
+import com.tencent.bkrepo.common.devops.util.http.SimpleHttpUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -32,7 +32,7 @@ class BkUserService(
         val bkCert = getBkCert()
         val uri = String.format(bkUserInfoApi, appCode, appSecret, bkCert.certType.value, bkCert.value)
         val requestUrl = "${bkHost.removeSuffix("/")}$uri"
-        val responseContent = CanwayHttpUtils.doGet(requestUrl).content
+        val responseContent = SimpleHttpUtils.doGet(requestUrl).content
         val bkUser = responseContent.readJsonString<BkUserInfo>().data
             ?: throw ErrorCodeException(CommonMessageCode.SERVICE_CALL_ERROR, "Can not load user info")
         return bkUser.bk_username
@@ -41,7 +41,7 @@ class BkUserService(
     fun getBkUserByUserId(userId: String): BkUserData {
         val uri = String.format(bkUserInfoApi, appCode, appSecret, BKUSERNAME, userId)
         val requestUrl = "${bkHost.removeSuffix("/")}$uri"
-        val responseContent = CanwayHttpUtils.doGet(requestUrl).content
+        val responseContent = SimpleHttpUtils.doGet(requestUrl).content
         return responseContent.readJsonString<BkUserInfo>().data
             ?: throw ErrorCodeException(CommonMessageCode.SERVICE_CALL_ERROR, "Can not load user info")
     }
@@ -62,7 +62,7 @@ class BkUserService(
     fun getBkUsers(page: Int, pageSize: Int): BkPage<BkUser>? {
         val uri = String.format(bkUserApi, appCode, appSecret, page, pageSize)
         val requestUrl = "${bkHost.removeSuffix("/")}$uri"
-        val responseContent = CanwayHttpUtils.doGet(requestUrl).content
+        val responseContent = SimpleHttpUtils.doGet(requestUrl).content
         val bkResponse = responseContent.readJsonString<BkResponse<BkPage<BkUser>>>()
         return bkResponse.data
     }

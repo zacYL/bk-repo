@@ -59,12 +59,12 @@ object CertTrustManager {
         return createSSLSocketFactory(trustManager)
     }
 
-    fun createSSLSocketFactory(trustManager: TrustManager): SSLSocketFactory {
+    private fun createSSLSocketFactory(trustManager: TrustManager): SSLSocketFactory {
         val sslContext = SSLContext.getInstance(TLS).apply { init(null, arrayOf(trustManager), null) }
         return sslContext.socketFactory
     }
 
-    fun createTrustManager(certString: String): X509TrustManager {
+    private fun createTrustManager(certString: String): X509TrustManager {
         val certInputStream = certString.byteInputStream(Charsets.UTF_8)
         val certificateFactory = CertificateFactory.getInstance(X509)
         val certificateList = certificateFactory.generateCertificates(certInputStream)

@@ -151,10 +151,10 @@
             showUploadLicense () {
                 this.$refs.genericUploadDialog.setData({
                     projectId: 'public-global',
-                    repoName: 'spdx-license',
+                    repoName: 'vuldb-repo',
                     show: true,
                     title: '上传许可证',
-                    fullPath: '/'
+                    fullPath: '/spdx-license'
                 })
             },
             changeTrust ({ licenseId, isTrust }) {

@@ -71,10 +71,12 @@ export const asyncPlanStatusEnum = {
 
 // 扫描方案类型
 export const scanTypeEnum = {
-    GENERIC: 'Generic仓库扫描',
-    MAVEN: 'Maven仓库扫描',
-    NPM: 'Npm仓库扫描',
-    PYPI: 'Pypi仓库扫描'
+    GENERIC: 'Generic仓库漏洞扫描',
+    MAVEN: 'Maven仓库漏洞扫描',
+    NPM: 'Npm仓库漏洞扫描',
+    PYPI: 'Pypi仓库漏洞扫描',
+    GENERIC_LICENSE: 'Generic仓库许可证扫描',
+    MAVEN_LICENSE: 'Maven仓库许可证扫描'
 }
 
 export const scannerTypeEnum = {
@@ -89,6 +91,10 @@ export const scannerTypeEnum = {
         MAVEN: '',
         NPM: '',
         PYPI: ''
+    },
+    scancodeToolkit: {
+        GENERIC_LICENSE: '支持apk、ipa、jar格式的文件',
+        MAVEN_LICENSE: ''
     }
 }
 

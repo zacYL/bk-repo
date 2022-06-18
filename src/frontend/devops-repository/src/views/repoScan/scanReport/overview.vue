@@ -29,14 +29,6 @@
 <script>
     import { segmentNumberThree } from '@repository/utils'
     import { mapActions } from 'vuex'
-    const baseInfoList = [
-        { key: 'artifactCount', label: '扫描制品数量' },
-        { key: 'total', label: '漏洞总量' },
-        { key: 'critical', label: '危急漏洞', color: '#EA3736' },
-        { key: 'high', label: '高级漏洞', color: '#FFB549' },
-        { key: 'medium', label: '中级漏洞', color: '#3A84FF' },
-        { key: 'low', label: '低级漏洞', color: '#979BA5' }
-    ]
     const nowTime = new Date(
         `${new Date().getFullYear()}-${new Date().getMonth() + 1}-${new Date().getDate()}`
     ).getTime() + 3600 * 1000 * 24
@@ -61,9 +53,27 @@
         }
     ]
     export default {
+        props: {
+            scanType: String
+        },
         data () {
             return {
-                baseInfoList,
+                baseInfoList: this.scanType.includes('LICENSE')
+                    ? [
+                        { key: 'artifactCount', label: '扫描制品数量' },
+                        { key: 'total', label: '许可证总数' },
+                        { key: 'unRecommend', label: '不推荐使用数' },
+                        { key: 'unknown', label: '未知许可证数' },
+                        { key: 'unCompliance', label: '不合规数' }
+                    ]
+                    : [
+                        { key: 'artifactCount', label: '扫描制品数量' },
+                        { key: 'total', label: '漏洞总量' },
+                        { key: 'critical', label: '危急漏洞', color: '#EA3736' },
+                        { key: 'high', label: '高级漏洞', color: '#FFB549' },
+                        { key: 'medium', label: '中级漏洞', color: '#3A84FF' },
+                        { key: 'low', label: '低级漏洞', color: '#979BA5' }
+                    ],
                 shortcuts,
                 filterTime: [new Date(nowTime - 3600 * 1000 * 24 * 30), new Date(nowTime)],
                 baseInfo: {}
@@ -91,10 +101,14 @@
             segmentNumberThree,
             ...mapActions([
                 'scanReportOverview',
+                'scanLicenseOverview',
                 'stopScan'
             ]),
             getScanReportOverview () {
-                this.scanReportOverview({
+                const fn = this.scanType.includes('LICENSE')
+                    ? this.scanLicenseOverview
+                    : this.scanReportOverview
+                fn({
                     projectId: this.projectId,
                     id: this.planId,
                     ...this.formatISO

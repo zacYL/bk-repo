@@ -27,7 +27,7 @@
                             </bk-option-group>
                         </bk-select>
                     </bk-form-item>
-                    <bk-form-item label="风险等级">
+                    <bk-form-item v-if="!scanType.includes('LICENSE')" label="风险等级">
                         <bk-select
                             v-model="filter.highestLeakLevel">
                             <bk-option v-for="[id, name] in Object.entries(leakLevelEnum)" :key="id" :id="id" :name="name"></bk-option>
@@ -60,10 +60,7 @@
     import { scanStatusEnum, leakLevelEnum } from '@repository/store/publicEnum'
     export default {
         props: {
-            repoType: {
-                type: Array,
-                default: () => []
-            }
+            scanType: String
         },
         data () {
             return {
@@ -82,8 +79,9 @@
         computed: {
             ...mapState(['repoListAll']),
             repoGroupList () {
+                const repoTypeLimit = [this.scanType.replace(/^([A-Z]+)/, '$1')]
                 return this.repoListAll
-                    .filter(r => this.repoType.includes(r.type))
+                    .filter(r => repoTypeLimit.includes(r.type))
                     .reduce((target, repo) => {
                         if (!target[repo.type]) target[repo.type] = []
                         target[repo.type].push(repo)

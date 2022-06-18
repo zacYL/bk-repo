@@ -2,6 +2,7 @@
     <div class="scan-report-container">
         <report-overview
             class="mb10"
+            :scan-type="baseInfo.planType"
             @refreshData="refreshData"
             @refresh="refreshList">
         </report-overview>
@@ -14,7 +15,7 @@
                 </operation-list>
                 <bk-button class="ml10" :theme="isfiltering ? 'primary' : 'default'" @click="showFilterForm">筛选</bk-button>
             </div>
-            <filter-sideslider ref="filterSideslider" :repo-type="[baseInfo.planType]" @filter="filterHandler"></filter-sideslider>
+            <filter-sideslider ref="filterSideslider" :scan-type="baseInfo.planType" @filter="filterHandler"></filter-sideslider>
         </div>
         <div class="report-list flex-align-center" v-bkloading="{ isLoading }">
             <div class="mr20 view-task" v-show="viewType === 'TASKVIEW'">
@@ -25,8 +26,8 @@
                         placeholder="请输入关键字，按Enter键搜索"
                         clearable
                         right-icon="bk-icon icon-search"
-                        @enter="searchTask"
-                        @clear="searchTask">
+                        @enter="handlerTaskPaginationChange()"
+                        @clear="handlerTaskPaginationChange()">
                     </bk-input>
                 </div>
                 <div class="task-list">
@@ -36,7 +37,7 @@
                         :has-next="taskList.length < taskPagination.count"
                         @load="handlerTaskPaginationChange({ current: taskPagination.current + 1 }, true)">
                         <div class="mb10 p10 task-item"
-                            :class="{ 'selected': task.taskId === taskIdSelected }"
+                            :class="{ 'selected': task.taskId === taskSelected.taskId }"
                             v-for="task in taskList"
                             :key="task.taskId"
                             @click="changeSelectedTask(task)">
@@ -56,11 +57,11 @@
             <div class="flex-1">
                 <div v-show="viewType === 'TASKVIEW'" class="mb20 task-overview flex-center">
                     <div class="overview-key">开始时间</div>
-                    <div class="overview-value">2022-05-23 16:30</div>
+                    <div class="overview-value">{{ formatDate(taskSelected.startDateTime) }}</div>
                     <div class="overview-key">结束时间</div>
-                    <div class="overview-value">2022-05-23 17:30</div>
+                    <div class="overview-value">{{ formatDate(taskSelected.finishedDateTime) }}</div>
                     <div class="overview-key">扫描制品数</div>
-                    <div class="overview-value">20</div>
+                    <div class="overview-value">{{ taskSelected.total }}</div>
                 </div>
                 <bk-table
                     :height="`calc(100% - ${viewType === 'TASKVIEW' ? 100 : 40}px`"
@@ -94,7 +95,7 @@
                             <span v-else>/</span>
                         </template>
                     </bk-table-column>
-                    <bk-table-column label="风险等级">
+                    <bk-table-column v-if="!baseInfo.planType.includes('LICENSE')" label="风险等级">
                         <template #default="{ row }">
                             <div v-if="row.highestLeakLevel" class="status-sign" :class="row.highestLeakLevel"
                                 :data-name="leakLevelEnum[row.highestLeakLevel]">
@@ -167,7 +168,7 @@
                 viewType: 'OVERVIEW',
                 taskLoading: false,
                 taskNameSearch: '',
-                taskIdSelected: '',
+                taskSelected: {},
                 taskList: [],
                 taskPagination: {
                     count: 0,
@@ -210,7 +211,8 @@
                 'getScanTaskList',
                 'scanReportList',
                 'scanTaskReportList',
-                'startScanSingle'
+                'startScanSingle',
+                'stopScanTask'
             ]),
             refreshData (key, value) {
                 this[key] = value
@@ -228,7 +230,7 @@
                 const fn = this.viewType === 'TASKVIEW' ? this.scanTaskReportList : this.scanReportList
                 return fn({
                     id: this.planId,
-                    taskId: this.taskIdSelected,
+                    taskId: this.taskSelected.taskId,
                     projectId: this.projectId,
                     query: {
                         ...(this.viewType === 'TASKVIEW' ? {} : this.formatISO),
@@ -305,6 +307,7 @@
                     planId: this.planId,
                     projectId: this.projectId,
                     triggerType: this.baseInfo.readOnly ? 'PIPELINE' : 'MANUAL',
+                    namePrefix: this.taskNameSearch || undefined,
                     current: this.pagination.current,
                     limit: this.pagination.limit
                 }).then(({ records, totalRecords }) => {
@@ -317,13 +320,29 @@
                     this.taskLoading = false
                 })
             },
-            searchTask () {},
-            changeSelectedTask ({ taskId }) {
-                if (this.taskIdSelected === taskId) return
-                this.taskIdSelected = taskId
+            changeSelectedTask (task) {
+                if (this.taskSelected.taskId === task.taskId) return
+                this.taskSelected = task
                 this.handlerPaginationChange()
             },
-            stopTask () {}
+            stopTask (task) {
+                this.$confirm({
+                    theme: 'danger',
+                    message: `确认中止扫描任务 ${task.name} ?`,
+                    confirmFn: () => {
+                        return this.stopScanTask({
+                            projectId: this.projectId,
+                            taskId: task.taskId
+                        }).then(() => {
+                            this.$bkMessage({
+                                theme: 'success',
+                                message: '中止任务' + this.$t('success')
+                            })
+                            this.handlerPaginationChange()
+                        })
+                    }
+                })
+            }
         }
     }
 </script>

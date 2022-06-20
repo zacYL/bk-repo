@@ -142,7 +142,6 @@ interface ScanPlanService {
      */
     fun planLicensesArtifact(projectId: String, subScanTaskId: String): FileLicensesResultOverview
 
-
     /**
      * 获取制品关联的扫描方案列表
      *
@@ -169,5 +168,4 @@ interface ScanPlanService {
      * @return 扫描方案最新一次扫描详情
      */
     fun scanLicensePlanInfo(request: PlanCountRequest): ScanLicensePlanInfo?
-
 }

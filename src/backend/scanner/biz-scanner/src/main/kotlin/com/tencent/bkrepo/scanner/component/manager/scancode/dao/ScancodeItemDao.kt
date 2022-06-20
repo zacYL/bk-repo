@@ -25,8 +25,8 @@ class ScancodeItemDao : ResultItemDao<TScancodeItem>() {
         logger.info("ScancodeItemDao customizePageBy criteria:${criteria.toJsonString()}")
         return criteria
     }
-    private fun dataKey(name: String) = "${TScancodeItem::data.name}.$name"
 
+    private fun dataKey(name: String) = "${TScancodeItem::data.name}.$name"
 
     fun pageOf(
         credentialsKey: String?,

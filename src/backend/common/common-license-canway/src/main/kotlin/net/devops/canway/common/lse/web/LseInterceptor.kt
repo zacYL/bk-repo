@@ -1,9 +1,9 @@
 package net.devops.canway.common.lse.web
 
+import com.tencent.bkrepo.common.api.constant.HttpStatus
 import io.undertow.util.BadRequestException
 import net.canway.license.utils.Constant
 import net.devops.canway.common.lse.LseChecker
-import org.apache.http.HttpStatus
 import org.slf4j.LoggerFactory
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter
 import javax.servlet.http.HttpServletRequest
@@ -23,7 +23,7 @@ class LseInterceptor constructor(
             }
         } catch (e: Exception) {
             logger.warn("check license fail ${e.message}")
-            response.status = HttpStatus.SC_BAD_REQUEST
+            response.status = HttpStatus.BAD_REQUEST.value
             response.writer.print(e.message)
             return false
         }

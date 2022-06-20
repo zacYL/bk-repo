@@ -47,8 +47,8 @@ internal class RsaUtilsTest {
     fun testRsaUtilsWithNullKey() {
         cryptoProperties = CryptoProperties(
             rsaAlgorithm = rsaAlgorithm,
-            privateKeyStr = privateKeyStr,
-            publicKeyStr = publicKeyStr
+            privateKeyStr = privateKeyStr.orEmpty(),
+            publicKeyStr = publicKeyStr.orEmpty()
         )
         RsaUtils(cryptoProperties!!)
         val publicKey = RsaUtils.publicKey
@@ -78,8 +78,8 @@ internal class RsaUtilsTest {
         println("$publicKeyStr")
         cryptoProperties = CryptoProperties(
             rsaAlgorithm = rsaAlgorithm,
-            privateKeyStr = privateKeyStr,
-            publicKeyStr = publicKeyStr
+            privateKeyStr = privateKeyStr.orEmpty(),
+            publicKeyStr = publicKeyStr.orEmpty()
         )
         RsaUtils(cryptoProperties!!)
         val encryptResult = RsaUtils.encrypt("test")

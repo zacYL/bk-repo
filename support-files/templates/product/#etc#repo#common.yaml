@@ -26,10 +26,10 @@ spring:
           environment:
             spring:
               pulsar:
-                serviceUrl: http://your.pulsar.com:8080
-                tokenAuthValue: your-jwt
-                tenant: your-pulsar-tenant
-                namespace: your-pulsar-namespace
+                serviceUrl: __PULSAR_SERVICE_URL__:__PULSAR_SERVICE_PORT__
+                tokenAuthValue: __PULSAR_AUTH_JWT_TOKEN__
+                tenant: __PULSAR_TENANT__
+                namespace: __PULSAR_NAMESPACE__
       function:
         autodetect: false
       default-binder: noop

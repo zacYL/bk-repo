@@ -58,7 +58,25 @@
         },
         data () {
             return {
-                baseInfoList: this.scanType.includes('LICENSE')
+                shortcuts,
+                filterTime: [new Date(nowTime - 3600 * 1000 * 24 * 30), new Date(nowTime)],
+                baseInfo: {}
+            }
+        },
+        computed: {
+            projectId () {
+                return this.$route.params.projectId
+            },
+            planId () {
+                return this.$route.params.planId
+            },
+            baseInfoList () {
+                if (!this.scanType) {
+                    return [
+                        { key: 'artifactCount', label: '扫描制品数量' }
+                    ]
+                }
+                return this.scanType.includes('LICENSE')
                     ? [
                         { key: 'artifactCount', label: '扫描制品数量' },
                         { key: 'total', label: '许可证总数' },
@@ -73,18 +91,7 @@
                         { key: 'high', label: '高级漏洞', color: '#FFB549' },
                         { key: 'medium', label: '中级漏洞', color: '#3A84FF' },
                         { key: 'low', label: '低级漏洞', color: '#979BA5' }
-                    ],
-                shortcuts,
-                filterTime: [new Date(nowTime - 3600 * 1000 * 24 * 30), new Date(nowTime)],
-                baseInfo: {}
-            }
-        },
-        computed: {
-            projectId () {
-                return this.$route.params.projectId
-            },
-            planId () {
-                return this.$route.params.planId
+                    ]
             },
             formatISO () {
                 const [startTime, endTime] = this.filterTime

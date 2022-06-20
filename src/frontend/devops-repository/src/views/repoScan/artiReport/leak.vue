@@ -35,8 +35,7 @@
                 </div>
             </div>
         </div>
-        <div class="leak-list display-block" data-title="漏洞列表">
-            <bk-button class="scan-btn" theme="default" @click="startScanSingleHandler">重新扫描</bk-button>
+        <div class="leak-list">
             <div class="flex-align-center">
                 <bk-input
                     class="w250"
@@ -54,6 +53,9 @@
                     @change="handlerPaginationChange()">
                     <bk-option v-for="[id, name] in Object.entries(leakLevelEnum)" :key="id" :id="id" :name="name"></bk-option>
                 </bk-select>
+                <div class="flex-1 flex-end-center">
+                    <bk-button theme="default" @click="startScanSingleHandler">重新扫描</bk-button>
+                </div>
             </div>
             <bk-table
                 class="mt10 leak-table"
@@ -304,14 +306,8 @@
     }
     .leak-list {
         flex: 1;
-        height: calc(100% - 35px);
+        height: 100%;
         margin-left: 20px;
-        margin-top: 35px;
-        .scan-btn {
-            position: absolute;
-            right: 0;
-            margin-top: -32px;
-        }
         .leak-title {
             padding: 5px 20px 0;
             font-weight: 800;

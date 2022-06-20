@@ -106,6 +106,12 @@ export default {
             `${prefix}/artifact/count/${projectId}/${recordId}`
         )
     },
+    // 许可扫描报告基本信息
+    licenseReportOverview (_, { projectId, recordId }) {
+        return Vue.prototype.$ajax.get(
+            `${prefix}/artifact/license/count/${projectId}/${recordId}`
+        )
+    },
     // 制品扫描报告漏洞列表
     getLeakList (_, { projectId, recordId, vulId, severity, current = 1, limit = 20 }) {
         return Vue.prototype.$ajax.get(
@@ -114,6 +120,19 @@ export default {
                 params: {
                     vulId: vulId || undefined,
                     leakType: severity || undefined,
+                    pageNumber: current,
+                    pageSize: limit
+                }
+            }
+        )
+    },
+    // 制品扫描报告漏洞列表
+    getLicenseLeakList (_, { projectId, recordId, licenseId, current = 1, limit = 20 }) {
+        return Vue.prototype.$ajax.get(
+            `${prefix}/artifact/license/leak/${projectId}/${recordId}`,
+            {
+                params: {
+                    licenseId: licenseId || undefined,
                     pageNumber: current,
                     pageSize: limit
                 }

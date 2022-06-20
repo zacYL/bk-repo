@@ -17,8 +17,8 @@ enum class ScanSchemeType(val repositoryType: RepositoryType) {
     OCI(RepositoryType.OCI),
 
     // 许可扫描
-    GENERIC_LICENSES(RepositoryType.GENERIC),
-    MAVEN_LICENSES(RepositoryType.MAVEN),
+    GENERIC_LICENSE(RepositoryType.GENERIC),
+    MAVEN_LICENSE(RepositoryType.MAVEN),
     NONE(RepositoryType.NONE);
 
     companion object {

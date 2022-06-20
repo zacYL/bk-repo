@@ -34,9 +34,9 @@ object ScanLicenseConverter {
             var total = 0L
 
             subScanTasks.forEach { subScanTask ->
-                unCompliance += getLicenseCount(LicenseNature.UN_COMPLIANCE.name, subScanTask)
-                unRecommend += getLicenseCount(LicenseNature.UN_RECOMMEND.name, subScanTask)
-                unknown += getLicenseCount(LicenseNature.UNKNOWN.name, subScanTask)
+                unCompliance += getLicenseCount(LicenseNature.UN_COMPLIANCE.natureName, subScanTask)
+                unRecommend += getLicenseCount(LicenseNature.UN_RECOMMEND.natureName, subScanTask)
+                unknown += getLicenseCount(LicenseNature.UNKNOWN.natureName, subScanTask)
                 total += getLicenseCount(LICENSE_TOTAL, subScanTask)
             }
             return ScanLicensePlanInfo(
@@ -69,9 +69,9 @@ object ScanLicenseConverter {
             var unknown = 0L
             var total = 0L
 
-            unCompliance += getLicenseCount(scannerType, LicenseNature.UN_COMPLIANCE.name, overview)
-            unRecommend += getLicenseCount(scannerType, LicenseNature.UN_RECOMMEND.name, overview)
-            unknown += getLicenseCount(scannerType, LicenseNature.UNKNOWN.name, overview)
+            unCompliance += getLicenseCount(scannerType, LicenseNature.UN_COMPLIANCE.natureName, overview)
+            unRecommend += getLicenseCount(scannerType, LicenseNature.UN_RECOMMEND.natureName, overview)
+            unknown += getLicenseCount(scannerType, LicenseNature.UNKNOWN.natureName, overview)
             total += getLicenseCount(scannerType, LICENSE_TOTAL, overview)
 
             val status =

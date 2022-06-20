@@ -53,9 +53,6 @@
         }
     ]
     export default {
-        props: {
-            scanType: String
-        },
         data () {
             return {
                 shortcuts,
@@ -70,12 +67,10 @@
             planId () {
                 return this.$route.params.planId
             },
+            scanType () {
+                return this.$route.query.scanType
+            },
             baseInfoList () {
-                if (!this.scanType) {
-                    return [
-                        { key: 'artifactCount', label: '扫描制品数量' }
-                    ]
-                }
                 return this.scanType.includes('LICENSE')
                     ? [
                         { key: 'artifactCount', label: '扫描制品数量' },
@@ -161,6 +156,7 @@
                         planId: this.baseInfo.id
                     },
                     query: {
+                        scanType: this.scanType,
                         scanName: this.baseInfo.name
                     }
                 })

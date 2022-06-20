@@ -164,7 +164,7 @@
                     }
                 })
             },
-            showScanReport ({ id, name }) {
+            showScanReport ({ id, planType, name }) {
                 this.$router.push({
                     name: 'scanReport',
                     params: {
@@ -172,11 +172,12 @@
                         planId: id
                     },
                     query: {
+                        scanType: planType,
                         scanName: name
                     }
                 })
             },
-            showScanConfig ({ id, name }) {
+            showScanConfig ({ id, planType, name }) {
                 this.$router.push({
                     name: 'scanConfig',
                     params: {
@@ -184,11 +185,12 @@
                         planId: id
                     },
                     query: {
+                        scanType: planType,
                         scanName: name
                     }
                 })
             },
-            startScanHandler ({ id, name }) {
+            startScanHandler ({ id, planType, name }) {
                 this.$router.push({
                     name: 'startScan',
                     params: {
@@ -196,6 +198,7 @@
                         planId: id
                     },
                     query: {
+                        scanType: planType,
                         scanName: name
                     }
                 })

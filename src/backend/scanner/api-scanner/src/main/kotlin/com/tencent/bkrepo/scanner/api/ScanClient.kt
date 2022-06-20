@@ -80,11 +80,14 @@ interface ScanClient {
         @RequestParam status: String
     ): Response<Boolean>
 
-
+    /**
+     * 根据许可id列表查询许可详细信息
+     *
+     * @return 许可id:许可详细信息
+     */
     @PostMapping("/licenseIds")
     fun licenseInfoByIds(
         @ApiParam(value = "许可证唯一标识集合")
         @RequestBody licenseIds: List<String>
     ): Response<Map<String, SpdxLicenseInfo>>
-
 }

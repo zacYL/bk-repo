@@ -1,7 +1,6 @@
 package com.tencent.bkrepo.scanner.pojo.request.scancodetoolkit
 
 import com.tencent.bkrepo.common.query.model.PageLimit
-import com.tencent.bkrepo.common.scanner.pojo.scanner.arrowhead.ArrowheadScanner
 import com.tencent.bkrepo.common.scanner.pojo.scanner.scanCodeCheck.scanner.ScancodeToolkitScanner
 import com.tencent.bkrepo.scanner.pojo.request.LoadResultArguments
 import io.swagger.annotations.ApiModelProperty

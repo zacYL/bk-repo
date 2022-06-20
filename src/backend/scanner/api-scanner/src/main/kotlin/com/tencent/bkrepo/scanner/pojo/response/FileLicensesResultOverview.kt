@@ -31,7 +31,6 @@ class FileLicensesResultOverview(
     @ApiModelProperty("许可总数")
     val total: Long = 0,
 
-
     @ApiModelProperty("完成时间")
     val finishTime: String?,
     @ApiModelProperty("是否通过质量规则")

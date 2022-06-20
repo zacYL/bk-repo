@@ -3,14 +3,9 @@ package com.tencent.bkrepo.scanner.component.manager.scancode.dao
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.query.model.PageLimit
-import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.result.DependencyItem
-import com.tencent.bkrepo.common.scanner.pojo.scanner.scanCodeCheck.result.ScanCodeToolkitScanExecutorResult
 import com.tencent.bkrepo.common.scanner.pojo.scanner.scanCodeCheck.result.ScancodeItem
 import com.tencent.bkrepo.scanner.component.manager.arrowhead.dao.ResultItemDao
-import com.tencent.bkrepo.scanner.component.manager.dependencycheck.dao.DependencyItemDao
-import com.tencent.bkrepo.scanner.component.manager.dependencycheck.model.TDependencyItem
 import com.tencent.bkrepo.scanner.component.manager.scancode.model.TScancodeItem
-import com.tencent.bkrepo.scanner.pojo.request.ArrowheadLoadResultArguments
 import com.tencent.bkrepo.scanner.pojo.request.scancodetoolkit.ScancodeToolkitResultArguments
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.mongodb.core.query.Criteria
@@ -47,7 +42,4 @@ class ScancodeItemDao : ResultItemDao<TScancodeItem>() {
         val data = find(query)
         return Page(pageLimit.pageNumber, pageLimit.pageSize, total, data)
     }
-
-
-
 }

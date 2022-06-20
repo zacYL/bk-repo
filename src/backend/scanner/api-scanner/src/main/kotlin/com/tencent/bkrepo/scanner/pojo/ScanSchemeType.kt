@@ -32,5 +32,4 @@ enum class ScanSchemeType(val repositoryType: RepositoryType) {
             return ofValueOrDefault(type).repositoryType
         }
     }
-
 }

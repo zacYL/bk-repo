@@ -9,7 +9,6 @@ import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.scanner.pojo.scanner.LicenseNature
-import com.tencent.bkrepo.common.scanner.pojo.scanner.LicenseNatureStatus
 import com.tencent.bkrepo.common.scanner.pojo.scanner.ScanExecutorResult
 import com.tencent.bkrepo.common.scanner.pojo.scanner.SubScanTaskStatus
 import com.tencent.bkrepo.common.scanner.pojo.scanner.scanCodeCheck.result.ScanCodeToolkitScanExecutorResult
@@ -71,13 +70,12 @@ class ScancodeToolkitExecutor @Autowired constructor(
             // 执行扫描
             File(workDir, scanner.container.outputDir).mkdir()
             val scanStatus = doScan(workDir, task, scannerInputFile)
-            val r = result(
+
+            return result(
                 scannerInputFile,
                 File(workDir, scanner.container.outputDir),
                 scanStatus
             )
-            logger.info("-===--=$r")
-            return r
         } finally {
             // 清理工作目录
             if (task.scanner.cleanWorkDir) {
@@ -125,7 +123,6 @@ class ScancodeToolkitExecutor @Autowired constructor(
         configFile.writeText(content)
         return configFile
     }
-
 
     /**
      * 创建容器执行扫描
@@ -192,7 +189,6 @@ class ScancodeToolkitExecutor @Autowired constructor(
 
     }
 
-
     /**
      * 创建工作目录
      *
@@ -209,7 +205,6 @@ class ScancodeToolkitExecutor @Autowired constructor(
         }
         return workDir
     }
-
 
     /**
      * 通过扫描结果
@@ -378,6 +373,5 @@ class ScancodeToolkitExecutor @Autowired constructor(
 
         // 报告许可总数
         private const val TOTAL = "total"
-
     }
 }

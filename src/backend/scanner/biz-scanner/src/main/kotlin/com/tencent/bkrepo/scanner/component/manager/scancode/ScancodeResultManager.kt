@@ -6,14 +6,12 @@ import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.scanner.pojo.scanner.ScanExecutorResult
 import com.tencent.bkrepo.common.scanner.pojo.scanner.Scanner
-import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.result.DependencyItem
 import com.tencent.bkrepo.common.scanner.pojo.scanner.scanCodeCheck.result.ScanCodeToolkitScanExecutorResult
 import com.tencent.bkrepo.common.scanner.pojo.scanner.scanCodeCheck.result.ScancodeItem
 import com.tencent.bkrepo.common.scanner.pojo.scanner.scanCodeCheck.scanner.ScancodeToolkitScanner
 import com.tencent.bkrepo.scanner.component.manager.ScanExecutorResultManager
 import com.tencent.bkrepo.scanner.component.manager.arrowhead.dao.ResultItemDao
 import com.tencent.bkrepo.scanner.component.manager.arrowhead.model.ResultItem
-import com.tencent.bkrepo.scanner.component.manager.dependencycheck.DependencyResultManager
 import com.tencent.bkrepo.scanner.component.manager.scancode.dao.ScancodeItemDao
 import com.tencent.bkrepo.scanner.component.manager.scancode.model.TScancodeItem
 import com.tencent.bkrepo.scanner.message.ScannerMessageCode

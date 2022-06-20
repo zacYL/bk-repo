@@ -85,5 +85,5 @@ object DockerUtils {
             logger.warn("$failedMsg, ${e.message}")
         }
     }
-
 }
+

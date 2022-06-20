@@ -1,6 +1,5 @@
 package com.tencent.bkrepo.common.scanner.pojo.scanner.scanCodeCheck.result
 
-import com.tencent.bkrepo.common.scanner.pojo.scanner.LicenseNatureStatus
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
 

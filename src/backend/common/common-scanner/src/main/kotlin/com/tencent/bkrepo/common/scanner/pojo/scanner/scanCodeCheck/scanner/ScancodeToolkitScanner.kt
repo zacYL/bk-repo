@@ -30,7 +30,6 @@ class ScancodeToolkitScanner(
         const val DEFAULT_CONFIG_BASH_PATH = "/toolScan.sh"
     }
 
-
     @ApiModel("arrowhead容器镜像配置")
     data class ScancodeToolkitDockerImage(
         @ApiModelProperty("使用的镜像名和版本")
@@ -44,5 +43,4 @@ class ScancodeToolkitScanner(
         @ApiModelProperty("输出目录，相对于workDir的路径")
         val outputDir: String = "/output"
     )
-
 }

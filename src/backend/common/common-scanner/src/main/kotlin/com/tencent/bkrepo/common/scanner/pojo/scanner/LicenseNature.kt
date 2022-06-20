@@ -5,8 +5,4 @@ enum class LicenseNature(val natureName: String, val level: Int) {
     UN_RECOMMEND("unRecommend", 2),
     UNKNOWN("unknown", 1),
     NORMAL("normal", 0);
-
-    companion object{
-
-    }
 }

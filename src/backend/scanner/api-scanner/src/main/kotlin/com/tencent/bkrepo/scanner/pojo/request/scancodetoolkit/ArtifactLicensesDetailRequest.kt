@@ -2,7 +2,6 @@ package com.tencent.bkrepo.scanner.pojo.request.scancodetoolkit
 
 import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_NUMBER
 import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_SIZE
-import com.tencent.bkrepo.common.scanner.pojo.scanner.arrowhead.CveSecItem
 import com.tencent.bkrepo.common.scanner.pojo.scanner.scanCodeCheck.result.ScancodeItem
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty

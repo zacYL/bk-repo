@@ -9,29 +9,29 @@ data class SubLicenseItem(
     val score: Float,
     val name: String,
     val short_name: String,
-    val category:String,
+    val category: String,
     @JsonProperty("is_exception")
-    val exception:Boolean,
+    val exception: Boolean,
     @JsonProperty("is_unknown")
-    val unknown:Boolean,
-    val owner:String,
-    val homepage_url:String?,
+    val unknown: Boolean,
+    val owner: String,
+    val homepage_url: String?,
     @JsonProperty("text_url")
-    val textUrl:String,
+    val textUrl: String,
     @JsonProperty("reference_url")
-    val referenceUrl:String,
+    val referenceUrl: String,
     @JsonProperty("scancode_text_url")
-    val scancodeTextUrl:String,
+    val scancodeTextUrl: String,
     @JsonProperty("scancode_data_url")
-    val scancodeDataUrl:String,
+    val scancodeDataUrl: String,
     @JsonProperty("spdx_license_key")
-    val spdxLicenseKey:String,
+    val spdxLicenseKey: String,
     @JsonProperty("spdx_url")
-    val spdxUrl:String,
+    val spdxUrl: String,
     @JsonProperty("start_line")
-    val startLine:Int,
+    val startLine: Int,
     @JsonProperty("end_line")
-    val endLine:Int,
+    val endLine: Int,
     @JsonProperty("matched_rule")
-    val matchedRule:Map<String,Any>
+    val matchedRule: Map<String, Any>
 )

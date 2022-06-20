@@ -275,6 +275,7 @@
                     },
                     query: {
                         ...this.$route.query,
+                        scanType: this.baseInfo.planType,
                         artiName: name
                     }
                 })

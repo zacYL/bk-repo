@@ -48,7 +48,9 @@
                 <template #default="{ row }">{{ `${row.isDeprecatedLicenseId ? '不' : ''}推荐` }}</template>
             </bk-table-column>
             <bk-table-column label="合规性" width="120">
-                <template #default="{ row }">{{ `${row.isTrust ? '' : '不'}合规` }}</template>
+                <template #default="{ row }">
+                    <span class="repo-tag" :class="row.isTrust ? 'SUCCESS' : 'FAILED'">{{ `${row.isTrust ? '' : '不'}合规` }}</span>
+                </template>
             </bk-table-column>
             <bk-table-column :label="$t('operation')" width="70">
                 <template #default="{ row }">
@@ -80,7 +82,7 @@
             :height-num="292"
             @cancel="licenseInfo.show = false">
             <bk-form class="mr10" :label-width="90">
-                <bk-form-item label="证书介绍">
+                <bk-form-item label="证书信息">
                     <a :href="licenseInfo.reference" target="_blank">{{ licenseInfo.reference }}</a>
                 </bk-form-item>
                 <bk-form-item label="参考文档">

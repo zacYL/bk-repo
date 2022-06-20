@@ -1,6 +1,6 @@
 spring:
   application:
-    name: ${service.prefix}${service.name}${service.suffix}
+    name: ${service.name}
     desc: Scanner Service
   # 上报的扫描结果比较大的时候需要配置
   servlet:

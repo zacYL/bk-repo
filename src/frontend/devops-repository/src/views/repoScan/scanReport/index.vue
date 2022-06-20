@@ -64,7 +64,7 @@
                     <div class="overview-value">{{ taskSelected.total }}</div>
                 </div>
                 <bk-table
-                    :height="`calc(100% - ${viewType === 'TASKVIEW' ? 100 : 40}px`"
+                    :height="`calc(100% - ${viewType === 'TASKVIEW' ? 100 : 40}px)`"
                     :data="scanList"
                     :outer-border="false"
                     :row-border="false"
@@ -158,7 +158,9 @@
             return {
                 scanStatusEnum,
                 leakLevelEnum,
-                baseInfo: {},
+                baseInfo: {
+                    planType: ''
+                },
                 formatISO: {},
                 filter: {},
                 viewEnum: {

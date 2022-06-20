@@ -57,7 +57,7 @@
                 return this.defaultRepos.map(name => this.repoListAll.find(r => r.name === name)).filter(Boolean)
             },
             repoListLimit () {
-                const repoTypeLimit = [this.scanType.replace(/^([A-Z]+)/, '$1')]
+                const repoTypeLimit = [this.scanType.replace(/^([A-Z]+).*$/, '$1')]
                 return this.repoListAll
                     .filter(r => repoTypeLimit.includes(r.type))
                     .sort((a, b) => {

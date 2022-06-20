@@ -79,7 +79,7 @@
         computed: {
             ...mapState(['repoListAll']),
             repoGroupList () {
-                const repoTypeLimit = [this.scanType.replace(/^([A-Z]+)/, '$1')]
+                const repoTypeLimit = [this.scanType.replace(/^([A-Z]+).*$/, '$1')]
                 return this.repoListAll
                     .filter(r => repoTypeLimit.includes(r.type))
                     .reduce((target, repo) => {

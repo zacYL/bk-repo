@@ -60,7 +60,7 @@
                     <template #default="{ row }">
                         <div class="leak-title">证书信息</div>
                         <div class="leak-tip">
-                            <a :href="row.description" target="_blank">{{ row.description }}</a>
+                            <a :href="row.description" target="_blank">{{ row.description || '/' }}</a>
                         </div>
                     </template>
                 </bk-table-column>
@@ -71,17 +71,18 @@
                 </bk-table-column>
                 <bk-table-column label="依赖路径" prop="dependentPath"></bk-table-column>
                 <bk-table-column label="OSI认证" width="120">
-                    <template #default="{ row }">{{ `${row.isOsiApproved ? '已' : '未'}认证` }}</template>
+                    <template #default="{ row }">{{ row.description ? `${row.isOsiApproved ? '已' : '未'}认证` : '/' }}</template>
                 </bk-table-column>
                 <bk-table-column label="FSF开源" width="120">
-                    <template #default="{ row }">{{ `${row.isFsfLibre ? '已' : '未'}开源` }}</template>
+                    <template #default="{ row }">{{ row.description ? `${row.isFsfLibre ? '已' : '未'}开源` : '/' }}</template>
                 </bk-table-column>
                 <bk-table-column label="推荐使用" width="120">
-                    <template #default="{ row }">{{ `${row.isDeprecatedLicenseId ? '不' : ''}推荐` }}</template>
+                    <template #default="{ row }">{{ row.description ? `${row.recommended ? '' : '不'}推荐` : '/' }}</template>
                 </bk-table-column>
                 <bk-table-column label="合规性" width="120">
                     <template #default="{ row }">
-                        <span class="repo-tag" :class="row.isTrust ? 'SUCCESS' : 'FAILED'">{{ `${row.isTrust ? '' : '不'}合规` }}</span>
+                        <span v-if="row.description" class="repo-tag" :class="row.compliance ? 'SUCCESS' : 'FAILED'">{{ `${row.compliance ? '' : '不'}合规` }}</span>
+                        <span v-else>/</span>
                     </template>
                 </bk-table-column>
             </bk-table>

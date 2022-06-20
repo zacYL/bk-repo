@@ -46,6 +46,7 @@ import com.tencent.bkrepo.scanner.pojo.request.PlanArtifactRequest
 import com.tencent.bkrepo.scanner.pojo.request.PlanCountRequest
 import com.tencent.bkrepo.scanner.pojo.request.UpdateScanPlanRequest
 import com.tencent.bkrepo.scanner.pojo.response.ArtifactPlanRelation
+import com.tencent.bkrepo.scanner.pojo.response.ScanLicensePlanInfo
 import com.tencent.bkrepo.scanner.pojo.response.PlanArtifactInfo
 import com.tencent.bkrepo.scanner.pojo.response.ScanPlanInfo
 import com.tencent.bkrepo.scanner.service.ScanPlanService
@@ -175,6 +176,13 @@ class UserScanPlanController(
         artifactRequest: ArtifactPlanRelationRequest
     ): Response<List<ArtifactPlanRelation>> {
         return ResponseBuilder.success(scanPlanService.artifactPlanList(artifactRequest))
+    }
+
+    @ApiOperation("方案详情-许可-统计数据")
+    @GetMapping("/license/count")
+    fun planLicenseDetailCount(countRequest: PlanCountRequest): Response<ScanLicensePlanInfo?> {
+        permissionCheckHandler.checkProjectPermission(countRequest.projectId, PermissionAction.MANAGE)
+        return ResponseBuilder.success(scanPlanService.scanLicensePlanInfo(ScanPlanConverter.convert(countRequest)))
     }
 
     companion object {

@@ -70,6 +70,8 @@ data class PackageVersion(
     val extension: Map<String, Any>,
     @ApiModelProperty("包内容文件路径")
     val contentPath: String? = null,
+    @ApiModelProperty("清单文件路径")
+    val manifestPath: String? = null,
     @ApiModelProperty("包版本序列号")
     val ordinal: Long
 )

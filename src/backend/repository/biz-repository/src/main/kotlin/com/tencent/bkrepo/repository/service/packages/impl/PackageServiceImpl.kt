@@ -682,6 +682,7 @@ class PackageServiceImpl(
                     tags = it.tags.orEmpty(),
                     extension = it.extension.orEmpty(),
                     contentPath = it.artifactPath,
+                    manifestPath = it.manifestPath,
                     ordinal = it.ordinal
                 )
             }

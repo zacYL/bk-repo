@@ -1,11 +1,11 @@
 <template>
     <div class="security-config-container">
         <bk-tab class="security-config-tab page-tab" type="unborder-card" :active.sync="tabName">
-            <bk-tab-panel name="license" label="许可证管理">
-                <license-manage></license-manage>
-            </bk-tab-panel>
-            <bk-tab-panel render-directive="if" name="vuldb" label="漏洞库管理">
+            <bk-tab-panel name="vuldb" label="漏洞库管理">
                 <scanner-manage></scanner-manage>
+            </bk-tab-panel>
+            <bk-tab-panel render-directive="if" name="license" label="许可证管理">
+                <license-manage></license-manage>
             </bk-tab-panel>
         </bk-tab>
     </div>
@@ -20,7 +20,7 @@
             scannerManage
         },
         data () {
-            return { tabName: 'license' }
+            return { tabName: 'vuldb' }
         }
     }
 </script>

@@ -49,7 +49,10 @@ class ServiceDepartmentController : ServiceDepartmentResource {
         return ResponseBuilder.success(departmentService.listDepartmentById(username, departmentId))
     }
 
-    override fun listDepartmentByIds(username: String?, departmentIds: List<Int>): Response<Any?> {
+    override fun listDepartmentByIds(
+        username: String?,
+        departmentIds: List<Int>
+    ): Response<List<BkChildrenDepartment>?> {
         return ResponseBuilder.success(departmentService.listDepartmentByIds(username, departmentIds))
     }
 }

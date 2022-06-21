@@ -9,9 +9,9 @@ import com.tencent.bkrepo.common.scanner.pojo.scanner.Scanner
 import com.tencent.bkrepo.common.scanner.pojo.scanner.scanCodeCheck.result.ScanCodeToolkitScanExecutorResult
 import com.tencent.bkrepo.common.scanner.pojo.scanner.scanCodeCheck.result.ScancodeItem
 import com.tencent.bkrepo.common.scanner.pojo.scanner.scanCodeCheck.scanner.ScancodeToolkitScanner
+import com.tencent.bkrepo.scanner.component.manager.ResultItem
+import com.tencent.bkrepo.scanner.component.manager.ResultItemDao
 import com.tencent.bkrepo.scanner.component.manager.ScanExecutorResultManager
-import com.tencent.bkrepo.scanner.component.manager.arrowhead.dao.ResultItemDao
-import com.tencent.bkrepo.scanner.component.manager.arrowhead.model.ResultItem
 import com.tencent.bkrepo.scanner.component.manager.scancode.dao.ScancodeItemDao
 import com.tencent.bkrepo.scanner.component.manager.scancode.model.TScancodeItem
 import com.tencent.bkrepo.scanner.message.ScannerMessageCode

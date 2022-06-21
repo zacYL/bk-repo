@@ -80,7 +80,7 @@
                 </div>
                 <bk-table
                     :data="artifactoryList"
-                    height="calc(100% - 102px)"
+                    height="calc(100% - 100px)"
                     :outer-border="false"
                     :row-border="false"
                     size="small"
@@ -94,7 +94,7 @@
                         <template #default="{ row }">
                             <scan-tag class="mr5"
                                 v-if="isEnterprise && !row.folder && /\.(ipa)|(apk)|(jar)$/.test(row.name)"
-                                :status="row.systemMetadata.scanStatus"
+                                :status="row.metadata.scanStatus"
                                 repo-type="generic"
                                 :full-path="row.fullPath">
                             </scan-tag>
@@ -355,7 +355,7 @@
                     this.pagination.count = totalRecords
                     this.artifactoryList = records.map(v => {
                         return {
-                            systemMetadata: {},
+                            metadata: {},
                             ...v,
                             // 流水线文件夹名称替换
                             name: v.metadata?.displayName || v.name
@@ -651,7 +651,7 @@
             background-color: white;
             .repo-generic-tree {
                 border-top: 1px solid var(--borderColor);
-                height: calc(100% - 52px);
+                height: calc(100% - 50px);
             }
         }
         .repo-generic-table {
@@ -659,7 +659,7 @@
             height: 100%;
             background-color: white;
             .multi-operation {
-                height: 52px;
+                height: 50px;
             }
             ::v-deep .selected-header {
                 color: var(--fontPrimaryColor);

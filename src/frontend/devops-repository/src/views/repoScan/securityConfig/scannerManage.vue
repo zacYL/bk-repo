@@ -4,7 +4,8 @@
             <bk-button class="ml20" icon="plus" theme="primary" @click="upload">{{ $t('upload') }}</bk-button>
             <bk-select
                 class="mr20 w250"
-                v-model="scannerFilter">
+                v-model="scannerFilter"
+                @change="handlerPaginationChange()">
                 <bk-option v-for="scanner in scannerList" :key="scanner.typr" :id="scanner.type" :name="scanner.name"></bk-option>
             </bk-select>
         </div>
@@ -19,7 +20,7 @@
             <template #empty>
                 <empty-data :is-loading="isLoading"></empty-data>
             </template>
-            <bk-table-column label="漏洞包名称" props="name"></bk-table-column>
+            <bk-table-column label="漏洞包名称" prop="name"></bk-table-column>
             <bk-table-column label="关联扫描器">
                 <template #default="{ row }">{{ getScannerName(row) }}</template>
             </bk-table-column>
@@ -87,7 +88,7 @@
             formatDate,
             ...mapActions([
                 'getScannerList',
-                'getArtifactoryList'
+                'searchPackageList'
             ]),
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
                 this.pagination.current = current
@@ -96,17 +97,25 @@
             },
             getDataListHandler () {
                 this.isLoading = true
-                this.getArtifactoryList({
+                this.searchPackageList({
                     projectId: 'public-global',
+                    repoType: 'generic',
                     repoName: 'vuldb-repo',
-                    fullPath: `/${this.scannerFilter}`,
-                    extRules: [
-                        {
-                            field: 'folder',
-                            value: false,
-                            operation: 'EQ'
-                        }
-                    ],
+                    extRules: this.scannerFilter
+                        ? [
+                            {
+                                field: 'path',
+                                value: `/${this.scannerFilter}/`,
+                                operation: 'EQ'
+                            }
+                        ]
+                        : [
+                            {
+                                field: 'path',
+                                value: ['/spdx-license/'],
+                                operation: 'NIN'
+                            }
+                        ],
                     current: this.pagination.current,
                     limit: this.pagination.limit
                 }).then(({ records, totalRecords }) => {

@@ -27,24 +27,12 @@
 
 package com.tencent.bkrepo.scanner.service
 
-import com.tencent.bkrepo.common.api.pojo.Page
-import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.scanner.pojo.ScanTask
 import com.tencent.bkrepo.scanner.pojo.ScanTriggerType
 import com.tencent.bkrepo.scanner.pojo.SubScanTask
-import com.tencent.bkrepo.scanner.pojo.request.ArtifactVulnerabilityRequest
-import com.tencent.bkrepo.scanner.pojo.request.BatchScanRequest
-import com.tencent.bkrepo.scanner.pojo.request.FileScanResultDetailRequest
-import com.tencent.bkrepo.scanner.pojo.request.FileScanResultOverviewRequest
+import com.tencent.bkrepo.scanner.pojo.request.PipelineScanRequest
 import com.tencent.bkrepo.scanner.pojo.request.ReportResultRequest
 import com.tencent.bkrepo.scanner.pojo.request.ScanRequest
-import com.tencent.bkrepo.scanner.pojo.request.ScanTaskQuery
-import com.tencent.bkrepo.scanner.pojo.request.SingleScanRequest
-import com.tencent.bkrepo.scanner.pojo.request.scancodetoolkit.ArtifactLicensesDetailRequest
-import com.tencent.bkrepo.scanner.pojo.response.ArtifactVulnerabilityInfo
-import com.tencent.bkrepo.scanner.pojo.response.FileLicensesResultDetail
-import com.tencent.bkrepo.scanner.pojo.response.FileScanResultDetail
-import com.tencent.bkrepo.scanner.pojo.response.FileScanResultOverview
 
 /**
  * 扫描服务
@@ -55,22 +43,14 @@ interface ScanService {
      *
      * @param scanRequest 扫描参数，指定使用的扫描器和需要扫描的文件
      * @param triggerType 触发类型
+     * @param userId 用户id，传入null时表示系统触发扫描，不校验用户权限
      */
-    fun scan(scanRequest: ScanRequest, triggerType: ScanTriggerType): ScanTask
+    fun scan(scanRequest: ScanRequest, triggerType: ScanTriggerType, userId: String? = null): ScanTask
 
     /**
-     * 扫描单个文件
-     *
-     * @param request 扫描请求
+     * 从流水线创建扫描任务
      */
-    fun singleScan(request: SingleScanRequest): ScanTask
-
-    /**
-     * 批量扫描
-     *
-     * @param request 批量扫描请求
-     */
-    fun batchScan(request: BatchScanRequest): ScanTask
+    fun pipelineScan(pipelineScanRequest: PipelineScanRequest): ScanTask
 
     /**
      * 停止子任务
@@ -83,16 +63,6 @@ interface ScanService {
     fun stopByPlanArtifactLatestSubtaskId(projectId: String, subtaskId: String): Boolean
 
     /**
-     * 停止方案下所有子任务
-     *
-     * @param projectId 项目id
-     * @param planId 方案id
-     *
-     * @return true 停止成功，false 停止失败
-     */
-    fun stopScanPlan(projectId: String, planId: String): Boolean
-
-    /**
      * 停止子任务
      *
      * @param projectId 项目id
@@ -103,51 +73,11 @@ interface ScanService {
     fun stopSubtask(projectId: String, subtaskId: String): Boolean
 
     /**
-     * 获取扫描任务
-     *
-     * @param taskId 任务id
-     */
-    fun task(taskId: String): ScanTask
-
-    /**
-     * 分页获取扫描任务
-     */
-    fun tasks(scanTaskQuery: ScanTaskQuery, pageLimit: PageLimit): Page<ScanTask>
-
-    /**
      * 扫描结果上报
      *
      * @param reportResultRequest 扫描结果上报请求
      */
     fun reportResult(reportResultRequest: ReportResultRequest)
-
-    /**
-     * 获取扫描结果预览
-     *
-     * @param request 扫描预览请求参数
-     *
-     * @return 扫描结果预览数据
-     */
-    fun resultOverview(request: FileScanResultOverviewRequest): List<FileScanResultOverview>
-
-    /**
-     * 获取文件扫描报告详情
-     *
-     * @param request 获取文件扫描报告请求参数
-     *
-     * @return 文件扫描报告详情
-     */
-    fun resultDetail(request: FileScanResultDetailRequest): FileScanResultDetail
-
-    /**
-     * 获取文件扫描报告详情
-     */
-    fun resultDetail(request: ArtifactVulnerabilityRequest): Page<ArtifactVulnerabilityInfo>
-
-    /**
-     * 获取文件扫描报告详情
-     */
-    fun resultDetail(request: ArtifactLicensesDetailRequest): Page<FileLicensesResultDetail>
 
     /**
      * 更新子扫描任务状态

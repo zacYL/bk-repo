@@ -28,17 +28,16 @@
 package com.tencent.bkrepo.scanner.executor.dependencycheck
 
 import com.tencent.bkrepo.common.api.exception.SystemErrorException
-import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_GLOBAL_PROJECT
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_VULDB_REPO
 import com.tencent.bkrepo.common.checker.pojo.DependencyInfo
 import com.tencent.bkrepo.common.checker.util.DependencyCheckerUtils
+import com.tencent.bkrepo.common.scanner.pojo.scanner.CveOverviewKey
 import com.tencent.bkrepo.common.scanner.pojo.scanner.ScanExecutorResult
 import com.tencent.bkrepo.common.scanner.pojo.scanner.SubScanTaskStatus
 import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.result.DependencyItem
 import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.result.DependencyScanExecutorResult
-import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.result.DependencyScanExecutorResult.Companion.overviewKeyOfCve
 import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.scanner.DependencyScanner
 import com.tencent.bkrepo.common.scanner.pojo.scanner.utils.normalizedLevel
 import com.tencent.bkrepo.common.storage.core.StorageProperties
@@ -49,7 +48,6 @@ import com.tencent.bkrepo.scanner.executor.ScanExecutor
 import com.tencent.bkrepo.scanner.executor.pojo.ScanExecutorTask
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
-import java.io.File
 
 @Component(DependencyScanner.TYPE)
 class DependencyScanExecutor(
@@ -114,14 +112,14 @@ class DependencyScanExecutor(
      * 解析扫描结果
      */
     private fun result(dependencyInfo: DependencyInfo, prefix: String): DependencyScanExecutorResult {
-        logger.info("dependencyInfo:${dependencyInfo.toJsonString()}")
+        logger.debug("dependencyInfo:${dependencyInfo.toJsonString()}")
         val dependencyItems = mutableListOf<DependencyItem>()
         // 遍历依赖
         dependencyInfo.dependencies.forEach { dependency ->
             // 遍历漏洞
             dependency.vulnerabilities?.forEach { vulnerability ->
                 val packages = dependency.packages?.get(0)?.id?.removePrefix("pkg:")?.split("@")
-                logger.info("packages:${packages?.toJsonString()}")
+                logger.debug("packages:${packages?.toJsonString()}")
                 packages?.let {
                     dependencyItems.add(
                         DependencyItem(
@@ -142,7 +140,7 @@ class DependencyScanExecutor(
                 }
             }
         }
-        logger.info("dependencyItems:${dependencyItems.toJsonString()}")
+        logger.debug("dependencyItems:${dependencyItems.toJsonString()}")
 
         return DependencyScanExecutorResult(
             scanStatus = SubScanTaskStatus.SUCCESS.name,
@@ -159,25 +157,13 @@ class DependencyScanExecutor(
 
         // cve count
         dependencyItems.forEach {
-            val overviewKey = overviewKeyOfCve(it.severity)
+            val overviewKey = CveOverviewKey.overviewKeyOf(it.severity)
             overview[overviewKey] = overview.getOrDefault(overviewKey, 0L) + 1L
         }
-/*
-{
-  "cveCriticalCount" : 2
-}
-*/
-        logger.info("overview:${overview.toJsonString()}")
+
+        logger.debug("overview:${overview.toJsonString()}")
 
         return overview
-    }
-
-    private inline fun <reified T> readJsonString(file: File): T? {
-        return if (file.exists()) {
-            file.inputStream().use { it.readJsonString<T>() }
-        } else {
-            null
-        }
     }
 
     private fun logMsg(task: ScanExecutorTask, msg: String) = with(task) {

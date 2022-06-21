@@ -135,6 +135,7 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
                 "User[$principal],ip[$clientAddress] download artifact[$artifactInfo] failed[$code]$message" +
                     " X_FORWARDED_FOR: $xForwardedFor"
             )
+            ArtifactMetrics.getDownloadFailedCounter().increment()
         } catch (exception: Exception) {
             this.onDownloadFailed(context, exception)
         } finally {
@@ -269,6 +270,7 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
      * 默认向上抛异常，由全局异常处理器处理
      */
     open fun onDownloadFailed(context: ArtifactDownloadContext, exception: Exception) {
+        ArtifactMetrics.getDownloadFailedCounter().increment()
         throw exception
     }
 

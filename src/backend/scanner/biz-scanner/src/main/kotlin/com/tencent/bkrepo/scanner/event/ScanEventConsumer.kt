@@ -29,7 +29,6 @@ package com.tencent.bkrepo.scanner.event
 
 import com.tencent.bkrepo.common.api.constant.CharPool
 import com.tencent.bkrepo.common.api.util.readJsonString
-import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_GLOBAL_PROJECT
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_VULDB_REPO
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
@@ -84,7 +83,6 @@ class ScanEventConsumer(
     )
 
     override fun accept(event: ArtifactEvent) {
-        logger.info("event:${event.toJsonString()}")
         if (!acceptTypes.contains(event.type)) {
             return
         }
@@ -150,7 +148,7 @@ class ScanEventConsumer(
                         planId = it.id!!,
                         rule = RuleConverter.convert(projectId, repoName, resourceKey)
                     )
-                    scanService.scan(request, ScanTriggerType.ON_NEW_ARTIFACT)
+                    scanService.scan(request, ScanTriggerType.ON_NEW_ARTIFACT, it.lastModifiedBy)
                     hasScanTask = true
                 }
         }
@@ -193,7 +191,7 @@ class ScanEventConsumer(
                         planId = it.id!!,
                         rule = RuleConverter.convert(projectId, repoName, packageKey, packageVersion)
                     )
-                    scanService.scan(request, ScanTriggerType.ON_NEW_ARTIFACT)
+                    scanService.scan(request, ScanTriggerType.ON_NEW_ARTIFACT, it.lastModifiedBy)
                     hasScanTask = true
                 }
         }

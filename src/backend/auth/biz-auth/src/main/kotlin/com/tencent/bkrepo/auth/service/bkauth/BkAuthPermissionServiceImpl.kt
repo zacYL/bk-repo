@@ -169,6 +169,10 @@ class BkAuthPermissionServiceImpl constructor(
     }
 
     override fun listPermissionRepo(projectId: String, userId: String, appId: String?): List<String> {
+        // 用户为系统管理员
+        if (isUserLocalAdmin(userId)) {
+            return getAllRepoByProjectId(projectId)
+        }
         appId?.let {
             val request = buildProjectCheckRequest(projectId, userId, appId)
 
@@ -205,15 +209,14 @@ class BkAuthPermissionServiceImpl constructor(
         )
     }
 
-    private fun matchBcsOrRepoCond(projectId: String?): Boolean {
-        return projectId == bkAuthConfig.bcsAppId || projectId == bkAuthConfig.bkrepoAppId
+    private fun matchBcsOrRepoCond(appId: String?): Boolean {
+        return appId == bkAuthConfig.bcsAppId || appId == bkAuthConfig.bkrepoAppId
     }
 
     private fun matchDevopsCond(appId: String?): Boolean {
         val devopsAppIdList = bkAuthConfig.devopsAppIdSet.split(",")
         return devopsAppIdList.contains(appId)
     }
-
 
     companion object {
         private val logger = LoggerFactory.getLogger(BkAuthPermissionServiceImpl::class.java)

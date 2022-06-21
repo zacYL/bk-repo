@@ -125,14 +125,14 @@ class TPlanArtifactLatestSubScanTask(
 ) {
     companion object {
         fun convert(
-            task: TSubScanTask,
+            task: SubScanTaskDefinition,
             resultStatus: String,
             overview: Map<String, Any?>? = null,
             modifiedBy: String? = null,
             qualityPass: Boolean? = null
         ) = with(task) {
             val now = LocalDateTime.now()
-            val numberOverview = overview?.let { Converter.convert(it) }
+            val numberOverview = overview?.let { Converter.convert(it) } ?: task.scanResultOverview
             val finishedDateTime = if (SubScanTaskStatus.finishedStatus(resultStatus)) {
                 now
             } else {
@@ -162,7 +162,7 @@ class TPlanArtifactLatestSubScanTask(
                 size = size,
                 credentialsKey = credentialsKey,
                 scanResultOverview = numberOverview,
-                qualityRedLine = qualityPass,
+                qualityRedLine = qualityPass ?: qualityRedLine,
                 scanQuality = scanQuality
             )
         }

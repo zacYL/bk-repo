@@ -57,7 +57,7 @@ class FileReferenceCleanupJob(
     private val mongoTemplate: MongoTemplate = fileReferenceDao.determineMongoTemplate()
 ) : CenterNodeJob() {
 
-    @Scheduled(cron = "0 0 4/6 * * ?") // 4点开始，6小时执行一次
+//    @Scheduled(cron = "0 0 4/6 * * ?") // 4点开始，6小时执行一次
     override fun start() {
         super.start()
     }

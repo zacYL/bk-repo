@@ -53,9 +53,9 @@ import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.project.ProjectCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
-import org.springframework.web.servlet.HandlerMapping
 import java.util.concurrent.TimeUnit
 import javax.servlet.http.HttpServletRequest
+import org.springframework.web.servlet.HandlerMapping
 
 @Suppress("LateinitUsage") // 静态成员通过init构造函数初始化
 class ArtifactContextHolder(
@@ -134,6 +134,16 @@ class ArtifactContextHolder(
         }
 
         /**
+         * 根据指定请求获取对应ArtifactInfo信息
+         * 如果请求为空，则返回`null`
+         */
+        fun getArtifactInfo(request: HttpServletRequest): ArtifactInfo? {
+            val artifactInfo = request.getAttribute(ARTIFACT_INFO_KEY) ?: return null
+            require(artifactInfo is ArtifactInfo)
+            return artifactInfo
+        }
+
+        /**
          * 根据当前请求获取对应仓库详情
          * 如果请求为空，则返回`null`
          */
@@ -187,8 +197,25 @@ class ArtifactContextHolder(
                 val repoType = getCurrentArtifactConfigurer().getRepositoryType().name
                 publicGlobalRepoHandler(projectId, repoName, repoType)
                 val response = repositoryClient.getRepoDetail(projectId, repoName, repoType)
-                return response.data ?: throw RepoNotFoundException(repoName)
+                return response.data ?: queryRepoDetailFormExtraRepoType(projectId, repoName)
             }
+        }
+
+        /**
+         * 当主仓库类型查不到，则从其他支持类型获取
+         * 当对应仓库不存在，抛[RepoNotFoundException]异常
+         */
+        fun queryRepoDetailFormExtraRepoType(projectId: String, repoName: String): RepositoryDetail {
+            val repoTypeList = getCurrentArtifactConfigurer().getRepositoryTypes()
+            var otherRepo: RepositoryDetail? = null
+            repoTypeList.forEach {
+                val repo = repositoryClient.getRepoDetail(projectId, repoName, it.name).data
+                if (repo != null) {
+                    otherRepo = repo
+                    return@forEach
+                }
+            }
+            return otherRepo ?: throw RepoNotFoundException(repoName)
         }
 
         /**

@@ -32,6 +32,6 @@
 dependencies {
     api(project(":common:common-query:query-api"))
     api(project(":common:common-api"))
-    api(project(":common:common-plugin:plugin-api"))
+    api("com.tencent.devops:devops-boot-starter-plugin")
     compileOnly("com.google.guava:guava")
 }

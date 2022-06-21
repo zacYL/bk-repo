@@ -34,6 +34,8 @@ rootProject.name = "bk-repo-backend"
 pluginManagement {
     repositories {
         mavenLocal()
+        maven(url = "https://mirrors.tencent.com/nexus/repository/gradle-plugins/")
+        maven(url = "https://mirrors.tencent.com/nexus/repository/maven-public")
         gradlePluginPortal()
         mavenCentral()
     }
@@ -49,9 +51,6 @@ fun includeAll(module: String) {
     }
 }
 
-include("dockerapi")
-include("dockerapi:biz-dockerapi")
-include("dockerapi:boot-dockerapi")
 include(":common:common-license-canway")
 include(":boot-assembly")
 includeAll(":auth")
@@ -60,10 +59,10 @@ includeAll(":common:common-storage")
 includeAll(":common:common-query")
 includeAll(":common:common-artifact")
 includeAll(":common:common-notify")
-includeAll(":common:common-plugin")
 includeAll(":common:common-devops")
 include(":common:common-cpack")
 includeAll(":common:common-operate")
+includeAll(":common:common-checker")
 includeAll(":composer")
 includeAll(":docker")
 includeAll(":generic")
@@ -85,4 +84,3 @@ includeAll(":webhook")
 includeAll(":job")
 includeAll(":scanner")
 includeAll(":scanner-executor")
-includeAll(":common:common-checker")

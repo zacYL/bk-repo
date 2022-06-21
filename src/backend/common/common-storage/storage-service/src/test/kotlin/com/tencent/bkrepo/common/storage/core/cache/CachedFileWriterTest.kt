@@ -41,6 +41,7 @@ import java.io.InputStream
 import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.util.concurrent.CountDownLatch
 import kotlin.concurrent.thread
 import kotlin.system.measureTimeMillis
 
@@ -65,10 +66,10 @@ internal class CachedFileWriterTest {
         val expectedSha256 = randomString.sha256()
         val count = 100
         val readers = Runtime.getRuntime().availableProcessors()
-        val threadList = mutableListOf<Thread>()
+        val countDownLatch = CountDownLatch(readers * count)
         measureTimeMillis {
             repeat(readers) {
-                val thread = thread {
+                thread {
                     repeat(count) {
                         val inputStream = randomString.byteInputStream().artifactStream(Range.full(size))
                         val out = ByteArrayOutputStream()
@@ -78,13 +79,13 @@ internal class CachedFileWriterTest {
                         inputStream.use { it.copyTo(out) }
                         val toString = out.toString(Charset.defaultCharset().name())
                         Assertions.assertEquals(expectedSha256, toString.sha256())
+                        countDownLatch.countDown()
                     }
                 }
-                threadList.add(thread)
             }
-            threadList.forEach { it.join() }
-        }.apply { println("duration: $this ms") }
+        }
 
+        countDownLatch.await()
         val sha256 = cachePath.resolve(filename).toFile().sha256()
         Assertions.assertEquals(expectedSha256, sha256)
     }

@@ -51,11 +51,13 @@ import org.slf4j.LoggerFactory
 open class ArtifactDownloadContext(
     repo: RepositoryDetail? = null,
     artifact: ArtifactInfo? = null,
+    artifacts: List<ArtifactInfo>? = null,
     userId: String = SecurityUtils.getUserId(),
     var useDisposition: Boolean = false
 ) : ArtifactContext(repo, artifact, userId) {
 
     val repo = repo ?: request.getAttribute(REPO_KEY) as RepositoryDetail
+    val artifacts = artifacts
 
     @Suppress("UNCHECKED_CAST")
     fun getInterceptors(): List<DownloadInterceptor<*>> {
@@ -69,7 +71,7 @@ open class ArtifactDownloadContext(
                 val interceptor = buildInterceptor(type, rules)
                 interceptor?.let { interceptorList.add(interceptor) }
             }
-            logger.info("get repo[${repo.projectId}/${repo.name}] download interceptor: $interceptorList")
+            logger.debug("get repo[${repo.projectId}/${repo.name}] download interceptor: $interceptorList")
         } catch (e: Exception) {
             logger.warn("fail to get repo[${repo.projectId}/${repo.name}] download interceptor: $e")
         }
@@ -89,6 +91,7 @@ open class ArtifactDownloadContext(
 
     private fun getDownloadSource(): DownloadInterceptorType {
         val userAgent = HeaderUtils.getHeader(HttpHeaders.USER_AGENT) ?: return DownloadInterceptorType.WEB
+        logger.debug("download user agent: $userAgent")
         return when {
             userAgent.contains(ANDROID_APP_USER_AGENT) -> DownloadInterceptorType.MOBILE
             userAgent.contains(IOS_APP_USER_AGENT) -> DownloadInterceptorType.MOBILE
@@ -99,7 +102,7 @@ open class ArtifactDownloadContext(
     companion object {
         private val logger = LoggerFactory.getLogger(ArtifactDownloadContext::class.java)
         private const val INTERCEPTORS = "interceptors"
-        private const val ANDROID_APP_USER_AGENT = "BK_CI_APP"
+        private const val ANDROID_APP_USER_AGENT = "BKCI_APP"
         private const val IOS_APP_USER_AGENT = "com.apple.appstored"
         private const val TYPE = "type"
     }

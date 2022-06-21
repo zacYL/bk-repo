@@ -27,7 +27,7 @@
 
 package com.tencent.bkrepo.common.artifact.interceptor
 
-import com.tencent.bkrepo.common.artifact.exception.CpackArtifactDownloadForbiddenException
+import com.tencent.bkrepo.common.artifact.exception.ArtifactDownloadForbiddenException
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import org.slf4j.LoggerFactory
 
@@ -51,7 +51,7 @@ abstract class DownloadInterceptor<T>(
         val match = matcher(node, rule)
         val forbidden = (allowed() && !match) || (!allowed() && match)
         if (forbidden) {
-            throw CpackArtifactDownloadForbiddenException("download node[${node.fullPath}] is forbidden by rule[$rule]")
+            throw ArtifactDownloadForbiddenException(node.projectId)
         }
     }
 

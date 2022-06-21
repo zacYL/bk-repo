@@ -35,6 +35,8 @@ import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.EscapeUtils
+import com.tencent.bkrepo.common.artifact.constant.PUBLIC_GLOBAL_PROJECT
+import com.tencent.bkrepo.common.artifact.constant.PUBLIC_PROXY_PROJECT
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
@@ -55,6 +57,7 @@ import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Update
 import org.springframework.data.mongodb.core.query.and
 import org.springframework.data.mongodb.core.query.inValues
+import org.springframework.data.mongodb.core.query.nin
 import org.springframework.data.mongodb.core.query.regex
 import org.springframework.data.mongodb.core.query.where
 import org.springframework.stereotype.Service
@@ -80,7 +83,7 @@ class ProjectServiceImpl(
     }
 
     override fun listProject(): List<ProjectInfo> {
-        return projectDao.findAll().map { convert(it)!! }
+        return projectDao.find(Query().addCriteria(excludeCri)).map { convert(it)!! }
     }
 
     override fun searchProject(option: ProjectSearchOption): Page<ProjectInfo> {
@@ -120,7 +123,7 @@ class ProjectServiceImpl(
         val limit = request.limit
         val skip = request.offset
         return if (request.projectIds.isEmpty()) {
-            val query = Query()
+            val query = Query().addCriteria(excludeCri)
             val totalCount = projectDao.count(query)
             val records = projectDao.find(query.skip(skip).limit(limit)).map { convert(it) }
             Page(0, limit, totalCount, records)
@@ -230,5 +233,6 @@ class ProjectServiceImpl(
                 )
             }
         }
+        private val excludeCri = TProject::name.nin(listOf(PUBLIC_GLOBAL_PROJECT, PUBLIC_PROXY_PROJECT))
     }
 }

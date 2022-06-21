@@ -36,6 +36,7 @@ import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactFileMap
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.resolve.file.multipart.MultipartArtifactFile
+import com.tencent.bkrepo.common.artifact.util.FileNameParser
 import com.tencent.bkrepo.helm.constants.CHART
 import com.tencent.bkrepo.helm.constants.CHART_PACKAGE_FILE_EXTENSION
 import com.tencent.bkrepo.helm.constants.FULL_PATH
@@ -91,17 +92,13 @@ object ChartParserUtil {
     fun parseNameAndVersion(context: ArtifactContext) {
         val fullPath = context.getStringAttribute(FULL_PATH)
         fullPath?.let {
-            parseNameAndVersion(fullPath)[NAME]?.let { it1 -> context.putAttribute(NAME, it1) }
-            parseNameAndVersion(fullPath)[VERSION]?.let { it1 -> context.putAttribute(VERSION, it1) }
-            parseNameAndVersion(fullPath).let { it1 -> context.putAttribute(META_DETAIL, it1) }
+            FileNameParser.parseNameAndVersionWithRegex(fullPath)[NAME]
+                ?.let { it1 -> context.putAttribute(NAME, it1) }
+            FileNameParser.parseNameAndVersionWithRegex(fullPath)[VERSION]
+                ?.let { it1 -> context.putAttribute(VERSION, it1) }
+            FileNameParser.parseNameAndVersionWithRegex(fullPath)
+                .let { it1 -> context.putAttribute(META_DETAIL, it1) }
         }
-    }
-
-    fun parseNameAndVersion(fullPath: String): Map<String, Any> {
-        val substring = fullPath.trimStart('/').substring(0, fullPath.lastIndexOf('.') - 1)
-        val name = substring.substringBeforeLast('-')
-        val version = substring.substringAfterLast('-')
-        return mapOf("name" to name, "version" to version)
     }
 
     /**
@@ -245,6 +242,49 @@ object ChartParserUtil {
                 throw HelmFileNotFoundException("chart not found")
             }
         }
+    }
+
+    /**
+     * 比较新旧两个index文件中的chart包差异
+     */
+    fun compareIndexYamlMetadata(
+        oldEntries: MutableMap<String, SortedSet<HelmChartMetadata>>,
+        newEntries: MutableMap<String, SortedSet<HelmChartMetadata>>
+    ): Pair<MutableMap<String, SortedSet<HelmChartMetadata>>, MutableMap<String, SortedSet<HelmChartMetadata>>> {
+        // 初次创建时需要将所有index中的全部存储
+        if (oldEntries.isEmpty()) {
+            return Pair(mutableMapOf(), newEntries)
+        }
+        val deletedMetadata: MutableMap<String, SortedSet<HelmChartMetadata>> = mutableMapOf()
+        val addedMetadata: MutableMap<String, SortedSet<HelmChartMetadata>> = mutableMapOf()
+        // 旧index中存在，新index不存在chart的需要删除
+        deletedMetadata.putAll(oldEntries.minus(newEntries.keys))
+        // 新index中存在，旧index不存在的chart需要新增
+        addedMetadata.putAll(newEntries.minus(oldEntries.keys))
+
+        // 针对同一个chart下不同版本差异处理
+        oldEntries.forEach { index ->
+            if (!newEntries.containsKey(index.key)) {
+                return@forEach
+            }
+            val newSet: SortedSet<HelmChartMetadata>? = newEntries[index.key]
+            val oldSet: SortedSet<HelmChartMetadata>? = oldEntries[index.key]
+            if (oldSet.isNullOrEmpty()) {
+                newSet?.let {
+                    addedMetadata[index.key] = it
+                }
+            } else {
+                if (newSet.isNullOrEmpty()) {
+                    deletedMetadata[index.key] = oldSet
+                } else {
+                    val deletedSet = oldSet.minus(newSet)
+                    val addedSet = newSet.minus(oldSet)
+                    deletedMetadata[index.key] = deletedSet.toSortedSet()
+                    addedMetadata[index.key] = addedSet.toSortedSet()
+                }
+            }
+        }
+        return Pair(deletedMetadata, addedMetadata)
     }
 
     fun convertUtcTime(indexYamlMetadata: HelmIndexYamlMetadata): HelmIndexYamlMetadata {

@@ -37,26 +37,33 @@ import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
+import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.artifact.pojo.configuration.composite.CompositeConfiguration
+import com.tencent.bkrepo.common.artifact.pojo.configuration.composite.ProxyChannelSetting
+import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
+import com.tencent.bkrepo.common.artifact.repository.composite.CompositeRepository
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.core.ArtifactService
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResourceWriter
 import com.tencent.bkrepo.common.artifact.stream.ArtifactInputStream
+import com.tencent.bkrepo.common.artifact.util.FileNameParser
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.lock.service.LockOperation
 import com.tencent.bkrepo.common.query.enums.OperationType
+import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.exception.RemoteErrorCodeException
 import com.tencent.bkrepo.helm.constants.CHART
 import com.tencent.bkrepo.helm.constants.CHART_PACKAGE_FILE_EXTENSION
 import com.tencent.bkrepo.helm.constants.FILE_TYPE
 import com.tencent.bkrepo.helm.constants.FULL_PATH
 import com.tencent.bkrepo.helm.constants.META_DETAIL
+import com.tencent.bkrepo.helm.constants.NAME
 import com.tencent.bkrepo.helm.constants.NODE_CREATE_DATE
 import com.tencent.bkrepo.helm.constants.NODE_FULL_PATH
 import com.tencent.bkrepo.helm.constants.NODE_METADATA
@@ -69,26 +76,29 @@ import com.tencent.bkrepo.helm.constants.REPO_NAME
 import com.tencent.bkrepo.helm.constants.REPO_TYPE
 import com.tencent.bkrepo.helm.constants.SIZE
 import com.tencent.bkrepo.helm.constants.TGZ_SUFFIX
+import com.tencent.bkrepo.helm.constants.VERSION
 import com.tencent.bkrepo.helm.exception.HelmBadRequestException
-import com.tencent.bkrepo.helm.exception.HelmFileAlreadyExistsException
 import com.tencent.bkrepo.helm.exception.HelmFileNotFoundException
 import com.tencent.bkrepo.helm.exception.HelmRepoNotFoundException
 import com.tencent.bkrepo.helm.pojo.artifact.HelmArtifactInfo
 import com.tencent.bkrepo.helm.pojo.metadata.HelmChartMetadata
 import com.tencent.bkrepo.helm.pojo.metadata.HelmIndexYamlMetadata
 import com.tencent.bkrepo.helm.pool.HelmThreadPoolExecutor
+import com.tencent.bkrepo.helm.utils.ChartParserUtil
 import com.tencent.bkrepo.helm.utils.DecompressUtil.getArchivesContent
 import com.tencent.bkrepo.helm.utils.HelmMetadataUtils
 import com.tencent.bkrepo.helm.utils.HelmUtils
 import com.tencent.bkrepo.helm.utils.ObjectBuilderUtil
+import com.tencent.bkrepo.helm.utils.RemoteDownloadUtil
 import com.tencent.bkrepo.helm.utils.TimeFormatUtil
 import com.tencent.bkrepo.repository.api.MetadataClient
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.PackageClient
+import com.tencent.bkrepo.repository.api.ProxyChannelClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
-import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.request.PackagePopulateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PopulatedPackageVersion
@@ -97,9 +107,10 @@ import com.tencent.bkrepo.repository.pojo.search.NodeQueryBuilder
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.ApplicationEventPublisher
+import org.springframework.cloud.client.circuitbreaker.NoFallbackAvailableException
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.SortedSet
 import java.util.concurrent.ThreadPoolExecutor
 
 // LateinitUsage: 抽象类中使用构造器注入会造成不便
@@ -118,9 +129,6 @@ open class AbstractChartService : ArtifactService() {
     lateinit var packageClient: PackageClient
 
     @Autowired
-    lateinit var eventPublisher: ApplicationEventPublisher
-
-    @Autowired
     lateinit var artifactResourceWriter: ArtifactResourceWriter
 
     @Autowired
@@ -128,6 +136,9 @@ open class AbstractChartService : ArtifactService() {
 
     @Autowired
     lateinit var lockOperation: LockOperation
+
+    @Autowired
+    lateinit var proxyChannelClient: ProxyChannelClient
 
     val threadPoolExecutor: ThreadPoolExecutor = HelmThreadPoolExecutor.instance
 
@@ -140,7 +151,7 @@ open class AbstractChartService : ArtifactService() {
             )
             return (inputStream as ArtifactInputStream).use { it.readYamlString() }
         } catch (e: Exception) {
-            logger.error("Error occurred while querying index.yaml, error: ${e.message}")
+            logger.warn("Error occurred while querying index.yaml, error: ${e.message}")
             throw HelmFileNotFoundException(e.message.toString())
         }
     }
@@ -149,28 +160,19 @@ open class AbstractChartService : ArtifactService() {
      * query original index.yaml file
      */
     fun getOriginalIndexYaml(projectId: String, repoName: String): HelmIndexYamlMetadata {
-        val fullPath = HelmUtils.getIndexCacheYamlFullPath()
-        val nodeDetail = nodeClient.getNodeDetail(projectId, repoName, fullPath).data
+        val nodeDetail = getOriginalIndexNode(projectId, repoName)
         val repository = repositoryClient.getRepoDetail(projectId, repoName, RepositoryType.HELM.name).data
             ?: throw RepoNotFoundException("Repository[$repoName] does not exist")
         val inputStream = storageManager.loadArtifactInputStream(nodeDetail, repository.storageCredentials)
-            ?: throw HelmFileNotFoundException("Artifact[$fullPath] does not exist")
+            ?: throw HelmFileNotFoundException("Artifact index.yaml does not exist")
         return inputStream.use { it.readYamlString() }
     }
 
-    /**
-     * 下载index.yaml （local类型仓库index.yaml存储时使用的name时index-cache.yaml，remote需要转换）
-     */
-    fun downloadIndexYaml() {
-        val context = ArtifactDownloadContext(null, ObjectBuilderUtil.buildIndexYamlRequest())
-        context.putAttribute(FULL_PATH, HelmUtils.getIndexCacheYamlFullPath())
-        try {
-            ArtifactContextHolder.getRepository().download(context)
-        } catch (e: Exception) {
-            logger.error("Error occurred while downloading index.yaml, error: ${e.message}")
-            throw HelmFileNotFoundException(e.message.toString())
-        }
+    fun getOriginalIndexNode(projectId: String, repoName: String): NodeDetail? {
+        val fullPath = HelmUtils.getIndexCacheYamlFullPath()
+        return nodeClient.getNodeDetail(projectId, repoName, fullPath).data
     }
+
     /**
      * upload index.yaml file
      */
@@ -200,7 +202,7 @@ open class AbstractChartService : ArtifactService() {
     fun getRepositoryInfo(artifactInfo: ArtifactInfo): RepositoryDetail {
         with(artifactInfo) {
             val result = repositoryClient.getRepoDetail(projectId, repoName, REPO_TYPE).data ?: run {
-                logger.error("check repository [$repoName] in projectId [$projectId] failed!")
+                logger.warn("check repository [$repoName] in projectId [$projectId] failed!")
                 throw HelmRepoNotFoundException("repository [$repoName] in projectId [$projectId] not existed.")
             }
             return result
@@ -227,7 +229,7 @@ open class AbstractChartService : ArtifactService() {
     fun checkRepositoryExistAndCategory(artifactInfo: ArtifactInfo) {
         with(artifactInfo) {
             val repo = repositoryClient.getRepoDetail(projectId, repoName, REPO_TYPE).data ?: run {
-                logger.error("check repository [$repoName] in projectId [$projectId] failed!")
+                logger.warn("check repository [$repoName] in projectId [$projectId] failed!")
                 throw HelmRepoNotFoundException("repository [$repoName] in projectId [$projectId] not existed.")
             }
             when (repo.category) {
@@ -240,7 +242,7 @@ open class AbstractChartService : ArtifactService() {
     }
 
     /**
-     * 当helm 本地文件上传后，创建或更新包/包版本信息
+     * 当helm 本地文件上传后/或从远程代理下载后，创建或更新包/包版本信息
      */
     fun initPackageInfo(context: ArtifactContext) {
         with(context) {
@@ -251,7 +253,14 @@ open class AbstractChartService : ArtifactService() {
             helmChartMetadataMap?.let {
                 val helmChartMetadata = HelmMetadataUtils.convertToObject(helmChartMetadataMap)
                 val overWrite = getBooleanAttribute(OVERWRITE) ?: false
-                createVersion(userId, artifactInfo, helmChartMetadata, size!!, overWrite)
+                createVersion(
+                    userId = userId,
+                    projectId = artifactInfo.projectId,
+                    repoName = artifactInfo.repoName,
+                    chartInfo = helmChartMetadata,
+                    size = size!!,
+                    isOverwrite = overWrite
+                )
             }
         }
     }
@@ -305,13 +314,6 @@ open class AbstractChartService : ArtifactService() {
     }
 
     /**
-     * 发布事件
-     */
-    fun publishEvent(any: Any) {
-        eventPublisher.publishEvent(any)
-    }
-
-    /**
      * 包版本数据填充
      * [nodeInfo] 某个节点的node节点信息
      */
@@ -344,57 +346,42 @@ open class AbstractChartService : ArtifactService() {
      */
     fun createVersion(
         userId: String,
-        artifactInfo: ArtifactInfo,
+        projectId: String,
+        repoName: String,
         chartInfo: HelmChartMetadata,
-        size: Long,
+        size: Long = 0,
         isOverwrite: Boolean = false
     ) {
         val contentPath = HelmUtils.getChartFileFullPath(chartInfo.name, chartInfo.version)
         val packageVersionCreateRequest = ObjectBuilderUtil.buildPackageVersionCreateRequest(
             userId = userId,
-            artifactInfo = artifactInfo,
+            projectId = projectId,
+            repoName = repoName,
             chartInfo = chartInfo,
             size = size,
             isOverwrite = isOverwrite
         )
-        val packageUpdateRequest = ObjectBuilderUtil.buildPackageUpdateRequest(artifactInfo, chartInfo)
+        val packageUpdateRequest = ObjectBuilderUtil.buildPackageUpdateRequest(
+            projectId = projectId,
+            repoName = repoName,
+            chartInfo = chartInfo
+        )
         try {
             packageClient.createVersion(packageVersionCreateRequest).apply {
                 logger.info("user: [$userId] create package version [$packageVersionCreateRequest] success!")
             }
             packageClient.updatePackage(packageUpdateRequest)
-        } catch (exception: RemoteErrorCodeException) {
+        } catch (exception: NoFallbackAvailableException) {
+            val e = exception.cause
+            if (e !is RemoteErrorCodeException || e.errorCode != ArtifactMessageCode.VERSION_EXISTED.getCode()) {
+                throw exception
+            }
             // 暂时转换为包存在异常
-            logger.warn("$contentPath already exists, message: ${exception.message}")
-            throw HelmFileAlreadyExistsException("$contentPath already exists")
-        }
-    }
-
-    /**
-     * 下载index.yaml文件到本地存储
-     */
-    fun initIndexYaml(projectId: String, repoName: String) {
-        logger.info("repo [$projectId/$repoName] has been created, will download index.yaml...")
-        val repoDetail = repositoryClient.getRepoDetail(projectId, repoName, REPO_TYPE).data ?: run {
-            logger.error("check repository [$repoName] in projectId [$projectId] failed!")
-            throw HelmRepoNotFoundException("repository [$repoName] in projectId [$projectId] not existed.")
-        }
-        if (RepositoryCategory.REMOTE != repoDetail.category) {
-            logger.warn("repo [$projectId/$repoName] does not need to download index.yaml")
-            return
-        }
-        val fullPath = HelmUtils.getIndexCacheYamlFullPath()
-        val context = ArtifactDownloadContext(repoDetail, ObjectBuilderUtil.buildIndexYamlRequest(projectId, repoName))
-        nodeClient.deleteNode(
-            NodeDeleteRequest(
-                projectId = projectId,
-                repoName = repoName,
-                fullPath = fullPath,
-                operator = context.userId
+            logger.warn(
+                "package version for $contentPath already existed, " +
+                    "message: ${e.message}"
             )
-        )
-        context.putAttribute(FULL_PATH, fullPath)
-        ArtifactContextHolder.getRepository().download(context)
+        }
     }
 
     private fun buildRedisKey(projectId: String, repoName: String): String {
@@ -417,6 +404,177 @@ open class AbstractChartService : ArtifactService() {
         } else {
             action()
         }
+    }
+
+    /**
+     * 通过chart包名以及版本号查出对应remote仓库下载地址
+     */
+    fun findRemoteArtifactFullPath(name: String): String {
+        logger.info("get remote url for downloading...")
+        val helmIndexYamlMetadata = queryOriginalIndexYaml()
+        val map = FileNameParser.parseNameAndVersionWithRegex(name)
+        val chartName = map[NAME]
+        val chartVersion = map[VERSION]
+        val chartList =
+            helmIndexYamlMetadata.entries[chartName]
+                ?: throw HelmFileNotFoundException("File [$name] can not be found.")
+        val helmChartMetadataList = chartList.filter {
+            chartVersion == it.version
+        }.toList()
+        return if (helmChartMetadataList.isNotEmpty()) {
+            require(helmChartMetadataList.size == 1) {
+                "find more than one version [$chartVersion] in package [$chartName]."
+            }
+            val urls = helmChartMetadataList.first().urls
+            if (urls.isNotEmpty()) {
+                urls.first()
+            } else {
+                throw HelmFileNotFoundException("File [$name] can not be found.")
+            }
+        } else {
+            throw HelmFileNotFoundException("File [$name] can not be found.")
+        }
+    }
+
+    /**
+     * 针对代理仓库：下载index.yaml文件到本地存储
+     */
+    fun initIndexYaml(
+        projectId: String,
+        repoName: String,
+        userId: String = SecurityUtils.getUserId()
+    ): HelmIndexYamlMetadata? {
+        logger.info("Will start to get index.yaml for repo [$projectId/$repoName]...")
+        val repoDetail = checkRepo(projectId, repoName) ?: return null
+        val originalIndexYamlMetadata = getIndex(repoDetail)
+        originalIndexYamlMetadata?.let {
+            storeIndex(
+                indexYamlMetadata = originalIndexYamlMetadata,
+                projectId = projectId,
+                repoName = repoName,
+                userId = userId
+            )
+        }
+        return originalIndexYamlMetadata
+    }
+
+    /**
+     * 根据仓库类型获取对应index文件
+     */
+    fun getIndex(repoDetail: RepositoryDetail): HelmIndexYamlMetadata? {
+        return when (repoDetail.configuration) {
+            is CompositeConfiguration -> {
+                val config = repoDetail.configuration as CompositeConfiguration
+                forEachProxyRepo(config.proxy.channelList, repoDetail)
+            }
+            is RemoteConfiguration -> {
+                val config = repoDetail.configuration as RemoteConfiguration
+                try {
+                    val inputStream = RemoteDownloadUtil.doHttpRequest(config, HelmUtils.getIndexYamlFullPath())
+                    (inputStream as ArtifactInputStream).use {
+                        it.readYamlString() as HelmIndexYamlMetadata
+                    }
+                } catch (e: Exception) {
+                    logger.warn(
+                        "Error occurred while caching the index-cache.yaml from remote repository, error: ${e.message}"
+                    )
+                    throw e
+                }
+            }
+            else -> {
+                null
+            }
+        }
+    }
+
+    /**
+     * 存储获取的index文件
+     */
+    fun storeIndex(
+        indexYamlMetadata: HelmIndexYamlMetadata,
+        projectId: String,
+        repoName: String,
+        userId: String = SecurityUtils.getUserId()
+    ) {
+        logger.info("Index file will be stored in repo $projectId|$repoName")
+        val (artifactFile, nodeCreateRequest) = ObjectBuilderUtil.buildFileAndNodeCreateRequest(
+            indexYamlMetadata = indexYamlMetadata,
+            projectId = projectId,
+            repoName = repoName,
+            operator = userId
+        )
+        uploadIndexYamlMetadata(artifactFile, nodeCreateRequest)
+    }
+
+    /**
+     * 检查该仓库是否remote仓库或者composite仓库
+     */
+    fun checkRepo(projectId: String, repoName: String): RepositoryDetail? {
+        val repoDetail = repositoryClient.getRepoDetail(projectId, repoName, REPO_TYPE).data ?: run {
+            throw HelmRepoNotFoundException("Could not find helm repository named [$repoName] in project [$projectId].")
+        }
+        if (RepositoryCategory.LOCAL == repoDetail.category) {
+            logger.warn(
+                "The local repo [$projectId/$repoName] does not need to do some operations on index.yaml"
+            )
+            return null
+        }
+        return repoDetail
+    }
+
+    /**
+     * 遍历代理仓库列表，获取对应index.yaml文件
+     */
+    private fun forEachProxyRepo(
+        channelList: List<ProxyChannelSetting>,
+        repositoryDetail: RepositoryDetail
+    ): HelmIndexYamlMetadata {
+        val oldIndex = HelmUtils.initIndexYamlMetadata()
+        for (proxyChannel in channelList) {
+            try {
+                val config = getRemoteConfigFromProxyChannel(repositoryDetail, proxyChannel)
+                val inputStream = RemoteDownloadUtil.doHttpRequest(config, HelmUtils.getIndexYamlFullPath())
+                val newIndex = (inputStream as ArtifactInputStream).use {
+                    it.readYamlString() as HelmIndexYamlMetadata
+                }
+                val (_, addedSet) = ChartParserUtil.compareIndexYamlMetadata(
+                    oldEntries = oldIndex.entries,
+                    newEntries = newIndex.entries
+                )
+                mergeMap(oldIndex.entries, addedSet)
+            } catch (ignored: Exception) {
+                logger.warn("Failed to execute action with channel ${proxyChannel.name}", ignored)
+            }
+        }
+        return oldIndex
+    }
+
+    /**
+     * 合并
+     */
+    private fun mergeMap(
+        old: MutableMap<String, SortedSet<HelmChartMetadata>>,
+        new: MutableMap<String, SortedSet<HelmChartMetadata>>
+    ) {
+        new.forEach { (key, values) ->
+            old[key]?.let {
+                old[key]?.addAll(values)
+            } ?: run { old.put(key, values) }
+        }
+    }
+
+    private fun getRemoteConfigFromProxyChannel(
+        repositoryDetail: RepositoryDetail,
+        setting: ProxyChannelSetting
+    ): RemoteConfiguration {
+        val proxyChannel = proxyChannelClient.getByUniqueId(
+            projectId = repositoryDetail.projectId,
+            repoName = repositoryDetail.name,
+            repoType = repositoryDetail.type.name,
+            name = setting.name
+        ).data!!
+        // 构造RemoteConfiguration
+        return (CompositeRepository.convertConfig(proxyChannel) as RemoteConfiguration)
     }
 
     companion object {

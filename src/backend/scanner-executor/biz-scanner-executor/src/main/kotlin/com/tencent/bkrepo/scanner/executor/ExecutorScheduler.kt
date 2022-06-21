@@ -38,7 +38,7 @@ class ExecutorScheduler @Autowired constructor(
     fun scan() {
         while (allowExecute()) {
             val subtask = scanClient.pullSubTask().data ?: break
-            if (executingSubtaskExecutorMap.contains(subtask.taskId)) {
+            if (scanning(subtask.taskId)) {
                 // 任务执行中，直接忽略新任务
                 logger.warn("subtask[${subtask.taskId}] of task[${subtask.parentScanTaskId}] is executing")
                 return
@@ -57,6 +57,13 @@ class ExecutorScheduler @Autowired constructor(
                 }
             }
         }
+    }
+
+    /**
+     * 判断任务是否正在执行
+     */
+    fun scanning(taskId: String): Boolean {
+        return executingSubtaskExecutorMap.containsKey(taskId)
     }
 
     /**
@@ -80,7 +87,7 @@ class ExecutorScheduler @Autowired constructor(
         if (!memAvailable || !diskAvailable) {
             logger.warn(
                 "memory[$freeMemPercent]: $freeMem / $totalMem, " +
-                    "disk space[$usableDiskSpacePercent]: $usableDiskSpacePercent / ${workDir.totalSpace}"
+                    "disk space[$usableDiskSpacePercent]: ${workDir.usableSpace} / ${workDir.totalSpace}"
             )
         }
 
@@ -147,6 +154,9 @@ class ExecutorScheduler @Autowired constructor(
                 parentTaskId = parentScanTaskId,
                 inputStream = artifactInputStream,
                 scanner = scanner,
+                projectId = projectId,
+                repoName = repoName,
+                fullPath = fullPath,
                 sha256 = sha256
             )
         }

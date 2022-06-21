@@ -31,6 +31,7 @@
 
 dependencies {
     api(project(":generic:api-generic"))
+    api(project(":common:common-redis"))
     api(project(":common:common-artifact:artifact-service"))
     api(project((":common:common-cpack")))
 }

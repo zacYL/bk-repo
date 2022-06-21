@@ -53,7 +53,8 @@ class ServiceHelmClientImpl(
         val chartInfo = map?.let { it1 -> HelmMetadataUtils.convertToObject(it1) }
         chartInfo?.appVersion?.let {
             val packageUpdateRequest = ObjectBuilderUtil.buildPackageUpdateRequest(
-                ArtifactInfo(projectId,repoName,""),
+                projectId,
+                repoName,
                 name,
                 chartInfo.appVersion!!,
                 chartInfo.description

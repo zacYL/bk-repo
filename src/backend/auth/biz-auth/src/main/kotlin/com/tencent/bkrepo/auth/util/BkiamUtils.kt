@@ -39,6 +39,7 @@ import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 
 object BkiamUtils {
     fun buildAction(resourceType: ResourceType, action: PermissionAction) = "${resourceType}_$action"
+
     fun getProjects(content: ExpressionDTO): List<String> {
         if (content.field != "project.id") {
             if (content.operator != ExpressionOperationEnum.ANY) {

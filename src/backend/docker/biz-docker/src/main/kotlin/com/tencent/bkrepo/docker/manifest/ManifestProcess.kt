@@ -70,7 +70,7 @@ import com.tencent.bkrepo.docker.util.BlobUtil.getBlobByName
 import com.tencent.bkrepo.docker.util.BlobUtil.getManifestConfigBlob
 import com.tencent.bkrepo.docker.util.ResponseUtil
 import com.tencent.bkrepo.repository.api.NodeClient
-import org.apache.commons.lang.StringUtils
+import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 import org.springframework.core.io.InputStreamResource
 import org.springframework.http.HttpHeaders

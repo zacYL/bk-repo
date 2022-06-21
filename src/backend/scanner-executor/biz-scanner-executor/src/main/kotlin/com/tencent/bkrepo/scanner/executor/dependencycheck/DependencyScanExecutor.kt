@@ -27,37 +27,40 @@
 
 package com.tencent.bkrepo.scanner.executor.dependencycheck
 
-import com.tencent.bkrepo.common.api.util.readJsonString
+import com.tencent.bkrepo.common.api.exception.SystemErrorException
 import com.tencent.bkrepo.common.api.util.toJsonString
+import com.tencent.bkrepo.common.artifact.constant.PUBLIC_GLOBAL_PROJECT
+import com.tencent.bkrepo.common.artifact.constant.PUBLIC_VULDB_REPO
 import com.tencent.bkrepo.common.checker.pojo.DependencyInfo
 import com.tencent.bkrepo.common.checker.util.DependencyCheckerUtils
+import com.tencent.bkrepo.common.scanner.pojo.scanner.CveOverviewKey
 import com.tencent.bkrepo.common.scanner.pojo.scanner.ScanExecutorResult
 import com.tencent.bkrepo.common.scanner.pojo.scanner.SubScanTaskStatus
 import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.result.DependencyItem
 import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.result.DependencyScanExecutorResult
-import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.result.DependencyScanExecutorResult.Companion.overviewKeyOfCve
 import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.scanner.DependencyScanner
 import com.tencent.bkrepo.common.scanner.pojo.scanner.utils.normalizedLevel
 import com.tencent.bkrepo.common.storage.core.StorageProperties
+import com.tencent.bkrepo.common.storage.core.locator.HashFileLocator
+import com.tencent.bkrepo.repository.api.NodeClient
+import com.tencent.bkrepo.repository.pojo.search.NodeQueryBuilder
 import com.tencent.bkrepo.scanner.executor.ScanExecutor
 import com.tencent.bkrepo.scanner.executor.pojo.ScanExecutorTask
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
-import java.io.File
 
 @Component(DependencyScanner.TYPE)
-class DependencyScanExecutor @Autowired constructor(
-    private val storageProperties: StorageProperties
+class DependencyScanExecutor(
+    private val storageProperties: StorageProperties,
+    private val nodeClient: NodeClient
 ) : ScanExecutor {
 
+    @Suppress("TooGenericExceptionCaught")
     override fun scan(task: ScanExecutorTask): ScanExecutorResult {
         logger.info("task:${task.toJsonString()}")
         require(task.scanner is DependencyScanner)
         try {
             val sha256 = task.sha256
-            val first = sha256.substring(0, 2)
-            val second = sha256.substring(2, 4)
             logger.info("storageProperties:${storageProperties.toJsonString()}")
             val path = storageProperties.filesystem.path
             val storePath = if (!path.startsWith("/")) {
@@ -65,15 +68,39 @@ class DependencyScanExecutor @Autowired constructor(
             } else {
                 path.removeSuffix("/")
             }
-            val filePath = "$storePath/$first/$second/$sha256"
+            val filePath = "$storePath${locator.locate(sha256)}$sha256"
             logger.info("scan file path:$filePath")
             // 执行扫描
-            val dependencyInfo = DependencyCheckerUtils.scanWithInfo(filePath)
+            val (dbDir, dbName) = latestDependencyCheckerDB(storePath, task.scanner.type)
+            val dependencyInfo = DependencyCheckerUtils.scanDynamicDBWithInfo(
+                scanPath = filePath,
+                dbName = dbName,
+                dbDir = dbDir
+            ) ?: throw SystemErrorException()
             return result(dependencyInfo, filePath)
         } catch (e: Exception) {
             logger.error(logMsg(task, "scan failed"), e)
             throw e
         }
+    }
+
+    fun latestDependencyCheckerDB(storePath: String, scannerType: String): Pair<String?, String?> {
+        val records = nodeClient.search(
+            NodeQueryBuilder()
+                .select("sha256")
+                .sortByDesc("lastModifiedDate")
+                .page(1, 1)
+                .projectId(PUBLIC_GLOBAL_PROJECT)
+                .repoName(PUBLIC_VULDB_REPO)
+                .and()
+                .path("/$scannerType/")
+                .excludeFolder()
+                .build()
+        ).data?.records ?: return Pair(null, null)
+        return if (records.isNotEmpty()) {
+            val dbSha256 = records.first()["sha256"]?.toString() ?: return Pair(null, null)
+            Pair("$storePath${locator.locate(dbSha256)}".removeSuffix("/"), dbSha256)
+        } else { Pair(null, null) }
     }
 
     override fun stop(taskId: String): Boolean {
@@ -85,14 +112,14 @@ class DependencyScanExecutor @Autowired constructor(
      * 解析扫描结果
      */
     private fun result(dependencyInfo: DependencyInfo, prefix: String): DependencyScanExecutorResult {
-        logger.info("dependencyInfo:${dependencyInfo.toJsonString()}")
+        logger.debug("dependencyInfo:${dependencyInfo.toJsonString()}")
         val dependencyItems = mutableListOf<DependencyItem>()
         // 遍历依赖
         dependencyInfo.dependencies.forEach { dependency ->
             // 遍历漏洞
             dependency.vulnerabilities?.forEach { vulnerability ->
                 val packages = dependency.packages?.get(0)?.id?.removePrefix("pkg:")?.split("@")
-                logger.info("packages:${packages?.toJsonString()}")
+                logger.debug("packages:${packages?.toJsonString()}")
                 packages?.let {
                     dependencyItems.add(
                         DependencyItem(
@@ -113,7 +140,7 @@ class DependencyScanExecutor @Autowired constructor(
                 }
             }
         }
-        logger.info("dependencyItems:${dependencyItems.toJsonString()}")
+        logger.debug("dependencyItems:${dependencyItems.toJsonString()}")
 
         return DependencyScanExecutorResult(
             scanStatus = SubScanTaskStatus.SUCCESS.name,
@@ -130,25 +157,13 @@ class DependencyScanExecutor @Autowired constructor(
 
         // cve count
         dependencyItems.forEach {
-            val overviewKey = overviewKeyOfCve(it.severity)
+            val overviewKey = CveOverviewKey.overviewKeyOf(it.severity)
             overview[overviewKey] = overview.getOrDefault(overviewKey, 0L) + 1L
         }
-/*
-{
-  "cveCriticalCount" : 2
-}
-*/
-        logger.info("overview:${overview.toJsonString()}")
+
+        logger.debug("overview:${overview.toJsonString()}")
 
         return overview
-    }
-
-    private inline fun <reified T> readJsonString(file: File): T? {
-        return if (file.exists()) {
-            file.inputStream().use { it.readJsonString<T>() }
-        } else {
-            null
-        }
     }
 
     private fun logMsg(task: ScanExecutorTask, msg: String) = with(task) {
@@ -157,5 +172,6 @@ class DependencyScanExecutor @Autowired constructor(
 
     companion object {
         private val logger = LoggerFactory.getLogger(DependencyScanExecutor::class.java)
+        private val locator = HashFileLocator()
     }
 }

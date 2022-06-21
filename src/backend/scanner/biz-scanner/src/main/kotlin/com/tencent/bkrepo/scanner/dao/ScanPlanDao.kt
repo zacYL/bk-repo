@@ -60,6 +60,13 @@ class ScanPlanDao : ScannerSimpleMongoDao<TScanPlan>() {
         return findOne(Query(criteria))
     }
 
+    fun find(projectId: String, type: String, name: String): TScanPlan? {
+        val criteria = projectCriteria(projectId)
+            .and(TScanPlan::type.name).isEqualTo(type)
+            .and(TScanPlan::name.name).isEqualTo(name)
+        return findOne(Query(criteria))
+    }
+
     fun findByProjectIdAndRepoName(
         projectId: String,
         repoName: String,
@@ -89,9 +96,9 @@ class ScanPlanDao : ScannerSimpleMongoDao<TScanPlan>() {
         return find(query)
     }
 
-    fun exists(projectId: String, id: String): Boolean {
+    fun findByProjectIdAndId(projectId: String, id: String): TScanPlan? {
         val criteria = projectCriteria(projectId).and(ID).isEqualTo(id)
-        return exists(Query(criteria))
+        return findOne(Query(criteria))
     }
 
     fun delete(projectId: String, id: String): UpdateResult {
@@ -136,7 +143,6 @@ class ScanPlanDao : ScannerSimpleMongoDao<TScanPlan>() {
             rule?.let { update.set(TScanPlan::rule.name, it.toJsonString()) }
 
             val query = Query(criteria)
-            logger.info("update scan plan query:$query, update:${update.toJsonString()}")
             return updateFirst(query, update)
         }
     }

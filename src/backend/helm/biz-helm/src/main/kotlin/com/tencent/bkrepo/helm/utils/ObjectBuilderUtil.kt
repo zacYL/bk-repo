@@ -35,6 +35,9 @@ import com.tencent.bkrepo.common.api.util.toYamlString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.constant.ARTIFACT_INFO_KEY
+import com.tencent.bkrepo.common.artifact.event.repo.RepoCreatedEvent
+import com.tencent.bkrepo.common.artifact.event.repo.RepoRefreshedEvent
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
@@ -59,27 +62,61 @@ import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateR
 
 object ObjectBuilderUtil {
 
-    fun buildPackageUpdateRequest(
-        artifactInfo: ArtifactInfo,
-        chartInfo: HelmChartMetadata
-    ): PackageUpdateRequest {
-        return buildPackageUpdateRequest(
-            artifactInfo,
-            chartInfo.name,
-            chartInfo.appVersion.toString(),
-            chartInfo.description
+    /**
+     * 仓库创建事件
+     */
+    fun buildCreatedEvent(
+        projectId: String,
+        repoName: String,
+        operator: String
+    ): RepoCreatedEvent {
+        return RepoCreatedEvent(
+            projectId = projectId,
+            repoName = repoName,
+            userId = operator,
+            repoType = RepositoryType.HELM
+        )
+    }
+
+    /**
+     * 仓库刷新事件
+     */
+    fun buildRefreshEvent(
+        projectId: String,
+        repoName: String,
+        userId: String
+    ): RepoRefreshedEvent {
+        return RepoRefreshedEvent(
+            projectId = projectId,
+            repoName = repoName,
+            userId = userId
         )
     }
 
     fun buildPackageUpdateRequest(
-        artifactInfo: ArtifactInfo,
+        projectId: String,
+        repoName: String,
+        chartInfo: HelmChartMetadata
+    ): PackageUpdateRequest {
+        return buildPackageUpdateRequest(
+            projectId = projectId,
+            repoName = repoName,
+            name = chartInfo.name,
+            appVersion = chartInfo.appVersion.toString(),
+            description = chartInfo.description
+        )
+    }
+
+    fun buildPackageUpdateRequest(
+        projectId: String,
+        repoName: String,
         name: String,
         appVersion: String,
         description: String?
     ): PackageUpdateRequest {
         return PackageUpdateRequest(
-            projectId = artifactInfo.projectId,
-            repoName = artifactInfo.repoName,
+            projectId = projectId,
+            repoName = repoName,
             name = name,
             packageKey = PackageKeys.ofHelm(name),
             description = description,
@@ -90,14 +127,15 @@ object ObjectBuilderUtil {
 
     fun buildPackageVersionCreateRequest(
         userId: String,
-        artifactInfo: ArtifactInfo,
+        projectId: String,
+        repoName: String,
         chartInfo: HelmChartMetadata,
         size: Long,
         isOverwrite: Boolean = false
     ): PackageVersionCreateRequest {
         return PackageVersionCreateRequest(
-            projectId = artifactInfo.projectId,
-            repoName = artifactInfo.repoName,
+            projectId = projectId,
+            repoName = repoName,
             packageName = chartInfo.name,
             packageKey = PackageKeys.ofHelm(chartInfo.name),
             packageType = PackageType.HELM,
@@ -107,7 +145,7 @@ object ObjectBuilderUtil {
             manifestPath = null,
             artifactPath = HelmUtils.getChartFileFullPath(chartInfo.name, chartInfo.version),
             stageTag = null,
-            metadata = HelmMetadataUtils.convertToMap(chartInfo),
+            packageMetadata = HelmMetadataUtils.convertToMetadata(chartInfo),
             overwrite = isOverwrite,
             createdBy = userId
         )

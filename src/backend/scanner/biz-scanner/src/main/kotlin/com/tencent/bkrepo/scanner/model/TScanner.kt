@@ -34,7 +34,8 @@ import java.time.LocalDateTime
 
 @Document("scanner")
 @CompoundIndexes(
-    CompoundIndex(name = "name_idx", def = "{'name': 1, 'deleted': 1}", unique = true)
+    CompoundIndex(name = "name_idx", def = "{'name': 1, 'deleted': 1}", unique = true),
+    CompoundIndex(name = "type_idx", def = "{'type': 1}", unique = true)
 )
 data class TScanner(
     val id: String? = null,

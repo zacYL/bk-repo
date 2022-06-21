@@ -29,9 +29,11 @@ package com.tencent.bkrepo.common.artifact.resolve.file
 
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
+import com.tencent.bkrepo.common.artifact.resolve.file.bksync.BkSyncArtifactFile
 import com.tencent.bkrepo.common.artifact.resolve.file.chunk.ChunkedArtifactFile
 import com.tencent.bkrepo.common.artifact.resolve.file.multipart.MultipartArtifactFile
 import com.tencent.bkrepo.common.artifact.resolve.file.stream.StreamArtifactFile
+import com.tencent.bkrepo.common.bksync.BlockChannel
 import com.tencent.bkrepo.common.storage.core.StorageProperties
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.common.storage.monitor.StorageHealthMonitor
@@ -62,6 +64,23 @@ class ArtifactFileFactory(
         private lateinit var properties: StorageProperties
 
         const val ARTIFACT_FILES = "artifact.files"
+
+        /**
+         * 构建使用BkSync的增量传输文件
+         * */
+        fun buildBkSync(
+            blockChannel: BlockChannel,
+            deltaInputStream: InputStream,
+            blockSize: Int
+        ): BkSyncArtifactFile {
+            return BkSyncArtifactFile(
+                blockChannel,
+                deltaInputStream,
+                blockSize
+            ).apply {
+                track(this)
+            }
+        }
 
         /**
          * 构造分块接收数据的artifact file

@@ -38,6 +38,8 @@ import com.tencent.bkrepo.common.artifact.config.ArtifactConfigurer
 import com.tencent.bkrepo.common.artifact.constant.ARTIFACT_CONFIGURER
 import com.tencent.bkrepo.common.artifact.constant.ARTIFACT_INFO_KEY
 import com.tencent.bkrepo.common.artifact.constant.PROJECT_ID
+import com.tencent.bkrepo.common.artifact.constant.PUBLIC_GLOBAL_PROJECT
+import com.tencent.bkrepo.common.artifact.constant.PUBLIC_VULDB_REPO
 import com.tencent.bkrepo.common.artifact.constant.REPO_KEY
 import com.tencent.bkrepo.common.artifact.constant.REPO_NAME
 import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
@@ -46,23 +48,28 @@ import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.repository.composite.CompositeRepository
 import com.tencent.bkrepo.common.artifact.repository.core.ArtifactRepository
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
+import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
+import com.tencent.bkrepo.repository.pojo.project.ProjectCreateRequest
+import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
-import org.springframework.web.servlet.HandlerMapping
 import java.util.concurrent.TimeUnit
 import javax.servlet.http.HttpServletRequest
+import org.springframework.web.servlet.HandlerMapping
 
 @Suppress("LateinitUsage") // 静态成员通过init构造函数初始化
 class ArtifactContextHolder(
     artifactConfigurers: List<ArtifactConfigurer>,
     compositeRepository: CompositeRepository,
-    repositoryClient: RepositoryClient
+    repositoryClient: RepositoryClient,
+    projectClient: ProjectClient
 ) {
 
     init {
         Companion.artifactConfigurers = artifactConfigurers
         Companion.compositeRepository = compositeRepository
         Companion.repositoryClient = repositoryClient
+        Companion.projectClient = projectClient
         require(artifactConfigurers.isNotEmpty()) { "No ArtifactConfigurer found!" }
         artifactConfigurers.forEach {
             artifactConfigurerMap[it.getRepositoryType()] = it
@@ -73,6 +80,7 @@ class ArtifactContextHolder(
         private lateinit var artifactConfigurers: List<ArtifactConfigurer>
         private lateinit var compositeRepository: CompositeRepository
         private lateinit var repositoryClient: RepositoryClient
+        private lateinit var projectClient: ProjectClient
 
         private val artifactConfigurerMap = mutableMapOf<RepositoryType, ArtifactConfigurer>()
         private val repositoryDetailCache = CacheBuilder.newBuilder()
@@ -121,6 +129,16 @@ class ArtifactContextHolder(
          */
         fun getArtifactInfo(): ArtifactInfo? {
             val artifactInfo = HttpContextHolder.getRequestOrNull()?.getAttribute(ARTIFACT_INFO_KEY) ?: return null
+            require(artifactInfo is ArtifactInfo)
+            return artifactInfo
+        }
+
+        /**
+         * 根据指定请求获取对应ArtifactInfo信息
+         * 如果请求为空，则返回`null`
+         */
+        fun getArtifactInfo(request: HttpServletRequest): ArtifactInfo? {
+            val artifactInfo = request.getAttribute(ARTIFACT_INFO_KEY) ?: return null
             require(artifactInfo is ArtifactInfo)
             return artifactInfo
         }
@@ -177,9 +195,64 @@ class ArtifactContextHolder(
         private fun queryRepoDetail(repositoryId: RepositoryId): RepositoryDetail {
             with(repositoryId) {
                 val repoType = getCurrentArtifactConfigurer().getRepositoryType().name
+                publicGlobalRepoHandler(projectId, repoName, repoType)
                 val response = repositoryClient.getRepoDetail(projectId, repoName, repoType)
-                return response.data ?: throw RepoNotFoundException(repoName)
+                return response.data ?: queryRepoDetailFormExtraRepoType(projectId, repoName)
             }
+        }
+
+        /**
+         * 当主仓库类型查不到，则从其他支持类型获取
+         * 当对应仓库不存在，抛[RepoNotFoundException]异常
+         */
+        fun queryRepoDetailFormExtraRepoType(projectId: String, repoName: String): RepositoryDetail {
+            val repoTypeList = getCurrentArtifactConfigurer().getRepositoryTypes()
+            var otherRepo: RepositoryDetail? = null
+            repoTypeList.forEach {
+                val repo = repositoryClient.getRepoDetail(projectId, repoName, it.name).data
+                if (repo != null) {
+                    otherRepo = repo
+                    return@forEach
+                }
+            }
+            return otherRepo ?: throw RepoNotFoundException(repoName)
+        }
+
+        /**
+         * 如果[PUBLIC_GLOBAL_PROJECT]项目下[PUBLIC_VULDB_REPO]仓库不存在则创建相应的项目和仓库
+         */
+        private fun publicGlobalRepoHandler(projectId: String, repoName: String, repoType: String) {
+            if (projectId == PUBLIC_GLOBAL_PROJECT &&
+                repoName == PUBLIC_VULDB_REPO &&
+                repoType == RepositoryType.GENERIC.name
+            ) {
+                checkProjectExists(projectId)
+                checkRepoExists(projectId, repoName, repoType)
+            }
+        }
+
+        private fun checkProjectExists(projectId: String) {
+            projectClient.getProjectInfo(projectId).data ?: projectClient.createProject(
+                ProjectCreateRequest(
+                    name = PUBLIC_GLOBAL_PROJECT,
+                    displayName = PUBLIC_GLOBAL_PROJECT,
+                    description = PUBLIC_GLOBAL_PROJECT
+                )
+            )
+        }
+
+        private fun checkRepoExists(projectId: String, repoName: String, repoType: String) {
+            repositoryClient.getRepoDetail(projectId, repoName, repoType).data
+                ?: repositoryClient.createRepo(
+                    RepoCreateRequest(
+                        projectId = projectId,
+                        name = repoName,
+                        type = RepositoryType.valueOf(repoType),
+                        category = RepositoryCategory.LOCAL,
+                        public = false,
+                        description = repoName
+                    )
+                )
         }
     }
 

@@ -7,6 +7,7 @@ import com.tencent.bkrepo.common.artifact.constant.PUBLIC_PROXY_PROJECT
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.devops.DEPLOY_CANWAY
 import com.tencent.bkrepo.common.devops.client.DevopsProjectClient
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.repository.dao.RepositoryDao
 import com.tencent.bkrepo.repository.model.TRepository
@@ -111,6 +112,7 @@ class SoftwareRepositoryServiceImpl(
 
     companion object {
         private val logger: Logger = LoggerFactory.getLogger(SoftwareRepositoryServiceImpl::class.java)
+
         private fun convertToInfo(tRepository: TRepository?): RepositoryInfo? {
             return tRepository?.let {
                 RepositoryInfo(

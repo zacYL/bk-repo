@@ -30,6 +30,7 @@ package com.tencent.bkrepo.scanner.task.iterator
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.model.Rule
+import com.tencent.bkrepo.scanner.pojo.ScanSchemeType
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.PackageClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
@@ -42,6 +43,7 @@ import com.tencent.bkrepo.scanner.pojo.ScanPlan
 import com.tencent.bkrepo.scanner.pojo.ScanTask
 import com.tencent.bkrepo.scanner.pojo.rule.RuleArtifact
 import com.tencent.bkrepo.scanner.utils.Request
+import com.tencent.bkrepo.scanner.utils.RuleUtil
 import org.springframework.stereotype.Component
 
 /**
@@ -70,10 +72,11 @@ class IteratorManager(
 
         // TODO projectClient添加分页获取project接口后这边再取消rule需要projectId条件的限制
         require(rule is Rule.NestedRule)
-        val projectIds = fieldValueFromRule(rule, NodeDetail::projectId.name)
+        val projectIds = RuleUtil.getProjectIds(rule)
         val projectIdIterator = projectIds.iterator()
 
-        val isPackageScanPlanType = scanTask.scanPlan != null && scanTask.scanPlan!!.type != RepositoryType.GENERIC.name
+        val isPackageScanPlanType = scanTask.scanPlan != null &&
+            ScanSchemeType.ofRepositoryType(scanTask.scanPlan!!.type)!= RepositoryType.GENERIC
         return if (isPackageScanPlanType || packageRule(rule)) {
             PackageIterator(packageClient, nodeClient, PackageIterator.PackageIteratePosition(rule))
         } else {
@@ -82,11 +85,11 @@ class IteratorManager(
     }
 
     private fun modifyRule(scanPlan: ScanPlan, rule: Rule.NestedRule): Rule {
-        if (fieldValueFromRule(rule, NodeDetail::repoName.name).isEmpty()) {
-            // 扫描所有仓库
-            addRepoNames(rule, scanPlan.projectId!!, scanPlan.type!!)
-        }
         if (scanPlan.type == RepositoryType.GENERIC.name) {
+            if (RuleUtil.getRepoNames(rule).isEmpty()) {
+                // 未指定要扫描的仓库时限制只扫描GENERIC类型仓库
+                addRepoNames(rule, scanPlan.projectId!!)
+            }
             // 限制待扫描文件后缀
             return addMobilePackageRule(rule)
         }
@@ -113,34 +116,9 @@ class IteratorManager(
         return Rule.NestedRule(mutableListOf(rule, mobilePackageRule), Rule.NestedRule.RelationType.AND)
     }
 
-    /**
-     * 在nestedRule第一层找需要字段的值
-     * 如果指定要扫描的projectId或repoName，必须relation为AND，在nestedRule里面的第一层rule包含对应的匹配条件
-     */
-    @Suppress("UNCHECKED_CAST")
-    private fun fieldValueFromRule(rule: Rule.NestedRule, field: String): List<String> {
-        val fieldValues = ArrayList<String>()
-        if (rule.relation != Rule.NestedRule.RelationType.AND) {
-            return emptyList()
-        } else {
-            rule.rules
-                .asSequence()
-                .filterIsInstance(Rule.QueryRule::class.java)
-                .filter { it.field == field }
-                .forEach {
-                    if (it.operation == OperationType.EQ) {
-                        fieldValues.add(it.value as String)
-                    } else if (it.operation == OperationType.IN) {
-                        fieldValues.addAll(it.value as Collection<String>)
-                    }
-                }
-        }
-        return fieldValues
-    }
-
-    private fun addRepoNames(rule: Rule, projectId: String, repoType: String): Rule {
+    private fun addRepoNames(rule: Rule, projectId: String): Rule {
         val repoNames = Request
-            .request { repositoryClient.listRepo(projectId, null, repoType) }
+            .request { repositoryClient.listRepo(projectId, null, RepositoryType.GENERIC.name) }
             ?.map { it.name }
             ?: return rule
 

@@ -29,7 +29,7 @@ data class BkDepartment(
     val level: Int,
     val parent: Int?,
     val name: String,
-    val is_deleted: Boolean,
+    val is_deleted: Boolean?,
     val rght: Int,
     val lft: Int,
     val order: Int,

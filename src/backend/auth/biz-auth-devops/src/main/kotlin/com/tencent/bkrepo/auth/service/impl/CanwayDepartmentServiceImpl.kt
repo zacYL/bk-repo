@@ -1,77 +1,52 @@
 package com.tencent.bkrepo.auth.service.impl
 
-import com.tencent.bkrepo.auth.pojo.BkDepartmentUser
 import com.tencent.bkrepo.auth.service.DepartmentService
 import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
-import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.devops.DEPLOY_CANWAY
-import com.tencent.bkrepo.common.devops.conf.DevopsConf
+import com.tencent.bkrepo.common.devops.client.BkClient
 import com.tencent.bkrepo.common.devops.pojo.BkCertificate
 import com.tencent.bkrepo.common.devops.pojo.BkChildrenDepartment
-import com.tencent.bkrepo.common.devops.pojo.BkDepartment
-import com.tencent.bkrepo.common.devops.pojo.BkPage
-import com.tencent.bkrepo.common.devops.pojo.BkParentDepartment
-import com.tencent.bkrepo.common.devops.pojo.BkResponse
+import com.tencent.bkrepo.common.devops.pojo.BkDepartmentUser
 import com.tencent.bkrepo.common.devops.pojo.CertType
-import com.tencent.bkrepo.common.devops.util.http.SimpleHttpUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Service
 
 @Service
 @ConditionalOnProperty(prefix = "auth", name = ["realm"], havingValue = DEPLOY_CANWAY, matchIfMissing = true)
 class CanwayDepartmentServiceImpl(
-    devopsConf: DevopsConf
+    private val bkClient: BkClient
 ) : DepartmentService {
 
-    private val paasHost = devopsConf.bkHost
-    private val bkAppCode = devopsConf.appCode
-    private val bkAppSecret = devopsConf.appSecret
-
     override fun listDepartmentById(username: String?, departmentId: Int?): List<BkChildrenDepartment>? {
-        val bkCertificate = getBkCertificate(username)
-        if (departmentId != null) {
-            val json = String.format(
-                jsonFormat,
-                bkAppCode,
-                bkAppSecret,
-                bkCertificate.certType.value,
-                bkCertificate.value,
-                departmentId
+        return if (departmentId == null) {
+            // 获取根部门
+            bkClient.listDepartments(
+                bkUsername = username,
+                bkToken = getBkToken(),
+                lookupField = "level",
+                exactLookups = "0"
             )
-            val requestUrl = "${paasHost.removeSuffix("/")}$paasBatchDepartmentUrl"
-            val responseContent = SimpleHttpUtils.doPost(requestUrl, json).content
-            val departments = responseContent.readJsonString<BkResponse<List<BkParentDepartment>>>()
-            return departments.data?.first()?.children
         } else {
-            val company = getCompanyId(bkCertificate) ?: return null
-            return listOf(company).map { transferCanwayChildrenDepartment(company) }
+            // 获取[departmentId]的子部门
+            bkClient.listDepartments(
+                bkUsername = username,
+                bkToken = getBkToken(),
+                lookupField = "parent",
+                exactLookups = departmentId.toString()
+            )
         }
     }
 
-    override fun listDepartmentByIds(username: String?, departmentIds: List<Int>): List<BkChildrenDepartment> {
-        val bkCertificate = getBkCertificate(username)
-        val list = mutableListOf<BkChildrenDepartment>()
-        for (departmentId in departmentIds) {
-            val url = "${paasHost.removeSuffix("/")}$paasListDepartmentUrl"
-            val requestUrl = String.format(
-                paasListDepartmentRequest, url, bkAppCode, bkAppSecret,
-                bkCertificate.certType.value, bkCertificate.value,
-                departmentId, listDepartmentField
-            )
-            val responseContent = SimpleHttpUtils.doGet(requestUrl).content
-            val department = responseContent.readJsonString<BkResponse<BkPage<BkDepartment>>>().data?.results?.first()
-                ?: throw ErrorCodeException(
-                    CommonMessageCode.RESOURCE_NOT_FOUND,
-                    "Can not load departmentId: $departmentId"
-                )
-            list.add(BkChildrenDepartment(department.id.toString(), department.name, null, null, null))
-        }
-        return list
+    override fun listDepartmentByIds(username: String?, departmentIds: List<Int>): List<BkChildrenDepartment>? {
+        return bkClient.listDepartments(
+            bkUsername = username,
+            bkToken = getBkToken(),
+            lookupField = "id",
+            exactLookups = departmentIds.joinToString(",")
+        )
     }
 
     /**
@@ -97,61 +72,23 @@ class CanwayDepartmentServiceImpl(
         )
     }
 
-    fun transferCanwayChildrenDepartment(department: BkDepartment): BkChildrenDepartment {
-        return BkChildrenDepartment(
-            department.id.toString(),
-            department.name,
-            department.order,
-            department.parent,
-            null
-        )
+    fun getBkToken(): String? {
+        val request = HttpContextHolder.getRequest()
+        val cookies = request.cookies
+        if (cookies != null) {
+            for (cookie in cookies) {
+                if (cookie.name == CertType.TOKEN.value) return cookie.value
+            }
+        }
+        return null
     }
 
-    fun getCompanyId(bkCertificate: BkCertificate): BkDepartment? {
-        // 查出总公司id
-        val url = "${paasHost.removeSuffix("/")}$paasListDepartmentUrl"
-        val requestUrl = String.format(
-            paasDepartmentApi,
-            url,
-            bkAppCode,
-            bkAppSecret,
-            bkCertificate.certType.value,
-            bkCertificate.value
+    override fun getUsersByDepartmentId(username: String?, departmentId: Int): List<BkDepartmentUser>? {
+        return bkClient.listDepartmentProfiles(
+            bkUsername = username,
+            bkToken = getBkToken(),
+            id = departmentId.toString(),
+            recursive = true
         )
-        val responseContent = SimpleHttpUtils.doGet(requestUrl).content
-        return responseContent.readJsonString<BkResponse<BkPage<BkDepartment>>>().data?.results?.first()
-    }
-
-    override fun getUsersByDepartmentId(username: String?, departmentId: Int): Set<BkDepartmentUser>? {
-        val bkCertificate = getBkCertificate(username)
-        val uri = String.format(
-            getUsersByDepartmentIdApi,
-            bkAppCode,
-            bkAppSecret,
-            bkCertificate.certType.value,
-            bkCertificate.value,
-            departmentId
-        )
-        val requestUrl = "${paasHost.removeSuffix("/")}$uri"
-        val responseContent = SimpleHttpUtils.doGet(requestUrl).content
-        return responseContent.readJsonString<BkResponse<Set<BkDepartmentUser>>>().data
-    }
-
-    companion object {
-        val logger: Logger = LoggerFactory.getLogger(CanwayDepartmentServiceImpl::class.java)
-        const val jsonFormat = "{\n" +
-            "    \"bk_app_code\":\"%s\",\n" +
-            "    \"bk_app_secret\":\"%s\",\n" +
-            "    \"%s\":\"%s\",\n" +
-            "    \"id_list\": [%d]\n" +
-            "}"
-        const val paasListDepartmentUrl = "/api/c/compapi/v2/usermanage/list_departments/"
-        const val paasBatchDepartmentUrl = "/api/c/compapi/v2/usermanage/department_batch/"
-        const val paasDepartmentApi = "%s?bk_app_code=%s&bk_app_secret=%s&%s=%s&page=1&page_size=1"
-        const val paasListDepartmentRequest =
-            "%s?bk_app_code=%s&bk_app_secret=%s&%s=%s&exact_lookups=%d&lookup_field=%s&page=1&page_size=1"
-        const val listDepartmentField = "id"
-        const val getUsersByDepartmentIdApi =
-            "/api/c/compapi/v2/usermanage/list_department_profiles/?bk_app_code=%s&bk_app_secret=%s&%s=%s&id=%d&recursive=true&no_page=true"
     }
 }

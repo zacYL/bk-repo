@@ -259,23 +259,6 @@ class PackageServiceImpl(
             tPackage.versionTag = mergeVersionTag(tPackage.versionTag, versionTag)
             tPackage.historyVersion = tPackage.historyVersion.toMutableSet().apply { add(versionName) }
             packageDao.save(tPackage)
-            // 保存版本上传记录
-            val oldRecord = packageUploadsDao.findByVersion(projectId, repoName, packageKey, versionName)
-            oldRecord?.apply {
-                date = LocalDate.now().toString()
-                userId = createdBy
-            }
-            packageUploadsDao.save(
-                oldRecord ?: TPackageUploadRecord(
-                    projectId = projectId,
-                    repoName = repoName,
-                    key = packageKey,
-                    name = packageName,
-                    version = versionName,
-                    date = LocalDate.now().toString(),
-                    userId = createdBy
-                )
-            )
 
             if (!isOverride) {
                 publishEvent((buildCreatedEvent(request, realIpAddress ?: HttpContextHolder.getClientAddress())))
@@ -427,12 +410,6 @@ class PackageServiceImpl(
         val userId = SecurityUtils.getUserId()
         if (HttpContextHolder.getRequest().method.equals("get", ignoreCase = true)) {
             updateRecentlyUseDate(projectId, repoName, packageKey, versionName)
-            try {
-                val downloadRecord = PackageDownloadRecord(projectId, repoName, packageKey, versionName, userId)
-                packageDownloadsService.record(downloadRecord)
-            } catch (e: Exception) {
-                logger.warn("Failed to record package download record", e)
-            }
             publishEvent(
                 PackageEventFactory.buildDownloadEvent(
                     projectId = projectId,

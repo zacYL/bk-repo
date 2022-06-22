@@ -1,7 +1,7 @@
 <template>
-    <div class="pt10 pb10 scan-task-container">
+    <div class="p20 scan-task-container">
         <div class="mb10 flex-end-center">
-            <bk-button class="mr20" :theme="isfiltering ? 'primary' : 'default'" @click="showFilterForm">筛选</bk-button>
+            <bk-button :theme="isfiltering ? 'primary' : 'default'" @click="showFilterForm">筛选</bk-button>
         </div>
         <bk-table
             height="calc(100% - 80px)"
@@ -163,7 +163,6 @@
                 this.handlerPaginationChange()
             },
             showArtiReport ({ recordId, name }) {
-                debugger
                 this.$router.push({
                     name: 'artiReport',
                     params: {

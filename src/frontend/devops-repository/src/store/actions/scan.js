@@ -235,13 +235,13 @@ export default {
         return Vue.prototype.$ajax.post(`/scanner/api/scan/quality/${id}`, body)
     },
     // 查询任务列表
-    getScanTaskList (_, { projectId, id, triggerType, namePrefix, current = 1, limit = 20 }) {
+    getScanTaskList (_, { projectId, planId, triggerType, namePrefix, current = 1, limit = 20 }) {
         return Vue.prototype.$ajax.get(
             `${prefix}/tasks`,
             {
                 params: {
                     projectId,
-                    planId: id,
+                    planId,
                     triggerType,
                     namePrefix,
                     pageNumber: current,
@@ -268,7 +268,7 @@ export default {
     },
     // 任务制品列表
     stopScanTask (_, { projectId, taskId }) {
-        return Vue.prototype.$ajax.get(
+        return Vue.prototype.$ajax.post(
             `${prefix}/${projectId}/tasks/${taskId}/stop`
         )
     },

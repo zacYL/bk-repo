@@ -195,6 +195,10 @@ class ScanTaskServiceImpl(
         }
     }
 
+    override fun resultDetail(request: ArtifactLicensesDetailRequest): Page<FileLicensesResultDetail> {
+        return resultDetail(request, planArtifactLatestSubScanTaskDao)
+    }
+
     private fun resultDetail(
         request: ArtifactVulnerabilityRequest,
         subScanTaskDao: AbsSubScanTaskDao<*>
@@ -217,9 +221,26 @@ class ScanTaskServiceImpl(
         }
     }
 
-    override fun resultDetail(request: ArtifactLicensesDetailRequest): Page<FileLicensesResultDetail> {
+
+    override fun planLicensesArtifact(projectId: String, subScanTaskId: String): FileLicensesResultOverview {
+        return planLicensesArtifact(subScanTaskId, planArtifactLatestSubScanTaskDao)
+    }
+
+    override fun archiveSubtaskResultDetail(request: ArtifactLicensesDetailRequest): Page<FileLicensesResultDetail> {
+        return resultDetail(request, archiveSubScanTaskDao)
+    }
+
+    override fun subtaskLicenseOverview(subtaskId: String): FileLicensesResultOverview {
+        return planLicensesArtifact(subtaskId, archiveSubScanTaskDao)
+    }
+
+
+    private fun resultDetail(
+        request: ArtifactLicensesDetailRequest,
+        subScanTaskDao: AbsSubScanTaskDao<*>
+    ): Page<FileLicensesResultDetail> {
         with(request) {
-            val subtask = planArtifactLatestSubScanTaskDao.findById(subScanTaskId!!)
+            val subtask = subScanTaskDao.findById(subScanTaskId!!)
                 ?: throw ErrorCodeException(CommonMessageCode.RESOURCE_NOT_FOUND, subScanTaskId!!)
             permissionCheckHandler.checkSubtaskPermission(subtask, PermissionAction.READ)
             val scanner = scannerService.get(subtask.scanner)
@@ -229,14 +250,18 @@ class ScanTaskServiceImpl(
                 subtask.credentialsKey,
                 subtask.sha256,
                 scannerService.get(subtask.scanner),
-                arguments)
+                arguments
+            )
             return ScanLicenseConverter.convert(detailReport, subtask.scannerType, reportType, pageNumber, pageSize)
         }
     }
 
-    override fun planLicensesArtifact(projectId: String, subScanTaskId: String): FileLicensesResultOverview {
-        val subtask = planArtifactLatestSubScanTaskDao.find(projectId, subScanTaskId)
-            ?: throw NotFoundException(CommonMessageCode.RESOURCE_NOT_FOUND, projectId, subScanTaskId)
+    private fun planLicensesArtifact(
+        subScanTaskId: String,
+        subtaskDao: AbsSubScanTaskDao<*>
+    ): FileLicensesResultOverview {
+        val subtask = subtaskDao.findById(subScanTaskId)
+            ?: throw NotFoundException(CommonMessageCode.RESOURCE_NOT_FOUND, subScanTaskId)
         permissionCheckHandler.checkSubtaskPermission(subtask, PermissionAction.READ)
         return ScanLicenseConverter.convert(subtask)
     }

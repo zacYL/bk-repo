@@ -1,11 +1,20 @@
 spring:
   application:
-    name: ${service.prefix}${service.name}${service.suffix}
+    name: ${service.name}
     desc: Scanner Service
   # 上报的扫描结果比较大的时候需要配置
   servlet:
     multipart:
-      max-request-size: 100MB  
+      max-request-size: 100MB
+  cloud:
+    stream:
+      function:
+        definition: artifactEvent
+      bindings:
+        artifactEvent-in-0:
+          group: scanner
+          destination: artifactEvent
+          binder: pulsar
 server:
   port: __BK_REPO_SCANNER_PORT__
 logging:

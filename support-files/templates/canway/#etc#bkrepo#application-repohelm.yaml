@@ -1,7 +1,16 @@
 spring:
   application:
-    name: ${service.prefix}${service.name}${service.suffix}
+    name: ${service.name}
     desc: Helm Service
+  cloud:
+    stream:
+      function:
+        definition: remoteRepo
+      bindings:
+        remoteRepo-in-0:
+          destination: bkrepo_artifact_repo
+          group: bkrepo_sub
+          binder: pulsar
 server:
   port: __BK_REPO_HELM_PORT__
 logging:

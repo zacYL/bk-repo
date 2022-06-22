@@ -1,6 +1,6 @@
 spring:
   application:
-    name: ${service.prefix}${service.name}${service.suffix}
+    name: ${service.name}
     desc: Npm Service
 server:
   port: __BK_REPO_NPM_PORT__

@@ -1,6 +1,6 @@
 spring:
   application:
-    name: ${service.prefix}${service.name}${service.suffix}
+    name: ${service.name}
     desc: Generic Service
 server:
   port: __BK_REPO_GENERIC_PORT__
@@ -10,3 +10,6 @@ service:
   name: generic
 generic:
   domain: ${cluster.self.url}/generic
+  delta:
+    projectId: bkrepo-internal
+    repoName: sign

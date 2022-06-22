@@ -138,4 +138,14 @@ class UserScanReportController(private val scanTaskService: ScanTaskService) {
     ): Response<FileLicensesResultOverview> {
         return ResponseBuilder.success(scanTaskService.planLicensesArtifact(projectId, subScanTaskId))
     }
+
+    @ApiOperation("制品详情--许可数据")
+    @GetMapping("/license/reports/{subScanTaskId}")
+    fun artifactLicenseReport(
+        @ApiParam(value = "扫描记录id") @PathVariable subScanTaskId: String,
+        request: ArtifactLicensesDetailRequest
+    ): Response<Page<FileLicensesResultDetail>> {
+        request.subScanTaskId = subScanTaskId
+        return ResponseBuilder.success(scanTaskService.archiveSubtaskResultDetail(request))
+    }
 }

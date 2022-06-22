@@ -56,6 +56,7 @@ interface ScanTaskService {
      * 分页获取扫描任务
      */
     fun tasks(scanTaskQuery: ScanTaskQuery, pageLimit: PageLimit): Page<ScanTask>
+
     /**
      * 获取属于某个扫描任务的扫描子任务结果预览
      *
@@ -131,4 +132,18 @@ interface ScanTaskService {
      * @return 制品扫描结果预览信息
      */
     fun planLicensesArtifact(projectId: String, subScanTaskId: String): FileLicensesResultOverview
+
+    /**
+     * 获取属于某个扫描任务的扫描子任务许可扫描报告详情
+     */
+    fun archiveSubtaskResultDetail(request: ArtifactLicensesDetailRequest): Page<FileLicensesResultDetail>
+
+    /**
+     * 获取属于某个扫描任务的扫描子任务结果预览
+     *
+     * @param subtaskId 子扫描任务id
+     *
+     * @return 制品扫描结果预览信息
+     */
+    fun subtaskLicenseOverview(subtaskId: String): FileLicensesResultOverview
 }

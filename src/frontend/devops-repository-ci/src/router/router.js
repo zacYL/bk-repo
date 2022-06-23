@@ -1,7 +1,7 @@
 const repoPreview = () => import('@repository/views/preview')
 const scanTask = () => import('@repository/views/preview/scanTask')
 
-const repoHome = () => import('@repository/views')
+const repoHome = () => import('@/views')
 const repoList = () => import('@/views/repoList')
 const repoConfig = () => import('@/views/repoConfig')
 const repoToken = () => import('@repository/views/repoToken')

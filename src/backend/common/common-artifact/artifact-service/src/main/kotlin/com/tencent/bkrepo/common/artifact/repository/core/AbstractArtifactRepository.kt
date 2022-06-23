@@ -27,7 +27,9 @@
 
 package com.tencent.bkrepo.common.artifact.repository.core
 
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
+import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
 import com.tencent.bkrepo.common.artifact.constant.PARAM_DOWNLOAD
 import com.tencent.bkrepo.common.artifact.event.ArtifactDownloadedEvent
 import com.tencent.bkrepo.common.artifact.event.ArtifactResponseEvent
@@ -36,7 +38,9 @@ import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.common.artifact.event.packages.VersionDownloadEvent
 import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
 import com.tencent.bkrepo.common.artifact.exception.ArtifactResponseException
+import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
+import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.metrics.ArtifactMetrics
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
@@ -194,9 +198,30 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
      * 下载前回调
      */
     open fun onDownloadBefore(context: ArtifactDownloadContext) {
+        if (isForbidden(context)) {
+            logger.info("artifact[${context.artifactInfo.getArtifactFullPath()}] is forbid")
+            throw ErrorCodeException(ArtifactMessageCode.ARTIFACT_FORBIDDEN, context.artifactInfo.getArtifactFullPath())
+        }
+
         // 控制浏览器直接下载，或打开预览
         context.useDisposition = context.request.getParameter(PARAM_DOWNLOAD)?.toBoolean() ?: false
         artifactMetrics.downloadingCount.incrementAndGet()
+    }
+
+    /**
+     * 制品是否禁用
+     */
+    private fun isForbidden(context: ArtifactDownloadContext): Boolean {
+        with(context.artifactInfo) {
+            val node = nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data
+                ?: throw NodeNotFoundException(getArtifactFullPath())
+            node.nodeMetadata.forEach {
+                if (it.key == FORBID_STATUS && it.value == true) {
+                    return true
+                }
+            }
+            return false
+        }
     }
 
     /**

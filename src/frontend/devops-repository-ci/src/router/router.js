@@ -1,5 +1,7 @@
-const repoHome = () => import('@/views')
+const repoPreview = () => import('@repository/views/preview')
+const scanTask = () => import('@repository/views/preview/scanTask')
 
+const repoHome = () => import('@repository/views')
 const repoList = () => import('@/views/repoList')
 const repoConfig = () => import('@/views/repoConfig')
 const repoToken = () => import('@repository/views/repoToken')
@@ -25,6 +27,16 @@ const startScan = () => import('@repository/views/repoScan/startScan')
 const securityConfig = () => import('@repository/views/repoScan/securityConfig')
 
 const routes = [
+    {
+        path: '/ui/:projectId/preview',
+        component: repoPreview,
+        children: [
+            {
+                path: 'scanTask/:planId/:taskId',
+                component: scanTask
+            }
+        ]
+    },
     {
         path: '/ui/:projectId',
         component: repoHome,

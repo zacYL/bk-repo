@@ -16,7 +16,7 @@ import com.tencent.bkrepo.common.cpack.service.NotifyService
 import com.tencent.bkrepo.common.devops.conf.DevopsConf
 import com.tencent.bkrepo.common.devops.pojo.BkMailMessage
 import com.tencent.bkrepo.common.devops.pojo.DevopsMailMessage
-import com.tencent.bkrepo.common.devops.util.http.CanwayHttpUtils
+import com.tencent.bkrepo.common.devops.util.http.SimpleHttpUtils
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.TemporaryTokenClient
@@ -203,7 +203,7 @@ class MailServiceImpl(
             )
         )
         val requestUrl = "${devopsConf.bkHost.removeSuffix("/")}$bkMailApi"
-        CanwayHttpUtils.doPost(requestUrl, bkMailMessage.toJsonString()).content
+        SimpleHttpUtils.doPost(requestUrl, bkMailMessage.toJsonString()).content
     }
 
     private fun devopsMailMessage(sender: String, file: FileShareInfo, receivers: List<String>, expireDays: String?) {
@@ -226,7 +226,7 @@ class MailServiceImpl(
             )
         )
         val requestUrl = "${devopsConf.devopsHost.removeSuffix("/")}$devopsMailApi"
-        CanwayHttpUtils.doPost(requestUrl, devopsMailMessage.toJsonString()).content
+        SimpleHttpUtils.doPost(requestUrl, devopsMailMessage.toJsonString()).content
     }
 
     private fun resolveArtifactInfo(content: String): ArtifactInfo {

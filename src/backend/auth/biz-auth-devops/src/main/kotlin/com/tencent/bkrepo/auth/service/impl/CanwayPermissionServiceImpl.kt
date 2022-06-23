@@ -32,7 +32,7 @@ import com.tencent.bkrepo.common.devops.conf.DevopsConf
 import com.tencent.bkrepo.common.devops.enums.InstanceType
 import com.tencent.bkrepo.common.devops.pojo.response.CanwayResponse
 import com.tencent.bkrepo.common.devops.service.BkUserService
-import com.tencent.bkrepo.common.devops.util.http.CanwayHttpUtils
+import com.tencent.bkrepo.common.devops.util.http.SimpleHttpUtils
 import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.repository.api.ProjectClient
@@ -413,7 +413,7 @@ class CanwayPermissionServiceImpl(
     private fun isCIProjectUser(userId: String, projectId: String): Boolean {
         val requestUrl = getPermissionUrl(String.format(ciUsersByProjectApi, projectId))
         val users = try {
-            val responseContent = CanwayHttpUtils.doGet(requestUrl).content
+            val responseContent = SimpleHttpUtils.doGet(requestUrl).content
             responseContent.readJsonString<CanwayResponse<List<String>>>().data
         } catch (e: Exception) {
             logger.error("query CI project users failed: [$requestUrl]", e)

@@ -37,6 +37,7 @@ import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.devops.pojo.BkChildrenDepartment
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import io.swagger.annotations.ApiOperation
+import io.swagger.annotations.ApiParam
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -56,7 +57,9 @@ class UserDepartmentController {
     @GetMapping("/list")
     fun listDepartment(
         @RequestParam username: String?,
-        @RequestParam departmentId: Int?): Response<List<BkChildrenDepartment>?> {
+        @ApiParam("部门ID, 不传默认返回所有根部门")
+        @RequestParam departmentId: Int?
+    ): Response<List<BkChildrenDepartment>?> {
         return ResponseBuilder.success(departmentService.listDepartmentById(username, departmentId))
     }
 
@@ -64,7 +67,8 @@ class UserDepartmentController {
     @PostMapping("/listByIds")
     fun listDepartmentByIds(
         @RequestParam username: String?,
-        @RequestBody departmentIds: List<Int>): Response<Any?> {
+        @RequestBody departmentIds: List<Int>
+    ): Response<List<BkChildrenDepartment>?> {
         return ResponseBuilder.success(departmentService.listDepartmentByIds(username, departmentIds))
     }
 }

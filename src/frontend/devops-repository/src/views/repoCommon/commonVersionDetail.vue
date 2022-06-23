@@ -1,7 +1,8 @@
 <template>
     <bk-tab class="common-version-container" type="unborder-card" :active.sync="tabName" v-bkloading="{ isLoading }">
         <template #setting>
-            <bk-button v-if="repoType !== 'docker'" outline class="mr10" @click="$emit('download')">下载</bk-button>
+            <bk-button v-if="!(detail.metadata && detail.metadata.forbidStatus) && repoType !== 'docker'"
+                outline class="mr10" @click="$emit('download')">下载</bk-button>
             <operation-list class="mr20"
                 :list="operationBtns">
                 <bk-button @click.stop="() => {}" icon="ellipsis"></bk-button>
@@ -11,8 +12,8 @@
             <div class="version-base-info base-info display-block" :data-title="$t('baseInfo')">
                 <div class="package-name grid-item">
                     <label>制品名称</label>
-                    <span>
-                        <span>{{ packageName }}</span>
+                    <span class="flex-1 flex-align-center text-overflow">
+                        <span class="text-overflow" :title="packageName">{{ packageName }}</span>
                         <span v-if="detail.basic.groupId" class="ml5 repo-tag"> {{ detail.basic.groupId }} </span>
                     </span>
                 </div>
@@ -20,15 +21,19 @@
                     v-for="{ name, label, value } in detailInfoMap"
                     :key="name">
                     <label>{{ label }}</label>
-                    <span class="flex-1 text-overflow" :title="value">
-                        <span>{{ value }}</span>
+                    <span class="flex-1 flex-align-center text-overflow">
+                        <span class="text-overflow" :title="value">{{ value }}</span>
                         <template v-if="name === 'version'">
                             <span class="ml5 repo-tag"
                                 v-for="tag in detail.basic.stageTag"
                                 :key="tag">
                                 {{ tag }}
                             </span>
-                            <scan-tag v-if="repoType === 'maven'" class="ml10" :status="(detail.metadata || {}).scanStatus"></scan-tag>
+                            <scan-tag v-if="['maven'].includes(repoType)" class="ml10" :status="detail.metadata.scanStatus"></scan-tag>
+                            <forbid-tag class="ml10"
+                                v-if="detail.metadata.forbidStatus"
+                                v-bind="detail.metadata">
+                            </forbid-tag>
                         </template>
                     </span>
                 </div>
@@ -142,6 +147,7 @@
     import CodeArea from '@repository/components/CodeArea'
     import OperationList from '@repository/components/OperationList'
     import ScanTag from '@repository/views/repoScan/scanTag'
+    import forbidTag from '@repository/components/ForbidTag'
     import { mapState, mapActions } from 'vuex'
     import { convertFileSize, formatDate } from '@repository/utils'
     import repoGuideMixin from '@repository/views/repoCommon/repoGuideMixin'
@@ -150,7 +156,8 @@
         components: {
             CodeArea,
             OperationList,
-            ScanTag
+            ScanTag,
+            forbidTag
         },
         mixins: [repoGuideMixin],
         data () {
@@ -207,9 +214,15 @@
                     .map(item => ({ ...item, value: this.detail.basic[item.name] }))
             },
             operationBtns () {
+                const { basic, metadata } = this.detail
                 return [
-                    this.permission.edit && { clickEvent: () => this.$emit('tag'), label: '晋级', disabled: (this.detail.basic.stageTag || '').includes('@release') },
-                    this.repoType === 'maven' && { clickEvent: () => this.$emit('scan'), label: '安全扫描' },
+                    ...(!metadata.forbidStatus
+                        ? [
+                            this.permission.edit && { clickEvent: () => this.$emit('tag'), label: '晋级', disabled: (basic.stageTag || '').includes('@release') },
+                            ['maven'].includes(this.repoType) && { clickEvent: () => this.$emit('scan'), label: '安全扫描' }
+                        ]
+                        : []),
+                    { clickEvent: () => this.$emit('forbid'), label: metadata.forbidStatus ? '解除禁止' : '禁止使用' },
                     this.permission.delete && { clickEvent: () => this.$emit('delete'), label: this.$t('delete') }
                 ]
             }
@@ -286,6 +299,7 @@
             > label {
                 line-height: 40px;
                 flex-basis: 80px;
+                flex-shrink: 0;
                 background-color: var(--bgColor);
             }
         }

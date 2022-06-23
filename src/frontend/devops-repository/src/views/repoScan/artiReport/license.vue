@@ -25,77 +25,66 @@
                     :data-name="item.label">
                 </div>
             </div>
-            <div class="arti-leak">
-                <div style="color:var(--fontSubsidiaryColor);">漏洞数量统计</div><div></div>
-                <div class="status-sign"
-                    :class="id"
-                    v-for="[id, name] in Object.entries(leakLevelEnum)"
-                    :key="id"
-                    :data-name="`${name}漏洞：${segmentNumberThree(baseInfo[id.toLowerCase()])}`">
-                </div>
-            </div>
         </div>
-        <div class="leak-list display-block" data-title="漏洞列表">
-            <bk-button class="scan-btn" theme="default" @click="startScanSingleHandler">重新扫描</bk-button>
+        <div class="leak-list">
             <div class="flex-align-center">
                 <bk-input
                     class="w250"
-                    v-model.trim="filter.vulId"
+                    v-model.trim="filter.licenseId"
                     clearable
-                    placeholder="请输入漏洞ID, 按Enter键搜索"
+                    placeholder="请输入许可证名称, 按Enter键搜索"
                     right-icon="bk-icon icon-search"
                     @enter="handlerPaginationChange()"
                     @clear="handlerPaginationChange()">
                 </bk-input>
-                <bk-select
-                    class="ml10 w250"
-                    v-model="filter.severity"
-                    placeholder="漏洞等级"
-                    @change="handlerPaginationChange()">
-                    <bk-option v-for="[id, name] in Object.entries(leakLevelEnum)" :key="id" :id="id" :name="name"></bk-option>
-                </bk-select>
+                <div class="flex-1 flex-end-center">
+                    <bk-button theme="default" @click="startScanSingleHandler">重新扫描</bk-button>
+                </div>
             </div>
             <bk-table
                 class="mt10 leak-table"
-                height="calc(100% - 82px)"
-                :data="leakList"
+                height="calc(100% - 80px)"
+                :data="licenseList"
                 :outer-border="false"
                 :row-border="false"
-                row-key="leakKey"
+                row-key="licenseKey"
                 size="small">
                 <template #empty>
                     <empty-data
                         :is-loading="isLoading"
-                        :search="Boolean(filter.vulId || filter.severity)"
-                        title="未扫描到漏洞">
+                        :search="Boolean(filter.licenseId)"
+                        title="未扫描到证书信息">
                     </empty-data>
                 </template>
                 <bk-table-column type="expand" width="30">
                     <template #default="{ row }">
-                        <template v-if="row.path">
-                            <div class="leak-title">存在漏洞的文件路径</div>
-                            <div class="leak-tip">{{ row.path }}</div>
-                        </template>
-                        <div class="leak-title">{{ row.title }}</div>
-                        <div class="leak-tip">{{ row.description || '/' }}</div>
-                        <div class="leak-title">修复建议</div>
-                        <div class="leak-tip">{{ row.officialSolution || '/' }}</div>
-                        <template v-if="row.reference && row.reference.length">
-                            <div class="leak-title">相关资料</div>
-                            <div class="leak-tip" display v-for="url in row.reference" :key="url">
-                                <a :href="url" target="_blank">{{ url }}</a>
-                            </div>
-                        </template>
+                        <div class="leak-title">证书信息</div>
+                        <div class="leak-tip">
+                            <a :href="row.description" target="_blank">{{ row.description || '/' }}</a>
+                        </div>
                     </template>
                 </bk-table-column>
-                <bk-table-column label="漏洞ID" prop="vulId" show-overflow-tooltip></bk-table-column>
-                <bk-table-column label="漏洞等级">
+                <bk-table-column label="名称">
                     <template #default="{ row }">
-                        <div class="status-sign" :class="row.severity" :data-name="leakLevelEnum[row.severity]"></div>
+                        <span v-bk-tooltips="{ content: row.fullName, placements: ['top'] }">{{ row.licenseId }}</span>
                     </template>
                 </bk-table-column>
-                <bk-table-column label="所属依赖" prop="pkgName" show-overflow-tooltip></bk-table-column>
-                <bk-table-column label="引入版本" prop="installedVersion" show-overflow-tooltip></bk-table-column>
+                <bk-table-column label="依赖路径" prop="dependentPath"></bk-table-column>
+                <bk-table-column label="OSI认证" width="120">
+                    <template #default="{ row }">{{ row.description ? `${row.isOsiApproved ? '已' : '未'}认证` : '/' }}</template>
+                </bk-table-column>
+                <bk-table-column label="FSF开源" width="120">
+                    <template #default="{ row }">{{ row.description ? `${row.isFsfLibre ? '已' : '未'}开源` : '/' }}</template>
+                </bk-table-column>
+                <bk-table-column label="推荐使用" width="120">
+                    <template #default="{ row }">{{ row.description ? `${row.recommended ? '' : '不'}推荐` : '/' }}</template>
+                </bk-table-column>
+                <bk-table-column label="合规性" width="120">
+                    <template #default="{ row }">
+                        <span v-if="row.description" class="repo-tag" :class="row.compliance ? 'SUCCESS' : 'FAILED'">{{ `${row.compliance ? '' : '不'}合规` }}</span>
+                        <span v-else>/</span>
+                    </template>
+                </bk-table-column>
             </bk-table>
             <bk-pagination
                 class="p10"
@@ -115,12 +104,10 @@
 <script>
     import { mapActions } from 'vuex'
     import { formatDate, segmentNumberThree, formatDuration } from '@repository/utils'
-    import { leakLevelEnum } from '@repository/store/publicEnum'
     export default {
-        name: 'artiReport',
+        name: 'license',
         data () {
             return {
-                leakLevelEnum,
                 metaBase: [
                     { key: 'duration', label: '持续时间' },
                     { key: 'finishTime', label: '完成时间' },
@@ -131,7 +118,7 @@
                 ],
                 baseInfo: {},
                 isLoading: false,
-                leakList: [],
+                licenseList: [],
                 pagination: {
                     count: 0,
                     current: 1,
@@ -139,8 +126,7 @@
                     limitList: [10, 20, 40]
                 },
                 filter: {
-                    vulId: '',
-                    severity: ''
+                    licenseId: ''
                 }
             }
         },
@@ -153,28 +139,17 @@
             },
             recordId () {
                 return this.$route.params.recordId
-            },
-            qualityList () {
-                const data = this.baseInfo.scanQuality || {}
-                return Object.keys(leakLevelEnum).map(k => {
-                    if (k.toLowerCase() in data && data[k.toLowerCase()] !== null) {
-                        return {
-                            id: k,
-                            label: `${leakLevelEnum[k]}漏洞总数 ≦ ${data[k.toLowerCase()]}`
-                        }
-                    }
-                    return undefined
-                }).filter(Boolean)
             }
         },
         created () {
-            this.artiReportOverview({
+            this.licenseReportOverview({
                 projectId: this.projectId,
-                recordId: this.recordId
+                recordId: this.recordId,
+                taskId: this.$route.query.taskId,
+                viewType: this.$route.query.viewType
             }).then(res => {
                 this.baseInfo = {
                     ...res,
-                    highestLeakLevel: leakLevelEnum[res.highestLeakLevel],
                     duration: formatDuration(res.duration / 1000),
                     finishTime: formatDate(res.finishTime)
                 }
@@ -185,27 +160,27 @@
             segmentNumberThree,
             ...mapActions([
                 'startScanSingle',
-                'artiReportOverview',
-                'getLeakList'
+                'licenseReportOverview',
+                'getLicenseLeakList'
             ]),
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
                 this.pagination.current = current
                 this.pagination.limit = limit
-                this.getLeakListHandler()
+                this.getLicenselicenseListHandler()
             },
-            getLeakListHandler () {
+            getLicenselicenseListHandler () {
                 this.isLoading = true
-                return this.getLeakList({
+                return this.getLicenseLeakList({
                     projectId: this.projectId,
                     recordId: this.recordId,
-                    vulId: this.filter.vulId,
-                    severity: this.filter.severity,
+                    viewType: this.$route.query.viewType,
+                    licenseId: this.filter.licenseId,
                     current: this.pagination.current,
                     limit: this.pagination.limit
                 }).then(({ records, totalRecords }) => {
-                    this.leakList = records.map(v => ({
+                    this.licenseList = records.map(v => ({
                         ...v,
-                        leakKey: `${v.vulId}${v.pkgName}${v.installedVersion}`
+                        licenseKey: `${v.licenseId}${v.dependentPath}`
                     }))
                     this.pagination.count = totalRecords
                 }).finally(() => {
@@ -219,8 +194,7 @@
             reset () {
                 this.filter = {
                     show: true,
-                    vulId: '',
-                    severity: ''
+                    licenseId: ''
                 }
             },
             startScanSingleHandler () {
@@ -243,7 +217,7 @@
             },
             back () {
                 const { repoType, repoName } = this.baseInfo
-                const { scanName, path, packageKey, version } = this.$route.query
+                const { scanType, scanName, path, packageKey, version } = this.$route.query
                 this.$router.push({
                     name: scanName ? 'scanReport' : (this.packageKey ? 'commonPackage' : 'repoGeneric'),
                     params: {
@@ -251,7 +225,7 @@
                         [this.planId ? 'planId' : 'repoType']: this.planId || repoType
                     },
                     query: scanName
-                        ? { scanName }
+                        ? { scanType, scanName }
                         : (this.packageKey
                             ? { repoName, packageKey, version }
                             : { repoName, path })
@@ -304,14 +278,8 @@
     }
     .leak-list {
         flex: 1;
-        height: calc(100% - 35px);
+        height: 100%;
         margin-left: 20px;
-        margin-top: 35px;
-        .scan-btn {
-            position: absolute;
-            right: 0;
-            margin-top: -32px;
-        }
         .leak-title {
             padding: 5px 20px 0;
             font-weight: 800;

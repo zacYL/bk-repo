@@ -9,8 +9,8 @@ spring:
       bindings:
         artifactEvent-in-0:
           group: replication
-          destination: event-topic
-          binder: noop
+          destination: artifactEvent
+          binder: pulsar
 server:
   port: __BK_REPO_REPLICATION_PORT__
 logging:

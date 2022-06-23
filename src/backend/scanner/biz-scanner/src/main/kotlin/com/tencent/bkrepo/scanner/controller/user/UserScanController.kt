@@ -42,6 +42,7 @@ import com.tencent.bkrepo.scanner.pojo.request.PipelineScanRequest
 import com.tencent.bkrepo.scanner.pojo.request.ScanRequest
 import com.tencent.bkrepo.scanner.pojo.request.ScanTaskQuery
 import com.tencent.bkrepo.scanner.pojo.request.SubtaskInfoRequest
+import com.tencent.bkrepo.scanner.pojo.response.FileLicensesResultOverview
 import com.tencent.bkrepo.scanner.pojo.response.SubtaskInfo
 import com.tencent.bkrepo.scanner.pojo.response.SubtaskResultOverview
 import com.tencent.bkrepo.scanner.service.ScanService
@@ -92,6 +93,18 @@ class UserScanController @Autowired constructor(
         return ResponseBuilder.success(scanService.stopByPlanArtifactLatestSubtaskId(projectId, subtaskId))
     }
 
+    @ApiOperation("中止制品扫描")
+    @PostMapping("/{projectId}/tasks/{taskId}/stop")
+    @Permission(ResourceType.PROJECT, PermissionAction.MANAGE)
+    fun stopTask(
+        @ApiParam(value = "projectId")
+        @PathVariable projectId: String,
+        @ApiParam(value = "任务id")
+        @PathVariable("taskId") taskId: String
+    ): Response<Boolean> {
+        return ResponseBuilder.success(scanService.stopTask(projectId, taskId))
+    }
+
     @ApiOperation("获取扫描任务信息")
     @GetMapping("/tasks/{taskId}")
     fun task(@PathVariable("taskId") taskId: String): Response<ScanTask> {
@@ -122,5 +135,14 @@ class UserScanController @Autowired constructor(
         permissionCheckHandler.checkProjectPermission(subtaskInfoRequest.projectId, PermissionAction.MANAGE)
         subtaskInfoRequest.parentScanTaskId = taskId
         return ResponseBuilder.success(scanTaskService.subtasks(ScanPlanConverter.convert(subtaskInfoRequest)))
+    }
+
+    @ApiOperation("获取许可扫描子任务信息")
+    @GetMapping("/license/tasks/{taskId}/subtasks/{subtaskId}")
+    fun licenseSubtask(
+        @PathVariable("taskId") taskId: String,
+        @PathVariable("subtaskId") subtaskId: String
+    ): Response<FileLicensesResultOverview> {
+        return ResponseBuilder.success(scanTaskService.subtaskLicenseOverview(subtaskId))
     }
 }

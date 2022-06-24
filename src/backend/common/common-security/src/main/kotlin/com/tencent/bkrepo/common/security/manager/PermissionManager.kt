@@ -36,7 +36,6 @@ import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
 import com.tencent.bkrepo.auth.api.ServiceExternalPermissionResource
 import com.tencent.bkrepo.auth.api.ServicePermissionResource
-import com.tencent.bkrepo.auth.api.ServiceUserResource
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.auth.pojo.externalPermission.ExternalPermission
@@ -47,7 +46,6 @@ import com.tencent.bkrepo.common.api.constant.MediaTypes
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.api.util.toJsonString
-import com.tencent.bkrepo.common.artifact.constant.PIPELINE
 import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
 import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
 import com.tencent.bkrepo.common.artifact.path.PathUtils
@@ -59,11 +57,11 @@ import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
-import com.tencent.bkrepo.repository.pojo.repo.RepoListOption
 import com.tencent.bkrepo.repository.constant.NODE_DETAIL_LIST_KEY
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeListOption
+import com.tencent.bkrepo.repository.pojo.repo.RepoListOption
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
 import okhttp3.Headers
 import okhttp3.MediaType
@@ -81,7 +79,6 @@ open class PermissionManager(
     private val repositoryClient: RepositoryClient,
     private val permissionResource: ServicePermissionResource,
     private val externalPermissionResource: ServiceExternalPermissionResource,
-    private val userResource: ServiceUserResource,
     private val httpAuthProperties: HttpAuthProperties,
     private val nodeClient: NodeClient
 ) {
@@ -152,6 +149,7 @@ open class PermissionManager(
      * @param projectId 项目id
      * @param repoName 仓库名称
      */
+    @Suppress("SwallowedException")
     open fun getRepoPermission(
         projectId: String,
         repoName: String
@@ -181,6 +179,7 @@ open class PermissionManager(
      * @param path 节点路径
      * @param public 仓库是否为public
      * @param anonymous 是否允许匿名
+     * @see !!! merge info by weaving !!!  cpack没有节点权限概念，节点权限转为仓库权限
      */
     open fun checkNodePermission(
         action: PermissionAction,
@@ -197,17 +196,11 @@ open class PermissionManager(
         if (isReadSystemRepo(action, repoInfo)) {
             return
         }
-        // 禁止批量下载流水线节点
-        if (path.size > 1 && repoName == PIPELINE) {
-            throw PermissionException()
-        }
-
         checkPermission(
-            type = ResourceType.NODE,
+            type = ResourceType.REPO,
             action = action,
             projectId = projectId,
             repoName = repoName,
-            paths = path.toList(),
             anonymous = anonymous
         )
     }

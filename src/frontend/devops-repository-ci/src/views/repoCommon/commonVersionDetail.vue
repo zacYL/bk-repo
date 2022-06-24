@@ -29,7 +29,7 @@
                                 :key="tag">
                                 {{ tag }}
                             </span>
-                            <scan-tag v-if="isEnterprise && ['maven'].includes(repoType)" class="ml10" :status="detail.metadata.scanStatus"></scan-tag>
+                            <scan-tag v-if="isEnterprise && ['maven', 'npm', 'pypi'].includes(repoType)" class="ml10" :status="detail.metadata.scanStatus"></scan-tag>
                             <forbid-tag class="ml10"
                                 v-if="detail.metadata.forbidStatus"
                                 v-bind="detail.metadata">
@@ -230,7 +230,7 @@
                     ...(!metadata.forbidStatus
                         ? [
                             this.permission.edit && { clickEvent: () => this.$emit('tag'), label: '晋级', disabled: (basic.stageTag || '').includes('@release') },
-                            this.isEnterprise && ['maven'].includes(this.repoType) && { clickEvent: () => this.$emit('scan'), label: '安全扫描' }
+                            this.isEnterprise && ['maven', 'npm', 'pypi'].includes(this.repoType) && { clickEvent: () => this.$emit('scan'), label: '安全扫描' }
                         ]
                         : []),
                     { clickEvent: () => this.$emit('forbid'), label: metadata.forbidStatus ? '解除禁止' : '禁止使用' },

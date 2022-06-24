@@ -34,7 +34,7 @@ import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 /**
  * 构件禁止下载异常,表示构件由制品库业务功能禁止下载，如质量规则，手动禁止等
  */
-class CpackArtifactDownloadForbiddenException(
+class ArtifactDownloadForbiddenByBusinessException(
     reason: String
 ) : ErrorCodeException(
     ArtifactMessageCode.ARTIFACT_DOWNLOAD_FORBIDDEN,

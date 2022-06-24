@@ -27,7 +27,7 @@
 
 package com.tencent.bkrepo.common.artifact.interceptor
 
-import com.tencent.bkrepo.common.artifact.exception.ArtifactDownloadForbiddenException
+import com.tencent.bkrepo.common.artifact.exception.ArtifactDownloadForbiddenByBusinessException
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import org.slf4j.LoggerFactory
 
@@ -51,7 +51,8 @@ abstract class DownloadInterceptor<T>(
         val match = matcher(node, rule)
         val forbidden = (allowed() && !match) || (!allowed() && match)
         if (forbidden) {
-            throw ArtifactDownloadForbiddenException(node.projectId)
+            // !!! merge info !!! 替换为自定义的构件禁止下载异常
+            throw ArtifactDownloadForbiddenByBusinessException(node.projectId)
         }
     }
 

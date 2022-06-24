@@ -222,7 +222,7 @@
                             ['maven', 'npm', 'pypi'].includes(this.repoType) && { clickEvent: () => this.$emit('scan'), label: '安全扫描' }
                         ]
                         : []),
-                    { clickEvent: () => this.$emit('forbid'), label: metadata.forbidStatus ? '解除禁止' : '禁止使用' },
+                    ['maven', 'npm', 'pypi'].includes(this.repoType) && { clickEvent: () => this.$emit('forbid'), label: metadata.forbidStatus ? '解除禁止' : '禁止使用' },
                     this.permission.delete && { clickEvent: () => this.$emit('delete'), label: this.$t('delete') }
                 ]
             }

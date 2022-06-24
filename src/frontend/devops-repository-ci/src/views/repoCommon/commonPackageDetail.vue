@@ -261,7 +261,7 @@
                         theme: 'success',
                         message: (row.metadata.forbidStatus ? '解除禁止' : '禁止使用') + this.$t('success')
                     })
-                    this.refresh(row)
+                    this.refresh(row.name)
                 })
             },
             downloadPackageHandler (row = this.currentVersion) {

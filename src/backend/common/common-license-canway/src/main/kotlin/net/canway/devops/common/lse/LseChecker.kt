@@ -33,17 +33,15 @@ import net.canway.license.bean.AuthRequest
 import net.canway.license.bean.AuthResponse
 import net.canway.license.exception.LicenseException
 import net.canway.license.service.LicenseAuthService
-import net.canway.license.utils.LicenseProperties
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Lazy
+import org.springframework.scheduling.annotation.Scheduled
 
 class LseChecker {
-    private var monitorTh: Thread? = null
-    private var authResponse: AuthResponse? = null
-    private var run = true
+    private var lseCache: AuthResponse? = null
 
     @Value("\${bk.paas.host:}")
     private val domain: String = ""
@@ -52,35 +50,17 @@ class LseChecker {
     @Lazy
     private lateinit var licenseFeign: LicenseFeign
 
-    init {
-        if (monitorTh == null || !monitorTh!!.isAlive) {
-            monitorTh = object : Thread() {
-                private val sleepTime = 60 * 1000L
-                override fun run() {
-                    logger.info(LicenseProperties().toString())
-                    while (run) {
-                        authResponse = checkCwLseImmediately()
-                        try {
-                            sleep(sleepTime)
-                        } catch (ignored: InterruptedException) {
-                            logger.error("InterruptedException happen", ignored)
-                        }
-                    }
-                }
-            }
-            monitorTh!!.start()
+    fun checkLse(): AuthResponse {
+        if (lseCache == null) {
+            lseCache = checkCwLseImmediately()
         }
+        return lseCache!!
     }
 
-    fun checkLse(): AuthResponse {
-        if (authResponse == null) {
-            synchronized(this::class.java) {
-                if (authResponse == null) {
-                    authResponse = checkCwLseImmediately()
-                }
-            }
-        }
-        return authResponse!!
+    @Scheduled(fixedDelay = LICENSE_UPDATE_INTERVAL)
+    fun updateLseCache() {
+        lseCache = checkCwLseImmediately()
+        logger.info("License Cache Updated")
     }
 
     private fun checkCwLseImmediately(): AuthResponse {
@@ -92,10 +72,8 @@ class LseChecker {
             logger.warn("License Access Failed")
             throw ErrorCodeException(CommonMessageCode.LICENSE_ACCESS_FAILED)
         }
-        try {
-            val response = LicenseAuthService.verify(data)
-            logger.info("License Verify Response: $response")
-            return response
+        return try {
+            LicenseAuthService.verify(data)
         } catch (e: LicenseException) {
             logger.error("License Verification Failed: $e")
             throw e
@@ -104,6 +82,7 @@ class LseChecker {
 
     companion object {
         val logger: Logger = LoggerFactory.getLogger(LseChecker::class.java)
+        const val LICENSE_UPDATE_INTERVAL = 180 * 1000L
         const val MODULE_NAME = "CPack"
     }
 }

@@ -29,8 +29,6 @@ package com.tencent.bkrepo.scanner.task.iterator
 
 import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_NUMBER
 import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_SIZE
-import com.tencent.bkrepo.common.api.exception.NotFoundException
-import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.common.query.model.QueryModel
@@ -200,8 +198,8 @@ class PackageIterator(
         with(pkg) {
             val packageVersion = Request.request {
                 packageClient.findVersionByName(projectId, repoName, packageKey, packageVersion!!)
-            } ?: throw NotFoundException(CommonMessageCode.RESOURCE_NOT_FOUND, packageKey, packageVersion!!)
-            pkg.fullPath = packageVersion.contentPath ?: packageVersion.manifestPath
+            }
+            pkg.fullPath = packageVersion?.contentPath ?: packageVersion?.manifestPath
         }
         return pkg
     }

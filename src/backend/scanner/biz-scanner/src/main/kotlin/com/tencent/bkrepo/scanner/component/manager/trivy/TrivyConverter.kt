@@ -27,17 +27,16 @@
 
 package com.tencent.bkrepo.scanner.component.manager.trivy
 
+import com.tencent.bkrepo.common.api.constant.CharPool.SLASH
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.query.model.PageLimit
-import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.result.DependencyItem
-import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.scanner.DependencyScanner
 import com.tencent.bkrepo.common.scanner.pojo.scanner.trivy.TrivyScanner
-import com.tencent.bkrepo.common.scanner.pojo.scanner.trivy.VulnerabilityItem
-import com.tencent.bkrepo.scanner.component.manager.ScannerConverter
+import com.tencent.bkrepo.scanner.component.manager.BaseScannerConverter
+import com.tencent.bkrepo.scanner.component.manager.trivy.model.TVulnerabilityItem
+import com.tencent.bkrepo.scanner.pojo.Node
 import com.tencent.bkrepo.scanner.pojo.request.ArtifactVulnerabilityRequest
 import com.tencent.bkrepo.scanner.pojo.request.LoadResultArguments
-import com.tencent.bkrepo.scanner.pojo.request.dependencecheck.DependencyLoadResultArguments
 import com.tencent.bkrepo.scanner.pojo.request.trivy.TrivyLoadResultArguments
 import com.tencent.bkrepo.scanner.pojo.response.ArtifactVulnerabilityInfo
 import com.tencent.bkrepo.scanner.utils.ScanPlanConverter
@@ -45,22 +44,22 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Component
 
 @Component("${TrivyScanner.TYPE}Converter")
-class TrivyConverter : ScannerConverter {
+class TrivyConverter : BaseScannerConverter() {
     @Suppress("UNCHECKED_CAST")
     override fun convertCveResult(result: Any): Page<ArtifactVulnerabilityInfo> {
-        result as Page<VulnerabilityItem>
+        result as Page<TVulnerabilityItem>
         val pageRequest = PageRequest.of(result.pageNumber, result.pageSize)
         val reports = result.records.mapTo(HashSet(result.records.size)) {
             ArtifactVulnerabilityInfo(
-                vulId = it.vulnerabilityID,
-                severity = ScanPlanConverter.convertToLeakLevel(it.severity),
-                pkgName = it.pkgName,
-                installedVersion = setOf(it.installedVersion),
-                title = it.title,
+                vulId = it.data.vulnerabilityID,
+                severity = ScanPlanConverter.convertToLeakLevel(it.data.severity.toLowerCase()),
+                pkgName = it.data.pkgName,
+                installedVersion = setOf(it.data.installedVersion),
+                title = it.data.title,
                 vulnerabilityName = "",
-                description = it.description,
+                description = it.data.description,
                 officialSolution = "",
-                reference = it.references,
+                reference = it.data.references,
                 path = ""
             )
         }.toList()
@@ -74,5 +73,11 @@ class TrivyConverter : ScannerConverter {
             reportType = request.reportType,
             pageLimit = PageLimit(request.pageNumber, request.pageSize)
         )
+    }
+
+    override fun convertToNode(node: Node): Node {
+        node.fullPath = node.fullPath.substringBeforeLast(SLASH)
+        node.artifactName = node.fullPath.split(SLASH).get(1)
+        return super.convertToNode(node)
     }
 }

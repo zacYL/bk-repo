@@ -33,19 +33,16 @@ import io.swagger.annotations.ApiModelProperty
 
 @ApiModel("制品漏洞信息")
 data class TrivyScanResult(
-    @ApiModelProperty("版本")
-    @JsonAlias("SchemaVersion")
-    val schemaVersion: String,
-    @ApiModelProperty("制品名称")
-    @JsonAlias("ArtifactName")
-    val artifactName: String,
-    @ApiModelProperty("元数据")
-    @JsonAlias("Metadata")
-    val metadata: Map<String, Any?>,
-    @ApiModelProperty("制品类型")
-    @JsonAlias("ArtifactType")
-    val artifactType: String,
+    @ApiModelProperty("目标")
+    @JsonAlias("Target")
+    val target: String,
+    @ApiModelProperty("类")
+    @JsonAlias("Class")
+    val clazz: String,
+    @ApiModelProperty("类型")
+    @JsonAlias("Type")
+    val type: String,
     @ApiModelProperty("Results")
-    @JsonAlias("Results")
-    val results: List<VulnerabilityItem>
+    @JsonAlias("Vulnerabilities")
+    val vulnerabilities: List<VulnerabilityItem>? = emptyList()
 )

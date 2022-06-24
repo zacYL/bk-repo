@@ -25,16 +25,15 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.common.scanner.pojo.scanner.trivy
+package com.tencent.bkrepo.scanner.component.manager
 
-import com.tencent.bkrepo.common.scanner.pojo.scanner.ScanExecutorResult
-import io.swagger.annotations.ApiModel
-import io.swagger.annotations.ApiModelProperty
+import com.tencent.bkrepo.scanner.pojo.Node
 
-@ApiModel("trivy扫描器扫描结果")
-data class TrivyScanExecutorResult(
-    override val scanStatus: String,
-    override val overview: Map<String, Any?>,
-    @ApiModelProperty("cve审计结果")
-    val vulnerabilityItems: List<VulnerabilityItem>
-) : ScanExecutorResult(scanStatus, overview, TrivyScanner.TYPE)
+/**
+ * 接口数据格式转换
+ */
+abstract class BaseScannerConverter : ScannerConverter {
+    override fun convertToNode(node: Node): Node {
+        return node
+    }
+}

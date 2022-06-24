@@ -27,6 +27,8 @@
 
 package com.tencent.bkrepo.scanner.executor.pojo
 
+import com.fasterxml.jackson.annotation.JsonProperty
+
 /**
  * ManifestV1
  */
@@ -38,7 +40,10 @@ data class ManifestV1(
 )
 
 data class Manifest(
-    val Config: String,
-    val RepoTags: List<String>,
-    val Layers: List<String>
+    @JsonProperty("Config")
+    val config: String,
+    @JsonProperty("RepoTags")
+    val repoTags: List<String>,
+    @JsonProperty("Layers")
+    val layers: List<String>
 )

@@ -170,10 +170,10 @@ export default {
         if (!urlMap[repoType] || state.domain[repoType]) return
         Vue.prototype.$ajax.get(
             urlMap[repoType]
-        ).then(domain => {
+        ).then(res => {
             commit('SET_DOMAIN', {
                 type: repoType,
-                domain: domain || `${location.origin}/${repoType}`
+                domain: res.domain || res || `${location.origin}/${repoType}`
             })
         })
     },

@@ -48,9 +48,9 @@
                                             disabled: ($version.stageTag || '').includes('@release')
                                         },
                                         repoType !== 'docker' && { label: '下载', clickEvent: () => downloadPackageHandler($version) },
-                                        isEnterprise && ['maven'].includes(repoType) && { label: '安全扫描', clickEvent: () => scanPackageHandler($version) }
+                                        isEnterprise && ['maven', 'npm', 'pypi'].includes(repoType) && { label: '安全扫描', clickEvent: () => scanPackageHandler($version) }
                                     ] : []),
-                                    { clickEvent: () => changeForbidStatusHandler($version), label: $version.metadata.forbidStatus ? '解除禁止' : '禁止使用' },
+                                    ['maven', 'npm', 'pypi'].includes(repoType) && { clickEvent: () => changeForbidStatusHandler($version), label: $version.metadata.forbidStatus ? '解除禁止' : '禁止使用' },
                                     permission.delete && { label: '删除', clickEvent: () => deleteVersionHandler($version) }
                                 ].filter(Boolean)"></operation-list>
                         </div>
@@ -261,7 +261,7 @@
                         theme: 'success',
                         message: (row.metadata.forbidStatus ? '解除禁止' : '禁止使用') + this.$t('success')
                     })
-                    this.refresh(row)
+                    this.refresh(row.name)
                 })
             },
             downloadPackageHandler (row = this.currentVersion) {

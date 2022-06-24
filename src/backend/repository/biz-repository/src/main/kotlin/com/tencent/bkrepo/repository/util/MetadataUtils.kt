@@ -32,6 +32,10 @@
 package com.tencent.bkrepo.repository.util
 
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
+import com.tencent.bkrepo.common.artifact.constant.FORBID_TYPE
+import com.tencent.bkrepo.common.artifact.constant.FORBID_USER
+import com.tencent.bkrepo.common.artifact.constant.SCAN_STATUS
 import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.message.RepositoryMessageCode
@@ -45,7 +49,7 @@ object MetadataUtils {
     /**
      * 元数据KEY保留字，仅允许系统使用
      */
-    private val RESERVED_KEY = setOf("scanStatus")
+    private val RESERVED_KEY = setOf(SCAN_STATUS, FORBID_STATUS, FORBID_USER, FORBID_TYPE)
 
     /**
      * 用于兼容旧逻辑，优先从[metadataModels]取数据，[metadataModels]不存在时从[metadataMap]取
@@ -95,6 +99,17 @@ object MetadataUtils {
             val new = it.apply { checkPermission(this, operator) }
             metadataMap[it.key] = new
         }
+        return metadataMap.values.toMutableList()
+    }
+
+    /**
+     * 替换禁用元数据信息
+     */
+    fun replaceForbid(oldMetadata: List<TMetadata>, forbidMetadata: List<TMetadata>): MutableList<TMetadata> {
+        val metadataMap = oldMetadata.associateByTo(
+            HashMap(oldMetadata.size + forbidMetadata.size)
+        ) { it.key }
+        forbidMetadata.forEach { metadataMap[it.key] = it }
         return metadataMap.values.toMutableList()
     }
 

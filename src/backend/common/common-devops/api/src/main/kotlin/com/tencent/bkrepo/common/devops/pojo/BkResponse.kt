@@ -54,4 +54,10 @@ data class BkChildrenDepartment(
     val order: Int?,
     val parent: Int?,
     val has_children: Boolean?
-)
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || other !is BkChildrenDepartment) return false
+        return id == other.id && name == other.name
+    }
+}

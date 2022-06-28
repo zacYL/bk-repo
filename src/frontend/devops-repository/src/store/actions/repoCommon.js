@@ -111,13 +111,6 @@ export default {
                 },
                 rule: {
                     rules: [
-                        ...(MODE_CONFIG === 'ci' && isGeneric
-                            ? [{
-                                field: 'repoName',
-                                value: ['report', 'log'],
-                                operation: 'NIN'
-                            }]
-                            : []),
                         ...(projectId
                             ? [{
                                 field: 'projectId',
@@ -138,7 +131,15 @@ export default {
                                 value: repoName,
                                 operation: 'EQ'
                             }]
-                            : []),
+                            : [
+                                ...(MODE_CONFIG === 'ci' && isGeneric
+                                    ? [{
+                                        field: 'repoName',
+                                        value: ['report', 'log'],
+                                        operation: 'NIN'
+                                    }]
+                                    : [])
+                            ]),
                         ...(packageName
                             ? [{
                                 field: 'name',

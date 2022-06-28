@@ -52,7 +52,14 @@ class DevopsClient(
         return devopsApi.groupsByProjectId(projectId = projectId).execute().body()?.data
     }
 
-
+    /**
+     * 查询用户在当前租户下的部门
+     * @param userId 用户
+     * @param tenantId 租户
+     */
+    fun departmentsByUserIdAndTenantId(userId: String, tenantId: String): List<DevopsDepartment>? {
+        return devopsApi.departmentsByUserIdAndTenantId(userId = userId, tenantId = tenantId).execute().body()?.data
+    }
     companion object {
         val okHttpClient: OkHttpClient = OkHttpClient.Builder()
             .sslSocketFactory(

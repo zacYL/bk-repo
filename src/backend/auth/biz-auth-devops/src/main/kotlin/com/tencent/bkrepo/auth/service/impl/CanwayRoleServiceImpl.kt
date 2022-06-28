@@ -1,8 +1,8 @@
 package com.tencent.bkrepo.auth.service.impl
 
+import com.tencent.bkrepo.auth.CI_TENANT
 import com.tencent.bkrepo.auth.ciApi
 import com.tencent.bkrepo.auth.ciPermission
-import com.tencent.bkrepo.auth.ciTenant
 import com.tencent.bkrepo.auth.model.TRole
 import com.tencent.bkrepo.auth.pojo.enums.RoleType
 import com.tencent.bkrepo.auth.pojo.role.Role
@@ -81,7 +81,7 @@ class CanwayRoleServiceImpl(
             ?: throw ErrorCodeException(CommonMessageCode.HEADER_MISSING)
         var tenant: String? = null
         for (cookie in cookies) {
-            if (cookie.name == ciTenant) tenant = cookie.value
+            if (cookie.name == CI_TENANT) tenant = cookie.value
         }
         if (tenant == null) throw ErrorCodeException(CommonMessageCode.HEADER_MISSING)
         return tenant

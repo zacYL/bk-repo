@@ -41,6 +41,7 @@ import io.swagger.annotations.ApiParam
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestAttribute
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -56,19 +57,21 @@ class UserDepartmentController {
     @ApiOperation("查询该部门下一级部门列表")
     @GetMapping("/list")
     fun listDepartment(
+        @RequestAttribute("userId") userId: String,
         @RequestParam username: String?,
         @ApiParam("部门ID, 不传默认返回所有根部门")
         @RequestParam departmentId: Int?
     ): Response<List<BkChildrenDepartment>?> {
-        return ResponseBuilder.success(departmentService.listDepartmentById(username, departmentId))
+        return ResponseBuilder.success(departmentService.listDepartmentById(userId, username, departmentId))
     }
 
     @ApiOperation("批量查询部门名称")
     @PostMapping("/listByIds")
     fun listDepartmentByIds(
+        @RequestAttribute("userId") userId: String,
         @RequestParam username: String?,
         @RequestBody departmentIds: List<Int>
     ): Response<List<BkChildrenDepartment>?> {
-        return ResponseBuilder.success(departmentService.listDepartmentByIds(username, departmentIds))
+        return ResponseBuilder.success(departmentService.listDepartmentByIds(userId, username, departmentIds))
     }
 }

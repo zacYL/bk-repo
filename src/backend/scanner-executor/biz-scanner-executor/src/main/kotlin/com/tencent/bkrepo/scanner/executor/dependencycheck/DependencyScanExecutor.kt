@@ -87,7 +87,7 @@ class DependencyScanExecutor(
     fun latestDependencyCheckerDB(storePath: String, scannerType: String): Pair<String?, String?> {
         val records = nodeClient.search(
             NodeQueryBuilder()
-                .select("sha256")
+                .select("sha256", "fullPath", "size", "lastModifiedDate")
                 .sortByDesc("lastModifiedDate")
                 .page(1, 1)
                 .projectId(PUBLIC_GLOBAL_PROJECT)
@@ -98,6 +98,7 @@ class DependencyScanExecutor(
                 .build()
         ).data?.records ?: return Pair(null, null)
         return if (records.isNotEmpty()) {
+            logger.info("find latest dc db:${records[0].toJsonString()}")
             val dbSha256 = records.first()["sha256"]?.toString() ?: return Pair(null, null)
             Pair("$storePath${locator.locate(dbSha256)}".removeSuffix("/"), dbSha256)
         } else { Pair(null, null) }

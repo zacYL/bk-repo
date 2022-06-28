@@ -4,5 +4,5 @@ data class DevopsDepartment(
     val id: String,
     val name: String,
     val parentId: String?,
-    val children: List<Any>?
+    val children: List<DevopsDepartment>?
 )

@@ -1,9 +1,9 @@
 package com.tencent.bkrepo.common.devops.inter
 
+import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.devops.pojo.CanwayGroup
 import com.tencent.bkrepo.common.devops.pojo.DevopsDepartment
 import com.tencent.bkrepo.common.devops.pojo.response.CanwayResponse
-import feign.Param
 import retrofit2.Call
 import retrofit2.http.GET
 import retrofit2.http.Path
@@ -17,9 +17,9 @@ interface DevopsInterface {
      */
     @GET("/ms/permission/api/service/administrator/{userId}/{type}")
     fun isAdmin(
-            @Path("userId") userId: String,
-            @Path("type") type: Int,
-            @Query("instanceCode") instanceCode: String? = null
+        @Path("userId") userId: String,
+        @Path("type") type: Int,
+        @Query("instanceCode") instanceCode: String? = null
     ): Call<CanwayResponse<Boolean>>
 
     /**
@@ -41,8 +41,7 @@ interface DevopsInterface {
      * [userId] 用户
      */
     @GET("/ms/usermanager/api/service/organization/organization/list")
-    fun departmentByUserId(@Param("userId") userId: String): Call<List<DevopsDepartment>?>
-
+    fun departmentByUserId(@Query("userId") userId: String): Call<List<DevopsDepartment>?>
 
     /**
      * 获取用户所属组织包括父级
@@ -58,6 +57,14 @@ interface DevopsInterface {
     @GET("/ms/permission/api/service/resource_instance/view/group/project/{projectId}")
     fun groupsByProjectId(@Path("projectId") projectId: String): Call<CanwayResponse<List<CanwayGroup>>?>
 
-
-
+    /**
+     * 查询用户在当前租户下的部门
+     * @param userId 用户
+     * @param tenantId 租户
+     */
+    @GET("/ms/permission/api/service/organization/department")
+    fun departmentsByUserIdAndTenantId(
+        @Query("userId") userId: String,
+        @Query("tenantId") tenantId: String
+    ): Call<Response<List<DevopsDepartment>>?>
 }

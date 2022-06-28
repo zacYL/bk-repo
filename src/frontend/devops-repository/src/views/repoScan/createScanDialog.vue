@@ -7,7 +7,7 @@
         @cancel="cancel">
         <bk-form class="mr10" :label-width="80" :model="scanForm" :rules="rules" ref="scanForm">
             <bk-form-item label="方案名称" :required="true" property="name" error-display-type="normal">
-                <bk-input v-model.trim="scanForm.name" maxlength="32" show-word-limit></bk-input>
+                <bk-input v-model.trim="scanForm.name" maxlength="100" show-word-limit></bk-input>
             </bk-form-item>
             <bk-form-item label="方案类型" :required="true" property="type" error-display-type="normal">
                 <bk-select

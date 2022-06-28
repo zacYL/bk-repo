@@ -4,7 +4,7 @@
             <bk-tab-panel name="baseInfo" label="基础设置">
                 <bk-form :label-width="120">
                     <bk-form-item label="方案名称">
-                        <bk-input class="w250" v-model.trim="scanBaseInfo.name" maxlength="100" show-word-limit></bk-input>
+                        <bk-input class="w250" v-model.trim="scanBaseInfo.name" maxlength="32" show-word-limit></bk-input>
                     </bk-form-item>
                     <bk-form-item label="方案类型">{{ scanTypeEnum[scanBaseInfo.type] }}</bk-form-item>
                     <bk-form-item label="扫描器">{{ scanBaseInfo.scanner }}</bk-form-item>

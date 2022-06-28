@@ -89,7 +89,7 @@
                     </bk-radio-group>
                 </bk-form-item>
                 <bk-form-item :label="$t('name')" :required="true" property="name" error-display-type="normal">
-                    <bk-input v-model.trim="editNodeDialog.name" :disabled="!editNodeDialog.add" maxlength="100" show-word-limit></bk-input>
+                    <bk-input v-model.trim="editNodeDialog.name" :disabled="!editNodeDialog.add" maxlength="32" show-word-limit></bk-input>
                 </bk-form-item>
                 <bk-form-item :label="$t('address')" :required="true" property="url" error-display-type="normal">
                     <bk-input v-model.trim="editNodeDialog.url" :disabled="!editNodeDialog.add"></bk-input>

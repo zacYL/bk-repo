@@ -17,7 +17,7 @@
                 </bk-radio-group>
             </bk-form-item>
             <bk-form-item :label="$t('repoName')" :required="true" property="name" error-display-type="normal">
-                <bk-input style="width:400px" v-model.trim="repoBaseInfo.name" maxlength="100" show-word-limit
+                <bk-input style="width:400px" v-model.trim="repoBaseInfo.name" maxlength="32" show-word-limit
                     :placeholder="$t(repoBaseInfo.type === 'docker' ? 'repoDockerNamePlacehodler' : 'repoNamePlacehodler')">
                 </bk-input>
                 <div v-if="repoBaseInfo.type === 'docker'" class="form-tip">docker仓库名称不支持大写英文字母</div>

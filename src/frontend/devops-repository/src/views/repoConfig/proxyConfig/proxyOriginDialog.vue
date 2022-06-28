@@ -16,7 +16,7 @@
             </bk-form-item>
             <template v-if="editProxyData.proxyType === 'privateProxy'">
                 <bk-form-item :label="$t('name')" :required="true" property="name" error-display-type="normal">
-                    <bk-input v-model.trim="editProxyData.name" maxlength="100" show-word-limit></bk-input>
+                    <bk-input v-model.trim="editProxyData.name" maxlength="32" show-word-limit></bk-input>
                 </bk-form-item>
             </template>
             <template v-else>

@@ -14,7 +14,7 @@
             <li v-for="li in filterList" :key="li.label"
                 class="operation-item"
                 :class="{ 'disabled': li.disabled }"
-                @click.stop="li.clickEvent()">
+                @click.stop="() => !li.disabled && li.clickEvent()">
                 {{ li.label }}
             </li>
         </ul></template>

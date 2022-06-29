@@ -206,8 +206,9 @@
             }
         },
         watch: {
-            viewType () {
+            viewType (val) {
                 this.handlerPaginationChange()
+                if (val === 'TASKVIEW') this.handlerTaskPaginationChange()
             }
         },
         created () {
@@ -350,6 +351,7 @@
                                 theme: 'success',
                                 message: '中止任务' + this.$t('success')
                             })
+                            this.$set(task, 'status', 'STOPPED')
                             this.handlerPaginationChange()
                         })
                     }

@@ -5,7 +5,7 @@
                 outline class="mr10" @click="$emit('download')">下载</bk-button>
             <operation-list class="mr10"
                 :list="operationBtns">
-                <bk-button @click.stop="() => {}" icon="ellipsis"></bk-button>
+                <bk-button icon="ellipsis"></bk-button>
             </operation-list>
         </template>
         <bk-tab-panel v-if="detail.basic" name="basic" :label="$t('baseInfo')">

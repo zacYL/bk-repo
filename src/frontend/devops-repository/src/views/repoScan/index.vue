@@ -3,7 +3,6 @@
         <div class="ml20 mr20 mt10 flex-between-center">
             <div class="flex-align-center">
                 <bk-button icon="plus" theme="primary" @click="showCreateDialog">{{ $t('create') }}</bk-button>
-                <bk-button class="ml10" @click="() => $router.push({ name: 'securityConfig' })">安全设置</bk-button>
             </div>
             <div class="flex-align-center">
                 <bk-input

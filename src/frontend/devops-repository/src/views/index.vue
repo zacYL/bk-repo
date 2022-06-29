@@ -77,6 +77,7 @@
                         MODE_CONFIG !== 'ci' && 'projectManage',
                         'userManage',
                         'nodeManage',
+                        'securityConfig',
                         this.isMasterNode && 'planManage',
                         'repoAudit'
                     ].filter(Boolean)

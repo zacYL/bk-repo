@@ -29,7 +29,7 @@
                                 :key="tag">
                                 {{ tag }}
                             </span>
-                            <scan-tag v-if="['maven', 'npm', 'pypi'].includes(repoType)" class="ml10" :status="metadataMap.scanStatus"></scan-tag>
+                            <scan-tag v-if="['maven', 'npm', 'pypi', 'docker'].includes(repoType)" class="ml10" :status="metadataMap.scanStatus"></scan-tag>
                             <forbid-tag class="ml10"
                                 v-if="metadataMap.forbidStatus"
                                 v-bind="metadataMap">
@@ -214,7 +214,7 @@
                     .map(item => ({ ...item, value: this.detail.basic[item.name] }))
             },
             metadataMap () {
-                return (this.basic.metadata || []).reduce((target, meta) => {
+                return (this.detail.metadata || []).reduce((target, meta) => {
                     target[meta.key] = meta.value
                     return target
                 }, {})
@@ -226,10 +226,10 @@
                     ...(!metadataMap.forbidStatus
                         ? [
                             this.permission.edit && { clickEvent: () => this.$emit('tag'), label: '晋级', disabled: (basic.stageTag || '').includes('@release') },
-                            ['maven', 'npm', 'pypi'].includes(this.repoType) && { clickEvent: () => this.$emit('scan'), label: '安全扫描' }
+                            ['maven', 'npm', 'pypi', 'docker'].includes(this.repoType) && { clickEvent: () => this.$emit('scan'), label: '安全扫描' }
                         ]
                         : []),
-                    ['maven', 'npm', 'pypi'].includes(this.repoType) && { clickEvent: () => this.$emit('forbid'), label: metadataMap.forbidStatus ? '解除禁止' : '禁止使用' },
+                    ['maven', 'npm', 'pypi', 'docker'].includes(this.repoType) && { clickEvent: () => this.$emit('forbid'), label: metadataMap.forbidStatus ? '解除禁止' : '禁止使用' },
                     this.permission.delete && { clickEvent: () => this.$emit('delete'), label: this.$t('delete') }
                 ]
             }

@@ -91,7 +91,8 @@ class UserPackageMetadataController(
                 repoName = repoName,
                 packageKey = packageKey,
                 version = version,
-                metadata = metadataSaveRequest.metadata
+                metadata = metadataSaveRequest.metadata,
+                versionMetadata = metadataSaveRequest.versionMetadata
             )
         }
         packageMetadataService.saveMetadata(request)

@@ -99,7 +99,7 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
             val basicInfo = buildBasicInfo(nodeDetail, packageVersion, readme)
             val versionDependenciesInfo =
                 queryVersionDependenciesInfo(artifactInfo, packageKey, packageMetadata.versions.map[version]!!)
-            return PackageVersionInfo(basicInfo, emptyMap(), versionDependenciesInfo)
+            return PackageVersionInfo(basicInfo, packageVersion.packageMetadata, versionDependenciesInfo)
         }
     }
 
@@ -108,8 +108,10 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
         packageKey: String,
         versionMetadata: NpmVersionMetadata
     ): VersionDependenciesInfo {
-        val packageDependents = packageDependentsClient.queryDependents(artifactInfo.projectId,
-            artifactInfo.repoName, packageKey).data.orEmpty()
+        val packageDependents = packageDependentsClient.queryDependents(
+            artifactInfo.projectId,
+            artifactInfo.repoName, packageKey
+        ).data.orEmpty()
         val dependenciesList = parseDependencies(versionMetadata)
         val devDependenciesList = parseDevDependencies(versionMetadata)
         return VersionDependenciesInfo(dependenciesList, devDependenciesList, packageDependents)
@@ -206,7 +208,7 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
             ArtifactContextHolder.getRepository().upload(context).also {
                 logger.info(
                     "user [${context.userId}] upload npm package metadata file [$fullPath] " +
-                        "to repo [$projectId/$repoName] success."
+                            "to repo [$projectId/$repoName] success."
                 )
             }
             artifactFile.delete()

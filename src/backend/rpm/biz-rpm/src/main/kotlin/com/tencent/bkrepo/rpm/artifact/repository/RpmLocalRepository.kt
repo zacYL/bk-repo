@@ -280,7 +280,7 @@ class RpmLocalRepository(
         val repodataUri = repoData.repoDataPath
         logger.info(
             "storeIndexMarkFile, repodataUri: $repodataUri, repeat: $repeat, indexType: $indexType," +
-                " metadata: $metadata"
+                    " metadata: $metadata"
         )
         val artifactFile = when (repeat) {
             FULLPATH_SHA256 -> {
@@ -437,7 +437,7 @@ class RpmLocalRepository(
         val repeat = checkRepeatArtifact(context)
         logger.info(
             "onUpload, artifactFormat: $artifactFormat, needIndex: $needIndex, repeat: $repeat, artifactUri: " +
-                context.artifactInfo.getArtifactFullPath()
+                    context.artifactInfo.getArtifactFullPath()
         )
         if (repeat != FULLPATH_SHA256) {
             val nodeCreateRequest = if (needIndex) {
@@ -655,7 +655,6 @@ class RpmLocalRepository(
                 projectId, repoName, artifactPath
             ).data ?: return null
             val stageTag = stageClient.query(projectId, repoName, packageKey, version).data
-            val rpmArtifactMetadata = jarNode.metadata
             val packageVersion = packageClient.findVersionByName(
                 projectId, repoName, packageKey, version
             ).data
@@ -673,7 +672,7 @@ class RpmLocalRepository(
                 stageTag,
                 null
             )
-            return RpmArtifactVersionData(rpmArtifactBasic, rpmArtifactMetadata)
+            return RpmArtifactVersionData(rpmArtifactBasic, packageVersion?.packageMetadata)
         }
     }
 
@@ -734,7 +733,7 @@ class RpmLocalRepository(
             if (nodeInfoPage.records.isEmpty()) break@loop
             logger.info(
                 "populatePackage: found ${nodeInfoPage.records.size}," +
-                    " totalRecords: ${nodeInfoPage.totalRecords}"
+                        " totalRecords: ${nodeInfoPage.totalRecords}"
             )
             val rpmNodeList = nodeInfoPage.records.filter { it.name.endsWith(".rpm") }
             for (nodeInfo in rpmNodeList) {
@@ -818,7 +817,7 @@ class RpmLocalRepository(
         var firstLine = true
         while (reader.readLine().also { line = it } != null) {
             val isBugLine = (line!!.startsWith("  </package  ") || line!!.startsWith("  </packa  ")) &&
-                line!!.endsWith("<package type=\"rpm\">")
+                    line!!.endsWith("<package type=\"rpm\">")
             when {
                 isBugLine -> {
                     outputStream.write("\n  </package>\n  <package type=\"rpm\">".toByteArray())

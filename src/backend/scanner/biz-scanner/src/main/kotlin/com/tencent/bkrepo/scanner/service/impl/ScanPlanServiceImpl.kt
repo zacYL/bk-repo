@@ -261,7 +261,8 @@ class ScanPlanServiceImpl(
                 if (it.planId == null) {
                     ScanPlanConverter.convertToArtifactPlanRelation(it, "_${it.scanner}")
                 } else {
-                    ScanPlanConverter.convertToArtifactPlanRelation(it, scanPlanMap[it.planId]!!.name)
+                    val scanPlan = scanPlanMap[it.planId]
+                    ScanPlanConverter.convertToArtifactPlanRelation(it, scanPlan!!.name, scanPlan.type)
                 }
             }
         }

@@ -198,30 +198,9 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
      * 下载前回调
      */
     open fun onDownloadBefore(context: ArtifactDownloadContext) {
-        if (isForbidden(context)) {
-            logger.info("artifact[${context.artifactInfo.getArtifactFullPath()}] is forbid")
-            throw ErrorCodeException(ArtifactMessageCode.ARTIFACT_FORBIDDEN, context.artifactInfo.getArtifactFullPath())
-        }
-
         // 控制浏览器直接下载，或打开预览
         context.useDisposition = context.request.getParameter(PARAM_DOWNLOAD)?.toBoolean() ?: false
         artifactMetrics.downloadingCount.incrementAndGet()
-    }
-
-    /**
-     * 制品是否禁用
-     */
-    private fun isForbidden(context: ArtifactDownloadContext): Boolean {
-        with(context.artifactInfo) {
-            val node = nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data
-                ?: throw NodeNotFoundException(getArtifactFullPath())
-            node.nodeMetadata.forEach {
-                if (it.key == FORBID_STATUS && it.value == true) {
-                    return true
-                }
-            }
-            return false
-        }
     }
 
     /**

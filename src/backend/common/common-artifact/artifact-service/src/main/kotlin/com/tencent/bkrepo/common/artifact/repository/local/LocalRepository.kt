@@ -33,7 +33,6 @@ package com.tencent.bkrepo.common.artifact.repository.local
 
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
-import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
@@ -66,11 +65,12 @@ abstract class LocalRepository : AbstractArtifactRepository() {
      */
     private fun isForbidden(context: ArtifactDownloadContext): Boolean {
         with(context.artifactInfo) {
-            val node = nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data
-                ?: throw NodeNotFoundException(getArtifactFullPath())
-            node.nodeMetadata.forEach {
-                if (it.key == FORBID_STATUS && it.value == true) {
-                    return true
+            val nodeInfo = nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data
+            nodeInfo?.let { node ->
+                node.nodeMetadata.forEach {
+                    if (it.key == FORBID_STATUS && it.value == true) {
+                        return true
+                    }
                 }
             }
             return false

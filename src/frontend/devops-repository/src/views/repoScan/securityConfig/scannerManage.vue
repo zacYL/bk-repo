@@ -78,8 +78,8 @@
         },
         created () {
             this.getScannerList().then(res => {
-                this.scannerList = res
-                this.scannerType = res[0]?.type || ''
+                this.scannerList = res.filter(v => v.type !== 'scancodeToolkit')
+                this.scannerType = this.scannerList[0]?.type || ''
             })
             this.handlerPaginationChange()
         },

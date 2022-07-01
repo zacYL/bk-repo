@@ -69,9 +69,20 @@
         },
         watch: {
             proxyData (data) {
-                this.editProxyData = {
-                    ...this.editProxyData,
-                    ...data
+                if (data.type === 'add') {
+                    this.editProxyData = {
+                        proxyType: 'publicProxy',
+                        type: 'add',
+                        name: '',
+                        url: '',
+                        username: '',
+                        password: ''
+                    }
+                } else {
+                    this.editProxyData = {
+                        ...this.editProxyData,
+                        ...data
+                    }
                 }
             }
         },

@@ -72,18 +72,14 @@
             addProxy () {
                 this.showProxyDialog = true
                 this.proxyData = {
-                    type: 'add',
-                    name: '',
-                    url: '',
-                    username: '',
-                    password: ''
+                    type: 'add'
                 }
             },
             editProxy (row) {
                 this.showProxyDialog = true
                 this.proxyData = {
-                    ...row,
-                    type: 'edit'
+                    type: 'edit',
+                    ...row
                 }
             },
             deleteProxy (row) {

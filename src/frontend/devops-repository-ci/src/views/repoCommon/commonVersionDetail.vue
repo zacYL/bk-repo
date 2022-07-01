@@ -29,7 +29,7 @@
                                 :key="tag">
                                 {{ tag }}
                             </span>
-                            <scan-tag v-if="isEnterprise && ['maven', 'npm', 'pypi', 'docker'].includes(repoType)" class="ml10" :status="metadataMap.scanStatus"></scan-tag>
+                            <scan-tag v-if="isEnterprise && showRepoScan" class="ml10" :status="metadataMap.scanStatus"></scan-tag>
                             <forbid-tag class="ml10"
                                 v-if="metadataMap.forbidStatus"
                                 v-bind="metadataMap">
@@ -155,6 +155,7 @@
     import OperationList from '@repository/components/OperationList'
     import ScanTag from '@repository/views/repoScan/scanTag'
     import forbidTag from '@repository/components/ForbidTag'
+    import { scanTypeEnum } from '@repository/store/publicEnum'
     import { mapState, mapGetters, mapActions } from 'vuex'
     import { convertFileSize, formatDate } from '@repository/utils'
     import repoGuideMixin from '@repository/views/repoCommon/repoGuideMixin'
@@ -230,6 +231,9 @@
                     return target
                 }, {})
             },
+            showRepoScan () {
+                return Object.keys(scanTypeEnum).join(',').toLowerCase().includes(this.repoType)
+            },
             operationBtns () {
                 const basic = this.detail.basic
                 const metadataMap = this.metadataMap
@@ -237,10 +241,10 @@
                     ...(!metadataMap.forbidStatus
                         ? [
                             this.permission.edit && { clickEvent: () => this.$emit('tag'), label: '晋级', disabled: (basic.stageTag || '').includes('@release') },
-                            this.isEnterprise && ['maven', 'npm', 'pypi', 'docker'].includes(this.repoType) && { clickEvent: () => this.$emit('scan'), label: '安全扫描' }
+                            this.isEnterprise && this.showRepoScan && { clickEvent: () => this.$emit('scan'), label: '安全扫描' }
                         ]
                         : []),
-                    ['maven', 'npm', 'pypi', 'docker'].includes(this.repoType) && { clickEvent: () => this.$emit('forbid'), label: metadataMap.forbidStatus ? '解除禁止' : '禁止使用' },
+                    this.showRepoScan && { clickEvent: () => this.$emit('forbid'), label: metadataMap.forbidStatus ? '解除禁止' : '禁止使用' },
                     this.permission.delete && { clickEvent: () => this.$emit('delete'), label: this.$t('delete') }
                 ].filter(Boolean)
             }

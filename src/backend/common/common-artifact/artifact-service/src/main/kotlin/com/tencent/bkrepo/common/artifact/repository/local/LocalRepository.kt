@@ -31,6 +31,9 @@
 
 package com.tencent.bkrepo.common.artifact.repository.local
 
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
+import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.core.AbstractArtifactRepository
@@ -47,6 +50,30 @@ abstract class LocalRepository : AbstractArtifactRepository() {
         with(context) {
             val nodeCreateRequest = buildNodeCreateRequest(this)
             storageManager.storeArtifactFile(nodeCreateRequest, getArtifactFile(), storageCredentials)
+        }
+    }
+
+    override fun onDownloadBefore(context: ArtifactDownloadContext) {
+        if (isForbidden(context)) {
+            throw ErrorCodeException(ArtifactMessageCode.ARTIFACT_FORBIDDEN, context.artifactInfo.getArtifactFullPath())
+        }
+        super.onDownloadBefore(context)
+    }
+
+    /**
+     * 制品是否禁用
+     */
+    private fun isForbidden(context: ArtifactDownloadContext): Boolean {
+        with(context.artifactInfo) {
+            val nodeInfo = nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data
+            nodeInfo?.let { node ->
+                node.nodeMetadata.forEach {
+                    if (it.key == FORBID_STATUS && it.value == true) {
+                        return true
+                    }
+                }
+            }
+            return false
         }
     }
 

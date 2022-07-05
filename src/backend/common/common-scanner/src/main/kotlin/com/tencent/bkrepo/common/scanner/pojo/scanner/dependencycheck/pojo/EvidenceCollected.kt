@@ -25,10 +25,10 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.common.checker.pojo
+package com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.pojo
 
 data class EvidenceCollected(
-    val productEvidence: List<ProductEvidence>,
-    val vendorEvidence: List<VendorEvidence>,
-    val versionEvidence: List<VersionEvidence>
+        val productEvidence: List<ProductEvidence>,
+        val vendorEvidence: List<VendorEvidence>,
+        val versionEvidence: List<VersionEvidence>
 )

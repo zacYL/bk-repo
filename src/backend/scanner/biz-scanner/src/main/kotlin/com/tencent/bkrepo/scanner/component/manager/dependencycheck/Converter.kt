@@ -27,10 +27,10 @@
 
 package com.tencent.bkrepo.scanner.component.manager.dependencycheck
 
-import com.tencent.bkrepo.common.checker.pojo.Cvssv2
-import com.tencent.bkrepo.common.checker.pojo.Cvssv3
 import com.tencent.bkrepo.common.scanner.pojo.scanner.arrowhead.CvssV2
 import com.tencent.bkrepo.common.scanner.pojo.scanner.arrowhead.CvssV3
+import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.pojo.Cvssv2
+import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.pojo.Cvssv3
 import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.result.DependencyItem
 import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.scanner.DependencyScanner
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER

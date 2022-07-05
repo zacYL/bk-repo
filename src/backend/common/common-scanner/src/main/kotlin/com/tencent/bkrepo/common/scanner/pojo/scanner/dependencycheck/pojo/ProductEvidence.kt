@@ -25,10 +25,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.common.checker.pojo
+package com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.pojo
 
-data class VulnerabilityId(
+data class ProductEvidence(
     val confidence: String,
-    val id: String,
-    val url: String?
+    val name: String,
+    val source: String,
+    val type: String,
+    val value: String
 )

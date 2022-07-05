@@ -27,6 +27,5 @@
 
 dependencies {
     api(project(":common:common-api"))
-    api(project(":common:common-checker:api-checker"))
     implementation("org.apache.commons:commons-lang3")
 }

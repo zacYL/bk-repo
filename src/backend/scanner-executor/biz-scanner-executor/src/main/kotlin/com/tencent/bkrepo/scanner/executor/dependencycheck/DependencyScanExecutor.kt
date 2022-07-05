@@ -31,11 +31,10 @@ import com.tencent.bkrepo.common.api.exception.SystemErrorException
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_GLOBAL_PROJECT
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_VULDB_REPO
-import com.tencent.bkrepo.common.checker.pojo.DependencyInfo
-import com.tencent.bkrepo.common.checker.util.DependencyCheckerUtils
 import com.tencent.bkrepo.common.scanner.pojo.scanner.CveOverviewKey
 import com.tencent.bkrepo.common.scanner.pojo.scanner.ScanExecutorResult
 import com.tencent.bkrepo.common.scanner.pojo.scanner.SubScanTaskStatus
+import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.pojo.DependencyInfo
 import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.result.DependencyItem
 import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.result.DependencyScanExecutorResult
 import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.scanner.DependencyScanner
@@ -46,6 +45,7 @@ import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.pojo.search.NodeQueryBuilder
 import com.tencent.bkrepo.scanner.executor.ScanExecutor
 import com.tencent.bkrepo.scanner.executor.pojo.ScanExecutorTask
+import com.tencent.bkrepo.scanner.executor.util.DependencyCheckerUtils
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 

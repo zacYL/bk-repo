@@ -25,12 +25,10 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.common.checker.pojo
+package com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.pojo
 
-data class VendorEvidence(
+data class Package(
     val confidence: String,
-    val name: String,
-    val source: String,
-    val type: String,
-    val value: String
+    val id: String,
+    val url: String?
 )

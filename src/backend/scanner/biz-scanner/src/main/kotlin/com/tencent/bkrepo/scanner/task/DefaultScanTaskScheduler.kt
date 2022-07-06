@@ -372,7 +372,7 @@ class DefaultScanTaskScheduler @Autowired constructor(
                 ?.overview
                 ?.let { Converter.convert(it) }
             // 质量检查结果
-            val qualityPass = if (qualityRule != null && overview != null) {
+            val qualityPass = if (!qualityRule.isNullOrEmpty() && overview != null) {
                 if (scanTask.scanner == SCANCODE_TOOLKIT) {
                     licenseScanQualityService.checkLicenseScanQualityRedLine(qualityRule, overview)
                 } else {

@@ -103,9 +103,11 @@ trivy主要是针对docker 镜像制品漏洞进行扫描。
 
 
 
-## 其他说明
+## trivy安装使用注意事项
 
-- 下载最新镜像漏洞库文件[trivy.db.gz](https://github.com/aquasecurity/trivy-db/releases)，解压为triyv.db上传至镜像漏洞库管理
+- scanner-executor服务所在服务器需要安装docker
+- 需要通过 POST /scanner/api/scanners 接口注册trivy类型的扫描器
+- 下载最新镜像漏洞库文件[trivy.db.gz](https://github.com/aquasecurity/trivy-db/releases)，解压获取triyv.db，重命名为trivy.db带版本文件（如trivy.db-2022-06-29）上传至镜像漏洞库管理（默认二进制仓库），即上传至public-global项目的vuldb-repo仓库trivy目录下。trivy扫描镜像时，会获取最新上传的trivy.db作为镜像漏洞库去扫描。
 
 
 

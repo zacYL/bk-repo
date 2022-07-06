@@ -187,8 +187,8 @@ class ScanPlanDao : ScannerSimpleMongoDao<TScanPlan>() {
         updateFirst(Query(criteria), update)
     }
 
-    fun updateScanPlanQuality(scanId: String, quality: Map<String, Any?>) {
-        val query = Query(criteria().and(ID).isEqualTo(scanId))
+    fun updateScanPlanQuality(planId: String, quality: Map<String, Any?>) {
+        val query = Query(criteria().and(ID).isEqualTo(planId))
         val update = buildQualityUpdate(quality)
         updateMulti(query, update)
     }

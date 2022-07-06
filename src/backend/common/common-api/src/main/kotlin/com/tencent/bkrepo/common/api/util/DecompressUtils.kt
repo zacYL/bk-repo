@@ -45,10 +45,10 @@ object DecompressUtils {
      */
     fun getContent(archiveInputStream: ArchiveInputStream, fileName: String): String {
         var zipEntry: ArchiveEntry
-        archiveInputStream.use { it ->
+        archiveInputStream.use { archiveEntry ->
             while (archiveInputStream.nextEntry.also { zipEntry = it } != null) {
                 if ((!zipEntry.isDirectory) && zipEntry.name.split("/").last() == fileName) {
-                    return streamToString(it)
+                    return streamToString(archiveEntry)
                 }
             }
         }

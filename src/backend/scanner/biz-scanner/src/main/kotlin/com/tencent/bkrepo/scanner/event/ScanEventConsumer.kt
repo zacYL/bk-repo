@@ -29,6 +29,7 @@ package com.tencent.bkrepo.scanner.event
 
 import com.tencent.bkrepo.common.api.constant.CharPool
 import com.tencent.bkrepo.common.api.util.readJsonString
+import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_GLOBAL_PROJECT
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_VULDB_REPO
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
@@ -83,9 +84,12 @@ class ScanEventConsumer(
     )
 
     override fun accept(event: ArtifactEvent) {
+        logger.info("accept event eventType[${event.type}]")
+
         if (!acceptTypes.contains(event.type)) {
             return
         }
+        logger.info("accept event event[${event.toJsonString()}]")
 
         executor.execute {
             when (event.type) {
@@ -176,13 +180,17 @@ class ScanEventConsumer(
         var hasScanTask = false
 
         with(event) {
-            if (data[VersionCreatedEvent::packageType.name] != PackageType.MAVEN.name) {
+
+            if (data[VersionCreatedEvent::packageType.name] != PackageType.MAVEN.name &&
+                data[VersionCreatedEvent::packageType.name] != PackageType.DOCKER.name
+            ) {
+                logger.info("skip event packageType[${VersionCreatedEvent::packageType.name}]")
                 return false
             }
             logger.info("receive event resourceKey[${event.resourceKey}]")
 
             scanPlanDao
-                .findByProjectIdAndRepoName(projectId, repoName, PackageType.MAVEN.name)
+                .findByProjectIdAndRepoName(projectId, repoName, data[VersionCreatedEvent::packageType.name].toString())
                 .filter { match(event, it.rule.readJsonString()) }
                 .forEach {
                     val packageKey = data[VersionCreatedEvent::packageKey.name] as String

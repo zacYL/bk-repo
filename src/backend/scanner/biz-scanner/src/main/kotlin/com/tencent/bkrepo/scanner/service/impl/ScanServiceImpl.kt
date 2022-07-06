@@ -259,7 +259,8 @@ class ScanServiceImpl @Autowired constructor(
         if (logger.isDebugEnabled) {
             logger.debug("planId:$planId, overview:${overview.toJsonString()}")
         }
-        val qualityPass = if (planId != null && overview.isNotEmpty()) {
+        val scanSuccess = resultSubTaskStatus == SubScanTaskStatus.SUCCESS.name
+        val qualityPass = if (planId != null && scanSuccess && !subTask.scanQuality.isNullOrEmpty()) {
             scanQualityService.checkScanQualityRedLine(planId, overview as Map<String, Number>)
         } else {
             null
@@ -291,7 +292,6 @@ class ScanServiceImpl @Autowired constructor(
         logger.info("updating scan result, parentTask[$parentTaskId], subTask[$subTaskId][$resultSubTaskStatus]")
 
         // 更新父任务扫描结果
-        val scanSuccess = resultSubTaskStatus == SubScanTaskStatus.SUCCESS.name
         val passCount = if (qualityPass == true) {
             1L
         } else {

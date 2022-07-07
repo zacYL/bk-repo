@@ -88,6 +88,29 @@ class PackageMetadataServiceImpl(
     }
 
     @Transactional(rollbackFor = [Throwable::class])
+    override fun forbidMetadata(request: PackageMetadataSaveRequest) {
+        request.apply {
+            if (versionMetadata.isNullOrEmpty()) {
+                logger.info("Metadata key list is empty, skip saving[$this]")
+                return
+            }
+            val forbidMetadata = MetadataUtils.getForbidData(versionMetadata!!)
+            if (forbidMetadata.isNullOrEmpty()) {
+                logger.info("forbidMetadata is empty, skip saving[$this]")
+                return
+            }
+
+            val tPackage = checkPackage(projectId, repoName, packageKey)
+            val tPackageVersion = checkPackageVersion(tPackage.id!!, version)
+            val oldMetadata = tPackageVersion.metadata
+            tPackageVersion.metadata = MetadataUtils.replaceForbid(oldMetadata, forbidMetadata)
+            packageVersionDao.save(tPackageVersion)
+        }.also {
+            logger.info("Save package forbid metadata [$it] success.")
+        }
+    }
+
+    @Transactional(rollbackFor = [Throwable::class])
     override fun deleteMetadata(request: PackageMetadataDeleteRequest) {
         if (request.keyList.isEmpty()) {
             logger.info("Metadata key list is empty, skip deleting[$this]")

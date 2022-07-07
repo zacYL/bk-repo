@@ -32,12 +32,8 @@
 package com.tencent.bkrepo.repository.service.metadata.impl
 
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
-import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
-import com.tencent.bkrepo.common.artifact.constant.FORBID_TYPE
-import com.tencent.bkrepo.common.artifact.constant.FORBID_USER
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.path.PathUtils.normalizeFullPath
-import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
 import com.tencent.bkrepo.repository.dao.NodeDao
 import com.tencent.bkrepo.repository.model.TMetadata
@@ -98,19 +94,11 @@ class MetadataServiceImpl(
                 return
             }
 
-            val forbidMetadata = nodeMetadata!!.filter { it.key == FORBID_STATUS }.map {
-                TMetadata(
-                    key = it.key,
-                    value = it.value,
-                    system = true,
-                    description = it.description
-                )
-            }.toMutableList()
-            if (forbidMetadata.isEmpty()) {
-                logger.info("forbidMetadata is empty, skip saving")
+            val forbidMetadata = MetadataUtils.getForbidData(nodeMetadata!!)
+            if (forbidMetadata.isNullOrEmpty()) {
+                logger.info("forbidMetadata is empty, skip saving[$request]")
                 return
             }
-            addForbidUserAndType(forbidMetadata)
 
             val fullPath = normalizeFullPath(fullPath)
             val node = nodeDao.findNode(projectId, repoName, fullPath)
@@ -121,26 +109,6 @@ class MetadataServiceImpl(
             publishEvent(buildMetadataSavedEvent(request))
             logger.info("Save metadata[${node.metadata}] on node[/$projectId/$repoName$fullPath] success.")
         }
-    }
-
-    /**
-     * 添加禁用操作用户和类型
-     */
-    private fun addForbidUserAndType(forbidMetadata: MutableList<TMetadata>) {
-        forbidMetadata.addAll(
-            listOf(
-                TMetadata(
-                    key = FORBID_USER,
-                    value = SecurityUtils.getUserId(),
-                    system = true
-                ),
-                TMetadata(
-                    key = FORBID_TYPE,
-                    value = "MANUAL",
-                    system = true
-                )
-            )
-        )
     }
 
     @Transactional(rollbackFor = [Throwable::class])

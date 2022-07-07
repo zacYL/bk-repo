@@ -168,12 +168,7 @@ class PackageServiceImpl(
         } else {
             val query = PackageQueryHelper.versionListQuery(tPackage.id!!, option.version, stageTag)
             val totalRecords = packageVersionDao.count(query)
-            val records = packageVersionDao.find(query.with(pageRequest)).map {
-                val metadata = it.artifactPath?.let { path ->
-                    nodeDao.findNode(projectId, repoName, path)?.metadata
-                }
-                convert(it, metadata)!!
-            }
+            val records = packageVersionDao.find(query.with(pageRequest)).map { convert(it)!! }
             Pages.ofResponse(pageRequest, totalRecords, records)
         }
     }
@@ -643,10 +638,7 @@ class PackageServiceImpl(
             }
         }
 
-        private fun convert(
-            tPackageVersion: TPackageVersion?,
-            metadata: MutableList<TMetadata>? = null
-        ): PackageVersion? {
+        private fun convert(tPackageVersion: TPackageVersion?): PackageVersion? {
             return tPackageVersion?.let {
                 PackageVersion(
                     createdBy = it.createdBy,
@@ -658,8 +650,8 @@ class PackageServiceImpl(
                     size = it.size,
                     downloads = it.downloads,
                     stageTag = it.stageTag,
-                    metadata = MetadataUtils.toMap(metadata ?: it.metadata),
-                    packageMetadata = MetadataUtils.toList(metadata ?: it.metadata),
+                    metadata = MetadataUtils.toMap(it.metadata),
+                    packageMetadata = MetadataUtils.toList(it.metadata),
                     tags = it.tags.orEmpty(),
                     extension = it.extension.orEmpty(),
                     contentPath = it.artifactPath,

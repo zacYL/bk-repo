@@ -99,6 +99,28 @@ class UserPackageMetadataController(
         return ResponseBuilder.success()
     }
 
+    @ApiOperation("创建/更新禁用元数据列表")
+    @Permission(type = ResourceType.REPO, action = PermissionAction.UPDATE)
+    @PostMapping("/forbid/{projectId}/{repoName}")
+    fun forbidMetadata(
+        @RequestAttribute userId: String,
+        @PathVariable projectId: String,
+        @PathVariable repoName: String,
+        @RequestBody metadataSaveRequest: UserPackageMetadataSaveRequest
+    ): Response<Void> {
+        val request = with(metadataSaveRequest) {
+            PackageMetadataSaveRequest(
+                projectId = projectId,
+                repoName = repoName,
+                packageKey = packageKey,
+                version = version,
+                versionMetadata = metadataSaveRequest.versionMetadata
+            )
+        }
+        packageMetadataService.forbidMetadata(request)
+        return ResponseBuilder.success()
+    }
+
     @ApiOperation("删除元数据")
     @Permission(type = ResourceType.REPO, action = PermissionAction.UPDATE)
     @DeleteMapping("/{projectId}/{repoName}")

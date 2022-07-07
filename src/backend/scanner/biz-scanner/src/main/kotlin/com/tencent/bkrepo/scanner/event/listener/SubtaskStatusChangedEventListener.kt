@@ -30,9 +30,12 @@ package com.tencent.bkrepo.scanner.event.listener
 import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
 import com.tencent.bkrepo.common.artifact.constant.FORBID_TYPE
 import com.tencent.bkrepo.common.artifact.constant.SCAN_STATUS
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.repository.api.MetadataClient
+import com.tencent.bkrepo.repository.api.PackageMetadataClient
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataSaveRequest
+import com.tencent.bkrepo.repository.pojo.metadata.packages.PackageMetadataSaveRequest
 import com.tencent.bkrepo.scanner.event.SubtaskStatusChangedEvent
 import com.tencent.bkrepo.scanner.model.SubScanTaskDefinition
 import com.tencent.bkrepo.scanner.model.TPlanArtifactLatestSubScanTask
@@ -44,7 +47,10 @@ import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Component
 
 @Component
-class SubtaskStatusChangedEventListener(private val metadataClient: MetadataClient) {
+class SubtaskStatusChangedEventListener(
+    private val metadataClient: MetadataClient,
+    private val packageMetadataClient: PackageMetadataClient
+) {
     @Async
     @EventListener(SubtaskStatusChangedEvent::class)
     fun listen(event: SubtaskStatusChangedEvent) {
@@ -68,7 +74,6 @@ class SubtaskStatusChangedEventListener(private val metadataClient: MetadataClie
                 if (!qualityRedLine) {
                     forbidMetadata(this, metadata)
                 }
-
                 metadata.add(
                     MetadataModel(
                         key = SubScanTaskDefinition::qualityRedLine.name,
@@ -77,20 +82,30 @@ class SubtaskStatusChangedEventListener(private val metadataClient: MetadataClie
                     )
                 )
             }
-
-            val request = MetadataSaveRequest(
-                projectId = projectId,
-                repoName = repoName,
-                fullPath = fullPath,
-                nodeMetadata = metadata
-            )
-            metadataClient.saveMetadata(request)
+            if (repoType == RepositoryType.GENERIC.name) {
+                val request = MetadataSaveRequest(
+                    projectId = projectId,
+                    repoName = repoName,
+                    fullPath = fullPath,
+                    nodeMetadata = metadata
+                )
+                metadataClient.saveMetadata(request)
+            } else {
+                val request = PackageMetadataSaveRequest(
+                    projectId = projectId,
+                    repoName = repoName,
+                    packageKey = packageKey!!,
+                    version = version!!,
+                    versionMetadata = metadata
+                )
+                packageMetadataClient.saveMetadata(request)
+            }
             logger.info("update project[$projectId] repo[$repoName] fullPath[$fullPath] metadata[$metadata] success")
         }
     }
 
     /**
-     * 如果方案设置forbidQualityUnPass=true && 制品质量规则qualityRedLine=false，
+     * 如果方案设置forbidQualityUnPass=true，保存禁用信息
      * 保存metadata(forbidStatus禁用状态(true)、forbidType禁用类型(qualityUnPass))
      */
     fun forbidMetadata(subTask: TPlanArtifactLatestSubScanTask, metadata: ArrayList<MetadataModel>) {
@@ -98,13 +113,7 @@ class SubtaskStatusChangedEventListener(private val metadataClient: MetadataClie
             // 方案禁用触发设置
             val forbidQualityUnPass = scanQuality?.get(FORBID_QUALITY_UNPASS) as Boolean?
             if (forbidQualityUnPass != null && forbidQualityUnPass) {
-                // 查询制品元数据判断是否禁用
-                val listMetadata = metadataClient.listMetadata(projectId, repoName, fullPath).data
-                val forbidStatus = listMetadata?.get(FORBID_STATUS) as Boolean?
-                // 无禁用信息 or 未被禁用，添加禁用信息
-                if (forbidStatus == null || !forbidStatus) {
-                    addMetadata(metadata, true, ForbidType.QUALITYUNPASS)
-                }
+                addMetadata(metadata, true, ForbidType.QUALITYUNPASS)
             }
         }
     }
@@ -112,24 +121,22 @@ class SubtaskStatusChangedEventListener(private val metadataClient: MetadataClie
     fun addMetadata(
         metadata: ArrayList<MetadataModel>,
         forbidStatus: Boolean,
-        forbidType: ForbidType? = null
+        forbidType: ForbidType
     ) {
-        metadata.add(
-            MetadataModel(
-                key = FORBID_STATUS,
-                value = forbidStatus,
-                system = true
-            )
-        )
-        forbidType?.let {
-            metadata.add(
+        metadata.addAll(
+            listOf(
+                MetadataModel(
+                    key = FORBID_STATUS,
+                    value = forbidStatus,
+                    system = true
+                ),
                 MetadataModel(
                     key = FORBID_TYPE,
-                    value = it.name,
+                    value = forbidType.name,
                     system = true
                 )
             )
-        }
+        )
     }
 
     companion object {

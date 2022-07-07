@@ -29,40 +29,40 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.repository.service.metadata
+package com.tencent.bkrepo.repository.controller.service
 
+import com.tencent.bkrepo.common.api.pojo.Response
+import com.tencent.bkrepo.common.service.util.ResponseBuilder
+import com.tencent.bkrepo.repository.api.PackageMetadataClient
 import com.tencent.bkrepo.repository.pojo.metadata.packages.PackageMetadataDeleteRequest
 import com.tencent.bkrepo.repository.pojo.metadata.packages.PackageMetadataSaveRequest
+import com.tencent.bkrepo.repository.service.metadata.PackageMetadataService
+import org.springframework.web.bind.annotation.RestController
 
 /**
- * 包元数据服务接口
+ * 元数据服务接口实现类
  */
-interface PackageMetadataService {
+@RestController
+class PackageMetadataController(
+    private val packageMetadataService: PackageMetadataService
+) : PackageMetadataClient {
 
-    /**
-     * 查询节点的元数据
-     *
-     * [projectId]为节点所属项目，[repoName]为节点所属仓库，[packageKey]为包唯一key, [version]为包版本
-     * 返回[Map]数据结构，`key`为元数据名称，`value`为元数据值
-     */
-    fun listMetadata(projectId: String, repoName: String, packageKey: String, version: String): Map<String, Any>
+    override fun listMetadata(
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        version: String
+    ): Response<Map<String, Any>> {
+        return ResponseBuilder.success(packageMetadataService.listMetadata(projectId, repoName, packageKey, version))
+    }
 
-    /**
-     * 根据请求[request]保存或者更新元数据
-     *
-     * 如果元数据`key`已经存在则更新，否则创建新的
-     */
-    fun saveMetadata(request: PackageMetadataSaveRequest)
+    override fun saveMetadata(request: PackageMetadataSaveRequest): Response<Void> {
+        packageMetadataService.saveMetadata(request)
+        return ResponseBuilder.success()
+    }
 
-    /**
-     * 根据请求[request]保存或者更新禁用元数据
-     *
-     * 如果元数据`key`已经存在则更新，否则创建新的
-     */
-    fun forbidMetadata(request: PackageMetadataSaveRequest)
-
-    /**
-     * 根据请求[request]删除元数据
-     */
-    fun deleteMetadata(request: PackageMetadataDeleteRequest)
+    override fun deleteMetadata(request: PackageMetadataDeleteRequest): Response<Void> {
+        packageMetadataService.deleteMetadata(request)
+        return ResponseBuilder.success()
+    }
 }

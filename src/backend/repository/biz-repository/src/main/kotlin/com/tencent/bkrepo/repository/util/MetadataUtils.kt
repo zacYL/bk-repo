@@ -37,6 +37,7 @@ import com.tencent.bkrepo.common.artifact.constant.FORBID_TYPE
 import com.tencent.bkrepo.common.artifact.constant.FORBID_USER
 import com.tencent.bkrepo.common.artifact.constant.SCAN_STATUS
 import com.tencent.bkrepo.common.security.exception.PermissionException
+import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.message.RepositoryMessageCode
 import com.tencent.bkrepo.repository.model.TMetadata
@@ -111,6 +112,42 @@ object MetadataUtils {
         ) { it.key }
         forbidMetadata.forEach { metadataMap[it.key] = it }
         return metadataMap.values.toMutableList()
+    }
+
+    fun getForbidData(metadata: List<MetadataModel>): MutableList<TMetadata>? {
+        val forbidMetadata = metadata.filter { it.key == FORBID_STATUS }.map {
+            TMetadata(
+                key = it.key,
+                value = it.value,
+                system = true,
+                description = it.description
+            )
+        }.toMutableList()
+        if (forbidMetadata.isEmpty()) {
+            return null
+        }
+        addForbidUserAndType(forbidMetadata)
+        return forbidMetadata
+    }
+
+    /**
+     * 添加禁用操作用户和类型
+     */
+    private fun addForbidUserAndType(forbidMetadata: MutableList<TMetadata>) {
+        forbidMetadata.addAll(
+            listOf(
+                TMetadata(
+                    key = FORBID_USER,
+                    value = SecurityUtils.getUserId(),
+                    system = true
+                ),
+                TMetadata(
+                    key = FORBID_TYPE,
+                    value = "MANUAL",
+                    system = true
+                )
+            )
+        )
     }
 
     /**

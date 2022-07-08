@@ -22,7 +22,7 @@ data class ScanQualityUpdateRequest(
             if (redLine != null && redLine < 0) {
                 throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, level.levelName)
             }
-            redLine?.let { map[level.levelName] = it }
+            map[level.levelName] = redLine
         }
         this.forbidScanUnFinished?.let { map[ScanQualityUpdateRequest::forbidScanUnFinished.name] = it }
         this.forbidQualityUnPass?.let { map[ScanQualityUpdateRequest::forbidQualityUnPass.name] = it }

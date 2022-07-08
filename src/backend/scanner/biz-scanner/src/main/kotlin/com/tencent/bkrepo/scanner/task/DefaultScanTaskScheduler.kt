@@ -37,6 +37,7 @@ import com.tencent.bkrepo.common.redis.RedisLock
 import com.tencent.bkrepo.common.redis.RedisOperation
 import com.tencent.bkrepo.common.scanner.pojo.scanner.Scanner
 import com.tencent.bkrepo.common.scanner.pojo.scanner.SubScanTaskStatus
+import com.tencent.bkrepo.common.scanner.pojo.scanner.constant.SCANCODE_TOOLKIT
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
 import com.tencent.bkrepo.scanner.component.manager.ScannerConverter
@@ -62,6 +63,7 @@ import com.tencent.bkrepo.scanner.pojo.ScanTaskStatus.FINISHED
 import com.tencent.bkrepo.scanner.pojo.ScanTaskStatus.SCANNING_SUBMITTED
 import com.tencent.bkrepo.scanner.pojo.ScanTaskStatus.SCANNING_SUBMITTING
 import com.tencent.bkrepo.scanner.pojo.SubScanTask
+import com.tencent.bkrepo.scanner.service.LicenseScanQualityService
 import com.tencent.bkrepo.scanner.service.ScanQualityService
 import com.tencent.bkrepo.scanner.service.ScannerService
 import com.tencent.bkrepo.scanner.task.ScanTaskSchedulerConfiguration.Companion.SCAN_TASK_SCHEDULER_THREAD_POOL_BEAN_NAME
@@ -98,7 +100,8 @@ class DefaultScanTaskScheduler @Autowired constructor(
     private val publisher: ApplicationEventPublisher,
     private val scannerProperties: ScannerProperties,
     private val scanQualityService: ScanQualityService,
-    private val scannerConverters: Map<String, ScannerConverter>
+    private val scannerConverters: Map<String, ScannerConverter>,
+    private val licenseScanQualityService: LicenseScanQualityService
 ) : ScanTaskScheduler {
 
     private val logger = LoggerFactory.getLogger(javaClass)
@@ -178,7 +181,7 @@ class DefaultScanTaskScheduler @Autowired constructor(
         // 更新任务状态为所有子任务已提交
         logger.info(
             "submit $submittedSubTaskCount sub tasks, $reuseResultTaskCount sub tasks reuse result, " +
-                "update task[${scanTask.taskId}] status to SCANNING_SUBMITTED"
+                    "update task[${scanTask.taskId}] status to SCANNING_SUBMITTED"
         )
         scanTaskDao.updateStatus(scanTask.taskId, SCANNING_SUBMITTED)
         scannerMetrics.incTaskCountAndGet(SCANNING_SUBMITTED)
@@ -369,8 +372,12 @@ class DefaultScanTaskScheduler @Autowired constructor(
                 ?.overview
                 ?.let { Converter.convert(it) }
             // 质量检查结果
-            val qualityPass = if (qualityRule != null && overview != null) {
-                scanQualityService.checkScanQualityRedLine(qualityRule, overview)
+            val qualityPass = if (!qualityRule.isNullOrEmpty() && overview != null) {
+                if (scanTask.scanner == SCANCODE_TOOLKIT) {
+                    licenseScanQualityService.checkLicenseScanQualityRedLine(qualityRule, overview)
+                } else {
+                    scanQualityService.checkScanQualityRedLine(qualityRule, overview)
+                }
             } else {
                 null
             }
@@ -460,7 +467,7 @@ class DefaultScanTaskScheduler @Autowired constructor(
         if (repoRes.isNotOk()) {
             logger.error(
                 "Get repo info failed: code[${repoRes.code}], message[${repoRes.message}]," +
-                    " projectId[$projectId], repoName[$repoName]"
+                        " projectId[$projectId], repoName[$repoName]"
             )
             throw SystemErrorException(CommonMessageCode.SYSTEM_ERROR, repoRes.message ?: "")
         }

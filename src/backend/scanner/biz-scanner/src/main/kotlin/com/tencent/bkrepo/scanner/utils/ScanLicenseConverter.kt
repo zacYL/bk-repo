@@ -119,8 +119,7 @@ object ScanLicenseConverter {
                 nil = nil,
                 total = total,
                 finishTime = finishedDateTime?.format(DateTimeFormatter.ISO_DATE_TIME),
-                // 后续增加质量规则
-                qualityRedLine = null,
+                qualityRedLine = qualityRedLine,
                 scanQuality = scanQuality,
                 duration = ScanPlanConverter.duration(startDateTime, finishedDateTime)
             )

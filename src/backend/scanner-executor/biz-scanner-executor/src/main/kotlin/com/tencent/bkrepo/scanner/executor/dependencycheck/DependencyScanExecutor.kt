@@ -28,6 +28,7 @@
 package com.tencent.bkrepo.scanner.executor.dependencycheck
 
 import com.tencent.bkrepo.common.api.exception.SystemErrorException
+import com.tencent.bkrepo.common.api.util.runWatch
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_GLOBAL_PROJECT
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_VULDB_REPO
@@ -72,11 +73,15 @@ class DependencyScanExecutor(
             logger.info("scan file path:$filePath")
             // 执行扫描
             val (dbDir, dbName) = latestDependencyCheckerDB(storePath, task.scanner.type)
-            val dependencyInfo = DependencyCheckerUtils.scanDynamicDBWithInfo(
-                scanPath = filePath,
-                dbName = dbName,
-                dbDir = dbDir
-            ) ?: throw SystemErrorException()
+            logger.info("task.fullPath:  ${task.fullPath}")
+            val dependencyInfo = runWatch(logger, "dependency checker") {
+                DependencyCheckerUtils.scanDynamicDBWithInfo(
+                    scanPath = filePath,
+                    filePath = task.fullPath,
+                    dbName = dbName,
+                    dbDir = dbDir,
+                ) ?: throw SystemErrorException()
+            }
             return result(dependencyInfo, filePath)
         } catch (e: Exception) {
             logger.error(logMsg(task, "scan failed"), e)

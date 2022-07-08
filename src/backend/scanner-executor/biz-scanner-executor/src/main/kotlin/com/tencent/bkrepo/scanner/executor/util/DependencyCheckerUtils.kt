@@ -38,8 +38,15 @@ object DependencyCheckerUtils {
      * @param [scanPath] 指定路径
      * @return 字符串返回
      */
-    fun scanDynamicDB(scanPath: String, dbName: String?, dbDir: String?): String? {
-        return ScanUtils.startScanDynamicDB(scanPath, dbName, dbDir)
+    fun scanDynamicDB(
+        scanPath: String,
+        filePath: String,
+        dbName: String?,
+        dbDir: String?,
+        retireJsDir: String?,
+        retireJsDirFileName: String?
+    ): String? {
+        return ScanUtils.scanSingleFile(scanPath, filePath, dbName, dbDir, retireJsDir, retireJsDirFileName)
     }
 
     /**
@@ -47,7 +54,7 @@ object DependencyCheckerUtils {
      * @param [scanPath] 指定路径
      * @return [DependencyInfo]
      */
-    fun scanDynamicDBWithInfo(scanPath: String, dbName: String?, dbDir: String?): DependencyInfo? {
-        return scanDynamicDB(scanPath, dbName, dbDir)?.readJsonString()
+    fun scanDynamicDBWithInfo(scanPath: String, filePath: String, dbName: String?, dbDir: String?): DependencyInfo? {
+        return scanDynamicDB(scanPath, filePath, dbName, dbDir, null, null)?.readJsonString()
     }
 }

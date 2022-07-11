@@ -41,7 +41,9 @@ import com.tencent.bkrepo.scanner.pojo.rule.RuleArtifact
 object RuleConverter {
 
     fun convert(sourceRule: Rule?, planType: String?, projectId: String): Rule {
-        val targetRule = createProjectIdAdnRepoRule(projectId, emptyList(), planType)
+        // 兼容许可证扫描的planType:MAVEN_LICENSE
+        val type = ScanSchemeType.ofRepositoryType(planType).name
+        val targetRule = createProjectIdAdnRepoRule(projectId, emptyList(), type)
         // 将sourceRule中除projectId相关外的rule都合并到targetRule中
         sourceRule?.let { mergeInto(it, targetRule, listOf(NodeInfo::projectId.name)) }
         return targetRule

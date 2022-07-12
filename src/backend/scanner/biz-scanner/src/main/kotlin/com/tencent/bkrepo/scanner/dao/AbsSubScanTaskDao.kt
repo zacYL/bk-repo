@@ -93,6 +93,11 @@ abstract class AbsSubScanTaskDao<E : SubScanTaskDefinition> : ScannerSimpleMongo
         return remove(query)
     }
 
+    fun deleteByPlanId(planId: String): DeleteResult {
+        val query = Query(SubScanTaskDefinition::planId.isEqualTo(planId))
+        return remove(query)
+    }
+
     private fun addHighestVulnerabilityLevel(level: String, criteria: Criteria): Criteria {
         Level.values().forEach {
             val isHighest = level == it.levelName

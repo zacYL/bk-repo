@@ -25,17 +25,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.common.checker.pojo
+package com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.pojo
 
-import com.fasterxml.jackson.annotation.JsonAlias
-
-data class Credits(
-    @JsonAlias("NPM")
-    val npm: String,
-    @JsonAlias("NVD")
-    val nvd: String,
-    @JsonAlias("OSSINDEX")
-    val ossIndex: String,
-    @JsonAlias("RETIREJS")
-    val retireJs: String
+data class VulnerableSoftware(
+    val software: Software
 )

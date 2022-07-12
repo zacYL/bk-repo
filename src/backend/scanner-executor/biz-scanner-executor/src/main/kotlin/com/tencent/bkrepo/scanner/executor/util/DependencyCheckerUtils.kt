@@ -25,10 +25,36 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.common.checker.pojo
+package com.tencent.bkrepo.scanner.executor.util
 
-data class Reference(
-    val name: String,
-    val source: String,
-    val url: String
-)
+import com.tencent.bkrepo.common.api.util.readJsonString
+import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.pojo.DependencyInfo
+import net.canway.devops.bkrepo.dependencycheck.ScanUtils
+
+object DependencyCheckerUtils {
+
+    /**
+     * 扫描指定路径下制品
+     * @param [scanPath] 指定路径
+     * @return 字符串返回
+     */
+    fun scanDynamicDB(
+        scanPath: String,
+        filePath: String,
+        dbName: String?,
+        dbDir: String?,
+        retireJsDir: String?,
+        retireJsDirFileName: String?
+    ): String? {
+        return ScanUtils.scanSingleFile(scanPath, filePath, dbName, dbDir, retireJsDir, retireJsDirFileName)
+    }
+
+    /**
+     * 扫描指定路径下制品
+     * @param [scanPath] 指定路径
+     * @return [DependencyInfo]
+     */
+    fun scanDynamicDBWithInfo(scanPath: String, filePath: String, dbName: String?, dbDir: String?): DependencyInfo? {
+        return scanDynamicDB(scanPath, filePath, dbName, dbDir, null, null)?.readJsonString()
+    }
+}

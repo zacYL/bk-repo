@@ -25,10 +25,10 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.common.checker.pojo
+package com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.pojo
 
 data class ProjectInfo(
-    val credits: Credits,
-    val name: String,
-    val reportDate: String
+        val credits: Credits,
+        val name: String,
+        val reportDate: String
 )

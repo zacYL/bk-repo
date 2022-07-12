@@ -25,10 +25,11 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.common.checker.pojo
+package com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.pojo
 
-data class Software(
-    val id: String,
-    val versionEndExcluding: String?,
-    val vulnerabilityIdMatched: String?
+data class DependencyInfo(
+        val dependencies: List<Dependency>,
+        val projectInfo: ProjectInfo,
+        val reportSchema: String,
+        val scanInfo: ScanInfo
 )

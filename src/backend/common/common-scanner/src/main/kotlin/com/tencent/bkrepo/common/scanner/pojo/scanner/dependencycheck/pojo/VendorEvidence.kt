@@ -25,17 +25,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.common.checker.pojo
+package com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.pojo
 
-data class Vulnerability(
-    val cvssv2: Cvssv2?,
-    val cvssv3: Cvssv3?,
-    val cwes: List<String>,
-    val description: String,
+data class VendorEvidence(
+    val confidence: String,
     val name: String,
-    val notes: String,
-    val references: List<Reference>,
-    val severity: String,
     val source: String,
-    val vulnerableSoftware: List<VulnerableSoftware>
+    val type: String,
+    val value: String
 )

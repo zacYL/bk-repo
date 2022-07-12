@@ -25,20 +25,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.common.checker.pojo
+package com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.pojo
 
-data class Cvssv3(
-    val attackComplexity: String,
-    val attackVector: String,
-    val availabilityImpact: String,
-    val baseScore: Double,
-    val baseSeverity: String,
-    val confidentialityImpact: String,
-    val exploitabilityScore: String?,
-    val impactScore: String?,
-    val integrityImpact: String,
-    val privilegesRequired: String,
-    val scope: String,
-    val userInteraction: String,
-    val version: String?
+data class VersionEvidence(
+    val confidence: String,
+    val name: String,
+    val source: String,
+    val type: String,
+    val value: String
 )

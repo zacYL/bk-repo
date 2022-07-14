@@ -26,7 +26,7 @@ export default {
             }
         },
         leftTree () {
-            const metadata = this.detail.metadata || {}
+            const metadata = this.metadataMap
             return {
                 children: [
                     {
@@ -61,7 +61,7 @@ export default {
             }
         },
         rightTree () {
-            const metadata = this.detail.metadata || {}
+            const metadata = this.metadataMap
             const ips = [
                 ...(metadata['target.ips'] || '')
                     .toString()

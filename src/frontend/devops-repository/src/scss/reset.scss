@@ -130,7 +130,6 @@ body {
         }
     }
     /* 字体颜色重置 */
-    .bk-table,
     .bk-form .bk-label,
     .bk-form-checkbox .bk-checkbox-text,
     .bk-form-radio,
@@ -183,6 +182,7 @@ body {
         color: var(--fontDisableColor)!important;
     }
 
+    .bk-table,
     .bk-breadcrumb .bk-breadcrumb-item:last-child .bk-breadcrumb-item-inner.is-link,
     .bk-page .bk-page-total-count,
     .bk-page .bk-page-total-count .stress,

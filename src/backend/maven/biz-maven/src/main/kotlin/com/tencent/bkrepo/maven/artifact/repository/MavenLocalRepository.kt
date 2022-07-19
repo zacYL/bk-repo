@@ -36,6 +36,8 @@ import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
 import com.tencent.bkrepo.common.artifact.exception.VersionNotFoundException
+import com.tencent.bkrepo.common.artifact.hash.sha1
+import com.tencent.bkrepo.common.artifact.hash.sha512
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
@@ -85,21 +87,17 @@ import com.tencent.bkrepo.maven.util.MavenStringUtils.isSnapshotNonUniqueUri
 import com.tencent.bkrepo.maven.util.MavenStringUtils.isSnapshotUri
 import com.tencent.bkrepo.maven.util.MavenStringUtils.resolverName
 import com.tencent.bkrepo.maven.util.MavenUtil
+import com.tencent.bkrepo.repository.api.MetadataClient
 import com.tencent.bkrepo.repository.api.StageClient
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
+import com.tencent.bkrepo.repository.pojo.metadata.MetadataSaveRequest
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
-import java.util.regex.Pattern
 import org.apache.commons.lang3.StringUtils
 import org.apache.maven.artifact.repository.metadata.Snapshot
 import org.apache.maven.artifact.repository.metadata.SnapshotVersion
@@ -112,11 +110,18 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.stereotype.Component
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.util.regex.Pattern
 
 @Component
 class MavenLocalRepository(
     private val stageClient: StageClient,
-    private val mavenMetadataService: MavenMetadataService
+    private val mavenMetadataService: MavenMetadataService,
+    private val metadataClient: MetadataClient
 ) : LocalRepository() {
 
     @Value("\${maven.domain:http://127.0.0.1:25803}")
@@ -559,6 +564,7 @@ class MavenLocalRepository(
 
     /**
      * 上传后更新构件的checksum文件
+     * 先尝试从文件元数据中取，如果没有则从节点数据或者服务端计算
      */
     private fun updateArtifactCheckSum(context: ArtifactContext, node: NodeDetail, typeArray: Array<HashType>) {
         logger.info(
@@ -566,11 +572,44 @@ class MavenLocalRepository(
                     "in repo ${context.artifactInfo.getRepoIdentify()}"
         )
         for (hashType in typeArray) {
-            val checksum = node.metadata[hashType.ext] as? String
+            val checksum = checksumNode(context, node, hashType)
             checksum?.let {
                 generateChecksum(node, hashType, checksum, context.storageCredentials)
             }
         }
+    }
+
+    private fun checksumNode(context: ArtifactContext, node: NodeDetail, hashType: HashType): String? {
+        val checksumValue = if ((node.metadata[hashType.ext] as? String)?.isNotBlank() == true) {
+            return node.metadata[hashType.ext] as String
+        } else if (hashType == HashType.MD5) {
+            node.md5
+        } else if (hashType == HashType.SHA256) {
+            node.sha256
+        } else if (hashType == HashType.SHA1) {
+            storageManager.loadArtifactInputStream(node, context.storageCredentials)?.use {
+                it.sha1()
+            }
+        } else if (hashType == HashType.SHA512) {
+            storageManager.loadArtifactInputStream(node, context.storageCredentials)?.use {
+                it.sha512()
+            }
+        } else {
+            logger.error("Unsupported hash type $hashType: [${context.repositoryDetail} | ${context.artifactInfo}]")
+            null
+        }
+        checksumValue?.let {
+            logger.info("Save ${hashType.ext} checksum $it for [${context.repositoryDetail} | ${context.artifactInfo}]")
+            metadataClient.saveMetadata(
+                MetadataSaveRequest(
+                    projectId = context.projectId,
+                    repoName = context.repoName,
+                    fullPath = node.fullPath,
+                    metadata = mapOf(hashType.ext to it)
+                )
+            )
+        }
+        return checksumValue
     }
 
     /**
@@ -718,6 +757,8 @@ class MavenLocalRepository(
                     throw ArtifactNotFoundException("Artifact $fullPath could not find..")
                 }
             }
+            // maven-metadata.xml
+            if (fullPath.endsWith("$MAVEN_METADATA_FILE_NAME.${checksumType?.ext}")) return null
             // 剔除类似-20190917.073536-2.jar路径，实际不存在的
             if (!fullPath.isSnapshotNonUniqueUri()) {
                 throw MavenArtifactNotFoundException("Artifact $fullPath could not find..")

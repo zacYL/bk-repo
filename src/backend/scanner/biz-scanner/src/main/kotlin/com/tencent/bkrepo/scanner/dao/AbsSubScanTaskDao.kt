@@ -67,7 +67,7 @@ abstract class AbsSubScanTaskDao<E : SubScanTaskDefinition> : ScannerSimpleMongo
             repoType?.let { criteria.and(SubScanTaskDefinition::repoType.name).isEqualTo(repoType) }
             repoName?.let { criteria.and(SubScanTaskDefinition::repoName.name).isEqualTo(repoName) }
             subScanTaskStatus?.let { criteria.and(SubScanTaskDefinition::status.name).inValues(it) }
-            if (startTime != null && endTime != null) {
+            if (startDateTime != null && endDateTime != null) {
                 criteria.and(SubScanTaskDefinition::createdDate.name).gte(startDateTime!!).lte(endDateTime!!)
             }
             qualityRedLine?.let { criteria.and(SubScanTaskDefinition::qualityRedLine.name).isEqualTo(qualityRedLine) }

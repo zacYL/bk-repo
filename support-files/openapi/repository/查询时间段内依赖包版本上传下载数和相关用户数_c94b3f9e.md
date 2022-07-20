@@ -1,0 +1,38 @@
+# 查询时间段内依赖包版本上传下载数和相关用户数
+功能描述：查询时间段内依赖包版本上传下载数和相关用户数
+
+### 请求地址
+```
+/api/project/statistics/summary
+```
+
+### 请求方法
+`GET`
+### 请求参数
+
+#### 查询参数
+
+| 字段 | 类型 | 必填 | 描述 |
+| -------- | -------- | -------- | -------- |
+| projectId     | string   | true       | projectId |
+| fromDate     | string   | true       | fromDate |
+| toDate     | string   | true       | toDate |
+
+
+
+### 返回结果
+| 字段 | 类型 | 描述 |
+| -------- | -------- | -------- |
+| code     | integer , format:int32  | 返回码 |
+| data     | 项目依赖包统计信息总览   | 数据 |
+| message     | string   | 错误信息 |
+| traceId     | string   | 链路追踪id |
+#### 项目依赖包统计信息总览
+| 字段 | 类型 | 描述 |
+| -------- | -------- | -------- |
+| dailyStatisticsDetails     | array<每天具体统计信息>   | 时间段内每天具体统计信息 |
+| userDownloadCount     | integer , format:int64  | 下载制品的用户数 |
+| userUploadCount     | integer , format:int64  | 上传制品的用户数 |
+| versionDownloadCount     | integer , format:int64  | 版本下载数 |
+| versionUploadCount     | integer , format:int64  | 版本上传数 |
+

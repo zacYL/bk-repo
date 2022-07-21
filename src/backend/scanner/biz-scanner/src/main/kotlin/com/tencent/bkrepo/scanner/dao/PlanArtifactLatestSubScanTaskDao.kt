@@ -28,6 +28,7 @@
 package com.tencent.bkrepo.scanner.dao
 
 import com.mongodb.client.result.UpdateResult
+import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.scanner.pojo.scanner.SubScanTaskStatus
 import com.tencent.bkrepo.scanner.model.SubScanTaskDefinition
 import com.tencent.bkrepo.scanner.model.TPlanArtifactLatestSubScanTask
@@ -89,6 +90,31 @@ class PlanArtifactLatestSubScanTaskDao(
                 .and(SubScanTaskDefinition::createdDate.name).gte(startDateTime!!).lte(endDateTime!!)
             return find(Query(criteria))
         }
+    }
+
+    /**
+     * 分页获取时间段内制品最新扫描记录
+     *
+     * @param projectId 项目ID
+     * @param startDateTime 起始时间
+     * @param endDateTime 截止时间
+     *
+     * @return 时间段内制品最新扫描成功结果
+     */
+    fun pageBy(
+        projectId: String,
+        startDateTime: LocalDateTime,
+        endDateTime: LocalDateTime,
+        pageNumber: Int,
+        pageSize: Int
+    ): List<TPlanArtifactLatestSubScanTask> {
+        val criteria = Criteria.where(SubScanTaskDefinition::projectId.name).isEqualTo(projectId)
+            .and(SubScanTaskDefinition::createdDate.name).gte(startDateTime).lte(endDateTime)
+            .and(SubScanTaskDefinition::status.name).inValues(listOf(SubScanTaskStatus.SUCCESS).map { it.name })
+            .and(SubScanTaskDefinition::scanResultOverview.name).ne(emptyMap<String, Number>())
+        val pageRequest = Pages.ofRequest(pageNumber, pageSize)
+        val query = Query(criteria).with(pageRequest)
+        return find(query)
     }
 
     /**

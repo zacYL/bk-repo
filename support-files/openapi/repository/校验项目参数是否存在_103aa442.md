@@ -1,0 +1,24 @@
+# 校验项目参数是否存在
+功能描述：校验项目参数是否存在
+
+### 请求地址
+```
+/api/project/exist
+```
+
+### 请求方法
+`GET`
+### 请求参数
+
+#### 查询参数
+
+| 字段 | 类型 | 必填 | 描述 |
+| -------- | -------- | -------- | -------- |
+| userId     | string   | false       | userId |
+| name     | string   | true       | 项目ID |
+| displayName     | string   | true       | 项目ID |
+
+
+
+### 返回结果
+

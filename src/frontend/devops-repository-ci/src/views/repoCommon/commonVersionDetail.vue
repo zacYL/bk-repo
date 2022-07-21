@@ -3,7 +3,7 @@
         <template #setting>
             <bk-button v-if="!metadataMap.forbidStatus && repoType !== 'docker'"
                 outline class="mr10" @click="$emit('download')">下载</bk-button>
-            <operation-list class="mr10"
+            <operation-list class="mr20"
                 :list="operationBtns">
                 <bk-button icon="ellipsis"></bk-button>
             </operation-list>
@@ -65,7 +65,7 @@
         <bk-tab-panel v-if="detail.metadata" name="metadata" :label="$t('metaData')">
             <div class="version-metadata display-block" :data-title="$t('metaData')">
                 <bk-table
-                    :data="detail.metadata"
+                    :data="detail.metadata.filter(m => !m.system)"
                     :outer-border="false"
                     :row-border="false"
                     size="small">
@@ -81,7 +81,7 @@
         <bk-tab-panel v-if="detail.manifest" name="manifest" label="Manifest">
             <div class="version-metadata display-block" data-title="Manifest">
                 <bk-table
-                    :data="Object.entries(detail.manifest || {})"
+                    :data="Object.entries(detail.manifest)"
                     :outer-border="false"
                     :row-border="false"
                     size="small">
@@ -142,7 +142,7 @@
                 </section>
             </article>
         </bk-tab-panel>
-        <bk-tab-panel v-if="MODE_CONFIG === 'ci' && detail.metadata"
+        <bk-tab-panel v-if="detail.metadata"
             render-directive="if"
             name="topo" label="CI/CD关联信息"
             style="height:100%;">
@@ -173,7 +173,6 @@
         mixins: [repoGuideMixin, topoDataMixin],
         data () {
             return {
-                MODE_CONFIG,
                 tabName: 'basic',
                 isLoading: false,
                 detail: {
@@ -218,8 +217,8 @@
                     { name: 'size', label: this.$t('size') },
                     { name: 'downloadCount', label: this.$t('downloads') },
                     { name: 'downloads', label: this.$t('downloads') },
-                    // { name: 'createdBy', label: this.$t('createdBy') },
-                    // { name: 'createdDate', label: this.$t('createdDate') },
+                    { name: 'createdBy', label: this.$t('createdBy') },
+                    { name: 'createdDate', label: this.$t('createdDate') },
                     { name: 'lastModifiedBy', label: this.$t('lastModifiedBy') },
                     { name: 'lastModifiedDate', label: this.$t('lastModifiedDate') }
                 ].filter(({ name }) => name in this.detail.basic)
@@ -246,7 +245,7 @@
                         : []),
                     this.showRepoScan && { clickEvent: () => this.$emit('forbid'), label: metadataMap.forbidStatus ? '解除禁止' : '禁止使用' },
                     this.permission.delete && { clickEvent: () => this.$emit('delete'), label: this.$t('delete') }
-                ].filter(Boolean)
+                ]
             }
         },
         watch: {

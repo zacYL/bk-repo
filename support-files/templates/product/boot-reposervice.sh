@@ -4,6 +4,8 @@
 #该脚本可在服务器上的任意目录下执行,不会影响到日志的输出位置等
 #-------------------------------------------------------------------------------------------------------------
 
+MAIN_CLASS=org.springframework.boot.loader.JarLauncher
+
 # 公共参数，不要修改
 PROJECT_NAME=repo
 
@@ -65,6 +67,19 @@ function getPID(){
     fi
 }
 
+detect_main (){
+  # 探测是slim版还是fatjar. 后台启动. PID文件及日志路径保持一致.
+  if [ -f "META-INF/MANIFEST.MF" ]; then
+    JAVA_OPTS="$JAVA_OPTS -Dfatjar=${JAR_FILE}"  # 兼容fatjar文件名匹配进程.
+    JAVA_RUN="$MAIN_CLASS"
+  elif [ -f "${JAR_FILE}" ]; then
+    JAVA_RUN="-jar ${JAR_FILE}"
+  else
+    echo >&2 "unsupported ci-proj dir: $PWD."
+    return 31
+  fi
+}
+
 HTTP_PORT_STATUS=0
 
 # 启动job服务器
@@ -79,7 +94,7 @@ function startup() {
     JAVA_OPTS="$JAVA_OPTS -Dspring.config.location=file:${CONF_HOME}/common.yaml,file:${CONF_HOME}/application-${SERVICE_NAME}.yaml"
     JAVA_OPTS="$JAVA_OPTS -Dservice.log.dir=${LOGS_HOME} -Dmanagement.endpoint.logfile.external-file=${LOGS_HOME}/${SERVICE_NAME}/${SERVICE_NAME}.log"
     JAVA_OPTS="$JAVA_OPTS -Ddevops_gateway=__HTTP_SCHEMA__://__BKCI_FQDN__"
-
+    detect_main
     export JAVA_OPTS
 
     getPID
@@ -97,7 +112,7 @@ function startup() {
             exit 1
         fi
 
-        nohup ${JAVA_HOME}/bin/java ${JAVA_OPTS} -classpath ${CLASSPATH} -jar ${JAR_FILE} > ${NOHUPLOG} 2>&1 &
+        nohup ${JAVA_HOME}/bin/java ${JAVA_OPTS} -classpath ${CLASSPATH} $JAVA_RUN > ${NOHUPLOG} 2>&1 &
 
         for i in $(seq 100)
         do

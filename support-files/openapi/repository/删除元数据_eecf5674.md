@@ -1,0 +1,23 @@
+# 删除元数据
+功能描述：删除元数据
+
+### 请求地址
+```
+/api/metadata/package/{projectId}/{repoName}
+```
+
+### 请求方法
+`DELETE`
+### 请求参数
+#### 路径参数
+
+| 字段 | 类型 | 必填 | 描述 |
+| -------- | -------- | -------- | -------- |
+| projectId     | string   | true       | projectId |
+| repoName     | string   | true       | repoName |
+
+
+
+#### 请求体参数
+### 返回结果
+

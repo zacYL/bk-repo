@@ -30,8 +30,7 @@ package com.tencent.bkrepo.scanner.task.iterator
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.model.Rule
-import com.tencent.bkrepo.common.scanner.pojo.scanner.scanCodeCheck.scanner.ScancodeToolkitScanner
-import com.tencent.bkrepo.scanner.pojo.ScanSchemeType
+import com.tencent.bkrepo.common.scanner.pojo.scanner.constant.SCANCODE_TOOLKIT
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.PackageClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
@@ -41,6 +40,7 @@ import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
 import com.tencent.bkrepo.scanner.configuration.ScannerProperties
 import com.tencent.bkrepo.scanner.pojo.Node
 import com.tencent.bkrepo.scanner.pojo.ScanPlan
+import com.tencent.bkrepo.scanner.pojo.ScanSchemeType
 import com.tencent.bkrepo.scanner.pojo.ScanTask
 import com.tencent.bkrepo.scanner.pojo.rule.RuleArtifact
 import com.tencent.bkrepo.scanner.utils.Request
@@ -66,7 +66,7 @@ class IteratorManager(
     fun createNodeIterator(scanTask: ScanTask, resume: Boolean = false): Iterator<Node> {
         val rule = if (scanTask.scanPlan != null && scanTask.rule is Rule.NestedRule) {
             // 存在扫描方案时才修改制品遍历规则
-            if (scanTask.scannerType == ScancodeToolkitScanner.TYPE) {
+            if (scanTask.scanner == SCANCODE_TOOLKIT) {
                 modifyLicenseRule(scanTask.scanPlan!!, scanTask.rule as Rule.NestedRule)
             }
             modifyRule(scanTask.scanPlan!!, scanTask.rule as Rule.NestedRule)

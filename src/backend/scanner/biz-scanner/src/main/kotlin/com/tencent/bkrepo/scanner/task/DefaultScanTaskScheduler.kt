@@ -37,7 +37,7 @@ import com.tencent.bkrepo.common.redis.RedisLock
 import com.tencent.bkrepo.common.redis.RedisOperation
 import com.tencent.bkrepo.common.scanner.pojo.scanner.Scanner
 import com.tencent.bkrepo.common.scanner.pojo.scanner.SubScanTaskStatus
-import com.tencent.bkrepo.common.scanner.pojo.scanner.scanCodeCheck.scanner.ScancodeToolkitScanner
+import com.tencent.bkrepo.common.scanner.pojo.scanner.constant.SCANCODE_TOOLKIT
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
 import com.tencent.bkrepo.scanner.component.manager.ScannerConverter
@@ -373,7 +373,7 @@ class DefaultScanTaskScheduler @Autowired constructor(
                 ?.let { Converter.convert(it) }
             // 质量检查结果
             val qualityPass = if (!qualityRule.isNullOrEmpty() && overview != null) {
-                if (scanTask.scannerType == ScancodeToolkitScanner.TYPE) {
+                if (scanTask.scanner == SCANCODE_TOOLKIT) {
                     licenseScanQualityService.checkLicenseScanQualityRedLine(qualityRule, overview)
                 } else {
                     scanQualityService.checkScanQualityRedLine(qualityRule, overview)

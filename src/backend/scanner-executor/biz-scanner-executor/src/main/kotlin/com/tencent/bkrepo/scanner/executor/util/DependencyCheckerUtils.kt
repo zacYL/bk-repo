@@ -38,6 +38,7 @@ object DependencyCheckerUtils {
      * @param [scanPath] 指定路径
      * @return 字符串返回
      */
+    @Synchronized
     fun scanDynamicDB(
         scanPath: String,
         filePath: String,

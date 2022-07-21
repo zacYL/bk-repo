@@ -78,7 +78,7 @@
                     </bk-table>
                 </div>
             </bk-tab-panel>
-            <bk-tab-panel v-if="!detailSlider.folder && MODE_CONFIG === 'ci' && detailSlider.data.metadata"
+            <bk-tab-panel v-if="!detailSlider.folder && detailSlider.data.metadata"
                 render-directive="if"
                 name="topo" label="CI/CD关联信息"
                 style="height:100%;">
@@ -100,7 +100,6 @@
         mixins: [topoDataMixin],
         data () {
             return {
-                MODE_CONFIG,
                 tabName: 'detailInfo',
                 detailSlider: {
                     show: false,

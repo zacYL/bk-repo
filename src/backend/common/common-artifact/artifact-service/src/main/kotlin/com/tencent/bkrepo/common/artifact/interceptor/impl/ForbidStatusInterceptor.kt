@@ -25,27 +25,30 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.scanner.configuration
+package com.tencent.bkrepo.common.artifact.interceptor.impl
 
-import org.springframework.boot.context.properties.ConfigurationProperties
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
+import com.tencent.bkrepo.common.artifact.interceptor.DownloadInterceptor
+import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 
-@ConfigurationProperties("scanner")
-data class ScannerProperties(
-    /**
-     * 默认项目扫描子任务数量限制
-     */
-    var defaultProjectSubScanTaskCountLimit: Int = DEFAULT_SUB_SCAN_TASK_COUNT_LIMIT,
-    var supportFileNameExt: Set<String> = DEFAULT_SUPPORT_FILE_NAME_EXTENSION,
-    var licenseSupportNameExt: Set<String> = LICENSE_SUPPORT_FILE_NAME_EXTENSION,
-    var detailReportUrl: String = "http://localhost"
-) {
-    companion object {
-        val DEFAULT_SUPPORT_FILE_NAME_EXTENSION = setOf(
-            "apk", "apks", "aab", "exe", "so", "ipa", "dmg", "jar", "gz", "tar", "zip"
-        )
-        val LICENSE_SUPPORT_FILE_NAME_EXTENSION = setOf("apk", "ipa", "jar")
-        const val DEFAULT_PROJECT_SCAN_PRIORITY = 0
-        const val DEFAULT_SCAN_TASK_COUNT_LIMIT = 1
-        const val DEFAULT_SUB_SCAN_TASK_COUNT_LIMIT = 20
+/**
+ * 制品禁用拦截器
+ */
+class ForbidStatusInterceptor : DownloadInterceptor<Any>(emptyMap()) {
+
+    override fun parseRule() {
+        throw UnsupportedOperationException()
+    }
+
+    override fun matcher(node: NodeDetail, rule: Any): Boolean {
+        throw UnsupportedOperationException()
+    }
+
+    override fun intercept(node: NodeDetail) {
+        if (node.metadata[FORBID_STATUS] == true) {
+            throw ErrorCodeException(ArtifactMessageCode.ARTIFACT_FORBIDDEN, node.fullPath)
+        }
     }
 }

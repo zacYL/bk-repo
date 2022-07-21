@@ -25,27 +25,16 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.scanner.configuration
+package com.tencent.bkrepo.repository.pojo.metadata
 
-import org.springframework.boot.context.properties.ConfigurationProperties
-
-@ConfigurationProperties("scanner")
-data class ScannerProperties(
-    /**
-     * 默认项目扫描子任务数量限制
-     */
-    var defaultProjectSubScanTaskCountLimit: Int = DEFAULT_SUB_SCAN_TASK_COUNT_LIMIT,
-    var supportFileNameExt: Set<String> = DEFAULT_SUPPORT_FILE_NAME_EXTENSION,
-    var licenseSupportNameExt: Set<String> = LICENSE_SUPPORT_FILE_NAME_EXTENSION,
-    var detailReportUrl: String = "http://localhost"
-) {
-    companion object {
-        val DEFAULT_SUPPORT_FILE_NAME_EXTENSION = setOf(
-            "apk", "apks", "aab", "exe", "so", "ipa", "dmg", "jar", "gz", "tar", "zip"
-        )
-        val LICENSE_SUPPORT_FILE_NAME_EXTENSION = setOf("apk", "ipa", "jar")
-        const val DEFAULT_PROJECT_SCAN_PRIORITY = 0
-        const val DEFAULT_SCAN_TASK_COUNT_LIMIT = 1
-        const val DEFAULT_SUB_SCAN_TASK_COUNT_LIMIT = 20
-    }
+/**
+ * 制品禁用类型
+ */
+enum class ForbidType {
+    // 扫描中被禁用
+    SCANNING,
+    // 未通过质量规则被禁用
+    QUALITY_UNPASS,
+    // 手动禁用
+    MANUAL
 }

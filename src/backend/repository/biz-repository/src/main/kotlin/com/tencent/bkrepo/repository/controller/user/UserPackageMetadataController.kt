@@ -56,7 +56,7 @@ import org.springframework.web.bind.annotation.RestController
 /**
  * 元数据接口实现类
  */
-@Api("节点元数据用户接口")
+@Api("包元数据用户接口")
 @RestController
 @RequestMapping("/api/metadata/package")
 class UserPackageMetadataController(
@@ -91,7 +91,6 @@ class UserPackageMetadataController(
                 repoName = repoName,
                 packageKey = packageKey,
                 version = version,
-                metadata = metadataSaveRequest.metadata,
                 versionMetadata = metadataSaveRequest.versionMetadata
             )
         }
@@ -117,7 +116,7 @@ class UserPackageMetadataController(
                 versionMetadata = metadataSaveRequest.versionMetadata
             )
         }
-        packageMetadataService.forbidMetadata(request)
+        packageMetadataService.addForbidMetadata(request)
         return ResponseBuilder.success()
     }
 

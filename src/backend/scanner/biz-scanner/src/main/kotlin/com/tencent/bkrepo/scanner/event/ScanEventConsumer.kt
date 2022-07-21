@@ -182,9 +182,10 @@ class ScanEventConsumer(
         with(event) {
 
             if (data[VersionCreatedEvent::packageType.name] != PackageType.MAVEN.name &&
-                data[VersionCreatedEvent::packageType.name] != PackageType.DOCKER.name
+                data[VersionCreatedEvent::packageType.name] != PackageType.DOCKER.name &&
+                data[VersionCreatedEvent::packageType.name] != PackageType.NPM.name
             ) {
-                logger.info("skip event packageType[${VersionCreatedEvent::packageType.name}]")
+                logger.info("skip event packageType[${VersionCreatedEvent::packageType}]")
                 return false
             }
             logger.info("receive event resourceKey[${event.resourceKey}]")
@@ -199,6 +200,7 @@ class ScanEventConsumer(
                         planId = it.id!!,
                         rule = RuleConverter.convert(projectId, repoName, packageKey, packageVersion)
                     )
+                    logger.info("package auto scan request:${request.toJsonString()}")
                     scanService.scan(request, ScanTriggerType.ON_NEW_ARTIFACT, it.lastModifiedBy)
                     hasScanTask = true
                 }

@@ -125,7 +125,7 @@
             }
         },
         computed: {
-            ...mapState(['userList']),
+            ...mapState(['projectList', 'userList']),
             isSearching () {
                 const { packageName, repoType, repoName } = this.$route.query
                 return Boolean(packageName || repoType || repoName)
@@ -161,7 +161,7 @@
                         roadMap: '0',
                         children: list.map((node, i) => {
                             return {
-                                name: node.projectId,
+                                name: (this.projectList.find(p => p.id === node.projectId) || {}).name || '/',
                                 projectId: node.projectId,
                                 roadMap: '0,' + i,
                                 children: node.repos.map((child, j) => {

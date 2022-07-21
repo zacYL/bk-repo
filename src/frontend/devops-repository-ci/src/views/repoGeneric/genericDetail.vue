@@ -43,13 +43,13 @@
                             :style="{ height: metadata.show ? '230px' : '0' }">
                             <bk-form class="p20" :label-width="80" :model="metadata" :rules="rules" ref="metadatForm">
                                 <bk-form-item :label="$t('key')" :required="true" property="key">
-                                    <bk-input size="small" v-model="metadata.key" :placeholder="$t('key')"></bk-input>
+                                    <bk-input size="small" v-model.trim="metadata.key" :placeholder="$t('key')"></bk-input>
                                 </bk-form-item>
                                 <bk-form-item :label="$t('value')" :required="true" property="value">
-                                    <bk-input size="small" v-model="metadata.value" :placeholder="$t('value')"></bk-input>
+                                    <bk-input size="small" v-model.trim="metadata.value" :placeholder="$t('value')"></bk-input>
                                 </bk-form-item>
                                 <bk-form-item :label="$t('description')">
-                                    <bk-input size="small" v-model="metadata.description" :placeholder="$t('description')"></bk-input>
+                                    <bk-input size="small" v-model.trim="metadata.description" :placeholder="$t('description')"></bk-input>
                                 </bk-form-item>
                                 <bk-form-item>
                                     <bk-button size="small" theme="default" @click.stop="hiddenAddMetadata">{{$t('cancel')}}</bk-button>

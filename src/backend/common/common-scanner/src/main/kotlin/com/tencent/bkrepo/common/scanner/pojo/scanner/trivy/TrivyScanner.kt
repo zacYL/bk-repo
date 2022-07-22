@@ -34,25 +34,24 @@ import io.swagger.annotations.ApiModelProperty
 @ApiModel("trivy扫描器配置")
 class TrivyScanner(
     override val name: String,
-    /**
-     * 格式为ArrowheadImageVersion::KnowledgeBaseVervion::StandaloneConfigTemplateVersion
-     * 或者ArrowheadImageVersion::KnowledgeBaseVervion
-     */
-    @ApiModelProperty("扫描器版本")
     override val version: String,
-    @ApiModelProperty("扫描器缓存目录，存放漏洞数据库文件目录")
-    val cacheDir: String,
-    @ApiModelProperty("扫描器根目录")
-    val rootPath: String,
-    @ApiModelProperty("扫描结束后是否清理工作目录")
-    val cleanWorkDir: Boolean = true,
+    @ApiModelProperty("扫描器缓存目录，会在rootPath下创建，存放漏洞数据库文件目录，需要以.开头，否则会被定时任务清理")
+    val cacheDir: String = ".cache",
     @ApiModelProperty("使用的容器镜像")
-    val container: TrivyDockerImage
+    val container: TrivyDockerImage,
+    @ApiModelProperty("漏洞库配置")
+    val vulDbConfig: VulDbConfig = VulDbConfig()
 ) : Scanner(name, TYPE, version) {
     companion object {
         const val TYPE = "trivy"
     }
 }
+
+@ApiModel("漏洞数据库配置")
+data class VulDbConfig(
+    @ApiModelProperty("漏洞库来源")
+    val dbSource: Int = DbSource.REPO.code,
+)
 
 @ApiModel("Trivy容器镜像配置")
 data class TrivyDockerImage(
@@ -66,3 +65,17 @@ data class TrivyDockerImage(
     val outputDir: String = "/output"
 )
 
+/**
+ * 漏洞库来源
+ */
+enum class DbSource(val code: Int) {
+    /**
+     * 从制品库下载
+     */
+    REPO(0),
+
+    /**
+     * 调用Trivy命令下载
+     */
+    TRIVY(1)
+}

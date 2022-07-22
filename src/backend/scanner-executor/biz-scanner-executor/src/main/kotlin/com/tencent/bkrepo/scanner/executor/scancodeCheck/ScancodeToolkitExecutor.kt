@@ -2,6 +2,7 @@ package com.tencent.bkrepo.scanner.executor.scancodeCheck
 
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.model.Bind
+import com.github.dockerjava.api.model.Binds
 import com.github.dockerjava.api.model.Volume
 import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.exception.SystemErrorException
@@ -19,7 +20,10 @@ import com.tencent.bkrepo.scanner.api.ScanClient
 import com.tencent.bkrepo.scanner.executor.ScanExecutor
 import com.tencent.bkrepo.scanner.executor.configuration.ScannerExecutorProperties
 import com.tencent.bkrepo.scanner.executor.pojo.ScanExecutorTask
+import com.tencent.bkrepo.scanner.executor.util.CommonUtils
 import com.tencent.bkrepo.scanner.executor.util.DockerUtils
+import com.tencent.bkrepo.scanner.executor.util.DockerUtils.pullImage
+import com.tencent.bkrepo.scanner.executor.util.DockerUtils.startContainer
 import com.tencent.bkrepo.scanner.executor.util.FileUtils
 import org.apache.commons.io.input.ReversedLinesFileReader
 import org.slf4j.LoggerFactory
@@ -141,12 +145,12 @@ class ScancodeToolkitExecutor @Autowired constructor(
 
         val containerConfig = task.scanner.container
         // 拉取镜像
-        DockerUtils.pullImage(dockerClient, containerConfig.image)
+        dockerClient.pullImage(containerConfig.image)
 
         // 容器内工作目录
         val hostConfig = DockerUtils.dockerHostConfig(
-            bind = Bind(workDir.absolutePath, Volume(containerConfig.workDir)),
-            maxTime = maxFilesSize
+            binds = Binds(Bind(workDir.absolutePath, Volume(containerConfig.workDir))),
+            maxSize = maxFilesSize
         )
 
         val containerCmd =
@@ -163,7 +167,7 @@ class ScancodeToolkitExecutor @Autowired constructor(
         taskContainerIdMap[task.taskId] = containerId
         logger.info(logMsg(task, "run container instance Id [$workDir, $containerId]"))
         try {
-            val result = DockerUtils.containerRun(dockerClient, containerId, maxScanDuration * 15L)
+            val result = dockerClient.startContainer(containerId, maxScanDuration * 15L)
             logger.info(logMsg(task, "task docker run result[$result], [$workDir, $containerId]"))
             if (!result) {
                 return scanStatus(task, workDir, SubScanTaskStatus.TIMEOUT)
@@ -177,12 +181,12 @@ class ScancodeToolkitExecutor @Autowired constructor(
             throw e
         } finally {
             taskContainerIdMap.remove(task.taskId)
-            DockerUtils.ignoreExceptionExecute(logMsg(task, "stop container failed")) {
+            CommonUtils.ignoreExceptionExecute(logMsg(task, "stop container failed")) {
                 dockerClient.stopContainerCmd(containerId)
                     .withTimeout(DEFAULT_STOP_CONTAINER_TIMEOUT_SECONDS).exec()
                 dockerClient.killContainerCmd(containerId).withSignal(SIGNAL_KILL).exec()
             }
-            DockerUtils.ignoreExceptionExecute(logMsg(task, "remove container failed")) {
+            CommonUtils.ignoreExceptionExecute(logMsg(task, "remove container failed")) {
                 dockerClient.removeContainerCmd(containerId).withForce(true).exec()
             }
         }

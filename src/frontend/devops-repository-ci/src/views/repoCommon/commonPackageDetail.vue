@@ -42,11 +42,17 @@
                             <operation-list
                                 class="version-operation"
                                 :list="[
-                                    permission.edit && { label: '晋级', clickEvent: () => changeStageTagHandler($version), disabled: ($version.stageTag || '').includes('@release') },
-                                    isEnterprise && repoType === 'maven' && { label: '安全扫描', clickEvent: () => scanPackageHandler($version) },
-                                    repoType !== 'docker' && { label: '下载', clickEvent: () => downloadPackageHandler($version) },
+                                    ...(!$version.metadata.forbidStatus ? [
+                                        permission.edit && {
+                                            label: '晋级', clickEvent: () => changeStageTagHandler($version),
+                                            disabled: ($version.stageTag || '').includes('@release')
+                                        },
+                                        repoType !== 'docker' && { label: '下载', clickEvent: () => downloadPackageHandler($version) },
+                                        isEnterprise && showRepoScan && { label: '安全扫描', clickEvent: () => scanPackageHandler($version) }
+                                    ] : []),
+                                    showRepoScan && { clickEvent: () => changeForbidStatusHandler($version), label: $version.metadata.forbidStatus ? '解除禁止' : '禁止使用' },
                                     permission.delete && { label: '删除', clickEvent: () => deleteVersionHandler($version) }
-                                ].filter(Boolean)"></operation-list>
+                                ]"></operation-list>
                         </div>
                     </infinite-scroll>
                 </div>
@@ -56,6 +62,7 @@
                     ref="versionDetail"
                     @tag="changeStageTagHandler()"
                     @scan="scanPackageHandler()"
+                    @forbid="changeForbidStatusHandler()"
                     @download="downloadPackageHandler()"
                     @delete="deleteVersionHandler()">
                 </version-detail>
@@ -68,8 +75,9 @@
 <script>
     import OperationList from '@repository/components/OperationList'
     import InfiniteScroll from '@repository/components/InfiniteScroll'
-    import VersionDetail from './commonVersionDetail'
+    import VersionDetail from '@repository/views/repoCommon/commonVersionDetail'
     import commonFormDialog from '@repository/views/repoCommon/commonFormDialog'
+    import { scanTypeEnum } from '@repository/store/publicEnum'
     import { mapState, mapGetters, mapActions } from 'vuex'
     export default {
         name: 'commonPackageDetail',
@@ -134,6 +142,9 @@
             },
             currentVersion () {
                 return this.versionList.find(version => version.name === this.version)
+            },
+            showRepoScan () {
+                return Object.keys(scanTypeEnum).join(',').toLowerCase().includes(this.repoType)
             }
         },
         created () {
@@ -145,7 +156,8 @@
                 'getPackageInfo',
                 'getVersionList',
                 'changeStageTag',
-                'deleteVersion'
+                'deleteVersion',
+                'forbidPackageMetadata'
             ]),
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}, load) {
                 this.pagination.current = current
@@ -238,6 +250,23 @@
                     id: '',
                     name: this.pkg.name,
                     version: row.name
+                })
+            },
+            changeForbidStatusHandler (row = this.currentVersion) {
+                this.forbidPackageMetadata({
+                    projectId: this.projectId,
+                    repoName: this.repoName,
+                    body: {
+                        packageKey: this.packageKey,
+                        version: row.name,
+                        versionMetadata: [{ key: 'forbidStatus', value: !row.metadata.forbidStatus }]
+                    }
+                }).then(() => {
+                    this.$bkMessage({
+                        theme: 'success',
+                        message: (row.metadata.forbidStatus ? '解除禁止' : '禁止使用') + this.$t('success')
+                    })
+                    this.refresh(row.name)
                 })
             },
             downloadPackageHandler (row = this.currentVersion) {

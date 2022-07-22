@@ -513,7 +513,7 @@ class DockerV2LocalRepoService @Autowired constructor(
                 history = configBlob.history,
                 manifest = nodeDetail.metadata,
                 layers = layers,
-                metadata = packageMetadata
+                metadata = versionDetail.packageMetadata,
             )
         } catch (ignored: Exception) {
             return null

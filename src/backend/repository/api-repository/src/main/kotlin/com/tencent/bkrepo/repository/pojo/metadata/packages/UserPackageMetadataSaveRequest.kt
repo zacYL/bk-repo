@@ -31,6 +31,7 @@
 
 package com.tencent.bkrepo.repository.pojo.metadata.packages
 
+import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
 
@@ -43,6 +44,6 @@ data class UserPackageMetadataSaveRequest(
     val packageKey: String,
     @ApiModelProperty("包版本", required = true)
     val version: String,
-    @ApiModelProperty("元数据key-value数据", required = true)
-    val metadata: Map<String, String>
+    @ApiModelProperty("元数据")
+    val versionMetadata: List<MetadataModel>? = null
 )

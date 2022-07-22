@@ -56,7 +56,7 @@ import org.springframework.web.bind.annotation.RestController
 /**
  * 元数据接口实现类
  */
-@Api("节点元数据用户接口")
+@Api("包元数据用户接口")
 @RestController
 @RequestMapping("/api/metadata/package")
 class UserPackageMetadataController(
@@ -91,10 +91,32 @@ class UserPackageMetadataController(
                 repoName = repoName,
                 packageKey = packageKey,
                 version = version,
-                metadata = metadataSaveRequest.metadata
+                versionMetadata = metadataSaveRequest.versionMetadata
             )
         }
         packageMetadataService.saveMetadata(request)
+        return ResponseBuilder.success()
+    }
+
+    @ApiOperation("创建/更新禁用元数据列表")
+    @Permission(type = ResourceType.REPO, action = PermissionAction.UPDATE)
+    @PostMapping("/forbid/{projectId}/{repoName}")
+    fun forbidMetadata(
+        @RequestAttribute userId: String,
+        @PathVariable projectId: String,
+        @PathVariable repoName: String,
+        @RequestBody metadataSaveRequest: UserPackageMetadataSaveRequest
+    ): Response<Void> {
+        val request = with(metadataSaveRequest) {
+            PackageMetadataSaveRequest(
+                projectId = projectId,
+                repoName = repoName,
+                packageKey = packageKey,
+                version = version,
+                versionMetadata = metadataSaveRequest.versionMetadata
+            )
+        }
+        packageMetadataService.addForbidMetadata(request)
         return ResponseBuilder.success()
     }
 

@@ -33,6 +33,7 @@ package com.tencent.bkrepo.repository.pojo.metadata.packages
 
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.pojo.ServiceRequest
+import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersionRequest
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
@@ -50,8 +51,8 @@ data class PackageMetadataSaveRequest(
     override val packageKey: String,
     @ApiModelProperty("包版本", required = true)
     override val version: String,
-    @ApiModelProperty("元数据key-value数据", required = true)
-    val metadata: Map<String, Any>? = null,
+    @ApiModelProperty("需要创建或更新的元数据", required = true)
+    val versionMetadata: List<MetadataModel>? = null,
     @ApiModelProperty("操作用户")
     override val operator: String = SYSTEM_USER
 ) : PackageVersionRequest, ServiceRequest

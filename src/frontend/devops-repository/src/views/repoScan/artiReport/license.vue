@@ -18,12 +18,7 @@
                     <span v-if="baseInfo.qualityRedLine" class="repo-tag SUCCESS">通过</span>
                     <span v-else class="repo-tag FAILED">不通过</span>
                 </div>
-                <div class="status-sign"
-                    :class="item.id"
-                    v-for="item in qualityList"
-                    :key="item.id"
-                    :data-name="item.label">
-                </div>
+                <div v-for="item in qualityList" :key="item">{{ item }}</div>
             </div>
         </div>
         <div class="leak-list">
@@ -139,6 +134,18 @@
             },
             recordId () {
                 return this.$route.params.recordId
+            },
+            qualityList () {
+                const data = this.baseInfo.scanQuality || {}
+                const ruleMap = {
+                    recommend: '仅有推荐使用的许可证',
+                    compliance: '仅有合规的许可证',
+                    unknown: '无未知许可证'
+                }
+                return Object.keys(ruleMap).map(k => {
+                    if (data[k]) return ruleMap[k]
+                    return undefined
+                }).filter(Boolean)
             }
         },
         created () {
@@ -217,7 +224,7 @@
             },
             back () {
                 const { repoType, repoName } = this.baseInfo
-                const { scanType, scanName, path, packageKey, version } = this.$route.query
+                const { viewType, scanType, scanName, path, packageKey, version } = this.$route.query
                 this.$router.push({
                     name: scanName ? 'scanReport' : (this.packageKey ? 'commonPackage' : 'repoGeneric'),
                     params: {
@@ -225,7 +232,7 @@
                         [this.planId ? 'planId' : 'repoType']: this.planId || repoType
                     },
                     query: scanName
-                        ? { scanType, scanName }
+                        ? { viewType, scanType, scanName }
                         : (this.packageKey
                             ? { repoName, packageKey, version }
                             : { repoName, path })

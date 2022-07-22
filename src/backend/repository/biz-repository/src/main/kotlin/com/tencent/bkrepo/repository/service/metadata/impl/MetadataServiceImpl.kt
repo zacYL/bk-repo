@@ -35,6 +35,7 @@ import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.path.PathUtils.normalizeFullPath
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
+import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.dao.NodeDao
 import com.tencent.bkrepo.repository.model.TMetadata
 import com.tencent.bkrepo.repository.model.TNode
@@ -87,9 +88,21 @@ class MetadataServiceImpl(
     }
 
     @Transactional(rollbackFor = [Throwable::class])
+    override fun addForbidMetadata(request: MetadataSaveRequest) {
+        with(request) {
+            val forbidMetadata = MetadataUtils.extractForbidMetadata(nodeMetadata!!)
+            if (forbidMetadata.isNullOrEmpty()) {
+                logger.info("forbidMetadata is empty, skip saving[$request]")
+                return
+            }
+            saveMetadata(request.copy(metadata = null, nodeMetadata = forbidMetadata, operator = SYSTEM_USER))
+        }
+    }
+
+    @Transactional(rollbackFor = [Throwable::class])
     override fun deleteMetadata(request: MetadataDeleteRequest) {
         with(request) {
-            if (keyList.isNullOrEmpty()) {
+            if (keyList.isEmpty()) {
                 logger.info("Metadata key list is empty, skip deleting")
                 return
             }
@@ -97,7 +110,11 @@ class MetadataServiceImpl(
             val query = NodeQueryHelper.nodeQuery(projectId, repoName, fullPath)
 
             // 检查是否有更新权限
-            nodeDao.findOne(query)?.metadata?.forEach { MetadataUtils.checkPermission(it, operator) }
+            nodeDao.findOne(query)?.metadata?.forEach {
+                if (it.key in keyList) {
+                    MetadataUtils.checkPermission(it, operator)
+                }
+            }
 
             val update = Update().pull(
                 TNode::metadata.name,

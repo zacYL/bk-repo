@@ -10,7 +10,7 @@ import com.tencent.bkrepo.common.devops.enums.CanwayPermissionType
 import com.tencent.bkrepo.common.devops.pojo.request.CanwayPermissionRequest
 import com.tencent.bkrepo.common.devops.pojo.response.CanwayPermissionResponse
 import com.tencent.bkrepo.common.devops.pojo.response.CanwayResponse
-import com.tencent.bkrepo.common.devops.util.http.CanwayHttpUtils
+import com.tencent.bkrepo.common.devops.util.http.SimpleHttpUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -94,7 +94,7 @@ class CanwayPermissionService(
             )
         ).toJsonString()
         val ciAddResourceUrl = "${devopsHost.removeSuffix("/")}$CANWAY_PERMISSION_API$ciCheckPermissionApi"
-        val responseContent = CanwayHttpUtils.doPost(ciAddResourceUrl, canwayCheckPermissionRequest).content
+        val responseContent = SimpleHttpUtils.doPost(ciAddResourceUrl, canwayCheckPermissionRequest).content
 
         return responseContent.readJsonString<CanwayResponse<CanwayPermissionResponse>>().data
     }

@@ -28,14 +28,14 @@
 package com.tencent.bkrepo.scanner.executor.dependencycheck
 
 import com.tencent.bkrepo.common.api.exception.SystemErrorException
+import com.tencent.bkrepo.common.api.util.runWatch
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_GLOBAL_PROJECT
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_VULDB_REPO
-import com.tencent.bkrepo.common.checker.pojo.DependencyInfo
-import com.tencent.bkrepo.common.checker.util.DependencyCheckerUtils
 import com.tencent.bkrepo.common.scanner.pojo.scanner.CveOverviewKey
 import com.tencent.bkrepo.common.scanner.pojo.scanner.ScanExecutorResult
 import com.tencent.bkrepo.common.scanner.pojo.scanner.SubScanTaskStatus
+import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.pojo.DependencyInfo
 import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.result.DependencyItem
 import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.result.DependencyScanExecutorResult
 import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.scanner.DependencyScanner
@@ -46,6 +46,7 @@ import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.pojo.search.NodeQueryBuilder
 import com.tencent.bkrepo.scanner.executor.ScanExecutor
 import com.tencent.bkrepo.scanner.executor.pojo.ScanExecutorTask
+import com.tencent.bkrepo.scanner.executor.util.DependencyCheckerUtils
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
@@ -72,11 +73,15 @@ class DependencyScanExecutor(
             logger.info("scan file path:$filePath")
             // 执行扫描
             val (dbDir, dbName) = latestDependencyCheckerDB(storePath, task.scanner.type)
-            val dependencyInfo = DependencyCheckerUtils.scanDynamicDBWithInfo(
-                scanPath = filePath,
-                dbName = dbName,
-                dbDir = dbDir
-            ) ?: throw SystemErrorException()
+            logger.info("task.fullPath:  ${task.fullPath}")
+            val dependencyInfo = runWatch(logger, "dependency checker") {
+                DependencyCheckerUtils.scanDynamicDBWithInfo(
+                    scanPath = filePath,
+                    filePath = task.fullPath,
+                    dbName = dbName,
+                    dbDir = dbDir,
+                ) ?: throw SystemErrorException()
+            }
             return result(dependencyInfo, filePath)
         } catch (e: Exception) {
             logger.error(logMsg(task, "scan failed"), e)
@@ -87,7 +92,7 @@ class DependencyScanExecutor(
     fun latestDependencyCheckerDB(storePath: String, scannerType: String): Pair<String?, String?> {
         val records = nodeClient.search(
             NodeQueryBuilder()
-                .select("sha256")
+                .select("sha256", "fullPath", "size", "lastModifiedDate")
                 .sortByDesc("lastModifiedDate")
                 .page(1, 1)
                 .projectId(PUBLIC_GLOBAL_PROJECT)
@@ -98,6 +103,7 @@ class DependencyScanExecutor(
                 .build()
         ).data?.records ?: return Pair(null, null)
         return if (records.isNotEmpty()) {
+            logger.info("find latest dc db:${records[0].toJsonString()}")
             val dbSha256 = records.first()["sha256"]?.toString() ?: return Pair(null, null)
             Pair("$storePath${locator.locate(dbSha256)}".removeSuffix("/"), dbSha256)
         } else { Pair(null, null) }

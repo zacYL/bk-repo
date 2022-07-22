@@ -1,18 +1,19 @@
 <template>
     <bk-tab class="common-version-container" type="unborder-card" :active.sync="tabName" v-bkloading="{ isLoading }">
         <template #setting>
-            <bk-button v-if="repoType !== 'docker'" outline class="mr10" @click="$emit('download')">下载</bk-button>
+            <bk-button v-if="!metadataMap.forbidStatus && repoType !== 'docker'"
+                outline class="mr10" @click="$emit('download')">下载</bk-button>
             <operation-list class="mr20"
                 :list="operationBtns">
-                <bk-button @click.stop="() => {}" icon="ellipsis"></bk-button>
+                <bk-button icon="ellipsis"></bk-button>
             </operation-list>
         </template>
         <bk-tab-panel v-if="detail.basic" name="basic" :label="$t('baseInfo')">
             <div class="version-base-info base-info display-block" :data-title="$t('baseInfo')">
                 <div class="package-name grid-item">
                     <label>制品名称</label>
-                    <span>
-                        <span>{{ packageName }}</span>
+                    <span class="flex-1 flex-align-center text-overflow">
+                        <span class="text-overflow" :title="packageName">{{ packageName }}</span>
                         <span v-if="detail.basic.groupId" class="ml5 repo-tag"> {{ detail.basic.groupId }} </span>
                     </span>
                 </div>
@@ -20,15 +21,19 @@
                     v-for="{ name, label, value } in detailInfoMap"
                     :key="name">
                     <label>{{ label }}</label>
-                    <span class="flex-1 text-overflow" :title="value">
-                        <span>{{ value }}</span>
+                    <span class="flex-1 flex-align-center text-overflow">
+                        <span class="text-overflow" :title="value">{{ value }}</span>
                         <template v-if="name === 'version'">
                             <span class="ml5 repo-tag"
                                 v-for="tag in detail.basic.stageTag"
                                 :key="tag">
                                 {{ tag }}
                             </span>
-                            <scan-tag v-if="repoType === 'maven'" class="ml10" :status="(detail.metadata || {}).scanStatus"></scan-tag>
+                            <scan-tag v-if="showRepoScan" class="ml10" :status="metadataMap.scanStatus"></scan-tag>
+                            <forbid-tag class="ml10"
+                                v-if="metadataMap.forbidStatus"
+                                v-bind="metadataMap">
+                            </forbid-tag>
                         </template>
                     </span>
                 </div>
@@ -60,15 +65,16 @@
         <bk-tab-panel v-if="detail.metadata" name="metadata" :label="$t('metaData')">
             <div class="version-metadata display-block" :data-title="$t('metaData')">
                 <bk-table
-                    :data="Object.entries(detail.metadata)"
+                    :data="detail.metadata.filter(m => !m.system)"
                     :outer-border="false"
                     :row-border="false"
                     size="small">
                     <template #empty>
                         <empty-data ex-style="margin-top:130px;"></empty-data>
                     </template>
-                    <bk-table-column :label="$t('key')" prop="0" show-overflow-tooltip></bk-table-column>
-                    <bk-table-column :label="$t('value')" prop="1" show-overflow-tooltip></bk-table-column>
+                    <bk-table-column :label="$t('key')" prop="key" show-overflow-tooltip></bk-table-column>
+                    <bk-table-column :label="$t('value')" prop="value" show-overflow-tooltip></bk-table-column>
+                    <bk-table-column :label="$t('description')" prop="description" show-overflow-tooltip></bk-table-column>
                 </bk-table>
             </div>
         </bk-tab-panel>
@@ -142,6 +148,8 @@
     import CodeArea from '@repository/components/CodeArea'
     import OperationList from '@repository/components/OperationList'
     import ScanTag from '@repository/views/repoScan/scanTag'
+    import forbidTag from '@repository/components/ForbidTag'
+    import { scanTypeEnum } from '@repository/store/publicEnum'
     import { mapState, mapActions } from 'vuex'
     import { convertFileSize, formatDate } from '@repository/utils'
     import repoGuideMixin from '@repository/views/repoCommon/repoGuideMixin'
@@ -150,7 +158,8 @@
         components: {
             CodeArea,
             OperationList,
-            ScanTag
+            ScanTag,
+            forbidTag
         },
         mixins: [repoGuideMixin],
         data () {
@@ -160,8 +169,7 @@
                 detail: {
                     basic: {
                         readme: ''
-                    },
-                    metadata: {}
+                    }
                 },
                 readmeContent: '',
                 selectedHistory: {},
@@ -199,17 +207,33 @@
                     { name: 'size', label: this.$t('size') },
                     { name: 'downloadCount', label: this.$t('downloads') },
                     { name: 'downloads', label: this.$t('downloads') },
-                    // { name: 'createdBy', label: this.$t('createdBy') },
-                    // { name: 'createdDate', label: this.$t('createdDate') },
+                    { name: 'createdBy', label: this.$t('createdBy') },
+                    { name: 'createdDate', label: this.$t('createdDate') },
                     { name: 'lastModifiedBy', label: this.$t('lastModifiedBy') },
                     { name: 'lastModifiedDate', label: this.$t('lastModifiedDate') }
                 ].filter(({ name }) => name in this.detail.basic)
                     .map(item => ({ ...item, value: this.detail.basic[item.name] }))
             },
+            metadataMap () {
+                return (this.detail.metadata || []).reduce((target, meta) => {
+                    target[meta.key] = meta.value
+                    return target
+                }, {})
+            },
+            showRepoScan () {
+                return Object.keys(scanTypeEnum).join(',').toLowerCase().includes(this.repoType)
+            },
             operationBtns () {
+                const basic = this.detail.basic
+                const metadataMap = this.metadataMap
                 return [
-                    this.permission.edit && { clickEvent: () => this.$emit('tag'), label: '晋级', disabled: (this.detail.basic.stageTag || '').includes('@release') },
-                    this.repoType === 'maven' && { clickEvent: () => this.$emit('scan'), label: '安全扫描' },
+                    ...(!metadataMap.forbidStatus
+                        ? [
+                            this.permission.edit && { clickEvent: () => this.$emit('tag'), label: '晋级', disabled: (basic.stageTag || '').includes('@release') },
+                            this.showRepoScan && { clickEvent: () => this.$emit('scan'), label: '安全扫描' }
+                        ]
+                        : []),
+                    this.showRepoScan && { clickEvent: () => this.$emit('forbid'), label: metadataMap.forbidStatus ? '解除禁止' : '禁止使用' },
                     this.permission.delete && { clickEvent: () => this.$emit('delete'), label: this.$t('delete') }
                 ]
             }
@@ -286,6 +310,7 @@
             > label {
                 line-height: 40px;
                 flex-basis: 80px;
+                flex-shrink: 0;
                 background-color: var(--bgColor);
             }
         }

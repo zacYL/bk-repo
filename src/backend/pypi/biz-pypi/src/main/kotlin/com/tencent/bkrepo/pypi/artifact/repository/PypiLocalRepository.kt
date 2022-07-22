@@ -304,7 +304,6 @@ class PypiLocalRepository(
                 projectId, repoName, artifactPath
             ).data ?: return null
             val stageTag = stageClient.query(projectId, repoName, packageKey, version).data
-            val pypiArtifactMetadata = jarNode.metadata
             val packageVersion = packageClient.findVersionByName(
                 projectId, repoName, packageKey, version
             ).data
@@ -321,7 +320,7 @@ class PypiLocalRepository(
                 stageTag,
                 null
             )
-            return PypiArtifactVersionData(pypiArtifactBasic, pypiArtifactMetadata)
+            return PypiArtifactVersionData(pypiArtifactBasic, packageVersion?.packageMetadata)
         }
     }
 
@@ -346,7 +345,7 @@ class PypiLocalRepository(
             return null
         }
         with(artifactInfo) {
-            val node = nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data?:return null
+            val node = nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data ?: return null
             // 请求不带包名，返回包名列表.
             if (getArtifactFullPath() == "/") {
                 if (node.folder) {
@@ -408,8 +407,8 @@ class PypiLocalRepository(
             val metadata = filenodeMetadata(node)
             builder.append(
                 "<a data-requires-python=\">=$metadata[\"requires_python\"]\" href=\"../../packages${
-                node
-                    .fullPath
+                    node
+                        .fullPath
                 }#md5=$md5\" rel=\"internal\" >${node.name}</a><br/>"
             )
         }
@@ -430,7 +429,7 @@ class PypiLocalRepository(
         for (node in nodeList) {
             builder.append(
                 "<a data-requires-python=\">=\" href=\"${node.name}\"" +
-                    " rel=\"internal\" >${node.name}</a><br/>"
+                        " rel=\"internal\" >${node.name}</a><br/>"
             )
         }
         return builder.toString()

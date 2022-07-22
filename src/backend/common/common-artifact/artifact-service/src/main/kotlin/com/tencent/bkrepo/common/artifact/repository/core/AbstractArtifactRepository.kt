@@ -27,7 +27,9 @@
 
 package com.tencent.bkrepo.common.artifact.repository.core
 
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
+import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
 import com.tencent.bkrepo.common.artifact.constant.PARAM_DOWNLOAD
 import com.tencent.bkrepo.common.artifact.event.ArtifactDownloadedEvent
 import com.tencent.bkrepo.common.artifact.event.ArtifactResponseEvent
@@ -37,6 +39,7 @@ import com.tencent.bkrepo.common.artifact.event.packages.VersionDownloadEvent
 import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
 import com.tencent.bkrepo.common.artifact.exception.ArtifactResponseException
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
+import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.metrics.ArtifactMetrics
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
@@ -50,14 +53,18 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResourceWriter
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.operate.api.pojo.event.EventCreateRequest
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.LocaleMessageUtils
 import com.tencent.bkrepo.common.storage.core.StorageService
 import com.tencent.bkrepo.common.storage.monitor.Throughput
-import com.tencent.bkrepo.repository.api.*
+import com.tencent.bkrepo.repository.api.NodeClient
+import com.tencent.bkrepo.repository.api.OperateLogClient
+import com.tencent.bkrepo.repository.api.PackageClient
+import com.tencent.bkrepo.repository.api.PackageDownloadsClient
+import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
-import com.tencent.bkrepo.common.operate.api.pojo.event.EventCreateRequest
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationEventPublisher
@@ -200,6 +207,24 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
     }
 
     /**
+     * 制品是否禁用
+     */
+    private fun isForbidden(context: ArtifactDownloadContext): Boolean {
+        nodeClient.getNodeDetail(
+            context.artifactInfo.projectId,
+            context.artifactInfo.repoName,
+            context.artifactInfo.getArtifactFullPath()
+        ).data?.let {
+            it.nodeMetadata.forEach { meta ->
+                if (meta.key == FORBID_STATUS && meta.value == true) {
+                    return true
+                }
+            }
+        }
+        return false
+    }
+
+    /**
      * 下载构件
      */
     open fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
@@ -292,16 +317,18 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
         if (context.repositoryDetail.type != RepositoryType.GENERIC) {
             val packageType = context.repositoryDetail.type.name
             val packageName = PackageKeys.resolveName(packageType.toLowerCase(), record.packageKey)
-            publisher.publishEvent(VersionDownloadEvent(
-                projectId = record.projectId,
-                repoName = record.repoName,
-                userId = SecurityUtils.getUserId(),
-                packageKey = record.packageKey,
-                packageVersion = record.packageVersion,
-                packageName = packageName,
-                packageType = packageType,
-                realIpAddress = HttpContextHolder.getClientAddress()
-            ))
+            publisher.publishEvent(
+                VersionDownloadEvent(
+                    projectId = record.projectId,
+                    repoName = record.repoName,
+                    userId = SecurityUtils.getUserId(),
+                    packageKey = record.packageKey,
+                    packageVersion = record.packageVersion,
+                    packageName = packageName,
+                    packageType = packageType,
+                    realIpAddress = HttpContextHolder.getClientAddress()
+                )
+            )
         }
     }
 

@@ -163,7 +163,7 @@ class ScancodeToolkitExecutor @Autowired constructor(
         taskContainerIdMap[task.taskId] = containerId
         logger.info(logMsg(task, "run container instance Id [$workDir, $containerId]"))
         try {
-            val result = DockerUtils.containerRun(dockerClient, containerId, maxScanDuration * 9L)
+            val result = DockerUtils.containerRun(dockerClient, containerId, maxScanDuration * 15L)
             logger.info(logMsg(task, "task docker run result[$result], [$workDir, $containerId]"))
             if (!result) {
                 return scanStatus(task, workDir, SubScanTaskStatus.TIMEOUT)

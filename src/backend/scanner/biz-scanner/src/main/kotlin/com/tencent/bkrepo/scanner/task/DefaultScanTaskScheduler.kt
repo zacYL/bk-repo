@@ -37,8 +37,10 @@ import com.tencent.bkrepo.common.redis.RedisLock
 import com.tencent.bkrepo.common.redis.RedisOperation
 import com.tencent.bkrepo.common.scanner.pojo.scanner.Scanner
 import com.tencent.bkrepo.common.scanner.pojo.scanner.SubScanTaskStatus
+import com.tencent.bkrepo.common.scanner.pojo.scanner.constant.SCANCODE_TOOLKIT
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
+import com.tencent.bkrepo.scanner.component.manager.ScannerConverter
 import com.tencent.bkrepo.scanner.configuration.ScannerProperties
 import com.tencent.bkrepo.scanner.dao.ArchiveSubScanTaskDao
 import com.tencent.bkrepo.scanner.dao.FileScanResultDao
@@ -61,6 +63,7 @@ import com.tencent.bkrepo.scanner.pojo.ScanTaskStatus.FINISHED
 import com.tencent.bkrepo.scanner.pojo.ScanTaskStatus.SCANNING_SUBMITTED
 import com.tencent.bkrepo.scanner.pojo.ScanTaskStatus.SCANNING_SUBMITTING
 import com.tencent.bkrepo.scanner.pojo.SubScanTask
+import com.tencent.bkrepo.scanner.service.LicenseScanQualityService
 import com.tencent.bkrepo.scanner.service.ScanQualityService
 import com.tencent.bkrepo.scanner.service.ScannerService
 import com.tencent.bkrepo.scanner.task.ScanTaskSchedulerConfiguration.Companion.SCAN_TASK_SCHEDULER_THREAD_POOL_BEAN_NAME
@@ -96,7 +99,9 @@ class DefaultScanTaskScheduler @Autowired constructor(
     private val redisOperation: RedisOperation,
     private val publisher: ApplicationEventPublisher,
     private val scannerProperties: ScannerProperties,
-    private val scanQualityService: ScanQualityService
+    private val scanQualityService: ScanQualityService,
+    private val scannerConverters: Map<String, ScannerConverter>,
+    private val licenseScanQualityService: LicenseScanQualityService
 ) : ScanTaskScheduler {
 
     private val logger = LoggerFactory.getLogger(javaClass)
@@ -176,7 +181,7 @@ class DefaultScanTaskScheduler @Autowired constructor(
         // 更新任务状态为所有子任务已提交
         logger.info(
             "submit $submittedSubTaskCount sub tasks, $reuseResultTaskCount sub tasks reuse result, " +
-                "update task[${scanTask.taskId}] status to SCANNING_SUBMITTED"
+                    "update task[${scanTask.taskId}] status to SCANNING_SUBMITTED"
         )
         scanTaskDao.updateStatus(scanTask.taskId, SCANNING_SUBMITTED)
         scannerMetrics.incTaskCountAndGet(SCANNING_SUBMITTED)
@@ -213,28 +218,32 @@ class DefaultScanTaskScheduler @Autowired constructor(
         val nodeIterator = iteratorManager.createNodeIterator(scanTask, false)
         val qualityRule = scanTask.scanPlan?.scanQuality
         for (node in nodeIterator) {
+            // 不通扫描类型的扫描器node转化为扫描器需要的node
+            val scannerConverter = scannerConverters[ScannerConverter.name(scanner.type)]
+            val convertNode = scannerConverter?.convertToNode(node) ?: node
+
             // 未使用扫描方案的情况直接取node的projectId
             projectScanConfiguration = projectScanConfiguration
-                ?: projectScanConfigurationDao.findByProjectId(node.projectId)
-            scanningCount = scanningCount ?: subScanTaskDao.scanningCount(node.projectId)
+                ?: projectScanConfigurationDao.findByProjectId(convertNode.projectId)
+            scanningCount = scanningCount ?: subScanTaskDao.scanningCount(convertNode.projectId)
 
             val storageCredentialsKey = repoInfoCache
-                .get(generateKey(node.projectId, node.repoName))
+                .get(generateKey(convertNode.projectId, convertNode.repoName))
                 .storageCredentialsKey
 
             // 文件已存在扫描结果，跳过扫描
             val existsFileScanResult =
-                fileScanResultDao.find(storageCredentialsKey, node.sha256, scanner.name, scanner.version)
+                fileScanResultDao.find(storageCredentialsKey, convertNode.sha256, scanner.name, scanner.version)
             if (existsFileScanResult != null && !scanTask.force) {
-                logger.info("skip scan file[${node.sha256}], credentials[$storageCredentialsKey]")
+                logger.info("skip scan file[${convertNode.sha256}], credentials[$storageCredentialsKey]")
                 val finishedSubtask = createFinishedSubTask(
-                    scanTask, existsFileScanResult, node, storageCredentialsKey, qualityRule
+                    scanTask, existsFileScanResult, convertNode, storageCredentialsKey, qualityRule
                 )
                 finishedSubScanTasks.add(finishedSubtask)
             } else {
                 // 添加到扫描任务队列
                 val status = status(scanningCount, projectScanConfiguration)
-                subScanTasks.add(createSubTask(scanTask, scanner, node, storageCredentialsKey, status))
+                subScanTasks.add(createSubTask(scanTask, scanner, convertNode, storageCredentialsKey, status))
                 if (status == SubScanTaskStatus.CREATED) {
                     scanningCount++
                 }
@@ -363,8 +372,12 @@ class DefaultScanTaskScheduler @Autowired constructor(
                 ?.overview
                 ?.let { Converter.convert(it) }
             // 质量检查结果
-            val qualityPass = if (qualityRule != null && overview != null) {
-                scanQualityService.checkScanQualityRedLine(qualityRule, overview)
+            val qualityPass = if (!qualityRule.isNullOrEmpty() && overview != null) {
+                if (scanTask.scanner == SCANCODE_TOOLKIT) {
+                    licenseScanQualityService.checkLicenseScanQualityRedLine(qualityRule, overview)
+                } else {
+                    scanQualityService.checkScanQualityRedLine(qualityRule, overview)
+                }
             } else {
                 null
             }
@@ -454,7 +467,7 @@ class DefaultScanTaskScheduler @Autowired constructor(
         if (repoRes.isNotOk()) {
             logger.error(
                 "Get repo info failed: code[${repoRes.code}], message[${repoRes.message}]," +
-                    " projectId[$projectId], repoName[$repoName]"
+                        " projectId[$projectId], repoName[$repoName]"
             )
             throw SystemErrorException(CommonMessageCode.SYSTEM_ERROR, repoRes.message ?: "")
         }

@@ -31,15 +31,16 @@
 
 package com.tencent.bkrepo.helm.pojo.user
 
+import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiModelProperty
 
-@Api("npm版本详情页返回包装模型")
+@Api("helm版本详情页返回包装模型")
 data class PackageVersionInfo(
     @ApiModelProperty("基础信息")
     val basic: BasicInfo,
     @ApiModelProperty("元数据信息")
-    val metadata: Map<String, String>
+    val metadata: List<MetadataModel>
 )
 
 @Api("基础信息")

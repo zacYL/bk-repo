@@ -63,6 +63,7 @@ import com.tencent.bkrepo.scanner.utils.ScanParamUtil
 import com.tencent.bkrepo.scanner.utils.ScanPlanConverter
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
 @Service
@@ -179,6 +180,7 @@ class ScanPlanServiceImpl(
         return defaultScanPlan!!
     }
 
+    @Transactional(rollbackFor = [Throwable::class])
     override fun delete(projectId: String, id: String) {
         logger.info("deleteScanPlan userId:${SecurityUtils.getUserId()}, projectId:$projectId, planId:$id")
 
@@ -192,6 +194,7 @@ class ScanPlanServiceImpl(
         // 方案正在使用，不能删除
         checkRunning(id)
         scanPlanDao.delete(projectId, id)
+        planArtifactLatestSubScanTaskDao.deleteByPlanId(id)
     }
 
     override fun update(request: UpdateScanPlanRequest): ScanPlan {
@@ -261,7 +264,8 @@ class ScanPlanServiceImpl(
                 if (it.planId == null) {
                     ScanPlanConverter.convertToArtifactPlanRelation(it, "_${it.scanner}")
                 } else {
-                    ScanPlanConverter.convertToArtifactPlanRelation(it, scanPlanMap[it.planId]!!.name)
+                    val scanPlan = scanPlanMap[it.planId]
+                    ScanPlanConverter.convertToArtifactPlanRelation(it, scanPlan!!.name, scanPlan.type)
                 }
             }
         }

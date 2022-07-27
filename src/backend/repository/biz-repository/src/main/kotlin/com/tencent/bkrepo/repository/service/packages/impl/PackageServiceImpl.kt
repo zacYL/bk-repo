@@ -67,6 +67,8 @@ import com.tencent.bkrepo.repository.util.PackageEventFactory.buildCreatedEvent
 import com.tencent.bkrepo.repository.util.PackageQueryHelper
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
+import org.springframework.data.domain.Sort
+import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
@@ -132,10 +134,12 @@ class PackageServiceImpl(
         projectId: String,
         repoName: String,
         limit: Int,
-        skip: Long
+        lastPackageKey: String?
     ): List<PackageSummary> {
         val query = PackageQueryHelper.packageListQuery(projectId, repoName, null)
-        val countQuery = Query.of(query).skip(skip).limit(limit)
+        lastPackageKey?.let { query.addCriteria(Criteria.where(TPackage::key.name).gt(lastPackageKey)) }
+        query.with(Sort.by(Sort.Order(Sort.Direction.ASC, TPackage::key.name)))
+        val countQuery = Query.of(query).limit(limit)
         return packageDao.find(countQuery).map { convert(it)!! }
     }
 
@@ -328,8 +332,10 @@ class PackageServiceImpl(
         tPackageVersion.recentlyUseDate = now
         tPackageVersion.lastModifiedDate = now
         packageVersionDao.save(tPackageVersion)
-        logger.info("update package version [$projectId/$repoName/$packageKey-$versionName] " +
-                "recentlyUseDate and lastModifiedDate success")
+        logger.info(
+            "update package version [$projectId/$repoName/$packageKey-$versionName] " +
+                    "recentlyUseDate and lastModifiedDate success"
+        )
     }
 
     override fun updatePackage(request: PackageUpdateRequest, realIpAddress: String?) {

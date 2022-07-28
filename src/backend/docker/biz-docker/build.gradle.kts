@@ -30,6 +30,7 @@
  */
 
 dependencies {
+    implementation(project(":common:common-stream"))
     api(project(":docker:api-docker"))
     api(project(":common:common-query:query-api"))
     api(project(":common:common-artifact:artifact-service"))

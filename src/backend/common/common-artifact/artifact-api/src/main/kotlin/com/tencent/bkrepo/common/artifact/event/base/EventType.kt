@@ -71,5 +71,8 @@ enum class EventType(val nick: String) {
     USER_DELETE("删除用户"),
     USER_UPDATE("更新用户"),
     // WebHook
-    WEBHOOK_TEST("webhook测试")
+    WEBHOOK_TEST("webhook测试"),
+
+    // repository clean
+    REPOSITORY_CLEAN("仓库清理")
 }

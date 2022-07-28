@@ -2,6 +2,7 @@ package com.tencent.bkrepo.repository.service.repo.impl
 
 import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_SIZE
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.event.packages.RepositoryCleanEvent
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.pojo.configuration.clean.CleanStatus
 import com.tencent.bkrepo.common.artifact.pojo.configuration.clean.RepositoryCleanStrategy
@@ -25,9 +26,9 @@ import com.tencent.bkrepo.repository.service.node.NodeStatsOperation
 import com.tencent.bkrepo.repository.service.packages.PackageService
 import com.tencent.bkrepo.repository.service.repo.RepositoryCleanService
 import com.tencent.bkrepo.repository.service.repo.RepositoryService
-import com.tencent.bkrepo.repository.util.ArtifactClientServiceFactory
 import com.tencent.bkrepo.repository.util.RuleUtils
 import org.slf4j.LoggerFactory
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import java.time.Duration
 import java.time.LocalDateTime
@@ -41,7 +42,8 @@ class RepositoryCleanServiceImpl(
     private val packageService: PackageService,
     private val nodeDeleteOperation: NodeDeleteOperation,
     private val nodeStatsOperation: NodeStatsOperation,
-    private val nodeClient: NodeClient
+    private val nodeClient: NodeClient,
+    private val publisher: ApplicationEventPublisher
 ) : RepositoryCleanService {
 
     override fun cleanRepo(repoId: String) {
@@ -93,26 +95,26 @@ class RepositoryCleanServiceImpl(
         cleanStrategy: RepositoryCleanStrategy
     ) {
         // 记录没有被删除的 package 数量，并在分页查询时跳过
-        var skip: Long = 0
-        var packageList = packageService.listPackagePage(projectId, repoName, DEFAULT_PAGE_SIZE, skip)
+        var packageList = packageService.listPackagePage(projectId, repoName, DEFAULT_PAGE_SIZE, null)
+        var lastPackageKey: String
         while (packageList.isNotEmpty()) {
-            skip += executePackageClean(packageList, skip, cleanStrategy)
-            packageList = packageService.listPackagePage(projectId, repoName, DEFAULT_PAGE_SIZE, skip)
+            // 记录上一页最后一条记录的 key
+            lastPackageKey = packageList[packageList.size - 1].key
+            executePackageClean(packageList, cleanStrategy)
+            packageList = packageService.listPackagePage(projectId, repoName, DEFAULT_PAGE_SIZE, lastPackageKey)
         }
     }
 
     private fun executePackageClean(
         packageList: List<PackageSummary>,
-        skip: Long,
         cleanStrategy: RepositoryCleanStrategy
-    ): Long {
-        var skipNumber = skip
+    ) {
         packageList.forEach {
             val deleteVersions: MutableList<PackageVersion>
             var ruleQueryList = mutableListOf<PackageVersion>()
             requireNotNull(it.id)
-            //包的版本数 < 保留版本数，直接跳过
-            if (it.versions < cleanStrategy.reserveVersions) return@forEach
+            //包的版本数 <= 保留版本数，直接跳过
+            if (it.versions <= cleanStrategy.reserveVersions) return@forEach
             val listVersion = packageService.listAllVersion(
                 it.projectId,
                 it.repoName,
@@ -140,14 +142,8 @@ class RepositoryCleanServiceImpl(
                             "delete version collection: $deleteVersions"
                 )
             }
-            if (deleteVersions.isNotEmpty()) {
-                if (!deleteVersions.containsAll(listVersion)) skipNumber++
-                deleteVersion(deleteVersions, it.key, it.type, it.projectId, it.repoName)
-            } else {
-                skipNumber++
-            }
+            deleteVersion(deleteVersions, it.key, it.type, it.projectId, it.repoName)
         }
-        return skipNumber
     }
 
     /**
@@ -271,7 +267,7 @@ class RepositoryCleanServiceImpl(
                 useDays = Duration.between(it.recentlyUseDate, nowDate).toDays()
             }
             val createdDays = Duration.between(it.createdDate, nowDate).toDays()
-            if (createdDays > reserveDays && useDays > reserveDays) {
+            if (createdDays >= reserveDays && useDays >= reserveDays) {
                 deleteNodeList.add(it)
             }
         }
@@ -302,7 +298,7 @@ class RepositoryCleanServiceImpl(
                 useDays = Duration.between(it.recentlyUseDate, nowDate).toDays()
             }
             val createdDays = Duration.between(it.createdDate, nowDate).toDays()
-            if (createdDays > reserveDays && useDays > reserveDays) {
+            if (createdDays >= reserveDays && useDays >= reserveDays) {
                 filterVersions.add(it)
             }
         }
@@ -319,16 +315,18 @@ class RepositoryCleanServiceImpl(
         projectId: String,
         repoName: String
     ) {
-        val artifactClientService = ArtifactClientServiceFactory.getArtifactClientService(type)
         versions.forEach {
-            try {
-                artifactClientService.deleteVersion(projectId, repoName, packageKey, it.name)
-            } catch (ex: Exception) {
-                logger.error(
-                    "delete package version fail, exception is [$ex], projectId:[$projectId] " +
-                            "repoName:[$repoName] packageKey:[$packageKey] version:[$it] "
+            publisher.publishEvent(
+                RepositoryCleanEvent(
+                    projectId,
+                    repoName,
+                    SYSTEM_USER,
+                    packageKey,
+                    it.name,
+                    type.toString(),
+                    null
                 )
-            }
+            )
         }
     }
 

@@ -69,6 +69,11 @@
                     <div class="repo-generic-actions bk-button-group">
                         <bk-button
                             v-if="multiSelect.length"
+                            @click="handlerMultiDownload()">
+                            批量下载
+                        </bk-button>
+                        <bk-button class="ml10"
+                            v-if="multiSelect.length"
                             @click="handlerMultiDelete()">
                             批量删除
                         </bk-button>
@@ -286,6 +291,7 @@
                 'getArtifactoryList',
                 'deleteArtifactory',
                 'deleteMultiArtifactory',
+                'downloadMultiArtifactory',
                 'getFolderSize',
                 'getFileNumOfFolder',
                 'getMultiFileNumOfFolder',
@@ -642,6 +648,11 @@
                         })
                     }
                 })
+            },
+            handlerMultiDownload () {
+                const commonPath = this.selectedTreeNode.fullPath
+                const paths = this.multiSelect.map(r => r.name)
+                window.open(`/web/generic/${this.projectId}/${this.repoName}/${encodeURIComponent(commonPath)}?paths=<${paths.join(':')}>`, '_self')
             }
         }
     }

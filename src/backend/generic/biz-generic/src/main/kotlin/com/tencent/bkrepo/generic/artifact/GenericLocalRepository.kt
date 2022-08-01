@@ -134,13 +134,16 @@ class GenericLocalRepository : LocalRepository() {
     }
 
     /**
-     * 支持单文件、目录、批量文件下载
+     * 支持单文件、目录、批量仅文件、批量文件和目录下载
      * 目录下载会以zip包形式将目录下的文件打包下载
-     * 批量文件下载会以zip包形式将文件打包下载
+     * 批量仅文件下载会以zip包形式将文件打包下载
+     * 批量文件和目录下载会以zip包形式将文件和目录打包下载
      */
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         return if (context.artifacts.isNullOrEmpty()) {
             downloadSingleNode(context)
+        } else if (context.multiFolder) {
+            downloadMultiNodeIncludeFolder(context)
         } else {
             downloadMultiNode(context)
         }
@@ -197,11 +200,75 @@ class GenericLocalRepository : LocalRepository() {
         }
     }
 
+    /**
+     * 多节点下载，支持目录和非目录节点混合下载
+     */
+    private fun downloadMultiNodeIncludeFolder(context: ArtifactDownloadContext): ArtifactResource {
+        with(context) {
+            val fullPathList = artifacts!!.map { it.getArtifactFullPath() }
+            // 提取节点公共目录
+            val prefix = if (fullPathList.size == 1) PathUtils.resolveParent(fullPathList.first()) else {
+                    fullPathList.reduce { commonPath, element -> PathUtils.getCommonPath(commonPath, element) }
+                }
+            // 根据请求参数查询节点，如有不存在节点则抛出异常
+            val nodes = getNodeDetailsFromReq(true)
+                ?: queryNodeDetailList(
+                    projectId = artifacts!!.first().projectId,
+                    repoName = artifacts!!.first().repoName,
+                    paths = fullPathList,
+                    prefix = prefix,
+                    allowFolder = true
+                )
+            val notExistNodes = fullPathList subtract nodes.map { it.fullPath }.toSet()
+            if (notExistNodes.isNotEmpty()) {
+                throw NodeNotFoundException(notExistNodes.joinToString(StringPool.COMMA))
+            }
+            // 获取所有文件节点
+            val fileNodes = nodes.filter { !it.folder }.toMutableList()
+            nodes.filter { it.folder }.forEach {
+                fileNodes.addAll(getSubNodes(it))
+            }
+            // 验证文件数量和大小是否超出阈值，是否有禁用状态
+            checkCountAndSize(fileNodes.onEach { downloadIntercept(this, it) })
+            // 更新文件使用时间并返回流
+            val nodeMap = fileNodes.associateBy(
+                {
+                    it.fullPath.removePrefix(prefix)
+                }, {
+                    nodeClient.updateRecentlyUseDate(it.projectId, it.repoName, it.fullPath, this.userId)
+                    storageManager.loadArtifactInputStream(it, storageCredentials)
+                    ?: throw ArtifactNotFoundException(it.fullPath)
+                }
+            )
+            return ArtifactResource(nodeMap, useDisposition = true)
+        }
+    }
+
+    private fun getSubNodes(folder: NodeDetail): List<NodeDetail> {
+        with(folder) {
+            val nodes = mutableListOf<NodeDetail>()
+            val option = NodeListOption(
+                pageNumber = 1,
+                pageSize = PAGE_SIZE,
+                includeFolder = false,
+                includeMetadata = true,
+                deep = true
+            )
+            while (true) {
+                val records = nodeClient.listNodePage(projectId, repoName, fullPath, option).data?.records
+                    .takeUnless { it.isNullOrEmpty() } ?: return nodes
+                option.pageNumber ++
+                nodes.addAll(records.map { NodeDetail(it) })
+            }
+        }
+    }
+
     private fun queryNodeDetailList(
         projectId: String,
         repoName: String,
         paths: List<String>,
-        prefix: String
+        prefix: String,
+        allowFolder: Boolean = false
     ): List<NodeDetail> {
         var pageNumber = 1
         val nodeDetailList = mutableListOf<NodeDetail>()
@@ -219,7 +286,7 @@ class GenericLocalRepository : LocalRepository() {
             }
             nodeDetailList.addAll(
                 records.filter { paths.contains(it.fullPath) }.map {
-                    if (it.folder) {
+                    if (it.folder && !allowFolder) {
                         throw BadRequestException(GenericMessageCode.DOWNLOAD_DIR_NOT_ALLOWED)
                     }
                     NodeDetail(it)
@@ -298,6 +365,14 @@ class GenericLocalRepository : LocalRepository() {
     private fun checkFolderSize(nodes: List<NodeInfo>) {
         val totalSize = nodes.map { it.size }.sum()
         if (totalSize > BATCH_DOWNLOAD_SIZE_THRESHOLD) {
+            throw ErrorCodeException(ArtifactMessageCode.NODE_LIST_TOO_LARGE)
+        }
+    }
+
+    @Throws(ErrorCodeException::class)
+    private fun checkCountAndSize(nodes: List<NodeDetail>) {
+        val totalSize = nodes.sumOf { it.size }
+        if (nodes.size > BATCH_DOWNLOAD_COUNT_THRESHOLD || totalSize > BATCH_DOWNLOAD_SIZE_THRESHOLD) {
             throw ErrorCodeException(ArtifactMessageCode.NODE_LIST_TOO_LARGE)
         }
     }
@@ -403,5 +478,10 @@ class GenericLocalRepository : LocalRepository() {
         private val BATCH_DOWNLOAD_SIZE_THRESHOLD = DataSize.ofGigabytes(10).toBytes()
 
         private const val REPORT = "report"
+
+        /**
+         * 节点分页查询单页大小
+         */
+        private const val PAGE_SIZE = 1000
     }
 }

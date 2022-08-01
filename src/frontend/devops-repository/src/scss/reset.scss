@@ -113,8 +113,8 @@ body {
             background-color: var(--bgHoverLighterColor);
         }
     }
-    .bk-button-text.bk-primary.hover,
-    .bk-button-text.bk-primary:hover {
+    .bk-button-text.bk-primary:not([disabled]).hover,
+    .bk-button-text.bk-primary:not([disabled]):hover {
         color: var(--primaryWeightColor);
     }
     /* 面包屑 */

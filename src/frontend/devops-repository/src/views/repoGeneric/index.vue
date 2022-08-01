@@ -92,7 +92,7 @@
                     <bk-table-column type="selection" width="60"></bk-table-column>
                     <bk-table-column :label="$t('fileName')" prop="name" show-overflow-tooltip :render-header="renderHeader">
                         <template #default="{ row }">
-                            <scan-tag class="mr5"
+                            <scan-tag class="mr5 table-svg"
                                 v-if="!row.folder && /\.(ipa)|(apk)|(jar)$/.test(row.name)"
                                 :status="row.metadata.scanStatus"
                                 repo-type="generic"
@@ -102,8 +102,8 @@
                                 v-if="!row.folder && row.metadata.forbidStatus"
                                 v-bind="row.metadata">
                             </forbid-tag>
-                            <Icon class="table-svg" size="16" :name="row.folder ? 'folder' : getIconName(row.name)" />
-                            <span class="ml10">{{row.name}}</span>
+                            <Icon class="table-svg mr5" size="16" :name="row.folder ? 'folder' : getIconName(row.name)" />
+                            <span>{{row.name}}</span>
                         </template>
                     </bk-table-column>
                     <bk-table-column v-if="searchFileName" :label="$t('path')" prop="fullPath" show-overflow-tooltip></bk-table-column>

@@ -36,13 +36,13 @@ import com.tencent.bkrepo.scanner.pojo.request.FileScanResultOverviewRequest
 import com.tencent.bkrepo.scanner.pojo.request.ScanTaskQuery
 import com.tencent.bkrepo.scanner.pojo.request.SubtaskInfoRequest
 import com.tencent.bkrepo.scanner.pojo.request.scancodetoolkit.ArtifactLicensesDetailRequest
-import com.tencent.bkrepo.scanner.pojo.response.SubtaskResultOverview
 import com.tencent.bkrepo.scanner.pojo.response.ArtifactVulnerabilityInfo
 import com.tencent.bkrepo.scanner.pojo.response.FileLicensesResultDetail
 import com.tencent.bkrepo.scanner.pojo.response.FileLicensesResultOverview
 import com.tencent.bkrepo.scanner.pojo.response.FileScanResultDetail
 import com.tencent.bkrepo.scanner.pojo.response.FileScanResultOverview
 import com.tencent.bkrepo.scanner.pojo.response.SubtaskInfo
+import com.tencent.bkrepo.scanner.pojo.response.SubtaskResultOverview
 
 interface ScanTaskService {
     /**
@@ -79,6 +79,11 @@ interface ScanTaskService {
      * @return 扫描方案扫描的制品信息
      */
     fun planArtifactSubtaskPage(request: SubtaskInfoRequest): Page<SubtaskInfo>
+
+    /**
+     * 导出扫描方案记录
+     */
+    fun exportScanPlanRecords(request: SubtaskInfoRequest): Map<String, Any>
 
     /**
      * 获取属于某个扫描方案的扫描子任务结果预览
@@ -122,6 +127,11 @@ interface ScanTaskService {
      * 获取文件扫描报告详情
      */
     fun resultDetail(request: ArtifactLicensesDetailRequest): Page<FileLicensesResultDetail>
+
+    /**
+     * 导出扫描结果详情
+     */
+    fun exportResultDetail(request: ArtifactLicensesDetailRequest): Map<String, Any>
 
     /**
      * 获取制品扫描结果预览

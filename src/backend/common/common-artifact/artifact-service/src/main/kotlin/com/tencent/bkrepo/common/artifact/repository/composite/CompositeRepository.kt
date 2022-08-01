@@ -31,10 +31,6 @@
 
 package com.tencent.bkrepo.common.artifact.repository.composite
 
-import com.tencent.bkrepo.common.api.exception.NotFoundException
-import com.tencent.bkrepo.common.artifact.constant.PRIVATE_PROXY_REPO_NAME
-import com.tencent.bkrepo.common.artifact.constant.PUBLIC_PROXY_PROJECT
-import com.tencent.bkrepo.common.artifact.constant.PUBLIC_PROXY_REPO_NAME
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.configuration.RepositoryConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.composite.ProxyChannelSetting
@@ -113,35 +109,13 @@ class CompositeRepository(
         localRepository.onDownloadSuccess(context, artifactResource, throughput)
     }
 
-    @Suppress("TooGenericExceptionCaught")
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
-        var artifactResource: ArtifactResource? = null
-        try {
-            artifactResource = localRepository.onDownload(context)
-        } catch (notFoundException: NotFoundException) {
+        return localRepository.onDownload(context) ?: run {
             mapFirstProxyRepo(context) {
                 require(it is ArtifactDownloadContext)
-                // 这里只会返回空，异常不会抛出
-                artifactResource = remoteRepository.onDownload(it)
-                if (artifactResource != null) {
-                    return@mapFirstProxyRepo artifactResource
-                } else { }
-            }
-            // 这里是为了保留各依赖源实现的异常
-            if (artifactResource == null) {
-                throw notFoundException
+                remoteRepository.onDownload(it)
             }
         }
-        if(artifactResource == null) {
-            mapFirstProxyRepo(context) {
-                require(it is ArtifactDownloadContext)
-                artifactResource = remoteRepository.onDownload(it)
-                if (artifactResource != null) {
-                    return@mapFirstProxyRepo artifactResource
-                } else { }
-            }
-        }
-        return artifactResource
     }
 
     override fun query(context: ArtifactQueryContext): Any? {
@@ -164,13 +138,14 @@ class CompositeRepository(
     /**
      * 遍历代理仓库列表，执行[action]操作，当遇到代理仓库[action]操作返回非`null`时，立即返回结果[R]
      */
-    protected fun <R> mapFirstProxyRepo(context: ArtifactContext, action: (ArtifactContext) -> R?): R? {
+    fun <R> mapFirstProxyRepo(context: ArtifactContext, action: (ArtifactContext) -> R?): R? {
         val proxyChannelList = getProxyChannelList(context)
         for (setting in proxyChannelList) {
             try {
                 action(getContextFromProxyChannel(context, setting))?.let {
                     // 无论请求是否成功, 都会返回kotlin.Unit
-                    if (it != Unit) { return it } }
+                    if (it != Unit) { return it }
+                }
             } catch (ignored: Exception) {
                 logger.warn("Failed to execute map with channel ${setting.name}", ignored)
             }
@@ -211,14 +186,14 @@ class CompositeRepository(
     /**
      * 获取代理源设置列表
      */
-    private fun getProxyChannelList(context: ArtifactContext): List<ProxyChannelSetting> {
+    protected fun getProxyChannelList(context: ArtifactContext): List<ProxyChannelSetting> {
         return context.getCompositeConfiguration().proxy.channelList
     }
 
     /**
      * 根据原始上下文[context]以及代理源设置[setting]生成新的[ArtifactContext]
      */
-    private fun getContextFromProxyChannel(
+    protected fun getContextFromProxyChannel(
         context: ArtifactContext,
         setting: ProxyChannelSetting
     ): ArtifactContext {

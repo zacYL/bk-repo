@@ -61,7 +61,6 @@ import com.tencent.bkrepo.generic.constant.HEADER_UPLOAD_ID
 import com.tencent.bkrepo.repository.constant.NODE_DETAIL_LIST_KEY
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
-import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.node.NodeListOption
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
@@ -306,23 +305,16 @@ class GenericLocalRepository : LocalRepository() {
         // 检查文件数量
         checkFileCount(node)
         // 查询子节点
-        val nodes = nodeClient.listNode(
-            projectId = node.projectId,
-            repoName = node.repoName,
-            path = node.fullPath,
-            includeFolder = false,
-            deep = true
-        ).data.orEmpty()
+        val nodes = getSubNodes(node)
         // 检查目录大小
         checkFolderSize(nodes)
         nodes.forEach {
-            nodeClient.updateRecentlyUseDate(it.projectId, it.repoName, it.fullPath, context.userId)
-            val nodeDetail = NodeDetail(it)
-            downloadIntercept(context, nodeDetail)
+            downloadIntercept(context, it)
         }
         // 构造name-node map
         val prefix = "${node.fullPath}/"
         val nodeMap = nodes.associate {
+            nodeClient.updateRecentlyUseDate(it.projectId, it.repoName, it.fullPath, context.userId)
             val name = it.fullPath.removePrefix(prefix)
             val inputStream = storageManager.loadArtifactInputStream(it, context.storageCredentials) ?: return null
             name to inputStream
@@ -362,7 +354,7 @@ class GenericLocalRepository : LocalRepository() {
      * @throws ErrorCodeException 超过阈值抛出NODE_LIST_TOO_LARGE类型ErrorCodeException
      */
     @Throws(ErrorCodeException::class)
-    private fun checkFolderSize(nodes: List<NodeInfo>) {
+    private fun checkFolderSize(nodes: List<NodeDetail>) {
         val totalSize = nodes.map { it.size }.sum()
         if (totalSize > BATCH_DOWNLOAD_SIZE_THRESHOLD) {
             throw ErrorCodeException(ArtifactMessageCode.NODE_LIST_TOO_LARGE)

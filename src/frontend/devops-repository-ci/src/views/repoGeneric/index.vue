@@ -72,7 +72,7 @@
                             @click="handlerMultiDownload()">
                             批量下载
                         </bk-button>
-                        <bk-button
+                        <bk-button class="ml10"
                             v-if="multiSelect.length"
                             @click="handlerMultiDelete()">
                             批量删除
@@ -602,7 +602,7 @@
             handlerMultiDownload () {
                 const commonPath = this.selectedTreeNode.fullPath
                 const paths = this.multiSelect.map(r => r.name)
-                const url = `/web/generic/multi/${this.projectId}/${this.repoName}/${encodeURIComponent(commonPath)}?paths=<${paths.join(':')}>`
+                const url = `/generic/multi/${this.projectId}/${this.repoName}/${encodeURIComponent(commonPath)}?paths=<${paths.join(':')}>`
                 if (url.length > 8000) {
                     this.$bkMessage({
                         theme: 'error',

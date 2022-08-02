@@ -7,7 +7,7 @@
         <template #header>
             <div class="flex-align-center">
                 <span class="mr10 canway-dialog-title">上传文件</span>
-                <span class="repo-tag">{{ rootData.fullPath || '/asdsadsad' }}</span>
+                <span class="repo-tag">{{ rootData.fullPath || '/' }}</span>
             </div>
         </template>
         <div class="flex-between-center">

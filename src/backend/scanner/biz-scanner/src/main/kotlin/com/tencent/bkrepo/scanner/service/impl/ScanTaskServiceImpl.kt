@@ -125,7 +125,7 @@ class ScanTaskServiceImpl(
     }
 
     override fun planArtifactSubtaskPage(request: SubtaskInfoRequest): Page<SubtaskInfo> {
-        if (request.id == null) {
+        if (request.planId == null) {
             throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID)
         }
         return subtasks(request, planArtifactLatestSubScanTaskDao)
@@ -134,12 +134,12 @@ class ScanTaskServiceImpl(
     override fun exportScanPlanRecords(request: SubtaskInfoRequest): Map<String, Any> {
         val exportResultMap = mutableMapOf<String, Any>()
         with(request) {
-            if (request.id == null) {
+            if (planId == null) {
                 throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID)
             }
             // 方案信息，获取方案名称
             val scanPlan =
-                scanPlanDao.find(projectId, id!!) ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID)
+                scanPlanDao.find(projectId, planId!!) ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID)
             exportResultMap["name"] = scanPlan.name
 
             // 获取任务信息

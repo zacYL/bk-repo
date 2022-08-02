@@ -589,6 +589,22 @@
             },
             handlerDownload ({ fullPath }) {
                 const url = `/generic/${this.projectId}/${this.repoName}/${fullPath}?download=true`
+                this.download(url)
+            },
+            handlerMultiDownload () {
+                const commonPath = this.selectedTreeNode.fullPath
+                const paths = this.multiSelect.map(r => r.name)
+                const url = `/web/generic/multi/${this.projectId}/${this.repoName}/${encodeURIComponent(commonPath)}?paths=<${paths.join(':')}>`
+                if (url.length > 8000) {
+                    this.$bkMessage({
+                        theme: 'error',
+                        message: '所选文件过多，请尝试分批次下载'
+                    })
+                    return
+                }
+                this.download(url)
+            },
+            download (url) {
                 this.$ajax.head(url).then(() => {
                     window.open(
                         '/web' + url,
@@ -658,19 +674,6 @@
                         })
                     }
                 })
-            },
-            handlerMultiDownload () {
-                const commonPath = this.selectedTreeNode.fullPath
-                const paths = this.multiSelect.map(r => r.name)
-                const url = `/web/generic/multi/${this.projectId}/${this.repoName}/${encodeURIComponent(commonPath)}?paths=<${paths.join(':')}>`
-                if (url.length > 8000) {
-                    this.$bkMessage({
-                        theme: 'error',
-                        message: '所选文件过多，请尝试分批次下载'
-                    })
-                    return
-                }
-                window.open(url, '_self')
             }
         }
     }

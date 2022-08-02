@@ -32,6 +32,7 @@ import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.exception.NotFoundException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Page
+import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.common.scanner.pojo.scanner.SubScanTaskStatus
@@ -50,6 +51,8 @@ import com.tencent.bkrepo.scanner.dao.ScanPlanDao
 import com.tencent.bkrepo.scanner.dao.ScanTaskDao
 import com.tencent.bkrepo.scanner.dao.SubScanTaskDao
 import com.tencent.bkrepo.scanner.exception.ScanTaskNotFoundException
+import com.tencent.bkrepo.scanner.model.LicenseScanDetailExport
+import com.tencent.bkrepo.scanner.model.LicenseScanPlanExport
 import com.tencent.bkrepo.scanner.pojo.ScanTask
 import com.tencent.bkrepo.scanner.pojo.request.ArtifactVulnerabilityRequest
 import com.tencent.bkrepo.scanner.pojo.request.FileScanResultDetailRequest
@@ -68,6 +71,7 @@ import com.tencent.bkrepo.scanner.service.ScanTaskService
 import com.tencent.bkrepo.scanner.service.ScannerService
 import com.tencent.bkrepo.scanner.utils.Converter
 import com.tencent.bkrepo.scanner.utils.ScanLicenseConverter
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.format.DateTimeFormatter
 
@@ -86,6 +90,9 @@ class ScanTaskServiceImpl(
     private val scanExecutorResultManagers: Map<String, ScanExecutorResultManager>,
     private val scannerConverters: Map<String, ScannerConverter>
 ) : ScanTaskService {
+
+    private val logger = LoggerFactory.getLogger(javaClass)
+
     override fun task(taskId: String): ScanTask {
         return scanTaskDao.findById(taskId)?.let { task ->
             if (task.projectId == null) {
@@ -121,6 +128,35 @@ class ScanTaskServiceImpl(
             throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID)
         }
         return subtasks(request, planArtifactLatestSubScanTaskDao)
+    }
+
+    override fun exportScanPlanRecords(request: SubtaskInfoRequest): Map<String, Any> {
+        val exportResultMap = mutableMapOf<String, Any>()
+        with(request) {
+            if (request.id == null) {
+                throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID)
+            }
+            // 方案信息，获取方案名称
+            val scanPlan =
+                scanPlanDao.find(projectId, id!!) ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID)
+            exportResultMap["name"] = scanPlan.name
+
+            // 获取任务信息
+            // TODO 许可已实现，需要添加漏洞实现
+            var pageNumber = 1
+            var page = planArtifactLatestSubScanTaskDao.pageBy(request)
+            val dataList = mutableListOf<LicenseScanPlanExport>()
+            while (page.records.isNotEmpty()) {
+                page.records.forEach {
+                    dataList.add(ScanLicenseConverter.convert(it))
+                }
+                pageNumber++
+                request.pageNumber = pageNumber
+                page = planArtifactLatestSubScanTaskDao.pageBy(request)
+            }
+            exportResultMap["data"] = dataList
+        }
+        return exportResultMap
     }
 
     override fun planArtifactSubtaskOverview(subtaskId: String): SubtaskResultOverview {
@@ -180,7 +216,13 @@ class ScanTaskServiceImpl(
     private fun subtaskOverview(subtaskId: String, subtaskDao: AbsSubScanTaskDao<*>): SubtaskResultOverview {
         val subtask = subtaskDao.findById(subtaskId)
             ?: throw NotFoundException(CommonMessageCode.RESOURCE_NOT_FOUND, subtaskId)
-        permissionCheckHandler.checkSubtaskPermission(subtask, PermissionAction.READ)
+        try {
+            permissionCheckHandler.checkSubtaskPermission(subtask, PermissionAction.READ)
+        } catch (e: Exception) {
+            logger.info("Failed to checkSubtaskPermission: ", e)
+            permissionCheckHandler.checkProjectPermission(subtask.projectId, PermissionAction.MANAGE)
+        }
+        permissionCheckHandler.checkProjectPermission(subtask.projectId, PermissionAction.MANAGE)
         return Converter.convert(subtask)
     }
 
@@ -207,7 +249,12 @@ class ScanTaskServiceImpl(
             val subtask = subScanTaskDao.findById(subScanTaskId!!)
                 ?: throw ErrorCodeException(CommonMessageCode.RESOURCE_NOT_FOUND, subScanTaskId!!)
 
-            permissionCheckHandler.checkSubtaskPermission(subtask, PermissionAction.READ)
+            try {
+                permissionCheckHandler.checkSubtaskPermission(subtask, PermissionAction.READ)
+            } catch (e: Exception) {
+                logger.info("Failed to checkSubtaskPermission: ", e)
+                permissionCheckHandler.checkProjectPermission(subtask.projectId, PermissionAction.MANAGE)
+            }
 
             val scanner = scannerService.get(subtask.scanner)
             val scannerConverter = scannerConverters[ScannerConverter.name(scanner.type)]
@@ -230,6 +277,36 @@ class ScanTaskServiceImpl(
         return resultDetail(request, archiveSubScanTaskDao)
     }
 
+    override fun exportResultDetail(request: ArtifactLicensesDetailRequest): Map<String, Any> {
+        val resultList = mutableListOf<FileLicensesResultDetail>()
+        val resultMap = mutableMapOf<String, Any>()
+        val subtask = planArtifactLatestSubScanTaskDao.findById(request.subScanTaskId!!)
+            ?: throw ErrorCodeException(CommonMessageCode.RESOURCE_NOT_FOUND, request.subScanTaskId!!)
+
+        var resultDetailPage = resultDetail(request, planArtifactLatestSubScanTaskDao)
+        var pageNumber = 1
+        while (resultDetailPage.records.isNotEmpty()) {
+            resultList.addAll(resultDetailPage.records)
+            pageNumber++
+            resultDetailPage = resultDetail(
+                ArtifactLicensesDetailRequest(
+                    projectId = request.projectId,
+                    subScanTaskId = request.subScanTaskId,
+                    pageNumber = pageNumber
+                )
+            )
+        }
+        logger.info("resultList size:[${resultList.size}]")
+        val resultListConvert = mutableListOf<LicenseScanDetailExport>()
+        resultList.forEach {
+            resultListConvert.add(ScanLicenseConverter.convert(it))
+        }
+        logger.info("resultListConvert:[${resultListConvert.toJsonString()}]")
+        resultMap["name"] = subtask.artifactName
+        resultMap["data"] = resultListConvert
+        return resultMap
+    }
+
     override fun subtaskLicenseOverview(subtaskId: String): FileLicensesResultOverview {
         return planLicensesArtifact(subtaskId, archiveSubScanTaskDao)
     }
@@ -242,7 +319,13 @@ class ScanTaskServiceImpl(
         with(request) {
             val subtask = subScanTaskDao.findById(subScanTaskId!!)
                 ?: throw ErrorCodeException(CommonMessageCode.RESOURCE_NOT_FOUND, subScanTaskId!!)
-            permissionCheckHandler.checkSubtaskPermission(subtask, PermissionAction.READ)
+            try {
+                permissionCheckHandler.checkSubtaskPermission(subtask, PermissionAction.READ)
+            } catch (e: Exception) {
+                logger.info("Failed to checkSubtaskPermission: ", e)
+                permissionCheckHandler.checkProjectPermission(subtask.projectId, PermissionAction.MANAGE)
+            }
+            permissionCheckHandler.checkProjectPermission(subtask.projectId, PermissionAction.MANAGE)
             val scanner = scannerService.get(subtask.scanner)
             val arguments = ScanLicenseConverter.convertToLoadArguments(request, scanner.type)
             val scanResultManager = scanExecutorResultManagers[subtask.scannerType]
@@ -262,7 +345,12 @@ class ScanTaskServiceImpl(
     ): FileLicensesResultOverview {
         val subtask = subtaskDao.findById(subScanTaskId)
             ?: throw NotFoundException(CommonMessageCode.RESOURCE_NOT_FOUND, subScanTaskId)
-        permissionCheckHandler.checkSubtaskPermission(subtask, PermissionAction.READ)
+        try {
+            permissionCheckHandler.checkSubtaskPermission(subtask, PermissionAction.READ)
+        } catch (e: Exception) {
+            logger.info("Failed to checkSubtaskPermission: ", e)
+            permissionCheckHandler.checkProjectPermission(subtask.projectId, PermissionAction.MANAGE)
+        }
         return ScanLicenseConverter.convert(subtask)
     }
 }

@@ -26,7 +26,7 @@ class ServiceNpmClientImpl(
         version: String,
         operator: String
     ) {
-        logger.info("NPM delete package begin,, projectId:[$projectId] " +
+        logger.info("NPM delete package begin, projectId:[$projectId] " +
                 "repoName:[$repoName] packageKey:[$packageKey] version:[$version]")
         // 删除包管理中对应的version
         packageClient.deleteVersion(projectId, repoName, packageKey, version, null)

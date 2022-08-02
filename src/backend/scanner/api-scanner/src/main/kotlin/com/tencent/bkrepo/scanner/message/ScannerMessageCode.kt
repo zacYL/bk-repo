@@ -41,7 +41,8 @@ enum class ScannerMessageCode(
     SCAN_TASK_COUNT_EXCEED_LIMIT("scanner.task.count.exceed-limit", 5),
     SCAN_TASK_NAME_BATCH_SCAN("scanner.task.name.manual", 6),
     SCAN_TASK_NAME_SINGLE_SCAN("scanner.task.name.manual.single", 7),
-    LICENSE_NOT_FOUND("license.not-found",8);
+    LICENSE_NOT_FOUND("license.not-found", 8),
+    EXPORT_REPORT_FAIL("export.report.fail", 9);
 
     override fun getBusinessCode() = businessCode
     override fun getKey() = key

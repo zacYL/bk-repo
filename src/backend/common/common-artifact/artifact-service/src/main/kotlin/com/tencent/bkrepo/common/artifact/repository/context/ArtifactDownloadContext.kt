@@ -37,6 +37,7 @@ import com.tencent.bkrepo.common.artifact.constant.DownloadInterceptorType
 import com.tencent.bkrepo.common.artifact.constant.REPO_KEY
 import com.tencent.bkrepo.common.artifact.interceptor.DownloadInterceptor
 import com.tencent.bkrepo.common.artifact.interceptor.impl.FilenameInterceptor
+import com.tencent.bkrepo.common.artifact.interceptor.impl.ForbidStatusInterceptor
 import com.tencent.bkrepo.common.artifact.interceptor.impl.MetadataInterceptor
 import com.tencent.bkrepo.common.artifact.interceptor.impl.MobileInterceptor
 import com.tencent.bkrepo.common.artifact.interceptor.impl.WebInterceptor
@@ -53,7 +54,8 @@ open class ArtifactDownloadContext(
     artifact: ArtifactInfo? = null,
     artifacts: List<ArtifactInfo>? = null,
     userId: String = SecurityUtils.getUserId(),
-    var useDisposition: Boolean = false
+    var useDisposition: Boolean = false,
+    var multiFolder: Boolean = false
 ) : ArtifactContext(repo, artifact, userId) {
 
     val repo = repo ?: request.getAttribute(REPO_KEY) as RepositoryDetail
@@ -71,6 +73,7 @@ open class ArtifactDownloadContext(
                 val interceptor = buildInterceptor(type, rules)
                 interceptor?.let { interceptorList.add(interceptor) }
             }
+            interceptorList.add(ForbidStatusInterceptor())
             logger.debug("get repo[${repo.projectId}/${repo.name}] download interceptor: $interceptorList")
         } catch (e: Exception) {
             logger.warn("fail to get repo[${repo.projectId}/${repo.name}] download interceptor: $e")

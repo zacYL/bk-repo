@@ -1,0 +1,31 @@
+# 删除节点
+功能描述：删除节点
+
+### 请求地址
+```
+/api/node/delete/{projectId}/{repoName}/**
+```
+
+### 请求方法
+`DELETE`
+### 请求参数
+
+#### 查询参数
+
+| 字段 | 类型 | 必填 | 描述 |
+| -------- | -------- | -------- | -------- |
+| artifactFullPath     | string   | false       |  |
+| artifactName     | string   | false       |  |
+| artifactVersion     | string   | false       |  |
+| projectId     | string   | false       |  |
+| repoIdentify     | string   | false       |  |
+| repoName     | string   | false       |  |
+| responseName     | string   | false       |  |
+
+
+#### 请求体参数
+| 字段 | 类型 | 必填 | 描述 |
+| -------- | -------- | -------- | -------- |
+
+### 返回结果
+

@@ -10,6 +10,8 @@ import com.tencent.bkrepo.common.scanner.pojo.scanner.LicenseNature
 import com.tencent.bkrepo.common.scanner.pojo.scanner.scanCodeCheck.result.ScanCodeToolkitScanExecutorResult
 import com.tencent.bkrepo.common.scanner.pojo.scanner.scanCodeCheck.result.ScancodeItem
 import com.tencent.bkrepo.common.scanner.pojo.scanner.scanCodeCheck.scanner.ScancodeToolkitScanner
+import com.tencent.bkrepo.scanner.model.LicenseScanDetailExport
+import com.tencent.bkrepo.scanner.model.LicenseScanPlanExport
 import com.tencent.bkrepo.scanner.model.SubScanTaskDefinition
 import com.tencent.bkrepo.scanner.model.TPlanArtifactLatestSubScanTask
 import com.tencent.bkrepo.scanner.model.TScanPlan
@@ -25,6 +27,37 @@ import org.springframework.data.domain.PageRequest
 import java.time.format.DateTimeFormatter
 
 object ScanLicenseConverter {
+
+    fun convert(licensesResultDetail: FileLicensesResultDetail): LicenseScanDetailExport {
+        with(licensesResultDetail) {
+            return LicenseScanDetailExport(
+                fullName = fullName,
+                dependentPath = dependentPath,
+                osi = isOsiApproved?.let { if (it) "已认证" else "未认证" } ?: "/",
+                fsf = isFsfLibre?.let { if (it) "已开源" else "未开源" } ?: "/",
+                recommended = recommended?.let { if (it) "推荐" else "不推荐" } ?: "/",
+                compliance = compliance?.let { if (it) "合规" else "不合规" } ?: "/",
+                description = description
+            )
+        }
+    }
+
+    fun convert(subScanTask: TPlanArtifactLatestSubScanTask): LicenseScanPlanExport {
+        with(subScanTask) {
+            return LicenseScanPlanExport(
+                name = artifactName,
+                versionOrFullPath = version ?: fullPath,
+                repoName = repoName,
+                qualityRedLine = qualityRedLine?.let { if (it) "通过" else "不通过" } ?: "/",
+                total = getLicenseCount(LICENSE_TOTAL, subScanTask),
+                unRecommend = getLicenseCount(LicenseNature.UN_RECOMMEND.natureName, subScanTask),
+                unknown = getLicenseCount(LicenseNature.UNKNOWN.natureName, subScanTask),
+                unCompliance = getLicenseCount(LicenseNature.UN_COMPLIANCE.natureName, subScanTask),
+                finishTime = finishedDateTime?.format(DateTimeFormatter.ISO_DATE_TIME) ?: "/",
+                duration = ScanPlanConverter.duration(startDateTime, finishedDateTime)
+            )
+        }
+    }
 
     fun convert(scanPlan: TScanPlan, subScanTasks: List<TPlanArtifactLatestSubScanTask>): ScanLicensePlanInfo {
         with(scanPlan) {

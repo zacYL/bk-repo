@@ -26,6 +26,7 @@
  */
 
 dependencies {
+    implementation("com.alibaba:easyexcel:3.1.1")
     implementation(project(":scanner:api-scanner"))
     implementation(project(":common:common-notify:notify-service"))
     implementation(project(":common:common-service"))

@@ -2,6 +2,15 @@ spring:
   application:
     name: ${service.name}
     desc: Maven Service
+  cloud:
+    stream:
+      function:
+        definition: artifactEvent
+      bindings:
+        artifactEvent-in-0:
+          group: maven
+          destination: artifactEvent
+          binder: pulsar
 server:
   port: __BK_REPO_MAVEN_PORT__
 logging:

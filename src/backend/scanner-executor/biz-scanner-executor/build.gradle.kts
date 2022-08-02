@@ -33,7 +33,7 @@ dependencies {
     implementation("commons-io:commons-io")
     implementation("com.github.docker-java:docker-java:${Versions.DockerJava}")
     implementation("com.github.docker-java:docker-java-transport-okhttp:${Versions.DockerJava}")
-    implementation("net.canway:dependency-check-simple:0.6.0-SNAPSHOT") {
+    implementation("net.canway:dependency-check-simple:0.6.1") {
         exclude(group = "junit", module = "junit")
         exclude(group = "org.slf4j", module = "slf4j-api")
         exclude(group = "org.slf4j", module = "slf4j-simple")

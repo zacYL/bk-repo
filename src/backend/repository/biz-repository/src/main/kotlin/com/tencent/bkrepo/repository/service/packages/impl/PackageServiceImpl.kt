@@ -38,7 +38,6 @@ import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.Preconditions
 import com.tencent.bkrepo.common.artifact.api.DefaultArtifactInfo
 import com.tencent.bkrepo.common.artifact.constant.ARTIFACT_INFO_KEY
-import com.tencent.bkrepo.common.artifact.constant.META_DATA
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
@@ -66,11 +65,13 @@ import com.tencent.bkrepo.repository.util.MetadataUtils
 import com.tencent.bkrepo.repository.util.PackageEventFactory
 import com.tencent.bkrepo.repository.util.PackageEventFactory.buildCreatedEvent
 import com.tencent.bkrepo.repository.util.PackageQueryHelper
-import java.time.LocalDateTime
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
+import org.springframework.data.domain.Sort
+import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.stereotype.Service
+import java.time.LocalDateTime
 
 @Service
 class PackageServiceImpl(
@@ -133,10 +134,12 @@ class PackageServiceImpl(
         projectId: String,
         repoName: String,
         limit: Int,
-        skip: Long
+        lastPackageKey: String?
     ): List<PackageSummary> {
         val query = PackageQueryHelper.packageListQuery(projectId, repoName, null)
-        val countQuery = Query.of(query).skip(skip).limit(limit)
+        lastPackageKey?.let { query.addCriteria(Criteria.where(TPackage::key.name).gt(lastPackageKey)) }
+        query.with(Sort.by(Sort.Order(Sort.Direction.ASC, TPackage::key.name)))
+        val countQuery = Query.of(query).limit(limit)
         return packageDao.find(countQuery).map { convert(it)!! }
     }
 
@@ -329,8 +332,10 @@ class PackageServiceImpl(
         tPackageVersion.recentlyUseDate = now
         tPackageVersion.lastModifiedDate = now
         packageVersionDao.save(tPackageVersion)
-        logger.info("update package version [$projectId/$repoName/$packageKey-$versionName] " +
-                "recentlyUseDate and lastModifiedDate success")
+        logger.info(
+            "update package version [$projectId/$repoName/$packageKey-$versionName] " +
+                    "recentlyUseDate and lastModifiedDate success"
+        )
     }
 
     override fun updatePackage(request: PackageUpdateRequest, realIpAddress: String?) {
@@ -400,7 +405,6 @@ class PackageServiceImpl(
         val context = ArtifactDownloadContext(artifact = artifactInfo, useDisposition = true)
         // context 复制时会从request map中获取对应的artifactInfo， 而artifactInfo设置到map中是在接口url解析时
         HttpContextHolder.getRequestOrNull()?.setAttribute(ARTIFACT_INFO_KEY, artifactInfo)
-        context.putAttribute(META_DATA, MetadataUtils.toList(tPackageVersion.metadata))
         ArtifactContextHolder.getRepository().download(context)
         val userId = SecurityUtils.getUserId()
         if (HttpContextHolder.getRequest().method.equals("get", ignoreCase = true)) {

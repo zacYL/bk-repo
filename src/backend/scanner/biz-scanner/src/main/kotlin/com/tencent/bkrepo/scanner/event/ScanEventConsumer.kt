@@ -181,12 +181,17 @@ class ScanEventConsumer(
 
         with(event) {
 
-            val packageType = event.data[VersionCreatedEvent::packageType.name] as String? ?: return false
-
+            if (data[VersionCreatedEvent::packageType.name] != PackageType.MAVEN.name &&
+                data[VersionCreatedEvent::packageType.name] != PackageType.DOCKER.name &&
+                data[VersionCreatedEvent::packageType.name] != PackageType.NPM.name
+            ) {
+                logger.info("skip event packageType[${VersionCreatedEvent::packageType}]")
+                return false
+            }
             logger.info("receive event resourceKey[${event.resourceKey}]")
 
             scanPlanDao
-                .findByProjectIdAndRepoName(projectId, repoName, packageType)
+                .findByProjectIdAndRepoName(projectId, repoName, data[VersionCreatedEvent::packageType.name].toString())
                 .filter { match(event, it.rule.readJsonString()) }
                 .forEach {
                     val packageKey = data[VersionCreatedEvent::packageKey.name] as String
@@ -195,6 +200,7 @@ class ScanEventConsumer(
                         planId = it.id!!,
                         rule = RuleConverter.convert(projectId, repoName, packageKey, packageVersion)
                     )
+                    logger.info("package auto scan request:${request.toJsonString()}")
                     scanService.scan(request, ScanTriggerType.ON_NEW_ARTIFACT, it.lastModifiedBy)
                     hasScanTask = true
                 }

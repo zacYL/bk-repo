@@ -68,7 +68,9 @@ class ScancodeResultManager @Autowired constructor(
                 )
             }
         }.run { pageOf(credentialsKey, sha256, scanner.name, pageLimit, arguments) }
-        logger.info("page:${page.toJsonString()}")
+        if (logger.isDebugEnabled) {
+            logger.debug("load page:${page.toJsonString()}")
+        }
         return Page(page.pageNumber, page.pageSize, page.totalRecords, page.records.map { it.data })
     }
 

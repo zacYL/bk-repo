@@ -36,6 +36,7 @@ import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
+import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
@@ -43,6 +44,7 @@ import com.tencent.bkrepo.generic.artifact.GenericArtifactInfo
 import com.tencent.bkrepo.generic.artifact.GenericArtifactInfo.Companion.BATCH_MAPPING_URI
 import com.tencent.bkrepo.generic.artifact.GenericArtifactInfo.Companion.BLOCK_MAPPING_URI
 import com.tencent.bkrepo.generic.artifact.GenericArtifactInfo.Companion.GENERIC_MAPPING_URI
+import com.tencent.bkrepo.generic.artifact.GenericArtifactInfo.Companion.MULTI_MAPPING_URI
 import com.tencent.bkrepo.generic.constant.HEADER_UPLOAD_ID
 import com.tencent.bkrepo.generic.pojo.BatchDownloadPaths
 import com.tencent.bkrepo.generic.pojo.BlockInfo
@@ -57,6 +59,7 @@ import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestAttribute
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -144,5 +147,22 @@ class GenericController(
             path = *artifacts.map { it.getArtifactFullPath() }.toTypedArray()
         )
         downloadService.batchDownload(artifacts)
+    }
+
+    @GetMapping(MULTI_MAPPING_URI)
+    fun batchDownloadIncludeFolder(
+        @ArtifactPathVariable artifactInfo: GenericArtifactInfo,
+        @RequestParam paths: String
+    ) {
+        with(artifactInfo) {
+            val artifactPaths = PathUtils.resolveMultiPathParam(getArtifactFullPath(), paths)
+            permissionManager.checkNodePermission(
+                action = PermissionAction.READ,
+                projectId = projectId,
+                repoName = repoName,
+                path = artifactPaths.toTypedArray()
+            )
+            downloadService.batchDownload(artifactPaths.map { GenericArtifactInfo(projectId, repoName, it) }, true)
+        }
     }
 }

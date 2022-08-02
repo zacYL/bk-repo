@@ -42,7 +42,7 @@ data class Node(
     /**
      * 文件完整路径
      */
-    var fullPath: String,
+    val fullPath: String,
     /**
      * 制品名
      */

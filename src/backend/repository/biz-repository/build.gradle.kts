@@ -30,15 +30,6 @@
  */
 
 dependencies {
-    api(project(":git:api-git"))
-    api(project(":nuget:api-nuget"))
-    api(project(":rpm:api-rpm"))
-    api(project(":composer:api-composer"))
-    api(project(":helm:api-helm"))
-    api(project(":npm:api-npm"))
-    api(project(":pypi:api-pypi"))
-    api(project(":docker:api-docker"))
-    api(project(":maven:api-maven"))
     api(project(":repository:api-repository"))
     api(project(":scanner:api-scanner"))
     api(project(":common:common-job"))

@@ -30,6 +30,7 @@
  */
 
 dependencies{
+    implementation(project(":common:common-stream"))
     api(project(":maven:api-maven"))
     api(project(":scanner:api-scanner"))
     api(project(":common:common-artifact:artifact-service"))

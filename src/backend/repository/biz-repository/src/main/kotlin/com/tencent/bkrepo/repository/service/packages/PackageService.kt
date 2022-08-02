@@ -116,13 +116,13 @@ interface PackageService {
     /**
      * 仓库清理 分页查询package
      * @param limit 限制返回文档的数量
-     * @param skip 在返回结果之前设置要跳过的文档数
+     * @param lastPackageKey 上一页最后一个包的key
      */
     fun listPackagePage(
         projectId: String,
         repoName: String,
         limit: Int,
-        skip: Long
+        lastPackageKey: String?
     ): List<PackageSummary>
 
     /**

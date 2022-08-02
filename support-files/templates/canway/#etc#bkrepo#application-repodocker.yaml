@@ -2,6 +2,15 @@ spring:
   application:
     name: ${service.name}
     desc: Docker Service
+  cloud:
+    stream:
+      function:
+        definition: artifactEvent
+      bindings:
+        artifactEvent-in-0:
+          group: docker
+          destination: artifactEvent
+          binder: pulsar
 server:
   port: __BK_REPO_DOCKER_PORT__
 auth:

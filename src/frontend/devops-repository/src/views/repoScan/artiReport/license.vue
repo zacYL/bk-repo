@@ -37,6 +37,7 @@
                     @clear="handlerPaginationChange()">
                 </bk-input>
                 <div class="flex-1 flex-end-center">
+                    <bk-button class="mr10" theme="default" @click="exportReport">导出报告</bk-button>
                     <bk-button theme="default" @click="startScanSingleHandler">重新扫描</bk-button>
                 </div>
             </div>
@@ -243,6 +244,10 @@
                             ? { repoName, packageKey, version }
                             : { repoName, path })
                 })
+            },
+            exportReport () {
+                const url = `/web/scanner/api/scan/export/artifact/license/leak/${this.projectId}/${this.recordId}`
+                window.open(url, '_self')
             }
         }
     }

@@ -53,6 +53,7 @@
                     <bk-option v-for="[id, name] in Object.entries(leakLevelEnum)" :key="id" :id="id" :name="name"></bk-option>
                 </bk-select>
                 <div class="flex-1 flex-end-center">
+                    <bk-button class="mr10" theme="default" @click="exportReport">导出报告</bk-button>
                     <bk-button theme="default" @click="startScanSingleHandler">重新扫描</bk-button>
                 </div>
             </div>
@@ -258,6 +259,10 @@
                             ? { repoName, packageKey, version }
                             : { repoName, path })
                 })
+            },
+            exportReport () {
+                const url = `/web/scanner/api/scan/export/artifact/leak/${this.projectId}/${this.recordId}`
+                window.open(url, '_self')
             }
         }
     }

@@ -3,6 +3,7 @@
         <div class="flex-between-center">
             <span class="report-title flex-align-center">方案总览</span>
             <div class="flex-align-center">
+                <bk-button class="mr10" theme="default" @click="showExportDialog = true">导出报告</bk-button>
                 <bk-date-picker
                     class="mr10 w250"
                     v-model="filterTime"
@@ -24,6 +25,37 @@
                 <span class="base-info-value" :style="{ color: item.color }">{{ segmentNumberThree(baseInfo[item.key] || 0) }}</span>
             </div>
         </div>
+        <canway-dialog
+            v-model="showExportDialog"
+            title="导出记录筛选"
+            :height-num="311"
+            @cancel="cancel">
+            <bk-form :label-width="80">
+                <bk-form-item label="扫描时间">
+                    <bk-date-picker
+                        v-model="exportTime"
+                        :shortcuts="shortcuts"
+                        type="daterange"
+                        transfer
+                        placeholder="请选择日期范围">
+                    </bk-date-picker>
+                </bk-form-item>
+                <bk-form-item label="扫描状态">
+                    <bk-select
+                        v-model="exportStatus"
+                        :clearable="false">
+                        <bk-option id="ALL" name="全部"></bk-option>
+                        <bk-option id="UN_QUALITY" name="未设置质量规则"></bk-option>
+                        <bk-option id="QUALITY_PASS" name="质量规则通过"></bk-option>
+                        <bk-option id="QUALITY_UNPASS" name="质量规则未通过"></bk-option>
+                    </bk-select>
+                </bk-form-item>
+            </bk-form>
+            <template #footer>
+                <bk-button theme="default" @click="showExportDialog = false">{{$t('cancel')}}</bk-button>
+                <bk-button class="ml10" theme="primary" @click="exportReport">{{$t('confirm')}}</bk-button>
+            </template>
+        </canway-dialog>
     </div>
 </template>
 <script>
@@ -57,6 +89,9 @@
             return {
                 shortcuts,
                 filterTime: [new Date(nowTime - 3600 * 1000 * 24 * 30), new Date(nowTime)],
+                showExportDialog: false,
+                exportTime: [new Date(nowTime - 3600 * 1000 * 24 * 30), new Date(nowTime)],
+                exportStatus: 'ALL',
                 baseInfo: {}
             }
         },
@@ -160,6 +195,23 @@
                         scanName: this.baseInfo.name
                     }
                 })
+            },
+            exportReport () {
+                let [startTime, endTime = new Date(nowTime)] = this.exportTime
+                startTime = startTime || new Date(endTime - 3600 * 1000 * 24 * 30)
+                const params = new URLSearchParams({
+                    projectId: this.projectId,
+                    id: this.planId,
+                    ...(this.exportStatus === 'ALL'
+                        ? {}
+                        : {
+                            status: this.exportStatus
+                        }),
+                    startTime: startTime.toISOString(),
+                    endTime: endTime.toISOString()
+                })
+                const url = `/web/scanner/api/scan/plan/export?${params.toString()}`
+                window.open(url, '_self')
             }
         }
     }

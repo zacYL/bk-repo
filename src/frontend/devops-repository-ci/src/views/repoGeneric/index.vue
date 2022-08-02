@@ -602,7 +602,7 @@
             handlerMultiDownload () {
                 const commonPath = this.selectedTreeNode.fullPath
                 const paths = this.multiSelect.map(r => r.name)
-                const url = `/web/generic/multi/${this.projectId}/${this.repoName}/${encodeURIComponent(commonPath)}?paths=<${paths.join(':')}>`
+                const url = `/generic/multi/${this.projectId}/${this.repoName}/${encodeURIComponent(commonPath)}?paths=<${paths.join(':')}>`
                 if (url.length > 8000) {
                     this.$bkMessage({
                         theme: 'error',

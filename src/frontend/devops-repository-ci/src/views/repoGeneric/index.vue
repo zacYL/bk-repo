@@ -264,13 +264,12 @@
         watch: {
             projectId () {
                 this.getRepoListAll({ projectId: this.projectId })
-                this.initPage()
             },
-            '$route.query.repoName' () {
-                this.initPage()
+            repoName () {
+                this.initTree()
             },
             '$route.query.path' () {
-                this.initPage()
+                this.pathChange()
             }
         },
         beforeRouteEnter (to, from, next) {
@@ -286,7 +285,8 @@
         },
         created () {
             this.getRepoListAll({ projectId: this.projectId })
-            this.initPage()
+            this.initTree()
+            this.pathChange()
             window.repositoryVue.$on('upload-refresh', this.getArtifactories)
         },
         methods: {
@@ -329,7 +329,7 @@
                     })
                 ])
             },
-            initPage () {
+            initTree () {
                 this.INIT_TREE([{
                     name: this.replaceRepoName(this.repoName),
                     displayName: this.replaceRepoName(this.repoName),
@@ -338,7 +338,8 @@
                     children: [],
                     roadMap: '0'
                 }])
-
+            },
+            pathChange () {
                 const paths = (this.$route.query.path || '').split('/').filter(Boolean)
                 paths.pop() // 定位到文件/文件夹的上级目录
                 paths.reduce(async (chain, path) => {

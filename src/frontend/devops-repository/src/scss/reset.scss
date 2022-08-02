@@ -71,6 +71,7 @@ body {
         }
         /* 流体布局适应 */
         .bk-table-body-wrapper {
+            height: calc(100% - 42px);
             overflow-y: auto!important;
         }
         .bk-table-body,

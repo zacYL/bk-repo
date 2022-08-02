@@ -19,7 +19,9 @@
                 <span class="ml10 repo-tag"
                     :class="{
                         [status]: true,
-                        'SUCCESS': ['UN_QUALITY', 'QUALITY_PASS', 'QUALITY_UNPASS'].includes(status)
+                        'SUCCESS': status === 'QUALITY_PASS',
+                        'INIT': status === 'UN_QUALITY',
+                        'WARNING': status === 'QUALITY_UNPASS'
                     }">
                     {{scanStatusEnum[status] || '未扫描'}}
                 </span>
@@ -29,11 +31,7 @@
                 :key="scan.id">
                 <div class="flex-align-center">
                     <Icon v-bk-tooltips="{ content: scanStatusEnum[scan.status] || '未扫描', placements: ['bottom-start'] }" size="16" :name="`scan-${(scan.status || 'INIT').toLowerCase()}`" />
-                    <span class="ml5 text-overflow"
-                        :class="{ 'hover-btn': scan.status === 'SUCCESS' }"
-                        style="max-width:150px;" :title="scan.name">
-                        {{ scan.name }}
-                    </span>
+                    <span class="ml5 text-overflow" style="max-width:150px;" :title="scan.name">{{ scan.name }}</span>
                 </div>
                 <bk-button text theme="primary" :disabled="!['UN_QUALITY', 'QUALITY_PASS', 'QUALITY_UNPASS'].includes(scan.status)" @click="toReport(scan)">查看详情</bk-button>
             </div>

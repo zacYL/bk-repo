@@ -1,7 +1,14 @@
 <template>
     <div class="upload-viewport-container" :class="{ 'visible': show, 'file-visible': showFileList }">
         <div class="viewport-header flex-between-center">
-            <div class="header-title">制品库上传任务</div>
+            <div class="header-title flex-align-center">
+                <span class="mr10">制品库上传任务</span>
+                <span v-if="!showFileList && upLoadTaskQueue.length"
+                    class="spin-icon"
+                    style="font-size:0;">
+                    <Icon size="16" name="scan-running" />
+                </span>
+            </div>
             <div class="header-operation flex-align-center">
                 <i v-if="showFileList" class="devops-icon icon-minus" @click="showFileList = !showFileList"></i>
                 <Icon v-else size="14" name="icon-expand" @click.native="showFileList = !showFileList" />
@@ -31,7 +38,11 @@
                     <template #default="{ row }">
                         <span v-if="row.status === 'UPLOADING'"
                             v-bk-tooltips="{ content: row.progressDetail, placements: ['bottom'] }">
-                            {{ row.progressPercent }}
+                            <span class="spin-icon inline-block"
+                                style="font-size:0;vertical-align:-2px;">
+                                <Icon size="14" name="scan-running" />
+                            </span>
+                            <span>{{ row.progressPercent }}</span>
                         </span>
                         <span v-else class="repo-tag" :class="row.status"
                             v-bk-tooltips="{ disabled: row.status !== 'FAILED' || !row.errMsg, content: row.errMsg, placements: ['bottom'] }">

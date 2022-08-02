@@ -72,7 +72,7 @@
                             @click="handlerMultiDownload()">
                             批量下载
                         </bk-button>
-                        <bk-button
+                        <bk-button class="ml10"
                             v-if="multiSelect.length"
                             @click="handlerMultiDelete()">
                             批量删除

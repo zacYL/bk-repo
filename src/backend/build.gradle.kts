@@ -82,7 +82,7 @@ allprojects {
     repositories {
         maven {
             isAllowInsecureProtocol = true
-            setUrl("https://vpack.canway.net/maven/devops/devops-maven/")
+            setUrl("https://bkrepo.cwoa.net/maven/devops/devops-maven")
             credentials {
                 username = "admin"
                 password = "bkrepo"

@@ -40,14 +40,17 @@ import com.tencent.bkrepo.common.query.matcher.RuleMatcher
 import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.storage.core.StorageProperties
 import com.tencent.bkrepo.repository.api.NodeClient
+import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.scanner.configuration.ScannerProperties
 import com.tencent.bkrepo.scanner.dao.ProjectScanConfigurationDao
 import com.tencent.bkrepo.scanner.dao.ScanPlanDao
+import com.tencent.bkrepo.scanner.dao.SubScanTaskDao
 import com.tencent.bkrepo.scanner.pojo.ScanTriggerType
 import com.tencent.bkrepo.scanner.pojo.request.ScanRequest
+import com.tencent.bkrepo.scanner.pojo.request.SubScanTaskQuery
 import com.tencent.bkrepo.scanner.pojo.rule.RuleArtifact
 import com.tencent.bkrepo.scanner.service.ScanService
 import com.tencent.bkrepo.scanner.service.SpdxLicenseService
@@ -71,7 +74,9 @@ class ScanEventConsumer(
     private val scanPlanDao: ScanPlanDao,
     private val projectScanConfigurationDao: ProjectScanConfigurationDao,
     private val executor: ThreadPoolTaskExecutor,
-    private val scannerProperties: ScannerProperties
+    private val scannerProperties: ScannerProperties,
+    private val repositoryClient: RepositoryClient,
+    private val subScanTaskDao: SubScanTaskDao
 ) : Consumer<ArtifactEvent> {
 
     /**
@@ -83,8 +88,21 @@ class ScanEventConsumer(
         EventType.VERSION_UPDATED
     )
 
+    /**
+     * 删除制品事件
+     */
+    private val delEventType = setOf(
+        EventType.NODE_DELETED,
+        EventType.VERSION_DELETED
+    )
+
     override fun accept(event: ArtifactEvent) {
         logger.info("accept event eventType[${event.type}]")
+
+        if (delEventType.contains(event.type)) {
+            stopScanTask(event)
+            return
+        }
 
         if (!acceptTypes.contains(event.type)) {
             return
@@ -99,6 +117,47 @@ class ScanEventConsumer(
                 }
                 EventType.VERSION_CREATED, EventType.VERSION_UPDATED -> scanOnVersionCreated(event)
                 else -> throw UnsupportedOperationException()
+            }
+        }
+    }
+
+    /**
+     * 删除制品，stop正在扫描的任务
+     */
+    private fun stopScanTask(event: ArtifactEvent) {
+        getScanTaskQuery(event)?.let { query ->
+            logger.info("del artifact, task query:${query.toJsonString()}")
+            val subScanTaskList = subScanTaskDao.findByQuery(query)
+            subScanTaskList.forEach {
+                scanService.stopSubtask(it.projectId, it.id!!)
+            }
+        }
+    }
+
+    private fun getScanTaskQuery(event: ArtifactEvent): SubScanTaskQuery? {
+        with(event) {
+            return when (type) {
+                EventType.VERSION_DELETED -> {
+                    SubScanTaskQuery(
+                        projectId = projectId,
+                        repoName = repoName,
+                        repoType = data[VersionCreatedEvent::packageType.name].toString(),
+                        packageKey = data[VersionCreatedEvent::packageKey.name].toString(),
+                        version = data[VersionCreatedEvent::packageVersion.name].toString(),
+                    )
+                }
+                EventType.NODE_DELETED -> {
+                    val repoInfo = repositoryClient.getRepoInfo(projectId, repoName)
+                    if (repoInfo.data?.type != RepositoryType.GENERIC) return null
+                    val fullPath = resourceKey
+                    SubScanTaskQuery(
+                        projectId = projectId,
+                        repoName = repoName,
+                        repoType = RepositoryType.GENERIC.name,
+                        fullPath = fullPath
+                    )
+                }
+                else -> null
             }
         }
     }

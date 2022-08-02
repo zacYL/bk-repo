@@ -39,6 +39,7 @@ import com.tencent.bkrepo.common.scanner.pojo.scanner.SubScanTaskStatus.EXECUTIN
 import com.tencent.bkrepo.common.scanner.pojo.scanner.SubScanTaskStatus.PULLED
 import com.tencent.bkrepo.scanner.model.TSubScanTask
 import com.tencent.bkrepo.scanner.pojo.request.CredentialsKeyFiles
+import com.tencent.bkrepo.scanner.pojo.request.SubScanTaskQuery
 import org.slf4j.LoggerFactory
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
@@ -79,6 +80,18 @@ class SubScanTaskDao(
             TSubScanTask::parentScanTaskId.isEqualTo(parentTaskId)
         )
         return find(query)
+    }
+
+    fun findByQuery(query: SubScanTaskQuery): List<TSubScanTask> {
+        with(query) {
+            val criteria = Criteria.where(TSubScanTask::projectId.name).isEqualTo(projectId)
+                .and(TSubScanTask::repoName.name).isEqualTo(repoName)
+                .and(TSubScanTask::repoType.name).isEqualTo(repoType)
+            packageKey?.let { criteria.and(TSubScanTask::packageKey.name).isEqualTo(packageKey) }
+            version?.let { criteria.and(TSubScanTask::version.name).isEqualTo(version) }
+            fullPath?.let { criteria.and(TSubScanTask::fullPath.name).isEqualTo(fullPath) }
+            return find(Query(criteria))
+        }
     }
 
     fun deleteById(subTaskId: String): DeleteResult {

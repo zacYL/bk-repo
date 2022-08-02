@@ -200,7 +200,7 @@
             }
         },
         computed: {
-            ...mapState(['clusterList', 'repoListAll']),
+            ...mapState(['clusterList']),
             projectId () {
                 return this.$route.params.projectId
             },

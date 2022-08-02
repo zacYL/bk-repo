@@ -1,6 +1,7 @@
 <template>
     <div class="bkrepo-main flex-column">
         <router-view class="bkrepo-main-container"></router-view>
+        <GlobalUploadViewport />
         <ConfirmDialog />
     </div>
 </template>

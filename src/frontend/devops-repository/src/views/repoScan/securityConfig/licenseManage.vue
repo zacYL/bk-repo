@@ -68,7 +68,7 @@
             :count="pagination.count"
             :limit-list="pagination.limitList">
         </bk-pagination>
-        <generic-upload-dialog ref="genericUploadDialog" @update="getLicenseListHandler"></generic-upload-dialog>
+        <upload-dialog ref="uploadDialog" @update="getLicenseListHandler"></upload-dialog>
         <canway-dialog
             v-model="licenseInfo.show"
             title="证书详细信息"
@@ -91,11 +91,11 @@
     </div>
 </template>
 <script>
-    import genericUploadDialog from '@repository/views/repoGeneric/genericUploadDialog'
+    import uploadDialog from '@repository/views/repoScan/securityConfig/uploadDialog'
     import { mapActions } from 'vuex'
     export default {
         name: 'user',
-        components: { genericUploadDialog },
+        components: { uploadDialog },
         data () {
             return {
                 isLoading: false,
@@ -143,7 +143,7 @@
                 })
             },
             showUploadLicense () {
-                this.$refs.genericUploadDialog.setData({
+                this.$refs.uploadDialog.setData({
                     projectId: 'public-global',
                     repoName: 'vuldb-repo',
                     show: true,

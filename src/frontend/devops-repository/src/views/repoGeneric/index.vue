@@ -40,9 +40,8 @@
                         <operation-list
                             v-if="item.roadMap === selectedTreeNode.roadMap"
                             :list="[
-                                item.roadMap !== '0' && { clickEvent: () => showDetail(item), label: $t('detail') },
-                                permission.write && repoName !== 'pipeline' && { clickEvent: () => addFolder(item), label: '新建文件夹' },
-                                permission.write && repoName !== 'pipeline' && { clickEvent: () => handlerUpload(item), label: '上传文件' }
+                                permission.write && repoName !== 'pipeline' && { clickEvent: () => handlerUpload(item), label: '上传文件' },
+                                permission.write && repoName !== 'pipeline' && { clickEvent: () => addFolder(item), label: '新建文件夹' }
                             ]">
                         </operation-list>
                     </template>
@@ -173,7 +172,6 @@
         <generic-form-dialog ref="genericFormDialog" @refresh="refreshNodeChange"></generic-form-dialog>
         <generic-share-dialog ref="genericShareDialog"></generic-share-dialog>
         <generic-tree-dialog ref="genericTreeDialog" @update="updateGenericTreeNode" @refresh="refreshNodeChange"></generic-tree-dialog>
-        <generic-upload-dialog ref="genericUploadDialog" @update="getArtifactories"></generic-upload-dialog>
     </div>
 </template>
 <script>
@@ -184,7 +182,6 @@
     import ScanTag from '@repository/views/repoScan/scanTag'
     import forbidTag from '@repository/components/ForbidTag'
     import genericDetail from '@repository/views/repoGeneric/genericDetail'
-    import genericUploadDialog from '@repository/views/repoGeneric/genericUploadDialog'
     import genericFormDialog from '@repository/views/repoGeneric/genericFormDialog'
     import genericShareDialog from '@repository/views/repoGeneric/genericShareDialog'
     import genericTreeDialog from '@repository/views/repoGeneric/genericTreeDialog'
@@ -201,7 +198,6 @@
             RepoTree,
             ScanTag,
             genericDetail,
-            genericUploadDialog,
             genericFormDialog,
             genericShareDialog,
             genericTreeDialog
@@ -265,6 +261,17 @@
                 return this.$route.query.fileName
             }
         },
+        watch: {
+            projectId () {
+                this.getRepoListAll({ projectId: this.projectId })
+            },
+            repoName () {
+                this.initTree()
+            },
+            '$route.query.path' () {
+                this.pathChange()
+            }
+        },
         beforeRouteEnter (to, from, next) {
             // 前端隐藏report仓库/log仓库
             if (MODE_CONFIG === 'ci' && (to.query.repoName === 'report' || to.query.repoName === 'log')) {
@@ -278,7 +285,9 @@
         },
         created () {
             this.getRepoListAll({ projectId: this.projectId })
-            this.initPage()
+            this.initTree()
+            this.pathChange()
+            window.repositoryVue.$on('upload-refresh', this.getArtifactories)
         },
         methods: {
             convertFileSize,
@@ -321,7 +330,7 @@
                     })
                 ])
             },
-            initPage () {
+            initTree () {
                 this.INIT_TREE([{
                     name: this.replaceRepoName(this.repoName),
                     displayName: this.replaceRepoName(this.repoName),
@@ -330,7 +339,8 @@
                     children: [],
                     roadMap: '0'
                 }])
-
+            },
+            pathChange () {
                 const paths = (this.$route.query.path || '').split('/').filter(Boolean)
                 paths.pop() // 定位到文件/文件夹的上级目录
                 paths.reduce(async (chain, path) => {
@@ -571,10 +581,10 @@
                 })
             },
             handlerUpload ({ fullPath }) {
-                this.$refs.genericUploadDialog.setData({
-                    show: true,
-                    title: `${this.$t('upload')} (${fullPath || '/'})`,
-                    fullPath: fullPath
+                this.$globalUploadFiles({
+                    projectId: this.projectId,
+                    repoName: this.repoName,
+                    fullPath
                 })
             },
             handlerDownload ({ fullPath }) {
@@ -652,7 +662,15 @@
             handlerMultiDownload () {
                 const commonPath = this.selectedTreeNode.fullPath
                 const paths = this.multiSelect.map(r => r.name)
-                window.open(`/web/generic/${this.projectId}/${this.repoName}/${encodeURIComponent(commonPath)}?paths=<${paths.join(':')}>`, '_self')
+                const url = `/web/generic/multi/${this.projectId}/${this.repoName}/${encodeURIComponent(commonPath)}?paths=<${paths.join(':')}>`
+                if (url.length > 8000) {
+                    this.$bkMessage({
+                        theme: 'error',
+                        message: '所选文件过多，请尝试分批次下载'
+                    })
+                    return
+                }
+                window.open(url, '_self')
             }
         }
     }

@@ -41,6 +41,7 @@
                             v-if="item.roadMap === selectedTreeNode.roadMap"
                             :list="[
                                 permission.write && repoName !== 'pipeline' && { clickEvent: () => handlerUpload(item), label: '上传文件' },
+                                permission.write && repoName !== 'pipeline' && { clickEvent: () => handlerUpload(item, true), label: '上传文件夹' },
                                 permission.write && repoName !== 'pipeline' && { clickEvent: () => addFolder(item), label: '新建文件夹' }
                             ].filter(Boolean)">
                         </operation-list>
@@ -185,7 +186,7 @@
     import genericFormDialog from '@repository/views/repoGeneric/genericFormDialog'
     import genericShareDialog from '@repository/views/repoGeneric/genericShareDialog'
     import genericTreeDialog from '@repository/views/repoGeneric/genericTreeDialog'
-    import { convertFileSize, formatDate } from '@repository/utils'
+    import { convertFileSize, formatDate, debounce } from '@repository/utils'
     import { getIconName } from '@repository/store/publicEnum'
     import { mapState, mapGetters, mapMutations, mapActions } from 'vuex'
     export default {
@@ -287,7 +288,11 @@
             this.getRepoListAll({ projectId: this.projectId })
             this.initTree()
             this.pathChange()
-            window.repositoryVue.$on('upload-refresh', this.getArtifactories)
+            window.repositoryVue.$on('upload-refresh', debounce((path) => {
+                if (path.replace(/\/[^/]+$/, '').includes(this.selectedTreeNode.fullPath)) {
+                    this.itemClickHandler(this.selectedTreeNode)
+                }
+            }))
         },
         methods: {
             convertFileSize,
@@ -429,12 +434,15 @@
                 this.updateGenericTreeNode(node)
 
                 // 更新url参数
-                this.$router.replace({
-                    query: {
-                        ...this.$route.query,
-                        path: `${node.fullPath}/default`
-                    }
-                })
+                const { path = '' } = this.$route.query
+                if (path.replace(/\/[^/]+$/, '') !== node.fullPath) {
+                    this.$router.replace({
+                        query: {
+                            ...this.$route.query,
+                            path: `${node.fullPath}/default`
+                        }
+                    })
+                }
             },
             iconClickHandler (node) {
                 // 更新已展开文件夹数据
@@ -579,10 +587,11 @@
                     path: fullPath
                 })
             },
-            handlerUpload ({ fullPath }) {
+            handlerUpload ({ fullPath }, folder = false) {
                 this.$globalUploadFiles({
                     projectId: this.projectId,
                     repoName: this.repoName,
+                    folder,
                     fullPath
                 })
             },

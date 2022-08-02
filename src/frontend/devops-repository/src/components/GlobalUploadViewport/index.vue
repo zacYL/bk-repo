@@ -57,7 +57,7 @@
         </div>
         <selected-files-dialog
             ref="selectedFilesDialog"
-            :public-data="rootData"
+            :root-data="rootData"
             @confirm="addFilesToFileList">
         </selected-files-dialog>
     </div>
@@ -85,6 +85,7 @@
                 rootData: {
                     projectId: '',
                     repoName: '',
+                    folder: false,
                     fullPath: ''
                 },
                 fileList: [],
@@ -117,7 +118,7 @@
             getUploadObj (file, overwrite) {
                 const { projectId, repoName, fullPath: path } = this.rootData
                 // TODO
-                const fullPath = `${path}/${file.name}`
+                const fullPath = `${path}/${this.rootData.folder ? file.webkitRelativePath : file.name}`
                 return {
                     xhr: new XMLHttpRequest(),
                     projectId,
@@ -149,7 +150,7 @@
                 const wait = this.fileList.find(f => f.status === 'INIT')
                 if (this.upLoadTaskQueue.length > 5 || !wait) return
                 this.$set(wait, 'status', 'UPLOADING')
-                const { xhr, projectId, repoName, fullPath, file, overwrite } = wait
+                const { xhr, projectId, repoName, fullPath, file, overwrite, status } = wait
                 this.uploadArtifactory({
                     xhr,
                     projectId,
@@ -168,9 +169,9 @@
                     }
                 }).then(() => {
                     this.$set(wait, 'status', 'SUCCESS')
-                    window.repositoryVue.$emit('upload-refresh')
+                    window.repositoryVue.$emit('upload-refresh', fullPath)
                 }).catch(e => {
-                    if (wait.status === 'CANCEL') return
+                    if (status === 'CANCEL') return
                     e && this.$set(wait, 'errMsg', e.message || e)
                     this.$set(wait, 'status', 'FAILED')
                 }).finally(() => {

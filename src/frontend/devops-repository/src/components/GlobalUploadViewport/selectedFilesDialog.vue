@@ -7,7 +7,7 @@
         <template #header>
             <div class="flex-align-center">
                 <span class="mr10 canway-dialog-title">上传文件</span>
-                <span class="repo-tag">{{ publicData.fullPath || '/asdsadsad' }}</span>
+                <span class="repo-tag">{{ rootData.fullPath || '/asdsadsad' }}</span>
             </div>
         </template>
         <div class="flex-between-center">
@@ -38,7 +38,7 @@
                 </template>
             </bk-table-column>
         </bk-table>
-        <input class="upload-input" ref="uploadInput" type="file" @change="selectedFilesHandler" multiple>
+        <input class="upload-input" ref="uploadInput" type="file" :webkitdirectory="rootData.folder" @change="selectedFilesHandler" multiple>
         <template #footer>
             <bk-button @click="cancel">{{ $t('cancel') }}</bk-button>
             <bk-button class="ml10" theme="primary" @click="confirm">{{ $t('confirm') }}</bk-button>
@@ -50,10 +50,7 @@
     export default {
         name: 'selectedFilesDialog',
         props: {
-            publicData: {
-                type: Object,
-                default: () => {}
-            }
+            rootData: Object
         },
         data () {
             return {
@@ -66,7 +63,9 @@
             convertFileSize,
             selectFiles () {
                 this.$refs.uploadInput.value = ''
-                this.$refs.uploadInput.click()
+                this.$nextTick(() => {
+                    this.$refs.uploadInput.click()
+                })
             },
             selectedFilesHandler () {
                 const files = [...this.$refs.uploadInput.files]

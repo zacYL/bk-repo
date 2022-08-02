@@ -71,6 +71,7 @@ body {
         }
         /* 流体布局适应 */
         .bk-table-body-wrapper {
+            height: calc(100% - 42px);
             overflow-y: auto!important;
         }
         .bk-table-body,
@@ -113,8 +114,8 @@ body {
             background-color: var(--bgHoverLighterColor);
         }
     }
-    .bk-button-text.bk-primary.hover,
-    .bk-button-text.bk-primary:hover {
+    .bk-button-text.bk-primary:not([disabled]).hover,
+    .bk-button-text.bk-primary:not([disabled]):hover {
         color: var(--primaryWeightColor);
     }
     /* 面包屑 */

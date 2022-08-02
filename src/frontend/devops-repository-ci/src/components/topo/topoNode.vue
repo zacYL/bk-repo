@@ -88,6 +88,7 @@
             margin: -5px;
             font-size: 16px;
             color: var(--primaryColor);
+            z-index: 1;
             cursor: pointer;
         }
     }

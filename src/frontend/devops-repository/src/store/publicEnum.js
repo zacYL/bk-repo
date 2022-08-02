@@ -106,9 +106,12 @@ export const scannerTypeEnum = {
 // 扫描方案执行状态
 export const scanStatusEnum = {
     INIT: '等待扫描',
-    RUNNING: '正在扫描',
+    RUNNING: '扫描中',
     STOP: '扫描中止',
     SUCCESS: '扫描完成',
+    UN_QUALITY: '未设置质量规则',
+    QUALITY_PASS: '质量规则通过',
+    QUALITY_UNPASS: '质量规则未通过',
     FAILED: '扫描异常'
 }
 

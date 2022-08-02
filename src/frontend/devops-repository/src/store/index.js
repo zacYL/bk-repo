@@ -7,6 +7,7 @@ Vue.use(Vuex)
 const storeObject = {
     state: {
         showLoginDialog: Boolean(window.login),
+        // 软件源区分和权限预留
         permission: {
             write: true,
             edit: true,

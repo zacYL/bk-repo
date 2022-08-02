@@ -12,11 +12,15 @@
                     <span class="ml20">{{ baseInfo[item.key] }}</span>
                 </div>
             </div>
-            <div v-if="baseInfo.qualityRedLine !== null" class="arti-quality">
+            <div class="arti-quality">
                 <div class="flex-align-center">
                     <span class="mr20" style="color:var(--fontSubsidiaryColor);">质量规则</span>
-                    <span v-if="baseInfo.qualityRedLine" class="repo-tag SUCCESS">通过</span>
-                    <span v-else class="repo-tag FAILED">不通过</span>
+                    <span class="repo-tag"
+                        :class="{
+                            'SUCCESS': baseInfo.status === 'QUALITY_PASS',
+                            'INIT': baseInfo.status === 'UN_QUALITY',
+                            'WARNING': baseInfo.status === 'QUALITY_UNPASS'
+                        }">{{scanStatusEnum[baseInfo.scanStatus]}}</span>
                 </div>
                 <div v-for="item in qualityList" :key="item">{{ item }}</div>
             </div>
@@ -33,6 +37,7 @@
                     @clear="handlerPaginationChange()">
                 </bk-input>
                 <div class="flex-1 flex-end-center">
+                    <bk-button class="mr10" theme="default" @click="exportReport">导出报告</bk-button>
                     <bk-button theme="default" @click="startScanSingleHandler">重新扫描</bk-button>
                 </div>
             </div>
@@ -99,10 +104,12 @@
 <script>
     import { mapActions } from 'vuex'
     import { formatDate, segmentNumberThree, formatDuration } from '@repository/utils'
+    import { scanStatusEnum } from '@repository/store/publicEnum'
     export default {
         name: 'license',
         data () {
             return {
+                scanStatusEnum,
                 metaBase: [
                     { key: 'duration', label: '持续时间' },
                     { key: 'finishTime', label: '完成时间' },
@@ -237,6 +244,10 @@
                             ? { repoName, packageKey, version }
                             : { repoName, path })
                 })
+            },
+            exportReport () {
+                const url = `/web/scanner/api/scan/export/artifact/license/leak/${this.projectId}/${this.recordId}`
+                window.open(url, '_self')
             }
         }
     }

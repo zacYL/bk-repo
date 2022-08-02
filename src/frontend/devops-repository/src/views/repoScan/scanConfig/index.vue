@@ -21,7 +21,7 @@
                     </bk-form-item>
                 </bk-form>
             </bk-tab-panel>
-            <bk-tab-panel render-directive="if" name="autoConfig" label="监控设置">
+            <bk-tab-panel v-if="!['DOCKER', 'PYPI'].includes(scanBaseInfo.type)" render-directive="if" name="autoConfig" label="监控设置">
                 <auto-scan-config :data="scanBaseInfo" @save="ajaxSaveConfig"></auto-scan-config>
             </bk-tab-panel>
             <bk-tab-panel render-directive="if" name="qualityRule" label="质量规则">

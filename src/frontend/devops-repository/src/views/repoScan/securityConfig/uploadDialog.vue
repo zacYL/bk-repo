@@ -20,7 +20,7 @@
     import ArtifactoryUpload from '@repository/components/ArtifactoryUpload'
     import { mapActions } from 'vuex'
     export default {
-        name: 'genericUpload',
+        name: 'uploadDialog',
         components: { ArtifactoryUpload },
         props: {
             heightNum: {

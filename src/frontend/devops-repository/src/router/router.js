@@ -258,7 +258,8 @@ const routes = [
                 meta: {
                     breadcrumb: [
                         { name: 'repoScan', label: '制品扫描' },
-                        { name: 'scanConfig', label: '{scanName}', template: '方案设置' }
+                        { name: 'scanReport', label: '{scanName}', template: '方案详情' },
+                        { name: 'scanConfig', label: '方案设置' }
                     ]
                 }
             },
@@ -269,7 +270,7 @@ const routes = [
                 meta: {
                     breadcrumb: [
                         { name: 'repoScan', label: '制品扫描' },
-                        { name: 'scanReport', label: '{scanName}', template: '扫描详情' },
+                        { name: 'scanReport', label: '{scanName}', template: '方案详情' },
                         { name: 'startScan', label: '立即扫描' }
                     ]
                 }

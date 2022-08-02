@@ -54,7 +54,7 @@ object ScanLicenseConverter {
                 unknown = getLicenseCount(LicenseNature.UNKNOWN.natureName, subScanTask),
                 unCompliance = getLicenseCount(LicenseNature.UN_COMPLIANCE.natureName, subScanTask),
                 finishTime = finishedDateTime?.format(DateTimeFormatter.ISO_DATE_TIME) ?: "/",
-                duration = ScanPlanConverter.duration(startDateTime, finishedDateTime)
+                duration = ScanPlanConverter.duration(startDateTime, finishedDateTime) / 1000
             )
         }
     }

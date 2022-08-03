@@ -296,6 +296,9 @@
                 }
             }))
         },
+        beforeDestroy () {
+            window.repositoryVue.$off('upload-refresh')
+        },
         methods: {
             convertFileSize,
             getIconName,

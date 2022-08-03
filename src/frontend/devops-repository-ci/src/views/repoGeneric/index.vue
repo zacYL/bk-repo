@@ -98,7 +98,7 @@
                     <bk-table-column :label="$t('fileName')" prop="name" show-overflow-tooltip :render-header="renderHeader">
                         <template #default="{ row }">
                             <scan-tag class="mr5 table-svg"
-                                v-if="isEnterprise && !row.folder && /\.(ipa)|(apk)|(jar)$/.test(row.name)"
+                                v-if="isEnterprise && !row.folder && genericScanFileTypes.includes(row.name.replace(/^.+\.([^.]+)$/, '$1'))"
                                 :status="row.metadata.scanStatus"
                                 repo-type="generic"
                                 :full-path="row.fullPath">
@@ -145,7 +145,9 @@
                                         ] : []),
                                         ...(!row.folder ? [
                                             { clickEvent: () => handlerShare(row), label: $t('share') },
-                                            isEnterprise && /\.(ipa)|(apk)|(jar)$/.test(row.name) && { clickEvent: () => handlerScan(row), label: '安全扫描' }
+                                            isEnterprise
+                                                && genericScanFileTypes.includes(row.name.replace(/^.+\.([^.]+)$/, '$1'))
+                                                && { clickEvent: () => handlerScan(row), label: '安全扫描' }
                                         ] : [])
                                     ] : []),
                                     !row.folder && { clickEvent: () => handlerForbid(row), label: row.metadata.forbidStatus ? '解除禁止' : '禁止使用' },
@@ -187,7 +189,7 @@
     import genericShareDialog from '@repository/views/repoGeneric/genericShareDialog'
     import genericTreeDialog from '@repository/views/repoGeneric/genericTreeDialog'
     import { convertFileSize, formatDate, debounce } from '@repository/utils'
-    import { getIconName } from '@repository/store/publicEnum'
+    import { getIconName, genericScanFileTypes } from '@repository/store/publicEnum'
     import { mapState, mapGetters, mapMutations, mapActions } from 'vuex'
     export default {
         name: 'repoGeneric',
@@ -205,6 +207,7 @@
         },
         data () {
             return {
+                genericScanFileTypes,
                 sideBarWidth: 300,
                 moveBarWidth: 10,
                 isLoading: false,
@@ -293,6 +296,9 @@
                     this.itemClickHandler(this.selectedTreeNode)
                 }
             }))
+        },
+        beforeDestroy () {
+            window.repositoryVue.$off('upload-refresh')
         },
         methods: {
             convertFileSize,

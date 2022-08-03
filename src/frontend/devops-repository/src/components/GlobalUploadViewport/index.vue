@@ -147,6 +147,12 @@
                 })
             },
             closeViewport () {
+                if (!this.upLoadTaskQueue.length) {
+                    this.show = false
+                    this.showFileList = true
+                    this.fileList = []
+                    return
+                }
                 this.$confirm({
                     theme: 'danger',
                     message: '确认 取消所有上传任务并清空任务列表 ？',
@@ -195,8 +201,8 @@
                 setTimeout(this.addToUpLoadTaskQueue, 500)
             },
             cancelUpload (row) {
-                if (row.status === 'UPLOADING') row.xhr.abort() // 取消走catch分支
                 this.$set(row, 'status', 'CANCEL')
+                row.xhr.abort()
             },
             reUpload (row) {
                 this.$set(row, 'status', 'INIT')

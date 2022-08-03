@@ -6,7 +6,7 @@
                 <span class="card-name text-overflow" :title="cardData.name">{{ cardData.name }}</span>
                 <span class="ml10 repo-tag" v-if="['MAVEN'].includes(cardData.type)">{{ cardData.key.replace(/^.*\/\/(.+):.*$/, '$1') }}</span>
                 <scan-tag class="ml10"
-                    v-if="isEnterprise && !cardData.type && /\.(ipa)|(apk)|(jar)$/.test(cardData.name)"
+                    v-if="isEnterprise && !cardData.type && genericScanFileTypes.includes(cardData.name.replace(/^.+\.([^.]+)$/, '$1'))"
                     :status="(cardData.metadata || {}).scanStatus"
                     readonly>
                 </scan-tag>
@@ -54,7 +54,7 @@
     import forbidTag from '@repository/components/ForbidTag'
     import { mapGetters } from 'vuex'
     import { convertFileSize, formatDate } from '@repository/utils'
-    import { getIconName, scanTypeEnum } from '@repository/store/publicEnum'
+    import { getIconName, scanTypeEnum, genericScanFileTypes } from '@repository/store/publicEnum'
     export default {
         name: 'packageCard',
         components: { OperationList, ScanTag, forbidTag },
@@ -66,6 +66,11 @@
             readonly: {
                 type: Boolean,
                 default: false
+            }
+        },
+        data () {
+            return {
+                genericScanFileTypes
             }
         },
         computed: {

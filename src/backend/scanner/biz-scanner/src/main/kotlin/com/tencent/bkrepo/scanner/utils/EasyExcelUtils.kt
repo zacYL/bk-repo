@@ -11,7 +11,7 @@ object EasyExcelUtils {
     private val logger = LoggerFactory.getLogger(EasyExcelUtils::class.java)
 
     fun download(data: Collection<*>, name: String, dataClass: Class<*>) {
-        try {
+//        try {
             val response = HttpContextHolder.getResponse()
             response.contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             response.characterEncoding = "utf-8"
@@ -22,9 +22,9 @@ object EasyExcelUtils {
                 "attachment;filename*=utf-8''$fileName.xlsx"
             )
             EasyExcel.write(response.outputStream, dataClass).sheet(fileName).doWrite(data)
-        } catch (e: Exception) {
-            logger.error("download excel fail:[$e]")
-            throw ExportReportException()
-        }
+//        } catch (e: Exception) {
+//            logger.error("download excel fail:[$e]")
+//            throw ExportReportException()
+//        }
     }
 }

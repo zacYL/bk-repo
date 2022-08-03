@@ -52,6 +52,9 @@ import com.tencent.bkrepo.scanner.dao.ScanPlanDao
 import com.tencent.bkrepo.scanner.dao.ScanTaskDao
 import com.tencent.bkrepo.scanner.dao.SubScanTaskDao
 import com.tencent.bkrepo.scanner.exception.ScanTaskNotFoundException
+import com.tencent.bkrepo.scanner.model.LeakDetailExport
+import com.tencent.bkrepo.scanner.model.LeakScanPlanExport
+import com.tencent.bkrepo.scanner.model.TPlanArtifactLatestSubScanTask
 import com.tencent.bkrepo.scanner.model.LicenseScanDetailExport
 import com.tencent.bkrepo.scanner.model.LicenseScanPlanExport
 import com.tencent.bkrepo.scanner.pojo.ScanTask
@@ -71,6 +74,7 @@ import com.tencent.bkrepo.scanner.pojo.response.SubtaskInfo
 import com.tencent.bkrepo.scanner.service.ScanTaskService
 import com.tencent.bkrepo.scanner.service.ScannerService
 import com.tencent.bkrepo.scanner.utils.Converter
+import com.tencent.bkrepo.scanner.utils.EasyExcelUtils
 import com.tencent.bkrepo.scanner.utils.ScanLicenseConverter
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -210,6 +214,35 @@ class ScanTaskServiceImpl(
         return resultDetail(request, planArtifactLatestSubScanTaskDao)
     }
 
+    override fun exportLeakDetail(request: ArtifactVulnerabilityRequest) {
+        with(request) {
+            val subtask = planArtifactLatestSubScanTaskDao.findById(subScanTaskId!!)
+                ?: throw ErrorCodeException(CommonMessageCode.RESOURCE_NOT_FOUND, subScanTaskId!!)
+
+            var resultDetailPage = resultDetail(request, planArtifactLatestSubScanTaskDao)
+            var pageNumber = 1
+            val resultList = mutableListOf<ArtifactVulnerabilityInfo>()
+            while (resultDetailPage.records.isNotEmpty()) {
+                resultList.addAll(resultDetailPage.records)
+                resultDetailPage = resultDetail(
+                    ArtifactVulnerabilityRequest(
+                        projectId = projectId,
+                        subScanTaskId = subScanTaskId,
+                        pageNumber = ++pageNumber
+                    )
+                )
+            }
+            logger.info("resultList size:[${resultList.size}]")
+            val dataList = mutableListOf<LeakDetailExport>()
+            resultList.forEach {
+                dataList.add(Converter.convertToDetailExport(it))
+            }
+            logger.info("export dataList:[${dataList.toJsonString()}]")
+            if (dataList.isEmpty()) return
+            EasyExcelUtils.download(dataList, subtask.artifactName, LeakDetailExport::class.java)
+        }
+    }
+
     override fun archiveSubtaskResultDetail(request: ArtifactVulnerabilityRequest): Page<ArtifactVulnerabilityInfo> {
         return resultDetail(request, archiveSubScanTaskDao)
     }
@@ -277,9 +310,8 @@ class ScanTaskServiceImpl(
         return resultDetail(request, archiveSubScanTaskDao)
     }
 
-    override fun exportResultDetail(request: ArtifactLicensesDetailRequest): Map<String, Any> {
+    override fun exportResultDetail(request: ArtifactLicensesDetailRequest) {
         val resultList = mutableListOf<FileLicensesResultDetail>()
-        val resultMap = mutableMapOf<String, Any>()
         val subtask = planArtifactLatestSubScanTaskDao.findById(request.subScanTaskId!!)
             ?: throw ErrorCodeException(CommonMessageCode.RESOURCE_NOT_FOUND, request.subScanTaskId!!)
 
@@ -287,12 +319,11 @@ class ScanTaskServiceImpl(
         var pageNumber = 1
         while (resultDetailPage.records.isNotEmpty()) {
             resultList.addAll(resultDetailPage.records)
-            pageNumber++
             resultDetailPage = resultDetail(
                 ArtifactLicensesDetailRequest(
                     projectId = request.projectId,
                     subScanTaskId = request.subScanTaskId,
-                    pageNumber = pageNumber
+                    pageNumber = ++pageNumber
                 )
             )
         }
@@ -302,9 +333,7 @@ class ScanTaskServiceImpl(
             resultListConvert.add(ScanLicenseConverter.convert(it))
         }
         logger.info("resultListConvert:[${resultListConvert.toJsonString()}]")
-        resultMap["name"] = subtask.artifactName
-        resultMap["data"] = resultListConvert
-        return resultMap
+        EasyExcelUtils.download(resultListConvert, subtask.artifactName, LicenseScanDetailExport::class.java)
     }
 
     override fun subtaskLicenseOverview(subtaskId: String): FileLicensesResultOverview {

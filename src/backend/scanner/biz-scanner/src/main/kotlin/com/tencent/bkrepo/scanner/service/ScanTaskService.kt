@@ -119,6 +119,11 @@ interface ScanTaskService {
     fun resultDetail(request: ArtifactVulnerabilityRequest): Page<ArtifactVulnerabilityInfo>
 
     /**
+     * 导出漏洞详情数据
+     */
+    fun exportLeakDetail(request: ArtifactVulnerabilityRequest)
+
+    /**
      * 获取属于某个扫描任务的扫描子任务扫描报告详情
      */
     fun archiveSubtaskResultDetail(request: ArtifactVulnerabilityRequest): Page<ArtifactVulnerabilityInfo>
@@ -131,7 +136,7 @@ interface ScanTaskService {
     /**
      * 导出扫描结果详情
      */
-    fun exportResultDetail(request: ArtifactLicensesDetailRequest): Map<String, Any>
+    fun exportResultDetail(request: ArtifactLicensesDetailRequest)
 
     /**
      * 获取制品扫描结果预览

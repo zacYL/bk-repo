@@ -147,6 +147,12 @@
                 })
             },
             closeViewport () {
+                if (!this.upLoadTaskQueue.length) {
+                    this.show = false
+                    this.showFileList = true
+                    this.fileList = []
+                    return
+                }
                 this.$confirm({
                     theme: 'danger',
                     message: '确认 取消所有上传任务并清空任务列表 ？',

@@ -84,25 +84,31 @@ export const scanTypeEnum = {
 export const scannerTypeEnum = {
     // 科恩
     arrowhead: {
-        GENERIC: '支持apk、ipa、aab、jar格式的文件',
+        GENERIC: '支持zip、tar、tgz、jar、war、exe、apk等多种常用文件格式',
         MAVEN: '',
         DOCKER: ''
     },
     // DependencyCheck
     DependencyCheck: {
-        GENERIC: '支持apk、ipa、jar格式的文件',
+        GENERIC: '支持zip、tar、tgz、jar、war、exe、apk等多种常用文件格式',
         MAVEN: '',
         NPM: '',
         PYPI: ''
     },
     scancodeToolkit: {
-        GENERIC_LICENSE: '支持apk、ipa、jar格式的文件',
+        GENERIC_LICENSE: '支持zip、tar、tgz、jar、war、exe、apk等多种常用文件格式',
         MAVEN_LICENSE: ''
     },
     trivy: {
         DOCKER: ''
     }
 }
+
+export const genericScanFileTypes = [
+    'zip', 'tar', 'tgz', 'jar', 'war', 'exe',
+    'apk', 'ear', 'sar', 'nupkg', 'gz', 'bz2',
+    'tbz2', 'rpm', 'ipa', 'aab'
+]
 
 // 扫描方案执行状态
 export const scanStatusEnum = {

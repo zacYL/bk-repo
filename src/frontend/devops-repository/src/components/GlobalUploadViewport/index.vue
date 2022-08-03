@@ -21,6 +21,7 @@
                 height="100%"
                 :outer-border="false"
                 :row-border="false"
+                :virtual-render="fileList.length > 3000"
                 size="small">
                 <bk-table-column :label="$t('fileName')" show-overflow-tooltip>
                     <template #default="{ row }">
@@ -159,7 +160,7 @@
             },
             addToUpLoadTaskQueue () {
                 const wait = this.fileList.find(f => f.status === 'INIT')
-                if (this.upLoadTaskQueue.length > 5 || !wait) return
+                if (this.upLoadTaskQueue.length > 3 || !wait) return
                 this.$set(wait, 'status', 'UPLOADING')
                 const { xhr, projectId, repoName, fullPath, file, overwrite, status } = wait
                 this.uploadArtifactory({
@@ -187,11 +188,11 @@
                     this.$set(wait, 'status', 'FAILED')
                 }).finally(() => {
                     this.upLoadTaskQueue = this.upLoadTaskQueue.filter(task => task !== wait)
-                    this.addToUpLoadTaskQueue()
+                    setTimeout(this.addToUpLoadTaskQueue, 500)
                     this.sortFileList()
                 })
                 this.upLoadTaskQueue.push(wait)
-                this.addToUpLoadTaskQueue()
+                setTimeout(this.addToUpLoadTaskQueue, 500)
             },
             cancelUpload (row) {
                 if (row.status === 'UPLOADING') row.xhr.abort() // 取消走catch分支

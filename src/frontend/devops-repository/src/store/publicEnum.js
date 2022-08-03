@@ -59,7 +59,8 @@ export function getIconName (name) {
 export const nodeTypeEnum = {
     CENTER: '中心节点',
     EDGE: '边缘节点',
-    STANDALONE: '独立节点'
+    STANDALONE: '独立节点',
+    REMOTE: '远程节点'
 }
 
 // 同步计划执行状态

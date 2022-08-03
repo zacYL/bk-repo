@@ -201,8 +201,8 @@
                 setTimeout(this.addToUpLoadTaskQueue, 500)
             },
             cancelUpload (row) {
-                if (row.status === 'UPLOADING') row.xhr.abort() // 取消走catch分支
                 this.$set(row, 'status', 'CANCEL')
+                row.xhr.abort()
             },
             reUpload (row) {
                 this.$set(row, 'status', 'INIT')

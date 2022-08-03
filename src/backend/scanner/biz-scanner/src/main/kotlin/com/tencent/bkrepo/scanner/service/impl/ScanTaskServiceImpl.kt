@@ -27,12 +27,12 @@
 
 package com.tencent.bkrepo.scanner.service.impl
 
+import com.google.common.util.concurrent.UncheckedExecutionException
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.exception.NotFoundException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Page
-import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.query.model.PageLimit
@@ -52,6 +52,9 @@ import com.tencent.bkrepo.scanner.dao.ScanPlanDao
 import com.tencent.bkrepo.scanner.dao.ScanTaskDao
 import com.tencent.bkrepo.scanner.dao.SubScanTaskDao
 import com.tencent.bkrepo.scanner.exception.ScanTaskNotFoundException
+import com.tencent.bkrepo.scanner.model.LeakDetailExport
+import com.tencent.bkrepo.scanner.model.LeakScanPlanExport
+import com.tencent.bkrepo.scanner.model.TPlanArtifactLatestSubScanTask
 import com.tencent.bkrepo.scanner.model.LicenseScanDetailExport
 import com.tencent.bkrepo.scanner.model.LicenseScanPlanExport
 import com.tencent.bkrepo.scanner.pojo.ScanTask
@@ -71,6 +74,7 @@ import com.tencent.bkrepo.scanner.pojo.response.SubtaskInfo
 import com.tencent.bkrepo.scanner.service.ScanTaskService
 import com.tencent.bkrepo.scanner.service.ScannerService
 import com.tencent.bkrepo.scanner.utils.Converter
+import com.tencent.bkrepo.scanner.utils.EasyExcelUtils
 import com.tencent.bkrepo.scanner.utils.ScanLicenseConverter
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -124,40 +128,50 @@ class ScanTaskServiceImpl(
         return subtasks(request, archiveSubScanTaskDao)
     }
 
+    override fun planArtifactSubtasks(projectId: String, planId: String): List<TPlanArtifactLatestSubScanTask> {
+        return planArtifactLatestSubScanTaskDao.findByPlanId(projectId, planId)
+    }
+
     override fun planArtifactSubtaskPage(request: SubtaskInfoRequest): Page<SubtaskInfo> {
-        if (request.planId == null) {
+        if (request.id == null) {
             throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID)
         }
         return subtasks(request, planArtifactLatestSubScanTaskDao)
     }
 
-    override fun exportScanPlanRecords(request: SubtaskInfoRequest): Map<String, Any> {
-        val exportResultMap = mutableMapOf<String, Any>()
+    override fun exportScanPlanRecords(request: SubtaskInfoRequest) {
+        logger.info("exportScanPlanRecords request:${request.toJsonString()}")
         with(request) {
-            if (planId == null) {
+            if (id == null) {
                 throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID)
             }
             // 方案信息，获取方案名称
-            val scanPlan =
-                scanPlanDao.find(projectId, planId!!) ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID)
-            exportResultMap["name"] = scanPlan.name
+            val scanPlan = scanPlanDao.find(projectId, id!!)
+                ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID)
 
+            val isLicenseScan = scanPlan.type.endsWith("_LICENSE")
             // 获取任务信息
-            // TODO 许可已实现，需要添加漏洞实现
             var pageNumber = 1
             var page = planArtifactLatestSubScanTaskDao.pageBy(request)
-            val dataList = mutableListOf<LicenseScanPlanExport>()
+            val dataList = mutableListOf<Any>()
             while (page.records.isNotEmpty()) {
                 page.records.forEach {
-                    dataList.add(ScanLicenseConverter.convert(it))
+                    if (isLicenseScan) {
+                        dataList.add(ScanLicenseConverter.convert(it))
+                    } else {
+                        dataList.add(Converter.convertToPlanExport(it))
+                    }
                 }
-                pageNumber++
-                request.pageNumber = pageNumber
+                request.pageNumber = ++pageNumber
                 page = planArtifactLatestSubScanTaskDao.pageBy(request)
             }
-            exportResultMap["data"] = dataList
+
+            if (isLicenseScan) {
+                EasyExcelUtils.download(dataList, scanPlan.name, LicenseScanPlanExport::class.java)
+            } else {
+                EasyExcelUtils.download(dataList, scanPlan.name, LeakScanPlanExport::class.java)
+            }
         }
-        return exportResultMap
     }
 
     override fun planArtifactSubtaskOverview(subtaskId: String): SubtaskResultOverview {
@@ -210,6 +224,35 @@ class ScanTaskServiceImpl(
         return resultDetail(request, planArtifactLatestSubScanTaskDao)
     }
 
+    override fun exportLeakDetail(request: ArtifactVulnerabilityRequest) {
+        with(request) {
+            val subtask = planArtifactLatestSubScanTaskDao.findById(subScanTaskId!!)
+                ?: throw ErrorCodeException(CommonMessageCode.RESOURCE_NOT_FOUND, subScanTaskId!!)
+
+            var resultDetailPage = resultDetail(request, planArtifactLatestSubScanTaskDao)
+            var pageNumber = 1
+            val resultList = mutableListOf<ArtifactVulnerabilityInfo>()
+            while (resultDetailPage.records.isNotEmpty()) {
+                resultList.addAll(resultDetailPage.records)
+                resultDetailPage = resultDetail(
+                    ArtifactVulnerabilityRequest(
+                        projectId = projectId,
+                        subScanTaskId = subScanTaskId,
+                        pageNumber = ++pageNumber
+                    )
+                )
+            }
+            logger.info("resultList size:[${resultList.size}]")
+            val dataList = mutableListOf<LeakDetailExport>()
+            resultList.forEach {
+                dataList.add(Converter.convertToDetailExport(it))
+            }
+            logger.info("export dataList:[${dataList.toJsonString()}]")
+            if (dataList.isEmpty()) return
+            EasyExcelUtils.download(dataList, subtask.artifactName, LeakDetailExport::class.java)
+        }
+    }
+
     override fun archiveSubtaskResultDetail(request: ArtifactVulnerabilityRequest): Page<ArtifactVulnerabilityInfo> {
         return resultDetail(request, archiveSubScanTaskDao)
     }
@@ -219,8 +262,8 @@ class ScanTaskServiceImpl(
             ?: throw NotFoundException(CommonMessageCode.RESOURCE_NOT_FOUND, subtaskId)
         try {
             permissionCheckHandler.checkSubtaskPermission(subtask, PermissionAction.READ)
-        } catch (e: RepoNotFoundException) {
-            logger.info("Failed to checkSubtaskPermission: ", e)
+        } catch (e: UncheckedExecutionException) {
+            logger.error("Failed to checkSubtaskPermission $e")
             permissionCheckHandler.checkProjectPermission(subtask.projectId, PermissionAction.MANAGE)
         }
         return Converter.convert(subtask)
@@ -251,8 +294,8 @@ class ScanTaskServiceImpl(
 
             try {
                 permissionCheckHandler.checkSubtaskPermission(subtask, PermissionAction.READ)
-            } catch (e: RepoNotFoundException) {
-                logger.info("Failed to checkSubtaskPermission: ", e)
+            } catch (e: UncheckedExecutionException) {
+                logger.error("Failed to checkSubtaskPermission $e")
                 permissionCheckHandler.checkProjectPermission(subtask.projectId, PermissionAction.MANAGE)
             }
 
@@ -277,9 +320,8 @@ class ScanTaskServiceImpl(
         return resultDetail(request, archiveSubScanTaskDao)
     }
 
-    override fun exportResultDetail(request: ArtifactLicensesDetailRequest): Map<String, Any> {
+    override fun exportResultDetail(request: ArtifactLicensesDetailRequest) {
         val resultList = mutableListOf<FileLicensesResultDetail>()
-        val resultMap = mutableMapOf<String, Any>()
         val subtask = planArtifactLatestSubScanTaskDao.findById(request.subScanTaskId!!)
             ?: throw ErrorCodeException(CommonMessageCode.RESOURCE_NOT_FOUND, request.subScanTaskId!!)
 
@@ -287,12 +329,11 @@ class ScanTaskServiceImpl(
         var pageNumber = 1
         while (resultDetailPage.records.isNotEmpty()) {
             resultList.addAll(resultDetailPage.records)
-            pageNumber++
             resultDetailPage = resultDetail(
                 ArtifactLicensesDetailRequest(
                     projectId = request.projectId,
                     subScanTaskId = request.subScanTaskId,
-                    pageNumber = pageNumber
+                    pageNumber = ++pageNumber
                 )
             )
         }
@@ -302,9 +343,7 @@ class ScanTaskServiceImpl(
             resultListConvert.add(ScanLicenseConverter.convert(it))
         }
         logger.info("resultListConvert:[${resultListConvert.toJsonString()}]")
-        resultMap["name"] = subtask.artifactName
-        resultMap["data"] = resultListConvert
-        return resultMap
+        EasyExcelUtils.download(resultListConvert, subtask.artifactName, LicenseScanDetailExport::class.java)
     }
 
     override fun subtaskLicenseOverview(subtaskId: String): FileLicensesResultOverview {
@@ -321,8 +360,8 @@ class ScanTaskServiceImpl(
                 ?: throw ErrorCodeException(CommonMessageCode.RESOURCE_NOT_FOUND, subScanTaskId!!)
             try {
                 permissionCheckHandler.checkSubtaskPermission(subtask, PermissionAction.READ)
-            } catch (e: RepoNotFoundException) {
-                logger.info("Failed to checkSubtaskPermission: ", e)
+            } catch (e: UncheckedExecutionException) {
+                logger.error("Failed to checkSubtaskPermission $e")
                 permissionCheckHandler.checkProjectPermission(subtask.projectId, PermissionAction.MANAGE)
             }
             val scanner = scannerService.get(subtask.scanner)
@@ -346,8 +385,8 @@ class ScanTaskServiceImpl(
             ?: throw NotFoundException(CommonMessageCode.RESOURCE_NOT_FOUND, subScanTaskId)
         try {
             permissionCheckHandler.checkSubtaskPermission(subtask, PermissionAction.READ)
-        } catch (e: RepoNotFoundException) {
-            logger.info("Failed to checkSubtaskPermission: ", e)
+        } catch (e: UncheckedExecutionException) {
+            logger.error("Failed to checkSubtaskPermission $e")
             permissionCheckHandler.checkProjectPermission(subtask.projectId, PermissionAction.MANAGE)
         }
         return ScanLicenseConverter.convert(subtask)

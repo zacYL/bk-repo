@@ -28,17 +28,22 @@
 package com.tencent.bkrepo.scanner.utils
 
 import com.tencent.bkrepo.common.api.util.readJsonString
+import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.scanner.pojo.scanner.CveOverviewKey
 import com.tencent.bkrepo.common.scanner.pojo.scanner.Level
 import com.tencent.bkrepo.common.scanner.pojo.scanner.Scanner
+import com.tencent.bkrepo.scanner.model.LeakDetailExport
+import com.tencent.bkrepo.scanner.model.LeakScanPlanExport
 import com.tencent.bkrepo.scanner.model.SubScanTaskDefinition
 import com.tencent.bkrepo.scanner.model.TProjectScanConfiguration
 import com.tencent.bkrepo.scanner.model.TScanPlan
 import com.tencent.bkrepo.scanner.model.TScanTask
 import com.tencent.bkrepo.scanner.model.TSubScanTask
+import com.tencent.bkrepo.scanner.pojo.LeakType
 import com.tencent.bkrepo.scanner.pojo.ProjectScanConfiguration
 import com.tencent.bkrepo.scanner.pojo.ScanTask
 import com.tencent.bkrepo.scanner.pojo.SubScanTask
+import com.tencent.bkrepo.scanner.pojo.response.ArtifactVulnerabilityInfo
 import com.tencent.bkrepo.scanner.pojo.response.SubtaskInfo
 import com.tencent.bkrepo.scanner.pojo.response.SubtaskResultOverview
 import java.time.format.DateTimeFormatter
@@ -122,10 +127,50 @@ object Converter {
                 highestLeakLevel = scanResultOverview?.let { highestLeakLevel(it) },
                 duration = ScanPlanConverter.duration(startDateTime, finishedDateTime),
                 finishTime = finishedDateTime?.format(DateTimeFormatter.ISO_DATE_TIME),
-                status = ScanPlanConverter.convertToScanStatus(status).name,
+                status = ScanPlanConverter.convertToScanStatus(status, qualityRedLine).name,
                 createdBy = createdBy,
                 createdDate = createdDate.format(DateTimeFormatter.ISO_DATE_TIME),
                 qualityRedLine = qualityRedLine
+            )
+        }
+    }
+
+    fun convertToPlanExport(subScanTask: SubScanTaskDefinition): LeakScanPlanExport {
+        return with(convert(subScanTask)) {
+            LeakScanPlanExport(
+                name = name,
+                versionOrFullPath = version ?: fullPath!!,
+                repoName = repoName,
+                qualityRedLine = qualityRedLine?.let { if (it) "通过" else "不通过" } ?: "/",
+                critical = critical,
+                high = high,
+                medium = medium,
+                low = low,
+                finishTime = finishTime ?: "/",
+                duration = duration / 1000
+            )
+        }
+    }
+
+    fun convertToLeakLevel(level: String): String  = when (level) {
+        Level.CRITICAL.name -> LeakType.CRITICAL.value
+        Level.HIGH.name -> LeakType.HIGH.value
+        Level.MEDIUM.name -> LeakType.MEDIUM.value
+        Level.LOW.name -> LeakType.LOW.value
+        else -> "/"
+    }
+
+    fun convertToDetailExport(artifactVulnerabilityInfo: ArtifactVulnerabilityInfo): LeakDetailExport {
+        return with(artifactVulnerabilityInfo) {
+            LeakDetailExport(
+                vulId = vulId,
+                severity = convertToLeakLevel(severity),
+                pkgName = pkgName,
+                installedVersion = installedVersion.toJsonString(),
+                vulnerabilityName = vulnerabilityName,
+                description = description,
+                officialSolution = officialSolution,
+                reference = reference?.toJsonString()
             )
         }
     }

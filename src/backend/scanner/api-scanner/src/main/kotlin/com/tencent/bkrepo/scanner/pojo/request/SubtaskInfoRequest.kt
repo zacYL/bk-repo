@@ -27,7 +27,6 @@
 
 package com.tencent.bkrepo.scanner.pojo.request
 
-import com.fasterxml.jackson.annotation.JsonAlias
 import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_NUMBER
 import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_SIZE
 import io.swagger.annotations.ApiModel
@@ -40,8 +39,7 @@ data class SubtaskInfoRequest(
     @ApiModelProperty("扫描方案所属项目id", required = true)
     val projectId: String,
     @ApiModelProperty("扫描方案id", required = true)
-    @JsonAlias("id")
-    val planId: String? = null,
+    val id: String? = null,
     @ApiModelProperty("扫描任务id，默认为扫描方案最新一次的扫描任务")
     var parentScanTaskId: String? = null,
     @ApiModelProperty("制品名关键字，只要制品名包含该关键字则匹配")
@@ -65,6 +63,8 @@ data class SubtaskInfoRequest(
     @Deprecated("仅用于兼容旧接口", ReplaceWith("subScanTaskStatus"))
     val status: String? = null,
     @ApiModelProperty("制品扫描状态")
+    var scanStatus: String? = null,
+    @ApiModelProperty("制品扫描状态")
     var subScanTaskStatus: List<String>? = null,
     @ApiModelProperty("制品扫描任务创建时间(开始)")
     val startTime: Instant? = null,
@@ -79,5 +79,7 @@ data class SubtaskInfoRequest(
     @ApiModelProperty("页大小")
     val pageSize: Int = DEFAULT_PAGE_SIZE,
     @ApiModelProperty("是否通过质量规则")
-    var qualityRedLine: Boolean? = null
+    var qualityRedLine: Boolean? = null,
+    @ApiModelProperty("未设置质量规则")
+    var unQuality: Boolean? = null
 )

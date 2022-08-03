@@ -22,7 +22,7 @@ object EasyExcelUtils {
                 "attachment;filename*=utf-8''$fileName.xlsx"
             )
             EasyExcel.write(response.outputStream, dataClass).sheet(fileName).doWrite(data)
-        }catch (e:Exception){
+        } catch (e: Exception) {
             logger.error("download excel fail:[$e]")
             throw ExportReportException()
         }

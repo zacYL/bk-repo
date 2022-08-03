@@ -29,6 +29,7 @@ package com.tencent.bkrepo.scanner.service
 
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.query.model.PageLimit
+import com.tencent.bkrepo.scanner.model.TPlanArtifactLatestSubScanTask
 import com.tencent.bkrepo.scanner.pojo.ScanTask
 import com.tencent.bkrepo.scanner.pojo.request.ArtifactVulnerabilityRequest
 import com.tencent.bkrepo.scanner.pojo.request.FileScanResultDetailRequest
@@ -70,6 +71,11 @@ interface ScanTaskService {
      * 分页获取扫描子任务
      */
     fun subtasks(request: SubtaskInfoRequest): Page<SubtaskInfo>
+
+    /**
+     * 获取使用指定扫描方案扫描过的制品
+     */
+    fun planArtifactSubtasks(projectId: String, planId: String): List<TPlanArtifactLatestSubScanTask>
 
     /**
      * 分页获取使用指定扫描方案扫描过的制品

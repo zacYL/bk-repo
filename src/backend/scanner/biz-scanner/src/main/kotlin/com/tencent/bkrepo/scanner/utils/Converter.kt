@@ -127,7 +127,7 @@ object Converter {
                 highestLeakLevel = scanResultOverview?.let { highestLeakLevel(it) },
                 duration = ScanPlanConverter.duration(startDateTime, finishedDateTime),
                 finishTime = finishedDateTime?.format(DateTimeFormatter.ISO_DATE_TIME),
-                status = ScanPlanConverter.convertToScanStatus(status).name,
+                status = ScanPlanConverter.convertToScanStatus(status, qualityRedLine).name,
                 createdBy = createdBy,
                 createdDate = createdDate.format(DateTimeFormatter.ISO_DATE_TIME),
                 qualityRedLine = qualityRedLine

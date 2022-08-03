@@ -128,6 +128,10 @@ class ScanTaskServiceImpl(
         return subtasks(request, archiveSubScanTaskDao)
     }
 
+    override fun planArtifactSubtasks(projectId: String, planId: String): List<TPlanArtifactLatestSubScanTask> {
+        return planArtifactLatestSubScanTaskDao.findByPlanId(projectId, planId)
+    }
+
     override fun planArtifactSubtaskPage(request: SubtaskInfoRequest): Page<SubtaskInfo> {
         if (request.id == null) {
             throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID)

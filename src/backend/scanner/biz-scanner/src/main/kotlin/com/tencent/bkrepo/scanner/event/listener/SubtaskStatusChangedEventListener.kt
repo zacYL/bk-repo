@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.scanner.event.listener
 
+import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
 import com.tencent.bkrepo.common.artifact.constant.FORBID_TYPE
 import com.tencent.bkrepo.common.artifact.constant.SCAN_STATUS
@@ -37,10 +38,12 @@ import com.tencent.bkrepo.repository.pojo.metadata.ForbidType
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataSaveRequest
 import com.tencent.bkrepo.repository.pojo.metadata.packages.PackageMetadataSaveRequest
+import com.tencent.bkrepo.scanner.event.DelScanPlanEvent
 import com.tencent.bkrepo.scanner.event.SubtaskStatusChangedEvent
 import com.tencent.bkrepo.scanner.model.SubScanTaskDefinition
 import com.tencent.bkrepo.scanner.model.TPlanArtifactLatestSubScanTask
-import com.tencent.bkrepo.scanner.utils.ScanPlanConverter
+import com.tencent.bkrepo.scanner.pojo.request.ArtifactPlanRelationRequest
+import com.tencent.bkrepo.scanner.service.ScanPlanService
 import org.slf4j.LoggerFactory
 import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Async
@@ -49,7 +52,8 @@ import org.springframework.stereotype.Component
 @Component
 class SubtaskStatusChangedEventListener(
     private val metadataClient: MetadataClient,
-    private val packageMetadataClient: PackageMetadataClient
+    private val packageMetadataClient: PackageMetadataClient,
+    private val scanPlanService: ScanPlanService
 ) {
     @Async
     @EventListener(SubtaskStatusChangedEvent::class)
@@ -62,13 +66,7 @@ class SubtaskStatusChangedEventListener(
 
             // 更新扫描状态元数据
             val metadata = ArrayList<MetadataModel>(4)
-            metadata.add(
-                MetadataModel(
-                    key = SCAN_STATUS,
-                    value = ScanPlanConverter.convertToScanStatus(status).name,
-                    system = true
-                )
-            )
+            addScanStatus(this, metadata)
             // 更新质量规则元数据
             qualityRedLine?.let {
                 // 未通过质量规则，判断是否触发禁用
@@ -77,6 +75,32 @@ class SubtaskStatusChangedEventListener(
                 }
                 metadata.add(MetadataModel(key = SubScanTaskDefinition::qualityRedLine.name, value = it, system = true))
             }
+            saveMetadata(this, metadata)
+            logger.info("update project[$projectId] repo[$repoName] fullPath[$fullPath] metadata[$metadata] success")
+        }
+    }
+
+    /**
+     * 删除方案，更新与该方案有关的制品的扫描状态
+     */
+    @Async
+    @EventListener(DelScanPlanEvent::class)
+    fun listen(event: DelScanPlanEvent) {
+        logger.info("DelScanPlanEvent planArtifactSubtasks:${event.planArtifactSubtasks.toJsonString()}")
+        event.planArtifactSubtasks.forEach {
+            with(it) {
+                val metadata = ArrayList<MetadataModel>(1)
+                addScanStatus(this, metadata)
+                saveMetadata(this, metadata)
+                logger.info(
+                    "update project[$projectId] repo[$repoName] fullPath[$fullPath] metadata[$metadata] success"
+                )
+            }
+        }
+    }
+
+    fun saveMetadata(subtask: TPlanArtifactLatestSubScanTask, metadata: ArrayList<MetadataModel>) {
+        with(subtask) {
             if (repoType == RepositoryType.GENERIC.name) {
                 val request = MetadataSaveRequest(
                     projectId = projectId,
@@ -95,7 +119,31 @@ class SubtaskStatusChangedEventListener(
                 )
                 packageMetadataClient.saveMetadata(request)
             }
-            logger.info("update project[$projectId] repo[$repoName] fullPath[$fullPath] metadata[$metadata] success")
+        }
+    }
+
+    fun addScanStatus(subtask: TPlanArtifactLatestSubScanTask, metadata: ArrayList<MetadataModel>) {
+        with(subtask) {
+            logger.info("getArtifactPlanStatus $subtask")
+            //状态转换，存到元数据中
+            val artifactPlanStatus = scanPlanService.artifactPlanStatus(
+                ArtifactPlanRelationRequest(
+                    projectId = projectId,
+                    repoName = repoName,
+                    repoType = repoType,
+                    packageKey = packageKey,
+                    version = version,
+                    fullPath = fullPath
+                )
+            ) ?: return
+            logger.info("artifactPlanStatus:$artifactPlanStatus")
+            metadata.add(
+                MetadataModel(
+                    key = SCAN_STATUS,
+                    value = artifactPlanStatus,
+                    system = true
+                )
+            )
         }
     }
 

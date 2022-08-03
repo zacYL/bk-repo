@@ -25,37 +25,10 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.scanner.utils
+package com.tencent.bkrepo.scanner.event
 
-import com.tencent.bkrepo.common.api.exception.ErrorCodeException
-import com.tencent.bkrepo.common.api.message.CommonMessageCode
-import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.scanner.model.TPlanArtifactLatestSubScanTask
 
-/**
- * 参数检查
- */
-object ScanParamUtil {
-
-    fun checkParam(
-        repoType: RepositoryType,
-        packageKey: String?,
-        version: String?,
-        fullPath: String?
-    ) {
-        when (repoType) {
-            RepositoryType.GENERIC -> {
-                if (fullPath.isNullOrEmpty()) {
-                    throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "fullPath[$fullPath]")
-                }
-            }
-            else -> {
-                if (packageKey.isNullOrEmpty() || version.isNullOrEmpty()) {
-                    throw ErrorCodeException(
-                        CommonMessageCode.PARAMETER_INVALID,
-                        "packageKey[$packageKey], version[$version]"
-                    )
-                }
-            }
-        }
-    }
-}
+data class DelScanPlanEvent(
+    val planArtifactSubtasks: List<TPlanArtifactLatestSubScanTask>
+)

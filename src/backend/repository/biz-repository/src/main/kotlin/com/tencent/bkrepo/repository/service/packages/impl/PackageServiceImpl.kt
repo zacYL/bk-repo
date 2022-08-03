@@ -38,6 +38,7 @@ import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.Preconditions
 import com.tencent.bkrepo.common.artifact.api.DefaultArtifactInfo
 import com.tencent.bkrepo.common.artifact.constant.ARTIFACT_INFO_KEY
+import com.tencent.bkrepo.common.artifact.constant.SCAN_STATUS
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
@@ -439,6 +440,17 @@ class PackageServiceImpl(
         val countQuery = Query.of(query).limit(0).skip(0)
         val totalRecords = packageDao.count(countQuery)
         val packageList = packageDao.find(query, MutableMap::class.java)
+        packageList.forEach continuing@{
+            it as MutableMap<String, Any>
+            val packageId = it[ID].toString()
+            val name = it[LATEST].toString()
+            packageVersionDao.findByName(packageId, name)?.metadata?.forEach { tMetadata ->
+                if (tMetadata.key == SCAN_STATUS) {
+                    it[SCAN_STATUS] = tMetadata.value
+                    return@continuing
+                }
+            }
+        }
         val pageNumber = if (query.limit == 0) 0 else (query.skip / query.limit).toInt()
         return Page(pageNumber + 1, query.limit, totalRecords, packageList)
     }
@@ -616,6 +628,8 @@ class PackageServiceImpl(
 
         private val logger = LoggerFactory.getLogger(PackageServiceImpl::class.java)
         private const val LOWEST_ORDINAL = 0L
+        private const val ID = "_id"
+        private const val LATEST = "latest"
 
         private fun convert(tPackage: TPackage?): PackageSummary? {
             return tPackage?.let {

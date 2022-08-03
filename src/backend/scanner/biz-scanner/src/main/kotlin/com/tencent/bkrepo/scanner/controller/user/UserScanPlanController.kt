@@ -44,7 +44,6 @@ import com.tencent.bkrepo.scanner.pojo.request.CreateScanPlanRequest
 import com.tencent.bkrepo.scanner.pojo.request.PlanCountRequest
 import com.tencent.bkrepo.scanner.pojo.request.SubtaskInfoRequest
 import com.tencent.bkrepo.scanner.pojo.request.UpdateScanPlanRequest
-import com.tencent.bkrepo.scanner.pojo.response.ArtifactPlanRelation
 import com.tencent.bkrepo.scanner.pojo.response.ScanLicensePlanInfo
 import com.tencent.bkrepo.scanner.pojo.response.ScanPlanInfo
 import com.tencent.bkrepo.scanner.pojo.response.SubtaskInfo
@@ -188,7 +187,7 @@ class UserScanPlanController(
     @GetMapping("/relation/artifact")
     fun artifactPlanList(
         artifactRequest: ArtifactPlanRelationRequest
-    ): Response<List<ArtifactPlanRelation>> {
+    ): Response<Map<String, Any?>> {
         return ResponseBuilder.success(scanPlanService.artifactPlanList(artifactRequest))
     }
 

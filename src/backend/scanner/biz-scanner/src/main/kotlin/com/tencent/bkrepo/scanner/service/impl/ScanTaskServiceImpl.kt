@@ -139,8 +139,8 @@ class ScanTaskServiceImpl(
         return subtasks(request, planArtifactLatestSubScanTaskDao)
     }
 
-    override fun exportScanPlanRecords(request: SubtaskInfoRequest): Map<String, Any> {
-        val exportResultMap = mutableMapOf<String, Any>()
+    override fun exportScanPlanRecords(request: SubtaskInfoRequest) {
+        logger.info("exportScanPlanRecords request:${request.toJsonString()}")
         with(request) {
             if (id == null) {
                 throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID)
@@ -149,22 +149,29 @@ class ScanTaskServiceImpl(
             val scanPlan = scanPlanDao.find(projectId, id!!)
                 ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID)
 
+            val isLicenseScan = scanPlan.type.endsWith("_LICENSE")
             // 获取任务信息
-            // TODO 许可已实现，需要添加漏洞实现
             var pageNumber = 1
             var page = planArtifactLatestSubScanTaskDao.pageBy(request)
-            val dataList = mutableListOf<LicenseScanPlanExport>()
+            val dataList = mutableListOf<Any>()
             while (page.records.isNotEmpty()) {
                 page.records.forEach {
-                    dataList.add(ScanLicenseConverter.convert(it))
+                    if (isLicenseScan) {
+                        dataList.add(ScanLicenseConverter.convert(it))
+                    } else {
+                        dataList.add(Converter.convertToPlanExport(it))
+                    }
                 }
-                pageNumber++
-                request.pageNumber = pageNumber
+                request.pageNumber = ++pageNumber
                 page = planArtifactLatestSubScanTaskDao.pageBy(request)
             }
-            exportResultMap["data"] = dataList
+
+            if (isLicenseScan) {
+                EasyExcelUtils.download(dataList, scanPlan.name, LicenseScanPlanExport::class.java)
+            } else {
+                EasyExcelUtils.download(dataList, scanPlan.name, LeakScanPlanExport::class.java)
+            }
         }
-        return exportResultMap
     }
 
     override fun planArtifactSubtaskOverview(subtaskId: String): SubtaskResultOverview {

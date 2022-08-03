@@ -89,7 +89,7 @@ interface ScanTaskService {
     /**
      * 导出扫描方案记录
      */
-    fun exportScanPlanRecords(request: SubtaskInfoRequest): Map<String, Any>
+    fun exportScanPlanRecords(request: SubtaskInfoRequest)
 
     /**
      * 获取属于某个扫描方案的扫描子任务结果预览

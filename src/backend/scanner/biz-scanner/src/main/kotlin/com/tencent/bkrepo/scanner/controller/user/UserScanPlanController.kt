@@ -34,11 +34,12 @@ import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_SIZE
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.query.model.PageLimit
+import com.tencent.bkrepo.common.scanner.pojo.scanner.SubScanTaskStatus
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.scanner.component.ScannerPermissionCheckHandler
-import com.tencent.bkrepo.scanner.model.LicenseScanPlanExport
 import com.tencent.bkrepo.scanner.pojo.ScanPlan
+import com.tencent.bkrepo.scanner.pojo.ScanStatus
 import com.tencent.bkrepo.scanner.pojo.request.ArtifactPlanRelationRequest
 import com.tencent.bkrepo.scanner.pojo.request.CreateScanPlanRequest
 import com.tencent.bkrepo.scanner.pojo.request.PlanCountRequest
@@ -49,7 +50,6 @@ import com.tencent.bkrepo.scanner.pojo.response.ScanPlanInfo
 import com.tencent.bkrepo.scanner.pojo.response.SubtaskInfo
 import com.tencent.bkrepo.scanner.service.ScanPlanService
 import com.tencent.bkrepo.scanner.service.ScanTaskService
-import com.tencent.bkrepo.scanner.utils.EasyExcelUtils
 import com.tencent.bkrepo.scanner.utils.ScanPlanConverter
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
@@ -174,13 +174,22 @@ class UserScanPlanController(
     @ApiOperation("扫描方案数据导出")
     @GetMapping("/export")
     fun planScanRecordExport(subtaskInfoRequest: SubtaskInfoRequest) {
-        permissionCheckHandler.checkProjectPermission(subtaskInfoRequest.projectId, PermissionAction.MANAGE)
-        val export = scanTaskService.exportScanPlanRecords(subtaskInfoRequest)
-        EasyExcelUtils.download(
-            export["data"] as Collection<*>,
-            export["name"] as String,
-            LicenseScanPlanExport::class.java
-        )
+        with(subtaskInfoRequest) {
+            permissionCheckHandler.checkProjectPermission(projectId, PermissionAction.MANAGE)
+            scanStatus?.let {
+                subScanTaskStatus = listOf(SubScanTaskStatus.SUCCESS.name)
+                qualityRedLine = when (it) {
+                    ScanStatus.QUALITY_PASS.name -> true
+                    ScanStatus.QUALITY_UNPASS.name -> false
+                    ScanStatus.UN_QUALITY.name -> {
+                        unQuality = true
+                        null
+                    }
+                    else -> null
+                }
+            }
+        }
+        scanTaskService.exportScanPlanRecords(subtaskInfoRequest)
     }
 
     @ApiOperation("文件/包关联的扫描方案列表")

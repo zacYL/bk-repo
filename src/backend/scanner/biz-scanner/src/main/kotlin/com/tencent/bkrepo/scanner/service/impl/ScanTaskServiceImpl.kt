@@ -337,12 +337,10 @@ class ScanTaskServiceImpl(
                 )
             )
         }
-        logger.info("resultList size:[${resultList.size}]")
         val resultListConvert = mutableListOf<LicenseScanDetailExport>()
         resultList.forEach {
             resultListConvert.add(ScanLicenseConverter.convert(it))
         }
-        logger.info("resultListConvert:[${resultListConvert.toJsonString()}]")
         EasyExcelUtils.download(resultListConvert, subtask.artifactName, LicenseScanDetailExport::class.java)
     }
 

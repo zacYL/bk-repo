@@ -27,6 +27,7 @@
             height="240px"
             :outer-border="false"
             :row-border="false"
+            :virtual-render="selectedFiles.length > 3000"
             size="small">
             <bk-table-column :label="$t('fileName')" prop="name" show-overflow-tooltip></bk-table-column>
             <bk-table-column :label="$t('size')" width="90" show-overflow-tooltip>
@@ -71,8 +72,11 @@
                 const files = [...this.$refs.uploadInput.files]
                 if (!files.length) return
                 files.forEach(file => {
-                    !this.selectedFiles.find(f => f.name === file.name)
-                        && (this.selectedFiles.push(file))
+                    !this.selectedFiles.find(f => {
+                        return this.rootData.folder
+                            ? f.webkitRelativePath === file.webkitRelativePath
+                            : f.name === file.name
+                    }) && (this.selectedFiles.push(file))
                 })
                 this.show = true
             },

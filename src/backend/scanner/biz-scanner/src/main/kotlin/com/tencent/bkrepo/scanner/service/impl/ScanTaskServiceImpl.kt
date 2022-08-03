@@ -27,12 +27,12 @@
 
 package com.tencent.bkrepo.scanner.service.impl
 
+import com.google.common.util.concurrent.UncheckedExecutionException
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.exception.NotFoundException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Page
-import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.query.model.PageLimit
@@ -219,8 +219,8 @@ class ScanTaskServiceImpl(
             ?: throw NotFoundException(CommonMessageCode.RESOURCE_NOT_FOUND, subtaskId)
         try {
             permissionCheckHandler.checkSubtaskPermission(subtask, PermissionAction.READ)
-        } catch (e: RepoNotFoundException) {
-            logger.info("Failed to checkSubtaskPermission: ", e)
+        } catch (e: UncheckedExecutionException) {
+            logger.error("Failed to checkSubtaskPermission $e")
             permissionCheckHandler.checkProjectPermission(subtask.projectId, PermissionAction.MANAGE)
         }
         return Converter.convert(subtask)
@@ -251,8 +251,8 @@ class ScanTaskServiceImpl(
 
             try {
                 permissionCheckHandler.checkSubtaskPermission(subtask, PermissionAction.READ)
-            } catch (e: RepoNotFoundException) {
-                logger.info("Failed to checkSubtaskPermission: ", e)
+            } catch (e: UncheckedExecutionException) {
+                logger.error("Failed to checkSubtaskPermission $e")
                 permissionCheckHandler.checkProjectPermission(subtask.projectId, PermissionAction.MANAGE)
             }
 
@@ -321,8 +321,8 @@ class ScanTaskServiceImpl(
                 ?: throw ErrorCodeException(CommonMessageCode.RESOURCE_NOT_FOUND, subScanTaskId!!)
             try {
                 permissionCheckHandler.checkSubtaskPermission(subtask, PermissionAction.READ)
-            } catch (e: RepoNotFoundException) {
-                logger.info("Failed to checkSubtaskPermission: ", e)
+            } catch (e: UncheckedExecutionException) {
+                logger.error("Failed to checkSubtaskPermission $e")
                 permissionCheckHandler.checkProjectPermission(subtask.projectId, PermissionAction.MANAGE)
             }
             val scanner = scannerService.get(subtask.scanner)
@@ -346,8 +346,8 @@ class ScanTaskServiceImpl(
             ?: throw NotFoundException(CommonMessageCode.RESOURCE_NOT_FOUND, subScanTaskId)
         try {
             permissionCheckHandler.checkSubtaskPermission(subtask, PermissionAction.READ)
-        } catch (e: RepoNotFoundException) {
-            logger.info("Failed to checkSubtaskPermission: ", e)
+        } catch (e: UncheckedExecutionException) {
+            logger.error("Failed to checkSubtaskPermission $e")
             permissionCheckHandler.checkProjectPermission(subtask.projectId, PermissionAction.MANAGE)
         }
         return ScanLicenseConverter.convert(subtask)

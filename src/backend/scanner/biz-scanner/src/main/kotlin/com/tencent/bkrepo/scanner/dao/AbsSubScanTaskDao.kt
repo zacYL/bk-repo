@@ -59,7 +59,7 @@ abstract class AbsSubScanTaskDao<E : SubScanTaskDefinition> : ScannerSimpleMongo
         with(request) {
             val criteria = Criteria.where(SubScanTaskDefinition::projectId.name).isEqualTo(projectId)
             parentScanTaskId?.let { criteria.and(SubScanTaskDefinition::parentScanTaskId.name).isEqualTo(it) }
-            planId?.let { criteria.and(SubScanTaskDefinition::planId.name).isEqualTo(planId) }
+            id?.let { criteria.and(SubScanTaskDefinition::planId.name).isEqualTo(id) }
             name?.let {
                 criteria.and(SubScanTaskDefinition::artifactName.name).regex(".*$name.*")
             }

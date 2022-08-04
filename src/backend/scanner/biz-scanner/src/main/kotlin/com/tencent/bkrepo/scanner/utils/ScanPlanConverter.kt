@@ -159,7 +159,7 @@ object ScanPlanConverter {
             val medium = Converter.getCveCount(scannerType, Level.MEDIUM.levelName, overview)
             val low = Converter.getCveCount(scannerType, Level.LOW.levelName, overview)
             val status = latestScanTask?.let {
-                convertToScanStatus(it.status,  isPlan = true).name
+                convertToScanStatus(it.status, isPlan = true).name
             } ?: ScanStatus.INIT.name
 
             return ScanPlanInfo(
@@ -191,13 +191,24 @@ object ScanPlanConverter {
     }
 
     fun convert(request: SubtaskInfoRequest): SubtaskInfoRequest {
-        request.highestLeakLevel = request.highestLeakLevel?.let { normalizedLevel(it) }
-        request.startDateTime = request.startTime?.let { LocalDateTime.ofInstant(it, ZoneOffset.systemDefault()) }
-        request.endDateTime = request.endTime?.let { LocalDateTime.ofInstant(it, ZoneOffset.systemDefault()) }
-        if (!request.status.isNullOrEmpty()) {
-            request.subScanTaskStatus = convertToSubScanTaskStatus(ScanStatus.valueOf(request.status!!)).map { it.name }
+        with(request) {
+            highestLeakLevel = highestLeakLevel?.let { normalizedLevel(it) }
+            startDateTime = startTime?.let { LocalDateTime.ofInstant(it, ZoneOffset.systemDefault()) }
+            endDateTime = endTime?.let { LocalDateTime.ofInstant(it, ZoneOffset.systemDefault()) }
+            if (!status.isNullOrEmpty()) {
+                subScanTaskStatus = convertToSubScanTaskStatus(ScanStatus.valueOf(status!!)).map { it.name }
+                qualityRedLine = when (status) {
+                    ScanStatus.QUALITY_PASS.name -> true
+                    ScanStatus.QUALITY_UNPASS.name -> false
+                    ScanStatus.UN_QUALITY.name -> {
+                        unQuality = true
+                        null
+                    }
+                    else -> null
+                }
+            }
+            return request
         }
-        return request
     }
 
     fun duration(startDateTime: LocalDateTime?, finishedDateTime: LocalDateTime?): Long {

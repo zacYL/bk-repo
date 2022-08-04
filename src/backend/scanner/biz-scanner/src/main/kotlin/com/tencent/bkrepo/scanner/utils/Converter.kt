@@ -200,7 +200,8 @@ object Converter {
                 finishTime = finishedDateTime?.format(DateTimeFormatter.ISO_DATE_TIME),
                 qualityRedLine = qualityRedLine,
                 scanQuality = scanQuality,
-                duration = ScanPlanConverter.duration(startDateTime, finishedDateTime)
+                duration = ScanPlanConverter.duration(startDateTime, finishedDateTime),
+                scanStatus = ScanPlanConverter.convertToScanStatus(status, qualityRedLine).name
             )
         }
     }

@@ -31,7 +31,7 @@ object ScanLicenseConverter {
     fun convert(licensesResultDetail: FileLicensesResultDetail): LicenseScanDetailExport {
         with(licensesResultDetail) {
             return LicenseScanDetailExport(
-                fullName = fullName,
+                fullName = if(fullName.isEmpty()) licenseId else fullName,
                 dependentPath = dependentPath,
                 osi = isOsiApproved?.let { if (it) "已认证" else "未认证" } ?: "/",
                 fsf = isFsfLibre?.let { if (it) "已开源" else "未开源" } ?: "/",

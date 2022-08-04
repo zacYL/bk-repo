@@ -146,7 +146,7 @@ object Converter {
                 high = high,
                 medium = medium,
                 low = low,
-                finishTime = finishTime ?: "/",
+                finishTime = finishTime?.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) ?: "/",
                 duration = duration / 1000
             )
         }

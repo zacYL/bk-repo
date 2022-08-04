@@ -9,6 +9,7 @@ import com.tencent.bkrepo.scanner.message.ScannerMessageCode
 import org.slf4j.LoggerFactory
 import java.net.URLEncoder
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 object EasyExcelUtils {
     private val logger = LoggerFactory.getLogger(EasyExcelUtils::class.java)
@@ -17,14 +18,14 @@ object EasyExcelUtils {
         val response = HttpContextHolder.getResponse()
         response.contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         response.characterEncoding = "utf-8"
-        val date = LocalDateTime.now()
+        val date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss"))
         val fileName = URLEncoder.encode("$name-repo-$date", "UTF-8")
         response.setHeader(
             "Content-disposition",
             "attachment;filename*=utf-8''$fileName.xlsx"
         )
         try {
-            EasyExcel.write(response.outputStream, dataClass).sheet(fileName).doWrite(data)
+            EasyExcel.write(response.outputStream, dataClass).sheet(name).doWrite(data)
         } catch (e: Exception) {
             // 重置response
             response.reset()

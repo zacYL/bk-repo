@@ -53,7 +53,7 @@ object ScanLicenseConverter {
                 unRecommend = getLicenseCount(LicenseNature.UN_RECOMMEND.natureName, subScanTask),
                 unknown = getLicenseCount(LicenseNature.UNKNOWN.natureName, subScanTask),
                 unCompliance = getLicenseCount(LicenseNature.UN_COMPLIANCE.natureName, subScanTask),
-                finishTime = finishedDateTime?.format(DateTimeFormatter.ISO_DATE_TIME) ?: "/",
+                finishTime = finishedDateTime?.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) ?: "/",
                 duration = ScanPlanConverter.duration(startDateTime, finishedDateTime) / 1000
             )
         }

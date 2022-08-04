@@ -168,7 +168,7 @@
                 const wait = this.fileList.find(f => f.status === 'INIT')
                 if (this.upLoadTaskQueue.length > 3 || !wait) return
                 this.$set(wait, 'status', 'UPLOADING')
-                const { xhr, projectId, repoName, fullPath, file, overwrite, status } = wait
+                const { xhr, projectId, repoName, fullPath, file, overwrite } = wait
                 this.uploadArtifactory({
                     xhr,
                     projectId,
@@ -189,7 +189,7 @@
                     this.$set(wait, 'status', 'SUCCESS')
                     window.repositoryVue.$emit('upload-refresh', fullPath)
                 }).catch(e => {
-                    if (status === 'CANCEL') return
+                    if (wait.status === 'CANCEL') return
                     e && this.$set(wait, 'errMsg', e.message || e)
                     this.$set(wait, 'status', 'FAILED')
                 }).finally(() => {

@@ -63,8 +63,6 @@ data class SubtaskInfoRequest(
     @Deprecated("仅用于兼容旧接口", ReplaceWith("subScanTaskStatus"))
     val status: String? = null,
     @ApiModelProperty("制品扫描状态")
-    var scanStatus: String? = null,
-    @ApiModelProperty("制品扫描状态")
     var subScanTaskStatus: List<String>? = null,
     @ApiModelProperty("制品扫描任务创建时间(开始)")
     val startTime: Instant? = null,

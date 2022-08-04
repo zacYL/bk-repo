@@ -174,21 +174,7 @@ class UserScanPlanController(
     @ApiOperation("扫描方案数据导出")
     @GetMapping("/export")
     fun planScanRecordExport(subtaskInfoRequest: SubtaskInfoRequest) {
-        with(subtaskInfoRequest) {
-            permissionCheckHandler.checkProjectPermission(projectId, PermissionAction.MANAGE)
-            scanStatus?.let {
-                subScanTaskStatus = listOf(SubScanTaskStatus.SUCCESS.name)
-                qualityRedLine = when (it) {
-                    ScanStatus.QUALITY_PASS.name -> true
-                    ScanStatus.QUALITY_UNPASS.name -> false
-                    ScanStatus.UN_QUALITY.name -> {
-                        unQuality = true
-                        null
-                    }
-                    else -> null
-                }
-            }
-        }
+        permissionCheckHandler.checkProjectPermission(subtaskInfoRequest.projectId, PermissionAction.MANAGE)
         scanTaskService.exportScanPlanRecords(ScanPlanConverter.convert(subtaskInfoRequest))
     }
 

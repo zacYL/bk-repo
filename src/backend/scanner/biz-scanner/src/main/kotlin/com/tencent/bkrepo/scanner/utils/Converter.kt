@@ -46,6 +46,7 @@ import com.tencent.bkrepo.scanner.pojo.SubScanTask
 import com.tencent.bkrepo.scanner.pojo.response.ArtifactVulnerabilityInfo
 import com.tencent.bkrepo.scanner.pojo.response.SubtaskInfo
 import com.tencent.bkrepo.scanner.pojo.response.SubtaskResultOverview
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 object Converter {
@@ -146,13 +147,15 @@ object Converter {
                 high = high,
                 medium = medium,
                 low = low,
-                finishTime = finishTime?.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) ?: "/",
+                finishTime = finishTime?.let {
+                    LocalDateTime.parse(it).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+                } ?: "/",
                 duration = duration / 1000
             )
         }
     }
 
-    fun convertToLeakLevel(level: String): String  = when (level) {
+    fun convertToLeakLevel(level: String): String = when (level) {
         Level.CRITICAL.name -> LeakType.CRITICAL.value
         Level.HIGH.name -> LeakType.HIGH.value
         Level.MEDIUM.name -> LeakType.MEDIUM.value

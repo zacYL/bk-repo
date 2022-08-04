@@ -242,13 +242,10 @@ class ScanTaskServiceImpl(
                     )
                 )
             }
-            logger.info("resultList size:[${resultList.size}]")
             val dataList = mutableListOf<LeakDetailExport>()
             resultList.forEach {
                 dataList.add(Converter.convertToDetailExport(it))
             }
-            logger.info("export dataList:[${dataList.toJsonString()}]")
-            if (dataList.isEmpty()) return
             EasyExcelUtils.download(dataList, subtask.artifactName, LeakDetailExport::class.java)
         }
     }

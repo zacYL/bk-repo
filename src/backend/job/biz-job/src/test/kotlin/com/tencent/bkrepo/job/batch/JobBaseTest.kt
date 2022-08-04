@@ -25,33 +25,47 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.job.service
+package com.tencent.bkrepo.job.batch
 
-import com.tencent.bkrepo.job.batch.base.BatchJob
-import com.tencent.bkrepo.job.pojo.JobDetail
-import org.springframework.stereotype.Service
+import com.tencent.bkrepo.common.job.JobAutoConfiguration
+import com.tencent.bkrepo.helm.api.HelmClient
+import com.tencent.bkrepo.job.config.JobConfig
+import com.tencent.bkrepo.replication.api.ArtifactPushClient
+import com.tencent.bkrepo.repository.api.FileReferenceClient
+import com.tencent.bkrepo.repository.api.NodeClient
+import org.springframework.boot.autoconfigure.task.TaskExecutionAutoConfiguration
+import org.springframework.boot.autoconfigure.task.TaskSchedulingAutoConfiguration
+import org.springframework.boot.test.mock.mockito.MockBean
+import org.springframework.context.annotation.ComponentScan
+import org.springframework.context.annotation.Import
+import org.springframework.test.context.TestPropertySource
 
-@Service
-class JobService(val jobs: List<BatchJob<*>>) {
-    fun detail() :List<JobDetail>{
-        val jobDetails = mutableListOf<JobDetail>()
-        jobs.forEach {
-            with(it.batchJobProperties) {
-                val jobDetail = JobDetail(
-                    name = it.getJobName(),
-                    enabled = enabled,
-                    cron = cron,
-                    fixedDelay = fixedDelay,
-                    fixedRate = fixedRate,
-                    initialDelay = initialDelay,
-                    running = it.isRunning(),
-                    lastBeginTime = it.lastBeginTime,
-                    lastEndTime = it.lastEndTime,
-                    lastExecuteTime = it.lastExecuteTime
-                )
-                jobDetails.add(jobDetail)
-            }
-        }
-        return jobDetails
-    }
+@Import(
+    JobAutoConfiguration::class,
+    TaskExecutionAutoConfiguration::class,
+    JobConfig::class,
+    TaskSchedulingAutoConfiguration::class
+)
+@TestPropertySource(
+    locations = [
+        "classpath:bootstrap-ut.properties",
+        "classpath:bootstrap.properties",
+        "classpath:job-ut.properties"
+    ]
+)
+@ComponentScan(basePackages = ["com.tencent.bkrepo.job"])
+@SpringBootConfiguration
+@EnableAutoConfiguration
+open class JobBaseTest {
+    @MockBean
+    lateinit var fileReferenceClient: FileReferenceClient
+
+    @MockBean
+    lateinit var helmClient: HelmClient
+
+    @MockBean
+    lateinit var nodeClient: NodeClient
+
+    @MockBean
+    lateinit var artifactPushClient: ArtifactPushClient
 }

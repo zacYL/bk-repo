@@ -40,9 +40,9 @@
                         <operation-list
                             v-if="item.roadMap === selectedTreeNode.roadMap"
                             :list="[
-                                item.roadMap !== '0' && { clickEvent: () => showDetail(item), label: $t('detail') },
-                                permission.write && repoName !== 'pipeline' && { clickEvent: () => addFolder(item), label: '新建文件夹' },
-                                permission.write && repoName !== 'pipeline' && { clickEvent: () => handlerUpload(item), label: '上传文件' }
+                                permission.write && repoName !== 'pipeline' && { clickEvent: () => handlerUpload(item), label: '上传文件' },
+                                permission.write && repoName !== 'pipeline' && { clickEvent: () => handlerUpload(item, true), label: '上传文件夹' },
+                                permission.write && repoName !== 'pipeline' && { clickEvent: () => addFolder(item), label: '新建文件夹' }
                             ]">
                         </operation-list>
                     </template>
@@ -69,6 +69,11 @@
                     <div class="repo-generic-actions bk-button-group">
                         <bk-button
                             v-if="multiSelect.length"
+                            @click="handlerMultiDownload()">
+                            批量下载
+                        </bk-button>
+                        <bk-button class="ml10"
+                            v-if="multiSelect.length"
                             @click="handlerMultiDelete()">
                             批量删除
                         </bk-button>
@@ -92,8 +97,8 @@
                     <bk-table-column type="selection" width="60"></bk-table-column>
                     <bk-table-column :label="$t('fileName')" prop="name" show-overflow-tooltip :render-header="renderHeader">
                         <template #default="{ row }">
-                            <scan-tag class="mr5"
-                                v-if="!row.folder && /\.(ipa)|(apk)|(jar)$/.test(row.name)"
+                            <scan-tag class="mr5 table-svg"
+                                v-if="!row.folder && genericScanFileTypes.includes(row.name.replace(/^.+\.([^.]+)$/, '$1'))"
                                 :status="row.metadata.scanStatus"
                                 repo-type="generic"
                                 :full-path="row.fullPath">
@@ -102,8 +107,8 @@
                                 v-if="!row.folder && row.metadata.forbidStatus"
                                 v-bind="row.metadata">
                             </forbid-tag>
-                            <Icon class="table-svg" size="16" :name="row.folder ? 'folder' : getIconName(row.name)" />
-                            <span class="ml10">{{row.name}}</span>
+                            <Icon class="table-svg mr5" size="16" :name="row.folder ? 'folder' : getIconName(row.name)" />
+                            <span>{{row.name}}</span>
                         </template>
                     </bk-table-column>
                     <bk-table-column v-if="searchFileName" :label="$t('path')" prop="fullPath" show-overflow-tooltip></bk-table-column>
@@ -140,7 +145,8 @@
                                         ] : []),
                                         ...(!row.folder ? [
                                             { clickEvent: () => handlerShare(row), label: $t('share') },
-                                            /\.(ipa)|(apk)|(jar)$/.test(row.name) && { clickEvent: () => handlerScan(row), label: '安全扫描' }
+                                            genericScanFileTypes.includes(row.name.replace(/^.+\.([^.]+)$/, '$1'))
+                                                && { clickEvent: () => handlerScan(row), label: '安全扫描' }
                                         ] : [])
                                     ] : []),
                                     !row.folder && { clickEvent: () => handlerForbid(row), label: row.metadata.forbidStatus ? '解除禁止' : '禁止使用' },
@@ -168,7 +174,6 @@
         <generic-form-dialog ref="genericFormDialog" @refresh="refreshNodeChange"></generic-form-dialog>
         <generic-share-dialog ref="genericShareDialog"></generic-share-dialog>
         <generic-tree-dialog ref="genericTreeDialog" @update="updateGenericTreeNode" @refresh="refreshNodeChange"></generic-tree-dialog>
-        <generic-upload-dialog ref="genericUploadDialog" @update="getArtifactories"></generic-upload-dialog>
     </div>
 </template>
 <script>
@@ -179,12 +184,11 @@
     import ScanTag from '@repository/views/repoScan/scanTag'
     import forbidTag from '@repository/components/ForbidTag'
     import genericDetail from '@repository/views/repoGeneric/genericDetail'
-    import genericUploadDialog from '@repository/views/repoGeneric/genericUploadDialog'
     import genericFormDialog from '@repository/views/repoGeneric/genericFormDialog'
     import genericShareDialog from '@repository/views/repoGeneric/genericShareDialog'
     import genericTreeDialog from '@repository/views/repoGeneric/genericTreeDialog'
-    import { convertFileSize, formatDate } from '@repository/utils'
-    import { getIconName } from '@repository/store/publicEnum'
+    import { convertFileSize, formatDate, debounce } from '@repository/utils'
+    import { getIconName, genericScanFileTypes } from '@repository/store/publicEnum'
     import { mapState, mapMutations, mapActions } from 'vuex'
     export default {
         name: 'repoGeneric',
@@ -196,7 +200,6 @@
             RepoTree,
             ScanTag,
             genericDetail,
-            genericUploadDialog,
             genericFormDialog,
             genericShareDialog,
             genericTreeDialog
@@ -204,6 +207,7 @@
         data () {
             return {
                 MODE_CONFIG,
+                genericScanFileTypes,
                 sideBarWidth: 300,
                 moveBarWidth: 10,
                 isLoading: false,
@@ -260,6 +264,17 @@
                 return this.$route.query.fileName
             }
         },
+        watch: {
+            projectId () {
+                this.getRepoListAll({ projectId: this.projectId })
+            },
+            repoName () {
+                this.initTree()
+            },
+            '$route.query.path' () {
+                this.pathChange()
+            }
+        },
         beforeRouteEnter (to, from, next) {
             // 前端隐藏report仓库/log仓库
             if (MODE_CONFIG === 'ci' && (to.query.repoName === 'report' || to.query.repoName === 'log')) {
@@ -273,7 +288,16 @@
         },
         created () {
             this.getRepoListAll({ projectId: this.projectId })
-            this.initPage()
+            this.initTree()
+            this.pathChange()
+            window.repositoryVue.$on('upload-refresh', debounce((path) => {
+                if (path.replace(/\/[^/]+$/, '').includes(this.selectedTreeNode.fullPath)) {
+                    this.itemClickHandler(this.selectedTreeNode)
+                }
+            }))
+        },
+        beforeDestroy () {
+            window.repositoryVue.$off('upload-refresh')
         },
         methods: {
             convertFileSize,
@@ -286,6 +310,7 @@
                 'getArtifactoryList',
                 'deleteArtifactory',
                 'deleteMultiArtifactory',
+                'downloadMultiArtifactory',
                 'getFolderSize',
                 'getFileNumOfFolder',
                 'getMultiFileNumOfFolder',
@@ -315,7 +340,7 @@
                     })
                 ])
             },
-            initPage () {
+            initTree () {
                 this.INIT_TREE([{
                     name: this.replaceRepoName(this.repoName),
                     displayName: this.replaceRepoName(this.repoName),
@@ -324,7 +349,8 @@
                     children: [],
                     roadMap: '0'
                 }])
-
+            },
+            pathChange () {
                 const paths = (this.$route.query.path || '').split('/').filter(Boolean)
                 paths.pop() // 定位到文件/文件夹的上级目录
                 paths.reduce(async (chain, path) => {
@@ -414,12 +440,15 @@
                 this.updateGenericTreeNode(node)
 
                 // 更新url参数
-                this.$router.replace({
-                    query: {
-                        ...this.$route.query,
-                        path: `${node.fullPath}/default`
-                    }
-                })
+                const { path = '' } = this.$route.query
+                if (path.replace(/\/[^/]+$/, '') !== node.fullPath) {
+                    this.$router.replace({
+                        query: {
+                            ...this.$route.query,
+                            path: `${node.fullPath}/default`
+                        }
+                    })
+                }
             },
             iconClickHandler (node) {
                 // 更新已展开文件夹数据
@@ -564,15 +593,25 @@
                     path: fullPath
                 })
             },
-            handlerUpload ({ fullPath }) {
-                this.$refs.genericUploadDialog.setData({
-                    show: true,
-                    title: `${this.$t('upload')} (${fullPath || '/'})`,
-                    fullPath: fullPath
+            handlerUpload ({ fullPath }, folder = false) {
+                this.$globalUploadFiles({
+                    projectId: this.projectId,
+                    repoName: this.repoName,
+                    folder,
+                    fullPath
                 })
             },
             handlerDownload ({ fullPath }) {
                 const url = `/generic/${this.projectId}/${this.repoName}/${fullPath}?download=true`
+                this.download(url)
+            },
+            handlerMultiDownload () {
+                const commonPath = this.selectedTreeNode.fullPath
+                const ids = this.multiSelect.map(r => r.id)
+                const url = `/generic/multi/${this.projectId}/${this.repoName}/${encodeURIComponent(commonPath)}?ids=<${ids.join(':')}>`
+                this.download(url)
+            },
+            download (url) {
                 this.$ajax.head(url).then(() => {
                     window.open(
                         '/web' + url,

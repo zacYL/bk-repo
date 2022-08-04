@@ -25,37 +25,23 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.scanner.utils
+package com.tencent.bkrepo.scanner.pojo.request
 
-import com.tencent.bkrepo.common.api.exception.ErrorCodeException
-import com.tencent.bkrepo.common.api.message.CommonMessageCode
-import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import io.swagger.annotations.ApiModel
+import io.swagger.annotations.ApiModelProperty
 
-/**
- * 参数检查
- */
-object ScanParamUtil {
-
-    fun checkParam(
-        repoType: RepositoryType,
-        packageKey: String?,
-        version: String?,
-        fullPath: String?
-    ) {
-        when (repoType) {
-            RepositoryType.GENERIC -> {
-                if (fullPath.isNullOrEmpty()) {
-                    throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "fullPath[$fullPath]")
-                }
-            }
-            else -> {
-                if (packageKey.isNullOrEmpty() || version.isNullOrEmpty()) {
-                    throw ErrorCodeException(
-                        CommonMessageCode.PARAMETER_INVALID,
-                        "packageKey[$packageKey], version[$version]"
-                    )
-                }
-            }
-        }
-    }
-}
+@ApiModel("获取扫描任务")
+data class SubScanTaskQuery(
+    @ApiModelProperty("任务所属项目")
+    val projectId: String,
+    @ApiModelProperty("仓库名")
+    val repoName: String,
+    @ApiModelProperty("仓库类型")
+    val repoType: String,
+    @ApiModelProperty("packageKey")
+    val packageKey: String? = null,
+    @ApiModelProperty("version")
+    val version: String? = null,
+    @ApiModelProperty("fullPath")
+    val fullPath: String? = null
+)

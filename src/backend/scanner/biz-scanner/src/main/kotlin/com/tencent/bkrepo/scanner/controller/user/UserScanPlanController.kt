@@ -34,23 +34,22 @@ import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_SIZE
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.query.model.PageLimit
+import com.tencent.bkrepo.common.scanner.pojo.scanner.SubScanTaskStatus
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.scanner.component.ScannerPermissionCheckHandler
-import com.tencent.bkrepo.scanner.model.LicenseScanPlanExport
 import com.tencent.bkrepo.scanner.pojo.ScanPlan
+import com.tencent.bkrepo.scanner.pojo.ScanStatus
 import com.tencent.bkrepo.scanner.pojo.request.ArtifactPlanRelationRequest
 import com.tencent.bkrepo.scanner.pojo.request.CreateScanPlanRequest
 import com.tencent.bkrepo.scanner.pojo.request.PlanCountRequest
 import com.tencent.bkrepo.scanner.pojo.request.SubtaskInfoRequest
 import com.tencent.bkrepo.scanner.pojo.request.UpdateScanPlanRequest
-import com.tencent.bkrepo.scanner.pojo.response.ArtifactPlanRelation
 import com.tencent.bkrepo.scanner.pojo.response.ScanLicensePlanInfo
 import com.tencent.bkrepo.scanner.pojo.response.ScanPlanInfo
 import com.tencent.bkrepo.scanner.pojo.response.SubtaskInfo
 import com.tencent.bkrepo.scanner.service.ScanPlanService
 import com.tencent.bkrepo.scanner.service.ScanTaskService
-import com.tencent.bkrepo.scanner.utils.EasyExcelUtils
 import com.tencent.bkrepo.scanner.utils.ScanPlanConverter
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
@@ -176,19 +175,14 @@ class UserScanPlanController(
     @GetMapping("/export")
     fun planScanRecordExport(subtaskInfoRequest: SubtaskInfoRequest) {
         permissionCheckHandler.checkProjectPermission(subtaskInfoRequest.projectId, PermissionAction.MANAGE)
-        val export = scanTaskService.exportScanPlanRecords(subtaskInfoRequest)
-        EasyExcelUtils.download(
-            export["data"] as Collection<*>,
-            export["name"] as String,
-            LicenseScanPlanExport::class.java
-        )
+        scanTaskService.exportScanPlanRecords(ScanPlanConverter.convert(subtaskInfoRequest))
     }
 
     @ApiOperation("文件/包关联的扫描方案列表")
     @GetMapping("/relation/artifact")
     fun artifactPlanList(
         artifactRequest: ArtifactPlanRelationRequest
-    ): Response<List<ArtifactPlanRelation>> {
+    ): Response<Map<String, Any?>> {
         return ResponseBuilder.success(scanPlanService.artifactPlanList(artifactRequest))
     }
 

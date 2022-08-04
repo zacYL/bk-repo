@@ -39,7 +39,7 @@
             :count="pagination.count"
             :limit-list="pagination.limitList">
         </bk-pagination>
-        <generic-upload-dialog ref="genericUploadDialog" height-num="375" @update="getDataListHandler">
+        <upload-dialog ref="uploadDialog" height-num="375" @update="getDataListHandler">
             <bk-form class="mb20" :label-width="90">
                 <bk-form-item label="关联扫描器">
                     <bk-select
@@ -51,16 +51,16 @@
                     </bk-select>
                 </bk-form-item>
             </bk-form>
-        </generic-upload-dialog>
+        </upload-dialog>
     </div>
 </template>
 <script>
-    import genericUploadDialog from '@repository/views/repoGeneric/genericUploadDialog'
+    import uploadDialog from '@repository/views/repoScan/securityConfig/uploadDialog'
     import { mapActions } from 'vuex'
     import { formatDate } from '@repository/utils'
     export default {
         name: 'user',
-        components: { genericUploadDialog },
+        components: { uploadDialog },
         data () {
             return {
                 isLoading: false,
@@ -78,7 +78,7 @@
         },
         watch: {
             scannerType (val) {
-                this.$refs.genericUploadDialog.setData({
+                this.$refs.uploadDialog.setData({
                     fullPath: `/${val}`
                 }, true)
             }
@@ -132,7 +132,7 @@
                 })
             },
             upload () {
-                this.$refs.genericUploadDialog.setData({
+                this.$refs.uploadDialog.setData({
                     projectId: 'public-global',
                     repoName: 'vuldb-repo',
                     show: true,

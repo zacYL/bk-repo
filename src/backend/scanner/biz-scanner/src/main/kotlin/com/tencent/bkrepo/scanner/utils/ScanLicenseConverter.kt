@@ -31,7 +31,7 @@ object ScanLicenseConverter {
     fun convert(licensesResultDetail: FileLicensesResultDetail): LicenseScanDetailExport {
         with(licensesResultDetail) {
             return LicenseScanDetailExport(
-                fullName = fullName,
+                fullName = if(fullName.isEmpty()) licenseId else fullName,
                 dependentPath = dependentPath,
                 osi = isOsiApproved?.let { if (it) "已认证" else "未认证" } ?: "/",
                 fsf = isFsfLibre?.let { if (it) "已开源" else "未开源" } ?: "/",
@@ -53,7 +53,7 @@ object ScanLicenseConverter {
                 unRecommend = getLicenseCount(LicenseNature.UN_RECOMMEND.natureName, subScanTask),
                 unknown = getLicenseCount(LicenseNature.UNKNOWN.natureName, subScanTask),
                 unCompliance = getLicenseCount(LicenseNature.UN_COMPLIANCE.natureName, subScanTask),
-                finishTime = finishedDateTime?.format(DateTimeFormatter.ISO_DATE_TIME) ?: "/",
+                finishTime = finishedDateTime?.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) ?: "/",
                 duration = ScanPlanConverter.duration(startDateTime, finishedDateTime) / 1000
             )
         }
@@ -154,7 +154,8 @@ object ScanLicenseConverter {
                 finishTime = finishedDateTime?.format(DateTimeFormatter.ISO_DATE_TIME),
                 qualityRedLine = qualityRedLine,
                 scanQuality = scanQuality,
-                duration = ScanPlanConverter.duration(startDateTime, finishedDateTime)
+                duration = ScanPlanConverter.duration(startDateTime, finishedDateTime),
+                scanStatus = ScanPlanConverter.convertToScanStatus(status, qualityRedLine).name
             )
         }
     }

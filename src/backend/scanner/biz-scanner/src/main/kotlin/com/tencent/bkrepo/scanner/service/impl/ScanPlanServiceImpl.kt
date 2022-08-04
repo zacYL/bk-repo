@@ -33,6 +33,7 @@ import com.tencent.bkrepo.common.api.exception.NotFoundException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.toJsonString
+import com.tencent.bkrepo.common.artifact.constant.SCAN_STATUS
 import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.scanner.pojo.ScanSchemeType
 import com.tencent.bkrepo.common.query.model.Rule
@@ -43,6 +44,7 @@ import com.tencent.bkrepo.scanner.component.ScannerPermissionCheckHandler
 import com.tencent.bkrepo.scanner.dao.PlanArtifactLatestSubScanTaskDao
 import com.tencent.bkrepo.scanner.dao.ScanPlanDao
 import com.tencent.bkrepo.scanner.dao.ScanTaskDao
+import com.tencent.bkrepo.scanner.event.DelScanPlanEvent
 import com.tencent.bkrepo.scanner.message.ScannerMessageCode
 import com.tencent.bkrepo.scanner.model.TScanPlan
 import com.tencent.bkrepo.scanner.pojo.ScanPlan
@@ -54,6 +56,7 @@ import com.tencent.bkrepo.scanner.pojo.response.ArtifactPlanRelation
 import com.tencent.bkrepo.scanner.pojo.response.ScanLicensePlanInfo
 import com.tencent.bkrepo.scanner.pojo.response.ScanPlanInfo
 import com.tencent.bkrepo.scanner.service.ScanPlanService
+import com.tencent.bkrepo.scanner.service.ScanTaskService
 import com.tencent.bkrepo.scanner.service.ScannerService
 import com.tencent.bkrepo.scanner.utils.Request
 import com.tencent.bkrepo.scanner.utils.ScanLicenseConverter
@@ -62,6 +65,7 @@ import com.tencent.bkrepo.scanner.utils.RuleUtil
 import com.tencent.bkrepo.scanner.utils.ScanParamUtil
 import com.tencent.bkrepo.scanner.utils.ScanPlanConverter
 import org.slf4j.LoggerFactory
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -73,7 +77,9 @@ class ScanPlanServiceImpl(
     private val scanTaskDao: ScanTaskDao,
     private val scannerService: ScannerService,
     private val planArtifactLatestSubScanTaskDao: PlanArtifactLatestSubScanTaskDao,
-    private val permissionCheckHandler: ScannerPermissionCheckHandler
+    private val permissionCheckHandler: ScannerPermissionCheckHandler,
+    private val publisher: ApplicationEventPublisher,
+    private val scanTaskService: ScanTaskService
 ) : ScanPlanService {
     override fun create(request: ScanPlan): ScanPlan {
         val operator = SecurityUtils.getUserId()
@@ -194,7 +200,10 @@ class ScanPlanServiceImpl(
         // 方案正在使用，不能删除
         checkRunning(id)
         scanPlanDao.delete(projectId, id)
+        val planArtifactSubtasks = scanTaskService.planArtifactSubtasks(projectId, id)
         planArtifactLatestSubScanTaskDao.deleteByPlanId(id)
+        // 发送删除方案事件
+        publisher.publishEvent(DelScanPlanEvent(planArtifactSubtasks))
     }
 
     override fun update(request: UpdateScanPlanRequest): ScanPlan {
@@ -243,7 +252,20 @@ class ScanPlanServiceImpl(
         }
     }
 
-    override fun artifactPlanList(request: ArtifactPlanRelationRequest): List<ArtifactPlanRelation> {
+    override fun artifactPlanList(request: ArtifactPlanRelationRequest): Map<String, Any?> {
+        with(request) {
+            permissionCheckHandler.checkNodePermission(projectId, repoName, fullPath!!, PermissionAction.READ)
+            val relations = artifactPlanRelation(request)
+            val scanStatus = if (relations.isEmpty()) {
+                null
+            } else {
+                ScanPlanConverter.artifactStatus(relations.map { it.status })
+            }
+            return mapOf(SCAN_STATUS to scanStatus, SCAN_PLANS to relations)
+        }
+    }
+
+    override fun artifactPlanRelation(request: ArtifactPlanRelationRequest): List<ArtifactPlanRelation> {
         with(request) {
             ScanParamUtil.checkParam(
                 repoType = ScanSchemeType.ofRepositoryType(repoType),
@@ -256,7 +278,6 @@ class ScanPlanServiceImpl(
                     packageClient.findVersionByName(projectId, repoName, packageKey!!, version!!)
                 }?.contentPath ?: throw NotFoundException(CommonMessageCode.RESOURCE_NOT_FOUND, packageKey!!, version!!)
             }
-            permissionCheckHandler.checkNodePermission(projectId, repoName, fullPath!!, PermissionAction.READ)
             val subtasks = planArtifactLatestSubScanTaskDao.findAll(projectId, repoName, fullPath!!)
             val planIds = subtasks.filter { it.planId != null }.map { it.planId!! }
             val scanPlanMap = scanPlanDao.findByIds(planIds, true).associateBy { it.id!! }
@@ -272,7 +293,7 @@ class ScanPlanServiceImpl(
     }
 
     override fun artifactPlanStatus(request: ArtifactPlanRelationRequest): String? {
-        val relations = artifactPlanList(request)
+        val relations = artifactPlanRelation(request)
 
         if (relations.isEmpty()) {
             return null
@@ -326,5 +347,6 @@ class ScanPlanServiceImpl(
             ScanTaskStatus.SCANNING_SUBMITTED.name
         )
         private const val PLAN_NAME_LENGTH_MAX = 32
+        private const val SCAN_PLANS = "scanPlans"
     }
 }

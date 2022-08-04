@@ -5,7 +5,7 @@
         width="450"
         :height-num="311"
         @cancel="cancel">
-        <bk-form class="mr10 repo-generic-form" :label-width="90" :model="genericForm" :rules="rules" ref="genericForm">
+        <bk-form class="repo-generic-form" :label-width="80" :model="genericForm" :rules="rules" ref="genericForm">
             <template v-if="genericForm.type === 'add'">
                 <bk-form-item :label="$t('createFolderLabel')" :required="true" property="path" error-display-type="normal">
                     <bk-input v-model.trim="genericForm.path"
@@ -60,7 +60,7 @@
                             trigger: 'blur'
                         },
                         {
-                            regex: /^(\/[^\\:*?"<>|]{1,50})+$/,
+                            regex: /^(\/[^\\:*?"<>|]{1,255})+$/,
                             message: this.$t('folderPathPlacehodler'),
                             trigger: 'blur'
                         }
@@ -72,7 +72,7 @@
                             trigger: 'blur'
                         },
                         {
-                            regex: /^([^\\/:*?"<>|]){1,50}$/,
+                            regex: /^([^\\/:*?"<>|]){1,255}$/,
                             message: this.$t('folderNamePlacehodler'),
                             trigger: 'blur'
                         }

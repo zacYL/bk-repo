@@ -29,6 +29,7 @@ package com.tencent.bkrepo.scanner.service
 
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.query.model.PageLimit
+import com.tencent.bkrepo.scanner.model.TPlanArtifactLatestSubScanTask
 import com.tencent.bkrepo.scanner.pojo.ScanTask
 import com.tencent.bkrepo.scanner.pojo.request.ArtifactVulnerabilityRequest
 import com.tencent.bkrepo.scanner.pojo.request.FileScanResultDetailRequest
@@ -72,6 +73,11 @@ interface ScanTaskService {
     fun subtasks(request: SubtaskInfoRequest): Page<SubtaskInfo>
 
     /**
+     * 获取使用指定扫描方案扫描过的制品
+     */
+    fun planArtifactSubtasks(projectId: String, planId: String): List<TPlanArtifactLatestSubScanTask>
+
+    /**
      * 分页获取使用指定扫描方案扫描过的制品
      *
      * @param request 获取扫描方案关联的制品请求，包含扫描方案信息和制品筛选条件
@@ -83,7 +89,7 @@ interface ScanTaskService {
     /**
      * 导出扫描方案记录
      */
-    fun exportScanPlanRecords(request: SubtaskInfoRequest): Map<String, Any>
+    fun exportScanPlanRecords(request: SubtaskInfoRequest)
 
     /**
      * 获取属于某个扫描方案的扫描子任务结果预览
@@ -119,6 +125,11 @@ interface ScanTaskService {
     fun resultDetail(request: ArtifactVulnerabilityRequest): Page<ArtifactVulnerabilityInfo>
 
     /**
+     * 导出漏洞详情数据
+     */
+    fun exportLeakDetail(request: ArtifactVulnerabilityRequest)
+
+    /**
      * 获取属于某个扫描任务的扫描子任务扫描报告详情
      */
     fun archiveSubtaskResultDetail(request: ArtifactVulnerabilityRequest): Page<ArtifactVulnerabilityInfo>
@@ -131,7 +142,7 @@ interface ScanTaskService {
     /**
      * 导出扫描结果详情
      */
-    fun exportResultDetail(request: ArtifactLicensesDetailRequest): Map<String, Any>
+    fun exportResultDetail(request: ArtifactLicensesDetailRequest)
 
     /**
      * 获取制品扫描结果预览

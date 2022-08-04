@@ -6,7 +6,7 @@
                 <span class="card-name text-overflow" :title="cardData.name">{{ cardData.name }}</span>
                 <span class="ml10 repo-tag" v-if="['MAVEN'].includes(cardData.type)">{{ cardData.key.replace(/^.*\/\/(.+):.*$/, '$1') }}</span>
                 <scan-tag class="ml10"
-                    v-if="isEnterprise && !cardData.type && /\.(ipa)|(apk)|(jar)$/.test(cardData.name)"
+                    v-if="isEnterprise && !cardData.type && genericScanFileTypes.includes(cardData.name.replace(/^.+\.([^.]+)$/, '$1'))"
                     :status="(cardData.metadata || {}).scanStatus"
                     readonly>
                 </scan-tag>
@@ -18,7 +18,13 @@
             <span class="package-card-description text-overflow" :title="cardData.description">{{ cardData.description }}</span>
             <div class="package-card-data">
                 <template v-if="cardData.type">
-                    <div class="card-metadata" :title="`最新版本：${cardData.latest}`"></div>
+                    <div class="card-metadata" :title="`最新版本：${cardData.latest}`">
+                        <scan-tag class="ml5"
+                            v-if="isEnterprise && showRepoScan"
+                            :status="cardData.scanStatus"
+                            readonly>
+                        </scan-tag>
+                    </div>
                     <div class="card-metadata" :title="`最后修改：${formatDate(cardData.lastModifiedDate)}`"></div>
                     <div class="card-metadata" :title="`版本数：${cardData.versions}`"></div>
                     <div class="card-metadata" :title="`下载统计：${cardData.downloads}`"></div>
@@ -48,7 +54,7 @@
     import forbidTag from '@repository/components/ForbidTag'
     import { mapGetters } from 'vuex'
     import { convertFileSize, formatDate } from '@repository/utils'
-    import { getIconName } from '@repository/store/publicEnum'
+    import { getIconName, scanTypeEnum, genericScanFileTypes } from '@repository/store/publicEnum'
     export default {
         name: 'packageCard',
         components: { OperationList, ScanTag, forbidTag },
@@ -62,8 +68,17 @@
                 default: false
             }
         },
+        data () {
+            return {
+                genericScanFileTypes
+            }
+        },
         computed: {
-            ...mapGetters(['isEnterprise'])
+            ...mapGetters(['isEnterprise']),
+            showRepoScan () {
+                console.log(scanTypeEnum)
+                return Object.keys(scanTypeEnum).join(',').includes(this.cardData.type)
+            }
         },
         methods: {
             convertFileSize,
@@ -131,11 +146,13 @@
             display: grid;
             grid-template: auto / repeat(4, 1fr);
             .card-metadata {
-                padding: 0 5px;
+                display: flex;
+                align-items: center;
+                padding-right: 10px;
                 overflow: hidden;
                 text-overflow: ellipsis;
                 white-space: nowrap;
-                &:after {
+                &:before {
                     content: attr(title);
                     color: var(--fontSubsidiaryColor);
                 }

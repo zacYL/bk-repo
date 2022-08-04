@@ -71,6 +71,7 @@ abstract class AbsSubScanTaskDao<E : SubScanTaskDefinition> : ScannerSimpleMongo
                 criteria.and(SubScanTaskDefinition::createdDate.name).gte(startDateTime!!).lte(endDateTime!!)
             }
             qualityRedLine?.let { criteria.and(SubScanTaskDefinition::qualityRedLine.name).isEqualTo(qualityRedLine) }
+            unQuality?.let { criteria.and(SubScanTaskDefinition::qualityRedLine.name).nin(listOf(true, false)) }
 
             val pageRequest = Pages.ofRequest(pageNumber, pageSize)
             val query = Query(criteria)
@@ -96,6 +97,14 @@ abstract class AbsSubScanTaskDao<E : SubScanTaskDefinition> : ScannerSimpleMongo
     fun deleteByPlanId(planId: String): DeleteResult {
         val query = Query(SubScanTaskDefinition::planId.isEqualTo(planId))
         return remove(query)
+    }
+
+    fun findByPlanId(projectId: String, planId: String): List<E> {
+        val criteria = Criteria
+            .where(SubScanTaskDefinition::projectId.name).isEqualTo(projectId)
+            .and(SubScanTaskDefinition::planId.name).isEqualTo(planId)
+        val query = Query(criteria)
+        return find(query)
     }
 
     private fun addHighestVulnerabilityLevel(level: String, criteria: Criteria): Criteria {

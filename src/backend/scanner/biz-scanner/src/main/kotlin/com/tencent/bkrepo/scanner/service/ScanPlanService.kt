@@ -138,7 +138,16 @@ interface ScanPlanService {
      *
      * @return 制品关联的扫描方案信息
      */
-    fun artifactPlanList(request: ArtifactPlanRelationRequest): List<ArtifactPlanRelation>
+    fun artifactPlanRelation(request: ArtifactPlanRelationRequest): List<ArtifactPlanRelation>
+
+    /**
+     * 获取制品关联的扫描方案列表
+     *
+     * @param request 获取制品关联的扫描方案请求，包含制品信息
+     *
+     * @return 制品关联的扫描方案信息和多个方案集成状态排序
+     */
+    fun artifactPlanList(request: ArtifactPlanRelationRequest): Map<String, Any?>
 
     /**
      * 获取制品扫描状态

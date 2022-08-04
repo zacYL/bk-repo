@@ -16,7 +16,11 @@
             <bk-table-column label="制品名称" show-overflow-tooltip>
                 <template #default="{ row }">
                     <span v-if="row.groupId" class="mr5 repo-tag" :data-name="row.groupId"></span>
-                    <span class="hover-btn" :class="{ 'disabled': row.status !== 'SUCCESS' }" @click="showArtiReport(row)">{{ row.name }}</span>
+                    <span class="hover-btn"
+                        :class="{ 'disabled': !['UN_QUALITY', 'QUALITY_PASS', 'QUALITY_UNPASS'].includes(row.status) }"
+                        @click="showArtiReport(row)">
+                        {{ row.name }}
+                    </span>
                 </template>
             </bk-table-column>
             <bk-table-column label="制品版本/存储路径" show-overflow-tooltip>
@@ -26,13 +30,6 @@
                 <template #default="{ row }">
                     <Icon class="table-svg" size="16" :name="row.repoType.toLowerCase()" />
                     <span class="ml5">{{replaceRepoName(row.repoName)}}</span>
-                </template>
-            </bk-table-column>
-            <bk-table-column label="质量规则">
-                <template #default="{ row }">
-                    <span v-if="row.qualityRedLine === true" class="repo-tag SUCCESS">通过</span>
-                    <span v-else-if="row.qualityRedLine === false" class="repo-tag FAILED">不通过</span>
-                    <span v-else>/</span>
                 </template>
             </bk-table-column>
             <bk-table-column v-if="!baseInfo.planType.includes('LICENSE')" label="风险等级">
@@ -156,7 +153,7 @@
                 this.handlerPaginationChange()
             },
             showArtiReport ({ recordId, name, status }) {
-                if (status !== 'SUCCESS') return
+                if (!['UN_QUALITY', 'QUALITY_PASS', 'QUALITY_UNPASS'].includes(status)) return
                 this.$router.push({
                     name: 'artiReport',
                     params: {

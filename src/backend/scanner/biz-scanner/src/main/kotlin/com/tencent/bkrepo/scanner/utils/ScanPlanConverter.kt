@@ -158,7 +158,9 @@ object ScanPlanConverter {
             val high = Converter.getCveCount(scannerType, Level.HIGH.levelName, overview)
             val medium = Converter.getCveCount(scannerType, Level.MEDIUM.levelName, overview)
             val low = Converter.getCveCount(scannerType, Level.LOW.levelName, overview)
-            val status = latestScanTask?.let { convertToScanStatus(it.status).name } ?: ScanStatus.INIT.name
+            val status = latestScanTask?.let {
+                convertToScanStatus(it.status, isPlan = true).name
+            } ?: ScanStatus.INIT.name
 
             return ScanPlanInfo(
                 id = id!!,
@@ -189,13 +191,24 @@ object ScanPlanConverter {
     }
 
     fun convert(request: SubtaskInfoRequest): SubtaskInfoRequest {
-        request.highestLeakLevel = request.highestLeakLevel?.let { normalizedLevel(it) }
-        request.startDateTime = request.startTime?.let { LocalDateTime.ofInstant(it, ZoneOffset.systemDefault()) }
-        request.endDateTime = request.endTime?.let { LocalDateTime.ofInstant(it, ZoneOffset.systemDefault()) }
-        if (!request.status.isNullOrEmpty()) {
-            request.subScanTaskStatus = convertToSubScanTaskStatus(ScanStatus.valueOf(request.status!!)).map { it.name }
+        with(request) {
+            highestLeakLevel = highestLeakLevel?.let { normalizedLevel(it) }
+            startDateTime = startTime?.let { LocalDateTime.ofInstant(it, ZoneOffset.systemDefault()) }
+            endDateTime = endTime?.let { LocalDateTime.ofInstant(it, ZoneOffset.systemDefault()) }
+            if (!status.isNullOrEmpty()) {
+                subScanTaskStatus = convertToSubScanTaskStatus(ScanStatus.valueOf(status!!)).map { it.name }
+                qualityRedLine = when (status) {
+                    ScanStatus.QUALITY_PASS.name -> true
+                    ScanStatus.QUALITY_UNPASS.name -> false
+                    ScanStatus.UN_QUALITY.name -> {
+                        unQuality = true
+                        null
+                    }
+                    else -> null
+                }
+            }
+            return request
         }
-        return request
     }
 
     fun duration(startDateTime: LocalDateTime?, finishedDateTime: LocalDateTime?): Long {
@@ -214,13 +227,17 @@ object ScanPlanConverter {
                 projectId = projectId,
                 planType = planType ?: "",
                 name = planName,
-                status = convertToScanStatus(status).name,
+                status = convertToScanStatus(status, qualityRedLine).name,
                 recordId = id!!,
                 subTaskId = id!!
             )
         }
     }
 
+    /*
+    当一个制品有多个扫描方案，在扫描、异常、完成时，仅显示一个标签，标签优先级由高到低为：
+    正在扫描＞质量规则未通过＞扫描异常＞质量规则通过＞未设置质量规则＞扫描中止
+     */
     fun artifactStatus(status: List<String>): String {
         require(status.isNotEmpty())
         var maxStatus: ScanStatus? = null
@@ -262,11 +279,14 @@ object ScanPlanConverter {
             ScanStatus.RUNNING -> listOf(SubScanTaskStatus.EXECUTING)
             ScanStatus.STOP -> listOf(SubScanTaskStatus.STOPPED)
             ScanStatus.FAILED -> listOf(SubScanTaskStatus.FAILED)
-            ScanStatus.SUCCESS -> listOf(SubScanTaskStatus.SUCCESS)
+            ScanStatus.SUCCESS,
+            ScanStatus.UN_QUALITY,
+            ScanStatus.QUALITY_PASS,
+            ScanStatus.QUALITY_UNPASS -> listOf(SubScanTaskStatus.SUCCESS)
         }
     }
 
-    fun convertToScanStatus(status: String?): ScanStatus {
+    fun convertToScanStatus(status: String?, qualityPass: Boolean? = null, isPlan: Boolean = false): ScanStatus {
         return when (status) {
             SubScanTaskStatus.BLOCKED.name,
             SubScanTaskStatus.CREATED.name,
@@ -284,7 +304,17 @@ object ScanPlanConverter {
             ScanTaskStatus.STOPPED.name -> ScanStatus.STOP
 
             SubScanTaskStatus.SUCCESS.name,
-            ScanTaskStatus.FINISHED.name -> ScanStatus.SUCCESS
+            ScanTaskStatus.FINISHED.name -> {
+                if (isPlan) {
+                    ScanStatus.SUCCESS
+                } else {
+                    when (qualityPass) {
+                        null -> ScanStatus.UN_QUALITY
+                        true -> ScanStatus.QUALITY_PASS
+                        else -> ScanStatus.QUALITY_UNPASS
+                    }
+                }
+            }
 
             SubScanTaskStatus.BLOCK_TIMEOUT.name,
             SubScanTaskStatus.TIMEOUT.name,

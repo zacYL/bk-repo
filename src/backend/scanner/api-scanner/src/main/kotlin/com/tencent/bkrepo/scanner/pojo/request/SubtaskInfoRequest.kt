@@ -77,5 +77,7 @@ data class SubtaskInfoRequest(
     @ApiModelProperty("页大小")
     val pageSize: Int = DEFAULT_PAGE_SIZE,
     @ApiModelProperty("是否通过质量规则")
-    var qualityRedLine: Boolean? = null
+    var qualityRedLine: Boolean? = null,
+    @ApiModelProperty("未设置质量规则")
+    var unQuality: Boolean? = null
 )

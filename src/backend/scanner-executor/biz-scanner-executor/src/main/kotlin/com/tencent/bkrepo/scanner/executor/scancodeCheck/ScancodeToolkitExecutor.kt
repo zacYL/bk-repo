@@ -36,6 +36,7 @@ import org.springframework.stereotype.Component
 import java.io.File
 import java.io.UncheckedIOException
 import java.net.SocketTimeoutException
+import java.util.ArrayList
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.max
 
@@ -270,7 +271,10 @@ class ScancodeToolkitExecutor @Autowired constructor(
         val licenseIdToInfo = scanClient.licenseInfoByIds(licenseByTool.toList()).data
         val scancodeItems = arrayListOf<ScancodeItem>()
         scancodeToolItem?.files?.map {
-            it.licenses.forEach { license ->
+            // 扫描结果根据【文件路径】和【license的Key】去重
+            val licenses = it.licenses
+            val distinctLicenses = licenses.distinctBy { license -> license.key }
+            distinctLicenses.forEach { license ->
                 val detail = licenseIdToInfo?.get(license.spdxLicenseKey)
                 val path = it.path.removePrefix("${inputFile.name}$EXT_SUFFIX")
                 val scancodeItem = if (detail == null) {

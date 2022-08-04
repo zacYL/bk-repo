@@ -608,7 +608,7 @@
             handlerMultiDownload () {
                 const commonPath = this.selectedTreeNode.fullPath
                 const ids = this.multiSelect.map(r => r.id)
-                const url = `/generic/multi/${this.projectId}/${this.repoName}/${encodeURIComponent(commonPath)}?paths=<${ids.join(':')}>`
+                const url = `/generic/multi/${this.projectId}/${this.repoName}/${encodeURIComponent(commonPath)}?ids=<${ids.join(':')}>`
                 this.download(url)
             },
             download (url) {

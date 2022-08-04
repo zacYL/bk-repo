@@ -607,15 +607,8 @@
             },
             handlerMultiDownload () {
                 const commonPath = this.selectedTreeNode.fullPath
-                const paths = this.multiSelect.map(r => r.name)
-                const url = `/generic/multi/${this.projectId}/${this.repoName}/${encodeURIComponent(commonPath)}?paths=<${paths.join(':')}>`
-                if (url.length > 8000) {
-                    this.$bkMessage({
-                        theme: 'error',
-                        message: '所选文件过多，请尝试分批次下载'
-                    })
-                    return
-                }
+                const ids = this.multiSelect.map(r => r.id)
+                const url = `/generic/multi/${this.projectId}/${this.repoName}/${encodeURIComponent(commonPath)}?paths=<${ids.join(':')}>`
                 this.download(url)
             },
             download (url) {

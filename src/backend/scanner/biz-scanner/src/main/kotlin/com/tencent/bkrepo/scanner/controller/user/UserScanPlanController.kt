@@ -189,7 +189,7 @@ class UserScanPlanController(
                 }
             }
         }
-        scanTaskService.exportScanPlanRecords(subtaskInfoRequest)
+        scanTaskService.exportScanPlanRecords(ScanPlanConverter.convert(subtaskInfoRequest))
     }
 
     @ApiOperation("文件/包关联的扫描方案列表")

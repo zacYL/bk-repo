@@ -138,7 +138,7 @@ interface ScanPlanService {
      *
      * @return 制品关联的扫描方案信息
      */
-    fun artifactPlanRelation(request: ArtifactPlanRelationRequest): List<ArtifactPlanRelation>
+    fun artifactPlanRelation(request: ArtifactPlanRelationRequest, checkPermission: Boolean = true): List<ArtifactPlanRelation>
 
     /**
      * 获取制品关联的扫描方案列表

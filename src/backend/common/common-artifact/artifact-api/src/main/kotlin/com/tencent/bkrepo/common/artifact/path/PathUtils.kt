@@ -37,9 +37,7 @@ import com.tencent.bkrepo.common.api.constant.StringPool.DOT
 import com.tencent.bkrepo.common.api.constant.StringPool.DOUBLE_DOT
 import com.tencent.bkrepo.common.api.constant.ensurePrefix
 import com.tencent.bkrepo.common.api.constant.ensureSuffix
-import com.tencent.bkrepo.common.api.exception.BadRequestException
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
-import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode.NODE_PATH_INVALID
 
 /**
@@ -263,21 +261,6 @@ object PathUtils {
             }
         }
         return commonPath.ensureSuffix(StringPool.SLASH)
-    }
-
-    /**
-     * 解析请求参数中的多路径参数
-     */
-    @Throws(BadRequestException::class)
-    fun resolveMultiPathParam(commonPath: String, paths: String): List<String> {
-        // 确保查询字符串参数没有超长而被截断
-        if (!paths.endsWith(">")) {
-            throw BadRequestException(CommonMessageCode.PARAMETER_INCOMPLETE)
-        }
-        val pathList = paths.ensurePrefix("<").removeSurrounding("<", ">").split(":").distinct()
-        return commonPath.takeIf { it != StringPool.ROOT }
-            ?.let { pathList.map { "$commonPath${it.ensurePrefix(StringPool.SLASH)}" } }
-            ?: pathList
     }
 
     /**

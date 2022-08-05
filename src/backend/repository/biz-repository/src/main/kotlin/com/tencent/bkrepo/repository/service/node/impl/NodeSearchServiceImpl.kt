@@ -137,8 +137,11 @@ class NodeSearchServiceImpl(
     private fun doQuery(context: NodeQueryContext): Page<Map<String, Any?>> {
         val query = context.mongoQuery
         val nodeList = nodeDao.find(query, MutableMap::class.java) as List<MutableMap<String, Any?>>
-        // metadata格式转换，并排除id字段
+        // metadata格式转换
         nodeList.forEach {
+            it["_id"]?.let { id ->
+                it[TNode::id.name] = id.toString()
+            }
             it.remove("_id")
             it[NodeInfo::createdDate.name]?.let { createDate ->
                 it[TNode::createdDate.name] = convertDateTime(createDate)

@@ -32,6 +32,7 @@ import com.tencent.bkrepo.common.artifact.path.PathUtils.toFullPath
 import com.tencent.bkrepo.common.artifact.path.PathUtils.toPath
 import com.tencent.bkrepo.repository.model.TNode
 import com.tencent.bkrepo.repository.pojo.node.NodeListOption
+import org.bson.types.ObjectId
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
@@ -60,6 +61,12 @@ object NodeQueryHelper {
             .and(TNode::repoName).isEqualTo(repoName)
             .and(TNode::fullPath).inValues(fullPath)
             .and(TNode::deleted).isEqualTo(null)
+        return Query(criteria)
+    }
+
+    fun nodeQuery(projectId: String, id: String): Query {
+        val criteria = where(TNode::projectId).isEqualTo(projectId)
+            .and("_id").isEqualTo(ObjectId(id))
         return Query(criteria)
     }
 

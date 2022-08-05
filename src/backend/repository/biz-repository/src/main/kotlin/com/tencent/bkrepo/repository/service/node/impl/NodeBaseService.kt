@@ -82,6 +82,11 @@ abstract class NodeBaseService(
         }
     }
 
+    override fun getNodeFullPathById(projectId: String, id: String): String? {
+        val node = nodeDao.findNodeById(projectId, id)
+        return convert(node)?.fullPath
+    }
+
     override fun listNode(artifact: ArtifactInfo, option: NodeListOption): List<NodeInfo> {
         checkNodeListOption(option)
         with(artifact) {

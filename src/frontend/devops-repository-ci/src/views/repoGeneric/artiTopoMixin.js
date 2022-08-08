@@ -30,19 +30,22 @@ export default {
                 children: [
                     {
                         title: '工作项',
-                        children: Object.keys(metadata).map(key => {
-                            const [type, CTeamId] = key.split('-')
-                            const typeLabel = CTeamTypeMap[type.toLowerCase()]
-                            if (typeLabel) {
-                                return {
-                                    title: metadata[key],
-                                    leftTag: typeLabel,
-                                    metadata: [
-                                        `编号: ${CTeamId}`
-                                    ]
-                                }
-                            } else return false
-                        }).filter(Boolean)
+                        children: Object.keys(metadata)
+                            .map(key => {
+                                const [type, CTeamId] = key.split('-')
+                                const typeLabel = CTeamTypeMap[type.toLowerCase()]
+                                if (typeLabel) {
+                                    return {
+                                        title: metadata[key],
+                                        leftTag: typeLabel,
+                                        metadata: [
+                                            `编号: ${CTeamId}`
+                                        ]
+                                    }
+                                } else return false
+                            })
+                            .filter(Boolean)
+                            .sort((a, b) => b.leftTag.content.charCodeAt() - a.leftTag.content.charCodeAt())
                     },
                     {
                         title: '代码',

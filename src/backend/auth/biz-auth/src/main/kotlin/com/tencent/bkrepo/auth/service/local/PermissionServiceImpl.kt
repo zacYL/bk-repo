@@ -73,10 +73,11 @@ open class PermissionServiceImpl constructor(
 ) : PermissionService, AbstractServiceImpl(mongoTemplate, userRepository, roleRepository) {
 
     @Autowired
-    lateinit var repoClient: RepositoryClient
+    lateinit var repositoryClient: RepositoryClient
 
     @Autowired
     lateinit var projectClient: ProjectClient
+
     override fun deletePermission(id: String): Boolean {
         logger.info("delete  permission  repoName: [$id]")
         permissionRepository.deleteById(id)
@@ -393,7 +394,7 @@ open class PermissionServiceImpl constructor(
     }
 
     fun getAllRepoByProjectId(projectId: String): List<String> {
-        return repoClient.listRepo(projectId).data?.map { it.name } ?: emptyList()
+        return repositoryClient.listRepo(projectId).data?.map { it.name } ?: emptyList()
     }
 
     fun isUserLocalAdmin(userId: String): Boolean {

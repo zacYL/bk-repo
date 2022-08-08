@@ -27,8 +27,6 @@
 
 package com.tencent.bkrepo.common.scanner.pojo.scanner.trivy
 
-import com.tencent.bkrepo.common.artifact.constant.PUBLIC_GLOBAL_PROJECT
-import com.tencent.bkrepo.common.artifact.constant.PUBLIC_VULDB_REPO
 import com.tencent.bkrepo.common.scanner.pojo.scanner.Scanner
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
@@ -51,10 +49,6 @@ class TrivyScanner(
 
 @ApiModel("漏洞数据库配置")
 data class VulDbConfig(
-    @ApiModelProperty("从制品库下载使用的projectId，仅dbSource为[DbSource.REPO]时有有效")
-    val projectId: String = PUBLIC_GLOBAL_PROJECT,
-    @ApiModelProperty("从制品库下载使用的repo，会从该repo的trivy目录中下载最新的文件，仅dbSource为[DbSource.REPO]时有有效")
-    val repo: String = PUBLIC_VULDB_REPO,
     @ApiModelProperty("漏洞库来源")
     val dbSource: Int = DbSource.REPO.code,
 )

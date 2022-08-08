@@ -262,7 +262,10 @@ class ScanPlanServiceImpl(
         return mapOf(SCAN_STATUS to scanStatus, SCAN_PLANS to relations)
     }
 
-    override fun artifactPlanRelation(request: ArtifactPlanRelationRequest): List<ArtifactPlanRelation> {
+    override fun artifactPlanRelation(
+        request: ArtifactPlanRelationRequest,
+        checkPermission: Boolean
+    ): List<ArtifactPlanRelation> {
         with(request) {
             ScanParamUtil.checkParam(
                 repoType = ScanSchemeType.ofRepositoryType(repoType),
@@ -275,7 +278,8 @@ class ScanPlanServiceImpl(
                     packageClient.findVersionByName(projectId, repoName, packageKey!!, version!!)
                 }?.contentPath ?: throw NotFoundException(CommonMessageCode.RESOURCE_NOT_FOUND, packageKey!!, version!!)
             }
-            permissionCheckHandler.checkNodePermission(projectId, repoName, fullPath!!, PermissionAction.READ)
+            if (checkPermission)
+                permissionCheckHandler.checkNodePermission(projectId, repoName, fullPath!!, PermissionAction.READ)
             val subtasks = planArtifactLatestSubScanTaskDao.findAll(projectId, repoName, fullPath!!)
             val planIds = subtasks.filter { it.planId != null }.map { it.planId!! }
             val scanPlanMap = scanPlanDao.findByIds(planIds, true).associateBy { it.id!! }
@@ -291,7 +295,7 @@ class ScanPlanServiceImpl(
     }
 
     override fun artifactPlanStatus(request: ArtifactPlanRelationRequest): String? {
-        val relations = artifactPlanRelation(request)
+        val relations = artifactPlanRelation(request, false)
 
         if (relations.isEmpty()) {
             return null

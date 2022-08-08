@@ -29,7 +29,7 @@
             v-model="showExportDialog"
             title="导出记录筛选"
             :height-num="311"
-            @cancel="cancel">
+            @cancel="showExportDialog = false">
             <bk-form :label-width="80">
                 <bk-form-item label="扫描时间">
                     <bk-date-picker

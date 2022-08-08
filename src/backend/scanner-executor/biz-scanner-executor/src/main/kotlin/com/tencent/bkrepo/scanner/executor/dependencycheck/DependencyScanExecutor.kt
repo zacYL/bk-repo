@@ -106,7 +106,9 @@ class DependencyScanExecutor(
             logger.info("find latest dc db:${records[0].toJsonString()}")
             val dbSha256 = records.first()["sha256"]?.toString() ?: return Pair(null, null)
             Pair("$storePath${locator.locate(dbSha256)}".removeSuffix("/"), dbSha256)
-        } else { Pair(null, null) }
+        } else {
+            Pair(null, null)
+        }
     }
 
     override fun stop(taskId: String): Boolean {
@@ -119,7 +121,7 @@ class DependencyScanExecutor(
      */
     private fun result(dependencyInfo: DependencyInfo, prefix: String): DependencyScanExecutorResult {
         logger.debug("dependencyInfo:${dependencyInfo.toJsonString()}")
-        val dependencyItems = mutableListOf<DependencyItem>()
+        val cveMap = HashMap<String, DependencyItem>()
         // 遍历依赖
         dependencyInfo.dependencies.forEach { dependency ->
             // 遍历漏洞
@@ -127,25 +129,25 @@ class DependencyScanExecutor(
                 val packages = dependency.packages?.get(0)?.id?.removePrefix("pkg:")?.split("@")
                 logger.debug("packages:${packages?.toJsonString()}")
                 packages?.let {
-                    dependencyItems.add(
-                        DependencyItem(
-                            cveId = vulnerability.name,
-                            name = vulnerability.name,
-                            dependency = packages[0],
-                            version = packages[1],
-                            severity = normalizedLevel(vulnerability.severity),
-                            description = vulnerability.description,
-                            officialSolution = null,
-                            defenseSolution = null,
-                            references = vulnerability.references.map { reference -> reference.url },
-                            cvssV2Vector = vulnerability.cvssv2,
-                            cvssV3 = vulnerability.cvssv3,
-                            path = dependency.filePath.removePrefix(prefix)
-                        )
+                    if (cveMap.containsKey(vulnerability.name)) return@forEach
+                    cveMap[vulnerability.name] = DependencyItem(
+                        cveId = vulnerability.name,
+                        name = vulnerability.name,
+                        dependency = packages[0],
+                        version = packages[1],
+                        severity = normalizedLevel(vulnerability.severity),
+                        description = vulnerability.description,
+                        officialSolution = null,
+                        defenseSolution = null,
+                        references = vulnerability.references.map { reference -> reference.url },
+                        cvssV2Vector = vulnerability.cvssv2,
+                        cvssV3 = vulnerability.cvssv3,
+                        path = dependency.filePath.removePrefix(prefix)
                     )
                 }
             }
         }
+        val dependencyItems = cveMap.values.toMutableList()
         logger.debug("dependencyItems:${dependencyItems.toJsonString()}")
 
         return DependencyScanExecutorResult(

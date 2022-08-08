@@ -50,6 +50,11 @@ interface NodeBaseOperation {
     fun getNodeDetail(artifact: ArtifactInfo, repoType: String? = null): NodeDetail?
 
     /**
+     * 通过ID查询节点路径
+     */
+    fun getNodeFullPathById(projectId: String, id: String): String?
+
+    /**
      * 列表查询节点
      */
     fun listNode(artifact: ArtifactInfo, option: NodeListOption): List<NodeInfo>

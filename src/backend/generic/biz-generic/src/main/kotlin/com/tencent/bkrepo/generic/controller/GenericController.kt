@@ -36,7 +36,6 @@ import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
-import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
@@ -51,6 +50,8 @@ import com.tencent.bkrepo.generic.pojo.BlockInfo
 import com.tencent.bkrepo.generic.pojo.UploadTransactionInfo
 import com.tencent.bkrepo.generic.service.DownloadService
 import com.tencent.bkrepo.generic.service.UploadService
+import com.tencent.bkrepo.generic.utils.DownloadParamResolver
+import com.tencent.bkrepo.repository.api.NodeClient
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -66,7 +67,8 @@ import org.springframework.web.bind.annotation.RestController
 class GenericController(
     private val uploadService: UploadService,
     private val downloadService: DownloadService,
-    private val permissionManager: PermissionManager
+    private val permissionManager: PermissionManager,
+    private val nodeClient: NodeClient
 ) {
 
     @PutMapping(GENERIC_MAPPING_URI)
@@ -152,10 +154,10 @@ class GenericController(
     @GetMapping(MULTI_MAPPING_URI)
     fun batchDownloadIncludeFolder(
         @ArtifactPathVariable artifactInfo: GenericArtifactInfo,
-        @RequestParam paths: String
+        @RequestParam ids: String
     ) {
         with(artifactInfo) {
-            val artifactPaths = PathUtils.resolveMultiPathParam(getArtifactFullPath(), paths)
+            val artifactPaths = DownloadParamResolver.resolveMultiNodeIdParam(projectId, ids, nodeClient)
             permissionManager.checkNodePermission(
                 action = PermissionAction.READ,
                 projectId = projectId,

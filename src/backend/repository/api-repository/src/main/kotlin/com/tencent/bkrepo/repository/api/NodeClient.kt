@@ -74,6 +74,13 @@ interface NodeClient {
         @RequestParam fullPath: String
     ): Response<NodeDetail?>
 
+    @ApiOperation("根据ID查询节点路径")
+    @GetMapping("/path/{projectId}")
+    fun getNodeFullPathById(
+        @PathVariable projectId: String,
+        @RequestParam id: String
+    ): Response<String?>
+
     @ApiOperation("更新最近使用时间")
     @GetMapping("/update/{projectId}/{repoName}")
     fun updateRecentlyUseDate(

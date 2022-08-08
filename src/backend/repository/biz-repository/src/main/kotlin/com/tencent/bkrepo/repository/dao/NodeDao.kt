@@ -62,6 +62,13 @@ class NodeDao : HashShardingMongoDao<TNode>() {
     }
 
     /**
+     * 根据ID查询节点
+     */
+    fun findNodeById(projectId: String, id: String): TNode? {
+        return this.findOne(NodeQueryHelper.nodeQuery(projectId, id))
+    }
+
+    /**
      * 查询节点是否存在
      */
     fun exists(projectId: String, repoName: String, fullPath: String): Boolean {

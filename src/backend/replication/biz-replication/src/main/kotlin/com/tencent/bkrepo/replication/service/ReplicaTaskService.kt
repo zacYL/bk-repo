@@ -51,7 +51,7 @@ interface ReplicaTaskService {
      * 根据任务name查询任务信息
      * @param name 任务name
      */
-    fun getByTaskName(name: String): ReplicaTaskInfo?
+    fun getByTaskName(name: String, projectId: String): ReplicaTaskInfo?
 
     /**
      * 根据任务key查询任务信息

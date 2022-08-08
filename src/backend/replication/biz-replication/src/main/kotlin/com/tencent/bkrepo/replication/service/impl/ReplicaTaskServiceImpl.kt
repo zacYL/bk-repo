@@ -86,8 +86,8 @@ class ReplicaTaskServiceImpl(
         return replicaTaskDao.findById(taskId)?.let { convert(it) }
     }
 
-    override fun getByTaskName(name: String): ReplicaTaskInfo? {
-        return replicaTaskDao.findByName(name)?.let { convert(it) }
+    override fun getByTaskName(name: String, projectId: String): ReplicaTaskInfo? {
+        return replicaTaskDao.findByName(name, projectId)?.let { convert(it) }
     }
 
     override fun getByTaskKey(key: String): ReplicaTaskInfo {

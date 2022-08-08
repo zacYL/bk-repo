@@ -40,8 +40,6 @@ import com.tencent.bkrepo.common.scanner.pojo.scanner.arrowhead.CheckSecItem
 import com.tencent.bkrepo.common.scanner.pojo.scanner.arrowhead.CveSecItem
 import com.tencent.bkrepo.common.scanner.pojo.scanner.arrowhead.SensitiveItem
 import com.tencent.bkrepo.scanner.component.manager.AbstractScanExecutorResultManager
-import com.tencent.bkrepo.scanner.pojo.request.LoadResultArguments
-import com.tencent.bkrepo.scanner.pojo.request.SaveResultArguments
 import com.tencent.bkrepo.scanner.component.manager.arrowhead.dao.ApplicationItemDao
 import com.tencent.bkrepo.scanner.component.manager.arrowhead.dao.CheckSecItemDao
 import com.tencent.bkrepo.scanner.component.manager.arrowhead.dao.CveSecItemDao
@@ -55,6 +53,8 @@ import com.tencent.bkrepo.scanner.component.manager.knowledgebase.TCve
 import com.tencent.bkrepo.scanner.component.manager.knowledgebase.TLicense
 import com.tencent.bkrepo.scanner.message.ScannerMessageCode
 import com.tencent.bkrepo.scanner.pojo.request.ArrowheadLoadResultArguments
+import com.tencent.bkrepo.scanner.pojo.request.LoadResultArguments
+import com.tencent.bkrepo.scanner.pojo.request.SaveResultArguments
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional

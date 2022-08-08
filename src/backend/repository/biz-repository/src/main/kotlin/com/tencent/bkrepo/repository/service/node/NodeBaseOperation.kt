@@ -37,6 +37,7 @@ import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.node.NodeListOption
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
+import com.tencent.bkrepo.repository.pojo.node.service.NodeUpdateAccessDateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeUpdateRequest
 
 /**
@@ -93,4 +94,9 @@ interface NodeBaseOperation {
      * 更新节点的【最近使用时间】
      */
     fun updateRecentlyUseDate(projectId: String, repoName: String, fullPath: String, operator: String)
+
+    /**
+     * 更新节点访问时间
+     */
+    fun updateNodeAccessDate(updateAccessDateRequest: NodeUpdateAccessDateRequest)
 }

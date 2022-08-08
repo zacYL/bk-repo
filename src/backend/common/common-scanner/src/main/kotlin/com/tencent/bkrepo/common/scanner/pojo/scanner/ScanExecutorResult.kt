@@ -33,10 +33,10 @@ import com.tencent.bkrepo.common.scanner.pojo.scanner.arrowhead.ArrowheadScanExe
 import com.tencent.bkrepo.common.scanner.pojo.scanner.arrowhead.ArrowheadScanner
 import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.result.DependencyScanExecutorResult
 import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.scanner.DependencyScanner
-import com.tencent.bkrepo.common.scanner.pojo.scanner.trivy.TrivyScanExecutorResult
-import com.tencent.bkrepo.common.scanner.pojo.scanner.trivy.TrivyScanner
 import com.tencent.bkrepo.common.scanner.pojo.scanner.scanCodeCheck.result.ScanCodeToolkitScanExecutorResult
 import com.tencent.bkrepo.common.scanner.pojo.scanner.scanCodeCheck.scanner.ScancodeToolkitScanner
+import com.tencent.bkrepo.common.scanner.pojo.scanner.trivy.TrivyScanExecutorResult
+import com.tencent.bkrepo.common.scanner.pojo.scanner.trivy.TrivyScanner
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
 

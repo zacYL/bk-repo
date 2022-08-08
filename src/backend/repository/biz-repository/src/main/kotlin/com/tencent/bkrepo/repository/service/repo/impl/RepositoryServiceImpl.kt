@@ -37,8 +37,6 @@ import com.tencent.bkrepo.common.api.util.Preconditions
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.DefaultArtifactInfo
-import com.tencent.bkrepo.common.artifact.constant.PUBLIC_PROXY_PROJECT
-import com.tencent.bkrepo.common.artifact.constant.PUBLIC_PROXY_REPO_NAME
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode.REPOSITORY_NOT_FOUND
 import com.tencent.bkrepo.common.artifact.path.PathUtils.ROOT
@@ -49,6 +47,7 @@ import com.tencent.bkrepo.common.artifact.pojo.configuration.clean.CleanStatus
 import com.tencent.bkrepo.common.artifact.pojo.configuration.clean.RepositoryCleanStrategy
 import com.tencent.bkrepo.common.artifact.pojo.configuration.composite.CompositeConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.composite.ProxyChannelSetting
+import com.tencent.bkrepo.common.artifact.pojo.configuration.composite.ProxyConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.local.LocalConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.virtual.VirtualConfiguration
@@ -56,22 +55,22 @@ import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.query.model.Rule
+import com.tencent.bkrepo.common.security.util.RsaUtils
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
+import com.tencent.bkrepo.common.stream.event.supplier.EventSupplier
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.config.RepositoryProperties
 import com.tencent.bkrepo.repository.dao.PackageDao
-import com.tencent.bkrepo.common.security.util.RsaUtils
-import com.tencent.bkrepo.common.stream.event.supplier.EventSupplier
 import com.tencent.bkrepo.repository.dao.RepositoryDao
 import com.tencent.bkrepo.repository.model.TNode
 import com.tencent.bkrepo.repository.model.TPackage
 import com.tencent.bkrepo.repository.model.TRepository
-import com.tencent.bkrepo.repository.pojo.project.ProjectCreateRequest
 import com.tencent.bkrepo.repository.pojo.project.RepoRangeQueryRequest
 import com.tencent.bkrepo.repository.pojo.proxy.ProxyChannelCreateRequest
 import com.tencent.bkrepo.repository.pojo.proxy.ProxyChannelDeleteRequest
+import com.tencent.bkrepo.repository.pojo.proxy.ProxyChannelInfo
 import com.tencent.bkrepo.repository.pojo.proxy.ProxyChannelUpdateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoDeleteRequest
@@ -88,8 +87,6 @@ import com.tencent.bkrepo.repository.util.RepoEventFactory.buildCreatedEvent
 import com.tencent.bkrepo.repository.util.RepoEventFactory.buildDeletedEvent
 import com.tencent.bkrepo.repository.util.RepoEventFactory.buildUpdatedEvent
 import com.tencent.bkrepo.repository.util.RuleUtils
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.domain.PageRequest
@@ -102,6 +99,8 @@ import org.springframework.data.mongodb.core.query.isEqualTo
 import org.springframework.data.mongodb.core.query.where
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 /**
  * 仓库服务实现类
@@ -254,7 +253,8 @@ class RepositoryServiceImpl(
             )
             return try {
                 if (repoConfiguration is CompositeConfiguration) {
-                    updateCompositeConfiguration(repoConfiguration, null, repository, operator)
+                    val old = queryCompositeConfiguration(projectId, name, type)
+                    updateCompositeConfiguration(repoConfiguration, old, repository, operator)
                 }
                 repository.configuration = cryptoConfigurationPwd(repoConfiguration, false).toJsonString()
                 repositoryDao.insert(repository)
@@ -415,6 +415,20 @@ class RepositoryServiceImpl(
                 .`in`(RepositoryCategory.COMPOSITE, RepositoryCategory.LOCAL)
         ).skip(skip).limit(DEFAULT_PAGE_SIZE)
         return repositoryDao.find(query, TRepository::class.java)
+    }
+
+    /**
+     * 获取仓库下的代理地址信息
+     */
+    private fun queryCompositeConfiguration(
+        projectId: String,
+        repoName: String,
+        repoType: RepositoryType
+    ): CompositeConfiguration? {
+        val proxyList = proxyChannelService.listProxyChannel(projectId, repoName, repoType)
+        if (proxyList.isEmpty()) return null
+        val proxy = ProxyConfiguration(proxyList.map { convertProxyToProxyChannelSetting(it) })
+        return CompositeConfiguration(proxy)
     }
 
     /**
@@ -759,6 +773,19 @@ class RepositoryServiceImpl(
                     lastModifiedDate = it.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME),
                     quota = it.quota,
                     used = it.used
+                )
+            }
+        }
+
+        private fun convertProxyToProxyChannelSetting(proxy: ProxyChannelInfo): ProxyChannelSetting {
+            with(proxy) {
+                return ProxyChannelSetting(
+                    public = public,
+                    name = name,
+                    url = url,
+                    credentialKey = credentialKey,
+                    username = username,
+                    password = password
                 )
             }
         }

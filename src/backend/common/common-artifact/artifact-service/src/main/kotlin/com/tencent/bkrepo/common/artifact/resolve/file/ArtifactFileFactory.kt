@@ -127,7 +127,9 @@ class ArtifactFileFactory(
          * @param storageCredentials 存储凭证
          */
         fun build(multipartFile: MultipartFile, storageCredentials: StorageCredentials): ArtifactFile {
-            return MultipartArtifactFile(multipartFile, getMonitor(), properties, storageCredentials).apply {
+            return MultipartArtifactFile(
+                multipartFile, getMonitor(storageCredentials), properties, storageCredentials
+            ).apply {
                 track(this)
             }
         }
@@ -154,8 +156,11 @@ class ArtifactFileFactory(
             artifactFileList.add(artifactFile)
         }
 
-        private fun getMonitor(): StorageHealthMonitor {
-            return monitorHelper.getMonitor(properties, getStorageCredentials())
+        private fun getMonitor(
+            storageCredentials: StorageCredentials? = null
+        ): StorageHealthMonitor {
+            val credentials = storageCredentials ?: getStorageCredentials()
+            return monitorHelper.getMonitor(properties, credentials)
         }
     }
 }

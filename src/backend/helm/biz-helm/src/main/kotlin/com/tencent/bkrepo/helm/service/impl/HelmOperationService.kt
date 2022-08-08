@@ -32,9 +32,10 @@ import com.tencent.bkrepo.common.artifact.pojo.configuration.RepositoryConfigura
 import com.tencent.bkrepo.common.artifact.pojo.configuration.composite.CompositeConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.security.util.SecurityUtils
-import com.tencent.bkrepo.helm.artifact.repository.HelmLocalRepository
+import com.tencent.bkrepo.helm.config.HelmProperties
 import com.tencent.bkrepo.helm.exception.HelmFileNotFoundException
 import com.tencent.bkrepo.helm.pojo.artifact.HelmDeleteArtifactInfo
 import com.tencent.bkrepo.helm.pojo.metadata.HelmChartMetadata
@@ -44,13 +45,15 @@ import com.tencent.bkrepo.helm.utils.HelmUtils
 import com.tencent.bkrepo.helm.utils.ObjectBuilderUtil
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
-import java.util.SortedSet
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
+import java.util.SortedSet
 
 @Component
-class HelmOperationService : AbstractChartService() {
+class HelmOperationService(
+    private val helmProperties: HelmProperties
+) : AbstractChartService() {
 
     /**
      * 删除chart或者prov
@@ -126,7 +129,7 @@ class HelmOperationService : AbstractChartService() {
                     packageClient.updatePackage(packageUpdateRequest)
                 }
             } catch (e: Exception) {
-                HelmLocalRepository.logger.warn("can not convert meta data")
+                logger.warn("can not convert meta data")
             }
         }
     }
@@ -135,14 +138,15 @@ class HelmOperationService : AbstractChartService() {
      * 初次创建仓库时根据index更新package信息
      */
     fun initPackageInfo(projectId: String, repoName: String, userId: String) {
-        val helmIndexYamlMetadata = initIndexYaml(projectId, repoName, userId)
+        val helmIndexYamlMetadata = initIndexYaml(projectId, repoName, userId, helmProperties.domain)
         helmIndexYamlMetadata?.entries?.forEach { element ->
             element.value.forEach {
                 createVersion(
                     userId = userId,
                     projectId = projectId,
                     repoName = repoName,
-                    chartInfo = it
+                    chartInfo = it,
+                    sourceType = ArtifactChannel.PROXY
                 )
             }
         }
@@ -162,7 +166,7 @@ class HelmOperationService : AbstractChartService() {
             HelmUtils.initIndexYamlMetadata()
         }
         // 获取最新文件
-        val newIndex = getIndex(repoDetail) ?: return
+        val newIndex = getIndex(repoDetail, helmProperties.domain) ?: return
 
         val (deletedSet, addedSet) = ChartParserUtil.compareIndexYamlMetadata(
             oldEntries = oldIndex.entries,
@@ -176,6 +180,13 @@ class HelmOperationService : AbstractChartService() {
                 oldIndex.entries[k]?.addAll(v)
             }
         }
+        // 额外再修改一次，防止历史数据不对
+        buildChartUrl(
+            domain = helmProperties.domain,
+            projectId = repoDetail.projectId,
+            repoName = repoDetail.name,
+            helmIndexYamlMetadata = oldIndex
+        )
         // 存储新index文件
         storeIndex(
             indexYamlMetadata = oldIndex,
@@ -224,7 +235,8 @@ class HelmOperationService : AbstractChartService() {
                     userId = userId,
                     projectId = projectId,
                     repoName = name,
-                    chartInfo = it
+                    chartInfo = it,
+                    sourceType = ArtifactChannel.PROXY
                 )
             }
         }

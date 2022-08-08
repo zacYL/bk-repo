@@ -38,9 +38,13 @@ dependencies {
     api(project(":common:common-artifact:artifact-api"))
     api(project(":common:common-storage:storage-service"))
     api(project(":common:common-operate:operate-service"))
+    api(project(":common:common-stream"))
 
     api("org.springframework.boot:spring-boot-starter-aop")
     api("io.micrometer:micrometer-registry-prometheus")
     api("org.influxdb:influxdb-java")
     api("org.apache.commons:commons-text")
+
+    testImplementation("org.mockito.kotlin:mockito-kotlin")
+    testImplementation("io.mockk:mockk")
 }

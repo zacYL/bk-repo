@@ -102,7 +102,6 @@ class AuthInterceptor : HandlerInterceptor {
                 request.setAttribute(USER_KEY, userId)
                 return true
             }
-
             val cookies = request.cookies
                 ?: throw AuthenticationException(AuthMessageCode.AUTH_LOGIN_TOKEN_CHECK_FAILED.name)
             for (cookie in cookies) {

@@ -41,6 +41,7 @@ import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.helm.constants.FULL_PATH
@@ -59,6 +60,7 @@ import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageUpdateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
+import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionUpdateRequest
 
 object ObjectBuilderUtil {
 
@@ -131,7 +133,8 @@ object ObjectBuilderUtil {
         repoName: String,
         chartInfo: HelmChartMetadata,
         size: Long,
-        isOverwrite: Boolean = false
+        isOverwrite: Boolean = false,
+        sourceType: ArtifactChannel? = null
     ): PackageVersionCreateRequest {
         return PackageVersionCreateRequest(
             projectId = projectId,
@@ -145,9 +148,30 @@ object ObjectBuilderUtil {
             manifestPath = null,
             artifactPath = HelmUtils.getChartFileFullPath(chartInfo.name, chartInfo.version),
             stageTag = null,
-            packageMetadata = HelmMetadataUtils.convertToMetadata(chartInfo),
+            packageMetadata = HelmMetadataUtils.convertToMetadata(chartInfo, sourceType),
             overwrite = isOverwrite,
             createdBy = userId
+        )
+    }
+
+    fun buildPackageVersionUpdateRequest(
+        projectId: String,
+        repoName: String,
+        chartInfo: HelmChartMetadata,
+        size: Long,
+        sourceType: ArtifactChannel? = null
+    ): PackageVersionUpdateRequest {
+        return PackageVersionUpdateRequest(
+            projectId = projectId,
+            repoName = repoName,
+            packageKey = PackageKeys.ofHelm(chartInfo.name),
+            versionName = chartInfo.version,
+            size = size,
+            manifestPath = null,
+            artifactPath = HelmUtils.getChartFileFullPath(chartInfo.name, chartInfo.version),
+            stageTag = null,
+            tags = null,
+            packageMetadata = HelmMetadataUtils.convertToMetadata(chartInfo, sourceType),
         )
     }
 

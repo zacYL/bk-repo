@@ -27,7 +27,6 @@
 
 package com.tencent.bkrepo.common.artifact.repository.core
 
-import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
 import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
 import com.tencent.bkrepo.common.artifact.constant.PARAM_DOWNLOAD
@@ -39,7 +38,6 @@ import com.tencent.bkrepo.common.artifact.event.packages.VersionDownloadEvent
 import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
 import com.tencent.bkrepo.common.artifact.exception.ArtifactResponseException
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
-import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.metrics.ArtifactMetrics
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
@@ -126,8 +124,9 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
     override fun download(context: ArtifactDownloadContext) {
         try {
             this.onDownloadBefore(context)
-            val artifactResponse = this.onDownload(context)
-                ?: throw ArtifactNotFoundException(context.artifactInfo.toString())
+            val artifactResponse = this.onDownload(context) ?: if (!context.download) return else {
+                    throw ArtifactNotFoundException(context.artifactInfo.toString())
+                }
             val throughput = artifactResourceWriter.write(artifactResponse)
             this.onDownloadSuccess(context, artifactResponse, throughput)
         } catch (exception: ArtifactResponseException) {

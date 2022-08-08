@@ -52,7 +52,7 @@ interface NodeBaseOperation {
     /**
      * 通过ID查询节点路径
      */
-    fun getNodeFullPathById(projectId: String, id: String): String?
+    fun listFullPathById(projectId: String, id: List<String>): Map<String, String>
 
     /**
      * 列表查询节点

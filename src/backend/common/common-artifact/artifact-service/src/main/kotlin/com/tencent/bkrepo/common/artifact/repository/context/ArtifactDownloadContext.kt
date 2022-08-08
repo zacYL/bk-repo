@@ -55,7 +55,8 @@ open class ArtifactDownloadContext(
     artifacts: List<ArtifactInfo>? = null,
     userId: String = SecurityUtils.getUserId(),
     var useDisposition: Boolean = false,
-    var multiFolder: Boolean = false
+    var multiFolder: Boolean = false,
+    var download: Boolean = true
 ) : ArtifactContext(repo, artifact, userId) {
 
     val repo = repo ?: request.getAttribute(REPO_KEY) as RepositoryDetail

@@ -64,6 +64,7 @@ enum class ArtifactMessageCode(private val key: String) : MessageCode {
     REPOSITORY_OVER_QUOTA("artifact.repository.over-quota"),
     ARTIFACT_DOWNLOAD_FORBIDDEN("artifact.download.forbidden"),
     ARTIFACT_FORBIDDEN("artifact.forbidden"),
+    FILE_LIST_EMPTY("artifact.file.list.empty")
     ;
 
     override fun getBusinessCode() = ordinal + 1

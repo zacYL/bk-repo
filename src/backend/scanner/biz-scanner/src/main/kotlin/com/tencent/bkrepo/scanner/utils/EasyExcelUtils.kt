@@ -1,12 +1,14 @@
 package com.tencent.bkrepo.scanner.utils
 
 import com.alibaba.excel.EasyExcel
+import com.alibaba.excel.write.style.column.LongestMatchColumnWidthStyleStrategy
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.LocaleMessageUtils
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.scanner.message.ScannerMessageCode
 import org.slf4j.LoggerFactory
+import java.io.IOException
 import java.net.URLEncoder
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -25,13 +27,15 @@ object EasyExcelUtils {
             "attachment;filename*=utf-8''$fileName.xlsx"
         )
         try {
-            EasyExcel.write(response.outputStream, dataClass).sheet(name).doWrite(data)
-        } catch (e: Exception) {
+            EasyExcel.write(response.outputStream, dataClass)
+                .head(dataClass).registerWriteHandler(LongestMatchColumnWidthStyleStrategy())
+                .sheet(name).doWrite(data)
+        } catch (e: IOException) {
             // 重置response
             response.reset()
             response.contentType = "application/json"
             response.characterEncoding = "utf-8"
-            logger.info("download excel fail:${e}")
+            logger.error("download excel fail:${e}")
             val errorMessage = LocaleMessageUtils.getLocalizedMessage(ScannerMessageCode.EXPORT_REPORT_FAIL)
             val fail = ResponseBuilder.fail(ScannerMessageCode.EXPORT_REPORT_FAIL.getCode(), errorMessage)
             response.writer.println(fail.toJsonString())

@@ -20,7 +20,7 @@
             </bk-table-column>
             <bk-table-column :label="$t('size')" width="90" show-overflow-tooltip>
                 <template #default="{ row }">
-                    {{ row.size ? convertFileSize(row.size) : '/' }}
+                    {{ row.folder ? '/' : (row.size > -1 ? convertFileSize(row.size) : $t('unknownSize')) }}
                 </template>
             </bk-table-column>
             <bk-table-column :label="$t('operation')" width="100">

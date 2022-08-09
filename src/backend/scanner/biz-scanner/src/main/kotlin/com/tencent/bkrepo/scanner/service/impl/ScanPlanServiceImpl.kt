@@ -276,7 +276,10 @@ class ScanPlanServiceImpl(
             if (fullPath == null) {
                 fullPath = Request.request {
                     packageClient.findVersionByName(projectId, repoName, packageKey!!, version!!)
-                }?.contentPath ?: throw NotFoundException(CommonMessageCode.RESOURCE_NOT_FOUND, packageKey!!, version!!)
+                }?.let {
+                    it.contentPath ?: it.manifestPath
+                    ?: throw NotFoundException(CommonMessageCode.RESOURCE_NOT_FOUND, packageKey!!, version!!)
+                }
             }
             if (checkPermission)
                 permissionCheckHandler.checkNodePermission(projectId, repoName, fullPath!!, PermissionAction.READ)

@@ -194,5 +194,10 @@
     "totalQuota": "仓库配额总量",
     "usedQuotaCapacity": "仓库已使用配额容量",
     "fileNameRule": "* wildcard is supported. For example: *_sign.apk",
-    "viewMetadataDocument": "View the metadata specification documentation"
+    "viewMetadataDocument": "View the metadata specification documentation",
+    "preview": "preview",
+    "unknownSize": "The size of the unknown",
+    "supportPreview": "This file does not support preview",
+    "previewCompressedLimitTips": "You can preview only compressed files smaller than 1Gb",
+    "previewFileTips": "Note: text files larger than 50M are displayed only for the first 50M"
 }

@@ -137,6 +137,7 @@
                                 :list="[
                                     { clickEvent: () => showDetail(row), label: $t('detail') },
                                     ...(!row.metadata.forbidStatus ? [
+                                        !row.folder && handlerPreview(row) && { clickEvent: () => handlerPreview(row, true), label: $t('preview') },
                                         { clickEvent: () => handlerDownload(row), label: $t('download') },
                                         ...(repoName !== 'pipeline' ? [
                                             permission.edit && { clickEvent: () => renameRes(row), label: $t('rename') },
@@ -174,6 +175,8 @@
         <generic-form-dialog ref="genericFormDialog" @refresh="refreshNodeChange"></generic-form-dialog>
         <generic-share-dialog ref="genericShareDialog"></generic-share-dialog>
         <generic-tree-dialog ref="genericTreeDialog" @update="updateGenericTreeNode" @refresh="refreshNodeChange"></generic-tree-dialog>
+        <preview-basic-file-dialog ref="previewBasicFileDialog"></preview-basic-file-dialog>
+        <compressed-file-table ref="compressedFileTable" @show-preview="handlerPreviewBasicsFile"></compressed-file-table>
     </div>
 </template>
 <script>
@@ -187,6 +190,8 @@
     import genericFormDialog from '@repository/views/repoGeneric/genericFormDialog'
     import genericShareDialog from '@repository/views/repoGeneric/genericShareDialog'
     import genericTreeDialog from '@repository/views/repoGeneric/genericTreeDialog'
+    import previewBasicFileDialog from './previewBasicFileDialog'
+    import compressedFileTable from './compressedFileTable'
     import { convertFileSize, formatDate, debounce } from '@repository/utils'
     import { getIconName, genericScanFileTypes } from '@repository/store/publicEnum'
     import { mapState, mapMutations, mapActions } from 'vuex'
@@ -202,7 +207,9 @@
             genericDetail,
             genericFormDialog,
             genericShareDialog,
-            genericTreeDialog
+            genericTreeDialog,
+            previewBasicFileDialog,
+            compressedFileTable
         },
         data () {
             return {
@@ -682,6 +689,51 @@
                             })
                         })
                     }
+                })
+            },
+            handlerPreview (row, excute = false) {
+                const ext = row.name.replace(/^.+\.([^.]+)$/, '$1')
+                const basicEnable = [
+                    'txt', 'sh', 'bat', 'json', 'yaml', 'md',
+                    'xml', 'log', 'ini', 'properties', 'toml'
+                ].includes(ext)
+                const compressEnable = [
+                    'rar', 'zip', 'gz', 'tgz', 'tar', 'jar'
+                ].includes(ext)
+                if (basicEnable) {
+                    excute && this.handlerPreviewBasicsFile(row)
+                    return true
+                }
+                if (compressEnable) {
+                    excute && this.handlerPreviewCompressedFile(row)
+                    return true
+                }
+                return false
+            },
+            async handlerPreviewBasicsFile (row) {
+                this.$refs.previewBasicFileDialog.setData({
+                    show: true,
+                    title: row.name,
+                    projectId: row.projectId,
+                    repoName: row.repoName,
+                    fullPath: row.fullPath,
+                    filePath: row.filePath
+                })
+            },
+            async handlerPreviewCompressedFile (row) {
+                if (row.size > 1024 * 1024 * 1024) { // 1GB
+                    this.$bkMessage({
+                        theme: 'error',
+                        message: this.$t('previewCompressedLimitTips')
+                    })
+                    return
+                }
+                this.$refs.compressedFileTable.setData({
+                    show: true,
+                    title: row.name,
+                    projectId: row.projectId,
+                    repoName: row.repoName,
+                    fullPath: row.fullPath
                 })
             }
         }

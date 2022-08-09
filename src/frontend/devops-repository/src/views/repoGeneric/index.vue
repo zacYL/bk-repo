@@ -603,15 +603,6 @@
             },
             handlerDownload ({ fullPath }) {
                 const url = `/generic/${this.projectId}/${this.repoName}/${fullPath}?download=true`
-                this.download(url)
-            },
-            handlerMultiDownload () {
-                const commonPath = this.selectedTreeNode.fullPath
-                const ids = this.multiSelect.map(r => r.id)
-                const url = `/generic/multi/${this.projectId}/${this.repoName}/${encodeURIComponent(commonPath)}?ids=<${ids.join(':')}>`
-                this.download(url)
-            },
-            download (url) {
                 this.$ajax.head(url).then(() => {
                     window.open(
                         '/web' + url,
@@ -623,6 +614,17 @@
                         theme: 'error',
                         message
                     })
+                })
+            },
+            handlerMultiDownload () {
+                const commonPath = this.selectedTreeNode.fullPath
+                const ids = this.multiSelect.map(r => r.id)
+                const url = `${this.projectId}/${this.repoName}/${encodeURIComponent(commonPath)}?id=<${ids.join(':')}>`
+                this.$ajax.get(`/generic/multi/false/${url}`).then(() => {
+                    window.open(
+                        '/web' + `/generic/multi/true/${url}`,
+                        '_self'
+                    )
                 })
             },
             handlerForbid ({ fullPath, metadata: { forbidStatus } }) {

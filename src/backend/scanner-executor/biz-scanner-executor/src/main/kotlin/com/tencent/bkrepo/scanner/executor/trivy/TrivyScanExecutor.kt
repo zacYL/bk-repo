@@ -178,7 +178,6 @@ class TrivyScanExecutor @Autowired constructor(
         }
         val repositoryDetail = repoRes.data
             ?: throw NotFoundException(RESOURCE_NOT_FOUND, PUBLIC_VULDB_REPO)
-
         val sha256 = dbNode["sha256"] as String
         val size = dbNode["size"].toString().toLong()
         return storageService.load(sha256, Range.full(size), repositoryDetail.storageCredentials)

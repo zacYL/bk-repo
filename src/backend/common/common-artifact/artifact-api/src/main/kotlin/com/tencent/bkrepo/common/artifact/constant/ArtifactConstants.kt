@@ -103,6 +103,11 @@ const val X_CHECKSUM_SHA256 = "X-Checksum-Sha256"
 const val PIPELINE = "pipeline"
 
 /**
+ * 报告仓库
+ */
+const val REPORT = "report"
+
+/**
  * 文件访问请求是否为直接下载
  */
 const val PARAM_DOWNLOAD = "download"
@@ -118,6 +123,13 @@ const val PARAM_PREVIEW = "preview"
 // 内存文件
 const val SOURCE_IN_MEMORY = "memory"
 const val SOURCE_IN_REMOTE = "remote"
+
+/**
+ * 用于标识制品来源
+ * ArtifactChannel.LOCAL
+ * ArtifactChannel.PROXY
+ */
+const val SOURCE_TYPE = "sourceType"
 
 // 制品禁用信息
 const val FORBID_STATUS = "forbidStatus"

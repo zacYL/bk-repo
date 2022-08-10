@@ -73,7 +73,9 @@ class DependencyResultManager @Autowired constructor(
         scanner: Scanner,
         arguments: LoadResultArguments?
     ): Any? {
-        logger.debug("DependencyCheck load, arguments:${arguments?.toJsonString()}")
+        if (logger.isDebugEnabled) {
+            logger.debug("DependencyCheck load, arguments:${arguments?.toJsonString()}")
+        }
         scanner as DependencyScanner
         arguments as DependencyLoadResultArguments
         val page = dependencyItemDao.pageBy(credentialsKey, sha256, scanner.name, arguments.pageLimit, arguments)

@@ -34,36 +34,37 @@ import com.tencent.bkrepo.job.COUNT
 import com.tencent.bkrepo.job.CREDENTIALS
 import com.tencent.bkrepo.job.ID
 import com.tencent.bkrepo.job.SHARDING_COUNT
-import com.tencent.bkrepo.job.batch.base.FileJobContext
 import com.tencent.bkrepo.job.batch.base.MongoDbBatchJob
-import com.tencent.bkrepo.job.batch.base.JobContext
-import com.tencent.bkrepo.job.config.MongodbJobProperties
+import com.tencent.bkrepo.job.batch.context.FileJobContext
+import com.tencent.bkrepo.job.config.properties.FileReferenceCleanupJobProperties
 import com.tencent.bkrepo.job.exception.JobExecuteException
 import com.tencent.bkrepo.repository.api.StorageCredentialsClient
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.isEqualTo
-import org.springframework.scheduling.annotation.Scheduled
+import org.springframework.stereotype.Component
 import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 
 /**
  * 清理引用=0的文件
  */
+@Component
+@EnableConfigurationProperties(FileReferenceCleanupJobProperties::class)
 class FileReferenceCleanupJob(
     private val storageService: StorageService,
     private val mongoTemplate: MongoTemplate,
     private val storageCredentialsClient: StorageCredentialsClient,
-    properties: MongodbJobProperties
-) : MongoDbBatchJob<FileReferenceCleanupJob.FileReferenceData>(properties) {
+    properties: FileReferenceCleanupJobProperties
+) : MongoDbBatchJob<FileReferenceCleanupJob.FileReferenceData, FileJobContext>(properties) {
 
-    @Scheduled(cron = "0 0 4/6 * * ?") // 4点开始，6小时执行一次
     override fun start(): Boolean {
         return super.start()
     }
 
-    override fun createJobContext(): JobContext {
+    override fun createJobContext(): FileJobContext {
         return FileJobContext()
     }
 
@@ -81,7 +82,7 @@ class FileReferenceCleanupJob(
         return Query(Criteria.where(COUNT).isEqualTo(0))
     }
 
-    override fun run(row: FileReferenceData, collectionName: String, context: JobContext) {
+    override fun run(row: FileReferenceData, collectionName: String, context: FileJobContext) {
         val credentialsKey = row.credentialsKey
         val sha256 = row.sha256
         val id = row.id
@@ -120,7 +121,7 @@ class FileReferenceCleanupJob(
         val credentialsKey: String? = map[CREDENTIALS] as String?
     }
 
-    override fun mapToObject(row: Map<String, Any?>): FileReferenceData {
+    override fun mapToEntity(row: Map<String, Any?>): FileReferenceData {
         return FileReferenceData(row)
     }
 }

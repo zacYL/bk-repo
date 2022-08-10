@@ -27,7 +27,7 @@
 
 package com.tencent.bkrepo.scanner.component.manager
 
-abstract class AbstractScanExecutorResultManager : ScanExecutorResultManager{
+abstract class AbstractScanExecutorResultManager : ScanExecutorResultManager {
     protected inline fun <T, reified R : ResultItem<T>> convert(
         credentialsKey: String?,
         sha256: String,

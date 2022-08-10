@@ -35,6 +35,7 @@ import com.tencent.bkrepo.common.api.util.readYamlString
 import com.tencent.bkrepo.common.api.util.toYamlString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
 import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
@@ -50,10 +51,11 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContex
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.core.ArtifactService
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResourceWriter
 import com.tencent.bkrepo.common.artifact.stream.ArtifactInputStream
-import com.tencent.bkrepo.common.artifact.util.FileNameParser
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
 import com.tencent.bkrepo.common.lock.service.LockOperation
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.security.util.SecurityUtils
@@ -63,7 +65,6 @@ import com.tencent.bkrepo.helm.constants.CHART_PACKAGE_FILE_EXTENSION
 import com.tencent.bkrepo.helm.constants.FILE_TYPE
 import com.tencent.bkrepo.helm.constants.FULL_PATH
 import com.tencent.bkrepo.helm.constants.META_DETAIL
-import com.tencent.bkrepo.helm.constants.NAME
 import com.tencent.bkrepo.helm.constants.NODE_CREATE_DATE
 import com.tencent.bkrepo.helm.constants.NODE_FULL_PATH
 import com.tencent.bkrepo.helm.constants.NODE_METADATA
@@ -76,7 +77,6 @@ import com.tencent.bkrepo.helm.constants.REPO_NAME
 import com.tencent.bkrepo.helm.constants.REPO_TYPE
 import com.tencent.bkrepo.helm.constants.SIZE
 import com.tencent.bkrepo.helm.constants.TGZ_SUFFIX
-import com.tencent.bkrepo.helm.constants.VERSION
 import com.tencent.bkrepo.helm.exception.HelmBadRequestException
 import com.tencent.bkrepo.helm.exception.HelmFileNotFoundException
 import com.tencent.bkrepo.helm.exception.HelmRepoNotFoundException
@@ -253,13 +253,15 @@ open class AbstractChartService : ArtifactService() {
             helmChartMetadataMap?.let {
                 val helmChartMetadata = HelmMetadataUtils.convertToObject(helmChartMetadataMap)
                 val overWrite = getBooleanAttribute(OVERWRITE) ?: false
+                val sourceType = getAttribute<ArtifactChannel>(SOURCE_TYPE)
                 createVersion(
                     userId = userId,
                     projectId = artifactInfo.projectId,
                     repoName = artifactInfo.repoName,
                     chartInfo = helmChartMetadata,
                     size = size!!,
-                    isOverwrite = overWrite
+                    isOverwrite = overWrite,
+                    sourceType = sourceType
                 )
             }
         }
@@ -350,27 +352,48 @@ open class AbstractChartService : ArtifactService() {
         repoName: String,
         chartInfo: HelmChartMetadata,
         size: Long = 0,
-        isOverwrite: Boolean = false
+        isOverwrite: Boolean = false,
+        sourceType: ArtifactChannel? = null
     ) {
         val contentPath = HelmUtils.getChartFileFullPath(chartInfo.name, chartInfo.version)
-        val packageVersionCreateRequest = ObjectBuilderUtil.buildPackageVersionCreateRequest(
-            userId = userId,
-            projectId = projectId,
-            repoName = repoName,
-            chartInfo = chartInfo,
-            size = size,
-            isOverwrite = isOverwrite
-        )
-        val packageUpdateRequest = ObjectBuilderUtil.buildPackageUpdateRequest(
-            projectId = projectId,
-            repoName = repoName,
-            chartInfo = chartInfo
-        )
         try {
-            packageClient.createVersion(packageVersionCreateRequest).apply {
-                logger.info("user: [$userId] create package version [$packageVersionCreateRequest] success!")
+            val packageVersion = packageClient.findVersionByName(
+                projectId = projectId,
+                repoName = repoName,
+                packageKey = PackageKeys.ofHelm(chartInfo.name),
+                version = chartInfo.version
+            ).data
+            if (packageVersion == null) {
+                val packageVersionCreateRequest = ObjectBuilderUtil.buildPackageVersionCreateRequest(
+                    userId = userId,
+                    projectId = projectId,
+                    repoName = repoName,
+                    chartInfo = chartInfo,
+                    size = size,
+                    isOverwrite = isOverwrite,
+                    sourceType = sourceType
+                )
+                val packageUpdateRequest = ObjectBuilderUtil.buildPackageUpdateRequest(
+                    projectId = projectId,
+                    repoName = repoName,
+                    chartInfo = chartInfo
+                )
+                packageClient.createVersion(packageVersionCreateRequest).apply {
+                    logger.info("user: [$userId] create package version [$packageVersionCreateRequest] success!")
+                }
+                packageClient.updatePackage(packageUpdateRequest)
+            } else {
+                val packageVersionUpdateRequest = ObjectBuilderUtil.buildPackageVersionUpdateRequest(
+                    projectId = projectId,
+                    repoName = repoName,
+                    chartInfo = chartInfo,
+                    size = size,
+                    sourceType = sourceType
+                )
+                packageClient.updateVersion(packageVersionUpdateRequest).apply {
+                    logger.info("user: [$userId] update package version [$packageVersionUpdateRequest] success!")
+                }
             }
-            packageClient.updatePackage(packageUpdateRequest)
         } catch (exception: NoFallbackAvailableException) {
             val e = exception.cause
             if (e !is RemoteErrorCodeException || e.errorCode != ArtifactMessageCode.VERSION_EXISTED.getCode()) {
@@ -407,46 +430,17 @@ open class AbstractChartService : ArtifactService() {
     }
 
     /**
-     * 通过chart包名以及版本号查出对应remote仓库下载地址
-     */
-    fun findRemoteArtifactFullPath(name: String): String {
-        logger.info("get remote url for downloading...")
-        val helmIndexYamlMetadata = queryOriginalIndexYaml()
-        val map = FileNameParser.parseNameAndVersionWithRegex(name)
-        val chartName = map[NAME]
-        val chartVersion = map[VERSION]
-        val chartList =
-            helmIndexYamlMetadata.entries[chartName]
-                ?: throw HelmFileNotFoundException("File [$name] can not be found.")
-        val helmChartMetadataList = chartList.filter {
-            chartVersion == it.version
-        }.toList()
-        return if (helmChartMetadataList.isNotEmpty()) {
-            require(helmChartMetadataList.size == 1) {
-                "find more than one version [$chartVersion] in package [$chartName]."
-            }
-            val urls = helmChartMetadataList.first().urls
-            if (urls.isNotEmpty()) {
-                urls.first()
-            } else {
-                throw HelmFileNotFoundException("File [$name] can not be found.")
-            }
-        } else {
-            throw HelmFileNotFoundException("File [$name] can not be found.")
-        }
-    }
-
-    /**
      * 针对代理仓库：下载index.yaml文件到本地存储
      */
     fun initIndexYaml(
         projectId: String,
         repoName: String,
-        userId: String = SecurityUtils.getUserId()
+        userId: String = SecurityUtils.getUserId(),
+        domain: String
     ): HelmIndexYamlMetadata? {
         logger.info("Will start to get index.yaml for repo [$projectId/$repoName]...")
         val repoDetail = checkRepo(projectId, repoName) ?: return null
-        val originalIndexYamlMetadata = getIndex(repoDetail)
+        val originalIndexYamlMetadata = getIndex(repoDetail, domain)
         originalIndexYamlMetadata?.let {
             storeIndex(
                 indexYamlMetadata = originalIndexYamlMetadata,
@@ -461,19 +455,33 @@ open class AbstractChartService : ArtifactService() {
     /**
      * 根据仓库类型获取对应index文件
      */
-    fun getIndex(repoDetail: RepositoryDetail): HelmIndexYamlMetadata? {
+    fun getIndex(repoDetail: RepositoryDetail, domain: String): HelmIndexYamlMetadata? {
         return when (repoDetail.configuration) {
             is CompositeConfiguration -> {
                 val config = repoDetail.configuration as CompositeConfiguration
-                forEachProxyRepo(config.proxy.channelList, repoDetail)
+                val helmIndexYamlMetadata = forEachProxyRepo(config.proxy.channelList, repoDetail)
+                buildChartUrl(
+                    domain = domain,
+                    projectId = repoDetail.projectId,
+                    repoName = repoDetail.name,
+                    helmIndexYamlMetadata = helmIndexYamlMetadata
+                )
+                helmIndexYamlMetadata
             }
             is RemoteConfiguration -> {
                 val config = repoDetail.configuration as RemoteConfiguration
                 try {
                     val inputStream = RemoteDownloadUtil.doHttpRequest(config, HelmUtils.getIndexYamlFullPath())
-                    (inputStream as ArtifactInputStream).use {
+                    val helmIndexYamlMetadata = (inputStream as ArtifactInputStream).use {
                         it.readYamlString() as HelmIndexYamlMetadata
                     }
+                    buildChartUrl(
+                        domain = domain,
+                        projectId = repoDetail.projectId,
+                        repoName = repoDetail.name,
+                        helmIndexYamlMetadata = helmIndexYamlMetadata
+                    )
+                    helmIndexYamlMetadata
                 } catch (e: Exception) {
                     logger.warn(
                         "Error occurred while caching the index-cache.yaml from remote repository, error: ${e.message}"
@@ -483,6 +491,26 @@ open class AbstractChartService : ArtifactService() {
             }
             else -> {
                 null
+            }
+        }
+    }
+
+    /**
+     * 将index.yaml中url更新本地访问地址，对外地址统一
+     */
+    fun buildChartUrl(
+        domain: String,
+        projectId: String,
+        repoName: String,
+        helmIndexYamlMetadata: HelmIndexYamlMetadata
+    ) {
+        helmIndexYamlMetadata.entries.values.forEach {
+            it.forEach { chart ->
+                chart.urls = listOf(
+                    UrlFormatter.format(
+                        domain, "$projectId/$repoName/charts/${chart.name}-${chart.version}.tgz"
+                    )
+                )
             }
         }
     }
@@ -578,9 +606,9 @@ open class AbstractChartService : ArtifactService() {
     }
 
     companion object {
+        val logger: Logger = LoggerFactory.getLogger(AbstractChartService::class.java)
         const val PAGE_NUMBER = 0
         const val PAGE_SIZE = 100000
-        val logger: Logger = LoggerFactory.getLogger(AbstractChartService::class.java)
 
         fun convertDateTime(timeStr: String): String {
             val localDateTime = LocalDateTime.parse(timeStr, DateTimeFormatter.ISO_DATE_TIME)

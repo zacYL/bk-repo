@@ -40,8 +40,6 @@ import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
 import com.tencent.bkrepo.auth.service.local.PermissionServiceImpl
 import com.tencent.bkrepo.common.artifact.path.PathUtils
-import com.tencent.bkrepo.repository.api.ProjectClient
-import com.tencent.bkrepo.repository.api.RepositoryClient
 import org.slf4j.LoggerFactory
 import org.springframework.data.mongodb.core.MongoTemplate
 
@@ -53,8 +51,6 @@ class BkAuthPermissionServiceImpl constructor(
     roleRepository: RoleRepository,
     permissionRepository: PermissionRepository,
     mongoTemplate: MongoTemplate,
-    repositoryClient: RepositoryClient,
-    projectClient: ProjectClient,
     private val bkAuthConfig: BkAuthConfig,
     private val bkAuthPipelineService: BkAuthPipelineService,
     private val bkAuthProjectService: BkAuthProjectService
@@ -62,9 +58,7 @@ class BkAuthPermissionServiceImpl constructor(
     userRepository,
     roleRepository,
     permissionRepository,
-    mongoTemplate,
-    repositoryClient,
-    projectClient
+    mongoTemplate
 ) {
     private fun parsePipelineId(path: String): String? {
         val roads = PathUtils.normalizeFullPath(path).split("/")
@@ -104,12 +98,10 @@ class BkAuthPermissionServiceImpl constructor(
                 }
             }
 
-            // devops来源的账号，不做拦截
             if (!pass && appId == bkAuthConfig.devopsAppId) {
                 logger.warn("devops forbidden [$request]")
             }
-
-            logger.debug("devops pass [$request]")
+            logger.debug("devops check [$request]")
             return pass
         }
     }
@@ -177,7 +169,7 @@ class BkAuthPermissionServiceImpl constructor(
             val request = buildProjectCheckRequest(projectId, userId, appId)
 
             // devops 体系
-            if (matchDevopsCond(appId)) {
+            if (matchDevopsCond(appId) || matchBcsOrRepoCond(appId)) {
                 if (checkDevopsPermission(request)) {
                     return getAllRepoByProjectId(projectId)
                 }
@@ -189,13 +181,10 @@ class BkAuthPermissionServiceImpl constructor(
 
     override fun checkPermission(request: CheckPermissionRequest): Boolean {
 
-        // bcs或bkrepo账号
-        if (matchBcsOrRepoCond(request.appId)) return super.checkPermission(request) || checkDevopsPermission(request)
-
         // devops账号
         if (matchDevopsCond(request.appId)) return checkDevopsPermission(request)
 
-        // 非devops体系
+        // 其他账号
         return super.checkPermission(request) || checkDevopsPermission(request)
     }
 

@@ -59,7 +59,7 @@ class ArtifactEventConsumer(
         100,
         200,
         60,
-        TimeUnit.SECONDS, LinkedBlockingQueue<Runnable>(1024),
+        TimeUnit.SECONDS, LinkedBlockingQueue(1024),
         ThreadFactoryBuilder().setNameFormat("webhook-event-worker-%d").build(),
         ThreadPoolExecutor.CallerRunsPolicy()
     )
@@ -104,14 +104,14 @@ class ArtifactEventConsumer(
                 )
             )
         }
-        webHookList.filter {
+        val triggerWebHookList = webHookList.filter {
             it.triggers.contains(event.type) && matchResourceKey(
                 it.resourceKeyPattern,
                 event.resourceKey
             )
         }
-        logger.info("event: $event, webHookList: $webHookList")
-        webHookExecutor.asyncExecutor(event, webHookList)
+        logger.info("event: $event, webHookList: $triggerWebHookList")
+        webHookExecutor.asyncExecutor(event, triggerWebHookList)
     }
 
     private fun checkIfNeedTrigger(event: ArtifactEvent): Boolean {

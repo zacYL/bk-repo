@@ -61,6 +61,7 @@ import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.mongodb.core.MongoTemplate
 import java.time.LocalDateTime
 
@@ -68,10 +69,14 @@ open class PermissionServiceImpl constructor(
     private val userRepository: UserRepository,
     private val roleRepository: RoleRepository,
     private val permissionRepository: PermissionRepository,
-    private val mongoTemplate: MongoTemplate,
-    private val repositoryClient: RepositoryClient,
-    private val projectClient: ProjectClient
+    private val mongoTemplate: MongoTemplate
 ) : PermissionService, AbstractServiceImpl(mongoTemplate, userRepository, roleRepository) {
+
+    @Autowired
+    lateinit var repositoryClient: RepositoryClient
+
+    @Autowired
+    lateinit var projectClient: ProjectClient
 
     override fun deletePermission(id: String): Boolean {
         logger.info("delete  permission  repoName: [$id]")
@@ -240,27 +245,41 @@ open class PermissionServiceImpl constructor(
     }
 
     private fun checkProjectAdmin(request: CheckPermissionRequest, roles: List<String>): Boolean {
+        var queryRoles = emptyList<String>()
         if (roles.isNotEmpty() && request.projectId != null) {
-            roles.filter { !it.isNullOrEmpty() }.forEach {
-                val role = roleRepository.findFirstByIdAndProjectIdAndType(it, request.projectId!!, RoleType.PROJECT)
-                if (role != null && role.admin) return true
-            }
+            queryRoles = roles.filter { !it.isNullOrEmpty() }.toList()
+        }
+        if (queryRoles.isEmpty()) {
+            return false
+        }
+        val result = roleRepository.findByProjectIdAndTypeAndAdminAndIdIn(
+            projectId = request.projectId!!, type = RoleType.PROJECT, admin = true, ids = queryRoles
+        )
+        if (result.isNotEmpty()) {
+            return true
         }
         return false
     }
 
     private fun checkRepoAdmin(request: CheckPermissionRequest, roles: List<String>): Boolean {
         // check role repo admin
+        var queryRoles = emptyList<String>()
         if (roles.isNotEmpty() && request.projectId != null && request.repoName != null) {
-            roles.filter { !it.isNullOrEmpty() }.forEach {
-                val rRole = roleRepository.findFirstByIdAndProjectIdAndTypeAndRepoName(
-                    id = it,
-                    projectId = request.projectId!!,
-                    type = RoleType.REPO,
-                    repoName = request.repoName!!
-                )
-                if (rRole != null && rRole.admin) return true
-            }
+            queryRoles = roles.filter { !it.isNullOrEmpty() }.toList()
+
+        }
+        if (queryRoles.isEmpty()) {
+            return false
+        }
+        val result = roleRepository.findByProjectIdAndTypeAndAdminAndRepoNameAndIdIn(
+            projectId = request.projectId!!,
+            type = RoleType.REPO,
+            repoName = request.repoName!!,
+            admin = true,
+            ids = queryRoles
+        )
+        if (result.isNotEmpty()) {
+            return true
         }
         return false
     }
@@ -339,9 +358,7 @@ open class PermissionServiceImpl constructor(
 
         // 用户为项目管理员
         if (roles.isNotEmpty() && roleRepository.findByProjectIdAndTypeAndAdminAndIdIn(
-                projectId = projectId,
-                type = RoleType.PROJECT,
-                admin = true, roles = roles
+                projectId = projectId, type = RoleType.PROJECT, admin = true, ids = roles
             ).isNotEmpty()
         ) {
             return getAllRepoByProjectId(projectId)
@@ -359,7 +376,9 @@ open class PermissionServiceImpl constructor(
         val noAdminRole = mutableListOf<String>()
 
         // 仓库管理员角色关联权限
-        val roleList = roleRepository.findByProjectIdAndTypeAndAdminAndIdIn(projectId, RoleType.REPO, true, roles)
+        val roleList = roleRepository.findByProjectIdAndTypeAndAdminAndIdIn(
+            projectId = projectId, type = RoleType.REPO, admin = true, ids = roles
+        )
         roleList.forEach {
             if (it.admin && it.repoName != null) {
                 repoList.add(it.repoName)
@@ -492,10 +511,7 @@ open class PermissionServiceImpl constructor(
             permissionRepository.insert(request)
         }
         return permissionRepository.findOneByProjectIdAndReposAndPermNameAndResourceType(
-            projectId = projectId,
-            repoName = repoName,
-            permName = permName,
-            resourceType = ResourceType.REPO
+            projectId = projectId, repoName = repoName, permName = permName, resourceType = ResourceType.REPO
         )!!
     }
 

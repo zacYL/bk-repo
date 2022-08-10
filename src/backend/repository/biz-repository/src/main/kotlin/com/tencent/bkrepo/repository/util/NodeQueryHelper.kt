@@ -64,9 +64,9 @@ object NodeQueryHelper {
         return Query(criteria)
     }
 
-    fun nodeQuery(projectId: String, id: String): Query {
+    fun nodeQuery(projectId: String, id: List<String>): Query {
         val criteria = where(TNode::projectId).isEqualTo(projectId)
-            .and("_id").isEqualTo(ObjectId(id))
+            .and("_id").inValues(id.map { ObjectId(it) })
         return Query(criteria)
     }
 

@@ -76,11 +76,11 @@ interface NodeClient {
     ): Response<NodeDetail?>
 
     @ApiOperation("根据ID查询节点路径")
-    @GetMapping("/path/{projectId}")
-    fun getNodeFullPathById(
+    @PostMapping("/path/{projectId}")
+    fun listFullPathById(
         @PathVariable projectId: String,
-        @RequestParam id: String
-    ): Response<String?>
+        @RequestBody id: List<String>
+    ): Response<Map<String, String>>
 
     @ApiOperation("更新最近使用时间")
     @GetMapping("/update/{projectId}/{repoName}")

@@ -66,6 +66,7 @@ enum class ArtifactMessageCode(private val key: String) : MessageCode {
     ARTIFACT_SIZE_TOO_LARGE("artifact.size.too-large"),
     ARTIFACT_TYPE_UNSUPPORTED("artifact.type.unsupported"),
     ARTIFACT_FORBIDDEN("artifact.forbidden"),
+    FILE_LIST_EMPTY("artifact.file.list.empty")
     ;
 
     override fun getBusinessCode() = ordinal + 1

@@ -69,8 +69,8 @@ class NodeController(
         return ResponseBuilder.success(nodeService.getNodeDetail(artifactInfo))
     }
 
-    override fun getNodeFullPathById(projectId: String, id: String): Response<String?> {
-        return ResponseBuilder.success(nodeService.getNodeFullPathById(projectId, id))
+    override fun listFullPathById(projectId: String, id: List<String>): Response<Map<String, String>> {
+        return ResponseBuilder.success(nodeService.listFullPathById(projectId, id))
     }
 
     override fun updateRecentlyUseDate(

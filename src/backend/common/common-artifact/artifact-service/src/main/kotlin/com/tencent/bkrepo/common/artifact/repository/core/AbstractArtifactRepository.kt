@@ -128,8 +128,9 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
     override fun download(context: ArtifactDownloadContext) {
         try {
             this.onDownloadBefore(context)
-            val artifactResponse = this.onDownload(context)
-                ?: throw ArtifactNotFoundException(context.artifactInfo.toString())
+            val artifactResponse = this.onDownload(context) ?: if (!context.download) return else {
+                    throw ArtifactNotFoundException(context.artifactInfo.toString())
+                }
             val throughput = artifactResourceWriter.write(artifactResponse)
             this.onDownloadSuccess(context, artifactResponse, throughput)
         } catch (exception: ArtifactResponseException) {

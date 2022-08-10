@@ -153,7 +153,12 @@ object ScanPlanConverter {
         }
     }
 
-    fun convert(scanPlan: TScanPlan, latestScanTask: TScanTask?, artifactCount: Long): ScanPlanInfo {
+    fun convert(
+        scanPlan: TScanPlan,
+        latestScanTask: TScanTask?,
+        artifactCount: Long,
+        scanning: Boolean = false
+    ): ScanPlanInfo {
         with(scanPlan) {
             val scannerType = latestScanTask?.scannerType
             val overview = scanPlan.scanResultOverview
@@ -162,9 +167,13 @@ object ScanPlanConverter {
             val high = Converter.getCveCount(scannerType, Level.HIGH.levelName, overview)
             val medium = Converter.getCveCount(scannerType, Level.MEDIUM.levelName, overview)
             val low = Converter.getCveCount(scannerType, Level.LOW.levelName, overview)
-            val status = latestScanTask?.let {
-                convertToScanStatus(it.status, isPlan = true).name
-            } ?: ScanStatus.INIT.name
+            val status = if (scanning) {
+                ScanStatus.RUNNING.name
+            } else {
+                latestScanTask?.let {
+                    convertToScanStatus(it.status, isPlan = true).name
+                } ?: ScanStatus.INIT.name
+            }
 
             return ScanPlanInfo(
                 id = id!!,

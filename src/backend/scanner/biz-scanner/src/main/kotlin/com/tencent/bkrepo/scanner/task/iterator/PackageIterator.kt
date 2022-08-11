@@ -41,6 +41,7 @@ import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
 import com.tencent.bkrepo.scanner.pojo.Node
 import com.tencent.bkrepo.scanner.pojo.rule.RuleArtifact
 import com.tencent.bkrepo.scanner.utils.Request
+import com.tencent.bkrepo.scanner.utils.RuleUtil
 import org.slf4j.LoggerFactory
 import kotlin.math.min
 
@@ -101,25 +102,31 @@ class PackageIterator(
         return if (records.isEmpty()) {
             emptyList()
         } else {
+            val hasNameOrVersion = RuleUtil.nameOrVersionField(position.rule)
             records.flatMap {
                 val pkg = parse(it)
-                // 获取与rule匹配的版本
-                pkg.historyVersion
-                    .ifEmpty { listOf(pkg.latestVersion) }
-                    .asSequence()
-                    .filter { version ->
-                        val valuesToMatch = mapOf(
-                            Package::projectId.name to pkg.projectId,
-                            Package::repoName.name to pkg.repoName,
-                            PackageSummary::type.name to pkg.type,
-                            PackageSummary::key.name to pkg.packageKey,
-                            RuleArtifact::name.name to pkg.artifactName,
-                            RuleArtifact::version.name to version
-                        )
-                        RuleMatcher.match(position.rule, valuesToMatch)
-                    }
-                    .map { version -> pkg.copy(packageVersion = version) }
-                    .toList()
+                if (!hasNameOrVersion) {
+                    // 未设置制品名称/版本rule，扫描最新版本
+                    listOf(pkg.copy(packageVersion = pkg.latestVersion))
+                } else {
+                    // 获取与rule匹配的版本
+                    pkg.historyVersion
+                        .ifEmpty { listOf(pkg.latestVersion) }
+                        .asSequence()
+                        .filter { version ->
+                            val valuesToMatch = mapOf(
+                                Package::projectId.name to pkg.projectId,
+                                Package::repoName.name to pkg.repoName,
+                                PackageSummary::type.name to pkg.type,
+                                PackageSummary::key.name to pkg.packageKey,
+                                RuleArtifact::name.name to pkg.artifactName,
+                                RuleArtifact::version.name to version
+                            )
+                            RuleMatcher.match(position.rule, valuesToMatch)
+                        }
+                        .map { version -> pkg.copy(packageVersion = version) }
+                        .toList()
+                }
             }
         }
     }

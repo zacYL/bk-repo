@@ -48,10 +48,14 @@ class CveWhitelistServiceImpl(
         return cveWhitelistDao.deleteByCveId(cveId)
     }
 
-    override fun searchByCveId(cveId: String?, pageNumber: Int, pageSize: Int): Page<CveWhitelistInfo> {
-        Preconditions.checkArgument(pageNumber >= 0, "pageNumber must be greater than or equal to 0")
-        Preconditions.checkArgument(pageSize >= 0, "pageSize must be greater than or equal to 0")
-        val pageRequest = Pages.ofRequest(page = pageNumber, size = pageSize)
+    override fun searchByCveId(cveId: String?, pageNumber: Int?, pageSize: Int?): Page<CveWhitelistInfo> {
+        if (pageNumber != null) {
+            Preconditions.checkArgument(pageNumber >= 0, "pageNumber must be greater than or equal to 0")
+        }
+        if (pageSize != null) {
+            Preconditions.checkArgument(pageSize >= 0, "pageSize must be greater than or equal to 0")
+        }
+        val pageRequest = Pages.ofRequest(page = pageNumber ?: default_pageNumber, size = pageSize ?: default_pageSize)
         val query = if (!cveId.isNullOrBlank()) {
             Query(Criteria.where(TCveWhitelist::cveId.name).regex(EscapeUtils.escapeRegex(cveId), "i"))
         } else {
@@ -90,5 +94,7 @@ class CveWhitelistServiceImpl(
 
     companion object {
         private val logger = LoggerFactory.getLogger(CveWhitelistServiceImpl::class.java)
+        private const val default_pageNumber = 1
+        private const val default_pageSize = 20
     }
 }

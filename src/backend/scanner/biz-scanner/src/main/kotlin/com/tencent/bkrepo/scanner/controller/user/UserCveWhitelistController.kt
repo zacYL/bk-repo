@@ -61,7 +61,7 @@ class UserCveWhitelistController(
         return ResponseBuilder.success()
     }
 
-    @PutMapping("/batch/")
+    @PutMapping("/batch")
     @Principal(PrincipalType.ADMIN)
     fun insertBatch(
         @RequestAttribute("userId") userId: String,
@@ -86,13 +86,13 @@ class UserCveWhitelistController(
         return ResponseBuilder.success()
     }
 
-    @GetMapping("/page/{pageNumber}/{pageSize}")
+    @GetMapping("/page")
     fun pageByCveId(
         @RequestParam cveId: String?,
-        @ApiParam(value = "当前页", required = true, example = "1")
-        @PathVariable @Min(1, message = "起始为1") pageNumber: Int,
-        @ApiParam(value = "分页大小", required = true, example = "20")
-        @PathVariable @Min(1, message = "分页至少需有一条数据") pageSize: Int
+        @ApiParam(value = "当前页", required = false, defaultValue = "0")
+        @RequestParam @Min(0, message = "pageNumber起始为0") pageNumber: Int?,
+        @ApiParam(value = "分页大小", required = false, defaultValue = "20")
+        @RequestParam @Min(1, message = "pageSize分页至少需有一条数据") pageSize: Int?
     ): Response<Page<CveWhitelistInfo>?> {
         return ResponseBuilder.success(cveWhitelistService.searchByCveId(cveId, pageNumber, pageSize))
     }

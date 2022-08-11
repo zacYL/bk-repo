@@ -253,5 +253,31 @@ export default {
                 isTrust
             }
         )
+    },
+    // 查询漏洞白名单
+    getCveWhiteList (_, { cveId, current = 1, limit = 20 }) {
+        return Vue.prototype.$ajax.get(
+            'scanner/api/cve_whitelist/page',
+            {
+                params: {
+                    cveId,
+                    pageNumber: current,
+                    pageSize: limit
+                }
+            }
+        )
+    },
+    // 添加漏洞白名单
+    addCveWhite (_, { body }) {
+        return Vue.prototype.$ajax.put(
+            'scanner/api/cve_whitelist/batch',
+            body
+        )
+    },
+    // 删除漏洞白名单
+    deleteCveWhite (_, { cveId }) {
+        return Vue.prototype.$ajax.delete(
+            `scanner/api/cve_whitelist/${cveId}`
+        )
     }
 }

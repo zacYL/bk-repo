@@ -146,7 +146,6 @@
                 return this.startScanSingle({
                     id,
                     projectId: this.projectId,
-                    repoType: 'GENERIC',
                     repoName: this.repoName,
                     fullPath: path
                 })

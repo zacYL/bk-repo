@@ -106,7 +106,7 @@
                     current: this.pagination.current,
                     limit: this.pagination.limit
                 }).then(({ records, totalRecords }) => {
-                    this.licenseList = records
+                    this.cveList = records
                     this.pagination.count = totalRecords
                 }).finally(() => {
                     this.isLoading = false

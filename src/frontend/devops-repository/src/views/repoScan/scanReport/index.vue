@@ -289,13 +289,10 @@
             },
             startScanSingleHandler ({ repoType, repoName, fullPath, packageKey, version }) {
                 this.startScanSingle({
-                    projectId: this.projectId,
                     id: this.planId,
-                    repoType,
+                    projectId: this.projectId,
                     repoName,
-                    fullPath,
-                    packageKey,
-                    version
+                    ...(repoType === 'GENERIC' ? { fullPath } : { packageKey, version })
                 }).then(() => {
                     this.$bkMessage({
                         theme: 'success',

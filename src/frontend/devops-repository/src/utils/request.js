@@ -21,8 +21,8 @@ function errorHandler (error) {
 
 request.interceptors.response.use(response => {
     const { data: { data, message }, status } = response
-    if (status === 200) {
-        return response.data instanceof Blob ? response.data : data
+    if (status === 200 || status === 206) {
+        return data === undefined ? response.data : data
     } else if (status === 401 || status === 402) {
         if (MODE_CONFIG === 'ci' || MODE_CONFIG === 'saas') {
             window.postMessage({

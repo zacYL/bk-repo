@@ -96,15 +96,8 @@
                     formData.append('token', encrypt.encrypt(this.loginForm.password))
                     this.bkrepoLogin(formData).then(res => {
                         if (res) {
-                            this.$bkMessage({
-                                theme: 'success',
-                                message: this.$t('login') + this.$t('success')
-                            })
-                            const afterLoginUrl = sessionStorage.getItem('afterLogin')
-                            sessionStorage.removeItem('afterLogin')
-                            afterLoginUrl && window.open(afterLoginUrl, '_self')
+                            // 重新进入应用
                             location.href = ''
-                            this.loginFailCounter = 0
                         } else {
                             this.loginFailedTip = this.$t('loginErrorTip')
                             this.loginFailed = true

@@ -101,10 +101,10 @@
                             recordId
                         },
                         query: {
-                            repoType: this.repoType,
-                            scanType: planType,
                             ...this.$route.params,
-                            ...this.$route.query
+                            ...this.$route.query,
+                            repoType: this.repoType,
+                            scanType: planType
                         }
                     })
                 }

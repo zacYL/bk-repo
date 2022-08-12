@@ -103,8 +103,6 @@
                             // ci登录逻辑
                             location.href = window.getLoginUrl()
                         } else {
-                            // 保存操作链接，登陆后调用
-                            sessionStorage.setItem('afterLogin', redirectUrl.href)
                             window.login = true
                             mountApp()
                         }
@@ -128,7 +126,13 @@
                 }
             }
             xhr.withCredentials = true
+            const cookies = document.cookie.split('; ').reduce((target, str) => {
+                const [key, value] = str.split('=')
+                target[key] = value
+                return target
+            }, {})
             xhr.open('HEAD', redirectUrl.href)
+            xhr.setRequestHeader('X-CSRFToken', cookies[(MODE_CONFIG === 'ci' || MODE_CONFIG === 'saas') ? 'bk_token' : 'bkrepo_ticket'])
             xhr.send()
         } else {
             mountApp()
@@ -138,7 +142,7 @@
             const app = document.createElement('div')
             app.setAttribute('id', 'app')
             document.body.append(app)
-            if (window.repositoryVue) window.repositoryVue.$mount('#app')
+            if (window.repositoryVue) window.repositoryVue.$mount('#app').$router.push({ name: 'repoList' })
         }
 
         function printError (status, message) {

@@ -43,6 +43,7 @@ import com.tencent.bkrepo.scanner.pojo.ScanTriggerType
 import com.tencent.bkrepo.scanner.pojo.request.PipelineScanRequest
 import com.tencent.bkrepo.scanner.pojo.request.ScanRequest
 import com.tencent.bkrepo.scanner.pojo.request.ScanTaskQuery
+import com.tencent.bkrepo.scanner.pojo.request.SingleScanRequest
 import com.tencent.bkrepo.scanner.pojo.request.SubtaskInfoRequest
 import com.tencent.bkrepo.scanner.pojo.response.FileLicensesResultOverview
 import com.tencent.bkrepo.scanner.pojo.response.SubtaskInfo
@@ -75,6 +76,14 @@ class UserScanController @Autowired constructor(
     @PostMapping
     fun scan(@RequestBody scanRequest: ScanRequest): Response<ScanTask> {
         return ResponseBuilder.success(scanService.scan(scanRequest, ScanTriggerType.MANUAL, SecurityUtils.getUserId()))
+    }
+
+    @ApiOperation("创建单个扫描任务")
+    @PostMapping("/single")
+    fun scanSingle(@RequestBody request: SingleScanRequest): Response<ScanTask> {
+        return ResponseBuilder.success(
+            scanService.scanSingle(request, ScanTriggerType.MANUAL_SINGLE, SecurityUtils.getUserId())
+        )
     }
 
     @ApiOperation("从流水线触发扫描")

@@ -35,6 +35,7 @@ import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
 import com.tencent.bkrepo.common.artifact.constant.FORBID_TYPE
 import com.tencent.bkrepo.common.artifact.constant.FORBID_USER
+import com.tencent.bkrepo.common.artifact.constant.QUALITY_STATUS
 import com.tencent.bkrepo.common.artifact.constant.SCAN_STATUS
 import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.security.util.SecurityUtils
@@ -51,7 +52,7 @@ object MetadataUtils {
     /**
      * 元数据KEY保留字，仅允许系统使用
      */
-    private val RESERVED_KEY = setOf(SCAN_STATUS, FORBID_STATUS, FORBID_USER, FORBID_TYPE)
+    val RESERVED_KEY = setOf(SCAN_STATUS, FORBID_STATUS, FORBID_USER, FORBID_TYPE, QUALITY_STATUS)
 
     /**
      * 用于兼容旧逻辑，优先从[metadataModels]取数据，[metadataModels]不存在时从[metadataMap]取

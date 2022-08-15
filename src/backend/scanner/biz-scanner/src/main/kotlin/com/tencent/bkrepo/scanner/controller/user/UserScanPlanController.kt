@@ -34,12 +34,10 @@ import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_SIZE
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.query.model.PageLimit
-import com.tencent.bkrepo.common.scanner.pojo.scanner.SubScanTaskStatus
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.scanner.component.ScannerPermissionCheckHandler
 import com.tencent.bkrepo.scanner.pojo.ScanPlan
-import com.tencent.bkrepo.scanner.pojo.ScanStatus
 import com.tencent.bkrepo.scanner.pojo.request.ArtifactPlanRelationRequest
 import com.tencent.bkrepo.scanner.pojo.request.CreateScanPlanRequest
 import com.tencent.bkrepo.scanner.pojo.request.PlanCountRequest
@@ -148,9 +146,12 @@ class UserScanPlanController(
         projectId: String,
         @ApiParam(value = "方案类型")
         @RequestParam
-        type: String?
-    ): Response<List<ScanPlan>> {
-        val planList = scanPlanService.list(projectId, type)
+        type: String?,
+        @ApiParam(value = "待扫描文件名后缀，该参数尽在type为GENERIC时有效")
+        @RequestParam(required = false)
+        fileNameExt: String? = null
+        ): Response<List<ScanPlan>> {
+        val planList = scanPlanService.list(projectId, type, fileNameExt)
         planList.forEach { ScanPlanConverter.keepProps(it, KEEP_PROPS) }
         return ResponseBuilder.success(planList)
     }
@@ -185,7 +186,6 @@ class UserScanPlanController(
     ): Response<Map<String, Any?>> {
         return ResponseBuilder.success(scanPlanService.artifactPlanList(artifactRequest))
     }
-
     @ApiOperation("方案详情-许可-统计数据")
     @GetMapping("/license/count")
     fun planLicenseDetailCount(countRequest: PlanCountRequest): Response<ScanLicensePlanInfo?> {

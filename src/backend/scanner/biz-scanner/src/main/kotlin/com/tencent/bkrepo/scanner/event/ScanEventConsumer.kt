@@ -52,6 +52,7 @@ import com.tencent.bkrepo.scanner.pojo.request.ScanRequest
 import com.tencent.bkrepo.scanner.pojo.request.SubScanTaskQuery
 import com.tencent.bkrepo.scanner.pojo.rule.RuleArtifact
 import com.tencent.bkrepo.scanner.service.ScanService
+import com.tencent.bkrepo.scanner.service.ScannerService
 import com.tencent.bkrepo.scanner.service.SpdxLicenseService
 import com.tencent.bkrepo.scanner.utils.RuleConverter
 import org.slf4j.LoggerFactory
@@ -66,16 +67,17 @@ import java.util.function.Consumer
  */
 @Component("artifactEvent")
 class ScanEventConsumer(
-    private val nodeClient: NodeClient,
-    private val storageProperties: StorageProperties,
-    private val spdxLicenseService: SpdxLicenseService,
-    private val scanService: ScanService,
-    private val scanPlanDao: ScanPlanDao,
-    private val projectScanConfigurationDao: ProjectScanConfigurationDao,
-    private val executor: ThreadPoolTaskExecutor,
-    private val scannerProperties: ScannerProperties,
-    private val repositoryClient: RepositoryClient,
-    private val subScanTaskDao: SubScanTaskDao
+        private val nodeClient: NodeClient,
+        private val storageProperties: StorageProperties,
+        private val spdxLicenseService: SpdxLicenseService,
+        private val scanService: ScanService,
+        private val scannerService: ScannerService,
+        private val scanPlanDao: ScanPlanDao,
+        private val projectScanConfigurationDao: ProjectScanConfigurationDao,
+        private val executor: ThreadPoolTaskExecutor,
+        private val scannerProperties: ScannerProperties,
+        private val repositoryClient: RepositoryClient,
+        private val subScanTaskDao: SubScanTaskDao
 ) : Consumer<ArtifactEvent> {
 
     /**
@@ -226,7 +228,7 @@ class ScanEventConsumer(
 
     private fun supportFileNameExtension(fullPath: String): Boolean {
         val fileNameExtension = fullPath.substringAfterLast('.', "")
-        return fileNameExtension in scannerProperties.supportFileNameExt
+        return fileNameExtension in scannerService.supportFileNameExt()
     }
 
     /**

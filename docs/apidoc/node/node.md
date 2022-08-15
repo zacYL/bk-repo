@@ -778,7 +778,6 @@
   | packages  | Int    | 节点数量     | node count           |
 
 
-
 ## 清理创建时间早于{date}的文件节点
 
 - API: DELETE /repository/api/node/clean/{projectId}/{repoName}?date=yyyy-MM-dd'T'HH:mm:ss.SSSXXX
@@ -811,4 +810,3 @@
     "traceId": null
   }
   ```
-

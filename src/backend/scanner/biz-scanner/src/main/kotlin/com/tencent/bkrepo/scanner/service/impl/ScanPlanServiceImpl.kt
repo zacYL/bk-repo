@@ -37,6 +37,7 @@ import com.tencent.bkrepo.common.artifact.constant.SCAN_STATUS
 import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.scanner.pojo.ScanSchemeType
 import com.tencent.bkrepo.common.query.model.Rule
+import com.tencent.bkrepo.common.scanner.pojo.scanner.ScanType
 import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.repository.api.PackageClient
@@ -62,6 +63,7 @@ import com.tencent.bkrepo.scanner.utils.Request
 import com.tencent.bkrepo.scanner.utils.ScanLicenseConverter
 import com.tencent.bkrepo.scanner.utils.RuleConverter
 import com.tencent.bkrepo.scanner.utils.RuleUtil
+import com.tencent.bkrepo.scanner.utils.ScanLicenseConverter
 import com.tencent.bkrepo.scanner.utils.ScanParamUtil
 import com.tencent.bkrepo.scanner.utils.ScanPlanConverter
 import org.slf4j.LoggerFactory
@@ -103,6 +105,7 @@ class ScanPlanServiceImpl(
                 projectId = projectId!!,
                 name = name!!,
                 type = type!!,
+                scanTypes = scanTypes ?: listOf(ScanType.SECURITY.name),
                 description = description ?: "",
                 scanner = scanner!!,
                 scanOnNewArtifact = scanOnNewArtifact ?: false,
@@ -118,8 +121,18 @@ class ScanPlanServiceImpl(
         }
     }
 
-    override fun list(projectId: String, type: String?): List<ScanPlan> {
-        return scanPlanDao.list(projectId, type).map { ScanPlanConverter.convert(it) }
+    override fun list(projectId: String, type: String?, fileNameExt: String?): List<ScanPlan> {
+        var scanPlans = scanPlanDao.list(projectId, type)
+        if (type == RepositoryType.GENERIC.name && fileNameExt != null) {
+            // 筛选支持指定文件名后缀的扫描方案
+            val scannerNames = scanPlans.map { it.scanner }
+            val scanners = scannerService.find(scannerNames).associateBy { it.name }
+            scanPlans = scanPlans.filter {
+                val scanner = scanners[it.scanner]!!
+                scanner.supportFileNameExt.isEmpty() || fileNameExt in scanner.supportFileNameExt
+            }
+        }
+        return scanPlans.map { ScanPlanConverter.convert(it) }
     }
 
     override fun page(
@@ -170,6 +183,7 @@ class ScanPlanServiceImpl(
                 projectId = projectId,
                 name = name,
                 type = type,
+                scanTypes = listOf(ScanType.SECURITY.name),
                 scanner = scannerService.default().name,
                 rule = RuleConverter.convert(projectId, emptyList(), type)
             )
@@ -325,6 +339,21 @@ class ScanPlanServiceImpl(
     private fun checkRunning(planId: String) {
         if (scanTaskDao.existsByPlanIdAndStatus(planId, runningStatus)) {
             throw ErrorCodeException(ScannerMessageCode.SCAN_PLAN_DELETE_FAILED)
+        }
+    }
+
+    override fun scanLicensePlanInfo(request: PlanCountRequest): ScanLicensePlanInfo? {
+        with(request) {
+            val scanPlan = scanPlanDao.find(projectId, id)
+                ?: throw throw NotFoundException(CommonMessageCode.RESOURCE_NOT_FOUND, projectId, id)
+            return if (startTime != null && endTime != null) {
+                val subScanTasks = planArtifactLatestSubScanTaskDao.findBy(request)
+                ScanLicenseConverter.convert(scanPlan, subScanTasks)
+            } else {
+                val scanTask = scanPlan.latestScanTaskId?.let { scanTaskDao.findById(it) }
+                val artifactCount = planArtifactLatestSubScanTaskDao.planArtifactCount(scanPlan.id!!)
+                ScanLicenseConverter.convert(scanPlan, scanTask, artifactCount)
+            }
         }
     }
 

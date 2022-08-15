@@ -44,6 +44,7 @@ data class ScannerProperties(
             "apk", "apks", "aab", "exe", "so", "ipa", "dmg", "jar", "gz", "tar", "zip"
         )
         val LICENSE_SUPPORT_FILE_NAME_EXTENSION = setOf("apk", "ipa", "jar")
+
         const val DEFAULT_PROJECT_SCAN_PRIORITY = 0
         const val DEFAULT_SCAN_TASK_COUNT_LIMIT = 1
         const val DEFAULT_SUB_SCAN_TASK_COUNT_LIMIT = 20

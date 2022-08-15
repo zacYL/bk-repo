@@ -136,5 +136,8 @@ const val FORBID_STATUS = "forbidStatus"
 const val FORBID_USER = "forbidUser"
 const val FORBID_TYPE = "forbidType"
 
+// 质量状态
+const val QUALITY_STATUS = "qualityRedLine"
+
 // 制品扫描状态
 const val SCAN_STATUS = "scanStatus"

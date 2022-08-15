@@ -2,6 +2,7 @@ package com.tencent.bkrepo.repository.job.clean
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
@@ -18,10 +19,11 @@ object CleanThreadPoolExecutor {
         val namedThreadFactory = ThreadFactoryBuilder().setNameFormat("clean-worker-%d").build()
         return ThreadPoolExecutor(
             0,
-            Runtime.getRuntime().availableProcessors(),
+            Runtime.getRuntime().availableProcessors() * 2,
             30,
             TimeUnit.SECONDS,
-            ArrayBlockingQueue(10), namedThreadFactory,
+            LinkedBlockingQueue(100),
+            namedThreadFactory,
             ThreadPoolExecutor.AbortPolicy()
         )
     }

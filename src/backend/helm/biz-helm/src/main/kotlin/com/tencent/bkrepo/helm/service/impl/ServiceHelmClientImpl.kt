@@ -1,6 +1,5 @@
 package com.tencent.bkrepo.helm.service.impl
 
-import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.helm.service.ServiceHelmClientService
 import com.tencent.bkrepo.helm.utils.HelmMetadataUtils

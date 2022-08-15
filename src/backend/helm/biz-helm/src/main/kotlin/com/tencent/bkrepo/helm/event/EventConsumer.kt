@@ -2,6 +2,7 @@ package com.tencent.bkrepo.helm.event
 
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.event.base.EventType
+import com.tencent.bkrepo.common.artifact.event.packages.RepositoryCleanEvent
 import com.tencent.bkrepo.common.artifact.event.packages.VersionDeletedEvent
 import com.tencent.bkrepo.helm.constants.REPO_TYPE
 import com.tencent.bkrepo.helm.service.ServiceHelmClientService
@@ -16,14 +17,17 @@ class EventConsumer(
     override fun accept(event: ArtifactEvent) {
         require(event.type == EventType.REPOSITORY_CLEAN) { return }
         with(event) {
-            require(data[VersionDeletedEvent::packageType.name] == REPO_TYPE) { return }
-            service.deleteVersion(
-                projectId,
-                repoName,
-                data[VersionDeletedEvent::packageKey.name] as String,
-                data[VersionDeletedEvent::packageVersion.name] as String,
-                SYSTEM_USER
-            )
+            require(data[RepositoryCleanEvent::packageType.name] == REPO_TYPE) { return }
+            val versionList = data[RepositoryCleanEvent::versionList.name] as List<String>
+            versionList.forEach {
+                service.deleteVersion(
+                    projectId,
+                    repoName,
+                    data[RepositoryCleanEvent::packageKey.name] as String,
+                    it,
+                    SYSTEM_USER
+                )
+            }
         }
     }
 }

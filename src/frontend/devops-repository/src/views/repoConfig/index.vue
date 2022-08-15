@@ -184,7 +184,7 @@
                 return this.$route.params.repoType
             },
             showProxyConfigTab () {
-                return ['maven', 'pypi', 'npm', 'composer', 'nuget'].includes(this.repoType)
+                return ['maven', 'docker', 'npm', 'helm', 'pypi', 'composer', 'nuget'].includes(this.repoType)
             },
             showCleanConfigTab () {
                 return ['maven', 'docker', 'npm', 'helm', 'generic'].includes(this.repoType)

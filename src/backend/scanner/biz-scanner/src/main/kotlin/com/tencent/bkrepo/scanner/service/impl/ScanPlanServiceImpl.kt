@@ -34,6 +34,7 @@ import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.constant.SCAN_STATUS
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.scanner.pojo.ScanSchemeType
 import com.tencent.bkrepo.common.query.model.Rule
@@ -63,7 +64,6 @@ import com.tencent.bkrepo.scanner.utils.Request
 import com.tencent.bkrepo.scanner.utils.ScanLicenseConverter
 import com.tencent.bkrepo.scanner.utils.RuleConverter
 import com.tencent.bkrepo.scanner.utils.RuleUtil
-import com.tencent.bkrepo.scanner.utils.ScanLicenseConverter
 import com.tencent.bkrepo.scanner.utils.ScanParamUtil
 import com.tencent.bkrepo.scanner.utils.ScanPlanConverter
 import org.slf4j.LoggerFactory
@@ -91,7 +91,7 @@ class ScanPlanServiceImpl(
                 throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "name cannot be empty or length > 32")
             }
 
-            if (!ScanSchemeType.values().map { it.name }.contains(type)) {
+            if (!RepositoryType.values().map { it.name }.contains(type)) {
                 throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "invalid scan plan type[$type]")
             }
 
@@ -319,21 +319,6 @@ class ScanPlanServiceImpl(
         }
 
         return ScanPlanConverter.artifactStatus(relations.map { it.status })
-    }
-
-    override fun scanLicensePlanInfo(request: PlanCountRequest): ScanLicensePlanInfo? {
-        with(request) {
-            val scanPlan = scanPlanDao.find(projectId, id)
-                ?: throw throw NotFoundException(CommonMessageCode.RESOURCE_NOT_FOUND, projectId, id)
-            return if (startTime != null && endTime != null) {
-                val subScanTasks = planArtifactLatestSubScanTaskDao.findBy(request)
-                ScanLicenseConverter.convert(scanPlan, subScanTasks)
-            } else {
-                val scanTask = scanPlan.latestScanTaskId?.let { scanTaskDao.findById(it) }
-                val artifactCount = planArtifactLatestSubScanTaskDao.planArtifactCount(scanPlan.id!!)
-                ScanLicenseConverter.convert(scanPlan, scanTask, artifactCount)
-            }
-        }
     }
 
     private fun checkRunning(planId: String) {

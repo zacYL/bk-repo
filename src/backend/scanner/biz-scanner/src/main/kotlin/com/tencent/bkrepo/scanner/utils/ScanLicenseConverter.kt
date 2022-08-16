@@ -27,19 +27,11 @@
 
 package com.tencent.bkrepo.scanner.utils
 
-import com.tencent.bkrepo.common.api.exception.ErrorCodeException
-import com.tencent.bkrepo.common.api.message.CommonMessageCode
-import com.tencent.bkrepo.common.api.pojo.Page
-import com.tencent.bkrepo.common.mongo.dao.util.Pages
-import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.common.scanner.pojo.scanner.Level
 import com.tencent.bkrepo.common.scanner.pojo.scanner.LicenseNature
 import com.tencent.bkrepo.common.scanner.pojo.scanner.LicenseOverviewKey
 import com.tencent.bkrepo.common.scanner.pojo.scanner.LicenseOverviewKey.NIL
 import com.tencent.bkrepo.common.scanner.pojo.scanner.LicenseOverviewKey.TOTAL
-import com.tencent.bkrepo.common.scanner.pojo.scanner.scanCodeCheck.result.ScanCodeToolkitScanExecutorResult
-import com.tencent.bkrepo.common.scanner.pojo.scanner.scanCodeCheck.result.ScancodeItem
-import com.tencent.bkrepo.common.scanner.pojo.scanner.scanCodeCheck.scanner.ScancodeToolkitScanner
 import com.tencent.bkrepo.scanner.model.LicenseScanDetailExport
 import com.tencent.bkrepo.scanner.model.LicenseScanPlanExport
 import com.tencent.bkrepo.scanner.model.SubScanTaskDefinition
@@ -47,13 +39,9 @@ import com.tencent.bkrepo.scanner.model.TPlanArtifactLatestSubScanTask
 import com.tencent.bkrepo.scanner.model.TScanPlan
 import com.tencent.bkrepo.scanner.model.TScanTask
 import com.tencent.bkrepo.scanner.pojo.ScanStatus
-import com.tencent.bkrepo.scanner.pojo.request.LoadResultArguments
-import com.tencent.bkrepo.scanner.pojo.request.scancodetoolkit.ArtifactLicensesDetailRequest
-import com.tencent.bkrepo.scanner.pojo.request.scancodetoolkit.ScancodeToolkitResultArguments
 import com.tencent.bkrepo.scanner.pojo.response.FileLicensesResultDetail
 import com.tencent.bkrepo.scanner.pojo.response.FileLicensesResultOverview
 import com.tencent.bkrepo.scanner.pojo.response.ScanLicensePlanInfo
-import org.springframework.data.domain.PageRequest
 import java.time.format.DateTimeFormatter
 
 object ScanLicenseConverter {
@@ -186,66 +174,6 @@ object ScanLicenseConverter {
                 duration = ScanPlanConverter.duration(startDateTime, finishedDateTime),
                 scanStatus = ScanPlanConverter.convertToScanStatus(status, qualityRedLine).name
             )
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    fun convert(
-        detailReport: Any?,
-        scannerType: String,
-        reportType: String,
-        pageNumber: Int,
-        pageSize: Int
-    ): Page<FileLicensesResultDetail> {
-        val pageRequest = PageRequest.of(pageNumber - 1, pageSize)
-        if (scannerType == ScancodeToolkitScanner.TYPE && reportType == ScancodeItem.TYPE && detailReport != null) {
-            detailReport as Page<ScancodeItem>
-            val reports = detailReport.records.mapTo(HashSet(detailReport.records.size)) {
-                FileLicensesResultDetail(
-                    licenseId = it.licenseId,
-                    fullName = it.fullName,
-                    compliance = it.compliance,
-                    riskLevel = it.riskLevel,
-                    recommended = it.recommended,
-                    description = it.description ?: "",
-                    isOsiApproved = it.isOsiApproved,
-                    dependentPath = it.dependentPath,
-                    isFsfLibre = it.isFsfLibre
-                )
-            }.toList()
-            return Pages.ofResponse(pageRequest, detailReport.totalRecords, reports)
-
-        }
-        return Pages.ofResponse(pageRequest, 0L, emptyList())
-    }
-
-    fun convertToLoadArguments(request: ArtifactLicensesDetailRequest, scannerType: String): LoadResultArguments? {
-        return when (scannerType) {
-            ScancodeToolkitScanner.TYPE -> {
-                ScancodeToolkitResultArguments(
-                    licenseIds = request.licenseId?.let { listOf(it) } ?: emptyList(),
-                    riskLevels = request.riskLevel?.let { listOf(it) } ?: emptyList(),
-                    reportType = request.reportType,
-                    pageLimit = PageLimit(request.pageNumber, request.pageSize)
-                )
-            }
-            else -> null
-        }
-    }
-
-    private fun getLicenseCount(scannerType: String?, level: String, overview: Map<String, Number>?): Long {
-        if (scannerType == null) {
-            return 0L
-        }
-
-        val key = getLicenseOverviewKey(scannerType, level)
-        return overview?.get(key)?.toLong() ?: 0L
-    }
-
-    private fun getLicenseOverviewKey(scannerType: String, level: String): String {
-        return when (scannerType) {
-            ScancodeToolkitScanner.TYPE -> ScanCodeToolkitScanExecutorResult.overviewKeyOf(level)
-            else -> throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, scannerType, level)
         }
     }
 

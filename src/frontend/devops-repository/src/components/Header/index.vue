@@ -95,6 +95,7 @@
         color: white;
         line-height: 24px;
         border: 1px solid #FFFFFF33;
+        border-radius: 2px;
         background-color: #FFFFFF1A;
         .icon-sort {
             display:inline-block;

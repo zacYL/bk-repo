@@ -29,7 +29,6 @@ package com.tencent.bkrepo.scanner.service.impl
 
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.common.scanner.pojo.scanner.CveOverviewKey
-import com.tencent.bkrepo.common.scanner.pojo.scanner.constant.SCANCODE_TOOLKIT
 import com.tencent.bkrepo.common.scanner.pojo.scanner.ScanType
 import com.tencent.bkrepo.common.scanner.pojo.scanner.Scanner
 import com.tencent.bkrepo.scanner.component.ScannerPermissionCheckHandler
@@ -69,9 +68,6 @@ class ScanQualityServiceImpl(
         val scanner = scannerService.get(tScanPlan.scanner)
         // 获取方案质量规则
         val scanQuality = scanPlanDao.get(planId).scanQuality
-        if (tScanPlan.scanner == SCANCODE_TOOLKIT){
-            return licenseScanQualityService.checkLicenseScanQualityRedLine(scanQuality, scanResultOverview)
-        }
         return checkScanQualityRedLine(scanQuality, scanResultOverview, scanner)
     }
 

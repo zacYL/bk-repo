@@ -38,10 +38,4 @@ data class ScanCodeToolkitScanExecutorResult(
     override val overview: Map<String, Any?>,
     @ApiModelProperty("结果")
     val scancodeItem: Set<ScancodeItem>
-) : ScanExecutorResult(scanStatus, overview, ScancodeToolkitScanner.TYPE) {
-    companion object {
-        fun overviewKeyOf(level: String): String {
-            return "license${level.capitalize()}Count"
-        }
-    }
-}
+) : ScanExecutorResult(scanStatus, overview, ScancodeToolkitScanner.TYPE)

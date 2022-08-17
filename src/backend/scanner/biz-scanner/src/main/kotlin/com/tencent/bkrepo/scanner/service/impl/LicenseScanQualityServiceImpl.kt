@@ -29,13 +29,12 @@ package com.tencent.bkrepo.scanner.service.impl
 
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.common.scanner.pojo.scanner.LicenseNature
-import com.tencent.bkrepo.common.scanner.pojo.scanner.scanCodeCheck.result.ScanCodeToolkitScanExecutorResult
+import com.tencent.bkrepo.common.scanner.pojo.scanner.LicenseOverviewKey
 import com.tencent.bkrepo.scanner.component.ScannerPermissionCheckHandler
 import com.tencent.bkrepo.scanner.dao.ScanPlanDao
 import com.tencent.bkrepo.scanner.pojo.request.LicenseScanQualityUpdateRequest
 import com.tencent.bkrepo.scanner.pojo.response.LicenseScanQualityResponse
 import com.tencent.bkrepo.scanner.service.LicenseScanQualityService
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
@@ -78,15 +77,10 @@ class LicenseScanQualityServiceImpl(
         overview: Map<String, Number>,
         quality: Map<String, Any>
     ): Boolean {
-        val count = overview[ScanCodeToolkitScanExecutorResult.overviewKeyOf(overviewKey.natureName)]?.toLong() ?: 0L
-        val redLine = quality[overviewKey.level] as Boolean
-        if (logger.isDebugEnabled){
-            logger.debug("overviewKey:[$overviewKey] count:[$count] redLine:[$redLine] result:[${count != 0L && redLine}]")
+        if (quality[overviewKey.level] == true) {
+            val count = overview[LicenseOverviewKey.overviewKeyOf(overviewKey.natureName)]?.toLong() ?: 0L
+            return count != 0L
         }
-        return count != 0L && redLine
-    }
-
-    companion object{
-        private val logger = LoggerFactory.getLogger(LicenseScanQualityServiceImpl::class.java)
+        return false
     }
 }

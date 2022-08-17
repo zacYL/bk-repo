@@ -36,7 +36,6 @@ import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.constant.SCAN_STATUS
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.query.model.PageLimit
-import com.tencent.bkrepo.scanner.pojo.ScanSchemeType
 import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.scanner.pojo.scanner.ScanType
 import com.tencent.bkrepo.common.security.permission.PrincipalType

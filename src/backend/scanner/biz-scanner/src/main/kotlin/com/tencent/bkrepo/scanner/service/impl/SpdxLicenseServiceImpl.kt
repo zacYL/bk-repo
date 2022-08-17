@@ -110,6 +110,8 @@ class SpdxLicenseServiceImpl(
         val records = licenseDao.find(query.with(pageRequest)).map { convert(it) }
         return Pages.ofResponse(pageRequest, totalRecords, records)
     }
+
+
     override fun listLicense(): List<SpdxLicenseInfo> {
         return licenseDao.findAll().map { convert(it) }
     }

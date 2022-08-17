@@ -124,11 +124,10 @@
                 const { id, version } = this.formDialog
                 return this.startScanSingle({
                     id,
-                    version,
-                    packageKey: this.packageKey,
                     projectId: this.projectId,
-                    repoType: 'MAVEN',
-                    repoName: this.repoName
+                    repoName: this.repoName,
+                    packageKey: this.packageKey,
+                    version
                 })
             },
             submitCommonForm () {

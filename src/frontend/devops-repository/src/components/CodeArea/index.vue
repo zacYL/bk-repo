@@ -81,8 +81,8 @@
     .code-copy {
         position: absolute;
         visibility: hidden;
-        top: 0;
-        right: 0;
+        top: 10px;
+        right: 10px;
     }
     &:hover {
         .code-copy {

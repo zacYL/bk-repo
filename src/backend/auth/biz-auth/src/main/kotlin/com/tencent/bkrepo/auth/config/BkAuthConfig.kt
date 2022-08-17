@@ -38,22 +38,37 @@ import org.springframework.stereotype.Component
 class BkAuthConfig {
 
     /**
-     * auth 服务器地址
+     * ci auth 服务器地址
      */
     @Value("\${auth.devops.ciAuthServer:}")
     private var ciAuthServer: String = ""
 
     /**
-     * auth 服务器地址
+     * ci auth token
      */
     @Value("\${auth.devops.ciAuthToken:}")
     private var ciAuthToken: String = ""
+
+    @Value("\${auth.devops.enableSuperAdmin: false}")
+    var enableSuperAdmin: Boolean = false
 
     /**
      * 蓝盾平台appId集合
      */
     @Value("\${auth.devops.appIdSet:}")
     var devopsAppIdSet: String = ""
+
+    /**
+     * 用户set
+     */
+    @Value("\${auth.devops.userIdSet:}")
+    var userIdSet: String = ""
+
+    /**
+     * 允许默认密码校验
+     */
+    @Value("\${auth.devops.allowDefaultPwd: true}")
+    var allowDefaultPwd: Boolean = true
 
     /**
      * 蓝盾CI平台appId

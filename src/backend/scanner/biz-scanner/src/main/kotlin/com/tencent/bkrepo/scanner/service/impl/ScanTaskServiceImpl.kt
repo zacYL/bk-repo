@@ -31,9 +31,11 @@ import com.google.common.util.concurrent.UncheckedExecutionException
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.exception.NotFoundException
+import com.tencent.bkrepo.common.api.exception.ParameterInvalidException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.toJsonString
+import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.common.scanner.pojo.scanner.SubScanTaskStatus
@@ -54,9 +56,9 @@ import com.tencent.bkrepo.scanner.dao.SubScanTaskDao
 import com.tencent.bkrepo.scanner.exception.ScanTaskNotFoundException
 import com.tencent.bkrepo.scanner.model.LeakDetailExport
 import com.tencent.bkrepo.scanner.model.LeakScanPlanExport
-import com.tencent.bkrepo.scanner.model.TPlanArtifactLatestSubScanTask
 import com.tencent.bkrepo.scanner.model.LicenseScanDetailExport
 import com.tencent.bkrepo.scanner.model.LicenseScanPlanExport
+import com.tencent.bkrepo.scanner.model.TPlanArtifactLatestSubScanTask
 import com.tencent.bkrepo.scanner.pojo.ScanTask
 import com.tencent.bkrepo.scanner.pojo.request.ArtifactVulnerabilityRequest
 import com.tencent.bkrepo.scanner.pojo.request.FileScanResultDetailRequest
@@ -64,13 +66,13 @@ import com.tencent.bkrepo.scanner.pojo.request.FileScanResultOverviewRequest
 import com.tencent.bkrepo.scanner.pojo.request.ScanTaskQuery
 import com.tencent.bkrepo.scanner.pojo.request.SubtaskInfoRequest
 import com.tencent.bkrepo.scanner.pojo.request.scancodetoolkit.ArtifactLicensesDetailRequest
-import com.tencent.bkrepo.scanner.pojo.response.SubtaskResultOverview
 import com.tencent.bkrepo.scanner.pojo.response.ArtifactVulnerabilityInfo
 import com.tencent.bkrepo.scanner.pojo.response.FileLicensesResultDetail
 import com.tencent.bkrepo.scanner.pojo.response.FileLicensesResultOverview
 import com.tencent.bkrepo.scanner.pojo.response.FileScanResultDetail
 import com.tencent.bkrepo.scanner.pojo.response.FileScanResultOverview
 import com.tencent.bkrepo.scanner.pojo.response.SubtaskInfo
+import com.tencent.bkrepo.scanner.pojo.response.SubtaskResultOverview
 import com.tencent.bkrepo.scanner.service.ScanTaskService
 import com.tencent.bkrepo.scanner.service.ScannerService
 import com.tencent.bkrepo.scanner.utils.Converter
@@ -92,7 +94,7 @@ class ScanTaskServiceImpl(
     private val fileScanResultDao: FileScanResultDao,
     private val nodeClient: NodeClient,
     private val repositoryClient: RepositoryClient,
-    private val scanExecutorResultManagers: Map<String, ScanExecutorResultManager>,
+    private val resultManagers: Map<String, ScanExecutorResultManager>,
     private val scannerConverters: Map<String, ScannerConverter>
 ) : ScanTaskService {
 
@@ -202,12 +204,17 @@ class ScanTaskServiceImpl(
     override fun resultDetail(request: FileScanResultDetailRequest): FileScanResultDetail {
         with(request) {
             val node = artifactInfo!!.run {
-                nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath())
-            }.data!!
+                nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data
+                    ?: throw NotFoundException(CommonMessageCode.RESOURCE_NOT_FOUND, getArtifactFullPath())
+            }
+            if (node.folder) {
+                throw ParameterInvalidException(node.fullPath)
+            }
+
             val repo = repositoryClient.getRepoInfo(node.projectId, node.repoName).data!!
 
             val scanner = scannerService.get(scanner)
-            val scanResultDetail = scanExecutorResultManagers[scanner.type]?.load(
+            val scanResultDetail = resultManagers[scanner.type]?.load(
                 repo.storageCredentialsKey, node.sha256!!, scanner, arguments
             )
             val status = if (scanResultDetail == null) {
@@ -261,6 +268,8 @@ class ScanTaskServiceImpl(
             permissionCheckHandler.checkSubtaskPermission(subtask, PermissionAction.READ)
         } catch (e: UncheckedExecutionException) {
             logger.error("Failed to checkSubtaskPermission $e")
+        } catch (e: RepoNotFoundException) {
+            logger.info("Failed to checkSubtaskPermission: ", e)
             permissionCheckHandler.checkProjectPermission(subtask.projectId, PermissionAction.MANAGE)
         }
         return Converter.convert(subtask)
@@ -293,13 +302,15 @@ class ScanTaskServiceImpl(
                 permissionCheckHandler.checkSubtaskPermission(subtask, PermissionAction.READ)
             } catch (e: UncheckedExecutionException) {
                 logger.error("Failed to checkSubtaskPermission $e")
+            } catch (e: RepoNotFoundException) {
+                logger.info("Failed to checkSubtaskPermission: ", e)
                 permissionCheckHandler.checkProjectPermission(subtask.projectId, PermissionAction.MANAGE)
             }
 
             val scanner = scannerService.get(subtask.scanner)
             val scannerConverter = scannerConverters[ScannerConverter.name(scanner.type)]
             val arguments = scannerConverter?.convertToLoadArguments(request)
-            val scanResultManager = scanExecutorResultManagers[subtask.scannerType]
+            val scanResultManager = resultManagers[subtask.scannerType]
             val detailReport = scanResultManager?.load(subtask.credentialsKey, subtask.sha256, scanner, arguments)
 
             return detailReport
@@ -361,7 +372,7 @@ class ScanTaskServiceImpl(
             }
             val scanner = scannerService.get(subtask.scanner)
             val arguments = ScanLicenseConverter.convertToLoadArguments(request, scanner.type)
-            val scanResultManager = scanExecutorResultManagers[subtask.scannerType]
+            val scanResultManager = resultManagers[subtask.scannerType]
             val detailReport = scanResultManager?.load(
                 subtask.credentialsKey,
                 subtask.sha256,

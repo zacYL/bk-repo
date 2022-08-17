@@ -41,8 +41,18 @@ enum class ScannerMessageCode(
     SCAN_TASK_COUNT_EXCEED_LIMIT("scanner.task.count.exceed-limit", 5),
     SCAN_TASK_NAME_BATCH_SCAN("scanner.task.name.manual", 6),
     SCAN_TASK_NAME_SINGLE_SCAN("scanner.task.name.manual.single", 7),
-    LICENSE_NOT_FOUND("license.not-found", 8),
-    EXPORT_REPORT_FAIL("export.report.fail", 9);
+    SCAN_REPORT_NOTIFY_MESSAGE_SCANNED("scanner.report.notify.message.scanned",8),
+    SCAN_REPORT_NOTIFY_MESSAGE_FAILED("scanner.report.notify.message.failed",9),
+    SCAN_REPORT_NOTIFY_MESSAGE_CVE_LOW("scanner.report.notify.message.cve.low",10),
+    SCAN_REPORT_NOTIFY_MESSAGE_CVE_MEDIUM("scanner.report.notify.message.cve.medium",11),
+    SCAN_REPORT_NOTIFY_MESSAGE_CVE_HIGH("scanner.report.notify.message.cve.high",12),
+    SCAN_REPORT_NOTIFY_MESSAGE_CVE_CRITICAL("scanner.report.notify.message.cve.critical",13),
+    SCAN_REPORT_NOTIFY_MESSAGE_DETAIL("scanner.report.notify.message.detail",14),
+    SCAN_REPORT_NOTIFY_MESSAGE_TITLE("scanner.report.notify.message.title", 15),
+    SCAN_REPORT_NOTIFY_MESSAGE_TRIGGER_TIME("scanner.report.notify.message.trigger.time", 16),
+    SCAN_REPORT_NOTIFY_MESSAGE_TRIGGER_USER("scanner.report.notify.message.trigger.user", 17),
+    LICENSE_NOT_FOUND("license.not-found",18),
+    EXPORT_REPORT_FAIL("export.report.fail", 19);
 
     override fun getBusinessCode() = businessCode
     override fun getKey() = key

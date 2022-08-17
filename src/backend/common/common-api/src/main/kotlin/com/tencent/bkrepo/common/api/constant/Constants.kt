@@ -37,6 +37,11 @@ package com.tencent.bkrepo.common.api.constant
 const val USER_KEY = "userId"
 
 /**
+ * 是否系统管理员
+ */
+const val ADMIN_USER = "admin"
+
+/**
  * 认证成功后platform写入request attributes的key
  */
 const val PLATFORM_KEY = "platformId"
@@ -90,3 +95,4 @@ const val COMPOSER_SERVICE_NAME = "\${service.prefix:repo-}composer\${service.su
 const val RPM_SERVICE_NAME = "\${service.prefix:repo-}rpm\${service.suffix:}"
 const val SCANNER_SERVICE_NAME = "\${service.prefix:repo-}scanner\${service.suffix:}"
 const val LICENSE_SERVICE_NAME = "license\${service-suffix:}"
+const val JOB_SERVICE_NAME = "\${service.prefix:}job\${service.suffix:}"

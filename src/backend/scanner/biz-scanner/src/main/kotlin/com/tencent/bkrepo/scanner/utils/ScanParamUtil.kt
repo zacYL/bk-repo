@@ -42,20 +42,12 @@ object ScanParamUtil {
         version: String?,
         fullPath: String?
     ) {
-        when (repoType) {
-            RepositoryType.GENERIC -> {
-                if (fullPath.isNullOrEmpty()) {
-                    throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "fullPath[$fullPath]")
-                }
-            }
-            else -> {
-                if (packageKey.isNullOrEmpty() || version.isNullOrEmpty()) {
-                    throw ErrorCodeException(
-                        CommonMessageCode.PARAMETER_INVALID,
-                        "packageKey[$packageKey], version[$version]"
-                    )
-                }
-            }
+        if (repoType == RepositoryType.GENERIC && fullPath.isNullOrEmpty()) {
+            throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "fullPath[$fullPath]")
+        }
+
+        if (repoType != RepositoryType.GENERIC && (packageKey.isNullOrEmpty() || version.isNullOrEmpty())) {
+            throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "packageKey[$packageKey], version[$version]")
         }
     }
 }

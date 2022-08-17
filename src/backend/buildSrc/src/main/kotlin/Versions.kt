@@ -58,4 +58,6 @@ object Versions {
     const val XStream = "1.4.19"
     const val DockerJava = "3.2.13"
     const val H2 = "2.1.210"
+    const val Mockk = "1.12.2"
+    const val Swagger = "1.6.2"
 }

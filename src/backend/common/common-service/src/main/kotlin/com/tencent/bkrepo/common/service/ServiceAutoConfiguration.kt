@@ -39,6 +39,8 @@ import com.tencent.bkrepo.common.service.exception.ServiceExceptionHandler
 import com.tencent.bkrepo.common.service.feign.ClientConfiguration
 import com.tencent.bkrepo.common.service.log.AccessLogWebServerCustomizer
 import com.tencent.bkrepo.common.service.message.MessageSourceConfiguration
+import com.tencent.bkrepo.common.service.metrics.UndertowMetrics
+import com.tencent.bkrepo.common.service.shutdown.ServiceShutdownConfiguration
 import org.springframework.boot.autoconfigure.AutoConfigureOrder
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
 import org.springframework.context.annotation.Bean
@@ -60,7 +62,9 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
     AsyncConfiguration::class,
     MessageSourceConfiguration::class,
     ClientConfiguration::class,
-    AccessLogWebServerCustomizer::class
+    AccessLogWebServerCustomizer::class,
+    UndertowMetrics::class,
+    ServiceShutdownConfiguration::class
 )
 class ServiceAutoConfiguration {
 

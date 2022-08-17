@@ -30,6 +30,7 @@ package com.tencent.bkrepo.generic.artifact
 import com.tencent.bkrepo.common.api.constant.CharPool
 import com.tencent.bkrepo.common.api.constant.MediaTypes
 import com.tencent.bkrepo.common.api.constant.StringPool
+import com.tencent.bkrepo.common.api.constant.ensureSuffix
 import com.tencent.bkrepo.common.api.exception.BadRequestException
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.util.toJsonString
@@ -46,6 +47,9 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadConte
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
+import com.tencent.bkrepo.common.artifact.stream.ArtifactInputStream
+import com.tencent.bkrepo.common.artifact.stream.EmptyInputStream
+import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.service.util.HeaderUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
@@ -202,44 +206,60 @@ class GenericLocalRepository : LocalRepository() {
     /**
      * 多节点下载，支持目录和非目录节点混合下载
      */
-    private fun downloadMultiNodeIncludeFolder(context: ArtifactDownloadContext): ArtifactResource {
+    private fun downloadMultiNodeIncludeFolder(context: ArtifactDownloadContext): ArtifactResource? {
         with(context) {
+            val repoName = artifacts!!.first().repoName
             val fullPathList = artifacts!!.map { it.getArtifactFullPath() }
             // 提取节点公共目录
-            val prefix = if (fullPathList.size == 1) PathUtils.resolveParent(fullPathList.first()) else {
+            val commonPath = if (fullPathList.size == 1) PathUtils.resolveParent(fullPathList.first()) else {
                     fullPathList.reduce { commonPath, element -> PathUtils.getCommonPath(commonPath, element) }
                 }
+            // 需要移除的目录层级
+            val removePath = if (fullPathList.size == 1) commonPath else PathUtils.resolveParent(commonPath)
+            // 节点的公共目录为根目录时，以仓库名添加额外的目录层级
+            val addPath = if (commonPath == StringPool.ROOT && fullPathList.size > 1) repoName + StringPool.SLASH
+                else ""
             // 根据请求参数查询节点，如有不存在节点则抛出异常
             val nodes = getNodeDetailsFromReq(true)
                 ?: queryNodeDetailList(
                     projectId = artifacts!!.first().projectId,
-                    repoName = artifacts!!.first().repoName,
+                    repoName = repoName,
                     paths = fullPathList,
-                    prefix = prefix,
+                    prefix = commonPath,
                     allowFolder = true
                 )
             val notExistNodes = fullPathList subtract nodes.map { it.fullPath }.toSet()
             if (notExistNodes.isNotEmpty()) {
                 throw NodeNotFoundException(notExistNodes.joinToString(StringPool.COMMA))
             }
-            // 获取所有文件节点
-            val fileNodes = nodes.filter { !it.folder }.toMutableList()
+            // 获取所有文件和目录节点，包含子节点
+            val allNodes = nodes.toMutableList()
             nodes.filter { it.folder }.forEach {
-                fileNodes.addAll(getSubNodes(it))
+                allNodes.addAll(getSubNodes(it))
             }
             // 验证文件数量和大小是否超出阈值，是否有禁用状态
-            checkCountAndSize(fileNodes.onEach { downloadIntercept(this, it) })
-            // 更新文件使用时间并返回流
-            val nodeMap = fileNodes.associateBy(
+            checkCountAndSize(allNodes.filter { !it.folder }.onEach { downloadIntercept(this, it) })
+            // 构建节点-流映射。文件节点：更新文件使用时间并返回构件输入流；目录节点：返回空构件输入流
+            val emptyArtifactInputStream = ArtifactInputStream(EmptyInputStream.INSTANCE, Range.full(0))
+            val nodeMap = allNodes.associateBy(
                 {
-                    it.fullPath.removePrefix(prefix)
+                    if (it.folder) {
+                        addPath + it.fullPath.removePrefix(removePath).ensureSuffix(StringPool.SLASH)
+                    } else {
+                        addPath + it.fullPath.removePrefix(removePath)
+                    }
                 }, {
-                    nodeClient.updateRecentlyUseDate(it.projectId, it.repoName, it.fullPath, this.userId)
-                    storageManager.loadArtifactInputStream(it, storageCredentials)
-                    ?: throw ArtifactNotFoundException(it.fullPath)
+                    if (it.folder) {
+                        emptyArtifactInputStream
+                    } else {
+                        nodeClient.updateRecentlyUseDate(it.projectId, it.repoName, it.fullPath, this.userId)
+                        storageManager.loadArtifactInputStream(it, storageCredentials)
+                            ?: throw ArtifactNotFoundException(it.fullPath)
+                    }
                 }
             )
-            return ArtifactResource(nodeMap, useDisposition = true)
+            val node = if (allNodes.size == 1) allNodes.first() else null
+            return if (download) ArtifactResource(nodeMap, node, useDisposition = true) else null
         }
     }
 
@@ -249,7 +269,7 @@ class GenericLocalRepository : LocalRepository() {
             val option = NodeListOption(
                 pageNumber = 1,
                 pageSize = PAGE_SIZE,
-                includeFolder = false,
+                includeFolder = true,
                 includeMetadata = true,
                 deep = true
             )

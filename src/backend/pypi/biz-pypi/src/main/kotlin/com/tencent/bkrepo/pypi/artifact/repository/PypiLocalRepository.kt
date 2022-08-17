@@ -31,9 +31,10 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.constant.ensureSuffix
-import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.api.exception.NotFoundException
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactMigrateContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
@@ -345,36 +346,34 @@ class PypiLocalRepository(
             return null
         }
         with(artifactInfo) {
-            val node = nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data ?: return null
+            val node = nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data
+                ?: throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, getArtifactFullPath())
+            if (!node.folder) {
+                return null
+            }
             // 请求不带包名，返回包名列表.
             if (getArtifactFullPath() == "/") {
-                if (node.folder) {
-                    val nodeList = nodeClient.listNode(
-                        projectId, repoName, getArtifactFullPath(), includeFolder = true,
-                        deep = true
-                    ).data ?: return null
-                    // 过滤掉'根节点',
-                    return buildPackageListContent(
-                        artifactInfo.projectId,
-                        artifactInfo.repoName,
-                        nodeList.filter { it.folder }.filter { it.path == "/" }
-                    )
-                }
+                val nodeList = nodeClient.listNode(
+                    projectId, repoName, getArtifactFullPath(), includeFolder = true, deep = true
+                ).data
+                    ?: throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, getArtifactFullPath())
+                // 过滤掉'根节点',
+                return buildPackageListContent(nodeList.filter { it.folder }.filter { it.path == "/" })
             }
             // 请求中带包名，返回对应包的文件列表。
             else {
-                if (node.folder) {
-                    val packageNode = nodeClient.listNode(
-                        projectId, repoName, getArtifactFullPath(), includeFolder = false,
-                        deep = true
-                    ).data ?: return null
-                    return buildPypiPageContent(
-                        buildPackageFileNodeListContent(packageNode)
-                    )
+                val packageNode = nodeClient.listNode(
+                    projectId, repoName, getArtifactFullPath(), includeFolder = false,
+                    deep = true, includeMetadata = true
+                ).data
+                if (packageNode.isNullOrEmpty()) {
+                    throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, getArtifactFullPath())
                 }
+                return buildPypiPageContent(
+                    buildPackageFileNodeListContent(packageNode)
+                )
             }
         }
-        return null
     }
 
     /**
@@ -398,30 +397,23 @@ class PypiLocalRepository(
      */
     private fun buildPackageFileNodeListContent(nodeList: List<NodeInfo>): String {
         val builder = StringBuilder()
-        if (nodeList.isEmpty()) {
-            builder.append("The directory is empty.")
-        }
         for (node in nodeList) {
             val md5 = node.md5
-            // 查询的对应的文件节点的metadata
-            val metadata = filenodeMetadata(node)
-            builder.append(
-                "<a data-requires-python=\">=$metadata[\"requires_python\"]\" href=\"../../packages${
-                    node
-                        .fullPath
-                }#md5=$md5\" rel=\"internal\" >${node.name}</a><br/>"
-            )
+            builder.append("<a")
+            val requiresPython = node.metadata?.get("requires_python")?.toString()
+            if (!requiresPython.isNullOrBlank()) {
+                builder.append(" data-requires-python=\"$requiresPython\"")
+            }
+            builder.append(" href=\"../../packages${node.fullPath}#md5=$md5\" rel=\"internal\" >${node.name}</a><br/>")
         }
         return builder.toString()
     }
 
     /**
      * 所有包列表
-     * @param projectId
-     * @param repoName
      * @param nodeList
      */
-    private fun buildPackageListContent(projectId: String, repoName: String, nodeList: List<NodeInfo>): String {
+    private fun buildPackageListContent(nodeList: List<NodeInfo>): String {
         val builder = StringBuilder()
         if (nodeList.isEmpty()) {
             builder.append("The directory is empty.")
@@ -433,32 +425,6 @@ class PypiLocalRepository(
             )
         }
         return builder.toString()
-    }
-
-    /**
-     * 根据每个文件节点数据去查metadata
-     * @param nodeInfo 节点
-     */
-    fun filenodeMetadata(nodeInfo: NodeInfo): List<Map<String, Any?>>? {
-        val fileNodeList: List<Map<String, Any?>>?
-        with(nodeInfo) {
-            val projectId = Rule.QueryRule("projectId", projectId)
-            val repoName = Rule.QueryRule("repoName", repoName)
-            val packageQuery = Rule.QueryRule("metadata.name", name, OperationType.EQ)
-            val fullPathQuery = Rule.QueryRule("fullPath", fullPath)
-            val rule = Rule.NestedRule(
-                mutableListOf(repoName, projectId, packageQuery, fullPathQuery),
-                Rule.NestedRule.RelationType.AND
-            )
-            val queryModel = QueryModel(
-                page = PageLimit(pageLimitCurrent, pageLimitSize),
-                sort = Sort(listOf("name"), Sort.Direction.ASC),
-                select = mutableListOf("projectId", "repoName", "fullPath", "metadata"),
-                rule = rule
-            )
-            fileNodeList = nodeClient.search(queryModel).data?.records
-        }
-        return fileNodeList
     }
 
     @org.springframework.beans.factory.annotation.Value("\${migrate.url:''}")

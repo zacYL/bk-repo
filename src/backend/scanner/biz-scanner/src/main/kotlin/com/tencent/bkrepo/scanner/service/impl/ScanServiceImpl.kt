@@ -32,10 +32,16 @@ import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.exception.NotFoundException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.toJsonString
+import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
+import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.scanner.pojo.scanner.SubScanTaskStatus
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.LocaleMessageUtils.getLocalizedMessage
+import com.tencent.bkrepo.repository.api.NodeClient
+import com.tencent.bkrepo.repository.api.PackageClient
+import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.scanner.component.ScannerPermissionCheckHandler
 import com.tencent.bkrepo.scanner.component.manager.ScanExecutorResultManager
 import com.tencent.bkrepo.scanner.dao.ArchiveSubScanTaskDao
@@ -67,6 +73,7 @@ import com.tencent.bkrepo.scanner.pojo.TaskMetadata.Companion.TASK_METADATA_PLUG
 import com.tencent.bkrepo.scanner.pojo.request.PipelineScanRequest
 import com.tencent.bkrepo.scanner.pojo.request.ReportResultRequest
 import com.tencent.bkrepo.scanner.pojo.request.ScanRequest
+import com.tencent.bkrepo.scanner.pojo.request.SingleScanRequest
 import com.tencent.bkrepo.scanner.service.ScanPlanService
 import com.tencent.bkrepo.scanner.service.ScanQualityService
 import com.tencent.bkrepo.scanner.service.ScanService
@@ -75,6 +82,7 @@ import com.tencent.bkrepo.scanner.task.ScanTaskScheduler
 import com.tencent.bkrepo.scanner.utils.Converter
 import com.tencent.bkrepo.scanner.utils.RuleConverter
 import com.tencent.bkrepo.scanner.utils.RuleUtil
+import com.tencent.bkrepo.scanner.utils.ScanParamUtil
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationEventPublisher
@@ -104,7 +112,10 @@ class ScanServiceImpl @Autowired constructor(
     private val permissionCheckHandler: ScannerPermissionCheckHandler,
     private val publisher: ApplicationEventPublisher,
     private val scanTaskStatusChangedEventListener: ScanTaskStatusChangedEventListener,
-    private val scanQualityService: ScanQualityService
+    private val scanQualityService: ScanQualityService,
+    private val repositoryClient: RepositoryClient,
+    private val nodeClient: NodeClient,
+    private val packageClient: PackageClient
 ) : ScanService {
 
     private val logger = LoggerFactory.getLogger(javaClass)
@@ -117,6 +128,38 @@ class ScanServiceImpl @Autowired constructor(
         val task = createTask(scanRequest, triggerType, userId)
         scanTaskScheduler.schedule(task)
         return task
+    }
+
+    override fun scanSingle(request: SingleScanRequest, triggerType: ScanTriggerType, userId: String?): ScanTask {
+        with(request) {
+            val repo = repositoryClient.getRepoInfo(projectId, repoName).data ?: throw RepoNotFoundException(repoName)
+
+            ScanParamUtil.checkParam(repo.type, packageKey, version, fullPath)
+            if (!checkArtifactExist(request, repo.type))
+                throw ErrorCodeException(ArtifactMessageCode.ARTIFACT_DATA_NOT_FOUND)
+
+            val rule = if (repo.type == RepositoryType.GENERIC) {
+                RuleConverter.convert(projectId, repoName, fullPath!!)
+            } else {
+                RuleConverter.convert(projectId, repoName, packageKey!!, version!!)
+            }
+            val scanRequest = ScanRequest(planId = planId, rule = rule, force = force)
+            return scan(scanRequest, triggerType, userId)
+        }
+    }
+
+    /**
+     * 校验制品是否存在
+     */
+    private fun checkArtifactExist(request: SingleScanRequest, repoType: RepositoryType): Boolean {
+        with(request) {
+            return if (repoType == RepositoryType.GENERIC) {
+                nodeClient.checkExist(projectId, repoName, fullPath!!).data ?: false
+            } else {
+                packageClient.findVersionByName(projectId, repoName, packageKey!!, version!!).data?.let { true }
+                    ?: false
+            }
+        }
     }
 
     @Transactional(rollbackFor = [Throwable::class])
@@ -475,9 +518,9 @@ class ScanServiceImpl @Autowired constructor(
         return when (triggerType) {
             ScanTriggerType.PIPELINE -> {
                 val metadataMap = metadata.associateBy { it.key }
-                val pipelineName = metadataMap[TASK_METADATA_PIPELINE_NAME] ?: ""
-                val buildNo = metadataMap[TASK_METADATA_BUILD_NUMBER] ?: ""
-                val pluginName = metadataMap[TASK_METADATA_PLUGIN_NAME] ?: ""
+                val pipelineName = metadataMap[TASK_METADATA_PIPELINE_NAME]?.value ?: ""
+                val buildNo = metadataMap[TASK_METADATA_BUILD_NUMBER]?.value ?: ""
+                val pluginName = metadataMap[TASK_METADATA_PLUGIN_NAME]?.value ?: ""
                 "$pipelineName-$buildNo-$pluginName"
             }
             ScanTriggerType.MANUAL_SINGLE -> getLocalizedMessage(ScannerMessageCode.SCAN_TASK_NAME_SINGLE_SCAN)

@@ -33,11 +33,14 @@ package com.tencent.bkrepo.generic.controller
 
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
+import com.tencent.bkrepo.common.api.constant.MediaTypes.APPLICATION_JSON
 import com.tencent.bkrepo.common.api.pojo.Response
+import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
 import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.common.security.permission.Permission
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.generic.artifact.GenericArtifactInfo
 import com.tencent.bkrepo.generic.artifact.GenericArtifactInfo.Companion.BATCH_MAPPING_URI
@@ -47,7 +50,9 @@ import com.tencent.bkrepo.generic.artifact.GenericArtifactInfo.Companion.MULTI_M
 import com.tencent.bkrepo.generic.constant.HEADER_UPLOAD_ID
 import com.tencent.bkrepo.generic.pojo.BatchDownloadPaths
 import com.tencent.bkrepo.generic.pojo.BlockInfo
+import com.tencent.bkrepo.generic.pojo.CompressedFileInfo
 import com.tencent.bkrepo.generic.pojo.UploadTransactionInfo
+import com.tencent.bkrepo.generic.service.CompressedFileService
 import com.tencent.bkrepo.generic.service.DownloadService
 import com.tencent.bkrepo.generic.service.UploadService
 import com.tencent.bkrepo.generic.utils.DownloadParamResolver
@@ -68,7 +73,8 @@ class GenericController(
     private val uploadService: UploadService,
     private val downloadService: DownloadService,
     private val permissionManager: PermissionManager,
-    private val nodeClient: NodeClient
+    private val nodeClient: NodeClient,
+    private val compressedFileService: CompressedFileService
 ) {
 
     @PutMapping(GENERIC_MAPPING_URI)
@@ -153,18 +159,44 @@ class GenericController(
 
     @GetMapping(MULTI_MAPPING_URI)
     fun batchDownloadIncludeFolder(
+        @PathVariable download: Boolean,
         @ArtifactPathVariable artifactInfo: GenericArtifactInfo,
-        @RequestParam ids: String
+        @RequestParam id: String
     ) {
         with(artifactInfo) {
-            val artifactPaths = DownloadParamResolver.resolveMultiNodeIdParam(projectId, ids, nodeClient)
+            val artifactPaths = DownloadParamResolver.resolveMultiNodeIdParam(projectId, id, nodeClient)
             permissionManager.checkNodePermission(
                 action = PermissionAction.READ,
                 projectId = projectId,
                 repoName = repoName,
                 path = artifactPaths.toTypedArray()
             )
-            downloadService.batchDownload(artifactPaths.map { GenericArtifactInfo(projectId, repoName, it) }, true)
+            downloadService.batchDownload(
+                artifactPaths.map { GenericArtifactInfo(projectId, repoName, it) },
+                multiFolder = true,
+                download = download
+            )
+            if (!download) {
+                val response = HttpContextHolder.getResponse()
+                response.contentType = APPLICATION_JSON
+                response.writer.println(ResponseBuilder.success().toJsonString())
+            }
         }
+    }
+    @Permission(ResourceType.NODE, PermissionAction.READ)
+    @GetMapping("/compressed/list/$GENERIC_MAPPING_URI")
+    fun listCompressedFile(
+        @ArtifactPathVariable artifactInfo: GenericArtifactInfo
+    ): Response<List<CompressedFileInfo>> {
+        return ResponseBuilder.success(compressedFileService.listCompressedFile(artifactInfo))
+    }
+
+    @Permission(ResourceType.NODE, PermissionAction.READ)
+    @GetMapping("/compressed/preview/$GENERIC_MAPPING_URI")
+    fun previewCompressedFile(
+        @ArtifactPathVariable artifactInfo: GenericArtifactInfo,
+        @RequestParam filePath: String
+    ) {
+        compressedFileService.previewCompressedFile(artifactInfo, filePath)
     }
 }

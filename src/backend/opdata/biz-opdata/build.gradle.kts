@@ -34,7 +34,7 @@ dependencies {
     api(project(":common:common-job"))
     api(project(":common:common-artifact:artifact-service"))
     api(project(":common:common-mongo"))
-    api(project(":common:common-redis"))
+    implementation(project(":common:common-notify:notify-service"))
     implementation("org.influxdb:influxdb-java")
     compileOnly("org.springframework.cloud:spring-cloud-starter-consul-discovery")
     compileOnly("org.springframework.cloud:spring-cloud-starter-consul-config")

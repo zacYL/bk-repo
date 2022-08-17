@@ -43,6 +43,7 @@ import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeMoveCopyRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeRenameRequest
+import com.tencent.bkrepo.repository.pojo.node.service.NodeUpdateAccessDateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeUpdateRequest
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
@@ -75,11 +76,11 @@ interface NodeClient {
     ): Response<NodeDetail?>
 
     @ApiOperation("根据ID查询节点路径")
-    @GetMapping("/path/{projectId}")
-    fun getNodeFullPathById(
+    @PostMapping("/path/{projectId}")
+    fun listFullPathById(
         @PathVariable projectId: String,
-        @RequestParam id: String
-    ): Response<String?>
+        @RequestBody id: List<String>
+    ): Response<Map<String, String>>
 
     @ApiOperation("更新最近使用时间")
     @GetMapping("/update/{projectId}/{repoName}")
@@ -121,6 +122,10 @@ interface NodeClient {
     @ApiOperation("更新节点")
     @PostMapping("/update")
     fun updateNode(@RequestBody nodeUpdateRequest: NodeUpdateRequest): Response<Void>
+
+    @ApiOperation("更新节点访问时间")
+    @PostMapping("/update/access/")
+    fun updateNodeAccessDate(@RequestBody nodeUpdateAccessDateRequest: NodeUpdateAccessDateRequest): Response<Void>
 
     @ApiOperation("重命名节点")
     @PostMapping("/rename")

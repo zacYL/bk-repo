@@ -45,6 +45,7 @@
 <script>
     import CodeArea from '@repository/components/CodeArea'
     import createTokenDialog from '@repository/views/repoToken/createTokenDialog'
+    import { mapState } from 'vuex'
     export default {
         name: 'emptyGuide',
         components: { CodeArea, createTokenDialog },
@@ -55,8 +56,9 @@
             }
         },
         computed: {
+            ...mapState(['permission']),
             showRepoConfigRoute () {
-                return ['maven', 'pypi', 'npm', 'composer', 'nuget'].includes(this.$route.params.repoType)
+                return this.permission.edit && ['maven', 'pypi', 'npm', 'composer', 'nuget'].includes(this.$route.params.repoType)
             }
         },
         methods: {

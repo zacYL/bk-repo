@@ -57,6 +57,7 @@ object Converter {
             scanner = scanner,
             projectId = projectId,
             repoName = repoName,
+            repoType = repoType,
             fullPath = fullPath,
             sha256 = sha256,
             size = size,

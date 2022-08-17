@@ -27,19 +27,18 @@
 
 package com.tencent.bkrepo.common.artifact.repository.core
 
-import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
 import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
 import com.tencent.bkrepo.common.artifact.constant.PARAM_DOWNLOAD
 import com.tencent.bkrepo.common.artifact.event.ArtifactDownloadedEvent
 import com.tencent.bkrepo.common.artifact.event.ArtifactResponseEvent
 import com.tencent.bkrepo.common.artifact.event.ArtifactUploadedEvent
+import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.common.artifact.event.packages.VersionDownloadEvent
 import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
 import com.tencent.bkrepo.common.artifact.exception.ArtifactResponseException
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
-import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.metrics.ArtifactMetrics
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
@@ -53,12 +52,12 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResourceWriter
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
-import com.tencent.bkrepo.common.operate.api.pojo.event.EventCreateRequest
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.LocaleMessageUtils
 import com.tencent.bkrepo.common.storage.core.StorageService
 import com.tencent.bkrepo.common.storage.monitor.Throughput
+import com.tencent.bkrepo.common.stream.event.supplier.EventSupplier
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.OperateLogClient
 import com.tencent.bkrepo.repository.api.PackageClient
@@ -111,6 +110,9 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
     @Autowired
     lateinit var operateLogClient: OperateLogClient
 
+    @Autowired
+    lateinit var eventSupplier: EventSupplier
+
     override fun upload(context: ArtifactUploadContext) {
         try {
             this.onUploadBefore(context)
@@ -126,8 +128,9 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
     override fun download(context: ArtifactDownloadContext) {
         try {
             this.onDownloadBefore(context)
-            val artifactResponse = this.onDownload(context)
-                ?: throw ArtifactNotFoundException(context.artifactInfo.toString())
+            val artifactResponse = this.onDownload(context) ?: if (!context.download) return else {
+                    throw ArtifactNotFoundException(context.artifactInfo.toString())
+                }
             val throughput = artifactResourceWriter.write(artifactResponse)
             this.onDownloadSuccess(context, artifactResponse, throughput)
         } catch (exception: ArtifactResponseException) {
@@ -243,37 +246,38 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
             buildDownloadRecord(context, artifactResource)?.let {
                 packageClient.updateRecentlyUseDate(it.projectId,it.repoName,it.packageKey,it.packageVersion)
                 taskAsyncExecutor.execute { packageDownloadsClient.record(it) }
-                try {
-                    if (context.repositoryDetail.type != RepositoryType.GENERIC) {
-                        val packageType = context.repositoryDetail.type.name
-                        val packageName = PackageKeys.resolveName(packageType.toLowerCase(), it.packageKey)
-                        operateLogClient.saveEvent(
-                            EventCreateRequest(
-                                type = EventType.VERSION_DOWNLOAD,
-                                projectId = it.projectId,
-                                repoName = it.repoName,
-                                resourceKey = "${it.packageKey}-${it.packageVersion}",
-                                userId = SecurityUtils.getUserId(),
-                                address = HttpContextHolder.getClientAddress(),
-                                data = mapOf(
-                                    "packageKey" to it.packageKey,
-                                    "packageType" to packageType,
-                                    "packageName" to packageName,
-                                    "packageVersion" to it.packageVersion
-                                )
-                            )
-                        )
-                    }
-                } catch (e: Exception) {
-                    logger.warn("Event: download request: [$it] publish failed")
-                }
-                publishDownloadEvent(context, it)
+                publishPackageDownloadEvent(context, it)
             }
         }
         if (throughput != Throughput.EMPTY) {
             publisher.publishEvent(ArtifactResponseEvent(artifactResource, throughput, context.storageCredentials))
-            publisher.publishEvent(ArtifactDownloadedEvent(context))
+            publishNodeDownloadEvent(context)
             logger.info("User[${SecurityUtils.getPrincipal()}] download artifact[${context.artifactInfo}] success")
+        }
+    }
+
+    private fun publishNodeDownloadEvent(context: ArtifactDownloadContext) {
+        publisher.publishEvent(ArtifactDownloadedEvent(context))
+        if (context.artifacts.isNullOrEmpty()) {
+            val event = ArtifactEvent(
+                type = EventType.NODE_DOWNLOADED,
+                projectId = context.projectId,
+                repoName = context.repoName,
+                resourceKey = context.artifactInfo.getArtifactFullPath(),
+                userId = context.userId
+            )
+            eventSupplier.delegateToSupplier(event = event, topic = BINDING_OUT_NAME)
+        } else {
+            context.artifacts.forEach {
+                val event = ArtifactEvent(
+                    type = EventType.NODE_DOWNLOADED,
+                    projectId = context.projectId,
+                    repoName = context.repoName,
+                    resourceKey = it.getArtifactFullPath(),
+                    userId = context.userId
+                )
+                eventSupplier.delegateToSupplier(event = event, topic = BINDING_OUT_NAME)
+            }
         }
     }
 
@@ -313,7 +317,7 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
         artifactMetrics.downloadingCount.decrementAndGet()
     }
 
-    private fun publishDownloadEvent(context: ArtifactDownloadContext, record: PackageDownloadRecord) {
+    private fun publishPackageDownloadEvent(context: ArtifactDownloadContext, record: PackageDownloadRecord) {
         if (context.repositoryDetail.type != RepositoryType.GENERIC) {
             val packageType = context.repositoryDetail.type.name
             val packageName = PackageKeys.resolveName(packageType.toLowerCase(), record.packageKey)
@@ -334,5 +338,6 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
 
     companion object {
         private val logger = LoggerFactory.getLogger(AbstractArtifactRepository::class.java)
+        private const val BINDING_OUT_NAME = "artifactEvent-out-0"
     }
 }

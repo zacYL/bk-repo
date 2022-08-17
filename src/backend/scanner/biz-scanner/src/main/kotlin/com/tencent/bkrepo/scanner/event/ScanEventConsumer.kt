@@ -43,7 +43,6 @@ import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
-import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.scanner.configuration.ScannerProperties
 import com.tencent.bkrepo.scanner.dao.ProjectScanConfigurationDao
 import com.tencent.bkrepo.scanner.dao.ScanPlanDao
@@ -199,7 +198,9 @@ class ScanEventConsumer(
         if (!supportFileNameExtension(event.resourceKey)) {
             return false
         }
-        logger.info("receive event resourceKey[${event.resourceKey}]")
+        if (logger.isDebugEnabled) {
+            logger.debug("receive event resourceKey[${event.resourceKey}]")
+        }
 
         var hasScanTask = false
         with(event) {
@@ -239,18 +240,11 @@ class ScanEventConsumer(
         var hasScanTask = false
 
         with(event) {
-
-            if (data[VersionCreatedEvent::packageType.name] != PackageType.MAVEN.name &&
-                data[VersionCreatedEvent::packageType.name] != PackageType.DOCKER.name &&
-                data[VersionCreatedEvent::packageType.name] != PackageType.NPM.name
-            ) {
-                logger.info("skip event packageType[${VersionCreatedEvent::packageType}]")
-                return false
-            }
+            val packageType = event.data[VersionCreatedEvent::packageType.name] as String? ?: return false
             logger.info("receive event resourceKey[${event.resourceKey}]")
 
             scanPlanDao
-                .findByProjectIdAndRepoName(projectId, repoName, data[VersionCreatedEvent::packageType.name].toString())
+                .findByProjectIdAndRepoName(projectId, repoName, packageType)
                 .filter { match(event, it.rule.readJsonString()) }
                 .forEach {
                     val packageKey = data[VersionCreatedEvent::packageKey.name] as String

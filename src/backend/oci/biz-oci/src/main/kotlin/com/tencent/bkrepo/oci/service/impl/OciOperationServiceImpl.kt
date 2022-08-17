@@ -30,10 +30,12 @@ package com.tencent.bkrepo.oci.service.impl
 import com.tencent.bkrepo.common.api.constant.HttpHeaders
 import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
+import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
 import com.tencent.bkrepo.common.artifact.exception.VersionNotFoundException
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.stream.ArtifactInputStream
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
@@ -89,15 +91,15 @@ import com.tencent.bkrepo.repository.pojo.packages.VersionListOption
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
 import com.tencent.bkrepo.repository.pojo.search.NodeQueryBuilder
 import com.tencent.bkrepo.repository.pojo.search.PackageQueryBuilder
+import org.apache.commons.lang3.StringUtils
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
 import java.nio.charset.Charset
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import javax.servlet.http.HttpServletRequest
-import org.apache.commons.lang3.StringUtils
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-import org.springframework.stereotype.Service
 
 @Service
 class OciOperationServiceImpl(
@@ -389,7 +391,9 @@ class OciOperationServiceImpl(
                 repoName = repoName,
                 name = name,
                 version = version
-            ) ?: throw OciFileNotFoundException("packageKey [$packageKey] don't found.")
+            ) ?: throw OciFileNotFoundException(
+                "Could not find the packageKey [$packageKey] in repo ${artifactInfo.getRepoIdentify()}"
+            )
             val packageVersion = packageClient.findVersionByName(projectId, repoName, packageKey, version).data!!
             val basicInfo = ObjectBuildUtils.buildBasicInfo(nodeDetail, packageVersion)
             return PackageVersionInfo(basicInfo, packageVersion.packageMetadata)
@@ -526,7 +530,8 @@ class OciOperationServiceImpl(
         digest: OciDigest,
         artifactFile: ArtifactFile,
         fullPath: String,
-        storageCredentials: StorageCredentials?
+        storageCredentials: StorageCredentials?,
+        sourceType: ArtifactChannel?
     ) {
         logger.info(
             "Will start to update oci info for ${ociArtifactInfo.getArtifactFullPath()} " +
@@ -560,7 +565,8 @@ class OciOperationServiceImpl(
                 syncBlobInfoV1(
                     ociArtifactInfo = ociArtifactInfo,
                     manifestDigest = digest,
-                    manifestPath = fullPath
+                    manifestPath = fullPath,
+                    sourceType = sourceType
                 )
             } else {
                 syncBlobInfo(
@@ -568,7 +574,8 @@ class OciOperationServiceImpl(
                     manifest = manifest!!,
                     manifestDigest = digest,
                     storageCredentials = storageCredentials,
-                    manifestPath = fullPath
+                    manifestPath = fullPath,
+                    sourceType = sourceType
                 )
             }
         }
@@ -605,7 +612,8 @@ class OciOperationServiceImpl(
     private fun syncBlobInfoV1(
         ociArtifactInfo: OciManifestArtifactInfo,
         manifestDigest: OciDigest,
-        manifestPath: String
+        manifestPath: String,
+        sourceType: ArtifactChannel? = null
     ) {
         logger.info(
             "Will start to sync fsLayers' blob info from manifest ${ociArtifactInfo.getArtifactFullPath()} " +
@@ -616,7 +624,8 @@ class OciOperationServiceImpl(
             manifestPath = manifestPath,
             ociArtifactInfo = ociArtifactInfo,
             manifestDigest = manifestDigest,
-            size = 0
+            size = 0,
+            sourceType = sourceType
         )
     }
 
@@ -628,7 +637,8 @@ class OciOperationServiceImpl(
         manifest: ManifestSchema2,
         manifestDigest: OciDigest,
         storageCredentials: StorageCredentials?,
-        manifestPath: String
+        manifestPath: String,
+        sourceType: ArtifactChannel? = null
     ) {
         logger.info(
             "Will start to sync blobs and config info from manifest ${ociArtifactInfo.getArtifactFullPath()} " +
@@ -664,7 +674,8 @@ class OciOperationServiceImpl(
             ociArtifactInfo = ociArtifactInfo,
             manifestDigest = manifestDigest,
             size = size,
-            chartYaml = chartYaml
+            chartYaml = chartYaml,
+            sourceType = sourceType
         )
     }
 
@@ -729,7 +740,8 @@ class OciOperationServiceImpl(
         ociArtifactInfo: OciManifestArtifactInfo,
         manifestDigest: OciDigest,
         size: Long,
-        chartYaml: Map<String, Any>? = null
+        chartYaml: Map<String, Any>? = null,
+        sourceType: ArtifactChannel? = null
     ) {
         with(ociArtifactInfo) {
             logger.info("Will create package info for [$packageName/$version in repo ${getRepoIdentify()} ")
@@ -743,14 +755,17 @@ class OciOperationServiceImpl(
                 version = ociArtifactInfo.reference
             ).data
             val metadata = mutableMapOf<String, Any>(MANIFEST_DIGEST to manifestDigest.toString())
-                .apply { chartYaml?.let { this.putAll(chartYaml) } }
+                .apply {
+                    chartYaml?.let { this.putAll(chartYaml) }
+                    sourceType?.let { this[SOURCE_TYPE] = sourceType }
+                }
             if (packageVersion == null) {
                 val request = ObjectBuildUtils.buildPackageVersionCreateRequest(
                     ociArtifactInfo = this,
                     packageName = packageName,
                     version = ociArtifactInfo.reference,
                     size = size,
-                    fullPath = manifestPath,
+                    manifestPath = manifestPath,
                     metadata = metadata,
                     repoType = repoType
                 )
@@ -760,7 +775,7 @@ class OciOperationServiceImpl(
                     ociArtifactInfo = this,
                     version = ociArtifactInfo.reference,
                     size = size,
-                    fullPath = manifestPath,
+                    manifestPath = manifestPath,
                     metadata = metadata,
                     packageKey = packageKey
                 )
@@ -963,7 +978,7 @@ class OciOperationServiceImpl(
         val data = mutableListOf<OciTag>()
         result.records.forEach {
             val name = it.name
-            val stageTag = StringUtils.join(it.stageTag.toTypedArray())
+            val stageTag = buildString(it.stageTag)
             val size = it.size
             val lastModifiedBy = it.lastModifiedBy
             val lastModifiedDate = it.lastModifiedDate.toString()
@@ -974,6 +989,11 @@ class OciOperationServiceImpl(
             )
         }
         return OciTagResult(result.totalRecords, data)
+    }
+
+    private fun buildString(stageTag: List<String>): String {
+        if (stageTag.isEmpty()) return StringPool.EMPTY
+        return StringUtils.join(stageTag.toTypedArray()).toString()
     }
 
     companion object {

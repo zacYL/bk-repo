@@ -159,63 +159,10 @@ export default {
         )
     },
     // 单个扫描
-    startScanSingle (_, { projectId, id, repoName, version, packageKey, fullPath }) {
-        // return Vue.prototype.$ajax.post(
-        //     `${prefix}/single`,
-        //     body
-        // )
+    startScanSingle (_, body) {
         return Vue.prototype.$ajax.post(
-            `${prefix}`,
-            {
-                id,
-                force: true,
-                rule: {
-                    rules: [
-                        {
-                            field: 'projectId',
-                            value: projectId,
-                            operation: 'EQ'
-                        },
-                        {
-                            field: 'repoName',
-                            value: [repoName],
-                            operation: 'IN'
-                        },
-                        {
-                            rules: [
-                                {
-                                    rules: [
-                                        packageKey
-                                            ? {
-                                                field: 'version',
-                                                operation: 'EQ',
-                                                value: version
-                                            }
-                                            : undefined,
-                                        packageKey
-                                            ? {
-                                                field: 'key',
-                                                operation: 'EQ',
-                                                value: packageKey
-                                            }
-                                            : undefined,
-                                        !packageKey
-                                            ? {
-                                                field: 'fullPath',
-                                                operation: 'EQ',
-                                                value: fullPath
-                                            }
-                                            : undefined
-                                    ].filter(Boolean),
-                                    relation: 'AND'
-                                }
-                            ],
-                            relation: 'OR'
-                        }
-                    ],
-                    relation: 'AND'
-                }
-            }
+            `${prefix}/single`,
+            body
         )
     },
     // 制品关联的扫描方案
@@ -305,6 +252,32 @@ export default {
             {
                 isTrust
             }
+        )
+    },
+    // 查询漏洞白名单
+    getCveWhiteList (_, { cveId, current = 1, limit = 20 }) {
+        return Vue.prototype.$ajax.get(
+            'scanner/api/cve_whitelist/page',
+            {
+                params: {
+                    cveId,
+                    pageNumber: current,
+                    pageSize: limit
+                }
+            }
+        )
+    },
+    // 添加漏洞白名单
+    addCveWhite (_, { body }) {
+        return Vue.prototype.$ajax.put(
+            'scanner/api/cve_whitelist/batch',
+            body
+        )
+    },
+    // 删除漏洞白名单
+    deleteCveWhite (_, { cveId }) {
+        return Vue.prototype.$ajax.delete(
+            `scanner/api/cve_whitelist/${cveId}`
         )
     }
 }

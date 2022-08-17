@@ -91,7 +91,7 @@
                 this.$emit('show-detail', this.cardData)
             },
             download () {
-                const url = `/generic/${this.cardData.projectId}/${this.cardData.repoName}/${this.cardData.fullPath}?download=true`
+                const url = `/generic/${this.cardData.projectId}/${this.cardData.repoName}/${encodeURIComponent(this.cardData.fullPath)}?download=true`
                 this.$ajax.head(url).then(() => {
                     window.open(
                         '/web' + url,

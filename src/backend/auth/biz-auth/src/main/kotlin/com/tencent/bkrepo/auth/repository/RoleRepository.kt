@@ -38,6 +38,7 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface RoleRepository : MongoRepository<TRole, String> {
+    fun findByIdIn(roles: List<String>): List<TRole>
     fun findByTypeAndProjectId(type: RoleType, projectId: String): List<TRole>
     fun findByProjectIdAndRepoNameAndType(projectId: String, repoName: String, type: RoleType): List<TRole>
     fun findFirstByRoleIdAndProjectId(roleId: String, projectId: String): TRole?
@@ -56,14 +57,11 @@ interface RoleRepository : MongoRepository<TRole, String> {
     fun deleteTRolesById(id: String)
 
     fun findFirstByProjectIdAndTypeAndName(projectId: String, type: RoleType, name: String): TRole?
-
-    fun findByIdIn(roles: List<String>): List<TRole>
-
     fun findByProjectIdAndTypeAndAdminAndIdIn(
         projectId: String,
         type: RoleType,
         admin: Boolean,
-        roles: List<String>
+        ids: List<String>
     ): List<TRole>
 
     fun findByType(type: RoleType): List<TRole>
@@ -80,4 +78,11 @@ interface RoleRepository : MongoRepository<TRole, String> {
     ): TRole?
 
     fun findByProjectIdAndTypeAndIdIn(projectId: String, type: RoleType, roles: List<String>): List<TRole>
+    fun findByProjectIdAndTypeAndAdminAndRepoNameAndIdIn(
+        projectId: String,
+        type: RoleType,
+        admin: Boolean,
+        repoName: String,
+        ids: List<String>
+    ): List<TRole>
 }

@@ -281,7 +281,7 @@ class ScanPlanServiceImpl(
     ): List<ArtifactPlanRelation> {
         with(request) {
             ScanParamUtil.checkParam(
-                repoType = ScanSchemeType.ofRepositoryType(repoType),
+                repoType = RepositoryType.valueOf(repoType),
                 packageKey = packageKey,
                 version = version,
                 fullPath = fullPath

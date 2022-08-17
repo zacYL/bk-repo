@@ -250,7 +250,7 @@ class OciOperationServiceImpl(
     private fun updatePackageExtension(artifactInfo: OciArtifactInfo, packageKey: String) {
         with(artifactInfo) {
             val version = packageClient.findPackageByKey(projectId, repoName, packageKey).data?.latest
-            try {
+//            try {
                 val chartDigest = findHelmChartYamlInfo(this, version)
                 val chartYaml = loadArtifactInput(
                     chartDigest = chartDigest,
@@ -268,9 +268,9 @@ class OciOperationServiceImpl(
                     description = description,
                     packageKey = packageKey
                 )
-            } catch (e: Exception) {
-                logger.warn("can not convert meta data")
-            }
+//            } catch (e: Exception) {
+//                logger.warn("can not convert meta data")
+//            }
         }
     }
 

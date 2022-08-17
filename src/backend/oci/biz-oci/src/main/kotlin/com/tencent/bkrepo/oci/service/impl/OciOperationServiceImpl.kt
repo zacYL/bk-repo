@@ -213,6 +213,8 @@ class OciOperationServiceImpl(
             val repoDetail = getRepositoryInfo(artifactInfo)
             val packageKey = PackageKeys.ofName(repoDetail.type.name.toLowerCase(), packageName)
             if (version.isNotBlank()) {
+                logger.info("========================projectId:$projectId,repoName:$repoName,packageKey:$packageKey,version:$version")
+                logger.info("========================[${packageClient.findVersionByName(projectId,repoName,packageKey,version).data}]")
                 packageClient.findVersionByName(
                     projectId,
                     repoName,

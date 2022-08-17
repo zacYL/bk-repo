@@ -17,6 +17,7 @@ import com.tencent.bkrepo.repository.model.TNode
 import com.tencent.bkrepo.repository.model.TPackageVersion
 import com.tencent.bkrepo.repository.model.TRepository
 import com.tencent.bkrepo.repository.pojo.node.NodeDelete
+import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
@@ -33,6 +34,7 @@ import org.springframework.stereotype.Service
 import java.time.Duration
 import java.time.LocalDateTime
 import java.util.*
+import java.util.stream.Collectors
 
 @Service
 class RepositoryCleanServiceImpl(
@@ -184,8 +186,8 @@ class RepositoryCleanServiceImpl(
         repoName: String,
         cleanStrategy: RepositoryCleanStrategy
     ) {
-        val projectIdRule = Rule.QueryRule("projectId", projectId)
-        val repoNameRule = Rule.QueryRule("repoName", repoName)
+        val projectIdRule = Rule.QueryRule(NodeInfo::projectId.name, projectId)
+        val repoNameRule = Rule.QueryRule(NodeInfo::repoName.name, repoName)
         val allNodeQueryRule = Rule.NestedRule(mutableListOf(projectIdRule, repoNameRule))
         val allNodeList = nodeRuleQuery(allNodeQueryRule)
         var reserveNodeList = mutableListOf<NodeDelete>()
@@ -315,19 +317,18 @@ class RepositoryCleanServiceImpl(
         projectId: String,
         repoName: String
     ) {
-        versions.forEach {
-            publisher.publishEvent(
-                RepositoryCleanEvent(
-                    projectId,
-                    repoName,
-                    SYSTEM_USER,
-                    packageKey,
-                    it.name,
-                    type.toString(),
-                    null
-                )
+        val versionList = versions.stream().map(PackageVersion::name).collect(Collectors.toList())
+        publisher.publishEvent(
+            RepositoryCleanEvent(
+                projectId,
+                repoName,
+                SYSTEM_USER,
+                packageKey,
+                versionList,
+                type.toString(),
+                null
             )
-        }
+        )
     }
 
     companion object {

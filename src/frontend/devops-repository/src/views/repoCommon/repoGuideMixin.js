@@ -54,7 +54,7 @@ export default {
                     ]
                 },
                 {
-                    title: '下载',
+                    title: '使用',
                     main: [
                         {
                             subTitle: '在命令行执行以下命令进行拉取',
@@ -138,7 +138,7 @@ export default {
                     ]
                 },
                 {
-                    title: '下载',
+                    title: '使用',
                     main: [
                         {
                             subTitle: '1、在设置仓库地址之后就可以使用如下命令去拉取制品',
@@ -200,7 +200,7 @@ export default {
                     ]
                 },
                 {
-                    title: '配置依赖源下载地址',
+                    title: '配置依赖源地址',
                     main: [
                         {
                             subTitle: '1、全局配置，将下列配置添加到conf/setting.xml文件中',
@@ -316,7 +316,7 @@ export default {
                     ]
                 },
                 {
-                    title: '拉取',
+                    title: '使用',
                     main: [
                         {
                             subTitle: '使用xml: 将下列配置添加到 conf/settings.xml 文件中',
@@ -464,7 +464,7 @@ export default {
                     ]
                 },
                 {
-                    title: '拉取',
+                    title: '使用',
                     main: [
                         {
                             subTitle: '3、拉取',
@@ -533,7 +533,7 @@ export default {
                     ]
                 },
                 {
-                    title: '下载',
+                    title: '使用',
                     main: [
                         {
                             subTitle: '使用 rpm 命令拉取',
@@ -624,7 +624,7 @@ export default {
                     ]
                 },
                 {
-                    title: '拉取',
+                    title: '使用',
                     main: [
                         {
                             subTitle: '在命令行执行以下命令进行拉取',
@@ -688,7 +688,7 @@ export default {
                     ]
                 },
                 {
-                    title: '拉取',
+                    title: '使用',
                     main: [
                         {
                             subTitle: '在命令行执行以下命令进行拉取',
@@ -743,7 +743,7 @@ export default {
                     ]
                 },
                 {
-                    title: '拉取',
+                    title: '使用',
                     main: [
                         {
                             subTitle: '在命令行执行以下命令拉取制品：',

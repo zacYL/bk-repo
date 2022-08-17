@@ -250,7 +250,8 @@ class OciOperationServiceImpl(
     private fun updatePackageExtension(artifactInfo: OciArtifactInfo, packageKey: String) {
         with(artifactInfo) {
             val version = packageClient.findPackageByKey(projectId, repoName, packageKey).data?.latest
-//            try {
+            logger.info("===========updatePackageExtension version:[$version]")
+            try {
                 val chartDigest = findHelmChartYamlInfo(this, version)
                 val chartYaml = loadArtifactInput(
                     chartDigest = chartDigest,
@@ -268,9 +269,9 @@ class OciOperationServiceImpl(
                     description = description,
                     packageKey = packageKey
                 )
-//            } catch (e: Exception) {
-//                logger.warn("can not convert meta data")
-//            }
+            } catch (e: Exception) {
+                logger.warn("can not convert meta data")
+            }
         }
     }
 
@@ -283,6 +284,7 @@ class OciOperationServiceImpl(
         userId: String,
         packageKey: String
     ) {
+        logger.info("=================remove version start")
         with(artifactInfo) {
             val nodeDetail = getBlobNodeDetail(
                 projectId = projectId,
@@ -299,6 +301,7 @@ class OciOperationServiceImpl(
                 userId = userId
             )
             packageClient.deleteVersion(projectId, repoName, packageKey, version)
+            logger.info("============remove version success")
         }
     }
 

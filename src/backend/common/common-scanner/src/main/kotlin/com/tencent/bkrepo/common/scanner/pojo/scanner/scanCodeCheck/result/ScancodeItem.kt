@@ -40,7 +40,7 @@ data class ScancodeItem(
     val description: String?,
     // 风险等级暂时没有
     @ApiModelProperty("风险等级")
-    val riskLevel: String?,
+    var riskLevel: String?,
     @ApiModelProperty("依赖路径")
     val dependentPath: String,
     @ApiModelProperty("合规性")

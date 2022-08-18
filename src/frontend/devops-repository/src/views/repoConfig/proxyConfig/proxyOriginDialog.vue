@@ -8,10 +8,10 @@
         @confirm="confirmProxyData">
         <label class="ml20 mr20 mb10 form-label">{{ $t('baseInfo') }}</label>
         <bk-form class="ml20 mr20" ref="proxyOrigin" :label-width="85" :model="editProxyData" :rules="rules">
-            <bk-form-item :label="$t('type')" property="proxyType">
-                <bk-radio-group v-model="editProxyData.proxyType">
-                    <bk-radio value="publicProxy">{{ $t('publicProxy') }}</bk-radio>
-                    <bk-radio class="ml20" value="privateProxy">{{ $t('privateProxy') }}</bk-radio>
+            <bk-form-item :label="$t('type')" property="public">
+                <bk-radio-group v-model="editProxyData.public">
+                    <bk-radio :value="true">{{ $t('publicProxy') }}</bk-radio>
+                    <bk-radio class="ml20" :value="false">{{ $t('privateProxy') }}</bk-radio>
                 </bk-radio-group>
             </bk-form-item>
             <bk-form-item :label="$t('name')" :required="true" property="name" error-display-type="normal">
@@ -42,7 +42,7 @@
         data () {
             return {
                 editProxyData: {
-                    proxyType: 'publicProxy', // 公有 or 私有
+                    public: true, // 公有 or 私有
                     type: '', // 添加 or 编辑
                     name: '',
                     url: '',
@@ -71,7 +71,7 @@
             proxyData (data) {
                 if (data.type === 'add') {
                     this.editProxyData = {
-                        proxyType: 'publicProxy',
+                        public: true,
                         type: 'add',
                         name: '',
                         url: '',

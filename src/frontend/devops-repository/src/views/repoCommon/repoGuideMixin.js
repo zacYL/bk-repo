@@ -408,8 +408,9 @@ export default {
                                 `   <groupId>${this.detail.basic.groupId}</groupId>`,
                                 `   <artifactId>${this.detail.basic.artifactId}</artifactId>`,
                                 `   <version>${this.versionLabel}</version>`,
+                                this.detail.basic.type && `   <type>${this.detail.basic.type}</type>`,
                                 '</dependency>'
-                            ]
+                            ].filter(Boolean)
                         },
                         {
                             subTitle: 'Gradle Groovy DSL',
@@ -561,7 +562,7 @@ export default {
                         {
                             subTitle: 'RPM',
                             codeList: [
-                                `rpm -i ${location.protocol}//${this.userName}:<PERSONAL_ACCESS_TOKEN>@${this.repoUrl}/<RPM_FILE_NAME>`
+                                `rpm -i ${location.protocol}//${this.userName}:<PERSONAL_ACCESS_TOKEN>@${location.host}/${this.repoType}/${this.projectId}/${this.repoName}/<RPM_FILE_NAME>`
                             ]
                         },
                         {

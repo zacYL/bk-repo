@@ -47,16 +47,7 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.artifact.stream.artifactStream
 import com.tencent.bkrepo.helm.config.HelmProperties
-import com.tencent.bkrepo.helm.constants.CHART
-import com.tencent.bkrepo.helm.constants.FILE_TYPE
-import com.tencent.bkrepo.helm.constants.FULL_PATH
-import com.tencent.bkrepo.helm.constants.INDEX_YAML
-import com.tencent.bkrepo.helm.constants.META_DETAIL
-import com.tencent.bkrepo.helm.constants.NAME
-import com.tencent.bkrepo.helm.constants.PROV
-import com.tencent.bkrepo.helm.constants.PROXY_URL
-import com.tencent.bkrepo.helm.constants.SIZE
-import com.tencent.bkrepo.helm.constants.VERSION
+import com.tencent.bkrepo.helm.constants.*
 import com.tencent.bkrepo.helm.exception.HelmForbiddenRequestException
 import com.tencent.bkrepo.helm.pojo.metadata.HelmIndexYamlMetadata
 import com.tencent.bkrepo.helm.service.impl.HelmOperationService
@@ -67,6 +58,7 @@ import com.tencent.bkrepo.helm.utils.ObjectBuilderUtil
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
+import okhttp3.Request
 import okhttp3.Response
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -77,6 +69,38 @@ class HelmRemoteRepository(
     private val helmOperationService: HelmOperationService,
     private val helmProperties: HelmProperties
 ) : RemoteRepository() {
+
+
+    override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
+        return getCacheArtifactResource(context) ?: run {
+            val remoteConfiguration = context.getRemoteConfiguration()
+            logger.info(
+                    "Remote download: not found artifact in cache, " +
+                            "download from remote repository: $remoteConfiguration"
+            )
+            val httpClient = createHttpClient(remoteConfiguration)
+            val downloadUrl = createRemoteDownloadUrl(context)
+            val request = Request.Builder().url(downloadUrl).build()
+            logger.info("Remote download: download url: $downloadUrl")
+            val response = super.downloadRetry(request, httpClient)
+
+            return if (response != null && checkResponse(response)) {
+                onDownloadResponse(context, response)
+            } else if (downloadUrl.contains("$CHARTS/$CHARTS")) {
+                val newDownloadUrl = downloadUrl.replace("$CHARTS/$CHARTS", CHARTS)
+                logger.info("Remote new download new url:[$newDownloadUrl]")
+                val newRequest = Request.Builder().url(newDownloadUrl).build()
+                val newResponse = super.downloadRetry(newRequest, httpClient)
+                if (newResponse != null && checkResponse(newResponse)) {
+                    onDownloadResponse(context, newResponse)
+                } else {
+                    null
+                }
+            } else {
+                null
+            }
+        }
+    }
 
     override fun upload(context: ArtifactUploadContext) {
         with(context) {

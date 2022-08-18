@@ -213,8 +213,6 @@ class OciOperationServiceImpl(
             val repoDetail = getRepositoryInfo(artifactInfo)
             val packageKey = PackageKeys.ofName(repoDetail.type.name.toLowerCase(), packageName)
             if (version.isNotBlank()) {
-                logger.info("========================projectId:$projectId,repoName:$repoName,packageKey:$packageKey,version:$version")
-                logger.info("========================[${packageClient.findVersionByName(projectId,repoName,packageKey,version).data}]")
                 packageClient.findVersionByName(
                     projectId,
                     repoName,
@@ -252,7 +250,6 @@ class OciOperationServiceImpl(
     private fun updatePackageExtension(artifactInfo: OciArtifactInfo, packageKey: String) {
         with(artifactInfo) {
             val version = packageClient.findPackageByKey(projectId, repoName, packageKey).data?.latest
-            logger.info("===========updatePackageExtension version:[$version]")
             try {
                 val chartDigest = findHelmChartYamlInfo(this, version)
                 val chartYaml = loadArtifactInput(
@@ -286,7 +283,6 @@ class OciOperationServiceImpl(
         userId: String,
         packageKey: String
     ) {
-        logger.info("=================remove version start")
         with(artifactInfo) {
             val nodeDetail = getBlobNodeDetail(
                 projectId = projectId,
@@ -303,7 +299,6 @@ class OciOperationServiceImpl(
                 userId = userId
             )
             packageClient.deleteVersion(projectId, repoName, packageKey, version)
-            logger.info("============remove version success")
         }
     }
 

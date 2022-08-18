@@ -264,6 +264,28 @@ object PathUtils {
     }
 
     /**
+     * 提取多个全路径的公共前缀
+     *
+     * [/a/b/c, /a/b/d] -> /a/b/
+     * [/a/b, /c]       -> /
+     * [/a/b/c]         -> /a/b/c
+     */
+    fun getCommonPrefix(path: List<String>): String {
+        val initial = path.last().removePrefix(StringPool.SLASH).removeSuffix(StringPool.SLASH).split(StringPool.SLASH)
+        val commonSegments = path.fold(initial) { acc, element ->
+            val pathSegments = element.removePrefix(StringPool.SLASH).removeSuffix(StringPool.SLASH)
+                .split(StringPool.SLASH)
+            acc.forEachIndexed { index, segment ->
+                if (index >= pathSegments.size || segment != pathSegments[index]) return@fold acc.take(index)
+            }
+            acc
+        }
+        return if (commonSegments.isEmpty()) StringPool.ROOT else {
+            commonSegments.joinToString(StringPool.SLASH, StringPool.SLASH, StringPool.SLASH)
+        }
+    }
+
+    /**
      * 检查非法字符
      */
     private fun checkIllegalByte(name: String) {

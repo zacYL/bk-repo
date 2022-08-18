@@ -210,14 +210,12 @@ class GenericLocalRepository : LocalRepository() {
         with(context) {
             val repoName = artifacts!!.first().repoName
             val fullPathList = artifacts!!.map { it.getArtifactFullPath() }
-            // 提取节点公共目录
-            val commonPath = if (fullPathList.size == 1) PathUtils.resolveParent(fullPathList.first()) else {
-                    fullPathList.reduce { commonPath, element -> PathUtils.getCommonPath(commonPath, element) }
-                }
+            // 提取节点全路径的公共前缀
+            val commonPrefix = PathUtils.getCommonPrefix(fullPathList)
             // 需要移除的目录层级
-            val removePath = if (fullPathList.size == 1) commonPath else PathUtils.resolveParent(commonPath)
+            val removePrefix = PathUtils.resolveParent(commonPrefix)
             // 节点的公共目录为根目录时，以仓库名添加额外的目录层级
-            val addPath = if (commonPath == StringPool.ROOT && fullPathList.size > 1) repoName + StringPool.SLASH
+            val addPath = if (commonPrefix == StringPool.ROOT && fullPathList.size > 1) repoName + StringPool.SLASH
                 else ""
             // 根据请求参数查询节点，如有不存在节点则抛出异常
             val nodes = getNodeDetailsFromReq(true)
@@ -225,7 +223,7 @@ class GenericLocalRepository : LocalRepository() {
                     projectId = artifacts!!.first().projectId,
                     repoName = repoName,
                     paths = fullPathList,
-                    prefix = commonPath,
+                    prefix = removePrefix,
                     allowFolder = true
                 )
             val notExistNodes = fullPathList subtract nodes.map { it.fullPath }.toSet()
@@ -244,9 +242,9 @@ class GenericLocalRepository : LocalRepository() {
             val nodeMap = allNodes.associateBy(
                 {
                     if (it.folder) {
-                        addPath + it.fullPath.removePrefix(removePath).ensureSuffix(StringPool.SLASH)
+                        addPath + it.fullPath.removePrefix(removePrefix).ensureSuffix(StringPool.SLASH)
                     } else {
-                        addPath + it.fullPath.removePrefix(removePath)
+                        addPath + it.fullPath.removePrefix(removePrefix)
                     }
                 }, {
                     if (it.folder) {

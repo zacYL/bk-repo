@@ -133,6 +133,8 @@ class RepositoryCleanServiceImpl(
                 )
             }
             listVersion.removeAll(ruleQueryList)
+            // 根据保留规则筛选后，需要删除的版本数小于保留版本数
+            if (listVersion.size < cleanStrategy.reserveVersions) return@forEach
             deleteVersions = reserveVersionsAndDaysFilter(
                 listVersion,
                 cleanStrategy.reserveVersions,

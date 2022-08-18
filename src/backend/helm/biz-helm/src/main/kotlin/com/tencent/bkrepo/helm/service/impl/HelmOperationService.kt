@@ -230,7 +230,8 @@ class HelmOperationService(
         logger.info("Packages will be updated in repo $projectId|$name")
         // 对新增的chart进行插入
         addedSet.forEach { element ->
-            element.value.forEach {
+            val versionList = element.value.reversed()
+            versionList.forEach {
                 createVersion(
                     userId = userId,
                     projectId = projectId,

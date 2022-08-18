@@ -92,7 +92,7 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
     }
 
     @Suppress("TooGenericExceptionCaught", "LoopWithTooManyJumpStatements")
-    private fun downloadRetry(request: Request, okHttpClient: OkHttpClient): Response? {
+    fun downloadRetry(request: Request, okHttpClient: OkHttpClient): Response? {
         var response: Response? = null
         outer@ for (i in 1..downloadRetryLimit) {
             try {

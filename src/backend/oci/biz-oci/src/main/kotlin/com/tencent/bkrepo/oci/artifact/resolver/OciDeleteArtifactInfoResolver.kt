@@ -39,14 +39,14 @@ import com.tencent.bkrepo.common.artifact.resolve.path.Resolver
 import com.tencent.bkrepo.oci.constant.NAME
 import com.tencent.bkrepo.oci.constant.PACKAGE_KEY
 import com.tencent.bkrepo.oci.constant.VERSION
-import com.tencent.bkrepo.oci.pojo.artifact.OciArtifactInfo
+import com.tencent.bkrepo.oci.pojo.artifact.OciDeleteArtifactInfo
 import com.tencent.bkrepo.oci.util.OciUtils
-import javax.servlet.http.HttpServletRequest
 import org.springframework.stereotype.Component
 import org.springframework.web.servlet.HandlerMapping
+import javax.servlet.http.HttpServletRequest
 
 @Component
-@Resolver(OciArtifactInfo::class)
+@Resolver(OciDeleteArtifactInfo::class)
 class OciDeleteArtifactInfoResolver(
     private val artifactConfigurerSupport: ArtifactConfigurerSupport
 ) : ArtifactInfoResolver {
@@ -67,7 +67,7 @@ class OciDeleteArtifactInfoResolver(
                     defaultType = artifactConfigurerSupport.getRepositoryType(),
                     extraTypes = artifactConfigurerSupport.getRepositoryTypes()
                 )
-                OciArtifactInfo(projectId, repoName, packageName, StringPool.EMPTY)
+                OciDeleteArtifactInfo(projectId, repoName, packageName, StringPool.EMPTY)
             }
             // 页面删除包版本请求
             requestURL.contains(PACKAGE_VERSION_DELETE_PREFIX) -> {
@@ -78,14 +78,14 @@ class OciDeleteArtifactInfoResolver(
                     extraTypes = artifactConfigurerSupport.getRepositoryTypes()
                 )
                 val version = request.getParameter(VERSION)
-                OciArtifactInfo(projectId, repoName, packageName, version)
+                OciDeleteArtifactInfo(projectId, repoName, packageName, version)
             }
             else -> {
                 // 客户端请求删除版本
                 val attributes = request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE) as Map<*, *>
                 val id = attributes[NAME].toString().trim()
                 val version = attributes[VERSION].toString().trim()
-                OciArtifactInfo(projectId, repoName, id, version)
+                OciDeleteArtifactInfo(projectId, repoName, id, version)
             }
         }
     }

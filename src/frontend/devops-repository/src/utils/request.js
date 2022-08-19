@@ -20,7 +20,17 @@ function errorHandler (error) {
 }
 
 request.interceptors.response.use(response => {
-    const { data: { data, message }, status } = response
+    const { data: { data, message, error }, status } = response
+
+    // 用于处理仓库列表helm仓库返回数据格式无法统一，造成的基础信息显示错误问题
+    if (status === 404 && error) {
+        return {
+            basic: {},
+            metadata: []
+        }
+    }
+
+    // 正常逻辑
     if (status === 200 || status === 206) {
         return data === undefined ? response.data : data
     } else if (status === 401 || status === 402) {

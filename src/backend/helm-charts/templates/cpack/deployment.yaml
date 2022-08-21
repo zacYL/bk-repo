@@ -1,0 +1,124 @@
+# cpack deployment
+{{ if .Values.cpack.enabled -}}
+apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
+kind: Deployment
+metadata:
+  name: {{ include "common.names.fullname" . }}-cpack
+  labels: {{- include "bkci.labels.standard" . | nindent 4 }}
+    {{- if .Values.commonLabels }}
+      {{- include "common.tplvalues.render" (dict "value" .Values.commonLabels "context" $) | nindent 4 }}
+    {{- end }}
+    app.kubernetes.io/component: microservice
+    app.kubernetes.io/name: cpack
+spec:
+  selector:
+    matchLabels: {{- include "bkci.labels.matchLabels" . | nindent 6 }}
+      app.kubernetes.io/component: microservice
+      app.kubernetes.io/name: cpack
+  {{- if not .Values.cpack.autoscaling.enabled }}
+  replicas: {{ .Values.cpack.replicas }}
+  {{- end }}
+  template:
+    metadata:
+      labels: {{- include "bkci.labels.standard" . | nindent 8 }}
+        {{- if .Values.cpack.podLabels }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.cpack.podLabels "context" $) | nindent 8 }}
+        {{- end }}
+        app.kubernetes.io/component: microservice
+        app.kubernetes.io/name: cpack
+    spec:
+      serviceAccountName: {{ .Values.rbac.serviceAccount }}
+      {{- if .Values.cpack.hostAliases }}
+      hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.cpack.hostAliases "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.cpack.affinity }}
+      affinity: {{- include "common.tplvalues.render" ( dict "value" .Values.cpack.affinity "context" $) | nindent 8 }}
+      {{- else }}
+      affinity:
+        podAffinity: {{- include "common.affinities.pods" (dict "type" .Values.cpack.podAffinityPreset  "context" $) | nindent 10 }}
+        podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.cpack.podAntiAffinityPreset  "context" $) | nindent 10 }}
+        nodeAffinity: {{- include "common.affinities.nodes" (dict "type" .Values.cpack.nodeAffinityPreset.type "key" .Values.cpack.nodeAffinityPreset.key "values" .Values.cpack.nodeAffinityPreset.values) | nindent 10 }}
+      {{- end }}
+      {{- if .Values.cpack.nodeSelector }}
+      nodeSelector: {{- include "common.tplvalues.render" ( dict "value" .Values.cpack.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.cpack.tolerations }}
+      tolerations: {{- include "common.tplvalues.render" (dict "value" .Values.cpack.tolerations "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.cpack.priorityClassName }}
+      priorityClassName: {{ .Values.cpack.priorityClassName | quote }}
+      {{- end }}
+      {{- if .Values.cpack.podSecurityContext.enabled }}
+      securityContext: {{- omit .Values.cpack.podSecurityContext "enabled" | toYaml | nindent 8 }}
+      {{- end }}
+      initContainers:
+        - name: cpack
+          image: {{ include "common.images.image" ( dict "imageRoot" .Values.cpack.image "global" $) }}
+          imagePullPolicy: Always
+          volumeMounts:
+            - mountPath: "/private"
+              name: "emp-cpack"
+          command:
+            - "/bin/sh"
+            - "-c"
+            - |
+              cp -a /data/workspace/* /private;
+      containers:
+        - name: public
+          image: {{ include "common.images.image" ( dict "imageRoot" .Values.publicImage "global" $) }}
+          imagePullPolicy: {{ .Values.publicImage.pullPolicy }}
+          {{- if .Values.cpack.containerSecurityContext.enabled }}
+          securityContext: {{- omit .Values.cpack.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.cpack.resources }}
+          resources: {{- toYaml .Values.cpack.resources | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: 80
+          env:
+            - name: MS_NAME
+              value: cpack
+            - name: NAMESPACE
+              value: {{ .Release.Namespace }}
+            - name: SERVICE_PREFIX
+              value: {{ include "common.names.fullname" . }}-
+          volumeMounts:
+            - mountPath: "/data/share"
+              name: "nfs-cpack"
+            - mountPath: "/private"
+              name: "emp-cpack"
+          workingDir: /data/workspace/cpack
+          {{ if .Values.entrypoint.override }}
+          command:
+            - "/bin/bash"
+            - "-c"
+            - |
+              cp -a /private/* /data/workspace;
+              /bin/bash backend.sh;
+          {{ end }}
+          livenessProbe:
+            httpGet:
+              path: /management/health/livenessState
+              port: http
+            initialDelaySeconds: 270
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 5
+            successThreshold: 1
+          readinessProbe:
+            httpGet:
+              path: /management/health/readinessState
+              port: http
+            initialDelaySeconds: 270
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 5
+            successThreshold: 1
+      volumes:
+        - name: nfs-cpack
+          persistentVolumeClaim:
+            claimName: {{ include "common.names.fullname" . }}-pvc
+        - name: emp-cpack
+          emptyDir: {}
+{{- end -}}

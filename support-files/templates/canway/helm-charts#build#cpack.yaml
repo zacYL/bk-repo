@@ -3,7 +3,7 @@ cpack:
   image:
     registry: __REGISTRY__ #镜像仓库
     repository: cpack
-    tag: __cpack_IMAGE_TAG__ #服务对应的tag，以出包带的镜像信息为准
+    tag: __CPACK_IMAGE_TAG__ #服务对应的tag，以出包带的镜像信息为准
     pullPolicy: IfNotPresent
     pullSecrets: []
   replicas: __REPLICAS__ #副本数

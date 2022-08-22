@@ -14,5 +14,5 @@ metadata:
   {{- end }}
 data:
   application.yml: |-
-    {{- include "application-cpack.yaml" . | nindent 4 -}}
+    {{- include "application-cpack.yml" . | nindent 4 -}}
 {{- end -}}

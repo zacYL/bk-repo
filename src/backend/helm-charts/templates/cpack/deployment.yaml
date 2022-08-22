@@ -1,15 +1,15 @@
 # cpack deployment
-  {{ if .Values.cpack.enabled -}}
+{{ if .Values.cpack.enabled -}}
 apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
 kind: Deployment
 metadata:
   name: {{ include "common.names.fullname" . }}-cpack
   labels: {{- include "bkci.labels.standard" . | nindent 4 }}
     {{- if .Values.commonLabels }}
-    {{- include "common.tplvalues.render" (dict "value" .Values.commonLabels "context" $) | nindent 4 }}
+      {{- include "common.tplvalues.render" (dict "value" .Values.commonLabels "context" $) | nindent 4 }}
     {{- end }}
-            app.kubernetes.io/component: microservice
-            app.kubernetes.io/name: cpack
+    app.kubernetes.io/component: microservice
+    app.kubernetes.io/name: cpack
 spec:
   selector:
     matchLabels: {{- include "bkci.labels.matchLabels" . | nindent 6 }}
@@ -24,8 +24,8 @@ spec:
         {{- if .Values.cpack.podLabels }}
         {{- include "common.tplvalues.render" (dict "value" .Values.cpack.podLabels "context" $) | nindent 8 }}
         {{- end }}
-                app.kubernetes.io/component: microservice
-                app.kubernetes.io/name: cpack
+        app.kubernetes.io/component: microservice
+        app.kubernetes.io/name: cpack
     spec:
       serviceAccountName: {{ .Values.rbac.serviceAccount }}
       {{- if .Values.cpack.hostAliases }}
@@ -120,5 +120,5 @@ spec:
           persistentVolumeClaim:
             claimName: {{ include "common.names.fullname" . }}-pvc
         - name: emp-cpack
-        emptyDir: {}
-  {{- end -}}
+          emptyDir: {}
+{{- end -}}

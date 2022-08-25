@@ -13,10 +13,11 @@
         computed: {
             ...mapState(['userList']),
             tooltipContent () {
+                console.log('this.forbidType :>> ', this.forbidType)
                 switch (this.forbidType) {
                     case 'SCANNING':
                         return '制品正在扫描中'
-                    case 'QUALITYUNPASS':
+                    case 'QUALITY_UNPASS':
                         return '制品扫描质量规则未通过'
                     case 'MANUAL':
                         return `${this.userList[this.forbidUser]?.name || this.forbidUser} 手动禁止`

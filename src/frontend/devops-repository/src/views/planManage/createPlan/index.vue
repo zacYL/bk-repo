@@ -111,7 +111,7 @@
                     :disabled="disabled">
                 </bk-input>
             </bk-form-item>
-            <bk-form-item>
+            <bk-form-item v-if="!disabled">
                 <bk-button @click="$router.push({ name: 'planManage' })">{{$t('cancel')}}</bk-button>
                 <bk-button class="ml10" theme="primary" :loading="planForm.loading" @click="save">{{$t('confirm')}}</bk-button>
             </bk-form-item>

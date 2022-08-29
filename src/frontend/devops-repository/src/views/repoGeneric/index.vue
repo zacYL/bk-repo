@@ -94,7 +94,9 @@
                     <template #empty>
                         <empty-data :is-loading="isLoading" :search="Boolean(searchFileName)"></empty-data>
                     </template>
+
                     <bk-table-column type="selection" width="60"></bk-table-column>
+
                     <bk-table-column :label="$t('fileName')" prop="name" show-overflow-tooltip :render-header="renderHeader">
                         <template #default="{ row }">
                             <scan-tag class="mr5 table-svg"
@@ -111,15 +113,25 @@
                             <span>{{row.name}}</span>
                         </template>
                     </bk-table-column>
+
+                    <bk-table-column :label="$t('metadata')">
+                        <template #default="{ row }">
+                            <metadata-tag :metadata="row.nodeMetadata" />
+                        </template>
+                    </bk-table-column>
+
                     <bk-table-column v-if="searchFileName" :label="$t('path')" prop="fullPath" show-overflow-tooltip></bk-table-column>
+
                     <bk-table-column :label="$t('lastModifiedDate')" prop="lastModifiedDate" width="150" :render-header="renderHeader">
                         <template #default="{ row }">{{ formatDate(row.lastModifiedDate) }}</template>
                     </bk-table-column>
+
                     <bk-table-column :label="$t('lastModifiedBy')" width="90" show-overflow-tooltip>
                         <template #default="{ row }">
                             {{ userList[row.lastModifiedBy] ? userList[row.lastModifiedBy].name : row.lastModifiedBy }}
                         </template>
                     </bk-table-column>
+
                     <bk-table-column :label="$t('size')" width="90" show-overflow-tooltip>
                         <template #default="{ row }">
                             <bk-button text
@@ -131,6 +143,7 @@
                             </span>
                         </template>
                     </bk-table-column>
+
                     <bk-table-column :label="$t('operation')" width="70">
                         <template #default="{ row }">
                             <operation-list
@@ -186,6 +199,7 @@
     import RepoTree from '@repository/components/RepoTree'
     import ScanTag from '@repository/views/repoScan/scanTag'
     import forbidTag from '@repository/components/ForbidTag'
+    import metadataTag from '@repository/views/repoCommon/metadataTag'
     import genericDetail from '@repository/views/repoGeneric/genericDetail'
     import genericFormDialog from '@repository/views/repoGeneric/genericFormDialog'
     import genericShareDialog from '@repository/views/repoGeneric/genericShareDialog'
@@ -204,6 +218,7 @@
             MoveSplitBar,
             RepoTree,
             ScanTag,
+            metadataTag,
             genericDetail,
             genericFormDialog,
             genericShareDialog,

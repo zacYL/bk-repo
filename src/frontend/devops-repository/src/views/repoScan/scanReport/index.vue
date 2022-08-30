@@ -276,7 +276,8 @@
                     name: 'artiReport',
                     params: {
                         ...this.$route.params,
-                        recordId
+                        recordId,
+                        preRouteName: this.$route.name
                     },
                     query: {
                         ...this.$route.query,

@@ -223,7 +223,14 @@
                         theme: 'success',
                         message: '已添加到扫描队列'
                     })
-                    this.back()
+
+                    /**
+                     *  因为制品库仓库制品库扫描详情和制品库扫描的扫描详情是同一个页面，但是在制品库仓库点击重新扫描后会跳转到制品扫描列表，属于bug,现处理为；如果是制品扫描进到扫描详情的，点击重新扫描成功后回退，其他的留在当前页面
+                     */
+                    const { preRouteName } = this.$route.params
+                    if (preRouteName === 'scanReport') {
+                        this.back()
+                    }
                 })
             },
             back () {

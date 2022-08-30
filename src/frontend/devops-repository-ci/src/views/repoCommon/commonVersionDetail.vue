@@ -72,8 +72,14 @@
                     <template #empty>
                         <empty-data ex-style="margin-top:130px;"></empty-data>
                     </template>
-                    <bk-table-column :label="$t('key')" prop="key" show-overflow-tooltip></bk-table-column>
-                    <bk-table-column :label="$t('value')" prop="value" show-overflow-tooltip></bk-table-column>
+                    <!-- <bk-table-column :label="$t('key')" prop="key" show-overflow-tooltip></bk-table-column>
+                    <bk-table-column :label="$t('value')" prop="value" show-overflow-tooltip></bk-table-column> -->
+                    <bk-table-column :label="$t('metadata')">
+                        <template #default="{ row }">
+                            <metadata-tag :metadata="row" />
+                        </template>
+                    </bk-table-column>
+                    
                     <bk-table-column :label="$t('description')" prop="description" show-overflow-tooltip></bk-table-column>
                 </bk-table>
             </div>
@@ -151,6 +157,7 @@
     </bk-tab>
 </template>
 <script>
+    import metadataTag from '@repository/views/repoCommon/metadataTag'
     import CodeArea from '@repository/components/CodeArea'
     import OperationList from '@repository/components/OperationList'
     import ScanTag from '@repository/views/repoScan/scanTag'
@@ -168,7 +175,8 @@
             OperationList,
             ScanTag,
             forbidTag,
-            topo
+            topo,
+            metadataTag
         },
         mixins: [repoGuideMixin, topoDataMixin],
         data () {

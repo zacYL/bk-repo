@@ -134,7 +134,7 @@ class DependencyScanExecutor(
                         cveId = vulnerability.name,
                         name = vulnerability.name,
                         dependency = packages[0],
-                        version = packages[1],
+                        version = if(packages[1] == PLACEHOLDER) "" else  packages[1],
                         severity = normalizedLevel(vulnerability.severity),
                         description = vulnerability.description,
                         officialSolution = null,
@@ -181,5 +181,6 @@ class DependencyScanExecutor(
     companion object {
         private val logger = LoggerFactory.getLogger(DependencyScanExecutor::class.java)
         private val locator = HashFileLocator()
+        private const val PLACEHOLDER = "%24%7Brevision%7D"
     }
 }

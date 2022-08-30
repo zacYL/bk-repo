@@ -44,8 +44,8 @@ import io.swagger.annotations.ApiModelProperty
 @JsonSubTypes(
     JsonSubTypes.Type(value = ArrowheadLoadResultArguments::class, name = ArrowheadScanner.TYPE),
     JsonSubTypes.Type(value = DependencyLoadResultArguments::class, name = DependencyScanner.TYPE),
-    JsonSubTypes.Type(value = ScancodeToolkitResultArguments::class, name = ScancodeToolkitScanner.TYPE),
-    JsonSubTypes.Type(value = TrivyLoadResultArguments::class, name = TrivyScanner.TYPE)
+    JsonSubTypes.Type(value = TrivyLoadResultArguments::class, name = TrivyScanner.TYPE),
+    JsonSubTypes.Type(value = ScancodeToolkitResultArguments::class, name = ScancodeToolkitScanner.TYPE)
 )
 open class LoadResultArguments(
     @ApiModelProperty("扫描器类型")

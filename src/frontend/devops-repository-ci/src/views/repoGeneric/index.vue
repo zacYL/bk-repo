@@ -1,15 +1,15 @@
 <template>
     <div class="repo-generic-container">
         <header class="mb10 pl20 pr20 generic-header flex-align-center">
-            <Icon class="generic-img" size="70" name="generic" />
-            <div class="ml20 generic-title">
-                <div class="mb10 repo-title text-overflow" :title="replaceRepoName(repoName)">
+            <Icon class="generic-img" size="30" name="generic" />
+            <div class="ml10 generic-title">
+                <div class="repo-title text-overflow" :title="replaceRepoName(repoName)">
                     {{ replaceRepoName(repoName) }}
                 </div>
-                <div class="repo-description text-overflow"
+                <!-- <div class="repo-description text-overflow"
                     :title="currentRepo.description">
                     {{ currentRepo.description || '【仓库描述】' }}
-                </div>
+                </div> -->
             </div>
         </header>
         <div class="repo-generic-main flex-align-center"
@@ -753,25 +753,24 @@
     height: 100%;
     overflow: hidden;
     .generic-header{
-        height: 90px;
+        height: 60px;
         background-color: white;
         .generic-img {
-            padding: 15px;
             border-radius: 4px;
-            box-shadow: 0px 3px 5px 0px rgba(217, 217, 217, 0.5);
         }
         .generic-title {
             .repo-title {
                 max-width: 500px;
                 font-size: 16px;
-                font-weight: bold;
+                font-weight: 500;
+                color: #081E40;
             }
-            .repo-description {
-                max-width: 70vw;
-                padding: 5px 15px;
-                background-color: var(--bgWeightColor);
-                border-radius: 2px;
-            }
+            // .repo-description {
+            //     max-width: 70vw;
+            //     padding: 5px 15px;
+            //     background-color: var(--bgWeightColor);
+            //     border-radius: 2px;
+            // }
         }
     }
     .repo-generic-main {

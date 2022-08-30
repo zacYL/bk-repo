@@ -31,44 +31,24 @@
 
 package com.tencent.bkrepo.oci.pojo.artifact
 
-import com.tencent.bkrepo.common.api.constant.StringPool
-import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
-
 /**
  * oci 构件基本信息
  * 其余场景的ArtifactInfo 可以继承该类，如[OciBlobArtifactInfo]
  */
-open class OciArtifactInfo(
-    projectId: String,
-    repoName: String,
-    val packageName: String,
-    val version: String
-) : ArtifactInfo(projectId, repoName, StringPool.EMPTY) {
+class OciDeleteArtifactInfo(
+        projectId: String,
+        repoName: String,
+        packageName: String,
+        version: String
+) : OciArtifactInfo(projectId, repoName, packageName, version) {
+
     override fun getArtifactName() = packageName
 
     override fun getArtifactVersion() = version
 
     companion object {
-        // manifest check/pull/upload/delete
-        const val MANIFEST_URL = "/v2/{projectId}/{repoName}/**/manifests/{reference}"
-
-        // blobs check/pull/delete
-        const val BOLBS_URL = "/v2/{projectId}/{repoName}/**/blobs/{digest}"
-
-        // blobs upload
-        const val BOLBS_UPLOAD_FIRST_STEP_URL = "/v2/{projectId}/{repoName}/**/blobs/uploads/"
-        const val BOLBS_UPLOAD_SECOND_STEP_URL = "/v2/{projectId}/{repoName}/**/blobs/uploads/{uuid}"
-
-        // tags get
-        const val TAGS_URL = "/v2/{projectId}/{repoName}/**/tags/list"
-
-        // version详情获取
-        const val OCI_VERSION_DETAIL = "/version/detail/{projectId}/{repoName}"
-
-        const val OCI_USER_MANIFEST_SUFFIX = "/manifest/{projectId}/{repoName}/**/{tag}"
-        const val OCI_USER_LAYER_SUFFIX = "/layer/{projectId}/{repoName}/**/{id}"
-        const val OCI_USER_REPO_SUFFIX = "/repo/{projectId}/{repoName}"
-        const val OCI_USER_TAG_SUFFIX = "/tag/{projectId}/{repoName}/**"
-        const val DOCKER_CATALOG_SUFFIX = "_catalog"
+        // 额外的package或者version 删除接口
+        const val OCI_PACKAGE_DELETE_URL = "/package/delete/{projectId}/{repoName}"
+        const val OCI_VERSION_DELETE_URL = "/version/delete/{projectId}/{repoName}"
     }
 }

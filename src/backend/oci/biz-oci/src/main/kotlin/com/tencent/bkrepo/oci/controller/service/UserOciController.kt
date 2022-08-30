@@ -41,12 +41,13 @@ import com.tencent.bkrepo.oci.constant.PAGE_NUMBER
 import com.tencent.bkrepo.oci.constant.PAGE_SIZE
 import com.tencent.bkrepo.oci.constant.USER_API_PREFIX
 import com.tencent.bkrepo.oci.pojo.artifact.OciArtifactInfo
-import com.tencent.bkrepo.oci.pojo.artifact.OciArtifactInfo.Companion.OCI_PACKAGE_DELETE_URL
 import com.tencent.bkrepo.oci.pojo.artifact.OciArtifactInfo.Companion.OCI_USER_MANIFEST_SUFFIX
 import com.tencent.bkrepo.oci.pojo.artifact.OciArtifactInfo.Companion.OCI_USER_REPO_SUFFIX
 import com.tencent.bkrepo.oci.pojo.artifact.OciArtifactInfo.Companion.OCI_USER_TAG_SUFFIX
-import com.tencent.bkrepo.oci.pojo.artifact.OciArtifactInfo.Companion.OCI_VERSION_DELETE_URL
 import com.tencent.bkrepo.oci.pojo.artifact.OciArtifactInfo.Companion.OCI_VERSION_DETAIL
+import com.tencent.bkrepo.oci.pojo.artifact.OciDeleteArtifactInfo
+import com.tencent.bkrepo.oci.pojo.artifact.OciDeleteArtifactInfo.Companion.OCI_PACKAGE_DELETE_URL
+import com.tencent.bkrepo.oci.pojo.artifact.OciDeleteArtifactInfo.Companion.OCI_VERSION_DELETE_URL
 import com.tencent.bkrepo.oci.pojo.artifact.OciManifestArtifactInfo
 import com.tencent.bkrepo.oci.pojo.response.OciImageResult
 import com.tencent.bkrepo.oci.pojo.response.OciTagResult
@@ -55,7 +56,6 @@ import com.tencent.bkrepo.oci.service.OciOperationService
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
-import javax.servlet.http.HttpServletRequest
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -64,6 +64,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.servlet.HandlerMapping
+import javax.servlet.http.HttpServletRequest
 
 @Suppress("MVCPathVariableInspection")
 @Api("oci产品接口")
@@ -95,7 +96,7 @@ class UserOciController(
     @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
     fun deletePackage(
         @RequestAttribute userId: String,
-        artifactInfo: OciArtifactInfo,
+        artifactInfo: OciDeleteArtifactInfo,
         @ApiParam(value = "包唯一key", required = true)
         @RequestParam packageKey: String
     ): Response<Void> {
@@ -108,7 +109,7 @@ class UserOciController(
     @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
     fun deleteVersion(
         @RequestAttribute userId: String,
-        artifactInfo: OciArtifactInfo,
+        artifactInfo: OciDeleteArtifactInfo,
         @ApiParam(value = "包唯一key", required = true)
         @RequestParam packageKey: String,
         @ApiParam(value = "包版本", required = true)

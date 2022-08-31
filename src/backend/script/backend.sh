@@ -27,6 +27,7 @@ java_argv+=(
   "-Dspring.main.allow-bean-definition-overriding=true"
   "-Dspring.application.name=$MS_NAME"
   "-Ddevops.service.mode=kubernetes"
+  "-Dspring.profiles.active=dev,kubernetes"
 )
 
 echo "java_run  $java_run "

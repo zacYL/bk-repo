@@ -148,9 +148,7 @@ class ScanPlanServiceImpl(
         val scanTaskMap = scanTaskDao.findByIds(scanTaskIds).associateBy { it.id }
 
         val planArtifactCountMap = planArtifactLatestSubScanTaskDao.planArtifactCount(page.records.map { it.id!! })
-
-        val scanningPlan = mutableSetOf<String>()
-        subScanTaskDao.findScanning(projectId).forEach { scanningPlan.add(it.planId!!) }
+        val scanningPlan = subScanTaskDao.findScanning(projectId).map { it.planId }.distinct()
 
         val scanPlanInfoList = page.records.map {
             ScanPlanConverter.convert(

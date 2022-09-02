@@ -98,6 +98,7 @@
                 </template>
             </bk-table-column>
         </bk-table>
+        
         <bk-pagination
             class="p10"
             size="small"

@@ -13,7 +13,6 @@
         computed: {
             ...mapState(['userList']),
             tooltipContent () {
-                console.log('this.forbidType :>> ', this.forbidType)
                 switch (this.forbidType) {
                     case 'SCANNING':
                         return '制品正在扫描中'

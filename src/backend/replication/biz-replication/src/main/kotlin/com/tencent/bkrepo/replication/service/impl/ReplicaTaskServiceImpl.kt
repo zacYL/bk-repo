@@ -327,6 +327,8 @@ class ReplicaTaskServiceImpl(
                 lastExecutionTime = null,
                 nextExecutionTime = null,
                 executionTimes = 0L,
+                createdBy = userId,
+                createdDate = LocalDateTime.now(),
                 lastModifiedBy = userId,
                 lastModifiedDate = LocalDateTime.now(),
                 enabled = false,

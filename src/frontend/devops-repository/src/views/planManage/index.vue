@@ -81,7 +81,7 @@
             <bk-table-column label="执行" width="60">
                 <template #default="{ row }">
                     <i class="devops-icon icon-play3 hover-btn inline-block"
-                        :class="{ 'disabled': row.lastExecutionStatus === 'RUNNING' || row.replicaType === 'REAL_TIME' }"
+                        :class="{ 'disabled': row.lastExecutionStatus === 'RUNNING' }"
                         @click.stop="executePlanHandler(row)">
                     </i>
                 </template>
@@ -90,7 +90,7 @@
                 <template #default="{ row }">
                     <operation-list
                         :list="[
-                            { label: '编辑', clickEvent: () => editPlanHandler(row), disabled: Boolean(row.lastExecutionStatus) || row.replicaType === 'REAL_TIME' },
+                            { label: '编辑', clickEvent: () => editPlanHandler(row), disabled: Boolean(row.lastExecutionStatus) },
                             { label: '复制', clickEvent: () => copyPlanHandler(row) },
                             { label: '删除', clickEvent: () => deletePlanHandler(row) },
                             { label: '日志', clickEvent: () => showPlanLogHandler(row) }
@@ -215,8 +215,8 @@
                     this.isLoading = false
                 })
             },
-            executePlanHandler ({ key, name, lastExecutionStatus, replicaType }) {
-                if (lastExecutionStatus === 'RUNNING' || replicaType === 'REAL_TIME') return
+            executePlanHandler ({ key, name, lastExecutionStatus }) {
+                if (lastExecutionStatus === 'RUNNING') return
                 this.$confirm({
                     theme: 'warning',
                     message: `确认执行计划 ${name} ?`,
@@ -233,8 +233,8 @@
                     }
                 })
             },
-            editPlanHandler ({ name, key, lastExecutionStatus, replicaType }) {
-                if (lastExecutionStatus || replicaType === 'REAL_TIME') return
+            editPlanHandler ({ name, key, lastExecutionStatus }) {
+                if (lastExecutionStatus) return
                 this.$router.push({
                     name: 'editPlan',
                     params: {

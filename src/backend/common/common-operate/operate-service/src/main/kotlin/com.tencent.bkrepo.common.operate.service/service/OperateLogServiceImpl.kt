@@ -28,6 +28,7 @@
 package com.tencent.bkrepo.common.operate.service.service
 
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
+import com.tencent.bkrepo.common.api.exception.ParameterInvalidException
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.EscapeUtils
 import com.tencent.bkrepo.common.api.util.TimeUtils
@@ -60,7 +61,6 @@ import org.springframework.data.mongodb.core.query.where
 import org.springframework.scheduling.annotation.Async
 import org.springframework.util.AntPathMatcher
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 /**
  * OperateLogService 实现类
@@ -145,6 +145,7 @@ open class OperateLogServiceImpl(
 
     override fun page(
         type: String?,
+        eventType: EventType?,
         projectId: String?,
         repoName: String?,
         operator: String?,
@@ -154,10 +155,30 @@ open class OperateLogServiceImpl(
         pageSize: Int
     ): Page<OperateLogResponse?> {
         val pageRequest = Pages.ofRequest(pageNumber, pageSize)
-        val query = buildOperateLogPageQuery(type, projectId, repoName, operator, startTime, endTime)
+        if (type != null && eventType != null) {
+            require(getEventList(type).contains(eventType)) {
+                throw ParameterInvalidException("event type [$eventType] not support for [$type]")
+            }
+        }
+        eventType?.run {
+            require(eventTypes().contains(eventType)) {
+                throw ParameterInvalidException("event type [$eventType] not support")
+            }
+        }
+        val query = buildOperateLogPageQuery(type, eventType, projectId, repoName, operator, startTime, endTime)
         val totalRecords = operateLogDao.count(query)
         val records = operateLogDao.find(query.with(pageRequest)).map { convert(it) }
         return Pages.ofResponse(pageRequest, totalRecords, records)
+    }
+
+    override fun eventTypes(): List<EventType> {
+        return mutableListOf<EventType>().apply {
+            addAll(repositoryEvent)
+            addAll(packageEvent)
+            addAll(adminEvent)
+            addAll(projectEvent)
+            addAll(metadataEvent)
+        }
     }
 
     @Async
@@ -226,29 +247,30 @@ open class OperateLogServiceImpl(
 
     private fun buildOperateLogPageQuery(
         type: String?,
+        eventType: EventType?,
         projectId: String?,
         repoName: String?,
         operator: String?,
         startTime: String?,
         endTime: String?
     ): Query {
-        val criteria = if (type != null) {
+        val criteria = if (eventType != null) {
+            Criteria.where(TOperateLog::type.name).`is`(eventType)
+        } else if (type != null) {
             Criteria.where(TOperateLog::type.name).`in`(getEventList(type))
         } else {
             Criteria.where(TOperateLog::type.name).nin(nodeEvent)
         }
-
         projectId?.let { criteria.and(TOperateLog::projectId.name).`is`(projectId) }
-
         repoName?.let { criteria.and(TOperateLog::repoName.name).`is`(repoName) }
-
         operator?.let { criteria.and(TOperateLog::userId.name).`is`(operator) }
-        val localStart = if (startTime != null && startTime.isNotBlank()) {
+
+        val localStart = if (!startTime.isNullOrBlank()) {
             TimeUtils.toSystemZoneTime(startTime)
         } else {
             TimeUtils.toSystemZoneTime(LocalDateTime.now().minusMonths(1))
         }
-        val localEnd = if (endTime != null && endTime.isNotBlank()) {
+        val localEnd = if (!endTime.isNullOrBlank()) {
             TimeUtils.toSystemZoneTime(endTime)
         } else {
             TimeUtils.toSystemZoneTime(LocalDateTime.now())
@@ -263,7 +285,9 @@ open class OperateLogServiceImpl(
             "PROJECT" -> repositoryEvent
             "PACKAGE" -> packageEvent
             "ADMIN" -> adminEvent
-            else -> listOf()
+            "REPO" -> repositoryEvent
+            "METADATA" -> metadataEvent
+            else -> throw ParameterInvalidException("resource type $resourceType not support")
         }
     }
 
@@ -346,7 +370,6 @@ open class OperateLogServiceImpl(
         private val adminEvent = listOf(EventType.ADMIN_ADD, EventType.ADMIN_DELETE)
         private val projectEvent = listOf(EventType.PROJECT_CREATED)
         private val metadataEvent = listOf(EventType.METADATA_SAVED, EventType.METADATA_DELETED)
-        private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSz")
         private val antPathMatcher = AntPathMatcher()
     }
 }

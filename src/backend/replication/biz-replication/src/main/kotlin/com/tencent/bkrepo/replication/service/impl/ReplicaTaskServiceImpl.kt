@@ -33,6 +33,7 @@ import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.Preconditions
+import com.tencent.bkrepo.common.artifact.constant.PIPELINE
 import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.security.util.SecurityUtils
@@ -215,7 +216,7 @@ class ReplicaTaskServiceImpl(
                 throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, request::name.name)
             }
             // 校验同步策略，按仓库同步可以选择多个仓库，按包或者节点同步只能在单个仓库下进行操作
-            validateReplicaObject(this)
+            validateReplicaObject(replicaObjectType, replicaTaskObjects)
             // 执行计划验证
             validateExecutionPlan(this)
         }
@@ -243,20 +244,27 @@ class ReplicaTaskServiceImpl(
         }
     }
 
-    private fun validateReplicaObject(request: ReplicaTaskCreateRequest) {
-        when (request.replicaObjectType) {
+    @Suppress("ThrowsCount")
+    private fun validateReplicaObject(
+        replicaObjectType: ReplicaObjectType,
+        replicaTaskObjects: List<ReplicaObjectInfo>
+    ) {
+        when (replicaObjectType) {
             ReplicaObjectType.REPOSITORY -> {
-                request.replicaTaskObjects.forEach {
+                replicaTaskObjects.forEach {
                     if (!it.packageConstraints.isNullOrEmpty() || !it.pathConstraints.isNullOrEmpty()) {
                         throw ErrorCodeException(CommonMessageCode.REQUEST_CONTENT_INVALID)
+                    }
+                    if (it.localRepoName == PIPELINE) {
+                        throw ErrorCodeException(ReplicationMessageCode.PIPELINE_REPO_NOT_ALLOWED)
                     }
                 }
             }
             ReplicaObjectType.PACKAGE -> {
-                if (request.replicaTaskObjects.size != 1) {
+                if (replicaTaskObjects.size != 1) {
                     throw ErrorCodeException(CommonMessageCode.REQUEST_CONTENT_INVALID)
                 }
-                val packageConstraints = request.replicaTaskObjects.first().packageConstraints
+                val packageConstraints = replicaTaskObjects.first().packageConstraints
                 Preconditions.checkNotBlank(packageConstraints, "packageConstraints")
                 packageConstraints?.forEach { pkg ->
                     Preconditions.checkNotBlank(pkg.packageKey, pkg::packageKey.name)
@@ -264,10 +272,10 @@ class ReplicaTaskServiceImpl(
                 }
             }
             ReplicaObjectType.PATH -> {
-                if (request.replicaTaskObjects.size != 1) {
+                if (replicaTaskObjects.size != 1) {
                     throw ErrorCodeException(CommonMessageCode.REQUEST_CONTENT_INVALID)
                 }
-                val pathConstraints = request.replicaTaskObjects.first().pathConstraints
+                val pathConstraints = replicaTaskObjects.first().pathConstraints
                 Preconditions.checkNotBlank(pathConstraints, "pathConstraints")
                 pathConstraints?.forEach { pathConstraint ->
                     PathUtils.normalizeFullPath(pathConstraint.path!!)
@@ -350,6 +358,8 @@ class ReplicaTaskServiceImpl(
                     throw ErrorCodeException(ReplicationMessageCode.TASK_DISABLE_UPDATE, key)
                 }
             }
+            // 校验同步对象
+            validateReplicaObject(replicaObjectType, replicaTaskObjects)
             // 更新任务
             val userId = SecurityUtils.getUserId()
             // 查询集群节点信息

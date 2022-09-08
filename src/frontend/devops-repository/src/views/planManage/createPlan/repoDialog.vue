@@ -50,7 +50,8 @@
             repoList () {
                 return this.repoListAll
                     .filter(r => {
-                        return ['DOCKER', 'MAVEN', 'NPM', 'GENERIC'].includes(r.type)
+                        console.log('r.type :>> ', r.type)
+                        return ['DOCKER', 'MAVEN', 'NPM', 'GENERIC'].includes(r.type) && r.name !== 'pipeline'
                     })
                     .map(repo => ({ ...repo, fid: repo.projectId + repo.name }))
                     .sort((a, b) => {

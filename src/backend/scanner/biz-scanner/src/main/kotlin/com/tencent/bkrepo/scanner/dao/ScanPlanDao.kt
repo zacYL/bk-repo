@@ -37,7 +37,6 @@ import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.scanner.model.TScanPlan
 import com.tencent.bkrepo.scanner.pojo.ScanPlan
-import com.tencent.bkrepo.scanner.utils.LicenseUtils
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.BulkOperations
 import org.springframework.data.mongodb.core.query.Criteria
@@ -78,7 +77,7 @@ class ScanPlanDao : ScannerSimpleMongoDao<TScanPlan>() {
         val criteria = Criteria
             .where(TScanPlan::projectId.name).isEqualTo(projectId)
             .and(TScanPlan::scanOnNewArtifact.name).isEqualTo(scanOnNewArtifact)
-            .and(TScanPlan::type.name).`in`(planType, LicenseUtils.convertLicenseScanType(planType))
+            .and(TScanPlan::type.name).isEqualTo(planType)
             .and(TScanPlan::deleted.name).isEqualTo(null)
         if (!includeEmptyRepoNames) {
             criteria.and(TScanPlan::repoNames.name).isEqualTo(repoName)
@@ -129,9 +128,9 @@ class ScanPlanDao : ScannerSimpleMongoDao<TScanPlan>() {
         type?.let { criteria.and(TScanPlan::type.name).isEqualTo(type) }
         planNameContains?.let { criteria.and(TScanPlan::name.name).regex(".*$planNameContains.*") }
         val pageRequest = Pages.ofRequest(pageLimit.getNormalizedPageNumber(), pageLimit.getNormalizedPageSize())
-        val query = Query(criteria).with(pageRequest).with(Sort.by(TScanPlan::createdDate.name).descending())
+        val query = Query(criteria).with(Sort.by(TScanPlan::createdDate.name).descending())
 
-        return Pages.ofResponse(pageRequest, count(query), find(query))
+        return Pages.ofResponse(pageRequest, count(query), find(query.with(pageRequest)))
     }
 
     fun update(scanPlan: ScanPlan): UpdateResult {

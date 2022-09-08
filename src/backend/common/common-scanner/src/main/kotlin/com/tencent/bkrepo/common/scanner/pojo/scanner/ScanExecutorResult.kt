@@ -45,8 +45,8 @@ import io.swagger.annotations.ApiModelProperty
 @JsonSubTypes(
     JsonSubTypes.Type(value = ArrowheadScanExecutorResult::class, name = ArrowheadScanner.TYPE),
     JsonSubTypes.Type(value = DependencyScanExecutorResult::class, name = DependencyScanner.TYPE),
-    JsonSubTypes.Type(value = ScanCodeToolkitScanExecutorResult::class, name = ScancodeToolkitScanner.TYPE),
-    JsonSubTypes.Type(value = TrivyScanExecutorResult::class, name = TrivyScanner.TYPE)
+    JsonSubTypes.Type(value = TrivyScanExecutorResult::class, name = TrivyScanner.TYPE),
+    JsonSubTypes.Type(value = ScanCodeToolkitScanExecutorResult::class, name = ScancodeToolkitScanner.TYPE)
 )
 open class ScanExecutorResult(
     @ApiModelProperty("扫描执行状态")

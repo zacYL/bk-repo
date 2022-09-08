@@ -11,7 +11,7 @@ service:
 
 scanner:
   executor:
-    work-dir: __BK_REPO_SCANNER_EXECUTOR_WORK_DIR__
+    work-dir: /tmp/scanner
     at-least-free-mem-percent: __BK_REPO_SCANNER_EXECUTOR_AT_LEAST_FREE_MEM_PERCENT__
     at-least-usable-disk-space-percent: __BK_REPO_SCANNER_EXECUTOR_AT_LEAST_USABLE_DISK_SPACE_PERCENT__
     docker:

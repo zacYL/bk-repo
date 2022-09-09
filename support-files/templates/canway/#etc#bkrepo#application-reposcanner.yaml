@@ -22,11 +22,8 @@ logging:
 service:
   name: scanner
 
-# 用于存储详细扫描报告
 scanner:
-  spring:
-    data:
-      mongodb:
-        uri: __BK_REPO_SCANNER_MONGODB_URI__
-        transaction:
-          enabled: false
+  # 默认项目扫描子任务数量限制
+  defaultProjectSubScanTaskCountLimit: 20
+  # 用于生成扫描报告路径
+  detailReportUrl: http://localhost

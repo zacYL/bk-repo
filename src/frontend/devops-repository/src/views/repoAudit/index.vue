@@ -38,6 +38,24 @@
                     :name="option.name">
                 </bk-option>
             </bk-select>
+            <bk-select
+                class="mr10 w250"
+                v-model="query.eventTypes"
+                clearable
+                searchable
+                multiple
+                show-select-all
+                placeholder="选择操作事件"
+                @change="handlerPaginationChange()"
+                :list="logEventTypeList">
+                <bk-option
+                    v-for="(item, index) in logEventTypeList"
+                    :key="index"
+                    :id="item[0]"
+                    :name="item[1]"
+                >
+                </bk-option>
+            </bk-select>
         </div>
         <bk-table
             class="mt10"
@@ -107,8 +125,10 @@
                 query: {
                     projectId: this.$route.params.projectId,
                     user: '',
-                    time: [new Date(nowTime - 3600 * 1000 * 24 * 7), new Date(nowTime)]
+                    time: [new Date(nowTime - 3600 * 1000 * 24 * 7), new Date(nowTime)],
+                    eventTypes: []
                 },
+                logEventTypeList: [],
                 auditList: [],
                 pagination: {
                     count: 0,
@@ -156,7 +176,8 @@
         methods: {
             formatDate,
             ...mapActions([
-                'getAuditList'
+                'getAuditList',
+                'getLogEventType'
             ]),
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
                 this.pagination.current = current
@@ -168,7 +189,8 @@
                     projectId: this.query.projectId || undefined,
                     startTime,
                     endTime,
-                    user: this.query.user || undefined
+                    user: this.query.user || undefined,
+                    eventType: this.query.eventTypes.join(',')
                 }
                 this.$router.replace({
                     query: {
@@ -189,6 +211,11 @@
                     this.pagination.count = totalRecords
                 }).finally(() => {
                     this.isLoading = false
+                })
+                
+                // 获取审计日志事件类型列表
+                this.getLogEventType().then(data => {
+                    this.logEventTypeList = Object.entries(data)
                 })
             },
             getProjectName (id) {

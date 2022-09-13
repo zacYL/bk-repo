@@ -72,7 +72,7 @@ class UserOperateLogController(
         @ApiParam("资源类型", required = false)
         @RequestParam type: String?,
         @ApiParam("事件类型", required = false)
-        @RequestParam eventType: EventType?,
+        @RequestParam eventType: List<EventType>?,
         @ApiParam("项目名", required = false)
         @RequestParam projectId: String?,
         @ApiParam("仓库名", required = false)

@@ -145,7 +145,7 @@ open class OperateLogServiceImpl(
 
     override fun page(
         type: String?,
-        eventType: EventType?,
+        eventType: List<EventType>?,
         projectId: String?,
         repoName: String?,
         operator: String?,
@@ -155,14 +155,14 @@ open class OperateLogServiceImpl(
         pageSize: Int
     ): Page<OperateLogResponse?> {
         val pageRequest = Pages.ofRequest(pageNumber, pageSize)
-        if (type != null && eventType != null) {
-            require(getEventList(type).contains(eventType)) {
-                throw ParameterInvalidException("event type [$eventType] not support for [$type]")
+        if (!eventType.isNullOrEmpty()) {
+            require(eventTypes().containsAll(eventType)) {
+                throw ParameterInvalidException("event type [$eventType] not support")
             }
         }
-        eventType?.run {
-            require(eventTypes().contains(eventType)) {
-                throw ParameterInvalidException("event type [$eventType] not support")
+        if (type != null && !eventType.isNullOrEmpty()) {
+            require(getEventList(type).containsAll(eventType)) {
+                throw ParameterInvalidException("event type [$eventType] not support for [$type]")
             }
         }
         val query = buildOperateLogPageQuery(type, eventType, projectId, repoName, operator, startTime, endTime)
@@ -247,15 +247,15 @@ open class OperateLogServiceImpl(
 
     private fun buildOperateLogPageQuery(
         type: String?,
-        eventType: EventType?,
+        eventType: List<EventType>?,
         projectId: String?,
         repoName: String?,
         operator: String?,
         startTime: String?,
         endTime: String?
     ): Query {
-        val criteria = if (eventType != null) {
-            Criteria.where(TOperateLog::type.name).`is`(eventType)
+        val criteria = if (!eventType.isNullOrEmpty()) {
+            Criteria.where(TOperateLog::type.name).`in`(eventType)
         } else if (type != null) {
             Criteria.where(TOperateLog::type.name).`in`(getEventList(type))
         } else {

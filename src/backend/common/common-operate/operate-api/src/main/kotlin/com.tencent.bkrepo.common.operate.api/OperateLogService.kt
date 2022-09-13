@@ -50,7 +50,7 @@ interface OperateLogService {
 
     fun page(
         type: String?,
-        eventType: EventType?,
+        eventType: List<EventType>?,
         projectId: String?,
         repoName: String?,
         operator: String?,

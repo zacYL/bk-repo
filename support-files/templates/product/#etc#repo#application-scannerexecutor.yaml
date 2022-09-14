@@ -11,9 +11,18 @@ service:
 
 scanner:
   executor:
-    work-dir: /tmp/scanner
-    at-least-free-mem-percent: __BK_REPO_SCANNER_EXECUTOR_AT_LEAST_FREE_MEM_PERCENT__
-    at-least-usable-disk-space-percent: __BK_REPO_SCANNER_EXECUTOR_AT_LEAST_USABLE_DISK_SPACE_PERCENT__
+    # 扫描工作目录，扫描模块独立使用目录
+    workDir: /tmp/scanner
+    # 单台机器最多执行的扫描任务数量
+    maxTaskCount: 10
+    # 允许扫描的最大文件大小
+    fileSizeLimit: 10GB
+    # 至少需要空闲的内存百分比，大于这个比例才能执行扫描任务
+    atLeastFreeMemPercent: __BK_REPO_SCANNER_EXECUTOR_AT_LEAST_FREE_MEM_PERCENT__
+    # 至少需要空闲的硬盘空间百分比，大于这个比例才能执行扫描任务
+    atLeastUsableDiskSpacePercent: __BK_REPO_SCANNER_EXECUTOR_AT_LEAST_USABLE_DISK_SPACE_PERCENT__
+    # 扫描器日志最大行数
+    maxScannerLogLines: 200
     docker:
       enabled: __BK_REPO_SCANNER_EXECUTOR_DOCKER_ENABLED__
       host: __BK_REPO_SCANNER_EXECUTOR_DOCKER_HOST__

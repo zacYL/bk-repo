@@ -97,18 +97,19 @@
                     <bk-table-column type="selection" width="60"></bk-table-column>
                     <bk-table-column :label="$t('fileName')" prop="name" show-overflow-tooltip :render-header="renderHeader">
                         <template #default="{ row }">
+                            <Icon class="table-svg mr5" size="16" :name="row.folder ? 'folder' : getIconName(row.name)" />
+                            <span
+                                class="hover-btn disabled"
+                                v-if="!row.folder && row.metadata.forbidStatus"
+                                v-bk-tooltips="{ content: tooltipContent(row.metadata), placements: ['top'] }"
+                            >{{row.name}}</span>
+                            <span v-else>{{ row.name }}</span>
                             <scan-tag class="mr5 table-svg"
                                 v-if="isEnterprise && !row.folder && genericScanFileTypes.includes(row.name.replace(/^.+\.([^.]+)$/, '$1'))"
                                 :status="row.metadata.scanStatus"
                                 repo-type="generic"
                                 :full-path="row.fullPath">
                             </scan-tag>
-                            <forbid-tag class="mr5"
-                                v-if="!row.folder && row.metadata.forbidStatus"
-                                v-bind="row.metadata">
-                            </forbid-tag>
-                            <Icon class="table-svg mr5" size="16" :name="row.folder ? 'folder' : getIconName(row.name)" />
-                            <span>{{row.name}}</span>
                         </template>
                     </bk-table-column>
 
@@ -193,7 +194,6 @@
     import MoveSplitBar from '@repository/components/MoveSplitBar'
     import RepoTree from '@repository/components/RepoTree'
     import ScanTag from '@repository/views/repoScan/scanTag'
-    import forbidTag from '@repository/components/ForbidTag'
     import metadataTag from '@repository/views/repoCommon/metadataTag'
     import genericDetail from './genericDetail'
     import genericFormDialog from '@repository/views/repoGeneric/genericFormDialog'
@@ -207,7 +207,6 @@
     export default {
         name: 'repoGeneric',
         components: {
-            forbidTag,
             OperationList,
             Breadcrumb,
             MoveSplitBar,
@@ -332,6 +331,18 @@
                 'getMultiFileNumOfFolder',
                 'forbidMetadata'
             ]),
+            tooltipContent ({ forbidType, forbidUser }) {
+                switch (forbidType) {
+                    case 'SCANNING':
+                        return '制品正在扫描中'
+                    case 'QUALITY_UNPASS':
+                        return '制品扫描质量规则未通过'
+                    case 'MANUAL':
+                        return `${this.userList[forbidUser]?.name || forbidUser} 手动禁止`
+                    default:
+                        return ''
+                }
+            },
             changeSideBarWidth (sideBarWidth) {
                 if (sideBarWidth > 250) {
                     this.sideBarWidth = sideBarWidth

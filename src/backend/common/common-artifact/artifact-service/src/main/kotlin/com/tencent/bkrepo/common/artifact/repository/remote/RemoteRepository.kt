@@ -178,7 +178,7 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
     open fun loadArtifactResource(cacheNode: NodeDetail, context: ArtifactDownloadContext): ArtifactResource? {
         return storageService.load(cacheNode.sha256!!, Range.full(cacheNode.size), context.storageCredentials)?.run {
             if (logger.isDebugEnabled) {
-                logger.debug("Cached remote artifact[${context.artifactInfo}] is hit.")
+                logger.debug("Cached remote artifact[${context.repositoryDetail}] is hit.")
             }
             ArtifactResource(this, context.artifactInfo.getResponseName(), cacheNode, ArtifactChannel.PROXY)
         }
@@ -199,8 +199,8 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
      * 尝试获取缓存的远程构件节点
      */
     open fun findCacheNodeDetail(context: ArtifactDownloadContext): NodeDetail? {
-        with(context) {
-            return nodeClient.getNodeDetail(projectId, repoName, artifactInfo.getArtifactFullPath()).data
+        with(context.repositoryDetail) {
+            return nodeClient.getNodeDetail(projectId, name, context.artifactInfo.getArtifactFullPath()).data
         }
     }
 

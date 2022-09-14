@@ -32,7 +32,7 @@ import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.job.pojo.JobDetail
 import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 
 @FeignClient(JOB_SERVICE_NAME)
@@ -42,6 +42,6 @@ interface JobClient {
     @GetMapping("/detail")
     fun detail(): Response<List<JobDetail>>
 
-    @PostMapping("/fileReferenceClean")
-    fun fileReferenceClean(): Response<Boolean>
+    @GetMapping("/update/{name}/{status}")
+    fun update(@PathVariable name: String, @PathVariable status:Boolean): Response<Boolean>
 }

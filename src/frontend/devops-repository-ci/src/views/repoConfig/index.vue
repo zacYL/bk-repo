@@ -184,7 +184,7 @@
                 return this.$route.params.repoType
             },
             showProxyConfigTab () {
-                return ['maven', 'docker', 'npm', 'helm', 'pypi', 'composer', 'nuget'].includes(this.repoType)
+                return ['maven', 'npm', 'pypi', 'composer', 'nuget'].includes(this.repoType)
             },
             repoAddress () {
                 const { repoType, name } = this.repoBaseInfo

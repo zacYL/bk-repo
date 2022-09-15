@@ -64,7 +64,7 @@ class DockerScanHelper(
         try {
             // 启动容器
             val result = dockerClient.startContainer(containerId, maxScanDuration)
-            logger.info(CommonUtils.buildLogMsg(task, "task docker run result[$result], [$taskWorkDir, $containerId]"))
+            logger.info(CommonUtils.buildLogMsg(task, "task docker run result[$result], [$taskWorkDir, $containerId maxScanDuration:$maxScanDuration]"))
             return result
         } finally {
             taskContainerIdMap.remove(task.taskId)

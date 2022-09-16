@@ -128,23 +128,22 @@ class DependencyScanExecutor(
             dependency.vulnerabilities?.forEach { vulnerability ->
                 val packages = dependency.packages?.get(0)?.id?.removePrefix("pkg:")?.split("@")
                 logger.debug("packages:${packages?.toJsonString()}")
-                packages?.let {
-                    if (cveMap.containsKey(vulnerability.name)) return@forEach
-                    cveMap[vulnerability.name] = DependencyItem(
-                        cveId = vulnerability.name,
-                        name = vulnerability.name,
-                        dependency = packages[0],
-                        version = if(packages[1] == PLACEHOLDER) "" else  packages[1],
-                        severity = normalizedLevel(vulnerability.severity),
-                        description = vulnerability.description,
-                        officialSolution = null,
-                        defenseSolution = null,
-                        references = vulnerability.references.map { reference -> reference.url },
-                        cvssV2Vector = vulnerability.cvssv2,
-                        cvssV3 = vulnerability.cvssv3,
-                        path = dependency.filePath.removePrefix(prefix)
-                    )
-                }
+                val version = packages?.get(1) ?: ""
+                if (cveMap.containsKey(vulnerability.name)) return@forEach
+                cveMap[vulnerability.name] = DependencyItem(
+                    cveId = vulnerability.name,
+                    name = vulnerability.name,
+                    dependency = packages?.get(0) ?: "",
+                    version = if(version == PLACEHOLDER) "" else version,
+                    severity = normalizedLevel(vulnerability.severity),
+                    description = vulnerability.description,
+                    officialSolution = null,
+                    defenseSolution = null,
+                    references = vulnerability.references.map { reference -> reference.url },
+                    cvssV2Vector = vulnerability.cvssv2,
+                    cvssV3 = vulnerability.cvssv3,
+                    path = dependency.filePath.removePrefix(prefix)
+                )
             }
         }
         val dependencyItems = cveMap.values.toMutableList()

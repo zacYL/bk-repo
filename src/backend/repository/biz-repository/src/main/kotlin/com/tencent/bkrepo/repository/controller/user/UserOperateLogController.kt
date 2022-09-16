@@ -34,6 +34,8 @@ import com.tencent.bkrepo.common.operate.api.OperateLogService
 import com.tencent.bkrepo.common.operate.api.pojo.OpLogListOption
 import com.tencent.bkrepo.common.operate.api.pojo.OperateLog
 import com.tencent.bkrepo.common.operate.api.pojo.OperateLogResponse
+import com.tencent.bkrepo.common.security.permission.Principal
+import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
@@ -47,6 +49,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @Api("操作日志用户接口")
 @RestController
+@Principal(PrincipalType.ADMIN)
 @RequestMapping("/api/log")
 class UserOperateLogController(
     private val operateLogService: OperateLogService

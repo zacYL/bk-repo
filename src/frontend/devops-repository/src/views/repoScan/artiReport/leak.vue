@@ -73,7 +73,7 @@
                         title="未扫描到漏洞">
                     </empty-data>
                 </template>
-                <bk-table-column type="expand" width="30">
+                <bk-table-column type="expand">
                     <template #default="{ row }">
                         <template v-if="row.path">
                             <div class="leak-title">存在漏洞的文件路径</div>

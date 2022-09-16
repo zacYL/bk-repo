@@ -25,23 +25,15 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.job.batch.utils
+package com.tencent.bkrepo.job.config.properties
 
+import org.springframework.boot.context.properties.ConfigurationProperties
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
-import java.util.Locale
 
-object TimeUtils {
-
-    fun parseMongoDateTimeStr(dateTimeStr: String): LocalDateTime? {
-        return try {
-            LocalDateTime.parse(
-                dateTimeStr,
-                DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss zzz yyyy", Locale.ENGLISH)
-            )
-        } catch (ignore: DateTimeParseException) {
-            null
-        }
-    }
-}
+@ConfigurationProperties("job.node-report")
+class NodeReport2BkbaseJobProperties(
+    override var enabled: Boolean = true,
+    override var cron: String = "0/1 * * * * ? ",
+    val startDateTime: LocalDateTime = LocalDateTime.MIN,
+    val endDateTime: LocalDateTime = LocalDateTime.MAX
+) : MongodbJobProperties(enabled)

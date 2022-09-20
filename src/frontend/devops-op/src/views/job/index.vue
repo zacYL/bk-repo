@@ -104,12 +104,18 @@ export default {
       update(job.name, job.enabled, job.runnig).then(() => {
         this.query()
       })
-      const key = 'job.' + job.name + '.enabled'
+      let jobName;
+      if (job.name.endsWith('Job')) {
+        jobName = job.name.substr(0, job.name.length - 3)
+      } else {
+        jobName = job.name
+      }
+      const key = 'job.' + jobName + '.enabled'
       const values = [{
         'key': key,
         'value': job.enabled
       }]
-      updateConfig(values)
+      updateConfig(values, 'job')
     },
     changeRunning(job) {
       update(job.name, job.enabled, !job.runnig).then(() => {

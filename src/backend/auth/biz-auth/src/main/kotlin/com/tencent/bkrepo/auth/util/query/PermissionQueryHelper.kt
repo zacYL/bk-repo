@@ -20,9 +20,10 @@ object PermissionQueryHelper {
         val criteria = Criteria()
         val orQuery = mutableListOf<Criteria>()
         orQuery.add(Criteria.where(TPermission::users.name).`in`(uid))
-        if(roles.isNotEmpty()) orQuery.add(Criteria.where(TPermission::roles.name).`in`(roles))
-        if( departments != null && departments.isNotEmpty())
+        if (roles.isNotEmpty()) orQuery.add(Criteria.where(TPermission::roles.name).`in`(roles))
+        if (!departments.isNullOrEmpty()) {
             orQuery.add(Criteria.where(TPermission::departments.name).`in`(departments))
+        }
         var celeriac = criteria.orOperator(*orQuery.toTypedArray())
                 .and(TPermission::resourceType.name).`is`(resourceType).and(TPermission::actions.name).`in`(action)
         if (resourceType != ResourceType.SYSTEM) {

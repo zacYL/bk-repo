@@ -135,6 +135,7 @@ open class PermissionServiceImpl constructor(
                 excludePattern = request.excludePattern,
                 users = request.users,
                 roles = request.roles,
+                actions = request.actions,
                 createBy = request.createBy,
                 createAt = LocalDateTime.now(),
                 updatedBy = request.updatedBy,
@@ -213,22 +214,20 @@ open class PermissionServiceImpl constructor(
         }
 
         // check user locked
-        if (user.locked) return false
-
+        if (user.locked) {
+            return false
+        }
         // check user admin permission
         if (user.admin) return true
 
         // check user project admin
         if (checkProjectUserAdmin(request)) return true
-
         // check role project admin
         if (checkProjectAdmin(request, user.roles)) return true
-
         // check role repo admin
         if (checkRepoAdmin(request, user.roles)) return true
-
         // check repo action
-        return checkRepoAction(request, user.roles)
+        return checkAction(request, user.roles)
     }
 
     private fun checkProjectUserAdmin(request: CheckPermissionRequest): Boolean {
@@ -268,9 +267,8 @@ open class PermissionServiceImpl constructor(
             queryRoles = roles.filter { !it.isNullOrEmpty() }.toList()
 
         }
-        if (queryRoles.isEmpty()) {
-            return false
-        }
+        if (queryRoles.isEmpty()) return false
+
         val result = roleRepository.findByProjectIdAndTypeAndAdminAndRepoNameAndIdIn(
             projectId = request.projectId!!,
             type = RoleType.REPO,
@@ -278,23 +276,45 @@ open class PermissionServiceImpl constructor(
             admin = true,
             ids = queryRoles
         )
-        if (result.isNotEmpty()) {
-            return true
+        if (result.isNotEmpty()) return true
+        return false
+    }
+
+    private fun checkAction(request: CheckPermissionRequest, roles: List<String>): Boolean {
+        with(request) {
+            if (resourceType == ResourceType.REPO && repoName != null) {
+                val query = PermissionQueryHelper.buildPermissionCheck(
+                        projectId!!, repoName!!, uid, action, resourceType, roles
+                )
+                val result = mongoTemplate.find(query, TPermission::class.java)
+                if (result.isEmpty()) return false
+
+                // result is not empty and path is null
+                if (path == null) return true
+
+                result.forEach {
+                    if (checkIncludePattern(it.includePattern, path!!)) return true
+                    if (!checkExcludePattern(it.excludePattern, path!!)) return false
+                }
+            }
         }
         return false
     }
 
-    private fun checkRepoAction(request: CheckPermissionRequest, roles: List<String>): Boolean {
-        with(request) {
-            if (resourceType == ResourceType.REPO && repoName != null) {
-                val query = PermissionQueryHelper.buildPermissionCheck(
-                    projectId!!, repoName!!, uid, action, resourceType, roles
-                )
-                val result = mongoTemplate.count(query, TPermission::class.java)
-                if (result != 0L) return true
-            }
+    private fun checkIncludePattern(patternList: List<String>, path: String): Boolean {
+        if (patternList.isEmpty()) return true
+        patternList.forEach {
+            if (path.contains(it)) return true
         }
         return false
+    }
+
+    private fun checkExcludePattern(patternList: List<String>, path: String): Boolean {
+        if (patternList.isEmpty()) return true
+        patternList.forEach {
+            if (path.contains(it)) return false
+        }
+        return true
     }
 
     override fun listPermissionProject(userId: String): List<String> {
@@ -546,6 +566,13 @@ open class PermissionServiceImpl constructor(
             PROJECT_MANAGE_PERMISSION -> listOf(PermissionAction.MANAGE)
             else -> listOf(PermissionAction.READ)
         }
+    }
+    private fun convActions(actions: List<PermissionAction>): List<String> {
+        var result = mutableListOf<String>()
+        actions.forEach {
+            result.add(it.toString())
+        }
+        return result
     }
 
     companion object {

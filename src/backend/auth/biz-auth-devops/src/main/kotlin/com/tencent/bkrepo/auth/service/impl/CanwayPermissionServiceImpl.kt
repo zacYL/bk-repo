@@ -13,12 +13,8 @@ import com.tencent.bkrepo.auth.pojo.enums.RoleType
 import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.CreatePermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.Permission
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionActionRequest
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionDepartmentRequest
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionPathRequest
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRepoRequest
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRoleRequest
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionUserRequest
 import com.tencent.bkrepo.auth.repository.PermissionRepository
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
@@ -31,10 +27,7 @@ import com.tencent.bkrepo.common.devops.client.DevopsClient
 import com.tencent.bkrepo.common.devops.conf.DevopsConf
 import com.tencent.bkrepo.common.devops.enums.InstanceType
 import com.tencent.bkrepo.common.devops.pojo.response.CanwayResponse
-import com.tencent.bkrepo.common.devops.service.BkUserService
 import com.tencent.bkrepo.common.devops.util.http.SimpleHttpUtils
-import com.tencent.bkrepo.common.security.exception.PermissionException
-import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import org.slf4j.Logger
@@ -50,7 +43,6 @@ class CanwayPermissionServiceImpl(
     private val mongoTemplate: MongoTemplate,
     repositoryClient: RepositoryClient,
     private val devopsConf: DevopsConf,
-    private val bkUserService: BkUserService,
     projectClient: ProjectClient
 ) : CpackPermissionServiceImpl(
     userRepository,
@@ -85,7 +77,6 @@ class CanwayPermissionServiceImpl(
 
     override fun checkPermission(request: CheckPermissionRequest): Boolean {
         logger.info("check permission  request : [$request] ")
-
         if (request.uid == ANONYMOUS_USER) return false
         // 校验用户是否属于对应部门、用户组和已添加用户
         if (isBkrepoAdmin(request)) return true
@@ -96,8 +87,6 @@ class CanwayPermissionServiceImpl(
     }
 
     fun canwayCheckPermission(request: CheckPermissionRequest): Boolean {
-        logger.debug("check permission  request : [$request] ")
-
         val user = userRepository.findFirstByUserId(request.uid) ?: run {
             throw ErrorCodeException(AuthMessageCode.AUTH_USER_NOT_EXIST)
         }
@@ -126,7 +115,11 @@ class CanwayPermissionServiceImpl(
         return checkRepoAction(request, ciRoles, departments)
     }
 
-    override fun checkRepoAction(request: CheckPermissionRequest, roles: List<String>, departments: List<String>?): Boolean {
+    override fun checkRepoAction(
+        request: CheckPermissionRequest,
+        roles: List<String>,
+        departments: List<String>?
+    ): Boolean {
         with(request) {
             if (resourceType == ResourceType.REPO && repoName != null) {
                 val query = PermissionQueryHelper.buildPermissionCheck(
@@ -167,9 +160,7 @@ class CanwayPermissionServiceImpl(
                 departments = request.departments
             )
         )
-        result.id?.let {
-            return true
-        }
+        result.id?.let { return true }
         return false
     }
 
@@ -339,51 +330,11 @@ class CanwayPermissionServiceImpl(
     }
 
     private fun isBkrepoAdmin(request: CheckPermissionRequest): Boolean {
-        logger.debug("check permission  request : [$request] ")
         val user = userRepository.findFirstByUserId(request.uid) ?: run {
             throw ErrorCodeException(AuthMessageCode.AUTH_USER_NOT_EXIST)
         }
-
         // check user admin permission
         return user.admin
-    }
-
-    override fun updatePermissionDepartment(request: UpdatePermissionDepartmentRequest): Boolean {
-        val webRequest = HttpContextHolder.getRequest()
-        val api = webRequest.requestURI.removePrefix("/").removePrefix("web/")
-        if (api.startsWith("api", ignoreCase = true)) {
-            if (!checkPermissionById(request.permissionId)) throw PermissionException()
-        }
-        return super.updatePermissionDepartment(request)
-    }
-
-    override fun updatePermissionUser(request: UpdatePermissionUserRequest): Boolean {
-        val webRequest = HttpContextHolder.getRequest()
-        val requestUri = webRequest.requestURI
-        logger.info("CanwayPermissionService accept : $requestUri, $request")
-        val api = requestUri.removePrefix("/").removePrefix("web/")
-        if (api.startsWith("api", ignoreCase = true)) {
-            if (!checkPermissionById(request.permissionId)) throw PermissionException()
-        }
-        return super.updatePermissionUser(request)
-    }
-
-    override fun updatePermissionRole(request: UpdatePermissionRoleRequest): Boolean {
-        val webRequest = HttpContextHolder.getRequest()
-        val api = webRequest.requestURI.removePrefix("/").removePrefix("web/")
-        if (api.startsWith("api", ignoreCase = true)) {
-            if (!checkPermissionById(request.permissionId)) throw PermissionException()
-        }
-        return super.updatePermissionRole(request)
-    }
-
-    override fun updatePermissionAction(request: UpdatePermissionActionRequest): Boolean {
-        val webRequest = HttpContextHolder.getRequest()
-        val api = webRequest.requestURI.removePrefix("/").removePrefix("web/")
-        if (api.startsWith("api", ignoreCase = true)) {
-            if (!checkPermissionById(request.permissionId)) throw PermissionException()
-        }
-        return super.updatePermissionAction(request)
     }
 
     /**
@@ -395,13 +346,13 @@ class CanwayPermissionServiceImpl(
     @Suppress("TooGenericExceptionCaught")
     private fun isCIAdmin(userId: String, projectId: String? = null, tenantId: String? = null): Boolean {
         return if (projectId != null && tenantId == null) {
-            logger.info("check user $userId is CI admin of project $projectId")
+            logger.info("check user $userId is CI project admin of [project: $projectId]")
             devopsClient.isAdmin(userId, InstanceType.PROJECT, projectId) ?: false
         } else if (projectId == null && tenantId != null) {
-            logger.info("check user $userId is CI admin of tenant $tenantId")
+            logger.info("check user $userId is CI tenant admin of [tenant: $tenantId]")
             devopsClient.isAdmin(userId, InstanceType.TENANT, tenantId) ?: false
         } else {
-            logger.info("check user $userId is CI super admin ")
+            logger.info("check user $userId is CI super admin")
             devopsClient.isAdmin(userId, InstanceType.SUPER) ?: false
         }
     }
@@ -420,20 +371,6 @@ class CanwayPermissionServiceImpl(
             null
         }
         return users?.contains(userId) ?: false
-    }
-
-    private fun checkPermissionById(permissionId: String): Boolean {
-        val userId = bkUserService.getBkUser()
-        val tPermission = permissionRepository.findFirstById(permissionId)!!
-        logger.info("CanwayPermissionService found tPermission: $tPermission")
-        val checkPermissionRequest = CheckPermissionRequest(
-            uid = userId,
-            resourceType = ResourceType.REPO,
-            action = PermissionAction.MANAGE,
-            projectId = tPermission.projectId,
-            repoName = tPermission.repos.first()
-        )
-        return checkPermission(checkPermissionRequest)
     }
 
     /**

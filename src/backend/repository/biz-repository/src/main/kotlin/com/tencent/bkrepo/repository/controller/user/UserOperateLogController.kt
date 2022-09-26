@@ -29,10 +29,13 @@ package com.tencent.bkrepo.repository.controller.user
 
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
+import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.common.operate.api.OperateLogService
 import com.tencent.bkrepo.common.operate.api.pojo.OpLogListOption
 import com.tencent.bkrepo.common.operate.api.pojo.OperateLog
 import com.tencent.bkrepo.common.operate.api.pojo.OperateLogResponse
+import com.tencent.bkrepo.common.security.permission.Principal
+import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
@@ -46,6 +49,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @Api("操作日志用户接口")
 @RestController
+@Principal(PrincipalType.ADMIN)
 @RequestMapping("/api/log")
 class UserOperateLogController(
     private val operateLogService: OperateLogService
@@ -58,11 +62,20 @@ class UserOperateLogController(
         return ResponseBuilder.success(operateLogService.listPage(option))
     }
 
+    @ApiOperation("审计日志事件类型")
+    @GetMapping("/event/type")
+    fun type(): Response<Map<EventType, String>> {
+        return ResponseBuilder.success(operateLogService.eventTypes().associateWith { it.nick })
+    }
+
+
     @ApiOperation("审计日志查询接口")
     @GetMapping("/page")
     fun page(
         @ApiParam("资源类型", required = false)
         @RequestParam type: String?,
+        @ApiParam("事件类型", required = false)
+        @RequestParam eventType: List<EventType>?,
         @ApiParam("项目名", required = false)
         @RequestParam projectId: String?,
         @ApiParam("仓库名", required = false)
@@ -79,8 +92,8 @@ class UserOperateLogController(
         @RequestParam pageSize: Int?
     ): Response<Page<OperateLogResponse?>> {
         val page = operateLogService.page(
-            type, projectId, repoName,
-            operator, startTime, endTime, pageNumber ?: 1, pageSize ?: 20
+                type, eventType, projectId, repoName,
+                operator, startTime, endTime, pageNumber ?: 1, pageSize ?: 20
         )
         return ResponseBuilder.success(page)
     }

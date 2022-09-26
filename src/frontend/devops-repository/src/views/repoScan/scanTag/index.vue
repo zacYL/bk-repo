@@ -103,7 +103,7 @@
                         query: {
                             ...this.$route.params,
                             ...this.$route.query,
-                            repoType: this.repoType,
+                            ...(this.repoType ? { repoType: this.repoType } : {}),
                             scanType: planType
                         }
                     })

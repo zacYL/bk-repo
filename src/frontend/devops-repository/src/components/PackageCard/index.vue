@@ -76,7 +76,6 @@
         computed: {
             ...mapGetters(['isEnterprise']),
             showRepoScan () {
-                console.log(scanTypeEnum)
                 return Object.keys(scanTypeEnum).join(',').includes(this.cardData.type)
             }
         },

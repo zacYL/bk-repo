@@ -209,7 +209,7 @@ export default {
         )
     },
     // 审计日志
-    getAuditList (_, { projectId, startTime, endTime, user, current, limit }) {
+    getAuditList (_, { projectId, startTime, endTime, user, current, limit, eventType }) {
         return Vue.prototype.$ajax.get(
             'repository/api/log/page',
             {
@@ -219,9 +219,14 @@ export default {
                     projectId,
                     startTime,
                     endTime,
+                    eventType,
                     operator: user
                 }
             }
         )
+    },
+    // 获取审计日志事件类型
+    getLogEventType (_) {
+        return Vue.prototype.$ajax.get('/repository/api/log/event/type')
     }
 }

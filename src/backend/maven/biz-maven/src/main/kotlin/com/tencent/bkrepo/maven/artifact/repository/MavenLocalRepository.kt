@@ -1141,6 +1141,7 @@ class MavenLocalRepository(
             val jarNode = nodeClient.getNodeDetail(
                 projectId, repoName, trueVersion.contentPath!!
             ).data ?: return null
+            val type = (jarNode.metadata["packaging"] as? String)?: "jar"
             val stageTag = stageClient.query(projectId, repoName, packageKey, version).data
             val packageVersion = packageClient.findVersionByName(
                 projectId, repoName, packageKey, version
@@ -1150,6 +1151,7 @@ class MavenLocalRepository(
                 groupId,
                 artifactId,
                 version,
+                if(type == "jar") null else type,
                 jarNode.size, jarNode.fullPath,
                 jarNode.createdBy, jarNode.createdDate,
                 jarNode.lastModifiedBy, jarNode.lastModifiedDate,

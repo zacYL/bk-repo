@@ -31,4 +31,7 @@
 
 package com.tencent.bkrepo.maven.exception
 
-class MavenArtifactNotFoundException(error: String) : RuntimeException(error)
+import com.tencent.bkrepo.common.api.exception.NotFoundException
+import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
+
+class MavenArtifactNotFoundException(error: String) : NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, error)

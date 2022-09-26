@@ -34,9 +34,10 @@ import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.constant.SCAN_STATUS
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.query.model.PageLimit
-import com.tencent.bkrepo.scanner.pojo.ScanSchemeType
 import com.tencent.bkrepo.common.query.model.Rule
+import com.tencent.bkrepo.common.scanner.pojo.scanner.ScanType
 import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.repository.api.PackageClient
@@ -44,6 +45,7 @@ import com.tencent.bkrepo.scanner.component.ScannerPermissionCheckHandler
 import com.tencent.bkrepo.scanner.dao.PlanArtifactLatestSubScanTaskDao
 import com.tencent.bkrepo.scanner.dao.ScanPlanDao
 import com.tencent.bkrepo.scanner.dao.ScanTaskDao
+import com.tencent.bkrepo.scanner.dao.SubScanTaskDao
 import com.tencent.bkrepo.scanner.event.DelScanPlanEvent
 import com.tencent.bkrepo.scanner.message.ScannerMessageCode
 import com.tencent.bkrepo.scanner.model.TScanPlan
@@ -79,7 +81,8 @@ class ScanPlanServiceImpl(
     private val planArtifactLatestSubScanTaskDao: PlanArtifactLatestSubScanTaskDao,
     private val permissionCheckHandler: ScannerPermissionCheckHandler,
     private val publisher: ApplicationEventPublisher,
-    private val scanTaskService: ScanTaskService
+    private val scanTaskService: ScanTaskService,
+    private val subScanTaskDao: SubScanTaskDao
 ) : ScanPlanService {
     override fun create(request: ScanPlan): ScanPlan {
         val operator = SecurityUtils.getUserId()
@@ -89,7 +92,7 @@ class ScanPlanServiceImpl(
                 throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "name cannot be empty or length > 32")
             }
 
-            if (!ScanSchemeType.values().map { it.name }.contains(type)) {
+            if (!RepositoryType.values().map { it.name }.contains(type)) {
                 throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "invalid scan plan type[$type]")
             }
 
@@ -103,6 +106,7 @@ class ScanPlanServiceImpl(
                 projectId = projectId!!,
                 name = name!!,
                 type = type!!,
+                scanTypes = scanTypes ?: listOf(ScanType.SECURITY.name),
                 description = description ?: "",
                 scanner = scanner!!,
                 scanOnNewArtifact = scanOnNewArtifact ?: false,
@@ -118,8 +122,18 @@ class ScanPlanServiceImpl(
         }
     }
 
-    override fun list(projectId: String, type: String?): List<ScanPlan> {
-        return scanPlanDao.list(projectId, type).map { ScanPlanConverter.convert(it) }
+    override fun list(projectId: String, type: String?, fileNameExt: String?): List<ScanPlan> {
+        var scanPlans = scanPlanDao.list(projectId, type)
+        if (type == RepositoryType.GENERIC.name && fileNameExt != null) {
+            // 筛选支持指定文件名后缀的扫描方案
+            val scannerNames = scanPlans.map { it.scanner }
+            val scanners = scannerService.find(scannerNames).associateBy { it.name }
+            scanPlans = scanPlans.filter {
+                val scanner = scanners[it.scanner]!!
+                scanner.supportFileNameExt.isEmpty() || fileNameExt in scanner.supportFileNameExt
+            }
+        }
+        return scanPlans.map { ScanPlanConverter.convert(it) }
     }
 
     override fun page(
@@ -134,12 +148,14 @@ class ScanPlanServiceImpl(
         val scanTaskMap = scanTaskDao.findByIds(scanTaskIds).associateBy { it.id }
 
         val planArtifactCountMap = planArtifactLatestSubScanTaskDao.planArtifactCount(page.records.map { it.id!! })
+        val scanningPlan = subScanTaskDao.findScanning(projectId).map { it.planId }.distinct()
 
         val scanPlanInfoList = page.records.map {
             ScanPlanConverter.convert(
                 it,
                 scanTaskMap[it.latestScanTaskId],
-                planArtifactCountMap[it.id!!] ?: 0L
+                planArtifactCountMap[it.id!!] ?: 0L,
+                scanningPlan.contains(it.id)
             )
         }
 
@@ -170,6 +186,7 @@ class ScanPlanServiceImpl(
                 projectId = projectId,
                 name = name,
                 type = type,
+                scanTypes = listOf(ScanType.SECURITY.name),
                 scanner = scannerService.default().name,
                 rule = RuleConverter.convert(projectId, emptyList(), type)
             )
@@ -268,7 +285,7 @@ class ScanPlanServiceImpl(
     ): List<ArtifactPlanRelation> {
         with(request) {
             ScanParamUtil.checkParam(
-                repoType = ScanSchemeType.ofRepositoryType(repoType),
+                repoType = RepositoryType.valueOf(repoType),
                 packageKey = packageKey,
                 version = version,
                 fullPath = fullPath
@@ -288,10 +305,9 @@ class ScanPlanServiceImpl(
             val scanPlanMap = scanPlanDao.findByIds(planIds, true).associateBy { it.id!! }
             return subtasks.map {
                 if (it.planId == null) {
-                    ScanPlanConverter.convertToArtifactPlanRelation(it, "_${it.scanner}")
+                    ScanPlanConverter.convertToArtifactPlanRelation(it)
                 } else {
-                    val scanPlan = scanPlanMap[it.planId]
-                    ScanPlanConverter.convertToArtifactPlanRelation(it, scanPlan!!.name, scanPlan.type)
+                    ScanPlanConverter.convertToArtifactPlanRelation(it, scanPlanMap[it.planId]!!)
                 }
             }
         }
@@ -307,6 +323,12 @@ class ScanPlanServiceImpl(
         return ScanPlanConverter.artifactStatus(relations.map { it.status })
     }
 
+    private fun checkRunning(planId: String) {
+        if (scanTaskDao.existsByPlanIdAndStatus(planId, runningStatus)) {
+            throw ErrorCodeException(ScannerMessageCode.SCAN_PLAN_DELETE_FAILED)
+        }
+    }
+
     override fun scanLicensePlanInfo(request: PlanCountRequest): ScanLicensePlanInfo? {
         with(request) {
             val scanPlan = scanPlanDao.find(projectId, id)
@@ -319,12 +341,6 @@ class ScanPlanServiceImpl(
                 val artifactCount = planArtifactLatestSubScanTaskDao.planArtifactCount(scanPlan.id!!)
                 ScanLicenseConverter.convert(scanPlan, scanTask, artifactCount)
             }
-        }
-    }
-
-    private fun checkRunning(planId: String) {
-        if (scanTaskDao.existsByPlanIdAndStatus(planId, runningStatus)) {
-            throw ErrorCodeException(ScannerMessageCode.SCAN_PLAN_DELETE_FAILED)
         }
     }
 

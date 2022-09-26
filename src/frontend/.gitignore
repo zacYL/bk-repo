@@ -4,7 +4,8 @@ package-lock.json
 yarn.lock
 yarn-error.log
 .yarnrc
-/.vscode
+.vscode
+.history
 */webpack_cache
 sprite_chunk.js
 sprite.svg

@@ -23,7 +23,7 @@
                 :row-border="false"
                 :virtual-render="fileList.length > 3000"
                 size="small">
-                <bk-table-column :label="$t('fileName')" show-overflow-tooltip>
+                <bk-table-column :label="$t('fileName')" min-width="300" show-overflow-tooltip>
                     <template #default="{ row }">
                         <bk-popover placement="top">
                             {{row.file.name}}

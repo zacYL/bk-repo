@@ -113,9 +113,24 @@ class NpmRemoteRepository(
         val downloadUri = createRemoteSearchUrl(context)
         val request = Request.Builder().url(downloadUri).build()
         val response = httpClient.newCall(request).execute()
-        return if (checkResponse(response)) {
+        return if (validateResponse(context, response)) {
             onQueryResponse(context, response)
         } else null
+    }
+
+    private fun validateResponse(context: ArtifactContext, response: Response): Boolean {
+        val contentType = response.body()!!.contentType()
+        return checkResponse(response) && contentType?.let {
+            if (it.toString().contains("application/json")) {
+                return@let true
+            } else {
+                logger.error(
+                    "Response from remote-repo[${context.repositoryDetail.name}] is not JSON format. " +
+                            "Please check the proxy configuration of repo[${context.artifactInfo.getRepoIdentify()}]"
+                )
+                return@let false
+            }
+        } ?: false
     }
 
     private fun createRemoteSearchUrl(context: ArtifactContext): String {

@@ -27,7 +27,10 @@
 
 package com.tencent.bkrepo.common.operate.service.service
 
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
+import com.tencent.bkrepo.common.api.exception.ParameterInvalidException
 import com.tencent.bkrepo.common.api.pojo.Page
+import com.tencent.bkrepo.common.api.util.EscapeUtils
 import com.tencent.bkrepo.common.api.util.TimeUtils
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.api.util.toJsonString
@@ -45,6 +48,10 @@ import com.tencent.bkrepo.common.operate.service.dao.OperateLogDao
 import com.tencent.bkrepo.common.operate.service.dao.OperateLogMigrateDao
 import com.tencent.bkrepo.common.operate.service.model.TOperateLog
 import com.tencent.bkrepo.common.operate.service.model.TOperateLogMig
+import com.tencent.bkrepo.common.security.exception.PermissionException
+import com.tencent.bkrepo.common.security.manager.PermissionManager
+import com.tencent.bkrepo.common.security.permission.PrincipalType
+import com.tencent.bkrepo.common.security.util.SecurityUtils
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
@@ -54,7 +61,6 @@ import org.springframework.data.mongodb.core.query.where
 import org.springframework.scheduling.annotation.Async
 import org.springframework.util.AntPathMatcher
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 /**
  * OperateLogService 实现类
@@ -63,6 +69,7 @@ import java.time.format.DateTimeFormatter
 open class OperateLogServiceImpl(
     private val operateProperties: OperateProperties,
     private val operateLogDao: OperateLogDao,
+    private val permissionManager: PermissionManager,
     private val operatorLogMigrateDao: OperateLogMigrateDao
 ) : OperateLogService {
 
@@ -108,22 +115,25 @@ open class OperateLogServiceImpl(
     }
 
     override fun listPage(option: OpLogListOption): Page<OperateLog> {
+        try {
+            permissionManager.checkPrincipal(SecurityUtils.getUserId(), PrincipalType.ADMIN)
+        } catch (e: PermissionException) {
+            permissionManager.checkProjectPermission(PermissionAction.MANAGE, option.projectId)
+        }
         with(option) {
+            val escapeValue = EscapeUtils.escapeRegexExceptWildcard(resourceKey)
+            val regexPattern = escapeValue.replace("*", ".*")
             val criteria = where(TOperateLog::projectId).isEqualTo(projectId)
                 .and(TOperateLog::repoName).isEqualTo(repoName)
                 .and(TOperateLog::type).isEqualTo(eventType)
                 .and(TOperateLog::createdDate).gte(startTime).lte(endTime)
+                .and(TOperateLog::resourceKey).regex("^$regexPattern")
                 .apply {
                     userId?.run { and(TOperateLog::userId).isEqualTo(userId) }
                     sha256?.run { and("${TOperateLog::description.name}.sha256").isEqualTo(sha256) }
                     pipelineId?.run { and("${TOperateLog::description.name}.pipelineId").isEqualTo(pipelineId) }
                     buildId?.run { and("${TOperateLog::description.name}.buildId").isEqualTo(buildId) }
                 }
-            if (prefixSearch) {
-                criteria.and(TOperateLog::resourceKey).regex("^$resourceKey")
-            } else {
-                criteria.and(TOperateLog::resourceKey).isEqualTo(resourceKey)
-            }
             val query = Query(criteria)
             val totalCount = operateLogDao.count(query)
             val pageRequest = Pages.ofRequest(pageNumber, pageSize)
@@ -135,6 +145,7 @@ open class OperateLogServiceImpl(
 
     override fun page(
         type: String?,
+        eventType: List<EventType>?,
         projectId: String?,
         repoName: String?,
         operator: String?,
@@ -144,10 +155,30 @@ open class OperateLogServiceImpl(
         pageSize: Int
     ): Page<OperateLogResponse?> {
         val pageRequest = Pages.ofRequest(pageNumber, pageSize)
-        val query = buildOperateLogPageQuery(type, projectId, repoName, operator, startTime, endTime)
+        if (!eventType.isNullOrEmpty()) {
+            require(eventTypes().containsAll(eventType)) {
+                throw ParameterInvalidException("event type [$eventType] not support")
+            }
+        }
+        if (type != null && !eventType.isNullOrEmpty()) {
+            require(getEventList(type).containsAll(eventType)) {
+                throw ParameterInvalidException("event type [$eventType] not support for [$type]")
+            }
+        }
+        val query = buildOperateLogPageQuery(type, eventType, projectId, repoName, operator, startTime, endTime)
         val totalRecords = operateLogDao.count(query)
         val records = operateLogDao.find(query.with(pageRequest)).map { convert(it) }
         return Pages.ofResponse(pageRequest, totalRecords, records)
+    }
+
+    override fun eventTypes(): List<EventType> {
+        return mutableListOf<EventType>().apply {
+            addAll(repositoryEvent)
+            addAll(packageEvent)
+            addAll(adminEvent)
+            addAll(projectEvent)
+            addAll(metadataEvent)
+        }
     }
 
     @Async
@@ -216,29 +247,30 @@ open class OperateLogServiceImpl(
 
     private fun buildOperateLogPageQuery(
         type: String?,
+        eventType: List<EventType>?,
         projectId: String?,
         repoName: String?,
         operator: String?,
         startTime: String?,
         endTime: String?
     ): Query {
-        val criteria = if (type != null) {
+        val criteria = if (!eventType.isNullOrEmpty()) {
+            Criteria.where(TOperateLog::type.name).`in`(eventType)
+        } else if (type != null) {
             Criteria.where(TOperateLog::type.name).`in`(getEventList(type))
         } else {
             Criteria.where(TOperateLog::type.name).nin(nodeEvent)
         }
-
         projectId?.let { criteria.and(TOperateLog::projectId.name).`is`(projectId) }
-
         repoName?.let { criteria.and(TOperateLog::repoName.name).`is`(repoName) }
-
         operator?.let { criteria.and(TOperateLog::userId.name).`is`(operator) }
-        val localStart = if (startTime != null && startTime.isNotBlank()) {
+
+        val localStart = if (!startTime.isNullOrBlank()) {
             TimeUtils.toSystemZoneTime(startTime)
         } else {
             TimeUtils.toSystemZoneTime(LocalDateTime.now().minusMonths(1))
         }
-        val localEnd = if (endTime != null && endTime.isNotBlank()) {
+        val localEnd = if (!endTime.isNullOrBlank()) {
             TimeUtils.toSystemZoneTime(endTime)
         } else {
             TimeUtils.toSystemZoneTime(LocalDateTime.now())
@@ -253,7 +285,9 @@ open class OperateLogServiceImpl(
             "PROJECT" -> repositoryEvent
             "PACKAGE" -> packageEvent
             "ADMIN" -> adminEvent
-            else -> listOf()
+            "REPO" -> repositoryEvent
+            "METADATA" -> metadataEvent
+            else -> throw ParameterInvalidException("resource type $resourceType not support")
         }
     }
 
@@ -336,7 +370,6 @@ open class OperateLogServiceImpl(
         private val adminEvent = listOf(EventType.ADMIN_ADD, EventType.ADMIN_DELETE)
         private val projectEvent = listOf(EventType.PROJECT_CREATED)
         private val metadataEvent = listOf(EventType.METADATA_SAVED, EventType.METADATA_DELETED)
-        private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSz")
         private val antPathMatcher = AntPathMatcher()
     }
 }

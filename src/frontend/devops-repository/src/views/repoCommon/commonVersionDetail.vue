@@ -17,26 +17,28 @@
                         <span v-if="detail.basic.groupId" class="ml5 repo-tag"> {{ detail.basic.groupId }} </span>
                     </span>
                 </div>
-                <div class="grid-item"
-                    v-for="{ name, label, value } in detailInfoMap"
-                    :key="name">
-                    <label>{{ label }}</label>
-                    <span class="flex-1 flex-align-center text-overflow">
-                        <span class="text-overflow" :title="value">{{ value }}</span>
-                        <template v-if="name === 'version'">
-                            <span class="ml5 repo-tag"
-                                v-for="tag in detail.basic.stageTag"
-                                :key="tag">
-                                {{ tag }}
-                            </span>
-                            <scan-tag v-if="showRepoScan" class="ml10" :status="metadataMap.scanStatus"></scan-tag>
-                            <forbid-tag class="ml10"
-                                v-if="metadataMap.forbidStatus"
-                                v-bind="metadataMap">
-                            </forbid-tag>
-                        </template>
-                    </span>
-                </div>
+                <template v-if="detail.basic.version">
+                    <div class="grid-item"
+                        v-for="{ name, label, value } in detailInfoMap"
+                        :key="name">
+                        <label>{{ label }}</label>
+                        <span class="flex-1 flex-align-center text-overflow">
+                            <span class="text-overflow" :title="value">{{ value }}</span>
+                            <template v-if="name === 'version'">
+                                <span class="ml5 repo-tag"
+                                    v-for="tag in detail.basic.stageTag"
+                                    :key="tag">
+                                    {{ tag }}
+                                </span>
+                                <scan-tag v-if="showRepoScan" class="ml10" :status="metadataMap.scanStatus"></scan-tag>
+                                <forbid-tag class="ml10"
+                                    v-if="metadataMap.forbidStatus"
+                                    v-bind="metadataMap">
+                                </forbid-tag>
+                            </template>
+                        </span>
+                    </div>
+                </template>
                 <div class="package-description grid-item">
                     <label>描述</label>
                     <span class="flex-1 text-overflow" :title="detail.basic.description">{{ detail.basic.description || '/' }}</span>
@@ -72,8 +74,13 @@
                     <template #empty>
                         <empty-data ex-style="margin-top:130px;"></empty-data>
                     </template>
-                    <bk-table-column :label="$t('key')" prop="key" show-overflow-tooltip></bk-table-column>
-                    <bk-table-column :label="$t('value')" prop="value" show-overflow-tooltip></bk-table-column>
+                    <!-- <bk-table-column :label="$t('key')" prop="key" show-overflow-tooltip></bk-table-column>
+                    <bk-table-column :label="$t('value')" prop="value" show-overflow-tooltip></bk-table-column> -->
+                    <bk-table-column :label="$t('metadata')">
+                        <template #default="{ row }">
+                            <metadata-tag :metadata="row" />
+                        </template>
+                    </bk-table-column>
                     <bk-table-column :label="$t('description')" prop="description" show-overflow-tooltip></bk-table-column>
                 </bk-table>
             </div>
@@ -149,6 +156,7 @@
     import OperationList from '@repository/components/OperationList'
     import ScanTag from '@repository/views/repoScan/scanTag'
     import forbidTag from '@repository/components/ForbidTag'
+    import metadataTag from '@repository/views/repoCommon/metadataTag'
     import { scanTypeEnum } from '@repository/store/publicEnum'
     import { mapState, mapActions } from 'vuex'
     import { convertFileSize, formatDate } from '@repository/utils'
@@ -159,7 +167,8 @@
             CodeArea,
             OperationList,
             ScanTag,
-            forbidTag
+            forbidTag,
+            metadataTag
         },
         mixins: [repoGuideMixin],
         data () {

@@ -90,7 +90,7 @@
                 // 添加
                 if (data.type === 'add') {
                     this.proxyList.push({
-                        public: data.proxyType === 'publicProxy',
+                        public: data.public,
                         name: data.name,
                         url: data.url,
                         ...(data.username
@@ -103,7 +103,7 @@
                 // 编辑
                 } else if (data.type === 'edit') {
                     this.proxyList.splice(this.proxyList.findIndex(v => v.name === name), 1, {
-                        public: data.proxyType === 'publicProxy',
+                        public: data.public,
                         name: data.name,
                         url: data.url,
                         ...(data.username

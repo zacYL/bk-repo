@@ -91,4 +91,10 @@ interface ProjectService {
      * 判断项目信息是否存在
      */
     fun checkProjectExist(name: String?, displayName: String?): Boolean
+
+    /**
+     * 删除项目
+     * @param confirmName 确认项目id
+     */
+    fun deleteProject(userId: String, name: String, confirmName: String)
 }

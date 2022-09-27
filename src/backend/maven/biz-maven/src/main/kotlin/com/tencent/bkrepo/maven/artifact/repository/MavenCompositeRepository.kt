@@ -1,10 +1,14 @@
 package com.tencent.bkrepo.maven.artifact.repository
 
 import com.tencent.bkrepo.common.api.exception.NotFoundException
+import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
+import com.tencent.bkrepo.common.artifact.exception.ArtifactNotInWhitelistException
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.repository.composite.CompositeRepository
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
+import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
 import com.tencent.bkrepo.repository.api.ProxyChannelClient
 import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Primary
@@ -18,6 +22,11 @@ class MavenCompositeRepository(
         proxyChannelClient: ProxyChannelClient
 ) : CompositeRepository(mavenLocalRepository, mavenRemoteRepository, proxyChannelClient) {
 
+    override fun onDownloadBefore(context: ArtifactDownloadContext) {
+        whitelistInterceptor(context)
+        super.onDownloadBefore(context)
+    }
+
     @Suppress("TooGenericExceptionCaught")
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         var artifactResource: ArtifactResource? = null
@@ -30,7 +39,8 @@ class MavenCompositeRepository(
                 artifactResource = mavenRemoteRepository.onDownload(it)
                 if (artifactResource != null) {
                     return@mapFirstProxyRepo artifactResource
-                } else {}
+                } else {
+                }
             }
             // 这里是为了保留各依赖源实现的异常
             if (artifactResource == null) {
@@ -43,10 +53,31 @@ class MavenCompositeRepository(
                 artifactResource = mavenRemoteRepository.onDownload(it)
                 if (artifactResource != null) {
                     return@mapFirstProxyRepo artifactResource
-                } else {}
+                } else {
+                }
             }
         }
         return artifactResource
+    }
+
+    private fun whitelistInterceptor(context: ArtifactDownloadContext) {
+        (context.artifactInfo as MavenArtifactInfo).let {
+            if (it.isValid()
+                    && artifactWhitelistProperties.intercept
+                    && remotePackageClient.search(RepositoryType.MAVEN).data == true
+            ) {
+                nodeClient.getNodeDetail(
+                        projectId = it.projectId,
+                        repoName = it.repoName,
+                        fullPath = it.getArtifactFullPath()).data?.let { nodeDetail ->
+                    nodeDetail.nodeMetadata.forEach { metadataModel ->
+                        if (metadataModel.key == SOURCE_TYPE && metadataModel.value == "remote") {
+                            throw ArtifactNotInWhitelistException()
+                        }
+                    }
+                }
+            }
+        }
     }
 
     override fun <R> mapFirstProxyRepo(context: ArtifactContext, action: (ArtifactContext) -> R?): R? {
@@ -55,14 +86,19 @@ class MavenCompositeRepository(
             try {
                 action(getContextFromProxyChannel(context, setting))?.let {
                     // 无论请求是否成功, 都会返回kotlin.Unit
-                    if (it != Unit) { return it }
+                    if (it != Unit) {
+                        return it
+                    }
                 }
+            } catch (downloadException: ArtifactNotInWhitelistException) {
+                throw ArtifactNotInWhitelistException()
             } catch (ignored: Exception) {
                 logger.warn("Failed to execute map with channel ${setting.name}", ignored)
             }
         }
         return null
     }
+
     companion object {
         private val logger = LoggerFactory.getLogger(MavenCompositeRepository::class.java)
     }

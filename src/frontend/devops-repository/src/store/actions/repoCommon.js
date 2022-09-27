@@ -191,5 +191,9 @@ export default {
                 }
             }
         )
+    },
+    // 查询白名单列表
+    getWhitelist (_, { repositoryType, packageKey, version, pageNumber, pageSize }) {
+        return Vue.prototype.$ajax.get(`repository/api/remote/whitelist/page?type=${repositoryType}&packageKey=${packageKey}&version=${version}&pageNumber=${pageNumber}&pageSize=${pageSize}&regex=true`)
     }
 }

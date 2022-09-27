@@ -47,6 +47,7 @@ import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest
+import org.springframework.context.annotation.ComponentScan
 import org.springframework.data.mongodb.core.query.Query
 
 @DisplayName("项目服务测试")

@@ -34,6 +34,8 @@ package com.tencent.bkrepo.common.artifact.repository.remote
 import com.tencent.bkrepo.common.api.constant.HttpHeaders
 import com.tencent.bkrepo.common.api.constant.HttpStatus
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
+import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.NetworkProxyConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteCredentialsConfiguration
@@ -50,6 +52,7 @@ import com.tencent.bkrepo.common.artifact.stream.artifactStream
 import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
 import com.tencent.bkrepo.common.artifact.util.okhttp.BasicAuthInterceptor
 import com.tencent.bkrepo.common.artifact.util.okhttp.HttpClientBuilderFactory
+import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import okhttp3.Authenticator
@@ -74,6 +77,7 @@ import java.util.concurrent.TimeUnit
 abstract class RemoteRepository : AbstractArtifactRepository() {
 
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
+        whitelistInterceptor(context)
         return getCacheArtifactResource(context) ?: run {
             val remoteConfiguration = context.getRemoteConfiguration()
             logger.info(
@@ -89,6 +93,10 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
                 onDownloadResponse(context, response)
             } else null
         }
+    }
+
+    open fun whitelistInterceptor(context: ArtifactDownloadContext) {
+        return
     }
 
     @Suppress("TooGenericExceptionCaught", "LoopWithTooManyJumpStatements")
@@ -244,16 +252,22 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
      * 获取缓存节点创建请求
      */
     open fun buildCacheNodeCreateRequest(context: ArtifactContext, artifactFile: ArtifactFile): NodeCreateRequest {
+        val nodeMetadata = if (context.repositoryDetail.type == RepositoryType.MAVEN) {
+            listOf(MetadataModel(SOURCE_TYPE, ArtifactChannel.PROXY))
+        } else {
+            null
+        }
         return NodeCreateRequest(
-            projectId = context.repositoryDetail.projectId,
-            repoName = context.repositoryDetail.name,
-            folder = false,
-            fullPath = context.artifactInfo.getArtifactFullPath(),
-            size = artifactFile.getSize(),
-            sha256 = artifactFile.getFileSha256(),
-            md5 = artifactFile.getFileMd5(),
-            overwrite = true,
-            operator = context.userId
+                projectId = context.repositoryDetail.projectId,
+                repoName = context.repositoryDetail.name,
+                folder = false,
+                fullPath = context.artifactInfo.getArtifactFullPath(),
+                size = artifactFile.getSize(),
+                sha256 = artifactFile.getFileSha256(),
+                md5 = artifactFile.getFileMd5(),
+                overwrite = true,
+                operator = context.userId,
+                nodeMetadata = nodeMetadata
         )
     }
 

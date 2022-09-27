@@ -2,9 +2,9 @@ package com.tencent.bkrepo.repository.service.whitelist
 
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
-import com.tencent.bkrepo.repository.cpack.controller.CreateRemotePackageWhitelistRequest
+import com.tencent.bkrepo.repository.pojo.whitelist.CreateRemotePackageWhitelistRequest
 import com.tencent.bkrepo.repository.cpack.controller.RemotePackageWhitelist
-import com.tencent.bkrepo.repository.cpack.controller.UpdateRemotePackageWhitelistRequest
+import com.tencent.bkrepo.repository.pojo.whitelist.UpdateRemotePackageWhitelistRequest
 
 interface RemotePackageWhitelistService {
     fun createWhitelist(request: CreateRemotePackageWhitelistRequest): Boolean

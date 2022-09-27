@@ -1,4 +1,4 @@
-package com.tencent.bkrepo.repository.cpack.controller
+package com.tencent.bkrepo.repository.pojo.whitelist
 
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 
@@ -8,7 +8,7 @@ data class UpdateRemotePackageWhitelistRequest(
         val type: RepositoryType? = null
 ) {
     init {
-        packageKey?.let { require(packageKeyValid()) { "packageKey must not be blank" } }
+        packageKey?.let { require(packageKeyValid()) }
         type?.let { require(!arrayOf(RepositoryType.GIT, RepositoryType.NONE, RepositoryType.GENERIC).contains(type)) {
             "type can not be [GIT, NONE, GENERIC]" }}
     }

@@ -6,12 +6,12 @@ import com.tencent.bkrepo.common.api.util.Preconditions
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.security.util.SecurityUtils
-import com.tencent.bkrepo.repository.cpack.controller.CreateRemotePackageWhitelistRequest
 import com.tencent.bkrepo.repository.cpack.controller.RemotePackageWhitelist
-import com.tencent.bkrepo.repository.cpack.controller.UpdateRemotePackageWhitelistRequest
 import com.tencent.bkrepo.repository.dao.RemotePackageWhitelistDao
 import com.tencent.bkrepo.repository.exception.WhitelistNotFoundException
 import com.tencent.bkrepo.repository.model.TRemotePackageWhitelist
+import com.tencent.bkrepo.repository.pojo.whitelist.CreateRemotePackageWhitelistRequest
+import com.tencent.bkrepo.repository.pojo.whitelist.UpdateRemotePackageWhitelistRequest
 import com.tencent.bkrepo.repository.service.whitelist.RemotePackageWhitelistService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -49,6 +49,7 @@ class RemotePackageWhitelistServiceImpl(
     }
 
     override fun batchWhitelist(request: List<CreateRemotePackageWhitelistRequest>): Int {
+        request.parallelStream()
         var count = 0
         for (i in request.indices) {
             try {
@@ -65,10 +66,10 @@ class RemotePackageWhitelistServiceImpl(
         val oldWhitelist = getWhitelist(id)?: throw WhitelistNotFoundException(id)
         with(oldWhitelist) {
             Triple(
-                    request.type?.let { if (type != it) request.type else null },
-                    request.packageKey?.let { if (packageKey != it) request.packageKey else null },
+                    request.type?.let { if (type != it) it else null },
+                    request.packageKey?.let { if (packageKey != it) it else null },
                     request.versions?.let {
-                        if (versions?.sorted() != it.sorted()) request.versions.distinct() else null }
+                        if (versions?.sorted() != it.sorted()) it.distinct() else null }
             ).apply {
                 if(first == null && second == null && third == null) return true
             }
@@ -152,7 +153,7 @@ class RemotePackageWhitelistServiceImpl(
                 id = tRemotePackageWhitelist.id!!,
                 type = tRemotePackageWhitelist.type,
                 packageKey = tRemotePackageWhitelist.packageKey,
-                versions = tRemotePackageWhitelist.versions,
+                versions = tRemotePackageWhitelist.versions?.sorted(),
                 createdBy = tRemotePackageWhitelist.createdBy,
                 createdDate = tRemotePackageWhitelist.createdDate,
                 lastModifiedBy = tRemotePackageWhitelist.lastModifiedBy,

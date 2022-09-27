@@ -6,6 +6,8 @@ import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.security.permission.Principal
 import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
+import com.tencent.bkrepo.repository.pojo.whitelist.CreateRemotePackageWhitelistRequest
+import com.tencent.bkrepo.repository.pojo.whitelist.UpdateRemotePackageWhitelistRequest
 import com.tencent.bkrepo.repository.service.whitelist.RemotePackageWhitelistService
 import io.swagger.annotations.ApiParam
 import org.springframework.web.bind.annotation.DeleteMapping

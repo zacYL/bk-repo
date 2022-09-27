@@ -5,6 +5,4 @@ import com.tencent.bkrepo.repository.model.TRemotePackageWhitelist
 import org.springframework.stereotype.Repository
 
 @Repository
-class RemotePackageWhitelistDao : SimpleMongoDao<TRemotePackageWhitelist>() {
-
-}
+class RemotePackageWhitelistDao : SimpleMongoDao<TRemotePackageWhitelist>()

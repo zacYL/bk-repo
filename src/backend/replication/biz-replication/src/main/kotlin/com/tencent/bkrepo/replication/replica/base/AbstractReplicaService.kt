@@ -165,6 +165,7 @@ abstract class AbstractReplicaService(
             try {
                 val executed = replicaContext.replicator.replicaFile(replicaContext, node)
                 updateProgress(executed)
+                ReplicaExecutionContext.increaseProgress(context.taskKey)
                 return
             } catch (throwable: Throwable) {
                 progress.failed += 1
@@ -225,6 +226,7 @@ abstract class AbstractReplicaService(
             try {
                 val executed = replicator.replicaPackageVersion(replicaContext, packageSummary, version)
                 updateProgress(executed)
+                ReplicaExecutionContext.increaseProgress(context.taskKey)
             } catch (throwable: Throwable) {
                 progress.failed += 1
                 setErrorStatus(this, throwable)

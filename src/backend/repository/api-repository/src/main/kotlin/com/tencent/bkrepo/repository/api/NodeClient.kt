@@ -165,6 +165,16 @@ interface NodeClient {
         @RequestParam path: String
     ): Response<Long>
 
+    @ApiOperation("根据路径列表查询文件节点数量总和")
+    @PostMapping("/file/{projectId}/{repoName}")
+    fun countFileNodeByList(
+        @ApiParam(value = "所属项目", required = true)
+        @PathVariable projectId: String,
+        @ApiParam(value = "仓库名称", required = true)
+        @PathVariable repoName: String,
+        @RequestBody fullPathList: List<String>
+    ): Response<Long>
+
     @ApiOperation("自定义查询节点")
     @PostMapping("/search")
     fun search(@RequestBody queryModel: QueryModel): Response<Page<Map<String, Any?>>>

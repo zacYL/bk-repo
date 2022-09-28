@@ -113,14 +113,18 @@ class RemotePackageWhitelistServiceImpl(
         val pageRequest = Pages.ofRequest(page = pageNumber ?: default_pageNumber, size = pageSize ?: default_pageSize)
         val criteria = Criteria()
         type?.let { criteria.and(TRemotePackageWhitelist::type.name).`is`(it) }
-        packageKey?.let {
-            if (regex) {
-                criteria.and(TRemotePackageWhitelist::packageKey.name).regex(EscapeUtils.escapeRegex(it), "i")
-            } else {
-                criteria.and(TRemotePackageWhitelist::packageKey.name).`is`(it)
+        if (!packageKey.isNullOrBlank()) {
+            criteria.and(TRemotePackageWhitelist::packageKey.name).apply {
+                if(regex) regex(EscapeUtils.escapeRegex(packageKey), "i")
+                else `is`(packageKey)
             }
         }
-        version?.let { criteria.and(TRemotePackageWhitelist::versions.name).`in`(it) }
+        if (!version.isNullOrBlank()) {
+            criteria.orOperator(
+                    listOf(Criteria.where(TRemotePackageWhitelist::versions.name).`in`(version),
+                            Criteria.where(TRemotePackageWhitelist::versions.name).`is`(null))
+            )
+        }
         val query = Query(criteria)
         val totalRecord = remotePackageWhitelistDao.count(query)
         val page = remotePackageWhitelistDao.find(

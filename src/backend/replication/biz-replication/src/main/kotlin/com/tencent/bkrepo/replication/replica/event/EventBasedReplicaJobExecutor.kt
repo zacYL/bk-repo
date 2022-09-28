@@ -31,6 +31,7 @@ import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.replication.manager.LocalDataManager
 import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordInfo
 import com.tencent.bkrepo.replication.pojo.task.ReplicaTaskDetail
+import com.tencent.bkrepo.replication.replica.base.context.ReplicaExecutionContext
 import com.tencent.bkrepo.replication.replica.base.executor.AbstractReplicaJobExecutor
 import com.tencent.bkrepo.replication.service.ClusterNodeService
 import com.tencent.bkrepo.replication.service.ReplicaRecordService
@@ -56,6 +57,11 @@ class EventBasedReplicaJobExecutor(
         val task = taskDetail.task
         val taskRecord: ReplicaRecordInfo = replicaRecordService.findOrCreateLatestRecord(task.key)
         try {
+            // 待同步的制品数量
+            val count = 1L * task.remoteClusters.size
+            // 初始化或更新同步进度缓存
+            ReplicaExecutionContext.increaseProgress(task.key, -count)
+                ?: ReplicaExecutionContext.initProgress(task.key, -count)
             task.remoteClusters.map { submit(taskDetail, taskRecord, it, event) }.map { it.get() }
             logger.info("Replica ${event.getFullResourceKey()} completed.")
         } catch (exception: Exception) {

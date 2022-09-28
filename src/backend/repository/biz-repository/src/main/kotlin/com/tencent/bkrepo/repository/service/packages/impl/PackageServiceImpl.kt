@@ -517,6 +517,17 @@ class PackageServiceImpl(
         return packageDao.count(query)
     }
 
+    override fun getVersionCount(projectId: String, repoName: String): Long {
+        val option = PackageListOption(pageSize = 1000)
+        var count = 0L
+        while (true) {
+            val packages = listPackagePage(projectId, repoName, option).records
+                .takeUnless { it.isEmpty() } ?: return count
+            option.pageNumber ++
+            count += packages.sumOf { it.versions }
+        }
+    }
+
     /**
      * 查找包，不存在则创建
      *

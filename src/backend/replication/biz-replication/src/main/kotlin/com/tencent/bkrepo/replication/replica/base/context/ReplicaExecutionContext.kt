@@ -27,14 +27,21 @@
 
 package com.tencent.bkrepo.replication.replica.base.context
 
+import com.google.common.cache.CacheBuilder
 import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus
 import com.tencent.bkrepo.replication.pojo.record.ReplicaProgress
 import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordDetail
+import java.util.concurrent.atomic.AtomicLong
 
 class ReplicaExecutionContext(
     val replicaContext: ReplicaContext,
     val detail: ReplicaRecordDetail
 ) {
+    /**
+     * 同步任务Key
+     */
+    val taskKey = replicaContext.task.key
+
     /**
      * 同步器
      */
@@ -79,6 +86,30 @@ class ReplicaExecutionContext(
             progress.success += 1
         } else {
             progress.skip += 1
+        }
+    }
+
+    companion object {
+
+        // 进行中的同步任务进度缓存
+        private val progressMap = CacheBuilder.newBuilder()
+            .maximumSize(1000)
+            .build<String, AtomicLong>()
+
+        fun initProgress(taskKey: String, progress: Long = 0) {
+            progressMap.put(taskKey, AtomicLong(progress))
+        }
+
+        fun increaseProgress(taskKey: String, count: Long = 1): Long? {
+            return progressMap.getIfPresent(taskKey)?.getAndAdd(count)
+        }
+
+        fun getCurrentProgress(taskKey: String): Long? {
+            return progressMap.getIfPresent(taskKey)?.get()
+        }
+
+        fun removeProgress(taskKey: String) {
+            progressMap.invalidate(taskKey)
         }
     }
 }

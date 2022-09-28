@@ -197,6 +197,13 @@ interface PackageClient {
         @PathVariable repoName: String
     ): Response<Long>
 
+    @ApiOperation("查询仓库包版本数量")
+    @GetMapping("/version/count/{projectId}/{repoName}")
+    fun getVersionCount(
+        @PathVariable projectId: String,
+        @PathVariable repoName: String
+    ): Response<Long>
+
     /**
      * 包版本数据填充，该过程会自动累加downloads和version数量到包信息中
      * 1. 如果包已经存在则不会更新包，跳到步骤2，否则创建新包

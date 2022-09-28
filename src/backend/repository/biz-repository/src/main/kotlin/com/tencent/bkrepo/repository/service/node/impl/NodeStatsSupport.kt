@@ -33,6 +33,7 @@ package com.tencent.bkrepo.repository.service.node.impl
 
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.api.DefaultArtifactInfo
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.repository.dao.NodeDao
 import com.tencent.bkrepo.repository.model.TNode
@@ -83,6 +84,19 @@ open class NodeStatsSupport(
             val query = NodeQueryHelper.nodeListQuery(projectId, repoName, getArtifactFullPath(), listOption)
             return nodeDao.count(query)
         }
+    }
+
+    override fun countFileNodeByList(projectId: String, repoName: String, fullPathList: List<String>): Long {
+        var count = 0L
+        fullPathList.forEach {
+            val folder = nodeDao.findNode(projectId, repoName, it)?.folder ?: return@forEach
+            if (folder) {
+                count += countFileNode(DefaultArtifactInfo(projectId, repoName, it))
+            } else {
+                count ++
+            }
+        }
+        return count
     }
 
     override fun aggregateComputeSize(criteria: Criteria): Long {

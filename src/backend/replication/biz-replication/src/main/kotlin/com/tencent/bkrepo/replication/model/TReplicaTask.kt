@@ -108,5 +108,9 @@ data class TReplicaTask(
     var createdBy: String,
     var createdDate: LocalDateTime,
     var lastModifiedBy: String,
-    var lastModifiedDate: LocalDateTime
+    var lastModifiedDate: LocalDateTime,
+    /**
+     * 任务需要分发的制品数量
+     */
+    var artifactCount: Long? = null
 )

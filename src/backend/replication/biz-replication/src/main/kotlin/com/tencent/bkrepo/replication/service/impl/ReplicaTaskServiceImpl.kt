@@ -35,11 +35,13 @@ import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.Preconditions
 import com.tencent.bkrepo.common.artifact.constant.PIPELINE
 import com.tencent.bkrepo.common.artifact.path.PathUtils
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.replication.dao.ReplicaObjectDao
 import com.tencent.bkrepo.replication.dao.ReplicaTaskDao
 import com.tencent.bkrepo.replication.exception.ReplicationMessageCode
+import com.tencent.bkrepo.replication.manager.LocalDataManager
 import com.tencent.bkrepo.replication.model.TReplicaObject
 import com.tencent.bkrepo.replication.model.TReplicaTask
 import com.tencent.bkrepo.replication.pojo.cluster.ClusterNodeType
@@ -55,6 +57,7 @@ import com.tencent.bkrepo.replication.pojo.task.request.ReplicaTaskCreateRequest
 import com.tencent.bkrepo.replication.pojo.task.request.ReplicaTaskUpdateRequest
 import com.tencent.bkrepo.replication.pojo.task.request.TaskPageParam
 import com.tencent.bkrepo.replication.pojo.task.setting.ExecutionStrategy
+import com.tencent.bkrepo.replication.replica.base.context.ReplicaExecutionContext
 import com.tencent.bkrepo.replication.replica.schedule.ReplicaTaskScheduler
 import com.tencent.bkrepo.replication.replica.schedule.ReplicaTaskScheduler.Companion.JOB_DATA_TASK_KEY
 import com.tencent.bkrepo.replication.replica.schedule.ReplicaTaskScheduler.Companion.REPLICA_JOB_GROUP
@@ -81,7 +84,8 @@ class ReplicaTaskServiceImpl(
     private val replicaObjectDao: ReplicaObjectDao,
     private val replicaRecordService: ReplicaRecordService,
     private val clusterNodeService: ClusterNodeService,
-    private val replicaTaskScheduler: ReplicaTaskScheduler
+    private val replicaTaskScheduler: ReplicaTaskScheduler,
+    private val localDataManager: LocalDataManager
 ) : ReplicaTaskService {
     override fun getByTaskId(taskId: String): ReplicaTaskInfo? {
         return replicaTaskDao.findById(taskId)?.let { convert(it) }
@@ -442,6 +446,33 @@ class ReplicaTaskServiceImpl(
         }
     }
 
+    override fun countArtifactToReplica(taskDetail: ReplicaTaskDetail): Long {
+        val projectId = taskDetail.task.projectId
+        return when(taskDetail.task.replicaObjectType) {
+            ReplicaObjectType.REPOSITORY -> {
+                var count = 0L
+                taskDetail.objects.forEach {
+                    count += if (it.repoType == RepositoryType.GENERIC) {
+                        localDataManager.countFileNode(projectId, it.localRepoName)
+                    } else {
+                        localDataManager.getVersionCount(projectId, it.localRepoName)
+                    }
+                }
+                count
+            }
+            // 同步对象类型不为仓库时，只会有一个同步对象
+            ReplicaObjectType.PACKAGE ->
+                taskDetail.objects.first().packageConstraints?.sumOf { it.versions?.size?.toLong() ?: 0 } ?: 0
+            ReplicaObjectType.PATH -> {
+                val pathConstraints = taskDetail.objects.first().pathConstraints
+                if (!pathConstraints.isNullOrEmpty()) {
+                    val pathList = pathConstraints.mapNotNull { it.path }
+                    localDataManager.countFileNode(projectId, taskDetail.objects.first().localRepoName, pathList)
+                } else 0
+            }
+        }
+    }
+
     companion object {
         private val logger = LoggerFactory.getLogger(ReplicaTaskServiceImpl::class.java)
         private const val TASK_NAME_LENGTH_MIN = 2
@@ -467,7 +498,9 @@ class ReplicaTaskServiceImpl(
                     createdBy = it.createdBy,
                     createdDate = it.createdDate.format(DateTimeFormatter.ISO_DATE_TIME),
                     lastModifiedBy = it.lastModifiedBy,
-                    lastModifiedDate = it.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME)
+                    lastModifiedDate = it.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME),
+                    currentProgress = ReplicaExecutionContext.getCurrentProgress(it.key),
+                    artifactCount = it.artifactCount
                 )
             }
         }

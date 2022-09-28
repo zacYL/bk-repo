@@ -127,4 +127,9 @@ interface ReplicaTaskService {
      * 手动执行任务
      */
     fun execute(key: String)
+
+    /**
+     * 计算同步任务的同步制品总数
+     */
+    fun countArtifactToReplica(taskDetail: ReplicaTaskDetail): Long
 }

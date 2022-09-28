@@ -1,21 +1,24 @@
 <template>
     <div class="proxy-manage-container" v-bkloading="{ isLoading }">
-        <!-- 筛选框 -->
         <div class="mt10 flex-between-center">
-            <bk-button class="ml20" icon="plus" theme="primary" @click="handleClickShowDialog('add')">制品信息</bk-button>
+            <div class="btn-group">
+                <bk-button class="ml20" theme="primary" icon="plus" @click="handleClickShowDialog('add')">添加</bk-button>
+                <bk-button class="ml20" theme="primary" @click="handleClickShowDialog('api')">API调用</bk-button>
+            </div>
+            <!-- 筛选框 -->
             <div class="mr20 flex-align-center">
                 <bk-input
                     v-model.trim="name"
                     class="w250"
                     placeholder="请输入制品名称, 按Enter键搜索"
                     clearable
-                    @enter="handlerPaginationChange()"
-                    @clear="handlerPaginationChange()"
+                    @enter="search"
+                    @clear="search"
                     right-icon="bk-icon icon-search"
                 />
             </div>
+            <!-- 筛选框 /-->
         </div>
-        <!-- 筛选框 /-->
 
         <!-- 表格 -->
         <bk-table
@@ -29,12 +32,14 @@
             <template #empty>
                 <empty-data :is-loading="isLoading"></empty-data>
             </template>
-            <bk-table-column label="制品名称"></bk-table-column>
-            <bk-table-column label="版本"></bk-table-column>
-            <bk-table-column label="制品类型"></bk-table-column>
-            <bk-table-column label="操作">
-                <bk-button class="mr10" theme="primary" text>编辑</bk-button>
-                <bk-button theme="primary" text>删除</bk-button>
+            <bk-table-column label="制品名称" prop="packageKey" min-width="300px" />
+            <bk-table-column label="版本" v-slot="{ row }">
+                <div>{{ row.versions.join(', ') }}</div>
+            </bk-table-column>
+            <bk-table-column label="制品类型" prop="type" width="200px" />
+            <bk-table-column label="操作" v-slot="{ row }" width="150px">
+                <bk-button class="mr10" theme="primary" text @click="handleClickShowDialog('edit', row)">编辑</bk-button>
+                <bk-button theme="primary" text @click="handleClickDelArtifact(row)">删除</bk-button>
             </bk-table-column>
         </bk-table>
         <!-- 表格 /-->
@@ -55,28 +60,30 @@
         <!-- 分页 /-->
 
         <!-- 新增制品信息dialog -->
-        <add-artifact-dialog
-            v-model="artifactDialog.addVisible"
-            @close="handleClickShowDialog('add-close')"
-            @confirm="handleClickAddConfirm"
+        <api-tip-dialog
+            :show="artifactDialogType === 'api'"
+            @close="handleClickShowDialog('close')"
         />
         <!-- 编辑制品信息dialog -->
-        <edit-artifact-dialog
-            v-model="artifactDialog.editVisible"
-            @close="handleClickShowDialog('add-close')"
-            @confirm="handleClickAddConfirm"
+        <add-or-edit-artifact-dialog
+            :show="['add', 'edit'].includes(artifactDialogType)"
+            :type="artifactDialogType"
+            :artifact="curArtifact"
+            @close="handleClickShowDialog('close')"
+            @update="fetchWhitelist"
         />
     </div>
 </template>
 
 <script>
-    import { mapActions } from 'vuex'
-    import AddArtifactDialog from './proxyWhiteListDialog/addArtifactDialog.vue'
-    import EditArtifactDialog from './proxyWhiteListDialog/editArtifactDialog.vue'
+    import { mapActions, mapState } from 'vuex'
+    import AddOrEditArtifactDialog from './proxyWhiteListDialog/addOrEditArtifactDialog.vue'
+    import ApiTipDialog from './proxyWhiteListDialog/apiTipDialog.vue'
+
     export default {
         components: {
-            AddArtifactDialog,
-            EditArtifactDialog
+            AddOrEditArtifactDialog,
+            ApiTipDialog
         },
         data () {
             return {
@@ -88,10 +95,8 @@
                     limit: 20,
                     limitList: [10, 20, 40]
                 },
-                artifactDialog: {
-                    addVisible: false,
-                    editVisible: false
-                },
+                artifactDialogType: '',
+                curArtifact: {},
                 params: {
                     repositoryType: '',
                     packageKey: '',
@@ -101,37 +106,72 @@
                 }
             }
         },
+        computed: {
+            ...mapState(['artifactTypeList']) // 二期做筛选时会用到
+        },
         created () {
-            this.getWhitelist(this.params).then(res => {
-                console.log(res)
-            })
+            if (!this.artifactTypeList.length) {
+                this.initArtifactTypeList()
+            }
+            this.fetchWhitelist()
         },
         methods: {
             ...mapActions([
-                'getWhitelist'
+                'getWhitelist',
+                'addWhiteList',
+                'delWhiteList',
+                'initArtifactTypeList'
             ]),
-            handlerPaginationChange () {
-                
+            fetchWhitelist () {
+                this.isLoading = true
+                this.current = this.params.pageNumber
+                return this.getWhitelist(this.params)
+                    .then(res => {
+                        this.proxyWhiteList = res.records
+                        this.pagination.count = res.count
+                    })
+                    .finally(() => {
+                        this.isLoading = false
+                    })
             },
-            // 显示dialog
-            handleClickShowDialog (dialogType) {
-                switch (dialogType) {
-                    case 'add':
-                        this.artifactDialog.addVisible = true
-                        break
-                    case 'add-close':
-                        this.artifactDialog.addVisible = false
-                        break
-                    case 'edit':
-                        
-                        break
-                    default:
-                        break
+            handlerPaginationChange (payload) {
+                if (payload.current) this.$set(this.params, 'pageNumber', payload.current)
+                if (payload.limit) this.$set(this.params, 'pageSize', payload.limit)
+                this.fetchWhitelist()
+            },
+            search () {
+                const params = this.params
+                params.packageKey = this.name
+                params.pageNumber = 1
+                this.params = params
+                this.fetchWhitelist()
+                    .then(() => {
+                        this.$set(this.pagination, 'current', 1)
+                    })
+            },
+            handleClickShowDialog (dialogType, artifact) {
+                if (dialogType === 'close') {
+                    this.artifactDialogType = ''
+                } else {
+                    this.artifactDialogType = dialogType
+                    if (dialogType === 'edit') {
+                        this.curArtifact = artifact
+                    }
                 }
             },
-            // 添加制品信息提交
-            handleClickAddConfirm (formdata) {
-
+            handleClickDelArtifact (artifact) {
+                this.isLoading = true
+                this.delWhiteList({ id: artifact.id })
+                    .then(() => {
+                        this.$bkMessage({
+                            theme: 'success',
+                            message: '删除成功'
+                        })
+                        this.fetchWhitelist()
+                    })
+                    .finally(() => {
+                        this.isLoading = false
+                    })
             }
         }
     }

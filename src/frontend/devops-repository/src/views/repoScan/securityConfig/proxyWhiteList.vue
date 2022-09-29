@@ -160,18 +160,25 @@
                 }
             },
             handleClickDelArtifact (artifact) {
-                this.isLoading = true
-                this.delWhiteList({ id: artifact.id })
-                    .then(() => {
-                        this.$bkMessage({
-                            theme: 'success',
-                            message: '删除成功'
-                        })
-                        this.fetchWhitelist()
-                    })
-                    .finally(() => {
-                        this.isLoading = false
-                    })
+                this.$bkInfoDevopsConfirm({
+                    title: '操作确认',
+                    subTitle: `是否确认删除${artifact.packageKey}？`,
+                    theme: 'danger',
+                    confirmFn: () => {
+                        this.isLoading = true
+                        this.delWhiteList({ id: artifact.id })
+                            .then(() => {
+                                this.$bkMessage({
+                                    theme: 'success',
+                                    message: '删除成功'
+                                })
+                                this.fetchWhitelist()
+                            })
+                            .finally(() => {
+                                this.isLoading = false
+                            })
+                    }
+                })
             }
         }
     }

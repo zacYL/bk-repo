@@ -176,7 +176,7 @@ abstract class AbstractReplicaService(
                 val currentProgress = ReplicaExecutionContext.increaseProgress(context.taskKey)
                 val artifactCount = ReplicaExecutionContext.getArtifactCount(context.taskKey)
                 if (currentProgress != null && artifactCount != null && currentProgress >= artifactCount) {
-                    ReplicaExecutionContext.removeProgress(taskKey)
+                    ReplicaExecutionContext.removeProgress(context.taskKey)
                 }
             }
         }
@@ -241,7 +241,7 @@ abstract class AbstractReplicaService(
                 val currentProgress = ReplicaExecutionContext.increaseProgress(context.taskKey)
                 val artifactCount = ReplicaExecutionContext.getArtifactCount(context.taskKey)
                 if (currentProgress != null && artifactCount != null && currentProgress >= artifactCount) {
-                    ReplicaExecutionContext.removeProgress(taskKey)
+                    ReplicaExecutionContext.removeProgress(context.taskKey)
                 }
             }
         }

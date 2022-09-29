@@ -173,11 +173,7 @@ abstract class AbstractReplicaService(
                     throw throwable
                 }
             } finally {
-                val currentProgress = ReplicaExecutionContext.increaseProgress(context.taskKey)
-                val artifactCount = ReplicaExecutionContext.getArtifactCount(context.taskKey)
-                if (currentProgress != null && artifactCount != null && currentProgress >= artifactCount) {
-                    ReplicaExecutionContext.removeProgress(context.taskKey)
-                }
+                updateTaskProgressCache(context.taskKey)
             }
         }
     }
@@ -238,11 +234,7 @@ abstract class AbstractReplicaService(
                     throw throwable
                 }
             } finally {
-                val currentProgress = ReplicaExecutionContext.increaseProgress(context.taskKey)
-                val artifactCount = ReplicaExecutionContext.getArtifactCount(context.taskKey)
-                if (currentProgress != null && artifactCount != null && currentProgress >= artifactCount) {
-                    ReplicaExecutionContext.removeProgress(context.taskKey)
-                }
+                updateTaskProgressCache(context.taskKey)
             }
         }
     }
@@ -288,6 +280,14 @@ abstract class AbstractReplicaService(
                 errorReason = buildErrorReason()
             )
             replicaRecordService.completeRecordDetail(detail.id, result)
+        }
+    }
+
+    private fun updateTaskProgressCache(taskKey: String) {
+        val currentProgress = ReplicaExecutionContext.increaseProgress(taskKey)
+        val artifactCount = ReplicaExecutionContext.getArtifactCount(taskKey)
+        if (currentProgress != null && artifactCount != null && currentProgress >= artifactCount) {
+//            ReplicaExecutionContext.removeProgress(taskKey)
         }
     }
 

@@ -65,7 +65,7 @@ class ReplicaRecordServiceImpl(
     private val clusterProperties: ClusterProperties
 ) : ReplicaRecordService {
 
-    override fun startNewRecord(key: String, count: Long): ReplicaRecordInfo {
+    override fun startNewRecord(key: String): ReplicaRecordInfo {
         val initialRecord = initialRecord(key)
         val tReplicaTask = replicaTaskDao.findByKey(key)
             ?: throw ErrorCodeException(ReplicationMessageCode.REPLICA_TASK_NOT_FOUND, key)
@@ -76,7 +76,6 @@ class ReplicaRecordServiceImpl(
                 CronUtils.getNextTriggerTime(tReplicaTask.setting.executionPlan.cronExpression.orEmpty())
         }
         tReplicaTask.lastExecutionStatus = ExecutionStatus.RUNNING
-        tReplicaTask.artifactCount = count
         replicaTaskDao.save(tReplicaTask)
         return initialRecord
     }

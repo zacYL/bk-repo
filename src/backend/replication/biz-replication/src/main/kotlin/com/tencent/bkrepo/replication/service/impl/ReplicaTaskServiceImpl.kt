@@ -500,7 +500,7 @@ class ReplicaTaskServiceImpl(
                     lastModifiedBy = it.lastModifiedBy,
                     lastModifiedDate = it.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME),
                     currentProgress = ReplicaExecutionContext.getCurrentProgress(it.key),
-                    artifactCount = it.artifactCount
+                    artifactCount = ReplicaExecutionContext.getArtifactCount(it.key)
                 )
             }
         }

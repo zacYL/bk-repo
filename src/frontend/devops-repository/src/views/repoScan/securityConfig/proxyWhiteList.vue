@@ -1,0 +1,191 @@
+<template>
+    <div class="proxy-manage-container" v-bkloading="{ isLoading }">
+        <div class="mt10 flex-between-center">
+            <div class="btn-group">
+                <bk-button class="ml20" theme="primary" icon="plus" @click="handleClickShowDialog('add')">添加</bk-button>
+                <bk-button class="ml20" theme="primary" @click="handleClickShowDialog('api')">API调用</bk-button>
+            </div>
+            <!-- 筛选框 -->
+            <div class="mr20 flex-align-center">
+                <bk-input
+                    v-model.trim="name"
+                    class="w250"
+                    placeholder="请输入制品名称, 按Enter键搜索"
+                    clearable
+                    @enter="search"
+                    @clear="search"
+                    right-icon="bk-icon icon-search"
+                />
+            </div>
+            <!-- 筛选框 /-->
+        </div>
+
+        <!-- 表格 -->
+        <bk-table
+            class="mt10"
+            height="calc(100% - 100px)"
+            :data="proxyWhiteList"
+            :outer-border="false"
+            :row-border="false"
+            size="small"
+        >
+            <template #empty>
+                <empty-data :is-loading="isLoading"></empty-data>
+            </template>
+            <bk-table-column label="制品名称" prop="packageKey" min-width="300px" />
+            <bk-table-column label="版本" v-slot="{ row }">
+                <div>{{ row.versions.join(', ') }}</div>
+            </bk-table-column>
+            <bk-table-column label="制品类型" prop="type" width="200px" />
+            <bk-table-column label="操作" v-slot="{ row }" width="150px">
+                <bk-button class="mr10" theme="primary" text @click="handleClickShowDialog('edit', row)">编辑</bk-button>
+                <bk-button theme="primary" text @click="handleClickDelArtifact(row)">删除</bk-button>
+            </bk-table-column>
+        </bk-table>
+        <!-- 表格 /-->
+
+        <!-- 分页 -->
+        <bk-pagination
+            class="p10"
+            size="small"
+            align="right"
+            show-total-count
+            @change="current => handlerPaginationChange({ current })"
+            @limit-change="limit => handlerPaginationChange({ limit })"
+            :current.sync="pagination.current"
+            :limit="pagination.limit"
+            :count="pagination.count"
+            :limit-list="pagination.limitList">
+        </bk-pagination>
+        <!-- 分页 /-->
+
+        <!-- 新增制品信息dialog -->
+        <api-tip-dialog
+            :show="artifactDialogType === 'api'"
+            @close="handleClickShowDialog('close')"
+        />
+        <!-- 编辑制品信息dialog -->
+        <add-or-edit-artifact-dialog
+            :show="['add', 'edit'].includes(artifactDialogType)"
+            :type="artifactDialogType"
+            :artifact="curArtifact"
+            @close="handleClickShowDialog('close')"
+            @update="fetchWhitelist"
+        />
+    </div>
+</template>
+
+<script>
+    import { mapActions, mapState } from 'vuex'
+    import AddOrEditArtifactDialog from './proxyWhiteListDialog/addOrEditArtifactDialog.vue'
+    import ApiTipDialog from './proxyWhiteListDialog/apiTipDialog.vue'
+
+    export default {
+        components: {
+            AddOrEditArtifactDialog,
+            ApiTipDialog
+        },
+        data () {
+            return {
+                isLoading: false,
+                proxyWhiteList: [],
+                pagination: {
+                    count: 0,
+                    current: 1,
+                    limit: 20,
+                    limitList: [10, 20, 40]
+                },
+                artifactDialogType: '',
+                curArtifact: {},
+                params: {
+                    repositoryType: '',
+                    packageKey: '',
+                    version: '',
+                    pageNumber: 1,
+                    pageSize: 20
+                }
+            }
+        },
+        computed: {
+            ...mapState(['artifactTypeList']) // 二期做筛选时会用到
+        },
+        created () {
+            if (!this.artifactTypeList.length) {
+                this.initArtifactTypeList()
+            }
+            this.fetchWhitelist()
+        },
+        methods: {
+            ...mapActions([
+                'getWhitelist',
+                'addWhiteList',
+                'delWhiteList',
+                'initArtifactTypeList'
+            ]),
+            fetchWhitelist () {
+                this.isLoading = true
+                this.current = this.params.pageNumber
+                return this.getWhitelist(this.params)
+                    .then(res => {
+                        this.proxyWhiteList = res.records
+                        this.pagination.count = res.count
+                    })
+                    .finally(() => {
+                        this.isLoading = false
+                    })
+            },
+            handlerPaginationChange (payload) {
+                if (payload.current) this.$set(this.params, 'pageNumber', payload.current)
+                if (payload.limit) this.$set(this.params, 'pageSize', payload.limit)
+                this.fetchWhitelist()
+            },
+            search () {
+                const params = this.params
+                params.packageKey = this.name
+                params.pageNumber = 1
+                this.params = params
+                this.fetchWhitelist()
+                    .then(() => {
+                        this.$set(this.pagination, 'current', 1)
+                    })
+            },
+            handleClickShowDialog (dialogType, artifact) {
+                if (dialogType === 'close') {
+                    this.artifactDialogType = ''
+                } else {
+                    this.artifactDialogType = dialogType
+                    if (dialogType === 'edit') {
+                        this.curArtifact = artifact
+                    }
+                }
+            },
+            handleClickDelArtifact (artifact) {
+                this.isLoading = true
+                this.delWhiteList({ id: artifact.id })
+                    .then(() => {
+                        this.$bkMessage({
+                            theme: 'success',
+                            message: '删除成功'
+                        })
+                        this.fetchWhitelist()
+                    })
+                    .finally(() => {
+                        this.isLoading = false
+                    })
+            }
+        }
+    }
+</script>
+
+<style lang="scss" scoped>
+.proxy-manage-container {
+    height: 100%;
+    overflow: hidden;
+    .hover-visible {
+        visibility: hidden;
+    }
+    .hover-row .hover-visible {
+        visibility: visible;
+    }
+}
+</style>

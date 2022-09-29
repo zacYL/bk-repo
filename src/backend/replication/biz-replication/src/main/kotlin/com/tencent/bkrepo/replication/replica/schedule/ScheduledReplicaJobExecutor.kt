@@ -87,6 +87,8 @@ class ScheduledReplicaJobExecutor(
         } finally {
             // 保存结果
             replicaRecordService.completeRecord(recordId!!, status, errorReason)
+            // 删除缓存中的进度
+            ReplicaExecutionContext.removeProgress(task.key)
             logger.info("Replica task[$taskId], record[$recordId] finished")
         }
     }

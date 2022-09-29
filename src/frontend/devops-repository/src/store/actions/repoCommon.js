@@ -210,5 +210,8 @@ export default {
     },
     delWhiteList (_, { id }) {
         return Vue.prototype.$ajax.delete(`${prefix}/remote/whitelist/${id}`)
+    },
+    delProjectByName (_, { name }) {
+        return Vue.prototype.$ajax.delete(`${prefix}/project/delete/${name}?confirmName=${name}`)
     }
 }

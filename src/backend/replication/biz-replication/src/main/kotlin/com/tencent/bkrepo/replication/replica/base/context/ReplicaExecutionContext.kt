@@ -101,7 +101,7 @@ class ReplicaExecutionContext(
         }
 
         fun increaseProgress(taskKey: String, count: Long = 1): Long? {
-            return progressMap.getIfPresent(taskKey)?.artifactCount?.addAndGet(count)
+            return progressMap.getIfPresent(taskKey)?.currentProgress?.addAndGet(count)
         }
 
         fun increaseArtifactCount(taskKey: String, count: Long = 1): Long? {

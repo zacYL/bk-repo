@@ -38,6 +38,11 @@
                     {{ userList[row.createdBy] ? userList[row.createdBy].name : row.createdBy }}
                 </template>
             </bk-table-column>
+            <bk-table-column label="操作" width="100">
+                <template #default="{ row }">
+                    <bk-button theme="primary" text @click="handleClickDelete(row.id)">删除</bk-button>
+                </template>
+            </bk-table-column>
         </bk-table>
         <bk-pagination
             class="p10"
@@ -52,16 +57,19 @@
             @limit-change="limit => handlerPaginationChange({ limit })">
         </bk-pagination>
         <project-info-dialog ref="projectInfoDialog"></project-info-dialog>
+        <delete-confirm-dialog :config="deleteConfirmDialogConfig" @confirm="handleClickConfirm" />
     </div>
 </template>
 <script>
     import projectInfoDialog from './projectInfoDialog'
-    import { mapState } from 'vuex'
+    import deleteConfirmDialog from './deleteConfirmDialog'
+    import { mapState, mapActions } from 'vuex'
     import { formatDate } from '@repository/utils'
     export default {
         name: 'projectManage',
         components: {
-            projectInfoDialog
+            projectInfoDialog,
+            deleteConfirmDialog
         },
         data () {
             return {
@@ -70,6 +78,10 @@
                     current: 1,
                     limit: 20,
                     limitList: [10, 20, 40]
+                },
+                deleteConfirmDialogConfig: {
+                    isShow: false,
+                    confirmName: ''
                 }
             }
         },
@@ -83,6 +95,7 @@
         },
         methods: {
             formatDate,
+            ...mapActions(['delProjectByName', 'getProjectList']),
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
                 this.pagination.current = current
                 this.pagination.limit = limit
@@ -104,6 +117,20 @@
                     query: {
                         projectId: id
                     }
+                })
+            },
+            // 点击删除按钮显示弹框
+            handleClickDelete (name) {
+                this.deleteConfirmDialogConfig = {
+                    isShow: true,
+                    confirmName: name
+                }
+            },
+            // 点击删除确认调用接口
+            handleClickConfirm (name) {
+                this.delProjectByName({ name }).then(() => {
+                    this.deleteConfirmDialogConfig.isShow = false
+                    this.getProjectList()
                 })
             }
         }

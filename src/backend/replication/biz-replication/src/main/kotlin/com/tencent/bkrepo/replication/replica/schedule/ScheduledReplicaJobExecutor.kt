@@ -70,9 +70,9 @@ class ScheduledReplicaJobExecutor(
             // 计算待同步的制品数
             val count = replicaTaskService.countArtifactToReplica(taskDetail) * task.remoteClusters.size
             // 初始化同步进度缓存
-            ReplicaExecutionContext.initProgress(task.key)
+            ReplicaExecutionContext.initProgress(task.key, count)
             // 开启新的同步记录
-            val taskRecord = replicaRecordService.startNewRecord(task.key, count).apply { recordId = id }
+            val taskRecord = replicaRecordService.startNewRecord(task.key).apply { recordId = id }
             val result = task.remoteClusters.map { submit(taskDetail, taskRecord, it) }.map { it.get() }
             result.forEach {
                 if (it.status == ExecutionStatus.FAILED) {

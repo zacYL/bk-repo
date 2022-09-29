@@ -60,8 +60,9 @@ class EventBasedReplicaJobExecutor(
             // 待同步的制品数量
             val count = 1L * task.remoteClusters.size
             // 初始化或更新同步进度缓存
-            ReplicaExecutionContext.increaseProgress(task.key, -count)
-                ?: ReplicaExecutionContext.initProgress(task.key, -count)
+            ReplicaExecutionContext.getArtifactCount(task.key)?.run {
+                ReplicaExecutionContext.increaseArtifactCount(task.key, count)
+            } ?: ReplicaExecutionContext.initProgress(task.key, count)
             task.remoteClusters.map { submit(taskDetail, taskRecord, it, event) }.map { it.get() }
             logger.info("Replica ${event.getFullResourceKey()} completed.")
         } catch (exception: Exception) {

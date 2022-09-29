@@ -165,13 +165,18 @@ abstract class AbstractReplicaService(
             try {
                 val executed = replicaContext.replicator.replicaFile(replicaContext, node)
                 updateProgress(executed)
-                ReplicaExecutionContext.increaseProgress(context.taskKey)
                 return
             } catch (throwable: Throwable) {
                 progress.failed += 1
                 setErrorStatus(this, throwable)
                 if (replicaContext.task.setting.errorStrategy == ErrorStrategy.FAST_FAIL) {
                     throw throwable
+                }
+            } finally {
+                val currentProgress = ReplicaExecutionContext.increaseProgress(context.taskKey)
+                val artifactCount = ReplicaExecutionContext.getArtifactCount(context.taskKey)
+                if (currentProgress != null && artifactCount != null && currentProgress >= artifactCount) {
+                    ReplicaExecutionContext.removeProgress(taskKey)
                 }
             }
         }
@@ -226,12 +231,17 @@ abstract class AbstractReplicaService(
             try {
                 val executed = replicator.replicaPackageVersion(replicaContext, packageSummary, version)
                 updateProgress(executed)
-                ReplicaExecutionContext.increaseProgress(context.taskKey)
             } catch (throwable: Throwable) {
                 progress.failed += 1
                 setErrorStatus(this, throwable)
                 if (replicaContext.task.setting.errorStrategy == ErrorStrategy.FAST_FAIL) {
                     throw throwable
+                }
+            } finally {
+                val currentProgress = ReplicaExecutionContext.increaseProgress(context.taskKey)
+                val artifactCount = ReplicaExecutionContext.getArtifactCount(context.taskKey)
+                if (currentProgress != null && artifactCount != null && currentProgress >= artifactCount) {
+                    ReplicaExecutionContext.removeProgress(taskKey)
                 }
             }
         }

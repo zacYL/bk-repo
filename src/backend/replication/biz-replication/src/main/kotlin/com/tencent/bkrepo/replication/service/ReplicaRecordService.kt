@@ -49,9 +49,8 @@ interface ReplicaRecordService {
      * 2. 修改上次运行时间为当前时间，并计算下次运行时间
      * 3. 修改上次运行状态为执行中
      * 4. 修改当前任务状态为执行中
-     * 5. 更新当前任务待分发制品数量
      */
-    fun startNewRecord(key: String, count: Long): ReplicaRecordInfo
+    fun startNewRecord(key: String): ReplicaRecordInfo
 
     /**
      * 初始化一条同步记录

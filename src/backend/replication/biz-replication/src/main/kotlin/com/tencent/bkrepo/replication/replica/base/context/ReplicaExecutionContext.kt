@@ -94,18 +94,26 @@ class ReplicaExecutionContext(
         // 进行中的同步任务进度缓存
         private val progressMap = CacheBuilder.newBuilder()
             .maximumSize(1000)
-            .build<String, AtomicLong>()
+            .build<String, Progress>()
 
-        fun initProgress(taskKey: String, progress: Long = 0) {
-            progressMap.put(taskKey, AtomicLong(progress))
+        fun initProgress(taskKey: String, count: Long) {
+            progressMap.put(taskKey, Progress(AtomicLong(0), AtomicLong(count)))
         }
 
         fun increaseProgress(taskKey: String, count: Long = 1): Long? {
-            return progressMap.getIfPresent(taskKey)?.getAndAdd(count)
+            return progressMap.getIfPresent(taskKey)?.artifactCount?.addAndGet(count)
+        }
+
+        fun increaseArtifactCount(taskKey: String, count: Long = 1): Long? {
+            return progressMap.getIfPresent(taskKey)?.artifactCount?.addAndGet(count)
         }
 
         fun getCurrentProgress(taskKey: String): Long? {
-            return progressMap.getIfPresent(taskKey)?.get()
+            return progressMap.getIfPresent(taskKey)?.currentProgress?.get()
+        }
+
+        fun getArtifactCount(taskKey: String): Long? {
+            return progressMap.getIfPresent(taskKey)?.artifactCount?.get()
         }
 
         fun removeProgress(taskKey: String) {
@@ -113,3 +121,14 @@ class ReplicaExecutionContext(
         }
     }
 }
+
+data class Progress(
+    /**
+     * 已分发的制品数量
+     */
+    var currentProgress: AtomicLong,
+    /**
+     * 本次任务需要分发的制品数量
+     */
+    var artifactCount: AtomicLong
+)

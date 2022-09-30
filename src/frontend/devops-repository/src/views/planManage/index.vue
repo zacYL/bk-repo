@@ -61,8 +61,8 @@
             </bk-table-column>
             <bk-table-column label="上次执行状态" width="100">
                 <template #default="{ row }">
-                    <span v-if="row.lastExecutionStatus === 'RUNNING'">
-                        {{row.currentProgress || 0}}/{{row.artifactCount || 0}}
+                    <span v-if="row.lastExecutionStatus === 'RUNNING' && row.artifactCount">
+                        {{row.currentProgress}}/{{row.artifactCount}}
                     </span>
                     <span v-else class="repo-tag" :class="row.lastExecutionStatus">
                         {{asyncPlanStatusEnum[row.lastExecutionStatus] || '未执行'}}

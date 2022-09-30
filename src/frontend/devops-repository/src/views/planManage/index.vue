@@ -121,7 +121,7 @@
         <bk-sideslider :is-show.sync="drawerSlider.isShow" :quick-close="true" :width="698">
             <div slot="header">{{ drawerSlider.title }}</div>
             <div slot="content">
-                <create-plan :rows-data="drawerSlider.rowsData" @close="handleClickCloseDrawer" />
+                <create-plan :rows-data="drawerSlider.rowsData" @close="handleClickCloseDrawer" @confirm="handlerPaginationChange" />
             </div>
         </bk-sideslider>
     </div>

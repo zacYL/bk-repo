@@ -36,6 +36,8 @@ import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.remote.RemoteRepository
 import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
 @Component
@@ -43,7 +45,7 @@ class MavenRemoteRepository : RemoteRepository() {
 
     override fun whitelistInterceptor(context: ArtifactDownloadContext) {
         (context.artifactInfo as MavenArtifactInfo).let {
-            if (it.isValid()
+            if (it.isArtifact()
                     && artifactWhitelistProperties.intercept
                     && remotePackageClient.search(RepositoryType.MAVEN).data == true
             ) {
@@ -54,5 +56,9 @@ class MavenRemoteRepository : RemoteRepository() {
                 }
             }
         }
+    }
+
+    companion object {
+        private val logger: Logger = LoggerFactory.getLogger(MavenRemoteRepository::class.java)
     }
 }

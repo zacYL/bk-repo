@@ -7,6 +7,7 @@ import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.repository.composite.CompositeRepository
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
 import com.tencent.bkrepo.repository.api.ProxyChannelClient
@@ -62,7 +63,7 @@ class MavenCompositeRepository(
 
     private fun whitelistInterceptor(context: ArtifactDownloadContext) {
         (context.artifactInfo as MavenArtifactInfo).let {
-            if (it.isValid()
+            if (it.isArtifact()
                     && artifactWhitelistProperties.intercept
                     && remotePackageClient.search(RepositoryType.MAVEN).data == true
             ) {
@@ -71,7 +72,10 @@ class MavenCompositeRepository(
                         repoName = it.repoName,
                         fullPath = it.getArtifactFullPath()).data?.let { nodeDetail ->
                     nodeDetail.nodeMetadata.forEach { metadataModel ->
-                        if (metadataModel.key == SOURCE_TYPE && metadataModel.value == "remote") {
+                        if (metadataModel.key == SOURCE_TYPE && metadataModel.value == ArtifactChannel.PROXY.name
+                                && remotePackageClient.search(
+                                        RepositoryType.MAVEN, "${it.groupId}:${it.artifactId}", it.versionId
+                                ).data != true) {
                             throw ArtifactNotInWhitelistException()
                         }
                     }

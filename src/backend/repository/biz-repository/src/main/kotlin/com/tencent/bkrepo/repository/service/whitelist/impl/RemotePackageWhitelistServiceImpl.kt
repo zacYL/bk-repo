@@ -1,10 +1,10 @@
 package com.tencent.bkrepo.repository.service.whitelist.impl
 
 import com.tencent.bkrepo.common.api.pojo.Page
-import com.tencent.bkrepo.common.api.util.EscapeUtils
 import com.tencent.bkrepo.common.api.util.Preconditions
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
+import com.tencent.bkrepo.common.query.util.MongoEscapeUtils
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.repository.cpack.controller.RemotePackageWhitelist
 import com.tencent.bkrepo.repository.dao.RemotePackageWhitelistDao
@@ -69,7 +69,10 @@ class RemotePackageWhitelistServiceImpl(
                     request.type?.let { if (type != it) it else null },
                     request.packageKey?.let { if (packageKey != it) it else null },
                     request.versions?.let {
-                        if (versions?.sorted() != it.sorted()) it.distinct() else null }
+                        if (versions?.sorted() != it.sorted()) {
+                            it.distinct().filter {version -> version.isNotBlank() }
+                        } else null
+                    }
             ).apply {
                 if(first == null && second == null && third == null) return true
             }
@@ -115,14 +118,16 @@ class RemotePackageWhitelistServiceImpl(
         type?.let { criteria.and(TRemotePackageWhitelist::type.name).`is`(it) }
         if (!packageKey.isNullOrBlank()) {
             criteria.and(TRemotePackageWhitelist::packageKey.name).apply {
-                if(regex) regex(EscapeUtils.escapeRegex(packageKey), "i")
+                if(regex) regex(MongoEscapeUtils.escapeRegex(packageKey), "i")
                 else `is`(packageKey)
             }
         }
         if (!version.isNullOrBlank()) {
             criteria.orOperator(
                     listOf(Criteria.where(TRemotePackageWhitelist::versions.name).`in`(version),
-                            Criteria.where(TRemotePackageWhitelist::versions.name).`is`(null))
+                            Criteria.where(TRemotePackageWhitelist::versions.name).`is`(null),
+                            Criteria.where(TRemotePackageWhitelist::versions.name).size(0)
+                    )
             )
         }
         val query = Query(criteria)
@@ -142,12 +147,17 @@ class RemotePackageWhitelistServiceImpl(
         return TRemotePackageWhitelist(
                 type = createRemotePackageWhitelistRequest.type,
                 packageKey = createRemotePackageWhitelistRequest.packageKey,
-                versions = createRemotePackageWhitelistRequest.versions?.distinct(),
+                versions = createRemotePackageWhitelistRequest.versions?.distinct()?.filter { it.isNotBlank() },
                 createdBy = userId,
                 createdDate = LocalDateTime.now(),
                 lastModifiedBy = userId,
                 lastModifiedDate = LocalDateTime.now()
         )
+    }
+
+    private fun versionsFilter(versions: List<String>?): List<String>? {
+        val res = versions?.distinct()?.filter { it.isNotBlank() }
+        return res?.let { it.ifEmpty { null } }
     }
 
     private fun transToInfo(

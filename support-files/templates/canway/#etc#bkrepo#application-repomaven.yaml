@@ -19,3 +19,5 @@ service:
   name: maven
 maven:
   domain: ${cluster.self.url}/maven
+#  是否开启制品白名单拦截
+proxy-source.intercept: true

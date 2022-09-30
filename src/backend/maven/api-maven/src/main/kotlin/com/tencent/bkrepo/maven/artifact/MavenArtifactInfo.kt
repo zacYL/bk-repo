@@ -68,6 +68,10 @@ class MavenArtifactInfo(
         return hasGroupId() && hasArtifactId() && hasVersion()
     }
 
+    fun isArtifact(): Boolean {
+        return this::groupId.isInitialized && this::artifactId.isInitialized && this::versionId.isInitialized
+    }
+
     fun isSnapshot(): Boolean {
         return versionId.endsWith(SNAPSHOT_SUFFIX)
     }

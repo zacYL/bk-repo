@@ -80,8 +80,6 @@
                         regex: /[a-z0-9_\-.]+:[a-z0-9_\-.]+/,
                         message: '非法制品名称',
                         trigger: 'change'
-                    }],
-                    versions: [{
                     }]
                 },
                 isLoading: false
@@ -106,7 +104,7 @@
             getNewForm () {
                 return {
                     type: this.artifactTypeList?.[0] || '',
-                    versions: [],
+                    versions: '',
                     packageKey: ''
                 }
             },
@@ -119,7 +117,7 @@
                 this.$refs.formRef.validate()
                     .then(() => {
                         const form = _.cloneDeep(this.form)
-                        form.versions = this.form.versions.split('\n')
+                        form.versions = this.form.versions.split('\n').filter(a => a)
                         return this.type === 'edit' ? this.editWhiteList(form) : this.addWhiteList(form)
                     })
                     .then(() => {

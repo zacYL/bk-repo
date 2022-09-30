@@ -199,8 +199,10 @@ export default {
             })
     },
     // 查询白名单列表
-    getWhitelist (_, { repositoryType, packageKey, version, pageNumber, pageSize }) {
-        return Vue.prototype.$ajax.get(`${prefix}/remote/whitelist/page?type=${repositoryType}&packageKey=${packageKey}&version=${version}&pageNumber=${pageNumber}&pageSize=${pageSize}&regex=true`)
+    getWhitelist (_, { repositoryType, packageKey, version, pageNumber, pageSize, regex = true }) {
+        return Vue.prototype.$ajax.get(`${prefix}/remote/whitelist/page`, {
+            params: { repositoryType, packageKey, version, pageNumber, pageSize, regex }
+        })
     },
     addWhiteList (_, { packageKey, versions, type }) {
         return Vue.prototype.$ajax.put(`${prefix}/remote/whitelist`, { packageKey, versions, type })
@@ -210,5 +212,8 @@ export default {
     },
     delWhiteList (_, { id }) {
         return Vue.prototype.$ajax.delete(`${prefix}/remote/whitelist/${id}`)
+    },
+    delProjectByName (_, { name }) {
+        return Vue.prototype.$ajax.delete(`${prefix}/project/delete/${name}?confirmName=${name}`)
     }
 }

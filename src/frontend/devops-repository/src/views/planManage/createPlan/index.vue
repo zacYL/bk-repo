@@ -12,12 +12,13 @@
                     v-model="planForm.executionStrategy"
                     @change="clearError">
                     <bk-radio value="IMMEDIATELY" :disabled="isDisabledExecutionStrategy || disabled">
-                        <span>立即执行</span>
+                        <span class="label-span">立即执行</span>
                     </bk-radio>
                     <bk-radio value="SPECIFIED_TIME" :disabled="isDisabledExecutionStrategy || disabled">
                         <div class="flex-align-center">
-                            指定时间
+                            <span class="label-span">指定时间</span>
                             <bk-date-picker
+                                style="width: 180px;"
                                 class="ml10"
                                 v-if="planForm.executionStrategy === 'SPECIFIED_TIME'"
                                 v-model="planForm.time"
@@ -31,15 +32,15 @@
                     </bk-radio>
                     <bk-radio value="CRON_EXPRESSION" :disabled="isDisabledExecutionStrategy || disabled">
                         <div class="flex-align-center">
-                            定时执行
+                            <span class="label-span">定时执行</span>
                             <template v-if="planForm.executionStrategy === 'CRON_EXPRESSION'">
-                                <bk-input v-if="disabled" class="ml10 w250" :value="planForm.cron" :disabled="disabled"></bk-input>
+                                <bk-input v-if="disabled" class="ml10 w180" :value="planForm.cron" :disabled="disabled"></bk-input>
                                 <Cron v-else class="ml10" v-model="planForm.cron" />
                             </template>
                         </div>
                     </bk-radio>
                     <bk-radio v-if="planForm.replicaObjectType === 'REPOSITORY'" value="REAL_TIME" :disabled="isDisabledRealTime || disabled">
-                        <span>实时同步</span>
+                        <span class="label-span">实时同步</span>
                     </bk-radio>
                 </bk-radio-group>
             </bk-form-item>
@@ -101,6 +102,20 @@
                     </bk-option>
                 </bk-select>
             </bk-form-item>
+            <bk-form-item label="创建者" property="creator">
+                <bk-input class="w480" v-model.trim="planForm.creator" :disabled="disabled"></bk-input>
+            </bk-form-item>
+            <bk-form-item label="创建时间" property="creator">
+                <bk-date-picker
+                    style="width: 480px;"
+                    v-model="planForm.created_time"
+                    type="datetime"
+                    :disabled="disabled"
+                    :options="{
+                        disabledDate: (date) => date < new Date()
+                    }">
+                </bk-date-picker>
+            </bk-form-item>
             <bk-form-item :label="$t('description')">
                 <bk-input
                     class="w480"
@@ -112,7 +127,7 @@
                 </bk-input>
             </bk-form-item>
             <bk-form-item v-if="!disabled">
-                <bk-button @click="$router.push({ name: 'planManage' })">{{$t('cancel')}}</bk-button>
+                <bk-button @click="$emit('close')">{{$t('cancel')}}</bk-button>
                 <bk-button class="ml10" theme="primary" :loading="planForm.loading" @click="save">{{$t('confirm')}}</bk-button>
             </bk-form-item>
         </bk-form>
@@ -128,6 +143,12 @@
     export default {
         name: 'createPlan',
         components: { Cron, CardRadioGroup, repositoryTable, packageTable, pathTable },
+        props: {
+            rowsData: {
+                type: Object,
+                default: () => {}
+            }
+        },
         data () {
             return {
                 isDisabledRealTime: false,
@@ -151,6 +172,8 @@
                     cron: '* * * * * ? *',
                     conflictStrategy: 'SKIP',
                     remoteClusterIds: [],
+                    creator: '',
+                    created_time: '',
                     description: ''
                 },
                 rules: {
@@ -202,11 +225,11 @@
         },
         computed: {
             ...mapState(['clusterList']),
-            projectId () {
-                return this.$route.params.projectId
-            },
+            // projectId () {
+            //     return this.$route.params.projectId
+            // },
             routeName () {
-                return this.$route.name
+                return this.rowsData.routeName
             },
             disabled () {
                 return this.routeName === 'planDetail'
@@ -236,7 +259,7 @@
             }
         },
         created () {
-            this.getRepoListAll({ projectId: this.projectId })
+            this.getRepoListAll({ projectId: this.rowsData.projectId })
             this.routeName !== 'createPlan' && this.handlePlanDetail()
         },
         methods: {
@@ -249,7 +272,7 @@
             handlePlanDetail () {
                 this.isLoading = true
                 this.getPlanDetail({
-                    key: this.$route.params.planId
+                    key: this.rowsData.planId
                 }).then(({
                     task: {
                         name,
@@ -306,7 +329,7 @@
                 const replicaTaskObjects = await this.$refs.planConfig.getConfig()
                 const body = {
                     name: this.planForm.name,
-                    localProjectId: this.projectId,
+                    localProjectId: this.rowsData.projectId,
                     replicaObjectType: this.planForm.replicaObjectType,
                     replicaTaskObjects,
                     replicaType: this.planForm.executionStrategy === 'REAL_TIME' ? 'REAL_TIME' : 'SCHEDULED',
@@ -342,13 +365,13 @@
                 }
                 const request = this.routeName === 'createPlan'
                     ? this.createPlan({ body })
-                    : this.updatePlan({ body: { ...body, key: this.$route.params.planId } })
+                    : this.updatePlan({ body: { ...body, key: this.rowsData.planId } })
                 request.then(() => {
                     this.$bkMessage({
                         theme: 'success',
                         message: this.$t('save') + this.$t('success')
                     })
-                    this.$router.back()
+                    this.$emit('close')
                 }).finally(() => {
                     this.planForm.loading = false
                 })
@@ -364,7 +387,6 @@
     .plan-form {
         max-width: 1080px;
         margin-top: 30px;
-        margin-left: 50px;
         .arrow-right-icon {
             position: relative;
             width: 20px;
@@ -403,16 +425,19 @@
                 display: flex;
                 align-items: center;
                 height: 32px;
-                min-width: 120px;
+                min-width: 80px;
                 .bk-radio-text {
                     height: 32px;
                     display: flex;
                     align-items: center;
+                    .label-span {
+                        width: 60px;
+                    }
                 }
             }
         }
         ::v-deep .bk-form-radio {
-            min-width: 120px;
+            min-width: 80px;
             margin-right: 20px;
         }
         .icon-question-circle-shape {

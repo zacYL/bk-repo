@@ -191,6 +191,11 @@ class PackageController(
         return ResponseBuilder.success(count)
     }
 
+    override fun getVersionCount(projectId: String, repoName: String): Response<Long> {
+        val count = packageService.getVersionCount(projectId, repoName)
+        return ResponseBuilder.success(count)
+    }
+
     override fun populatePackage(request: PackagePopulateRequest): Response<Void> {
         packageService.populatePackage(request)
         return ResponseBuilder.success()

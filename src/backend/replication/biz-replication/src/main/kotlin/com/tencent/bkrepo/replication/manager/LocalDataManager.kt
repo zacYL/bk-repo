@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.replication.manager
 
+import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.storage.core.StorageService
 import com.tencent.bkrepo.replication.constant.NODE_FULL_PATH
@@ -192,7 +193,14 @@ class LocalDataManager(
         return result.records[0][SIZE].toString().toLong()
     }
 
-/**
+    /**
+     * 根据多个路径获取文件节点总数
+     */
+    fun countFileNode(projectId: String, repoName: String, pathList: List<String> = listOf(PathUtils.ROOT)): Long {
+        return nodeClient.countFileNodeByList(projectId, repoName, pathList).data ?: 0
+    }
+
+    /**
      * 分页查询包
      */
     @Throws(IllegalStateException::class)
@@ -204,6 +212,13 @@ class LocalDataManager(
         ).data?.records
         check(packages != null) { "Local packages not found" }
         return packages
+    }
+
+    /**
+     * 查询仓库包版本数量
+     */
+    fun getVersionCount(projectId: String, repoName: String): Long {
+        return packageClient.getVersionCount(projectId, repoName).data ?: 0
     }
 
     /**

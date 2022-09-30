@@ -150,6 +150,10 @@ class NodeController(
         return ResponseBuilder.success(nodeService.countFileNode(artifactInfo))
     }
 
+    override fun countFileNodeByList(projectId: String, repoName: String, fullPathList: List<String>): Response<Long> {
+        return ResponseBuilder.success(nodeService.countFileNodeByList(projectId, repoName, fullPathList))
+    }
+
     override fun search(queryModel: QueryModel): Response<Page<Map<String, Any?>>> {
         return ResponseBuilder.success(nodeSearchService.search(queryModel))
     }

@@ -74,6 +74,7 @@ import org.quartz.JobBuilder
 import org.quartz.JobKey
 import org.quartz.TriggerBuilder
 import org.slf4j.LoggerFactory
+import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -108,7 +109,8 @@ class ReplicaTaskServiceImpl(
 
     override fun listTasksPage(projectId: String, param: TaskPageParam): Page<ReplicaTaskInfo> {
         with(param) {
-            val query = buildListQuery(projectId, name, lastExecutionStatus, enabled, sortType)
+            val direction = Sort.Direction.valueOf(sortDirection)
+            val query = buildListQuery(projectId, name, lastExecutionStatus, enabled, sortType, direction)
             val pageRequest = Pages.ofRequest(pageNumber, pageSize)
             val totalRecords = replicaTaskDao.count(query)
             val records = replicaTaskDao.find(query.with(pageRequest)).map { convert(it)!! }

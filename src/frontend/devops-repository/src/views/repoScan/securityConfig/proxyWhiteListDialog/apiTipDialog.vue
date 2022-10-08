@@ -1,7 +1,7 @@
 <template>
     <canway-dialog
         :value="show"
-        title="API使用方法"
+        title="API使用方法1111"
         :width="720"
         :height-num="400"
         @cancel="$emit('close')"
@@ -66,6 +66,13 @@
                 },
                 editor: {
                     defaultModel: 'previewOnly'
+                },
+                engine: {
+                    syntax: {
+                        codeBlock: {
+                            theme: 'light'
+                        }
+                    }
                 }
             })
         }
@@ -73,11 +80,6 @@
 </script>
 
 <style lang="scss" scoped>
-    .code-area {
-        height: 200px;
-        overflow: auto;
-    }
-
     #markdown-tip {
         max-height: 400px;
         overflow: auto;

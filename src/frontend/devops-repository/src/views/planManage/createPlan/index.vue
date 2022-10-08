@@ -102,10 +102,10 @@
                     </bk-option>
                 </bk-select>
             </bk-form-item>
-            <bk-form-item label="创建者" property="creator">
+            <bk-form-item label="创建者" property="creator" v-if="routeName !== 'createPlan'">
                 <bk-input class="w480" v-model.trim="planForm.creator" :disabled="disabled"></bk-input>
             </bk-form-item>
-            <bk-form-item label="创建时间" property="creator">
+            <bk-form-item label="创建时间" property="creator" v-if="routeName !== 'createPlan'">
                 <bk-date-picker
                     style="width: 480px;"
                     v-model="planForm.created_time"
@@ -372,6 +372,7 @@
                         message: this.$t('save') + this.$t('success')
                     })
                     this.$emit('close')
+                    this.$emit('confirm')
                 }).finally(() => {
                     this.planForm.loading = false
                 })

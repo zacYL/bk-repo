@@ -36,7 +36,8 @@
             :outer-border="false"
             :row-border="false"
             row-key="userId"
-            size="small">
+            size="small"
+            @sort-change="handleSortChange">
             <template #empty>
                 <empty-data :is-loading="isLoading" :search="Boolean(planInput || lastExecutionStatus || showEnabled)"></empty-data>
             </template>
@@ -56,7 +57,7 @@
             <bk-table-column label="同步策略" width="80">
                 <template #default="{ row }">{{ getExecutionStrategy(row) }}</template>
             </bk-table-column>
-            <bk-table-column label="上次执行时间" prop="LAST_EXECUTION_TIME" width="150" :render-header="renderHeader">
+            <bk-table-column label="上次执行时间" prop="LAST_EXECUTION_TIME" width="150" sortable="custom">
                 <template #default="{ row }">{{formatDate(row.lastExecutionTime)}}</template>
             </bk-table-column>
             <bk-table-column label="上次执行状态" width="100">
@@ -121,7 +122,7 @@
         <bk-sideslider :is-show.sync="drawerSlider.isShow" :quick-close="true" :width="698">
             <div slot="header">{{ drawerSlider.title }}</div>
             <div slot="content">
-                <create-plan :rows-data="drawerSlider.rowsData" @close="handleClickCloseDrawer" />
+                <create-plan :rows-data="drawerSlider.rowsData" @close="handleClickCloseDrawer" @confirm="handlerPaginationChange" />
             </div>
         </bk-sideslider>
     </div>
@@ -150,6 +151,7 @@
                 lastExecutionStatus: '',
                 planInput: '',
                 sortType: 'CREATED_TIME',
+                sortDirection: 'ASC',
                 planList: [],
                 pagination: {
                     count: 0,
@@ -192,25 +194,6 @@
                         CRON_EXPRESSION: '定时执行'
                     }[executionStrategy]
             },
-            renderHeader (h, { column }) {
-                return h('div', {
-                    class: {
-                        'flex-align-center hover-btn': true,
-                        'selected-header': this.sortType === column.property
-                    },
-                    on: {
-                        click: () => {
-                            this.sortType = column.property
-                            this.handlerPaginationChange()
-                        }
-                    }
-                }, [
-                    h('span', column.label),
-                    h('i', {
-                        class: 'ml5 devops-icon icon-down-shape'
-                    })
-                ])
-            },
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
                 this.pagination.current = current
                 this.pagination.limit = limit
@@ -224,6 +207,7 @@
                     enabled: this.showEnabled || undefined,
                     lastExecutionStatus: this.lastExecutionStatus || undefined,
                     sortType: this.sortType,
+                    sortDirection: this.sortDirection,
                     current: this.pagination.current,
                     limit: this.pagination.limit
                 }).then(({ records, totalRecords }) => {
@@ -263,6 +247,11 @@
                         routeName: 'createPlan'
                     }
                 }
+            },
+            handleSortChange ({ prop, order }) {
+                this.sortType = order ? prop : 'CREATED_TIME'
+                this.sortDirection = order === 'descending' ? 'DESC' : 'ASC'
+                this.getPlanListHandler()
             },
             editPlanHandler ({ name, key, lastExecutionStatus }) {
                 if (lastExecutionStatus) return

@@ -1,9 +1,9 @@
 <template>
     <canway-dialog
         :value="show"
-        title="API使用方法1111"
+        title="API使用方法"
         :width="720"
-        :height-num="400"
+        :height="40"
         @cancel="$emit('close')"
     >
         <bk-form class="mr10" :label-width="90">

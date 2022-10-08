@@ -2,7 +2,7 @@
     <canway-dialog
         :value="show"
         title="API使用方法"
-        :width="520"
+        :width="720"
         :height-num="400"
         @cancel="$emit('close')"
     >
@@ -16,7 +16,7 @@
             </bk-select>
             <div class="artifact-copy">
                 <p class="tips">请在合适的位置创建工作目录，并在该目录下执行命令：</p>
-                <code-area class="mb20" :code-list="codeList"></code-area>
+                <div id="markdown-tip" />
             </div>
         </bk-form>
         <template #footer>
@@ -26,15 +26,11 @@
 </template>
 
 <script>
-    import CodeArea from '@repository/components/CodeArea'
     import repoGuideMixin from '@repository/views/repoCommon/repoGuideMixin'
     import { mapState } from 'vuex'
-    import getCodeList from './getCodeList'
+    import getMarkdownTip from './getMarkdownTip'
 
     export default {
-        components: {
-            CodeArea
-        },
         mixins: [repoGuideMixin],
         props: {
             show: {
@@ -47,7 +43,7 @@
                 form: {
                     type: ''
                 },
-                codeList: getCodeList()
+                markdownTip: getMarkdownTip()
             }
         },
         computed: {
@@ -59,6 +55,19 @@
                     this.$set(this.form, 'type', this.artifactTypeList?.[0] || '')
                 }
             }
+        },
+        mounted () {
+            // eslint-disable-next-line no-undef
+            return new Cherry({
+                id: 'markdown-tip',
+                value: this.markdownTip,
+                toolbars: {
+                    toolbar: false
+                },
+                editor: {
+                    defaultModel: 'previewOnly'
+                }
+            })
         }
     }
 </script>
@@ -66,6 +75,11 @@
 <style lang="scss" scoped>
     .code-area {
         height: 200px;
+        overflow: auto;
+    }
+
+    #markdown-tip {
+        max-height: 400px;
         overflow: auto;
     }
 </style>

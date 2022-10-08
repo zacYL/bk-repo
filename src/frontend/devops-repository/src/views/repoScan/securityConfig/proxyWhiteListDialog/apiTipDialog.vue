@@ -3,7 +3,7 @@
         :value="show"
         title="API使用方法"
         :width="720"
-        :height-num="400"
+        :height="400"
         @cancel="$emit('close')"
     >
         <bk-form class="mr10" :label-width="90">
@@ -66,6 +66,13 @@
                 },
                 editor: {
                     defaultModel: 'previewOnly'
+                },
+                engine: {
+                    syntax: {
+                        codeBlock: {
+                            theme: 'light'
+                        }
+                    }
                 }
             })
         }
@@ -73,11 +80,6 @@
 </script>
 
 <style lang="scss" scoped>
-    .code-area {
-        height: 200px;
-        overflow: auto;
-    }
-
     #markdown-tip {
         max-height: 400px;
         overflow: auto;

@@ -3,7 +3,7 @@
         :value="show"
         title="API使用方法"
         :width="720"
-        :height="40"
+        :height="400"
         @cancel="$emit('close')"
     >
         <bk-form class="mr10" :label-width="90">

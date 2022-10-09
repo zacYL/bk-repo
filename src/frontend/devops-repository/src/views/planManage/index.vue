@@ -151,7 +151,7 @@
                 lastExecutionStatus: '',
                 planInput: '',
                 sortType: 'CREATED_TIME',
-                sortDirection: 'ASC',
+                sortDirection: 'DESC',
                 planList: [],
                 pagination: {
                     count: 0,
@@ -250,7 +250,7 @@
             },
             handleSortChange ({ prop, order }) {
                 this.sortType = order ? prop : 'CREATED_TIME'
-                this.sortDirection = order === 'descending' ? 'DESC' : 'ASC'
+                this.sortDirection = order === 'ascending' ? 'ASC' : 'DESC'
                 this.getPlanListHandler()
             },
             editPlanHandler ({ name, key, lastExecutionStatus }) {

@@ -53,11 +53,11 @@ import com.tencent.bkrepo.repository.pojo.project.ProjectRangeQueryRequest
 import com.tencent.bkrepo.repository.pojo.project.ProjectSearchOption
 import com.tencent.bkrepo.repository.pojo.project.ProjectUpdateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoDeleteRequest
-import com.tencent.bkrepo.repository.service.node.NodeService
 import com.tencent.bkrepo.repository.service.packages.PackageService
 import com.tencent.bkrepo.repository.service.repo.ProjectService
 import com.tencent.bkrepo.repository.service.repo.RepositoryService
 import com.tencent.bkrepo.repository.util.ProjectEventFactory.buildCreatedEvent
+import com.tencent.bkrepo.repository.util.ProjectEventFactory.buildDeletedEvent
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -214,6 +214,7 @@ class ProjectServiceImpl(
             repoPage = repositoryService.listRepoPage(name, DEFAULT_PAGE_NUMBER, DEFAULT_PAGE_SIZE)
         }
         projectDao.deleteById(name)
+        publishEvent(buildDeletedEvent(userId, name))
         logger.info("delete project:[$name] success by [$userId].")
     }
 

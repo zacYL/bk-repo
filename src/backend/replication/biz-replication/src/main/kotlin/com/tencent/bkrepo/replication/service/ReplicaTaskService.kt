@@ -109,6 +109,11 @@ interface ReplicaTaskService {
     fun deleteByTaskKey(key: String)
 
     /**
+     * 根据[projectId]删除同步任务
+     */
+    fun deleteByProjectId(name: String)
+
+    /**
      * 根据[key]切换任务状态
      */
     fun toggleStatus(key: String)

@@ -329,14 +329,9 @@ class PackageServiceImpl(
         val tPackage = checkPackage(projectId, repoName, packageKey)
         val packageId = tPackage.id.orEmpty()
         val tPackageVersion = checkPackageVersion(packageId, versionName)
-        val now = LocalDateTime.now()
-        tPackageVersion.recentlyUseDate = now
-        tPackageVersion.lastModifiedDate = now
+        tPackageVersion.recentlyUseDate = LocalDateTime.now()
         packageVersionDao.save(tPackageVersion)
-        logger.info(
-            "update package version [$projectId/$repoName/$packageKey-$versionName] " +
-                    "recentlyUseDate and lastModifiedDate success"
-        )
+        logger.info("update package version [$projectId/$repoName/$packageKey-$versionName] recentlyUseDate success")
     }
 
     override fun updatePackage(request: PackageUpdateRequest, realIpAddress: String?) {

@@ -74,6 +74,8 @@ import org.quartz.JobBuilder
 import org.quartz.JobKey
 import org.quartz.TriggerBuilder
 import org.slf4j.LoggerFactory
+import org.springframework.data.mongodb.core.query.Query
+import org.springframework.data.mongodb.core.query.isEqualTo
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
@@ -298,6 +300,13 @@ class ReplicaTaskServiceImpl(
         // 删除任务
         replicaTaskDao.deleteByKey(key)
         logger.info("delete task [$key] success.")
+    }
+
+    override fun deleteByProjectId(name: String) {
+        replicaTaskDao.find(Query(TReplicaTask::projectId.isEqualTo(name))).forEach {
+            deleteByTaskKey(it.key)
+        }
+        logger.info("delete task by projectId[$name] success")
     }
 
     override fun toggleStatus(key: String) {

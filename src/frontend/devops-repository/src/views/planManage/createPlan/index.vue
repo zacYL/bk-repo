@@ -102,18 +102,15 @@
                     </bk-option>
                 </bk-select>
             </bk-form-item>
-            <bk-form-item label="创建者" property="creator" v-if="routeName !== 'createPlan'">
-                <bk-input class="w480" v-model.trim="planForm.creator" :disabled="disabled"></bk-input>
+            <bk-form-item label="创建者" v-if="routeName !== 'createPlan'">
+                <bk-input class="w480" :value="planForm.createdBy" disabled></bk-input>
             </bk-form-item>
-            <bk-form-item label="创建时间" property="creator" v-if="routeName !== 'createPlan'">
+            <bk-form-item label="创建时间" v-if="routeName !== 'createPlan'">
                 <bk-date-picker
                     style="width: 480px;"
-                    v-model="planForm.created_time"
+                    :value="planForm.createdDate"
                     type="datetime"
-                    :disabled="disabled"
-                    :options="{
-                        disabledDate: (date) => date < new Date()
-                    }">
+                    disabled>
                 </bk-date-picker>
             </bk-form-item>
             <bk-form-item :label="$t('description')">
@@ -172,8 +169,8 @@
                     cron: '* * * * * ? *',
                     conflictStrategy: 'SKIP',
                     remoteClusterIds: [],
-                    creator: '',
-                    created_time: '',
+                    createdBy: '',
+                    createdDate: '',
                     description: ''
                 },
                 rules: {
@@ -280,6 +277,8 @@
                         replicaType,
                         remoteClusters,
                         description,
+                        createdBy,
+                        createdDate,
                         setting: {
                             conflictStrategy,
                             executionStrategy,
@@ -305,7 +304,9 @@
                             : {}),
                         conflictStrategy,
                         remoteClusterIds: remoteClusters.map(v => v.id),
-                        description
+                        description,
+                        createdBy,
+                        createdDate
                     }
                     this.replicaTaskObjects = objects
                 }).finally(() => {

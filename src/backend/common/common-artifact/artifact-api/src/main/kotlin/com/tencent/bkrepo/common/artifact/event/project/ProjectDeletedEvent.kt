@@ -25,47 +25,22 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.replication.replica.event
+package com.tencent.bkrepo.common.artifact.event.project
 
+import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.event.base.EventType
-import com.tencent.bkrepo.replication.replica.base.executor.EventConsumerThreadPoolExecutor
-import com.tencent.bkrepo.replication.service.ReplicaTaskService
-import org.springframework.stereotype.Component
 
 /**
- * 构件事件消费者，用于实时同步
- * 对应binding name为artifactEvent-in-0
+ * 项目删除事件
  */
-@Component("artifactEvent")
-class ArtifactEventConsumer(
-    private val replicaTaskService: ReplicaTaskService,
-    private val eventBasedReplicaJobExecutor: EventBasedReplicaJobExecutor
-) : EventConsumer() {
-
-    private val executors = EventConsumerThreadPoolExecutor.instance
-    /**
-     * 允许接收的事件类型
-     */
-    override fun getAcceptTypes(): Set<EventType> {
-        return setOf(
-            EventType.NODE_CREATED,
-            EventType.VERSION_CREATED,
-            EventType.VERSION_UPDATED,
-            EventType.PROJECT_DELETED
-        )
-    }
-
-    override fun action(event: ArtifactEvent) {
-        // 删除项目下所有分发计划及记录
-        if (event.type == EventType.PROJECT_DELETED){
-            replicaTaskService.deleteByProjectId(event.projectId)
-        }
-
-        executors.execute {
-            replicaTaskService.listRealTimeTasks(event.projectId, event.repoName).forEach {
-                eventBasedReplicaJobExecutor.execute(it, event)
-            }
-        }
-    }
-}
+data class ProjectDeletedEvent(
+    override val projectId: String,
+    override val userId: String
+) : ArtifactEvent(
+    type = EventType.PROJECT_CREATED,
+    projectId = projectId,
+    repoName = StringPool.EMPTY,
+    resourceKey = projectId,
+    userId = userId
+)

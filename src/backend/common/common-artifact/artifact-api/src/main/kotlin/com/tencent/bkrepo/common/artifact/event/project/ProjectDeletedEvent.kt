@@ -38,7 +38,7 @@ data class ProjectDeletedEvent(
     override val projectId: String,
     override val userId: String
 ) : ArtifactEvent(
-    type = EventType.PROJECT_CREATED,
+    type = EventType.PROJECT_DELETED,
     projectId = projectId,
     repoName = StringPool.EMPTY,
     resourceKey = projectId,

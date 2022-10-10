@@ -102,17 +102,8 @@
                     </bk-option>
                 </bk-select>
             </bk-form-item>
-            <bk-form-item label="创建者" v-if="routeName !== 'createPlan'">
-                <bk-input class="w480" :value="planForm.createdBy" disabled></bk-input>
-            </bk-form-item>
-            <bk-form-item label="创建时间" v-if="routeName !== 'createPlan'">
-                <bk-date-picker
-                    style="width: 480px;"
-                    :value="planForm.createdDate"
-                    type="datetime"
-                    disabled>
-                </bk-date-picker>
-            </bk-form-item>
+            <bk-form-item label="创建者" v-if="routeName !== 'createPlan'">{{ planForm.createdBy }}</bk-form-item>
+            <bk-form-item label="创建时间" v-if="routeName !== 'createPlan'">{{ planForm.createdDate }}</bk-form-item>
             <bk-form-item :label="$t('description')">
                 <bk-input
                     class="w480"

@@ -102,8 +102,10 @@
                     </bk-option>
                 </bk-select>
             </bk-form-item>
-            <bk-form-item label="创建者" v-if="routeName !== 'createPlan'">{{ planForm.createdBy }}</bk-form-item>
-            <bk-form-item label="创建时间" v-if="routeName !== 'createPlan'">{{ planForm.createdDate }}</bk-form-item>
+            <bk-form-item label="创建者" v-if="routeName !== 'createPlan'">
+                {{ userList[planForm.createdBy] && userList[planForm.createdBy].name }}
+            </bk-form-item>
+            <bk-form-item label="创建时间" v-if="routeName !== 'createPlan'">{{ formatDate(planForm.createdDate) }}</bk-form-item>
             <bk-form-item :label="$t('description')">
                 <bk-input
                     class="w480"
@@ -128,6 +130,8 @@
     import repositoryTable from './repositoryTable'
     import packageTable from './packageTable'
     import pathTable from './pathTable'
+    import { formatDate } from '@repository/utils'
+
     export default {
         name: 'createPlan',
         components: { Cron, CardRadioGroup, repositoryTable, packageTable, pathTable },
@@ -212,7 +216,7 @@
             }
         },
         computed: {
-            ...mapState(['clusterList']),
+            ...mapState(['clusterList', 'userList']),
             // projectId () {
             //     return this.$route.params.projectId
             // },
@@ -257,6 +261,7 @@
                 'getPlanDetail',
                 'updatePlan'
             ]),
+            formatDate,
             handlePlanDetail () {
                 this.isLoading = true
                 this.getPlanDetail({

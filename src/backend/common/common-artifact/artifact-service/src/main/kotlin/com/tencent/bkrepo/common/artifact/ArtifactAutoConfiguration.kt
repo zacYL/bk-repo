@@ -43,6 +43,7 @@ import com.tencent.bkrepo.common.artifact.repository.ArtifactContextConfiguratio
 import com.tencent.bkrepo.common.artifact.resolve.ArtifactResolverConfiguration
 import com.tencent.bkrepo.common.artifact.view.ArtifactViewModelConfiguration
 import com.tencent.bkrepo.common.artifact.view.ViewModelProperties
+import com.tencent.bkrepo.common.artifact.whitelist.ArtifactWhitelistProperties
 import org.springframework.boot.actuate.autoconfigure.metrics.export.influx.InfluxMetricsExportAutoConfiguration
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
@@ -67,6 +68,7 @@ import org.springframework.context.annotation.PropertySource
     ArtifactResolverConfiguration::class,
     ArtifactViewModelConfiguration::class,
     ArtifactHealthConfiguration::class,
-    ArtifactDownloadInterceptorConfiguration::class
+    ArtifactDownloadInterceptorConfiguration::class,
+    ArtifactWhitelistProperties::class
 )
 class ArtifactAutoConfiguration

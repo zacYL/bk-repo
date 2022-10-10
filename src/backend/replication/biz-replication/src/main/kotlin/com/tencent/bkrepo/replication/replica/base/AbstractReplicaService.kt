@@ -172,6 +172,8 @@ abstract class AbstractReplicaService(
                 if (replicaContext.task.setting.errorStrategy == ErrorStrategy.FAST_FAIL) {
                     throw throwable
                 }
+            } finally {
+                updateTaskProgressCache(context.taskKey)
             }
         }
     }
@@ -231,6 +233,8 @@ abstract class AbstractReplicaService(
                 if (replicaContext.task.setting.errorStrategy == ErrorStrategy.FAST_FAIL) {
                     throw throwable
                 }
+            } finally {
+                updateTaskProgressCache(context.taskKey)
             }
         }
     }
@@ -276,6 +280,14 @@ abstract class AbstractReplicaService(
                 errorReason = buildErrorReason()
             )
             replicaRecordService.completeRecordDetail(detail.id, result)
+        }
+    }
+
+    private fun updateTaskProgressCache(taskKey: String) {
+        val currentProgress = ReplicaExecutionContext.increaseProgress(taskKey)
+        val artifactCount = ReplicaExecutionContext.getArtifactCount(taskKey)
+        if (currentProgress != null && artifactCount != null && currentProgress >= artifactCount) {
+            ReplicaExecutionContext.removeProgress(taskKey)
         }
     }
 

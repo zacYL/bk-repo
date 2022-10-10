@@ -54,13 +54,14 @@ object TaskQueryHelper {
         name: String? = null,
         lastExecutionStatus: ExecutionStatus? = null,
         enabled: Boolean? = null,
-        sortType: TaskSortType?
+        sortType: TaskSortType?,
+        sortDirection: Sort.Direction = Sort.Direction.DESC
     ): Query {
         val criteria = where(TReplicaTask::projectId).isEqualTo(projectId)
         name?.takeIf { it.isNotBlank() }?.apply { criteria.and(TReplicaTask::name).regex("^$this") }
         lastExecutionStatus?.apply { criteria.and(TReplicaTask::lastExecutionStatus).isEqualTo(this) }
         enabled?.apply { criteria.and(TReplicaTask::enabled).isEqualTo(this) }
-        return Query(criteria).with(Sort.by(Sort.Direction.DESC, sortType?.key))
+        return Query(criteria).with(Sort.by(sortDirection, sortType?.key))
     }
 
     fun undoScheduledTaskQuery(): Query {

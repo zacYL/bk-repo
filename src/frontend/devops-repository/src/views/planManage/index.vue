@@ -1,7 +1,7 @@
 <template>
     <div class="plan-container" v-bkloading="{ isLoading }">
         <div class="ml20 mr20 mt10 flex-between-center">
-            <bk-button icon="plus" theme="primary" @click="$router.push({ name: 'createPlan' })">{{ $t('create') }}</bk-button>
+            <bk-button icon="plus" theme="primary" @click="handleClickCreatePlan">{{ $t('create') }}</bk-button>
             <div class="flex-align-center">
                 <bk-input
                     class="w250"
@@ -36,7 +36,8 @@
             :outer-border="false"
             :row-border="false"
             row-key="userId"
-            size="small">
+            size="small"
+            @sort-change="handleSortChange">
             <template #empty>
                 <empty-data :is-loading="isLoading" :search="Boolean(planInput || lastExecutionStatus || showEnabled)"></empty-data>
             </template>
@@ -56,15 +57,20 @@
             <bk-table-column label="同步策略" width="80">
                 <template #default="{ row }">{{ getExecutionStrategy(row) }}</template>
             </bk-table-column>
-            <bk-table-column label="上次执行时间" prop="LAST_EXECUTION_TIME" width="150" :render-header="renderHeader">
+            <bk-table-column label="上次执行时间" prop="LAST_EXECUTION_TIME" width="150" sortable="custom">
                 <template #default="{ row }">{{formatDate(row.lastExecutionTime)}}</template>
             </bk-table-column>
             <bk-table-column label="上次执行状态" width="100">
                 <template #default="{ row }">
-                    <span class="repo-tag" :class="row.lastExecutionStatus">{{asyncPlanStatusEnum[row.lastExecutionStatus] || '未执行'}}</span>
+                    <span v-if="row.lastExecutionStatus === 'RUNNING' && row.artifactCount">
+                        {{row.currentProgress}}/{{row.artifactCount}}
+                    </span>
+                    <span v-else class="repo-tag" :class="row.lastExecutionStatus">
+                        {{asyncPlanStatusEnum[row.lastExecutionStatus] || '未执行'}}
+                    </span>
                 </template>
             </bk-table-column>
-            <bk-table-column label="下次执行时间" prop="NEXT_EXECUTION_TIME" width="150" :render-header="renderHeader">
+            <!-- <bk-table-column label="下次执行时间" prop="NEXT_EXECUTION_TIME" width="150" :render-header="renderHeader">
                 <template #default="{ row }">{{formatDate(row.nextExecutionTime)}}</template>
             </bk-table-column>
             <bk-table-column label="创建者" width="90" show-overflow-tooltip>
@@ -72,7 +78,7 @@
             </bk-table-column>
             <bk-table-column :label="$t('createdDate')" prop="CREATED_TIME" width="150" :render-header="renderHeader">
                 <template #default="{ row }">{{formatDate(row.createdDate)}}</template>
-            </bk-table-column>
+            </bk-table-column> -->
             <bk-table-column label="启用计划" width="70">
                 <template #default="{ row }">
                     <bk-switcher class="m5" v-model="row.enabled" size="small" theme="primary" @change="changeEnabledHandler(row)"></bk-switcher>
@@ -113,6 +119,12 @@
         </bk-pagination>
         <plan-log v-model="planLog.show" :plan-data="planLog.planData"></plan-log>
         <plan-copy-dialog v-bind="planCopy" @cancel="planCopy.show = false" @refresh="handlerPaginationChange()"></plan-copy-dialog>
+        <bk-sideslider :is-show.sync="drawerSlider.isShow" :quick-close="true" :width="698">
+            <div slot="header">{{ drawerSlider.title }}</div>
+            <div slot="content">
+                <create-plan :rows-data="drawerSlider.rowsData" @close="handleClickCloseDrawer" @confirm="handlerPaginationChange" />
+            </div>
+        </bk-sideslider>
     </div>
 </template>
 <script>
@@ -122,17 +134,24 @@
     import { mapState, mapActions } from 'vuex'
     import { formatDate } from '@repository/utils'
     import { asyncPlanStatusEnum } from '@repository/store/publicEnum'
+    import createPlan from '@repository/views/planManage/createPlan'
     export default {
         name: 'plan',
-        components: { planLog, planCopyDialog, OperationList },
+        components: { planLog, planCopyDialog, OperationList, createPlan },
         data () {
             return {
+                drawerSlider: {
+                    isShow: false,
+                    title: '',
+                    rowsData: {}
+                },
                 asyncPlanStatusEnum,
                 isLoading: false,
                 showEnabled: undefined,
                 lastExecutionStatus: '',
                 planInput: '',
                 sortType: 'CREATED_TIME',
+                sortDirection: 'DESC',
                 planList: [],
                 pagination: {
                     count: 0,
@@ -175,25 +194,6 @@
                         CRON_EXPRESSION: '定时执行'
                     }[executionStrategy]
             },
-            renderHeader (h, { column }) {
-                return h('div', {
-                    class: {
-                        'flex-align-center hover-btn': true,
-                        'selected-header': this.sortType === column.property
-                    },
-                    on: {
-                        click: () => {
-                            this.sortType = column.property
-                            this.handlerPaginationChange()
-                        }
-                    }
-                }, [
-                    h('span', column.label),
-                    h('i', {
-                        class: 'ml5 devops-icon icon-down-shape'
-                    })
-                ])
-            },
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
                 this.pagination.current = current
                 this.pagination.limit = limit
@@ -207,6 +207,7 @@
                     enabled: this.showEnabled || undefined,
                     lastExecutionStatus: this.lastExecutionStatus || undefined,
                     sortType: this.sortType,
+                    sortDirection: this.sortDirection,
                     current: this.pagination.current,
                     limit: this.pagination.limit
                 }).then(({ records, totalRecords }) => {
@@ -234,18 +235,46 @@
                     }
                 })
             },
+            handleClickCloseDrawer () {
+                this.drawerSlider.isShow = false
+            },
+            handleClickCreatePlan () {
+                this.drawerSlider = {
+                    isShow: true,
+                    title: '创建计划',
+                    rowsData: {
+                        ...this.$route.params,
+                        routeName: 'createPlan'
+                    }
+                }
+            },
+            handleSortChange ({ prop, order }) {
+                this.sortType = order ? prop : 'CREATED_TIME'
+                this.sortDirection = order === 'ascending' ? 'ASC' : 'DESC'
+                this.getPlanListHandler()
+            },
             editPlanHandler ({ name, key, lastExecutionStatus }) {
                 if (lastExecutionStatus) return
-                this.$router.push({
-                    name: 'editPlan',
-                    params: {
+                this.drawerSlider = {
+                    isShow: true,
+                    title: '编辑计划',
+                    rowsData: {
                         ...this.$route.params,
-                        planId: key
-                    },
-                    query: {
-                        planName: name
+                        planId: key,
+                        planName: name,
+                        routeName: 'editPlan'
                     }
-                })
+                }
+                // this.$router.push({
+                //     name: 'editPlan',
+                //     params: {
+                //         ...this.$route.params,
+                //         planId: key
+                //     },
+                //     query: {
+                //         planName: name
+                //     }
+                // })
             },
             copyPlanHandler ({ name, key, description }) {
                 this.planCopy = {
@@ -284,14 +313,23 @@
                     this.getPlanListHandler()
                 })
             },
-            showPlanDetailHandler ({ key }) {
-                this.$router.push({
-                    name: 'planDetail',
-                    params: {
+            showPlanDetailHandler ({ name, key }) {
+                this.drawerSlider = {
+                    isShow: true,
+                    title: `${name}详情`,
+                    rowsData: {
                         ...this.$route.params,
-                        planId: key
+                        planId: key,
+                        routeName: 'planDetail'
                     }
-                })
+                }
+                // this.$router.push({
+                //     name: 'planDetail',
+                //     params: {
+                //         ...this.$route.params,
+                //         planId: key
+                //     }
+                // })
             },
             showPlanLogHandler (row) {
                 this.planLog.show = true

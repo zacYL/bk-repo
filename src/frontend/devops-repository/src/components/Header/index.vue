@@ -82,6 +82,10 @@
         &:hover {
             background-color: rgba(255, 255, 255, 0.4);
         }
+
+        ::v-deep .bk-select-name {
+            color: white;
+        }
     }
     .bkrepo-logo {
         color: white;

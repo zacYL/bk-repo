@@ -287,4 +287,9 @@ interface PackageService {
      * 查询包数量
      */
     fun getPackageCount(projectId: String, repoName: String): Long
+
+    /**
+     * 查询仓库包版本数量
+     */
+    fun getVersionCount(projectId: String, repoName: String): Long
 }

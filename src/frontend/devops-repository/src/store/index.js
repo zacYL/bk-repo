@@ -43,7 +43,8 @@ const storeObject = {
             docker: '',
             npm: ''
         },
-        clusterList: []
+        clusterList: [],
+        artifactTypeList: []
     },
     getters: {
         masterNode (state) {
@@ -115,6 +116,9 @@ const storeObject = {
         },
         SHOW_LOGIN_DIALOG (state, show = true) {
             state.showLoginDialog = show
+        },
+        SET_ARTIFACT_LIST (state, list) {
+            state.artifactTypeList = list
         }
     },
     actions

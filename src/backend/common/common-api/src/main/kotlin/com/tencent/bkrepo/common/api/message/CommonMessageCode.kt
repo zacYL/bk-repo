@@ -56,7 +56,8 @@ enum class CommonMessageCode(private val key: String) : MessageCode {
     REGEX_EXPRESSION_PATTERN_ERROR("regex.expression.pattern.error"),
     DIRECTORY_NOT_EXIST("directory.not.exist"),
     LICENSE_ACCESS_FAILED("license.access.failed"),
-    PARAMETER_INCOMPLETE("request.parameter.incomplete")
+    PARAMETER_INCOMPLETE("request.parameter.incomplete"),
+    PACKAGEKEY_INVALID("packageKey.invalid")
     ;
 
     override fun getBusinessCode() = ordinal + 1

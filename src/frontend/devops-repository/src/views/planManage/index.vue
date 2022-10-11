@@ -97,14 +97,15 @@
                     <operation-list
                         :list="[
                             { label: '编辑', clickEvent: () => editPlanHandler(row), disabled: Boolean(row.lastExecutionStatus) },
-                            { label: '复制', clickEvent: () => copyPlanHandler(row) },
+                            { label: '复制计划', clickEvent: () => copyPlanHandler(row) },
+                            { label: '复制URL', clickEvent: () => copyUrlHandler(row) },
                             { label: '删除', clickEvent: () => deletePlanHandler(row) },
                             { label: '日志', clickEvent: () => showPlanLogHandler(row) }
                         ]"></operation-list>
                 </template>
             </bk-table-column>
         </bk-table>
-        
+
         <bk-pagination
             class="p10"
             size="small"
@@ -132,7 +133,7 @@
     import planLog from './planLog'
     import planCopyDialog from './planCopyDialog'
     import { mapState, mapActions } from 'vuex'
-    import { formatDate } from '@repository/utils'
+    import { formatDate, copyToClipboard } from '@repository/utils'
     import { asyncPlanStatusEnum } from '@repository/store/publicEnum'
     import createPlan from '@repository/views/planManage/createPlan'
     export default {
@@ -299,6 +300,20 @@
                             })
                         })
                     }
+                })
+            },
+            copyUrlHandler ({ key }) {
+                const url = window.location.origin + `/replication/api/task/execute/${key}`
+                copyToClipboard(url).then(() => {
+                    this.$bkMessage({
+                        theme: 'success',
+                        message: this.$t('copy') + this.$t('success')
+                    })
+                }).catch(() => {
+                    this.$bkMessage({
+                        theme: 'error',
+                        message: this.$t('copy') + this.$t('fail')
+                    })
                 })
             },
             changeEnabledHandler ({ key, enabled }) {

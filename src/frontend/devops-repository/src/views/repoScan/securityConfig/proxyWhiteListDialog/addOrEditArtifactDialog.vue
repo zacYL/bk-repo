@@ -78,7 +78,7 @@
                         trigger: 'blur'
                     }, {
                         regex: /^[a-z0-9_\-.]+:[a-z0-9_\-.]+$/,
-                        message: '非法制品名称',
+                        message: '格式无效, 期望格式为: groupId:artifactId',
                         trigger: 'change'
                     }]
                 },
@@ -118,15 +118,22 @@
                     .then(() => {
                         const form = _.cloneDeep(this.form)
                         form.versions = this.form.versions.split('\n').filter(a => a)
-                        return this.type === 'edit' ? this.editWhiteList(form) : this.addWhiteList(form)
-                    })
-                    .then(() => {
-                        this.$bkMessage({
-                            theme: 'success',
-                            message: `${this.type === 'add' ? '添加' : '编辑'}成功`
-                        })
-                        this.$emit('close')
-                        this.$emit('update')
+                        const promise = this.type === 'edit' ? this.editWhiteList(form) : this.addWhiteList(form)
+                        return promise
+                            .then(() => {
+                                this.$bkMessage({
+                                    theme: 'success',
+                                    message: `${this.type === 'add' ? '添加' : '编辑'}成功`
+                                })
+                                this.$emit('close')
+                                this.$emit('update')
+                            })
+                            .catch(err => {
+                                this.$bkMessage({
+                                    theme: 'error',
+                                    message: err.message || '未知错误'
+                                })
+                            })
                     })
                     .catch(() => {})
                     .finally(() => {

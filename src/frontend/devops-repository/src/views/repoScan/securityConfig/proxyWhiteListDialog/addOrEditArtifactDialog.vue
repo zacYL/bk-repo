@@ -77,7 +77,7 @@
                         message: '请填写制品名称',
                         trigger: 'blur'
                     }, {
-                        regex: /[a-z0-9_\-.]+:[a-z0-9_\-.]+/,
+                        regex: /^[a-z0-9_\-.]+:[a-z0-9_\-.]+$/,
                         message: '非法制品名称',
                         trigger: 'change'
                     }]

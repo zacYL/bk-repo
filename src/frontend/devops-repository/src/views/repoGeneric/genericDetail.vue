@@ -98,7 +98,7 @@
     import metadataTag from '@repository/views/repoCommon/metadataTag'
     import CodeArea from '@repository/components/CodeArea'
     import createTokenDialog from '@repository/views/repoToken/createTokenDialog'
-    import topo from '@/components/topo'
+    import topo from '@repository/components/topo'
     import topoDataMixin from './artiTopoMixin'
     import { mapState, mapActions } from 'vuex'
     import { convertFileSize, formatDate } from '@repository/utils'

@@ -75,7 +75,7 @@
                         </bk-table-column>
 
                         <bk-table-column :label="$t('description')" prop="description" show-overflow-tooltip></bk-table-column>
-                        
+
                         <bk-table-column width="60">
                             <template #default="{ row }">
                                 <Icon class="hover-btn" size="24" name="icon-delete"
@@ -85,6 +85,12 @@
                     </bk-table>
                 </div>
             </bk-tab-panel>
+            <bk-tab-panel v-if="!detailSlider.folder && detailSlider.data.metadata"
+                render-directive="if"
+                name="topo" label="CI/CD关联信息"
+                style="height:100%;">
+                <topo :root-node="rootNode" :left-tree="leftTree" :right-tree="rightTree" />
+            </bk-tab-panel>
         </bk-tab></template>
     </bk-sideslider>
 </template>
@@ -92,11 +98,14 @@
     import metadataTag from '@repository/views/repoCommon/metadataTag'
     import CodeArea from '@repository/components/CodeArea'
     import createTokenDialog from '@repository/views/repoToken/createTokenDialog'
+    import topo from '@/components/topo'
+    import topoDataMixin from './artiTopoMixin'
     import { mapState, mapActions } from 'vuex'
     import { convertFileSize, formatDate } from '@repository/utils'
     export default {
         name: 'genericDetail',
-        components: { CodeArea, createTokenDialog, metadataTag },
+        components: { CodeArea, createTokenDialog, metadataTag, topo },
+        mixins: [topoDataMixin],
         data () {
             return {
                 tabName: 'detailInfo',

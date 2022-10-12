@@ -307,7 +307,7 @@
                 copyToClipboard(url).then(() => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: this.$t('copy') + this.$t('success')
+                        message: '成功复制URL到剪贴板'
                     })
                 }).catch(() => {
                     this.$bkMessage({

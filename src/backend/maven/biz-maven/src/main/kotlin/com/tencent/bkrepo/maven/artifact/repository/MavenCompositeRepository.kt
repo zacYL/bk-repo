@@ -63,10 +63,7 @@ class MavenCompositeRepository(
 
     private fun whitelistInterceptor(context: ArtifactDownloadContext) {
         (context.artifactInfo as MavenArtifactInfo).let {
-            if (it.isArtifact()
-                    && artifactWhitelistProperties.intercept
-                    && remotePackageClient.search(RepositoryType.MAVEN).data == true
-            ) {
+            if (it.isArtifact() && whitelistSwitchClient.get(RepositoryType.MAVEN).data == true) {
                 nodeClient.getNodeDetail(
                         projectId = it.projectId,
                         repoName = it.repoName,

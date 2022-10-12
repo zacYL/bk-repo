@@ -52,7 +52,6 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResourceWriter
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
-import com.tencent.bkrepo.common.artifact.whitelist.ArtifactWhitelistProperties
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.LocaleMessageUtils
@@ -65,6 +64,7 @@ import com.tencent.bkrepo.repository.api.PackageClient
 import com.tencent.bkrepo.repository.api.PackageDownloadsClient
 import com.tencent.bkrepo.repository.api.RemotePackageWhitelistClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
+import com.tencent.bkrepo.repository.api.WhitelistSwitchClient
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -116,7 +116,7 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
     lateinit var eventSupplier: EventSupplier
 
     @Autowired
-    lateinit var artifactWhitelistProperties: ArtifactWhitelistProperties
+    lateinit var whitelistSwitchClient: WhitelistSwitchClient
 
     @Autowired
     lateinit var remotePackageClient: RemotePackageWhitelistClient

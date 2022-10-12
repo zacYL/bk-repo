@@ -18,6 +18,11 @@ object WhitelistUtils {
         }
     }
 
+    fun typeValid(type: RepositoryType) {
+        if(!optionalType().contains(type))
+            throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, type.name)
+    }
+
     private fun formatInfo(type: RepositoryType): String {
         return when (type) {
             RepositoryType.MAVEN -> "groupId:artifactId"

@@ -6,6 +6,5 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 @ConfigurationProperties("proxy-source")
 data class ArtifactWhitelistProperties (
-    var whitelist: String = "remote",
-    var intercept: Boolean = false
+    var whitelist: String = "remote"
 )

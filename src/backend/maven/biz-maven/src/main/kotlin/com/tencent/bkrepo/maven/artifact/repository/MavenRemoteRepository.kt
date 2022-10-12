@@ -45,10 +45,7 @@ class MavenRemoteRepository : RemoteRepository() {
 
     override fun whitelistInterceptor(context: ArtifactDownloadContext) {
         (context.artifactInfo as MavenArtifactInfo).let {
-            if (it.isArtifact()
-                    && artifactWhitelistProperties.intercept
-                    && remotePackageClient.search(RepositoryType.MAVEN).data == true
-            ) {
+            if (it.isArtifact() && whitelistSwitchClient.get(RepositoryType.MAVEN).data == true) {
                 remotePackageClient.search(
                         RepositoryType.MAVEN, "${it.groupId}:${it.artifactId}", it.versionId
                 ).data?.let { result ->

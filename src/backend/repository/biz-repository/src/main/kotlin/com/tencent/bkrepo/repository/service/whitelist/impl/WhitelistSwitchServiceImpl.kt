@@ -5,7 +5,7 @@ import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.repository.dao.WhitelistSwitchDao
 import com.tencent.bkrepo.repository.model.TWhitelistSwitch
 import com.tencent.bkrepo.repository.service.whitelist.WhitelistSwitchService
-import com.tencent.bkrepo.repository.util.WhitelistUtils
+import com.tencent.bkrepo.common.artifact.util.WhitelistUtils
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.stereotype.Service

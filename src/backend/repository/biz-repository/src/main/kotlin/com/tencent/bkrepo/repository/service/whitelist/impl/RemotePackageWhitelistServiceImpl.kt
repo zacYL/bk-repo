@@ -5,6 +5,7 @@ import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.Preconditions
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.artifact.util.WhitelistUtils
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.query.util.MongoEscapeUtils
 import com.tencent.bkrepo.common.security.util.SecurityUtils
@@ -15,7 +16,6 @@ import com.tencent.bkrepo.repository.pojo.whitelist.CreateRemotePackageWhitelist
 import com.tencent.bkrepo.repository.pojo.whitelist.RemotePackageWhitelist
 import com.tencent.bkrepo.repository.pojo.whitelist.UpdateRemotePackageWhitelistRequest
 import com.tencent.bkrepo.repository.service.whitelist.RemotePackageWhitelistService
-import com.tencent.bkrepo.repository.util.WhitelistUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Sort

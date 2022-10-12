@@ -6,7 +6,7 @@ import com.tencent.bkrepo.common.security.permission.Principal
 import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.repository.service.whitelist.WhitelistSwitchService
-import com.tencent.bkrepo.repository.util.WhitelistUtils
+import com.tencent.bkrepo.common.artifact.util.WhitelistUtils
 import io.swagger.annotations.ApiParam
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable

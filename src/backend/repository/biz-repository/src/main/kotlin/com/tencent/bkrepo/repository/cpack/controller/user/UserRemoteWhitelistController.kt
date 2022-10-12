@@ -10,7 +10,7 @@ import com.tencent.bkrepo.repository.pojo.whitelist.CreateRemotePackageWhitelist
 import com.tencent.bkrepo.repository.pojo.whitelist.RemotePackageWhitelist
 import com.tencent.bkrepo.repository.pojo.whitelist.UpdateRemotePackageWhitelistRequest
 import com.tencent.bkrepo.repository.service.whitelist.RemotePackageWhitelistService
-import com.tencent.bkrepo.repository.util.WhitelistUtils
+import com.tencent.bkrepo.common.artifact.util.WhitelistUtils
 import io.swagger.annotations.ApiParam
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping

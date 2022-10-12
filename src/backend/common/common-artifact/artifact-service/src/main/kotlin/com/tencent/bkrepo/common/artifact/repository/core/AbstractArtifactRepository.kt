@@ -242,6 +242,10 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
         throw MethodNotAllowedException()
     }
 
+    open fun whitelistInterceptor(context: ArtifactDownloadContext) {
+        return
+    }
+
     /**
      * 下载成功回调
      */

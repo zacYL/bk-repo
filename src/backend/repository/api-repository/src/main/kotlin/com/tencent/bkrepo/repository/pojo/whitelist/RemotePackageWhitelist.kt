@@ -1,4 +1,4 @@
-package com.tencent.bkrepo.repository.cpack.controller
+package com.tencent.bkrepo.repository.pojo.whitelist
 
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import java.time.LocalDateTime

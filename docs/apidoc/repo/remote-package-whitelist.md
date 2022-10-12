@@ -13,7 +13,7 @@ module: **repository**
 校验规则如下：
 
 ```txt
-MAVEN: [a-z0-9_\-.]+:[a-z0-9_\-.]+
+MAVEN: [a-zA-Z0-9_\-.]+:[a-zA-Z0-9_\-.]+
 ```
 
 

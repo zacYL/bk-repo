@@ -1,4 +1,4 @@
-package com.tencent.bkrepo.repository.cpack.controller
+package com.tencent.bkrepo.repository.cpack.controller.user
 
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
@@ -7,8 +7,10 @@ import com.tencent.bkrepo.common.security.permission.Principal
 import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.repository.pojo.whitelist.CreateRemotePackageWhitelistRequest
+import com.tencent.bkrepo.repository.pojo.whitelist.RemotePackageWhitelist
 import com.tencent.bkrepo.repository.pojo.whitelist.UpdateRemotePackageWhitelistRequest
 import com.tencent.bkrepo.repository.service.whitelist.RemotePackageWhitelistService
+import com.tencent.bkrepo.repository.util.WhitelistUtils
 import io.swagger.annotations.ApiParam
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -30,13 +32,14 @@ class UserRemoteWhitelistController(
 
     @GetMapping("/optional/type")
     fun listOptionalType(): Response<List<RepositoryType>> {
-        return ResponseBuilder.success(listOf(RepositoryType.MAVEN))
+        return ResponseBuilder.success(WhitelistUtils.optionalType())
     }
 
     @PutMapping("")
     fun createWhitelist(
             @RequestBody request: CreateRemotePackageWhitelistRequest
     ): Response<Boolean> {
+        WhitelistUtils.packageKeyValidThrow(request.packageKey, request.type)
         return ResponseBuilder.success(remotePackageWhitelistService.createWhitelist(request))
     }
 

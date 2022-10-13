@@ -162,6 +162,9 @@
                                             { clickEvent: () => handlerShare(row), label: $t('share') },
                                             genericScanFileTypes.includes(row.name.replace(/^.+\.([^.]+)$/, '$1'))
                                                 && { clickEvent: () => handlerScan(row), label: '安全扫描' }
+                                        ] : []),
+                                        ...(row.folder ? [
+                                            { clickEvent: () => handlerShare(row), label: $t('divide') }
                                         ] : [])
                                     ] : []),
                                     !row.folder && { clickEvent: () => handlerForbid(row), label: row.metadata.forbidStatus ? '解除禁止' : '禁止使用' },
@@ -457,7 +460,6 @@
             // 树组件选中文件夹
             itemClickHandler (node) {
                 this.selectedTreeNode = node
-                
                 this.handlerPaginationChange()
                 // 更新已展开文件夹数据
                 const reg = new RegExp(`^${node.roadMap}`)

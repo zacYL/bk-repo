@@ -164,7 +164,7 @@
                                                 && { clickEvent: () => handlerScan(row), label: '安全扫描' }
                                         ] : []),
                                         ...(row.folder ? [
-                                            { clickEvent: () => handlerShare(row), label: $t('divide') }
+                                            { clickEvent: () => handlerShare(row), label: $t('share') }
                                         ] : [])
                                     ] : []),
                                     !row.folder && { clickEvent: () => handlerForbid(row), label: row.metadata.forbidStatus ? '解除禁止' : '禁止使用' },

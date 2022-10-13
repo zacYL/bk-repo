@@ -35,7 +35,6 @@ import com.tencent.bkrepo.common.api.constant.HttpHeaders
 import com.tencent.bkrepo.common.api.constant.HttpStatus
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
-import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.NetworkProxyConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteCredentialsConfiguration
@@ -49,6 +48,7 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.artifact.stream.artifactStream
+import com.tencent.bkrepo.common.artifact.util.WhitelistUtils
 import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
 import com.tencent.bkrepo.common.artifact.util.okhttp.BasicAuthInterceptor
 import com.tencent.bkrepo.common.artifact.util.okhttp.HttpClientBuilderFactory
@@ -93,10 +93,6 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
                 onDownloadResponse(context, response)
             } else null
         }
-    }
-
-    open fun whitelistInterceptor(context: ArtifactDownloadContext) {
-        return
     }
 
     @Suppress("TooGenericExceptionCaught", "LoopWithTooManyJumpStatements")
@@ -252,11 +248,9 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
      * 获取缓存节点创建请求
      */
     open fun buildCacheNodeCreateRequest(context: ArtifactContext, artifactFile: ArtifactFile): NodeCreateRequest {
-        val nodeMetadata = if (context.repositoryDetail.type == RepositoryType.MAVEN) {
+        val nodeMetadata = if (WhitelistUtils.optionalType().contains(context.repositoryDetail.type)) {
             listOf(MetadataModel(SOURCE_TYPE, ArtifactChannel.PROXY))
-        } else {
-            null
-        }
+        } else { null }
         return NodeCreateRequest(
                 projectId = context.repositoryDetail.projectId,
                 repoName = context.repositoryDetail.name,

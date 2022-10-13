@@ -87,6 +87,7 @@ class CompositeRepository(
     }
 
     override fun onDownloadBefore(context: ArtifactDownloadContext) {
+        whitelistInterceptor(context)
         localRepository.onDownloadBefore(context)
     }
 

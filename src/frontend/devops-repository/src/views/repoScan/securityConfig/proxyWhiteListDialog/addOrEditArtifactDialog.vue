@@ -78,7 +78,7 @@
                         trigger: 'blur'
                     }, {
                         regex: /[a-zA-Z0-9_\-.]+:[a-zA-Z0-9_\-.]+/,
-                        message: '非法制品名称',
+                        message: '格式无效, 期望格式为: groupId:artifactId',
                         trigger: 'change'
                     }]
                 },

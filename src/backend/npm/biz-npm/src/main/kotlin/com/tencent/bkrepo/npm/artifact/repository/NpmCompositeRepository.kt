@@ -34,12 +34,15 @@ class NpmCompositeRepository(
     override fun whitelistInterceptor(context: ArtifactDownloadContext) {
         if (whitelistSwitchClient.get(RepositoryType.NPM).data == true) {
             val fullPath = context.getStringAttribute(NPM_FILE_FULL_PATH)?: return
+            logger.info("npm local fullPath: $fullPath")
             val packageInfo = NpmUtils.parseNameAndVersionFromFullPath(context.artifactInfo.getArtifactFullPath())
+            logger.info("npm local packageInfo: [${packageInfo.first} : ${packageInfo.second}]")
             nodeClient.getNodeDetail(
                     projectId = context.projectId,
                     repoName = context.repoName,
                     fullPath = fullPath).data?.let { nodeDetail ->
                 // 如果节点在仓库中存在
+                logger.info("npm local nodeDetail: $nodeDetail")
                 nodeDetail.nodeMetadata.forEach { metadataModel ->
                     // 判断是否来自代理源缓存
                     if (metadataModel.key == SOURCE_TYPE && metadataModel.value == ArtifactChannel.PROXY.name

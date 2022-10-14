@@ -7,13 +7,13 @@
         @cancel="$emit('close')"
     >
         <bk-form class="mr10" :label-width="90">
-            <bk-select
+            <!-- <bk-select
                 class="w250"
                 v-model="form.type"
                 placeholder="请选择制品类型"
                 :clearable="false">
                 <bk-option v-for="item in artifactTypeList" :key="item" :id="item" :name="item" />
-            </bk-select>
+            </bk-select> -->
             <div class="artifact-copy">
                 <p class="tips">请在合适的位置创建工作目录，并在该目录下执行命令：</p>
                 <div id="markdown-tip" />

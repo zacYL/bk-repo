@@ -93,7 +93,7 @@ class RemotePackageWhitelistServiceImpl(
                 val newType = first ?: oldWhitelist.type
                 page(newType, second!!, null, null, null, false).records.let {
                     if (it.isNotEmpty()) {
-                        throw ErrorCodeException(CommonMessageCode.RESOURCE_EXISTED, "packageKey { $second }")
+                        throw ErrorCodeException(CommonMessageCode.RESOURCE_EXISTED, "packageKey : $second ")
                     }
                 }
             }

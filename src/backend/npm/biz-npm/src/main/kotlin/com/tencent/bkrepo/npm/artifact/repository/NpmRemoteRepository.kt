@@ -71,6 +71,7 @@ class NpmRemoteRepository(
     override fun whitelistInterceptor(context: ArtifactDownloadContext) {
         if (whitelistSwitchClient.get(RepositoryType.NPM).data == true) {
             val packageInfo = NpmUtils.parseNameAndVersionFromFullPath(context.artifactInfo.getArtifactFullPath())
+            logger.info("npm remote packageInfo: [${packageInfo.first} : ${packageInfo.second}]")
             if (remotePackageClient.search(RepositoryType.NPM, packageInfo.first, packageInfo.second).data != true) {
                 throw ArtifactNotInWhitelistException()
             }

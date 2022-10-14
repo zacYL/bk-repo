@@ -31,6 +31,7 @@
 
 package com.tencent.bkrepo.common.artifact.repository.composite
 
+import com.tencent.bkrepo.common.artifact.exception.ArtifactNotInWhitelistException
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.configuration.RepositoryConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.composite.ProxyChannelSetting
@@ -147,6 +148,8 @@ class CompositeRepository(
                     // 无论请求是否成功, 都会返回kotlin.Unit
                     if (it != Unit) { return it }
                 }
+            } catch (downloadException: ArtifactNotInWhitelistException) {
+                throw ArtifactNotInWhitelistException()
             } catch (ignored: Exception) {
                 logger.warn("Failed to execute map with channel ${setting.name}", ignored)
             }

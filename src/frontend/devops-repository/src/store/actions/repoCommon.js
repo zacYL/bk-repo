@@ -155,7 +155,6 @@ export default {
                             }]
                             : []),
                         ...extRules
-                        
                     ],
                     relation: 'AND'
                 }
@@ -215,5 +214,13 @@ export default {
     },
     delProjectByName (_, { name }) {
         return Vue.prototype.$ajax.delete(`${prefix}/project/delete/${name}?confirmName=${name}`)
+    },
+    // 仓库类型是否开启拦截清单
+    getWhiteListSwitchList ({ state, commit }) {
+        return Vue.prototype.$ajax.get(`${prefix}/remote/whitelist/switch/list`)
+    },
+    // 修改仓库类型拦截状态
+    updateWhiteListSwitchList ({ state, commit }, { RepositoryType }) {
+        return Vue.prototype.$ajax.post(`${prefix}/remote/whitelist/switch/${RepositoryType}`)
     }
 }

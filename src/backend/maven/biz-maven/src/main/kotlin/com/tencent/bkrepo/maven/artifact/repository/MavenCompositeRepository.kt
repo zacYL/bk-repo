@@ -23,11 +23,6 @@ class MavenCompositeRepository(
         proxyChannelClient: ProxyChannelClient
 ) : CompositeRepository(mavenLocalRepository, mavenRemoteRepository, proxyChannelClient) {
 
-    override fun onDownloadBefore(context: ArtifactDownloadContext) {
-        whitelistInterceptor(context)
-        super.onDownloadBefore(context)
-    }
-
     @Suppress("TooGenericExceptionCaught")
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         var artifactResource: ArtifactResource? = null
@@ -61,12 +56,9 @@ class MavenCompositeRepository(
         return artifactResource
     }
 
-    private fun whitelistInterceptor(context: ArtifactDownloadContext) {
+    override fun whitelistInterceptor(context: ArtifactDownloadContext) {
         (context.artifactInfo as MavenArtifactInfo).let {
-            if (it.isArtifact()
-                    && artifactWhitelistProperties.intercept
-                    && remotePackageClient.search(RepositoryType.MAVEN).data == true
-            ) {
+            if (it.isArtifact() && whitelistSwitchClient.get(RepositoryType.MAVEN).data == true) {
                 nodeClient.getNodeDetail(
                         projectId = it.projectId,
                         repoName = it.repoName,

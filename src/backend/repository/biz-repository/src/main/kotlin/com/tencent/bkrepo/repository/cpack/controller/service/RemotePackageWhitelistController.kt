@@ -1,4 +1,4 @@
-package com.tencent.bkrepo.repository.controller.service
+package com.tencent.bkrepo.repository.cpack.controller.service
 
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType

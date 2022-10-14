@@ -1,16 +1,19 @@
 package com.tencent.bkrepo.repository.service.whitelist.impl
 
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.Preconditions
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.artifact.util.WhitelistUtils
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.query.util.MongoEscapeUtils
 import com.tencent.bkrepo.common.security.util.SecurityUtils
-import com.tencent.bkrepo.repository.cpack.controller.RemotePackageWhitelist
 import com.tencent.bkrepo.repository.dao.RemotePackageWhitelistDao
 import com.tencent.bkrepo.repository.exception.WhitelistNotFoundException
 import com.tencent.bkrepo.repository.model.TRemotePackageWhitelist
 import com.tencent.bkrepo.repository.pojo.whitelist.CreateRemotePackageWhitelistRequest
+import com.tencent.bkrepo.repository.pojo.whitelist.RemotePackageWhitelist
 import com.tencent.bkrepo.repository.pojo.whitelist.UpdateRemotePackageWhitelistRequest
 import com.tencent.bkrepo.repository.service.whitelist.RemotePackageWhitelistService
 import org.slf4j.Logger
@@ -38,8 +41,8 @@ class RemotePackageWhitelistServiceImpl(
                         id = it[0].id,
                         request = UpdateRemotePackageWhitelistRequest(
                                 versions = mutableListOf<String>().apply{
-                                    it[0].versions?.let { it1 -> addAll(it1) }
-                                    request.versions?.let { it1 -> addAll(it1) }
+                                    it[0].versions?.let { existsVersions -> addAll(existsVersions) }
+                                    request.versions?.let { requestVersions -> addAll(requestVersions) }
                                 }.distinct(),
                         )
                 )
@@ -49,12 +52,15 @@ class RemotePackageWhitelistServiceImpl(
     }
 
     override fun batchWhitelist(request: List<CreateRemotePackageWhitelistRequest>): Int {
-        request.parallelStream()
         var count = 0
         for (i in request.indices) {
             try {
-                createWhitelist(request[i])
-                count++
+                request[i].let {
+                    if (WhitelistUtils.packageKeyValid(it.packageKey, it.type)) {
+                        createWhitelist(it)
+                        count++
+                    }
+                }
             } catch (e: Exception) {
                 logger.error("batch whitelist error, index: $i, data: ${request[i]}", e)
             }
@@ -63,7 +69,12 @@ class RemotePackageWhitelistServiceImpl(
     }
 
     override fun updateWhitelist(id: String, request: UpdateRemotePackageWhitelistRequest): Boolean {
-        val oldWhitelist = getWhitelist(id)?: throw WhitelistNotFoundException(id)
+        val oldWhitelist = getWhitelist(id) ?: throw WhitelistNotFoundException(id)
+        if (request.type != null) {
+            request.packageKey?.let { WhitelistUtils.packageKeyValidThrow(it, request.type!!) }
+        } else {
+            request.packageKey?.let { WhitelistUtils.packageKeyValidThrow(it, oldWhitelist.type) }
+        }
         with(oldWhitelist) {
             Triple(
                     request.type?.let { if (type != it) it else null },
@@ -77,6 +88,15 @@ class RemotePackageWhitelistServiceImpl(
                 if(first == null && second == null && third == null) return true
             }
         }.apply {
+            // packageKey
+            if(second != null) {
+                val newType = first ?: oldWhitelist.type
+                page(newType, second!!, null, null, null, false).records.let {
+                    if (it.isNotEmpty()) {
+                        throw ErrorCodeException(CommonMessageCode.RESOURCE_EXISTED, "packageKey { $second }")
+                    }
+                }
+            }
             val query = Query(Criteria.where(TRemotePackageWhitelist::id.name).`is`(id))
             val update = Update().apply {
                 first?.let { set(TRemotePackageWhitelist::type.name, it) }

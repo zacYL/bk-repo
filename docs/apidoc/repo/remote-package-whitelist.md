@@ -13,7 +13,8 @@ module: **repository**
 校验规则如下：
 
 ```txt
-MAVEN: [a-z0-9_\-.]+:[a-z0-9_\-.]+
+MAVEN: [a-zA-Z0-9_\-.]+:[a-zA-Z0-9_\-.]+
+NPM：todo
 ```
 
 
@@ -265,14 +266,14 @@ MAVEN: [a-z0-9_\-.]+:[a-z0-9_\-.]+
 
 * 请求字段说明
 
-  | 字段       | 类型    | 默认值 | 是否必传 | 说明                                | Description |
-  | ---------- | ------- | ------ | -------- | ----------------------------------- | ----------- |
-  | type       | String  | 无     | 否       | 仓库类型                            | cve id      |
-  | packageKey | String  | 无     | 否       | 唯一包名                            | package key |
-  | version    | String  | 无     | 否       | 版本                                | version     |
-  | regex      | Boolean | true   | 否       | true:packageKey正则匹配，false:相等 | regex       |
-  | pageNumber | Int     | 1      | 否       | 页数                                | page number |
-  | pageSize   | Int     | 20     | 否       | 每页数量                            | page size   |
+  | 字段       | 类型    | 默认值 | 是否必传 | 说明                                | Description     |
+  | ---------- | ------- | ------ | -------- | ----------------------------------- | --------------- |
+  | type       | String  | 无     | 否       | 仓库类型                            | Repository type |
+  | packageKey | String  | 无     | 否       | 唯一包名                            | package key     |
+  | version    | String  | 无     | 否       | 版本                                | version         |
+  | regex      | Boolean | true   | 否       | true:packageKey正则匹配，false:相等 | regex           |
+  | pageNumber | Int     | 1      | 否       | 页数                                | page number     |
+  | pageSize   | Int     | 20     | 否       | 每页数量                            | page size       |
 
 * 响应体
 
@@ -371,5 +372,85 @@ MAVEN: [a-z0-9_\-.]+:[a-z0-9_\-.]+
   }
   ```
 
-  
 
+
+
+## 仓库类型是否开启拦截清单
+
+* API: GET /api/remote/whitelist/switch/list
+
+* API 名称: get_switch_list
+
+* 功能说明：
+
+  * 中文： 获取仓库类型是否开启拦截清单
+  * English: get switch list
+
+* 请求体
+
+  此接口请求体为空
+
+* 请求字段说明
+
+  无
+
+* 响应体
+
+  ```json
+  {
+      "code": 0,
+      "message": null,
+      "data": {
+          "MAVEN": true,
+          "NPM": false
+      },
+      "traceId": ""
+  }
+  ```
+  
+* data字段说明
+
+  | 字段           | 类型    | 说明                        | Description  |
+  | -------------- | ------- | --------------------------- | ------------ |
+  | RepositoryType | Boolean | true: 开启拦截，false: 关闭 | 是否开启拦截 |
+
+
+
+## 修改仓库类型拦截状态
+
+* API: GET /api/remote/whitelist/switch/{RepositoryType}
+
+* API 名称: switch_status
+
+* 功能说明：
+
+  * 中文： 修改仓库类型拦截状态
+  * English: switch status
+
+* 请求体
+
+  此接口请求体为空
+
+* 请求字段说明
+
+  | 字段           | 类型   | 默认值 | 是否必传 | 说明     | Description     |
+  | -------------- | ------ | ------ | -------- | -------- | --------------- |
+  | RepositoryType | String | 无     | 是       | 仓库类型 | repository type |
+
+
+* 响应体
+
+  ```json
+  {
+      "code": 0,
+      "message": null,
+      "data": true,
+      "traceId": ""
+  }
+  ```
+
+* data字段说明
+
+  | 字段 | 类型    | 说明                 | Description      |
+  | ---- | ------- | -------------------- | ---------------- |
+  | data | Boolean | 返回修改成功后的结果 | 修改成功后的结果 |

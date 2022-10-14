@@ -33,6 +33,9 @@ package com.tencent.bkrepo.npm.artifact.repository
 
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
+import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
+import com.tencent.bkrepo.common.artifact.exception.ArtifactNotInWhitelistException
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactMigrateContext
@@ -41,6 +44,7 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchConte
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.migration.MigrateDetail
 import com.tencent.bkrepo.common.artifact.repository.remote.RemoteRepository
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
 import com.tencent.bkrepo.common.storage.monitor.Throughput
@@ -49,6 +53,7 @@ import com.tencent.bkrepo.npm.exception.NpmBadRequestException
 import com.tencent.bkrepo.npm.pojo.NpmSearchInfoMap
 import com.tencent.bkrepo.npm.pojo.NpmSearchResponse
 import com.tencent.bkrepo.npm.utils.NpmUtils
+import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import okhttp3.Request
 import okhttp3.Response
@@ -62,6 +67,15 @@ import java.io.InputStream
 class NpmRemoteRepository(
     private val executor: ThreadPoolTaskExecutor
 ) : RemoteRepository() {
+
+    override fun whitelistInterceptor(context: ArtifactDownloadContext) {
+        if (whitelistSwitchClient.get(RepositoryType.NPM).data == true) {
+            val packageInfo = NpmUtils.parseNameAndVersionFromFullPath(context.artifactInfo.getArtifactFullPath())
+            if (remotePackageClient.search(RepositoryType.NPM, packageInfo.first, packageInfo.second).data != true) {
+                throw ArtifactNotInWhitelistException()
+            }
+        }
+    }
 
     override fun onDownloadSuccess(
         context: ArtifactDownloadContext,
@@ -164,15 +178,16 @@ class NpmRemoteRepository(
 
     override fun buildCacheNodeCreateRequest(context: ArtifactContext, artifactFile: ArtifactFile): NodeCreateRequest {
         return NodeCreateRequest(
-            projectId = context.repositoryDetail.projectId,
-            repoName = context.repositoryDetail.name,
-            folder = false,
-            fullPath = context.getStringAttribute(NPM_FILE_FULL_PATH)!!,
-            size = artifactFile.getSize(),
-            sha256 = artifactFile.getFileSha256(),
-            md5 = artifactFile.getFileMd5(),
-            overwrite = true,
-            operator = context.userId
+                projectId = context.repositoryDetail.projectId,
+                repoName = context.repositoryDetail.name,
+                folder = false,
+                fullPath = context.getStringAttribute(NPM_FILE_FULL_PATH)!!,
+                size = artifactFile.getSize(),
+                sha256 = artifactFile.getFileSha256(),
+                md5 = artifactFile.getFileMd5(),
+                overwrite = true,
+                operator = context.userId,
+                nodeMetadata = listOf(MetadataModel(SOURCE_TYPE, ArtifactChannel.PROXY))
         )
     }
 

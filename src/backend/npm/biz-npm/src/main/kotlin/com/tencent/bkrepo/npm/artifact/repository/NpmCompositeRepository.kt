@@ -1,12 +1,19 @@
 package com.tencent.bkrepo.npm.artifact.repository
 
 import com.tencent.bkrepo.common.api.util.JsonUtils
+import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
+import com.tencent.bkrepo.common.artifact.exception.ArtifactNotInWhitelistException
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.repository.composite.CompositeRepository
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.repository.remote.RemoteRepository
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
+import com.tencent.bkrepo.npm.constants.NPM_FILE_FULL_PATH
 import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
+import com.tencent.bkrepo.npm.utils.NpmUtils
 import com.tencent.bkrepo.repository.api.ProxyChannelClient
 import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Primary
@@ -23,6 +30,30 @@ class NpmCompositeRepository(
     private val remoteRepository: RemoteRepository,
     proxyChannelClient: ProxyChannelClient
 ) : CompositeRepository(localRepository, remoteRepository, proxyChannelClient) {
+
+    override fun whitelistInterceptor(context: ArtifactDownloadContext) {
+        if (whitelistSwitchClient.get(RepositoryType.NPM).data == true) {
+            val fullPath = context.getStringAttribute(NPM_FILE_FULL_PATH)?: return
+            val packageInfo = NpmUtils.parseNameAndVersionFromFullPath(context.artifactInfo.getArtifactFullPath())
+            nodeClient.getNodeDetail(
+                    projectId = context.projectId,
+                    repoName = context.repoName,
+                    fullPath = fullPath).data?.let { nodeDetail ->
+                // 如果节点在仓库中存在
+                nodeDetail.nodeMetadata.forEach { metadataModel ->
+                    // 判断是否来自代理源缓存
+                    if (metadataModel.key == SOURCE_TYPE && metadataModel.value == ArtifactChannel.PROXY.name
+                            // 查询该制品是否在白名单中
+                            && remotePackageClient.search(
+                                    RepositoryType.NPM, packageInfo.first, packageInfo.second
+                            ).data != true) {
+                        // 抛出异常 Http.status = 423
+                        throw ArtifactNotInWhitelistException()
+                    }
+                }
+            }
+        }
+    }
 
     override fun query(context: ArtifactQueryContext): InputStream? {
         val localQueryResult = localRepository.query(context) as? InputStream

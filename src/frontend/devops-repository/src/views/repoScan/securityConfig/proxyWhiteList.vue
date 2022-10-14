@@ -135,6 +135,9 @@
                 this.current = this.params.pageNumber
                 return this.getWhitelist(this.params)
                     .then(res => {
+                        res.records.forEach(item => {
+                            item.versions = item.versions || [] // 兼容versions为null的场景
+                        })
                         this.proxyWhiteList = res.records
                         this.pagination.count = res.count
                     })

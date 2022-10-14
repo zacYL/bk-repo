@@ -168,7 +168,7 @@ class RepositoryServiceImpl(
             appId = SecurityUtils.getPlatformId()
         ).data.orEmpty()
         if (!option.name.isNullOrBlank()) {
-            names = names.filter { it.startsWith(option.name.orEmpty(), true) }
+            names = names.filter { it.contains(option.name.orEmpty(), true) }
         }
         val criteria = where(TRepository::projectId).isEqualTo(projectId)
             .and(TRepository::display).ne(false)

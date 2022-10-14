@@ -32,7 +32,7 @@ import io.swagger.annotations.ApiModelProperty
 
 @ApiModel("仓库列表选项")
 data class RepoListOption(
-    @ApiModelProperty("仓库名称(前缀匹配，忽略大小写)", required = false)
+    @ApiModelProperty("仓库名称(模糊匹配，忽略大小写)", required = false)
     val name: String? = null,
     @ApiModelProperty("仓库类型", required = false)
     val type: String? = null

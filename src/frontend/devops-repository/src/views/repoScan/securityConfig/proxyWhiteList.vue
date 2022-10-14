@@ -4,6 +4,7 @@
             <div class="btn-group">
                 <bk-button class="ml20" theme="primary" icon="plus" @click="handleClickShowDialog('add')">添加</bk-button>
                 <bk-button class="ml20" theme="primary" @click="handleClickShowDialog('api')">API调用</bk-button>
+                <bk-button class="ml20" theme="primary" @click="handleClickShowDialog('status')">启用状态</bk-button>
             </div>
             <!-- 筛选框 -->
             <div class="mr20 flex-align-center">
@@ -72,6 +73,11 @@
             @close="handleClickShowDialog('close')"
             @update="fetchWhitelist"
         />
+        <!-- 白名单启用状态dialog -->
+        <white-list-status-dialog
+            :show="artifactDialogType === 'status'"
+            @close="handleClickShowDialog('close')"
+        />
     </div>
 </template>
 
@@ -79,11 +85,13 @@
     import { mapActions, mapState } from 'vuex'
     import AddOrEditArtifactDialog from './proxyWhiteListDialog/addOrEditArtifactDialog.vue'
     import ApiTipDialog from './proxyWhiteListDialog/apiTipDialog.vue'
+    import whiteListStatusDialog from './proxyWhiteListDialog/whiteListStatusDialog.vue'
 
     export default {
         components: {
             AddOrEditArtifactDialog,
-            ApiTipDialog
+            ApiTipDialog,
+            whiteListStatusDialog
         },
         data () {
             return {

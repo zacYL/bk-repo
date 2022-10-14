@@ -3,14 +3,22 @@
         <div class="mt10 flex-between-center">
             <div class="btn-group">
                 <bk-button class="ml20" theme="primary" icon="plus" @click="handleClickShowDialog('add')">添加</bk-button>
-                <bk-button class="ml20" theme="primary" @click="handleClickShowDialog('api')">API调用</bk-button>
-                <bk-button class="ml20" theme="primary" @click="handleClickShowDialog('status')">启用状态</bk-button>
+                <bk-button class="ml20" @click="handleClickShowDialog('api')">API调用</bk-button>
+                <bk-button class="ml20" @click="handleClickShowDialog('status')">启用状态</bk-button>
             </div>
             <!-- 筛选框 -->
             <div class="mr20 flex-align-center">
+                <bk-select
+                    @change="search"
+                    v-model.trim="params.repositoryType"
+                    placeholder="全部仓库类型"
+                    style="width: 160px;">
+                    <bk-option v-for="item in artifactTypeList" :key="item" :id="item" :name="item"></bk-option>
+                </bk-select>
                 <bk-input
                     v-model.trim="name"
-                    class="w250"
+                    class="ml10"
+                    style="width: 230px;"
                     placeholder="请输入制品名称, 按Enter键搜索"
                     clearable
                     @enter="search"

@@ -66,27 +66,34 @@
                     edit: '编辑制品信息'
                 },
                 form: this.getNewForm(),
-                rules: {
+                isLoading: false
+            }
+        },
+        computed: {
+            ...mapState(['artifactTypeList']),
+            rules () {
+                return {
                     type: [{
                         required: true,
                         message: '请选择制品类型',
                         trigger: 'blur'
                     }],
-                    packageKey: [{
-                        required: true,
-                        message: '请填写制品名称',
-                        trigger: 'blur'
-                    }, {
-                        regex: /[a-zA-Z0-9_\-.]+:[a-zA-Z0-9_\-.]+/,
-                        message: '格式无效, 期望格式为: groupId:artifactId',
-                        trigger: 'change'
-                    }]
-                },
-                isLoading: false
+                    packageKey: [
+                        {
+                            required: true,
+                            message: '请填写制品名称',
+                            trigger: 'blur'
+                        },
+                        ...this.form.type === 'MAVEN'
+                            ? [{
+                                regex: /[a-zA-Z0-9_\-.]+:[a-zA-Z0-9_\-.]+/,
+                                message: '格式无效, 期望格式为: groupId:artifactId',
+                                trigger: 'change'
+                            }]
+                            : []
+                    ]
+                }
             }
-        },
-        computed: {
-            ...mapState(['artifactTypeList'])
         },
         watch: {
             type (val) {

@@ -10,7 +10,7 @@
             <div class="mr20 flex-align-center">
                 <bk-select
                     @change="search"
-                    v-model.trim="params.repositoryType"
+                    v-model.trim="params.type"
                     placeholder="全部仓库类型"
                     style="width: 160px;">
                     <bk-option v-for="item in artifactTypeList" :key="item" :id="item" :name="item"></bk-option>
@@ -114,7 +114,7 @@
                 artifactDialogType: '',
                 curArtifact: {},
                 params: {
-                    repositoryType: '',
+                    type: '',
                     packageKey: '',
                     version: '',
                     pageNumber: 1,

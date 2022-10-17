@@ -1,10 +1,15 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 export const TITLE_HOME = sidebarTitle
+export const ROUTER_NAME_ACCOUNT = 'Account'
 export const ROUTER_NAME_SERVICE = 'Service'
 export const ROUTER_NAME_NODE = 'Node'
+export const ROUTER_NAME_EMPTY_FOLDER = 'EmptyFolder'
+export const ROUTER_NAME_FIRST_LEVEL_FOLDER = 'FirstLevelFolder'
 export const ROUTER_NAME_INSTANCE = 'Instance'
 export const ROUTER_NAME_STORAGE_CREDENTIALS = 'StorageCredentials'
+export const ROUTER_NAME_STORAGE_METRICS = 'StorageMetrics'
+export const ROUTER_NAME_STORAGE_METRIC_DETAIL = 'StorageMetricDetail'
 export const ROUTER_NAME_EXT_PERMISSION = 'ExtPermission'
 export const ROUTER_NAME_WEBHOOK = 'Webhook'
 export const ROUTER_NAME_NOTIFY_CREDENTIALS = 'NotifyCredentials'
@@ -12,6 +17,7 @@ export const ROUTER_NAME_PLUGIN = 'Plugin'
 export const ROUTER_NAME_SCANNERS = 'Scanners'
 export const ROUTER_NAME_PROJECT_SCAN_CONFIGURATIONS = 'ProjectScanConfigurations'
 export const ROUTER_NAME_JOB = 'Job'
+export const ROUTER_NAME_SHED_LOCK = 'Shedlock'
 
 Vue.use(Router)
 
@@ -52,7 +58,7 @@ export const constantRoutes = [
 
   {
     path: '/',
-    redirect: '/services',
+    redirect: process.env.VUE_APP_K8S === 'k8s' ? '/nodes' : '/services',
     meta: { title: TITLE_HOME, icon: 'bk' }
   },
 
@@ -69,8 +75,33 @@ export const constantRoutes = [
  */
 export const asyncRoutes = [
   {
+    path: '/account',
+    component: Layout,
+    children: [
+      {
+        path: '/',
+        name: ROUTER_NAME_ACCOUNT,
+        meta: { title: '平台账户管理', icon: 'user' },
+        component: () => import('@/views/account/index')
+      }
+    ]
+  },
+  {
+    path: '/shed-lock',
+    component: Layout,
+    children: [
+      {
+        path: '/',
+        name: ROUTER_NAME_SHED_LOCK,
+        meta: { title: '数据库锁管理', icon: 'lock' },
+        component: () => import('@/views/shed-lock/index')
+      }
+    ]
+  },
+  {
     path: '/services',
     component: Layout,
+    hidden: process.env.VUE_APP_K8S === 'k8s',
     children: [
       {
         path: '/',
@@ -91,12 +122,26 @@ export const asyncRoutes = [
   {
     path: '/nodes',
     component: Layout,
+    meta: { title: '文件管理', icon: 'file' },
+    redirect: '/nodes/nodes',
     children: [
       {
-        path: '/',
+        path: 'nodes',
         name: ROUTER_NAME_NODE,
         meta: { title: '文件管理', icon: 'file' },
         component: () => import('@/views/node/index')
+      },
+      {
+        path: 'emptyFolder',
+        name: ROUTER_NAME_EMPTY_FOLDER,
+        meta: { title: '清理空目录', icon: 'file' },
+        component: () => import('@/views/node/EmptyFolder')
+      },
+      {
+        path: 'firstLevelFolder',
+        name: ROUTER_NAME_FIRST_LEVEL_FOLDER,
+        meta: { title: '一级目录统计', icon: 'file' },
+        component: () => import('@/views/node/FirstLevelFolder')
       }
     ]
   },
@@ -112,6 +157,18 @@ export const asyncRoutes = [
         name: ROUTER_NAME_STORAGE_CREDENTIALS,
         component: () => import('@/views/storage/Credential'),
         meta: { title: '凭据', icon: 'credentials' }
+      },
+      {
+        path: 'metrics',
+        name: ROUTER_NAME_STORAGE_METRICS,
+        component: () => import('@/views/storage/Metrics'),
+        meta: { title: '挂载存储节点统计', icon: 'credentials' }
+      },
+      {
+        path: 'metricsDetail',
+        name: ROUTER_NAME_STORAGE_METRIC_DETAIL,
+        component: () => import('@/views/storage/MetricDetail'),
+        meta: { title: '挂载存储节点详情', icon: 'credentials' }
       }
     ]
   },
@@ -130,6 +187,7 @@ export const asyncRoutes = [
   {
     path: '/webhook',
     component: Layout,
+    hidden: process.env.VUE_APP_K8S === 'k8s',
     meta: { title: 'WebHook管理', icon: 'webhook' },
     children: [
       {
@@ -148,10 +206,11 @@ export const asyncRoutes = [
   },
   {
     path: '/scan',
+    hidden: process.env.VUE_APP_K8S === 'k8s',
     alwaysShow: true,
     redirect: '/scan/scanners',
     component: Layout,
-    meta: { title: '制品扫描管理', icon: 'scan' },
+    meta: { title: '制品分析管理', icon: 'scan' },
     children: [
       {
         path: 'scanners',
@@ -163,7 +222,7 @@ export const asyncRoutes = [
         path: 'configurations',
         name: ROUTER_NAME_PROJECT_SCAN_CONFIGURATIONS,
         component: () => import('@/views/scan/ProjectScanConfiguration'),
-        meta: { title: '项目扫描配置', icon: 'setting' }
+        meta: { title: '项目配置', icon: 'setting' }
       }
     ]
   },

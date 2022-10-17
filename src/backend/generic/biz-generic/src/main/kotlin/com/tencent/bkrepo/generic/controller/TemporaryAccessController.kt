@@ -42,6 +42,7 @@ import com.tencent.bkrepo.generic.constant.HEADER_OLD_FILE_PATH
 import com.tencent.bkrepo.generic.pojo.TemporaryAccessToken
 import com.tencent.bkrepo.generic.pojo.TemporaryAccessUrl
 import com.tencent.bkrepo.generic.pojo.TemporaryUrlCreateRequest
+import com.tencent.bkrepo.generic.service.DownloadService
 import com.tencent.bkrepo.generic.service.TemporaryAccessService
 import com.tencent.bkrepo.repository.pojo.token.TemporaryTokenCreateRequest
 import com.tencent.bkrepo.repository.pojo.token.TokenType
@@ -62,7 +63,8 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 @RequestMapping("/temporary/")
 class TemporaryAccessController(
     private val temporaryAccessService: TemporaryAccessService,
-    private val permissionManager: PermissionManager
+    private val permissionManager: PermissionManager,
+    private val downloadService: DownloadService
 ) {
 
     @PostMapping("/token/create")
@@ -94,7 +96,7 @@ class TemporaryAccessController(
         val tokenInfo = temporaryAccessService.validateToken(token, artifactInfo, TokenType.DOWNLOAD)
         require(userId != ANONYMOUS_USER) { throw AuthenticationException() }
         temporaryAccessService.decrementPermits(tokenInfo)
-        temporaryAccessService.download(artifactInfo)
+        downloadService.batchDownload(listOf(artifactInfo), true, true)
     }
 
     @CrossOrigin

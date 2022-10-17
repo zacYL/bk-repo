@@ -30,8 +30,11 @@
  */
 
 dependencies {
+    api(fileTree(mapOf("dir" to "lib", "include" to listOf("*.jar"))))
     implementation(project(":common:common-api"))
     api("org.springframework.boot:spring-boot-starter-data-mongodb")
     implementation("org.apache.commons:commons-lang3")
     implementation("com.google.guava:guava")
+    api("org.springframework:spring-tx:5.2.12.RELEASE")
+    api("org.springframework.data:spring-data-commons:2.3.6.RELEASE")
 }

@@ -90,6 +90,7 @@ allprojects {
         exclude(group = "log4j", module = "log4j")
         exclude(group = "org.slf4j", module = "slf4j-log4j12")
         exclude(group = "commons-logging", module = "commons-logging")
+        exclude(group = "org.springframework.data", module = "spring-data-mongodb")
     }
 
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {

@@ -88,15 +88,18 @@ class RemotePackageWhitelistServiceImpl(
                 if(first == null && second == null && third == null) return true
             }
         }.apply {
-            // packageKey
-            if(second != null) {
+            // packageKey or type changed, check if exists
+            if( first!= null || second != null) {
                 val newType = first ?: oldWhitelist.type
-                page(newType, second!!, null, null, null, false).records.let {
+                val newPackageKey = second ?: oldWhitelist.packageKey
+                page(newType, newPackageKey, null, null, null, false).records.let {
                     if (it.isNotEmpty()) {
-                        throw ErrorCodeException(CommonMessageCode.RESOURCE_EXISTED, "packageKey : $second ")
+                        throw ErrorCodeException(CommonMessageCode.RESOURCE_EXISTED,
+                                "type=$newType; packageKey=$newPackageKey ")
                     }
                 }
             }
+
             val query = Query(Criteria.where(TRemotePackageWhitelist::id.name).`is`(id))
             val update = Update().apply {
                 first?.let { set(TRemotePackageWhitelist::type.name, it) }

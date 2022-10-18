@@ -9,20 +9,20 @@
             <!-- 筛选框 -->
             <div class="mr20 flex-align-center">
                 <bk-select
-                    @change="search"
+                    @change="handlerPaginationChange"
                     v-model.trim="params.type"
                     placeholder="全部仓库类型"
                     style="width: 160px;">
                     <bk-option v-for="item in artifactTypeList" :key="item" :id="item" :name="item"></bk-option>
                 </bk-select>
                 <bk-input
-                    v-model.trim="name"
+                    v-model.trim="params.packageKey"
                     class="ml10"
                     style="width: 230px;"
                     placeholder="请输入制品名称, 按Enter键搜索"
                     clearable
-                    @enter="search"
-                    @clear="search"
+                    @enter="handlerPaginationChange"
+                    @clear="handlerPaginationChange"
                     right-icon="bk-icon icon-search"
                 />
             </div>
@@ -129,7 +129,7 @@
             if (!this.artifactTypeList.length) {
                 this.initArtifactTypeList()
             }
-            this.fetchWhitelist()
+            this.handlerPaginationChange()
         },
         methods: {
             ...mapActions([
@@ -153,20 +153,12 @@
                         this.isLoading = false
                     })
             },
-            handlerPaginationChange (payload) {
-                if (payload.current) this.$set(this.params, 'pageNumber', payload.current)
-                if (payload.limit) this.$set(this.params, 'pageSize', payload.limit)
+            handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
+                this.params.pageNumber = current
+                this.params.pageSize = limit
+                this.pagination.current = current
+                this.pagination.limit = limit
                 this.fetchWhitelist()
-            },
-            search () {
-                const params = this.params
-                params.packageKey = this.name
-                params.pageNumber = 1
-                this.params = params
-                this.fetchWhitelist()
-                    .then(() => {
-                        this.$set(this.pagination, 'current', 1)
-                    })
             },
             handleClickShowDialog (dialogType, artifact) {
                 if (dialogType === 'close') {

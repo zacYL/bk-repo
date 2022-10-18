@@ -30,6 +30,9 @@ const commonPackageDetail = () => import('@repository/views/repoCommon/commonPac
 
 const repoSearch = () => import('@repository/views/repoSearch')
 
+// 网络设置
+const networkConfig = () => import('@repository/views/networkConfig')
+
 const routes = [
     {
         path: '/ui/:projectId/preview',
@@ -134,6 +137,16 @@ const routes = [
                 meta: {
                     breadcrumb: [
                         { name: 'repoAudit', label: '审计日志' }
+                    ]
+                }
+            },
+            {
+                path: 'networkConfig',
+                name: 'networkConfig',
+                component: networkConfig,
+                meta: {
+                    breadcrumb: [
+                        { name: 'networkConfig', label: '网络设置' }
                     ]
                 }
             },

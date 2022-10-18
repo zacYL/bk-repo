@@ -40,7 +40,8 @@
             init () {
                 this.initLoading = true
                 this.getNetworkRatelimit().then(res => {
-                    this.speedData = Number.isNaN(Number(res)) ? null : Number(res)
+                    const replicationNetworkRate = res?.replicationNetworkRate
+                    this.speedData = Number.isNaN(Number(replicationNetworkRate)) ? null : Number(replicationNetworkRate)
                 }).finally(() => {
                     this.initLoading = false
                 })

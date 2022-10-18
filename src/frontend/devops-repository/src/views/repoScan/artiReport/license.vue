@@ -57,7 +57,7 @@
                     </empty-data>
                 </template>
                 <bk-table-column type="expand" width="30">
-                    <template #default="{ row }">
+                    <template slot-scope="{ row }">
                         <div class="leak-title">证书信息</div>
                         <div class="leak-tip">
                             <a :href="row.description" target="_blank">{{ row.description || '/' }}</a>

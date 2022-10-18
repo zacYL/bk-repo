@@ -29,62 +29,11 @@ body {
     }
     /* 表格 */
     .bk-table {
-        /* 列边距 */
-        .cell {
-            padding: 0 10px;
-        }
-        /* 替换图标 */ 
-        .bk-table-column-expand .bk-table-expand-icon .bk-icon {
-            font-size: 20px;
-            color: var(--fontSubsidiaryColor);
-            margin: -10px 0 0 -10px;
-            &:before {
-                content: '\e107'
-            }
-        }
-        /* 行高 */
-        td, th {
-            height: 40px;
-            /* 列边距 */
-            &:first-child > .cell {
-                padding-left: 30px;
-            }
-            &:last-child > .cell {
-                padding-right: 30px;
-            }
-            &.is-right .cell {
-                padding-right: 30px;
-            }
-        }
-        th {
-            :hover {
-                background-color: transparent;
-            }
-            > .cell {
-                height: 40px;
-                line-height: 40px;
-            }
-        }
-        /* 行hover背景 */
-        .bk-table-body tr.bk-table-row.hover-row > td {
-            background-color: var(--bgLighterColor);
-        }
-        /* 流体布局适应 */
-        .bk-table-body-wrapper {
-            height: calc(100% - 42px);
-            overflow-y: auto!important;
-        }
         .bk-table-body,
         .bk-table-footer,
         .bk-table-header,
         .bk-table-empty-block {
-            width: auto!important;
-        }
-        .bk-table-empty-text {
-            padding: 20px 0 100px;
-        }
-        .bk-table-column-selection .bk-form-checkbox .bk-checkbox {
-            flex: initial
+            width: auto !important;
         }
     }
     /* 按钮 */

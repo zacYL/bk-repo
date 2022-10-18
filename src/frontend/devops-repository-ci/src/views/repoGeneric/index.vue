@@ -6,10 +6,6 @@
                 <div class="repo-title text-overflow" :title="replaceRepoName(repoName)">
                     {{ replaceRepoName(repoName) }}
                 </div>
-                <!-- <div class="repo-description text-overflow"
-                    :title="currentRepo.description">
-                    {{ currentRepo.description || '【仓库描述】' }}
-                </div> -->
             </div>
         </header>
         <div class="repo-generic-main flex-align-center"
@@ -497,7 +493,7 @@
             },
             updateGenericTreeNode (item) {
                 this.$set(item, 'loading', true)
-                return this.getFolderList({
+                return debounce(this.getFolderList({
                     projectId: this.projectId,
                     repoName: this.repoName,
                     fullPath: item.fullPath,
@@ -505,7 +501,7 @@
                     isPipeline: this.repoName === 'pipeline'
                 }).finally(() => {
                     this.$set(item, 'loading', false)
-                })
+                }))
             },
             // 双击table打开文件夹
             openFolder (row) {

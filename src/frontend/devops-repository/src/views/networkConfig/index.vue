@@ -2,7 +2,7 @@
     <div class="repo-network-config">
         <div class="network-config-header">
             <div class="blue-tag"></div>
-            <span>SSO登录配置</span>
+            <span>限速策略</span>
         </div>
         <div class="network-config-main" v-bkloading="{ isLoading: initLoading }">
             <span class="tip-span">限速策略将会限制每个分发计划的最大网络速率，从而保证网络带宽资源的合理利用。</span>

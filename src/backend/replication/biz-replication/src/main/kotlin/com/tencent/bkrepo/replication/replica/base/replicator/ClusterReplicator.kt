@@ -178,7 +178,8 @@ class ClusterReplicator(
         with(context) {
             return buildNodeCreateRequest(this, node)?.let {
                 val artifactInputStream = localDataManager.getBlobData(it.sha256!!, it.size!!, localRepo)
-                val rateLimitInputStream = artifactInputStream.rateLimit(replicationProperties.rateLimit.toBytes())
+                val rateLimitInputStream = artifactInputStream.rateLimit(localDataManager.getRateLimit().toBytes())
+//                val rateLimitInputStream = artifactInputStream.rateLimit(replicationProperties.rateLimit.toBytes())
                 // 1. 同步文件数据
                 pushBlob(
                     inputStream = rateLimitInputStream,

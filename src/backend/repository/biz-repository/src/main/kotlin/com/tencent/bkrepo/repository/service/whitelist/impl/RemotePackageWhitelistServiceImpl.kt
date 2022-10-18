@@ -69,27 +69,26 @@ class RemotePackageWhitelistServiceImpl(
     }
 
     override fun updateWhitelist(id: String, request: UpdateRemotePackageWhitelistRequest): Boolean {
+        val requestPackageKey = request.packageKey?.trim()
+        val requestVersions = request.versions
+                ?.filter { it.isNotBlank() }?.distinct()?.sorted()
         val oldWhitelist = getWhitelist(id) ?: throw WhitelistNotFoundException(id)
         if (request.type != null) {
-            request.packageKey?.let { WhitelistUtils.packageKeyValidThrow(it, request.type!!) }
+            requestPackageKey?.let { WhitelistUtils.packageKeyValidThrow(it, request.type!!) }
         } else {
-            request.packageKey?.let { WhitelistUtils.packageKeyValidThrow(it, oldWhitelist.type) }
+            requestPackageKey?.let { WhitelistUtils.packageKeyValidThrow(it, oldWhitelist.type) }
         }
         with(oldWhitelist) {
             Triple(
                     request.type?.let { if (type != it) it else null },
-                    request.packageKey?.let { if (packageKey != it) it else null },
-                    request.versions?.let {
-                        if (versions?.sorted() != it.sorted()) {
-                            it.distinct().filter {version -> version.isNotBlank() }
-                        } else null
-                    }
+                    requestPackageKey?.let { if (packageKey != it) it else null },
+                    requestVersions?.let { if (versions?.sorted() != it) it else null }
             ).apply {
-                if(first == null && second == null && third == null) return true
+                if (first == null && second == null && third == null) return true
             }
         }.apply {
             // packageKey or type changed, check if exists
-            if( first!= null || second != null) {
+            if (first != null || second != null) {
                 val newType = first ?: oldWhitelist.type
                 val newPackageKey = second ?: oldWhitelist.packageKey
                 page(newType, newPackageKey, null, null, null, false).records.let {
@@ -131,7 +130,8 @@ class RemotePackageWhitelistServiceImpl(
             regex: Boolean
     ): Page<RemotePackageWhitelist> {
         if (pageNumber != null) {
-            Preconditions.checkArgument(pageNumber >= 0, "pageNumber must be greater than or equal to 0")
+            Preconditions.checkArgument(pageNumber >= 0,
+                    "pageNumber must be greater than or equal to 0")
         }
         if (pageSize != null) {
             Preconditions.checkArgument(pageSize >= 0, "pageSize must be greater than or equal to 0")
@@ -169,8 +169,9 @@ class RemotePackageWhitelistServiceImpl(
     ): TRemotePackageWhitelist {
         return TRemotePackageWhitelist(
                 type = createRemotePackageWhitelistRequest.type,
-                packageKey = createRemotePackageWhitelistRequest.packageKey,
-                versions = createRemotePackageWhitelistRequest.versions?.distinct()?.filter { it.isNotBlank() },
+                packageKey = createRemotePackageWhitelistRequest.packageKey.trim(),
+                versions = createRemotePackageWhitelistRequest.versions
+                        ?.filter { it.isNotBlank() }?.distinct()?.sorted(),
                 createdBy = userId,
                 createdDate = LocalDateTime.now(),
                 lastModifiedBy = userId,

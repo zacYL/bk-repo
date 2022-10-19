@@ -31,6 +31,7 @@
 
 package com.tencent.bkrepo.npm.artifact.repository
 
+import com.tencent.bkrepo.common.api.constant.CharPool.SLASH
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
@@ -151,8 +152,12 @@ class NpmRemoteRepository(
     private fun createRemoteSearchUrl(context: ArtifactContext): String {
         val configuration = context.getRemoteConfiguration()
         val requestURI = context.getStringAttribute("requestURI")
-        val artifactUri =
+        val (name, version) = NpmUtils.parseNameAndVersionFromQueryString(context.request.queryString)
+        var artifactUri =
             requestURI ?: context.request.requestURI.substringAfterLast(context.artifactInfo.getRepoIdentify())
+        if (artifactUri.isBlank() && name.isNotBlank()) {
+            artifactUri = name + SLASH + version
+        }
         val queryString = context.request.queryString
         return UrlFormatter.format(configuration.url, artifactUri, queryString)
     }

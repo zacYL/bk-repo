@@ -31,9 +31,13 @@
 
 package com.tencent.bkrepo.npm.utils
 
+import com.tencent.bkrepo.common.api.constant.CharPool.AND
+import com.tencent.bkrepo.common.api.constant.CharPool.EQUAL
 import com.tencent.bkrepo.common.api.constant.CharPool.SLASH
 import com.tencent.bkrepo.common.api.constant.StringPool
+import com.tencent.bkrepo.common.api.constant.StringPool.UTF_8
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.util.PackageKeys.resolveNpm
 import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
 import com.tencent.bkrepo.common.service.util.HeaderUtils
 import com.tencent.bkrepo.npm.constants.LATEST
@@ -43,6 +47,7 @@ import com.tencent.bkrepo.npm.constants.NPM_PKG_TGZ_WITH_DOWNLOAD_FULL_PATH
 import com.tencent.bkrepo.npm.constants.NPM_PKG_VERSION_METADATA_FULL_PATH
 import com.tencent.bkrepo.npm.constants.NPM_TGZ_TARBALL_PREFIX
 import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
+import java.net.URLDecoder
 
 object NpmUtils {
 
@@ -101,6 +106,23 @@ object NpmUtils {
             "${splitList.first()}/${splitList[1]}"
         }
         val version = analyseVersionFromPackageName(artifactFullPath, name)
+        return Pair(name, version)
+    }
+
+    /**
+     * 将查询字符串中的packageKey和version转换为路径变量
+     */
+    fun parseNameAndVersionFromQueryString(queryString: String): Pair<String, String> {
+        var name = ""
+        var version = ""
+        val splitList = queryString.split(AND).filter { it.isNotBlank() }.map { it.trim() }.toList()
+        splitList.forEach {
+            val paramList = URLDecoder.decode(it, UTF_8).split(EQUAL)
+            when (paramList[0]) {
+                "packageKey" -> name = resolveNpm(paramList[1])
+                "version" -> version = paramList[1]
+            }
+        }
         return Pair(name, version)
     }
 

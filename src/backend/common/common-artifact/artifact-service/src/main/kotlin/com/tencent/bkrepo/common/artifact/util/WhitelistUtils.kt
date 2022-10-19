@@ -17,6 +17,9 @@ object WhitelistUtils {
      * @return true if valid
      */
     fun packageKeyValid(packageKey: String, type: RepositoryType): Boolean {
+        if(packageKey.isBlank()) {
+            return false
+        }
         return when (type) {
             RepositoryType.MAVEN -> packageKey.matches(Regex("[a-zA-Z0-9_\\-.]+:[a-zA-Z0-9_\\-.]+"))
             RepositoryType.NPM -> true

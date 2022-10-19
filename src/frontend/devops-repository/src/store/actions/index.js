@@ -6,6 +6,7 @@ import repoCommon from './repoCommon'
 import token from './token'
 import permission from './permission'
 import nodeManage from './nodeManage'
+import networkConfig from './networkConfig'
 import project from './project'
 import scan from './scan'
 
@@ -17,6 +18,7 @@ export default {
     ...token,
     ...permission,
     ...nodeManage,
+    ...networkConfig,
     ...project,
     ...scan,
     /*

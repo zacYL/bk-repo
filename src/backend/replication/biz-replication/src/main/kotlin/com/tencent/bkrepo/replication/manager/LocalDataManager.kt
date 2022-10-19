@@ -32,6 +32,7 @@ import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.storage.core.StorageService
 import com.tencent.bkrepo.replication.constant.NODE_FULL_PATH
 import com.tencent.bkrepo.replication.constant.SIZE
+import com.tencent.bkrepo.repository.api.GlobalConfigClient
 import com.tencent.bkrepo.repository.api.MetadataClient
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.PackageClient
@@ -47,6 +48,7 @@ import com.tencent.bkrepo.repository.pojo.project.ProjectInfo
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
 import com.tencent.bkrepo.repository.pojo.search.NodeQueryBuilder
 import org.springframework.stereotype.Component
+import org.springframework.util.unit.DataSize
 import java.io.InputStream
 
 /**
@@ -60,7 +62,8 @@ class LocalDataManager(
     private val nodeClient: NodeClient,
     private val packageClient: PackageClient,
     private val metadataClient: MetadataClient,
-    private val storageService: StorageService
+    private val storageService: StorageService,
+    private val globalConfigClient: GlobalConfigClient
 ) {
 
     /**
@@ -259,5 +262,16 @@ class LocalDataManager(
     fun loadInputStreamByRange(sha256: String, range: Range, projectId: String, repoName: String): InputStream {
         val repo = findRepoByName(projectId, repoName)
         return getBlobDataByRange(sha256, range, repo)
+    }
+
+    /**
+     * 获取分发速率配置
+     */
+    fun getRateLimit(): DataSize {
+        globalConfigClient.getConfig().data?.let {
+            if (it.replicationNetworkRate != null)
+                return DataSize.ofMegabytes(it.replicationNetworkRate!!)
+        }
+        return DataSize.ofBytes(-1)
     }
 }

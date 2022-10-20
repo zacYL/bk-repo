@@ -31,7 +31,6 @@
 
 package com.tencent.bkrepo.npm.artifact.repository
 
-import com.tencent.bkrepo.common.api.constant.CharPool.SLASH
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
@@ -104,8 +103,10 @@ class NpmRemoteRepository(
             val httpClient = createHttpClient(remoteConfiguration)
             context.putAttribute("requestURI", "/${packageInfo.first}/${packageInfo.second}")
             val downloadUri = createRemoteSearchUrl(context)
+            logger.info("Request url of package version metadata: $downloadUri")
             val request = Request.Builder().url(downloadUri).build()
             val response = httpClient.newCall(request).execute()
+            logger.info("$response")
             if (checkResponse(response)) {
                 val artifactFile = createTempFile(response.body()!!)
                 context.putAttribute(NPM_FILE_FULL_PATH, versionMetadataFullPath)
@@ -127,8 +128,10 @@ class NpmRemoteRepository(
         val remoteConfiguration = context.getRemoteConfiguration()
         val httpClient = createHttpClient(remoteConfiguration)
         val downloadUri = createRemoteSearchUrl(context)
+        logger.info("Request url of package metadata: $downloadUri")
         val request = Request.Builder().url(downloadUri).build()
         val response = httpClient.newCall(request).execute()
+        logger.info("$response")
         return if (validateResponse(context, response)) {
             onQueryResponse(context, response)
         } else null
@@ -152,12 +155,8 @@ class NpmRemoteRepository(
     private fun createRemoteSearchUrl(context: ArtifactContext): String {
         val configuration = context.getRemoteConfiguration()
         val requestURI = context.getStringAttribute("requestURI")
-        val (name, version) = NpmUtils.parseNameAndVersionFromQueryString(context.request.queryString)
-        var artifactUri =
+        val artifactUri =
             requestURI ?: context.request.requestURI.substringAfterLast(context.artifactInfo.getRepoIdentify())
-        if (artifactUri.isBlank() && name.isNotBlank()) {
-            artifactUri = name + SLASH + version
-        }
         val queryString = context.request.queryString
         return UrlFormatter.format(configuration.url, artifactUri, queryString)
     }

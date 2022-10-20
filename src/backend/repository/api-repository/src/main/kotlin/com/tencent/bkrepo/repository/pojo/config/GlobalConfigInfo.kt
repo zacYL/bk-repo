@@ -16,6 +16,8 @@ data class GlobalConfigInfo(
     val lastModifiedBy: String,
     @ApiModelProperty("修改时间")
     val lastModifiedDate: String,
-    @ApiModelProperty("分发网络速率")
-    val replicationNetworkRate: Long?
+    @ApiModelProperty("类型")
+    val type: ConfigType,
+    @ApiModelProperty("配置")
+    val configuration: String
 )

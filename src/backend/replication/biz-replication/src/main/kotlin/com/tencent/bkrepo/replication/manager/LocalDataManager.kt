@@ -38,6 +38,7 @@ import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.PackageClient
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
+import com.tencent.bkrepo.repository.pojo.config.ConfigType
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.packages.PackageListOption
@@ -268,9 +269,8 @@ class LocalDataManager(
      * 获取分发速率配置
      */
     fun getRateLimit(): DataSize {
-        globalConfigClient.getConfig().data?.let {
-            if (it.replicationNetworkRate != null)
-                return DataSize.ofMegabytes(it.replicationNetworkRate!!)
+        globalConfigClient.getConfig(ConfigType.REPLICATION_NETWORK_RATE).data?.let {
+            return DataSize.ofMegabytes(it.configuration.toLong())
         }
         return DataSize.ofBytes(-1)
     }

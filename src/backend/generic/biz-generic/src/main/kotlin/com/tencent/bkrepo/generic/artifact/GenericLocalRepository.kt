@@ -261,13 +261,13 @@ class GenericLocalRepository : LocalRepository() {
         }
     }
 
-    private fun getSubNodes(folder: NodeDetail): List<NodeDetail> {
+    private fun getSubNodes(folder: NodeDetail, includeFolder: Boolean = true): List<NodeDetail> {
         with(folder) {
             val nodes = mutableListOf<NodeDetail>()
             val option = NodeListOption(
                 pageNumber = 1,
                 pageSize = PAGE_SIZE,
-                includeFolder = true,
+                includeFolder = includeFolder,
                 includeMetadata = true,
                 deep = true
             )
@@ -323,7 +323,7 @@ class GenericLocalRepository : LocalRepository() {
         // 检查文件数量
         checkFileCount(node)
         // 查询子节点
-        val nodes = getSubNodes(node)
+        val nodes = getSubNodes(node, includeFolder = false)
         // 检查目录大小
         checkFolderSize(nodes)
         nodes.forEach {

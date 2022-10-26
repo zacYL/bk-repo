@@ -87,6 +87,17 @@ class ArtifactReplicaController(
         return nodeClient.checkExist(projectId, repoName, fullPath)
     }
 
+    override fun checkNodeExistAndMd5(
+        projectId: String,
+        repoName: String,
+        fullPath: String,
+        md5: String
+    ): Response<Boolean> {
+        return nodeClient.getNodeDetail(projectId, repoName, fullPath).data?.let {
+            ResponseBuilder.success(it.md5 == md5)
+        } ?: ResponseBuilder.success(false)
+    }
+
     override fun checkNodeExistList(
         request: NodeExistCheckRequest
     ): Response<List<String>> {

@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.replication.replica.base.replicator
 
+import com.tencent.bkrepo.common.artifact.constant.RESERVED_KEY
 import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
@@ -150,7 +151,8 @@ class ClusterReplicator(
                 )
                 replicaFile(context, node.nodeInfo)
             }
-            val packageMetadata = packageVersion.packageMetadata as MutableList<MetadataModel>
+            // filter system reserve metadata
+            val packageMetadata = packageVersion.packageMetadata.filter { it.key !in RESERVED_KEY } as MutableList<MetadataModel>
             packageMetadata.add(MetadataModel(SOURCE_TYPE, ArtifactChannel.REPLICATION))
             // 包数据
             val request = PackageVersionCreateRequest(

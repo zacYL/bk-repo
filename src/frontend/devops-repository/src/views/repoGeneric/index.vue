@@ -394,13 +394,7 @@
                     if (!node) return
                     await this.updateGenericTreeNode(node)
                     const child = node.children.find(child => child.name === path)
-                    if (!child) {
-                        this.$bkMessage({
-                            theme: 'error',
-                            message: '文件路径不存在'
-                        })
-                        return
-                    }
+                    if (!child) return
                     this.sideTreeOpenList.push(child.roadMap)
                     return child
                 }, Promise.resolve(this.genericTree[0])).then(node => {

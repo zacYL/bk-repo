@@ -141,3 +141,8 @@ const val QUALITY_STATUS = "qualityRedLine"
 
 // 制品扫描状态
 const val SCAN_STATUS = "scanStatus"
+
+/**
+ * 元数据KEY保留字，仅允许系统使用
+ */
+val RESERVED_KEY = setOf(SCAN_STATUS, FORBID_STATUS, FORBID_USER, FORBID_TYPE, QUALITY_STATUS)

@@ -18,6 +18,23 @@
                             :list="availableList">
                         </card-radio-group>
                     </bk-form-item>
+
+                    <bk-form-item label="覆盖策略" v-if="repoType === 'maven' || repoType === 'npm'">
+                        <div class="flex-align-center">
+                            <bk-switcher
+                                v-model="repoBaseInfo.override.switcher"
+                                size="small"
+                                theme="primary"
+                                @change="handleOverrideChange"
+                            ></bk-switcher>
+                            <span class="ml10">开启后上传同名称版本制品将会根据覆盖策略决定是否覆盖</span>
+                        </div>
+                        <bk-radio-group v-model="repoBaseInfo.override.isFlag" v-if="repoBaseInfo.override.switcher">
+                            <bk-radio class="mr20" :value="false">不允许覆盖</bk-radio>
+                            <bk-radio :value="true">允许覆盖</bk-radio>
+                        </bk-radio-group>
+                    </bk-form-item>
+
                     <template v-if="repoType === 'generic'">
                         <!-- <bk-form-item v-for="type in ['mobile', 'web']" :key="type" -->
                         <bk-form-item v-for="type in ['web']" :key="type"
@@ -135,6 +152,10 @@
                     repodataDepth: 0,
                     groupXmlSet: [],
                     description: '',
+                    override: {
+                        switcher: false,
+                        isFlag: true
+                    },
                     mobile: {
                         enable: false,
                         filename: '',
@@ -229,6 +250,9 @@
         },
         methods: {
             ...mapActions(['getRepoInfo', 'updateRepoInfo', 'getDomain']),
+            handleOverrideChange (isFlag) {
+                this.repoBaseInfo.override.switcher = isFlag
+            },
             toRepoList () {
                 this.$router.push({
                     name: 'repoList'

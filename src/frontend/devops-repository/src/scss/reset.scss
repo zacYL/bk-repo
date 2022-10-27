@@ -223,21 +223,7 @@ body {
             border-color: var(--primaryColor);
         }
     }
-
-    .bk-tab-label-wrapper .bk-tab-label-list {
-        &.bk-tab-label-list-has-bar:after {
-            margin-left: 8px;
-            width: calc(var(--activeBarWidth) - 16px);
-        }
-        .bk-tab-label-item {
-            min-width: initial;
-            padding: 0 20px;
-            &.active .bk-tab-label {
-                font-weight: bold;
-            }
-        }
-    }
-
+    
     .bk-option-name {
         width: 100%;
         overflow: hidden;

@@ -6,10 +6,6 @@
                 <div class="repo-title text-overflow" :title="replaceRepoName(repoName)">
                     {{ replaceRepoName(repoName) }}
                 </div>
-                <!-- <div class="repo-description text-overflow"
-                    :title="currentRepo.description">
-                    {{ currentRepo.description || '【仓库描述】' }}
-                </div> -->
             </div>
         </header>
         <div class="repo-generic-main flex-align-center"

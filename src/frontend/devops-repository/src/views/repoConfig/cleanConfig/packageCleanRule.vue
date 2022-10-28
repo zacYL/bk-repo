@@ -4,7 +4,7 @@
         <bk-input
             style="width:180px;"
             :value="defaultValue.field.replace(/^metadata\.(.*)$/, '$1')"
-            @input="field => change({ field: `metadata.${field}` })"
+            @change="field => change({ field: `metadata.${field}` })"
             :disabled="disabled"
             placeholder="属性键">
         </bk-input>
@@ -62,9 +62,11 @@
                 select: operation = this.defaultValue.operation,
                 input: value = this.defaultValue.value
             }) {
+                // key 值不能有空格
+                const key = field.replace(/\s*/g, '')
                 this.$emit('change', {
-                    [field]: {
-                        field,
+                    [key]: {
+                        field: key,
                         operation,
                         value
                     }

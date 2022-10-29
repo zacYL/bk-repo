@@ -1,7 +1,6 @@
 package com.tencent.bkrepo.repository.job.clean
 
 import com.tencent.bkrepo.repository.service.repo.RepositoryCleanService
-import com.tencent.bkrepo.repository.service.repo.RepositoryService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.util.concurrent.ThreadPoolExecutor

@@ -2,7 +2,7 @@ package com.tencent.bkrepo.repository.service.repo.impl
 
 import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_SIZE
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
-import com.tencent.bkrepo.common.artifact.event.packages.RepositoryCleanEvent
+import com.tencent.bkrepo.common.artifact.event.repo.RepositoryCleanEvent
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.pojo.configuration.clean.CleanStatus
 import com.tencent.bkrepo.common.artifact.pojo.configuration.clean.RepositoryCleanStrategy
@@ -33,7 +33,6 @@ import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import java.time.Duration
 import java.time.LocalDateTime
-import java.util.*
 import java.util.stream.Collectors
 
 @Service

@@ -1,7 +1,6 @@
 package com.tencent.bkrepo.repository.job.clean
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
-import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit

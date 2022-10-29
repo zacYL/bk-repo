@@ -1,4 +1,4 @@
-package com.tencent.bkrepo.common.artifact.event.packages
+package com.tencent.bkrepo.common.artifact.event.repo
 
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.event.base.EventType

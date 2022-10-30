@@ -57,13 +57,19 @@
             }
         },
         methods: {
+            trimSpecial (str) {
+                if (str !== '') {
+                    const pattern = /[`~!@#$%^\-&*()_+=|{}':;',\\\[\]\<>\/?~！@#￥……&*（）——|{}【】'；：""'‘’。，、？\s]/g
+                    return str.replace(pattern, '')
+                }
+            },
             change ({
                 field = this.defaultValue.field,
                 select: operation = this.defaultValue.operation,
                 input: value = this.defaultValue.value
             }) {
-                // key 值不能有空格
-                const key = field.replace(/\s*/g, '')
+                // key 值不能有特殊符号
+                const key = this.trimSpecial(field)
                 this.$emit('change', {
                     [key]: {
                         field: key,

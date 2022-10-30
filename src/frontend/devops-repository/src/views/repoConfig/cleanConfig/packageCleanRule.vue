@@ -57,11 +57,13 @@
             }
         },
         methods: {
-            trimSpecial (str) {
-                if (str !== '') {
+            trimSpecial (string) {
+                let str = ''
+                if (string !== '') {
                     const pattern = /[`~!@#$%^\-&*()_+=|{}':;',\\\[\]\<>\/?~！@#￥……&*（）——|{}【】'；：""'‘’。，、？\s]/g
-                    return str.replace(pattern, '')
+                    str = string.replace(pattern, '')
                 }
+                return str
             },
             change ({
                 field = this.defaultValue.field,

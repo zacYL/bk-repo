@@ -65,6 +65,7 @@ import com.tencent.bkrepo.npm.properties.NpmProperties
 import com.tencent.bkrepo.npm.utils.NpmUtils
 import com.tencent.bkrepo.npm.utils.OkHttpUtil
 import com.tencent.bkrepo.npm.utils.TimeUtil
+import com.tencent.bkrepo.repository.constant.CoverStrategy
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
@@ -102,7 +103,7 @@ class NpmLocalRepository(
     }
 
     override fun buildNodeCreateRequest(context: ArtifactUploadContext): NodeCreateRequest {
-        val name = context.getStringAttribute("name") ?: StringPool.EMPTY
+        logger.info("npm repo[${context.repoName}] coverStrategy:${context.repositoryDetail.coverStrategy}")
         return NodeCreateRequest(
             projectId = context.projectId,
             repoName = context.repoName,
@@ -112,7 +113,7 @@ class NpmLocalRepository(
             sha256 = context.getArtifactSha256(),
             md5 = context.getArtifactMd5(),
             operator = context.userId,
-            overwrite = name != NPM_PACKAGE_TGZ_FILE
+            overwrite = context.repositoryDetail.coverStrategy != CoverStrategy.UNCOVER
         )
     }
 

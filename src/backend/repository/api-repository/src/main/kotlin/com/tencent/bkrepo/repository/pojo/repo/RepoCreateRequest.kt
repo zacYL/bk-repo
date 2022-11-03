@@ -34,6 +34,7 @@ package com.tencent.bkrepo.repository.pojo.repo
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.pojo.configuration.RepositoryConfiguration
+import com.tencent.bkrepo.repository.constant.CoverStrategy
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
@@ -61,7 +62,8 @@ data class RepoCreateRequest(
     val storageCredentialsKey: String? = null,
     @ApiModelProperty("仓库配额", required = false)
     val quota: Long? = null,
-
+    @ApiModelProperty("覆盖策略", required = false)
+    val coverStrategy: CoverStrategy? = null,
     @ApiModelProperty("操作用户", required = false)
     val operator: String = SYSTEM_USER
 

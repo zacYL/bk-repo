@@ -85,7 +85,7 @@ class ArtifactContextHolder(
         private val artifactConfigurerMap = mutableMapOf<RepositoryType, ArtifactConfigurer>()
         private val repositoryDetailCache = CacheBuilder.newBuilder()
             .maximumSize(1000)
-            .expireAfterWrite(60, TimeUnit.SECONDS)
+            .expireAfterWrite(30, TimeUnit.SECONDS)
             .build<RepositoryId, RepositoryDetail>()
 
         /**

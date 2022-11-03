@@ -234,6 +234,7 @@ class CompositeRepository(
                 lastModifiedBy = repositoryDetail.lastModifiedBy,
                 lastModifiedDate = repositoryDetail.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME),
                 quota = repositoryDetail.quota,
+                coverStrategy = repositoryDetail.coverStrategy,
                 used = repositoryDetail.used,
                 oldCredentialsKey = repositoryDetail.oldCredentialsKey
             )

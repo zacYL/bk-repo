@@ -247,7 +247,8 @@ class RepositoryServiceImpl(
                 lastModifiedBy = operator,
                 lastModifiedDate = LocalDateTime.now(),
                 quota = quota,
-                used = 0
+                used = 0,
+                coverStrategy = coverStrategy
             )
             return try {
                 if (repoConfiguration is CompositeConfiguration) {
@@ -300,6 +301,7 @@ class RepositoryServiceImpl(
                 updateRepoConfiguration(it, cryptoConfigurationPwd(oldConfiguration), repository, operator)
                 repository.configuration = cryptoConfigurationPwd(it, false).toJsonString()
             }
+            coverStrategy?.let { repository.coverStrategy = it }
             repositoryDao.save(repository)
         }
         val event = buildUpdatedEvent(repoUpdateRequest, repository.type)
@@ -769,6 +771,7 @@ class RepositoryServiceImpl(
                     lastModifiedBy = it.lastModifiedBy,
                     lastModifiedDate = it.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME),
                     quota = it.quota,
+                    coverStrategy = it.coverStrategy,
                     used = it.used,
                     oldCredentialsKey = it.oldCredentialsKey
                 )
@@ -791,7 +794,8 @@ class RepositoryServiceImpl(
                     lastModifiedBy = it.lastModifiedBy,
                     lastModifiedDate = it.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME),
                     quota = it.quota,
-                    used = it.used
+                    used = it.used,
+                    coverStrategy = it.coverStrategy
                 )
             }
         }

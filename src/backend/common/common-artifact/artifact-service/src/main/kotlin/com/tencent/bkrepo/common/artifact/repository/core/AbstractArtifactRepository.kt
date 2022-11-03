@@ -181,6 +181,7 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
      * 上传前回调
      */
     open fun onUploadBefore(context: ArtifactUploadContext) {
+        coverStrategy(context)
         artifactMetrics.uploadingCount.incrementAndGet()
     }
 
@@ -243,6 +244,13 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
     }
 
     open fun whitelistInterceptor(context: ArtifactDownloadContext) {
+        return
+    }
+
+    /**
+     * 仓库覆盖策略
+     */
+    open fun coverStrategy(context: ArtifactUploadContext) {
         return
     }
 

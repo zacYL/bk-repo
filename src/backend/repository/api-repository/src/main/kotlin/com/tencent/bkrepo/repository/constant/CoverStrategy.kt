@@ -29,38 +29,25 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.repository.pojo.repo
-
-import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
-import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
-import com.tencent.bkrepo.common.artifact.pojo.configuration.RepositoryConfiguration
-import com.tencent.bkrepo.repository.constant.CoverStrategy
-import io.swagger.annotations.ApiModel
-import io.swagger.annotations.ApiModelProperty
+package com.tencent.bkrepo.repository.constant
 
 /**
- * 创建仓库请求
+ * 覆盖策略
+ * 优先级：仓库覆盖策略 > 客户端覆盖策略
  */
-@ApiModel("创建仓库请求")
-data class UserRepoCreateRequest(
-    @ApiModelProperty("所属项目id", required = true)
-    override val projectId: String,
-    @ApiModelProperty("仓库名称", required = true)
-    override val name: String,
-    @ApiModelProperty("仓库类型", required = true)
-    val type: RepositoryType,
-    @ApiModelProperty("仓库类别", required = true)
-    val category: RepositoryCategory = RepositoryCategory.COMPOSITE,
-    @ApiModelProperty("是否公开", required = true)
-    val public: Boolean = false,
-    @ApiModelProperty("简要描述", required = false)
-    val description: String? = null,
-    @ApiModelProperty("仓库配置", required = true)
-    val configuration: RepositoryConfiguration? = null,
-    @ApiModelProperty("存储凭证key", required = false)
-    val storageCredentialsKey: String? = null,
-    @ApiModelProperty("仓库配额", required = false)
-    val quota: Long? = null,
-    @ApiModelProperty("覆盖策略", required = false)
-    val coverStrategy: CoverStrategy? = null
-) : RepoRequest
+enum class CoverStrategy {
+    /**
+     * 覆盖
+     */
+    COVER,
+
+    /**
+     * 不覆盖
+     */
+    UNCOVER,
+
+    /**
+     * 不启用覆盖策略，以客户端参数为准
+     */
+    DISABLE
+}

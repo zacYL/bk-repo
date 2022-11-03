@@ -39,9 +39,9 @@
             // 获取参数
             init () {
                 this.initLoading = true
-                this.getNetworkRatelimit().then(res => {
-                    const replicationNetworkRate = res?.replicationNetworkRate
-                    this.speedData = Number.isNaN(Number(replicationNetworkRate)) ? null : Number(replicationNetworkRate)
+                this.getNetworkRatelimit({ type: 'REPLICATION_NETWORK_RATE' }).then(res => {
+                    const configuration = res?.configuration
+                    this.speedData = Number.isNaN(Number(configuration)) ? null : Number(configuration)
                 }).finally(() => {
                     this.initLoading = false
                 })
@@ -49,7 +49,7 @@
             // 保存参数
             clickSave () {
                 this.saveLoading = true
-                this.saveNetworkRatelimit({ value: this.speedData ? Number(this.speedData) : -1 }).then(res => {
+                this.saveNetworkRatelimit({ type: 'REPLICATION_NETWORK_RATE', configuration: this.speedData ? Number(this.speedData) : -1 }).then(res => {
                     if (res) {
                         this.$bkMessage({
                             theme: 'success',

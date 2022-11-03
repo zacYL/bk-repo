@@ -35,6 +35,7 @@ import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.pojo.configuration.RepositoryConfiguration
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
+import com.tencent.bkrepo.repository.constant.CoverStrategy
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
 
@@ -71,6 +72,8 @@ data class RepositoryDetail(
     val lastModifiedDate: String,
     @ApiModelProperty("仓库配额")
     val quota: Long?,
+    @ApiModelProperty("覆盖策略")
+    val coverStrategy: CoverStrategy?,
     @ApiModelProperty("仓库已使用容量")
     val used: Long?
 )

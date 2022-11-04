@@ -280,7 +280,7 @@
                                 break
                             default:
                                 this.repoBaseInfo.override.switcher = false
-                                this.repoBaseInfo.override.isFlag = false
+                                this.repoBaseInfo.override.isFlag = true
                         }
                     }
 

@@ -117,13 +117,3 @@ object JarUtils {
         }
     }
 }
-
-fun main() {
-    val file = File("/Users/weaving/Downloads/commons-io-2.11.0-sources.jar")
-    val (pomFile, model) = JarUtils.parsePomInJar(file)
-    println(pomFile.absolutePath)
-    println(model.groupId)
-    println(model.artifactId)
-    println(model.version)
-    println(model.packaging)
-}

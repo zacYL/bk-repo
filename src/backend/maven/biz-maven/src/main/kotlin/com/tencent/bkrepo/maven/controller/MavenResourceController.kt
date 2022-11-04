@@ -71,7 +71,6 @@ class MavenResourceController(
         mavenService.verifyDeploy(mavenArtifactInfo, request)
     }
 
-
     @GetMapping(MavenArtifactInfo.MAVEN_MAPPING_URI, produces = [MediaType.APPLICATION_JSON_VALUE])
     fun dependency(@ArtifactPathVariable mavenArtifactInfo: MavenArtifactInfo) {
         mavenService.dependency(mavenArtifactInfo)

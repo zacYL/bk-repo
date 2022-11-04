@@ -27,15 +27,18 @@
 
 package com.tencent.bkrepo.replication.manager
 
+import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.storage.core.StorageService
 import com.tencent.bkrepo.replication.constant.NODE_FULL_PATH
 import com.tencent.bkrepo.replication.constant.SIZE
+import com.tencent.bkrepo.repository.api.GlobalConfigClient
 import com.tencent.bkrepo.repository.api.MetadataClient
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.PackageClient
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
+import com.tencent.bkrepo.repository.pojo.config.ConfigType
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.packages.PackageListOption
@@ -46,6 +49,7 @@ import com.tencent.bkrepo.repository.pojo.project.ProjectInfo
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
 import com.tencent.bkrepo.repository.pojo.search.NodeQueryBuilder
 import org.springframework.stereotype.Component
+import org.springframework.util.unit.DataSize
 import java.io.InputStream
 
 /**
@@ -59,7 +63,8 @@ class LocalDataManager(
     private val nodeClient: NodeClient,
     private val packageClient: PackageClient,
     private val metadataClient: MetadataClient,
-    private val storageService: StorageService
+    private val storageService: StorageService,
+    private val globalConfigClient: GlobalConfigClient
 ) {
 
     /**
@@ -192,7 +197,14 @@ class LocalDataManager(
         return result.records[0][SIZE].toString().toLong()
     }
 
-/**
+    /**
+     * 根据多个路径获取文件节点总数
+     */
+    fun countFileNode(projectId: String, repoName: String, pathList: List<String> = listOf(PathUtils.ROOT)): Long {
+        return nodeClient.countFileNodeByList(projectId, repoName, pathList).data ?: 0
+    }
+
+    /**
      * 分页查询包
      */
     @Throws(IllegalStateException::class)
@@ -204,6 +216,13 @@ class LocalDataManager(
         ).data?.records
         check(packages != null) { "Local packages not found" }
         return packages
+    }
+
+    /**
+     * 查询仓库包版本数量
+     */
+    fun getVersionCount(projectId: String, repoName: String): Long {
+        return packageClient.getVersionCount(projectId, repoName).data ?: 0
     }
 
     /**
@@ -244,5 +263,15 @@ class LocalDataManager(
     fun loadInputStreamByRange(sha256: String, range: Range, projectId: String, repoName: String): InputStream {
         val repo = findRepoByName(projectId, repoName)
         return getBlobDataByRange(sha256, range, repo)
+    }
+
+    /**
+     * 获取分发速率配置
+     */
+    fun getRateLimit(): DataSize {
+        globalConfigClient.getConfig(ConfigType.REPLICATION_NETWORK_RATE).data?.let {
+            return DataSize.ofMegabytes(it.configuration.toLong())
+        }
+        return DataSize.ofBytes(-1)
     }
 }

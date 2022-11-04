@@ -4,7 +4,7 @@
         <bk-input
             style="width:180px;"
             :value="defaultValue.field.replace(/^metadata\.(.*)$/, '$1')"
-            @input="field => change({ field: `metadata.${field}` })"
+            @change="field => change({ field: `metadata.${field}` })"
             :disabled="disabled"
             placeholder="属性键">
         </bk-input>
@@ -57,14 +57,24 @@
             }
         },
         methods: {
+            trimSpecial (string) {
+                let str = ''
+                if (string !== '') {
+                    const pattern = /[`~!@#$%^\-&*()_+=|{}':;',\\\[\]\<>\/?~！@#￥……&*（）——|{}【】'；：""'‘’。，、？\s]/g
+                    str = string.replace(pattern, '')
+                }
+                return str
+            },
             change ({
                 field = this.defaultValue.field,
                 select: operation = this.defaultValue.operation,
                 input: value = this.defaultValue.value
             }) {
+                // key 值不能有特殊符号
+                const key = this.trimSpecial(field)
                 this.$emit('change', {
-                    [field]: {
-                        field,
+                    [key]: {
+                        field: key,
                         operation,
                         value
                     }

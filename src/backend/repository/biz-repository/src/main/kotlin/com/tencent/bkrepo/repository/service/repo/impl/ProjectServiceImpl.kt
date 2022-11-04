@@ -30,6 +30,7 @@ package com.tencent.bkrepo.repository.service.repo.impl
 import com.tencent.bkrepo.auth.api.ServicePermissionResource
 import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_NUMBER
 import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_SIZE
+import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.constant.TOTAL_RECORDS_INFINITY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
@@ -38,19 +39,29 @@ import com.tencent.bkrepo.common.api.util.EscapeUtils
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_GLOBAL_PROJECT
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_PROXY_PROJECT
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.devops.DEPLOY_CPACK
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
 import com.tencent.bkrepo.repository.dao.ProjectDao
 import com.tencent.bkrepo.repository.model.TProject
+import com.tencent.bkrepo.repository.pojo.packages.PackageListOption
 import com.tencent.bkrepo.repository.pojo.project.ProjectCreateRequest
 import com.tencent.bkrepo.repository.pojo.project.ProjectInfo
 import com.tencent.bkrepo.repository.pojo.project.ProjectListOption
 import com.tencent.bkrepo.repository.pojo.project.ProjectRangeQueryRequest
 import com.tencent.bkrepo.repository.pojo.project.ProjectSearchOption
 import com.tencent.bkrepo.repository.pojo.project.ProjectUpdateRequest
+import com.tencent.bkrepo.repository.pojo.repo.RepoDeleteRequest
+import com.tencent.bkrepo.repository.service.packages.PackageService
 import com.tencent.bkrepo.repository.service.repo.ProjectService
+import com.tencent.bkrepo.repository.service.repo.RepositoryService
 import com.tencent.bkrepo.repository.util.ProjectEventFactory.buildCreatedEvent
+import com.tencent.bkrepo.repository.util.ProjectEventFactory.buildDeletedEvent
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.annotation.Lazy
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
@@ -61,6 +72,7 @@ import org.springframework.data.mongodb.core.query.nin
 import org.springframework.data.mongodb.core.query.regex
 import org.springframework.data.mongodb.core.query.where
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.regex.Pattern
@@ -73,6 +85,16 @@ class ProjectServiceImpl(
     private val projectDao: ProjectDao,
     private val servicePermissionResource: ServicePermissionResource
 ) : ProjectService {
+    @Autowired
+    @Lazy
+    private lateinit var repositoryService: RepositoryService
+
+    @Autowired
+    @Lazy
+    private lateinit var packageService: PackageService
+
+    @Value("\${auth.realm:}")
+    private var authRealm: String = StringPool.EMPTY
 
     override fun getProjectInfo(name: String): ProjectInfo? {
         return convert(projectDao.findByName(name))
@@ -176,6 +198,26 @@ class ProjectServiceImpl(
         return nameResult || displayNameResult
     }
 
+    @Transactional(rollbackFor = [Throwable::class])
+    override fun deleteProject(userId: String, name: String, confirmName: String) {
+        if (name != confirmName) throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, confirmName)
+        if (!checkExist(name)) throw ErrorCodeException(ArtifactMessageCode.PROJECT_NOT_FOUND, name)
+        if (authRealm == DEPLOY_CPACK && projectDao.count(Query().addCriteria(excludeCri)) == 1L) {
+            throw ErrorCodeException(CommonMessageCode.SYSTEM_ERROR)
+        }
+        var repoPage = repositoryService.listRepoPage(name, DEFAULT_PAGE_NUMBER, DEFAULT_PAGE_SIZE)
+        while (repoPage.records.isNotEmpty()) {
+            repoPage.records.forEach { repo ->
+                if (repo.type != RepositoryType.GENERIC) deletePackage(name, repo.name)
+                repositoryService.deleteRepo(RepoDeleteRequest(name, repo.name, true, userId))
+            }
+            repoPage = repositoryService.listRepoPage(name, DEFAULT_PAGE_NUMBER, DEFAULT_PAGE_SIZE)
+        }
+        projectDao.deleteById(name)
+        publishEvent(buildDeletedEvent(userId, name))
+        logger.info("delete project:[$name] success by [$userId].")
+    }
+
     override fun updateProject(name: String, request: ProjectUpdateRequest): Boolean {
         if (!checkExist(name)) {
             throw ErrorCodeException(ArtifactMessageCode.PROJECT_NOT_FOUND, name)
@@ -211,6 +253,16 @@ class ProjectServiceImpl(
             ) {
                 throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, request::displayName.name)
             }
+        }
+    }
+
+    private fun deletePackage(projectId: String, repoName: String) {
+        var packagePage = packageService.listPackagePage(projectId, repoName, PackageListOption())
+        while (packagePage.records.isNotEmpty()) {
+            packagePage.records.forEach { pkg ->
+                packageService.deletePackage(projectId, repoName, pkg.key)
+            }
+            packagePage = packageService.listPackagePage(projectId, repoName, PackageListOption())
         }
     }
 

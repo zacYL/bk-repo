@@ -51,6 +51,7 @@ import com.tencent.bkrepo.common.artifact.pojo.configuration.composite.ProxyConf
 import com.tencent.bkrepo.common.artifact.pojo.configuration.local.LocalConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.virtual.VirtualConfiguration
+import com.tencent.bkrepo.common.mongo.dao.AbstractMongoDao.Companion.ID
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.common.query.model.QueryModel
@@ -91,12 +92,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
-import org.springframework.data.mongodb.core.query.Criteria
-import org.springframework.data.mongodb.core.query.Query
-import org.springframework.data.mongodb.core.query.and
-import org.springframework.data.mongodb.core.query.inValues
-import org.springframework.data.mongodb.core.query.isEqualTo
-import org.springframework.data.mongodb.core.query.where
+import org.springframework.data.mongodb.core.query.*
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -168,11 +164,12 @@ class RepositoryServiceImpl(
             appId = SecurityUtils.getPlatformId()
         ).data.orEmpty()
         if (!option.name.isNullOrBlank()) {
-            names = names.filter { it.startsWith(option.name.orEmpty(), true) }
+            names = names.filter { it.contains(option.name.orEmpty(), true) }
         }
         val criteria = where(TRepository::projectId).isEqualTo(projectId)
             .and(TRepository::display).ne(false)
             .and(TRepository::name).inValues(names)
+            .and(TRepository::deleted).isEqualTo(null)
         option.type?.takeIf { it.isNotBlank() }?.apply { criteria.and(TRepository::type).isEqualTo(this.toUpperCase()) }
         val query = Query(criteria).with(Sort.by(Sort.Direction.DESC, TRepository::createdDate.name))
         return repositoryDao.find(query).map { convertToInfo(it)!! }
@@ -199,6 +196,7 @@ class RepositoryServiceImpl(
         } else {
             where(TRepository::projectId).isEqualTo(projectId).and(TRepository::name).inValues(request.repoNames)
         }
+        criteria.and(TRepository::deleted).isEqualTo(null)
         val totalCount = repositoryDao.count(Query(criteria))
         val records = repositoryDao.find(Query(criteria).limit(limit).skip(skip))
             .map { convertToInfo(it) }
@@ -249,7 +247,8 @@ class RepositoryServiceImpl(
                 lastModifiedBy = operator,
                 lastModifiedDate = LocalDateTime.now(),
                 quota = quota,
-                used = 0
+                used = 0,
+                coverStrategy = coverStrategy
             )
             return try {
                 if (repoConfiguration is CompositeConfiguration) {
@@ -257,6 +256,15 @@ class RepositoryServiceImpl(
                     updateCompositeConfiguration(repoConfiguration, old, repository, operator)
                 }
                 repository.configuration = cryptoConfigurationPwd(repoConfiguration, false).toJsonString()
+
+                // 查找是否存在假删除的仓库，如果存在则删除旧仓库再插入新数据
+                val criteria = where(TRepository::projectId).isEqualTo(projectId)
+                    .and(TRepository::name).isEqualTo(name)
+                    .and(TRepository::deleted).ne(null)
+                if (repositoryDao.remove(Query(criteria)).deletedCount != 0L) {
+                    logger.info("Retrieved deleted record of Repository[$projectId/$name] before creating")
+                }
+
                 repositoryDao.insert(repository)
                 val event = buildCreatedEvent(repoCreateRequest)
                 publishEvent(event)
@@ -293,6 +301,7 @@ class RepositoryServiceImpl(
                 updateRepoConfiguration(it, cryptoConfigurationPwd(oldConfiguration), repository, operator)
                 repository.configuration = cryptoConfigurationPwd(it, false).toJsonString()
             }
+            coverStrategy?.let { repository.coverStrategy = it }
             repositoryDao.save(repository)
         }
         val event = buildUpdatedEvent(repoUpdateRequest, repository.type)
@@ -327,7 +336,15 @@ class RepositoryServiceImpl(
                 )
                 nodeService.deleteByPath(projectId, name, ROOT, operator)
             }
-            repositoryDao.deleteById(repository.id)
+
+            // 为避免仓库被删除后节点无法被自动清理的问题，对仓库实行假删除
+            if (!repository.id.isNullOrBlank()) {
+                repositoryDao.updateFirst(
+                    Query(Criteria.where(ID).isEqualTo(repository.id)),
+                    Update().set(TRepository::deleted.name, LocalDateTime.now())
+                )
+            }
+
             // 删除关联的库
             if (repository.category == RepositoryCategory.COMPOSITE) {
                 val configuration = repository.configuration.readJsonString<CompositeConfiguration>()
@@ -341,7 +358,7 @@ class RepositoryServiceImpl(
     }
 
     override fun allRepos(projectId: String?, repoName: String?, repoType: RepositoryType?): List<RepositoryInfo?> {
-        val criteria = Criteria()
+        val criteria = where(TRepository::deleted).isEqualTo(null)
         projectId?.let { criteria.and(TRepository::projectId.name).`is`(projectId) }
         repoName?.let { criteria.and(TRepository::name.name).`is`(repoName) }
         repoType?.let { criteria.and(TRepository::type.name).`is`(repoType) }
@@ -413,6 +430,7 @@ class RepositoryServiceImpl(
         val query = Query.query(
             Criteria.where(TRepository::category.name)
                 .`in`(RepositoryCategory.COMPOSITE, RepositoryCategory.LOCAL)
+                .and(TRepository::deleted).isEqualTo(null)
         ).skip(skip).limit(DEFAULT_PAGE_SIZE)
         return repositoryDao.find(query, TRepository::class.java)
     }
@@ -445,6 +463,7 @@ class RepositoryServiceImpl(
     private fun buildListQuery(projectId: String, repoName: String? = null, repoType: String? = null): Query {
         val criteria = where(TRepository::projectId).isEqualTo(projectId)
         criteria.and(TRepository::display).ne(false)
+        criteria.and(TRepository::deleted).isEqualTo(null)
         repoName?.takeIf { it.isNotBlank() }?.apply { criteria.and(TRepository::name).regex("^$this") }
         repoType?.takeIf { it.isNotBlank() }?.apply { criteria.and(TRepository::type).isEqualTo(this.toUpperCase()) }
         return Query(criteria).with(Sort.by(Sort.Direction.DESC, TRepository::createdDate.name))
@@ -666,7 +685,9 @@ class RepositoryServiceImpl(
     }
 
     override fun listRepoPageByType(type: String, pageNumber: Int, pageSize: Int): Page<RepositoryDetail> {
-        val query = Query(TRepository::type.isEqualTo(type)).with(Sort.by(TRepository::name.name))
+        val query = Query(TRepository::type.isEqualTo(type))
+            .addCriteria(TRepository::deleted.isEqualTo(null))
+            .with(Sort.by(TRepository::name.name))
         val count = repositoryDao.count(query)
         val pageQuery = query.with(PageRequest.of(pageNumber, pageSize))
         val data = repositoryDao.find(pageQuery).map {
@@ -750,6 +771,7 @@ class RepositoryServiceImpl(
                     lastModifiedBy = it.lastModifiedBy,
                     lastModifiedDate = it.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME),
                     quota = it.quota,
+                    coverStrategy = it.coverStrategy,
                     used = it.used,
                     oldCredentialsKey = it.oldCredentialsKey
                 )
@@ -772,7 +794,8 @@ class RepositoryServiceImpl(
                     lastModifiedBy = it.lastModifiedBy,
                     lastModifiedDate = it.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME),
                     quota = it.quota,
-                    used = it.used
+                    used = it.used,
+                    coverStrategy = it.coverStrategy
                 )
             }
         }

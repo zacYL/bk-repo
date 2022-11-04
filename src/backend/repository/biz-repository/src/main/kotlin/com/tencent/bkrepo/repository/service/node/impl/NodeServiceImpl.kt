@@ -105,6 +105,10 @@ class NodeServiceImpl(
         return NodeStatsSupport(this).countFileNode(artifact)
     }
 
+    override fun countFileNodeByList(projectId: String, repoName: String, fullPathList: List<String>): Long {
+        return NodeStatsSupport(this).countFileNodeByList(projectId, repoName, fullPathList)
+    }
+
     @Transactional(rollbackFor = [Throwable::class])
     override fun deleteNode(deleteRequest: NodeDeleteRequest): NodeDeleteResult {
         return NodeDeleteSupport(this).deleteNode(deleteRequest)

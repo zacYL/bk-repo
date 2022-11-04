@@ -33,6 +33,7 @@ package com.tencent.bkrepo.common.artifact.event.base
 enum class EventType(val nick: String) {
     // PROJECT
     PROJECT_CREATED("创建项目"),
+    PROJECT_DELETED("删除项目"),
 
     // REPOSITORY
     REPO_CREATED("创建仓库"),

@@ -6,10 +6,6 @@
                 <div class="repo-title text-overflow" :title="pkg.name">
                     {{ pkg.name }}
                 </div>
-                <!-- <div class="repo-description text-overflow"
-                    :title="pkg.description">
-                    {{ pkg.description || '【制品描述】' }}
-                </div> -->
             </div>
         </header>
         <div class="common-version-main flex-align-center">

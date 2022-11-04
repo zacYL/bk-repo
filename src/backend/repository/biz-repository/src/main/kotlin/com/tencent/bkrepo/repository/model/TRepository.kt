@@ -33,6 +33,7 @@ package com.tencent.bkrepo.repository.model
 
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.repository.constant.CoverStrategy
 import org.springframework.data.mongodb.core.index.CompoundIndex
 import org.springframework.data.mongodb.core.index.CompoundIndexes
 import org.springframework.data.mongodb.core.mapping.Document
@@ -65,5 +66,7 @@ data class TRepository(
     var projectId: String,
 
     var quota: Long? = null,
-    var used: Long? = null
+    var used: Long? = null,
+    var deleted: LocalDateTime? = null,
+    var coverStrategy: CoverStrategy? = null
 )

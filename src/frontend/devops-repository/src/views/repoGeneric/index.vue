@@ -6,10 +6,6 @@
                 <div class="repo-title text-overflow" :title="replaceRepoName(repoName)">
                     {{ replaceRepoName(repoName) }}
                 </div>
-                <!-- <div class="repo-description text-overflow"
-                    :title="currentRepo.description">
-                    {{ currentRepo.description || '【仓库描述】' }}
-                </div> -->
             </div>
         </header>
         <div class="repo-generic-main flex-align-center"
@@ -162,6 +158,9 @@
                                             { clickEvent: () => handlerShare(row), label: $t('share') },
                                             genericScanFileTypes.includes(row.name.replace(/^.+\.([^.]+)$/, '$1'))
                                                 && { clickEvent: () => handlerScan(row), label: '安全扫描' }
+                                        ] : []),
+                                        ...(row.folder ? [
+                                            { clickEvent: () => handlerShare(row), label: $t('share') }
                                         ] : [])
                                     ] : []),
                                     !row.folder && { clickEvent: () => handlerForbid(row), label: row.metadata.forbidStatus ? '解除禁止' : '禁止使用' },
@@ -391,13 +390,7 @@
                     if (!node) return
                     await this.updateGenericTreeNode(node)
                     const child = node.children.find(child => child.name === path)
-                    if (!child) {
-                        this.$bkMessage({
-                            theme: 'error',
-                            message: '文件路径不存在'
-                        })
-                        return
-                    }
+                    if (!child) return
                     this.sideTreeOpenList.push(child.roadMap)
                     return child
                 }, Promise.resolve(this.genericTree[0])).then(node => {
@@ -457,7 +450,6 @@
             // 树组件选中文件夹
             itemClickHandler (node) {
                 this.selectedTreeNode = node
-                
                 this.handlerPaginationChange()
                 // 更新已展开文件夹数据
                 const reg = new RegExp(`^${node.roadMap}`)

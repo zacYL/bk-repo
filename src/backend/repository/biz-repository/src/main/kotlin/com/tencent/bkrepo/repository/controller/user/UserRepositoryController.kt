@@ -112,7 +112,8 @@ class UserRepositoryController(
                 configuration = configuration,
                 storageCredentialsKey = storageCredentialsKey,
                 operator = userId,
-                quota = quota
+                quota = quota,
+                coverStrategy = coverStrategy
             )
         }
         repositoryService.createRepo(createRequest)
@@ -224,6 +225,7 @@ class UserRepositoryController(
             public = request.public,
             description = request.description,
             configuration = request.configuration,
+            coverStrategy = request.coverStrategy,
             operator = userId
         )
         repositoryService.updateRepo(repoUpdateRequest)

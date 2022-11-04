@@ -89,6 +89,7 @@ import com.tencent.bkrepo.maven.util.MavenStringUtils.resolverName
 import com.tencent.bkrepo.maven.util.MavenUtil
 import com.tencent.bkrepo.repository.api.MetadataClient
 import com.tencent.bkrepo.repository.api.StageClient
+import com.tencent.bkrepo.repository.constant.CoverStrategy
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataSaveRequest
@@ -245,6 +246,26 @@ class MavenLocalRepository(
         metadata?.add(MetadataModel(key = "version", value = mavenGavc.version))
         mavenGavc.classifier?.let { metadata?.add(MetadataModel(key = "classifier", value = it)) }
         return request
+    }
+
+    override fun coverStrategy(context: ArtifactUploadContext) {
+        (context.artifactInfo as MavenArtifactInfo).let {
+            val coverStrategy = context.repositoryDetail.coverStrategy
+            logger.info("The repo[${it.repoName}] coverStrategy:$coverStrategy")
+            if (it.isArtifact() && coverStrategy == CoverStrategy.UNCOVER) {
+                val fullPath = it.getArtifactFullPath()
+                nodeClient.getNodeDetail(
+                    projectId = it.projectId,
+                    repoName = it.repoName,
+                    fullPath = fullPath
+                ).data?.let { _ ->
+                    val message = "The File $fullPath already existed in the ${it.getRepoIdentify()}, " +
+                        "repo[${it.repoName}] cover strategy uncover."
+                    logger.error(message)
+                    throw MavenRequestForbiddenException(message)
+                }
+            }
+        }
     }
 
     override fun onUploadBefore(context: ArtifactUploadContext) {

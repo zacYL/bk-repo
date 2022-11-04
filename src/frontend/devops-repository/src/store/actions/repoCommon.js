@@ -155,7 +155,6 @@ export default {
                             }]
                             : []),
                         ...extRules
-                        
                     ],
                     relation: 'AND'
                 }
@@ -191,5 +190,37 @@ export default {
                 }
             }
         )
+    },
+    initArtifactTypeList ({ commit }) {
+        return Vue.prototype.$ajax.get(`${prefix}/remote/whitelist/optional/type`)
+            .then(res => {
+                commit('SET_ARTIFACT_LIST', res)
+            })
+    },
+    // 查询白名单列表
+    getWhitelist (_, { type, packageKey, version, pageNumber, pageSize, regex = true }) {
+        return Vue.prototype.$ajax.get(`${prefix}/remote/whitelist/page`, {
+            params: { type, packageKey, version, pageNumber, pageSize, regex }
+        })
+    },
+    addWhiteList (_, { packageKey, versions, type }) {
+        return Vue.prototype.$ajax.put(`${prefix}/remote/whitelist`, { packageKey, versions, type })
+    },
+    editWhiteList (_, { id, packageKey, versions, type }) {
+        return Vue.prototype.$ajax.post(`${prefix}/remote/whitelist/${id}`, { packageKey, versions, type })
+    },
+    delWhiteList (_, { id }) {
+        return Vue.prototype.$ajax.delete(`${prefix}/remote/whitelist/${id}`)
+    },
+    delProjectByName (_, { name }) {
+        return Vue.prototype.$ajax.delete(`${prefix}/project/delete/${name}?confirmName=${name}`)
+    },
+    // 仓库类型是否开启拦截清单
+    getWhiteListSwitchList ({ state, commit }) {
+        return Vue.prototype.$ajax.get(`${prefix}/remote/whitelist/switch/list`)
+    },
+    // 修改仓库类型拦截状态
+    updateWhiteListSwitchList ({ state, commit }, { RepositoryType }) {
+        return Vue.prototype.$ajax.post(`${prefix}/remote/whitelist/switch/${RepositoryType}`)
     }
 }

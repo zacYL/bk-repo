@@ -21,7 +21,8 @@
     "description": "repo description",
     "configuration": null,
     "storageCredentialsKey": null,
-    "quota": 1024
+    "quota": 1024,
+    "coverStrategy": "COVER"
   }
   ```
 
@@ -38,6 +39,7 @@
   |configuration|object|否|无|仓库配置，参考后文|repo configuration|
   |storageCredentialsKey|string|否|无|存储凭证key|storage credentials key|
   |quota|long|否|无|仓库配额|repo quota|
+  |coverStrategy|string|否|无|覆盖策略，枚举值|cover strategy|
 
 - 响应体
 
@@ -63,10 +65,11 @@
   {
     "public": false,
     "description": "repo description",
-    "configuration": null
+    "configuration": null,
+    "coverStrategy": "UNCOVER"
   }
-  ```
-
+```
+  
 - 请求字段说明
 
   |字段|类型|是否必须|默认值|说明|Description|
@@ -76,6 +79,7 @@
   |public|boolean|否|无|是否公开。null则不修改|is public repo|
   |description|string|否|无|仓库描述。null则不修改|repo description|
   |configuration|RepositoryConfiguration|否|无|仓库配置，参考后文。null则不修改|repo configuration|
+  |coverStrategy|string|否|无|覆盖策略，枚举值|cover strategy|
 
 - 响应体
 
@@ -131,6 +135,7 @@
   |projectId|string|是|无|项目名称|project name|
   |repoName|string|是|无|仓库名称|repo name|
   |type|string|否|无|仓库类型|repo type|
+  |coverStrategy|string|否|无|覆盖策略，枚举值|cover strategy|
 
 - 响应体
 
@@ -151,7 +156,8 @@
       "lastModifiedBy" : "system",
       "lastModifiedDate" : "2020-03-16T12:13:03.371",
       "quota": 1024,
-      "used": 100
+      "used": 100,
+      "coverStrategy": "COVER"
     },
     "traceId": null
   }
@@ -335,6 +341,7 @@
   |lastModifiedDate|string|上次修改时间|last modify time|
   |quota|long|仓库配额，单位字节，值为nul时表示未设置仓库配额|repo quota|
   |used|long|仓库已使用容量，单位字节|repo used volume|
+  |coverStrategy|string|覆盖策略|cover strategy|
 
 ## 查询仓库配额
 
@@ -600,3 +607,13 @@
 ### 依赖源的差异化配置项
 
 各个依赖源的差异化配置通过`settings`进行配置，每项配置的具体含义请参考依赖源文档。 
+
+### 仓库覆盖策略CoverStrategy
+
+> 用于标识仓库覆盖策略
+
+| 枚举值  | 说明           |
+| ------- | -------------- |
+| COVER   | 覆盖           |
+| UNCOVER | 不覆盖         |
+| DISABLE | 不启用覆盖策略 |

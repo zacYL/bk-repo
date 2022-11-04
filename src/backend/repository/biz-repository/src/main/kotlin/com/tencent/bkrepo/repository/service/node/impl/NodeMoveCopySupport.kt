@@ -33,6 +33,7 @@ package com.tencent.bkrepo.repository.service.node.impl
 
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
+import com.tencent.bkrepo.common.artifact.constant.RESERVED_KEY
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.artifact.path.PathUtils.combineFullPath
@@ -53,7 +54,6 @@ import com.tencent.bkrepo.repository.pojo.node.service.NodeMoveCopyRequest
 import com.tencent.bkrepo.repository.service.node.NodeMoveCopyOperation
 import com.tencent.bkrepo.repository.service.repo.QuotaService
 import com.tencent.bkrepo.repository.service.repo.StorageCredentialService
-import com.tencent.bkrepo.repository.util.MetadataUtils
 import com.tencent.bkrepo.repository.util.NodeEventFactory
 import com.tencent.bkrepo.repository.util.NodeQueryHelper
 import org.slf4j.LoggerFactory
@@ -188,7 +188,7 @@ open class NodeMoveCopySupport(
             )
             // 移除扫描、禁用相关的元数据
             dstNode.metadata?.let { metadata ->
-                dstNode.metadata = metadata.filter { !MetadataUtils.RESERVED_KEY.contains(it.key) }.toMutableList()
+                dstNode.metadata = metadata.filter { !RESERVED_KEY.contains(it.key) }.toMutableList()
             }
             // move操作，create信息保留
             if (move) {

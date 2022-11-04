@@ -12,7 +12,7 @@ const projectManage = () => import('@repository/views/projectManage')
 const projectConfig = () => import('@repository/views/projectManage/projectConfig')
 const nodeManage = () => import('@repository/views/nodeManage')
 const planManage = () => import('@repository/views/planManage')
-const createPlan = () => import('@repository/views/planManage/createPlan')
+// const createPlan = () => import('@repository/views/planManage/createPlan')
 const logDetail = () => import('@repository/views/planManage/logDetail')
 
 const repoScan = () => import('@repository/views/repoScan')
@@ -29,6 +29,9 @@ const commonPackageList = () => import('@repository/views/repoCommon/commonPacka
 const commonPackageDetail = () => import('@repository/views/repoCommon/commonPackageDetail')
 
 const repoSearch = () => import('@repository/views/repoSearch')
+
+// 网络设置
+const networkConfig = () => import('@repository/views/networkConfig')
 
 const routes = [
     {
@@ -138,6 +141,16 @@ const routes = [
                 }
             },
             {
+                path: 'networkConfig',
+                name: 'networkConfig',
+                component: networkConfig,
+                meta: {
+                    breadcrumb: [
+                        { name: 'networkConfig', label: '网络设置' }
+                    ]
+                }
+            },
+            {
                 path: 'nodeManage',
                 name: 'nodeManage',
                 component: nodeManage,
@@ -157,39 +170,39 @@ const routes = [
                     ]
                 }
             },
-            {
-                path: 'planManage/createPlan',
-                name: 'createPlan',
-                component: createPlan,
-                meta: {
-                    breadcrumb: [
-                        { name: 'planManage', label: '制品分发' },
-                        { name: 'createPlan', label: '创建计划' }
-                    ]
-                }
-            },
-            {
-                path: 'planManage/editPlan/:planId',
-                name: 'editPlan',
-                component: createPlan,
-                meta: {
-                    breadcrumb: [
-                        { name: 'planManage', label: '{planName}', template: '制品分发' },
-                        { name: 'createPlan', label: '编辑计划' }
-                    ]
-                }
-            },
-            {
-                path: 'planManage/planDetail/:planId',
-                name: 'planDetail',
-                component: createPlan,
-                meta: {
-                    breadcrumb: [
-                        { name: 'planManage', label: '{planName}', template: '制品分发' },
-                        { name: 'createPlan', label: '计划详情' }
-                    ]
-                }
-            },
+            // {
+            //     path: 'planManage/createPlan',
+            //     name: 'createPlan',
+            //     component: createPlan,
+            //     meta: {
+            //         breadcrumb: [
+            //             { name: 'planManage', label: '制品分发' },
+            //             { name: 'createPlan', label: '创建计划' }
+            //         ]
+            //     }
+            // },
+            // {
+            //     path: 'planManage/editPlan/:planId',
+            //     name: 'editPlan',
+            //     component: createPlan,
+            //     meta: {
+            //         breadcrumb: [
+            //             { name: 'planManage', label: '{planName}', template: '制品分发' },
+            //             { name: 'createPlan', label: '编辑计划' }
+            //         ]
+            //     }
+            // },
+            // {
+            //     path: 'planManage/planDetail/:planId',
+            //     name: 'planDetail',
+            //     component: createPlan,
+            //     meta: {
+            //         breadcrumb: [
+            //             { name: 'planManage', label: '{planName}', template: '制品分发' },
+            //             { name: 'createPlan', label: '计划详情' }
+            //         ]
+            //     }
+            // },
             {
                 path: 'planManage/logDetail/:logId',
                 name: 'logDetail',

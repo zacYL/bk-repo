@@ -1,6 +1,7 @@
 package com.tencent.bkrepo.repository.util
 
 import com.tencent.bkrepo.common.artifact.event.project.ProjectCreatedEvent
+import com.tencent.bkrepo.common.artifact.event.project.ProjectDeletedEvent
 import com.tencent.bkrepo.repository.pojo.project.ProjectCreateRequest
 
 /**
@@ -18,5 +19,9 @@ object ProjectEventFactory {
                 userId = operator
             )
         }
+    }
+
+    fun buildDeletedEvent(userId: String, name: String): ProjectDeletedEvent {
+        return ProjectDeletedEvent(projectId = name, userId = userId)
     }
 }

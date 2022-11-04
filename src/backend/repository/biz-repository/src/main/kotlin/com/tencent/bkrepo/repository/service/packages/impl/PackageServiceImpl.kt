@@ -329,14 +329,9 @@ class PackageServiceImpl(
         val tPackage = checkPackage(projectId, repoName, packageKey)
         val packageId = tPackage.id.orEmpty()
         val tPackageVersion = checkPackageVersion(packageId, versionName)
-        val now = LocalDateTime.now()
-        tPackageVersion.recentlyUseDate = now
-        tPackageVersion.lastModifiedDate = now
+        tPackageVersion.recentlyUseDate = LocalDateTime.now()
         packageVersionDao.save(tPackageVersion)
-        logger.info(
-            "update package version [$projectId/$repoName/$packageKey-$versionName] " +
-                    "recentlyUseDate and lastModifiedDate success"
-        )
+        logger.info("update package version [$projectId/$repoName/$packageKey-$versionName] recentlyUseDate success")
     }
 
     override fun updatePackage(request: PackageUpdateRequest, realIpAddress: String?) {
@@ -515,6 +510,17 @@ class PackageServiceImpl(
     override fun getPackageCount(projectId: String, repoName: String): Long {
         val query = PackageQueryHelper.packageListQuery(projectId, repoName, null)
         return packageDao.count(query)
+    }
+
+    override fun getVersionCount(projectId: String, repoName: String): Long {
+        val option = PackageListOption(pageSize = 1000)
+        var count = 0L
+        while (true) {
+            val packages = listPackagePage(projectId, repoName, option).records
+                .takeUnless { it.isEmpty() } ?: return count
+            option.pageNumber ++
+            count += packages.sumOf { it.versions }
+        }
     }
 
     /**

@@ -72,6 +72,23 @@
                     </bk-tag-input>
                 </bk-form-item>
             </template>
+
+            <bk-form-item label="版本策略" v-if="repoBaseInfo.type === 'maven' || repoBaseInfo.type === 'npm'">
+                <div class="flex-align-center">
+                    <bk-switcher
+                        v-model="repoBaseInfo.override.switcher"
+                        size="small"
+                        theme="primary"
+                        @change="handleOverrideChange"
+                    ></bk-switcher>
+                    <span class="ml10">开启后上传同名称版本制品将会根据版本策略决定是否覆盖</span>
+                </div>
+                <bk-radio-group v-model="repoBaseInfo.override.isFlag" v-if="repoBaseInfo.override.switcher">
+                    <bk-radio class="mr20" :value="false">不允许覆盖</bk-radio>
+                    <bk-radio :value="true">允许覆盖</bk-radio>
+                </bk-radio-group>
+            </bk-form-item>
+
             <bk-form-item :label="$t('description')">
                 <bk-input type="textarea"
                     class="w480"
@@ -104,6 +121,10 @@
             interceptors: [],
             groupXmlSet: [],
             description: '',
+            override: {
+                switcher: false,
+                isFlag: true
+            },
             mobile: {
                 enable: false,
                 filename: '',
@@ -230,6 +251,9 @@
             cancel () {
                 this.show = false
             },
+            handleOverrideChange (isFlag) {
+                this.repoBaseInfo.override.switcher = isFlag
+            },
             asynCheckRepoName () {
                 return this.checkRepoName({
                     projectId: this.projectId,
@@ -253,31 +277,35 @@
                     })
                 }
                 this.loading = true
-                this.createRepo({
-                    body: {
-                        projectId: this.projectId,
-                        type: this.repoBaseInfo.type.toUpperCase(),
-                        name: this.repoBaseInfo.name,
-                        public: this.repoBaseInfo.public,
-                        description: this.repoBaseInfo.description,
-                        category: this.repoBaseInfo.type === 'generic' ? 'LOCAL' : 'COMPOSITE',
-                        configuration: {
-                            type: 'composite',
-                            settings: {
-                                system: this.repoBaseInfo.system,
-                                interceptors: interceptors.length ? interceptors : undefined,
-                                ...(
-                                    this.repoBaseInfo.type === 'rpm'
-                                        ? {
-                                            enabledFileLists: this.repoBaseInfo.enabledFileLists,
-                                            repodataDepth: this.repoBaseInfo.repodataDepth,
-                                            groupXmlSet: this.repoBaseInfo.groupXmlSet
-                                        }
-                                        : {}
-                                )
-                            }
+                const body = {
+                    projectId: this.projectId,
+                    type: this.repoBaseInfo.type.toUpperCase(),
+                    name: this.repoBaseInfo.name,
+                    public: this.repoBaseInfo.public,
+                    description: this.repoBaseInfo.description,
+                    category: this.repoBaseInfo.type === 'generic' ? 'LOCAL' : 'COMPOSITE',
+                    configuration: {
+                        type: 'composite',
+                        settings: {
+                            system: this.repoBaseInfo.system,
+                            interceptors: interceptors.length ? interceptors : undefined,
+                            ...(
+                                this.repoBaseInfo.type === 'rpm'
+                                    ? {
+                                        enabledFileLists: this.repoBaseInfo.enabledFileLists,
+                                        repodataDepth: this.repoBaseInfo.repodataDepth,
+                                        groupXmlSet: this.repoBaseInfo.groupXmlSet
+                                    }
+                                    : {}
+                            )
                         }
                     }
+                }
+                if (body.type === 'MAVEN' || body.type === 'NPM') {
+                    body.coverStrategy = !this.repoBaseInfo.override.switcher ? 'DISABLE' : this.repoBaseInfo.override.isFlag ? 'COVER' : 'UNCOVER'
+                }
+                this.createRepo({
+                    body: body
                 }).then(() => {
                     this.$bkMessage({
                         theme: 'success',

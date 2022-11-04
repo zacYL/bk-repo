@@ -6,13 +6,10 @@
                 <div class="mb5 repo-title text-overflow" :title="repoName">
                     {{ repoName }}
                 </div>
-                <!-- <div class="repo-description text-overflow"
-                    :title="currentRepo.description">
-                    {{ currentRepo.description || '【仓库描述】' }}
-                </div> -->
             </div>
             <div class="flex-end-center flex-1">
-                <bk-button class="ml10 flex-align-center" text theme="primary" @click="showGuide = true">
+                <!-- <bk-button theme="primary" @click="handleClickUpload">上传制品</bk-button> -->
+                <bk-button class="ml20 flex-align-center" text theme="primary" @click="showGuide = true">
                     <span class="flex-align-center">
                         <Icon class="mr5" name="hand-guide" size="16" />
                         {{$t('guide')}}
@@ -88,6 +85,10 @@
                 <repo-guide class="pt20 pb20 pl10 pr10" :article="articleGuide"></repo-guide>
             </template>
         </bk-sideslider>
+
+        <!-- maven包制上传侧边栏 -->
+        <!-- <repo-maven-uploader v-model="mavenUploader.isVisible" /> -->
+        <!-- maven包制上传侧边栏 /-->
     </div>
 </template>
 <script>
@@ -95,6 +96,7 @@
     import packageCard from '@repository/components/PackageCard'
     import repoGuide from '@repository/views/repoCommon/repoGuide'
     import emptyGuide from '@repository/views/repoCommon/emptyGuide'
+    // import repoMavenUploader from '@repository/views/repoCommon/repoMavenUploader'
     import repoGuideMixin from '@repository/views/repoCommon/repoGuideMixin'
     import { mapState, mapActions } from 'vuex'
     export default {
@@ -115,6 +117,9 @@
                     limitList: [10, 20, 40]
                 },
                 showGuide: false
+                // mavenUploader: {
+                //     isVisible: false
+                // }
             }
         },
         computed: {
@@ -137,6 +142,10 @@
                 this.direction = this.direction === 'ASC' ? 'DESC' : 'ASC'
                 this.handlerPaginationChange()
             },
+            // 点击上传制品按钮，显示侧边抽屉
+            // handleClickUpload () {
+            //     this.mavenUploader.isVisible = true
+            // },
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}, load) {
                 this.pagination.current = current
                 this.pagination.limit = limit

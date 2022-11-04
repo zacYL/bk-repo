@@ -51,11 +51,17 @@ class ArtifactEventConsumer(
         return setOf(
             EventType.NODE_CREATED,
             EventType.VERSION_CREATED,
-            EventType.VERSION_UPDATED
+            EventType.VERSION_UPDATED,
+            EventType.PROJECT_DELETED
         )
     }
 
     override fun action(event: ArtifactEvent) {
+        // 删除项目下所有分发计划及记录
+        if (event.type == EventType.PROJECT_DELETED){
+            replicaTaskService.deleteByProjectId(event.projectId)
+        }
+
         executors.execute {
             replicaTaskService.listRealTimeTasks(event.projectId, event.repoName).forEach {
                 eventBasedReplicaJobExecutor.execute(it, event)

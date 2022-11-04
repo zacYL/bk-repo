@@ -219,6 +219,7 @@ class ScanPlanServiceImpl(
         scanPlanDao.delete(projectId, id)
         val planArtifactSubtasks = scanTaskService.planArtifactSubtasks(projectId, id)
         planArtifactLatestSubScanTaskDao.deleteByPlanId(id)
+        scanTaskDao.deleteByPlanId(id)
         // 发送删除方案事件
         publisher.publishEvent(DelScanPlanEvent(planArtifactSubtasks))
     }

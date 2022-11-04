@@ -103,8 +103,10 @@ class NpmRemoteRepository(
             val httpClient = createHttpClient(remoteConfiguration)
             context.putAttribute("requestURI", "/${packageInfo.first}/${packageInfo.second}")
             val downloadUri = createRemoteSearchUrl(context)
+            logger.info("Request url of package version metadata: $downloadUri")
             val request = Request.Builder().url(downloadUri).build()
             val response = httpClient.newCall(request).execute()
+            logger.info("$response")
             if (checkResponse(response)) {
                 val artifactFile = createTempFile(response.body()!!)
                 context.putAttribute(NPM_FILE_FULL_PATH, versionMetadataFullPath)
@@ -126,8 +128,10 @@ class NpmRemoteRepository(
         val remoteConfiguration = context.getRemoteConfiguration()
         val httpClient = createHttpClient(remoteConfiguration)
         val downloadUri = createRemoteSearchUrl(context)
+        logger.info("Request url of package metadata: $downloadUri")
         val request = Request.Builder().url(downloadUri).build()
         val response = httpClient.newCall(request).execute()
+        logger.info("$response")
         return if (validateResponse(context, response)) {
             onQueryResponse(context, response)
         } else null

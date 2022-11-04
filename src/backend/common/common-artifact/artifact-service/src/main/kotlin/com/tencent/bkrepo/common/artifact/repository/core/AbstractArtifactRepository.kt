@@ -181,6 +181,7 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
      * 上传前回调
      */
     open fun onUploadBefore(context: ArtifactUploadContext) {
+        coverStrategy(context)
         artifactMetrics.uploadingCount.incrementAndGet()
     }
 
@@ -247,6 +248,13 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
     }
 
     /**
+     * 仓库覆盖策略
+     */
+    open fun coverStrategy(context: ArtifactUploadContext) {
+        return
+    }
+
+    /**
      * 下载成功回调
      */
     open fun onDownloadSuccess(
@@ -256,7 +264,7 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
     ) {
         if (artifactResource.channel == ArtifactChannel.LOCAL) {
             buildDownloadRecord(context, artifactResource)?.let {
-                packageClient.updateRecentlyUseDate(it.projectId,it.repoName,it.packageKey,it.packageVersion)
+                packageClient.updateRecentlyUseDate(it.projectId, it.repoName, it.packageKey, it.packageVersion)
                 taskAsyncExecutor.execute { packageDownloadsClient.record(it) }
                 publishPackageDownloadEvent(context, it)
             }

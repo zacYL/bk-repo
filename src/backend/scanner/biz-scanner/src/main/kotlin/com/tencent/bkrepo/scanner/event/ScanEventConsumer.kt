@@ -38,12 +38,9 @@ import com.tencent.bkrepo.common.artifact.event.packages.VersionCreatedEvent
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.query.matcher.RuleMatcher
 import com.tencent.bkrepo.common.query.model.Rule
-import com.tencent.bkrepo.common.storage.core.StorageProperties
-import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
-import com.tencent.bkrepo.scanner.configuration.ScannerProperties
 import com.tencent.bkrepo.scanner.dao.ProjectScanConfigurationDao
 import com.tencent.bkrepo.scanner.dao.ScanPlanDao
 import com.tencent.bkrepo.scanner.dao.SubScanTaskDao
@@ -51,6 +48,7 @@ import com.tencent.bkrepo.scanner.pojo.ScanTriggerType
 import com.tencent.bkrepo.scanner.pojo.request.ScanRequest
 import com.tencent.bkrepo.scanner.pojo.request.SubScanTaskQuery
 import com.tencent.bkrepo.scanner.pojo.rule.RuleArtifact
+import com.tencent.bkrepo.scanner.service.ScanPlanService
 import com.tencent.bkrepo.scanner.service.ScanService
 import com.tencent.bkrepo.scanner.service.ScannerService
 import com.tencent.bkrepo.scanner.service.SpdxLicenseService
@@ -74,7 +72,8 @@ class ScanEventConsumer(
     private val projectScanConfigurationDao: ProjectScanConfigurationDao,
     private val executor: ThreadPoolTaskExecutor,
     private val repositoryClient: RepositoryClient,
-    private val subScanTaskDao: SubScanTaskDao
+    private val subScanTaskDao: SubScanTaskDao,
+    private val scanPlanService: ScanPlanService
 ) : Consumer<ArtifactEvent> {
 
     /**
@@ -96,6 +95,14 @@ class ScanEventConsumer(
 
     override fun accept(event: ArtifactEvent) {
         logger.info("accept event eventType[${event.type}]")
+
+        if (event.type == EventType.PROJECT_DELETED) {
+            scanPlanDao.list(event.projectId).forEach {
+                scanService.stopScanPlan(event.projectId, it.id!!)
+                scanPlanService.delete(event.projectId, it.id!!)
+            }
+            logger.info("delete scan plan by projectId:[${event.projectId}] success")
+        }
 
         if (delEventType.contains(event.type)) {
             stopScanTask(event)

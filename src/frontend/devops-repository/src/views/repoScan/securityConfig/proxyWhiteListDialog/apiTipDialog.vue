@@ -1,0 +1,87 @@
+<template>
+    <canway-dialog
+        :value="show"
+        title="API使用方法"
+        :width="720"
+        :height="400"
+        @cancel="$emit('close')"
+    >
+        <bk-form class="mr10" :label-width="90">
+            <!-- <bk-select
+                class="w250"
+                v-model="form.type"
+                placeholder="请选择制品类型"
+                :clearable="false">
+                <bk-option v-for="item in artifactTypeList" :key="item" :id="item" :name="item" />
+            </bk-select> -->
+            <div class="artifact-copy">
+                <p class="tips">请在合适的位置创建工作目录，并在该目录下执行命令：</p>
+                <div id="markdown-tip" />
+            </div>
+        </bk-form>
+        <template #footer>
+            <bk-button theme="default" @click="$emit('close')">{{$t('close')}}</bk-button>
+        </template>
+    </canway-dialog>
+</template>
+
+<script>
+    import repoGuideMixin from '@repository/views/repoCommon/repoGuideMixin'
+    import { mapState } from 'vuex'
+    import getMarkdownTip from './getMarkdownTip'
+
+    export default {
+        mixins: [repoGuideMixin],
+        props: {
+            show: {
+                type: Boolean,
+                required: true
+            }
+        },
+        data () {
+            return {
+                form: {
+                    type: ''
+                },
+                markdownTip: getMarkdownTip()
+            }
+        },
+        computed: {
+            ...mapState(['artifactTypeList'])
+        },
+        watch: {
+            show (val) {
+                if (val) {
+                    this.$set(this.form, 'type', this.artifactTypeList?.[0] || '')
+                }
+            }
+        },
+        mounted () {
+            // eslint-disable-next-line no-undef
+            return new Cherry({
+                id: 'markdown-tip',
+                value: this.markdownTip,
+                toolbars: {
+                    toolbar: false
+                },
+                editor: {
+                    defaultModel: 'previewOnly'
+                },
+                engine: {
+                    syntax: {
+                        codeBlock: {
+                            theme: 'light'
+                        }
+                    }
+                }
+            })
+        }
+    }
+</script>
+
+<style lang="scss" scoped>
+    #markdown-tip {
+        max-height: 400px;
+        overflow: auto;
+    }
+</style>

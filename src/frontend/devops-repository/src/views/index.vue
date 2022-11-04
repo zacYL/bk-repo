@@ -71,7 +71,8 @@
                             'nodeManage',
                             'securityConfig',
                             this.isMasterNode && 'planManage',
-                            'repoAudit'
+                            'repoAudit',
+                            'networkConfig'
                         ].filter(Boolean)
                     }
                 }

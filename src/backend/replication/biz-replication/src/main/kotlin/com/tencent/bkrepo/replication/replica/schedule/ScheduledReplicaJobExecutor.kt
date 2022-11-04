@@ -30,6 +30,7 @@ package com.tencent.bkrepo.replication.replica.schedule
 import com.tencent.bkrepo.replication.manager.LocalDataManager
 import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus
 import com.tencent.bkrepo.replication.pojo.task.ReplicaTaskInfo
+import com.tencent.bkrepo.replication.replica.base.context.ReplicaExecutionContext
 import com.tencent.bkrepo.replication.replica.base.executor.AbstractReplicaJobExecutor
 import com.tencent.bkrepo.replication.service.ClusterNodeService
 import com.tencent.bkrepo.replication.service.ReplicaRecordService
@@ -66,6 +67,10 @@ class ScheduledReplicaJobExecutor(
         try {
             // 查询同步对象
             val taskDetail = replicaTaskService.getDetailByTaskKey(task.key)
+            // 计算待同步的制品数
+            val count = replicaTaskService.countArtifactToReplica(taskDetail) * task.remoteClusters.size
+            // 初始化同步进度缓存
+            ReplicaExecutionContext.initProgress(task.key, count)
             // 开启新的同步记录
             val taskRecord = replicaRecordService.startNewRecord(task.key).apply { recordId = id }
             val result = task.remoteClusters.map { submit(taskDetail, taskRecord, it) }.map { it.get() }
@@ -82,6 +87,8 @@ class ScheduledReplicaJobExecutor(
         } finally {
             // 保存结果
             replicaRecordService.completeRecord(recordId!!, status, errorReason)
+            // 删除缓存中的进度
+            ReplicaExecutionContext.removeProgress(task.key)
             logger.info("Replica task[$taskId], record[$recordId] finished")
         }
     }

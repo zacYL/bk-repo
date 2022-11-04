@@ -18,6 +18,23 @@
                             :list="availableList">
                         </card-radio-group>
                     </bk-form-item>
+
+                    <bk-form-item label="版本策略" v-if="repoType === 'maven' || repoType === 'npm'">
+                        <div class="flex-align-center">
+                            <bk-switcher
+                                v-model="repoBaseInfo.override.switcher"
+                                size="small"
+                                theme="primary"
+                                @change="handleOverrideChange"
+                            ></bk-switcher>
+                            <span class="ml10">开启后上传同名称版本制品将会根据版本策略决定是否覆盖</span>
+                        </div>
+                        <bk-radio-group v-model="repoBaseInfo.override.isFlag" v-if="repoBaseInfo.override.switcher">
+                            <bk-radio class="mr20" :value="false">不允许覆盖</bk-radio>
+                            <bk-radio :value="true">允许覆盖</bk-radio>
+                        </bk-radio-group>
+                    </bk-form-item>
+
                     <template v-if="repoType === 'generic'">
                         <!-- <bk-form-item v-for="type in ['mobile', 'web']" :key="type" -->
                         <bk-form-item v-for="type in ['web']" :key="type"
@@ -135,6 +152,10 @@
                     repodataDepth: 0,
                     groupXmlSet: [],
                     description: '',
+                    override: {
+                        switcher: false,
+                        isFlag: true
+                    },
                     mobile: {
                         enable: false,
                         filename: '',
@@ -229,6 +250,9 @@
         },
         methods: {
             ...mapActions(['getRepoInfo', 'updateRepoInfo', 'getDomain']),
+            handleOverrideChange (isFlag) {
+                this.repoBaseInfo.override.switcher = isFlag
+            },
             toRepoList () {
                 this.$router.push({
                     name: 'repoList'
@@ -247,7 +271,22 @@
                         ...res.configuration.settings,
                         repoType: res.type.toLowerCase()
                     }
-                    
+                    if (res.type === 'MAVEN' || res.type === 'NPM') {
+                        switch (res.coverStrategy) {
+                            case 'COVER':
+                                this.repoBaseInfo.override.switcher = true
+                                this.repoBaseInfo.override.isFlag = true
+                                break
+                            case 'UNCOVER':
+                                this.repoBaseInfo.override.switcher = true
+                                this.repoBaseInfo.override.isFlag = false
+                                break
+                            default:
+                                this.repoBaseInfo.override.switcher = false
+                                this.repoBaseInfo.override.isFlag = true
+                        }
+                    }
+
                     const { interceptors } = res.configuration.settings
                     if (interceptors instanceof Array) {
                         interceptors.forEach(i => {
@@ -292,6 +331,9 @@
                             )
                         }
                     }
+                }
+                if (this.repoType === 'maven' || this.repoType === 'npm') {
+                    body.coverStrategy = !this.repoBaseInfo.override.switcher ? 'DISABLE' : this.repoBaseInfo.override.isFlag ? 'COVER' : 'UNCOVER'
                 }
                 this.repoBaseInfo.loading = true
                 this.updateRepoInfo({

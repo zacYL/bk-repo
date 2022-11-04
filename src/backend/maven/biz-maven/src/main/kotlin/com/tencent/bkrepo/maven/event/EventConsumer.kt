@@ -2,8 +2,7 @@ package com.tencent.bkrepo.maven.event
 
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.event.base.EventType
-import com.tencent.bkrepo.common.artifact.event.packages.RepositoryCleanEvent
-import com.tencent.bkrepo.common.artifact.event.packages.VersionDeletedEvent
+import com.tencent.bkrepo.common.artifact.event.repo.RepositoryCleanEvent
 import com.tencent.bkrepo.maven.constants.REPO_TYPE
 import com.tencent.bkrepo.maven.service.MavenDeleteService
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER

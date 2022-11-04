@@ -62,6 +62,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.format.DateTimeFormatter
 
 @Service
 class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
@@ -262,7 +263,7 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
                     repoName,
                     packageVersion.downloads,
                     createdBy,
-                    createdDate,
+                    packageVersion.createdDate.format(DateTimeFormatter.ISO_DATE_TIME),
                     lastModifiedBy,
                     lastModifiedDate,
                     readme = readmeInfo

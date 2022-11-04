@@ -252,7 +252,14 @@ class ClusterReplicator(
                 }
             }
             // 查询元数据
-            val metadata = if (task.setting.includeMetadata) node.nodeMetadata else emptyList()
+            val metadata = if (task.setting.includeMetadata) {
+                // filter system reserve metadata
+                node.nodeMetadata?.filter {
+                    it.key !in RESERVED_KEY
+                }
+            } else {
+                emptyList()
+            }
             return NodeCreateRequest(
                 projectId = remoteProjectId,
                 repoName = remoteRepoName,

@@ -29,36 +29,64 @@ package com.tencent.bkrepo.maven.service.impl
 
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.constant.PARAM_DOWNLOAD
+import com.tencent.bkrepo.common.artifact.manager.StorageManager
+import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.core.ArtifactService
+import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.view.ViewModelService
 import com.tencent.bkrepo.common.security.permission.Permission
+import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
 import com.tencent.bkrepo.maven.artifact.MavenDeleteArtifactInfo
 import com.tencent.bkrepo.maven.exception.MavenBadRequestException
+import com.tencent.bkrepo.maven.pojo.request.MavenWebDeployRequest
+import com.tencent.bkrepo.maven.pojo.response.MavenWebDeployResponse
 import com.tencent.bkrepo.maven.service.MavenService
+import com.tencent.bkrepo.maven.util.JarUtils
+import com.tencent.bkrepo.maven.util.MavenMetadataUtils.initByModel
+import com.tencent.bkrepo.maven.util.MavenMetadataUtils.reRender
+import com.tencent.bkrepo.maven.util.MavenModelUtils.toArtifactUri
+import com.tencent.bkrepo.maven.util.MavenModelUtils.toMetadataUri
 import com.tencent.bkrepo.repository.api.NodeClient
+import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.list.HeaderItem
 import com.tencent.bkrepo.repository.pojo.list.RowItem
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeListViewItem
+import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
+import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
+import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
+import org.apache.commons.io.FileUtils
+import org.apache.maven.artifact.repository.metadata.Metadata
+import org.apache.maven.artifact.repository.metadata.io.xpp3.MetadataXpp3Reader
+import org.apache.maven.artifact.repository.metadata.io.xpp3.MetadataXpp3Writer
+import org.apache.maven.model.Model
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileInputStream
+import java.io.InputStream
+import java.util.*
 import java.util.regex.PatternSyntaxException
 
 @Service
 class MavenServiceImpl(
     private val nodeClient: NodeClient,
-    private val viewModelService: ViewModelService
+    private val viewModelService: ViewModelService,
+    private val repositoryClient: RepositoryClient,
+    private val storageManager: StorageManager
 ) : ArtifactService(), MavenService {
 
     @Value("\${spring.application.name}")
@@ -152,7 +180,165 @@ class MavenServiceImpl(
         return ArtifactContextHolder.getRepository().query(context)
     }
 
+    // todo classifier
+    // todo snapshot
+    // todo pom
+
+    @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
+    override fun fileDeploy(mavenArtifactInfo: MavenArtifactInfo, file: ArtifactFile): MavenWebDeployResponse {
+        val context = ArtifactUploadContext(file)
+        val webNode = buildMavenWebDeployNode(mavenArtifactInfo, file)
+        storageManager.storeArtifactFile(webNode, file, context.storageCredentials)
+
+        with(mavenArtifactInfo) {
+            val node = nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data!!
+            storageManager.loadArtifactInputStream(node, context.storageCredentials).use {
+                val tempFile = File.createTempFile("maven-web", "deploy")
+                FileUtils.copyInputStreamToFile(it, tempFile)
+                try {
+                    val model = JarUtils.parseModelInJar(tempFile)
+                    return MavenWebDeployResponse(
+                        uuid = mavenArtifactInfo.getArtifactFullPath(),
+                        groupId = model.groupId,
+                        artifactId = model.artifactId,
+                        version = model.version,
+                        classifier = null,
+                        type = model.packaging
+                    )
+                } finally {
+                    nodeClient.deleteNode(
+                        NodeDeleteRequest(
+                            projectId = projectId,
+                            repoName = repoName,
+                            fullPath = getArtifactFullPath(),
+                            operator = "maven-web-deploy"
+                        )
+                    )
+                    tempFile.apply { if (this.exists()) delete() }
+                }
+            }
+        }
+    }
+
+    private fun buildMavenWebDeployNode(mavenArtifactInfo: MavenArtifactInfo, file: ArtifactFile): NodeCreateRequest {
+        return NodeCreateRequest(
+            projectId = mavenArtifactInfo.projectId,
+            repoName = mavenArtifactInfo.repoName,
+            fullPath = mavenArtifactInfo.getArtifactFullPath(),
+            folder = false,
+            overwrite = false,
+            expires = 0L,
+            md5 = file.getFileMd5(),
+            sha256 = file.getFileSha256(),
+            size = file.getSize(),
+            operator = SecurityUtils.getUserId()
+        )
+    }
+
+    override fun verifyDeploy(mavenArtifactInfo: MavenArtifactInfo, request: MavenWebDeployRequest) {
+        with(mavenArtifactInfo) {
+            // TODO, 是否存在节点被删除的情况
+            val node = nodeClient.getNodeDetail(projectId, repoName, request.uuid).data!!
+            storageManager.loadArtifactInputStream(node, null)?.use {
+                val jarFile = File("$system_temp_dir/${UUID.randomUUID()}", request.uuid.trim('/'))
+                FileUtils.copyInputStreamToFile(it, jarFile)
+                val (pomFile, model) = JarUtils.parsePomInJar(jarFile).apply {
+                    Pair(this.first, JarUtils.processModel(this.second, request))
+                }
+                val jarArtifact = createArtifact(mavenArtifactInfo, model, request.uuid)
+
+                val pomArtifact = createArtifact(mavenArtifactInfo, model, pomFile.name)
+
+                val repo = repositoryClient.getRepoDetail(mavenArtifactInfo.projectId, mavenArtifactInfo.repoName).data
+                    ?: throw ErrorCodeException(ArtifactMessageCode.REPOSITORY_NOT_FOUND, mavenArtifactInfo.repoName)
+
+                // todo 删除jar 和 pom 文件
+                // 如果是jar包，需要上传pom文件，如果是pom文件，只需要上传pom 文件本身
+                uploadArtifact(repo, jarArtifact, FileInputStream(jarFile))
+                // pom
+                uploadArtifact(repo, pomArtifact, FileInputStream(pomFile))
+
+                // maven-metadata.xml
+                updateMetadata(repo, model)
+            }
+        }
+//        nodeClient.deleteNode(NodeDeleteRequest(
+//                projectId = mavenArtifactInfo.projectId,
+//                repoName = mavenArtifactInfo.repoName,
+//                fullPath = request.uuid,
+//                operator = "maven-web-deploy"
+//        ))
+    }
+
+    /**
+     * 更新maven-metadata.xml
+     */
+    private fun updateMetadata(repo: RepositoryDetail, model: Model) {
+        // 查询maven-metadata.xml是否存在
+        val metadataPath = model.toMetadataUri()
+        val metadataNode = nodeClient.getNodeDetail(repo.projectId, repo.name, metadataPath).data
+        val mavenMetadata = if (metadataNode != null) {
+            val metadata = storageManager.loadArtifactInputStream(metadataNode, null)?.use { inputStream ->
+                MetadataXpp3Reader().read(inputStream)
+            }
+            // TODO 是否存在maven-metadata.xml 中versioning节点不存在的情况
+            metadata?.apply {
+                if (!versioning.versions.contains(model.version)) {
+                    versioning.versions.add(model.version)
+                }
+            }?.reRender()
+        } else {
+            Metadata().initByModel(model)
+        }
+
+        // 上传maven-metadata.xml
+        val metadataArtifact = MavenArtifactInfo(
+            projectId = repo.projectId,
+            repoName = repo.name,
+            artifactUri = model.toMetadataUri(),
+        )
+        ByteArrayOutputStream().use { metadataStream ->
+            MetadataXpp3Writer().write(metadataStream, mavenMetadata)
+            uploadArtifact(repo, metadataArtifact, metadataStream.toByteArray().inputStream())
+        }
+    }
+
+    private fun createArtifact(
+        mavenArtifactInfo: MavenArtifactInfo,
+        model: Model,
+        name: String
+    ): MavenArtifactInfo {
+        return MavenArtifactInfo(
+            projectId = mavenArtifactInfo.projectId,
+            repoName = mavenArtifactInfo.repoName,
+            artifactUri = model.toArtifactUri(name),
+        ).apply {
+            this.groupId = model.groupId
+            this.artifactId = model.artifactId
+            this.versionId = model.version
+            this.jarName = name
+        }
+    }
+
+    private fun uploadArtifact(repo: RepositoryDetail, artifact: MavenArtifactInfo, inputStream: InputStream) {
+        inputStream.use {
+            ArtifactFileFactory.build(it).apply {
+                ArtifactUploadContext(
+                    repo = repo,
+                    artifactFile = this,
+                    artifactInfo = artifact,
+                ).apply { repository.upload(this) }
+                this.delete()
+            }
+        }
+    }
+
     companion object {
         private val logger: Logger = LoggerFactory.getLogger(MavenServiceImpl::class.java)
+        private val system_temp_dir = System.getProperty("java.io.tmpdir")
     }
+}
+
+fun main() {
+    println(System.getProperty("java.io.tmpdir"))
 }

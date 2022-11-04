@@ -29,14 +29,18 @@
  * SOFTWARE.
  */
 
-dependencies {
-    implementation(project(":common:common-stream"))
-    api(project(":maven:api-maven"))
-    api(project(":scanner:api-scanner"))
-    api(project(":common:common-artifact:artifact-service"))
-    api(project(":common:common-mongo"))
-    implementation("org.apache.maven:maven-repository-metadata:${Versions.MAVEN}")
-    implementation("org.apache.maven:maven-model:${Versions.MAVEN}")
-    implementation("org.apache.maven:maven-artifact:${Versions.MavenArtifact}")
-    implementation("org.apache.maven:maven-plugin-api:${Versions.MAVEN}")
+package com.tencent.bkrepo.maven.message
+
+import com.tencent.bkrepo.common.api.message.MessageCode
+
+enum class MavenMessageCode(private val key: String) : MessageCode {
+
+    SUCCESS("success") { override fun getCode() = 0 },
+
+    FILE_RESOLVE_FAILED("file.resolve.failed")
+    ;
+
+    override fun getBusinessCode() = ordinal + 1
+    override fun getKey() = key
+    override fun getModuleCode() = 1
 }

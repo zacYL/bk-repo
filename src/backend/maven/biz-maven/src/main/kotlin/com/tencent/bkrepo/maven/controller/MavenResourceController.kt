@@ -27,14 +27,20 @@
 
 package com.tencent.bkrepo.maven.controller
 
+import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
+import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
+import com.tencent.bkrepo.maven.pojo.request.MavenWebDeployRequest
+import com.tencent.bkrepo.maven.pojo.response.MavenWebDeployResponse
 import com.tencent.bkrepo.maven.service.MavenService
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -48,6 +54,23 @@ class MavenResourceController(
     ) {
         return mavenService.deploy(mavenArtifactInfo, file)
     }
+
+    @PutMapping("/deploy/{projectId}/{repoName}/*")
+    fun fileDeploy(
+            mavenArtifactInfo: MavenArtifactInfo,
+            file: ArtifactFile
+    ): Response<MavenWebDeployResponse> {
+        return ResponseBuilder.success(mavenService.fileDeploy(mavenArtifactInfo, file))
+    }
+
+    @PostMapping("/deploy/{projectId}/{repoName}")
+    fun verifyDeploy(
+            mavenArtifactInfo: MavenArtifactInfo,
+            @RequestBody request: MavenWebDeployRequest,
+    ) {
+        mavenService.verifyDeploy(mavenArtifactInfo, request)
+    }
+
 
     @GetMapping(MavenArtifactInfo.MAVEN_MAPPING_URI, produces = [MediaType.APPLICATION_JSON_VALUE])
     fun dependency(@ArtifactPathVariable mavenArtifactInfo: MavenArtifactInfo) {

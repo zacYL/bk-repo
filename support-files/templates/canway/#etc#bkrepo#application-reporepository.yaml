@@ -9,12 +9,18 @@ spring:
     schedulerName: bkrepo-scheduler
   cloud:
     stream:
+      function:
+        definition: devopsEvent
       bindings:
         artifactEvent-out-0:
           destination: artifactEvent
           binder: pulsar
         bkrepo_artifact_repo:
           destination: bkrepo_artifact_repo
+          binder: pulsar
+        devopsEvent-in-0:
+          group: repository
+          destination: devopsEvent
           binder: pulsar
 server:
   port: __BK_REPO_REPOSITORY_PORT__

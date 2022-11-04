@@ -52,6 +52,7 @@ import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.InputStream
+import java.util.concurrent.TimeUnit
 
 class ReplicaContext(
     taskDetail: ReplicaTaskDetail,
@@ -112,7 +113,7 @@ class ReplicaContext(
         httpClient = if (remoteCluster.type != ClusterNodeType.REMOTE) {
             HttpClientBuilderFactory.create(cluster.certificate).addInterceptor(
                 BasicAuthInterceptor(cluster.username.orEmpty(), cluster.password.orEmpty())
-            ).build()
+            ).readTimeout(300, TimeUnit.SECONDS).build()
         } else {
             null
         }

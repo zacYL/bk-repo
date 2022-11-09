@@ -7,9 +7,9 @@ export const repoEnum = [
     'npm',
     'helm',
     'composer',
-    'rpm'
+    'rpm',
     // 'git',
-    // 'nuget'
+    'nuget'
 ]
 
 // 文件类型

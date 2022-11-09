@@ -31,7 +31,7 @@ request.interceptors.response.use(response => {
     }
 
     // 正常逻辑
-    if (status === 200 || status === 206) {
+    if (status === 200 || status === 206 || status === 201) {
         return data === undefined ? response.data : data
     } else if (status === 401 || status === 402) {
         if (MODE_CONFIG === 'ci' || MODE_CONFIG === 'saas') {

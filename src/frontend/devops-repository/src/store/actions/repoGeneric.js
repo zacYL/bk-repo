@@ -192,7 +192,7 @@ export default {
         )
     },
     // 上传文件
-    uploadArtifactory (_, { xhr, projectId, repoName, body, progressHandler, fullPath = '', headers = {} }) {
+    uploadArtifactory (_, { xhr, projectId, repoName, body, progressHandler, fullPath = '', headers = {}, uploadType }) {
         return new Promise((resolve, reject) => {
             xhr.onreadystatechange = () => {
                 if (xhr.readyState === 4) {
@@ -203,8 +203,14 @@ export default {
                     }
                 }
             }
+            let requestUrl
+            if (uploadType === 'mavenUpload') {
+                requestUrl = 'maven/deploy'
+            } else {
+                requestUrl = 'web/generic'
+            }
             xhr.upload.addEventListener('progress', progressHandler)
-            xhr.open('PUT', `/web/generic/${projectId}/${repoName}/${encodeURIComponent(fullPath)}`, true)
+            xhr.open('PUT', `/${requestUrl}/${projectId}/${repoName}/${encodeURIComponent(fullPath)}`, true)
             xhr.responseType = 'json'
             xhr.setRequestHeader('Content-Type', headers['Content-Type'])
             xhr.setRequestHeader('X-BKREPO-OVERWRITE', headers['X-BKREPO-OVERWRITE'])
@@ -295,6 +301,13 @@ export default {
     previewCompressedBasicFile (_, { projectId, repoName, fullPath, filePath }) {
         return Vue.prototype.$ajax.get(
             `generic/compressed/preview/${projectId}/${repoName}/${encodeURIComponent(fullPath)}?filePath=${filePath}`
+        )
+    },
+    // maven仓库上传制品后提交任务
+    submitMavenArtifactory (_, { projectId, repoName, body }) {
+        return Vue.prototype.$ajax.post(
+            `/maven/deploy/${projectId}/${repoName}`, body
+
         )
     }
 }

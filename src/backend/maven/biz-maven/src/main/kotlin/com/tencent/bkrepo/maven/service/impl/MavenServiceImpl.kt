@@ -49,9 +49,13 @@ import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
 import com.tencent.bkrepo.maven.artifact.MavenDeleteArtifactInfo
 import com.tencent.bkrepo.maven.exception.JarFormatException
+import com.tencent.bkrepo.maven.exception.MavenArtifactFormatException
 import com.tencent.bkrepo.maven.exception.MavenBadRequestException
+import com.tencent.bkrepo.maven.pojo.MavenMetadataSearchPojo
+import com.tencent.bkrepo.maven.pojo.MavenVersion
 import com.tencent.bkrepo.maven.pojo.request.MavenWebDeployRequest
 import com.tencent.bkrepo.maven.pojo.response.MavenWebDeployResponse
+import com.tencent.bkrepo.maven.service.MavenMetadataService
 import com.tencent.bkrepo.maven.service.MavenService
 import com.tencent.bkrepo.maven.util.JarUtils
 import com.tencent.bkrepo.maven.util.MavenMetadataUtils.initByModel
@@ -61,6 +65,10 @@ import com.tencent.bkrepo.maven.util.MavenModelUtils.toArtifactUri
 import com.tencent.bkrepo.maven.util.MavenModelUtils.toMetadataUri
 import com.tencent.bkrepo.maven.util.MavenModelUtils.toPom
 import com.tencent.bkrepo.maven.util.MavenModelUtils.toPomUri
+import com.tencent.bkrepo.maven.util.MavenModelUtils.toSnapshotArtifactUri
+import com.tencent.bkrepo.maven.util.MavenModelUtils.toSnapshotMetadataUri
+import com.tencent.bkrepo.maven.util.MavenModelUtils.toSnapshotPomUri
+import com.tencent.bkrepo.maven.util.MavenStringUtils.isSnapshotUri
 import com.tencent.bkrepo.maven.util.MavenStringUtils.resolverName
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
@@ -92,7 +100,8 @@ class MavenServiceImpl(
     private val nodeClient: NodeClient,
     private val viewModelService: ViewModelService,
     private val repositoryClient: RepositoryClient,
-    private val storageManager: StorageManager
+    private val storageManager: StorageManager,
+    private val mavenMetadataService: MavenMetadataService
 ) : ArtifactService(), MavenService {
 
     @Value("\${spring.application.name}")
@@ -186,8 +195,6 @@ class MavenServiceImpl(
         return ArtifactContextHolder.getRepository().query(context)
     }
 
-    // todo classifier
-    // todo snapshot
     // todo pom
 
     @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
@@ -202,16 +209,30 @@ class MavenServiceImpl(
                 val tempFile = File.createTempFile("maven-web", "deploy")
                 FileUtils.copyInputStreamToFile(it, tempFile)
                 try {
-                    val model = JarUtils.parseModelInJar(tempFile)
+                    // 依靠文件名后缀判断是否为pom
+                    val model = if (getArtifactFullPath().endsWith(".pom")) {
+                        JarUtils.readModel(tempFile).apply {
+                            if (this.packaging != "pom") {
+                                throw JarFormatException("The packaging of the pom file is not pom")
+                            }
+                        }
+                    } else {
+                        JarUtils.parseModelInJar(tempFile)
+                    }
                     // 尝试解析classifier
-                    val mavenVersion = getArtifactFullPath()
-                            .substringAfterLast("/").resolverName(model.artifactId, model.version)
+                    val classifier = try {
+                        getArtifactFullPath()
+                                .substringAfterLast("/").resolverName(model.artifactId, model.version).classifier
+                    } catch (e: MavenArtifactFormatException) {
+                        logger.warn("Failed to parse classifier for [$projectId, $repoName, ${getArtifactFullPath()}]")
+                        null
+                    }
                     return MavenWebDeployResponse(
                             uuid = getArtifactFullPath(),
                             groupId = model.groupId,
                             artifactId = model.artifactId,
                             version = model.version,
-                            classifier = mavenVersion.classifier,
+                            classifier = classifier,
                             type = model.packaging
                     )
                 } catch (e: JarFormatException) {
@@ -256,23 +277,47 @@ class MavenServiceImpl(
                         ?: throw ErrorCodeException(ArtifactMessageCode.REPOSITORY_NOT_FOUND, repoName)
                 val jarFile = File("$system_temp_dir/${UUID.randomUUID()}", request.uuid.trim('/'))
                 FileUtils.copyInputStreamToFile(it, jarFile)
-                val (pomFile, model) = JarUtils.parsePomInJar(jarFile).apply {
-                    Pair(this.first, JarUtils.processModel(this.second, request))
+                val (pomFile, model) = if (node.name.endsWith(".pom")) {
+                    Pair(jarFile, JarUtils.readModel(jarFile).apply { JarUtils.processModel(this, request) })
+                } else {
+                    JarUtils.parsePomInJar(jarFile).apply {
+                        Pair(this.first, JarUtils.processModel(this.second, request))
+                    }
                 }
-                val mavenVersion = request.uuid
-                        .substringAfterLast("/").resolverName(model.artifactId, model.version)
-                val classifier = if (request.classifier.isNullOrBlank()) mavenVersion.classifier else request.classifier
-                val jarArtifact = createArtifact(mavenArtifactInfo, model, classifier)
-
-                val pomArtifact = createPom(mavenArtifactInfo, model, classifier)
-
-                // todo 删除jar 和 pom 文件
-                // 如果是jar包，需要上传pom文件，如果是pom文件，只需要上传pom 文件本身
-                uploadArtifact(repo, jarArtifact, FileInputStream(jarFile))
-                jarFile.apply { if (this.exists()) delete() }
-                // pom
-                uploadArtifact(repo, pomArtifact, FileInputStream(pomFile))
-                pomFile.apply { if (this.exists()) delete() }
+                // 以mavenVersion是否为空来决定snapshot or release
+                var mavenVersion: MavenVersion? = try {
+                    request.uuid
+                            .substringAfterLast("/").resolverName(model.artifactId, model.version)
+                } catch (e: MavenArtifactFormatException) {
+                    logger.warn("Failed to parse maven version for [$projectId, $repoName, ${request.uuid}]")
+                    null
+                }
+                val classifier = if (request.classifier.isNullOrBlank()) {
+                    mavenVersion?.classifier
+                } else {
+                    request.classifier
+                }
+                // 此处至空，表示是release版本
+                mavenVersion = null
+                // 在接下来的if 中，如果是snapshot版本，会对mavenVersion重新赋值
+                if (model.version.isSnapshotUri()) {
+                    mavenVersion = getSnapshotVersion(mavenArtifactInfo, model, classifier)
+                }
+                logger.info("[ $projectId, $repoName, ${request.uuid} ] maven version is $mavenVersion")
+                if (model.packaging != "pom") {
+                    createArtifact(mavenArtifactInfo, model, mavenVersion, classifier = classifier).let { jarArtifact ->
+                        uploadArtifact(repo, jarArtifact, FileInputStream(jarFile))
+                        jarFile.apply { if (this.exists()) delete() }
+                    }
+                }
+                createPom(mavenArtifactInfo, model, mavenVersion).let { pomArtifact ->
+                    uploadArtifact(repo, pomArtifact, FileInputStream(pomFile))
+                    pomFile.apply { if (this.exists()) delete() }
+                }
+                if (mavenVersion != null) {
+                    // version/maven-metadata.xml
+                    uploadArtifact(repo, createSnapshotMetadata(mavenArtifactInfo, model), "".byteInputStream())
+                }
                 // maven-metadata.xml
                 updateMetadata(repo, model)
             }
@@ -284,6 +329,32 @@ class MavenServiceImpl(
                         fullPath = request.uuid,
                         operator = "maven-web-deploy"
                 )
+        )
+    }
+
+    private fun getSnapshotVersion(
+            mavenArtifactInfo: MavenArtifactInfo,
+            model: Model,
+            classifier: String?
+    ): MavenVersion {
+        val record = mavenMetadataService.findAndModify(
+                MavenMetadataSearchPojo(
+                        projectId = mavenArtifactInfo.projectId,
+                        repoName = mavenArtifactInfo.repoName,
+                        groupId = model.groupId,
+                        artifactId = model.artifactId,
+                        version = model.version,
+                        classifier = classifier,
+                        extension = model.packaging
+                )
+        )
+        return MavenVersion(
+                artifactId = model.artifactId,
+                version = model.version,
+                timestamp = record.timestamp,
+                buildNo = record.buildNo,
+                classifier = classifier,
+                packaging = model.packaging
         )
     }
 
@@ -323,12 +394,17 @@ class MavenServiceImpl(
     private fun createArtifact(
             mavenArtifactInfo: MavenArtifactInfo,
             model: Model,
+            mavenVersion: MavenVersion? = null,
             classifier: String? = null
     ): MavenArtifactInfo {
         return MavenArtifactInfo(
                 projectId = mavenArtifactInfo.projectId,
                 repoName = mavenArtifactInfo.repoName,
-                artifactUri = model.toArtifactUri(classifier),
+                artifactUri = if (mavenVersion == null) {
+                    model.toArtifactUri(classifier)
+                } else {
+                    model.toSnapshotArtifactUri(mavenVersion)
+                }
         ).apply {
             this.groupId = model.groupId
             this.artifactId = model.artifactId
@@ -337,20 +413,35 @@ class MavenServiceImpl(
         }
     }
 
-    private fun createPom(
+    private fun createSnapshotMetadata(
             mavenArtifactInfo: MavenArtifactInfo,
             model: Model,
-            classifier: String? = null
     ): MavenArtifactInfo {
         return MavenArtifactInfo(
                 projectId = mavenArtifactInfo.projectId,
                 repoName = mavenArtifactInfo.repoName,
-                artifactUri = model.toPomUri(classifier),
+                artifactUri = model.toSnapshotMetadataUri(),
+        )
+    }
+
+    private fun createPom(
+            mavenArtifactInfo: MavenArtifactInfo,
+            model: Model,
+            mavenVersion: MavenVersion? = null
+    ): MavenArtifactInfo {
+        return MavenArtifactInfo(
+                projectId = mavenArtifactInfo.projectId,
+                repoName = mavenArtifactInfo.repoName,
+                artifactUri = if (mavenVersion == null) {
+                    model.toPomUri()
+                } else {
+                    model.toSnapshotPomUri(mavenVersion)
+                }
         ).apply {
             this.groupId = model.groupId
             this.artifactId = model.artifactId
             this.versionId = model.version
-            this.jarName = model.toPom(classifier)
+            this.jarName = model.toPom()
         }
     }
 

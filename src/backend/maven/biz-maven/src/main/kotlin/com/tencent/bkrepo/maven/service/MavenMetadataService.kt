@@ -157,6 +157,9 @@ class MavenMetadataService(
         return mavenMetadataDao.find(query)
     }
 
+    /**
+     * 查询最新snapshot版本记录, 并更新snapshot版本记录:timestamp根据当前时间生成, buildNo根据当前最大buildNo+1生成
+     */
     fun findAndModify(mavenMetadataSearchPojo: MavenMetadataSearchPojo): TMavenMetadataRecord {
         logger.info(
             "findAndModify metadata groupId[${mavenMetadataSearchPojo.groupId}], " +

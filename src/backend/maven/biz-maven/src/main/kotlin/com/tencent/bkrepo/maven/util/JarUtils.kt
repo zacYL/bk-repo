@@ -52,8 +52,7 @@ object JarUtils {
         val jar = try {
             JarFile(jarFile)
         } catch (e: IOException) {
-            // try to read as .pom file
-            return readModel(jarFile).apply { processModel(this) }
+            throw JarFormatException("only jar file is supported")
         }
         val entries = jar.entries()
         while (entries.hasMoreElements()) {
@@ -67,7 +66,7 @@ object JarUtils {
         throw JarFormatException("pom.xml not found")
     }
 
-    private fun readModel(pomFile: File): Model {
+    fun readModel(pomFile: File): Model {
         return try {
             FileInputStream(pomFile).use {
                 readModel(it)
@@ -103,6 +102,9 @@ object JarUtils {
         }
     }
 
+    /**
+     * 按照请求参数构建model
+     */
     fun processModel(model: Model, request: MavenWebDeployRequest) {
         with(request) {
             if (groupId != null && groupId!!.isNotBlank() && request.groupId != model.groupId) {
@@ -113,6 +115,10 @@ object JarUtils {
             }
             if (version != null && version!!.isNotBlank() && request.version != model.version) {
                 model.version = request.version
+            }
+            if (type != null && type!!.isNotBlank() && request.type != model.packaging) {
+                if(model.packaging == "pom") return@with
+                model.packaging = request.type
             }
         }
     }

@@ -98,6 +98,19 @@ interface RepositoryService {
     ): List<RepositoryInfo>
 
     /**
+     * 查询项目下的有权限的依赖仓库列表
+     *
+     * @param userId 用户id
+     * @param projectId 项目id
+     * @param option 仓库查询选项
+     */
+    fun listPermissionPackageRepo(
+        userId: String,
+        projectId: String,
+        option: RepoListOption
+    ): List<RepositoryInfo>
+
+    /**
      * 分页查询项目下的有权限的仓库列表
      *
      * @param userId 用户id

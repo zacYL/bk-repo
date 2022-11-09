@@ -153,6 +153,16 @@ class RepositoryServiceImpl(
         return Pages.ofResponse(pageRequest, totalRecords, records)
     }
 
+    override fun listPermissionPackageRepo(
+        userId: String,
+        projectId: String,
+        option: RepoListOption
+    ): List<RepositoryInfo> {
+        return listPermissionRepo(userId, projectId, option).filter {
+            it.type != RepositoryType.GENERIC
+        }
+    }
+
     override fun listPermissionRepo(
         userId: String,
         projectId: String,

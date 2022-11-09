@@ -68,6 +68,7 @@
     "configuration": null,
     "coverStrategy": "UNCOVER"
   }
+  ```
 ```
   
 - 请求字段说明
@@ -90,7 +91,7 @@
     "data": null,
     "traceId": null
   }
-  ```
+```
 
 ## 删除仓库
 
@@ -342,6 +343,72 @@
   |quota|long|仓库配额，单位字节，值为nul时表示未设置仓库配额|repo quota|
   |used|long|仓库已使用容量，单位字节|repo used volume|
   |coverStrategy|string|覆盖策略|cover strategy|
+
+## 列表查询依赖仓库
+
+- API: GET /repository/api/repo/list/package/{projectId}?name=local&type=MAVEN
+
+- API 名称: list_repo
+
+- 功能说明：
+
+  - 中文：列表查询依赖仓库
+  - English：list repo
+
+- 请求体
+  此接口无请求体
+
+- 请求字段说明
+
+  | 字段      | 类型   | 是否必须 | 默认值 | 说明                       | Description  |
+  | --------- | ------ | -------- | ------ | -------------------------- | ------------ |
+  | projectId | string | 是       | 无     | 项目名称                   | project name |
+  | name      | string | 否       | 无     | 仓库名称，支持前缀模糊匹配 | repo name    |
+  | type      | string | 否       | 无     | 仓库类型，枚举值           | repo type    |
+
+- 响应体
+
+  ```json
+  {
+    "code": 0,
+    "message": null,
+    "data": [
+      {
+        "projectId" : "test",
+        "name" : "local",
+        "type" : "GENERIC",
+        "category" : "LOCAL",
+        "public" : false,
+        "description" : "",
+        "createdBy" : "system",
+        "createdDate" : "2020-03-16T12:13:03.371",
+        "lastModifiedBy" : "system",
+        "lastModifiedDate" : "2020-03-16T12:13:03.371",
+        "quota": 1024,
+        "used": 100
+      }
+    ],
+    "traceId": null
+  }
+  ```
+
+- data字段说明
+
+  | 字段             | 类型    | 说明                                            | Description      |
+  | ---------------- | ------- | ----------------------------------------------- | ---------------- |
+  | projectId        | string  | 项目id                                          | project id       |
+  | name             | string  | 仓库名称                                        | repo name        |
+  | type             | string  | 仓库类型                                        | repo type        |
+  | category         | string  | 仓库类别                                        | repo category    |
+  | public           | boolean | 是否公开项目                                    | is public repo   |
+  | description      | string  | 仓库描述                                        | repo description |
+  | createdBy        | string  | 创建者                                          | create user      |
+  | createdDate      | string  | 创建时间                                        | create time      |
+  | lastModifiedBy   | string  | 上次修改者                                      | last modify user |
+  | lastModifiedDate | string  | 上次修改时间                                    | last modify time |
+  | quota            | long    | 仓库配额，单位字节，值为nul时表示未设置仓库配额 | repo quota       |
+  | used             | long    | 仓库已使用容量，单位字节                        | repo used volume |
+  | coverStrategy    | string  | 覆盖策略                                        | cover strategy   |
 
 ## 查询仓库配额
 

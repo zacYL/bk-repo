@@ -2,8 +2,7 @@ package com.tencent.bkrepo.docker.event
 
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.event.base.EventType
-import com.tencent.bkrepo.common.artifact.event.packages.RepositoryCleanEvent
-import com.tencent.bkrepo.common.artifact.event.packages.VersionDeletedEvent
+import com.tencent.bkrepo.common.artifact.event.repo.RepositoryCleanEvent
 import com.tencent.bkrepo.docker.constant.REPO_TYPE
 import com.tencent.bkrepo.docker.service.DockerDeleteService
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER

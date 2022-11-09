@@ -234,7 +234,8 @@ class LocalDataManager(
             repoName = repoName,
             path = fullPath,
             includeFolder = true,
-            deep = false
+            deep = false,
+            includeMetadata = true
         ).data
         check(nodes != null) { "Local packages not found" }
         return nodes

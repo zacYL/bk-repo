@@ -103,7 +103,6 @@ class NpmLocalRepository(
     }
 
     override fun buildNodeCreateRequest(context: ArtifactUploadContext): NodeCreateRequest {
-        logger.info("npm repo[${context.repoName}] coverStrategy:${context.repositoryDetail.coverStrategy}")
         return NodeCreateRequest(
             projectId = context.projectId,
             repoName = context.repoName,
@@ -113,7 +112,7 @@ class NpmLocalRepository(
             sha256 = context.getArtifactSha256(),
             md5 = context.getArtifactMd5(),
             operator = context.userId,
-            overwrite = context.repositoryDetail.coverStrategy != CoverStrategy.UNCOVER
+            overwrite = true
         )
     }
 

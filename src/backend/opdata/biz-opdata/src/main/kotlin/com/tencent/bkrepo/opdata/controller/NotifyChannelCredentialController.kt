@@ -53,7 +53,7 @@ class NotifyChannelCredentialController(
 ) {
     @ApiOperation("创建通知渠道凭据")
     @PostMapping
-    @LogOperate(type = "NOTIFY_CREATE")
+    @LogOperate(type = "NOTIFY_CREATE", desensitize = true)
     fun create(@RequestBody credential: NotifyChannelCredential): Response<NotifyChannelCredential> {
         return ResponseBuilder.success(notifyChannelCredentialService.create(SecurityUtils.getUserId(), credential))
     }
@@ -68,7 +68,7 @@ class NotifyChannelCredentialController(
 
     @ApiOperation("更新通知渠道凭据")
     @PutMapping("/{name}")
-    @LogOperate(type = "SCANNER_UPDATE")
+    @LogOperate(type = "NOTIFY_UPDATE", desensitize = true)
     fun update(
         @PathVariable name: String,
         @RequestBody credential: NotifyChannelCredential

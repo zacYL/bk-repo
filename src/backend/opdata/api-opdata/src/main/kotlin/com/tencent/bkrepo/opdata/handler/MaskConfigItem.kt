@@ -25,33 +25,33 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.opdata.pojo.config
+package com.tencent.bkrepo.opdata.handler
 
-import com.tencent.bkrepo.common.api.exception.BadRequestException
-import com.tencent.bkrepo.common.operate.api.annotation.Sensitive
-import com.tencent.bkrepo.opdata.handler.MaskConfigItem
-import com.tencent.bkrepo.opdata.message.OpDataMessageCode
+import com.tencent.bkrepo.common.operate.api.handler.AbsSensitiveHandler
+import com.tencent.bkrepo.common.operate.api.handler.MaskPartString
+import com.tencent.bkrepo.opdata.pojo.config.ConfigItem
 
-/**
- * 配置项
- */
-@Sensitive(handler = MaskConfigItem::class)
-data class ConfigItem(
-    val key: String,
-    val value: Any?
-) {
-    /**
-     * 校验value类型是否为String, Number, Boolean
-     */
-    fun validateValueType() {
-        if (value == null) {
-            return
+class MaskConfigItem : AbsSensitiveHandler() {
+    private val maskPartString = MaskPartString()
+
+    override fun doDesensitize(sensitiveObj: Any): Any {
+        require(sensitiveObj is ConfigItem)
+        return if (shouldMask(sensitiveObj)) {
+            sensitiveObj.copy(value = sensitiveObj.value?.let { maskPartString.desensitize(it) })
+        } else {
+            sensitiveObj.copy()
         }
+    }
 
-        if (value is String || value is Number || value is Boolean) {
-            return
-        }
+    override fun supportTypes(): List<Class<*>> {
+        return listOf(ConfigItem::class.java)
+    }
 
-        throw BadRequestException(OpDataMessageCode.ConfigValueTypeInvalid)
+    private fun shouldMask(configItem: ConfigItem): Boolean {
+        return KEYS.any { configItem.key.contains(it, ignoreCase = true) }
+    }
+
+    companion object {
+        private val KEYS = arrayOf("token", "auth", "password", "pwd", "secret", "sasl", "mongodb.uri", "privateKey")
     }
 }

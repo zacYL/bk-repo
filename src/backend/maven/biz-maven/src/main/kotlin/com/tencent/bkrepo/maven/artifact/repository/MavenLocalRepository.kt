@@ -61,11 +61,11 @@ import com.tencent.bkrepo.maven.constants.PACKAGE_SUFFIX_REGEX
 import com.tencent.bkrepo.maven.constants.SNAPSHOT_SUFFIX
 import com.tencent.bkrepo.maven.constants.X_CHECKSUM_SHA1
 import com.tencent.bkrepo.maven.enum.HashType
-import com.tencent.bkrepo.maven.enum.MavenMessageCode
 import com.tencent.bkrepo.maven.enum.SnapshotBehaviorType
 import com.tencent.bkrepo.maven.exception.ConflictException
 import com.tencent.bkrepo.maven.exception.MavenArtifactNotFoundException
 import com.tencent.bkrepo.maven.exception.MavenRequestForbiddenException
+import com.tencent.bkrepo.maven.message.MavenMessageCode
 import com.tencent.bkrepo.maven.model.TMavenMetadataRecord
 import com.tencent.bkrepo.maven.pojo.Basic
 import com.tencent.bkrepo.maven.pojo.MavenArtifactVersionData
@@ -1163,6 +1163,7 @@ class MavenLocalRepository(
                 projectId, repoName, trueVersion.contentPath!!
             ).data ?: return null
             val type = (jarNode.metadata["packaging"] as? String) ?: "jar"
+            val classifier = jarNode.metadata["classifier"] as? String
             val stageTag = stageClient.query(projectId, repoName, packageKey, version).data
             val packageVersion = packageClient.findVersionByName(
                 projectId, repoName, packageKey, version
@@ -1174,6 +1175,7 @@ class MavenLocalRepository(
                 groupId,
                 artifactId,
                 version,
+                classifier,
                 if (type == "jar") null else type,
                 jarNode.size, jarNode.fullPath,
                 jarNode.createdBy, createdDate,

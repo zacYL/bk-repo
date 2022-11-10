@@ -14,7 +14,7 @@ Content-Disposition: form-data; name="file"; filename="file.csv"
 %}
 
 ### 确认上传信息
-POST 127.0.0.1:25803/deploy/test/maven
+POST {{mavenHost}}/deploy/{{project}}/{{repo}}
 Authorization: Basic {{username}} {{password}}
 Content-Type: application/json
 {
@@ -27,6 +27,10 @@ Content-Type: application/json
     });
 %}
 
-###
+### test1
+GET {{mavenHost}}/deploy/{{project}}/{{repo}}/abc
+Accept: application/json
+
+### test2
 GET 127.0.0.1:25803/test/maven/abc
 Accept: application/json

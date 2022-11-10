@@ -109,16 +109,16 @@ class MavenServiceImpl(
 
     @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
     override fun deploy(
-            mavenArtifactInfo: MavenArtifactInfo,
-            file: ArtifactFile
+        mavenArtifactInfo: MavenArtifactInfo,
+        file: ArtifactFile
     ) {
         val context = ArtifactUploadContext(file)
         try {
             ArtifactContextHolder.getRepository().upload(context)
         } catch (e: PatternSyntaxException) {
             logger.warn(
-                    "Error [${e.message}] occurred during uploading ${mavenArtifactInfo.getArtifactFullPath()} " +
-                            "in repo ${mavenArtifactInfo.getRepoIdentify()}"
+                "Error [${e.message}] occurred during uploading ${mavenArtifactInfo.getArtifactFullPath()} " +
+                    "in repo ${mavenArtifactInfo.getRepoIdentify()}"
             )
             throw MavenBadRequestException(e.message)
         }
@@ -155,19 +155,19 @@ class MavenServiceImpl(
             viewModelService.trailingSlash(applicationName)
             // listNodePage 接口没办法满足当前情况
             val nodeList = nodeClient.listNode(
-                    projectId = projectId,
-                    repoName = repoName,
-                    path = getArtifactFullPath(),
-                    includeFolder = true,
-                    deep = false
+                projectId = projectId,
+                repoName = repoName,
+                path = getArtifactFullPath(),
+                includeFolder = true,
+                deep = false
             ).data
             val currentPath = viewModelService.computeCurrentPath(node)
             val headerList = listOf(
-                    HeaderItem("Name"),
-                    HeaderItem("Created by"),
-                    HeaderItem("Last modified"),
-                    HeaderItem("Size"),
-                    HeaderItem("Sha256")
+                HeaderItem("Name"),
+                HeaderItem("Created by"),
+                HeaderItem("Last modified"),
+                HeaderItem("Size"),
+                HeaderItem("Sha256")
             )
             val itemList = nodeList?.map { NodeListViewItem.from(it) }?.sorted()
             val rowList = itemList?.map {
@@ -222,28 +222,28 @@ class MavenServiceImpl(
                     // 尝试解析classifier
                     val classifier = try {
                         getArtifactFullPath()
-                                .substringAfterLast("/").resolverName(model.artifactId, model.version).classifier
+                            .substringAfterLast("/").resolverName(model.artifactId, model.version).classifier
                     } catch (e: MavenArtifactFormatException) {
                         logger.warn("Failed to parse classifier for [$projectId, $repoName, ${getArtifactFullPath()}]")
                         null
                     }
                     return MavenWebDeployResponse(
-                            uuid = getArtifactFullPath(),
-                            groupId = model.groupId,
-                            artifactId = model.artifactId,
-                            version = model.version,
-                            classifier = classifier,
-                            type = model.packaging
+                        uuid = getArtifactFullPath(),
+                        groupId = model.groupId,
+                        artifactId = model.artifactId,
+                        version = model.version,
+                        classifier = classifier,
+                        type = model.packaging
                     )
                 } catch (e: JarFormatException) {
                     logger.error("Fail to parse the pom file in the jar file", e)
                     nodeClient.deleteNode(
-                            NodeDeleteRequest(
-                                    projectId = projectId,
-                                    repoName = repoName,
-                                    fullPath = getArtifactFullPath(),
-                                    operator = "maven-web-deploy"
-                            )
+                        NodeDeleteRequest(
+                            projectId = projectId,
+                            repoName = repoName,
+                            fullPath = getArtifactFullPath(),
+                            operator = "maven-web-deploy"
+                        )
                     )
                     throw e
                 } finally {
@@ -255,26 +255,26 @@ class MavenServiceImpl(
 
     private fun buildMavenWebDeployNode(mavenArtifactInfo: MavenArtifactInfo, file: ArtifactFile): NodeCreateRequest {
         return NodeCreateRequest(
-                projectId = mavenArtifactInfo.projectId,
-                repoName = mavenArtifactInfo.repoName,
-                fullPath = mavenArtifactInfo.getArtifactFullPath(),
-                folder = false,
-                overwrite = false,
-                expires = 0L,
-                md5 = file.getFileMd5(),
-                sha256 = file.getFileSha256(),
-                size = file.getSize(),
-                operator = SecurityUtils.getUserId()
+            projectId = mavenArtifactInfo.projectId,
+            repoName = mavenArtifactInfo.repoName,
+            fullPath = mavenArtifactInfo.getArtifactFullPath(),
+            folder = false,
+            overwrite = true,
+            expires = 0L,
+            md5 = file.getFileMd5(),
+            sha256 = file.getFileSha256(),
+            size = file.getSize(),
+            operator = SecurityUtils.getUserId()
         )
     }
 
     override fun verifyDeploy(mavenArtifactInfo: MavenArtifactInfo, request: MavenWebDeployRequest) {
         with(mavenArtifactInfo) {
             val node = nodeClient.getNodeDetail(projectId, repoName, request.uuid).data
-                    ?: throw NodeNotFoundException(request.uuid)
+                ?: throw NodeNotFoundException(request.uuid)
             storageManager.loadArtifactInputStream(node, null)?.use {
                 val repo = repositoryClient.getRepoDetail(projectId, repoName).data
-                        ?: throw ErrorCodeException(ArtifactMessageCode.REPOSITORY_NOT_FOUND, repoName)
+                    ?: throw ErrorCodeException(ArtifactMessageCode.REPOSITORY_NOT_FOUND, repoName)
                 val jarFile = File("$system_temp_dir/${UUID.randomUUID()}", request.uuid.trim('/'))
                 FileUtils.copyInputStreamToFile(it, jarFile)
                 val (pomFile, model) = if (node.name.endsWith(".pom")) {
@@ -287,7 +287,7 @@ class MavenServiceImpl(
                 // 以mavenVersion是否为空来决定snapshot or release
                 var mavenVersion: MavenVersion? = try {
                     request.uuid
-                            .substringAfterLast("/").resolverName(model.artifactId, model.version)
+                        .substringAfterLast("/").resolverName(model.artifactId, model.version)
                 } catch (e: MavenArtifactFormatException) {
                     logger.warn("Failed to parse maven version for [$projectId, $repoName, ${request.uuid}]")
                     null
@@ -323,38 +323,38 @@ class MavenServiceImpl(
             }
         }
         nodeClient.deleteNode(
-                NodeDeleteRequest(
-                        projectId = mavenArtifactInfo.projectId,
-                        repoName = mavenArtifactInfo.repoName,
-                        fullPath = request.uuid,
-                        operator = "maven-web-deploy"
-                )
+            NodeDeleteRequest(
+                projectId = mavenArtifactInfo.projectId,
+                repoName = mavenArtifactInfo.repoName,
+                fullPath = request.uuid,
+                operator = "maven-web-deploy"
+            )
         )
     }
 
     private fun getSnapshotVersion(
-            mavenArtifactInfo: MavenArtifactInfo,
-            model: Model,
-            classifier: String?
+        mavenArtifactInfo: MavenArtifactInfo,
+        model: Model,
+        classifier: String?
     ): MavenVersion {
         val record = mavenMetadataService.findAndModify(
-                MavenMetadataSearchPojo(
-                        projectId = mavenArtifactInfo.projectId,
-                        repoName = mavenArtifactInfo.repoName,
-                        groupId = model.groupId,
-                        artifactId = model.artifactId,
-                        version = model.version,
-                        classifier = classifier,
-                        extension = model.packaging
-                )
-        )
-        return MavenVersion(
+            MavenMetadataSearchPojo(
+                projectId = mavenArtifactInfo.projectId,
+                repoName = mavenArtifactInfo.repoName,
+                groupId = model.groupId,
                 artifactId = model.artifactId,
                 version = model.version,
-                timestamp = record.timestamp,
-                buildNo = record.buildNo,
                 classifier = classifier,
-                packaging = model.packaging
+                extension = model.packaging
+            )
+        )
+        return MavenVersion(
+            artifactId = model.artifactId,
+            version = model.version,
+            timestamp = record.timestamp,
+            buildNo = record.buildNo,
+            classifier = classifier,
+            packaging = model.packaging
         )
     }
 
@@ -381,9 +381,9 @@ class MavenServiceImpl(
 
         // 上传maven-metadata.xml
         val metadataArtifact = MavenArtifactInfo(
-                projectId = repo.projectId,
-                repoName = repo.name,
-                artifactUri = model.toMetadataUri(),
+            projectId = repo.projectId,
+            repoName = repo.name,
+            artifactUri = model.toMetadataUri(),
         )
         ByteArrayOutputStream().use { metadataStream ->
             MetadataXpp3Writer().write(metadataStream, mavenMetadata)
@@ -392,19 +392,19 @@ class MavenServiceImpl(
     }
 
     private fun createArtifact(
-            mavenArtifactInfo: MavenArtifactInfo,
-            model: Model,
-            mavenVersion: MavenVersion? = null,
-            classifier: String? = null
+        mavenArtifactInfo: MavenArtifactInfo,
+        model: Model,
+        mavenVersion: MavenVersion? = null,
+        classifier: String? = null
     ): MavenArtifactInfo {
         return MavenArtifactInfo(
-                projectId = mavenArtifactInfo.projectId,
-                repoName = mavenArtifactInfo.repoName,
-                artifactUri = if (mavenVersion == null) {
-                    model.toArtifactUri(classifier)
-                } else {
-                    model.toSnapshotArtifactUri(mavenVersion)
-                }
+            projectId = mavenArtifactInfo.projectId,
+            repoName = mavenArtifactInfo.repoName,
+            artifactUri = if (mavenVersion == null) {
+                model.toArtifactUri(classifier)
+            } else {
+                model.toSnapshotArtifactUri(mavenVersion)
+            }
         ).apply {
             this.groupId = model.groupId
             this.artifactId = model.artifactId
@@ -414,29 +414,29 @@ class MavenServiceImpl(
     }
 
     private fun createSnapshotMetadata(
-            mavenArtifactInfo: MavenArtifactInfo,
-            model: Model,
+        mavenArtifactInfo: MavenArtifactInfo,
+        model: Model,
     ): MavenArtifactInfo {
         return MavenArtifactInfo(
-                projectId = mavenArtifactInfo.projectId,
-                repoName = mavenArtifactInfo.repoName,
-                artifactUri = model.toSnapshotMetadataUri(),
+            projectId = mavenArtifactInfo.projectId,
+            repoName = mavenArtifactInfo.repoName,
+            artifactUri = model.toSnapshotMetadataUri(),
         )
     }
 
     private fun createPom(
-            mavenArtifactInfo: MavenArtifactInfo,
-            model: Model,
-            mavenVersion: MavenVersion? = null
+        mavenArtifactInfo: MavenArtifactInfo,
+        model: Model,
+        mavenVersion: MavenVersion? = null
     ): MavenArtifactInfo {
         return MavenArtifactInfo(
-                projectId = mavenArtifactInfo.projectId,
-                repoName = mavenArtifactInfo.repoName,
-                artifactUri = if (mavenVersion == null) {
-                    model.toPomUri()
-                } else {
-                    model.toSnapshotPomUri(mavenVersion)
-                }
+            projectId = mavenArtifactInfo.projectId,
+            repoName = mavenArtifactInfo.repoName,
+            artifactUri = if (mavenVersion == null) {
+                model.toPomUri()
+            } else {
+                model.toSnapshotPomUri(mavenVersion)
+            }
         ).apply {
             this.groupId = model.groupId
             this.artifactId = model.artifactId
@@ -449,9 +449,9 @@ class MavenServiceImpl(
         inputStream.use {
             ArtifactFileFactory.build(it).apply {
                 ArtifactUploadContext(
-                        repo = repo,
-                        artifactFile = this,
-                        artifactInfo = artifact,
+                    repo = repo,
+                    artifactFile = this,
+                    artifactInfo = artifact,
                 ).apply { repository.upload(this) }
                 this.delete()
             }

@@ -35,6 +35,7 @@ import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
 import com.tencent.bkrepo.maven.pojo.request.MavenWebDeployRequest
 import com.tencent.bkrepo.maven.pojo.response.MavenWebDeployResponse
 import com.tencent.bkrepo.maven.service.MavenService
+import com.tencent.bkrepo.maven.util.DeployUtils.validate
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -57,17 +58,18 @@ class MavenResourceController(
 
     @PutMapping("/deploy/{projectId}/{repoName}/*")
     fun fileDeploy(
-            mavenArtifactInfo: MavenArtifactInfo,
-            file: ArtifactFile
+        mavenArtifactInfo: MavenArtifactInfo,
+        file: ArtifactFile
     ): Response<MavenWebDeployResponse> {
         return ResponseBuilder.success(mavenService.fileDeploy(mavenArtifactInfo, file))
     }
 
     @PostMapping("/deploy/{projectId}/{repoName}")
     fun verifyDeploy(
-            mavenArtifactInfo: MavenArtifactInfo,
-            @RequestBody request: MavenWebDeployRequest,
+        mavenArtifactInfo: MavenArtifactInfo,
+        @RequestBody request: MavenWebDeployRequest,
     ) {
+        request.validate()
         mavenService.verifyDeploy(mavenArtifactInfo, request)
     }
 

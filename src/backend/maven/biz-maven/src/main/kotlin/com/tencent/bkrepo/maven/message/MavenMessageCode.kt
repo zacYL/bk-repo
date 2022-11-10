@@ -37,7 +37,10 @@ enum class MavenMessageCode(private val key: String) : MessageCode {
 
     SUCCESS("success") { override fun getCode() = 0 },
 
-    FILE_RESOLVE_FAILED("file.resolve.failed")
+    CHECKSUM_CONFLICT("checksum.conflict"),
+    FILE_RESOLVE_FAILED("file.resolve.failed"),
+    PARAMETER_CONTAINS_INVALID("parameter.contains.invalid"),
+    PARAMETER_EXPECT("parameter.expect")
     ;
 
     override fun getBusinessCode() = ordinal + 1

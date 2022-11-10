@@ -97,6 +97,9 @@ module: **repository**
   | classifier | String | 无     | 否（不传则由服务端解析） | classifier | classifier  |
   | type       | String | 无     | 否（不传则由服务端解析） | type       | type        |
 
+  **`上一步接口服务返回type=pom 时，考虑实际需求，修改该字段将无效`**
+  
+  参数校验规则如下：`groupId`, `artifactId` 符合如下正则：`[a-zA-Z0-9_\-.]+` ; `version`不允许出现如下字符：`\/:"<>|?*[](){},`
 * 响应体
 
   ```json

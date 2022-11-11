@@ -195,8 +195,6 @@ class MavenServiceImpl(
         return ArtifactContextHolder.getRepository().query(context)
     }
 
-    // todo pom
-
     @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
     override fun fileDeploy(mavenArtifactInfo: MavenArtifactInfo, file: ArtifactFile): MavenWebDeployResponse {
         val context = ArtifactUploadContext(file)

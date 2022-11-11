@@ -10,7 +10,7 @@ module: **repository**
 
 ## 上传文件
 
-* API: POST /deploy/{projectId}/{repoName}/{filename}
+* API: PUT /deploy/{projectId}/{repoName}/{filename}
 
 * API 名称: deploy_artifact
 
@@ -63,7 +63,7 @@ module: **repository**
 
 ## 确认上传信息后提交任务
 
-* API: PUT /deploy/{projectId}/{repoName}
+* API: POST /deploy/{projectId}/{repoName}
 
 * API 名称: verify_deploy_artifact
 

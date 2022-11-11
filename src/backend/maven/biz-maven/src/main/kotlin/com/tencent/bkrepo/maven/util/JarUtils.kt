@@ -84,7 +84,7 @@ object JarUtils {
         return try {
             ReaderFactory.newXmlReader(inputStream).use {
                 MavenXpp3Reader().read(it)
-            }
+            }.apply { processModel(this) }
         } catch (e: IOException) {
             logger.error("Error reading POM ", e)
             throw JarFormatException("")
@@ -99,6 +99,7 @@ object JarUtils {
         with(model) {
             if (groupId == null) groupId = parent?.groupId
             if (version == null) version = parent?.version
+            if (packaging == "bundle") packaging = "jar"
         }
     }
 

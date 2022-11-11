@@ -110,7 +110,7 @@
                     ? [
                         { key: 'artifactCount', label: '扫描制品数量' },
                         { key: 'total', label: '许可证总数' },
-                        { key: 'unRecommend', label: '不推荐使用数' },
+                        { key: 'unRecommend', label: '废弃许可证数' },
                         { key: 'unknown', label: '未知许可证数' },
                         { key: 'unCompliance', label: '不合规数' }
                     ]

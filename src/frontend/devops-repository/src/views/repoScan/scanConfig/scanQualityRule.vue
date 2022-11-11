@@ -6,7 +6,7 @@
         <template v-if="scanType.includes('LICENSE')">
             <bk-form-item label="规则设置" property="recommend" error-display-type="normal">
                 <div style="color:var(--fontSubsidiaryColor);">当许可证中出现不符合以下规则的许可证时，则不通过质量规则</div>
-                <div class="mt10"><bk-checkbox :disabled="!editable" v-model="rule.recommend">仅有推荐使用的许可证</bk-checkbox></div>
+                <div class="mt10"><bk-checkbox :disabled="!editable" v-model="rule.recommend">仅有可用许可证</bk-checkbox></div>
                 <div class="mt10"><bk-checkbox :disabled="!editable" v-model="rule.compliance">仅有合规的许可证</bk-checkbox></div>
                 <div class="mt10"><bk-checkbox :disabled="!editable" v-model="rule.unknown">无未知许可证</bk-checkbox></div>
             </bk-form-item>

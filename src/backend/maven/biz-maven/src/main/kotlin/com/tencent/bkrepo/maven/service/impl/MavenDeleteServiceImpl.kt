@@ -10,7 +10,7 @@ import com.tencent.bkrepo.maven.enum.HashType
 import com.tencent.bkrepo.maven.pojo.MavenGAVC
 import com.tencent.bkrepo.maven.service.MavenDeleteService
 import com.tencent.bkrepo.maven.service.MavenMetadataService
-import com.tencent.bkrepo.maven.util.MavenMetadataUtils.deleteVersioning
+import com.tencent.bkrepo.maven.util.MavenMetadataUtils.reRender
 import com.tencent.bkrepo.maven.util.MavenUtil
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.PackageClient
@@ -43,7 +43,7 @@ class MavenDeleteServiceImpl(
         operator: String
     ): Boolean {
         packageClient.deleteVersion(projectId, repoName, packageKey, version)
-        val artifactPath = MavenUtil.extractPath(packageKey) + "/${version}"
+        val artifactPath = MavenUtil.extractPath(packageKey) + "/$version"
         // 需要删除对应的metadata表记录
         val (artifactId, groupId) = MavenUtil.extractGrounpIdAndArtifactId(packageKey)
         val mavenGAVC = MavenGAVC(groupId, artifactId, version, null)
@@ -66,7 +66,10 @@ class MavenDeleteServiceImpl(
     }
 
     private fun updatePackageMetadata(
-        projectId: String, repoName: String, artifactPath: String, mavenGavc: MavenGAVC
+        projectId: String,
+        repoName: String,
+        artifactPath: String,
+        mavenGavc: MavenGAVC
     ) {
         val repositoryDetail = repositoryClient.getRepoDetail(projectId, repoName, RepositoryType.MAVEN.name).data
             ?: throw RepoNotFoundException("repo not found: { projectId=$projectId, repoName=$repoName }")
@@ -84,7 +87,7 @@ class MavenDeleteServiceImpl(
                 nodeClient.deleteNode(NodeDeleteRequest(projectId, repoName, node.fullPath, operator))
                 return
             }
-            mavenMetadata.deleteVersioning()
+            mavenMetadata.reRender()
             storeMetadataXml(repositoryDetail, mavenMetadata, node, operator)
         }
     }
@@ -142,12 +145,12 @@ class MavenDeleteServiceImpl(
             md5 = metadataArtifact.getFileMd5(),
             operator = operator
         )
-        storageManager.storeArtifactFile(metadataNode, metadataArtifact,repositoryDetail.storageCredentials)
+        storageManager.storeArtifactFile(metadataNode, metadataArtifact, repositoryDetail.storageCredentials)
         metadataArtifact.delete()
         logger.info("Success to save $fullPath, size: ${metadataArtifact.getSize()}")
     }
 
-    companion object{
+    companion object {
         val logger: Logger = LoggerFactory.getLogger(MavenDeleteServiceImpl::class.java)
     }
 }

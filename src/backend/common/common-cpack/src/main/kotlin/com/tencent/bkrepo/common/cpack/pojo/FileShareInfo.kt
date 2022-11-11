@@ -6,5 +6,5 @@ data class FileShareInfo(
     val projectId: String,
     val repoName: String,
     val downloadUrl: String,
-    val qrCodeBase64: String
+    val qrCodeBase64: String?
 )

@@ -57,7 +57,7 @@ class MailServiceImpl(
             downloadUrl = content,
             qrCodeBase64 = if (nodeDetail.name.endsWith("apk") || nodeDetail.name.endsWith("ipa")) {
                 QRUtils.getQRCodeBase64(content)
-            } else "null"
+            } else null
         )
 
         val token = content.substringAfterLast("&token=").removeSuffix("&download=true")
@@ -98,7 +98,7 @@ class MailServiceImpl(
             downloadUrl = content,
             qrCodeBase64 = if (nodeDetail.name.endsWith("apk") || nodeDetail.name.endsWith("ipa")) {
                 QRUtils.getQRCodeBase64(content)
-            } else "null"
+            } else null
         )
 
         val token = content.substringAfterLast("&token=").removeSuffix("&download=true")

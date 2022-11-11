@@ -1,0 +1,36 @@
+### 上传文件jar
+PUT {{mavenHost}}/deploy/{{project}}/{{repo}}/commons-lang3-3.12.0.jar
+Authorization: Basic {{username}} {{password}}
+Content-Type: application/java-archive; boundary=boundary
+--boundary
+Content-Disposition: form-data; name="file"; filename="file.csv"
+@./file/commons-lang3-3.12.0.jar
+--boundary
+
+> {%
+    client.test('Request executed successfully', function() {
+        client.assert(response.status === 200, 'Response status is not 200');
+    });
+%}
+
+### 确认上传信息
+POST {{mavenHost}}/deploy/{{project}}/{{repo}}
+Authorization: Basic {{username}} {{password}}
+Content-Type: application/json
+{
+    "uuid": "commons-lang3-3.12.0.jar"
+}
+
+> {%
+    client.test('Request executed successfully', function() {
+        client.assert(response.status === 200, 'Response status is not 200');
+    });
+%}
+
+### test1
+GET {{mavenHost}}/deploy/{{project}}/{{repo}}/abc
+Accept: application/json
+
+### test2
+GET 127.0.0.1:25803/test/maven/abc
+Accept: application/json

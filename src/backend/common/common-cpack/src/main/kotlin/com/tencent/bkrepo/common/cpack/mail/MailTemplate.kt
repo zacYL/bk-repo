@@ -258,8 +258,8 @@ object MailTemplate {
                                                     "style"("color: #3c96ff")
                                                     "href"(it.downloadUrl)
                                                     +"下载"
-                                                    img {
-                                                        "src"(it.qrCodeBase64)
+                                                    it.qrCodeBase64?.let {
+                                                        img { "src"(it) }
                                                     }
                                                 }
                                             }

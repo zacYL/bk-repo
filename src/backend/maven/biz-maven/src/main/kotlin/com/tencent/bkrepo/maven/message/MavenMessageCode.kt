@@ -29,23 +29,21 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.maven.pojo
+package com.tencent.bkrepo.maven.message
 
-data class Basic(
-    val groupId: String,
-    val artifactId: String,
-    val version: String,
-    val classifier: String?,
-    val type: String?,
-    val size: Long,
-    val fullPath: String,
-    val createdBy: String,
-    val createdDate: String,
-    val lastModifiedBy: String,
-    val lastModifiedDate: String,
-    val downloadCount: Long,
-    val sha256: String?,
-    val md5: String?,
-    val stageTag: List<String>?,
-    val description: String?
-)
+import com.tencent.bkrepo.common.api.message.MessageCode
+
+enum class MavenMessageCode(private val key: String) : MessageCode {
+
+    SUCCESS("success") { override fun getCode() = 0 },
+
+    CHECKSUM_CONFLICT("checksum.conflict"),
+    FILE_RESOLVE_FAILED("file.resolve.failed"),
+    PARAMETER_CONTAINS_INVALID("parameter.contains.invalid"),
+    PARAMETER_EXPECT("parameter.expect")
+    ;
+
+    override fun getBusinessCode() = ordinal + 1
+    override fun getKey() = key
+    override fun getModuleCode() = 1
+}

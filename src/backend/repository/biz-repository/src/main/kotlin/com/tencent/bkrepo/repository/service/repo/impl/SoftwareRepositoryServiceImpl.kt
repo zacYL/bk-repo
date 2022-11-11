@@ -12,7 +12,6 @@ import com.tencent.bkrepo.repository.service.repo.SoftwareRepositoryService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Sort
-import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.and
 import org.springframework.data.mongodb.core.query.inValues
@@ -62,7 +61,7 @@ class SoftwareRepositoryServiceImpl(
     ): Query {
         val publicCriteria = where(TRepository::public).`is`(true)
         val systemCriteria = where(TRepository::configuration).regex("\\\"system\\\"( )?:( )?true")
-        val criteria = Criteria()
+        val criteria = where(TRepository::deleted).isEqualTo(null)
         if (projectId != null && projectId.isNotBlank()) {
             criteria.and(TRepository::projectId).`is`(projectId)
         } else if (ciProjects != null && ciProjects.isNotEmpty()) {

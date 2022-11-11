@@ -4,6 +4,8 @@
         <bk-input
             style="width:180px;"
             :value="defaultValue.field.replace(/^metadata\.(.*)$/, '$1')"
+            @compositionstart.native="handleComposition"
+            @compositionend.native="handleComposition"
             @change="field => change({ field: `metadata.${field}` })"
             :disabled="disabled"
             placeholder="属性键">
@@ -57,6 +59,16 @@
             }
         },
         methods: {
+            handleComposition (e) {
+                if (e.type === 'compositionend') {
+                    // 中文输入完成，触发change
+                    this.isOnComposition = true
+                    this.change({ field: `metadata.${e.target.value}` })
+                } else if (e.type === 'compositionstart') {
+                    // 中文输入开始，禁止抛出事件
+                    this.isOnComposition = false
+                }
+            },
             trimSpecial (string) {
                 let str = ''
                 if (string !== '') {
@@ -72,13 +84,20 @@
             }) {
                 // key 值不能有特殊符号
                 const key = this.trimSpecial(field)
-                this.$emit('change', {
-                    [key]: {
-                        field: key,
-                        operation,
-                        value
-                    }
-                })
+                // 过滤value字段空格
+                if (value) {
+                    value = value.replace(/(^\s*)|(\s*$)/g, '')
+                }
+                // 英文、数字输入正常抛出，中文输入开始到结束阶段不抛出
+                if (this.isOnComposition) {
+                    this.$emit('change', {
+                        [key]: {
+                            field: key,
+                            operation,
+                            value
+                        }
+                    })
+                }
             }
         }
     }

@@ -131,6 +131,19 @@ class UserRepositoryController(
         return ResponseBuilder.success(repositoryService.listPermissionRepo(userId, projectId, repoListOption))
     }
 
+    @ApiOperation("查询有权限的依赖仓库列表")
+    @GetMapping("/list/package/{projectId}")
+    fun listUserPackageRepo(
+        @RequestAttribute userId: String,
+        @ApiParam(value = "项目id", required = true)
+        @PathVariable projectId: String,
+        repoListOption: RepoListOption
+    ): Response<List<RepositoryInfo>> {
+        return ResponseBuilder.success(
+            repositoryService.listPermissionPackageRepo(userId, projectId, repoListOption)
+        )
+    }
+
     @ApiOperation("分页查询有权限的仓库列表")
     @GetMapping("/page/{projectId}/{pageNumber}/{pageSize}")
     fun listUserRepoPage(

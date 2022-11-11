@@ -205,7 +205,7 @@ export default {
             }
             let requestUrl
             if (uploadType === 'mavenUpload') {
-                requestUrl = 'maven/deploy'
+                requestUrl = 'web/maven/deploy'
             } else {
                 requestUrl = 'web/generic'
             }

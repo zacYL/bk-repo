@@ -76,8 +76,8 @@
                 <bk-table-column label="FSF开源" width="120">
                     <template #default="{ row }">{{ row.description ? `${row.isFsfLibre ? '已' : '未'}开源` : '/' }}</template>
                 </bk-table-column>
-                <bk-table-column label="推荐使用" width="120">
-                    <template #default="{ row }">{{ row.description ? `${row.recommended ? '' : '不'}推荐` : '/' }}</template>
+                <bk-table-column label="使用状态" width="120">
+                    <template #default="{ row }">{{`${row.recommended ? '可用' : '废弃'}` }}</template>
                 </bk-table-column>
                 <bk-table-column label="合规性" width="120">
                     <template #default="{ row }">
@@ -145,7 +145,7 @@
             qualityList () {
                 const data = this.baseInfo.scanQuality || {}
                 const ruleMap = {
-                    recommend: '仅有推荐使用的许可证',
+                    recommend: '仅有可用许可证',
                     compliance: '仅有合规的许可证',
                     unknown: '无未知许可证'
                 }

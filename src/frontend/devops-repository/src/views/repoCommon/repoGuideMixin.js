@@ -407,6 +407,7 @@ export default {
                                 '<dependency>',
                                 `   <groupId>${this.detail.basic.groupId}</groupId>`,
                                 `   <artifactId>${this.detail.basic.artifactId}</artifactId>`,
+                                this.detail.basic.classifier && `   <classifier>${this.detail.basic.classifier}</classifier>`,
                                 `   <version>${this.versionLabel}</version>`,
                                 this.detail.basic.type && `   <type>${this.detail.basic.type}</type>`,
                                 '</dependency>'

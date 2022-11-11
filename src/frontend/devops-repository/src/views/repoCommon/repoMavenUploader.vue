@@ -12,9 +12,11 @@
                     请选择Maven制品包
                 </div>
                 <bk-upload
+                    v-bkloading="{ isLoading: isLoading, title: '文件正在上传中，请稍候' }"
                     :with-credentials="true"
                     :size="5 * 1024"
                     :limit="1"
+                    :multiple="false"
                     :custom-request="onRequestUpload"
                     ext-cls="content-upload"
                     url="#"
@@ -24,6 +26,12 @@
                         {{currentFileName || ''}}
                         <bk-progress :stroke-width="8" :percent="uploadPercent"></bk-progress>
                     </div>
+                    <bk-button v-if="uploadPercent > 0 && uploadPercent !== 1" class="upload-show-file-container-cancel" title="取消" theme="warning" :text="true" @click="onAbortUpload">
+                        取消
+                    </bk-button>
+                    <bk-button v-if="uploadPercent === 1" class="upload-show-file-container-cancel" title="上传成功" theme="success" :text="true">
+                        上传成功
+                    </bk-button>
                 </div>
                 <div class="error-upload-info" v-if="errorMsg">{{errorMsg || '无法识别包信息，请确认是否由Maven客户端打包，并重新上传'}}</div>
 
@@ -58,7 +66,7 @@
             </div>
         </div>
         <div slot="footer">
-            <bk-button @click.stop.prevent="$emit('cancel')">{{$t('cancel')}}</bk-button>
+            <bk-button @click.stop.prevent="$emit('cancel',false)">{{$t('cancel')}}</bk-button>
             <bk-button class="ml10" theme="primary" :disabled="customSettings.uploadFlag || customSettings.saveBtnDisable" @click.stop.prevent="submitData">{{$t('confirm')}}</bk-button>
         </div>
     </bk-sideslider>
@@ -111,12 +119,22 @@
                             required: true,
                             message: '请输入Group ID',
                             trigger: 'blur'
+                        },
+                        {
+                            validator: this.checkGroupOrArtifact,
+                            message: '请输入正确的Group ID',
+                            trigger: 'blur'
                         }
                     ],
                     artifactId: [
                         {
                             required: true,
                             message: '请输入Artifact ID',
+                            trigger: 'blur'
+                        },
+                        {
+                            validator: this.checkGroupOrArtifact,
+                            message: '请输入正确的Artifact ID',
                             trigger: 'blur'
                         }
                     ],
@@ -125,7 +143,14 @@
                             required: true,
                             message: '请输入Version',
                             trigger: 'blur'
+                        },
+                        // \/:"<>|?*[](){},
+                        {
+                            validator: this.checkVersion,
+                            message: '请输入正确的Version,不包括\/:"<>|?*[](){},',
+                            trigger: 'blur'
                         }
+
                     ],
                     type: [
                         {
@@ -134,7 +159,10 @@
                             trigger: 'blur'
                         }
                     ]
-                }
+                },
+                uploadXhr: null, // 上传请求的xhr对象，用于上传和取消上传时所用
+                isLoading: false // 上传选择框是否在加载中状态，因为不能禁用，所以选择使用loading代替
+
             }
         },
         computed: {
@@ -147,6 +175,14 @@
                 'uploadArtifactory',
                 'submitMavenArtifactory'
             ]),
+            checkGroupOrArtifact (val) {
+                const reg = /^[a-zA-Z0-9_\-.]+$/
+                return reg.test(val)
+            },
+            checkVersion (val) {
+                const reg = /[\\+/:："”<>|?*(){},，\[\]]/
+                return !reg.test(val)
+            },
             handleClickClose () {
                 this.customSettings = {
                     isShow: false,
@@ -155,13 +191,15 @@
                     saveBtnDisable: false // 确认按钮是否禁用
                 }
                 // 关闭弹窗时重置滚动条需要的数据
-                this.uploadPercent = 0
-                this.currentFileName = ''
-                this.$emit('close', false)
+                this.onAbortUpload()
+                this.$emit('cancel', false)
             },
             onRequestUpload (uploadFile) {
+                this.isLoading = true
+                this.errorMsg = ''
+                this.uploadXhr = new XMLHttpRequest()
                 this.uploadArtifactory({
-                    xhr: new XMLHttpRequest(),
+                    xhr: this.uploadXhr,
                     projectId: this.projectId,
                     repoName: this.repoName,
                     body: uploadFile.fileList[0].origin,
@@ -182,8 +220,19 @@
                     this.customSettings.uploadFlag = false
                     this.formData = res.data
                 }).catch(error => {
-                    this.errorMsg = error.message || error.error || '无法识别包信息，请确认是否由Maven客户端打包，并重新上传'
+                    this.isLoading = false
+                    // error &&  this.errorMsg = error.message || error.error || '无法识别包信息，请确认是否由Maven客户端打包，并重新上传'
+                    error && (this.errorMsg = error.message || error.error || error)
                 })
+            },
+            // 取消上传操作
+            onAbortUpload () {
+                this.isLoading = false
+                this.uploadXhr && this.uploadXhr.abort()
+                this.uploadXhr = null
+                this.uploadPercent = 0
+                this.currentFileName = ''
+                this.errorMsg = ''
             },
             submitData () {
                 this.$refs.productForm.validate().then(validator => {
@@ -200,6 +249,8 @@
                             theme: 'error',
                             message: `${error.message || '上传出错了，请重新上传'}`
                         })
+                    }).finally(() => {
+                        this.customSettings.saveBtnDisable = false
                     })
                 }, validator => {
                     // console.log('表单校验出错了')
@@ -244,12 +295,18 @@
     height: 70px;
     padding: 5px;
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     width: 100% ;
     &-info{
         text-align: center;
-        width: 100%;
+        width: 80%;
     }
+    &-cancel{
+        margin: 22px 0 0 0;
+    }
+}
+::v-deep .progress-text{
+    margin: 0 0 0 10px;
 }
 ::v-deep .bk-upload.draggable .file-wrapper{
     height: 100%;

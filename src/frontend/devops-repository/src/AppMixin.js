@@ -61,7 +61,9 @@ export default {
                 })
 
                 window.globalVue.$on('change::$routePath', data => { // 蓝鲸Devops切换路径
-                    this.$router.push({ name: data.routePath.englishName, path: data.routePath.path.replace(/^\/[a-zA-Z]+/, '/ui') })
+                    if (/^\/ui\//.test(data.routePath.iframe_url) || /\/ui\/$/.test(data.routePath.iframe_url)) {
+                        this.$router.push({ name: data.routePath.englishName, path: data.routePath.path.replace(/^\/[a-zA-Z]+/, '/ui') })
+                    }
                 })
 
                 window.globalVue.$on('order::backHome', data => { // 蓝鲸Devops选择项目时切换

@@ -72,7 +72,7 @@
 }, {
   "id" : "bada9ac029e849429f21282954e2d825",
   "code" : "repoScan",
-  "name" : "制品扫描",
+  "name" : "制品分析",
   "parentCode" : "project",
   "privateData" : false,
   "belongModule" : "CPack",
@@ -242,7 +242,7 @@
 }, {
   "id" : "bada9ac029e849429f21282954e2d825",
   "code" : "repoScan",
-  "name" : "制品扫描",
+  "name" : "制品分析",
   "parentCode" : "project",
   "privateData" : false,
   "belongModule" : "CPack",

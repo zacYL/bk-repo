@@ -182,22 +182,6 @@
     "weight" : 10
   } ]
 }, {
-  "id" : "25edede92ca64b818b5ba1b4dd7529de",
-  "code" : "v_pack_cluster",
-  "name" : "制品库-节点管理",
-  "parentCode" : "project",
-  "privateData" : false,
-  "belongModule" : "CPack",
-  "belongVersion" : "ENTERPRISE",
-  "functionList" : [ {
-    "functionId" : "25edede92ca64b818b5ba1b4dd7529de",
-    "name" : "查看",
-    "resourceCode" : "v_pack_cluster",
-    "actionCode" : "view",
-    "associatedInstance" : false,
-    "weight" : 50
-  } ]
-}, {
   "belongService" : "BladeTest",
   "id" : "28d0c9a103414c94947361d0fc5f4ac4",
   "code" : "test_bkrepo",

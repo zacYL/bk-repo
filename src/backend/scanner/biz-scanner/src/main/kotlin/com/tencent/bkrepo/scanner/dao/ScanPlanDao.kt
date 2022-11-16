@@ -123,9 +123,10 @@ class ScanPlanDao : ScannerSimpleMongoDao<TScanPlan>() {
         return find(query)
     }
 
-    fun page(projectId: String, type: String?, planNameContains: String?, pageLimit: PageLimit): Page<TScanPlan> {
+    fun page(projectId: String, planType: String?, scanType: String?, planNameContains: String?, pageLimit: PageLimit): Page<TScanPlan> {
         val criteria = projectCriteria(projectId)
-        type?.let { criteria.and(TScanPlan::type.name).isEqualTo(type) }
+        planType?.let { criteria.and(TScanPlan::type.name).isEqualTo(it) }
+        scanType?.let { criteria.and(TScanPlan::scanTypes.name).inValues(it) }
         planNameContains?.let { criteria.and(TScanPlan::name.name).regex(".*$planNameContains.*") }
         val pageRequest = Pages.ofRequest(pageLimit.getNormalizedPageNumber(), pageLimit.getNormalizedPageSize())
         val query = Query(criteria).with(Sort.by(TScanPlan::createdDate.name).descending())

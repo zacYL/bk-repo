@@ -52,51 +52,51 @@ export default {
     },
     // 请求文件夹下的子文件夹
     getFolderList ({ commit }, { projectId, repoName, roadMap, fullPath = '', isPipeline = false }) {
-        let request
-        if (isPipeline && !fullPath) {
-            request = Vue.prototype.$ajax.get(
-                `${prefix}/pipeline/list/${projectId}`
-            ).then(records => ({ records }))
-        } else {
-            request = Vue.prototype.$ajax.post(
-                `${prefix}/node/search`,
-                {
-                    page: {
-                        pageNumber: 1,
-                        pageSize: 10000
-                    },
-                    sort: {
-                        properties: [isPipeline ? 'lastModifiedDate' : 'name'],
-                        direction: isPipeline ? 'DESC' : 'ASC'
-                    },
-                    rule: {
-                        rules: [
-                            {
-                                field: 'projectId',
-                                value: projectId,
-                                operation: 'EQ'
-                            },
-                            {
-                                field: 'repoName',
-                                value: repoName,
-                                operation: 'EQ'
-                            },
-                            {
-                                field: 'path',
-                                value: `${fullPath === '/' ? '' : fullPath}/`,
-                                operation: 'EQ'
-                            },
-                            {
-                                field: 'folder',
-                                value: true,
-                                operation: 'EQ'
-                            }
-                        ],
-                        relation: 'AND'
-                    }
+        // let request
+        // if (isPipeline && !fullPath) {
+        //     request = Vue.prototype.$ajax.get(
+        //         `${prefix}/pipeline/list/${projectId}`
+        //     ).then(records => ({ records }))
+        // } else {
+        const request = Vue.prototype.$ajax.post(
+            `${prefix}/node/search`,
+            {
+                page: {
+                    pageNumber: 1,
+                    pageSize: 10000
+                },
+                sort: {
+                    properties: [isPipeline ? 'lastModifiedDate' : 'name'],
+                    direction: isPipeline ? 'DESC' : 'ASC'
+                },
+                rule: {
+                    rules: [
+                        {
+                            field: 'projectId',
+                            value: projectId,
+                            operation: 'EQ'
+                        },
+                        {
+                            field: 'repoName',
+                            value: repoName,
+                            operation: 'EQ'
+                        },
+                        {
+                            field: 'path',
+                            value: `${fullPath === '/' ? '' : fullPath}/`,
+                            operation: 'EQ'
+                        },
+                        {
+                            field: 'folder',
+                            value: true,
+                            operation: 'EQ'
+                        }
+                    ],
+                    relation: 'AND'
                 }
-            )
-        }
+            }
+        )
+        // }
         return request.then(({ records }) => {
             commit('UPDATE_TREE', {
                 roadMap,
@@ -115,55 +115,55 @@ export default {
     },
     // 仓库内自定义查询
     getArtifactoryList (_, { projectId, repoName, name, fullPath, current, limit, isPipeline = false, sortType = 'lastModifiedDate' }) {
-        if (isPipeline && !fullPath && !name) {
-            return Vue.prototype.$ajax.get(
-                `${prefix}/pipeline/list/${projectId}`
-            ).then(records => ({ records, totalRecords: 0 }))
-        } else {
-            return Vue.prototype.$ajax.post(
-                `${prefix}/node/search`,
-                {
-                    page: {
-                        pageNumber: current,
-                        pageSize: limit
-                    },
-                    sort: {
-                        properties: ['folder', sortType],
-                        direction: 'DESC'
-                    },
-                    rule: {
-                        rules: [
-                            {
-                                field: 'projectId',
-                                value: projectId,
-                                operation: 'EQ'
-                            },
-                            {
-                                field: 'repoName',
-                                value: repoName,
-                                operation: 'EQ'
-                            },
-                            ...(name
-                                ? [
-                                    {
-                                        field: 'name',
-                                        value: `*${name}*`,
-                                        operation: 'MATCH'
-                                    }
-                                ]
-                                : [
-                                    {
-                                        field: 'path',
-                                        value: `${fullPath === '/' ? '' : fullPath}/`,
-                                        operation: 'EQ'
-                                    }
-                                ])
-                        ],
-                        relation: 'AND'
-                    }
+        // if (isPipeline && !fullPath && !name) {
+        //     return Vue.prototype.$ajax.get(
+        //         `${prefix}/pipeline/list/${projectId}`
+        //     ).then(records => ({ records, totalRecords: 0 }))
+        // } else {
+        return Vue.prototype.$ajax.post(
+            `${prefix}/node/search`,
+            {
+                page: {
+                    pageNumber: current,
+                    pageSize: limit
+                },
+                sort: {
+                    properties: ['folder', sortType],
+                    direction: 'DESC'
+                },
+                rule: {
+                    rules: [
+                        {
+                            field: 'projectId',
+                            value: projectId,
+                            operation: 'EQ'
+                        },
+                        {
+                            field: 'repoName',
+                            value: repoName,
+                            operation: 'EQ'
+                        },
+                        ...(name
+                            ? [
+                                {
+                                    field: 'name',
+                                    value: `*${name}*`,
+                                    operation: 'MATCH'
+                                }
+                            ]
+                            : [
+                                {
+                                    field: 'path',
+                                    value: `${fullPath === '/' ? '' : fullPath}/`,
+                                    operation: 'EQ'
+                                }
+                            ])
+                    ],
+                    relation: 'AND'
                 }
-            )
-        }
+            }
+        )
+        // }
     },
     // 创建目录
     createFolder (_, { projectId, repoName, fullPath = '' }) {

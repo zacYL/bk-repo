@@ -31,6 +31,7 @@ import com.mongodb.client.result.UpdateResult
 import com.tencent.bkrepo.common.api.exception.NotFoundException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Page
+import com.tencent.bkrepo.common.api.util.EscapeUtils
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.query.model.PageLimit
@@ -127,7 +128,7 @@ class ScanPlanDao : ScannerSimpleMongoDao<TScanPlan>() {
         val criteria = projectCriteria(projectId)
         planType?.let { criteria.and(TScanPlan::type.name).isEqualTo(it) }
         scanType?.let { criteria.and(TScanPlan::scanTypes.name).inValues(it) }
-        planNameContains?.let { criteria.and(TScanPlan::name.name).regex(".*$planNameContains.*") }
+        planNameContains?.let { criteria.and(TScanPlan::name.name).regex(".*${EscapeUtils.escapeRegex(it)}.*") }
         val pageRequest = Pages.ofRequest(pageLimit.getNormalizedPageNumber(), pageLimit.getNormalizedPageSize())
         val query = Query(criteria).with(Sort.by(TScanPlan::createdDate.name).descending())
 

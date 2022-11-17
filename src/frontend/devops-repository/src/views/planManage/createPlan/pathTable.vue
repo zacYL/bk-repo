@@ -54,7 +54,7 @@
             repoGroupList () {
                 return this.repoListAll
                     .filter(r => {
-                        return ['GENERIC'].includes(r.type) && r.name !== 'pipeline'
+                        return ['GENERIC'].includes(r.type) && r.name !== 'pipeline' && r.name !== 'report'
                     })
                     .reduce((target, repo) => {
                         if (!target[repo.type]) target[repo.type] = []

@@ -69,4 +69,12 @@ interface NpmFixToolResource {
         artifactInfo: NpmArtifactInfo,
         @PathVariable name: String
     ): Response<Any>
+
+    @ApiOperation("修复package.json缺失包版本元数据的问题")
+    @PostMapping("/fix/{projectId}/{repoName}/{name}/{version}")
+    fun completePackageInfo(
+        artifactInfo: NpmArtifactInfo,
+        @PathVariable name: String,
+        @PathVariable version: String
+    ): Response<Boolean>
 }

@@ -88,7 +88,7 @@ export default {
                     [isGeneric ? 'name' : 'packageName']: `*${packageName}*`,
                     ...(MODE_CONFIG === 'ci' && isGeneric
                         ? {
-                            exRepo: 'report,log'
+                            exRepo: 'log'
                         }
                         : {})
                 }
@@ -135,7 +135,7 @@ export default {
                                 ...(MODE_CONFIG === 'ci' && isGeneric
                                     ? [{
                                         field: 'repoName',
-                                        value: ['report', 'log'],
+                                        value: ['log'],
                                         operation: 'NIN'
                                     }]
                                     : [])

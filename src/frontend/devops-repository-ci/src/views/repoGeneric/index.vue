@@ -292,7 +292,7 @@
         },
         beforeRouteEnter (to, from, next) {
             // 前端隐藏report仓库/log仓库
-            if (to.query.repoName === 'report' || to.query.repoName === 'log') {
+            if (to.query.repoName === 'log') {
                 next({
                     name: 'repoList',
                     params: {

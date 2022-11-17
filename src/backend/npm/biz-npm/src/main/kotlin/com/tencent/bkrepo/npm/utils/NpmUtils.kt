@@ -71,6 +71,10 @@ object NpmUtils {
         return filename.substringBeforeLast(".tgz").substringAfter("$name-")
     }
 
+    fun analyseVersionFromVersionMetadataName(filename: String, name: String): String {
+        return filename.substringBeforeLast(".json").substringAfter("$name-")
+    }
+
     /**
      * 查看[tarball]里面是否使用 - 分隔符来进行分隔
      */

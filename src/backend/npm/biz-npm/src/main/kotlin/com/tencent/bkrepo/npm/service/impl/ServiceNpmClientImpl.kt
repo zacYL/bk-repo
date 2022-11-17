@@ -2,7 +2,6 @@ package com.tencent.bkrepo.npm.service.impl
 
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
-import com.tencent.bkrepo.common.artifact.manager.StorageManager
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
@@ -15,9 +14,7 @@ import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import org.springframework.stereotype.Service
 
 @Service
-class ServiceNpmClientImpl(
-    private val storageManager: StorageManager
-) : ServiceNpmClientService, AbstractNpmService() {
+class ServiceNpmClientImpl : ServiceNpmClientService, AbstractNpmService() {
 
     override fun deleteVersion(
         projectId: String,

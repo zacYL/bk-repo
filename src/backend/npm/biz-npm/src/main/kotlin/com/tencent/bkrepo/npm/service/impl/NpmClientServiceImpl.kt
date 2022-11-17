@@ -239,7 +239,7 @@ class NpmClientServiceImpl(
         val packageKey = PackageKeys.ofNpm(name)
         with(artifactInfo) {
             // 判断package_version是否存在
-            if (tgzPath.isEmpty() || !packageVersionExist(projectId, repoName, packageKey, version)) {
+            if (!packageVersionExist(projectId, repoName, packageKey, version)) {
                 throw NpmArtifactNotFoundException("package [$name] with version [$version] not exists.")
             }
             fullPathList.add(tgzPath)

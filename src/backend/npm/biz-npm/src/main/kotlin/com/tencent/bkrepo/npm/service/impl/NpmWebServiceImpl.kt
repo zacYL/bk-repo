@@ -78,7 +78,11 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
         val name = PackageKeys.resolveNpm(packageKey)
         val packageMetadata = queryPackageInfo(artifactInfo, name, false)
         if (!packageMetadata.versions.map.keys.contains(version)) {
-            throw NpmArtifactNotFoundException("version [$version] don't found in package [$name].")
+            val versionMetadata = queryVersionMetadata(artifactInfo, name, version)
+                ?: throw NpmArtifactNotFoundException("version [$version] don't found in package [$name].")
+            modifyPackageMetadata(packageMetadata, versionMetadata, version)
+            uploadPackageMetadata(packageMetadata)
+            logger.info("complete package.json of [$name]: add metadata of version [$version] when query version info")
         }
         //获取readme文档
         val versionMetaData = packageMetadata.versions.map[version]
@@ -144,7 +148,7 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
             val tgzPath =
                 packageMetadata.versions.map[version]?.dist?.tarball?.substringAfterLast(
                     artifactInfo.getRepoIdentify()
-                ).orEmpty()
+                ).takeUnless { it.isNullOrBlank() } ?: NpmUtils.getTgzPath(name, version)
             npmClientService.deleteVersion(artifactInfo, name, version, tgzPath)
             // 修改package.json文件的内容
             updatePackageWithDeleteVersion(artifactInfo, this, packageMetadata)

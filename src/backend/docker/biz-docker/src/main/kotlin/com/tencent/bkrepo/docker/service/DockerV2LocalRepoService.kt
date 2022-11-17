@@ -496,8 +496,8 @@ class DockerV2LocalRepoService @Autowired constructor(
             val configBlob = JsonUtils.objectMapper.readValue(configBytes, DockerSchema2Config::class.java)
             val basic = mapOf(
                 DOCKER_NODE_SIZE to versionDetail.size,
-                DOCKER_CREATE_DATE to versionDetail.createdDate,
-                DOCKER_CREATE_BY to versionDetail.createdBy,
+                DOCKER_CREATE_DATE to nodeDetail.createdDate,
+                DOCKER_CREATE_BY to nodeDetail.createdBy,
                 DOCKER_VERSION to tag,
                 DOCKER_VERSION_DOMAIN to artifactRepo.domain,
                 LAST_MODIFIED_BY to nodeDetail.lastModifiedBy,

@@ -132,7 +132,6 @@
             next()
         },
         created () {
-            console.log('迭代', [this.manage, this.user, this.role].find(item => item.name === this.tabName))
             this.currentProject.id && this.initProjectConfig()
             this.getRoleList().then(res => {
                 this.roleList = res.reduce((target, item) => {

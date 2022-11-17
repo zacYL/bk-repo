@@ -8,12 +8,12 @@ import com.tencent.bkrepo.auth.pojo.enums.RoleType
 import com.tencent.bkrepo.auth.pojo.role.Role
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
-import com.tencent.bkrepo.auth.service.DevopsUserService
 import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.readJsonString
+import com.tencent.bkrepo.common.devops.client.DevopsClient
 import com.tencent.bkrepo.common.devops.conf.DevopsConf
 import com.tencent.bkrepo.common.devops.pojo.CanwayGroup
 import com.tencent.bkrepo.common.devops.pojo.response.CanwayResponse
@@ -37,7 +37,7 @@ class CanwayRoleServiceImpl(
     lateinit var devopsConf: DevopsConf
 
     @Autowired
-    lateinit var devopsUserService: DevopsUserService
+    lateinit var devopsClient: DevopsClient
 
     override fun listRoleByProject(projectId: String, repoName: String?): List<Role> {
         // 插入用户组
@@ -103,7 +103,7 @@ class CanwayRoleServiceImpl(
     }
 
     override fun systemRolesByProjectId(projectId: String): List<Role> {
-        val projectGroups = devopsUserService.groupsByProjectId(projectId) ?: listOf()
+        val projectGroups = devopsClient.groupsByProjectId(projectId) ?: listOf()
         checkGroups(projectGroups)
         val projectGroupIds = projectGroups.map { it.id }
         return systemRoles().filter { projectGroupIds.contains(it.id) }

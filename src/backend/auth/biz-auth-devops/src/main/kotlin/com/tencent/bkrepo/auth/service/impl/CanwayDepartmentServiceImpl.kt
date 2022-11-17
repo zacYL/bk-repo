@@ -16,6 +16,7 @@ import com.tencent.bkrepo.common.devops.pojo.BkDepartmentUser
 import com.tencent.bkrepo.common.devops.pojo.CertType
 import com.tencent.bkrepo.common.devops.pojo.DevopsDepartment
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
+import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Service
 import java.util.concurrent.TimeUnit
@@ -28,14 +29,14 @@ class CanwayDepartmentServiceImpl(
 ) : DepartmentService {
     override fun listDepartmentById(
         userId: String,
-        username: String?,
+        projectId: String?,
         departmentId: Int?
     ): List<BkChildrenDepartment>? {
         val devopsDepartment = getTenantId()?.let { departmentsByUserIdAndTenantId(userId, it) }
         val departments = if (departmentId == null) {
             // 获取根部门
             bkClient.listDepartments(
-                bkUsername = username,
+                bkUsername = userId,
                 bkToken = getBkToken(),
                 lookupField = "level",
                 exactLookups = "0"
@@ -43,15 +44,16 @@ class CanwayDepartmentServiceImpl(
         } else {
             // 获取[departmentId]的子部门
             bkClient.listDepartments(
-                bkUsername = username,
+                bkUsername = userId,
                 bkToken = getBkToken(),
                 lookupField = "parent",
                 exactLookups = departmentId.toString()
             )
         }
-        return if (devopsDepartment != null && devopsDepartment.isNotEmpty()) {
+        return if (!devopsDepartment.isNullOrEmpty()) {
             departments?.filter { devopsDepartment.contains(it) }
         } else {
+            logger.info("devops department is empty")
             departments
         }
     }
@@ -149,5 +151,6 @@ class CanwayDepartmentServiceImpl(
             .maximumSize(1000)
             .expireAfterWrite(60, TimeUnit.SECONDS)
             .build<UserDepartmentId, List<BkChildrenDepartment>>()
+        private val logger = LoggerFactory.getLogger(CanwayDepartmentServiceImpl::class.java)
     }
 }

@@ -4,6 +4,7 @@ import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.devops.pojo.CanwayGroup
 import com.tencent.bkrepo.common.devops.pojo.DevopsDepartment
 import com.tencent.bkrepo.common.devops.pojo.response.CanwayResponse
+import com.tencent.bkrepo.common.devops.pojo.response.CanwayUser
 import retrofit2.Call
 import retrofit2.http.GET
 import retrofit2.http.Path
@@ -67,4 +68,23 @@ interface DevopsInterface {
         @Query("userId") userId: String,
         @Query("tenantId") tenantId: String
     ): Call<Response<List<DevopsDepartment>>?>
+
+    @GET("/ms/permission/api/service/administrator/identifyProjectManageAuth/{userId}/{projectId}")
+    fun identifyProjectManageAuth(
+        @Path("userId") userId: String,
+        @Path("projectId") projectId: String
+    ): Call<CanwayResponse<Boolean>?>
+
+    /**
+     * 查询指定CI项目下项目成员
+     * @param projectId 项目
+     * @param withAdmin 是否包含项目管理员
+     * @param withParentAdmin
+     */
+    @GET("/ms/permission/api/service/system_resource/viewWithName/project/{projectId}")
+    fun usersByProjectId(
+        @Path("projectId") projectId: String,
+        @Query("withAdmin") withAdmin: Boolean,
+        @Query("withParentAdmin") withParentAdmin: Boolean
+    ): Call<CanwayResponse<List<CanwayUser>>?>
 }

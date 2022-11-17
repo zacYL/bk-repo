@@ -58,11 +58,11 @@ class UserDepartmentController {
     @GetMapping("/list")
     fun listDepartment(
         @RequestAttribute("userId") userId: String,
-        @RequestParam username: String?,
+        @RequestParam projectId: String?,
         @ApiParam("部门ID, 不传默认返回所有根部门")
         @RequestParam departmentId: Int?
     ): Response<List<BkChildrenDepartment>?> {
-        return ResponseBuilder.success(departmentService.listDepartmentById(userId, username, departmentId))
+        return ResponseBuilder.success(departmentService.listDepartmentById(userId, projectId, departmentId))
     }
 
     @ApiOperation("批量查询部门名称")

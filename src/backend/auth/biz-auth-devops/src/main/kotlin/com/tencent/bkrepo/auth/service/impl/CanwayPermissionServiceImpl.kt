@@ -18,7 +18,6 @@ import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRepoRequest
 import com.tencent.bkrepo.auth.repository.PermissionRepository
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
-import com.tencent.bkrepo.auth.service.DevopsUserService
 import com.tencent.bkrepo.auth.util.query.PermissionQueryHelper
 import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
@@ -52,9 +51,6 @@ class CanwayPermissionServiceImpl(
     repositoryClient,
     projectClient
 ) {
-
-    @Autowired
-    lateinit var devopsUserService: DevopsUserService
 
     @Autowired
     lateinit var devopsClient: DevopsClient
@@ -91,28 +87,28 @@ class CanwayPermissionServiceImpl(
             throw ErrorCodeException(AuthMessageCode.AUTH_USER_NOT_EXIST)
         }
 
-        // check user repo admin
+        // 查询用户是否为仓库管理员
         if (checkRepoUserAdmin(request)) return true
 
-        // check role project admin
+        // 查询用户的所属组是否为项目管理员
         if (checkProjectAdmin(request, user.roles)) return true
-
-        // check role repo admin
+        // 查询用户的所属组是否为仓库管理员
         if (checkRepoAdmin(request, user.roles)) return true
 
-        // check project action
+        // 查询用户的所属组是否为项目用户
         if (checkProjectAction(request, user.roles)) return true
 
         // 查询用户在CI所属组织/部门
         val departments = devopsClient.departmentsByUserId(request.uid)?.map { it.id }
-
-        // 查询项目下所有用户组
-        val ciRoles = request.projectId?.let { devopsClient.groupsByProjectId(it)
-                ?.filter { canwayGroup -> canwayGroup.users.contains(request.uid) }
-                ?.map { canwayGroup -> canwayGroup.id } } ?: emptyList()
+        // 查询用户在CI所属用户组
+        val ciRoles = request.projectId?.let { devopsClient.groupsByProjectId(it) }
+        val roles = mutableListOf<String>().apply {
+            addAll(user.roles)
+            addAll(ciRoles?.filter { it.users.contains(request.uid) }?.map { it.id } ?: emptyList())
+        }.distinct().filter { it.isNotBlank() }
 
         // check repo action
-        return checkRepoAction(request, ciRoles, departments)
+        return checkRepoAction(request, roles, departments)
     }
 
     override fun checkRepoAction(
@@ -120,10 +116,20 @@ class CanwayPermissionServiceImpl(
         roles: List<String>,
         departments: List<String>?
     ): Boolean {
+        // 走到这里鉴权请求 只会是仓库级别
         with(request) {
+            // 是否为仓库的管理者
             if (resourceType == ResourceType.REPO && repoName != null) {
                 val query = PermissionQueryHelper.buildPermissionCheck(
-                        projectId!!, repoName!!, uid, action, resourceType, roles, departments
+                    projectId!!, repoName!!, uid, PermissionAction.MANAGE, resourceType, roles, departments
+                )
+                val result = mongoTemplate.count(query, TPermission::class.java)
+                if (result != 0L) return true
+            }
+            // 是否为仓库使用者
+            if (resourceType == ResourceType.REPO && repoName != null) {
+                val query = PermissionQueryHelper.buildPermissionCheck(
+                    projectId!!, repoName!!, uid, action, resourceType, roles, departments
                 )
                 val result = mongoTemplate.count(query, TPermission::class.java)
                 if (result != 0L) return true
@@ -201,7 +207,7 @@ class CanwayPermissionServiceImpl(
             listOf(PermissionAction.WRITE, PermissionAction.DELETE, PermissionAction.UPDATE)
         )
         // 过滤CI中的角色
-        val ciProjectGroups = devopsUserService.groupsByProjectId(projectId)?.map { it.id }
+        val ciProjectGroups = devopsClient.groupsByProjectId(projectId)?.map { it.id }
         return listOf(repoAdmin, repoUser).map { transferCIPermission(it, ciProjectGroups) }
     }
 
@@ -347,7 +353,10 @@ class CanwayPermissionServiceImpl(
     private fun isCIAdmin(userId: String, projectId: String? = null, tenantId: String? = null): Boolean {
         return if (projectId != null && tenantId == null) {
             logger.info("check user $userId is CI project admin of [project: $projectId]")
-            devopsClient.isAdmin(userId, InstanceType.PROJECT, projectId) ?: false
+            // 历史接口，兼容老版本
+            val result1 = devopsClient.isAdmin(userId, InstanceType.PROJECT, projectId) ?: false
+            val result2 = devopsClient.identifyProjectManageAuth(userId, projectId) ?: false
+            result1 || result2
         } else if (projectId == null && tenantId != null) {
             logger.info("check user $userId is CI tenant admin of [tenant: $tenantId]")
             devopsClient.isAdmin(userId, InstanceType.TENANT, tenantId) ?: false

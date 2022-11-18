@@ -113,7 +113,7 @@ class UserScanPlanController(
 
     @ApiOperation("扫描方案列表-分页")
     @GetMapping("/list/{projectId}")
-    @Permission(ResourceType.PROJECT, PermissionAction.MANAGE)
+    @Permission(ResourceType.PROJECT, PermissionAction.READ)
     fun scanPlanList(
         @ApiParam(value = "projectId", required = true)
         @PathVariable

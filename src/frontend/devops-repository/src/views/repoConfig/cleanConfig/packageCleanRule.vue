@@ -40,7 +40,8 @@
                     { id: 'EQ', name: '等于' },
                     { id: 'MATCH', name: '包含' },
                     { id: 'REGEX', name: '正则匹配' }
-                ]
+                ],
+                isOnComposition: true // 此处默认设置为true，在用户输入时保证会进入抛出change事件
             }
         },
         watch: {
@@ -89,7 +90,8 @@
                     value = value.replace(/(^\s*)|(\s*$)/g, '')
                 }
                 // 英文、数字输入正常抛出，中文输入开始到结束阶段不抛出
-                if (this.isOnComposition) {
+                // 此处注意，如果从始至终都没有输入中文，this.isOnComposition的值就是undefined，但感觉这样不太好，因此在上方定义此变量为响应式数据
+                if (this.isOnComposition || this.isOnComposition === undefined) {
                     this.$emit('change', {
                         [key]: {
                             field: key,

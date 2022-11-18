@@ -40,6 +40,7 @@ import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestAttribute
 import org.springframework.web.bind.annotation.RequestBody
@@ -58,20 +59,28 @@ class UserDepartmentController {
     @GetMapping("/list")
     fun listDepartment(
         @RequestAttribute("userId") userId: String,
-        @RequestParam projectId: String?,
         @ApiParam("部门ID, 不传默认返回所有根部门")
         @RequestParam departmentId: Int?
     ): Response<List<BkChildrenDepartment>?> {
-        return ResponseBuilder.success(departmentService.listDepartmentById(userId, projectId, departmentId))
+        return ResponseBuilder.success(departmentService.listDepartmentById(userId, departmentId))
+    }
+
+    @ApiOperation("查询项目下有权限的部门列表: CI 项目下有权限的部门")
+    @GetMapping("/list/{projectId}")
+    fun listDepartmentByProjectId(
+        @RequestAttribute("userId") userId: String,
+        @ApiParam("项目ID", required = true)
+        @PathVariable projectId: String
+    ): Response<List<String>> {
+        return ResponseBuilder.success(departmentService.listDepartmentByProjectId(userId, projectId))
     }
 
     @ApiOperation("批量查询部门名称")
     @PostMapping("/listByIds")
     fun listDepartmentByIds(
         @RequestAttribute("userId") userId: String,
-        @RequestParam username: String?,
         @RequestBody departmentIds: List<Int>
     ): Response<List<BkChildrenDepartment>?> {
-        return ResponseBuilder.success(departmentService.listDepartmentByIds(userId, username, departmentIds))
+        return ResponseBuilder.success(departmentService.listDepartmentByIds(userId, departmentIds))
     }
 }

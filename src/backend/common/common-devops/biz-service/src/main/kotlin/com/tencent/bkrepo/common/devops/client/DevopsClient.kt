@@ -75,11 +75,11 @@ class DevopsClient(
     }
 
     fun departmentsByProjectId(projectId: String): List<DevopsDepartment>? {
-        return devopsApi.departmentsByProjectId(projectId).execute().body()
+        return devopsApi.departmentsByProjectId(projectId).execute().body()?.data
     }
 
     fun childrenDepartments(departmentId: String): List<DevopsDepartment>? {
-        return devopsApi.childrenDepartments(departmentId).execute().body()
+        return devopsApi.childrenDepartments(departmentId).execute().body()?.data
     }
     companion object {
         val okHttpClient: OkHttpClient = OkHttpClient.Builder()
@@ -93,17 +93,4 @@ class DevopsClient(
             .writeTimeout(5L, TimeUnit.SECONDS)
             .build()
     }
-}
-
-fun main() {
-    val conf = DevopsConf().apply {
-        appCode = "bk_ci"
-        appSecret = "1206bbf7-2e29-4bb7-b5b6-7d34b93cfdf8"
-        bkHost = "http://paas.upgtest.com"
-        devopsHost = "http://devops.upgtest.com"
-    }
-
-    val devopsApi = DevopsClient(conf).devopsApi
-    val response = devopsApi.usersByProjectId("we77e4",true, false).execute()
-    println(response.body())
 }

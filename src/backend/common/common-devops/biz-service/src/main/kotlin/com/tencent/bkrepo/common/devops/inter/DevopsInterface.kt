@@ -28,21 +28,21 @@ interface DevopsInterface {
      * [projectId] 项目
      */
     @GET("/ms/permission/api/service/resource_instance/view/department/project/{projectId}")
-    fun departmentsByProjectId(@Path("projectId") projectId: String): Call<List<DevopsDepartment>?>
+    fun departmentsByProjectId(@Path("projectId") projectId: String): Call<CanwayResponse<List<DevopsDepartment>>?>
 
     /**
      * 部门下子部门
      * [departmentId] 父部门
      */
     @GET("/ms/permission/api/service/organization/under/{departmentId}")
-    fun childrenDepartments(@Path("departmentId") departmentId: String): Call<List<DevopsDepartment>?>
+    fun childrenDepartments(@Path("departmentId") departmentId: String): Call<CanwayResponse<List<DevopsDepartment>>?>
 
     /**
      * 获取用户所属组织
      * [userId] 用户
      */
     @GET("/ms/usermanager/api/service/organization/organization/list")
-    fun departmentByUserId(@Query("userId") userId: String): Call<List<DevopsDepartment>?>
+    fun departmentByUserId(@Query("userId") userId: String): Call<CanwayResponse<List<DevopsDepartment>>?>
 
     /**
      * 获取用户所属组织包括父级

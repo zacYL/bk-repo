@@ -203,7 +203,9 @@
                             '仓库内所有制品的页面删除权限'
                         ]
                     }
-                ]
+                ],
+                permissionDeptList: [], // 当前项目下有权限的部门集合
+                treeIds: [] // 当前所有树节点的id集合
             }
         },
         computed: {
@@ -241,6 +243,7 @@
                 }, {})
             })
             // 根节点
+            this.getPermissionDepartment()
             this.getRepoDepartmentList({
                 username: this.userInfo.username
             }).then(res => {
@@ -259,7 +262,8 @@
                 'setActionPermission',
                 'getRepoDepartmentList',
                 'setDepartmentPermission',
-                'getRepoDepartmentDetail'
+                'getRepoDepartmentDetail',
+                'getRepoAuthDepartmentList'
             ]),
             getName (part, tag) {
                 const map = {
@@ -288,14 +292,40 @@
                 section[part].deleteList.push(tag)
                 this.submit('delete', part, section)
             },
+            // 获取所有的树节点的id
+            getAllTreeId (treeData) {
+                this.treeIds.push(...treeData.map(item => item.id))
+                this.treeIds = Array.from(new Set(this.treeIds))
+                treeData.forEach(item => {
+                    if (item.has_children && item.children) {
+                        this.getAllTreeId(item.children || [])
+                    }
+                })
+            },
             initTree (treeTarget, { data: disabled = [], addList: add = [] } = {}) {
+                const noPermissionList = []
                 treeTarget.setData(this.departmentTree)
+                this.getAllTreeId(this.departmentTree)
+
+                noPermissionList.push(this.treeIds.filter(item => !this.permissionDeptList.includes(item)))
+
                 disabled.forEach(id => {
                     treeTarget.setChecked(id)
                     treeTarget.setDisabled(id)
                 })
+                // 将后台返回的有权限的部门排除，无权限的部门设置禁用
+                noPermissionList.forEach(id => {
+                    treeTarget.setDisabled(id)
+                })
+
                 add.forEach(id => {
                     treeTarget.setChecked(id)
+                })
+            },
+            // 获取当前项目下有权限的部门
+            getPermissionDepartment () {
+                this.getRepoAuthDepartmentList({ projectId: this.projectId }).then(res => {
+                    this.permissionDeptList = res
                 })
             },
             changeAddDepartments (treeTarget, ids) {
@@ -315,6 +345,7 @@
                     this.$set(node.data, 'has_children', false)
                 } else {
                     this.handleFlatDepartment(res)
+                    this.getPermissionDepartment()
                     this.$nextTick(() => {
                         let target = this.departmentTree
                         node.parents.forEach(parent => {

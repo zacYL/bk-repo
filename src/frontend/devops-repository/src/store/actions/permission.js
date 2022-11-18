@@ -150,6 +150,12 @@ export default {
             }
         ).then(res => res.map(v => ({ ...v, has_children: true })))
     },
+    // 查询当前项目下有权限的部门
+    getRepoAuthDepartmentList (_, { projectId }) {
+        return Vue.prototype.$ajax.get(
+            `${authPrefix}/department/list/${projectId}`
+        )
+    },
     // 查询仓库所有权限
     getPermissionDetail (_, { projectId, repoName }) {
         return Vue.prototype.$ajax.get(

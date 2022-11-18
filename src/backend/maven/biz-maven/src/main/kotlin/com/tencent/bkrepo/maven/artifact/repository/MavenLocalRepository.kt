@@ -1171,6 +1171,8 @@ class MavenLocalRepository(
             val count = packageVersion?.downloads ?: 0
             val createdDate = packageVersion?.createdDate?.format(DateTimeFormatter.ISO_DATE_TIME)
                 ?: jarNode.createdDate
+            val lastModifiedDate = packageVersion?.lastModifiedDate?.format(DateTimeFormatter.ISO_DATE_TIME)
+                ?: jarNode.lastModifiedDate
             val mavenArtifactBasic = Basic(
                 groupId,
                 artifactId,
@@ -1179,7 +1181,7 @@ class MavenLocalRepository(
                 if (type == "jar") null else type,
                 jarNode.size, jarNode.fullPath,
                 jarNode.createdBy, createdDate,
-                jarNode.lastModifiedBy, jarNode.lastModifiedDate,
+                jarNode.lastModifiedBy, lastModifiedDate,
                 count,
                 jarNode.sha256,
                 jarNode.md5,

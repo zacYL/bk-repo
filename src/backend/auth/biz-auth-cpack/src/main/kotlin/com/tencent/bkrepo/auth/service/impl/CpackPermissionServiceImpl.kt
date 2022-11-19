@@ -370,6 +370,15 @@ open class CpackPermissionServiceImpl constructor(
         departments: List<String>? = null
     ): Boolean {
         with(request) {
+            // 是否为仓库的管理者
+            if (resourceType == ResourceType.REPO && repoName != null) {
+                val query = PermissionQueryHelper.buildPermissionCheck(
+                    projectId!!, repoName!!, uid, PermissionAction.MANAGE, resourceType, roles
+                )
+                val result = mongoTemplate.count(query, TPermission::class.java)
+                if (result != 0L) return true
+            }
+            // 是否为仓库使用者
             if (resourceType == ResourceType.REPO && repoName != null) {
                 val query = PermissionQueryHelper.buildPermissionCheck(
                     projectId!!, repoName!!, uid, action, resourceType, roles

@@ -1,5 +1,6 @@
 package com.tencent.bkrepo.auth.service.impl
 
+import com.tencent.bkrepo.auth.job.BkDepartmentCache
 import com.tencent.bkrepo.auth.service.DepartmentService
 import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
@@ -15,17 +16,23 @@ import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Service
+import java.util.Collections
 
 @Service
 @ConditionalOnProperty(prefix = "auth", name = ["realm"], havingValue = DEPLOY_CANWAY, matchIfMissing = true)
 class CanwayDepartmentServiceImpl(
     private val bkClient: BkClient,
-    private val devopsClient: DevopsClient
+    private val devopsClient: DevopsClient,
+    private val bkDepartmentCache: BkDepartmentCache
 ) : DepartmentService {
     override fun listDepartmentById(
         userId: String,
-        departmentId: Int?
+        departmentId: Int?,
+        projectId: String
     ): List<BkChildrenDepartment>? {
+        val ciPermissionDepartment = devopsClient.departmentsByProjectId(projectId)?.let { list ->
+            list.map { it.id }
+        } ?: return null
         return if (departmentId == null) {
             // 获取根部门
             bkClient.listDepartments(
@@ -33,7 +40,9 @@ class CanwayDepartmentServiceImpl(
                 bkToken = getBkToken(),
                 lookupField = "level",
                 exactLookups = "0"
-            )
+            )?.onEach {
+                it.permission = ciPermissionDepartment.contains(it.id)
+            }
         } else {
             // 获取[departmentId]的子部门
             bkClient.listDepartments(
@@ -41,7 +50,15 @@ class CanwayDepartmentServiceImpl(
                 bkToken = getBkToken(),
                 lookupField = "parent",
                 exactLookups = departmentId.toString()
-            )
+            )?.onEach { department ->
+                val bkChildrenDepartment = bkDepartmentCache.allBkDepartment.find { it.id == department.id }
+                department.permission = bkChildrenDepartment?.parentDepartmentIds
+                    ?.let {
+                        !Collections.disjoint(
+                            ciPermissionDepartment,
+                            mutableListOf<String>().apply { addAll(it); add(bkChildrenDepartment.id) })
+                    } ?: false
+            }
         }
     }
     override fun listDepartmentByIds(

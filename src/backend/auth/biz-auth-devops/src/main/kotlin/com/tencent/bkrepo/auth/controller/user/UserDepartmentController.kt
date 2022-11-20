@@ -60,9 +60,11 @@ class UserDepartmentController {
     fun listDepartment(
         @RequestAttribute("userId") userId: String,
         @ApiParam("部门ID, 不传默认返回所有根部门")
-        @RequestParam departmentId: Int?
+        @RequestParam departmentId: Int?,
+        @ApiParam("项目ID", required = true)
+        @RequestParam projectId: String
     ): Response<List<BkChildrenDepartment>?> {
-        return ResponseBuilder.success(departmentService.listDepartmentById(userId, departmentId))
+        return ResponseBuilder.success(departmentService.listDepartmentById(userId, departmentId, projectId))
     }
 
     @ApiOperation("查询项目下有权限的部门列表: CI 项目下有权限的部门")

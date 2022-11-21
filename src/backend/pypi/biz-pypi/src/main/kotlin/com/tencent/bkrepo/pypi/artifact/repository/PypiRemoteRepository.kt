@@ -69,7 +69,7 @@ class PypiRemoteRepository : RemoteRepository() {
     override fun createRemoteDownloadUrl(context: ArtifactContext): String {
         val remoteConfiguration = context.getRemoteConfiguration()
         val artifactUri = context.artifactInfo.getArtifactFullPath()
-        return remoteConfiguration.url.trimEnd('/') + "/packages" + artifactUri
+        return remoteConfiguration.url.trimEnd('/').removeSuffix("/simple") + "/packages" + artifactUri
     }
 
     /**

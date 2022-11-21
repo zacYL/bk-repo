@@ -63,4 +63,9 @@ class NpmFixToolResourceImpl @Autowired constructor(
         npmFixToolService.inconsistentCorrectionData(artifactInfo, name)
         return ResponseBuilder.success()
     }
+
+    override fun completePackageInfo(artifactInfo: NpmArtifactInfo, name: String, version: String): Response<Boolean> {
+        val result =  npmFixToolService.completePackageInfo(artifactInfo, name, version)
+        return ResponseBuilder.success(result)
+    }
 }

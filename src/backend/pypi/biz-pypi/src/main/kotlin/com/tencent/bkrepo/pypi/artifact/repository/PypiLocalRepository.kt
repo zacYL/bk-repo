@@ -347,8 +347,8 @@ class PypiLocalRepository(
         }
         with(artifactInfo) {
             val node = nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data
-                ?: throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, getArtifactFullPath())
-            if (!node.folder) {
+            if (node == null || !node.folder) {
+                logger.info("folder node[${getArtifactName()}] not found in [$projectId/$repoName]")
                 return null
             }
             // 请求不带包名，返回包名列表.

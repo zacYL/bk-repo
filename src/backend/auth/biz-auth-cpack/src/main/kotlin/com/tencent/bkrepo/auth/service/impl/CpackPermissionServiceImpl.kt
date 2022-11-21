@@ -183,7 +183,7 @@ open class CpackPermissionServiceImpl constructor(
         with(request) {
             checkPermissionExist(permissionId)
             findPermissionById(permissionId)?.let { permission ->
-                if(permission.resourceType == ResourceType.PROJECT) {
+                if (permission.resourceType == ResourceType.PROJECT) {
                     deleteRepoPermissionUserId(permission, request.userId)
                 }
             }
@@ -192,9 +192,9 @@ open class CpackPermissionServiceImpl constructor(
     }
 
     private fun deleteRepoPermissionUserId(permission: Permission, userList: List<String>) {
-        val deleteUsers = permission.users.filter { !userList.contains(it)}
-        if(deleteUsers.isEmpty()) { return }
-        for(userId in deleteUsers) {
+        val deleteUsers = permission.users.filter { !userList.contains(it) }
+        if (deleteUsers.isEmpty()) { return }
+        for (userId in deleteUsers) {
             userRepository.findFirstByUserId(userId)?.let { tUser ->
                 val query = PermissionQueryHelper.buildProjectUserCheck(
                     projectId = permission.projectId!!,
@@ -209,14 +209,12 @@ open class CpackPermissionServiceImpl constructor(
                     ResourceType.REPO,
                     userId
                 )
-                for(p in permissions) {
+                for (p in permissions) {
                     updatePermissionById(p.id!!, TPermission::users.name, p.users.filter { it != userId })
                 }
             }
         }
     }
-
-
 
     override fun updatePermissionRole(request: UpdatePermissionRoleRequest): Boolean {
         logger.info("update permission role request:[$request]")
@@ -281,14 +279,16 @@ open class CpackPermissionServiceImpl constructor(
 
     fun checkRepoUserAdmin(request: CheckPermissionRequest): Boolean {
         if (request.projectId != null && request.repoName != null) {
-            val permission = permissionRepository.findAllByProjectIdAndResourceTypeAndPermNameAndReposInAndActionsIn(
-                projectId = request.projectId!!,
-                resourceType = ResourceType.REPO,
-                permName = AUTH_BUILTIN_ADMIN,
-                repoName = request.repoName!!,
-                action = PermissionAction.MANAGE
-            )
-            if (permission.isNotEmpty() && permission.any { it.users.contains(request.uid) }) return true
+            val permission = permissionRepository
+                .findAllByProjectIdAndResourceTypeAndPermNameAndReposInAndActionsInAndUsersIn(
+                    projectId = request.projectId!!,
+                    resourceType = ResourceType.REPO,
+                    permName = AUTH_BUILTIN_ADMIN,
+                    repoName = request.repoName!!,
+                    action = PermissionAction.MANAGE,
+                    userId = request.uid
+                )
+            if (permission.isNotEmpty()) return true
         }
         return false
     }
@@ -364,13 +364,24 @@ open class CpackPermissionServiceImpl constructor(
         return false
     }
 
-    open fun checkRepoAction(request: CheckPermissionRequest,
-                             roles: List<String>,
-                             departments: List<String>? = null): Boolean {
+    open fun checkRepoAction(
+        request: CheckPermissionRequest,
+        roles: List<String>,
+        departments: List<String>? = null
+    ): Boolean {
         with(request) {
+            // 是否为仓库的管理者
             if (resourceType == ResourceType.REPO && repoName != null) {
                 val query = PermissionQueryHelper.buildPermissionCheck(
-                        projectId!!, repoName!!, uid, action, resourceType, roles
+                    projectId!!, repoName!!, uid, PermissionAction.MANAGE, resourceType, roles
+                )
+                val result = mongoTemplate.count(query, TPermission::class.java)
+                if (result != 0L) return true
+            }
+            // 是否为仓库使用者
+            if (resourceType == ResourceType.REPO && repoName != null) {
+                val query = PermissionQueryHelper.buildPermissionCheck(
+                    projectId!!, repoName!!, uid, action, resourceType, roles
                 )
                 val result = mongoTemplate.count(query, TPermission::class.java)
                 if (result != 0L) return true

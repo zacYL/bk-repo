@@ -23,37 +23,16 @@ data class BkPage<T>(
     val next: String?
 )
 
-data class BkDepartment(
-    val id: Int,
-    val tree_id: Int,
-    val level: Int,
-    val parent: Int?,
-    val name: String,
-    val is_deleted: Boolean?,
-    val rght: Int,
-    val lft: Int,
-    val order: Int,
-    val create_time: String?,
-    val update_time: String?
-)
-
-data class BkParentDepartment(
-    val id: Int,
-    val order: Int,
-    val name: String,
-    val ancestor_name: String,
-    val parent: String?,
-    val has_children: Boolean,
-    val children: List<BkChildrenDepartment>?
-
-)
-
 data class BkChildrenDepartment(
     val id: String,
     val name: String,
     val order: Int?,
     val parent: Int?,
-    val has_children: Boolean?
+    val level: Int,
+    val has_children: Boolean?,
+    var permission: Boolean = false,
+    var children: MutableList<BkChildrenDepartment> = mutableListOf(),
+    var parentDepartmentIds: MutableList<String> = mutableListOf()
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

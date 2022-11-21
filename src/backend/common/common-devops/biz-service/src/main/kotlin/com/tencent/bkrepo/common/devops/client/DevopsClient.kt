@@ -6,6 +6,7 @@ import com.tencent.bkrepo.common.devops.enums.InstanceType
 import com.tencent.bkrepo.common.devops.inter.DevopsInterface
 import com.tencent.bkrepo.common.devops.pojo.CanwayGroup
 import com.tencent.bkrepo.common.devops.pojo.DevopsDepartment
+import com.tencent.bkrepo.common.devops.pojo.response.CanwayUser
 import com.tencent.bkrepo.common.devops.util.http.CertTrustManager
 import okhttp3.OkHttpClient
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -59,6 +60,26 @@ class DevopsClient(
      */
     fun departmentsByUserIdAndTenantId(userId: String, tenantId: String): List<DevopsDepartment>? {
         return devopsApi.departmentsByUserIdAndTenantId(userId = userId, tenantId = tenantId).execute().body()?.data
+    }
+
+    fun identifyProjectManageAuth(userId: String, projectId: String): Boolean? {
+        return devopsApi.identifyProjectManageAuth(userId, projectId).execute().body()?.data
+    }
+
+    fun usersByProjectId(
+        projectId: String,
+        withAdmin: Boolean = true,
+        withParentAdmin: Boolean = false
+    ): List<CanwayUser>? {
+        return devopsApi.usersByProjectId(projectId, withAdmin, withParentAdmin).execute().body()?.data
+    }
+
+    fun departmentsByProjectId(projectId: String): List<DevopsDepartment>? {
+        return devopsApi.departmentsByProjectId(projectId).execute().body()?.data
+    }
+
+    fun childrenDepartments(departmentId: String): List<DevopsDepartment>? {
+        return devopsApi.childrenDepartments(departmentId).execute().body()?.data
     }
     companion object {
         val okHttpClient: OkHttpClient = OkHttpClient.Builder()

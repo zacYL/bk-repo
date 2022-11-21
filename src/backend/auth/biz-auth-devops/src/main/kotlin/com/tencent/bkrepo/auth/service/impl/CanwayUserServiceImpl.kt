@@ -7,7 +7,6 @@ import com.tencent.bkrepo.auth.ciUserManager
 import com.tencent.bkrepo.auth.constant.DEFAULT_PASSWORD
 import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.model.TUser
-import com.tencent.bkrepo.auth.pojo.CanwayUser
 import com.tencent.bkrepo.auth.pojo.DevopsUser
 import com.tencent.bkrepo.auth.pojo.token.Token
 import com.tencent.bkrepo.auth.pojo.token.TokenResult
@@ -20,7 +19,6 @@ import com.tencent.bkrepo.auth.pojo.user.UserInfo
 import com.tencent.bkrepo.auth.pojo.user.UserResult
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
-import com.tencent.bkrepo.auth.service.DevopsUserService
 import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.util.DataDigestUtils
 import com.tencent.bkrepo.auth.util.IDUtil
@@ -29,8 +27,10 @@ import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.sensitive.DesensitizedUtils
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.artifact.path.PathUtils
+import com.tencent.bkrepo.common.devops.client.DevopsClient
 import com.tencent.bkrepo.common.devops.conf.DevopsConf
 import com.tencent.bkrepo.common.devops.pojo.response.CanwayResponse
+import com.tencent.bkrepo.common.devops.pojo.response.CanwayUser
 import com.tencent.bkrepo.common.devops.util.http.SimpleHttpUtils
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import org.slf4j.Logger
@@ -55,7 +55,7 @@ class CanwayUserServiceImpl(
     lateinit var devopsConf: DevopsConf
 
     @Autowired
-    lateinit var devopsUserService: DevopsUserService
+    lateinit var devopsClient: DevopsClient
 
     override fun createUser(request: CreateUserRequest): Boolean {
         // todo 校验
@@ -378,7 +378,7 @@ class CanwayUserServiceImpl(
 
     override fun listUserByProjectId(projectId: String, includeAdmin: Boolean): List<UserResult> {
         val localUsers = listUserResult(emptyList())
-        val projectUsers = devopsUserService.usersByProjectId(projectId) ?: listOf()
+        val projectUsers = devopsClient.usersByProjectId(projectId)?.map { it.userId } ?: listOf()
         return localUsers.filter { projectUsers.contains(it.userId) }
     }
 

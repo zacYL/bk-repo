@@ -18,7 +18,6 @@ import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRepoRequest
 import com.tencent.bkrepo.auth.repository.PermissionRepository
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
-import com.tencent.bkrepo.auth.service.DevopsUserService
 import com.tencent.bkrepo.auth.util.query.PermissionQueryHelper
 import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
@@ -54,9 +53,6 @@ class CanwayPermissionServiceImpl(
 ) {
 
     @Autowired
-    lateinit var devopsUserService: DevopsUserService
-
-    @Autowired
     lateinit var devopsClient: DevopsClient
 
     override fun deletePermission(id: String): Boolean {
@@ -75,13 +71,19 @@ class CanwayPermissionServiceImpl(
             .map { transferPermission(it) }
     }
 
+    /**
+     * 1. 制品库或CI超级管理员
+     * 2. 项目管理员 -- 与CI 集成时项目相关权限不在存在，比如创建项目，添加项目用户等操作都被隐藏了，
+     * CI 集成时web 端所有操作都是仓库级权限，所以CI 项目管理员 也等于制品库管理员
+     */
     override fun checkPermission(request: CheckPermissionRequest): Boolean {
         logger.info("check permission  request : [$request] ")
         if (request.uid == ANONYMOUS_USER) return false
-        // 校验用户是否属于对应部门、用户组和已添加用户
+        // 校验用户是否为制品库管理员
         if (isBkrepoAdmin(request)) return true
         // 校验用户是否为CI 超级管理员或项目管理员
         if (isCIAdmin(request.uid, projectId = request.projectId)) return true
+        // 如果用户是CI 项目用户, 且action == [PermissionAction.READ] 鉴权通过
         if (checkCIReadPermission(request)) return true
         return canwayCheckPermission(request)
     }
@@ -91,28 +93,28 @@ class CanwayPermissionServiceImpl(
             throw ErrorCodeException(AuthMessageCode.AUTH_USER_NOT_EXIST)
         }
 
-        // check user repo admin
+        // 查询用户是否为仓库管理员
         if (checkRepoUserAdmin(request)) return true
 
-        // check role project admin
+        // 查询用户的所属组是否为项目管理员
         if (checkProjectAdmin(request, user.roles)) return true
-
-        // check role repo admin
+        // 查询用户的所属组是否为仓库管理员
         if (checkRepoAdmin(request, user.roles)) return true
 
-        // check project action
+        // 查询用户的所属组是否为项目用户
         if (checkProjectAction(request, user.roles)) return true
 
         // 查询用户在CI所属组织/部门
         val departments = devopsClient.departmentsByUserId(request.uid)?.map { it.id }
-
-        // 查询项目下所有用户组
-        val ciRoles = request.projectId?.let { devopsClient.groupsByProjectId(it)
-                ?.filter { canwayGroup -> canwayGroup.users.contains(request.uid) }
-                ?.map { canwayGroup -> canwayGroup.id } } ?: emptyList()
+        // 查询用户在CI所属用户组
+        val ciRoles = request.projectId?.let { devopsClient.groupsByProjectId(it) }
+        val roles = mutableListOf<String>().apply {
+            addAll(user.roles)
+            addAll(ciRoles?.filter { it.users.contains(request.uid) }?.map { it.id } ?: emptyList())
+        }.distinct().filter { it.isNotBlank() }
 
         // check repo action
-        return checkRepoAction(request, ciRoles, departments)
+        return checkRepoAction(request, roles, departments)
     }
 
     override fun checkRepoAction(
@@ -120,10 +122,20 @@ class CanwayPermissionServiceImpl(
         roles: List<String>,
         departments: List<String>?
     ): Boolean {
+        // 走到这里鉴权请求 只会是仓库级别
         with(request) {
+            // 是否为仓库的管理者
             if (resourceType == ResourceType.REPO && repoName != null) {
                 val query = PermissionQueryHelper.buildPermissionCheck(
-                        projectId!!, repoName!!, uid, action, resourceType, roles, departments
+                    projectId!!, repoName!!, uid, PermissionAction.MANAGE, resourceType, roles, departments
+                )
+                val result = mongoTemplate.count(query, TPermission::class.java)
+                if (result != 0L) return true
+            }
+            // 是否为仓库使用者
+            if (resourceType == ResourceType.REPO && repoName != null) {
+                val query = PermissionQueryHelper.buildPermissionCheck(
+                    projectId!!, repoName!!, uid, action, resourceType, roles, departments
                 )
                 val result = mongoTemplate.count(query, TPermission::class.java)
                 if (result != 0L) return true
@@ -201,7 +213,7 @@ class CanwayPermissionServiceImpl(
             listOf(PermissionAction.WRITE, PermissionAction.DELETE, PermissionAction.UPDATE)
         )
         // 过滤CI中的角色
-        val ciProjectGroups = devopsUserService.groupsByProjectId(projectId)?.map { it.id }
+        val ciProjectGroups = devopsClient.groupsByProjectId(projectId)?.map { it.id }
         return listOf(repoAdmin, repoUser).map { transferCIPermission(it, ciProjectGroups) }
     }
 
@@ -347,6 +359,8 @@ class CanwayPermissionServiceImpl(
     private fun isCIAdmin(userId: String, projectId: String? = null, tenantId: String? = null): Boolean {
         return if (projectId != null && tenantId == null) {
             logger.info("check user $userId is CI project admin of [project: $projectId]")
+            if (devopsClient.identifyProjectManageAuth(userId, projectId) == true) return true
+            // 历史接口，兼容老版本
             devopsClient.isAdmin(userId, InstanceType.PROJECT, projectId) ?: false
         } else if (projectId == null && tenantId != null) {
             logger.info("check user $userId is CI tenant admin of [tenant: $tenantId]")
@@ -373,18 +387,9 @@ class CanwayPermissionServiceImpl(
         return users?.contains(userId) ?: false
     }
 
-    /**
-     * 校验用户是否是CI 项目下用户，如果是且action == [PermissionAction.READ] 鉴权通过
-     */
     private fun checkCIReadPermission(request: CheckPermissionRequest): Boolean {
-        val uid = request.uid
         val projectId = request.projectId ?: return false
-        val resourceType = request.resourceType
-        val action = request.action
-
-        return if (resourceType == ResourceType.REPO && action == PermissionAction.READ) {
-            isCIProjectUser(uid, projectId)
-        } else false
+        return request.action == PermissionAction.READ && isCIProjectUser(request.uid, projectId)
     }
 
     private fun getPermissionUrl(uri: String): String {

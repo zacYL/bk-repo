@@ -140,12 +140,13 @@ export default {
         )
     },
     // 查询所有部门
-    getRepoDepartmentList (_, { departmentId }) {
+    getRepoDepartmentList (_, { departmentId, projectId }) {
         return Vue.prototype.$ajax.get(
             `${authPrefix}/department/list`,
             {
                 params: {
-                    departmentId
+                    departmentId,
+                    projectId
                 }
             }
         ).then(res => res.map(v => ({ ...v, has_children: true })))

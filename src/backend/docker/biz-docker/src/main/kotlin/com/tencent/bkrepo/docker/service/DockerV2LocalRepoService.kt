@@ -497,17 +497,16 @@ class DockerV2LocalRepoService @Autowired constructor(
             val basic = mapOf(
                 DOCKER_NODE_SIZE to versionDetail.size,
                 DOCKER_CREATE_DATE to versionDetail.createdDate,
-                DOCKER_CREATE_BY to versionDetail.createdBy,
+                DOCKER_CREATE_BY to nodeDetail.createdBy,
                 DOCKER_VERSION to tag,
                 DOCKER_VERSION_DOMAIN to artifactRepo.domain,
                 LAST_MODIFIED_BY to nodeDetail.lastModifiedBy,
-                LAST_MODIFIED_DATE to nodeDetail.lastModifiedDate,
+                LAST_MODIFIED_DATE to versionDetail.lastModifiedDate,
                 DOWNLOAD_COUNT to versionDetail.downloads,
                 STAGE_TAG to versionDetail.stageTag,
                 DOCKER_DIGEST_SHA256 to DockerDigest(manifest.config.digest).hex,
                 DOCKER_OS to configBlob.os
             )
-            val packageMetadata = versionDetail.metadata
             return DockerTagDetail(
                 basic = basic,
                 history = configBlob.history,

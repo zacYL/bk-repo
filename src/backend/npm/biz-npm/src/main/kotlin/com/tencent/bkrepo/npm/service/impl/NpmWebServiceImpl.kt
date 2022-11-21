@@ -265,7 +265,7 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
                     createdBy,
                     packageVersion.createdDate.format(DateTimeFormatter.ISO_DATE_TIME),
                     lastModifiedBy,
-                    lastModifiedDate,
+                    packageVersion.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME),
                     readme = readmeInfo
                 )
             }

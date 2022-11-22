@@ -15,7 +15,9 @@
                     <bk-form-item label="访问权限">
                         <card-radio-group
                             v-model="available"
-                            :list="availableList">
+                            :list="availableList"
+                            :disabled="repoBaseInfo.name === 'pipeline' || repoBaseInfo.name === 'report'"
+                        >
                         </card-radio-group>
                     </bk-form-item>
 
@@ -216,6 +218,9 @@
             },
             available: {
                 get () {
+                    if (this.repoBaseInfo.name === 'pipeline' || this.repoBaseInfo.name === 'report') {
+                        return 'project'
+                    }
                     if (this.repoBaseInfo.public) return 'public'
                     if (this.repoBaseInfo.system) return 'system'
                     return 'project'

@@ -7,9 +7,9 @@
             <bk-tab-panel render-directive="if" name="license" label="许可证管理">
                 <license-manage></license-manage>
             </bk-tab-panel>
-            <bk-tab-panel render-directive="if" name="whitelist" label="漏洞白名单">
+            <!-- <bk-tab-panel render-directive="if" name="whitelist" label="漏洞白名单">
                 <cve-white-list></cve-white-list>
-            </bk-tab-panel>
+            </bk-tab-panel> -->
             <bk-tab-panel render-directive="if" name="proxywhitelist" label="代理白名单">
                 <proxy-white-list></proxy-white-list>
             </bk-tab-panel>
@@ -19,14 +19,14 @@
 <script>
     import licenseManage from './licenseManage'
     import scannerManage from './scannerManage'
-    import cveWhiteList from './cveWhiteList'
+    // import cveWhiteList from './cveWhiteList'
     import proxyWhiteList from './proxyWhiteList'
     export default {
         name: 'securityConfig',
         components: {
             licenseManage,
             scannerManage,
-            cveWhiteList,
+            // cveWhiteList,
             proxyWhiteList
         },
         data () {

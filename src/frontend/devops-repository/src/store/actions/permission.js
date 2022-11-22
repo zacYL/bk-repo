@@ -140,15 +140,22 @@ export default {
         )
     },
     // 查询所有部门
-    getRepoDepartmentList (_, { departmentId }) {
+    getRepoDepartmentList (_, { departmentId, projectId }) {
         return Vue.prototype.$ajax.get(
             `${authPrefix}/department/list`,
             {
                 params: {
-                    departmentId
+                    departmentId,
+                    projectId
                 }
             }
         ).then(res => res.map(v => ({ ...v, has_children: true })))
+    },
+    // 查询当前项目下有权限的部门
+    getRepoAuthDepartmentList (_, { projectId }) {
+        return Vue.prototype.$ajax.get(
+            `${authPrefix}/department/list/${projectId}`
+        )
     },
     // 查询仓库所有权限
     getPermissionDetail (_, { projectId, repoName }) {

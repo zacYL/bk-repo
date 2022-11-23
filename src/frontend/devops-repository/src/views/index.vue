@@ -60,6 +60,7 @@
                     return {
                         project: [
                             'repoList',
+                            'repoCatalog',
                             'repoSearch',
                             MODE_CONFIG === 'ci' && 'repoToken',
                             (this.userInfo.admin || this.userInfo.manage) && 'repoScan',

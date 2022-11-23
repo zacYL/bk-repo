@@ -9,6 +9,7 @@ import nodeManage from './nodeManage'
 import networkConfig from './networkConfig'
 import project from './project'
 import scan from './scan'
+import repoCatalog from './repoCatalog'
 
 const prefix = 'repository/api'
 
@@ -21,6 +22,8 @@ export default {
     ...networkConfig,
     ...project,
     ...scan,
+    ...repoCatalog,
+
     /*
         创建仓库
         body: {

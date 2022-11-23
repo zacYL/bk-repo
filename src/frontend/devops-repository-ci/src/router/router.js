@@ -23,6 +23,7 @@ const scanReport = () => import('@repository/views/repoScan/scanReport')
 const artiReport = () => import('@repository/views/repoScan/artiReport')
 const scanConfig = () => import('@repository/views/repoScan/scanConfig')
 const startScan = () => import('@repository/views/repoScan/startScan')
+const repoCatalog = () => import('@repository/views/repoCatalog')
 
 const securityConfig = () => import('@repository/views/repoScan/securityConfig')
 
@@ -60,6 +61,16 @@ const routes = [
                     breadcrumb: [
                         { name: 'repoList', label: '仓库列表' },
                         { name: 'repoConfig', label: '仓库配置' }
+                    ]
+                }
+            },
+            {
+                path: 'repoCatalog',
+                name: 'repoCatalog',
+                component: repoCatalog,
+                meta: {
+                    breadcrumb: [
+                        { name: 'repoCatalog', label: '依赖目录' }
                     ]
                 }
             },

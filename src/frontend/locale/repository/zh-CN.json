@@ -138,6 +138,7 @@
     "noPermission": "未获得授权",
     "logout": "退出",
     "repoList": "制品仓库",
+    "repoCatalog": "依赖目录",
     "repoSearch": "制品搜索",
     "repoToken": "访问令牌",
     "userManage": "用户管理",

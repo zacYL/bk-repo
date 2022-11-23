@@ -29,6 +29,7 @@ const commonPackageList = () => import('@repository/views/repoCommon/commonPacka
 const commonPackageDetail = () => import('@repository/views/repoCommon/commonPackageDetail')
 
 const repoSearch = () => import('@repository/views/repoSearch')
+const repoCatalog = () => import('@repository/views/repoCatalog')
 
 // 网络设置
 const networkConfig = () => import('@repository/views/networkConfig')
@@ -67,6 +68,16 @@ const routes = [
                     breadcrumb: [
                         { name: 'repoList', label: '仓库列表' },
                         { name: 'repoConfig', label: '仓库配置' }
+                    ]
+                }
+            },
+            {
+                path: 'repoCatalog',
+                name: 'repoCatalog',
+                component: repoCatalog,
+                meta: {
+                    breadcrumb: [
+                        { name: 'repoCatalog', label: '依赖目录' }
                     ]
                 }
             },

@@ -196,6 +196,12 @@ class RepositoryServiceImpl(
         return Pages.buildPage(allRepos, pageNumber, pageSize)
     }
 
+    override fun listRepoByTypes(projectId: String, types: List<String>): List<RepositoryInfo> {
+        val query = buildListQuery(projectId)
+            .addCriteria(TRepository::type.inValues(types.map { it.toUpperCase() }))
+        return repositoryDao.find(query).map { convertToInfo(it)!! }
+    }
+
     override fun rangeQuery(request: RepoRangeQueryRequest): Page<RepositoryInfo?> {
         val limit = request.limit
         val skip = request.offset

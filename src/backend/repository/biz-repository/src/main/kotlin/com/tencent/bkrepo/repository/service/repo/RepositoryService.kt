@@ -125,6 +125,14 @@ interface RepositoryService {
     ): Page<RepositoryInfo>
 
     /**
+     * 根据多个仓库类型查询项目下的仓库列表
+     *
+     * @param projectId 项目ID
+     * @param types 仓库类型
+     */
+    fun listRepoByTypes(projectId: String, types: List<String>): List<RepositoryInfo>
+
+    /**
      * 根据类型分页查询仓库列表
      *
      * @param type 仓库类型

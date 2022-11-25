@@ -34,6 +34,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
+import com.tencent.bkrepo.npm.constants.VERSION
 import java.io.IOException
 import java.io.Serializable
 
@@ -62,32 +63,14 @@ class NpmVersionMetadata : Serializable {
 
     @JsonProperty("dist")
     var dist: Dist? = null
-    var dependencies: Map<String, String>? = null
+    var dependencies: Map<String, Any>? = null
         set(dependencies) {
-            field = if (dependencies is Map) {
-                dependencies
-            } else {
-                if ((dependencies !is List<*> || (dependencies as List<*>).isNotEmpty()) && dependencies != null) {
-                    throw IOException("Invalid package.json format. The dependencies field cannot be parsed.")
-                }
-                mutableMapOf()
-            }
+            field = if (dependencies != null) resolveDependencies(dependencies) else emptyMap()
         }
     var optionalDependencies: Map<String, String>? = null
-    var devDependencies: Map<String, String>? = null
+    var devDependencies: Map<String, Any>? = null
         set(devDependencies) {
-            field = if (devDependencies is Map) {
-                devDependencies
-            } else {
-                if ((
-                            devDependencies !is List<*> ||
-                                    (devDependencies as List<*>).isNotEmpty()
-                            ) && devDependencies != null
-                ) {
-                    throw IOException("Invalid package.json format. The devDependencies field cannot be parsed.")
-                }
-                mutableMapOf()
-            }
+            field = if (devDependencies != null) resolveDependencies(devDependencies) else emptyMap()
         }
     var bundledDependencies: JsonNode? = null
     var peerDependencies: JsonNode? = null
@@ -131,6 +114,24 @@ class NpmVersionMetadata : Serializable {
     @JsonAnyGetter
     fun any(): Map<String, Any?> {
         return this.other
+    }
+
+    private fun resolveDependencies(dependencies: Map<String, Any>): Map<String, Any> {
+        return when (dependencies.values.firstOrNull()) {
+            is String, null -> dependencies
+            is Map<*, *> -> {
+                dependencies.mapValues {
+                    val dependencyMap = it.value as Map<*, *>
+                    dependencyMap[VERSION] ?: throw IOException(
+                        "Invalid package.json format($name-$version-dependencies/devDependencies-${it.key})"
+                    )
+                }
+            }
+            else ->
+                throw IOException(
+                    "Invalid package.json format. The dependencies/devDependencies field cannot be parsed."
+                )
+        }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

@@ -276,6 +276,7 @@ class NpmClientServiceImpl(
             val context = ArtifactQueryContext()
             val packageFullPath = NpmUtils.getPackageMetadataPath(name)
             context.putAttribute(NPM_FILE_FULL_PATH, packageFullPath)
+            context.putAttribute("requestURI", name)
             val inputStream =
                 ArtifactContextHolder.getRepository().query(context) as? InputStream
                     ?: throw NpmArtifactNotFoundException("document not found")

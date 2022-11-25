@@ -50,7 +50,10 @@
             }
         },
         computed: {
-            ...mapState(['genericTree']),
+            ...mapState(['operateTree']),
+            genericTree () {
+                return this.operateTree
+            },
             projectId () {
                 return this.$route.params.projectId
             },
@@ -98,13 +101,15 @@
             submit () {
                 this.genericTreeData.loading = true
                 const { type, path, selectedNode } = this.genericTreeData
+                console.log('saljdksajldsajlkd')
+                console.log(selectedNode)
                 this[type + 'Node']({
                     body: {
                         srcProjectId: this.projectId,
                         srcRepoName: this.repoName,
                         srcFullPath: path,
                         destProjectId: this.projectId,
-                        destRepoName: this.repoName,
+                        destRepoName: selectedNode.repoName || selectedNode.name,
                         destFullPath: `${selectedNode.fullPath || '/'}`,
                         overwrite: false
                     }

@@ -50,7 +50,34 @@ export default {
         return Vue.prototype.$ajax.get(
             `${prefix}/repo/info/${projectId}/${repoName}`
         )
+    },
+    // 分页， 依赖目录页面搜索功能，通过文件或文件夹名称正则匹配符合条件的文件或文件夹，需要添加一个排除二进制仓库的规则，等后面看怎么修改
+    getTableListByName ({ commit }, { projectId, name, current = 1, limit = 20, sortType = 'lastModifiedDate' }) {
+        return Vue.prototype.$ajax.post(`${prefix}/node/search`, {
+            page: {
+                pageNumber: current,
+                pageSize: limit
+            },
+            sort: {
+                properties: ['folder', sortType],
+                direction: 'DESC'
+            },
+            rule: {
+                rules: [
+                    {
+                        field: 'projectId',
+                        value: projectId,
+                        operation: 'EQ'
+                    },
+                    {
+                        field: 'name',
+                        value: name,
+                        operation: 'REGEX'
+                    }
+                ],
+                relation: 'AND'
+            }
+        })
     }
-    // getNodeListByName({ commit }, { projectId, repoName })
 
 }

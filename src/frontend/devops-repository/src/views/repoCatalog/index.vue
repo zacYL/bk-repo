@@ -7,6 +7,10 @@
                 placeholder="请输入文件名称"
                 clearable
                 right-icon="bk-icon icon-search"
+                @enter="onSearchFile"
+                @clear="() => {
+                    searchFlag = !searchFlag
+                }"
             >
             </bk-input>
 
@@ -18,8 +22,10 @@
                     :name="option.name.toLowerCase()">
                 </bk-option>
             </bk-select>
+            <bk-button v-if="searchFlag" @click="searchFlag = !searchFlag">返回目录树</bk-button>
+
         </header>
-        <div class="repo-rely-main flex-align-center">
+        <div class="repo-rely-main flex-align-center" v-if="!searchFlag">
             <div class="repo-rely-side"
                 :style="{ 'flex-basis': `${sideBarWidth}px` }"
 
@@ -30,7 +36,7 @@
                     </span>
                 </div>
                 <div class="repo-rely-side-tree">
-                    <relyTree @clickNode="onClickNode" :check-type="checkRepoType" :key="checkRepoType"></relyTree>
+                    <relyTree @clickNode="onClickNode" :check-type="checkRepoType" :search-node="searchNode" :key="checkRepoType"></relyTree>
                 </div>
 
             </div>
@@ -54,8 +60,8 @@
                         </bk-tab-panel>
                         <!-- 此时需要给tab-panel添加key作为标识，不然渲染的文件内容会出现上次的内容 -->
                         <bk-tab-panel
-                            v-if="currentNodeType === 'file' && applyFileTypes[fileObj.type]"
-                            :key="baseDetailInfo.fullPath "
+                            v-if="currentNodeType === 'file' && applyFileTypes[fileObj.type] && baseDetailInfo.repoName"
+                            :key="baseDetailInfo.fullPath"
                             name="content" label="文件内容" v-bkloading="{ isLoading: fileContentLoading }" :style="{ 'display': fileObj.size > maxFileSize ? 'flex' : '' }" style=" align-items: center; justify-content: center;">
 
                             <!-- <pre v-if="fileContent && fileObj.size <= maxFileSize"><code class="html">{{fileContent}}</code></pre> -->
@@ -80,7 +86,46 @@
 
                 </div>
             </div>
+        </div>
+        <div class="repo-table-container" v-if="searchFlag" v-bkloading="{ isLoading: tableLoading }">
+            <bk-table
+                class="mt10"
+                height="calc(100% - 53px)"
+                :data="repoSearchTable"
+                :outer-border="false"
+                :row-border="false"
+                size="small">
+                <template #empty>
+                    <empty-data :is-loading="isLoading" :search="Boolean(fileNameSearch)"></empty-data>
+                </template>
+                <bk-table-column label="文件夹/文件名称" prop="name" show-overflow-tooltip>
+                    <template #default="{ row }">
+                        <div class="hover-btn" @click="onClickTableItem(row)">{{row.name}}</div>
 
+                    </template>
+
+                </bk-table-column>
+                <bk-table-column label="路径" prop="fullPath" width="350" show-overflow-tooltip></bk-table-column>
+                <bk-table-column label="仓库" width="200">
+                    <template #default="{ row }">{{ row.repoName }}</template>
+                </bk-table-column>
+
+                <bk-table-column :label="$t('lastModifiedDate')" prop="lastModifiedDate">
+                    <template #default="{ row }">{{ formatDate(row.lastModifiedDate) }}</template>
+                </bk-table-column>
+            </bk-table>
+            <bk-pagination
+                class="p10"
+                size="small"
+                align="center"
+                show-total-count
+                @change="current => handlerPaginationChange({ current })"
+                @limit-change="limit => handlerPaginationChange({ limit })"
+                :current.sync="pagination.current"
+                :limit="pagination.limit"
+                :count="pagination.count"
+                :limit-list="pagination.limitList">
+            </bk-pagination>
         </div>
     </div>
 </template>
@@ -100,19 +145,17 @@
         },
         data () {
             return {
-                sideBarWidth: 500, // 当前页面左侧的宽度
+                sideBarWidth: 400, // 当前页面左侧的宽度
                 moveBarWidth: 10, // 每次移动的距离
-                isLoading: false,
                 treeLoading: false,
                 fileNameSearch: '', // 搜索的文件名称
-
+                searchFlag: false, // 是否是搜索事件
+                searchNode: '', // 搜索后点击的节点
                 depotList: depotTypeList,
                 checkRepoType: '',
-
                 active: 'basic', // 当前选中的标签页
                 currentNodeType: 'depot', // 当前选中的节点类型
                 repoName: '', // 当前选择的节点名称
-                nodeLevel: 0, // 节点的层级，因为根节点唯一键是仓库名，子节点就可以用id
                 baseDetailInfo: null, // 当前选择节点的详情
                 currentRepoType: '', // 当前选择的节点的仓库类型
                 fileContent: null, // 当前点击的文件内容
@@ -126,7 +169,16 @@
                 maxFileSize: 1024 * 1024 * 1, // 1MB ，文件大小限制，超过此限制则不显示文件具体文件内容，提示需要下载
                 jsonData: '',
                 basicTabLoading: false, // 基础信息tab页加载中状态
-                fileContentLoading: false // 文件内容tab页加载中状态
+                fileContentLoading: false, // 文件内容tab页加载中状态
+                repoSearchTable: [], // 搜索展示列表
+                // 分页信息
+                pagination: {
+                    count: 0,
+                    current: 1,
+                    limit: 20,
+                    limitList: [10, 20, 40]
+                },
+                tableLoading: false
             }
         },
         computed: {
@@ -150,8 +202,41 @@
             ...mapActions([
                 'getNodeDetail',
                 'getRepoInfo',
-                'getRepoInfoDetail'
+                'getRepoInfoDetail',
+                'getTableListByName'
             ]),
+            onSearchFile () {
+                // 此时展示搜索table页面
+                this.searchFlag = true
+                this.getTableList()
+            },
+            // 获取当前搜索的结果
+            getTableList () {
+                this.tableLoading = true
+                this.getTableListByName({
+                    projectId: this.projectId,
+                    name: this.fileNameSearch.trim() || '',
+                    current: this.pagination.current || 1,
+                    limit: this.pagination.limit || 20
+                }).then(res => {
+                    this.repoSearchTable = res.records || []
+                    this.pagination.count = res.totalRecords || 0
+                    this.pagination.current = res.page
+                    this.pagination.limit = res.pageSize
+                }).finally(() => {
+                    this.tableLoading = false
+                })
+            },
+            // 处理分页数据
+            handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
+                this.pagination.current = current
+                this.pagination.limit = limit
+                this.getTableList()
+            },
+            onClickTableItem (item) {
+                this.searchNode = item
+                this.searchFlag = false
+            },
             onClickNode (node) {
                 this.basicTabLoading = true
                 this.currentRepoType = ''
@@ -228,7 +313,7 @@
                 }).then(res => {
                     this.baseDetailInfo = {
                         ...res,
-                        name: res.name || this.repoName,
+                        name: res.name || '',
                         size: convertFileSize(res.size),
                         createdBy: res.createdBy,
                         createdDate: formatDate(res.createdDate),
@@ -255,17 +340,6 @@
             // 下载文件或 获取文件内容
             onDownloadFile (type) {
                 this.fileContentLoading = true
-                const markdownInstance = new window.Cherry({
-                    id: 'markdown-container',
-                    // markdown 文件不能按照代码的样式去显示,即Markdown文件直接展示，不需要其他操作
-                    editor: {
-                        codemirror: {
-                            // depend on codemirror theme name: https://codemirror.net/demo/theme.html
-                            theme: 'dracula'
-                        },
-                        defaultModel: 'previewOnly'
-                    }
-                })
 
                 const url = `/repository/api/list/${this.baseDetailInfo.projectId}/${this.baseDetailInfo.repoName}/${encodeURIComponent(this.baseDetailInfo.fullPath)}?download=true`
                 this.$ajax.head(url).then(() => {
@@ -280,6 +354,17 @@
                                         this.jsonData = reader.result || e.target.result || ''
                                     } else {
                                         // 非json文件使用cherry-markdown解析
+                                        const markdownInstance = new window.Cherry({
+                                            id: 'markdown-container',
+                                            // markdown 文件不能按照代码的样式去显示,即Markdown文件直接展示，不需要其他操作
+                                            editor: {
+                                                codemirror: {
+                                                    // depend on codemirror theme name: https://codemirror.net/demo/theme.html
+                                                    theme: 'dracula'
+                                                },
+                                                defaultModel: 'previewOnly'
+                                            }
+                                        })
                                         this.fileContent = reader.result || e.target.result || ''
                                         const content = this.applyFileTypes[this.fileObj.type] === 'md' ? `${this.fileContent}` : `\`\`\`${this.applyFileTypes[this.fileObj.type] || 'js'}\n${this.fileContent} \`\`\``
                                         markdownInstance.setValue(content)
@@ -296,6 +381,7 @@
                             '/web' + url,
                             '_self'
                         )
+                        this.fileContentLoading = false
                     }
                 }).catch(e => {
                     const message = e.status === 423 ? this.$t('fileDownloadError') : this.$t('fileError')
@@ -373,6 +459,12 @@ position: relative;
     position: absolute;
     right: 50px;
     top: 12px;
+}
+
+.repo-table-container{
+    background: #fff;
+    height: calc(100% - 60px);
+
 }
 // ::v-deep .bk-table-row.selected-row {
 //     background-color: var(--bgHoverColor);

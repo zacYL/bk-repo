@@ -1,34 +1,35 @@
 <template>
-    <vue-tree-list
-        ref="relyTreeRef"
-        @click="onClickTreeNode"
-        :model="treeData"
-        v-bind:default-expanded="false"
-        v-bkloading="{ isLoading: treeLoading }"
-        class="repo-catalog-tree-container"
+    <vue-tree
+        ref="treeDataRefs"
+        :data="treeData"
+        node-key="id"
+        accordion
+        highlight-current
+        :render-after-expand="false"
+        :default-expanded-keys="defaultExpandKeys"
+        :props="defaultProps"
+        @node-click="handleNodeClick"
     >
-        <template v-slot:leafNameDisplay="slotProps">
-            <div class="repo-catalog-tree" :style="{ 'background': currentClickNode.id === slotProps.model.id ? 'rgba(58, 132, 255, 0.3)' : '' }">
+        <template slot-scope="{ node }">
 
-                <Icon size="14" :name="slotProps.model.type ? slotProps.model.type.toLowerCase() : slotProps.model.folder ? 'folder' : 'file'" class="mr10 ml10" />
-
-                <div :title="slotProps.model.name">
-                    {{ slotProps.model.name }}
-                </div>
+            <div class=" repo-catalog-tree">
+                <Icon size="16" :name="node.data.type ? node.data.type.toLowerCase() : node.data.folder ? 'folder' : 'file'" class="ml5 mr5" />
+                <span>
+                    {{ node.label }}
+                </span>
             </div>
         </template>
-        <span class="icon" slot="treeNodeIcon">
-        </span>
-    </vue-tree-list>
+    </vue-tree>
+
 </template>
 <script>
-    import { VueTreeList, Tree, TreeNode } from 'vue-tree-list'
-
+    import VueTree from '@devops/vue-tree'
+    import '@devops/vue-tree/dist/vue-tree.css'
     import { mapActions } from 'vuex'
     export default {
         name: 'relyTree',
         components: {
-            VueTreeList
+            VueTree
         },
         props: {
             checkType: {
@@ -36,14 +37,27 @@
                 default: '',
                 required: false,
                 describe: '当前选择的仓库类型'
+            },
+            searchNode: {
+                type: Object,
+                default: () => {
+                    return {}
+                },
+                required: false,
+                describe: '搜索后点击的节点对象'
             }
 
         },
         data () {
             return {
-                treeData: new Tree([]),
+                treeData: [],
+                defaultProps: {
+                    children: 'children',
+                    label: 'name'
+                },
                 currentClickNode: '', // 当前点击的节点
-                treeLoading: false
+                treeLoading: false,
+                defaultExpandKeys: [] // 默认展开的节点的key数组
             }
         },
         computed: {
@@ -72,41 +86,44 @@
                             type: item.type,
                             projectId: item.projectId,
                             repoName: item.name,
-                            children: [],
-                            expandFlag: false,
-                            disabled: true,
-                            dragDisabled: true,
-                            addTreeNodeDisabled: true,
-                            addLeafNodeDisabled: true,
-                            delNodeDisabled: true,
-                            editNodeDisabled: true
+                            children: []
                         }
                         return node
                     })
-                    this.treeData = new Tree(
-                        nodeList
-                    )
-                    if (this.treeData.children.length > 0) {
+                    this.treeData = nodeList
+                    // if (this.searchNode) {
+                    //     console.log('当前选择的是哪个仓库', this.searchNode.repoName)
+                    //     this.getTreeData(this.searchNode.projectId, this.searchNode.repoName, this.searchNode.fullPath, this.treeData.find(item => item.name === this.searchNode.repoName))
+                    // }
+                    if (this.treeData.length > 0) {
                         // 此时需要默认选择第一个仓库
-                        this.$emit('clickNode', this.treeData.children[0])
+                        this.$emit('clickNode', this.treeData[0])
                     }
                 }).finally(() => {
                     this.treeLoading = false
                 })
             },
+            handleNodeClick (data, node) {
+                this.currentClickNode = data
+                if (data.folder) {
+                    // 当点击的节点是文件夹或仓库时才请求获取其子节点
+                    this.getTreeData(data)
+                }
+                this.$emit('clickNode', data)
+                node.expand()
+            },
 
             // 获取树节点的数据
-            getTreeData (projectId, repoName, fullPath, data, node) {
+            getTreeData (data) {
                 if (data.children !== null && (data.children && data.children.length > 0)) {
-                    // 注意，此处顺序不能交换，必须先收起当前节点，才能将当前节点置为空，否则会导致下次展开节点时不能展开
-                    node.toggle()
+                    // 此时是关闭当前展开的节点，需要将当前节点的子节点置为空，否则再次展开时会重新添加子节点导致子节点重复
                     data.children = []
                     return
                 }
                 this.getSubTreeNodes({
-                    projectId: projectId,
-                    repoName: repoName,
-                    fullPath: fullPath
+                    projectId: data.projectId,
+                    repoName: data.repoName,
+                    fullPath: data.fullPath
                 }).then(res => {
                     if (res.records.length > 0) {
                         const secondChildren = res.records.map((item) => {
@@ -118,59 +135,15 @@
                                 type: item.type,
                                 projectId: item.projectId,
                                 repoName: item.repoName,
-                                children: [],
-                                expandFlag: false,
-                                disabled: true,
-                                dragDisabled: true,
-                                addTreeNodeDisabled: true,
-                                addLeafNodeDisabled: true,
-                                delNodeDisabled: true,
-                                editNodeDisabled: true
+                                children: []
+
                             }
                             return node
                         })
 
-                        for (let i = 0; i < secondChildren.length; i++) {
-                            data.addChildren(new TreeNode(secondChildren[i]))
-                        }
-                        node.toggle()
+                        this.$refs.treeDataRefs.updateKeyChildren(data.id, secondChildren)
                     }
                 })
-            },
-            // 获取当前路径在当前层级的位置，只可应用于仓库下的文件夹及文件
-            getNodePosition (data, path) {
-                return data.children.find(item => item.name === path)
-            },
-            // 递归，找到当前点击的节点的位置，并调用search接口添加子节点
-            getNodeData (data, pathList, i, node, newData) {
-                if (i < pathList.length) {
-                    newData = this.getNodePosition(data, pathList[i])
-                    i++
-
-                    this.getNodeData(newData, pathList, i, node, newData)
-                } else {
-                    this.getTreeData(node.projectId, node.repoName, node.fullPath, newData, node)
-                }
-            },
-
-            // 点击树节点
-            onClickTreeNode (node) {
-                this.currentClickNode = node
-
-                if (node.name === node.repoName) {
-                    // 表明此时点击的是仓库，加载树节点
-                    this.getTreeData(node.projectId, node.repoName, node.fullPath, this.treeData.children.find(item => item.name === node.repoName), node)
-                } else {
-                    // 此时表明 点击的是子文件夹
-                    const fullPathList = node.fullPath.replace(/^\//, '').split('/')
-
-                    if (fullPathList[0] === '') {
-                        fullPathList.splice(0, 1)
-                    }
-                    let tempData
-                    this.getNodeData(this.treeData.children.find(item => item.name === node.repoName), fullPathList, 0, node, tempData)
-                }
-                this.$emit('clickNode', node)
             }
 
         }
@@ -185,16 +158,8 @@
     width: 100%;
     display: flex;
     align-items: center;
-}
-::v-deep .vtl-node-content{
+    min-height: 24px;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    width: 100%;
-}
-::v-deep .vtl-node-main .vtl-caret {
-    display: none;
-    pointer-events: none;
 }
 
 </style>

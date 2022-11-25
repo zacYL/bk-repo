@@ -3,7 +3,7 @@ frontend/*
 package-lock.json
 yarn.lock
 yarn-error.log
-.yarnrc
+#.yarnrc
 .vscode
 .history
 */webpack_cache

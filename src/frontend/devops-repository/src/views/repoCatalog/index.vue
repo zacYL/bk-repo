@@ -14,7 +14,7 @@
             >
             </bk-input>
 
-            <bk-select v-model="checkRepoType" placeholder="请选择仓库类型" class="search-common">
+            <bk-select v-model="checkRepoType" placeholder="请选择仓库类型" class="search-common" @change="onChangeRepoType">
                 <bk-option
                     v-for="option in depotList"
                     :key="option.id"
@@ -36,7 +36,7 @@
                     </span>
                 </div>
                 <div class="repo-rely-side-tree">
-                    <relyTree @clickNode="onClickNode" :check-type="checkRepoType" :search-node="searchNode" :key="checkRepoType"></relyTree>
+                    <relyTree @clickNode="onClickNode" :check-type="checkRepoType" :search-node="searchNode" :key="checkRepoType" @searchFinish="onSearchFinish"></relyTree>
                 </div>
 
             </div>
@@ -45,7 +45,7 @@
                 :width="moveBarWidth"
                 @change="changeSideBarWidth"
             />
-            <div class="repo-rely-content">
+            <div class="repo-rely-content" v-bkloading="{ isLoading: basicTabLoading }">
                 <div class="repo-rely-content-header" v-if="baseDetailInfo">
                     <Icon size="14" :name="currentRepoType.toLowerCase()" />
                     <div class="ml10" :title="replaceRepoName(baseDetailInfo.repoName || baseDetailInfo.name)">
@@ -208,17 +208,33 @@
             onSearchFile () {
                 // 此时展示搜索table页面
                 this.searchFlag = true
+                this.pagination.current = 1
+                this.pagination.limit = 20
                 this.getTableList()
             },
+            onChangeRepoType () {
+                if (this.searchFlag) {
+                    this.pagination.current = 1
+                    this.pagination.limit = 20
+                    this.getTableList()
+                }
+            },
+
             // 获取当前搜索的结果
             getTableList () {
                 this.tableLoading = true
-                this.getTableListByName({
+                const params = {
                     projectId: this.projectId,
                     name: this.fileNameSearch.trim() || '',
                     current: this.pagination.current || 1,
                     limit: this.pagination.limit || 20
-                }).then(res => {
+                }
+                if (this.checkRepoType.length > 0) {
+                    params.repoType = [this.checkRepoType]
+                }
+                this.getTableListByName(
+                    params
+                ).then(res => {
                     this.repoSearchTable = res.records || []
                     this.pagination.count = res.totalRecords || 0
                     this.pagination.current = res.page
@@ -236,6 +252,16 @@
             onClickTableItem (item) {
                 this.searchNode = item
                 this.searchFlag = false
+                this.basicTabLoading = true
+            },
+            // 搜索完成之后的操作
+            onSearchFinish (flag) {
+                // 在点击到之前选择的节点后将右部分的loading状态取消
+                this.basicTabLoading = flag
+                // 将搜索选中的节点置为空
+                this.searchNode = ''
+                // 将文件名称搜索框置为空
+                this.fileNameSearch = ''
             },
             onClickNode (node) {
                 this.basicTabLoading = true
@@ -301,7 +327,9 @@
                         }
                     }
                 }).finally(() => {
-                    this.basicTabLoading = false
+                    if (!this.searchNode && !this.searchNode.id) {
+                        this.basicTabLoading = false
+                    }
                 })
             },
             // 获取当前选择的节点的详情信息
@@ -327,7 +355,9 @@
                         this.currentRepoType = res.type
                     })
                 }).finally(() => {
-                    this.basicTabLoading = false
+                    if (!this.searchNode && !this.searchNode.id) {
+                        this.basicTabLoading = false
+                    }
                 })
             },
             // 当选择的是文件内容tab页时，需要调用接口获取二进制流对象

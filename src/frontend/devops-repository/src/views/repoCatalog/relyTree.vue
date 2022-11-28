@@ -28,6 +28,8 @@
     import VueTree from '@devops/vue-tree'
     import '@devops/vue-tree/dist/vue-tree.css'
     import { mapActions } from 'vuex'
+    import lodash from 'lodash'
+
     export default {
         name: 'relyTree',
         components: {
@@ -93,7 +95,7 @@
                         return node
                     })
                     this.treeData = nodeList
-                    if (this.searchNode) {
+                    if (this.searchNode && !lodash.isEmpty(this.searchNode)) {
                         this.$nextTick(() => {
                             const currentRepoData = this.treeData.find(item => item.name === this.searchNode.repoName)
                             const currentRepoNode = this.$refs.treeDataRefs.getNode(currentRepoData.id)

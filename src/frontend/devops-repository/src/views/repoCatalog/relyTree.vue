@@ -95,7 +95,7 @@
                         return node
                     })
                     this.treeData = nodeList
-                    if (this.searchNode && !lodash.isEmpty(this.searchNode)) {
+                    if (!lodash.isEmpty(this.searchNode)) {
                         this.$nextTick(() => {
                             const currentRepoData = this.treeData.find(item => item.name === this.searchNode.repoName)
                             const currentRepoNode = this.$refs.treeDataRefs.getNode(currentRepoData.id)

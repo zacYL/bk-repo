@@ -101,8 +101,6 @@
             submit () {
                 this.genericTreeData.loading = true
                 const { type, path, selectedNode } = this.genericTreeData
-                console.log('saljdksajldsajlkd')
-                console.log(selectedNode)
                 this[type + 'Node']({
                     body: {
                         srcProjectId: this.projectId,

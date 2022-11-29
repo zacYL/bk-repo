@@ -1,30 +1,37 @@
 package com.tencent.bkrepo.nuget.service.impl
 
+import com.tencent.bkrepo.common.api.constant.MediaTypes
 import com.tencent.bkrepo.common.api.exception.NotFoundException
 import com.tencent.bkrepo.common.artifact.manager.PackageManager
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
 import com.tencent.bkrepo.common.artifact.repository.core.ArtifactService
 import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.nuget.artifact.NugetArtifactInfo
 import com.tencent.bkrepo.nuget.constant.NugetProperties
+import com.tencent.bkrepo.nuget.model.v2.search.NuGetSearchRequest
 import com.tencent.bkrepo.nuget.pojo.artifact.NugetDeleteArtifactInfo
+import com.tencent.bkrepo.nuget.pojo.artifact.NugetDownloadArtifactInfo
 import com.tencent.bkrepo.nuget.pojo.domain.NugetDomainInfo
 import com.tencent.bkrepo.nuget.pojo.user.BasicInfo
 import com.tencent.bkrepo.nuget.pojo.user.PackageVersionInfo
-import com.tencent.bkrepo.nuget.service.NugetPackageService
+import com.tencent.bkrepo.nuget.service.NugetWebService
+import com.tencent.bkrepo.nuget.util.NugetUtils
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.io.IOException
 
 @Service
-class NugetPackageServiceImpl(
+class NugetWebServiceImpl(
     private val nugetProperties: NugetProperties,
     private val packageManager: PackageManager,
     private val nodeClient: NodeClient
-) : NugetPackageService, ArtifactService() {
+) : NugetWebService, ArtifactService() {
 
     override fun deletePackage(userId: String, artifactInfo: NugetDeleteArtifactInfo) {
         repository.remove(ArtifactRemoveContext())
@@ -55,8 +62,32 @@ class NugetPackageServiceImpl(
         return NugetDomainInfo(UrlFormatter.formatHost(nugetProperties.domain))
     }
 
+    override fun getServiceDocument(artifactInfo: NugetArtifactInfo) {
+        val response = HttpContextHolder.getResponse()
+        try {
+            var serviceDocument = NugetUtils.getServiceDocumentResource()
+            serviceDocument = serviceDocument.replace(
+                "\$\$baseUrl\$\$",
+                HttpContextHolder.getRequest().requestURL.toString()
+            )
+            response.contentType = MediaTypes.APPLICATION_XML
+            response.writer.write(serviceDocument)
+        } catch (exception: IOException) {
+            logger.error("unable to read resource: $exception")
+            throw exception
+        }
+    }
+
+    override fun download(userId: String, artifactInfo: NugetDownloadArtifactInfo) {
+        repository.download(ArtifactDownloadContext())
+    }
+
+    override fun findPackagesById(artifactInfo: NugetArtifactInfo, searchRequest: NuGetSearchRequest) {
+        // todo
+    }
+
     companion object {
-        private val logger = LoggerFactory.getLogger(NugetPackageServiceImpl::class.java)
+        private val logger = LoggerFactory.getLogger(NugetWebServiceImpl::class.java)
 
         fun buildBasicInfo(nodeDetail: NodeDetail, packageVersion: PackageVersion): BasicInfo {
             with(nodeDetail) {

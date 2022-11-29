@@ -33,17 +33,11 @@ package com.tencent.bkrepo.nuget.controller
 
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
-import com.tencent.bkrepo.common.api.constant.MediaTypes.APPLICATION_JSON
-import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
 import com.tencent.bkrepo.common.security.permission.Permission
-import com.tencent.bkrepo.nuget.artifact.NugetArtifactInfo
-import com.tencent.bkrepo.nuget.model.v2.search.NuGetSearchRequest
 import com.tencent.bkrepo.nuget.pojo.artifact.NugetDeleteArtifactInfo
-import com.tencent.bkrepo.nuget.pojo.artifact.NugetDownloadArtifactInfo
 import com.tencent.bkrepo.nuget.pojo.artifact.NugetPublishArtifactInfo
 import com.tencent.bkrepo.nuget.service.NugetClientService
 import org.springframework.web.bind.annotation.DeleteMapping
-import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestAttribute
 import org.springframework.web.bind.annotation.RequestMapping
@@ -55,13 +49,6 @@ import org.springframework.web.bind.annotation.RestController
 class NugetClientController(
     private val nugetClientService: NugetClientService
 ) {
-    @GetMapping(produces = [APPLICATION_JSON])
-    fun getServiceDocument(
-        @ArtifactPathVariable artifactInfo: NugetArtifactInfo
-    ) {
-        nugetClientService.getServiceDocument(artifactInfo)
-    }
-
     /**
      * usage: NuGet push <程序包路径> [API 密钥] [ options ]
      * Content-Type multipart/form-data
@@ -74,23 +61,6 @@ class NugetClientController(
         publishInfo: NugetPublishArtifactInfo
     ) {
         nugetClientService.publish(userId, publishInfo)
-    }
-
-    @GetMapping("/Download/{id}/{version}")
-    @Permission(ResourceType.REPO, PermissionAction.READ)
-    fun download(
-        @RequestAttribute userId: String,
-        artifactInfo: NugetDownloadArtifactInfo
-    ) {
-        nugetClientService.download(userId, artifactInfo)
-    }
-
-    @GetMapping("/FindPackagesById()", produces = ["application/xml"])
-    fun findPackagesById(
-        @ArtifactPathVariable artifactInfo: NugetArtifactInfo,
-        searchRequest: NuGetSearchRequest
-    ) {
-        nugetClientService.findPackagesById(artifactInfo, searchRequest)
     }
 
     /**

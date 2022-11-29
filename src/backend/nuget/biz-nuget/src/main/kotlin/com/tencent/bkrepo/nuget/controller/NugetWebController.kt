@@ -96,7 +96,7 @@ class NugetWebController(
         nugetWebService.download(userId, artifactInfo)
     }
 
-    @GetMapping("/FindPackagesById()", produces = ["application/xml"])
+    @GetMapping("/packages/{projectId}/{repoName}", produces = ["application/xml"])
     @Permission(ResourceType.REPO, PermissionAction.READ)
     fun findPackagesById(
         @ArtifactPathVariable artifactInfo: NugetArtifactInfo,

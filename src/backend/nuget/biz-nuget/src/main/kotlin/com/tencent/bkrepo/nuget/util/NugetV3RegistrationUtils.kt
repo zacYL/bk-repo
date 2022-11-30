@@ -1,11 +1,11 @@
 package com.tencent.bkrepo.nuget.util
 
 import com.github.zafarkhaja.semver.Version
-import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.nuget.constant.*
 import com.tencent.bkrepo.nuget.pojo.nuspec.NuspecMetadata
 import com.tencent.bkrepo.nuget.pojo.request.NugetSearchRequest
 import com.tencent.bkrepo.nuget.pojo.response.search.SearchResponseData
+import com.tencent.bkrepo.nuget.pojo.response.search.SearchResponseDataTypes
 import com.tencent.bkrepo.nuget.pojo.response.search.SearchResponseDataVersion
 import com.tencent.bkrepo.nuget.pojo.v3.metadata.index.*
 import com.tencent.bkrepo.nuget.pojo.v3.metadata.leaf.RegistrationLeaf
@@ -74,7 +74,12 @@ object NugetV3RegistrationUtils {
             val count = registrationPageItemList.size
             val registrationUrl: URI = NugetUtils.buildRegistrationIndexUrl(v3RegistrationUrl, packageId)
             return RegistrationPage(
-                pageURI, count, registrationPageItemList, lowerVersion, registrationUrl, upperVersion
+                id = pageURI,
+                count = count,
+                items = registrationPageItemList,
+                lower = lowerVersion,
+                parent = registrationUrl,
+                upper = upperVersion
             )
         }
     }
@@ -110,16 +115,16 @@ object NugetV3RegistrationUtils {
         )
     }
 
-    private fun metadataToDependencyGroups(
+    fun metadataToDependencyGroups(
         dependencies: List<Any>?,
-        v3RegistrationUrl: String
+        v3RegistrationUrl: String? = null
     ): List<DependencyGroups> {
         // nuspec文件的dependencies可能是"简单依赖列表"或"依赖项组"，都需要转换到DependencyGroups
         val dependencyMaps = dependencies?.map { it as Map<*, *> }
         val first = dependencyMaps?.firstOrNull() ?: return emptyList()
-        return if (first.containsKey(ID) && first.containsKey(VERSION)) {
+        return if (first.containsKey(ID)) {
             // 简单依赖列表的targetFramework为空
-            listOf(resolveSingleFlatList(dependencyMaps, v3RegistrationUrl))
+            listOf(resolveSingleFlatList(source = dependencyMaps, v3RegistrationUrl = v3RegistrationUrl))
         } else {
             resolveDependencyGroups(dependencyMaps, v3RegistrationUrl)
         }
@@ -132,14 +137,17 @@ object NugetV3RegistrationUtils {
      */
     private fun resolveSingleFlatList(
         source: List<Map<*, *>>,
-        v3RegistrationUrl: String,
-        targetFramework: String? = null
+        targetFramework: String? = null,
+        v3RegistrationUrl: String? = null,
     ): DependencyGroups {
         val singleFlatList = mutableListOf<Dependency>()
         source.forEach {
-            singleFlatList.add(Dependency(it[ID].toString()))
+            val version = it[VERSION]?.toString()
+            singleFlatList.add(
+                Dependency(packageId = it[ID].toString(), range = versionToRange(version))
+            )
         }
-        return DependencyGroups(singleFlatList, targetFramework)
+        return DependencyGroups(dependencies = singleFlatList, targetFramework = targetFramework)
     }
 
     /**
@@ -151,25 +159,31 @@ object NugetV3RegistrationUtils {
      * 3.dependency不为空，targetFramework为空，这样的Map最多只有1个，表示匹配不到框架时的默认或回落依赖
      * 4.dependency和targetFramework都为空，表示默认或回落情况下没有依赖
      */
-    private fun resolveDependencyGroups(source: List<Map<*, *>>, v3RegistrationUrl: String): List<DependencyGroups> {
+    private fun resolveDependencyGroups(
+        source: List<Map<*, *>>,
+        v3RegistrationUrl: String? = null
+    ): List<DependencyGroups> {
         val dependencyGroupList = mutableListOf<DependencyGroups>()
         source.forEach {
             val dependencyObject = it[DEPENDENCY]
             val targetFramework = it[TARGET_FRAMEWORKS]?.toString()
             // 解析单个依赖项组
             val dependencyGroup = when (dependencyObject) {
-                // 当依赖项组中的依赖项只有1个时，dependency是包含键为ID和Version的Map
+                // 当依赖项组中的依赖项只有1个时，dependency是1个包含键为id的Map
                 is Map<*, *> -> {
-                    val singleFlatList = listOf(Dependency(dependencyObject[ID].toString()))
-                    DependencyGroups(singleFlatList, targetFramework)
+                    val version = dependencyObject[VERSION]?.toString()
+                    val singleFlatList = listOf(
+                        Dependency(packageId = dependencyObject[ID].toString(), range = versionToRange(version))
+                    )
+                    DependencyGroups(dependencies = singleFlatList, targetFramework = targetFramework)
                 }
-                // 当依赖项组中的依赖项有多个时，dependency是一个列表，包含多个Map，每个Map对应一个依赖项，包含ID和Version的键
+                // 当依赖项组中的依赖项有多个时，dependency是一个List，包含多个Map，每个Map对应一个依赖项，且包含key:id
                 is List<*> -> {
                     val dependencyMaps = dependencyObject.map { dependency -> dependency as Map<*, *> }
-                    resolveSingleFlatList(dependencyMaps, v3RegistrationUrl, targetFramework)
+                    resolveSingleFlatList(dependencyMaps, targetFramework, v3RegistrationUrl)
                 }
                 else -> {
-                    DependencyGroups(null, targetFramework)
+                    DependencyGroups(dependencies = null, targetFramework = targetFramework)
                 }
             }
             dependencyGroupList.add(dependencyGroup)
@@ -193,7 +207,7 @@ object NugetV3RegistrationUtils {
                 packageId = id,
                 licenseUrl = licenseUrl?.let { URI.create(it) },
                 licenseExpression = null,
-                listed = false,
+                listed = true,
                 minClientVersion = minClientVersion,
                 projectUrl = projectUrl?.let { URI.create(it) },
                 published = null,
@@ -203,6 +217,12 @@ object NugetV3RegistrationUtils {
                 title = title,
                 version = version
             )
+        }
+    }
+
+    private fun versionToRange(version: String?): String? {
+        return version?.let {
+            if (version.startsWith("[") || version.startsWith("(")) version else "[$version, )"
         }
     }
 
@@ -218,7 +238,11 @@ object NugetV3RegistrationUtils {
             val packageId = registrationLeafList[0].catalogEntry.packageId
             val registrationPageList =
                 buildRegistrationItems(registrationLeafList, v3RegistrationUrl, versionCount, pagesCount, packageId)
-            return RegistrationIndex(pagesCount, registrationPageList)
+            return RegistrationIndex(
+                id = NugetUtils.buildRegistrationIndexUrl(v3RegistrationUrl, packageId),
+                count = pagesCount,
+                items = registrationPageList
+            )
         }
     }
 
@@ -279,10 +303,9 @@ object NugetV3RegistrationUtils {
         val latestVersionPackage = sortedPackageVersionList.last()
         val searchResponseDataVersionList =
             sortedPackageVersionList.filter {
-                searchRequest.prerelease ?: false || !isPreRelease(latestVersionPackage.name)
+                searchRequest.prerelease ?: false || !isPreRelease(it.name)
             }.map { buildSearchResponseDataVersion(it, packageSummary.name, v3RegistrationUrl) }
-        val writeValueAsString = JsonUtils.objectMapper.writeValueAsString(latestVersionPackage.metadata)
-        val nuspecMetadata = JsonUtils.objectMapper.readValue(writeValueAsString, NuspecMetadata::class.java)
+        val nuspecMetadata = NugetUtils.resolveVersionMetadata(latestVersionPackage)
         return buildSearchResponseData(v3RegistrationUrl, searchResponseDataVersionList, nuspecMetadata, packageSummary)
     }
 
@@ -294,7 +317,8 @@ object NugetV3RegistrationUtils {
     ): SearchResponseData {
         with(nuspecMetadata) {
             return SearchResponseData(
-                id = NugetUtils.buildRegistrationIndexUrl(v3RegistrationUrl, id),
+                registration = NugetUtils.buildRegistrationIndexUrl(v3RegistrationUrl, id),
+                id = id,
                 version = version,
                 description = description,
                 versions = searchResponseDataVersionList,
@@ -303,13 +327,13 @@ object NugetV3RegistrationUtils {
                 licenseUrl = licenseUrl?.let { URI.create(it) },
                 owners = owners?.split(','),
                 projectUrl = projectUrl?.let { URI.create(it) },
-                registration = NugetUtils.buildRegistrationIndexUrl(v3RegistrationUrl, id),
                 summary = summary,
                 tags = tags?.split(','),
                 title = title,
                 totalDownloads = packageSummary.downloads.toInt(),
                 verified = false,
-                packageTypes = emptyList()
+                packageTypes = packageTypes?.map { SearchResponseDataTypes(it.name) }
+                    ?: listOf(SearchResponseDataTypes())
             )
         }
     }

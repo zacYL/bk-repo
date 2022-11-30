@@ -141,7 +141,7 @@ object PackageQueryHelper {
                 packageName?.let {
                     val escapedValue = MongoEscapeUtils.escapeRegexExceptWildcard(it)
                     val regexPattern = escapedValue.replace("*", ".*")
-                    and(TPackage::name).regex("^$regexPattern") }
+                    and(TPackage::name).regex("^$regexPattern", "i") }
             }
     }
 

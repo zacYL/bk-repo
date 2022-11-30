@@ -182,7 +182,7 @@
         <generic-detail ref="genericDetail"></generic-detail>
         <generic-form-dialog ref="genericFormDialog" @refresh="refreshNodeChange"></generic-form-dialog>
         <generic-share-dialog ref="genericShareDialog"></generic-share-dialog>
-        <generic-tree-dialog ref="genericTreeDialog" @update="updateGenericTreeNode" @refresh="refreshNodeChange"></generic-tree-dialog>
+        <generic-tree-dialog ref="genericTreeDialog" @update="updateOperateTreeNode" @refresh="refreshNodeChange"></generic-tree-dialog>
         <preview-basic-file-dialog ref="previewBasicFileDialog"></preview-basic-file-dialog>
         <compressed-file-table ref="compressedFileTable" @show-preview="handlerPreviewBasicsFile"></compressed-file-table>
     </div>
@@ -263,6 +263,7 @@
                 const breadcrumb = []
                 let node = this.genericTree
                 const road = this.selectedTreeNode.roadMap.split(',')
+                road.splice(0, 1)
                 road.forEach(index => {
                     breadcrumb.push({
                         name: node[index].displayName,
@@ -318,7 +319,7 @@
             convertFileSize,
             getIconName,
             formatDate,
-            ...mapMutations(['INIT_TREE']),
+            ...mapMutations(['INIT_TREE', 'INIT_OPERATE_TREE', 'UPDATE_TREE', 'UPDATE_OPERATE_TREE']),
             ...mapActions([
                 'getRepoListAll',
                 'getFolderList',
@@ -328,7 +329,8 @@
                 'getFolderSize',
                 'getFileNumOfFolder',
                 'getMultiFileNumOfFolder',
-                'forbidMetadata'
+                'forbidMetadata',
+                'getGenericList'
             ]),
             tooltipContent ({ forbidType, forbidUser }) {
                 switch (forbidType) {
@@ -367,13 +369,31 @@
                 ])
             },
             initTree () {
+                //
+                const Tree = []
+                this.getGenericList({ projectId: this.projectId }).then((res) => {
+                    res.forEach(item => {
+                        Tree.push({
+                            name: this.replaceRepoName(item.name),
+                            displayName: this.replaceRepoName(item.name),
+                            fullPath: '',
+                            folder: true,
+                            children: [],
+                            roadMap: `${item.name},0`
+                        })
+                    })
+                    this.INIT_OPERATE_TREE(Tree)
+                }).catch((error) => {
+                    console.log(error)
+                })
+
                 this.INIT_TREE([{
                     name: this.replaceRepoName(this.repoName),
                     displayName: this.replaceRepoName(this.repoName),
                     fullPath: '',
                     folder: true,
                     children: [],
-                    roadMap: '0'
+                    roadMap: `${this.repoName},0`
                 }])
             },
             pathChange () {
@@ -485,14 +505,48 @@
                     this.updateGenericTreeNode(node)
                 }
             },
-            updateGenericTreeNode (item) {
+            updateOperateTreeNode (item) {
                 this.$set(item, 'loading', true)
-                return debounce(this.getFolderList({
+                const name = item.roadMap.split(',').slice(0, 1)[0]
+                return this.getFolderList({
                     projectId: this.projectId,
-                    repoName: this.repoName,
+                    repoName: name,
                     fullPath: item.fullPath,
                     roadMap: item.roadMap,
                     isPipeline: this.repoName === 'pipeline'
+                }).then((res) => {
+                    const records = res.records
+                    const roadMap = item.roadMap
+                    this.UPDATE_OPERATE_TREE({
+                        roadMap,
+                        list: records.map((v, index) => ({
+                            ...v,
+                            roadMap: `${roadMap},${index}`
+                        }))
+                    })
+                }).finally(() => {
+                    this.$set(item, 'loading', false)
+                })
+            },
+            updateGenericTreeNode (item) {
+                this.$set(item, 'loading', true)
+                const name = item.roadMap.split(',').slice(0, 1)[0]
+                return debounce(this.getFolderList({
+                    projectId: this.projectId,
+                    repoName: name,
+                    fullPath: item.fullPath,
+                    roadMap: item.roadMap,
+                    isPipeline: this.repoName === 'pipeline'
+                }).then((res) => {
+                    const records = res.records
+                    const roadMap = item.roadMap
+                    this.UPDATE_TREE({
+                        roadMap,
+                        list: records.map((v, index) => ({
+                            ...v,
+                            roadMap: `${roadMap},${index}`
+                        }))
+                    })
                 }).finally(() => {
                     this.$set(item, 'loading', false)
                 }))

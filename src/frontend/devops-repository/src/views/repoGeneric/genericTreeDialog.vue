@@ -50,7 +50,10 @@
             }
         },
         computed: {
-            ...mapState(['genericTree']),
+            ...mapState(['operateTree']),
+            genericTree () {
+                return this.operateTree
+            },
             projectId () {
                 return this.$route.params.projectId
             },
@@ -104,7 +107,7 @@
                         srcRepoName: this.repoName,
                         srcFullPath: path,
                         destProjectId: this.projectId,
-                        destRepoName: this.repoName,
+                        destRepoName: selectedNode.repoName || selectedNode.name,
                         destFullPath: `${selectedNode.fullPath || '/'}`,
                         overwrite: false
                     }

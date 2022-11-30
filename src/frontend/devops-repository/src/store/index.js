@@ -13,6 +13,15 @@ const storeObject = {
             edit: true,
             delete: true
         },
+        operateTree: [
+            {
+                name: '/',
+                displayName: '/',
+                fullPath: '',
+                folder: true,
+                children: [],
+                roadMap: '0'
+            }],
         genericTree: [
             {
                 name: '/',
@@ -59,12 +68,38 @@ const storeObject = {
         INIT_TREE (state, root) {
             state.genericTree = root
         },
+        
+        INIT_OPERATE_TREE (state, root) {
+            state.operateTree = root
+        },
         UPDATE_TREE (state, { roadMap, list }) {
             let tree = state.genericTree
-            roadMap.split(',').forEach(index => {
+            const indexAry = roadMap.split(',')
+            indexAry.splice(0, 1)
+            indexAry.forEach(index => {
                 if (!tree[index].children) Vue.set(tree[index], 'children', [])
                 tree = tree[index].children
             })
+            list = list.map(item => {
+                const children = (tree.find(oldItem => oldItem.fullPath === item.fullPath) || {}).children || []
+                return {
+                    ...item,
+                    children,
+                    displayName: item.metadata?.displayName || item.name
+                }
+            })
+            tree.splice(0, tree.length, ...list)
+        },
+        UPDATE_OPERATE_TREE (state, { roadMap, list }) {
+            let tree = state.operateTree
+            const indexAry = roadMap.split(',')
+            const name = indexAry.splice(0, 1)[0]
+            tree = tree.filter(item => item.name === name)
+            indexAry.forEach(index => {
+                if (!tree[index].children) Vue.set(tree[index], 'children', [])
+                tree = tree[index].children
+            })
+            
             list = list.map(item => {
                 const children = (tree.find(oldItem => oldItem.fullPath === item.fullPath) || {}).children || []
                 return {

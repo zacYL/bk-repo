@@ -66,15 +66,7 @@ export default {
                         relation: 'AND'
                     }
                 }
-            ).then(({ records }) => {
-                commit('UPDATE_TREE', {
-                    roadMap,
-                    list: records.map((v, index) => ({
-                        ...v,
-                        roadMap: `${roadMap},${index}`
-                    }))
-                })
-            })
+            )
         },
         // 仓库内自定义查询
         // override

@@ -57,7 +57,7 @@ class PypiCompositeRepository(
             try {
                 action(getContextFromProxyChannel(context, setting))?.let {
                     // 无论请求是否成功, 都会返回kotlin.Unit
-                    if (it != Unit) {
+                    if (it != Unit && it != "") {
                         return it
                     }
                 }

@@ -32,13 +32,12 @@
 package com.tencent.bkrepo.pypi.artifact.repository
 
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchContext
 import com.tencent.bkrepo.common.artifact.repository.remote.RemoteRepository
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.stream.Range
-import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.pypi.FLUSH_CACHE_EXPIRE
 import com.tencent.bkrepo.pypi.REMOTE_HTML_CACHE_FULL_PATH
@@ -83,18 +82,11 @@ class PypiRemoteRepository : RemoteRepository() {
     }
 
     override fun query(context: ArtifactQueryContext): Any? {
-        val response = HttpContextHolder.getResponse()
-        response.contentType = "text/html"
-        if (context.artifactInfo.getArtifactFullPath() == "/") {
-            val cacheHtml = getCacheHtml(context) ?: "Can not cache remote html"
-            response.setContentLength(cacheHtml.length)
-            response.writer.print(cacheHtml)
+        return if (context.artifactInfo.getArtifactFullPath() == "/") {
+            getCacheHtml(context)
         } else {
-            val responseStr = remoteRequest(context) ?: ""
-            response.setContentLength(responseStr.length)
-            response.writer.print(responseStr)
+            remoteRequest(context)
         }
-        return null
     }
 
     fun remoteRequest(context: ArtifactQueryContext): String? {
@@ -133,7 +125,7 @@ class PypiRemoteRepository : RemoteRepository() {
         }.start()
         val stringBuilder = StringBuilder()
         storageService.load(node.sha256!!, Range.full(node.size), context.storageCredentials)?.use {
-            artifactInputStream ->
+                artifactInputStream ->
             var line: String?
             val br = BufferedReader(InputStreamReader(artifactInputStream))
             while (br.readLine().also { line = it } != null) {
@@ -190,7 +182,7 @@ class PypiRemoteRepository : RemoteRepository() {
     fun store(node: NodeCreateRequest, artifactFile: ArtifactFile, storageCredentials: StorageCredentials?) {
         storageManager.storeArtifactFile(node, artifactFile, storageCredentials)
         artifactFile.delete()
-        with(node) { PypiLocalRepository.logger.info("Success to store$projectId/$repoName/$fullPath") }
+        with(node) { logger.info("Success to store$projectId/$repoName/$fullPath") }
         logger.info("Success to insert $node")
     }
 

@@ -27,22 +27,23 @@ export const depotTypeList = [
         id: 'RPM',
         name: 'RPM'
     },
-    {
-        id: 'RDS',
-        name: 'RDS'
-    },
+
     {
         id: 'NUGET',
         name: 'NUGET'
-    },
-    {
-        id: 'GIT',
-        name: 'GIT'
-    },
-    {
-        id: 'OCI',
-        name: 'OCI'
     }
+    // {
+    //     id: 'GIT',
+    //     name: 'GIT'
+    // }
+    // {
+    //     id: 'RDS',
+    //     name: 'RDS'
+    // },
+    // {
+    //     id: 'OCI',
+    //     name: 'OCI'
+    // }
 ]
 export const fileTypeList = {
     // .md、.json、.txt、.LICENSE、.xml、POM、dependency

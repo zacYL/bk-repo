@@ -8,7 +8,9 @@
         :render-after-expand="false"
         :default-expanded-keys="defaultExpandKeys"
         :props="defaultProps"
+        :expand-on-click-node="false"
         @node-click="handleNodeClick"
+        @node-expand="handleNodeExpand"
         v-bkloading="{ isLoading: treeLoading }"
         style="height:100%;"
     >
@@ -90,7 +92,8 @@
                             type: item.type,
                             projectId: item.projectId,
                             repoName: item.name,
-                            children: []
+                            // 默认为当前节点添加一个子节点，让其显示左边的展开图标按钮
+                            children: [{ id: '000000', name: '' }]
                         }
                         return node
                     })
@@ -100,11 +103,15 @@
                             const currentRepoData = this.treeData.find(item => item.name === this.searchNode.repoName)
                             const currentRepoNode = this.$refs.treeDataRefs.getNode(currentRepoData.id)
                             if (currentRepoData && currentRepoNode) {
-                                this.handleNodeClick(currentRepoData, currentRepoNode)
-                                // 然后去切割 fullPath 为数组，并去除第一个/
-                                const fullPathList = this.searchNode.fullPath.replace(/^\//, '').split('/')
-                                // 调用方法递归找到当前元素的位置
-                                this.getNodePosition(currentRepoData, fullPathList, 0)
+                                this.handleNodeExpand(currentRepoData, currentRepoNode).then(() => {
+                                    // 此时需要考虑到获取仓库的子层级时接口报错后会导致this.searchNode重置为空的情况
+                                    if (!lodash.isEmpty(this.searchNode) && this.searchNode.fullPath) {
+                                        // 然后去切割 fullPath 为数组，并去除第一个/
+                                        const fullPathList = this.searchNode.fullPath.replace(/^\//, '').split('/')
+                                        // 调用方法递归找到当前元素的位置
+                                        this.getNodePosition(currentRepoData, fullPathList, 0)
+                                    }
+                                })
                             }
                         })
                     }
@@ -123,40 +130,45 @@
             getNodePosition (data, fullPathList, i) {
                 this.treeLoading = true
                 if (i < fullPathList.length) {
-                    // 此处因为立即执行此操作时会出现当前数据的children为空数组的情况，因此使用setTimeout延迟处理，又因为考虑到可能网络比较差，所以延迟了3秒
-                    setTimeout(() => {
-                        const newData = data.children.find(data => data.name === fullPathList[i])
-                        this.handleNodeClick(newData, this.$refs.treeDataRefs.getNode(newData))
-                        i++
-                        this.getNodePosition(newData, fullPathList, i)
-                    }, 3000)
+                    // 此处因为立即执行此操作时会出现当前数据的children为空数组的情况，
+                    // 因此使用setTimeout延迟处理，又因为考虑到可能网络比较差，所以延迟了3秒
+                    // 但这个延迟导致loading时间太久，因此使用promise.then()
+                    const newData = data.children.find(data => data.name === fullPathList[i])
+                    if (newData) {
+                        this.handleNodeExpand(newData, this.$refs.treeDataRefs.getNode(newData)).then(() => {
+                            i++
+                            this.getNodePosition(newData, fullPathList, i)
+                        })
+                    }
                 } else {
                     this.treeLoading = false
                     this.$emit('searchFinish', this.treeLoading)
                     this.defaultExpandKeys = [this.searchNode.id]
+                    this.handleNodeClick(data)
                 }
             },
 
             handleNodeClick (data, node) {
                 this.currentClickNode = data
+                this.$emit('clickNode', data)
+                // node.expand()
+            },
+            handleNodeExpand (data, node) {
                 if (data.folder) {
                     // 当点击的节点是文件夹或仓库时才请求获取其子节点
-                    this.getTreeData(data, node)
+                    return this.getTreeData(data, node)
+                } else {
+                    // 在当前点击的节点不是文件夹或仓库时不在请求其子级，此时需要返回resolve的promise，否则会导致不能跳出递归
+                    return Promise.resolve()
                 }
-                this.$emit('clickNode', data)
-                node.expand()
             },
 
             // 获取树节点的数据
             getTreeData (data, node) {
-                if (data.children !== null && (data.children && data.children.length > 0)) {
-                    // 此时是关闭当前展开的节点，需要将当前节点的子节点置为空，否则再次展开时会重新添加子节点导致子节点重复
-                    data.children = []
-                    return
-                }
+                // 向当前选择节点添加子节点之前先将之前默认添加的数据清除，否则会出现数据重复或无用数据
+                data.children = []
                 this.treeLoading = true
-                // node.loading = true
-                this.getSubTreeNodes({
+                return this.getSubTreeNodes({
                     projectId: data.projectId,
                     repoName: data.repoName,
                     fullPath: data.fullPath
@@ -174,12 +186,35 @@
                                 children: []
 
                             }
+                            if (node.folder) {
+                                // 如果当前节点是文件夹，则默认为其添加一个子节点，让其显示左边的展开图标按钮
+                                node.children = [{ id: '000000', name: '' }]
+                            }
                             return node
                         })
 
                         this.$refs.treeDataRefs.updateKeyChildren(data.id, secondChildren)
-                        // node.loading = false
-                        // node.loaded = true
+                    }
+                }).catch((error) => {
+                    this.$bkMessage({
+                        message: error.message,
+                        theme: 'error'
+                    })
+                    if (data.folder) {
+                        // 在请求报错后为了保持文件夹左侧的图标按钮，需要将之前清空的数组再次默认添加一个数据
+                        data.children = [{ id: '000000', name: '' }]
+                        // 将当前节点的展开状态改为false，否则会展开当前节点，显示不应该出现的默认节点的无效数据
+                        this.$refs.treeDataRefs.getNode(data).expanded = false
+                        // 此时默认点击当前需要加载子级的节点
+                        if (!lodash.isEmpty(this.searchNode)) {
+                            // 调用此方法之后会导致this.searchNode变为空，所以其余地方在操作其对象内部的属性时需要判断是否为空
+                            this.$emit('searchFinish', this.treeLoading)
+                            //  此时不能在设置默认展开，否则会导致展开当前节点，显示不应该出现的默认节点的无效数据
+                            // this.defaultExpandKeys = [data.id]
+                            this.handleNodeClick(data)
+                            this.$emit('clickNode', data)
+                            this.treeLoading = false
+                        }
                     }
                 }).finally(() => {
                     if (!this.searchNode && !this.searchNode.id) {

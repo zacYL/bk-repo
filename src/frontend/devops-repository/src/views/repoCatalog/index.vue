@@ -20,6 +20,10 @@
                     :key="option.id"
                     :id="option.id"
                     :name="option.name.toLowerCase()">
+                    <div class="flex-align-center">
+                        <Icon size="20" :name="option.name.toLowerCase()" />
+                        <span class="ml10 flex-1 text-overflow">{{option.name.toLowerCase()}}</span>
+                    </div>
                 </bk-option>
             </bk-select>
             <bk-button v-if="searchFlag" @click="searchFlag = !searchFlag">返回目录树</bk-button>

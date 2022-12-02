@@ -144,6 +144,7 @@
                     .map(item => ({ ...item, value: this.detailInfo[item.name] }))
             },
             repoAddress () {
+                this.detailInfo.repoType = this.detailInfo?.type?.toLowerCase() || ''
                 const { repoType, name } = this.detailInfo
                 if (repoType === 'docker') {
                     return `${location.protocol}//${this.domain.docker}/${this.projectId}/${name}/`

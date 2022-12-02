@@ -76,8 +76,8 @@ export default {
                     },
                     {
                         field: 'name',
-                        value: name,
-                        operation: 'REGEX'
+                        value: `*${name}*`,
+                        operation: 'MATCH'
                     }
                 ],
                 relation: 'AND'

@@ -375,9 +375,19 @@
                 ])
             },
             initTree () {
-                //
+                this.INIT_TREE([{
+                    name: this.replaceRepoName(this.repoName),
+                    displayName: this.replaceRepoName(this.repoName),
+                    fullPath: '',
+                    folder: true,
+                    children: [],
+                    roadMap: `${this.repoName},0`
+                }])
+            },
+            // 初始化操作树(复制、移动)
+            initGenericOperateTree () {
                 const Tree = []
-                this.getGenericList({ projectId: this.projectId }).then((res) => {
+                return this.getGenericList({ projectId: this.projectId }).then((res) => {
                     res.forEach(item => {
                         Tree.push({
                             name: this.replaceRepoName(item.name),
@@ -392,14 +402,6 @@
                 }).catch((error) => {
                     console.log(error)
                 })
-                this.INIT_TREE([{
-                    name: this.replaceRepoName(this.repoName),
-                    displayName: this.replaceRepoName(this.repoName),
-                    fullPath: '',
-                    folder: true,
-                    children: [],
-                    roadMap: `${this.repoName},0`
-                }])
             },
             pathChange () {
                 const paths = (this.$route.query.path || '').split('/').filter(Boolean)
@@ -610,6 +612,7 @@
             },
             refreshNodeChange () {
                 this.updateGenericTreeNode(this.selectedTreeNode)
+                this.updateOperateTreeNode(this.selectedTreeNode)
                 this.getArtifactories()
             },
             handlerShare ({ name, fullPath }) {
@@ -656,19 +659,23 @@
                 })
             },
             moveRes ({ name, fullPath }) {
-                this.$refs.genericTreeDialog.setTreeData({
-                    show: true,
-                    type: 'move',
-                    title: `${this.$t('move')} (${name})`,
-                    path: fullPath
+                this.initGenericOperateTree().then(() => {
+                    this.$refs.genericTreeDialog.setTreeData({
+                        show: true,
+                        type: 'move',
+                        title: `${this.$t('move')} (${name})`,
+                        path: fullPath
+                    })
                 })
             },
             copyRes ({ name, fullPath }) {
-                this.$refs.genericTreeDialog.setTreeData({
-                    show: true,
-                    type: 'copy',
-                    title: `${this.$t('copy')} (${name})`,
-                    path: fullPath
+                this.initGenericOperateTree().then(() => {
+                    this.$refs.genericTreeDialog.setTreeData({
+                        show: true,
+                        type: 'copy',
+                        title: `${this.$t('copy')} (${name})`,
+                        path: fullPath
+                    })
                 })
             },
             handlerUpload ({ fullPath }, folder = false) {

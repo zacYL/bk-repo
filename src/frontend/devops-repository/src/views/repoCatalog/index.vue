@@ -305,6 +305,7 @@
                 }).then(res => {
                     this.baseDetailInfo = {
                         ...res,
+                        ...res.configuration.settings,
                         name: res.name || repoName,
                         createdBy: res.createdBy,
                         createdDate: formatDate(res.createdDate),

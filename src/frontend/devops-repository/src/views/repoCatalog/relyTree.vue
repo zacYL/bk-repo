@@ -63,7 +63,8 @@
                 },
                 currentClickNode: '', // 当前点击的节点
                 treeLoading: false,
-                defaultExpandKeys: [] // 默认展开的节点的key数组
+                defaultExpandKeys: [], // 默认展开的节点的key数组
+                oldCurrentNode: '' // 之前点击的节点，用于设置当前节点的高亮显示
             }
         },
         computed: {
@@ -118,7 +119,7 @@
                     // 当前存在依赖仓库，并且不是搜索后返回的，此时就需要默认选中第一个仓库
                     if (this.treeData.length > 0 && !this.searchNode.id) {
                         // 此时需要默认选择第一个仓库
-                        this.$emit('clickNode', this.treeData[0])
+                        this.handleNodeClick(this.treeData[0])
                     }
                 }).finally(() => {
                     if (!this.searchNode && !this.searchNode.id) {
@@ -148,10 +149,15 @@
                 }
             },
 
-            handleNodeClick (data, node) {
+            handleNodeClick (data) {
                 this.currentClickNode = data
                 this.$emit('clickNode', data)
-                // node.expand()
+                // 点击时需要先将之前的节点的高亮去除，否则会导致出现多个高亮显示的节点
+                this.oldCurrentNode && (this.oldCurrentNode.isCurrent = false)
+                this.$nextTick(() => {
+                    this.oldCurrentNode = this.$refs.treeDataRefs.getNode(this.currentClickNode) || ''
+                    this.oldCurrentNode && (this.oldCurrentNode.isCurrent = true)
+                })
             },
             handleNodeExpand (data, node) {
                 if (data.folder) {

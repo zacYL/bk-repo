@@ -34,21 +34,17 @@ package com.tencent.bkrepo.repository.service.node.impl
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.query.model.QueryModel
-import com.tencent.bkrepo.common.query.util.MongoEscapeUtils
 import com.tencent.bkrepo.common.security.http.core.HttpAuthProperties
 import com.tencent.bkrepo.repository.dao.NodeDao
 import com.tencent.bkrepo.repository.model.TNode
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.repo.RepoListOption
-import com.tencent.bkrepo.repository.pojo.software.CountResult
 import com.tencent.bkrepo.repository.pojo.software.ProjectPackageOverview
 import com.tencent.bkrepo.repository.search.node.NodeQueryContext
 import com.tencent.bkrepo.repository.search.node.NodeQueryInterpreter
 import com.tencent.bkrepo.repository.service.node.NodeSearchService
 import com.tencent.bkrepo.repository.service.repo.RepositoryService
 import com.tencent.bkrepo.repository.util.MetadataUtils
-import org.springframework.data.mongodb.core.aggregation.Aggregation
-import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
@@ -110,24 +106,10 @@ class NodeSearchServiceImpl(
                 )
             )
         }
-        val criteria = Criteria.where(TNode::repoName.name).`in`(genericRepos)
-        criteria.and(TNode::projectId.name).`is`(projectId)
-            .and(TNode::deleted.name).`is`(null)
-            .and(TNode::folder.name).`is`(false)
-
-        val escapedValue = MongoEscapeUtils.escapeRegexExceptWildcard(name)
-        val regexPattern = escapedValue.replace("*", ".*")
-        criteria.and(TNode::name.name).regex("^$regexPattern$", "i")
-        val aggregation = Aggregation.newAggregation(
-            TNode::class.java,
-            Aggregation.match(criteria),
-            Aggregation.group("\$${TNode::repoName.name}").count().`as`("count")
-        )
-        val result = nodeDao.aggregate(aggregation, CountResult::class.java).mappedResults
-        return transTree(projectId, result)
+        return transTree(projectId, genericRepos)
     }
 
-    private fun transTree(projectId: String, list: List<CountResult>): List<ProjectPackageOverview> {
+    private fun transTree(projectId: String, repoNamelist: List<String>): List<ProjectPackageOverview> {
         val projectSet = mutableSetOf<ProjectPackageOverview>()
         projectSet.add(
             ProjectPackageOverview(
@@ -136,14 +118,14 @@ class NodeSearchServiceImpl(
                 sum = 0L
             )
         )
-        list.sortedByDescending { it.count }.map { pojo ->
+        repoNamelist.map { pojo ->
             val repoOverview = ProjectPackageOverview.RepoPackageOverview(
-                repoName = pojo.id,
-                repoCategory = repositoryService.getRepoInfo(projectId, pojo.id)?.category,
-                packages = pojo.count
+                repoName = pojo,
+                repoCategory = repositoryService.getRepoInfo(projectId, pojo)?.category,
+                packages = 0L
             )
             projectSet.first().repos.add(repoOverview)
-            projectSet.first().sum += pojo.count
+            projectSet.first().sum += 0L
         }
         return projectSet.toList()
     }

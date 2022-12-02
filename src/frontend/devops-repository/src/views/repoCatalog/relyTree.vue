@@ -145,6 +145,8 @@
                     this.$emit('searchFinish', this.treeLoading)
                     this.defaultExpandKeys = [this.searchNode.id]
                     this.handleNodeClick(data)
+                    const currentNode = this.$refs.treeDataRefs.getNode(data)
+                    currentNode && (currentNode.isCurrent = true)
                 }
             },
 

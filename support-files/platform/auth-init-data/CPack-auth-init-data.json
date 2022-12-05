@@ -239,4 +239,20 @@
     "associatedInstance" : false,
     "weight" : 50
   } ]
+}, {
+  "id" : "c0088cd6412f4aa98cc0d057eb9fc04b",
+  "code" : "repoCatalog",
+  "name" : "制品库-依赖目录",
+  "parentCode" : "project",
+  "privateData" : false,
+  "belongModule" : "CPACK",
+  "belongVersion" : "STANDARD",
+  "functionList" : [ {
+    "functionId" : "c0088cd6412f4aa98cc0d057eb9fc04b",
+    "name" : "查看",
+    "resourceCode" : "repoCatalog",
+    "actionCode" : "view",
+    "associatedInstance" : false,
+    "weight" : 50
+  } ]
 } ]

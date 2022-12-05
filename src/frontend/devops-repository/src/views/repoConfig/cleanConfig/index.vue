@@ -23,11 +23,7 @@
                     :key="ind"
                     :disabled="!config.autoClean"
                     v-bind="rule"
-                    @change="r => {
-                        for (let key in r) {
-                            key && config.rules.splice(ind, 1, r)
-                        }
-                    }"
+                    @change="(r) => onChange(r,ind)"
                     @delete="config.rules.splice(ind, 1)">
                 </component>
             </div>
@@ -41,7 +37,7 @@
     import packageCleanRule from './packageCleanRule'
     import genericCleanRule from './genericCleanRule.vue'
     import { mapActions } from 'vuex'
-    
+
     export default {
         name: 'cleanConfig',
         components: {
@@ -123,6 +119,11 @@
             },
             clearError () {
                 this.$refs.cleanForm.clearError()
+            },
+            onChange (r, ind) {
+                for (const key in r) {
+                    key && this.config.rules.splice(ind, 1, r)
+                }
             },
             async save () {
                 await this.$refs.cleanForm.validate()

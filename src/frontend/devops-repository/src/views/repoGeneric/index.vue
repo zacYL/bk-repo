@@ -612,7 +612,6 @@
             },
             refreshNodeChange () {
                 this.updateGenericTreeNode(this.selectedTreeNode)
-                this.updateOperateTreeNode(this.selectedTreeNode)
                 this.getArtifactories()
             },
             handlerShare ({ name, fullPath }) {

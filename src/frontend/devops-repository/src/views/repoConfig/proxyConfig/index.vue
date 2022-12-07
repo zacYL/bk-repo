@@ -9,6 +9,7 @@
             <div class="proxy-origin">{{$t('name')}}</div>
             <div class="proxy-type">{{$t('type')}}</div>
             <div class="proxy-address">{{$t('address')}}</div>
+            <div class="proxy-switcher">网络代理</div>
             <div class="proxy-operation">{{$t('operation')}}</div>
         </div>
         <draggable v-if="proxyList.length" v-model="proxyList" :options="{ animation: 200 }" @update="debounceSaveProxy">
@@ -17,6 +18,7 @@
                 <div class="proxy-origin">{{proxy.name}}</div>
                 <div class="proxy-type">{{proxy.public ? $t('publicProxy') : $t('privateProxy')}}</div>
                 <div class="proxy-address">{{proxy.url}}</div>
+                <div class="proxy-switcher">{{ isEmpty(proxy.networkProxy) ? '已关闭' : '已开启'}}</div>
                 <div class="flex-align-center proxy-operation">
                     <Icon class="mr10 hover-btn" size="24" name="icon-edit" @click.native.stop="editProxy(proxy)" />
                     <Icon class="hover-btn" size="24" name="icon-delete" @click.native.stop="deleteProxy(proxy)" />
@@ -32,6 +34,7 @@
     import proxyOriginDialog from './proxyOriginDialog'
     import { mapActions } from 'vuex'
     import { debounce } from '@repository/utils'
+    import { isEmpty } from 'lodash'
     export default {
         name: 'proxyConfig',
         components: { draggable, proxyOriginDialog },
@@ -45,7 +48,8 @@
                 // 当前仓库的代理源
                 proxyList: [],
                 proxyData: {},
-                debounceSaveProxy: null
+                debounceSaveProxy: null,
+                isEmpty
             }
         },
         computed: {
@@ -87,32 +91,27 @@
                 this.debounceSaveProxy()
             },
             confirmProxyData ({ name, data }) {
+                const updateData = {
+                    public: data.public,
+                    name: data.name,
+                    url: data.url,
+                    ...(data.username
+                        ? {
+                            username: data.username,
+                            password: data.password
+                        }
+                        : {})
+                }
+                if (data.networkProxy.host) {
+                    // 当网络代理的 host 存在时表明配置了网络代理，此时请求时就需要添加 networkProxy对象
+                    updateData.networkProxy = { ...data.networkProxy }
+                }
                 // 添加
                 if (data.type === 'add') {
-                    this.proxyList.push({
-                        public: data.public,
-                        name: data.name,
-                        url: data.url,
-                        ...(data.username
-                            ? {
-                                username: data.username,
-                                password: data.password
-                            }
-                            : {})
-                    })
+                    this.proxyList.push(updateData)
                 // 编辑
                 } else if (data.type === 'edit') {
-                    this.proxyList.splice(this.proxyList.findIndex(v => v.name === name), 1, {
-                        public: data.public,
-                        name: data.name,
-                        url: data.url,
-                        ...(data.username
-                            ? {
-                                username: data.username,
-                                password: data.password
-                            }
-                            : {})
-                    })
+                    this.proxyList.splice(this.proxyList.findIndex(v => v.name === name), 1, updateData)
                 }
                 this.cancelProxy()
                 this.debounceSaveProxy()
@@ -143,13 +142,13 @@
                         }
                     }
                 }).then(() => {
-                    this.$emit('refresh')
                     this.$bkMessage({
                         theme: 'success',
                         message: this.$t('save') + this.$t('success')
                     })
                 }).finally(() => {
                     this.saveLoading = false
+                    this.$emit('refresh')
                 })
             }
         }
@@ -181,6 +180,9 @@
         }
         .proxy-address {
             flex: 6;
+        }
+        .proxy-switcher {
+            flex: 2;
         }
         .proxy-operation {
             flex:1;

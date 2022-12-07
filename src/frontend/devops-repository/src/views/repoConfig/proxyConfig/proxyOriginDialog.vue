@@ -159,6 +159,13 @@
                 await this.$refs.proxyOrigin.validate()
                 if (this.editNetworkProxyData.switcher) {
                     await this.$refs.proxyNetworkRefs.validate()
+                    // 根据后台要求，在用户不填username或password时将该字段删除
+                    if (!this.editNetworkProxyData.username) {
+                        delete this.editNetworkProxyData.username
+                    }
+                    if (!this.editNetworkProxyData.password) {
+                        delete this.editNetworkProxyData.password
+                    }
                 } else {
                     this.editNetworkProxyData = this.oldEditNetworkProxyData
                 }

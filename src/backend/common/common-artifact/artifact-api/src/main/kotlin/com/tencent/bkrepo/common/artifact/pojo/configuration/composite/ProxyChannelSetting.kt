@@ -31,6 +31,7 @@
 
 package com.tencent.bkrepo.common.artifact.pojo.configuration.composite
 
+import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.NetworkProxyConfiguration
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
 
@@ -50,5 +51,7 @@ data class ProxyChannelSetting(
     @ApiModelProperty("代理源认证用户名", required = false)
     val username: String? = null,
     @ApiModelProperty("代理源认证密码", required = false)
-    var password: String? = null
+    var password: String? = null,
+    @ApiModelProperty("网络代理配置", required = false)
+    val networkProxy: NetworkProxyConfiguration? = null
 )

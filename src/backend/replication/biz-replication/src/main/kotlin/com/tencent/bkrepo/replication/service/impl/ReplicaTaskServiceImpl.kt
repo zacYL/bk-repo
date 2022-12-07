@@ -313,7 +313,12 @@ class ReplicaTaskServiceImpl(
         val task = replicaTaskDao.findByKey(key)
             ?: throw ErrorCodeException(ReplicationMessageCode.REPLICA_TASK_NOT_FOUND, key)
         if (task.replicaType == ReplicaType.REAL_TIME) {
-            task.status = if (task.enabled) ReplicaStatus.WAITING else ReplicaStatus.REPLICATING
+            if (task.enabled) {
+                task.status = ReplicaStatus.WAITING
+            } else {
+                task.lastExecutionStatus = ExecutionStatus.RUNNING
+                task.status = ReplicaStatus.REPLICATING
+            }
         }
         task.enabled = !task.enabled
         task.lastModifiedBy = SecurityUtils.getUserId()

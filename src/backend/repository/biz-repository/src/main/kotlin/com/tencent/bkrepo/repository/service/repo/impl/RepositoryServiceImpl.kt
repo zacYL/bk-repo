@@ -302,7 +302,7 @@ class RepositoryServiceImpl(
     override fun updateRepo(repoUpdateRequest: RepoUpdateRequest) {
         val repository = checkRepository(repoUpdateRequest.projectId, repoUpdateRequest.name)
         repoUpdateRequest.apply {
-            Preconditions.checkArgument((description?.length ?: 0) < REPO_DESC_MAX_LENGTH, this::description.name)
+            Preconditions.checkArgument((description?.length ?: 0) <= REPO_DESC_MAX_LENGTH, this::description.name)
             Preconditions.checkArgument(checkInterceptorConfig(configuration), this::description.name)
             quota?.let {
                 Preconditions.checkArgument(it >= (repository.used ?: 0), this::quota.name)
@@ -677,7 +677,8 @@ class RepositoryServiceImpl(
             username = proxy.username,
             password = proxy.password,
             public = proxy.public,
-            credentialKey = proxy.credentialKey
+            credentialKey = proxy.credentialKey,
+            networkProxy = proxy.networkProxy
         )
         proxyChannelService.createProxy(operator, proxyRepository)
         logger.info("Success to create private proxy repository[$proxyRepository]")
@@ -694,7 +695,8 @@ class RepositoryServiceImpl(
             username = proxy.username,
             password = proxy.password,
             public = proxy.public,
-            credentialKey = proxy.credentialKey
+            credentialKey = proxy.credentialKey,
+            networkProxy = proxy.networkProxy
         )
         proxyChannelService.updateProxy(operator, proxyRepository)
         logger.info("Success to update private proxy repository[$proxyRepository]")

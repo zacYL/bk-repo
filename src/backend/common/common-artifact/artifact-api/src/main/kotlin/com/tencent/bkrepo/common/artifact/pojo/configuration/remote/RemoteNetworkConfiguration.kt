@@ -38,7 +38,7 @@ data class RemoteNetworkConfiguration(
     /**
      * 代理配置
      */
-    val proxy: NetworkProxyConfiguration? = null,
+    var proxy: NetworkProxyConfiguration? = null,
     /**
      * 远程请求连接超时时间，单位ms
      */

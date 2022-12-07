@@ -103,7 +103,10 @@ class NpmRemoteRepository(
             val httpClient = createHttpClient(remoteConfiguration)
             context.putAttribute("requestURI", "/${packageInfo.first}/${packageInfo.second}")
             val downloadUri = createRemoteSearchUrl(context)
-            logger.info("Request url of package version metadata: $downloadUri")
+            logger.info(
+                "Request url of package version metadata: $downloadUri, " +
+                        "NetworkProxy=${remoteConfiguration.network.proxy}"
+            )
             val request = Request.Builder().url(downloadUri).build()
             val response = httpClient.newCall(request).execute()
             logger.info("$response")
@@ -128,7 +131,7 @@ class NpmRemoteRepository(
         val remoteConfiguration = context.getRemoteConfiguration()
         val httpClient = createHttpClient(remoteConfiguration)
         val downloadUri = createRemoteSearchUrl(context)
-        logger.info("Request url of package metadata: $downloadUri")
+        logger.info("Request url of package metadata: $downloadUri, NetworkProxy=${remoteConfiguration.network.proxy}")
         val request = Request.Builder().url(downloadUri).build()
         val response = httpClient.newCall(request).execute()
         logger.info("$response")

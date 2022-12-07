@@ -30,9 +30,32 @@
                 <bk-input type="password" v-model.trim="editProxyData.password"></bk-input>
             </bk-form-item>
         </bk-form>
+        <label class="ml20 mr20 mt20 mb10 form-label">网络代理</label>
+        <bk-form class="ml20 mr20" ref="proxyNetworkRefs" :label-width="85" :model="editNetworkProxyData" :rules="networkRules">
+            <bk-form-item label="开关" property="switcher">
+                <template>
+                    <bk-switcher v-model="editNetworkProxyData.switcher" theme="primary"></bk-switcher>
+                    <span>{{editNetworkProxyData.switcher ? '开启' : '关闭'}}</span>
+                </template>
+            </bk-form-item>
+            <bk-form-item v-if="editNetworkProxyData.switcher" label="IP" property="host" :required="true" error-display-type="normal">
+                <bk-input v-model.trim="editNetworkProxyData.host"></bk-input>
+            </bk-form-item>
+            <bk-form-item v-if="editNetworkProxyData.switcher" label="端口" property="port" :required="true" error-display-type="normal">
+                <bk-input v-model.trim="editNetworkProxyData.port"></bk-input>
+                <!-- type="number" :max="65535" :min="1"  -->
+            </bk-form-item>
+            <bk-form-item v-if="editNetworkProxyData.switcher" :label="$t('account')" property="username">
+                <bk-input v-model.trim="editNetworkProxyData.username"></bk-input>
+            </bk-form-item>
+            <bk-form-item v-if="editNetworkProxyData.switcher" :label="$t('password')" property="password">
+                <bk-input type="password" v-model.trim="editNetworkProxyData.password"></bk-input>
+            </bk-form-item>
+        </bk-form>
     </canway-dialog>
 </template>
 <script>
+    import { isEmpty } from 'lodash'
     export default {
         name: 'proxyOriginDialog',
         props: {
@@ -40,6 +63,13 @@
             proxyData: Object
         },
         data () {
+            const oldEditNetworkProxyData = {
+                switcher: false,
+                host: '',
+                port: '',
+                username: '',
+                password: ''
+            }
             return {
                 editProxyData: {
                     public: true, // 公有 or 私有
@@ -49,6 +79,8 @@
                     username: '',
                     password: ''
                 },
+                oldEditNetworkProxyData,
+                editNetworkProxyData: { ...oldEditNetworkProxyData },
                 rules: {
                     name: [
                         {
@@ -64,11 +96,30 @@
                             trigger: 'blur'
                         }
                     ]
+                },
+                networkRules: {
+                    host: [
+                        {
+                            required: true,
+                            message: '请输入网络代理IP',
+                            trigger: 'blur'
+                        }
+                    ],
+                    port: [
+                        {
+                            required: true,
+                            message: '请输入网络代理端口',
+                            trigger: 'blur'
+                        }
+                    ]
                 }
             }
         },
         watch: {
             proxyData (data) {
+                // 在打开弹窗时先将之前的数据校验结果去除
+                this.$refs.proxyOrigin && this.$refs.proxyOrigin.clearError()
+                this.$refs.proxyNetworkRefs && this.$refs.proxyNetworkRefs.clearError()
                 if (data.type === 'add') {
                     this.editProxyData = {
                         public: true,
@@ -78,10 +129,27 @@
                         username: '',
                         password: ''
                     }
+                    // 初始化网络代理配置form表单
+                    this.editNetworkProxyData = {
+                        ...this.oldEditNetworkProxyData
+                    }
                 } else {
                     this.editProxyData = {
                         ...this.editProxyData,
                         ...data
+                    }
+                    if (isEmpty(data.networkProxy)) {
+                        // 当返回的不存在networkProxy字段时表明之前没有配置网络代理
+                        this.editNetworkProxyData = {
+                            ...this.oldEditNetworkProxyData
+                        }
+                    } else {
+                        // 此时表明之前配置了网络代理,此时需要将 switcher 字段置为true
+                        this.editNetworkProxyData = {
+                            ...this.oldEditNetworkProxyData,
+                            ...data.networkProxy,
+                            switcher: true
+                        }
                     }
                 }
             }
@@ -89,7 +157,18 @@
         methods: {
             async confirmProxyData () {
                 await this.$refs.proxyOrigin.validate()
-                this.$emit('confirm', { name: this.proxyData.name, data: this.editProxyData })
+                if (this.editNetworkProxyData.switcher) {
+                    await this.$refs.proxyNetworkRefs.validate()
+                } else {
+                    this.editNetworkProxyData = this.oldEditNetworkProxyData
+                }
+                delete this.editNetworkProxyData.switcher
+                const backData = {
+                    name: this.proxyData.name,
+                    data: this.editProxyData
+                }
+                backData.data.networkProxy = { ...this.editNetworkProxyData }
+                this.$emit('confirm', backData)
             }
         }
     }

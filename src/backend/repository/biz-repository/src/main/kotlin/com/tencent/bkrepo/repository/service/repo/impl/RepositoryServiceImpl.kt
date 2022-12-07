@@ -302,7 +302,7 @@ class RepositoryServiceImpl(
     override fun updateRepo(repoUpdateRequest: RepoUpdateRequest) {
         val repository = checkRepository(repoUpdateRequest.projectId, repoUpdateRequest.name)
         repoUpdateRequest.apply {
-            Preconditions.checkArgument((description?.length ?: 0) < REPO_DESC_MAX_LENGTH, this::description.name)
+            Preconditions.checkArgument((description?.length ?: 0) <= REPO_DESC_MAX_LENGTH, this::description.name)
             Preconditions.checkArgument(checkInterceptorConfig(configuration), this::description.name)
             quota?.let {
                 Preconditions.checkArgument(it >= (repository.used ?: 0), this::quota.name)

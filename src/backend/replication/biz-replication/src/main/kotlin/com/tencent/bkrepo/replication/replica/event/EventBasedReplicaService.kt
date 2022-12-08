@@ -28,6 +28,7 @@
 package com.tencent.bkrepo.replication.replica.event
 
 import com.tencent.bkrepo.common.artifact.event.base.EventType
+import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.replication.manager.LocalDataManager
 import com.tencent.bkrepo.replication.pojo.cluster.ClusterNodeType
 import com.tencent.bkrepo.replication.pojo.task.objects.PackageConstraint
@@ -53,11 +54,18 @@ class EventBasedReplicaService(
             // 同步仓库
             replicator.replicaRepo(this)
             when (event.type) {
-                EventType.NODE_CREATED -> {
+                EventType.NODE_CREATED,
+                EventType.NODE_MOVED,
+                EventType.NODE_COPIED -> {
                     // 只有非third party集群支持该消息
                     if (context.remoteCluster.type == ClusterNodeType.REMOTE)
                         throw UnsupportedOperationException()
-                    val pathConstraint = PathConstraint(event.resourceKey)
+                    val fullPath = if (event.type == EventType.NODE_CREATED) event.resourceKey else {
+                        val dstParentPath = event.data["dstFullPath"].toString()
+                        val name = PathUtils.resolveName(event.resourceKey)
+                        PathUtils.combineFullPath(dstParentPath, name)
+                    }
+                    val pathConstraint = PathConstraint(fullPath)
                     replicaByPathConstraint(this, pathConstraint)
                 }
                 EventType.VERSION_CREATED, EventType.VERSION_UPDATED -> {

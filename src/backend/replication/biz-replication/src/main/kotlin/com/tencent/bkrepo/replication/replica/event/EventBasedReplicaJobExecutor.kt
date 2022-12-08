@@ -28,6 +28,8 @@
 package com.tencent.bkrepo.replication.replica.event
 
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
+import com.tencent.bkrepo.common.artifact.event.base.EventType
+import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.replication.manager.LocalDataManager
 import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordInfo
 import com.tencent.bkrepo.replication.pojo.task.ReplicaTaskDetail
@@ -56,6 +58,17 @@ class EventBasedReplicaJobExecutor(
     fun execute(taskDetail: ReplicaTaskDetail, event: ArtifactEvent) {
         val task = taskDetail.task
         val taskRecord: ReplicaRecordInfo = replicaRecordService.findOrCreateLatestRecord(task.key)
+        val fullResourceKey = when(event.type) {
+                EventType.NODE_COPIED,
+                EventType.NODE_MOVED -> {
+                    val dstProjectId = event.data["dstProjectId"].toString()
+                    val dstRepoName = event.data["dstRepoName"].toString()
+                    val dstParentPath = event.data["dstFullPath"].toString()
+                    val name = PathUtils.resolveName(event.resourceKey)
+                    "$dstProjectId/$dstRepoName/$dstParentPath/$name"
+                }
+                else -> event.getFullResourceKey()
+            }
         try {
             // 待同步的制品数量
             val count = 1L * task.remoteClusters.size
@@ -64,9 +77,9 @@ class EventBasedReplicaJobExecutor(
                 ReplicaExecutionContext.increaseArtifactCount(task.key, count)
             } ?: ReplicaExecutionContext.initProgress(task.key, count)
             task.remoteClusters.map { submit(taskDetail, taskRecord, it, event) }.map { it.get() }
-            logger.info("Replica ${event.getFullResourceKey()} completed.")
+            logger.info("Replica $fullResourceKey completed.")
         } catch (exception: Exception) {
-            logger.error("Replica ${event.getFullResourceKey()}} failed: $exception", exception)
+            logger.error("Replica $fullResourceKey failed: $exception", exception)
         }
     }
 

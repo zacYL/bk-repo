@@ -54,7 +54,7 @@
     "grayCssUrl" : "",
     "grayJsUrl" : "",
     "projectIdType" : "path",
-    "weight" : 10,
+    "weight" : 20,
     "logoUrl" : "repoList",
     "webSocket" : "",
     "authLevel" : "USER",

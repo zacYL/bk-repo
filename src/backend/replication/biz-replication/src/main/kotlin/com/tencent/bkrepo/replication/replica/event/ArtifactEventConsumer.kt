@@ -50,6 +50,8 @@ class ArtifactEventConsumer(
     override fun getAcceptTypes(): Set<EventType> {
         return setOf(
             EventType.NODE_CREATED,
+            EventType.NODE_MOVED,
+            EventType.NODE_COPIED,
             EventType.VERSION_CREATED,
             EventType.VERSION_UPDATED,
             EventType.PROJECT_DELETED
@@ -62,8 +64,15 @@ class ArtifactEventConsumer(
             replicaTaskService.deleteByProjectId(event.projectId)
         }
 
+        var projectId = event.projectId
+        var repoName = event.repoName
+        if (event.type == EventType.NODE_MOVED || event.type == EventType.NODE_COPIED) {
+            projectId = event.data["dstProjectId"].toString()
+            repoName = event.data["dstRepoName"].toString()
+        }
+
         executors.execute {
-            replicaTaskService.listRealTimeTasks(event.projectId, event.repoName).forEach {
+            replicaTaskService.listRealTimeTasks(projectId, repoName).forEach {
                 eventBasedReplicaJobExecutor.execute(it, event)
             }
         }

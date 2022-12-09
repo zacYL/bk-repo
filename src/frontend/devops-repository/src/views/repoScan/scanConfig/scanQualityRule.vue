@@ -15,7 +15,8 @@
             <bk-form-item label="规则设置">
                 <div style="color:var(--fontSubsidiaryColor);">当扫描的制品漏洞超过下方任意一条规则中设定的数量，则制品未通过质量规则</div>
             </bk-form-item>
-            <bk-form-item label="" v-for="[id, name] in Object.entries(leakLevelEnum)" :key="id"
+
+            <bk-form-item label="" v-for="[id, name] in LeakLevelEnumArr" :key="id"
                 :property="id.toLowerCase()" error-display-type="normal">
                 <div class="flex-align-center">
                     <div :class="`status-sign ${id}`" :data-name="`${name}漏洞≦`"></div>
@@ -91,6 +92,12 @@
             },
             planId () {
                 return this.$route.params.planId
+            },
+            // 白名单漏洞不需要计入质量规则
+            LeakLevelEnumArr () {
+                const arr = Object.entries(this.leakLevelEnum)
+                arr.splice(arr.findIndex(item => item[0] === 'WHITE'), 1)
+                return arr
             }
         },
         created () {

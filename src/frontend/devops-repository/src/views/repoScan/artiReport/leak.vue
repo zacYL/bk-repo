@@ -30,7 +30,7 @@
                     :class="id"
                     v-for="[id, name] in Object.entries(leakLevelEnum)"
                     :key="id"
-                    :data-name="`${name}漏洞：${segmentNumberThree(baseInfo[id.toLowerCase()])}`">
+                    :data-name="`${name}漏洞：${segmentNumberThree(baseInfo[id.toLowerCase()]) ? segmentNumberThree(baseInfo[id.toLowerCase()]) : 0}`">
                 </div>
             </div>
         </div>
@@ -91,7 +91,12 @@
                         </template>
                     </template>
                 </bk-table-column>
-                <bk-table-column label="漏洞ID" prop="vulId" show-overflow-tooltip></bk-table-column>
+                <bk-table-column label="漏洞ID" prop="vulId" show-overflow-tooltip>
+                    <template #default="{ row }">
+                        <div class="status-id " :class="row.isCveWhite ? 'WHITE' : ''" :data-name="row.vulId" data-white-name="白名单"></div>
+                    </template>
+
+                </bk-table-column>
                 <bk-table-column label="漏洞等级">
                     <template #default="{ row }">
                         <div class="status-sign" :class="row.severity" :data-name="leakLevelEnum[row.severity]"></div>
@@ -328,4 +333,21 @@
         }
     }
 }
+.status-id {
+    display: inline-flex;
+    align-items: center;
+        &:before{
+            content:attr(data-name);
+            margin-right: 10px;
+        }
+    &.WHITE{
+            &:after{
+            content: attr(data-white-name);
+            padding:2px 5px;
+            background:#EEF0F5;
+            color:#acaaab;
+        }
+    }
+}
+
 </style>

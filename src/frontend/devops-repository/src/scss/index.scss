@@ -177,6 +177,9 @@ body {
     &.LOW {
         --signColor: var(--fontSubsidiaryColor);
     }
+    &.WHITE {
+        --signColor: var(--successColor);
+    }
     &:before {
         content: '';
         width: 8px;

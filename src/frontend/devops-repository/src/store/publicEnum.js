@@ -127,5 +127,6 @@ export const leakLevelEnum = {
     CRITICAL: '危急',
     HIGH: '高级',
     MEDIUM: '中级',
-    LOW: '低级'
+    LOW: '低级',
+    WHITE: '白名单'
 }

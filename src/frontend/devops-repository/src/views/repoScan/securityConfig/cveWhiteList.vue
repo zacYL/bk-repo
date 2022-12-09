@@ -128,6 +128,7 @@
                         message: '添加成功'
                     })
                     this.addCveDialog.show = false
+                    this.getCveWhiteListHandler()
                 })
             },
             deleteCve ({ cveId }) {

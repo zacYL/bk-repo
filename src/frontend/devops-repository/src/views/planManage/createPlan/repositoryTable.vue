@@ -81,7 +81,7 @@
 .repository-table-container {
     .repo-list {
         display: grid;
-        grid-template: auto / repeat(4, 1fr);
+        grid-template: auto / repeat(3, 1fr);
         gap: 10px;
         .repo-item {
             height: 32px;

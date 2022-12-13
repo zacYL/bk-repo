@@ -12,6 +12,8 @@ interface CveWhitelistService {
 
     fun getByCveIds(cveIds: List<String>): List<CveWhitelistInfo?>
 
+    fun getCveList(): List<CveWhitelistInfo?>
+
     fun deleteByCveId(cveId: String, userId: String)
 
     fun searchByCveId(cveId: String?, pageNumber: Int?, pageSize: Int?): Page<CveWhitelistInfo>

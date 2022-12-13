@@ -121,5 +121,9 @@ open class SubScanTaskDefinition(
     /**
      * 扫描时方案的质量规则
      */
-    val scanQuality: Map<String, Any>? = null
+    val scanQuality: Map<String, Any>? = null,
+    /**
+     * cve白名单
+     */
+    val cveWhite: List<String>? = null,
 )

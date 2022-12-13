@@ -33,12 +33,21 @@ import com.google.common.cache.LoadingCache
 import com.tencent.bkrepo.common.api.exception.NotFoundException
 import com.tencent.bkrepo.common.api.exception.SystemErrorException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
+import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.redis.RedisLock
 import com.tencent.bkrepo.common.redis.RedisOperation
+import com.tencent.bkrepo.common.scanner.pojo.scanner.CveOverviewKey
 import com.tencent.bkrepo.common.scanner.pojo.scanner.Scanner
 import com.tencent.bkrepo.common.scanner.pojo.scanner.SubScanTaskStatus
+import com.tencent.bkrepo.common.scanner.pojo.scanner.arrowhead.ArrowheadScanner
+import com.tencent.bkrepo.common.scanner.pojo.scanner.arrowhead.CveSecItem
+import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.result.DependencyItem
+import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.scanner.DependencyScanner
+import com.tencent.bkrepo.common.scanner.pojo.scanner.trivy.TrivyScanner
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
+import com.tencent.bkrepo.scanner.component.manager.ScanExecutorResultManager
+import com.tencent.bkrepo.scanner.component.manager.trivy.model.TVulnerabilityItem
 import com.tencent.bkrepo.scanner.configuration.ScannerProperties
 import com.tencent.bkrepo.scanner.dao.ArchiveSubScanTaskDao
 import com.tencent.bkrepo.scanner.dao.FileScanResultDao
@@ -61,6 +70,7 @@ import com.tencent.bkrepo.scanner.pojo.ScanTaskStatus.FINISHED
 import com.tencent.bkrepo.scanner.pojo.ScanTaskStatus.SCANNING_SUBMITTED
 import com.tencent.bkrepo.scanner.pojo.ScanTaskStatus.SCANNING_SUBMITTING
 import com.tencent.bkrepo.scanner.pojo.SubScanTask
+import com.tencent.bkrepo.scanner.service.CveWhitelistService
 import com.tencent.bkrepo.scanner.service.ScanQualityService
 import com.tencent.bkrepo.scanner.service.ScannerService
 import com.tencent.bkrepo.scanner.task.ScanTaskSchedulerConfiguration.Companion.SCAN_TASK_SCHEDULER_THREAD_POOL_BEAN_NAME
@@ -96,7 +106,9 @@ class DefaultScanTaskScheduler @Autowired constructor(
     private val redisOperation: RedisOperation,
     private val publisher: ApplicationEventPublisher,
     private val scannerProperties: ScannerProperties,
-    private val scanQualityService: ScanQualityService
+    private val scanQualityService: ScanQualityService,
+    private val resultManagers: Map<String, ScanExecutorResultManager>,
+    private val cveWhitelistService: CveWhitelistService
 ) : ScanTaskScheduler {
 
     private val logger = LoggerFactory.getLogger(javaClass)
@@ -282,6 +294,7 @@ class DefaultScanTaskScheduler @Autowired constructor(
 
     @Transactional(rollbackFor = [Throwable::class])
     fun save(finishedSubtasks: List<TArchiveSubScanTask>) {
+        logger.debug("save finishedSubtasks:${finishedSubtasks.toJsonString()}")
         if (finishedSubtasks.isEmpty()) {
             return
         }
@@ -350,6 +363,53 @@ class DefaultScanTaskScheduler @Autowired constructor(
         }
     }
 
+    fun getCveWhite(
+        credentialKey: String? = null,
+        sha256: String,
+        scanner: Scanner,
+        overview: Map<String, Number>?
+    ): Pair<List<String>?, HashMap<String, Long>> {
+        // 系统设置白名单
+        val systemCveWhite = cveWhitelistService.getCveList().mapNotNull { it?.cveId }
+        // 获取漏洞扫描结果
+        val scanResultManager = resultManagers[scanner.type]
+        val items = scanResultManager?.loadItems(credentialKey, sha256, scanner)
+        val qualityOverview = HashMap<String, Long>()
+        qualityOverview.putAll(overview as Map<String, Long>)
+        val cveWhiteIds = when (scanner.type) {
+            DependencyScanner.TYPE -> {
+                items as List<DependencyItem>
+                val whiteList = items.filter { systemCveWhite.contains(it.cveId) }
+                whiteList.forEach {
+                    val overviewKey = CveOverviewKey.overviewKeyOf(it.severity)
+                    qualityOverview[overviewKey] = qualityOverview[overviewKey]!! - 1L
+                }
+                whiteList.map { it.cveId }
+            }
+            TrivyScanner.TYPE -> {
+                items as List<TVulnerabilityItem>
+                val whiteList = items.filter { systemCveWhite.contains(it.data.vulnerabilityId) }
+                whiteList.forEach {
+                    val overviewKey = CveOverviewKey.overviewKeyOf(it.data.severity.toLowerCase())
+                    qualityOverview[overviewKey] = qualityOverview[overviewKey]!! - 1L
+                }
+                whiteList.map { it.data.vulnerabilityId }
+            }
+            ArrowheadScanner.TYPE -> {
+                items as List<CveSecItem>
+                val whiteList = items.filter { systemCveWhite.contains(it.cveId) }
+                whiteList.forEach {
+                    val overviewKey = CveOverviewKey.overviewKeyOf(it.cvssRank)
+                    qualityOverview[overviewKey] = qualityOverview[overviewKey]!! - 1L
+                }
+                whiteList.map { it.cveId }
+            }
+            else -> null
+        }
+
+        return Pair(cveWhiteIds, qualityOverview)
+    }
+
     fun createFinishedSubTask(
         scanTask: ScanTask,
         fileScanResult: TFileScanResult,
@@ -365,9 +425,21 @@ class DefaultScanTaskScheduler @Autowired constructor(
                 .scanResult[scanTask.scanner]
                 ?.overview
                 ?.let { Converter.convert(it) }
+
+            val (cveWhite, qualityOverview) = getCveWhite(
+                credentialKey = credentialKey,
+                sha256 = sha256,
+                scanner = scanner,
+                overview = overview
+            )
+            logger.debug(
+                "subTask[${scanTask.taskId}], artifact cveWhite:$cveWhite, " +
+                    "qualityOverview:${qualityOverview.toJsonString()}"
+            )
+
             // 质量检查结果
             val qualityPass = if (!qualityRule.isNullOrEmpty() && overview != null) {
-                scanQualityService.checkScanQualityRedLine(qualityRule, overview, scanner)
+                scanQualityService.checkScanQualityRedLine(qualityRule, qualityOverview as Map<String, Number>, scanner)
             } else {
                 null
             }
@@ -400,7 +472,8 @@ class DefaultScanTaskScheduler @Autowired constructor(
 
                 scanResultOverview = overview,
                 qualityRedLine = qualityPass,
-                scanQuality = scanTask.scanPlan?.scanQuality
+                scanQuality = scanTask.scanPlan?.scanQuality,
+                cveWhite = cveWhite
             )
         }
     }

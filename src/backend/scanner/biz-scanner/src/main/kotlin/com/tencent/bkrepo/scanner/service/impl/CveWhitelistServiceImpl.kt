@@ -43,6 +43,11 @@ class CveWhitelistServiceImpl(
         return result.map { transformToInfo(it) }
     }
 
+    override fun getCveList(): List<CveWhitelistInfo?> {
+        val result = cveWhitelistDao.findAll()
+        return result.map { transformToInfo(it) }
+    }
+
     override fun deleteByCveId(cveId: String, userId: String) {
         logger.info("delete vul whitelist: [$cveId] by user: [$userId]")
         return cveWhitelistDao.deleteByCveId(cveId)

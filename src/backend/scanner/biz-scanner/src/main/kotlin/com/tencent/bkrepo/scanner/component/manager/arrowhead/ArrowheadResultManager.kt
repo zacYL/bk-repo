@@ -121,6 +121,14 @@ class ArrowheadResultManager @Autowired constructor(
         return Page(page.pageNumber, page.pageSize, page.totalRecords, page.records.map { it.data })
     }
 
+    override fun loadItems(credentialsKey: String?, sha256: String, scanner: Scanner): Any? {
+        scanner as ArrowheadScanner
+        val cveItems = cveSecItemDao.items(credentialsKey, sha256, scanner.name)
+        val pocIds = cveItems.map { it.data.pocId }
+        val cveMap = knowledgeBase.findByPocId(pocIds).associateBy { it.pocId }
+        return cveItems.map { Converter.convert(it, cveMap[it.data.pocId]) }
+    }
+
     private fun loadApplicationItems(
         credentialsKey: String?,
         sha256: String,

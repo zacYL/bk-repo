@@ -44,6 +44,14 @@ abstract class ResultItemDao<T : ResultItem<*>> : ScannerSimpleMongoDao<T>() {
         return remove(Query(criteria))
     }
 
+    fun items(
+        credentialsKey: String?,
+        sha256: String,
+        scanner: String
+    ): List<T> {
+        return find(Query(buildCriteria(credentialsKey, sha256, scanner)))
+    }
+
     fun pageBy(
         credentialsKey: String?,
         sha256: String,

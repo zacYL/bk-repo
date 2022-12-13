@@ -81,6 +81,11 @@ class TrivyResultManager @Autowired constructor(
         return Page(page.pageNumber, page.pageSize, page.totalRecords, page.records)
     }
 
+    override fun loadItems(credentialsKey: String?, sha256: String, scanner: Scanner): Any? {
+        scanner as TrivyScanner
+        return vulnerabilityItemDao.items(credentialsKey, sha256, scanner.name)
+    }
+
     private fun replace(
         credentialsKey: String?,
         sha256: String,

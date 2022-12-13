@@ -205,6 +205,7 @@ object Converter {
                 high = high,
                 medium = medium,
                 low = low,
+                white = subScanTask.cveWhite?.size?.toLong() ?: 0L,
                 total = critical + high + medium + low,
                 finishTime = finishedDateTime?.format(DateTimeFormatter.ISO_DATE_TIME),
                 qualityRedLine = qualityRedLine,

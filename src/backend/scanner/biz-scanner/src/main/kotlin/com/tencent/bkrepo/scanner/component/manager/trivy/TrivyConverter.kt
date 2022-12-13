@@ -44,7 +44,7 @@ import org.springframework.stereotype.Component
 @Component("${TrivyScanner.TYPE}Converter")
 class TrivyConverter : ScannerConverter {
     @Suppress("UNCHECKED_CAST")
-    override fun convertCveResult(result: Any): Page<ArtifactVulnerabilityInfo> {
+    override fun convertCveResult(result: Any, cveWhite: List<String>?): Page<ArtifactVulnerabilityInfo> {
         result as Page<TVulnerabilityItem>
         val pageRequest = PageRequest.of(result.pageNumber, result.pageSize)
         val reports = result.records.mapTo(HashSet(result.records.size)) {
@@ -58,7 +58,8 @@ class TrivyConverter : ScannerConverter {
                 description = it.data.description,
                 officialSolution = "",
                 reference = it.data.references,
-                path = ""
+                path = "",
+                isCveWhite = cveWhite?.contains(it.data.vulnerabilityId) ?: false
             )
         }.toList()
         return Pages.ofResponse(pageRequest, result.totalRecords, reports)

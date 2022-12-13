@@ -36,7 +36,14 @@ import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.query.model.Rule
+import com.tencent.bkrepo.common.scanner.pojo.scanner.CveOverviewKey
 import com.tencent.bkrepo.common.scanner.pojo.scanner.SubScanTaskStatus
+import com.tencent.bkrepo.common.scanner.pojo.scanner.arrowhead.ArrowheadScanExecutorResult
+import com.tencent.bkrepo.common.scanner.pojo.scanner.arrowhead.ArrowheadScanner
+import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.result.DependencyScanExecutorResult
+import com.tencent.bkrepo.common.scanner.pojo.scanner.dependencycheck.scanner.DependencyScanner
+import com.tencent.bkrepo.common.scanner.pojo.scanner.trivy.TrivyScanExecutorResult
+import com.tencent.bkrepo.common.scanner.pojo.scanner.trivy.TrivyScanner
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.LocaleMessageUtils.getLocalizedMessage
 import com.tencent.bkrepo.repository.api.NodeClient
@@ -74,6 +81,7 @@ import com.tencent.bkrepo.scanner.pojo.request.PipelineScanRequest
 import com.tencent.bkrepo.scanner.pojo.request.ReportResultRequest
 import com.tencent.bkrepo.scanner.pojo.request.ScanRequest
 import com.tencent.bkrepo.scanner.pojo.request.SingleScanRequest
+import com.tencent.bkrepo.scanner.service.CveWhitelistService
 import com.tencent.bkrepo.scanner.service.ScanPlanService
 import com.tencent.bkrepo.scanner.service.ScanQualityService
 import com.tencent.bkrepo.scanner.service.ScanService
@@ -115,7 +123,8 @@ class ScanServiceImpl @Autowired constructor(
     private val scanQualityService: ScanQualityService,
     private val repositoryClient: RepositoryClient,
     private val nodeClient: NodeClient,
-    private val packageClient: PackageClient
+    private val packageClient: PackageClient,
+    private val cveWhitelistService: CveWhitelistService
 ) : ScanService {
 
     private val logger = LoggerFactory.getLogger(javaClass)
@@ -242,9 +251,17 @@ class ScanServiceImpl @Autowired constructor(
         with(reportResultRequest) {
             logger.info("report result, parentTask[$parentTaskId], subTask[$subTaskId]")
             val subScanTask = subScanTaskDao.findById(subTaskId) ?: return
+            val (cveWhite, qualityOverview) = getCveWhite(reportResultRequest)
+            logger.debug(
+                "subTask[$subTaskId], artifact cveWhite:$cveWhite, qualityOverview:${qualityOverview.toJsonString()}"
+            )
             // 更新扫描任务结果
             val updateScanTaskResultSuccess = updateScanTaskResult(
-                subScanTask, scanStatus, scanExecutorResult?.overview ?: emptyMap()
+                subTask = subScanTask,
+                resultSubTaskStatus = scanStatus,
+                overview = scanExecutorResult?.overview ?: emptyMap(),
+                cveWhite = cveWhite,
+                qualityOverview = qualityOverview
             )
 
             // 没有扫描任务被更新或子扫描任务失败时直接返回
@@ -276,6 +293,52 @@ class ScanServiceImpl @Autowired constructor(
     }
 
     /**
+     * 获取制品Cve白名单
+     */
+    private fun getCveWhite(reportResultRequest: ReportResultRequest): Pair<List<String>?, HashMap<String, Long>> {
+        // 系统设置白名单
+        val systemCveWhite = cveWhitelistService.getCveList().mapNotNull { it?.cveId }
+        val result = reportResultRequest.scanExecutorResult!!
+        val qualityOverview = HashMap<String, Long>()
+        qualityOverview.putAll(result.overview as Map<String, Long>)
+        logger.debug(
+            "reportResultRequest:${reportResultRequest.toJsonString()}, system cveWhitelist:$systemCveWhite, " +
+                "overview:${qualityOverview.toJsonString()}"
+        )
+        val cveWhiteIds = when (result.type) {
+            DependencyScanner.TYPE -> {
+                result as DependencyScanExecutorResult
+                val whiteList = result.dependencyItems.filter { systemCveWhite.contains(it.cveId) }
+                whiteList.forEach {
+                    val overviewKey = CveOverviewKey.overviewKeyOf(it.severity)
+                    qualityOverview[overviewKey] = qualityOverview[overviewKey]!! - 1L
+                }
+                whiteList.map { it.cveId }
+            }
+            TrivyScanner.TYPE -> {
+                result as TrivyScanExecutorResult
+                val whiteList = result.vulnerabilityItems.filter { systemCveWhite.contains(it.vulnerabilityId) }
+                whiteList.forEach {
+                    val overviewKey = CveOverviewKey.overviewKeyOf(it.severity.toLowerCase())
+                    qualityOverview[overviewKey] = qualityOverview[overviewKey]!! - 1L
+                }
+                whiteList.map { it.vulnerabilityId }
+            }
+            ArrowheadScanner.TYPE -> {
+                result as ArrowheadScanExecutorResult
+                val whiteList = result.cveSecItems.filter { systemCveWhite.contains(it.cveId) }
+                whiteList.forEach {
+                    val overviewKey = CveOverviewKey.overviewKeyOf(it.cvssRank)
+                    qualityOverview[overviewKey] = qualityOverview[overviewKey]!! - 1L
+                }
+                whiteList.map { it.cveId }
+            }
+            else -> null
+        }
+        return Pair(cveWhiteIds, qualityOverview)
+    }
+
+    /**
      * 更新任务状态
      *
      * @return 是否更新成功
@@ -286,7 +349,9 @@ class ScanServiceImpl @Autowired constructor(
         subTask: TSubScanTask,
         resultSubTaskStatus: String,
         overview: Map<String, Any?>,
-        modifiedBy: String? = null
+        modifiedBy: String? = null,
+        cveWhite: List<String>? = null,
+        qualityOverview: Map<String, Long> = emptyMap()
     ): Boolean {
         val subTaskId = subTask.id!!
         val parentTaskId = subTask.parentScanTaskId
@@ -304,13 +369,18 @@ class ScanServiceImpl @Autowired constructor(
         }
         val scanSuccess = resultSubTaskStatus == SubScanTaskStatus.SUCCESS.name
         val qualityPass = if (planId != null && scanSuccess && !subTask.scanQuality.isNullOrEmpty()) {
-            scanQualityService.checkScanQualityRedLine(planId, overview as Map<String, Number>)
+            scanQualityService.checkScanQualityRedLine(planId, qualityOverview as Map<String, Number>)
         } else {
             null
         }
         archiveSubScanTaskDao.save(
             TArchiveSubScanTask.from(
-                subTask, resultSubTaskStatus, overview, qualityPass = qualityPass, modifiedBy = modifiedBy
+                task = subTask,
+                status = resultSubTaskStatus,
+                overview = overview,
+                qualityPass = qualityPass,
+                modifiedBy = modifiedBy,
+                cveWhite = cveWhite
             )
         )
         planArtifactLatestSubScanTaskDao.updateStatus(
@@ -318,7 +388,8 @@ class ScanServiceImpl @Autowired constructor(
             subtaskScanStatus = resultSubTaskStatus,
             overview = overview,
             modifiedBy = modifiedBy,
-            qualityPass = qualityPass
+            qualityPass = qualityPass,
+            cveWhite = cveWhite
         )
         publisher.publishEvent(
             SubtaskStatusChangedEvent(

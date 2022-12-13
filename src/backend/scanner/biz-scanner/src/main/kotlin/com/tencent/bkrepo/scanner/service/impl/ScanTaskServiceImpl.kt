@@ -232,7 +232,7 @@ class ScanTaskServiceImpl(
         return resultDetail(
             request, request.subScanTaskId!!, planArtifactLatestSubScanTaskDao,
             { converter, req -> converter.convertToLoadArguments(req) },
-            { converter, report -> converter.convertCveResult(report) }
+            { converter, report, cveWhite -> converter.convertCveResult(report, cveWhite) }
         ) ?: Pages.buildPage(emptyList(), request.pageSize, request.pageNumber)
     }
 
@@ -266,7 +266,7 @@ class ScanTaskServiceImpl(
         return resultDetail(
             request, request.subScanTaskId!!, archiveSubScanTaskDao,
             { converter, req -> converter.convertToLoadArguments(req) },
-            { converter, report -> converter.convertCveResult(report) }
+            { converter, report, cveWhite -> converter.convertCveResult(report, cveWhite) }
         ) ?: Pages.buildPage(emptyList(), request.pageSize, request.pageNumber)
     }
 
@@ -297,7 +297,7 @@ class ScanTaskServiceImpl(
         return resultDetail(
             request, request.subScanTaskId!!, planArtifactLatestSubScanTaskDao,
             { converter, req -> converter.convertToLoadArguments(req) },
-            { converter, report -> converter.convertLicenseResult(report) }
+            { converter, report, _ -> converter.convertLicenseResult(report) }
         ) ?: Pages.buildPage(emptyList(), request.pageSize, request.pageNumber)
     }
 
@@ -309,7 +309,7 @@ class ScanTaskServiceImpl(
         return resultDetail(
             request, request.subScanTaskId!!, archiveSubScanTaskDao,
             { converter, req -> converter.convertToLoadArguments(req) },
-            { converter, report -> converter.convertLicenseResult(report) }
+            { converter, report, _ -> converter.convertLicenseResult(report) }
         ) ?: Pages.buildPage(emptyList(), request.pageSize, request.pageNumber)
     }
 
@@ -322,7 +322,7 @@ class ScanTaskServiceImpl(
         subtaskId: String,
         subScanTaskDao: AbsSubScanTaskDao<*>,
         convertToArgs: (converter: ScannerConverter, req: Req) -> LoadResultArguments,
-        convertToRes: (converter: ScannerConverter, report: Any) -> Page<Res>
+        convertToRes: (converter: ScannerConverter, report: Any, cveWhite: List<String>?) -> Page<Res>
     ): Page<Res>? {
         val subtask = subScanTaskDao.findById(subtaskId)
             ?: throw ErrorCodeException(CommonMessageCode.RESOURCE_NOT_FOUND, subtaskId)
@@ -340,7 +340,7 @@ class ScanTaskServiceImpl(
         val scanResultManager = resultManagers[subtask.scannerType]
         return scanResultManager
             ?.load(subtask.credentialsKey, subtask.sha256, scanner, arguments)
-            ?.let { convertToRes(scannerConverter, it) }
+            ?.let { convertToRes(scannerConverter, it, subtask.cveWhite) }
     }
 
     private fun planLicensesArtifact(

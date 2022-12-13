@@ -95,7 +95,11 @@ class TPlanArtifactLatestSubScanTask(
     /**
      * 扫描时方案的质量规则
      */
-    scanQuality: Map<String, Any>? = null
+    scanQuality: Map<String, Any>? = null,
+    /**
+     * cve白名单
+     */
+    cveWhite: List<String>? = null
 ) : SubScanTaskDefinition(
     id = id,
     createdBy = createdBy,
@@ -121,7 +125,8 @@ class TPlanArtifactLatestSubScanTask(
     credentialsKey = credentialsKey,
     scanResultOverview = scanResultOverview,
     qualityRedLine = qualityRedLine,
-    scanQuality = scanQuality
+    scanQuality = scanQuality,
+    cveWhite = cveWhite
 ) {
     companion object {
         fun convert(
@@ -163,7 +168,8 @@ class TPlanArtifactLatestSubScanTask(
                 credentialsKey = credentialsKey,
                 scanResultOverview = numberOverview,
                 qualityRedLine = qualityPass ?: qualityRedLine,
-                scanQuality = scanQuality
+                scanQuality = scanQuality,
+                cveWhite = cveWhite
             )
         }
     }

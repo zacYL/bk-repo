@@ -99,7 +99,11 @@ class TSubScanTask(
     /**
      * 扫描时方案的质量规则
      */
-    scanQuality: Map<String, Any>? = null
+    scanQuality: Map<String, Any>? = null,
+    /**
+     * cve白名单
+     */
+    cveWhite: List<String>? = null
 ) : SubScanTaskDefinition(
     id = id,
     createdDate = createdDate,
@@ -125,5 +129,6 @@ class TSubScanTask(
     size = size,
     credentialsKey = credentialsKey,
     scanResultOverview = null,
-    scanQuality = scanQuality
+    scanQuality = scanQuality,
+    cveWhite = cveWhite
 )

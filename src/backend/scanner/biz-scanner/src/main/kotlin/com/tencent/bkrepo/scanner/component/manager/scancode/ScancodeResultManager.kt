@@ -73,4 +73,8 @@ class ScancodeResultManager @Autowired constructor(
         val page = scancodeItemDao.pageBy(credentialsKey, sha256, scanner.name, arguments.pageLimit, arguments)
         return Page(page.pageNumber, page.pageSize, page.totalRecords, page.records.map { it.data })
     }
+
+    override fun loadItems(credentialsKey: String?, sha256: String, scanner: Scanner): Any? {
+        return scancodeItemDao.items(credentialsKey, sha256, scanner.name)
+    }
 }

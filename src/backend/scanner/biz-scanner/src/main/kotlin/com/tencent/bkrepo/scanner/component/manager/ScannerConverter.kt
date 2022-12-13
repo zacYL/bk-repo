@@ -39,7 +39,7 @@ import java.lang.UnsupportedOperationException
  * 接口数据格式转换
  */
 interface ScannerConverter {
-    fun convertCveResult(result: Any): Page<ArtifactVulnerabilityInfo> {
+    fun convertCveResult(result: Any, cveWhite: List<String>?): Page<ArtifactVulnerabilityInfo> {
         throw UnsupportedOperationException()
     }
     fun convertToLoadArguments(request: ArtifactVulnerabilityRequest): LoadResultArguments {

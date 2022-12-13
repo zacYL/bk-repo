@@ -80,7 +80,11 @@ class TArchiveSubScanTask(
     /**
      * 扫描时方案的质量规则
      */
-    scanQuality: Map<String, Any>? = null
+    scanQuality: Map<String, Any>? = null,
+    /**
+     * cve白名单
+     */
+    cveWhite: List<String>? = null
 ) : SubScanTaskDefinition(
     id = id,
     createdBy = createdBy,
@@ -106,7 +110,8 @@ class TArchiveSubScanTask(
     credentialsKey = credentialsKey,
     scanResultOverview = scanResultOverview,
     qualityRedLine = qualityRedLine,
-    scanQuality = scanQuality
+    scanQuality = scanQuality,
+    cveWhite = cveWhite
 ) {
     companion object {
         fun from(
@@ -114,7 +119,8 @@ class TArchiveSubScanTask(
             status: String,
             overview: Map<String, Any?>? = null,
             modifiedBy: String? = null,
-            qualityPass: Boolean? = null
+            qualityPass: Boolean? = null,
+            cveWhite: List<String>? = null
         ) = with(task) {
             val now = LocalDateTime.now()
             val numberOverview = overview?.let { Converter.convert(it) }
@@ -149,7 +155,8 @@ class TArchiveSubScanTask(
                 credentialsKey = credentialsKey,
                 scanResultOverview = numberOverview,
                 qualityRedLine = qualityPass,
-                scanQuality = scanQuality
+                scanQuality = scanQuality,
+                cveWhite = cveWhite
             )
         }
     }

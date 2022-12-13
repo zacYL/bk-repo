@@ -70,4 +70,10 @@ interface ScanExecutorResultManager {
         scanner: Scanner,
         arguments: LoadResultArguments?
     ): Any?
+
+    fun loadItems(
+        credentialsKey: String?,
+        sha256: String,
+        scanner: Scanner
+    ): Any?
 }

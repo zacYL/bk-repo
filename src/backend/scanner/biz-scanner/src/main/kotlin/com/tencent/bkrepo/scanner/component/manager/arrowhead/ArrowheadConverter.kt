@@ -82,7 +82,7 @@ class ArrowheadConverter(private val licenseService: SpdxLicenseService) : Scann
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun convertCveResult(result: Any): Page<ArtifactVulnerabilityInfo> {
+    override fun convertCveResult(result: Any, cveWhite: List<String>?): Page<ArtifactVulnerabilityInfo> {
         result as Page<CveSecItem>
         val pageRequest = Pages.ofRequest(result.pageNumber, result.pageSize)
         val reports = result.records.mapTo(HashSet(result.records.size)) {
@@ -96,7 +96,8 @@ class ArrowheadConverter(private val licenseService: SpdxLicenseService) : Scann
                 description = it.description,
                 officialSolution = it.officialSolution.ifEmpty { it.defenseSolution },
                 reference = it.references,
-                path = it.path
+                path = it.path,
+                isCveWhite = cveWhite?.contains(it.cveId) ?: false
             )
         }.toList()
         return Pages.ofResponse(pageRequest, result.totalRecords, reports)

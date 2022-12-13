@@ -85,6 +85,14 @@ class DependencyResultManager @Autowired constructor(
         return Page(page.pageNumber, page.pageSize, page.totalRecords, records)
     }
 
+    override fun loadItems(credentialsKey: String?, sha256: String, scanner: Scanner): Any? {
+        scanner as DependencyScanner
+        val cveItems = dependencyItemDao.items(credentialsKey, sha256, scanner.name)
+        val pocIds = cveItems.map { Converter.pocIdOf(it.data.cveId) }
+        val cveMap = knowledgeBase.findByPocId(pocIds).associateBy { it.pocId }
+        return cveItems.map { Converter.convert(it, cveMap[Converter.pocIdOf(it.data.cveId)]!!) }
+    }
+
     private fun replace(
         credentialsKey: String?,
         sha256: String,

@@ -155,7 +155,8 @@ class PlanArtifactLatestSubScanTaskDao(
         overview: Map<String, Any?>? = null,
         modifiedBy: String? = null,
         now: LocalDateTime = LocalDateTime.now(),
-        qualityPass: Boolean? = null
+        qualityPass: Boolean? = null,
+        cveWhite: List<String>? = null
     ): UpdateResult {
         val criteria = Criteria
             .where(TPlanArtifactLatestSubScanTask::latestSubScanTaskId.name).isEqualTo(latestSubScanTaskId)
@@ -165,6 +166,7 @@ class PlanArtifactLatestSubScanTaskDao(
             .set(TPlanArtifactLatestSubScanTask::status.name, subtaskScanStatus)
         modifiedBy?.let { update.set(TPlanArtifactLatestSubScanTask::lastModifiedBy.name, it) }
         qualityPass?.let { update.set(TPlanArtifactLatestSubScanTask::qualityRedLine.name, it) }
+        cveWhite?.let { update.set(TPlanArtifactLatestSubScanTask::cveWhite.name, it) }
 
         // 更新为正在扫描的状态时更新
         if (subtaskScanStatus == SubScanTaskStatus.EXECUTING.name) {

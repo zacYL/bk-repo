@@ -139,8 +139,8 @@
                         theme: 'success',
                         message: '移除成功'
                     })
+                    this.getCveWhiteListHandler()
                 })
-                this.getCveWhiteListHandler()
             }
         }
     }

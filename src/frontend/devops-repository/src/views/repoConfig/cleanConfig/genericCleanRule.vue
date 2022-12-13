@@ -1,12 +1,5 @@
 <template>
-    <div class="rule-item flex-align-center">
-        <bk-input
-            style="width:180px;"
-            :value="path.value"
-            @input="path => change({ path })"
-            :disabled="disabled"
-            placeholder="请输入文件目录的绝对路径">
-        </bk-input>
+    <div class="flex-align-center mt10">
         <bk-select
             style="width:100px;"
             v-model="type"
@@ -36,20 +29,13 @@
     </div>
 </template>
 <script>
+
     import SelectInput from '@repository/components/SelectInput'
     export default {
         name: 'metadataRule',
         components: { SelectInput },
         props: {
-            disabled: Boolean,
-            path: {
-                type: Object,
-                default: () => ({
-                    field: 'path',
-                    operation: 'REGEX',
-                    value: ''
-                })
-            }
+            disabled: Boolean
         },
         data () {
             return {
@@ -63,6 +49,7 @@
                     { id: 'MATCH', name: '包含' },
                     { id: 'REGEX', name: '正则匹配' }
                 ]
+
             }
         },
         computed: {
@@ -100,16 +87,15 @@
                 deep: true
             }
         },
+        created () {
+        },
         methods: {
             change ({
-                path = this.path.value,
                 field = this.defaultValue.field,
                 select: operation = this.defaultValue.operation,
                 input: value = this.defaultValue.value
             }) {
-                const data = {
-                    path: { field: 'path', operation: 'REGEX', value: path }
-                }
+                const data = {}
                 field && (data[field] = { field, operation, value })
                 this.$emit('change', data)
             }

@@ -204,4 +204,5 @@ interface RepositoryService {
     fun allRepoPage(skip: Long): List<TRepository>
 
     fun allRepos(projectId: String?, repoName: String?, repoType: RepositoryType?): List<RepositoryInfo?>
+    fun migrateCleanStrategy(): List<String>
 }

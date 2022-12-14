@@ -1,6 +1,7 @@
 package com.tencent.bkrepo.repository.service.repo.impl
 
 import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_SIZE
+import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.event.repo.RepositoryCleanEvent
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
@@ -9,6 +10,7 @@ import com.tencent.bkrepo.common.artifact.pojo.configuration.clean.RepositoryCle
 import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.query.model.Rule
+import com.tencent.bkrepo.common.query.model.Sort
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.dao.RepositoryDao
@@ -18,6 +20,7 @@ import com.tencent.bkrepo.repository.model.TPackageVersion
 import com.tencent.bkrepo.repository.model.TRepository
 import com.tencent.bkrepo.repository.pojo.node.NodeDelete
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
+import com.tencent.bkrepo.repository.pojo.node.NodeListOption
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
@@ -27,6 +30,7 @@ import com.tencent.bkrepo.repository.service.node.NodeStatsOperation
 import com.tencent.bkrepo.repository.service.packages.PackageService
 import com.tencent.bkrepo.repository.service.repo.RepositoryCleanService
 import com.tencent.bkrepo.repository.service.repo.RepositoryService
+import com.tencent.bkrepo.repository.util.RepoCleanUtils
 import com.tencent.bkrepo.repository.util.RuleUtils
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
@@ -54,13 +58,27 @@ class RepositoryCleanServiceImpl(
             cleanStrategy?.let {
                 logger.info(
                     "projectId:[${repo.projectId}] repoName:[${repo.name}] " +
-                            "clean strategy autoClean:[${it.autoClean}] status:[${it.status}]"
+                        "clean strategy autoClean:[${it.autoClean}] status:[${it.status}]"
                 )
                 // 自动清理关闭，状态为 WAITING，删除job
                 if (!it.autoClean && it.status == CleanStatus.WAITING) {
                     taskScheduler.deleteJob(repoId)
                     return
                 }
+                execute(repo, it)
+            } ?: logger.warn("projectId:[${repo.projectId}] repoName:[${repo.name}] clean strategy is null")
+        } ?: logger.error("argument exception tRepository is null, tRepository:[$tRepository]")
+    }
+
+    override fun cleanRepoDebug(projectId: String, repoName: String) {
+        val tRepository = repositoryDao.findByNameAndType(projectId, repoName)
+        tRepository?.let { repo ->
+            val cleanStrategy = repositoryService.getRepoCleanStrategy(repo.projectId, repo.name)
+            cleanStrategy?.let {
+                logger.info(
+                    "projectId:[${repo.projectId}] repoName:[${repo.name}] " +
+                        "clean strategy autoClean:[${it.autoClean}] status:[${it.status}]"
+                )
                 execute(repo, it)
             } ?: logger.warn("projectId:[${repo.projectId}] repoName:[${repo.name}] clean strategy is null")
         } ?: logger.error("argument exception tRepository is null, tRepository:[$tRepository]")
@@ -73,7 +91,14 @@ class RepositoryCleanServiceImpl(
         try {
             repositoryService.updateCleanStatusRunning(repo.projectId, repo.name)
             if (repo.type == RepositoryType.GENERIC) {
-                executeNodeClean(repo.projectId, repo.name, cleanStrategy)
+                // 将rule 转为 Map<Regex, Rule>
+                val flattenRule = RepoCleanUtils.flattenRule(cleanStrategy)
+                flattenRule?.let {
+                    if (logger.isDebugEnabled) {
+                        logger.debug("flattenRule:[${flattenRule.toJsonString()}]")
+                    }
+                    executeNodeCleanV2(repo.projectId, repo.name, "/", it)
+                }
             } else {
                 executeClean(repo.projectId, repo.name, cleanStrategy)
             }
@@ -85,7 +110,6 @@ class RepositoryCleanServiceImpl(
             logger.error("projectId:[${repo.projectId}] repoName:[${repo.name}] clean error [$ex]")
         }
     }
-
 
     /**
      * 依赖源清理：执行规则过滤，并删除
@@ -114,7 +138,7 @@ class RepositoryCleanServiceImpl(
             val deleteVersions: MutableList<PackageVersion>
             var ruleQueryList = mutableListOf<PackageVersion>()
             requireNotNull(it.id)
-            //包的版本数 <= 保留版本数，直接跳过
+            // 包的版本数 <= 保留版本数，直接跳过
             if (it.versions <= cleanStrategy.reserveVersions) return@forEach
             val listVersion = packageService.listAllVersion(
                 it.projectId,
@@ -128,7 +152,7 @@ class RepositoryCleanServiceImpl(
             if (logger.isDebugEnabled) {
                 logger.debug(
                     "projectId:[${it.projectId}] repoName:[${it.repoName}] " +
-                            "packageName:[${it.name}] rule query result:[$ruleQueryList]"
+                        "packageName:[${it.name}] rule query result:[$ruleQueryList]"
                 )
             }
             listVersion.removeAll(ruleQueryList)
@@ -142,7 +166,7 @@ class RepositoryCleanServiceImpl(
             if (logger.isDebugEnabled) {
                 logger.debug(
                     "projectId:[${it.projectId}] repoName:[${it.repoName}] clean [packageName:${it.name}] " +
-                            "delete version collection: $deleteVersions"
+                        "delete version collection: $deleteVersions"
                 )
             }
             deleteVersion(deleteVersions, it.key, it.type, it.projectId, it.repoName)
@@ -219,6 +243,45 @@ class RepositoryCleanServiceImpl(
         }
     }
 
+    private fun executeNodeCleanV2(
+        projectId: String,
+        repoName: String,
+        path: String,
+        flatten: Map<Regex, Rule.NestedRule>,
+        pageNumber: Int = 1
+    ) {
+        val nodelist = nodeClient.listNodePage(
+            projectId = projectId,
+            repoName = repoName,
+            path = path,
+            option = NodeListOption(
+                pageNumber = pageNumber,
+                pageSize = cleanPageSize,
+                includeMetadata = true,
+                includeFolder = true,
+                sortProperty = listOf(TNode::id.name),
+                direction = listOf(Sort.Direction.ASC.name)
+            )
+        ).data?.records
+        if (nodelist != null) {
+            nodelist.forEach {
+                // 找到所有path
+                if (!RepoCleanUtils.needReserve(it, flatten)) {
+                    nodeDeleteOperation.deleteByPath(it.projectId, it.repoName, it.fullPath, SYSTEM_USER)
+                } else {
+                    if (it.folder) {
+                        executeNodeCleanV2(it.projectId, it.repoName, it.fullPath, flatten)
+                    }
+                }
+            }
+            if (nodelist.size >= cleanPageSize) {
+                executeNodeCleanV2(projectId, repoName, path, flatten, pageNumber + 1)
+            }
+        } else {
+            logger.warn("list node page is null")
+        }
+    }
+
     /**
      * generic仓库清理：根据规则查询节点
      * @return MutableList<TNode> 节点集合
@@ -286,9 +349,9 @@ class RepositoryCleanServiceImpl(
         reserveDays: Long
     ): List<PackageVersion> {
         val filterVersions: MutableList<PackageVersion> = mutableListOf()
-        //根据 【版本序列号】 降序排序
+        // 根据 【版本序列号】 降序排序
         val sortedByDesc = versions.sortedByDescending { it.ordinal }
-        //截取超过【保留版本数】的版本，进行保留天数过滤
+        // 截取超过【保留版本数】的版本，进行保留天数过滤
         val reserveDaysFilter =
             sortedByDesc.subList(reserveVersions.toInt(), versions.size).sortedByDescending { it.recentlyUseDate }
         if (logger.isDebugEnabled) {
@@ -333,6 +396,7 @@ class RepositoryCleanServiceImpl(
     }
 
     companion object {
+        private const val cleanPageSize = 1024 * 10
         private val logger = LoggerFactory.getLogger(RepositoryCleanServiceImpl::class.java)
     }
 }

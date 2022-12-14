@@ -33,6 +33,8 @@ import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.common.security.permission.Permission
+import com.tencent.bkrepo.common.security.permission.Principal
+import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoDeleteRequest
@@ -253,5 +255,12 @@ class UserRepositoryController(
         @RequestBody userRepoCreateRequest: UserRepoCreateRequest
     ): Response<Void> {
         return this.createRepo(userId, userRepoCreateRequest)
+    }
+
+    @ApiOperation("仓库清理策略数据迁移接口：将全局的保留时间迁移至具体每条目录清理条件中")
+    @Principal(PrincipalType.ADMIN)
+    @GetMapping("/migrate/cleanStrategy")
+    fun migrateCleanStrategy(): Response<List<String>> {
+        return ResponseBuilder.success(repositoryService.migrateCleanStrategy())
     }
 }

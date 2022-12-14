@@ -80,6 +80,10 @@
                         value: ''
                     }
                     const meta = Object.values(val).find(meta => meta.field)
+                    if (Object.values(val)?.[0]?.field === 'id') {
+                        // 此时表明选择的是全部
+                        this.type = 'all'
+                    }
                     // 触发type改变导致input回置
                     meta && (this.defaultValue = { ...meta })
                 },

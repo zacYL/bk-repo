@@ -10,7 +10,7 @@
         <bk-form-item v-if="repoType !== 'generic'" label="最少保留时间(天)" required property="reserveDays" error-display-type="normal">
             <bk-input class="w250" v-model="config.reserveDays" :disabled="!config.autoClean"></bk-input>
         </bk-form-item>
-        <bk-form-item label="保留规则">
+        <bk-form-item :label="repoType === 'generic' ? '清理机制' : '保留规则'">
             <template v-if="repoType !== 'generic'">
                 <bk-button :disabled="!config.autoClean" icon="plus" @click="addRule()">添加规则</bk-button>
                 <div class="form-tip">
@@ -32,9 +32,9 @@
                 <div class="flex-align-center">
                     <span class="generic-rule-icon"><i class="bk-icon icon-question-circle" v-bk-tooltips="htmlConfig"></i></span>
                     <div id="generic-rule-info">
-                        <p>1. 在目录下符合保留规则的文件永久不会被自动清理，文件不符合任意保留规则但是存储未超过保留时间内同样不会被清理，文件被下载、编辑将刷新保留时间。</p>
-                        <p>2. 开启自动清理后，未设置保留规则和时间的文件，将按照文件目录1（仓库全局规则）的保留时间与规则做保留，文件目录1不可删除。</p>
-                        <p>3. 添加文件目录后，文件目录下的所有文件按照所属目录的保留时间与规则做保留，不再按照全局规则做保留。</p>
+                        <p>1. 在目录下符合保留规则的文件永久不会被清理，文件不符合任意保留规则但是存储未超过暂存时间不会被清理，文件被下载、编辑将刷新保留时间。</p>
+                        <p>2. 开启自动清理后，未设置保留规则和暂存时间的文件，将按照文件目录1（仓库全局规则）的暂存时间与规则做保留，文件目录1不可删除。</p>
+                        <p>3. 添加文件目录后，文件目录下的所有文件按照所属目录的暂存时间与规则做保留，不再按照全局规则做保留。</p>
                         <p>4. 在父目录存在多个子目录与保留规则时，添加子目录1保留规则，仅子目录1内的文件按照子目录1的规则进行保留，其他子目录按照父目录规则做保留。</p>
                     </div>
                     <bk-button :disabled="!config.autoClean" icon="plus" @click="addGenericCatalog()">添加目录</bk-button>
@@ -90,7 +90,7 @@
                                 </bk-popover>
 
                             </bk-form-item>
-                            <bk-form-item label="文件保留时间" :rules="genericRules.reserveDays"
+                            <bk-form-item label="文件暂存时间" :rules="genericRules.reserveDays"
                                 :property="`rules.${index}.reserveDays`" error-display-type="normal">
                                 <bk-input class="w250" type="number"
                                     :max="maxReserveDay"
@@ -98,7 +98,7 @@
                                 <span class="ml10 mr10">天</span>
                             </bk-form-item>
                             <bk-form-item>
-                                <bk-button :disabled="!config.autoClean" icon="plus" @click="onAddGenericRule(index)">添加规则</bk-button>
+                                <bk-button :disabled="!config.autoClean" icon="plus" @click="onAddGenericRule(index)">添加保留规则</bk-button>
                             </bk-form-item>
                         </bk-form>
                         <bk-icon class="ml5 hover-btn" v-if="index !== 0" type="close-circle" :disabled="!config.autoClean" @click="onDeleteGenericCatalog(index)" />
@@ -438,10 +438,19 @@
                                 },
                                 {
                                     rules: Object.values(rs.rules).map(i => {
-                                        const item = Object.values(i)?.[0]
-                                        return item?.field.replace(/^metadata\./, '') && item?.value && {
-                                            ...item,
-                                            value: item?.operation === 'MATCH' ? `*${item?.value}*` : item?.value
+                                        if (Object.values(i).length === 0) {
+                                            // 此时表明传值为空对象，即此时选择了全部
+                                            return {
+                                                field: 'id',
+                                                value: 'null',
+                                                operation: 'NE'
+                                            }
+                                        } else {
+                                            const item = Object.values(i)?.[0]
+                                            return item?.field.replace(/^metadata\./, '') && item?.value && {
+                                                ...item,
+                                                value: item?.operation === 'MATCH' ? `*${item?.value}*` : item?.value
+                                            }
                                         }
                                     }).filter(Boolean),
                                     relation: 'OR'

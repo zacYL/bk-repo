@@ -399,6 +399,10 @@
                 for (const key in r) {
                     key && this.genericConfig.rules[index].rules.splice(ind, 1, r)
                 }
+                // 此时选择的是空对象，即全部,此时也需要重新改变当前规则，从而触发子组件内部的watch去改变页面
+                if (Object.keys(r).length === 0) {
+                    this.genericConfig.rules[index].rules.splice(ind, 1, r)
+                }
             },
             // 二进制仓库添加规则按钮
             onAddGenericRule (index) {

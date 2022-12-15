@@ -30,7 +30,7 @@ import com.tencent.bkrepo.repository.service.node.NodeStatsOperation
 import com.tencent.bkrepo.repository.service.packages.PackageService
 import com.tencent.bkrepo.repository.service.repo.RepositoryCleanService
 import com.tencent.bkrepo.repository.service.repo.RepositoryService
-import com.tencent.bkrepo.repository.util.RepoCleanUtils
+import com.tencent.bkrepo.repository.util.RepoCleanRuleUtils
 import com.tencent.bkrepo.repository.util.RuleUtils
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
@@ -92,7 +92,7 @@ class RepositoryCleanServiceImpl(
             repositoryService.updateCleanStatusRunning(repo.projectId, repo.name)
             if (repo.type == RepositoryType.GENERIC) {
                 // 将rule 转为 Map<Regex, Rule>
-                val flattenRule = RepoCleanUtils.flattenRule(cleanStrategy)
+                val flattenRule = RepoCleanRuleUtils.flattenRule(cleanStrategy)
                 flattenRule?.let {
                     if (logger.isDebugEnabled) {
                         logger.debug("flattenRule:[${flattenRule.toJsonString()}]")
@@ -247,7 +247,7 @@ class RepositoryCleanServiceImpl(
         projectId: String,
         repoName: String,
         path: String,
-        flatten: Map<Regex, Rule.NestedRule>,
+        flatten: Map<String, Rule.NestedRule>,
         pageNumber: Int = 1
     ) {
         val nodelist = nodeClient.listNodePage(
@@ -266,7 +266,7 @@ class RepositoryCleanServiceImpl(
         if (nodelist != null) {
             nodelist.forEach {
                 // 找到所有path
-                if (!RepoCleanUtils.needReserve(it, flatten)) {
+                if (!RepoCleanRuleUtils.needReserve(it, flatten)) {
                     nodeDeleteOperation.deleteByPath(it.projectId, it.repoName, it.fullPath, SYSTEM_USER)
                 } else {
                     if (it.folder) {

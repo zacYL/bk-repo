@@ -6,7 +6,7 @@ import com.tencent.bkrepo.common.artifact.pojo.configuration.clean.RepositoryCle
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
-import com.tencent.bkrepo.repository.util.RepoCleanUtils
+import com.tencent.bkrepo.repository.util.RepoCleanRuleUtils
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -108,7 +108,7 @@ class RepoCleanTest {
     @Test
     @DisplayName("测试将清理策略打平方法")
     fun `flatten repo cleanStrategy`() {
-        val flattenRule = RepoCleanUtils.flattenRule(cleanStrategy)
+        val flattenRule = RepoCleanRuleUtils.flattenRule(cleanStrategy)
         println(flattenRule?.size)
         println(flattenRule?.toJsonString())
     }

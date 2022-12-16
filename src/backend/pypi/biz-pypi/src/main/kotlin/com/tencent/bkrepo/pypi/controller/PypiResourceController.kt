@@ -34,6 +34,8 @@ package com.tencent.bkrepo.pypi.controller
 import com.tencent.bkrepo.common.artifact.api.ArtifactFileMap
 import com.tencent.bkrepo.pypi.artifact.PypiArtifactInfo
 import com.tencent.bkrepo.pypi.service.PypiService
+import io.swagger.annotations.Api
+import org.slf4j.LoggerFactory
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -42,6 +44,7 @@ import org.springframework.web.bind.annotation.RestController
 /**
  * pypi服务接口实现类
  */
+@Api("pypi client api")
 @RestController
 class PypiResourceController(
     private var pypiService: PypiService
@@ -51,6 +54,9 @@ class PypiResourceController(
      */
     @PostMapping(PypiArtifactInfo.PYPI_ROOT_POST_URI)
     fun upload(pypiArtifactInfo: PypiArtifactInfo, artifactFileMap: ArtifactFileMap) {
+        if (logger.isDebugEnabled) {
+            logger.debug("upload pypi package: $pypiArtifactInfo")
+        }
         pypiService.upload(pypiArtifactInfo, artifactFileMap)
     }
 
@@ -63,6 +69,9 @@ class PypiResourceController(
         produces = [MediaType.TEXT_XML_VALUE]
     )
     fun search(pypiArtifactInfo: PypiArtifactInfo): String {
+        if (logger.isDebugEnabled) {
+            logger.debug("search pypi package: $pypiArtifactInfo")
+        }
         return pypiService.search(pypiArtifactInfo)
     }
 
@@ -71,6 +80,9 @@ class PypiResourceController(
      */
     @GetMapping(PypiArtifactInfo.PYPI_SIMPLE_MAPPING_INSTALL_URI, produces = [MediaType.TEXT_HTML_VALUE])
     fun simple(artifactInfo: PypiArtifactInfo): Any? {
+        if (logger.isDebugEnabled) {
+            logger.debug("simple pypi package: $artifactInfo")
+        }
         return pypiService.simple(artifactInfo)
     }
 
@@ -80,6 +92,12 @@ class PypiResourceController(
      */
     @GetMapping(PypiArtifactInfo.PYPI_PACKAGES_MAPPING_URI)
     fun packages(artifactInfo: PypiArtifactInfo) {
+        if (logger.isDebugEnabled) {
+            logger.debug("packages pypi package: $artifactInfo")
+        }
         pypiService.packages(artifactInfo)
+    }
+    companion object {
+        private val logger = LoggerFactory.getLogger(PypiResourceController::class.java)
     }
 }

@@ -259,6 +259,7 @@ class PypiLocalRepository(
     fun getVersionDetail(context: ArtifactQueryContext): Any? {
         val packageKey = context.request.getParameter("packageKey")
         val version = context.request.getParameter("version")
+        logger.info("Get version detail, packageKey: $packageKey, version: $version")
         val name = PackageKeys.resolvePypi(packageKey)
         val trueVersion = packageClient.findVersionByName(
             context.projectId,
@@ -301,6 +302,7 @@ class PypiLocalRepository(
      *
      */
     fun getSimpleHtml(artifactInfo: ArtifactInfo): Any? {
+        logger.info("Get simple html, artifactInfo: ${artifactInfo.getArtifactFullPath()}")
         val request = HttpContextHolder.getRequest()
         if (!request.requestURI.endsWith("/")) {
             val response = HttpContextHolder.getResponse()
@@ -411,11 +413,7 @@ class PypiLocalRepository(
             val fullPath = context.artifactInfo.getArtifactFullPath()
             val pypiPackagePojo = fullPath.toPypiPackagePojo()
             val packageKey = PackageKeys.ofPypi(pypiPackagePojo.name)
-            return PackageDownloadRecord(
-                projectId, repoName,
-                packageKey, pypiPackagePojo.version,
-                userId
-            )
+            return PackageDownloadRecord(projectId, repoName, packageKey, pypiPackagePojo.version, userId)
         }
     }
 

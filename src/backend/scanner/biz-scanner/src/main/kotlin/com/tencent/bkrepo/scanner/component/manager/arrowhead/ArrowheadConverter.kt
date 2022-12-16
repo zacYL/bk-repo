@@ -99,7 +99,7 @@ class ArrowheadConverter(private val licenseService: SpdxLicenseService) : Scann
                 path = it.path,
                 isCveWhite = cveWhite?.contains(it.cveId) ?: false
             )
-        }.toList()
+        }.toList().sortedByDescending { it.isCveWhite }
         return Pages.ofResponse(pageRequest, result.totalRecords, reports)
     }
 

@@ -169,23 +169,34 @@ object RepoCleanRuleUtils {
         ).apply {
             nodeInfo.recentlyUseDate?.let { this.add(LocalDateTime.parse(it, DateTimeFormatter.ISO_DATE_TIME)) }
         }.maxOf { it }
-        val days = Duration.between(lastModifiedTimeDate, LocalDateTime.now()).toDays()
+        val days = Duration.between(lastModifiedTimeDate, LocalDateTime.now()).toDays().toInt()
+        logger.debug("lastModifiedTimeDate:[$lastModifiedTimeDate], days:[$days]")
         // todo matchRule 是否可能为空，考虑如果为空附默认值
         val rules = matchRule!!.rules.filterIsInstance<Rule.NestedRule>().first().rules
+        // reserveDays
         val reverseDays = matchRule.rules.filterIsInstance<Rule.QueryRule>()
-            .firstOrNull { it.field == "reserveDays" }?.value as? Long ?: 30L
+            .firstOrNull { it.field == "reserveDays" }?.value as? Int ?: 30
+        logger.debug("reverseDays:[$reverseDays]")
         // 有设置规则 尝试匹配规则
         if (!rules.isNullOrEmpty()) {
             rules.forEach { queryRule ->
                 queryRule as Rule.QueryRule
                 if (queryRule.field == "id") {
+                    if (logger.isDebugEnabled) {
+                        logger.debug("match by id: [${queryRule.value}]")
+                    }
                     return true
                 }
                 if (queryRule.field == "name") {
                     val ruleValue = queryRule.value as String
                     val type = queryRule.operation
                     checkReverseRule(nodeInfo.name, ruleValue, type).apply {
-                        if (this) return true
+                        if (this) {
+                            if (logger.isDebugEnabled) {
+                                logger.debug("match by name: [${queryRule.value}]")
+                            }
+                            return true
+                        }
                     }
                 }
                 if (queryRule.field.startsWith("metadata.")) {
@@ -195,7 +206,16 @@ object RepoCleanRuleUtils {
                     nodeInfo.nodeMetadata?.first { it.key == key }?.let { metadata ->
                         val metadataValue = metadata.value as String
                         checkReverseRule(metadataValue, ruleValue, type).apply {
-                            if (this) return true
+                            if (this) {
+                                if (logger.isDebugEnabled) {
+                                    logger.debug(
+                                            "match by metadata: " +
+                                                    "[query: ${queryRule.toJsonString()}, " +
+                                                    "metadata: ${metadata.toJsonString()}]"
+                                    )
+                                }
+                                return true
+                            }
                         }
                     }
                 }

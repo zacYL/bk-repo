@@ -264,13 +264,13 @@ class RepositoryCleanServiceImpl(
             )
         ).data?.records
         if (nodelist != null) {
+            logger.info("executeNodeCleanV2: [$projectId/$repoName$path]")
             nodelist.forEach {
-                // 找到所有path
-                if (!RepoCleanRuleUtils.needReserve(it, flatten)) {
-                    nodeDeleteOperation.deleteByPath(it.projectId, it.repoName, it.fullPath, SYSTEM_USER)
+                if (it.folder) {
+                    executeNodeCleanV2(it.projectId, it.repoName, it.fullPath, flatten)
                 } else {
-                    if (it.folder) {
-                        executeNodeCleanV2(it.projectId, it.repoName, it.fullPath, flatten)
+                    if (!RepoCleanRuleUtils.needReserve(it, flatten)) {
+                        nodeDeleteOperation.deleteByPath(it.projectId, it.repoName, it.fullPath, SYSTEM_USER)
                     }
                 }
             }

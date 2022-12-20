@@ -61,7 +61,7 @@ class TrivyConverter : ScannerConverter {
                 path = "",
                 isCveWhite = cveWhite?.contains(it.data.vulnerabilityId) ?: false
             )
-        }.toList()
+        }.toList().sortedByDescending { it.isCveWhite }
         return Pages.ofResponse(pageRequest, result.totalRecords, reports)
     }
 

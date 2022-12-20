@@ -9,4 +9,6 @@ interface RepositoryCleanService {
      * @param repoId 仓库id
      */
     fun cleanRepo(repoId: String)
+
+    fun cleanRepoDebug(projectId: String, repoName: String)
 }

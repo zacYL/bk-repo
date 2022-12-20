@@ -32,46 +32,72 @@
 package com.tencent.bkrepo.pypi.controller
 
 import com.tencent.bkrepo.common.artifact.api.ArtifactFileMap
-import com.tencent.bkrepo.pypi.api.PypiResource
 import com.tencent.bkrepo.pypi.artifact.PypiArtifactInfo
-import com.tencent.bkrepo.pypi.pojo.PypiMigrateResponse
 import com.tencent.bkrepo.pypi.service.PypiService
-import org.springframework.beans.factory.annotation.Autowired
+import io.swagger.annotations.Api
+import org.slf4j.LoggerFactory
+import org.springframework.http.MediaType
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RestController
 
 /**
  * pypi服务接口实现类
  */
+@Api("pypi client api")
 @RestController
-class PypiResourceController : PypiResource {
-
-    @Autowired
-    private lateinit var pypiService: PypiService
-
-    override fun upload(pypiArtifactInfo: PypiArtifactInfo, artifactFileMap: ArtifactFileMap) {
+class PypiResourceController(
+    private var pypiService: PypiService
+) {
+    /**
+     * pypi upload 接口
+     */
+    @PostMapping(PypiArtifactInfo.PYPI_ROOT_POST_URI)
+    fun upload(pypiArtifactInfo: PypiArtifactInfo, artifactFileMap: ArtifactFileMap) {
+        if (logger.isDebugEnabled) {
+            logger.debug("upload pypi package: $pypiArtifactInfo")
+        }
         pypiService.upload(pypiArtifactInfo, artifactFileMap)
     }
 
-    override fun search(pypiArtifactInfo: PypiArtifactInfo): String {
+    /**
+     * pypi search 接口
+     */
+    @PostMapping(
+        PypiArtifactInfo.PYPI_ROOT_POST_URI,
+        consumes = [MediaType.TEXT_XML_VALUE],
+        produces = [MediaType.TEXT_XML_VALUE]
+    )
+    fun search(pypiArtifactInfo: PypiArtifactInfo): String {
+        if (logger.isDebugEnabled) {
+            logger.debug("search pypi package: $pypiArtifactInfo")
+        }
         return pypiService.search(pypiArtifactInfo)
     }
 
-    override fun simple(artifactInfo: PypiArtifactInfo): Any? {
+    /**
+     * pypi simple/{package} 页面接口，
+     */
+    @GetMapping(PypiArtifactInfo.PYPI_SIMPLE_MAPPING_INSTALL_URI, produces = [MediaType.TEXT_HTML_VALUE])
+    fun simple(artifactInfo: PypiArtifactInfo): Any? {
+        if (logger.isDebugEnabled) {
+            logger.debug("simple pypi package: $artifactInfo")
+        }
         return pypiService.simple(artifactInfo)
     }
 
-    override fun packages(artifactInfo: PypiArtifactInfo) {
+    /**
+     * pypi install 接口
+     * packages/{package}/{version}/{filename}#md5={md5}
+     */
+    @GetMapping(PypiArtifactInfo.PYPI_PACKAGES_MAPPING_URI)
+    fun packages(artifactInfo: PypiArtifactInfo) {
+        if (logger.isDebugEnabled) {
+            logger.debug("packages pypi package: $artifactInfo")
+        }
         pypiService.packages(artifactInfo)
     }
-
-    override fun migrateByUrl(pypiArtifactInfo: PypiArtifactInfo): PypiMigrateResponse<String> {
-        return pypiService.migrate(pypiArtifactInfo)
-    }
-
-    /**
-     * 数据迁移结果查询接口
-     */
-    override fun migrateResult(pypiArtifactInfo: PypiArtifactInfo): PypiMigrateResponse<String> {
-        return pypiService.migrateResult(pypiArtifactInfo)
+    companion object {
+        private val logger = LoggerFactory.getLogger(PypiResourceController::class.java)
     }
 }

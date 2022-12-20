@@ -68,19 +68,69 @@
           "public":"false",
           "cleanStrategy":{
               "autoClean":"true",
-              "reserveVersions":"5",
-              "reserveDays":"1",
               "rule":{
                   "relation": "AND",
                   "rules":[
                   	{"field" : "projectId","value" : "test","operation" : "EQ"}, 
                   	{"field" : "repoName","value" : "rrreert","operation" : "EQ"},
-                  	
               		{
               			"rules" : [ 
-              				{"rules" : [ {"field" : "fullpath","value" : "^/","operation" : "REGEX"} ],"relation" : "AND"}, 
-              				{"rules" : [ {"field" : "fullpath","value" : "^/","operation" : "REGEX"}, {"field" : "name","value" : "aaaaa","operation" : "EQ"} ],"relation" : "AND"}, 
-              				{"rules" : [ {"field" : "fullpath","value" : "^/","operation" : "REGEX"}, {"field" : "metadata.key","value" : "*value*","operation" : "MATCH"} ],"relation" : "AND"}
+              				{
+                                  "rules": [
+                                      {
+                                          "field": "reserveDays",
+                                          "value": 30,
+                                          "operation": "LTE"
+                                      },
+                                      {
+                                          "field": "path",
+                                          "value": "/",
+                                          "operation": "REGEX"
+                                      },
+                                      {
+                                          "rules": [
+                                              {
+                                                  "field": "name",
+                                                  "value": "bbbb",
+                                                  "operation": "MATCH"
+                                              }
+                                          ],
+                                          "relation": "OR"
+                                      }
+                                  ],
+                                  "relation" : "AND"
+                              },
+              				{
+                                  "rules": [
+                                      {
+                                          "field": "reserveDays",
+                                          "value": 30,
+                                          "operation": "LTE"
+                                      },
+                                      {
+                                          "field": "path",
+                                          "value": "/a",
+                                          "operation": "REGEX"
+                                      },
+                                      {
+                                          "rules": [
+                                              {
+                                                  "field": "metadata.pipilineId",
+                                                  "value": "123",
+                                                  "operation": "MATCH"
+                                              },
+                                              {
+                                                  "field": "name",
+                                                  "value": "product",
+                                                  "operation": "EQ"
+                                              }
+                                          ],
+                                          "relation": "OR"
+                                      }
+                                  ],
+                                  "relation" : "AND"
+                              }
+              				
               		 	],
               			"relation" : "OR"
             			}

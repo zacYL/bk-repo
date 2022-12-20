@@ -16,6 +16,7 @@ data class RepositoryCleanStrategy(
     val reserveVersions: Long = 20,
 
     @ApiModelProperty("保留天数", required = true)
+    @Deprecated("")
     val reserveDays: Long = 30,
 
     @ApiModelProperty("元数据保留规则", required = false)

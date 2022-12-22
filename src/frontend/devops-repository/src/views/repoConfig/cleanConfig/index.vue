@@ -53,7 +53,10 @@
                             >
                                 <bk-popover :disabled="!config.autoClean || index === 0"
                                     placement="top-end" trigger="click" theme="light"
-                                    ref="genericPopoverRefs" :max-width="300" :arrow="false" :width="300" :distance="0">
+                                    ref="genericPopoverRefs"
+                                    :max-width="300" :width="300"
+                                    :arrow="false" flip-on-update
+                                    :distance="0">
                                     <bk-input class="generic-input-common"
                                         readonly placeholder="请选择文件目录"
                                         :disabled="!config.autoClean || index === 0"

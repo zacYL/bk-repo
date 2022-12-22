@@ -13,6 +13,8 @@
             v-show="type === 'metadata'"
             style="width:180px;"
             :value="defaultValue.field.replace(/^metadata\.(.*)$/, '$1')"
+            @compositionstart.native="handleComposition"
+            @compositionend.native="handleComposition"
             @input="field => change({ field: `metadata.${field}` })"
             :disabled="disabled"
             placeholder="属性键">
@@ -48,7 +50,8 @@
                     { id: 'EQ', name: '等于' },
                     { id: 'MATCH', name: '包含' },
                     { id: 'REGEX', name: '正则匹配' }
-                ]
+                ],
+                isOnComposition: true // 此处默认设置为true，在用户输入时保证会进入抛出change事件
 
             }
         },
@@ -94,14 +97,43 @@
         created () {
         },
         methods: {
+            handleComposition (e) {
+                if (e.type === 'compositionend') {
+                    // 中文输入完成，触发change
+                    this.isOnComposition = true
+                    this.change({ field: `metadata.${e.target.value}` })
+                } else if (e.type === 'compositionstart') {
+                    // 中文输入开始，禁止抛出事件
+                    this.isOnComposition = false
+                }
+            },
+            trimSpecial (string) {
+                let str = ''
+                if (string !== '') {
+                    const pattern = /[`~!@#$%^\-&*()_+=|{}':;',\\\[\]\<>\/?~！@#￥……&*（）——|{}【】'；：""'‘’。，、？\s]/g
+                    str = string.replace(pattern, '')
+                }
+                return str
+            },
             change ({
                 field = this.defaultValue.field,
                 select: operation = this.defaultValue.operation,
                 input: value = this.defaultValue.value
             }) {
-                const data = {}
-                field && (data[field] = { field, operation, value })
-                this.$emit('change', data)
+                // key 值不能有特殊符号
+                const key = this.trimSpecial(field)
+
+                // 过滤value字段空格
+                if (value) {
+                    value = value.replace(/(^\s*)|(\s*$)/g, '')
+                }
+                // 英文、数字输入正常抛出，中文输入开始到结束阶段不抛出
+                // 此处注意，如果从始至终都没有输入中文，this.isOnComposition的值就是undefined，但感觉这样不太好，因此在上方定义此变量为响应式数据
+                if (this.isOnComposition || this.isOnComposition === undefined) {
+                    const data = {}
+                    key && (data[key] = { field: key, operation, value })
+                    this.$emit('change', data)
+                }
             }
         }
     }

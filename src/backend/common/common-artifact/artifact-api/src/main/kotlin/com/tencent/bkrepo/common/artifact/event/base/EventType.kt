@@ -75,5 +75,9 @@ enum class EventType(val nick: String) {
     WEBHOOK_TEST("webhook测试"),
 
     // repository clean
-    REPOSITORY_CLEAN("仓库清理")
+    REPOSITORY_CLEAN("仓库清理"),
+
+    CVE_WHITE_ADD("添加Cve白名单"),
+    CVE_WHITE_ADD_BATCH("批量添加Cve白名单"),
+    CVE_WHITE_DELETE("删除Cve白名单")
 }

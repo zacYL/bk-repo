@@ -452,7 +452,7 @@
                                             const item = Object.values(i)?.[0]
                                             return item?.field.replace(/^metadata\./, '') && item?.value && {
                                                 ...item,
-                                                value: item?.operation === 'MATCH' ? `${item?.value}` : item?.value
+                                                value: item?.operation === 'MATCH' ? `*${item?.value}*` : item?.value
                                             }
                                         }
                                     }).filter(Boolean),

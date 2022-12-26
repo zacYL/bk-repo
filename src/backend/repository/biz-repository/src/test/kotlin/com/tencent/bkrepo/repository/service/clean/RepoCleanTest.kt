@@ -101,9 +101,115 @@ class RepoCleanTest {
         )
     )
 
-    private val nodeLists = listOf<NodeInfo>(
-
+    private val cleanStrategy01 = RepositoryCleanStrategy(
+        status = CleanStatus.WAITING,
+        autoClean = false,
+        rule = Rule.NestedRule(
+            rules = mutableListOf(
+                Rule.QueryRule(
+                    field = "projectId",
+                    value = "test",
+                    operation = OperationType.EQ
+                ),
+                Rule.QueryRule(
+                    field = "repoName",
+                    value = "t333",
+                    operation = OperationType.EQ
+                ),
+                Rule.NestedRule(
+                    rules = mutableListOf(
+                        Rule.NestedRule(
+                            rules = mutableListOf(
+                                Rule.QueryRule(
+                                    field = "path",
+                                    value = "/",
+                                    operation = OperationType.EQ
+                                ),
+                                Rule.QueryRule(
+                                    field = "reserveDays",
+                                    value = 1024L,
+                                    operation = OperationType.LTE
+                                ),
+                                Rule.NestedRule(
+                                    rules = mutableListOf(
+                                        Rule.QueryRule(
+                                            field = "name",
+                                            value = "test",
+                                            operation = OperationType.EQ
+                                        ),
+                                        Rule.QueryRule(
+                                            field = "metadata.pipelineId",
+                                            value = "dddd",
+                                            operation = OperationType.MATCH
+                                        ),
+                                    ),
+                                    relation = Rule.NestedRule.RelationType.OR
+                                )
+                            ),
+                            relation = Rule.NestedRule.RelationType.AND
+                        ),
+                        Rule.NestedRule(
+                            rules = mutableListOf(
+                                Rule.QueryRule(
+                                    field = "path",
+                                    value = "/a/b/c",
+                                    operation = OperationType.EQ
+                                ),
+                                Rule.QueryRule(
+                                    field = "reserveDays",
+                                    value = 30L,
+                                    operation = OperationType.LTE
+                                ),
+                                Rule.NestedRule(
+                                    rules = mutableListOf(
+                                        Rule.QueryRule(
+                                            field = "name",
+                                            value = "xxxx",
+                                            operation = OperationType.EQ
+                                        ),
+                                        Rule.QueryRule(
+                                            field = "metadata.pipelineId",
+                                            value = "dddd",
+                                            operation = OperationType.MATCH
+                                        ),
+                                    ),
+                                    relation = Rule.NestedRule.RelationType.OR
+                                )
+                            ),
+                            relation = Rule.NestedRule.RelationType.AND
+                        ),
+                    ),
+                    relation = Rule.NestedRule.RelationType.OR
+                )
+            ),
+            relation = Rule.NestedRule.RelationType.AND
+        )
     )
+
+    private val nodeInfo = NodeInfo(
+        createdBy = "Jolie",
+        createdDate = "2022-08-18T11:45:22.706",
+        lastModifiedBy = "ericwu",
+        lastModifiedDate = "2022-08-19T17:32:10.803",
+        recentlyUseDate = "2022-08-19T14:13:34.741",
+        lastAccessDate = "2022-08-18T11:45:22.706",
+        folder = false,
+        path = "/Jolie/文件扫描格式测试/",
+        name = "1.tar",
+        fullPath = "/Jolie/文件扫描格式测试/1.tar",
+        size = 618,
+        sha256 = "a9399e2a7608e2f8c78e57d7a5d80030607b316051bc7fa2a1b141d1437c1020",
+        md5 = "dab0bb5bbf5e4396cc02b57b11b78931",
+        metadata = emptyMap<String, Any>(),
+        nodeMetadata = listOf(),
+        projectId = "w6675d",
+        repoName = "jc_generic_test"
+    )
+
+
+
+
+    private val nodeLists = listOf<NodeInfo>()
 
     @Test
     @DisplayName("测试将清理策略打平方法")
@@ -111,5 +217,16 @@ class RepoCleanTest {
         val flattenRule = RepoCleanRuleUtils.flattenRule(cleanStrategy)
         println(flattenRule?.size)
         println(flattenRule?.toJsonString())
+    }
+
+    @Test
+    @DisplayName("测试节点清理")
+    fun `node clean test`() {
+        val `metadata?` = nodeInfo.nodeMetadata?.firstOrNull {
+            it.key == "pipelineId"
+        }
+        val `medadata!` = nodeInfo.nodeMetadata?.first {
+            it.key == "pipelineId"
+        }
     }
 }

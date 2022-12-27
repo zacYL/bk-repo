@@ -28,7 +28,7 @@ class CveWhitelistServiceImpl(
     override fun insert(cveId: String, userId: String) {
         if (getByCveId(cveId) != null) return
         cveWhitelistDao.insert(transformToT(cveId, userId))
-        operateLog(EventType.CVE_WHITE_ADD)
+        operateLog(EventType.CVE_WHITE_ADD, mapOf("cveId" to cveId))
     }
 
     override fun insertBatch(cveIds: List<String>, userId: String) {
@@ -36,16 +36,17 @@ class CveWhitelistServiceImpl(
             cveIds.filter { cveId -> !(getByCveIds(cveIds).map { it?.cveId }.contains(cveId)) }
                 .map { transformToT(it, userId) }
         )
-        operateLog(EventType.CVE_WHITE_ADD_BATCH)
+        operateLog(EventType.CVE_WHITE_ADD_BATCH, mapOf("cveIds" to cveIds))
     }
 
-    private fun operateLog(type: EventType) {
+    private fun operateLog(type: EventType, data: Map<String, Any>) {
         val event = ArtifactEvent(
             type = type,
             projectId = "",
             repoName = "",
             resourceKey = "",
-            userId = SecurityUtils.getUserId()
+            userId = SecurityUtils.getUserId(),
+            data = data
         )
         operateLogService.saveEventAsync(event, HttpContextHolder.getClientAddress())
     }
@@ -69,7 +70,7 @@ class CveWhitelistServiceImpl(
 
     override fun deleteByCveId(cveId: String, userId: String) {
         logger.info("delete vul whitelist: [$cveId] by user: [$userId]")
-        operateLog(EventType.CVE_WHITE_DELETE)
+        operateLog(EventType.CVE_WHITE_DELETE, mapOf("cveId" to cveId))
         return cveWhitelistDao.deleteByCveId(cveId)
     }
 

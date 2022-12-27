@@ -178,6 +178,7 @@ open class OperateLogServiceImpl(
             addAll(adminEvent)
             addAll(projectEvent)
             addAll(metadataEvent)
+            addAll(cveWhiteEvent)
         }
     }
 
@@ -370,6 +371,9 @@ open class OperateLogServiceImpl(
         private val adminEvent = listOf(EventType.ADMIN_ADD, EventType.ADMIN_DELETE)
         private val projectEvent = listOf(EventType.PROJECT_CREATED)
         private val metadataEvent = listOf(EventType.METADATA_SAVED, EventType.METADATA_DELETED)
+        private val cveWhiteEvent = listOf(
+            EventType.CVE_WHITE_ADD, EventType.CVE_WHITE_ADD_BATCH, EventType.CVE_WHITE_DELETE
+        )
         private val antPathMatcher = AntPathMatcher()
     }
 }

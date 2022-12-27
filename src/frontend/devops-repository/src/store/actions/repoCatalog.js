@@ -9,7 +9,7 @@ export default {
         return Vue.prototype.$ajax.get(url)
     },
     // 获取当前项目下所选仓库的子节点
-    getSubTreeNodes (_, { projectId, repoName, fullPath, current = 1, limit = 100, sortType = 'lastModifiedDate' }) {
+    getSubTreeNodes (_, { projectId, repoName, fullPath, current = 1, limit = 500, sortType = 'lastModifiedDate' }) {
         return Vue.prototype.$ajax.post(`${prefix}/node/search`, {
             page: {
                 pageNumber: current,

@@ -65,7 +65,10 @@
                 set (val) {
                     const oldValue = this.defaultValue.field
                     // 被动改变
-                    if (val === oldValue) return
+                    if (val === oldValue || (oldValue.indexOf('metadata') > -1 && val === 'metadata')) {
+                        // 当之前的值和新的值相等时或者说之前的值是元数据并且新值选择的依旧是元数据，此时都是不需要在重新改变当前的输入框的值的
+                        return
+                    }
                     // 用户输入
                     let field = ''
                     if (val === 'name') field = 'name'

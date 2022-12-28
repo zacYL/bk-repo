@@ -64,7 +64,8 @@
                 currentClickNode: '', // 当前点击的节点
                 treeLoading: false,
                 defaultExpandKeys: [], // 默认展开的节点的key数组
-                oldCurrentNode: '' // 之前点击的节点，用于设置当前节点的高亮显示
+                oldCurrentNode: '', // 之前点击的节点，用于设置当前节点的高亮显示
+                currentTreeData: [] // 当前添加的树节点的数据，因为接口是分页的，需要递归获取全部数据后赋值
             }
         },
         computed: {
@@ -160,6 +161,7 @@
                 })
             },
             handleNodeExpand (data, node) {
+                this.currentTreeData = []
                 if (data.folder) {
                     // 当点击的节点是文件夹或仓库时才请求获取其子节点
                     return this.getTreeData(data, node)
@@ -168,16 +170,21 @@
                     return Promise.resolve()
                 }
             },
-
             // 获取树节点的数据
             getTreeData (data, node) {
                 // 向当前选择节点添加子节点之前先将之前默认添加的数据清除，否则会出现数据重复或无用数据
                 data.children = []
+
+                return this.getPaginationTreeData(data)
+            },
+            // 因为获取子节点接口是分页获取的，所以现在采用递归获取
+            getPaginationTreeData (data, pageNumber) {
                 this.treeLoading = true
                 return this.getSubTreeNodes({
                     projectId: data.projectId,
                     repoName: data.repoName,
-                    fullPath: data.fullPath
+                    fullPath: data.fullPath,
+                    current: pageNumber || 1
                 }).then(res => {
                     if (res.records.length > 0) {
                         const secondChildren = res.records.map((item) => {
@@ -190,7 +197,6 @@
                                 projectId: item.projectId,
                                 repoName: item.repoName,
                                 children: []
-
                             }
                             if (node.folder) {
                                 // 如果当前节点是文件夹，则默认为其添加一个子节点，让其显示左边的展开图标按钮
@@ -199,7 +205,17 @@
                             return node
                         })
 
-                        this.$refs.treeDataRefs.updateKeyChildren(data.id, secondChildren)
+                        if (res.count > res.pageSize && res.totalPages > res.pageNumber) {
+                            // 此时证明数据不止只有一页，此时就需要加载剩余的数据，需要采用递归
+                            this.currentTreeData = this.currentTreeData.concat(lodash.cloneDeep(secondChildren))
+                            const pageNumber = ++res.pageNumber
+                            // 因为在筛选后需要重新定位到选中的节点，所以需要将接口return，返回一个promise
+                            return this.getPaginationTreeData(data, pageNumber)
+                        } else {
+                            // 在请求到最后的数据后需要将之前的数据和当前最后一页的数据合并
+                            this.currentTreeData = this.currentTreeData.concat(lodash.cloneDeep(secondChildren))
+                            this.$refs.treeDataRefs.updateKeyChildren(data.id, this.currentTreeData)
+                        }
                     }
                 }).catch((error) => {
                     this.$bkMessage({

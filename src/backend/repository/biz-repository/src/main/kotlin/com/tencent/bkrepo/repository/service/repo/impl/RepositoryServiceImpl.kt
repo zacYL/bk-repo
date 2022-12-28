@@ -428,24 +428,24 @@ class RepositoryServiceImpl(
                         // 在合并后后规则集中寻找是否存在重复路径
                         val existPathNestedRule = targetPathNestedRules.find {
                             it.rules.filterIsInstance<Rule.QueryRule>()
-                                    .find { path -> path.value == pathQueryRule.value } != null
+                                .find { path -> path.value == pathQueryRule.value } != null
                         }
                         // 过滤掉 path及reverseDays 条件
                         val filterRules = queryRules.filterIsInstance<Rule.QueryRule>()
-                                .filter { it.field != "path" && !it.field.startsWith("reverseDays") }
+                            .filter { it.field != "path" && !it.field.startsWith("reverseDays") }
 
                         if (existPathNestedRule == null) {
                             if (filterRules.isNullOrEmpty()) {
                                 pathNestedRule.rules.add(
-                                        Rule.QueryRule("id", "null", OperationType.NE)
+                                    Rule.QueryRule("id", "null", OperationType.NE)
                                 )
                             }
                             targetPathNestedRules.add(pathNestedRule)
                         } else {
                             // 这里意味着 path 对应的规则为全部
                             if (filterRules.isNullOrEmpty() &&
-                                    existPathNestedRule.rules
-                                            .filterIsInstance<Rule.QueryRule>().find { it.field == "id" } == null
+                                existPathNestedRule.rules
+                                    .filterIsInstance<Rule.QueryRule>().find { it.field == "id" } == null
                             ) {
                                 existPathNestedRule.rules.add(Rule.QueryRule("id", "null", OperationType.NE))
                             } else {
@@ -472,8 +472,8 @@ class RepositoryServiceImpl(
                                     rootPathExist = true
                                 }
                                 if (eachRule.field == "name" ||
-                                        eachRule.field.startsWith("metadata.") ||
-                                        eachRule.field == "id") {
+                                    eachRule.field.startsWith("metadata.") ||
+                                    eachRule.field == "id") {
                                     matchRules.add(eachRule)
                                 }
                             }
@@ -527,29 +527,29 @@ class RepositoryServiceImpl(
 
     private fun defaultRootClean(repo: RepositoryInfo, reserveDays: Long): Rule.NestedRule {
         return Rule.NestedRule(
-                rules = mutableListOf(
-                        Rule.QueryRule(field = "projectId", value = repo.projectId, operation = OperationType.EQ),
-                        Rule.QueryRule(field = "repoName", value = repo.name, operation = OperationType.EQ),
+            rules = mutableListOf(
+                Rule.QueryRule(field = "projectId", value = repo.projectId, operation = OperationType.EQ),
+                Rule.QueryRule(field = "repoName", value = repo.name, operation = OperationType.EQ),
+                Rule.NestedRule(
+                    rules = mutableListOf(
                         Rule.NestedRule(
-                                rules = mutableListOf(
-                                        Rule.NestedRule(
-                                                rules = mutableListOf(
-                                                        Rule.QueryRule("path", "/", OperationType.REGEX),
-                                                        Rule.QueryRule("reserveDays", reserveDays, OperationType.LTE),
-                                                        Rule.NestedRule(
-                                                                rules = mutableListOf(
-                                                                        Rule.QueryRule("id", "null", OperationType.NE)
-                                                                ),
-                                                                relation = Rule.NestedRule.RelationType.OR
-                                                        )
-                                                ),
-                                                relation = Rule.NestedRule.RelationType.AND
-                                        )
-                                ),
-                                relation = Rule.NestedRule.RelationType.OR
+                            rules = mutableListOf(
+                                Rule.QueryRule("path", "/", OperationType.REGEX),
+                                Rule.QueryRule("reserveDays", reserveDays, OperationType.LTE),
+                                Rule.NestedRule(
+                                    rules = mutableListOf(
+                                        Rule.QueryRule("id", "null", OperationType.NE)
+                                    ),
+                                    relation = Rule.NestedRule.RelationType.OR
+                                )
+                            ),
+                            relation = Rule.NestedRule.RelationType.AND
                         )
-                ),
-                relation = Rule.NestedRule.RelationType.AND
+                    ),
+                    relation = Rule.NestedRule.RelationType.OR
+                )
+            ),
+            relation = Rule.NestedRule.RelationType.AND
         )
     }
 
@@ -719,7 +719,7 @@ class RepositoryServiceImpl(
                 Preconditions.checkArgument(newCleanStrategy.reserveVersions >= 0, "reserveVersions")
 //                Preconditions.checkArgument(newCleanStrategy.reserveDays >= 0, "reserveDays")
                 // 校验元数据保留规则中包含的正则表达式
-//                checkMetadataRuleWrapper(newCleanStrategy.rule, repository.projectId, repository.name)
+                checkMetadataRuleWrapper(newCleanStrategy.rule, repository.projectId, repository.name)
             } else {
                 logger.warn(
                     "projectId:[${repository.projectId}] repoName:[${repository.name}] new clean strategy is null"
@@ -790,15 +790,15 @@ class RepositoryServiceImpl(
             } else if (value is Long) {
                 if (value < 0) {
                     throw ErrorCodeException(
-                            messageCode = CommonMessageCode.PARAMETER_INVALID,
-                            params = arrayOf("rule", "reserveDays must be greater than or equal to 0")
+                        messageCode = CommonMessageCode.PARAMETER_INVALID,
+                        params = arrayOf("rule", "reserveDays must be greater than or equal to 0")
                     )
                 }
             } else {
                 logger.error("reserveDays value is $value")
                 throw ErrorCodeException(
-                        messageCode = CommonMessageCode.PARAMETER_INVALID,
-                        params = arrayOf("rule", "reserveDays must be an integer")
+                    messageCode = CommonMessageCode.PARAMETER_INVALID,
+                    params = arrayOf("rule", "reserveDays must be an integer")
                 )
             }
         }

@@ -103,17 +103,17 @@ class RepoCleanTest {
 
     private val cleanStrategy01 = RepositoryCleanStrategy(
         status = CleanStatus.WAITING,
-        autoClean = false,
+        autoClean = true,
         rule = Rule.NestedRule(
             rules = mutableListOf(
                 Rule.QueryRule(
                     field = "projectId",
-                    value = "test",
+                    value = "s93fc1",
                     operation = OperationType.EQ
                 ),
                 Rule.QueryRule(
                     field = "repoName",
-                    value = "t333",
+                    value = "jc_migrate_test6",
                     operation = OperationType.EQ
                 ),
                 Rule.NestedRule(
@@ -123,24 +123,67 @@ class RepoCleanTest {
                                 Rule.QueryRule(
                                     field = "path",
                                     value = "/",
-                                    operation = OperationType.EQ
+                                    operation = OperationType.REGEX
                                 ),
                                 Rule.QueryRule(
                                     field = "reserveDays",
-                                    value = 1024L,
+                                    value = 2L,
+                                    operation = OperationType.LTE
+                                ),
+                                Rule.NestedRule(
+                                    rules = mutableListOf(),
+                                    relation = Rule.NestedRule.RelationType.OR
+                                )
+                            ),
+                            relation = Rule.NestedRule.RelationType.AND
+                        ),
+                        Rule.NestedRule(
+                            rules = mutableListOf(
+                                Rule.QueryRule(
+                                    field = "path",
+                                    value = "/CTest/aa",
+                                    operation = OperationType.REGEX
+                                ),
+                                Rule.QueryRule(
+                                    field = "reserveDays",
+                                    value = 2L,
+                                    operation = OperationType.LTE
+                                ),
+                                Rule.NestedRule(
+                                    rules = mutableListOf(),
+                                    relation = Rule.NestedRule.RelationType.OR
+                                )
+                            ),
+                            relation = Rule.NestedRule.RelationType.AND
+                        ),
+                        Rule.NestedRule(
+                            rules = mutableListOf(
+                                Rule.QueryRule(
+                                    field = "path",
+                                    value = "/CTest",
+                                    operation = OperationType.REGEX
+                                ),
+                                Rule.QueryRule(
+                                    field = "reserveDays",
+                                    value = 1L,
                                     operation = OperationType.LTE
                                 ),
                                 Rule.NestedRule(
                                     rules = mutableListOf(
                                         Rule.QueryRule(
-                                            field = "name",
-                                            value = "test",
+                                            field = "metadata.name",
+                                            value = "jackson-datatype-jsr310-2.13.0.jar",
                                             operation = OperationType.EQ
                                         ),
                                         Rule.QueryRule(
-                                            field = "metadata.pipelineId",
-                                            value = "dddd",
+                                            field = "metadata.name",
+                                            value = "*connector*",
                                             operation = OperationType.MATCH
+                                        ),
+                                        Rule.QueryRule(
+                                            field = "metadata.version",
+                                            value = ".*.([4-9]|[1-9][0-9]).*",
+                                            operation = OperationType.REGEX
                                         ),
                                     ),
                                     relation = Rule.NestedRule.RelationType.OR
@@ -152,25 +195,55 @@ class RepoCleanTest {
                             rules = mutableListOf(
                                 Rule.QueryRule(
                                     field = "path",
-                                    value = "/a/b/c",
-                                    operation = OperationType.EQ
+                                    value = "/Jolie",
+                                    operation = OperationType.REGEX
                                 ),
                                 Rule.QueryRule(
                                     field = "reserveDays",
-                                    value = 30L,
+                                    value = 1L,
+                                    operation = OperationType.LTE
+                                ),
+                                Rule.NestedRule(
+                                    rules = mutableListOf(
+                                        Rule.QueryRule(
+                                            field = "id",
+                                            value = "null",
+                                            operation = OperationType.NE
+                                        )
+                                    ),
+                                    relation = Rule.NestedRule.RelationType.OR
+                                )
+                            ),
+                            relation = Rule.NestedRule.RelationType.AND
+                        ),
+                        Rule.NestedRule(
+                            rules = mutableListOf(
+                                Rule.QueryRule(
+                                    field = "path",
+                                    value = "/CPack",
+                                    operation = OperationType.REGEX
+                                ),
+                                Rule.QueryRule(
+                                    field = "reserveDays",
+                                    value = 1L,
                                     operation = OperationType.LTE
                                 ),
                                 Rule.NestedRule(
                                     rules = mutableListOf(
                                         Rule.QueryRule(
                                             field = "name",
-                                            value = "xxxx",
+                                            value = "admin-server-0.0.1-SNAPSHOT.jar",
                                             operation = OperationType.EQ
                                         ),
                                         Rule.QueryRule(
-                                            field = "metadata.pipelineId",
-                                            value = "dddd",
+                                            field = "name",
+                                            value = "*bksdk*",
                                             operation = OperationType.MATCH
+                                        ),
+                                        Rule.QueryRule(
+                                            field = "name",
+                                            value = ".*.war",
+                                            operation = OperationType.REGEX
                                         ),
                                     ),
                                     relation = Rule.NestedRule.RelationType.OR
@@ -206,15 +279,12 @@ class RepoCleanTest {
         repoName = "jc_generic_test"
     )
 
-
-
-
     private val nodeLists = listOf<NodeInfo>()
 
     @Test
     @DisplayName("测试将清理策略打平方法")
     fun `flatten repo cleanStrategy`() {
-        val flattenRule = RepoCleanRuleUtils.flattenRule(cleanStrategy)
+        val flattenRule = RepoCleanRuleUtils.flattenRule(cleanStrategy01)
         println(flattenRule?.size)
         println(flattenRule?.toJsonString())
     }

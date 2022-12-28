@@ -126,7 +126,7 @@ object RepoCleanRuleUtils {
             val pathRegexStr = path.removeSuffix("/") + "/"
             pathRegexStr
         }
-        return flattenMap.toSortedMap(compareByDescending { it.length })
+        return flattenMap.toSortedMap(compareByDescending<String> { it.length }.thenBy { it })
     }
 
     /**

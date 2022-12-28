@@ -147,7 +147,7 @@ class NugetRemoteRepository(
         with(context) {
             val configuration = getRemoteConfiguration()
             val registrationsBaseUrl = getResourceId(REGISTRATIONS_BASE_SEMVER2_URL, context) ?: return null
-            val requestUrl = "$registrationsBaseUrl/${artifactInfo.packageName}/$INDEX"
+            val requestUrl = UrlFormatter.format(registrationsBaseUrl, "${artifactInfo.packageName}/$INDEX")
             logger.info("Query Remote Registrations from [$requestUrl] on configuration[$configuration]")
             val response = executeRequest(configuration, requestUrl)
             return getJsonObjectFromResponse(response, RegistrationIndex::class.java)

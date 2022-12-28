@@ -567,7 +567,7 @@
         },
         {
           "field": "folder",
-          "value": "false",
+          "value": false,
           "operation": "EQ"
         },
       ],

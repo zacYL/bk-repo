@@ -36,17 +36,23 @@ import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
 import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
 import com.tencent.bkrepo.maven.artifact.MavenDeleteArtifactInfo
+import com.tencent.bkrepo.maven.pojo.MavenDependency
+import com.tencent.bkrepo.maven.pojo.MavenPlugin
 import com.tencent.bkrepo.maven.pojo.response.MavenGAVCResponse
+import com.tencent.bkrepo.repository.pojo.dependent.PackageVersionDependentsRelation
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
+import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
+import javax.validation.constraints.Min
 
 @Api("Maven 产品接口")
 @RequestMapping("/ext")
+@Validated
 interface MavenWebResource {
     @ApiOperation("maven jar 包删除接口")
     @DeleteMapping(MavenArtifactInfo.MAVEN_EXT_PACKAGE_DELETE)
@@ -83,4 +89,37 @@ interface MavenWebResource {
         @RequestParam c: String?,
         @RequestParam repos: String?
     ): Response<Page<MavenGAVCResponse.UriResult>>
+
+    @ApiOperation("查询包的依赖项")
+    @GetMapping("/dependencies/{projectId}/{repoName}")
+    fun dependencies(
+        @PathVariable projectId: String,
+        @PathVariable repoName: String,
+        @RequestParam packageKey: String,
+        @RequestParam version: String,
+        @RequestParam @Min(1) pageNumber: Int? = 1,
+        @RequestParam @Min(1) pageSize: Int? = 20,
+    ): Response<Page<MavenDependency>>
+
+    @ApiOperation("查询仓库中依赖该制品的制品")
+    @GetMapping("/dependencies/reverse/{projectId}/{repoName}")
+    fun dependenciesReverse(
+            @PathVariable projectId: String,
+            @PathVariable repoName: String,
+            @RequestParam packageKey: String,
+            @RequestParam version: String,
+            @RequestParam @Min(1) pageNumber: Int? = 1,
+            @RequestParam @Min(1) pageSize: Int? = 20,
+    ): Response<Page<PackageVersionDependentsRelation>>
+
+    @ApiOperation("查询包依赖的插件")
+    @GetMapping("/plugins/{projectId}/{repoName}")
+    fun plugins(
+        @PathVariable projectId: String,
+        @PathVariable repoName: String,
+        @RequestParam packageKey: String,
+        @RequestParam version: String,
+        @RequestParam @Min(1) pageNumber: Int? = 1,
+        @RequestParam @Min(1) pageSize: Int? = 20,
+    ): Response<Page<MavenPlugin>>
 }

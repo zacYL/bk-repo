@@ -74,7 +74,10 @@ import com.tencent.bkrepo.maven.pojo.MavenMetadataSearchPojo
 import com.tencent.bkrepo.maven.pojo.MavenRepoConf
 import com.tencent.bkrepo.maven.pojo.response.MavenArtifactResponse
 import com.tencent.bkrepo.maven.service.MavenMetadataService
+import com.tencent.bkrepo.maven.util.DependencyUtils
+import com.tencent.bkrepo.maven.util.DependencyUtils.toSearchString
 import com.tencent.bkrepo.maven.util.DigestUtils
+import com.tencent.bkrepo.maven.util.JarUtils
 import com.tencent.bkrepo.maven.util.MavenConfiguration.toMavenRepoConf
 import com.tencent.bkrepo.maven.util.MavenConfiguration.versionBehaviorConflict
 import com.tencent.bkrepo.maven.util.MavenGAVCUtils.mavenGAVC
@@ -88,8 +91,11 @@ import com.tencent.bkrepo.maven.util.MavenStringUtils.isSnapshotUri
 import com.tencent.bkrepo.maven.util.MavenStringUtils.resolverName
 import com.tencent.bkrepo.maven.util.MavenUtil
 import com.tencent.bkrepo.repository.api.MetadataClient
+import com.tencent.bkrepo.repository.api.PackageVersionDependentsClient
 import com.tencent.bkrepo.repository.api.StageClient
 import com.tencent.bkrepo.repository.constant.CoverStrategy
+import com.tencent.bkrepo.repository.pojo.dependent.PackageVersionDependentsRelation
+import com.tencent.bkrepo.repository.pojo.dependent.PackageVersionDependentsRequest
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataSaveRequest
@@ -105,6 +111,7 @@ import org.apache.maven.artifact.repository.metadata.SnapshotVersion
 import org.apache.maven.artifact.repository.metadata.Versioning
 import org.apache.maven.artifact.repository.metadata.io.xpp3.MetadataXpp3Reader
 import org.apache.maven.artifact.repository.metadata.io.xpp3.MetadataXpp3Writer
+import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -122,7 +129,8 @@ import java.util.regex.Pattern
 class MavenLocalRepository(
     private val stageClient: StageClient,
     private val mavenMetadataService: MavenMetadataService,
-    private val metadataClient: MetadataClient
+    private val metadataClient: MetadataClient,
+    private val packageVersionDependentsClient: PackageVersionDependentsClient
 ) : LocalRepository() {
 
     @Value("\${maven.domain:http://127.0.0.1:25803}")
@@ -321,7 +329,8 @@ class MavenLocalRepository(
             }
             val node =
                 nodeClient.getNodeDetail(projectId, repoName, artifactFilePath).data ?: throw NotFoundException(
-                    ArtifactMessageCode.NODE_NOT_FOUND, artifactFilePath
+                    ArtifactMessageCode.NODE_NOT_FOUND,
+                    artifactFilePath
                 )
             val serverDigest = node.metadata[hashType.ext].toString()
             val clientDigest = MavenUtil.extractDigest(getArtifactFile().getInputStream())
@@ -346,7 +355,7 @@ class MavenLocalRepository(
             logger.info("File's package is $packaging")
 
             val fileSuffix = packaging
-            if (packaging == "pom") {
+            val model: Model = if (packaging == "pom") {
                 val mavenPomModel = context.getArtifactFile().getInputStream().use { MavenXpp3Reader().read(it) }
                 val version = if (mavenPomModel.version == null) {
                     mavenPomModel.parent.version
@@ -358,6 +367,13 @@ class MavenLocalRepository(
                 if (!verNotBlank || !isPom) {
                     packaging = mavenPomModel.packaging
                 }
+                mavenPomModel
+            } else {
+                context.getArtifactFile().apply {
+                    if (this.getFile() == null) this.flushToFile()
+                }
+                val file = context.getArtifactFile().getFile()!!
+                JarUtils.parseModelInJar(file)
             }
             val isArtifact = (packaging == fileSuffix)
             logger.info("Current file is artifact: $isArtifact")
@@ -369,7 +385,32 @@ class MavenLocalRepository(
                 storageCredentials = context.storageCredentials
             )
             context.putAttribute(FULL_PATH, node.fullPath)
-            if (isArtifact) createMavenVersion(context, mavenGavc, node.fullPath)
+            if (isArtifact) {
+                createMavenVersion(context, mavenGavc, node.fullPath)
+                // 记录依赖信息
+                val dependencies = model.dependencies
+                val plugins = model.build.plugins
+                packageVersionDependentsClient.insert(
+                    PackageVersionDependentsRelation(
+                        projectId = context.projectId,
+                        repoName = context.repoName,
+                        packageKey = PackageKeys.ofGav(mavenGavc.groupId, mavenGavc.artifactId),
+                        version = mavenGavc.version,
+                        dependencies = mutableSetOf<String>().apply {
+                            addAll(
+                                dependencies.map {
+                                    DependencyUtils.parseDependency(it).toSearchString()
+                                }
+                            )
+                            addAll(
+                                plugins.map {
+                                    DependencyUtils.parsePlugin(it).toSearchString()
+                                }
+                            )
+                        }
+                    )
+                )
+            }
             // 更新包各模块版本最新记录
             logger.info("Prepare to create maven metadata....")
             try {
@@ -1022,6 +1063,15 @@ class MavenLocalRepository(
                 "Will delete package $packageName version ${version.name} in repo ${getRepoIdentify()}"
             )
             packageClient.deleteVersion(projectId, repoName, packageName, version.name)
+            // 删除版本对应的依赖关系记录
+            packageVersionDependentsClient.delete(
+                PackageVersionDependentsRequest(
+                    projectId = projectId,
+                    repoName = repoName,
+                    packageKey = packageName,
+                    version = version.name
+                )
+            )
             val artifactPath = MavenUtil.extractPath(packageName) + "/${version.name}"
             // 需要删除对应的metadata表记录
             val (artifactId, groupId) = MavenUtil.extractGrounpIdAndArtifactId(packageName)
@@ -1045,8 +1095,9 @@ class MavenLocalRepository(
             val fullPath = artifactInfo.getArtifactFullPath()
             logger.info("Will prepare to delete file $fullPath in repo ${artifactInfo.getRepoIdentify()} ")
             // 如果删除单个文件不能删除metadata.xml文件, 如果文件删除了对应的校验文件也要删除
-            if (fullPath.endsWith(MAVEN_METADATA_FILE_NAME) && !forceDeleted)
+            if (fullPath.endsWith(MAVEN_METADATA_FILE_NAME) && !forceDeleted) {
                 throw MavenRequestForbiddenException("$MAVEN_METADATA_FILE_NAME can not be deleted.")
+            }
             val node = nodeClient.getNodeDetail(projectId, repoName, fullPath).data
             if (node != null) {
                 if (checksumType(node.fullPath) == null) {
@@ -1157,16 +1208,21 @@ class MavenLocalRepository(
             context.repoName,
             packageKey,
             version
-        ).data ?: return null
+        ).data ?: throw MavenArtifactNotFoundException("Can not find version $version of package $packageKey")
         with(context.artifactInfo) {
             val jarNode = nodeClient.getNodeDetail(
-                projectId, repoName, trueVersion.contentPath!!
+                projectId,
+                repoName,
+                trueVersion.contentPath!!
             ).data ?: return null
             val type = (jarNode.metadata["packaging"] as? String) ?: "jar"
             val classifier = jarNode.metadata["classifier"] as? String
             val stageTag = stageClient.query(projectId, repoName, packageKey, version).data
             val packageVersion = packageClient.findVersionByName(
-                projectId, repoName, packageKey, version
+                projectId,
+                repoName,
+                packageKey,
+                version
             ).data
             val count = packageVersion?.downloads ?: 0
             val createdDate = packageVersion?.createdDate?.format(DateTimeFormatter.ISO_DATE_TIME)

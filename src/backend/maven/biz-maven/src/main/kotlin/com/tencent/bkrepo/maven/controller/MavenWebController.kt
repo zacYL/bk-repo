@@ -40,9 +40,12 @@ import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.maven.api.MavenWebResource
 import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
 import com.tencent.bkrepo.maven.artifact.MavenDeleteArtifactInfo
+import com.tencent.bkrepo.maven.pojo.MavenDependency
+import com.tencent.bkrepo.maven.pojo.MavenPlugin
 import com.tencent.bkrepo.maven.pojo.response.MavenGAVCResponse
 import com.tencent.bkrepo.maven.service.MavenExtService
 import com.tencent.bkrepo.maven.service.MavenService
+import com.tencent.bkrepo.repository.pojo.dependent.PackageVersionDependentsRelation
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -86,5 +89,64 @@ class MavenWebController(
         repos: String?
     ): Response<Page<MavenGAVCResponse.UriResult>> {
         return mavenExtService.gavc(projectId, pageNumber, pageSize, g, a, v, c, repos)
+    }
+
+    override fun dependencies(
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        version: String,
+        pageNumber: Int?,
+        pageSize: Int?
+    ): Response<Page<MavenDependency>> {
+        return mavenExtService.dependencies(
+            projectId,
+            repoName,
+            packageKey,
+            version,
+            pageNumber ?: 1,
+            pageSize ?: 20
+        )
+    }
+
+    override fun dependenciesReverse(
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        version: String,
+        pageNumber: Int?,
+        pageSize: Int?
+    ): Response<Page<PackageVersionDependentsRelation>> {
+        return mavenExtService.dependenciesReverse(
+            projectId,
+            repoName,
+            packageKey,
+            version,
+            pageNumber ?: PAGE_NUMBER,
+            pageSize ?: PAGE_SIZE
+        )
+    }
+
+    override fun plugins(
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        version: String,
+        pageNumber: Int?,
+        pageSize: Int?
+    ): Response<Page<MavenPlugin>> {
+        return mavenExtService.plugins(
+            projectId,
+            repoName,
+            packageKey,
+            version,
+            pageNumber ?: PAGE_NUMBER,
+            pageSize ?: PAGE_SIZE
+        )
+    }
+
+    companion object {
+        private const val PAGE_NUMBER = 1
+        private const val PAGE_SIZE = 20
     }
 }

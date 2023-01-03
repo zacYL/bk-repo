@@ -115,6 +115,7 @@ Rule.NestedRule(
 object RepoCleanRuleUtils {
 
     private val logger: Logger = LoggerFactory.getLogger(RepoCleanRuleUtils::class.java)
+    private const val daySeconds = 24 * 60 * 60L
     fun flattenRule(cleanStrategy: RepositoryCleanStrategy): Map<String, Rule.NestedRule>? {
         val rule = cleanStrategy.rule ?: return null
         val reverseRule = (rule as Rule.NestedRule).rules.filterIsInstance<Rule.NestedRule>().firstOrNull()
@@ -155,7 +156,7 @@ object RepoCleanRuleUtils {
         }
     }
 
-    fun needReserve(
+    private fun needReserve(
         nodeInfo: NodeInfo,
         flattenRules: Map<String, Rule.NestedRule>,
     ): Boolean {
@@ -178,8 +179,8 @@ object RepoCleanRuleUtils {
         ).apply {
             nodeInfo.recentlyUseDate?.let { this.add(LocalDateTime.parse(it, DateTimeFormatter.ISO_DATE_TIME)) }
         }.maxOf { it }
-        val days = Duration.between(lastModifiedTimeDate, LocalDateTime.now()).toDays().toInt()
-        logger.debug("lastModifiedTimeDate:[$lastModifiedTimeDate], days:[$days]")
+        val seconds = Duration.between(lastModifiedTimeDate, LocalDateTime.now()).seconds
+        logger.debug("lastModifiedTimeDate:[$lastModifiedTimeDate], seconds:[$seconds]")
         // todo matchRule 是否可能为空，考虑如果为空附默认值
         val rules = matchRule!!.rules
             .filterIsInstance<Rule.NestedRule>().first().rules
@@ -248,7 +249,7 @@ object RepoCleanRuleUtils {
             }
             logger.info("not match any rule")
         }
-        return reverseDays >= days
+        return reverseDays * daySeconds >= seconds
     }
 
     fun checkReverseRule(nodeValue: String, ruleValue: String, type: OperationType): Boolean {

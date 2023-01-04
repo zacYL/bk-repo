@@ -233,11 +233,11 @@
              * */
             isDisabledExecutionStrategy () {
                 let isDisabled = false
-            
+
                 if (this.routeName === 'editPlan') {
                     const { executionStrategy } = this.planForm
                     const executionStatus = ['IMMEDIATELY', 'SPECIFIED_TIME', 'CRON_EXPRESSION'].includes(executionStrategy)
-                    
+
                     if (executionStrategy === 'REAL_TIME' && executionStatus === false) {
                         isDisabled = true
                         this.isDisabledRealTime = false
@@ -318,6 +318,12 @@
                 this.$refs.planForm.clearError()
             },
             async save () {
+                if (this.planForm.remoteClusterIds.length > 0) {
+                    const clusterArr = this.clusterList.filter(v => v.type !== 'CENTER').map(v => v.id)
+                    this.planForm.remoteClusterIds = this.planForm.remoteClusterIds.map(v => {
+                        return clusterArr.includes(v) && v
+                    }).filter(Boolean)
+                }
                 await this.$refs.planForm.validate()
 
                 if (this.planForm.loading) return

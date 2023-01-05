@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.io.File
 import java.io.FileOutputStream
-import java.util.*
 
 @Service
 class MavenDebugService(
@@ -87,9 +86,7 @@ class MavenDebugService(
                         MavenXpp3Reader().read(it)
                     }
                 } else {
-                    logger.info("tempDir: {}", TEMO_DIR)
-                    val formatTempDir = if (TEMO_DIR.endsWith("/")) TEMO_DIR else "$TEMO_DIR/"
-                    val jarFile = File(formatTempDir + "maven" + UUID.randomUUID() + "/" + jarNode.name)
+                    val jarFile = File.createTempFile("maven", jarNode.name)
                     try {
                         FileOutputStream(jarFile).use { outputStream ->
                             storageManager.loadArtifactInputStream(jarNode, repoDetail.storageCredentials)?.use {
@@ -130,6 +127,5 @@ class MavenDebugService(
     companion object {
         private val logger: Logger = LoggerFactory.getLogger(MavenDebugService::class.java)
         private const val PAGE_SIZE = 10000
-        private val TEMO_DIR = System.getProperty("java.io.tmpdir")
     }
 }

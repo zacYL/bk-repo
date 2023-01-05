@@ -11,15 +11,22 @@ import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.maven.exception.MavenArtifactNotFoundException
 import com.tencent.bkrepo.maven.exception.MavenBadRequestException
 import com.tencent.bkrepo.maven.pojo.MavenDependency
+import com.tencent.bkrepo.maven.pojo.MavenGAVC
 import com.tencent.bkrepo.maven.pojo.MavenPlugin
 import com.tencent.bkrepo.maven.pojo.MavenVersionDependentsRelation
 import com.tencent.bkrepo.maven.pojo.response.MavenGAVCResponse
 import com.tencent.bkrepo.maven.util.DependencyUtils
 import com.tencent.bkrepo.maven.util.DependencyUtils.toReverseSearchString
+import com.tencent.bkrepo.maven.util.DependencyUtils.toSearchString
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.PackageClient
 import com.tencent.bkrepo.repository.api.VersionDependentsClient
+import com.tencent.bkrepo.repository.pojo.dependent.VersionDependentsRelation
 import com.tencent.bkrepo.repository.pojo.dependent.VersionDependentsRequest
+import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
+import org.apache.maven.model.Model
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
@@ -231,5 +238,50 @@ class MavenExtService(
             }
         }
         return Pair(dependencies, plugins)
+    }
+
+    fun addVersionDependents(mavenGavc: MavenGAVC, model: Model, projectId: String, repoName: String) {
+        val ext = mutableListOf<MetadataModel>().apply {
+            add(MetadataModel("type", mavenGavc.packaging))
+            mavenGavc.classifier?.let { add(MetadataModel("classifier", it)) }
+        }
+        val dependencies = try {
+            model.dependencies
+        } catch (e: NullPointerException) {
+            logger.warn("Failed to parse dependencies from pom.xml")
+            listOf()
+        }
+
+        val plugins = try {
+            model.build.plugins
+        } catch (e: NullPointerException) {
+            logger.warn("Failed to parse plugins from pom.xml")
+            listOf()
+        }
+        versionDependentsClient.insert(
+            VersionDependentsRelation(
+                projectId = projectId,
+                repoName = repoName,
+                packageKey = PackageKeys.ofGav(mavenGavc.groupId, mavenGavc.artifactId),
+                version = mavenGavc.version,
+                ext = ext,
+                dependencies = mutableSetOf<String>().apply {
+                    addAll(
+                        dependencies.map {
+                            DependencyUtils.parseDependency(it, model).toSearchString()
+                        }
+                    )
+                    addAll(
+                        plugins.map {
+                            DependencyUtils.parsePlugin(it).toSearchString()
+                        }
+                    )
+                }
+            )
+        )
+    }
+
+    companion object {
+        private val logger: Logger = LoggerFactory.getLogger(MavenExtService::class.java)
     }
 }

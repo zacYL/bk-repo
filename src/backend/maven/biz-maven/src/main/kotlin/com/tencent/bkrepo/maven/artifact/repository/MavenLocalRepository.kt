@@ -74,9 +74,8 @@ import com.tencent.bkrepo.maven.pojo.MavenGAVC
 import com.tencent.bkrepo.maven.pojo.MavenMetadataSearchPojo
 import com.tencent.bkrepo.maven.pojo.MavenRepoConf
 import com.tencent.bkrepo.maven.pojo.response.MavenArtifactResponse
+import com.tencent.bkrepo.maven.service.MavenExtService
 import com.tencent.bkrepo.maven.service.MavenMetadataService
-import com.tencent.bkrepo.maven.util.DependencyUtils
-import com.tencent.bkrepo.maven.util.DependencyUtils.toSearchString
 import com.tencent.bkrepo.maven.util.DigestUtils
 import com.tencent.bkrepo.maven.util.JarUtils
 import com.tencent.bkrepo.maven.util.MavenConfiguration.toMavenRepoConf
@@ -95,7 +94,6 @@ import com.tencent.bkrepo.repository.api.MetadataClient
 import com.tencent.bkrepo.repository.api.StageClient
 import com.tencent.bkrepo.repository.api.VersionDependentsClient
 import com.tencent.bkrepo.repository.constant.CoverStrategy
-import com.tencent.bkrepo.repository.pojo.dependent.VersionDependentsRelation
 import com.tencent.bkrepo.repository.pojo.dependent.VersionDependentsRequest
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
@@ -131,7 +129,8 @@ class MavenLocalRepository(
     private val stageClient: StageClient,
     private val mavenMetadataService: MavenMetadataService,
     private val metadataClient: MetadataClient,
-    private val versionDependentsClient: VersionDependentsClient
+    private val versionDependentsClient: VersionDependentsClient,
+    private val mavenExtService: MavenExtService
 ) : LocalRepository() {
 
     @Value("\${maven.domain:http://127.0.0.1:25803}")
@@ -395,7 +394,7 @@ class MavenLocalRepository(
             if (isArtifact) {
                 createMavenVersion(context, mavenGavc, node.fullPath)
                 // 记录依赖信息
-                model?.let { addVersionDependents(mavenGavc, it, context) }
+                model?.let { mavenExtService.addVersionDependents(mavenGavc, it, context.projectId, context.repoName) }
             }
             // 更新包各模块版本最新记录
             logger.info("Prepare to create maven metadata....")
@@ -430,47 +429,6 @@ class MavenLocalRepository(
                 super.onUpload(context)
             }
         }
-    }
-
-    private fun addVersionDependents(mavenGavc: MavenGAVC, model: Model, context: ArtifactUploadContext) {
-        val ext = mutableListOf<MetadataModel>().apply {
-            add(MetadataModel("type", mavenGavc.packaging))
-            mavenGavc.classifier?.let { add(MetadataModel("classifier", it)) }
-        }
-        val dependencies = try {
-            model.dependencies
-        } catch (e: NullPointerException) {
-            logger.warn("Failed to parse dependencies from pom.xml")
-            listOf()
-        }
-
-        val plugins = try {
-            model.build.plugins
-        } catch (e: NullPointerException) {
-            logger.warn("Failed to parse plugins from pom.xml")
-            listOf()
-        }
-        versionDependentsClient.insert(
-            VersionDependentsRelation(
-                projectId = context.projectId,
-                repoName = context.repoName,
-                packageKey = PackageKeys.ofGav(mavenGavc.groupId, mavenGavc.artifactId),
-                version = mavenGavc.version,
-                ext = ext,
-                dependencies = mutableSetOf<String>().apply {
-                    addAll(
-                        dependencies.map {
-                            DependencyUtils.parseDependency(it, model).toSearchString()
-                        }
-                    )
-                    addAll(
-                        plugins.map {
-                            DependencyUtils.parsePlugin(it).toSearchString()
-                        }
-                    )
-                }
-            )
-        )
     }
 
     private fun metadataUploadHandler(artifactFullPath: String, context: ArtifactContext): Boolean {

@@ -124,9 +124,3 @@ object JarUtils {
         }
     }
 }
-
-fun main() {
-    val file = File("/Users/weaving/Downloads/spring-data-redis-1.8.6.RELEASE.jar")
-    val model = JarUtils.parseModelInJar(file)
-    print(model.toString())
-}

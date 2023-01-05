@@ -149,6 +149,9 @@
                 </section>
             </article>
         </bk-tab-panel>
+        <bk-tab-panel v-if="detailType === 'maven'" name="rely" :label="$t('dependencies')">
+            <mavenDependencies></mavenDependencies>
+        </bk-tab-panel>
     </bk-tab>
 </template>
 <script>
@@ -157,6 +160,7 @@
     import ScanTag from '@repository/views/repoScan/scanTag'
     import forbidTag from '@repository/components/ForbidTag'
     import metadataTag from '@repository/views/repoCommon/metadataTag'
+    import mavenDependencies from '@repository/views/repoCommon/mavenDependencies'
     import { scanTypeEnum } from '@repository/store/publicEnum'
     import { mapState, mapActions } from 'vuex'
     import { convertFileSize, formatDate } from '@repository/utils'
@@ -168,7 +172,8 @@
             OperationList,
             ScanTag,
             forbidTag,
-            metadataTag
+            metadataTag,
+            mavenDependencies
         },
         mixins: [repoGuideMixin],
         data () {
@@ -203,7 +208,8 @@
                             trigger: 'blur'
                         }
                     ]
-                }
+                },
+                detailType: '' // maven仓库显示依赖tab项的repoType，但不能直接用repoType，直接用会导致依赖这个tab项出现在其余的tab项之前
             }
         },
         computed: {
@@ -293,6 +299,8 @@
                     if (this.repoType === 'docker') {
                         this.selectedHistory = res.history[0] || {}
                     }
+                    // 此时不能在HTML中直接使用repoType，如果直接使用会导致该tab页提前被渲染，出现在其他tab页之前，不符合产品要求
+                    this.detailType = this.repoType
                 }).finally(() => {
                     this.isLoading = false
                 })

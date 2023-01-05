@@ -64,7 +64,7 @@
                 </version-detail>
             </div>
         </div>
-        
+
         <common-form-dialog ref="commonFormDialog" @refresh="refresh"></common-form-dialog>
     </div>
 </template>
@@ -330,7 +330,7 @@
         }
     }
     .common-version-main {
-        height: calc(100% - 100px);
+        height: calc(100% - 70px);
         .common-version {
             width: 250px;
             height: 100%;

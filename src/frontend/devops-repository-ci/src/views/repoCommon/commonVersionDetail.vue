@@ -79,7 +79,7 @@
                             <metadata-tag :metadata="row" />
                         </template>
                     </bk-table-column>
-                    
+
                     <bk-table-column :label="$t('description')" prop="description" show-overflow-tooltip></bk-table-column>
                 </bk-table>
             </div>
@@ -154,6 +154,9 @@
             style="height:100%;">
             <topo :root-node="rootNode" :left-tree="leftTree" :right-tree="rightTree" />
         </bk-tab-panel>
+        <bk-tab-panel v-if="detailType === 'maven'" name="rely" :label="$t('dependencies')">
+            <mavenDependencies></mavenDependencies>
+        </bk-tab-panel>
     </bk-tab>
 </template>
 <script>
@@ -162,6 +165,7 @@
     import OperationList from '@repository/components/OperationList'
     import ScanTag from '@repository/views/repoScan/scanTag'
     import forbidTag from '@repository/components/ForbidTag'
+    import mavenDependencies from '@repository/views/repoCommon/mavenDependencies'
     import { scanTypeEnum } from '@repository/store/publicEnum'
     import { mapState, mapGetters, mapActions } from 'vuex'
     import { convertFileSize, formatDate } from '@repository/utils'
@@ -176,7 +180,8 @@
             ScanTag,
             forbidTag,
             topo,
-            metadataTag
+            metadataTag,
+            mavenDependencies
         },
         mixins: [repoGuideMixin, topoDataMixin],
         data () {
@@ -211,7 +216,8 @@
                             trigger: 'blur'
                         }
                     ]
-                }
+                },
+                detailType: '' // maven仓库显示依赖tab项的repoType，但不能直接用repoType，直接用会导致依赖这个tab项出现在其余的tab项之前
             }
         },
         computed: {
@@ -302,6 +308,8 @@
                     if (this.repoType === 'docker') {
                         this.selectedHistory = res.history[0] || {}
                     }
+                    // 此时不能在HTML中直接使用repoType，如果直接使用会导致该tab页提前被渲染，出现在其他tab页之前，不符合产品要求
+                    this.detailType = this.repoType
                 }).finally(() => {
                     this.isLoading = false
                 })

@@ -8,8 +8,11 @@ import com.tencent.bkrepo.maven.util.JarUtils
 import com.tencent.bkrepo.maven.util.MavenGAVCUtils.toMavenGAVC
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.PackageClient
+import com.tencent.bkrepo.repository.api.PackageMetadataClient
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
+import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
+import com.tencent.bkrepo.repository.pojo.metadata.packages.PackageMetadataSaveRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageListOption
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
@@ -28,7 +31,8 @@ class MavenDebugService(
     private val repositoryClient: RepositoryClient,
     private val nodeClient: NodeClient,
     private val storageManager: StorageManager,
-    private val mavenExtService: MavenExtService
+    private val mavenExtService: MavenExtService,
+    private val packageMetadataClient: PackageMetadataClient
 ) {
     fun dependenciesForeach() {
         // 遍历所有项目
@@ -81,6 +85,32 @@ class MavenDebugService(
             val mavenGAVC = jarPath.toMavenGAVC()
             val jarNode = nodeClient.getNodeDetail(repo.projectId, repo.name, jarPath).data
             if (jarNode != null) {
+                val oldVersionMetadata = version.packageMetadata
+                // 更新包版本信息
+                val metadata: MutableMap<String, Any> = mutableMapOf(
+                    "groupId" to mavenGAVC.groupId,
+                    "artifactId" to mavenGAVC.artifactId,
+                    "version" to mavenGAVC.version,
+                    "packaging" to mavenGAVC.packaging
+                )
+                mavenGAVC.classifier?.let {
+                    metadata["classifier"] = it
+                }
+                oldVersionMetadata.forEach {
+                    if (!metadata.containsKey(it.key)) {
+                        metadata[it.key] = it.value
+                    }
+                }
+                logger.info("update package version metadata: $metadata")
+                packageMetadataClient.saveMetadata(
+                    PackageMetadataSaveRequest(
+                        projectId = repo.projectId,
+                        repoName = repo.name,
+                        packageKey = packageKey,
+                        version = version.name,
+                        versionMetadata = metadata.map { MetadataModel(key = it.key, value = it.value) }
+                    )
+                )
                 val model = if (mavenGAVC.packaging == "pom") {
                     storageManager.loadArtifactInputStream(jarNode, repoDetail.storageCredentials)?.use {
                         MavenXpp3Reader().read(it)

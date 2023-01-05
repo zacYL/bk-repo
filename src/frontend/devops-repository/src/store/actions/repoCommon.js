@@ -222,5 +222,38 @@ export default {
     // 修改仓库类型拦截状态
     updateWhiteListSwitchList ({ state, commit }, { RepositoryType }) {
         return Vue.prototype.$ajax.post(`${prefix}/remote/whitelist/switch/${RepositoryType}`)
+    },
+    // maven仓库获取正向依赖
+    getCorrectDependencies (_, { projectId, repoName, packageKey, version, pageNumber, pageSize }) {
+        return Vue.prototype.$ajax.get(`/maven/ext/dependencies/${projectId}/${repoName}`, {
+            params: {
+                packageKey,
+                version,
+                pageNumber,
+                pageSize
+            }
+        })
+    },
+    // maven仓库获取插件
+    getCorrectPlugins (_, { projectId, repoName, packageKey, version, pageNumber, pageSize }) {
+        return Vue.prototype.$ajax.get(`/maven/ext/plugins/${projectId}/${repoName}`, {
+            params: {
+                packageKey,
+                version,
+                pageNumber,
+                pageSize
+            }
+        })
+    },
+    // maven仓库获取反向依赖
+    getReverseDependencies (_, { projectId, repoName, packageKey, version, pageNumber, pageSize }) {
+        return Vue.prototype.$ajax.get(`/maven/ext/dependencies/reverse/${projectId}/${repoName}`, {
+            params: {
+                packageKey,
+                version,
+                pageNumber,
+                pageSize
+            }
+        })
     }
 }

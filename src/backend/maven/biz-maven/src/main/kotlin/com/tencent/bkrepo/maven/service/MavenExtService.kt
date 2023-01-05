@@ -8,22 +8,26 @@ import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.query.model.Sort
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
+import com.tencent.bkrepo.maven.exception.MavenArtifactNotFoundException
 import com.tencent.bkrepo.maven.exception.MavenBadRequestException
 import com.tencent.bkrepo.maven.pojo.MavenDependency
 import com.tencent.bkrepo.maven.pojo.MavenPlugin
+import com.tencent.bkrepo.maven.pojo.MavenVersionDependentsRelation
 import com.tencent.bkrepo.maven.pojo.response.MavenGAVCResponse
 import com.tencent.bkrepo.maven.util.DependencyUtils
+import com.tencent.bkrepo.maven.util.DependencyUtils.toReverseSearchString
 import com.tencent.bkrepo.repository.api.NodeClient
-import com.tencent.bkrepo.repository.api.PackageVersionDependentsClient
-import com.tencent.bkrepo.repository.pojo.dependent.PackageVersionDependentsRelation
-import com.tencent.bkrepo.repository.pojo.dependent.PackageVersionDependentsRequest
+import com.tencent.bkrepo.repository.api.PackageClient
+import com.tencent.bkrepo.repository.api.VersionDependentsClient
+import com.tencent.bkrepo.repository.pojo.dependent.VersionDependentsRequest
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
 @Service
 class MavenExtService(
     private val nodeClient: NodeClient,
-    private val packageVersionDependentsClient: PackageVersionDependentsClient
+    private val packageClient: PackageClient,
+    private val versionDependentsClient: VersionDependentsClient
 ) {
 
     @Value("\${maven.domain:http://127.0.0.1:25803}")
@@ -123,15 +127,50 @@ class MavenExtService(
         version: String,
         pageNumber: Int,
         pageSize: Int
-    ): Response<Page<PackageVersionDependentsRelation>> {
-        val searchStr = "dependency:" + PackageKeys.resolveGav(packageKey) + ":$version"
-        return packageVersionDependentsClient.dependenciesReverse(
+    ): Response<Page<MavenVersionDependentsRelation>> {
+        // 先找到制品包信息
+        val packageVersion = packageClient.findVersionByName(projectId, repoName, packageKey, version).data
+            ?: throw MavenArtifactNotFoundException("")
+        val mavenDependency = MavenDependency(
+            groupId = packageVersion.metadata["groupId"] as String,
+            artifactId = packageVersion.metadata["artifactId"] as String,
+            version = packageVersion.metadata["version"] as String,
+            type = packageVersion.metadata["packaging"] as String,
+            classifier = packageVersion.metadata["classifier"] as? String,
+            scope = null,
+            optional = null
+        )
+        val searchStr = mavenDependency.toReverseSearchString()
+        val response =  versionDependentsClient.dependenciesReverse(
             searchStr = searchStr,
             projectId = projectId,
             repoName = repoName,
             pageNumber = pageNumber,
             pageSize = pageSize
         )
+        val relations = response.data?.records?.map { it ->
+            val arr = PackageKeys.resolveGav(it.packageKey).split(":")
+            val type = it.ext?.firstOrNull { it.key == "type" }?.value as? String ?: "jar"
+            val classifier = it.ext?.firstOrNull { it.key == "classifier" }?.value as? String
+            MavenVersionDependentsRelation(
+                projectId = it.projectId,
+                repoName = it.repoName,
+                packageKey = it.packageKey,
+                groupId = arr[0],
+                    artifactId = arr[1],
+                version = it.version,
+                    type = type,
+                    classifier = classifier,
+                    dependencies = null
+            )
+        }
+        return ResponseBuilder.success(Page(
+            pageNumber = response.data!!.pageNumber,
+            pageSize = response.data!!.pageSize,
+            totalRecords = response.data!!.totalRecords,
+            totalPages = response.data!!.totalPages,
+            records = relations!!
+        ))
     }
 
     private fun <T> page(
@@ -172,8 +211,8 @@ class MavenExtService(
         packageKey: String,
         version: String,
     ): Pair<Set<MavenDependency>, Set<MavenPlugin>> {
-        val result = packageVersionDependentsClient.get(
-            PackageVersionDependentsRequest(
+        val result = versionDependentsClient.get(
+            VersionDependentsRequest(
                 projectId = projectId,
                 repoName = repoName,
                 packageKey = packageKey,

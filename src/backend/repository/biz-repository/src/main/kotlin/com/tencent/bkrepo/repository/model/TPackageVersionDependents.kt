@@ -18,5 +18,6 @@ data class TPackageVersionDependents(
     val repoName: String,
     val packageKey: String,
     val version: String,
+    val ext: List<TMetadata>? = null,
     val dependents: Set<String>? = null
 )

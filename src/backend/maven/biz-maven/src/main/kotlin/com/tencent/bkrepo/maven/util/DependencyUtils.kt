@@ -4,6 +4,7 @@ import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.maven.pojo.MavenDependency
 import com.tencent.bkrepo.maven.pojo.MavenPlugin
 import org.apache.maven.model.Dependency
+import org.apache.maven.model.Model
 import org.apache.maven.model.Plugin
 
 object DependencyUtils {
@@ -13,15 +14,23 @@ object DependencyUtils {
     // 属性为空时的占位符
     private const val PLACEHOLDER = StringPool.POUND
 
-    fun parseDependency(dependency: Dependency) = MavenDependency(
-        groupId = dependency.groupId,
-        artifactId = dependency.artifactId,
-        version = dependency.version,
-        type = dependency.type,
-        scope = dependency.scope,
-        classifier = dependency.classifier,
-        optional = dependency.optional.toBoolean()
-    )
+    fun parseDependency(dependency: Dependency, model: Model): MavenDependency {
+        val versionStr = if (dependency.version.isNullOrEmpty()) model.version else dependency.version
+        val version: String? = if (isProperty(versionStr)) {
+            model.properties.getProperty(extractProperty(versionStr))
+        } else {
+            versionStr
+        }
+        return MavenDependency(
+            groupId = dependency.groupId,
+            artifactId = dependency.artifactId,
+            version = version,
+            type = dependency.type,
+            scope = dependency.scope,
+            classifier = dependency.classifier,
+            optional = dependency.optional.toBoolean()
+        )
+    }
 
     fun parsePlugin(plugin: Plugin) = MavenPlugin(
         groupId = plugin.groupId,
@@ -38,9 +47,22 @@ object DependencyUtils {
         .append(artifactId).append(SEPARATOR)
         .append(version).append(SEPARATOR)
         .append(type).append(SEPARATOR)
-        .append(scope ?: PLACEHOLDER).append(SEPARATOR)
         .append(classifier ?: PLACEHOLDER).append(SEPARATOR)
+        .append(scope ?: PLACEHOLDER).append(SEPARATOR)
         .append(optional ?: PLACEHOLDER)
+        .toString()
+
+    /**
+     * [MavenDependency] 生成可检索字符串
+     * return dependency:[groupId]:[artifactId]:[version]:[type]:[classifier]
+     */
+    fun MavenDependency.toReverseSearchString() = StringBuilder()
+        .append("dependency").append(SEPARATOR)
+        .append(groupId).append(SEPARATOR)
+        .append(artifactId).append(SEPARATOR)
+        .append(version).append(SEPARATOR)
+        .append(type).append(SEPARATOR)
+        .append(classifier ?: PLACEHOLDER)
         .toString()
 
     fun MavenPlugin.toSearchString() = StringBuilder()
@@ -60,8 +82,8 @@ object DependencyUtils {
             artifactId = split[2],
             version = split[3],
             type = split[4],
-            scope = transPlaceHolder(split[5]),
-            classifier = transPlaceHolder(split[6]),
+            classifier = transPlaceHolder(split[5]),
+            scope = transPlaceHolder(split[6]),
             optional = transPlaceHolder(split[7]).toBoolean()
         )
     }
@@ -74,6 +96,10 @@ object DependencyUtils {
             version = transPlaceHolder(split[3]),
         )
     }
+
+    private fun isProperty(str: String) = str.startsWith("\${") && str.endsWith("}")
+
+    private fun extractProperty(str: String) = str.removePrefix("\${").removeSuffix("}")
 
     private fun transPlaceHolder(str: String?) = if (str == PLACEHOLDER) null else str
 }

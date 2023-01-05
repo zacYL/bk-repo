@@ -5,4 +5,4 @@ import com.tencent.bkrepo.repository.model.TPackageVersionDependents
 import org.springframework.stereotype.Repository
 
 @Repository
-class PackageVersionDependentsDao : SimpleMongoDao<TPackageVersionDependents>()
+class VersionDependentsDao : SimpleMongoDao<TPackageVersionDependents>()

@@ -63,6 +63,7 @@ import com.tencent.bkrepo.maven.constants.X_CHECKSUM_SHA1
 import com.tencent.bkrepo.maven.enum.HashType
 import com.tencent.bkrepo.maven.enum.SnapshotBehaviorType
 import com.tencent.bkrepo.maven.exception.ConflictException
+import com.tencent.bkrepo.maven.exception.JarFormatException
 import com.tencent.bkrepo.maven.exception.MavenArtifactNotFoundException
 import com.tencent.bkrepo.maven.exception.MavenRequestForbiddenException
 import com.tencent.bkrepo.maven.message.MavenMessageCode
@@ -91,11 +92,11 @@ import com.tencent.bkrepo.maven.util.MavenStringUtils.isSnapshotUri
 import com.tencent.bkrepo.maven.util.MavenStringUtils.resolverName
 import com.tencent.bkrepo.maven.util.MavenUtil
 import com.tencent.bkrepo.repository.api.MetadataClient
-import com.tencent.bkrepo.repository.api.PackageVersionDependentsClient
 import com.tencent.bkrepo.repository.api.StageClient
+import com.tencent.bkrepo.repository.api.VersionDependentsClient
 import com.tencent.bkrepo.repository.constant.CoverStrategy
-import com.tencent.bkrepo.repository.pojo.dependent.PackageVersionDependentsRelation
-import com.tencent.bkrepo.repository.pojo.dependent.PackageVersionDependentsRequest
+import com.tencent.bkrepo.repository.pojo.dependent.VersionDependentsRelation
+import com.tencent.bkrepo.repository.pojo.dependent.VersionDependentsRequest
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataSaveRequest
@@ -130,7 +131,7 @@ class MavenLocalRepository(
     private val stageClient: StageClient,
     private val mavenMetadataService: MavenMetadataService,
     private val metadataClient: MetadataClient,
-    private val packageVersionDependentsClient: PackageVersionDependentsClient
+    private val versionDependentsClient: VersionDependentsClient
 ) : LocalRepository() {
 
     @Value("\${maven.domain:http://127.0.0.1:25803}")
@@ -355,7 +356,7 @@ class MavenLocalRepository(
             logger.info("File's package is $packaging")
 
             val fileSuffix = packaging
-            val model: Model = if (packaging == "pom") {
+            val model: Model? = if (packaging == "pom") {
                 val mavenPomModel = context.getArtifactFile().getInputStream().use { MavenXpp3Reader().read(it) }
                 val version = if (mavenPomModel.version == null) {
                     mavenPomModel.parent.version
@@ -373,7 +374,13 @@ class MavenLocalRepository(
                     if (this.getFile() == null) this.flushToFile()
                 }
                 val file = context.getArtifactFile().getFile()!!
-                JarUtils.parseModelInJar(file)
+                // todo pom.xml 可能为空
+                // reference: org.springframework:spring-webmvc:4.3.7.RELEASE
+                try {
+                    JarUtils.parseModelInJar(file)
+                } catch (e: JarFormatException) {
+                    null
+                }
             }
             val isArtifact = (packaging == fileSuffix)
             logger.info("Current file is artifact: $isArtifact")
@@ -388,28 +395,7 @@ class MavenLocalRepository(
             if (isArtifact) {
                 createMavenVersion(context, mavenGavc, node.fullPath)
                 // 记录依赖信息
-                val dependencies = model.dependencies
-                val plugins = model.build.plugins
-                packageVersionDependentsClient.insert(
-                    PackageVersionDependentsRelation(
-                        projectId = context.projectId,
-                        repoName = context.repoName,
-                        packageKey = PackageKeys.ofGav(mavenGavc.groupId, mavenGavc.artifactId),
-                        version = mavenGavc.version,
-                        dependencies = mutableSetOf<String>().apply {
-                            addAll(
-                                dependencies.map {
-                                    DependencyUtils.parseDependency(it).toSearchString()
-                                }
-                            )
-                            addAll(
-                                plugins.map {
-                                    DependencyUtils.parsePlugin(it).toSearchString()
-                                }
-                            )
-                        }
-                    )
-                )
+                model?.let { addVersionDependents(mavenGavc, it, context) }
             }
             // 更新包各模块版本最新记录
             logger.info("Prepare to create maven metadata....")
@@ -444,6 +430,47 @@ class MavenLocalRepository(
                 super.onUpload(context)
             }
         }
+    }
+
+    private fun addVersionDependents(mavenGavc: MavenGAVC, model: Model, context: ArtifactUploadContext) {
+        val ext = mutableListOf<MetadataModel>().apply {
+            add(MetadataModel("type", mavenGavc.packaging))
+            mavenGavc.classifier?.let { add(MetadataModel("classifier", it)) }
+        }
+        val dependencies = try {
+            model.dependencies
+        } catch (e: NullPointerException) {
+            logger.warn("Failed to parse dependencies from pom.xml")
+            listOf()
+        }
+
+        val plugins = try {
+            model.build.plugins
+        } catch (e: NullPointerException) {
+            logger.warn("Failed to parse plugins from pom.xml")
+            listOf()
+        }
+        versionDependentsClient.insert(
+            VersionDependentsRelation(
+                projectId = context.projectId,
+                repoName = context.repoName,
+                packageKey = PackageKeys.ofGav(mavenGavc.groupId, mavenGavc.artifactId),
+                version = mavenGavc.version,
+                ext = ext,
+                dependencies = mutableSetOf<String>().apply {
+                    addAll(
+                        dependencies.map {
+                            DependencyUtils.parseDependency(it, model).toSearchString()
+                        }
+                    )
+                    addAll(
+                        plugins.map {
+                            DependencyUtils.parsePlugin(it).toSearchString()
+                        }
+                    )
+                }
+            )
+        )
     }
 
     private fun metadataUploadHandler(artifactFullPath: String, context: ArtifactContext): Boolean {
@@ -975,11 +1002,15 @@ class MavenLocalRepository(
     }
 
     private fun createMavenVersion(context: ArtifactUploadContext, mavenGAVC: MavenGAVC, fullPath: String) {
-        val metadata = mutableMapOf(
+        val metadata: MutableMap<String, String> = mutableMapOf(
             "groupId" to mavenGAVC.groupId,
             "artifactId" to mavenGAVC.artifactId,
-            "version" to mavenGAVC.version
+            "version" to mavenGAVC.version,
+            "packaging" to mavenGAVC.packaging
         )
+        mavenGAVC.classifier?.let {
+            metadata["classifier"] = it
+        }
         try {
             mavenGAVC.classifier?.let { metadata["classifier"] = it }
             packageClient.createVersion(
@@ -1064,8 +1095,8 @@ class MavenLocalRepository(
             )
             packageClient.deleteVersion(projectId, repoName, packageName, version.name)
             // 删除版本对应的依赖关系记录
-            packageVersionDependentsClient.delete(
-                PackageVersionDependentsRequest(
+            versionDependentsClient.delete(
+                VersionDependentsRequest(
                     projectId = projectId,
                     repoName = repoName,
                     packageKey = packageName,

@@ -118,9 +118,15 @@ object JarUtils {
                 model.version = request.version
             }
             if (type != null && type!!.isNotBlank() && request.type != model.packaging) {
-                if(model.packaging == "pom") return@with
+                if (model.packaging == "pom") return@with
                 model.packaging = request.type
             }
         }
     }
+}
+
+fun main() {
+    val file = File("/Users/weaving/Downloads/spring-data-redis-1.8.6.RELEASE.jar")
+    val model = JarUtils.parseModelInJar(file)
+    print(model.toString())
 }

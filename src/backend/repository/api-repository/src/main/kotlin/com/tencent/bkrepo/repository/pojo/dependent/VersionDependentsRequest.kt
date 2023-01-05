@@ -35,7 +35,7 @@ import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
 
 @ApiModel("删除指定包版本依赖关系")
-data class PackageVersionDependentsRequest(
+data class VersionDependentsRequest(
     @ApiModelProperty("项目", required = true)
     val projectId: String,
     @ApiModelProperty("仓库", required = true)

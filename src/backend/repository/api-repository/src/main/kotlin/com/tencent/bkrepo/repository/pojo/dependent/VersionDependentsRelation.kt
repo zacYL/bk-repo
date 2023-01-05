@@ -31,11 +31,12 @@
 
 package com.tencent.bkrepo.repository.pojo.dependent
 
+import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
 
 @ApiModel("包版本依赖关系")
-data class PackageVersionDependentsRelation(
+data class VersionDependentsRelation(
     @ApiModelProperty("项目", required = true)
     val projectId: String,
     @ApiModelProperty("仓库", required = true)
@@ -44,7 +45,9 @@ data class PackageVersionDependentsRelation(
     val packageKey: String,
     @ApiModelProperty("版本", required = true)
     val version: String,
-    @ApiModelProperty("包依赖列表", required = true)
+    @ApiModelProperty("版本扩展字段", required = false)
+    val ext: List<MetadataModel>?,
+    @ApiModelProperty("包依赖列表", required = false)
     val dependencies: Set<String>?
 )
 

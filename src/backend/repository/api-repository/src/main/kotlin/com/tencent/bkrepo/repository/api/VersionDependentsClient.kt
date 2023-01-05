@@ -34,8 +34,8 @@ package com.tencent.bkrepo.repository.api
 import com.tencent.bkrepo.common.api.constant.REPOSITORY_SERVICE_NAME
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
-import com.tencent.bkrepo.repository.pojo.dependent.PackageVersionDependentsRelation
-import com.tencent.bkrepo.repository.pojo.dependent.PackageVersionDependentsRequest
+import com.tencent.bkrepo.repository.pojo.dependent.VersionDependentsRelation
+import com.tencent.bkrepo.repository.pojo.dependent.VersionDependentsRequest
 import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.context.annotation.Primary
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -48,16 +48,16 @@ import org.springframework.web.bind.annotation.RequestParam
 @Primary
 @FeignClient(REPOSITORY_SERVICE_NAME, contextId = "PackageVersionDependentsClient")
 @RequestMapping("/service/package/version/dependents")
-interface PackageVersionDependentsClient {
+interface VersionDependentsClient {
 
     @PostMapping("/add")
-    fun insert(@RequestBody relation: PackageVersionDependentsRelation): Response<Boolean>
+    fun insert(@RequestBody relation: VersionDependentsRelation): Response<Boolean>
 
     @DeleteMapping("/delete")
-    fun delete(@RequestBody request: PackageVersionDependentsRequest): Response<Boolean>
+    fun delete(@RequestBody request: VersionDependentsRequest): Response<Boolean>
 
     @PostMapping("/get")
-    fun get(@RequestBody request: PackageVersionDependentsRequest): Response<Set<String>>
+    fun get(@RequestBody request: VersionDependentsRequest): Response<Set<String>>
 
     @GetMapping("/reverse")
     fun dependenciesReverse(
@@ -66,5 +66,5 @@ interface PackageVersionDependentsClient {
         @RequestParam repoName: String?,
         @RequestParam pageNumber: Int,
         @RequestParam pageSize: Int
-    ): Response<Page<PackageVersionDependentsRelation>>
+    ): Response<Page<VersionDependentsRelation>>
 }

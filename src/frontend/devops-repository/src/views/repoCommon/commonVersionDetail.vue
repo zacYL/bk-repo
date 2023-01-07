@@ -276,6 +276,8 @@
             ]),
             getDetail () {
                 this.isLoading = true
+                // 在每次重新获取接口详情时都需要先将此tab页的类型置为空，否则不会重新加载依赖tab页组件，也就不会重新获取数据
+                this.detailType = ''
                 this.getVersionDetail({
                     projectId: this.projectId,
                     repoType: this.repoType,

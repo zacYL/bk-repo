@@ -17,7 +17,7 @@ data class RegistrationItem(
     // 作为一种优化，items数组有时会从page对象中排除。如果单个包ID的版本数非常大，
     // 那么对于只关心特定版本或小范围版本的客户机来说，注册索引文档的处理将是巨大和浪费的。
     // The array of registration leaves and their associate metadata
-    val items: List<RegistrationPageItem>? = null,
+    var items: List<RegistrationPageItem>? = null,
     // The lowest SemVer 2.0.0 version in the page (inclusive)
     val lower: String,
     // 当展示items属性时parent属性才会出现

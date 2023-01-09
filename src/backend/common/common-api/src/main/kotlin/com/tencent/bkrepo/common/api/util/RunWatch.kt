@@ -24,3 +24,17 @@ fun <T> runWatch(f: () -> T): Pair<T, Long> {
     val start = System.currentTimeMillis()
     return Pair(f(), System.currentTimeMillis() - start)
 }
+
+fun <T> retryWatch(f: () -> T, times: Int = 3, logger: Logger? = null, desc: String? = null): T? {
+    for (i in 0..times) {
+        try {
+            logger?.info("retryWatch [$desc : $i]")
+            return f()
+        } catch (e: Exception) {
+            if (i == times) {
+                throw e
+            }
+        }
+    }
+    return null
+}

@@ -1,7 +1,7 @@
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
- * Copyright (C) 2020 THL A29 Limited, a Tencent company.  All rights reserved.
+ * Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
  *
  * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
  *
@@ -31,10 +31,28 @@
 
 package com.tencent.bkrepo.maven.pojo
 
-data class MavenGAVC(
+import io.swagger.annotations.ApiModel
+import io.swagger.annotations.ApiModelProperty
+
+@ApiModel("包版本依赖关系")
+data class MavenVersionDependentsRelation(
+    @ApiModelProperty("项目", required = true)
+    val projectId: String,
+    @ApiModelProperty("仓库", required = true)
+    val repoName: String,
+    @ApiModelProperty("packageKey", required = true)
+    val packageKey: String,
+    @ApiModelProperty("groupId", required = true)
     val groupId: String,
+    @ApiModelProperty("artifactId", required = true)
     val artifactId: String,
+    @ApiModelProperty("版本", required = true)
     val version: String,
+    @ApiModelProperty("制品类型", required = true)
+    val type: String,
+    @ApiModelProperty("classifier", required = false)
     val classifier: String?,
-    val packaging: String = "jar"
+    @ApiModelProperty("包依赖列表", required = false)
+    val dependencies: Set<String>?
 )
+

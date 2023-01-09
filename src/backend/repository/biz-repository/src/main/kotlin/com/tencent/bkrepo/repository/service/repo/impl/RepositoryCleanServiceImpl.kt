@@ -264,13 +264,19 @@ class RepositoryCleanServiceImpl(
             )
         ).data?.records
         if (nodelist != null) {
-            logger.info("executeNodeCleanV2: [$projectId/$repoName$path]")
+            logger.info("executeNodeCleanV2: [$projectId/$repoName$path], node size: ${nodelist.size}")
             nodelist.forEach {
                 if (it.folder) {
                     executeNodeCleanV2(it.projectId, it.repoName, it.fullPath, flatten)
                 } else {
-                    if (!RepoCleanRuleUtils.needReserve(it, flatten)) {
-                        nodeDeleteOperation.deleteByPath(it.projectId, it.repoName, it.fullPath, SYSTEM_USER)
+                    if (!RepoCleanRuleUtils.needReserveWrapper(it, flatten)) {
+                        try {
+                            logger.info("executeNodeCleanV2: will delete node: " +
+                                    "[${it.projectId}/${it.repoName}/${it.fullPath}]")
+                            nodeDeleteOperation.deleteByPath(it.projectId, it.repoName, it.fullPath, SYSTEM_USER)
+                        } catch (e: Exception) {
+                            logger.error("executeNodeCleanV2: delete node failed, node: $it", e)
+                        }
                     }
                 }
             }

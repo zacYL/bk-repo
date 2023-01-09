@@ -2,20 +2,39 @@ package com.tencent.bkrepo.maven.service
 
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
+import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.query.model.Sort
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
+import com.tencent.bkrepo.maven.exception.MavenArtifactNotFoundException
 import com.tencent.bkrepo.maven.exception.MavenBadRequestException
+import com.tencent.bkrepo.maven.pojo.MavenDependency
+import com.tencent.bkrepo.maven.pojo.MavenGAVC
+import com.tencent.bkrepo.maven.pojo.MavenPlugin
+import com.tencent.bkrepo.maven.pojo.MavenVersionDependentsRelation
 import com.tencent.bkrepo.maven.pojo.response.MavenGAVCResponse
+import com.tencent.bkrepo.maven.util.DependencyUtils
+import com.tencent.bkrepo.maven.util.DependencyUtils.toReverseSearchString
+import com.tencent.bkrepo.maven.util.DependencyUtils.toSearchString
 import com.tencent.bkrepo.repository.api.NodeClient
+import com.tencent.bkrepo.repository.api.PackageClient
+import com.tencent.bkrepo.repository.api.VersionDependentsClient
+import com.tencent.bkrepo.repository.pojo.dependent.VersionDependentsRelation
+import com.tencent.bkrepo.repository.pojo.dependent.VersionDependentsRequest
+import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
+import org.apache.maven.model.Model
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
 @Service
 class MavenExtService(
-    private val nodeClient: NodeClient
+    private val nodeClient: NodeClient,
+    private val packageClient: PackageClient,
+    private val versionDependentsClient: VersionDependentsClient
 ) {
 
     @Value("\${maven.domain:http://127.0.0.1:25803}")
@@ -84,7 +103,8 @@ class MavenExtService(
         rules.add(Rule.NestedRule(metadataRules, Rule.NestedRule.RelationType.AND))
 
         val rule = Rule.NestedRule(
-            rules, Rule.NestedRule.RelationType.AND
+            rules,
+            Rule.NestedRule.RelationType.AND
         )
         val queryModel = QueryModel(
             page = PageLimit(pageNumber = pageNumber, pageSize = pageSize),
@@ -93,5 +113,175 @@ class MavenExtService(
             rule = rule
         )
         return nodeClient.search(queryModel)
+    }
+
+    fun dependencies(
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        version: String,
+        pageNumber: Int,
+        pageSize: Int
+    ): Response<Page<MavenDependency>> {
+        val (dependencies, _) = dependents(projectId, repoName, packageKey, version)
+        return page(dependencies, pageNumber, pageSize)
+    }
+
+    fun dependenciesReverse(
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        version: String,
+        pageNumber: Int,
+        pageSize: Int
+    ): Response<Page<MavenVersionDependentsRelation>> {
+        // 先找到制品包信息
+        val packageVersion = packageClient.findVersionByName(projectId, repoName, packageKey, version).data
+            ?: throw MavenArtifactNotFoundException("")
+        val mavenDependency = MavenDependency(
+            groupId = packageVersion.metadata["groupId"] as String,
+            artifactId = packageVersion.metadata["artifactId"] as String,
+            version = packageVersion.metadata["version"] as String,
+            type = packageVersion.metadata["packaging"] as String,
+            classifier = packageVersion.metadata["classifier"] as? String,
+            scope = null,
+            optional = null
+        )
+        val searchStr = mavenDependency.toReverseSearchString()
+        val response =  versionDependentsClient.dependenciesReverse(
+            searchStr = searchStr,
+            projectId = projectId,
+            repoName = repoName,
+            pageNumber = pageNumber,
+            pageSize = pageSize
+        )
+        val relations = response.data?.records?.map { it ->
+            val arr = PackageKeys.resolveGav(it.packageKey).split(":")
+            val type = it.ext?.firstOrNull { it.key == "type" }?.value as? String ?: "jar"
+            val classifier = it.ext?.firstOrNull { it.key == "classifier" }?.value as? String
+            MavenVersionDependentsRelation(
+                projectId = it.projectId,
+                repoName = it.repoName,
+                packageKey = it.packageKey,
+                groupId = arr[0],
+                    artifactId = arr[1],
+                version = it.version,
+                    type = type,
+                    classifier = classifier,
+                    dependencies = null
+            )
+        }
+        return ResponseBuilder.success(Page(
+            pageNumber = response.data!!.pageNumber,
+            pageSize = response.data!!.pageSize,
+            totalRecords = response.data!!.totalRecords,
+            totalPages = response.data!!.totalPages,
+            records = relations!!
+        ))
+    }
+
+    private fun <T> page(
+        set: Set<T>,
+        pageNumber: Int,
+        pageSize: Int
+    ): Response<Page<T>> {
+        val totalRecords = set.size.toLong()
+        val start = (pageNumber - 1) * pageSize
+        val end = pageNumber * pageSize
+        if (start > totalRecords) {
+            return ResponseBuilder.success(Page(pageNumber, pageSize, totalRecords, emptyList()))
+        }
+        val page = Page(
+            pageNumber = pageNumber,
+            pageSize = pageSize,
+            totalRecords = totalRecords,
+            records = set.toList().subList(start, end.coerceAtMost(set.size))
+        )
+        return ResponseBuilder.success(page)
+    }
+
+    fun plugins(
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        version: String,
+        pageNumber: Int,
+        pageSize: Int
+    ): Response<Page<MavenPlugin>> {
+        val (_, plugins) = dependents(projectId, repoName, packageKey, version)
+        return page(plugins, pageNumber, pageSize)
+    }
+
+    private fun dependents(
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        version: String,
+    ): Pair<Set<MavenDependency>, Set<MavenPlugin>> {
+        val result = versionDependentsClient.get(
+            VersionDependentsRequest(
+                projectId = projectId,
+                repoName = repoName,
+                packageKey = packageKey,
+                version = version,
+            )
+        ).data
+        val dependencies = mutableSetOf<MavenDependency>()
+        val plugins = mutableSetOf<MavenPlugin>()
+        result?.let {
+            it.forEach { dependents ->
+                if (dependents.startsWith("dependency")) {
+                    dependencies.add(DependencyUtils.toMavenDependency(dependents))
+                } else if (dependents.startsWith("plugin")) {
+                    plugins.add(DependencyUtils.toMavenPlugin(dependents))
+                }
+            }
+        }
+        return Pair(dependencies, plugins)
+    }
+
+    fun addVersionDependents(mavenGavc: MavenGAVC, model: Model, projectId: String, repoName: String) {
+        val ext = mutableListOf<MetadataModel>().apply {
+            add(MetadataModel("type", mavenGavc.packaging))
+            mavenGavc.classifier?.let { add(MetadataModel("classifier", it)) }
+        }
+        val dependencies = try {
+            model.dependencies
+        } catch (e: NullPointerException) {
+            logger.warn("Failed to parse dependencies from pom.xml")
+            listOf()
+        }
+
+        val plugins = try {
+            model.build.plugins
+        } catch (e: NullPointerException) {
+            logger.warn("Failed to parse plugins from pom.xml")
+            listOf()
+        }
+        versionDependentsClient.insert(
+            VersionDependentsRelation(
+                projectId = projectId,
+                repoName = repoName,
+                packageKey = PackageKeys.ofGav(mavenGavc.groupId, mavenGavc.artifactId),
+                version = mavenGavc.version,
+                ext = ext,
+                dependencies = mutableSetOf<String>().apply {
+                    addAll(
+                        dependencies.map {
+                            DependencyUtils.parseDependency(it, model).toSearchString()
+                        }
+                    )
+                    addAll(
+                        plugins.map {
+                            DependencyUtils.parsePlugin(it).toSearchString()
+                        }
+                    )
+                }
+            )
+        )
+    }
+
+    companion object {
+        private val logger: Logger = LoggerFactory.getLogger(MavenExtService::class.java)
     }
 }

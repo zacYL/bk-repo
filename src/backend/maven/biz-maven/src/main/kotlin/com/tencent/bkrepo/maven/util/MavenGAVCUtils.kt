@@ -58,7 +58,8 @@ object MavenGAVCUtils {
             groupId = this.groupId,
             artifactId = this.artifactId,
             version = this.versionId,
-            classifier = mavenVersion.classifier
+            classifier = mavenVersion.classifier,
+            packaging = mavenVersion.packaging
         )
     }
 

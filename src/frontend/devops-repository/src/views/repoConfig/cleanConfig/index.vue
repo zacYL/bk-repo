@@ -62,7 +62,7 @@
                                         :disabled="!config.autoClean || index === 0"
                                         right-icon="bk-icon icon-angle-down"
                                         v-model="rule.catalogValue"
-                                        v-bk-tooltips="{ content: rule.catalogValue ,disabled: (rule.catalogValue?.length || 0) < 20 }"
+                                        v-bk-tooltips="{ content: rule.catalogValue ,disabled: ((rule.catalogValue && rule.catalogValue.length) || 0) < 20 }"
                                         @mouseover.native="rule.clearable = true"
                                         @mouseout.native="rule.clearable = false"
                                         :clearable="rule.clearable ? true : false"

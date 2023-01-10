@@ -38,7 +38,7 @@
             </template>
             <bk-table-column :label="$t('repoName')" show-overflow-tooltip>
                 <template #default="{ row }">
-                    <span v-if="['custom', 'pipeline', 'docker-local'].includes(row.name)"
+                    <span v-if="['custom', 'pipeline', 'docker-local','report'].includes(row.name)"
                         class="mr5 repo-tag SUCCESS" data-name="内置"></span>
                     <span v-if="row.configuration.settings.system"
                         class="mr5 repo-tag" data-name="系统"></span>

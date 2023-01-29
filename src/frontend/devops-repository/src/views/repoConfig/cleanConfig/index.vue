@@ -297,37 +297,40 @@
             handleNodeExpand (index, data) {
                 // 向当前选择节点添加子节点之前先将之前默认添加的数据清除，否则会出现数据重复或无用数据
                 data && (data.children = [])
-                this.getFolderList({
-                    projectId: data?.projectId || this.projectId,
-                    repoName: data?.repoName || this.repoName,
-                    fullPath: data?.fullPath || '/'
-                }).then(res => {
-                    if (res.records.length === 0) {
-                        this.$refs.genericTreeRefs[index - 1].updateKeyChildren(data.fullPath, [])
-                    } else {
-                        const secondChildren = res.records.map((item) => {
-                            const node = {
-                                name: item.name,
-                                folder: item.folder,
-                                fullPath: item.fullPath,
-                                projectId: item.projectId,
-                                repoName: item.repoName,
-                                children: []
+                // 根据产品要求，generic仓库的清理设置目录限制层级为10级，10级之后不再支持展开和选择
+                if (data && data.fullPath && (this.$refs.genericTreeRefs[index - 1].getNode(data)?.level || 1) < 10 && data.fullPath.split('/').length < 10) {
+                    this.getFolderList({
+                        projectId: data?.projectId || this.projectId,
+                        repoName: data?.repoName || this.repoName,
+                        fullPath: data?.fullPath || '/'
+                    }).then(res => {
+                        if (res.records.length === 0) {
+                            this.$refs.genericTreeRefs[index - 1].updateKeyChildren(data.fullPath, [])
+                        } else {
+                            const secondChildren = res.records.map((item) => {
+                                const node = {
+                                    name: item.name,
+                                    folder: item.folder,
+                                    fullPath: item.fullPath,
+                                    projectId: item.projectId,
+                                    repoName: item.repoName,
+                                    children: []
+                                }
+                                if (node.folder) {
+                                    // 如果当前节点是文件夹，则默认为其添加一个子节点，让其显示左边的展开图标按钮
+                                    node.children = [{ name: '', fullPath: '/000000' }]
+                                }
+                                return node
+                            })
+                            if (index !== 0) {
+                                this.$refs.genericTreeRefs[index - 1].updateKeyChildren(data.fullPath, secondChildren)
                             }
-                            if (node.folder) {
-                                // 如果当前节点是文件夹，则默认为其添加一个子节点，让其显示左边的展开图标按钮
-                                node.children = [{ name: '', fullPath: '/000000' }]
-                            }
-                            return node
-                        })
-                        if (index !== 0) {
-                            this.$refs.genericTreeRefs[index - 1].updateKeyChildren(data.fullPath, secondChildren)
                         }
-                    }
-                    if (this.genericConfig.rules[index].catalogValue) {
-                        this.$refs.genericTreeRefs[index - 1].setChecked(this.genericConfig.rules[index].catalogValue, true)
-                    }
-                })
+                        if (this.genericConfig.rules[index].catalogValue) {
+                            this.$refs.genericTreeRefs[index - 1].setChecked(this.genericConfig.rules[index].catalogValue, true)
+                        }
+                    })
+                }
             },
 
             handleCheckChange (index, data) {

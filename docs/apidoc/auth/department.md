@@ -4,7 +4,7 @@
 
 ### 查询部门
 
-- API: GET /auth/api/department/list/?departmentId={departmentId}
+- API: GET /auth/api/department/list/?departmentId={departmentId}&projectId={projectId}
 
 - API 名称: list_department
 
@@ -19,9 +19,10 @@
 
 - input 字段说明
 
-| 字段         | 类型 | 是否必须             | 默认值 | 说明     | Description  |
-| ------------ | ---- | -------------------- | ------ | -------- | ------------ |
-| departmentId | Int  | 否(不传则返回根部门) | 无     | 父部门id | departmentId |
+| 字段         | 类型   | 是否必须             | 默认值 | 说明     | Description  |
+| ------------ | ------ | -------------------- | ------ | -------- | ------------ |
+| departmentId | Int    | 否(不传则返回根部门) | 无     | 父部门id | departmentId |
+| projectId    | String | 是                   | 无     | 项目Id   | Project  id  |
 
 
 - output:
@@ -45,17 +46,19 @@
 
 - output 字段说明
 
-| 字段         | 类型           | 说明                                    | Description               |
-| ------------ | -------------- | --------------------------------------- | ------------------------- |
-| code         | bool           | 错误编码。 0表示success，>0表示失败错误 | 0:success, other: failure |
-| message      | result message | 错误消息                                | the failure message       |
-| data         | bool           | result data                             | the data for response     |
-| traceId      | string         | 请求跟踪id                              | the trace id              |
-| id           | Int            | 部门id                                  | department Id             |
-| parent       | Int            | 父部门id                                | parentId                  |
-| name         | String         | 部门名                                  | department name           |
-| order        | Int            |                                         |                           |
-| has_children | Boolean        | 是否有子部门                            | has children              |
+| 字段                | 类型           | 说明                                    | Description               |
+| ------------------- | -------------- | --------------------------------------- | ------------------------- |
+| code                | bool           | 错误编码。 0表示success，>0表示失败错误 | 0:success, other: failure |
+| message             | result message | 错误消息                                | the failure message       |
+| data                | bool           | result data                             | the data for response     |
+| traceId             | string         | 请求跟踪id                              | the trace id              |
+| id                  | Int            | 部门id                                  | department Id             |
+| parent              | Int            | 父部门id                                | parentId                  |
+| name                | String         | 部门名                                  | department name           |
+| order               | Int            |                                         |                           |
+| has_children        | Boolean        | 是否有子部门                            | has children              |
+| permission          | Boolean        | 是否有权限                              | has permission            |
+| parentDepartmentIds | List<String>   | 父部门列表                              | parent departmentIds      |
 
 
 

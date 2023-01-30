@@ -89,7 +89,7 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
             val downloadUrl = createRemoteDownloadUrl(context)
             val request = Request.Builder()
                 .removeHeader("User-Agent")
-                .addHeader("User-Agent", "remote-repo-client/${UUID.randomUUID()}")
+                .addHeader("User-Agent", "${UUID.randomUUID()}")
                 .url(downloadUrl)
                 .build()
             logger.info("Remote download: download url: $downloadUrl")

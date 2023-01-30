@@ -69,6 +69,7 @@ import java.net.UnknownHostException
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 /**
@@ -86,7 +87,11 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
             )
             val httpClient = createHttpClient(remoteConfiguration)
             val downloadUrl = createRemoteDownloadUrl(context)
-            val request = Request.Builder().url(downloadUrl).build()
+            val request = Request.Builder()
+                .removeHeader("User-Agent")
+                .addHeader("User-Agent", "remote-repo-client/${UUID.randomUUID()}")
+                .url(downloadUrl)
+                .build()
             logger.info("Remote download: download url: $downloadUrl")
             val response = downloadRetry(request, httpClient)
             return if (response != null && checkResponse(response)) {
@@ -120,7 +125,6 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
                 logger.error("Remote download: download retry: $i, url: ${request.url()}, error: ${ie.message}")
                 break@outer
             } catch (e: Exception) {
-                if (i >= downloadRetryLimit) { break@outer }
                 logger.error("Remote download: request failed: $request", e)
             }
         }
@@ -128,11 +132,8 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
     }
 
     /**
-     * 校验远程情求是否具有重试的价值，此处不代表下载成功
-     * 200、201、202、
-     * 401、402、403、404、
-     * 500、502
-     * 以上状态码都定义为无需重试
+     * 校验远程请求是否具有重试的价值
+     * 200、201、202
      */
     open fun checkRetry(response: Response): Boolean {
         if (response.isSuccessful) {
@@ -142,7 +143,7 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
             "Remote download: download failed: ${response.code()}, " +
                 "url: ${response.request().url()}, body: ${response.body()?.string()}"
         )
-        return resourceNotReach.contains(response.code()) || serverStatusError.contains(response.code())
+        return false
     }
 
     override fun search(context: ArtifactSearchContext): List<Any> {

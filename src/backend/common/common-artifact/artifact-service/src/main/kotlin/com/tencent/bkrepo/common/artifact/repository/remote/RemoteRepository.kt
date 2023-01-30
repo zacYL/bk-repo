@@ -91,7 +91,9 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
             val response = downloadRetry(request, httpClient)
             return if (response != null && checkResponse(response)) {
                 onDownloadResponse(context, response)
-            } else null
+            } else {
+                null
+            }
         }
     }
 
@@ -132,11 +134,14 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
      * 500、502
      * 以上状态码都定义为无需重试
      */
-    private fun checkRetry(response: Response): Boolean {
+    open fun checkRetry(response: Response): Boolean {
         if (response.isSuccessful) {
             return true
         }
-        logger.warn("Remote download: download failed: ${response.code()}, url: ${response.request().url()}")
+        logger.warn(
+            "Remote download: download failed: ${response.code()}, " +
+                "url: ${response.request().url()}, body: ${response.body()?.string()}"
+        )
         return resourceNotReach.contains(response.code()) || serverStatusError.contains(response.code())
     }
 
@@ -148,7 +153,9 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
         val response = httpClient.newCall(request).execute()
         return if (checkResponse(response)) {
             onSearchResponse(context, response)
-        } else emptyList()
+        } else {
+            emptyList()
+        }
     }
 
     override fun query(context: ArtifactQueryContext): Any? {
@@ -159,7 +166,9 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
         val response = httpClient.newCall(request).execute()
         return if (checkResponse(response)) {
             onQueryResponse(context, response)
-        } else null
+        } else {
+            null
+        }
     }
 
     /**
@@ -173,7 +182,9 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
         if (cacheNode == null || cacheNode.folder) return null
         return if (!isExpired(cacheNode, configuration.cache.expiration)) {
             loadArtifactResource(cacheNode, context)
-        } else null
+        } else {
+            null
+        }
     }
 
     /**
@@ -216,7 +227,9 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
         return if (configuration.cache.enabled) {
             val nodeCreateRequest = buildCacheNodeCreateRequest(context, artifactFile)
             storageManager.storeArtifactFile(nodeCreateRequest, artifactFile, context.storageCredentials)
-        } else null
+        } else {
+            null
+        }
     }
 
     /**
@@ -252,16 +265,16 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
             listOf(MetadataModel(SOURCE_TYPE, ArtifactChannel.PROXY))
         } else { null }
         return NodeCreateRequest(
-                projectId = context.repositoryDetail.projectId,
-                repoName = context.repositoryDetail.name,
-                folder = false,
-                fullPath = context.artifactInfo.getArtifactFullPath(),
-                size = artifactFile.getSize(),
-                sha256 = artifactFile.getFileSha256(),
-                md5 = artifactFile.getFileMd5(),
-                overwrite = true,
-                operator = context.userId,
-                nodeMetadata = nodeMetadata
+            projectId = context.repositoryDetail.projectId,
+            repoName = context.repositoryDetail.name,
+            folder = false,
+            fullPath = context.artifactInfo.getArtifactFullPath(),
+            size = artifactFile.getSize(),
+            sha256 = artifactFile.getFileSha256(),
+            md5 = artifactFile.getFileMd5(),
+            overwrite = true,
+            operator = context.userId,
+            nodeMetadata = nodeMetadata
         )
     }
 
@@ -310,7 +323,9 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
                     .header(HttpHeaders.PROXY_AUTHORIZATION, Credentials.basic(username, password))
                     .build()
             }
-        } else Authenticator.NONE
+        } else {
+            Authenticator.NONE
+        }
     }
 
     /**
@@ -321,7 +336,9 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
         val password = configuration.password
         return if (username != null && password != null) {
             BasicAuthInterceptor(username, password)
-        } else null
+        } else {
+            null
+        }
     }
 
     /**

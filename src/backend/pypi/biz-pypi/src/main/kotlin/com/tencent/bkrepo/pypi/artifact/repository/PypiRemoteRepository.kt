@@ -46,12 +46,14 @@ import com.tencent.bkrepo.pypi.artifact.xml.XmlConvertUtil
 import com.tencent.bkrepo.pypi.exception.PypiRemoteSearchException
 import com.tencent.bkrepo.pypi.util.XmlUtils.readXml
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import okhttp3.MediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
+import okhttp3.Response
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -69,6 +71,17 @@ class PypiRemoteRepository : RemoteRepository() {
         val remoteConfiguration = context.getRemoteConfiguration()
         val artifactUri = context.artifactInfo.getArtifactFullPath()
         return remoteConfiguration.url.trimEnd('/').removeSuffix("/simple") + "/packages" + artifactUri
+    }
+
+    override fun checkRetry(response: Response): Boolean {
+        if (response.isSuccessful) {
+            return true
+        }
+        logger.warn(
+            "Remote download: download failed: ${response.code()}, " +
+                "url: ${response.request().url()}, body: ${response.body()?.string()}"
+        )
+        return false
     }
 
     /**

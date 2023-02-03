@@ -32,7 +32,13 @@ import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.path.PathUtils.ROOT
-import com.tencent.bkrepo.common.artifact.repository.context.*
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.file.multipart.MultipartArtifactFile
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
@@ -262,7 +268,7 @@ class PypiLocalRepository(
      * 2，pypi simple html页面
      */
     override fun query(context: ArtifactQueryContext): Any? {
-        val servletPath = context.request.servletPath
+        val servletPath = ArtifactContextHolder.getUrlPath(this.javaClass.name)!!
         return if (servletPath.startsWith("/ext/version/detail")) {
             // 请求版本详情
             getVersionDetail(context)

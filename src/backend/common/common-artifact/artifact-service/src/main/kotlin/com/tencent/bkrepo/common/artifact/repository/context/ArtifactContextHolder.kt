@@ -47,6 +47,7 @@ import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.repository.composite.CompositeRepository
 import com.tencent.bkrepo.common.artifact.repository.core.ArtifactRepository
+import com.tencent.bkrepo.common.security.http.core.HttpAuthSecurity
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
@@ -54,6 +55,7 @@ import com.tencent.bkrepo.repository.pojo.project.ProjectCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoUpdateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
+import org.springframework.beans.factory.ObjectProvider
 import org.springframework.web.servlet.HandlerMapping
 import java.util.concurrent.TimeUnit
 import javax.servlet.http.HttpServletRequest
@@ -82,12 +84,14 @@ class ArtifactContextHolder(
         private lateinit var compositeRepository: CompositeRepository
         private lateinit var repositoryClient: RepositoryClient
         private lateinit var projectClient: ProjectClient
+        private lateinit var httpAuthSecurity: ObjectProvider<HttpAuthSecurity>
 
         private val artifactConfigurerMap = mutableMapOf<RepositoryType, ArtifactConfigurer>()
         private val repositoryDetailCache = CacheBuilder.newBuilder()
             .maximumSize(1000)
             .expireAfterWrite(30, TimeUnit.SECONDS)
             .build<RepositoryId, RepositoryDetail>()
+        private val regex = Regex("""com\.tencent\.bkrepo\.(\w+)\..*""")
 
         /**
          * 获取当前服务对应的[ArtifactConfigurer]
@@ -184,6 +188,26 @@ class ArtifactContextHolder(
             return repositoryDetailCache.get(repositoryId) {
                 queryRepoDetail(repositoryId)
             }
+        }
+
+        /**
+         * 获取url path。自动处理url前缀
+         * @param className 调用者的类名
+         * */
+        fun getUrlPath(className: String): String? {
+            val request = HttpContextHolder.getRequestOrNull() ?: return null
+            val realPath = request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE).toString()
+            val serviceName = regex.find(className)?.groupValues?.get(1)
+            val security = httpAuthSecurity.stream().filter {
+                it.prefix == "/$serviceName"
+            }.findFirst()
+            var path = realPath
+            security.ifPresent {
+                if (it.prefixEnabled) {
+                    path = realPath.removePrefix(it.prefix)
+                }
+            }
+            return path
         }
 
         /**

@@ -156,7 +156,7 @@
                 // 点击时需要先将之前的节点的高亮去除，否则会导致出现多个高亮显示的节点
                 this.oldCurrentNode && (this.oldCurrentNode.isCurrent = false)
                 this.$nextTick(() => {
-                    this.oldCurrentNode = this.$refs.treeDataRefs.getNode(this.currentClickNode) || ''
+                    this.oldCurrentNode = this.$refs.treeDataRefs && (this.$refs.treeDataRefs.getNode(this.currentClickNode) || '')
                     this.oldCurrentNode && (this.oldCurrentNode.isCurrent = true)
                 })
             },

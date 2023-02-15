@@ -82,7 +82,7 @@ class ClusterReplicator(
             val localProject = localDataManager.findProjectById(localProjectId)
             val request = ProjectCreateRequest(
                 name = remoteProjectId,
-                displayName = remoteProjectId,
+                displayName = "${localProject.displayName}_$remoteProjectId",
                 description = localProject.description,
                 operator = localProject.createdBy
             )

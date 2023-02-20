@@ -32,6 +32,9 @@ class InfoController {
     @Value("\${release.cicd}")
     private var cicd: String = ""
 
+    @Value("\${release.commitId}")
+    private var latestCommitId: String = ""
+
     @GetMapping("/release", produces = ["application/json;charset=utf-8"])
     fun version() = Release(
         version = version,
@@ -40,6 +43,7 @@ class InfoController {
         fixVersion = fixVersion,
         buildTime = buildTime,
         description = description,
-        cicd = cicd
+        cicd = cicd,
+        latestCommitId = latestCommitId
     )
 }

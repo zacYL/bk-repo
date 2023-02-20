@@ -8,4 +8,5 @@ data class Release(
     val buildTime: String,
     val description: String,
     val cicd: String,
+    val latestCommitId: String
 )

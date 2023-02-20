@@ -1,3 +1,5 @@
+
+import java.io.ByteArrayOutputStream
 import java.time.LocalDateTime
 
 /*
@@ -105,18 +107,22 @@ allprojects {
         dependsOn(tasks.getByName("test"))
     }
 
+    fun getGitCommitId(): String {
+        ByteArrayOutputStream().use { out ->
+            exec {
+                commandLine("git", "rev-parse", "HEAD")
+                standardOutput = out
+            }
+            return out.toString().trim()
+        }
+    }
+
     tasks.withType<ProcessResources> {
         // 不从缓存中加载信息
         outputs.upToDateWhen { false }
         filesMatching("**/*.properties") {
             filter {
                 it.replace("@release.version@", Release.Version)
-//                it.replace("@release.majorVersion@", System.getenv("BK_CI_MAJOR_VERSION") ?: "")
-//                it.replace("@release.minorVersion@", System.getenv("BK_CI_MINOR_VERSION") ?: "")
-//                it.replace("@release.fixVersion@", System.getenv("BK_CI_FIX_VERSION") ?: "")
-//                it.replace("@release.buildNum@", System.getenv("BK_CI_BUILD_NUM") ?: "")
-//                it.replace("@release.buildTime@", LocalDateTime.now().toString())
-//                it.replace("@release.description@", "https://www.canway.net/Cpack/978.html")
             }
             filter {
                 it.replace("@release.description@", "https://www.canway.net/Cpack/978.html")
@@ -140,6 +146,9 @@ allprojects {
                         "/${System.getenv("BK_CI_PIPELINE_ID")}/${System.getenv("BK_CI_BUILD_NUM")} ." +
                         " Build branch: [${System.getenv("branch") ?: ""}]"
                 )
+            }
+            filter {
+                it.replace("@release.commitId@", getGitCommitId())
             }
         }
     }

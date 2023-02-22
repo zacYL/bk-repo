@@ -301,7 +301,9 @@ open class CpackPermissionServiceImpl constructor(
                     it,
                     listOf(request.uid)
                 ).isNotEmpty()
-            ) return true
+            ) {
+                return true
+            }
         }
         return false
     }
@@ -373,7 +375,12 @@ open class CpackPermissionServiceImpl constructor(
             // 是否为仓库的管理者
             if (resourceType == ResourceType.REPO && repoName != null) {
                 val query = PermissionQueryHelper.buildPermissionCheck(
-                    projectId!!, repoName!!, uid, PermissionAction.MANAGE, resourceType, roles
+                    projectId!!,
+                    repoName!!,
+                    uid,
+                    PermissionAction.MANAGE,
+                    resourceType,
+                    roles
                 )
                 val result = mongoTemplate.count(query, TPermission::class.java)
                 if (result != 0L) return true
@@ -381,7 +388,12 @@ open class CpackPermissionServiceImpl constructor(
             // 是否为仓库使用者
             if (resourceType == ResourceType.REPO && repoName != null) {
                 val query = PermissionQueryHelper.buildPermissionCheck(
-                    projectId!!, repoName!!, uid, action, resourceType, roles
+                    projectId!!,
+                    repoName!!,
+                    uid,
+                    action,
+                    resourceType,
+                    roles
                 )
                 val result = mongoTemplate.count(query, TPermission::class.java)
                 if (result != 0L) return true
@@ -453,7 +465,9 @@ open class CpackPermissionServiceImpl constructor(
                 userId = userId,
                 type = ResourceType.PROJECT
             ).isNotEmpty()
-        ) return getAllRepoByProjectId(projectId)
+        ) {
+            return getAllRepoByProjectId(projectId)
+        }
 
         // 用户为该项目关联用户组成员
         if (permissionRepository.findAllByProjectIdAndResourceTypeAndRolesIn(
@@ -461,7 +475,9 @@ open class CpackPermissionServiceImpl constructor(
                 roles = roles,
                 type = ResourceType.PROJECT
             ).isNotEmpty()
-        ) return getAllRepoByProjectId(projectId)
+        ) {
+            return getAllRepoByProjectId(projectId)
+        }
 
         val repoList = mutableListOf<String>()
 
@@ -557,13 +573,17 @@ open class CpackPermissionServiceImpl constructor(
                 PROJECT_MANAGE_PERMISSION,
                 listOf(userId)
             ).isNotEmpty()
-        ) return true
+        ) {
+            return true
+        }
         if (permissionRepository.findAllByResourceTypeAndPermNameAndRolesIn(
                 ResourceType.PROJECT,
                 PROJECT_MANAGE_PERMISSION,
                 roles
             ).isNotEmpty()
-        ) return true
+        ) {
+            return true
+        }
         return false
     }
 

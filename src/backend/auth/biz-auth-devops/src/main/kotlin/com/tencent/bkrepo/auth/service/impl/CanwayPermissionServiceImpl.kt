@@ -250,7 +250,7 @@ class CanwayPermissionServiceImpl(
         val projectDepartments = devopsClient.departmentsByProjectId(projectId)?.map { it.id }?.distinct()
         // 过滤蓝鲸中不存在的部门
         val departments = projectDepartments?.filter { allDepartments.contains(it) } ?: emptyList()
-        return listOf(repoAdmin, repoUser).map { transferCIPermission(it, ciProjectGroups, departments) }
+        return listOf(repoAdmin, repoUser).map { transferCIPermission(it, ciProjectGroups, departments, allDepartments) }
     }
 
     private fun checkPermissionExist(pId: String) {
@@ -438,12 +438,13 @@ class CanwayPermissionServiceImpl(
     private fun transferCIPermission(
         permission: TPermission,
         ciProjectGroups: List<String>?,
-        ciDepartments: List<String>
+        ciDepartments: List<String>,
+        allDepartments: List<String>
     ): Permission {
         val roles = permission.roles.filter { ciProjectGroups?.contains(it) == true }
         // 过滤CI项目下未授权的部门
         val departments = permission.departments.filter {
-            bkDepartmentCache.isParentDepartment(ciDepartments, it)
+            allDepartments.contains(it) && bkDepartmentCache.isParentDepartment(ciDepartments, it)
         }
         return Permission(
             id = permission.id,

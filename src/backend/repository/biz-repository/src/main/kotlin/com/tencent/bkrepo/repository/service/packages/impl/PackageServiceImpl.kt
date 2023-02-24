@@ -242,29 +242,30 @@ class PackageServiceImpl(
                 }
                 packageVersionDao.save(oldVersion)
                 packageDao.upsert(query, update)
+                logger.info("Update package version[$oldVersion] success")
                 publishEvent(buildUpdatedEvent(request, realIpAddress ?: HttpContextHolder.getClientAddress()))
             } else {
-                packageVersionDao.save(
-                    TPackageVersion(
-                        createdBy = createdBy,
-                        createdDate = LocalDateTime.now(),
-                        lastModifiedBy = createdBy,
-                        lastModifiedDate = LocalDateTime.now(),
-                        packageId = tPackage.id!!,
-                        name = versionName.trim(),
-                        size = size,
-                        ordinal = calculateOrdinal(versionName),
-                        downloads = 0,
-                        manifestPath = manifestPath,
-                        artifactPath = artifactPath,
-                        stageTag = stageTag.orEmpty(),
-                        metadata = MetadataUtils.compatibleFromAndCheck(metadata, packageMetadata, createdBy),
-                        tags = request.tags?.filter { it.isNotBlank() }.orEmpty(),
-                        extension = request.extension.orEmpty()
-                    )
+                val newVersion = TPackageVersion(
+                    createdBy = createdBy,
+                    createdDate = LocalDateTime.now(),
+                    lastModifiedBy = createdBy,
+                    lastModifiedDate = LocalDateTime.now(),
+                    packageId = tPackage.id!!,
+                    name = versionName.trim(),
+                    size = size,
+                    ordinal = calculateOrdinal(versionName),
+                    downloads = 0,
+                    manifestPath = manifestPath,
+                    artifactPath = artifactPath,
+                    stageTag = stageTag.orEmpty(),
+                    metadata = MetadataUtils.compatibleFromAndCheck(metadata, packageMetadata, createdBy),
+                    tags = request.tags?.filter { it.isNotBlank() }.orEmpty(),
+                    extension = request.extension.orEmpty()
                 )
+                packageVersionDao.save(newVersion)
                 update.inc(TPackage::versions.name)
                 packageDao.upsert(query, update)
+                logger.info("Create package version[$newVersion] success")
                 publishEvent(buildCreatedEvent(request, realIpAddress ?: HttpContextHolder.getClientAddress()))
             }
         }

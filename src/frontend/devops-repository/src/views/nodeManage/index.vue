@@ -82,12 +82,12 @@
             height-num="402"
             @cancel="editNodeDialog.show = false">
             <bk-form class="mr50" :label-width="110" :model="editNodeDialog" :rules="rules" ref="editNodeDialog">
-                <bk-form-item :label="$t('type')" property="type">
+                <!-- <bk-form-item :label="$t('type')" property="type">
                     <bk-radio-group v-model="editNodeDialog.type">
                         <bk-radio class="mr20" value="STANDALONE">独立节点</bk-radio>
                         <bk-radio class="mr20" value="EDGE">边缘节点</bk-radio>
                     </bk-radio-group>
-                </bk-form-item>
+                </bk-form-item> -->
                 <bk-form-item :label="$t('name')" :required="true" property="name" error-display-type="normal">
                     <bk-input v-model.trim="editNodeDialog.name" :disabled="!editNodeDialog.add" maxlength="32" show-word-limit></bk-input>
                 </bk-form-item>

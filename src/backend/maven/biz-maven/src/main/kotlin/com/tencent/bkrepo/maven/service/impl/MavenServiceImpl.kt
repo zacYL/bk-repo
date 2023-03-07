@@ -48,6 +48,7 @@ import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
 import com.tencent.bkrepo.maven.artifact.MavenDeleteArtifactInfo
+import com.tencent.bkrepo.maven.enum.MavenMessageCode
 import com.tencent.bkrepo.maven.exception.JarFormatException
 import com.tencent.bkrepo.maven.exception.MavenArtifactFormatException
 import com.tencent.bkrepo.maven.exception.MavenBadRequestException
@@ -120,7 +121,7 @@ class MavenServiceImpl(
                 "Error [${e.message}] occurred during uploading ${mavenArtifactInfo.getArtifactFullPath()} " +
                     "in repo ${mavenArtifactInfo.getRepoIdentify()}"
             )
-            throw MavenBadRequestException(e.message)
+            throw MavenBadRequestException(MavenMessageCode.MAVEN_ARTIFACT_UPLOAD, mavenArtifactInfo.getArtifactFullPath())
         }
     }
 

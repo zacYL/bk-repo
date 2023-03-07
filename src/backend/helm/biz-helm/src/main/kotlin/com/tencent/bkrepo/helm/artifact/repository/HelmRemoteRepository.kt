@@ -48,7 +48,18 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.artifact.stream.artifactStream
 import com.tencent.bkrepo.helm.config.HelmProperties
-import com.tencent.bkrepo.helm.constants.*
+import com.tencent.bkrepo.helm.constants.CHART
+import com.tencent.bkrepo.helm.constants.CHARTS
+import com.tencent.bkrepo.helm.constants.FILE_TYPE
+import com.tencent.bkrepo.helm.constants.FULL_PATH
+import com.tencent.bkrepo.helm.constants.HelmMessageCode
+import com.tencent.bkrepo.helm.constants.INDEX_YAML
+import com.tencent.bkrepo.helm.constants.META_DETAIL
+import com.tencent.bkrepo.helm.constants.NAME
+import com.tencent.bkrepo.helm.constants.PROV
+import com.tencent.bkrepo.helm.constants.PROXY_URL
+import com.tencent.bkrepo.helm.constants.SIZE
+import com.tencent.bkrepo.helm.constants.VERSION
 import com.tencent.bkrepo.helm.exception.HelmForbiddenRequestException
 import com.tencent.bkrepo.helm.pojo.metadata.HelmIndexYamlMetadata
 import com.tencent.bkrepo.helm.service.impl.HelmOperationService
@@ -107,7 +118,7 @@ class HelmRemoteRepository(
         with(context) {
             val message = "Forbidden to upload chart into a remote repository [$projectId/$repoName]"
             logger.warn(message)
-            throw HelmForbiddenRequestException(message)
+            throw HelmForbiddenRequestException(HelmMessageCode.HELM_FILE_UPLOAD_FORBIDDEN, "$projectId/$repoName")
         }
     }
 

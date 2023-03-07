@@ -34,12 +34,15 @@ package com.tencent.bkrepo.helm.service.impl
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.artifact.api.ArtifactFileMap
+import com.tencent.bkrepo.common.artifact.exception.VersionNotFoundException
+import com.tencent.bkrepo.common.artifact.exception.PackageNotFoundException
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.helm.constants.CHART
 import com.tencent.bkrepo.helm.constants.FILE_TYPE
+import com.tencent.bkrepo.helm.constants.HelmMessageCode
 import com.tencent.bkrepo.helm.constants.PROV
 import com.tencent.bkrepo.helm.exception.HelmFileNotFoundException
 import com.tencent.bkrepo.helm.pojo.artifact.HelmArtifactInfo
@@ -59,9 +62,7 @@ class ChartManipulationServiceImpl : AbstractChartService(), ChartManipulationSe
         val keys = artifactFileMap.keys
         checkRepositoryExistAndCategory(artifactInfo)
         check(keys.contains(CHART) || keys.contains(PROV)) {
-            throw HelmFileNotFoundException(
-                "no package or provenance file found in form fields chart and prov"
-            )
+            throw HelmFileNotFoundException(HelmMessageCode.HELM_FILE_NOT_FOUND, "chart|provenance")
         }
         if (keys.contains(CHART)) {
             val context = ArtifactUploadContext(artifactFileMap[CHART]!!)
@@ -80,7 +81,7 @@ class ChartManipulationServiceImpl : AbstractChartService(), ChartManipulationSe
     override fun uploadProv(artifactInfo: HelmArtifactInfo, artifactFileMap: ArtifactFileMap) {
         checkRepositoryExistAndCategory(artifactInfo)
         check(artifactFileMap.keys.contains(PROV)) {
-            throw HelmFileNotFoundException("no provenance file found in form fields prov")
+            throw HelmFileNotFoundException(HelmMessageCode.HELM_FILE_NOT_FOUND, "provenance")
         }
         val context = ArtifactUploadContext(artifactFileMap[PROV]!!)
         context.putAttribute(FILE_TYPE, PROV)
@@ -93,9 +94,7 @@ class ChartManipulationServiceImpl : AbstractChartService(), ChartManipulationSe
         logger.info("handling delete chart version request: [$artifactInfo]")
         with(artifactInfo) {
             if (!packageVersionExist(projectId, repoName, packageName, version)) {
-                throw HelmFileNotFoundException(
-                    "remove package $packageName for version [$version] failed: no such file or directory"
-                )
+                throw VersionNotFoundException(version)
             }
             val context = ArtifactRemoveContext()
             ArtifactContextHolder.getRepository().remove(context)
@@ -108,7 +107,7 @@ class ChartManipulationServiceImpl : AbstractChartService(), ChartManipulationSe
         logger.info("handling delete chart request: [$artifactInfo]")
         with(artifactInfo) {
             if (!packageExist(projectId, repoName, packageName)) {
-                throw HelmFileNotFoundException("remove package $packageName failed: no such file or directory")
+                throw PackageNotFoundException(packageName)
             }
             val context = ArtifactRemoveContext()
             ArtifactContextHolder.getRepository().remove(context)

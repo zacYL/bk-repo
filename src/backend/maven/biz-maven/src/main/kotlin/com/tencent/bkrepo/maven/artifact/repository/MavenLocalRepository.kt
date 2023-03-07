@@ -57,12 +57,12 @@ import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
 import com.tencent.bkrepo.maven.artifact.MavenDeleteArtifactInfo
 import com.tencent.bkrepo.maven.constants.*
 import com.tencent.bkrepo.maven.enum.HashType
+import com.tencent.bkrepo.maven.enum.MavenMessageCode
 import com.tencent.bkrepo.maven.enum.SnapshotBehaviorType
 import com.tencent.bkrepo.maven.exception.ConflictException
 import com.tencent.bkrepo.maven.exception.JarFormatException
 import com.tencent.bkrepo.maven.exception.MavenArtifactNotFoundException
 import com.tencent.bkrepo.maven.exception.MavenRequestForbiddenException
-import com.tencent.bkrepo.maven.message.MavenMessageCode
 import com.tencent.bkrepo.maven.model.TMavenMetadataRecord
 import com.tencent.bkrepo.maven.pojo.*
 import com.tencent.bkrepo.maven.pojo.response.MavenArtifactResponse
@@ -295,7 +295,7 @@ class MavenLocalRepository(
                     val message = "The File $path already existed in the ${context.artifactInfo.getRepoIdentify()}, " +
                         "please check your overwrite configuration."
                     logger.warn(message)
-                    throw MavenRequestForbiddenException(message)
+                    throw MavenRequestForbiddenException(MavenMessageCode.MAVEN_REQUEST_FORBIDDEN, path, context.artifactInfo.getRepoIdentify())
                 }
             }
         }
@@ -341,7 +341,7 @@ class MavenLocalRepository(
             val serverDigest = node.metadata[hashType.ext].toString()
             val clientDigest = MavenUtil.extractDigest(getArtifactFile().getInputStream())
             if (clientDigest != serverDigest) {
-                throw ConflictException(MavenMessageCode.CHECKSUM_CONFLICT, clientDigest, serverDigest)
+                throw ConflictException(MavenMessageCode.MAVEN_CHECKSUM_CONFLICT, clientDigest, serverDigest)
             }
         }
     }
@@ -813,14 +813,14 @@ class MavenLocalRepository(
             // 剔除文件夹路径
             if (checksumType == null) {
                 if (!fullPath.matches(Regex(PACKAGE_SUFFIX_REGEX))) {
-                    throw ArtifactNotFoundException("Artifact $fullPath could not find..")
+                    throw MavenArtifactNotFoundException(MavenMessageCode.MAVEN_ARTIFACT_NOT_FOUND, fullPath, artifactInfo.getRepoIdentify())
                 }
             }
             // maven-metadata.xml
             if (fullPath.endsWith("$MAVEN_METADATA_FILE_NAME.${checksumType?.ext}")) return null
             // 剔除类似-20190917.073536-2.jar路径，实际不存在的
             if (!fullPath.isSnapshotNonUniqueUri()) {
-                throw MavenArtifactNotFoundException("Artifact $fullPath could not find..")
+                throw MavenArtifactNotFoundException(MavenMessageCode.MAVEN_ARTIFACT_NOT_FOUND, fullPath, artifactInfo.getRepoIdentify())
             }
             val mavenArtifactInfo = context.artifactInfo as MavenArtifactInfo
             try {
@@ -966,7 +966,7 @@ class MavenLocalRepository(
         val nonUniqueName = mavenVersion.combineToNonUnique()
         // 针对非正常路径： 获取后缀为-1.0.0-SNAPSHOT.jar， 但是版本和versionId不一致的
         if (nonUniqueName != name) {
-            throw MavenArtifactNotFoundException("Artifact $fullPath could not find..")
+            throw MavenArtifactNotFoundException(MavenMessageCode.MAVEN_ARTIFACT_NOT_FOUND, fullPath, "$projectId|$repoName")
         }
         return fullPath.replace(name, uniqueName)
     }

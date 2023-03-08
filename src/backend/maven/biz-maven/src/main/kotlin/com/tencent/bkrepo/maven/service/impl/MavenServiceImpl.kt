@@ -121,7 +121,9 @@ class MavenServiceImpl(
                 "Error [${e.message}] occurred during uploading ${mavenArtifactInfo.getArtifactFullPath()} " +
                     "in repo ${mavenArtifactInfo.getRepoIdentify()}"
             )
-            throw MavenBadRequestException(MavenMessageCode.MAVEN_ARTIFACT_UPLOAD, mavenArtifactInfo.getArtifactFullPath())
+            throw MavenBadRequestException(
+                MavenMessageCode.MAVEN_ARTIFACT_UPLOAD, mavenArtifactInfo.getArtifactFullPath()
+            )
         }
     }
 

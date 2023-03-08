@@ -105,7 +105,9 @@ class ChartRepositoryServiceImpl(
             ArtifactContextHolder.getRepository().download(context)
         } catch (e: Exception) {
             logger.warn("Error occurred while downloading index.yaml, error: ${e.message}")
-            throw HelmFileNotFoundException(HelmMessageCode.HELM_FILE_NOT_FOUND, INDEX_YAML, "${context.projectId}|${context.repoName}")
+            throw HelmFileNotFoundException(
+                HelmMessageCode.HELM_FILE_NOT_FOUND, INDEX_YAML, "${context.projectId}|${context.repoName}"
+            )
         }
     }
 
@@ -210,7 +212,9 @@ class ChartRepositoryServiceImpl(
             ArtifactContextHolder.getRepository().download(context)
         } catch (e: Exception) {
             logger.warn("Error occurred while installing chart, error: ${e.message}")
-            throw HelmFileNotFoundException(HelmMessageCode.HELM_FILE_NOT_FOUND, artifactInfo.getArtifactFullPath(), artifactInfo.getRepoIdentify())
+            throw HelmFileNotFoundException(
+                HelmMessageCode.HELM_FILE_NOT_FOUND, artifactInfo.getArtifactFullPath(), artifactInfo.getRepoIdentify()
+            )
         }
     }
 
@@ -223,7 +227,9 @@ class ChartRepositoryServiceImpl(
             ArtifactContextHolder.getRepository().download(context)
         } catch (e: Exception) {
             logger.warn("Error occurred while installing prov, error: ${e.message}")
-            throw HelmFileNotFoundException(HelmMessageCode.HELM_FILE_NOT_FOUND, artifactInfo.getArtifactFullPath(), artifactInfo.getRepoIdentify())
+            throw HelmFileNotFoundException(
+                HelmMessageCode.HELM_FILE_NOT_FOUND, artifactInfo.getArtifactFullPath(), artifactInfo.getRepoIdentify()
+            )
         }
     }
 

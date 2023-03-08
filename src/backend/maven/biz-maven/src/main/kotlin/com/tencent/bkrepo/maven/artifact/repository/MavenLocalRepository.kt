@@ -295,7 +295,9 @@ class MavenLocalRepository(
                     val message = "The File $path already existed in the ${context.artifactInfo.getRepoIdentify()}, " +
                         "please check your overwrite configuration."
                     logger.warn(message)
-                    throw MavenRequestForbiddenException(MavenMessageCode.MAVEN_REQUEST_FORBIDDEN, path, context.artifactInfo.getRepoIdentify())
+                    throw MavenRequestForbiddenException(
+                        MavenMessageCode.MAVEN_REQUEST_FORBIDDEN, path, context.artifactInfo.getRepoIdentify()
+                    )
                 }
             }
         }
@@ -813,14 +815,18 @@ class MavenLocalRepository(
             // 剔除文件夹路径
             if (checksumType == null) {
                 if (!fullPath.matches(Regex(PACKAGE_SUFFIX_REGEX))) {
-                    throw MavenArtifactNotFoundException(MavenMessageCode.MAVEN_ARTIFACT_NOT_FOUND, fullPath, artifactInfo.getRepoIdentify())
+                    throw MavenArtifactNotFoundException(
+                        MavenMessageCode.MAVEN_ARTIFACT_NOT_FOUND, fullPath, artifactInfo.getRepoIdentify()
+                    )
                 }
             }
             // maven-metadata.xml
             if (fullPath.endsWith("$MAVEN_METADATA_FILE_NAME.${checksumType?.ext}")) return null
             // 剔除类似-20190917.073536-2.jar路径，实际不存在的
             if (!fullPath.isSnapshotNonUniqueUri()) {
-                throw MavenArtifactNotFoundException(MavenMessageCode.MAVEN_ARTIFACT_NOT_FOUND, fullPath, artifactInfo.getRepoIdentify())
+                throw MavenArtifactNotFoundException(
+                    MavenMessageCode.MAVEN_ARTIFACT_NOT_FOUND, fullPath, artifactInfo.getRepoIdentify()
+                )
             }
             val mavenArtifactInfo = context.artifactInfo as MavenArtifactInfo
             try {
@@ -966,7 +972,9 @@ class MavenLocalRepository(
         val nonUniqueName = mavenVersion.combineToNonUnique()
         // 针对非正常路径： 获取后缀为-1.0.0-SNAPSHOT.jar， 但是版本和versionId不一致的
         if (nonUniqueName != name) {
-            throw MavenArtifactNotFoundException(MavenMessageCode.MAVEN_ARTIFACT_NOT_FOUND, fullPath, "$projectId|$repoName")
+            throw MavenArtifactNotFoundException(
+                MavenMessageCode.MAVEN_ARTIFACT_NOT_FOUND, fullPath, "$projectId|$repoName"
+            )
         }
         return fullPath.replace(name, uniqueName)
     }

@@ -55,6 +55,7 @@ import com.tencent.bkrepo.common.artifact.util.okhttp.HttpClientBuilderFactory
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
+import com.tencent.bkrepo.repository.pojo.repo.RemoteUrlRequest
 import okhttp3.Authenticator
 import okhttp3.Credentials
 import okhttp3.Interceptor
@@ -75,6 +76,7 @@ import java.util.concurrent.TimeUnit
 /**
  * 远程仓库抽象逻辑
  */
+@Suppress("TooManyFunctions")
 abstract class RemoteRepository : AbstractArtifactRepository() {
 
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
@@ -169,6 +171,18 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
             onQueryResponse(context, response)
         } else {
             null
+        }
+    }
+
+    /**
+     *  获取远程URL响应
+     */
+    fun getRemoteUrlResponse(remoteUrlRequest: RemoteUrlRequest): Response {
+        with (remoteUrlRequest) {
+            val remoteConfiguration = RemoteConfiguration(credentials = credentials, network = network)
+            val httpClient = createHttpClient(remoteConfiguration)
+            val request = Request.Builder().url(url).build()
+            return httpClient.newCall(request).execute()
         }
     }
 

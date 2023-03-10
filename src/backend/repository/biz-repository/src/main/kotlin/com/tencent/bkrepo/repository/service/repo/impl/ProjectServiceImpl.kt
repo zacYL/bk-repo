@@ -53,6 +53,7 @@ import com.tencent.bkrepo.repository.pojo.project.ProjectRangeQueryRequest
 import com.tencent.bkrepo.repository.pojo.project.ProjectSearchOption
 import com.tencent.bkrepo.repository.pojo.project.ProjectUpdateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoDeleteRequest
+import com.tencent.bkrepo.repository.pojo.repo.RepoListOption
 import com.tencent.bkrepo.repository.service.packages.PackageService
 import com.tencent.bkrepo.repository.service.repo.ProjectService
 import com.tencent.bkrepo.repository.service.repo.RepositoryService
@@ -205,13 +206,13 @@ class ProjectServiceImpl(
         if (authRealm == DEPLOY_CPACK && projectDao.count(Query().addCriteria(excludeCri)) == 1L) {
             throw ErrorCodeException(CommonMessageCode.SYSTEM_ERROR)
         }
-        var repoPage = repositoryService.listRepoPage(name, DEFAULT_PAGE_NUMBER, DEFAULT_PAGE_SIZE)
+        var repoPage = repositoryService.listRepoPage(name, DEFAULT_PAGE_NUMBER, DEFAULT_PAGE_SIZE, RepoListOption())
         while (repoPage.records.isNotEmpty()) {
             repoPage.records.forEach { repo ->
                 if (repo.type != RepositoryType.GENERIC) deletePackage(name, repo.name)
                 repositoryService.deleteRepo(RepoDeleteRequest(name, repo.name, true, userId))
             }
-            repoPage = repositoryService.listRepoPage(name, DEFAULT_PAGE_NUMBER, DEFAULT_PAGE_SIZE)
+            repoPage = repositoryService.listRepoPage(name, DEFAULT_PAGE_NUMBER, DEFAULT_PAGE_SIZE, RepoListOption())
         }
         projectDao.deleteById(name)
         publishEvent(buildDeletedEvent(userId, name))

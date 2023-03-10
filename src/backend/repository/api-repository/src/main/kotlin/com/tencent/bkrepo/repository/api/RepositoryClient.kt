@@ -92,7 +92,9 @@ interface RepositoryClient {
         @ApiParam("仓库名称", required = false)
         @RequestParam name: String? = null,
         @ApiParam("仓库类型", required = false)
-        @RequestParam type: String? = null
+        @RequestParam type: String? = null,
+        @ApiParam("仓库类别", required = false)
+        @RequestParam category: List<String>? = null
     ): Response<List<RepositoryInfo>>
 
     @ApiOperation("查询有权限的仓库列表")

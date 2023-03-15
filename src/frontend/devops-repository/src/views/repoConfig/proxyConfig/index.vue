@@ -65,7 +65,7 @@
         },
         watch: {
             baseData () {
-                this.proxyList = this.baseData.configuration.proxy.channelList
+                this.proxyList = this.baseData.configuration.proxy?.channelList || []
             }
         },
         created () {

@@ -247,10 +247,15 @@ class CanwayPermissionServiceImpl(
             bkUsername = BK_WHITELIST_USER,
             bkToken = DevopsHttpUtils.getBkToken()
         ).map { it.toString() }
+        logger.debug("$allDepartments")
         val projectDepartments = devopsClient.departmentsByProjectId(projectId)?.map { it.id }?.distinct()
+        logger.debug("$projectDepartments")
         // 过滤蓝鲸中不存在的部门
         val departments = projectDepartments?.filter { allDepartments.contains(it) } ?: emptyList()
-        return listOf(repoAdmin, repoUser).map { transferCIPermission(it, ciProjectGroups, departments, allDepartments) }
+        logger.debug("$departments")
+        return listOf(repoAdmin, repoUser).map {
+            transferCIPermission(it, ciProjectGroups, departments, allDepartments)
+        }
     }
 
     private fun checkPermissionExist(pId: String) {

@@ -11,6 +11,12 @@ export const repoEnum = [
     // 'git',
     'nuget'
 ]
+export const repoRemoteSupportEnum = [
+    'maven',
+    'npm',
+    'pypi',
+    'nuget'
+]
 
 // 文件类型
 export const fileType = [
@@ -130,3 +136,21 @@ export const leakLevelEnum = {
     LOW: '低级',
     WHITE: '白名单'
 }
+// 制品仓库类型(本地/远程/虚拟)
+export const storeTypeEnum = [
+    {
+        id: 'local',
+        name: 'localStore',
+        icon: 'local-store'
+    },
+    {
+        id: 'remote',
+        name: 'remoteStore',
+        icon: 'remote-store'
+    },
+    {
+        id: 'virtual',
+        name: 'virtualStore',
+        icon: 'virtual-store'
+    }
+]

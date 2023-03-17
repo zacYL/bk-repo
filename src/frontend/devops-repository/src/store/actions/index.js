@@ -50,13 +50,14 @@ export default {
         )
     },
     // 分页查询仓库列表
-    getRepoList (_, { projectId, current, limit, name, type }) {
+    getRepoList (_, { projectId, current, limit, name, type, category }) {
         return Vue.prototype.$ajax.get(
             `${prefix}/repo/page/${projectId}/${current}/${limit}`,
             {
                 params: {
                     name: name || undefined,
-                    type: type || undefined
+                    type: type || undefined,
+                    category: category || undefined
                 }
             }
         ).then(res => ({
@@ -70,12 +71,21 @@ export default {
         return Vue.prototype.$ajax.get(`${prefix}/repo/list/${projectId}?name=&type=GENERIC`)
     },
     // 查询仓库列表
-    getRepoListAll ({ commit }, { projectId }) {
+    getRepoListAll ({ commit }, { projectId, name, type, category }) {
         return Vue.prototype.$ajax.get(
-            `${prefix}/repo/list/${projectId}`
+            `${prefix}/repo/list/${projectId}`,
+            {
+                params: {
+                    name: name || undefined,
+                    type: type || undefined,
+                    category: category || undefined
+                }
+            }
         ).then(res => {
             // 前端隐藏report仓库/log仓库
             commit('SET_REPO_LIST_ALL', res.filter(v => v.name !== 'log'))
+            // 将原始数据暴露出去，供创建虚拟仓库时处理
+            return res
         })
     },
     // 查询仓库信息
@@ -115,5 +125,12 @@ export default {
             cookie.remove('bkrepo_ticket')
             commit('SHOW_LOGIN_DIALOG', true)
         }
+    },
+    // 创建远程仓库时测试链接
+    testRemoteUrl (_, { body }) {
+        return Vue.prototype.$ajax.post(
+            `${prefix}/repo/testremote`,
+            body
+        )
     }
 }

@@ -1,14 +1,14 @@
 <template>
     <canway-dialog
         v-model="show"
-        width="800"
-        height-num="603"
-        title="创建仓库"
+        width="860"
+        height-num="700"
+        :title="$t('create') + $t(storeType + 'Store')"
         @cancel="cancel">
         <bk-form class="mr10 repo-base-info" :label-width="130" :model="repoBaseInfo" :rules="rules" ref="repoBaseInfo">
             <bk-form-item :label="$t('repoType')" :required="true" property="type" error-display-type="normal">
                 <bk-radio-group v-model="repoBaseInfo.type" class="repo-type-radio-group" @change="changeRepoType">
-                    <bk-radio-button v-for="repo in repoEnum" :key="repo" :value="repo">
+                    <bk-radio-button v-for="repo in filterRepoEnum" :key="repo" :value="repo">
                         <div class="flex-column flex-center repo-type-radio">
                             <Icon size="32" :name="repo" />
                             <span>{{repo}}</span>
@@ -22,6 +22,82 @@
                 </bk-input>
                 <div v-if="repoBaseInfo.type === 'docker'" class="form-tip">docker仓库名称不支持大写英文字母</div>
             </bk-form-item>
+            <template v-if="storeType === 'remote'">
+                <bk-form-item :label="$t('address')" :required="true" property="url" error-display-type="normal">
+                    <bk-input style="width:400px" v-model.trim="repoBaseInfo.url"></bk-input>
+                    <bk-button theme="primary" @click="onClickTestRemoteUrl">{{ $t('testRemoteUrl') }}</bk-button>
+                </bk-form-item>
+                <bk-form-item :label="$t('account')" property="credentials.username" error-display-type="normal">
+                    <bk-input style="width:400px" v-model.trim="repoBaseInfo.credentials.username"></bk-input>
+                </bk-form-item>
+                <bk-form-item :label="$t('password')" property="credentials.password" error-display-type="normal">
+                    <bk-input style="width:400px" type="password" v-model.trim="repoBaseInfo.credentials.password"></bk-input>
+                </bk-form-item>
+                <bk-form-item :label="$t('networkProxy')" property="switcher">
+                    <template>
+                        <bk-switcher v-model="repoBaseInfo.network.switcher" theme="primary"></bk-switcher>
+                        <span>{{repoBaseInfo.network.switcher ? $t('open') : $t('close')}}</span>
+                    </template>
+                </bk-form-item>
+                <template v-if="repoBaseInfo.network.switcher">
+                    <bk-form-item label="IP" property="network.proxy.host" :required="true" error-display-type="normal">
+                        <bk-input style="width:400px" v-model.trim="repoBaseInfo.network.proxy.host"></bk-input>
+                    </bk-form-item>
+                    <bk-form-item :label="$t('port')" property="network.proxy.port" :required="true" error-display-type="normal">
+                        <bk-input style="width:400px" type="number" :max="65535" :min="1" v-model.trim="repoBaseInfo.network.proxy.port"></bk-input>
+                    </bk-form-item>
+                    <bk-form-item :label="$t('account')" property="network.proxy.username">
+                        <bk-input style="width:400px" v-model.trim="repoBaseInfo.network.proxy.username"></bk-input>
+                    </bk-form-item>
+                    <bk-form-item :label="$t('password')" property="network.proxy.password">
+                        <bk-input style="width:400px" type="password" v-model.trim="repoBaseInfo.network.proxy.password"></bk-input>
+                    </bk-form-item>
+                </template>
+            </template>
+
+            <template v-if="storeType === 'virtual'">
+                <bk-form-item :label="$t('select') + $t('storageStore')" property="virtualStoreList" :required="true" error-display-type="normal">
+                    <div class="virtual-check-container">
+                        <bk-transfer
+                            :title="[$t('repositoryList'), $t('selectedRepo')]"
+                            :source-list="sourceRepoList"
+                            display-key="name"
+                            setting-key="name"
+                            searchable
+                            show-overflow-tips
+                            @change="changeSelect">
+                            <template #source-option="{ name, category }">
+                                <div class="flex-align-center flex-1">
+                                    <Icon size="16" :name="category === 'LOCAL' ? 'local-store' : 'remote-store'" />
+                                    <span class="ml10 flex-1 text-overflow" :title="name">{{ name }}</span>
+                                    <i class="bk-icon icon-arrows-right"></i>
+                                </div>
+                            </template>
+                            <template #target-option="{ name, category }">
+                                <div class="flex-align-center flex-1">
+                                    <Icon size="16" :name="category === 'LOCAL' ? 'local-store' : 'remote-store'" />
+                                    <span class="ml10 flex-1 text-overflow" :title="name">{{ name }}</span>
+                                    <i class="bk-icon icon-close"></i>
+                                </div>
+                            </template>
+                        </bk-transfer>
+                    </div>
+                </bk-form-item>
+                <bk-form-item :label="$t('uploadTargetStore')" property="uploadTargetStore">
+                    <bk-select
+                        v-model="repoBaseInfo.deploymentRepo"
+                        style="width:300px;"
+                        :show-empty="false"
+                        :placeholder="$t('pleaseSelect') + $t('uploadTargetStore')">
+                        <bk-option v-for="item in deploymentRepoCheckList" :key="item.name" :id="item.name" :name="item.name">
+                        </bk-option>
+                        <div v-if="!deploymentRepoCheckList.length" class="form-tip mt10 ml10 mr10 mb10">
+                            {{$t('noAddedLocalStore')}}
+                        </div>
+                    </bk-select>
+                    <div class="form-tip">{{$t('addPackagePrompt')}}</div>
+                </bk-form-item>
+            </template>
             <bk-form-item label="访问权限">
                 <card-radio-group
                     v-model="available"
@@ -107,12 +183,14 @@
 </template>
 <script>
     import CardRadioGroup from '@repository/components/CardRadioGroup'
-    import { repoEnum } from '@repository/store/publicEnum'
+    import { repoEnum, repoRemoteSupportEnum } from '@repository/store/publicEnum'
     import { mapActions } from 'vuex'
+    import { isEmpty } from 'lodash'
 
     const getRepoBaseInfo = () => {
         return {
             type: 'generic',
+            category: 'LOCAL',
             name: '',
             public: false,
             system: false,
@@ -134,19 +212,46 @@
                 enable: false,
                 filename: '',
                 metadata: ''
-            }
+            },
+            // 远程仓库的地址下面的账号和密码
+            credentials: {
+                username: null,
+                password: null
+            },
+            url: '', // 远程仓库的地址
+            // 远程仓库的网络代理
+            network: {
+                proxy: {
+                    host: null,
+                    port: null,
+                    username: null,
+                    password: null
+                }
+            },
+            // 虚拟仓库的选中的存储库列表
+            virtualStoreList: [],
+            deploymentRepo: '' // 虚拟仓库中选择存储的本地仓库
         }
     }
 
     export default {
         name: 'createRepo',
         components: { CardRadioGroup },
+        props: {
+            // 当前仓库类型ID
+            storeType: {
+                type: String,
+                default: 'local'
+            }
+        },
         data () {
             return {
-                repoEnum,
                 show: false,
                 loading: false,
-                repoBaseInfo: getRepoBaseInfo()
+                repoBaseInfo: getRepoBaseInfo(),
+                // 因为创建仓库时拆分为本地/远程/虚拟，远程仓库和虚拟仓库没有generic选项，所以需要重新组合
+                filterRepoEnum: repoEnum,
+                sourceRepoList: [] // 待选择的制品仓库列表
             }
         },
         computed: {
@@ -170,6 +275,42 @@
                     {
                         regex: /^[^\s]+:[^\s]+/,
                         message: this.$t('metadataRule'),
+                        trigger: 'blur'
+                    }
+                ]
+                // 远程仓库的 地址校验规则
+                const urlRule = [
+                    {
+                        required: true,
+                        message: this.$t('pleaseInput') + this.$t('address'),
+                        trigger: 'blur'
+                    },
+                    {
+                        validator: this.checkRemoteUrl,
+                        message: this.$t('pleaseInput') + this.$t('legit') + this.$t('address'),
+                        trigger: 'blur'
+                    }
+                ]
+                // 远程仓库下代理的IP和端口的校验的校验规则
+                const proxyHostRule = [
+                    {
+                        required: true,
+                        message: this.$t('pleaseInput') + this.$t('networkProxy') + 'IP',
+                        trigger: 'blur'
+                    }
+                ]
+                const proxyPortRule = [
+                    {
+                        required: true,
+                        message: this.$t('pleaseInput') + this.$t('networkProxy') + this.$t('port'),
+                        trigger: 'blur'
+                    }
+                ]
+                // 虚拟仓库下选择存储库的校验
+                const checkStorageRule = [
+                    {
+                        required: true,
+                        message: this.$t('noSelectStorageStore'),
                         trigger: 'blur'
                     }
                 ]
@@ -219,7 +360,14 @@
                     'mobile.filename': filenameRule,
                     'mobile.metadata': metadataRule,
                     'web.filename': filenameRule,
-                    'web.metadata': metadataRule
+                    'web.metadata': metadataRule,
+                    // 远程仓库才应该有地址的校验
+                    url: this.storeType === 'remote' ? urlRule : {},
+                    // 远程仓库且开启网络代理才应该设置代理的IP和端口的校验
+                    'network.proxy.host': (this.storeType === 'remote' && this.repoBaseInfo.network.switcher) ? proxyHostRule : {},
+                    'network.proxy.port': (this.storeType === 'remote' && this.repoBaseInfo.network.switcher) ? proxyPortRule : {},
+                    // 虚拟仓库的选择存储库的校验
+                    virtualStoreList: this.storeType === 'virtual' ? checkStorageRule : {}
                 }
             },
             available: {
@@ -239,10 +387,48 @@
                     { label: '系统内公开', value: 'system', tip: '系统内成员可以使用' },
                     { label: '可匿名下载', value: 'public', tip: '不鉴权，任意终端都可下载' }
                 ]
+            },
+            // 虚拟仓库中选择上传的目标仓库的下拉列表数据
+            deploymentRepoCheckList () {
+                return this.repoBaseInfo.virtualStoreList.filter(item => item.category === 'LOCAL')
+            }
+        },
+        watch: {
+            storeType: {
+                handler (val) {
+                    if (val === 'remote') {
+                        // 远程仓库目前因为需要代理设置，目前只支持maven、npm、pypi、nuget四种仓库
+                        this.filterRepoEnum = repoRemoteSupportEnum
+                    } else if (val === 'virtual') {
+                        // 虚拟仓库不支持选择generic仓库
+                        this.filterRepoEnum = repoEnum.filter(item => item !== 'generic')
+                    } else {
+                        // 本地仓库
+                        this.filterRepoEnum = repoEnum
+                    }
+                    // 因为远程仓库和虚拟仓库没有generic类型且远程仓库支持的制品类型有限，所以需要将其重新赋默认值
+                    this.repoBaseInfo.type = this.filterRepoEnum[0] || ''
+                }
+            },
+            show (val) {
+                // 当选择的是虚拟仓库且打开创建弹窗时才加载虚拟仓库选择所需要的源列表数据
+                (val && this.storeType === 'virtual') && this.getSourceRepoList()
+            },
+            deploymentRepoCheckList: {
+                handler (val) {
+                    // 当选择的存储库为空时需要将上传目标仓库的这个选中值重置为空
+                    !val.length && (this.repoBaseInfo.deploymentRepo = '')
+                }
             }
         },
         methods: {
-            ...mapActions(['createRepo', 'checkRepoName']),
+            ...mapActions(['createRepo', 'checkRepoName', 'getRepoListAll', 'testRemoteUrl']),
+            // 虚拟仓库弹窗中获取可供选择的远程和本地仓库列表
+            getSourceRepoList () {
+                this.getRepoListAll({ projectId: this.projectId, type: this.repoBaseInfo.type, category: 'LOCAL,REMOTE' }).then(res => {
+                    this.sourceRepoList = res
+                })
+            },
             showDialogHandler () {
                 this.show = true
                 this.repoBaseInfo = getRepoBaseInfo()
@@ -250,6 +436,7 @@
             },
             cancel () {
                 this.show = false
+                this.$emit('close')
             },
             handleOverrideChange (isFlag) {
                 this.repoBaseInfo.override.switcher = isFlag
@@ -262,7 +449,51 @@
             },
             changeRepoType () {
                 if (this.repoBaseInfo.type === 'docker') this.repoBaseInfo.name = ''
-                this.$refs.repoBaseInfo.clearError()
+                this.$refs.repoBaseInfo.clearError();
+                (this.show && this.storeType === 'virtual') && this.getSourceRepoList()
+            },
+            checkRemoteUrl (val) {
+                const reg = /^https?:\/\/(([a-zA-Z0-9_-])+(\.)?)*(:\d+)?(\/((\.)?(\?)?=?&?[a-zA-Z0-9_-](\?)?)*)*$/
+                return reg?.test(val)
+            },
+            // 创建远程仓库弹窗中测试远程链接
+            onClickTestRemoteUrl () {
+                if (!this.repoBaseInfo?.url || isEmpty(this.repoBaseInfo.url) || !this.checkRemoteUrl(this.repoBaseInfo?.url)) {
+                    this.$bkMessage({
+                        theme: 'warning',
+                        limit: 3,
+                        message: this.$t('pleaseInput') + this.$t('legit') + this.$t('address')
+                    })
+                } else {
+                    const body = {
+                        type: this.repoBaseInfo.type.toUpperCase(),
+                        url: this.repoBaseInfo.url,
+                        credentials: this.repoBaseInfo.credentials,
+                        network: {
+                            proxy: null
+                        }
+                    }
+                    if (this.repoBaseInfo.network.switcher) {
+                        body.network.proxy = this.repoBaseInfo.network.proxy
+                    }
+                    this.testRemoteUrl({ body }).then((res) => {
+                        if (res.success) {
+                            this.$bkMessage({
+                                theme: 'success',
+                                message: this.$t('successConnectServer')
+                            })
+                        } else {
+                            this.$bkMessage({
+                                theme: 'error',
+                                message: this.$t('connectFailed') + `: ${res.message}`
+                            })
+                        }
+                    })
+                }
+            },
+            // 选择存储库穿梭框中数据改变事件
+            changeSelect (sourceList, targetList) {
+                this.repoBaseInfo.virtualStoreList = targetList
             },
             async confirm () {
                 await this.$refs.repoBaseInfo.validate()
@@ -283,9 +514,9 @@
                     name: this.repoBaseInfo.name,
                     public: this.repoBaseInfo.public,
                     description: this.repoBaseInfo.description,
-                    category: this.repoBaseInfo.type === 'generic' ? 'LOCAL' : 'COMPOSITE',
+                    category: this.storeType.toUpperCase() || 'COMPOSITE',
                     configuration: {
-                        type: 'composite',
+                        type: this.storeType || 'composite',
                         settings: {
                             system: this.repoBaseInfo.system,
                             interceptors: interceptors.length ? interceptors : undefined,
@@ -304,9 +535,30 @@
                 if (body.type === 'MAVEN' || body.type === 'NPM') {
                     body.coverStrategy = !this.repoBaseInfo.override.switcher ? 'DISABLE' : this.repoBaseInfo.override.isFlag ? 'COVER' : 'UNCOVER'
                 }
-                this.createRepo({
-                    body: body
-                }).then(() => {
+                // 远程仓库，此时需要添加 地址，账号密码和网络代理相关的配置
+                if (this.storeType === 'remote') {
+                    body.configuration.url = this.repoBaseInfo.url
+                    body.configuration.credentials = this.repoBaseInfo.credentials
+                    body.configuration.network = {
+                        proxy: null
+                    }
+                    if (this.repoBaseInfo.network.switcher) {
+                        body.configuration.network = {
+                            proxy: this.repoBaseInfo.network.proxy
+                        }
+                    }
+                }
+                // 虚拟仓库需要添加存储库相关配置
+                if (this.storeType === 'virtual') {
+                    body.configuration.repositoryList = this.repoBaseInfo.virtualStoreList.map(item => {
+                        return {
+                            name: item.name,
+                            category: item.category
+                        }
+                    })
+                    body.configuration.deploymentRepo = this.repoBaseInfo.deploymentRepo || ''
+                }
+                this.createRepo({ body }).then(() => {
                     this.$bkMessage({
                         theme: 'success',
                         message: this.$t('create') + this.$t('repository') + this.$t('success')
@@ -343,5 +595,9 @@
             height: 60px;
         }
     }
+}
+.virtual-check-container{
+    width: 96%;
+    height: 410px;
 }
 </style>

@@ -57,31 +57,9 @@
 
             <template v-if="storeType === 'virtual'">
                 <bk-form-item :label="$t('select') + $t('storageStore')" property="virtualStoreList" :required="true" error-display-type="normal">
-                    <bk-button class="mb10" hover-theme="primary" :disabled="!repoBaseInfo.virtualStoreList.length" @click="onSortCheckedStore">{{ $t('storeSort') }}</bk-button>
+                    <bk-button class="mb10" hover-theme="primary" @click="toCheckedStore">{{ $t('pleaseSelect') }}</bk-button>
                     <div class="virtual-check-container">
-                        <bk-transfer
-                            :title="[$t('repositoryList'), $t('selectedRepo')]"
-                            :source-list="sourceRepoList"
-                            display-key="name"
-                            setting-key="name"
-                            searchable
-                            show-overflow-tips
-                            @change="changeSelect">
-                            <template #source-option="{ name, category }">
-                                <div class="flex-align-center flex-1">
-                                    <Icon size="16" :name="category === 'LOCAL' ? 'local-store' : 'remote-store'" />
-                                    <span class="ml10 flex-1 text-overflow" :title="name">{{ name }}</span>
-                                    <i class="bk-icon icon-arrows-right"></i>
-                                </div>
-                            </template>
-                            <template #target-option="{ name, category }">
-                                <div class="flex-align-center flex-1">
-                                    <Icon size="16" :name="category === 'LOCAL' ? 'local-store' : 'remote-store'" />
-                                    <span class="ml10 flex-1 text-overflow" :title="name">{{ name }}</span>
-                                    <i class="bk-icon icon-close"></i>
-                                </div>
-                            </template>
-                        </bk-transfer>
+                        <store-sort v-if="repoBaseInfo.virtualStoreList.length" ref="storeSortRef" :sort-list="repoBaseInfo.virtualStoreList"></store-sort>
                     </div>
                 </bk-form-item>
                 <bk-form-item :label="$t('uploadTargetStore')" property="uploadTargetStore">
@@ -180,12 +158,18 @@
             <bk-button @click="cancel">{{$t('cancel')}}</bk-button>
             <bk-button class="ml10" :loading="loading" theme="primary" @click="confirm">{{$t('confirm')}}</bk-button>
         </template>
-        <store-sort v-if="repoBaseInfo.virtualStoreList.length" ref="storeSortRef" title="已选存储库拖拽排序" :sort-list="initCheckStoreList" @changeStoreSort="onChangeStoreSort"></store-sort>
+        <check-target-store
+            ref="checkTargetStoreRef"
+            :repo-type="repoBaseInfo.type"
+            :check-list="repoBaseInfo.virtualStoreList"
+            @checkedTarget="onCheckedTargetStore">
+        </check-target-store>
     </canway-dialog>
 </template>
 <script>
     import CardRadioGroup from '@repository/components/CardRadioGroup'
     import StoreSort from '@repository/components/StoreSort'
+    import CheckTargetStore from '@repository/components/CheckTargetStore'
     import { repoEnum, repoRemoteSupportEnum } from '@repository/store/publicEnum'
     import { mapActions } from 'vuex'
     import { isEmpty } from 'lodash'
@@ -238,7 +222,7 @@
 
     export default {
         name: 'createRepo',
-        components: { CardRadioGroup, StoreSort },
+        components: { CardRadioGroup, CheckTargetStore, StoreSort },
         props: {
             // 当前仓库类型ID
             storeType: {
@@ -252,9 +236,7 @@
                 loading: false,
                 repoBaseInfo: getRepoBaseInfo(),
                 // 因为创建仓库时拆分为本地/远程/虚拟，远程仓库和虚拟仓库没有generic选项，所以需要重新组合
-                filterRepoEnum: repoEnum,
-                sourceRepoList: [], // 待选择的制品仓库列表
-                initCheckStoreList: [] // 子组件排序所需要的选中仓库的数组
+                filterRepoEnum: repoEnum
             }
         },
         computed: {
@@ -413,31 +395,20 @@
                     this.repoBaseInfo.type = this.filterRepoEnum[0] || ''
                 }
             },
-            show (val) {
-                // 当选择的是虚拟仓库且打开创建弹窗时才加载虚拟仓库选择所需要的源列表数据
-                (val && this.storeType === 'virtual') && this.getSourceRepoList()
-            },
             deploymentRepoCheckList: {
                 handler (val) {
-                    // 当选择的存储库为空时需要将上传目标仓库的这个选中值重置为空
-                    !val.length && (this.repoBaseInfo.deploymentRepo = '')
+                    // 当选中的存储库中没有本地仓库或者当前选中的上传目标仓库不在被选中的存储库中时需要将当前选中的上传目标仓库重置为空
+                    if (!val.length || !(val.map((item) => item.name).includes(this.repoBaseInfo.deploymentRepo))) {
+                        this.repoBaseInfo.deploymentRepo = ''
+                    }
                 }
             }
         },
         methods: {
-            ...mapActions(['createRepo', 'checkRepoName', 'getRepoListAll', 'testRemoteUrl']),
-            // 打开排序弹窗
-            onSortCheckedStore () {
-                // 因为穿梭框回显的数据是需要是之前的数组，不能改变其地址值，而组件内部修改props的值不允许，
-                // 所以此处先浅拷贝一份数据值传给子组件，在确定后再将子组件返回的数据值重新赋值给穿梭框回显的数组，供穿梭框回显
-                this.initCheckStoreList = [...this.repoBaseInfo.virtualStoreList]
-                this.$refs.storeSortRef && (this.$refs.storeSortRef.show = true)
-            },
-            // 虚拟仓库弹窗中获取可供选择的远程和本地仓库列表
-            getSourceRepoList () {
-                this.getRepoListAll({ projectId: this.projectId, type: this.repoBaseInfo.type, category: 'LOCAL,REMOTE' }).then(res => {
-                    this.sourceRepoList = res
-                })
+            ...mapActions(['createRepo', 'checkRepoName', 'testRemoteUrl']),
+            // 打开选择存储库弹窗
+            toCheckedStore () {
+                this.$refs.checkTargetStoreRef && (this.$refs.checkTargetStoreRef.show = true)
             },
             showDialogHandler () {
                 this.show = true
@@ -459,8 +430,7 @@
             },
             changeRepoType () {
                 if (this.repoBaseInfo.type === 'docker') this.repoBaseInfo.name = ''
-                this.$refs.repoBaseInfo.clearError();
-                (this.show && this.storeType === 'virtual') && this.getSourceRepoList()
+                this.$refs.repoBaseInfo.clearError()
             },
             checkRemoteUrl (val) {
                 const reg = /^https?:\/\/(([a-zA-Z0-9_-])+(\.)?)*(:\d+)?(\/((\.)?(\?)?=?&?[a-zA-Z0-9_-](\?)?)*)*$/
@@ -501,16 +471,10 @@
                     })
                 }
             },
-            // 选择存储库穿梭框中数据改变事件
-            changeSelect (sourceList, targetList) {
-                this.repoBaseInfo.virtualStoreList = targetList
+            // 选中的存储库弹窗确认事件
+            onCheckedTargetStore (list) {
+                this.repoBaseInfo.virtualStoreList = list
             },
-            onChangeStoreSort (list) {
-                // 当用户点击了确定之后需要将组件返回的数组的数据值重新赋值给原来的穿梭框绑定的右侧的数组，因为穿梭框回显的数据是需要是之前的数组，不能改变其地址值
-                this.repoBaseInfo.virtualStoreList.splice(0, this.repoBaseInfo.virtualStoreList.length, ...list)
-                this.changeSelect(this.sourceRepoList, this.repoBaseInfo.virtualStoreList)
-            },
-           
             async confirm () {
                 await this.$refs.repoBaseInfo.validate()
                 const interceptors = []
@@ -614,6 +578,6 @@
 }
 .virtual-check-container{
     width: 96%;
-    height: 410px;
+    max-height: 300px;
 }
 </style>

@@ -53,33 +53,14 @@
                         
                     <template v-if="repoBaseInfo.category === 'VIRTUAL'">
                         <bk-form-item :label=" $t('select') + $t('storageStore')" property="virtualStoreList" :required="true" error-display-type="normal">
-                            <bk-button class="mb10" hover-theme="primary" :disabled="!repoBaseInfo.virtualStoreList.length" @click="onSortCheckedStore">{{ $t('storeSort') }}</bk-button>
+                            <bk-button class="mb10" hover-theme="primary" @click="toCheckedStore">{{ $t('pleaseSelect') }}</bk-button>
                             <div class="virtual-check-container">
-                                <bk-transfer
-                                    ref="storeTransfer"
-                                    :title="[$t('repositoryList'), $t('selectedRepo')]"
-                                    :source-list="sourceRepoList"
-                                    :target-list="targetRepoList"
-                                    display-key="name"
-                                    setting-key="name"
-                                    searchable
-                                    show-overflow-tips
-                                    @change="changeSelect">
-                                    <template #source-option="{ name, category }">
-                                        <div class="flex-align-center flex-1">
-                                            <Icon size="16" :name="category === 'LOCAL' ? 'local-store' : 'remote-store'" />
-                                            <span class="ml10 flex-1 text-overflow" :title="name">{{ name }}</span>
-                                            <i class="bk-icon icon-arrows-right"></i>
-                                        </div>
-                                    </template>
-                                    <template #target-option="{ name, category }">
-                                        <div class="flex-align-center flex-1">
-                                            <Icon size="16" :name="category === 'LOCAL' ? 'local-store' : 'remote-store'" />
-                                            <span class="ml10 flex-1 text-overflow" :title="name">{{ name }}</span>
-                                            <i class="bk-icon icon-close"></i>
-                                        </div>
-                                    </template>
-                                </bk-transfer>
+                                <store-sort
+                                    v-if="repoBaseInfo.virtualStoreList.length"
+                                    :key="repoBaseInfo.virtualStoreList"
+                                    ref="storeSortRef"
+                                    :sort-list="repoBaseInfo.virtualStoreList"
+                                    @update="onUpdateList"></store-sort>
                             </div>
                         </bk-form-item>
                         <bk-form-item :label="$t('uploadTargetStore')" property="deploymentRepo">
@@ -190,7 +171,12 @@
                 <permission-config :category="repoBaseInfo.category"></permission-config>
             </bk-tab-panel>
         </bk-tab>
-        <store-sort v-if="initCheckStoreList.length" ref="storeSortRef" title="已选存储库拖拽排序" :sort-list="initCheckStoreList" @changeStoreSort="onChangeStoreSort"></store-sort>
+        <check-target-store
+            ref="checkTargetStoreRef"
+            :repo-type="repoBaseInfo.type"
+            :check-list="repoBaseInfo.virtualStoreList"
+            @checkedTarget="onCheckedTargetStore">
+        </check-target-store>
     </div>
 </template>
 <script>
@@ -198,6 +184,7 @@
     // import proxyConfig from '@repository/views/repoConfig/proxyConfig'
     import cleanConfig from '@repository/views/repoConfig/cleanConfig'
     import permissionConfig from './permissionConfig'
+    import CheckTargetStore from '@repository/components/CheckTargetStore'
     import StoreSort from '@repository/components/StoreSort'
     import { mapState, mapActions } from 'vuex'
     import { isEmpty } from 'lodash'
@@ -209,7 +196,8 @@
             // proxyConfig,
             cleanConfig,
             permissionConfig,
-            StoreSort
+            StoreSort,
+            CheckTargetStore
         },
         data () {
             return {
@@ -258,10 +246,7 @@
                     // 虚拟仓库的选中的存储库列表
                     virtualStoreList: [],
                     deploymentRepo: '' // 虚拟仓库中选择存储的本地仓库
-                },
-                sourceRepoList: [],
-                targetRepoList: [], // 穿梭框中右边选中框默认初始化回显数据
-                initCheckStoreList: [] // 子组件排序所需要的选中仓库的数组
+                }
             }
         },
         computed: {
@@ -415,7 +400,10 @@
             },
             deploymentRepoCheckList: {
                 handler (val) {
-                    !val.length && (this.repoBaseInfo.deploymentRepo = '')
+                    // 当选中的存储库中没有本地仓库或者当前选中的上传目标仓库不在被选中的存储库中时需要将当前选中的上传目标仓库重置为空
+                    if (!val.length || !(val.map((item) => item.name).includes(this.repoBaseInfo.deploymentRepo))) {
+                        this.repoBaseInfo.deploymentRepo = ''
+                    }
                 }
             }
         },
@@ -424,21 +412,18 @@
             this.getRepoInfoHandler()
         },
         methods: {
-            ...mapActions(['getRepoInfo', 'updateRepoInfo', 'getDomain', 'getRepoListAll', 'testRemoteUrl']),
-            // 打开排序弹窗
-            onSortCheckedStore () {
-                // 因为穿梭框回显的数据是需要是之前的数组，不能改变其地址值，而组件内部修改props的值不允许，
-                // 所以此处先浅拷贝一份数据值传给子组件，在确定后再将子组件返回的数据值重新赋值给穿梭框回显的数组，供穿梭框回显
-                this.initCheckStoreList = [...this.repoBaseInfo.virtualStoreList]
-                this.$nextTick(() => {
-                    this.$refs.storeSortRef && (this.$refs.storeSortRef.show = true)
-                })
+            ...mapActions(['getRepoInfo', 'updateRepoInfo', 'getDomain', 'testRemoteUrl']),
+            // 打开选择存储库弹窗
+            toCheckedStore () {
+                this.$refs.checkTargetStoreRef && (this.$refs.checkTargetStoreRef.show = true)
             },
-            // 虚拟仓库弹窗中获取可供选择的远程和本地仓库列表
-            getSourceRepoList () {
-                return this.getRepoListAll({ projectId: this.projectId, type: this.repoBaseInfo.type, category: 'LOCAL,REMOTE' }).then(res => {
-                    this.sourceRepoList = res
-                })
+            // 当删除了选中的存储库时
+            onUpdateList (list) {
+                this.repoBaseInfo.virtualStoreList = list
+            },
+            // 选中的存储库弹窗确认事件
+            onCheckedTargetStore (list) {
+                this.repoBaseInfo.virtualStoreList = list
             },
             handleOverrideChange (isFlag) {
                 this.repoBaseInfo.override.switcher = isFlag
@@ -487,15 +472,6 @@
                     })
                 }
             },
-            // 选择存储库穿梭框中数据改变事件
-            changeSelect (sourceList, targetList) {
-                this.repoBaseInfo.virtualStoreList = targetList
-            },
-            onChangeStoreSort (list) {
-                // 当用户点击了确定之后需要将组件返回的数组的数据值重新赋值给原来的穿梭框绑定的右侧的数组，因为穿梭框回显的数据是需要是之前的数组，不能改变其地址值
-                this.repoBaseInfo.virtualStoreList.splice(0, this.repoBaseInfo.virtualStoreList.length, ...list)
-                this.changeSelect(this.sourceRepoList, this.repoBaseInfo.virtualStoreList)
-            },
             getRepoInfoHandler () {
                 this.isLoading = true
                 this.getRepoInfo({
@@ -529,10 +505,8 @@
                     if (res.category === 'VIRTUAL') {
                         this.repoBaseInfo.virtualStoreList = res.configuration.repositoryList
                         this.targetRepoList = res.configuration.repositoryList.map(item => item.name)
-                        this.getSourceRepoList().then(() => {
-                            // 当后台返回的字段为null时需要将其设置为空字符串，否则会因为组件需要的参数类型不对应，导致选择框的placeholder不显示
-                            this.repoBaseInfo.deploymentRepo = res.configuration.deploymentRepo || ''
-                        })
+                        // 当后台返回的字段为null时需要将其设置为空字符串，否则会因为组件需要的参数类型不对应，导致选择框的placeholder不显示
+                        this.repoBaseInfo.deploymentRepo = res.configuration.deploymentRepo || ''
                     }
                     // 远程仓库，添加地址，账号密码和网络代理相关配置
                     if (res.category === 'REMOTE') {
@@ -662,6 +636,6 @@
 }
 .virtual-check-container{
     width: 96%;
-    height: 410px;
+    max-height: 300px;
 }
 </style>

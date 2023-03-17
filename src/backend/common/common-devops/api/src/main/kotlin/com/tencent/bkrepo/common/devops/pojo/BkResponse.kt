@@ -23,6 +23,10 @@ data class BkPage<T>(
     val next: String?
 )
 
+data class BkDepartmentId(
+    val id: Int
+)
+
 data class BkChildrenDepartment(
     val id: String,
     val name: String,
@@ -38,5 +42,9 @@ data class BkChildrenDepartment(
         if (this === other) return true
         if (other == null || other !is BkChildrenDepartment) return false
         return id == other.id && name == other.name
+    }
+
+    override fun hashCode(): Int {
+        return id.hashCode()
     }
 }

@@ -4,6 +4,7 @@ import com.tencent.bkrepo.auth.ciApi
 import com.tencent.bkrepo.auth.ciPermission
 import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_ADMIN
 import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_USER
+import com.tencent.bkrepo.auth.job.BkDepartmentCache
 import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.model.TPermission
 import com.tencent.bkrepo.auth.pojo.RegisterResourceRequest
@@ -22,10 +23,13 @@ import com.tencent.bkrepo.auth.util.query.PermissionQueryHelper
 import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.util.readJsonString
+import com.tencent.bkrepo.common.devops.BK_WHITELIST_USER
+import com.tencent.bkrepo.common.devops.client.BkClient
 import com.tencent.bkrepo.common.devops.client.DevopsClient
 import com.tencent.bkrepo.common.devops.conf.DevopsConf
 import com.tencent.bkrepo.common.devops.enums.InstanceType
 import com.tencent.bkrepo.common.devops.pojo.response.CanwayResponse
+import com.tencent.bkrepo.common.devops.util.http.DevopsHttpUtils
 import com.tencent.bkrepo.common.devops.util.http.SimpleHttpUtils
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
@@ -54,6 +58,12 @@ class CanwayPermissionServiceImpl(
 
     @Autowired
     lateinit var devopsClient: DevopsClient
+
+    @Autowired
+    lateinit var bkClient: BkClient
+
+    @Autowired
+    lateinit var bkDepartmentCache: BkDepartmentCache
 
     override fun deletePermission(id: String): Boolean {
         logger.info("delete  permission  repoName: [$id]")
@@ -122,26 +132,44 @@ class CanwayPermissionServiceImpl(
         roles: List<String>,
         departments: List<String>?
     ): Boolean {
-        // 走到这里鉴权请求 只会是仓库级别
         with(request) {
-            // 是否为仓库的管理者
             if (resourceType == ResourceType.REPO && repoName != null) {
-                val query = PermissionQueryHelper.buildPermissionCheck(
-                    projectId!!, repoName!!, uid, PermissionAction.MANAGE, resourceType, roles, departments
+                val filterDepartments = filterUserDepartment(departments, projectId!!)
+                // 是否为仓库的管理者
+                val manageQuery = PermissionQueryHelper.buildPermissionCheck(
+                        projectId!!,
+                        repoName!!,
+                        uid,
+                        PermissionAction.MANAGE,
+                        resourceType,
+                        roles,
+                        filterDepartments
                 )
-                val result = mongoTemplate.count(query, TPermission::class.java)
-                if (result != 0L) return true
-            }
-            // 是否为仓库使用者
-            if (resourceType == ResourceType.REPO && repoName != null) {
-                val query = PermissionQueryHelper.buildPermissionCheck(
-                    projectId!!, repoName!!, uid, action, resourceType, roles, departments
+                val manageResult = mongoTemplate.count(manageQuery, TPermission::class.java)
+                if (manageResult != 0L) return true
+                // 是否为仓库使用者
+                val userQuery = PermissionQueryHelper.buildPermissionCheck(
+                        projectId!!,
+                        repoName!!,
+                        uid,
+                        action,
+                        resourceType,
+                        roles,
+                        filterDepartments
                 )
-                val result = mongoTemplate.count(query, TPermission::class.java)
-                if (result != 0L) return true
+                val userResult = mongoTemplate.count(userQuery, TPermission::class.java)
+                if (userResult != 0L) return true
             }
         }
         return false
+    }
+
+    /**
+     * 过滤用户所属部门中没有在当前项目被授权的部门
+     */
+    private fun filterUserDepartment(departments: List<String>?, projectId: String): List<String>? {
+        val ciDepartments = devopsClient.departmentsByProjectId(projectId)?.map { it.id } ?: emptyList()
+        return departments?.filter { bkDepartmentCache.isParentDepartment(ciDepartments, it) }
     }
 
     override fun createPermission(request: CreatePermissionRequest): Boolean {
@@ -214,7 +242,20 @@ class CanwayPermissionServiceImpl(
         )
         // 过滤CI中的角色
         val ciProjectGroups = devopsClient.groupsByProjectId(projectId)?.map { it.id }
-        return listOf(repoAdmin, repoUser).map { transferCIPermission(it, ciProjectGroups) }
+        // 查询蓝鲸全部部门
+        val allDepartments = bkClient.allDepartmentIds(
+            bkUsername = BK_WHITELIST_USER,
+            bkToken = DevopsHttpUtils.getBkToken()
+        ).map { it.toString() }
+        logger.debug("$allDepartments")
+        val projectDepartments = devopsClient.departmentsByProjectId(projectId)?.map { it.id }?.distinct()
+        logger.debug("$projectDepartments")
+        // 过滤蓝鲸中不存在的部门
+        val departments = projectDepartments?.filter { allDepartments.contains(it) } ?: emptyList()
+        logger.debug("$departments")
+        return listOf(repoAdmin, repoUser).map {
+            transferCIPermission(it, ciProjectGroups, departments, allDepartments)
+        }
     }
 
     private fun checkPermissionExist(pId: String) {
@@ -312,7 +353,9 @@ class CanwayPermissionServiceImpl(
                 userId = userId,
                 type = ResourceType.PROJECT
             ).isNotEmpty()
-        ) return getAllRepoByProjectId(projectId)
+        ) {
+            return getAllRepoByProjectId(projectId)
+        }
 
         val repoList = mutableListOf<String>()
 
@@ -397,28 +440,38 @@ class CanwayPermissionServiceImpl(
         return "${devopsHost.removeSuffix("/")}$ciPermission$ciApi$uri"
     }
 
+    private fun transferCIPermission(
+        permission: TPermission,
+        ciProjectGroups: List<String>?,
+        ciDepartments: List<String>,
+        allDepartments: List<String>
+    ): Permission {
+        val roles = permission.roles.filter { ciProjectGroups?.contains(it) == true }
+        // 过滤CI项目下未授权的部门
+        val departments = permission.departments.filter {
+            allDepartments.contains(it) && bkDepartmentCache.isParentDepartment(ciDepartments, it)
+        }
+        return Permission(
+            id = permission.id,
+            resourceType = permission.resourceType,
+            projectId = permission.projectId,
+            permName = permission.permName,
+            repos = permission.repos,
+            includePattern = permission.includePattern,
+            excludePattern = permission.excludePattern,
+            users = permission.users,
+            roles = roles,
+            departments = departments,
+            actions = permission.actions,
+            createBy = permission.createBy,
+            createAt = permission.createAt,
+            updatedBy = permission.updatedBy,
+            updateAt = permission.updateAt
+        )
+    }
+
     companion object {
         val logger: Logger = LoggerFactory.getLogger(CanwayPermissionServiceImpl::class.java)
         const val ciUsersByProjectApi = "/service/resource_instance/view/project/%s"
-        fun transferCIPermission(permission: TPermission, ciProjectGroups: List<String>?): Permission {
-            val roles = permission.roles.filter { ciProjectGroups?.contains(it) == true }
-            return Permission(
-                id = permission.id,
-                resourceType = permission.resourceType,
-                projectId = permission.projectId,
-                permName = permission.permName,
-                repos = permission.repos,
-                includePattern = permission.includePattern,
-                excludePattern = permission.excludePattern,
-                users = permission.users,
-                roles = roles,
-                departments = permission.departments,
-                actions = permission.actions,
-                createBy = permission.createBy,
-                createAt = permission.createAt,
-                updatedBy = permission.updatedBy,
-                updateAt = permission.updateAt
-            )
-        }
     }
 }

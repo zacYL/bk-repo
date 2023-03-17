@@ -5,6 +5,7 @@ import com.tencent.bkrepo.auth.service.DepartmentService
 import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
+import com.tencent.bkrepo.common.devops.BK_WHITELIST_USER
 import com.tencent.bkrepo.common.devops.DEPLOY_CANWAY
 import com.tencent.bkrepo.common.devops.client.BkClient
 import com.tencent.bkrepo.common.devops.client.DevopsClient
@@ -12,6 +13,7 @@ import com.tencent.bkrepo.common.devops.pojo.BkCertificate
 import com.tencent.bkrepo.common.devops.pojo.BkChildrenDepartment
 import com.tencent.bkrepo.common.devops.pojo.BkDepartmentUser
 import com.tencent.bkrepo.common.devops.pojo.CertType
+import com.tencent.bkrepo.common.devops.util.http.DevopsHttpUtils.getBkToken
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -96,17 +98,6 @@ class CanwayDepartmentServiceImpl(
         )
     }
 
-    fun getBkToken(): String? {
-        val request = HttpContextHolder.getRequest()
-        val cookies = request.cookies
-        if (cookies != null) {
-            for (cookie in cookies) {
-                if (cookie.name == CertType.TOKEN.value) return cookie.value
-            }
-        }
-        return null
-    }
-
     override fun getUsersByDepartmentId(username: String?, departmentId: Int): List<BkDepartmentUser>? {
         return bkClient.listDepartmentProfiles(
             bkUsername = username,
@@ -120,8 +111,6 @@ class CanwayDepartmentServiceImpl(
         return devopsClient.departmentsByProjectId(projectId)?.map { it.id } ?: listOf()
     }
     companion object {
-        // 对接时要求该用户为白名单，不然无法获取到部门信息
-        const val BK_WHITELIST_USER = "admin"
         private val logger = LoggerFactory.getLogger(CanwayDepartmentServiceImpl::class.java)
     }
 }

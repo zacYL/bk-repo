@@ -57,6 +57,7 @@
 
             <template v-if="storeType === 'virtual'">
                 <bk-form-item :label="$t('select') + $t('storageStore')" property="virtualStoreList" :required="true" error-display-type="normal">
+                    <bk-button class="mb10" hover-theme="primary" :disabled="!repoBaseInfo.virtualStoreList.length" @click="onSortCheckedStore">{{ $t('storeSort') }}</bk-button>
                     <div class="virtual-check-container">
                         <bk-transfer
                             :title="[$t('repositoryList'), $t('selectedRepo')]"
@@ -179,14 +180,15 @@
             <bk-button @click="cancel">{{$t('cancel')}}</bk-button>
             <bk-button class="ml10" :loading="loading" theme="primary" @click="confirm">{{$t('confirm')}}</bk-button>
         </template>
+        <store-sort v-if="repoBaseInfo.virtualStoreList.length" ref="storeSortRef" title="已选存储库拖拽排序" :sort-list="initCheckStoreList" @changeStoreSort="onChangeStoreSort"></store-sort>
     </canway-dialog>
 </template>
 <script>
     import CardRadioGroup from '@repository/components/CardRadioGroup'
+    import StoreSort from '@repository/components/StoreSort'
     import { repoEnum, repoRemoteSupportEnum } from '@repository/store/publicEnum'
     import { mapActions } from 'vuex'
     import { isEmpty } from 'lodash'
-
     const getRepoBaseInfo = () => {
         return {
             type: 'generic',
@@ -236,7 +238,7 @@
 
     export default {
         name: 'createRepo',
-        components: { CardRadioGroup },
+        components: { CardRadioGroup, StoreSort },
         props: {
             // 当前仓库类型ID
             storeType: {
@@ -251,7 +253,8 @@
                 repoBaseInfo: getRepoBaseInfo(),
                 // 因为创建仓库时拆分为本地/远程/虚拟，远程仓库和虚拟仓库没有generic选项，所以需要重新组合
                 filterRepoEnum: repoEnum,
-                sourceRepoList: [] // 待选择的制品仓库列表
+                sourceRepoList: [], // 待选择的制品仓库列表
+                initCheckStoreList: [] // 子组件排序所需要的选中仓库的数组
             }
         },
         computed: {
@@ -423,6 +426,13 @@
         },
         methods: {
             ...mapActions(['createRepo', 'checkRepoName', 'getRepoListAll', 'testRemoteUrl']),
+            // 打开排序弹窗
+            onSortCheckedStore () {
+                // 因为穿梭框回显的数据是需要是之前的数组，不能改变其地址值，而组件内部修改props的值不允许，
+                // 所以此处先浅拷贝一份数据值传给子组件，在确定后再将子组件返回的数据值重新赋值给穿梭框回显的数组，供穿梭框回显
+                this.initCheckStoreList = [...this.repoBaseInfo.virtualStoreList]
+                this.$refs.storeSortRef && (this.$refs.storeSortRef.show = true)
+            },
             // 虚拟仓库弹窗中获取可供选择的远程和本地仓库列表
             getSourceRepoList () {
                 this.getRepoListAll({ projectId: this.projectId, type: this.repoBaseInfo.type, category: 'LOCAL,REMOTE' }).then(res => {
@@ -495,6 +505,12 @@
             changeSelect (sourceList, targetList) {
                 this.repoBaseInfo.virtualStoreList = targetList
             },
+            onChangeStoreSort (list) {
+                // 当用户点击了确定之后需要将组件返回的数组的数据值重新赋值给原来的穿梭框绑定的右侧的数组，因为穿梭框回显的数据是需要是之前的数组，不能改变其地址值
+                this.repoBaseInfo.virtualStoreList.splice(0, this.repoBaseInfo.virtualStoreList.length, ...list)
+                this.changeSelect(this.sourceRepoList, this.repoBaseInfo.virtualStoreList)
+            },
+           
             async confirm () {
                 await this.$refs.repoBaseInfo.validate()
                 const interceptors = []

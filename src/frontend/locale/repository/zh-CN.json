@@ -228,5 +228,6 @@
     "connectFailed":"连接失败",
     "noSelectStorageStore":"未选择仓库，不可创建虚拟仓库",
     "noAddedLocalStore":"未添加任何本地仓库，请选中本地仓库后再选择",
-    "addPackagePrompt":"上传包仅可以上传到已添加的本地仓库中"
+    "addPackagePrompt":"上传包仅可以上传到已添加的本地仓库中",
+    "storeSort":"选中仓库排序"
 }

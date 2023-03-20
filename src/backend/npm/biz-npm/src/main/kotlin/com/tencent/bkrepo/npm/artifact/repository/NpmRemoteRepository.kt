@@ -46,13 +46,17 @@ import com.tencent.bkrepo.common.artifact.repository.migration.MigrateDetail
 import com.tencent.bkrepo.common.artifact.repository.remote.RemoteRepository
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
+import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
 import com.tencent.bkrepo.common.storage.monitor.Throughput
 import com.tencent.bkrepo.npm.constants.NPM_FILE_FULL_PATH
 import com.tencent.bkrepo.npm.exception.NpmBadRequestException
+import com.tencent.bkrepo.npm.handler.NpmPackageHandler
+import com.tencent.bkrepo.npm.model.metadata.NpmVersionMetadata
 import com.tencent.bkrepo.npm.pojo.NpmSearchInfoMap
 import com.tencent.bkrepo.npm.pojo.NpmSearchResponse
 import com.tencent.bkrepo.npm.utils.NpmUtils
+import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import okhttp3.Request
@@ -65,7 +69,8 @@ import java.io.InputStream
 
 @Component
 class NpmRemoteRepository(
-    private val executor: ThreadPoolTaskExecutor
+    private val executor: ThreadPoolTaskExecutor,
+    private val npmPackageHandler: NpmPackageHandler
 ) : RemoteRepository() {
 
     override fun whitelistInterceptor(context: ArtifactDownloadContext) {
@@ -83,12 +88,18 @@ class NpmRemoteRepository(
         artifactResource: ArtifactResource,
         throughput: Throughput
     ) {
-        super.onDownloadSuccess(context, artifactResource, throughput)
         // 存储package-version.json文件
-        executor.execute { cachePackageVersionMetadata(context) }
+        executor.execute {
+            cachePackageVersionMetadata(context)?.run {
+                npmPackageHandler.createVersion(
+                    context.userId, context.artifactInfo,this, artifactResource.getTotalSize()
+                )
+            }
+            super.onDownloadSuccess(context, artifactResource, throughput)
+        }
     }
 
-    private fun cachePackageVersionMetadata(context: ArtifactDownloadContext) {
+    private fun cachePackageVersionMetadata(context: ArtifactDownloadContext): NpmVersionMetadata? {
         with(context) {
             val packageInfo = NpmUtils.parseNameAndVersionFromFullPath(artifactInfo.getArtifactFullPath())
             val versionMetadataFullPath = NpmUtils.getVersionPackageMetadataPath(packageInfo.first, packageInfo.second)
@@ -97,7 +108,7 @@ class NpmRemoteRepository(
                     "version metadata [$versionMetadataFullPath] is already exits " +
                         "in repo [$projectId/$repoName]"
                 )
-                return
+                return null
             }
             val remoteConfiguration = context.getRemoteConfiguration()
             val httpClient = createHttpClient(remoteConfiguration)
@@ -110,12 +121,15 @@ class NpmRemoteRepository(
             val request = Request.Builder().url(downloadUri).build()
             val response = httpClient.newCall(request).execute()
             logger.info("$response")
-            if (checkResponse(response)) {
+            return if (checkResponse(response)) {
                 val artifactFile = createTempFile(response.body()!!)
                 context.putAttribute(NPM_FILE_FULL_PATH, versionMetadataFullPath)
                 cacheArtifactFile(context, artifactFile)
                 logger.info("cache version metadata [$versionMetadataFullPath] success.")
-            }
+                artifactFile.getInputStream().use {
+                    JsonUtils.objectMapper.readValue(it, NpmVersionMetadata::class.java)
+                }
+            } else null
         }
     }
 
@@ -210,6 +224,18 @@ class NpmRemoteRepository(
             val message = "Unable to migrate npm package info a remote repository [$projectId/$repoName]"
             logger.warn(message)
             throw NpmBadRequestException(message)
+        }
+    }
+
+    override fun buildDownloadRecord(
+        context: ArtifactDownloadContext,
+        artifactResource: ArtifactResource
+    ): PackageDownloadRecord? {
+        with(context) {
+            val packageInfo = NpmUtils.parseNameAndVersionFromFullPath(artifactInfo.getArtifactFullPath())
+            with(packageInfo) {
+                return PackageDownloadRecord(projectId, repoName, PackageKeys.ofNpm(first), second, userId)
+            }
         }
     }
 

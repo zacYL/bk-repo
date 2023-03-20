@@ -33,13 +33,13 @@ package com.tencent.bkrepo.repository.service.node.impl
 
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_PROXY_PROJECT
-import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.repository.dao.NodeDao
 import com.tencent.bkrepo.repository.model.TNode
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
+import com.tencent.bkrepo.repository.pojo.repo.RepoListOption
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
 import com.tencent.bkrepo.repository.pojo.software.NodeOverviewResponse
 import com.tencent.bkrepo.repository.search.node.NodeQueryContext
@@ -67,27 +67,21 @@ class SoftwareNodeSearchServiceImpl(
         val rules = (queryModel.rule as Rule.NestedRule).rules
         var repoName: String? = null
         var projectId: String? = null
-        var repoType: RepositoryType? = null
+        var repoType: String? = null
         val otherField = mutableListOf<Rule>()
         for (rule in rules) {
             val queryRule = rule as Rule.QueryRule
-            if (queryRule.field == "repoName") {
-                repoName = queryRule.value as String
-                continue
+            when (queryRule.field) {
+                "repoName" -> repoName = queryRule.value as String
+                "projectId" -> projectId = queryRule.value as String
+                "repoType" -> repoType = queryRule.value as String
+                else -> otherField.add(rule)
             }
-            if (queryRule.field == "projectId") {
-                projectId = queryRule.value as String
-                continue
-            }
-            if (queryRule.field == "repoType") {
-                repoType = RepositoryType.valueOf(queryRule.value as String)
-                continue
-            }
-            otherField.add(rule)
         }
+        val option = RepoListOption(type = repoType)
         if (projectId == null) {
             val projectsRule = mutableListOf<Rule>()
-            val allSoftRepo = softwareRepositoryService.listRepo(type = repoType, includeGeneric = false)
+            val allSoftRepo = softwareRepositoryService.listRepo(option = option, includeGeneric = false)
             val projectMap = transRepoTree(allSoftRepo)
             projectMap.map { project ->
                 val projectRule = Rule.QueryRule(field = "projectId", value = project.key)
@@ -108,7 +102,7 @@ class SoftwareNodeSearchServiceImpl(
         }
         if (projectId != null && repoName == null) {
             val genericRepos =
-                softwareRepositoryService.listRepo(projectId, type = repoType, includeGeneric = false).map { it.name }
+                softwareRepositoryService.listRepo(projectId, option = option, includeGeneric = false).map { it.name }
             rules.add(Rule.QueryRule(field = "repoName", value = genericRepos, operation = OperationType.IN))
         }
         queryModel.rule = Rule.NestedRule(rules, Rule.NestedRule.RelationType.OR)

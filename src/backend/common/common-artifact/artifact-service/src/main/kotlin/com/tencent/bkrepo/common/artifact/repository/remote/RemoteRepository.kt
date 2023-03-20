@@ -210,7 +210,13 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
             if (logger.isDebugEnabled) {
                 logger.debug("Cached remote artifact[${context.repositoryDetail}] is hit.")
             }
-            ArtifactResource(this, context.artifactInfo.getResponseName(), cacheNode, ArtifactChannel.PROXY)
+            ArtifactResource(
+                this,
+                context.artifactInfo.getResponseName(),
+                cacheNode,
+                ArtifactChannel.PROXY,
+                context.useDisposition
+            )
         }
     }
 
@@ -255,7 +261,13 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
         val size = artifactFile.getSize()
         val artifactStream = artifactFile.getInputStream().artifactStream(Range.full(size))
         val node = cacheArtifactFile(context, artifactFile)
-        return ArtifactResource(artifactStream, context.artifactInfo.getResponseName(), node, ArtifactChannel.PROXY)
+        return ArtifactResource(
+            artifactStream,
+            context.artifactInfo.getResponseName(),
+            node,
+            ArtifactChannel.PROXY,
+            context.useDisposition
+        )
     }
 
     /**

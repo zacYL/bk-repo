@@ -126,6 +126,7 @@ class NodeSearchServiceImpl(
         list.sortedByDescending { it.count }.map { pojo ->
             val repoOverview = ProjectPackageOverview.RepoPackageOverview(
                 repoName = pojo.id,
+                repoCategory = repositoryService.getRepoInfo(projectId, pojo.id)?.category,
                 packages = pojo.count
             )
             projectSet.first().repos.add(repoOverview)

@@ -29,6 +29,9 @@ export default {
         userName () {
             return this.userInfo.username || '<USERNAME>'
         },
+        storeType () {
+            return this.$route.query.storeType || ''
+        },
         dockerGuide () {
             return [
                 {

@@ -157,7 +157,7 @@
                 })
                 this.getListData()
             },
-            toPackageList ({ projectId, repoType, name }) {
+            toPackageList ({ projectId, repoType, name, category }) {
                 this.$router.push({
                     name: repoType === 'generic' ? 'repoGeneric' : 'commonList',
                     params: {
@@ -165,7 +165,8 @@
                         repoType
                     },
                     query: {
-                        repoName: name
+                        repoName: name,
+                        storeType: category?.toLowerCase() || ''
                     }
                 })
             }

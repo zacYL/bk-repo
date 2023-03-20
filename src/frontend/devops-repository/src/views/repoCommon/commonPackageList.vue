@@ -217,7 +217,8 @@
                     name: 'commonPackage',
                     query: {
                         repoName: this.repoName,
-                        packageKey: pkg.key
+                        packageKey: pkg.key,
+                        storeType: this.storeType
                     }
                 })
             }

@@ -39,7 +39,7 @@
                                 class="version-operation"
                                 :list="[
                                     ...(!$version.metadata.forbidStatus ? [
-                                        permission.edit && {
+                                        showPromotion && {
                                             label: '晋级', clickEvent: () => changeStageTagHandler($version),
                                             disabled: ($version.stageTag || '').includes('@release')
                                         },
@@ -47,7 +47,7 @@
                                         isEnterprise && showRepoScan && { label: '安全扫描', clickEvent: () => scanPackageHandler($version) }
                                     ] : []),
                                     showRepoScan && { clickEvent: () => changeForbidStatusHandler($version), label: $version.metadata.forbidStatus ? '解除禁止' : '禁止使用' },
-                                    permission.delete && { label: '删除', clickEvent: () => deleteVersionHandler($version) }
+                                    (permission.delete && !(storeType === 'virtual')) && { label: '删除', clickEvent: () => deleteVersionHandler($version) }
                                 ]"></operation-list>
                         </div>
                     </infinite-scroll>
@@ -139,8 +139,19 @@
             currentVersion () {
                 return this.versionList.find(version => version.name === this.version)
             },
+            // 当前仓库类型，本地/远程/虚拟/组合
+            storeType () {
+                return this.$route.query.storeType || ''
+            },
             showRepoScan () {
-                return Object.keys(scanTypeEnum).join(',').toLowerCase().includes(this.repoType)
+                // 软件源模式下屏蔽安全扫描和禁用操作
+                // 虚拟仓库屏蔽安全扫描和禁用操作
+                return Object.keys(scanTypeEnum).join(',').toLowerCase().includes(this.repoType) && !(this.storeType === 'virtual')
+            },
+            // 是否显示晋级操作
+            showPromotion () {
+                // 远程或虚拟仓库不显示晋级操作
+                return this.permission.edit && !(this.storeType === 'remote') && !(this.storeType === 'virtual')
             }
         },
         created () {

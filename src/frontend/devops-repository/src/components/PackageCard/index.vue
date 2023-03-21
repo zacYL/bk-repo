@@ -28,7 +28,7 @@
                     <div class="card-metadata" :title="`最后修改：${formatDate(cardData.lastModifiedDate)}`"></div>
                     <div class="card-metadata" :title="`版本数：${cardData.versions}`"></div>
                     <div class="card-metadata" :title="`下载统计：${cardData.downloads}`"></div>
-                    <div v-if="storeType === 'remote'" class="card-metadata" :title="`仓库来源：${cardData.repoName}`"></div>
+                    <div v-if="storeType === 'virtual'" class="card-metadata" :title="`仓库来源：${cardData.repoName}`"></div>
                 </template>
                 <template v-else>
                     <div class="card-metadata" :title="`所属仓库：${cardData.repoName}`"></div>
@@ -38,7 +38,7 @@
             </div>
         </div>
         <div class="card-operation flex-center">
-            <Icon class="hover-btn" v-if="!readonly && !(storeType === 'remote') " size="24" name="icon-delete" @click.native.stop="deleteCard" />
+            <Icon class="hover-btn" v-if="!readonly && !(storeType === 'virtual') " size="24" name="icon-delete" @click.native.stop="deleteCard" />
             <operation-list
                 v-if="!cardData.type"
                 :list="[

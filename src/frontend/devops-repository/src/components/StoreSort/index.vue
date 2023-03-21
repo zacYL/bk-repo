@@ -6,7 +6,7 @@
             <div class="sort-category">{{$t('storeTypes')}}</div>
             <div class="sort-operation">{{$t('operation')}}</div>
         </div>
-        <draggable v-if="list.length" :list="list" :options="{ animation: 200,sort: true }">
+        <draggable class="sort-content" v-if="list.length" :list="list" :options="{ animation: 200,sort: true }">
             <div class="sort-item" v-for="(item,index) in list" :key="item.name + Math.random()">
                 <div class="sort-index flex-center"><Icon name="drag" size="16" /></div>
                 <div class="sort-name">{{item.name}}</div>
@@ -49,8 +49,7 @@
 </script>
 <style lang="scss" scoped>
 .store-sort-body{
-    max-height: 300px;
-    overflow-y: auto;
+    overflow: hidden;
 }
     .sort-item,
     .sort-head {
@@ -76,7 +75,11 @@
         color: var(--fontSubsidiaryColor);
         background-color: var(--bgColor);
     }
-    .sort-item {
+    .sort-item{
         cursor: move;
+    }
+    .sort-content {
+        max-height:200px;
+        overflow-y: auto
     }
 </style>

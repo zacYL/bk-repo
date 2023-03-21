@@ -639,6 +639,5 @@
 }
 .virtual-check-container{
     width: 96%;
-    max-height: 300px;
 }
 </style>

@@ -295,7 +295,7 @@
                 const checkStorageRule = [
                     {
                         required: true,
-                        message: this.$t('noSelectStorageStore'),
+                        message: this.$t('noSelectStorageStore') + this.$t('create') + this.$t('virtualStore'),
                         trigger: 'blur'
                     }
                 ]

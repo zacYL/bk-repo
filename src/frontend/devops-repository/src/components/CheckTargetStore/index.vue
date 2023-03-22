@@ -42,6 +42,7 @@
 </template>
 <script>
     import { mapActions } from 'vuex'
+    import { cloneDeep } from 'lodash'
     export default {
         name: 'checkTargetStore',
         components: { },
@@ -73,7 +74,9 @@
                     limit: 10,
                     limitList: [10, 20, 40]
                 },
-                newCheckedList: []
+                newCheckedList: [], // 表格中选中的数据
+                tempCheckList: [], // 在加载下一页时临时存储之前页面选中的数据
+                currentPageList: [] // 当前分页的接口返回的数据
             }
         },
         computed: {
@@ -85,7 +88,7 @@
             show (val) {
                 if (val) {
                     this.handlerPaginationChange()
-                    this.setCheckData()
+                    // this.setCheckData()
                 } else {
                     this.storeList = []
                 }
@@ -106,6 +109,8 @@
             },
             // 获取列表数据
             getStoreList () {
+                // 在获取下一页数据之前需要先将之前选中的数据临时存储起来
+                this.tempCheckList = cloneDeep(this.newCheckedList)
                 this.isLoading = true
                 this.getRepoList({
                     projectId: this.projectId,
@@ -114,6 +119,7 @@
                     type: this.repoType,
                     category: 'LOCAL,REMOTE'
                 }).then((res) => {
+                    this.currentPageList = res?.records || []
                     this.storeList = this.storeList.concat(res.records)
                     if (res.records.length < this.pagination.limit) {
                         this.hasNext = false
@@ -133,8 +139,13 @@
             setCheckData () {
                 this.$nextTick(() => {
                     if (this.checkList.length > 0) {
-                        const selected = this.storeList.filter(store => this.checkList.map(item => item.name).includes(store.name))
-                        selected.forEach(item => {
+                        // 获取当前页的默认选中数据
+                        const selected = this.currentPageList.filter(store => this.checkList.map(item => item.name).includes(store.name))
+                        // 获取之前页面的选中数据
+                        const selectedTwo = this.storeList.filter(store => this.tempCheckList.map(item => item.name).includes(store.name))
+                        // 获取当前表格全部选中的数据
+                        const selectList = selected.concat(selectedTwo)
+                        selectList.forEach(item => {
                             this.$refs.checkStoreTableRef && this.$refs.checkStoreTableRef.toggleRowSelection(item, true)
                         })
                     }

@@ -216,7 +216,7 @@
                 this.$router.push({
                     name: 'commonPackage',
                     query: {
-                        repoName: this.repoName,
+                        repoName: this.storeType === 'virtual' ? pkg.repoName : this.repoName,
                         packageKey: pkg.key,
                         storeType: this.storeType
                     }

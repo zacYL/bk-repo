@@ -402,6 +402,12 @@
                         this.repoBaseInfo.deploymentRepo = ''
                     }
                 }
+            },
+            'repoBaseInfo.type': {
+                // 当选择的仓库类型改变时需要将选择的存储库重置为空
+                handler () {
+                    this.repoBaseInfo.virtualStoreList = []
+                }
             }
         },
         methods: {

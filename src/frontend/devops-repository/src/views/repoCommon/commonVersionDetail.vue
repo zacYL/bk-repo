@@ -288,7 +288,7 @@
                 this.getVersionDetail({
                     projectId: this.projectId,
                     repoType: this.repoType,
-                    repoName: this.repoName,
+                    repoName: this.storeType === 'virtual' ? this.sourceRepoName : this.repoName,
                     packageKey: this.packageKey,
                     version: this.version
                 }).then(res => {

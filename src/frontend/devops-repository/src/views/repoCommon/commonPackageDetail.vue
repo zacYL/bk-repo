@@ -151,6 +151,10 @@
             showPromotion () {
                 // 远程或虚拟仓库不显示晋级操作
                 return this.permission.edit && !(this.storeType === 'remote') && !(this.storeType === 'virtual')
+            },
+            // 虚拟仓库的仓库来源，虚拟仓库时需要更换repoName为此值
+            sourceRepoName () {
+                return this.$route.query.sourceName || ''
             }
         },
         created () {
@@ -188,7 +192,8 @@
                     packageKey: this.packageKey,
                     current: this.pagination.current,
                     limit: this.pagination.limit,
-                    version: this.versionInput
+                    version: this.versionInput,
+                    srcRepo: this.sourceRepoName || undefined
                 }).then(({ records, totalRecords }) => {
                     load ? this.versionList.push(...records) : (this.versionList = records)
                     this.pagination.count = totalRecords
@@ -213,7 +218,7 @@
                 this.infoLoading = true
                 this.getPackageInfo({
                     projectId: this.projectId,
-                    repoName: this.repoName,
+                    repoName: this.storeType === 'virtual' ? this.sourceRepoName : this.repoName,
                     packageKey: this.packageKey
                 }).then(info => {
                     this.pkg = info

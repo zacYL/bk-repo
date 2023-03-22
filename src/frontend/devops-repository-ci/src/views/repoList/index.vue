@@ -45,7 +45,7 @@
                     class="ml10 w250"
                     @change="handlerPaginationChange()"
                     :placeholder="$t('allStoreTypes')">
-                    <bk-option v-for="category in storeTypeEnum" :key="category.id" :id="category.id" :name="category.name">
+                    <bk-option v-for="category in storeTypeEnum" :key="category.id" :id="category.id" :name="$t(category.name)">
                         <div class="flex-align-center">
                             <Icon size="20" :name="category.icon" />
                             <span class="ml10 flex-1 text-overflow">{{$t(category.name)}}</span>
@@ -220,7 +220,7 @@
                 this.currentStoreType = type
                 this.$refs.createRepo.showDialogHandler()
             },
-            toPackageList ({ projectId, repoType, name }) {
+            toPackageList ({ projectId, repoType, name, category }) {
                 this.$router.push({
                     name: repoType === 'generic' ? 'repoGeneric' : 'commonList',
                     params: {
@@ -228,7 +228,8 @@
                         repoType
                     },
                     query: {
-                        repoName: name
+                        repoName: name,
+                        storeType: category?.toLowerCase() || ''
                     }
                 })
             },

@@ -69,7 +69,7 @@
                             批量下载
                         </bk-button>
                         <bk-button class="ml10"
-                            v-if="multiSelect.length"
+                            v-if="multiSelect.length && !$route.path.startsWith('/software')"
                             @click="handlerMultiDelete()">
                             批量删除
                         </bk-button>
@@ -150,21 +150,21 @@
                                         !row.folder && handlerPreview(row) && { clickEvent: () => handlerPreview(row, true), label: $t('preview') },
                                         { clickEvent: () => handlerDownload(row), label: $t('download') },
                                         ...(repoName !== 'pipeline' ? [
-                                            permission.edit && { clickEvent: () => renameRes(row), label: $t('rename') },
-                                            permission.write && { clickEvent: () => moveRes(row), label: $t('move') },
-                                            permission.write && { clickEvent: () => copyRes(row), label: $t('copy') }
+                                            (permission.edit && !$route.path.startsWith('/software')) && { clickEvent: () => renameRes(row), label: $t('rename') },
+                                            (permission.write && !$route.path.startsWith('/software')) && { clickEvent: () => moveRes(row), label: $t('move') },
+                                            (permission.write && !$route.path.startsWith('/software')) && { clickEvent: () => copyRes(row), label: $t('copy') }
                                         ] : []),
                                         ...(!row.folder ? [
                                             { clickEvent: () => handlerShare(row), label: $t('share') },
-                                            genericScanFileTypes.includes(row.name.replace(/^.+\.([^.]+)$/, '$1'))
+                                            ( genericScanFileTypes.includes(row.name.replace(/^.+\.([^.]+)$/, '$1')) && !$route.path.startsWith('/software'))
                                                 && { clickEvent: () => handlerScan(row), label: '安全扫描' }
                                         ] : []),
                                         ...(row.folder ? [
                                             { clickEvent: () => handlerShare(row), label: $t('share') }
                                         ] : [])
                                     ] : []),
-                                    !row.folder && { clickEvent: () => handlerForbid(row), label: row.metadata.forbidStatus ? '解除禁止' : '禁止使用' },
-                                    permission.delete && { clickEvent: () => deleteRes(row), label: $t('delete') }
+                                    (!row.folder && !$route.path.startsWith('/software') ) && { clickEvent: () => handlerForbid(row), label: row.metadata.forbidStatus ? '解除禁止' : '禁止使用' },
+                                    (permission.delete && !$route.path.startsWith('/software')) && { clickEvent: () => deleteRes(row), label: $t('delete') }
                                 ]">
                             </operation-list>
                         </template>

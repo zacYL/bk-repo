@@ -217,7 +217,8 @@
     "selectedRepo":"Selected repo",
     "successConnectServer":"Success connect server",
     "connectFailed":"Connect failed",
-    "noSelectStorageStore":"No store is selected, virtual store cannot be created",
+    "noSelectStorageStore":"Please select the store",
     "noAddedLocalStore":"No local store has been added, please select the local store and then select",
-    "addPackagePrompt":"The upload package can only be uploaded to the added local store"
+    "addPackagePrompt":"The upload package can only be uploaded to the added local store",
+    "storeSort":"Select store sort"
 }

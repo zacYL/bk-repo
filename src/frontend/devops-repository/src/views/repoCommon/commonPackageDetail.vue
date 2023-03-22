@@ -39,7 +39,7 @@
                                 class="version-operation"
                                 :list="[
                                     ...(!$version.metadata.forbidStatus ? [
-                                        permission.edit && {
+                                        showPromotion && {
                                             label: '晋级', clickEvent: () => changeStageTagHandler($version),
                                             disabled: ($version.stageTag || '').includes('@release')
                                         },
@@ -47,7 +47,7 @@
                                         showRepoScan && { label: '安全扫描', clickEvent: () => scanPackageHandler($version) }
                                     ] : []),
                                     showRepoScan && { clickEvent: () => changeForbidStatusHandler($version), label: $version.metadata.forbidStatus ? '解除禁止' : '禁止使用' },
-                                    permission.delete && { label: '删除', clickEvent: () => deleteVersionHandler($version) }
+                                    (permission.delete && !$route.path.startsWith('/software') && !(storeType === 'virtual')) && { label: '删除', clickEvent: () => deleteVersionHandler($version) }
                                 ]"></operation-list>
                         </div>
                     </infinite-scroll>
@@ -138,8 +138,23 @@
             currentVersion () {
                 return this.versionList.find(version => version.name === this.version)
             },
+            // 当前仓库类型
+            storeType () {
+                return this.$route.query.storeType || ''
+            },
             showRepoScan () {
-                return Object.keys(scanTypeEnum).join(',').toLowerCase().includes(this.repoType)
+                // 软件源模式下屏蔽安全扫描和禁用操作
+                // 虚拟仓库屏蔽安全扫描和禁用操作
+                return Object.keys(scanTypeEnum).join(',').toLowerCase().includes(this.repoType) && !this.$route.path.startsWith('/software') && !(this.storeType === 'virtual')
+            },
+            // 是否显示晋级操作
+            showPromotion () {
+                // 远程或虚拟仓库不显示晋级操作
+                return this.permission.edit && !(this.storeType === 'remote') && !(this.storeType === 'virtual')
+            },
+            // 虚拟仓库的仓库来源，虚拟仓库时需要更换repoName为此值
+            sourceRepoName () {
+                return this.$route.query.sourceName || ''
             }
         },
         created () {
@@ -177,7 +192,8 @@
                     packageKey: this.packageKey,
                     current: this.pagination.current,
                     limit: this.pagination.limit,
-                    version: this.versionInput
+                    version: this.versionInput,
+                    srcRepo: this.sourceRepoName || undefined
                 }).then(({ records, totalRecords }) => {
                     load ? this.versionList.push(...records) : (this.versionList = records)
                     this.pagination.count = totalRecords
@@ -202,7 +218,7 @@
                 this.infoLoading = true
                 this.getPackageInfo({
                     projectId: this.projectId,
-                    repoName: this.repoName,
+                    repoName: this.storeType === 'virtual' ? this.sourceRepoName : this.repoName,
                     packageKey: this.packageKey
                 }).then(info => {
                     this.pkg = info

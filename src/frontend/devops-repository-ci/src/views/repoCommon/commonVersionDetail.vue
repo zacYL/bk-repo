@@ -16,6 +16,13 @@
                         <span class="text-overflow" :title="packageName">{{ packageName }}</span>
                         <span v-if="detail.basic.groupId" class="ml5 repo-tag"> {{ detail.basic.groupId }} </span>
                     </span>
+                    <template v-if="storeType === 'virtual'">
+                        <label class="grid-store-source">仓库来源</label>
+                        <span class="flex-1 flex-align-center text-overflow">
+                            <icon class="mr10" size="20" :name="(storeType || 'local') + '-store'" />
+                            <span class="text-overflow" :title="repoName">{{ repoName }}</span>
+                        </span>
+                    </template>
                 </div>
                 <div class="grid-item"
                     v-for="{ name, label, value } in detailInfoMap"
@@ -245,7 +252,7 @@
                 }, {})
             },
             showRepoScan () {
-                return Object.keys(scanTypeEnum).join(',').toLowerCase().includes(this.repoType)
+                return Object.keys(scanTypeEnum).join(',').toLowerCase().includes(this.repoType) && !this.$route.path.startsWith('/software') && !(this.storeType === 'virtual')
             },
             operationBtns () {
                 const basic = this.detail.basic
@@ -253,12 +260,12 @@
                 return [
                     ...(!metadataMap.forbidStatus
                         ? [
-                            this.permission.edit && { clickEvent: () => this.$emit('tag'), label: '晋级', disabled: (basic.stageTag || '').includes('@release') },
+                            (this.permission.edit && !(this.storeType === 'remote') && !(this.storeType === 'virtual')) && { clickEvent: () => this.$emit('tag'), label: '晋级', disabled: (basic.stageTag || '').includes('@release') },
                             this.isEnterprise && this.showRepoScan && { clickEvent: () => this.$emit('scan'), label: '安全扫描' }
                         ]
                         : []),
                     this.showRepoScan && { clickEvent: () => this.$emit('forbid'), label: metadataMap.forbidStatus ? '解除禁止' : '禁止使用' },
-                    this.permission.delete && { clickEvent: () => this.$emit('delete'), label: this.$t('delete') }
+                    (this.permission.delete && !this.$route.path.startsWith('/software') && !(this.storeType === 'virtual')) && { clickEvent: () => this.$emit('delete'), label: this.$t('delete') }
                 ]
             }
         },
@@ -306,7 +313,7 @@
                         }
                     }
                     if (this.repoType === 'docker') {
-                        this.selectedHistory = res.history[0] || {}
+                        this.selectedHistory = (res?.history && res?.history[0]) || {}
                     }
                     // 此时不能在HTML中直接使用repoType，如果直接使用会导致该tab页提前被渲染，出现在其他tab页之前，不符合产品要求
                     this.detailType = this.repoType
@@ -410,6 +417,10 @@
         .block-header {
             border-bottom: 1px solid var(--borderWeightColor);
         }
+    }
+    .grid-store-source{
+        border-left: 1px solid var(--borderColor);;
+        margin:0 1px 0 0;
     }
     .version-history {
         height: 100%;

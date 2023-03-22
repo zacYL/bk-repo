@@ -53,31 +53,14 @@
                         
                     <template v-if="repoBaseInfo.category === 'VIRTUAL'">
                         <bk-form-item :label=" $t('select') + $t('storageStore')" property="virtualStoreList" :required="true" error-display-type="normal">
+                            <bk-button class="mb10" hover-theme="primary" @click="toCheckedStore">{{ $t('pleaseSelect') }}</bk-button>
                             <div class="virtual-check-container">
-                                <bk-transfer
-                                    :title="[$t('repositoryList'), $t('selectedRepo')]"
-                                    :source-list="sourceRepoList"
-                                    :target-list="targetRepoList"
-                                    display-key="name"
-                                    setting-key="name"
-                                    searchable
-                                    show-overflow-tips
-                                    @change="changeSelect">
-                                    <template #source-option="{ name, category }">
-                                        <div class="flex-align-center flex-1">
-                                            <Icon size="16" :name="category === 'LOCAL' ? 'local-store' : 'remote-store'" />
-                                            <span class="ml10 flex-1 text-overflow" :title="name">{{ name }}</span>
-                                            <i class="bk-icon icon-arrows-right"></i>
-                                        </div>
-                                    </template>
-                                    <template #target-option="{ name, category }">
-                                        <div class="flex-align-center flex-1">
-                                            <Icon size="16" :name="category === 'LOCAL' ? 'local-store' : 'remote-store'" />
-                                            <span class="ml10 flex-1 text-overflow" :title="name">{{ name }}</span>
-                                            <i class="bk-icon icon-close"></i>
-                                        </div>
-                                    </template>
-                                </bk-transfer>
+                                <store-sort
+                                    v-if="repoBaseInfo.virtualStoreList.length"
+                                    :key="repoBaseInfo.virtualStoreList"
+                                    ref="storeSortRef"
+                                    :sort-list="repoBaseInfo.virtualStoreList"
+                                    @update="onUpdateList"></store-sort>
                             </div>
                         </bk-form-item>
                         <bk-form-item :label="$t('uploadTargetStore')" property="deploymentRepo">
@@ -188,6 +171,12 @@
                 <permission-config :category="repoBaseInfo.category"></permission-config>
             </bk-tab-panel>
         </bk-tab>
+        <check-target-store
+            ref="checkTargetStoreRef"
+            :repo-type="repoBaseInfo.type"
+            :check-list="repoBaseInfo.virtualStoreList"
+            @checkedTarget="onCheckedTargetStore">
+        </check-target-store>
     </div>
 </template>
 <script>
@@ -195,6 +184,8 @@
     // import proxyConfig from '@repository/views/repoConfig/proxyConfig'
     import cleanConfig from '@repository/views/repoConfig/cleanConfig'
     import permissionConfig from './permissionConfig'
+    import CheckTargetStore from '@repository/components/CheckTargetStore'
+    import StoreSort from '@repository/components/StoreSort'
     import { mapState, mapActions } from 'vuex'
     import { isEmpty } from 'lodash'
 
@@ -204,7 +195,9 @@
             CardRadioGroup,
             // proxyConfig,
             cleanConfig,
-            permissionConfig
+            permissionConfig,
+            StoreSort,
+            CheckTargetStore
         },
         data () {
             return {
@@ -253,9 +246,7 @@
                     // 虚拟仓库的选中的存储库列表
                     virtualStoreList: [],
                     deploymentRepo: '' // 虚拟仓库中选择存储的本地仓库
-                },
-                sourceRepoList: [],
-                targetRepoList: [] // 穿梭框中右边选中框默认初始化回显数据
+                }
             }
         },
         computed: {
@@ -359,7 +350,7 @@
                 const checkStorageRule = [
                     {
                         required: true,
-                        message: this.$t('noSelectStorageStore'),
+                        message: this.$t('noSelectStorageStore') + this.$t('save'),
                         trigger: 'blur'
                     }
                 ]
@@ -409,7 +400,10 @@
             },
             deploymentRepoCheckList: {
                 handler (val) {
-                    !val.length && (this.repoBaseInfo.deploymentRepo = '')
+                    // 当选中的存储库中没有本地仓库或者当前选中的上传目标仓库不在被选中的存储库中时需要将当前选中的上传目标仓库重置为空
+                    if (!val.length || !(val.map((item) => item.name).includes(this.repoBaseInfo.deploymentRepo))) {
+                        this.repoBaseInfo.deploymentRepo = ''
+                    }
                 }
             }
         },
@@ -418,12 +412,18 @@
             this.getRepoInfoHandler()
         },
         methods: {
-            ...mapActions(['getRepoInfo', 'updateRepoInfo', 'getDomain', 'getRepoListAll', 'testRemoteUrl']),
-            // 虚拟仓库弹窗中获取可供选择的远程和本地仓库列表
-            getSourceRepoList () {
-                return this.getRepoListAll({ projectId: this.projectId, type: this.repoBaseInfo.type, category: 'LOCAL,REMOTE' }).then(res => {
-                    this.sourceRepoList = res
-                })
+            ...mapActions(['getRepoInfo', 'updateRepoInfo', 'getDomain', 'testRemoteUrl']),
+            // 打开选择存储库弹窗
+            toCheckedStore () {
+                this.$refs.checkTargetStoreRef && (this.$refs.checkTargetStoreRef.show = true)
+            },
+            // 当删除了选中的存储库时
+            onUpdateList (list) {
+                this.repoBaseInfo.virtualStoreList = list
+            },
+            // 选中的存储库弹窗确认事件
+            onCheckedTargetStore (list) {
+                this.repoBaseInfo.virtualStoreList = list
             },
             handleOverrideChange (isFlag) {
                 this.repoBaseInfo.override.switcher = isFlag
@@ -472,10 +472,6 @@
                     })
                 }
             },
-            // 选择存储库穿梭框中数据改变事件
-            changeSelect (sourceList, targetList) {
-                this.repoBaseInfo.virtualStoreList = targetList
-            },
             getRepoInfoHandler () {
                 this.isLoading = true
                 this.getRepoInfo({
@@ -509,10 +505,8 @@
                     if (res.category === 'VIRTUAL') {
                         this.repoBaseInfo.virtualStoreList = res.configuration.repositoryList
                         this.targetRepoList = res.configuration.repositoryList.map(item => item.name)
-                        this.getSourceRepoList().then(() => {
-                            // 当后台返回的字段为null时需要将其设置为空字符串，否则会因为组件需要的参数类型不对应，导致选择框的placeholder不显示
-                            this.repoBaseInfo.deploymentRepo = res.configuration.deploymentRepo || ''
-                        })
+                        // 当后台返回的字段为null时需要将其设置为空字符串，否则会因为组件需要的参数类型不对应，导致选择框的placeholder不显示
+                        this.repoBaseInfo.deploymentRepo = res.configuration.deploymentRepo || ''
                     }
                     // 远程仓库，添加地址，账号密码和网络代理相关配置
                     if (res.category === 'REMOTE') {
@@ -642,6 +636,5 @@
 }
 .virtual-check-container{
     width: 96%;
-    height: 410px;
 }
 </style>

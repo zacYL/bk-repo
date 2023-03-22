@@ -217,7 +217,10 @@
                     name: 'commonPackage',
                     query: {
                         repoName: this.repoName,
-                        packageKey: pkg.key
+                        packageKey: pkg.key,
+                        storeType: this.storeType,
+                        // 虚拟仓库中需要添加仓库来源，供制品详情页获取制品版本列表数据使用
+                        sourceName: this.storeType === 'virtual' ? pkg.repoName || '' : undefined
                     }
                 })
             }
@@ -268,7 +271,7 @@
         }
     }
     .common-package-list {
-        height: calc(100% - 150px);
+        height: calc(100% - 120px);
         padding: 0 20px;
         background-color: white;
         .list-count {
@@ -277,7 +280,7 @@
         }
     }
     .empty-guide {
-        height: calc(100% - 100px);
+        height: calc(100% - 70px);
         background-color: white;
         overflow-y: auto;
     }

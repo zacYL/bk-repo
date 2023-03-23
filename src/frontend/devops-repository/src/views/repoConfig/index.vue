@@ -1,6 +1,6 @@
 <template>
     <div class="repo-config-container" v-bkloading="{ isLoading }">
-        <bk-tab class="repo-config-tab page-tab" type="unborder-card" :active.sync="tabName">
+        <bk-tab v-if="showTabPanel" class="repo-config-tab page-tab" type="unborder-card" :active.sync="tabName">
             <bk-tab-panel name="baseInfo" :label="$t('repoBaseInfo')">
                 <bk-form ref="repoBaseInfo" class="repo-base-info" :label-width="120" :model="repoBaseInfo" :rules="rules">
                     <bk-form-item :label="$t('repoName')">
@@ -161,9 +161,9 @@
                     </bk-form-item>
                 </bk-form>
             </bk-tab-panel>
-            <!-- <bk-tab-panel v-if="showProxyConfigTab" name="proxyConfig" :label="$t('proxyConfig')">
+            <bk-tab-panel v-if="showProxyConfigTab" name="proxyConfig" :label="$t('proxyConfig')">
                 <proxy-config :base-data="repoBaseInfo" @refresh="getRepoInfoHandler"></proxy-config>
-            </bk-tab-panel> -->
+            </bk-tab-panel>
             <bk-tab-panel v-if="showCleanConfigTab" render-directive="if" name="cleanConfig" label="清理设置">
                 <clean-config :base-data="repoBaseInfo" @refresh="getRepoInfoHandler"></clean-config>
             </bk-tab-panel>
@@ -181,7 +181,7 @@
 </template>
 <script>
     import CardRadioGroup from '@repository/components/CardRadioGroup'
-    // import proxyConfig from '@repository/views/repoConfig/proxyConfig'
+    import proxyConfig from '@repository/views/repoConfig/proxyConfig'
     import cleanConfig from '@repository/views/repoConfig/cleanConfig'
     import permissionConfig from './permissionConfig'
     import CheckTargetStore from '@repository/components/CheckTargetStore'
@@ -193,7 +193,7 @@
         name: 'repoConfig',
         components: {
             CardRadioGroup,
-            // proxyConfig,
+            proxyConfig,
             cleanConfig,
             permissionConfig,
             StoreSort,
@@ -245,7 +245,9 @@
                     },
                     // 虚拟仓库的选中的存储库列表
                     virtualStoreList: [],
-                    deploymentRepo: '' // 虚拟仓库中选择存储的本地仓库
+                    deploymentRepo: '', // 虚拟仓库中选择存储的本地仓库
+                    // 是否展示tab标签页，因为代理设置和清理设置需要根据详情页接口返回的数据判断是否显示，解决异步导致的tab顺序错误的问题
+                    showTabPanel: false
                 }
             }
         },
@@ -260,15 +262,11 @@
             repoType () {
                 return this.$route.params.repoType
             },
-            // showProxyConfigTab () {
-            //     return ['maven', 'npm', 'pypi', 'composer', 'nuget'].includes(this.repoType)
-            // },
+            showProxyConfigTab () {
+                return this.repoBaseInfo.category === 'COMPOSITE' && ['maven', 'npm', 'pypi', 'composer', 'nuget'].includes(this.repoType)
+            },
             showCleanConfigTab () {
-                if (this.repoBaseInfo.category === 'LOCAL') {
-                    return ['maven', 'docker', 'npm', 'helm', 'generic'].includes(this.repoType)
-                } else {
-                    return false
-                }
+                return (this.repoBaseInfo.category === 'LOCAL' || this.repoBaseInfo.category === 'COMPOSITE') && ['maven', 'docker', 'npm', 'helm', 'generic'].includes(this.repoType)
             },
             repoAddress () {
                 const { repoType, name } = this.repoBaseInfo
@@ -541,6 +539,8 @@
                     }
                 }).finally(() => {
                     this.isLoading = false
+                    // 不论接口返回数据是否成功，都需要显示tab标签页
+                    this.showTabPanel = true
                 })
             },
             async saveBaseInfo () {

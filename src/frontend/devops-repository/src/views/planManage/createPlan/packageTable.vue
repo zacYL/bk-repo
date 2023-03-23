@@ -64,7 +64,7 @@
             repoGroupList () {
                 return this.repoListAll
                     .filter(r => {
-                        return ['DOCKER', 'MAVEN', 'NPM'].includes(r.type)
+                        return ['DOCKER', 'MAVEN', 'NPM'].includes(r.type) && r.category !== 'REMOTE' && r.category !== 'VIRTUAL'
                     })
                     .reduce((target, repo) => {
                         if (!target[repo.type]) target[repo.type] = []

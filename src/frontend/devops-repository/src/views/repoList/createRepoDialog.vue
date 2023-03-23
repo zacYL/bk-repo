@@ -59,7 +59,12 @@
                 <bk-form-item :label="$t('select') + $t('storageStore')" property="virtualStoreList" :required="true" error-display-type="normal">
                     <bk-button class="mb10" hover-theme="primary" @click="toCheckedStore">{{ $t('pleaseSelect') }}</bk-button>
                     <div class="virtual-check-container">
-                        <store-sort v-if="repoBaseInfo.virtualStoreList.length" ref="storeSortRef" :sort-list="repoBaseInfo.virtualStoreList"></store-sort>
+                        <store-sort
+                            v-if="repoBaseInfo.virtualStoreList.length"
+                            :key="repoBaseInfo.virtualStoreList"
+                            ref="storeSortRef"
+                            :sort-list="repoBaseInfo.virtualStoreList">
+                        </store-sort>
                     </div>
                 </bk-form-item>
                 <bk-form-item :label="$t('uploadTargetStore')" property="uploadTargetStore">

@@ -16,7 +16,9 @@
                 size="small"
                 v-bkloading="{ isLoading }"
                 @scroll-end="onScrolled"
-                @selection-change="onSelectChange">
+                @select="onSelect"
+                @select-all="onSelectAll"
+            >
                 <template #empty>
                     <empty-data :is-loading="isLoading"></empty-data>
                 </template>
@@ -74,9 +76,7 @@
                     limit: 10,
                     limitList: [10, 20, 40]
                 },
-                newCheckedList: [], // 表格中选中的数据
-                tempCheckList: [], // 在加载下一页时临时存储之前页面选中的数据
-                currentPageList: [] // 当前分页的接口返回的数据
+                newCheckedList: [] // 表格中选中的数据
             }
         },
         computed: {
@@ -87,8 +87,9 @@
         watch: {
             show (val) {
                 if (val) {
+                    // 当打开弹窗时将父组件选中的数据赋值，然后在下方设置选中
+                    this.newCheckedList = cloneDeep(this.checkList)
                     this.handlerPaginationChange()
-                    // this.setCheckData()
                 } else {
                     this.storeList = []
                 }
@@ -109,8 +110,6 @@
             },
             // 获取列表数据
             getStoreList () {
-                // 在获取下一页数据之前需要先将之前选中的数据临时存储起来
-                this.tempCheckList = cloneDeep(this.newCheckedList)
                 this.isLoading = true
                 this.getRepoList({
                     projectId: this.projectId,
@@ -119,7 +118,6 @@
                     type: this.repoType,
                     category: 'LOCAL,REMOTE'
                 }).then((res) => {
-                    this.currentPageList = res?.records || []
                     this.storeList = this.storeList.concat(res.records)
                     if (res.records.length < this.pagination.limit) {
                         this.hasNext = false
@@ -132,20 +130,39 @@
                     this.isLoading = false
                 })
             },
-            onSelectChange (selection) {
-                this.newCheckedList = selection
+            // 表格中改变某一行的选中状态
+            onSelect (selection, row) {
+                if (selection.map(item => item.name).includes(row.name)) {
+                    // 此时表明是勾选操作
+                    // 当已选中的数组中没有当前元素时才需要设置选中，如果已经存在了(全选操作导致的)则不需要处理
+                    !(this.newCheckedList.find(v => v.name === row.name)) && this.newCheckedList.push(row)
+                } else {
+                    // 取消勾选,需要先找到之前选中的元素所在的位置，然后从选中的数组中取消
+                    const index = this.newCheckedList.findIndex(item => item.name === row.name)
+                    this.newCheckedList.splice(index, 1)
+                }
+            },
+            // 全选操作回调
+            onSelectAll (selection) {
+                if (selection.length > 0) {
+                    // 设置全选
+                    selection.forEach((row) => {
+                        this.onSelect(selection, row)
+                    })
+                } else {
+                    // 取消全选
+                    this.storeList.forEach((row) => {
+                        this.onSelect([], row)
+                    })
+                }
             },
             // 打开弹窗时设置初始化选中的数据
             setCheckData () {
                 this.$nextTick(() => {
-                    if (this.checkList.length > 0) {
-                        // 获取当前页的默认选中数据
-                        const selected = this.currentPageList.filter(store => this.checkList.map(item => item.name).includes(store.name))
-                        // 获取之前页面的选中数据
-                        const selectedTwo = this.storeList.filter(store => this.tempCheckList.map(item => item.name).includes(store.name))
-                        // 获取当前表格全部选中的数据
-                        const selectList = selected.concat(selectedTwo)
-                        selectList.forEach(item => {
+                    if (this.newCheckedList.length > 0) {
+                        // 获取默认选中数据
+                        const selected = this.storeList.filter(store => this.newCheckedList.map(item => item.name).includes(store.name))
+                        selected.forEach(item => {
                             this.$refs.checkStoreTableRef && this.$refs.checkStoreTableRef.toggleRowSelection(item, true)
                         })
                     }

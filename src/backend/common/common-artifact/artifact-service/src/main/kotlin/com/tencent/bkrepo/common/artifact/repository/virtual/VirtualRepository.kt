@@ -75,6 +75,8 @@ abstract class VirtualRepository : AbstractArtifactRepository() {
         return mapFirstRepo(context) { sub, repository ->
             require(sub is ArtifactDownloadContext)
             require(repository is AbstractArtifactRepository)
+            sub.artifactInfo.repoName = sub.repositoryDetail.name
+            sub.repoName = sub.repositoryDetail.name
             repository.onDownload(sub)
         }
     }

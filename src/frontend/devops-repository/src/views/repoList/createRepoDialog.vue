@@ -9,9 +9,12 @@
             <bk-form-item :label="$t('repoType')" :required="true" property="type" error-display-type="normal">
                 <bk-radio-group v-model="repoBaseInfo.type" class="repo-type-radio-group" @change="changeRepoType">
                     <bk-radio-button v-for="repo in filterRepoEnum" :key="repo" :value="repo">
-                        <div class="flex-column flex-center repo-type-radio">
+                        <div class="flex-column flex-center repo-type-radio" :class="{ 'checked': repo === repoBaseInfo.type }">
                             <Icon size="32" :name="repo" />
                             <span>{{repo}}</span>
+                            <span v-show="repo === repoBaseInfo.type" class="top-right-selected">
+                                <i class="devops-icon icon-check-1"></i>
+                            </span>
                         </div>
                     </bk-radio-button>
                 </bk-radio-group>
@@ -584,6 +587,23 @@
             padding: 5px;
             width: 80px;
             height: 60px;
+             &.checked {
+                background-color: #e1ecff;
+                color: var(--primaryColor) ;
+            }
+            .top-right-selected {
+                position: absolute;
+                top: 0;
+                right: 0;
+                border-width: 16px;
+                border-style: solid;
+                border-color: var(--primaryColor) var(--primaryColor) transparent transparent;
+                i {
+                    position: absolute;
+                    margin-top: -12px;
+                    color: #fff;
+                }
+            }
         }
     }
 }

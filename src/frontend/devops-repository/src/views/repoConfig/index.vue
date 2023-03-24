@@ -502,7 +502,6 @@
                     // 虚拟仓库，添加可选仓库穿梭框及上传目标仓库下拉框
                     if (res.category === 'VIRTUAL') {
                         this.repoBaseInfo.virtualStoreList = res.configuration.repositoryList
-                        this.targetRepoList = res.configuration.repositoryList.map(item => item.name)
                         // 当后台返回的字段为null时需要将其设置为空字符串，否则会因为组件需要的参数类型不对应，导致选择框的placeholder不显示
                         this.repoBaseInfo.deploymentRepo = res.configuration.deploymentRepo || ''
                     }

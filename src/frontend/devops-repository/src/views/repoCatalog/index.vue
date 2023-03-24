@@ -10,10 +10,8 @@
                 @enter="onSearchFile"
                 @clear="() => {
                     searchFlag = !searchFlag
-                }"
-            >
+                }">
             </bk-input>
-
             <bk-select v-model="checkRepoType" placeholder="请选择仓库类型" class="search-common" @change="onChangeRepoType">
                 <bk-option
                     v-for="option in depotList"
@@ -27,22 +25,16 @@
                 </bk-option>
             </bk-select>
             <bk-button v-if="searchFlag" @click="searchFlag = !searchFlag">返回目录树</bk-button>
-
         </header>
         <div class="repo-rely-main flex-align-center" v-if="!searchFlag">
             <div class="repo-rely-side"
-                :style="{ 'flex-basis': `${sideBarWidth}px` }"
-
-            >
+                :style="{ 'flex-basis': `${sideBarWidth}px` }">
                 <div class="repo-rely-side-info">
-                    <span>
-                        目录列表
-                    </span>
+                    <span>目录列表</span>
                 </div>
                 <div class="repo-rely-side-tree">
                     <relyTree @clickNode="onClickNode" :check-type="checkRepoType" :search-node="searchNode" :key="checkRepoType" @searchFinish="onSearchFinish"></relyTree>
                 </div>
-
             </div>
             <move-split-bar
                 :left="sideBarWidth"
@@ -67,9 +59,7 @@
                             v-if="currentNodeType === 'file' && applyFileTypes[fileObj.type] && baseDetailInfo.repoName"
                             :key="baseDetailInfo.fullPath"
                             name="content" label="文件内容" v-bkloading="{ isLoading: fileContentLoading }" :style="{ 'display': fileObj.size > maxFileSize ? 'flex' : '' }" style=" align-items: center; justify-content: center;">
-
                             <!-- <pre v-if="fileContent && fileObj.size <= maxFileSize"><code class="html">{{fileContent}}</code></pre> -->
-
                             <json-viewer v-if="jsonData && fileObj.size <= maxFileSize && applyFileTypes[fileObj.type] === 'json'" :value="jsonData"
                                 copyable
                                 boxed
@@ -79,15 +69,16 @@
                                 <template v-slot:copy="{ copied }">{{copied ? '已复制' : '复制'}}</template>
                             </json-viewer>
                             <div v-if="fileObj.size <= maxFileSize && applyFileTypes[fileObj.type] !== 'json'" id="markdown-container"></div>
-                            <div v-if=" fileObj.size > maxFileSize">
-                                文件过大，请下载文件到本地查看
-                            </div>
-
+                            <div v-if=" fileObj.size > maxFileSize">文件过大，请下载文件到本地查看</div>
                         </bk-tab-panel>
-                        <bk-button v-if="baseDetailInfo && currentNodeType === 'file'" theme="default" title="下载" size="small" class="mr10 repo-rely-content-download" @click="onDownloadFile">下载</bk-button>
-
+                        <bk-button
+                            v-if="baseDetailInfo && currentNodeType === 'file'"
+                            theme="default"
+                            title="下载"
+                            size="small"
+                            class="mr10 repo-rely-content-download"
+                            @click="onDownloadFile">下载</bk-button>
                     </bk-tab>
-
                 </div>
             </div>
         </div>
@@ -105,15 +96,12 @@
                 <bk-table-column label="文件夹/文件名称" prop="name" show-overflow-tooltip>
                     <template #default="{ row }">
                         <div class="hover-btn" @click="onClickTableItem(row)">{{row.name}}</div>
-
                     </template>
-
                 </bk-table-column>
                 <bk-table-column label="路径" prop="fullPath" width="350" show-overflow-tooltip></bk-table-column>
                 <bk-table-column label="仓库" width="200">
                     <template #default="{ row }">{{ row.repoName }}</template>
                 </bk-table-column>
-
                 <bk-table-column :label="$t('lastModifiedDate')" prop="lastModifiedDate">
                     <template #default="{ row }">{{ formatDate(row.lastModifiedDate) }}</template>
                 </bk-table-column>
@@ -191,14 +179,6 @@
                 return this.$route.params.projectId
             }
 
-        },
-        watch: {
-
-        },
-        created () {
-        },
-
-        beforeDestroy () {
         },
         methods: {
             convertFileSize,
@@ -439,10 +419,7 @@
                         })
                     } else {
                         // 下载文件
-                        window.open(
-                            '/web' + url,
-                            '_self'
-                        )
+                        window.open('/web' + url, '_self')
                         this.fileContentLoading = false
                     }
                 }).catch(e => {
@@ -453,8 +430,7 @@
                     })
                 })
             },
-
-            //    改变左侧树的宽度
+            // 改变左侧树的宽度
             changeSideBarWidth (sideBarWidth) {
                 if (sideBarWidth > 260) {
                     this.sideBarWidth = sideBarWidth
@@ -470,7 +446,6 @@
     .rely-header{
         height: 50px;
         background-color: white;
-
     }
     .repo-rely-main {
         height: calc(100% - 60px);

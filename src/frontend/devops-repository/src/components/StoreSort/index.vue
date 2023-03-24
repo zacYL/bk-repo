@@ -4,17 +4,17 @@
             <div class="sort-index"></div>
             <div class="sort-name">{{$t('name')}}</div>
             <div class="sort-category">{{$t('storeTypes')}}</div>
-            <div class="sort-operation">{{$t('operation')}}</div>
+            <div v-if="!disabled" class="sort-operation">{{$t('operation')}}</div>
         </div>
-        <draggable class="sort-content" v-if="list.length" :list="list" :options="{ animation: 200,sort: true }">
-            <div class="sort-item" v-for="(item,index) in list" :key="item.name + Math.random()">
+        <draggable :disabled="disabled" class="sort-content" v-if="list.length" :list="list" :options="{ animation: 200,sort: true }">
+            <div class="sort-item" :class="{ 'sort-cursor': !disabled }" v-for="(item,index) in list" :key="item.name + Math.random()">
                 <div class="sort-index flex-center"><Icon name="drag" size="16" /></div>
                 <div class="sort-name">{{item.name}}</div>
                 <div class="sort-category flex-align-center">
                     <Icon class="mr5" :name="item.category.toLowerCase() + '-store'" size="16" />
                     <span>{{$t(item.category.toLowerCase() + 'Store') }}</span>
                 </div>
-                <div class="sort-operation flex-align-center">
+                <div v-if="!disabled" class="sort-operation flex-align-center">
                     <Icon class="hover-btn" size="24" name="icon-delete" @click.native.stop="deleteStore(index)" />
                 </div>
             </div>
@@ -31,6 +31,11 @@
             sortList: {
                 type: Array,
                 required: true
+            },
+            // 是否禁用，此时禁用拖拽排序及删除已选仓库(不显示操作所在列)
+            disabled: {
+                type: Boolean,
+                default: false
             }
         },
         data () {
@@ -75,7 +80,7 @@
         color: var(--fontSubsidiaryColor);
         background-color: var(--bgColor);
     }
-    .sort-item{
+    .sort-cursor{
         cursor: move;
     }
     .sort-content {

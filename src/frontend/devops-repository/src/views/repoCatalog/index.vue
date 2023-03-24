@@ -331,6 +331,33 @@
                                 this.baseDetailInfo.override.isFlag = true
                         }
                     }
+                    // 虚拟仓库，添加可选仓库穿梭框及上传目标仓库下拉框
+                    if (res.category === 'VIRTUAL') {
+                        this.baseDetailInfo.virtualStoreList = res.configuration.repositoryList
+                        // 当后台返回的字段为null时需要将其设置为空字符串，否则会因为组件需要的参数类型不对应，导致选择框的placeholder不显示
+                        this.baseDetailInfo.deploymentRepo = res.configuration.deploymentRepo || ''
+                    }
+                    // 远程仓库，添加地址，账号密码和网络代理相关配置
+                    if (res.category === 'REMOTE') {
+                        this.baseDetailInfo.url = res.configuration.url
+                        this.baseDetailInfo.credentials = res.configuration.credentials
+                        if (res.configuration.network.proxy === null) {
+                            this.baseDetailInfo.network = {
+                                proxy: {
+                                    host: null,
+                                    port: null,
+                                    username: null,
+                                    password: null
+                                },
+                                switcher: false
+                            }
+                        } else {
+                            this.baseDetailInfo.network = {
+                                proxy: res.configuration.network.proxy,
+                                switcher: true
+                            }
+                        }
+                    }
                 }).finally(() => {
                     if (!this.searchNode && !this.searchNode.id) {
                         this.basicTabLoading = false

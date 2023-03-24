@@ -111,7 +111,7 @@
                     </template>
                 </bk-form-item>
             </template>
-            <template v-if="repoBaseInfo.type === 'rpm'">
+            <template v-if="!(storeType === 'virtual') && repoBaseInfo.type === 'rpm'">
                 <bk-form-item :label="$t('enabledFileLists')">
                     <bk-checkbox v-model="repoBaseInfo.enabledFileLists"></bk-checkbox>
                 </bk-form-item>
@@ -136,7 +136,7 @@
                 </bk-form-item>
             </template>
 
-            <bk-form-item label="版本策略" v-if="repoBaseInfo.type === 'maven' || repoBaseInfo.type === 'npm'">
+            <bk-form-item label="版本策略" v-if="!(storeType === 'virtual') && (repoBaseInfo.type === 'maven' || repoBaseInfo.type === 'npm')">
                 <div class="flex-align-center">
                     <bk-switcher
                         v-model="repoBaseInfo.override.switcher"

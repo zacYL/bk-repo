@@ -222,8 +222,6 @@
     "port":"端口",
     "uploadTargetStore":"上传目标仓库",
     "select":"选择",
-    "repositoryList":"仓库列表",
-    "selectedRepo":"已选仓库",
     "successConnectServer":"成功连接到服务器",
     "connectFailed":"连接失败",
     "noSelectStorageStore":"请选择仓库后",

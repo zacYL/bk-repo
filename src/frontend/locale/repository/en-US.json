@@ -206,6 +206,7 @@
     "remoteStore":"Remote store",
     "virtualStore":"Virtual store",
     "compositeStore":"Composite store",
+    "storeTypes":"Store types",
     "allStoreTypes" :"All store types",
     "testRemoteUrl":"Test remote url",
     "storageStore":"Storage store",

@@ -83,7 +83,7 @@
                     <span class="hover-btn" @click="toPackageList(row)">{{replaceRepoName(row.name)}}</span>
                 </template>
             </bk-table-column>
-            <bk-table-column :label="$t('storeTypes')" width="110">
+            <bk-table-column :label="$t('storeTypes')" width="120">
                 <template #default="{ row }">
                     <span>{{ $t((row.category.toLowerCase() || 'local') + 'Store')}}</span>
                 </template>

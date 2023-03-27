@@ -71,21 +71,12 @@ export default {
         return Vue.prototype.$ajax.get(`${prefix}/repo/list/${projectId}?name=&type=GENERIC`)
     },
     // 查询仓库列表
-    getRepoListAll ({ commit }, { projectId, name, type, category }) {
+    getRepoListAll ({ commit }, { projectId }) {
         return Vue.prototype.$ajax.get(
-            `${prefix}/repo/list/${projectId}`,
-            {
-                params: {
-                    name: name || undefined,
-                    type: type || undefined,
-                    category: category || undefined
-                }
-            }
+            `${prefix}/repo/list/${projectId}`
         ).then(res => {
             // 前端隐藏report仓库/log仓库
             commit('SET_REPO_LIST_ALL', res.filter(v => v.name !== 'log'))
-            // 将原始数据暴露出去，供创建虚拟仓库时处理
-            return res
         })
     },
     // 查询仓库信息

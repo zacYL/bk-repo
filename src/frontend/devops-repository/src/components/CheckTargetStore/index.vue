@@ -10,7 +10,7 @@
                 ref="checkStoreTableRef"
                 class="mt10"
                 :data="storeList"
-                height="calc(100% - 10px)"
+                height="250px"
                 :outer-border="false"
                 :row-border="false"
                 size="small"
@@ -22,13 +22,13 @@
                 <template #empty>
                     <empty-data :is-loading="isLoading"></empty-data>
                 </template>
-                <bk-table-column type="selection" width="60"></bk-table-column>
+                <bk-table-column type="selection" width="40"></bk-table-column>
                 <bk-table-column :label="$t('repoName')" show-overflow-tooltip>
                     <template #default="{ row }">
                         <span>{{replaceRepoName(row.name)}}</span>
                     </template>
                 </bk-table-column>
-                <bk-table-column :label="$t('storeTypes')" width="120">
+                <bk-table-column :label="$t('storeTypes')" width="150">
                     <template #default="{ row }">
                         <Icon class="mr5" :name="(row.category.toLowerCase() || 'local') + '-store'" size="16" />
                         <span>{{ $t((row.category.toLowerCase() || 'local') + 'Store')}}</span>
@@ -51,7 +51,9 @@
         props: {
             title: {
                 type: String,
-                default: '选择存储库'
+                default () {
+                    return this.$t('select') + this.$t('space') + this.$t('storageStore')
+                }
             },
             // 当前选择的制品类型
             repoType: {
@@ -179,5 +181,8 @@
     }
 </script>
 <style lang="scss" scoped>
-
+// 选择存储库的dialog弹窗上方不需要留那么多的空白部分，影响下方表格内容展示
+::v-deep .canway-dialog-header{
+    margin-bottom: 0;
+}
 </style>

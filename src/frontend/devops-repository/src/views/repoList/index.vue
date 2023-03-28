@@ -14,14 +14,15 @@
                         :icon-right="isDropdownShow ? 'angle-up' : 'angle-down'"
                     >{{ $t('create') }}</bk-button>
                 </div>
+                <!-- 使用bk-link替代之前的 a 标签可以设置某个操作的禁用 -->
                 <ul class="bk-dropdown-list" slot="dropdown-content">
                     <li v-for="item in storeTypeEnum" :key="item.name">
-                        <a href="javascript:;" @click="handlerCreateStore(item.id)">
+                        <bk-link theme="default" href="javascript:;" @click="handlerCreateStore(item.id)">
                             <div class="flex-align-center">
                                 <Icon class="pr5" :name="item.icon" size="16" />
                                 <span> {{$t(item.name)}} </span>
                             </div>
-                        </a>
+                        </bk-link>
                     </li>
                 </ul>
             </bk-dropdown-menu>

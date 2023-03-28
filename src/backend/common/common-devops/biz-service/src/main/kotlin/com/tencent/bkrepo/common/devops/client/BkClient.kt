@@ -75,6 +75,22 @@ class BkClient(
         ).execute().body()?.data?.results
     }
 
+    fun allDepartmentIds(
+        bkUsername: String? = null,
+        bkToken: String? = null
+    ): List<Int> {
+        require(!(bkUsername == null && bkToken == null)) {
+            ("username and cookie.bk_token can't all be null ")
+        }
+        return bkInterface.allDepartmentIds(
+            bkAppCode = devopsConf.appCode,
+            bkAppSecret = devopsConf.appSecret,
+            bkUsername = bkUsername,
+            bkToken = bkToken,
+            fields = "id"
+        ).execute().body()?.data?.results?.map { it.id } ?: emptyList()
+    }
+
     companion object {
         val okHttpClient: OkHttpClient = OkHttpClient.Builder()
             .sslSocketFactory(

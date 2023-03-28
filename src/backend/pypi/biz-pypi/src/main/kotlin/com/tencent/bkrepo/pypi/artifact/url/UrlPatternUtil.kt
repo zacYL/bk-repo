@@ -32,18 +32,25 @@
 package com.tencent.bkrepo.pypi.artifact.url
 
 import org.apache.commons.lang3.StringUtils
+import org.slf4j.LoggerFactory
 import javax.servlet.http.HttpServletRequest
 
 /**
  */
 object UrlPatternUtil {
 
+    private val logger = LoggerFactory.getLogger(UrlPatternUtil::class.java)
+
     fun HttpServletRequest.parameterMaps(): MutableMap<String, String> {
         val map = this.parameterMap
         val metadata: MutableMap<String, String> = mutableMapOf()
         // 对字符串数组做处理
         for (entry in map) {
-            metadata[entry.key] = StringUtils.join(entry.value, ",")
+            if (StringUtils.join(entry.value, "").length <= 1024) {
+                metadata[entry.key] = StringUtils.join(entry.value, ",")
+            } else {
+                logger.warn("key too large to index, [${entry.key}:${entry.value}]")
+            }
         }
         return metadata
     }

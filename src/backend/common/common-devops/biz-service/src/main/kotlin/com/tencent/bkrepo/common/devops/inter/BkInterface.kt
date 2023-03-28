@@ -1,6 +1,7 @@
 package com.tencent.bkrepo.common.devops.inter
 
 import com.tencent.bkrepo.common.devops.pojo.BkChildrenDepartment
+import com.tencent.bkrepo.common.devops.pojo.BkDepartmentId
 import com.tencent.bkrepo.common.devops.pojo.BkDepartmentUser
 import com.tencent.bkrepo.common.devops.pojo.BkPage
 import com.tencent.bkrepo.common.devops.pojo.BkResponse
@@ -32,6 +33,21 @@ interface BkInterface {
         @Query("page") page: Int? = null,
         @Query("page_size") pageSize: Int? = null
     ): Call<BkResponse<BkPage<BkChildrenDepartment>?>>
+
+    /**
+     * 获取部门列表
+     */
+    @GET("/api/c/compapi/v2/usermanage/list_departments")
+    fun allDepartmentIds(
+        @Query("bk_app_code") bkAppCode: String,
+        @Query("bk_app_secret") bkAppSecret: String,
+        // 当前用户用户名，应用免登录态验证白名单中的应用，用此字段指定当前用户
+        @Query("bk_username") bkUsername: String? = null,
+        // 当前用户登录态，bk_token与bk_username必须一个有效，bk_token可以通过Cookie获取
+        @Query("bk_token") bkToken: String? = null,
+        // 返回值字段, 例如"username,id"
+        @Query("fields") fields: String? = null
+    ): Call<BkResponse<BkPage<BkDepartmentId>?>>
 
     /**
      * 查询用户的部门信息

@@ -91,11 +91,11 @@ class PypiRemoteRepository : RemoteRepository() {
 
     fun remoteRequest(context: ArtifactQueryContext): String? {
         val listUri = generateRemoteListUrl(context)
+        logger.info("Remote list url: $listUri")
         val remoteConfiguration = context.getRemoteConfiguration()
         val okHttpClient: OkHttpClient = createHttpClient(remoteConfiguration)
         val build: Request = Request.Builder().get().url(listUri).build()
-        val htmlContent = okHttpClient.newCall(build).execute().body()?.string()
-        return htmlContent
+        return okHttpClient.newCall(build).execute().body()?.string()
     }
 
     /**

@@ -327,13 +327,13 @@ class CanwayUserServiceImpl(
     override fun userPage(
         pageNumber: Int,
         pageSize: Int,
-        user: String?,
+        userName: String?,
         admin: Boolean?,
         locked: Boolean?
     ): Page<UserInfo> {
         val criteria = Criteria()
-        user?.let {
-            val userRegex = PathUtils.escapeRegex(user)
+        userName?.let {
+            val userRegex = PathUtils.escapeRegex(userName)
             criteria.orOperator(
                 Criteria.where(TUser::userId.name).regex("^$userRegex"),
                 Criteria.where(TUser::name.name).regex("^$userRegex")

@@ -599,17 +599,15 @@ export default {
                             subTitle: '设置拉取凭证'
                         },
                         {
-                            subTitle: 'MacOS / Linux系统：将配置添加到 $HOME/.pip/pip.conf 文件中',
+                            subTitle: '配置拉取依赖源地址',
                             codeList: [
-                                '[global]',
-                                `index-url = ${location.protocol}//${this.userName}:<PERSONAL_ACCESS_TOKEN>@${location.host}/${this.repoType}/${this.projectId}/${this.repoName}/simple`
+                                `pip config set global.index-url http://admin:<PERSONAL_ACCESS_TOKEN>@${location.host}/${this.repoType}/${this.projectId}/${this.repoName}/simple`
                             ]
                         },
                         {
-                            subTitle: 'Windows系统：将配置添加到 %HOME%/pip/pip.ini 文件中',
+                            subTitle: '如果服务地址为http, 还需额外配置授信该站点',
                             codeList: [
-                                '[global]',
-                                `index-url = ${location.protocol}//${this.userName}:<PERSONAL_ACCESS_TOKEN>@${location.host}/${this.repoType}/${this.projectId}/${this.repoName}/simple`
+                                `pip config set install.trusted-host ${location.host}`
                             ]
                         }
                     ]

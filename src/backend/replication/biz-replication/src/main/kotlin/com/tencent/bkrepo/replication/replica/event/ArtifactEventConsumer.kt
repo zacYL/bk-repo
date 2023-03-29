@@ -29,8 +29,10 @@ package com.tencent.bkrepo.replication.replica.event
 
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.event.base.EventType
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.replication.replica.base.executor.EventConsumerThreadPoolExecutor
 import com.tencent.bkrepo.replication.service.ReplicaTaskService
+import com.tencent.bkrepo.repository.api.RepositoryClient
 import org.springframework.stereotype.Component
 
 /**
@@ -40,7 +42,8 @@ import org.springframework.stereotype.Component
 @Component("artifactEvent")
 class ArtifactEventConsumer(
     private val replicaTaskService: ReplicaTaskService,
-    private val eventBasedReplicaJobExecutor: EventBasedReplicaJobExecutor
+    private val eventBasedReplicaJobExecutor: EventBasedReplicaJobExecutor,
+    private val repositoryClient: RepositoryClient
 ) : EventConsumer() {
 
     private val executors = EventConsumerThreadPoolExecutor.instance
@@ -69,6 +72,9 @@ class ArtifactEventConsumer(
         if (event.type == EventType.NODE_MOVED || event.type == EventType.NODE_COPIED) {
             projectId = event.data["dstProjectId"].toString()
             repoName = event.data["dstRepoName"].toString()
+            repositoryClient.getRepoInfo(projectId, repoName).data?.let {
+                require(it.type == RepositoryType.GENERIC) { return }
+            }
         }
 
         executors.execute {

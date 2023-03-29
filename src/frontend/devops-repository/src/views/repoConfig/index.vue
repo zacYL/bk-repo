@@ -21,7 +21,7 @@
                     <template v-if="repoBaseInfo.category === 'REMOTE'">
                         <bk-form-item :label="$t('address')" :required="true" property="url" error-display-type="normal">
                             <bk-input style="width:400px" v-model.trim="repoBaseInfo.url"></bk-input>
-                            <bk-button theme="primary" @click="onClickTestRemoteUrl">{{ $t('testRemoteUrl') }}</bk-button>
+                            <bk-button theme="primary" :disabled="disableTestUrl" @click="onClickTestRemoteUrl">{{ $t('testRemoteUrl') }}</bk-button>
                         </bk-form-item>
                         <bk-form-item :label="$t('account')" property="credentials.username" error-display-type="normal">
                             <bk-input style="width:400px" v-model.trim="repoBaseInfo.credentials.username"></bk-input>
@@ -248,7 +248,8 @@
                     deploymentRepo: '', // 虚拟仓库中选择存储的本地仓库
                     // 是否展示tab标签页，因为代理设置和清理设置需要根据详情页接口返回的数据判断是否显示，解决异步导致的tab顺序错误的问题
                     showTabPanel: false
-                }
+                },
+                disableTestUrl: false
             }
         },
         computed: {
@@ -455,6 +456,7 @@
                     if (this.repoBaseInfo.network.switcher) {
                         body.network.proxy = this.repoBaseInfo.network.proxy
                     }
+                    this.disableTestUrl = true
                     this.testRemoteUrl({ body }).then((res) => {
                         if (res.success) {
                             this.$bkMessage({
@@ -467,6 +469,8 @@
                                 message: this.$t('connectFailed') + `: ${res.message}`
                             })
                         }
+                    }).finally(() => {
+                        this.disableTestUrl = false
                     })
                 }
             },

@@ -87,7 +87,7 @@
                         </card-radio-group>
                     </bk-form-item>
 
-                    <bk-form-item label="版本策略" v-if="!(repoBaseInfo.category === 'VIRTUAL') && (repoType === 'maven' || repoType === 'npm')">
+                    <bk-form-item label="版本策略" v-if="!(repoBaseInfo.category === 'REMOTE') && !(repoBaseInfo.category === 'VIRTUAL') && (repoType === 'maven' || repoType === 'npm')">
                         <div class="flex-align-center">
                             <bk-switcher
                                 v-model="repoBaseInfo.override.switcher"
@@ -123,7 +123,7 @@
                             </template>
                         </bk-form-item>
                     </template>
-                    <template v-if="!(repoBaseInfo.category === 'VIRTUAL') && repoType === 'rpm'">
+                    <template v-if="!(repoBaseInfo.category === 'REMOTE') && !(repoBaseInfo.category === 'VIRTUAL') && repoType === 'rpm'">
                         <bk-form-item :label="$t('enabledFileLists')">
                             <bk-checkbox v-model="repoBaseInfo.enabledFileLists"></bk-checkbox>
                         </bk-form-item>

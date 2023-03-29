@@ -19,8 +19,7 @@
                     <template v-if="storeType === 'virtual'">
                         <label class="grid-store-source">仓库来源</label>
                         <span class="flex-1 flex-align-center text-overflow">
-                            <icon class="mr10" size="20" :name="(storeType || 'local') + '-store'" />
-                            <span class="text-overflow" :title="sourceName || repoName">{{ sourceName || repoName }}</span>
+                            <span class="text-overflow" :title="sourceRepoName || repoName">{{ sourceRepoName || repoName }}</span>
                         </span>
                     </template>
                 </div>

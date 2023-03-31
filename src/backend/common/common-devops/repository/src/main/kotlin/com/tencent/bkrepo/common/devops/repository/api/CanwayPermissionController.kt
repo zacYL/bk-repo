@@ -34,7 +34,7 @@ class CanwayPermissionController {
             canwayPermissionService.checkCanwayPermission(
                 projectId = projectId,
                 repoName = repoName,
-                operator = userId,
+                userId = userId,
                 action = CanwayPermissionType.valueOf(action.toUpperCase())
             )
         )

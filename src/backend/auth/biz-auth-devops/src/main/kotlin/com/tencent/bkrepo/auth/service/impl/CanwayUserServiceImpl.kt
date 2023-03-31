@@ -2,7 +2,6 @@ package com.tencent.bkrepo.auth.service.impl
 
 import com.mongodb.BasicDBObject
 import com.tencent.bkrepo.auth.ciApi
-import com.tencent.bkrepo.auth.ciPermission
 import com.tencent.bkrepo.auth.ciUserManager
 import com.tencent.bkrepo.auth.constant.DEFAULT_PASSWORD
 import com.tencent.bkrepo.auth.message.AuthMessageCode
@@ -30,7 +29,6 @@ import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.devops.client.DevopsClient
 import com.tencent.bkrepo.common.devops.conf.DevopsConf
 import com.tencent.bkrepo.common.devops.pojo.response.CanwayResponse
-import com.tencent.bkrepo.common.devops.pojo.response.CanwayUser
 import com.tencent.bkrepo.common.devops.util.http.SimpleHttpUtils
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import org.slf4j.Logger
@@ -351,7 +349,7 @@ class CanwayUserServiceImpl(
     @Suppress("TooGenericExceptionCaught", "SwallowedException")
     override fun listUserResult(rids: List<String>): List<UserResult> {
         val devopsHost = devopsConf.devopsHost.removeSuffix("/")
-        var request = "$devopsHost$ciUserManager$ciApi$userListApi_4300"
+        val request = "$devopsHost$ciUserManager$ciApi$userListApi"
         return try {
             val response = SimpleHttpUtils.doGet(request).content
             val canwayUserList = response.readJsonString<CanwayResponse<List<DevopsUser>>>().data
@@ -361,18 +359,7 @@ class CanwayUserServiceImpl(
             }
         } catch (e: Exception) {
             logger.warn("CI 用户管理用户列表接头调用失败: $request")
-            try {
-                request = "$devopsHost$ciPermission$ciApi$userListApi"
-                val response = SimpleHttpUtils.doGet(request).content
-                val canwayUserList = response.readJsonString<CanwayResponse<List<CanwayUser>>>().data
-                    ?: return listOf()
-                canwayUserList.map {
-                    UserResult(userId = it.userId, name = it.displayName)
-                }
-            } catch (e: Exception) {
-                logger.error("CI 权限中心用户列表接头调用失败: $request")
-                super.listUserResult(rids)
-            }
+            super.listUserResult(rids)
         }
     }
 
@@ -383,9 +370,7 @@ class CanwayUserServiceImpl(
     }
 
     companion object {
-        const val userListApi = "/service/blueking/user"
-        // 权限中心4300接口
-        const val userListApi_4300 = "/service/user/allUser"
+        const val userListApi = "/service/user/all"
         private val logger: Logger = LoggerFactory.getLogger(CanwayUserServiceImpl::class.java)
     }
 }

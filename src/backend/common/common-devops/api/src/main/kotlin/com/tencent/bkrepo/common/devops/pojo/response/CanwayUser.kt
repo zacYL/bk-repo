@@ -5,5 +5,5 @@ package com.tencent.bkrepo.common.devops.pojo.response
  */
 data class CanwayUser(
     val userId: String,
-    val displayName: String
+    val username: String
 )

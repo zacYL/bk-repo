@@ -1,7 +1,5 @@
 package com.tencent.bkrepo.auth.service.impl
 
-import com.tencent.bkrepo.auth.ciApi
-import com.tencent.bkrepo.auth.ciPermission
 import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_ADMIN
 import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_USER
 import com.tencent.bkrepo.auth.job.BkDepartmentCache
@@ -22,15 +20,10 @@ import com.tencent.bkrepo.auth.repository.UserRepository
 import com.tencent.bkrepo.auth.util.query.PermissionQueryHelper
 import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
-import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.devops.BK_WHITELIST_USER
 import com.tencent.bkrepo.common.devops.client.BkClient
 import com.tencent.bkrepo.common.devops.client.DevopsClient
-import com.tencent.bkrepo.common.devops.conf.DevopsConf
-import com.tencent.bkrepo.common.devops.enums.InstanceType
-import com.tencent.bkrepo.common.devops.pojo.response.CanwayResponse
 import com.tencent.bkrepo.common.devops.util.http.DevopsHttpUtils
-import com.tencent.bkrepo.common.devops.util.http.SimpleHttpUtils
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import org.slf4j.Logger
@@ -45,7 +38,6 @@ class CanwayPermissionServiceImpl(
     private val permissionRepository: PermissionRepository,
     private val mongoTemplate: MongoTemplate,
     repositoryClient: RepositoryClient,
-    private val devopsConf: DevopsConf,
     projectClient: ProjectClient
 ) : CpackPermissionServiceImpl(
     userRepository,
@@ -402,15 +394,13 @@ class CanwayPermissionServiceImpl(
     private fun isCIAdmin(userId: String, projectId: String? = null, tenantId: String? = null): Boolean {
         return if (projectId != null && tenantId == null) {
             logger.info("check user $userId is CI project admin of [project: $projectId]")
-            if (devopsClient.identifyProjectManageAuth(userId, projectId) == true) return true
-            // 历史接口，兼容老版本
-            devopsClient.isAdmin(userId, InstanceType.PROJECT, projectId) ?: false
+            devopsClient.identifyProjectManageAuth(userId, projectId) ?: false
         } else if (projectId == null && tenantId != null) {
             logger.info("check user $userId is CI tenant admin of [tenant: $tenantId]")
-            devopsClient.isAdmin(userId, InstanceType.TENANT, tenantId) ?: false
+            devopsClient.identifyTenantManageAuth(userId, tenantId) ?: false
         } else {
             logger.info("check user $userId is CI super admin")
-            devopsClient.isAdmin(userId, InstanceType.SUPER) ?: false
+            devopsClient.identifySystemManageAuth(userId) ?: false
         }
     }
 
@@ -419,15 +409,9 @@ class CanwayPermissionServiceImpl(
      */
     @Suppress("TooGenericExceptionCaught")
     private fun isCIProjectUser(userId: String, projectId: String): Boolean {
-        val requestUrl = getPermissionUrl(String.format(ciUsersByProjectApi, projectId))
-        val users = try {
-            val responseContent = SimpleHttpUtils.doGet(requestUrl).content
-            responseContent.readJsonString<CanwayResponse<List<String>>>().data
-        } catch (e: Exception) {
-            logger.error("query CI project users failed: [$requestUrl]", e)
-            null
-        }
-        return users?.contains(userId) ?: false
+        val projectUsers = devopsClient.usersByProjectId(projectId)?.map { it.userId }
+        logger.info("[project: $projectId] contains the following members: $projectUsers")
+        return projectUsers?.contains(userId) ?: false
     }
 
     private fun checkCIReadPermission(request: CheckPermissionRequest): Boolean {
@@ -435,10 +419,10 @@ class CanwayPermissionServiceImpl(
         return request.action == PermissionAction.READ && isCIProjectUser(request.uid, projectId)
     }
 
-    private fun getPermissionUrl(uri: String): String {
-        val devopsHost = devopsConf.devopsHost
-        return "${devopsHost.removeSuffix("/")}$ciPermission$ciApi$uri"
-    }
+//    private fun getPermissionUrl(uri: String): String {
+//        val devopsHost = devopsConf.devopsHost
+//        return "${devopsHost.removeSuffix("/")}$ciPermission$ciApi$uri"
+//    }
 
     private fun transferCIPermission(
         permission: TPermission,
@@ -472,6 +456,5 @@ class CanwayPermissionServiceImpl(
 
     companion object {
         val logger: Logger = LoggerFactory.getLogger(CanwayPermissionServiceImpl::class.java)
-        const val ciUsersByProjectApi = "/service/resource_instance/view/project/%s"
     }
 }

@@ -12,14 +12,14 @@ class LicenseServiceImpl(
     override fun getLicense(): LicenseInfo {
         with(lseChecker.checkLse()) {
             return LicenseInfo(
-                productKey(),
-                productName(),
-                versionType(),
-                modules(),
-                applyUserNumber(),
-                applyNodeNumber(),
-                validityTime(),
-                subscribeType()
+                productKey,
+                productName,
+                versionType,
+                modules,
+                applyUserNumber,
+                applyNodeNumber,
+                validityTime,
+                subscribeType
             )
         }
     }

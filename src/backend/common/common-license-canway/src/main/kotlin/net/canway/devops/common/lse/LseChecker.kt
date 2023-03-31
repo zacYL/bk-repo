@@ -57,7 +57,7 @@ class LseChecker {
 		// 判断如果不是企业版许可去访问企业版功能则抛异常
 		val request = HttpContextHolder.getRequest()
 		val service = request.requestURI.trimStart(CharPool.SLASH).split(CharPool.SLASH).first().toLowerCase()
-		if (authResponse.versionType() != ENTERPRISE_VERSION && LICENSE_ENTERPRISE_MODULE_SET.contains(service)) {
+		if (authResponse.versionType != ENTERPRISE_VERSION && LICENSE_ENTERPRISE_MODULE_SET.contains(service)) {
 			logger.warn("Please upgrade to the enterprise version license before using [$service] module.")
 			throw ErrorCodeException(CommonMessageCode.LICENSE_ENTERPRISE_UNSUPPORTED)
 		}
@@ -74,8 +74,8 @@ class LseChecker {
 		val authRequest = AuthRequest(domain, CPACK_PRODUCT_CODE, System.currentTimeMillis())
 		val request = LicenseAuthService.getRequest(authRequest)
 		val result = licenseFeign.auth(request)
-		val data = result.data()
-		if (result.code() != 0 || data.isNullOrEmpty()) {
+		val data = result.data
+		if (result.code != 0 || data.isNullOrEmpty()) {
 			logger.warn("License Access Failed")
 			throw ErrorCodeException(CommonMessageCode.LICENSE_ACCESS_FAILED)
 		}

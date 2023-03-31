@@ -47,7 +47,7 @@ export default {
                         }
                     ]
                 },
-                this.storeType === 'remote'
+                (this.storeType === 'remote' || this.$route.path.startsWith('/software'))
                     ? undefined
                     : {
                         title: '推送',
@@ -137,7 +137,7 @@ export default {
                         }
                     ]
                 },
-                this.storeType === 'remote'
+                (this.storeType === 'remote' || this.$route.path.startsWith('/software'))
                     ? undefined
                     : {
                         title: '推送',
@@ -235,7 +235,7 @@ export default {
                         }
                     ]
                 },
-                this.storeType === 'remote'
+                (this.storeType === 'remote' || this.$route.path.startsWith('/software'))
                     ? undefined
                     : {
                         title: '推送',
@@ -461,7 +461,7 @@ export default {
                         }
                     ]
                 },
-                this.storeType === 'remote'
+                (this.storeType === 'remote' || this.$route.path.startsWith('/software'))
                     ? undefined
                     : {
                         title: '推送',
@@ -538,7 +538,7 @@ export default {
                         }
                     ]
                 },
-                this.storeType === 'remote'
+                (this.storeType === 'remote' || this.$route.path.startsWith('/software'))
                     ? undefined
                     : {
                         title: '推送',
@@ -629,7 +629,7 @@ export default {
                         }
                     ]
                 },
-                this.storeType === 'remote'
+                (this.storeType === 'remote' || this.$route.path.startsWith('/software'))
                     ? undefined
                     : {
                         title: '推送',
@@ -695,7 +695,7 @@ export default {
                         }
                     ]
                 },
-                this.storeType === 'remote'
+                (this.storeType === 'remote' || this.$route.path.startsWith('/software'))
                     ? undefined
                     : {
                         title: '推送',
@@ -752,7 +752,7 @@ export default {
                         }
                     ]
                 },
-                this.storeType === 'remote'
+                (this.storeType === 'remote' || this.$route.path.startsWith('/software'))
                     ? undefined
                     : {
                         title: '推送',
@@ -776,7 +776,7 @@ export default {
                         }
                     ]
                 },
-                this.storeType === 'remote'
+                (this.storeType === 'remote' || this.$route.path.startsWith('/software'))
                     ? undefined
                     : {
                         title: '删除',

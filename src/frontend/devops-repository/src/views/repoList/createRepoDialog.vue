@@ -1,11 +1,11 @@
 <template>
     <canway-dialog
         v-model="show"
-        width="860"
+        width="810"
         height-num="700"
-        :title="$t('create') + $t(storeType + 'Store')"
+        :title="title"
         @cancel="cancel">
-        <bk-form class="mr10 repo-base-info" :label-width="130" :model="repoBaseInfo" :rules="rules" ref="repoBaseInfo">
+        <bk-form class="mr10 repo-base-info" :label-width="140" :model="repoBaseInfo" :rules="rules" ref="repoBaseInfo">
             <bk-form-item :label="$t('repoType')" :required="true" property="type" error-display-type="normal">
                 <bk-radio-group v-model="repoBaseInfo.type" class="repo-type-radio-group" @change="changeRepoType">
                     <bk-radio-button v-for="repo in filterRepoEnum" :key="repo" :value="repo">
@@ -28,7 +28,7 @@
             <template v-if="storeType === 'remote'">
                 <bk-form-item :label="$t('address')" :required="true" property="url" error-display-type="normal">
                     <bk-input style="width:400px" v-model.trim="repoBaseInfo.url"></bk-input>
-                    <bk-button theme="primary" @click="onClickTestRemoteUrl">{{ $t('testRemoteUrl') }}</bk-button>
+                    <bk-button theme="primary" :disabled="disableTestUrl" @click="onClickTestRemoteUrl">{{ $t('testRemoteUrl') }}</bk-button>
                 </bk-form-item>
                 <bk-form-item :label="$t('account')" property="credentials.username" error-display-type="normal">
                     <bk-input style="width:400px" v-model.trim="repoBaseInfo.credentials.username"></bk-input>
@@ -111,7 +111,7 @@
                     </template>
                 </bk-form-item>
             </template>
-            <template v-if="!(storeType === 'virtual') && repoBaseInfo.type === 'rpm'">
+            <template v-if="!(storeType === 'remote') && !(storeType === 'virtual') && repoBaseInfo.type === 'rpm'">
                 <bk-form-item :label="$t('enabledFileLists')">
                     <bk-checkbox v-model="repoBaseInfo.enabledFileLists"></bk-checkbox>
                 </bk-form-item>
@@ -136,7 +136,7 @@
                 </bk-form-item>
             </template>
 
-            <bk-form-item label="版本策略" v-if="!(storeType === 'virtual') && (repoBaseInfo.type === 'maven' || repoBaseInfo.type === 'npm')">
+            <bk-form-item label="版本策略" v-if="!(storeType === 'remote') && !(storeType === 'virtual') && (repoBaseInfo.type === 'maven' || repoBaseInfo.type === 'npm')">
                 <div class="flex-align-center">
                     <bk-switcher
                         v-model="repoBaseInfo.override.switcher"
@@ -215,6 +215,7 @@
             url: '', // 远程仓库的地址
             // 远程仓库的网络代理
             network: {
+                switcher: false,
                 proxy: {
                     host: null,
                     port: null,
@@ -244,7 +245,8 @@
                 loading: false,
                 repoBaseInfo: getRepoBaseInfo(),
                 // 因为创建仓库时拆分为本地/远程/虚拟，远程仓库和虚拟仓库没有generic选项，所以需要重新组合
-                filterRepoEnum: repoEnum
+                filterRepoEnum: repoEnum,
+                disableTestUrl: false // 远程仓库中测试链接按钮是否被禁用
             }
         },
         computed: {
@@ -381,6 +383,10 @@
                     { label: '可匿名下载', value: 'public', tip: '不鉴权，任意终端都可下载' }
                 ]
             },
+            // 弹窗标题
+            title () {
+                return this.$t('create') + this.$t('space') + this.$t(this.storeType + 'Store')
+            },
             // 虚拟仓库中选择上传的目标仓库的下拉列表数据
             deploymentRepoCheckList () {
                 return this.repoBaseInfo.virtualStoreList.filter(item => item.category === 'LOCAL')
@@ -391,7 +397,7 @@
                 handler (val) {
                     if (val === 'remote') {
                         // 远程仓库目前因为需要代理设置，目前只支持maven、npm、pypi、nuget四种仓库
-                        this.filterRepoEnum = repoRemoteSupportEnum
+                        this.filterRepoEnum = repoEnum.filter(item => repoRemoteSupportEnum.includes(item))
                     } else if (val === 'virtual') {
                         // 虚拟仓库不支持选择generic仓库
                         this.filterRepoEnum = repoEnum.filter(item => item !== 'generic')
@@ -470,6 +476,7 @@
                     if (this.repoBaseInfo.network.switcher) {
                         body.network.proxy = this.repoBaseInfo.network.proxy
                     }
+                    this.disableTestUrl = true
                     this.testRemoteUrl({ body }).then((res) => {
                         if (res.success) {
                             this.$bkMessage({
@@ -482,6 +489,8 @@
                                 message: this.$t('connectFailed') + `: ${res.message}`
                             })
                         }
+                    }).finally(() => {
+                        this.disableTestUrl = false
                     })
                 }
             },
@@ -588,7 +597,7 @@
             width: 80px;
             height: 60px;
              &.checked {
-                background-color: #e1ecff;
+                background-color: var(--bgHoverLighterColor);
                 color: var(--primaryColor) ;
             }
             .top-right-selected {

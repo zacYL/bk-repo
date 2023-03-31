@@ -97,7 +97,8 @@ class NpmPackageHandler {
                     dist.any()[SIZE].toString().toLong()
                 }
                 with(tgzNodeInfo) {
-                    val metadata = buildProperties(next.value).map { MetadataModel(key = it.key, value = it.value) }
+                    val metadata =
+                        buildProperties(next.value).map { MetadataModel(key = it.key, value = it.value ?: "null") }
                     val populatedPackageVersion = PopulatedPackageVersion(
                         createdBy = createdBy,
                         createdDate = LocalDateTime.parse(createdDate),
@@ -162,7 +163,7 @@ class NpmPackageHandler {
                     manifestPath = manifestPath,
                     artifactPath = contentPath,
                     stageTag = null,
-                    packageMetadata = metadata.map { MetadataModel(key = it.key, value = it.value) },
+                    packageMetadata = metadata.map { MetadataModel(key = it.key, value = it.value ?: "null") },
                     overwrite = true,
                     createdBy = userId
                 )
@@ -173,7 +174,7 @@ class NpmPackageHandler {
         }
     }
 
-    private fun buildProperties(npmVersionMetadata: NpmVersionMetadata?): Map<String, String> {
+    private fun buildProperties(npmVersionMetadata: NpmVersionMetadata?): Map<String, Any?> {
         return npmVersionMetadata?.let {
             val value = JsonUtils.objectMapper.writeValueAsString(it)
             val npmProperties = JsonUtils.objectMapper.readValue(value, PackageProperties::class.java)

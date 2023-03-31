@@ -263,7 +263,10 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
         artifactResource: ArtifactResource,
         throughput: Throughput
     ) {
-        if (artifactResource.channel == ArtifactChannel.LOCAL || context.repo.category == RepositoryCategory.REMOTE) {
+        if (artifactResource.channel == ArtifactChannel.LOCAL
+            || (artifactResource.channel == ArtifactChannel.PROXY
+                && context.repo.category != RepositoryCategory.COMPOSITE)
+        ) {
             buildDownloadRecord(context, artifactResource)?.let {
                 packageClient.updateRecentlyUseDate(it.projectId, it.repoName, it.packageKey, it.packageVersion)
                 taskAsyncExecutor.execute { packageDownloadsClient.record(it) }

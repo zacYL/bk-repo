@@ -33,6 +33,7 @@ package com.tencent.bkrepo.npm.artifact.repository
 
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
+import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
 import com.tencent.bkrepo.common.artifact.exception.ArtifactNotInWhitelistException
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
@@ -149,26 +150,40 @@ class NpmRemoteRepository(
         val downloadUri = createRemoteSearchUrl(context)
         logger.info("Request url of package metadata: $downloadUri, NetworkProxy=${remoteConfiguration.network.proxy}")
         val request = Request.Builder().url(downloadUri).build()
-        val response = httpClient.newCall(request).execute()
-        logger.info("$response")
-        return if (validateResponse(context, response)) {
-            onQueryResponse(context, response)
-        } else null
+        try {
+            val response = httpClient.newCall(request).execute()
+            logger.info("$response")
+            if (checkResponse(response) && checkJsonFormat(response)) {
+                return onQueryResponse(context, response)
+            }
+        } catch (e: Exception) {
+            logger.warn("Failed to request or resolve response: ${e.message}")
+        }
+        return getCacheArtifactResource(buildDownloadCacheContext(context))?.getSingleStream()
     }
 
-    private fun validateResponse(context: ArtifactContext, response: Response): Boolean {
+    private fun checkJsonFormat(response: Response): Boolean {
         val contentType = response.body()!!.contentType()
-        return checkResponse(response) && contentType?.let {
-            if (it.toString().contains("application/json")) {
-                return@let true
-            } else {
-                logger.error(
-                    "Response from remote-repo[${context.repositoryDetail.name}] is not JSON format. " +
-                            "Please check the proxy configuration of repo[${context.artifactInfo.getRepoIdentify()}]"
+        if (!contentType.toString().contains("application/json")) {
+            logger.warn("Query Failed: Response from [${response.request().url()}] is not JSON format. " +
+                    "Content-Type: $contentType"
+            )
+            return false
+        }
+        return true
+    }
+
+    private fun buildDownloadCacheContext(context: ArtifactContext): ArtifactDownloadContext {
+        with(context) {
+            return ArtifactDownloadContext(
+                repositoryDetail,
+                ArtifactInfo(
+                    repositoryDetail.projectId,
+                    repositoryDetail.name,
+                    getStringAttribute(NPM_FILE_FULL_PATH) ?: artifactInfo.getArtifactFullPath()
                 )
-                return@let false
-            }
-        } ?: false
+            )
+        }
     }
 
     private fun createRemoteSearchUrl(context: ArtifactContext): String {

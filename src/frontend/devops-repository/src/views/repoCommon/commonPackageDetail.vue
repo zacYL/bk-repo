@@ -282,7 +282,8 @@
             },
             downloadPackageHandler (row = this.currentVersion) {
                 if (this.repoType === 'docker') return
-                const url = `/repository/api/version/download/${this.projectId}/${this.repoName}?packageKey=${this.packageKey}&version=${row.name}&download=true`
+                const repoName = this.storeType === 'virtual' ? this.sourceRepoName : this.repoName
+                const url = `/repository/api/version/download/${this.projectId}/${repoName}?packageKey=${this.packageKey}&version=${row.name}&download=true`
                 this.$ajax.head(url).then(() => {
                     window.open(
                         '/web' + url,

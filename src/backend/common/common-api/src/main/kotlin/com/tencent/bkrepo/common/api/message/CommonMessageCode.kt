@@ -56,6 +56,8 @@ enum class CommonMessageCode(private val key: String) : MessageCode {
     REGEX_EXPRESSION_PATTERN_ERROR("regex.expression.pattern.error"),
     DIRECTORY_NOT_EXIST("directory.not.exist"),
     LICENSE_ACCESS_FAILED("license.access.failed"),
+    LICENSE_VERIFY_FAILED("license.verify.failed"),
+    LICENSE_ENTERPRISE_UNSUPPORTED("license.enterprise.unsupported"),
     PARAMETER_INCOMPLETE("request.parameter.incomplete"),
     PACKAGEKEY_INVALID("packageKey.invalid"),
     REPO_CLEAN_PATH_EXISTED("repo.clean.path.repeat")

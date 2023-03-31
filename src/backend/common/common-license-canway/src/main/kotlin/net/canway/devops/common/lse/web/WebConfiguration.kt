@@ -3,7 +3,6 @@ package net.canway.devops.common.lse.web
 import net.canway.devops.common.lse.LseChecker
 import net.canway.devops.common.lse.controller.LicenseController
 import net.canway.devops.common.lse.service.impl.LicenseServiceImpl
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
@@ -11,7 +10,6 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
 @Configuration
-@ConditionalOnProperty(prefix = "ci", value = ["license"], havingValue = "true", matchIfMissing = true)
 @Import(
     LicenseController::class,
     LicenseServiceImpl::class

@@ -26,8 +26,10 @@
 
 package net.canway.devops.common.lse
 
+import com.tencent.bkrepo.common.api.constant.CharPool
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import net.canway.devops.common.lse.feign.LicenseFeign
 import net.canway.license.bean.AuthRequest
 import net.canway.license.bean.AuthResponse
@@ -41,48 +43,59 @@ import org.springframework.context.annotation.Lazy
 import org.springframework.scheduling.annotation.Scheduled
 
 class LseChecker {
-    private var lseCache: AuthResponse? = null
+	private var lseCache: AuthResponse? = null
 
-    @Value("\${bk.paas.host:}")
-    private val domain: String = ""
+	@Value("\${bk.paas.host:}")
+	private val domain: String = ""
 
-    @Autowired
-    @Lazy
-    private lateinit var licenseFeign: LicenseFeign
+	@Autowired
+	@Lazy
+	private lateinit var licenseFeign: LicenseFeign
 
-    fun checkLse(): AuthResponse {
-        if (lseCache == null) {
-            lseCache = checkCwLseImmediately()
-        }
-        return lseCache!!
-    }
+	fun checkLse(): AuthResponse {
+		val authResponse = lseCache ?: checkCwLseImmediately()
+		// 判断如果不是企业版许可去访问企业版功能则抛异常
+		val request = HttpContextHolder.getRequest()
+		val service = request.requestURI.trimStart(CharPool.SLASH).split(CharPool.SLASH).first().toLowerCase()
+		if (authResponse.versionType() != ENTERPRISE_VERSION && LICENSE_ENTERPRISE_MODULE_SET.contains(service)) {
+			logger.warn("Please upgrade to the enterprise version license before using [$service] module.")
+			throw ErrorCodeException(CommonMessageCode.LICENSE_ENTERPRISE_UNSUPPORTED)
+		}
+		return authResponse
+	}
 
-    @Scheduled(fixedDelay = LICENSE_UPDATE_INTERVAL)
-    fun updateLseCache() {
-        lseCache = checkCwLseImmediately()
-        logger.info("License Cache Updated")
-    }
+	@Scheduled(fixedDelay = LICENSE_UPDATE_INTERVAL)
+	fun updateLseCache() {
+		lseCache = checkCwLseImmediately()
+		logger.info("License Cache Updated")
+	}
 
-    private fun checkCwLseImmediately(): AuthResponse {
-        val authRequest = AuthRequest(domain, MODULE_NAME, System.currentTimeMillis())
-        val request = LicenseAuthService.getRequest(authRequest)
-        val result = licenseFeign.auth(request)
-        val data = result.data()
-        if (result.code() != 0 || data.isNullOrEmpty()) {
-            logger.warn("License Access Failed")
-            throw ErrorCodeException(CommonMessageCode.LICENSE_ACCESS_FAILED)
-        }
-        return try {
-            LicenseAuthService.verify(data)
-        } catch (e: LicenseException) {
-            logger.error("License Verification Failed: $e")
-            throw e
-        }
-    }
+	private fun checkCwLseImmediately(): AuthResponse {
+		val authRequest = AuthRequest(domain, CPACK_PRODUCT_CODE, System.currentTimeMillis())
+		val request = LicenseAuthService.getRequest(authRequest)
+		val result = licenseFeign.auth(request)
+		val data = result.data()
+		if (result.code() != 0 || data.isNullOrEmpty()) {
+			logger.warn("License Access Failed")
+			throw ErrorCodeException(CommonMessageCode.LICENSE_ACCESS_FAILED)
+		}
+		return try {
+			LicenseAuthService.verify(data)
+		} catch (e: LicenseException) {
+			logger.error("License Verification Failed: $e")
+			throw ErrorCodeException(CommonMessageCode.LICENSE_VERIFY_FAILED)
+		}
+	}
 
-    companion object {
-        val logger: Logger = LoggerFactory.getLogger(LseChecker::class.java)
-        const val LICENSE_UPDATE_INTERVAL = 180 * 1000L
-        const val MODULE_NAME = "CPack"
-    }
+	companion object {
+		val logger: Logger = LoggerFactory.getLogger(LseChecker::class.java)
+		const val LICENSE_UPDATE_INTERVAL = 180 * 1000L
+		const val CPACK_PRODUCT_CODE = "CPack"
+		private const val REPLICATION_LICENSE_CODE = "replication"
+		private const val ANALYSE_LICENSE_CODE = "analyst"
+		private const val ENTERPRISE_VERSION = "ENTERPRISE"
+
+		// 定义企业版菜单
+		private val LICENSE_ENTERPRISE_MODULE_SET = setOf(REPLICATION_LICENSE_CODE, ANALYSE_LICENSE_CODE)
+	}
 }

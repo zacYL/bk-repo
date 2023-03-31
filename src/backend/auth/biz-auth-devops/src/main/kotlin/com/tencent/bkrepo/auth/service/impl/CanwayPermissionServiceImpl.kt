@@ -316,8 +316,12 @@ class CanwayPermissionServiceImpl(
         val user = userRepository.findFirstByUserId(userId) ?: run {
             return listProjectPublicRepo(projectId)
         }
+        // 用户是否为DevOps管理员
+        if (isCIAdmin(userId,projectId)){
+            return getAllRepoByProjectId(projectId)
+        }
 
-        // 用户为系统管理员
+        // 用户为制品库系统管理员
         if (user.admin) {
             return getAllRepoByProjectId(projectId)
         }

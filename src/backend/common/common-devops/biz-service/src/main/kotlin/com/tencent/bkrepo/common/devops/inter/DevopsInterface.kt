@@ -1,48 +1,16 @@
 package com.tencent.bkrepo.common.devops.inter
 
-import com.tencent.bkrepo.common.api.pojo.Response
-import com.tencent.bkrepo.common.devops.pojo.CanwayGroup
+
+import com.tencent.bkrepo.common.devops.pojo.CanwayProjectSubjectData
 import com.tencent.bkrepo.common.devops.pojo.DevopsDepartment
+import com.tencent.bkrepo.common.devops.pojo.request.CanwayUserGroupRequest
+import com.tencent.bkrepo.common.devops.pojo.response.CanwayGroupResponse
 import com.tencent.bkrepo.common.devops.pojo.response.CanwayResponse
 import com.tencent.bkrepo.common.devops.pojo.response.CanwayUser
 import retrofit2.Call
-import retrofit2.http.GET
-import retrofit2.http.Path
-import retrofit2.http.Query
+import retrofit2.http.*
 
 interface DevopsInterface {
-
-    /**
-     * 加载CI 下用户有权限的项目列表，用户信息由Cookie传入
-     * @param type 2：项目，1：需求池
-     */
-    @GET("/ms/permission/api/service/administrator/{userId}/{type}")
-    fun isAdmin(
-        @Path("userId") userId: String,
-        @Path("type") type: Int,
-        @Query("instanceCode") instanceCode: String? = null
-    ): Call<CanwayResponse<Boolean>>
-
-    /**
-     * 项目下部门
-     * [projectId] 项目
-     */
-    @GET("/ms/permission/api/service/resource_instance/view/department/project/{projectId}")
-    fun departmentsByProjectId(@Path("projectId") projectId: String): Call<CanwayResponse<List<DevopsDepartment>>?>
-
-    /**
-     * 部门下子部门
-     * [departmentId] 父部门
-     */
-    @GET("/ms/permission/api/service/organization/under/{departmentId}")
-    fun childrenDepartments(@Path("departmentId") departmentId: String): Call<CanwayResponse<List<DevopsDepartment>>?>
-
-    /**
-     * 获取用户所属组织
-     * [userId] 用户
-     */
-    @GET("/ms/usermanager/api/service/organization/organization/list")
-    fun departmentByUserId(@Query("userId") userId: String): Call<CanwayResponse<List<DevopsDepartment>>?>
 
     /**
      * 获取用户所属组织包括父级
@@ -52,39 +20,57 @@ interface DevopsInterface {
     fun departmentsByUserId(@Path("userId") userId: String): Call<CanwayResponse<List<DevopsDepartment>>?>
 
     /**
-     * 查询项目下所有用户组
+     * 查询项目下所有部门或用户组
      * [projectId] 项目
      */
-    @GET("/ms/permission/api/service/resource_instance/view/group/project/{projectId}")
-    fun groupsByProjectId(@Path("projectId") projectId: String): Call<CanwayResponse<List<CanwayGroup>>?>
+    @GET("/ms/auth/api/service/project/{projectId}/member/direct/list")
+    fun organizationByProjectId(
+        @Path("projectId") projectId: String,
+        @Query("subjectCode") subjectCode: String? = null
+    ): Call<CanwayResponse<List<CanwayProjectSubjectData>>?>
 
     /**
-     * 查询用户在当前租户下的部门
-     * @param userId 用户
-     * @param tenantId 租户
+     * 自助查询用户组成员
      */
-    @GET("/ms/permission/api/service/organization/department")
-    fun departmentsByUserIdAndTenantId(
-        @Query("userId") userId: String,
-        @Query("tenantId") tenantId: String
-    ): Call<Response<List<DevopsDepartment>>?>
+    @POST("/ms/auth/api/service/custom/user_group/member/query")
+    @Headers("Content-Type: application/json")
+    fun groupInformation(
+        @Body
+        canwayUserGroupRequest: CanwayUserGroupRequest
+    ): Call<CanwayResponse<List<CanwayGroupResponse>>?>
 
-    @GET("/ms/permission/api/service/administrator/identifyProjectManageAuth/{userId}/{projectId}")
+    /**
+     * 查看用户是否有系统管理员权限
+     */
+    @GET("/ms/auth/api/service/system/superior_admin")
+    fun identifySystemManageAuth(
+        @Header("X-DEVOPS-UID") userId: String
+    ): Call<CanwayResponse<Boolean>?>
+
+    /**
+     * 查看用户是否有租户管理员权限
+     */
+    @GET("/ms/auth/api/service/tenant/{tenantId}/member/superior_admin")
+    fun identifyTenantManageAuth(
+        @Header("X-DEVOPS-UID") userId: String,
+        @Path("tenantId") tenantId: String
+    ): Call<CanwayResponse<Boolean>?>
+
+    /**
+     * 查看用户是否有项目管理员权限
+     */
+    @GET("/ms/auth/api/service/project/{projectId}/admin/superior_admin")
     fun identifyProjectManageAuth(
-        @Path("userId") userId: String,
+        @Header("X-DEVOPS-UID") userId: String,
         @Path("projectId") projectId: String
     ): Call<CanwayResponse<Boolean>?>
 
     /**
      * 查询指定CI项目下项目成员
      * @param projectId 项目
-     * @param withAdmin 是否包含项目管理员
-     * @param withParentAdmin
      */
-    @GET("/ms/permission/api/service/system_resource/viewWithName/project/{projectId}")
+    @GET("/ms/auth/api/service/project/{projectId}/member/list")
     fun usersByProjectId(
         @Path("projectId") projectId: String,
-        @Query("withAdmin") withAdmin: Boolean,
-        @Query("withParentAdmin") withParentAdmin: Boolean
     ): Call<CanwayResponse<List<CanwayUser>>?>
 }

@@ -232,11 +232,11 @@
     "module": "CPack",
     "license": "STANDARD",
     "childrenMenus": [],
-    "createdBy": "ericxuan",
-    "createdByName": "admin",
+    "createdBy": "admin",
+    "createdByName": "",
     "createdTime": "2023-03-31 14:44:48",
-    "updatedBy": "ericxuan",
-    "updatedByName": "admin",
+    "updatedBy": "admin",
+    "updatedByName": "",
     "updatedTime": "2023-03-31 14:44:48"
   }
 ]

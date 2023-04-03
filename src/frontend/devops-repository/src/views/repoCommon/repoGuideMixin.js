@@ -760,7 +760,7 @@ export default {
                             {
                                 subTitle: '将<LOCAL_PACKAGE_NAME>替换为本地制品名称，命令行执行以下命令推送制品：',
                                 codeList: [
-                                    `nuget push -ApiKey api -Source "${this.repoName}" <LOCAL_PACKAGE_NAME>.nupkg`
+                                    `nuget push -Source "${this.repoName}" <LOCAL_PACKAGE_NAME>.nupkg`
                                 ]
                             }
                         ]
@@ -784,7 +784,7 @@ export default {
                             {
                                 subTitle: '注意：通过本操作删除的制品无法恢复',
                                 codeList: [
-                                    `nuget delete -ApiKey api -Source "${this.repoName}" ${this.packageName} ${this.versionLabel}`
+                                    `nuget delete -Source "${this.repoName}" ${this.packageName} ${this.versionLabel}`
                                 ]
                             }
                         ]

@@ -32,7 +32,6 @@
 dependencies {
     implementation(project(":common:common-stream"))
     api(project(":maven:api-maven"))
-    api(project(":scanner:api-scanner"))
     api(project(":common:common-artifact:artifact-service"))
     api(project(":common:common-mongo"))
     implementation("org.apache.maven:maven-repository-metadata:${Versions.MAVEN}")

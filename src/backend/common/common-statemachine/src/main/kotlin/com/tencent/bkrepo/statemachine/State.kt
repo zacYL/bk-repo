@@ -27,8 +27,6 @@
 
 package com.tencent.bkrepo.statemachine
 
-import com.sun.org.slf4j.internal.LoggerFactory
-
 /**
  * 状态
  *
@@ -40,7 +38,6 @@ class State(
     private val transitions: Map<String, List<Transition>>
 ) {
 
-    private val logger = LoggerFactory.getLogger(javaClass)
     /**
      * 接收到事件时执行状态转移
      */
@@ -48,8 +45,6 @@ class State(
         var finalTransition: Transition? = null
         val transitions = transitions[event.name] ?: emptyList()
         for (transition in transitions) {
-            logger.warn("state onEvent, transition:${transition.source}, ${transition.target}, " +
-                            "${transition.event}, ${transition.hasCondition()}")
             if (!transition.hasCondition() && finalTransition == null) {
                 finalTransition = transition
             } else if (transition.hasCondition() && transition.match(event)) {

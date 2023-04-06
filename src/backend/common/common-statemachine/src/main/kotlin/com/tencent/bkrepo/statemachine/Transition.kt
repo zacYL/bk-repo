@@ -27,8 +27,6 @@
 
 package com.tencent.bkrepo.statemachine
 
-import com.sun.org.slf4j.internal.LoggerFactory
-
 /**
  * 状态转移过程
  */
@@ -76,10 +74,6 @@ class Transition(
      * 执行状态转移
      */
     fun transit(event: Event): TransitResult {
-        logger.warn("transition, source:$source, target:$target, event:${event.name}, " +
-                        "action:$action, condition:$condition")
         return action.execute(source, target, event)
     }
-
-    private val logger = LoggerFactory.getLogger(javaClass)
 }

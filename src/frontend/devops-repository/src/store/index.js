@@ -34,6 +34,8 @@ const storeObject = {
         ],
         projectList: [],
         repoListAll: [],
+        scannerSupportFileNameExt: [],
+        scannerSupportPackageType: [],
         userList: {
             anonymous: {
                 id: 'anonymous',
@@ -154,6 +156,12 @@ const storeObject = {
         },
         SET_ARTIFACT_LIST (state, list) {
             state.artifactTypeList = list
+        },
+        SET_SCANNER_SUPPORT_FILE_NAME_EXT_LIST (state, data) {
+            state.scannerSupportFileNameExt = data
+        },
+        SET_SCANNER_SUPPORT_PACKAGE_TYPE_LIST (state, data) {
+            state.scannerSupportPackageType = data
         }
     },
     actions

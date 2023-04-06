@@ -41,13 +41,12 @@
 </template>
 <script>
     import { mapActions } from 'vuex'
-    import { scanTypeEnum, scannerTypeEnum } from '@repository/store/publicEnum'
+    import { scanTypeEnum } from '@repository/store/publicEnum'
     export default {
         name: 'createScan',
         data () {
             return {
                 scanTypeEnum,
-                scannerTypeEnum,
                 scanForm: {
                     show: false,
                     loading: false,
@@ -56,7 +55,7 @@
                     name: '',
                     description: ''
                 },
-                scannerList: [],
+                filterScannerList: [],
                 rules: {
                     name: [
                         {
@@ -87,11 +86,15 @@
                 return this.$route.params.projectId
             },
             scannerTip () {
-                const scanner = this.scannerList.find(s => s.name === this.scanForm.scanner)
-                return scanner ? this.scannerTypeEnum[scanner.type][this.scanForm.type] : ''
-            },
-            filterScannerList () {
-                return this.scannerList.filter(s => this.scanForm.type in (this.scannerTypeEnum[s.type] || {}))
+                const scanner = this.filterScannerList.find(s => s.name === this.scanForm.scanner)
+                return scanner ? scanner.description : ''
+            }
+        },
+        watch: {
+            'scanForm.type': function (newVal) {
+                return this.getScannerList({ packageType: this.scanForm.type }).then(res => {
+                    this.filterScannerList = res
+                })
             }
         },
         methods: {
@@ -101,9 +104,6 @@
                     ...this.scanForm,
                     ...data
                 }
-                this.getScannerList().then(res => {
-                    this.scannerList = res
-                })
             },
             cancel () {
                 this.$refs.scanForm.clearError()
@@ -121,6 +121,7 @@
                     projectId: this.projectId,
                     type,
                     name,
+                    scanTypes: this.filterScannerList.find(s => s.name === this.scanForm.scanner).supportScanTypes,
                     scanner,
                     description
                 }).then(() => {

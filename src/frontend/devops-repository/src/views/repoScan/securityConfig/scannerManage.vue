@@ -84,7 +84,8 @@
             }
         },
         created () {
-            this.getScannerList().then(res => {
+            // 此时根据后端同学要求，获取扫描器时传参为安全问题扫描，即 SECURITY，此时写死这个参数
+            this.getScannerList({ scanType: 'SECURITY' }).then(res => {
                 this.scannerList = res.filter(v => v.type !== 'scancodeToolkit')
                 this.scannerType = this.scannerList[0]?.type || ''
             })

@@ -44,7 +44,7 @@
                                             disabled: ($version.stageTag || '').includes('@release')
                                         },
                                         repoType !== 'docker' && { label: '下载', clickEvent: () => downloadPackageHandler($version) },
-                                        showRepoScan && { label: '安全扫描', clickEvent: () => scanPackageHandler($version) }
+                                        showRepoScan && { label: '扫描制品', clickEvent: () => scanPackageHandler($version) }
                                     ] : []),
                                     showRepoScan && { clickEvent: () => changeForbidStatusHandler($version), label: $version.metadata.forbidStatus ? '解除禁止' : '禁止使用' },
                                     (permission.delete && !$route.path.startsWith('/software') && !(storeType === 'virtual')) && { label: '删除', clickEvent: () => deleteVersionHandler($version) }
@@ -73,7 +73,6 @@
     import InfiniteScroll from '@repository/components/InfiniteScroll'
     import VersionDetail from '@repository/views/repoCommon/commonVersionDetail'
     import commonFormDialog from '@repository/views/repoCommon/commonFormDialog'
-    import { scanTypeEnum } from '@repository/store/publicEnum'
     import { mapState, mapActions } from 'vuex'
     export default {
         name: 'commonPackageDetail',
@@ -119,7 +118,7 @@
             }
         },
         computed: {
-            ...mapState(['permission']),
+            ...mapState(['permission', 'scannerSupportPackageType']),
             projectId () {
                 return this.$route.params.projectId || ''
             },
@@ -145,7 +144,7 @@
             showRepoScan () {
                 // 软件源模式下屏蔽安全扫描和禁用操作
                 // 虚拟仓库屏蔽安全扫描和禁用操作
-                return Object.keys(scanTypeEnum).join(',').toLowerCase().includes(this.repoType) && !this.$route.path.startsWith('/software') && !(this.storeType === 'virtual')
+                return this.scannerSupportPackageType.join(',').toLowerCase().includes(this.repoType) && !this.$route.path.startsWith('/software') && !(this.storeType === 'virtual')
             },
             // 是否显示晋级操作
             showPromotion () {
@@ -160,6 +159,7 @@
         created () {
             this.getPackageInfoHandler()
             this.handlerPaginationChange()
+            this.refreshSupportPackageTypeList()
         },
         methods: {
             ...mapActions([
@@ -167,7 +167,8 @@
                 'getVersionList',
                 'changeStageTag',
                 'deleteVersion',
-                'forbidPackageMetadata'
+                'forbidPackageMetadata',
+                'refreshSupportPackageTypeList'
             ]),
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}, load) {
                 this.pagination.current = current
@@ -256,7 +257,7 @@
                 this.$refs.commonFormDialog.setData({
                     show: true,
                     loading: false,
-                    title: '安全扫描',
+                    title: '扫描制品',
                     type: 'scan',
                     id: '',
                     name: this.pkg.name,

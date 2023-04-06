@@ -3,31 +3,30 @@
         <bk-form-item label="质量规则">
             <bk-switcher v-model="editable" size="small" theme="primary" @change="$refs.ruleForm.clearError()"></bk-switcher>
         </bk-form-item>
-        <template v-if="scanType.includes('LICENSE')">
-            <bk-form-item label="规则设置" property="recommend" error-display-type="normal">
+        <template>
+            <bk-form-item v-if="ruleTypes.includes(SCAN_TYPE_LICENSE)" label="许可证规则">
                 <div style="color:var(--fontSubsidiaryColor);">当许可证中出现不符合以下规则的许可证时，则不通过质量规则</div>
                 <div class="mt10"><bk-checkbox :disabled="!editable" v-model="rule.recommend">仅有可用许可证</bk-checkbox></div>
                 <div class="mt10"><bk-checkbox :disabled="!editable" v-model="rule.compliance">仅有合规的许可证</bk-checkbox></div>
                 <div class="mt10"><bk-checkbox :disabled="!editable" v-model="rule.unknown">无未知许可证</bk-checkbox></div>
             </bk-form-item>
-        </template>
-        <template v-else>
-            <bk-form-item label="规则设置">
+            <bk-form-item v-if="ruleTypes.includes(SCAN_TYPE_SECURITY)" label="安全规则">
                 <div style="color:var(--fontSubsidiaryColor);">当扫描的制品漏洞超过下方任意一条规则中设定的数量，则制品未通过质量规则</div>
             </bk-form-item>
-
-            <bk-form-item label="" v-for="[id, name] in LeakLevelEnumArr" :key="id"
-                :property="id.toLowerCase()" error-display-type="normal">
-                <div class="flex-align-center">
-                    <div :class="`status-sign ${id}`" :data-name="`${name}漏洞≦`"></div>
-                    <bk-input class="ml10 mr10" style="width: 80px;"
-                        :disabled="!editable" v-model.trim="rule[id.toLowerCase()]"
-                        @focus="$refs.ruleForm.clearError()"
-                        @blur="$refs.ruleForm.validate()">
-                    </bk-input>
-                    <span>个</span>
-                </div>
-            </bk-form-item>
+            <template v-if="ruleTypes.includes(SCAN_TYPE_SECURITY)">
+                <bk-form-item label="" v-for="[id, name] in Object.entries(leakLevelEnum)" :key="id"
+                    :property="id.toLowerCase()" error-display-type="normal">
+                    <div class="flex-align-center">
+                        <div :class="`status-sign ${id}`" :data-name="`${name}漏洞≦`"></div>
+                        <bk-input class="ml10 mr10" style="width: 80px;"
+                            :disabled="!editable" v-model.trim="rule[id.toLowerCase()]"
+                            @focus="$refs.ruleForm.clearError()"
+                            @blur="$refs.ruleForm.validate()">
+                        </bk-input>
+                        <span>个</span>
+                    </div>
+                </bk-form-item>
+            </template>
         </template>
         <bk-form-item label="触发事件">
             <div style="color:var(--fontSubsidiaryColor);">可勾选下方按钮，在扫描或扫描结束后触发勾选项</div>
@@ -42,8 +41,14 @@
 <script>
     import { mapActions } from 'vuex'
     import { leakLevelEnum } from '@repository/store/publicEnum'
+    import { SCAN_TYPE_LICENSE, SCAN_TYPE_SECURITY } from '../../../store/publicEnum'
     export default {
         name: 'scanQualityRule',
+        props: {
+            projectId: String,
+            planId: String,
+            scanTypes: Array
+        },
         data () {
             const validate = {
                 regex: /^[0-9]*$/,
@@ -51,13 +56,19 @@
                 trigger: 'blur'
             }
             return {
+                SCAN_TYPE_SECURITY: SCAN_TYPE_SECURITY,
+                SCAN_TYPE_LICENSE: SCAN_TYPE_LICENSE,
                 leakLevelEnum,
                 editable: false,
                 rule: {
+                    recommend: false,
+                    compliance: false,
+                    unknown: false,
                     critical: '',
                     high: '',
                     medium: '',
                     low: '',
+                    white: '',
                     forbidScanUnFinished: false,
                     forbidQualityUnPass: false
                 },
@@ -65,7 +76,8 @@
                     critical: [validate],
                     high: [validate],
                     medium: [validate],
-                    low: [
+                    low: [validate],
+                    white: [
                         validate,
                         {
                             validator: () => this.editable ? this.computedEditable() : true,
@@ -84,20 +96,8 @@
             }
         },
         computed: {
-            projectId () {
-                return this.$route.params.projectId
-            },
-            scanType () {
-                return this.$route.query.scanType
-            },
-            planId () {
-                return this.$route.params.planId
-            },
-            // 白名单漏洞不需要计入质量规则
-            LeakLevelEnumArr () {
-                const arr = Object.entries(this.leakLevelEnum)
-                arr.splice(arr.findIndex(item => item[0] === 'WHITE'), 1)
-                return arr
+            ruleTypes () {
+                return this.scanTypes.filter(scanType => scanType === SCAN_TYPE_SECURITY || scanType === SCAN_TYPE_LICENSE)
             }
         },
         created () {
@@ -107,7 +107,7 @@
         methods: {
             ...mapActions(['getQualityRule', 'saveQualityRule']),
             initData () {
-                this.rule = this.scanType.includes('LICENSE')
+                this.rule = this.scanTypes.includes('LICENSE')
                     ? {
                         recommend: false,
                         compliance: false,
@@ -120,50 +120,54 @@
                         high: '',
                         medium: '',
                         low: '',
+                        white: '',
                         forbidScanUnFinished: false,
                         forbidQualityUnPass: false
                     }
             },
             async save () {
                 await this.$refs.ruleForm.validate()
-                this.saveQualityRule({
-                    type: this.scanType,
-                    id: this.planId,
-                    body: this.editable
-                        ? Object.keys(this.rule).reduce((target, key) => {
-                            const value = this.rule[key]
-                            if (typeof value === 'string' && value.length > 0) {
-                                target[key] = Number(value)
-                            }
-                            if (typeof value === 'boolean' || typeof value === 'number') {
-                                target[key] = value
-                            }
-                            return target
-                        }, {})
-                        : {}
-                }).then(() => {
-                    this.$bkMessage({
-                        theme: 'success',
-                        message: this.$t('save') + this.$t('success')
+                Promise
+                    .all(this.ruleTypes.map(type => this.doSave(type)))
+                    .then(() => {
+                        this.$bkMessage({
+                            theme: 'success',
+                            message: this.$t('save') + this.$t('success')
+                        })
+                        this.getRules()
                     })
-                    this.getRules()
+            },
+            doSave (ruleType) {
+                return this.saveQualityRule({
+                    type: ruleType,
+                    id: this.planId,
+                    body: Object.keys(this.rule).reduce((target, key) => {
+                        const value = this.rule[key]
+                        if (typeof value === 'string' && value.length > 0) {
+                            target[key] = Number(value)
+                        }
+                        if (typeof value === 'boolean' || typeof value === 'number') {
+                            target[key] = value
+                        }
+                        return target
+                    }, {})
                 })
             },
             getRules () {
-                this.getQualityRule({
-                    type: this.scanType,
-                    id: this.planId
-                }).then(res => {
-                    this.initData()
-                    Object.keys(res).forEach(k => {
-                        res[k] !== null && (this.rule[k] = res[k])
+                Promise.all(
+                    this.ruleTypes.map(type => this.getQualityRule({ type: type, id: this.planId }))
+                ).then(qualityRules => {
+                    qualityRules.forEach(qualityRule => {
+                        Object.keys(qualityRule).forEach(k => {
+                            qualityRule[k] !== null && (this.rule[k] = qualityRule[k])
+                        })
                     })
                     this.editable = this.computedEditable()
                 })
             },
             computedEditable () {
-                const { critical, high, medium, low, recommend, compliance, unknown } = this.rule
-                return this.scanType.includes('LICENSE')
+                const { critical, high, medium, low, white, recommend, compliance, unknown } = this.rule
+                return this.scanTypes.includes('LICENSE')
                     ? Boolean(
                         recommend
                             || compliance
@@ -174,6 +178,7 @@
                             || high !== ''
                             || medium !== ''
                             || low !== ''
+                            || white !== ''
                     )
             }
         }

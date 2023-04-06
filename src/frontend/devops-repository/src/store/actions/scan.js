@@ -1,6 +1,6 @@
 import Vue from 'vue'
 
-const prefix = 'scanner/api/scan'
+const prefix = 'analyst/api/scan'
 
 export default {
     // 创建扫描方案
@@ -25,12 +25,16 @@ export default {
         )
     },
     // 所有扫描方案
-    getScanAll (_, { projectId, type }) {
+    getScanAll (_, { projectId, type, fileNameExt = null }) {
+        if (!fileNameExt) {
+            fileNameExt = null
+        }
         return Vue.prototype.$ajax.get(
             `${prefix}/plan/all/${projectId}`,
             {
                 params: {
-                    type
+                    type,
+                    fileNameExt
                 }
             }
         )
@@ -151,6 +155,13 @@ export default {
             }
         )
     },
+    // 获取扫描报告
+    getReports (_, { projectId, repoName, fullPath, body }) {
+        return Vue.prototype.$ajax.post(
+            `${prefix}/reports/detail/${projectId}/${repoName}/${encodeURIComponent(fullPath)}`,
+            body
+        )
+    },
     // 批量扫描
     startScan (_, body) {
         return Vue.prototype.$ajax.post(
@@ -182,16 +193,42 @@ export default {
         )
     },
     // 获取扫描器列表
-    getScannerList () {
-        return Vue.prototype.$ajax.get('/scanner/api/scanners/base')
+    getScannerList (_, { packageType = null, scanType = null }) {
+        return Vue.prototype.$ajax.get(
+            '/analyst/api/scanners/base',
+            {
+                params: {
+                    packageType,
+                    scanType
+                }
+            }
+        )
+    },
+    // 获取系统支持的所有文件名后缀列表
+    refreshSupportFileNameExtList ({ commit }) {
+        Vue.prototype.$ajax.get('/analyst/api/scanners/support/ext').then(fileNameExtList => {
+            commit('SET_SCANNER_SUPPORT_FILE_NAME_EXT_LIST', fileNameExtList)
+        }).catch(e => {
+            console.log('get support file name extension failed')
+            console.error(e)
+        })
+    },
+    // 获取系统支持的所有包名后缀列表
+    refreshSupportPackageTypeList ({ commit }) {
+        Vue.prototype.$ajax.get('/analyst/api/scanners/support/package').then(packageTypeList => {
+            commit('SET_SCANNER_SUPPORT_PACKAGE_TYPE_LIST', packageTypeList)
+        }).catch(e => {
+            console.log('get support package type failed')
+            console.error(e)
+        })
     },
     // 获取质量规则
     getQualityRule (_, { type, id }) {
-        return Vue.prototype.$ajax.get(`/scanner/api/scan${type.includes('LICENSE') ? '/license' : ''}/quality/${id}`)
+        return Vue.prototype.$ajax.get(`/analyst/api/scan${type.includes('LICENSE') ? '/license' : ''}/quality/${id}`)
     },
     // 更新质量规则
     saveQualityRule (_, { type, id, body }) {
-        return Vue.prototype.$ajax.post(`/scanner/api/scan${type.includes('LICENSE') ? '/license' : ''}/quality/${id}`, body)
+        return Vue.prototype.$ajax.post(`/analyst/api/scan${type.includes('LICENSE') ? '/license' : ''}/quality/${id}`, body)
     },
     // 查询任务列表
     getScanTaskList (_, { projectId, planId, triggerType, namePrefix, current = 1, limit = 20 }) {
@@ -234,7 +271,7 @@ export default {
     // 查询许可证列表
     getLicenseList (_, { name, isTrust, current = 1, limit = 20 }) {
         return Vue.prototype.$ajax.get(
-            'scanner/api/license/list',
+            'analyst/api/license/list',
             {
                 params: {
                     name,
@@ -248,7 +285,7 @@ export default {
     // 设置许可证
     editLicense (_, { licenseId, isTrust }) {
         return Vue.prototype.$ajax.post(
-            `scanner/api/license/${licenseId}`,
+            `analyst/api/license/${licenseId}`,
             {
                 isTrust
             }
@@ -257,7 +294,7 @@ export default {
     // 查询漏洞白名单
     getCveWhiteList (_, { cveId, current = 1, limit = 20 }) {
         return Vue.prototype.$ajax.get(
-            'scanner/api/cve_whitelist/page',
+            'analyst/api/cve_whitelist/page',
             {
                 params: {
                     cveId,
@@ -270,14 +307,14 @@ export default {
     // 添加漏洞白名单
     addCveWhite (_, { body }) {
         return Vue.prototype.$ajax.put(
-            'scanner/api/cve_whitelist/batch',
+            'analyst/api/cve_whitelist/batch',
             body
         )
     },
     // 删除漏洞白名单
     deleteCveWhite (_, { cveId }) {
         return Vue.prototype.$ajax.delete(
-            `scanner/api/cve_whitelist/${cveId}`
+            `analyst/api/cve_whitelist/${cveId}`
         )
     }
 }

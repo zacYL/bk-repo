@@ -157,7 +157,7 @@
                                         ...(!row.folder ? [
                                             { clickEvent: () => handlerShare(row), label: $t('share') },
                                             ( genericScanFileTypes.includes(row.name.replace(/^.+\.([^.]+)$/, '$1')) && !$route.path.startsWith('/software'))
-                                                && { clickEvent: () => handlerScan(row), label: '安全扫描' }
+                                                && { clickEvent: () => handlerScan(row), label: '扫描制品' }
                                         ] : []),
                                         ...(row.folder ? [
                                             { clickEvent: () => handlerShare(row), label: $t('share') }
@@ -603,7 +603,7 @@
                 this.$refs.genericFormDialog.setData({
                     show: true,
                     loading: false,
-                    title: '安全扫描',
+                    title: '扫描制品',
                     type: 'scan',
                     id: '',
                     name,

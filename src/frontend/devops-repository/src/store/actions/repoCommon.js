@@ -147,7 +147,7 @@ export default {
                             ? [{
                                 field: 'name',
                                 value: `*${packageName}*`,
-                                operation: 'MATCH'
+                                operation: 'MATCH_I'
                             }]
                             : []),
                         ...(isGeneric

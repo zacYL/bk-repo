@@ -100,7 +100,13 @@ import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
-import org.springframework.data.mongodb.core.query.*
+import org.springframework.data.mongodb.core.query.Criteria
+import org.springframework.data.mongodb.core.query.Query
+import org.springframework.data.mongodb.core.query.Update
+import org.springframework.data.mongodb.core.query.and
+import org.springframework.data.mongodb.core.query.inValues
+import org.springframework.data.mongodb.core.query.isEqualTo
+import org.springframework.data.mongodb.core.query.where
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.net.SocketTimeoutException
@@ -662,8 +668,13 @@ class RepositoryServiceImpl(
 
     override fun testRemoteUrl(remoteUrlRequest: RemoteUrlRequest): ConnectionStatusInfo {
         val remoteRepository = ArtifactContextHolder.getRepository(RepositoryCategory.REMOTE) as RemoteRepository
+        val remoteConfiguration = RemoteConfiguration(
+            url = remoteUrlRequest.url,
+            credentials = remoteUrlRequest.credentials,
+            network = remoteUrlRequest.network
+        )
         return try {
-            val response = remoteRepository.getRemoteUrlResponse(remoteUrlRequest)
+            val response = remoteRepository.getResponse(remoteConfiguration)
             val reason = HttpStatus.valueOf(response.code()).reasonPhrase
             ConnectionStatusInfo(response.code() < 400, "${response.code()} $reason")
         } catch (exception: SocketTimeoutException) {

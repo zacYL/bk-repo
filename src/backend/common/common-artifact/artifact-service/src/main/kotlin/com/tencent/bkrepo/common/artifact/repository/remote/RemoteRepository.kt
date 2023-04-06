@@ -55,7 +55,6 @@ import com.tencent.bkrepo.common.artifact.util.okhttp.HttpClientBuilderFactory
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
-import com.tencent.bkrepo.repository.pojo.repo.RemoteUrlRequest
 import okhttp3.Authenticator
 import okhttp3.Credentials
 import okhttp3.Interceptor
@@ -166,20 +165,22 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
         val httpClient = createHttpClient(remoteConfiguration)
         val downloadUri = createRemoteDownloadUrl(context)
         val request = Request.Builder().url(downloadUri).build()
-        val response = httpClient.newCall(request).execute()
-        return if (checkResponse(response)) {
-            onQueryResponse(context, response)
-        } else {
+        return try {
+            val response = httpClient.newCall(request).execute()
+            if (checkQueryResponse(response)) {
+                onQueryResponse(context, response)
+            } else null
+        } catch (e: Exception) {
+            logger.warn("Failed to request or resolve response: ${e.message}")
             null
         }
     }
 
     /**
-     *  获取远程URL响应
+     *  根据远程仓库配置获取响应
      */
-    fun getRemoteUrlResponse(remoteUrlRequest: RemoteUrlRequest): Response {
-        with (remoteUrlRequest) {
-            val remoteConfiguration = RemoteConfiguration(credentials = credentials, network = network)
+    fun getResponse(remoteConfiguration: RemoteConfiguration): Response {
+        with(remoteConfiguration) {
             val httpClient = createHttpClient(remoteConfiguration)
             val request = Request.Builder().url(url).build()
             return httpClient.newCall(request).execute()
@@ -374,6 +375,17 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
     protected fun checkResponse(response: Response): Boolean {
         if (!response.isSuccessful) {
             logger.warn("Download artifact from remote failed: [${response.code()}]")
+            return false
+        }
+        return true
+    }
+
+    /**
+     * 检查查询响应
+     */
+    open fun checkQueryResponse(response: Response): Boolean {
+        if (!response.isSuccessful) {
+            logger.warn("Query artifact info from remote failed: [${response.code()}]")
             return false
         }
         return true

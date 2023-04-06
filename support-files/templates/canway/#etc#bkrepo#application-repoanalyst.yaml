@@ -1,0 +1,68 @@
+spring:
+  application:
+    name: ${service.name}
+    desc: analyst Service
+  # 上报的扫描结果比较大的时候需要配置
+  servlet:
+    multipart:
+      max-request-size: 100MB
+  cloud:
+    stream:
+      function:
+        definition: artifactEvent
+      bindings:
+        artifactEvent-in-0:
+          group: analyst
+          destination: artifactEvent
+          binder: pulsar
+
+
+server:
+  port: __BK_REPO_ANALYST_PORT__
+logging:
+  path: ${logging.path-common}/${service.name}
+service:
+  name: analyst
+
+scanner:
+  # 默认项目扫描子任务数量限制
+  defaultProjectSubScanTaskCountLimit: 20
+  # 用于生成扫描报告路径
+  detailReportUrl: __BK_HTTP_SCHEMA__://__BK_REPO_FQDN__
+  # 后端服务baseUrl
+  baseUrl: __BK_HTTP_SCHEMA__://__BK_REPO_FQDN__
+  # 用于监控数据统计的分布式计数器使用的存储类型
+  distributedCountType: redis
+  # 默认分发器
+  defaultDispatcher: __DEFAULT_DISPATCHER__
+  # 分发器
+  dispatcher:
+    docker:
+      enabled: __DISPATCHER_DOCKER_ENABLED__
+    k8s:
+      # 是否启用
+      enabled: __DISPATCHER_K8S_ENABLED__
+      # 创建job使用的命名空间
+      namespace: bkrepo-analyst
+      # k8s api server url
+      apiServer: __BK_REPO_API_SERVER__
+      # 用于访问apiServer时进行认证，未配置时取当前环境的~/.kube/config，或者当前部署的service account
+      token: __BK_REPO_TOKEN__
+      # 是否验证ssl，默认不验证
+      verifyingSsl: false
+      # job执行结束后，k8s中job对象保留时间为一小时
+      jobTtlSecondsAfterFinished: 3600
+      # 是否在执行成功后删除job，如果K8S集群的ttlSecondsAfterFinished参数可用，可将该参数设置为false
+      cleanJobAfterSuccess: false
+      # 容器limit mem
+      limitMem: 2GB
+      # 容器 request mem
+      requestMem: 1GB
+      # 会在文件三倍大小与该值之间取大者作为容器request ephemeralStorage
+      requestStorage: 2GB
+      # 容器limit ephemeralStorage
+      limitStorage: 4GB
+      # 容器request cpu
+      requestCpu: 1
+      # 容器limit cpu
+      limitCpu: 2

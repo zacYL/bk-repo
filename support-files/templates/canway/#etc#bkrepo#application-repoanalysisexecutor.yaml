@@ -1,0 +1,37 @@
+spring:
+  application:
+    name: ${service.name}
+    desc: AnalysisExecutor Service
+server:
+  port: __BK_REPO_ANALYSISEXECUTOR_PORT__
+logging:
+  path: ${logging.path-common}/${service.name}
+service:
+  name: analysisexecutor
+
+scanner:
+  executor:
+    # 扫描工作目录，扫描模块独立使用目录
+    workDir: /tmp/bkrepo-data/analysis-executor
+    # 单台机器最多执行的扫描任务数量
+    maxTaskCount: 10
+    # 允许扫描的最大文件大小
+    fileSizeLimit: 10GB
+    # 至少需要空闲的内存百分比，大于这个比例才能执行扫描任务
+    atLeastFreeMemPercent: __BK_REPO_ANALYSIS_EXECUTOR_AT_LEAST_FREE_MEM_PERCENT__
+    # 至少需要空闲的硬盘空间百分比，大于这个比例才能执行扫描任务
+    atLeastUsableDiskSpacePercent: __BK_REPO_ANALYSIS_EXECUTOR_AT_LEAST_USABLE_DISK_SPACE_PERCENT__
+    # 扫描器日志最大行数
+    maxScannerLogLines: 5000
+    # 是否主动轮询拉取任务
+    pull: true
+    # 是否输出分析工具容器执行日志
+    showContainerLogs: true
+    # bkrepo服务域名
+    baseHost: __BK_REPO_FQDN__
+    docker:
+      enabled: __BK_REPO_ANALYSIS_EXECUTOR_DOCKER_ENABLED__
+      host: __BK_REPO_ANALYSIS_EXECUTOR_DOCKER_HOST__
+      version: __BK_REPO_ANALYSIS_EXECUTOR_DOCKER_VERSION__
+      connect-timeout: __BK_REPO_ANALYSIS_EXECUTOR_DOCKER_CONNECT_TIMEOUT__
+      read-timeout: __BK_REPO_ANALYSIS_EXECUTOR_DOCKER_READ_TIMEOUT__

@@ -1,0 +1,8 @@
+package com.tencent.bkrepo.analysis.executor
+
+import org.springframework.boot.SpringBootConfiguration
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration
+
+@EnableAutoConfiguration
+@SpringBootConfiguration
+class ScannerExecutorTestConfiguration

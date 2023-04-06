@@ -8,7 +8,7 @@
                 </div>
             </div>
             <div class="flex-end-center flex-1">
-                <bk-button v-if="currentType === 'MAVEN'" theme="primary" @click="handleClickUpload">上传制品</bk-button>
+                <bk-button v-if="currentType === 'MAVEN' && !(storeType === 'remote') && !(storeType === 'virtual') && !$route.path.startsWith('/software')" theme="primary" @click="handleClickUpload">上传制品</bk-button>
                 <bk-button class="ml20 flex-align-center" text theme="primary" @click="showGuide = true">
                     <span class="flex-align-center">
                         <Icon class="mr5" name="hand-guide" size="16" />
@@ -87,7 +87,7 @@
         </bk-sideslider>
 
         <!-- maven包制上传侧边栏 -->
-        <repo-maven-uploader v-model="mavenUploader.isVisible" :project-id="projectId" :repo-name="repoName" @update="onUpdateUploader" @cancel="onCancelUploader" />
+        <repo-maven-uploader v-if="currentType === 'MAVEN' && mavenUploader.isVisible" v-model="mavenUploader.isVisible" :project-id="projectId" :repo-name="repoName" @update="onUpdateUploader" @cancel="onCancelUploader" />
         <!-- maven包制上传侧边栏 /-->
     </div>
 </template>

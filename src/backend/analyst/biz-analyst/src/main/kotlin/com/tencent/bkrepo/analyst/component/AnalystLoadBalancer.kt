@@ -30,7 +30,7 @@ package com.tencent.bkrepo.analyst.component
 import com.tencent.bkrepo.common.api.constant.ANALYSIS_EXECUTOR_SERVICE_NAME
 import com.tencent.devops.loadbalancer.config.DevOpsLoadBalancerProperties
 import com.tencent.devops.loadbalancer.gray.BaseLoadBalancer
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.HttpUrl
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Value
@@ -109,7 +109,8 @@ class AnalystLoadBalancer(
             val requestData = context.clientRequest as RequestData
             val url = requestData.url
             if (url.host == analysisServiceName && url.path.endsWith("/service/executor/stop")) {
-                val subtaskId = url.toHttpUrlOrNull()?.queryParameter("subtaskId") as String
+                val subtaskId = HttpUrl.get(url)?.queryParameter("subtaskId") as String
+                // val subtaskId = url.toHttpUrlOrNull()?.queryParameter("subtaskId") as String
                 val instanceIp = redisTemplate.opsForValue().get(instanceKey(subtaskId))
                 instances.firstOrNull { it.host == instanceIp }?.let { return DefaultResponse(it) }
             }

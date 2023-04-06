@@ -39,7 +39,7 @@ import com.tencent.bkrepo.common.analysis.pojo.scanner.SubScanTaskStatus
 import com.tencent.bkrepo.common.analysis.pojo.scanner.standard.StandardScanner
 import com.tencent.bkrepo.common.analysis.pojo.scanner.utils.DockerUtils.createContainer
 import com.tencent.bkrepo.common.analysis.pojo.scanner.utils.DockerUtils.removeContainer
-import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.HttpUrl
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.data.redis.core.RedisTemplate
@@ -113,14 +113,15 @@ class DockerDispatcher(
     private fun containerIdKey(subtaskId: String) = "scanner:dispatcher:sid:$subtaskId:cid"
 
     private fun hostConfig(): HostConfig? {
-        val url = scannerProperties.baseUrl.toHttpUrl()
-        val address = InetAddress.getByName(url.host)
+        //val url = scannerProperties.baseUrl.toHttpUrl()
+        val url =  HttpUrl.parse(scannerProperties.baseUrl)!!
+        val address = InetAddress.getByName(url.host())
         logger.info("baseUrl:$url, address:$address")
         val hostConfig = HostConfig.newHostConfig()
         return if (address.hostAddress == LOCALHOST) {
-            hostConfig.withExtraHosts("${url.host}:host-gateway")
+            hostConfig.withExtraHosts("${url.host()}:host-gateway")
         } else {
-            hostConfig.withExtraHosts("${url.host}:${address.hostAddress}")
+            hostConfig.withExtraHosts("${url.host()}:${address.hostAddress}")
         }
     }
 

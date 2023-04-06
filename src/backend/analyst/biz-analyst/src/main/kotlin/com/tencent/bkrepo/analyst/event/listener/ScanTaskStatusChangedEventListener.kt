@@ -61,7 +61,7 @@ import com.tencent.bkrepo.common.service.util.LocaleMessageUtils
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.devops.plugin.api.PluginManager
 import com.tencent.devops.plugin.api.applyExtension
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.HttpUrl
 import org.slf4j.LoggerFactory
 import org.springframework.context.event.EventListener
 import org.springframework.data.redis.core.RedisTemplate
@@ -128,7 +128,8 @@ class ScanTaskStatusChangedEventListener(
     private fun weworkBotNotify(scanTask: ScanTask, message: String) {
         val weworkBot = getWeworkBot(scanTask.taskId)
         if (weworkBot != null) {
-            val webhookKey = weworkBot.webhookUrl.toHttpUrlOrNull()?.queryParameter("key")
+            val webhookKey = HttpUrl.parse(weworkBot.webhookUrl)?.queryParameter("key")
+            // val webhookKey = weworkBot.webhookUrl.toHttpUrlOrNull()?.queryParameter("key")
             if (webhookKey.isNullOrEmpty()) {
                 logger.warn("get webhook key failed[${weworkBot.webhookUrl}]")
                 return

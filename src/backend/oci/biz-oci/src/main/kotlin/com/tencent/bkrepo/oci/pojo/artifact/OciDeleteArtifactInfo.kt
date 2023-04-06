@@ -36,10 +36,10 @@ package com.tencent.bkrepo.oci.pojo.artifact
  * 其余场景的ArtifactInfo 可以继承该类，如[OciBlobArtifactInfo]
  */
 class OciDeleteArtifactInfo(
-        projectId: String,
-        repoName: String,
-        packageName: String,
-        version: String
+    projectId: String,
+    repoName: String,
+    packageName: String,
+    version: String
 ) : OciArtifactInfo(projectId, repoName, packageName, version) {
 
     override fun getArtifactName() = packageName

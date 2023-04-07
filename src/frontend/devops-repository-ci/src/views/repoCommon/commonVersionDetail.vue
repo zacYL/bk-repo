@@ -45,7 +45,7 @@
                 </div>
                 <div class="package-description grid-item">
                     <label>描述</label>
-                    <span class="flex-1 text-overflow" :title="detail.basic.description">{{ detail.basic.description || '/' }}</span>
+                    <span class="flex-1 text-overflow" :title="detail.basic.description">{{ detail.basic.description || '' }}</span>
                 </div>
             </div>
             <div class="version-base-info base-info-guide display-block" :data-title="$t('useTips')">
@@ -172,7 +172,6 @@
     import ScanTag from '@repository/views/repoScan/scanTag'
     import forbidTag from '@repository/components/ForbidTag'
     import mavenDependencies from '@repository/views/repoCommon/mavenDependencies'
-    import { scanTypeEnum } from '@repository/store/publicEnum'
     import { mapState, mapGetters, mapActions } from 'vuex'
     import { convertFileSize, formatDate } from '@repository/utils'
     import repoGuideMixin from '@repository/views/repoCommon/repoGuideMixin'
@@ -227,7 +226,7 @@
             }
         },
         computed: {
-            ...mapState(['userList', 'permission']),
+            ...mapState(['userList', 'permission', 'scannerSupportPackageType']),
             ...mapGetters(['isEnterprise']),
             detailInfoMap () {
                 return [
@@ -251,7 +250,7 @@
                 }, {})
             },
             showRepoScan () {
-                return Object.keys(scanTypeEnum).join(',').toLowerCase().includes(this.repoType) && !this.$route.path.startsWith('/software') && !(this.storeType === 'virtual')
+                return this.scannerSupportPackageType.join(',').toLowerCase().includes(this.repoType) && !this.$route.path.startsWith('/software') && !(this.storeType === 'virtual')
             },
             operationBtns () {
                 const basic = this.detail.basic
@@ -260,7 +259,7 @@
                     ...(!metadataMap.forbidStatus
                         ? [
                             (this.permission.edit && !(this.storeType === 'remote') && !(this.storeType === 'virtual')) && { clickEvent: () => this.$emit('tag'), label: '晋级', disabled: (basic.stageTag || '').includes('@release') },
-                            this.isEnterprise && this.showRepoScan && { clickEvent: () => this.$emit('scan'), label: '安全扫描' }
+                            this.isEnterprise && this.showRepoScan && { clickEvent: () => this.$emit('scan'), label: '扫描制品' }
                         ]
                         : []),
                     this.showRepoScan && { clickEvent: () => this.$emit('forbid'), label: metadataMap.forbidStatus ? '解除禁止' : '禁止使用' },

@@ -2,7 +2,7 @@
     <div class="scan-report-container">
         <report-overview
             class="mb10"
-            :scan-type="baseInfo.planType"
+            :scan-plan="scanPlan"
             @refreshData="refreshData"
             @refresh="refreshList">
         </report-overview>
@@ -15,7 +15,7 @@
                 </operation-list>
                 <bk-button class="ml10" :theme="isfiltering ? 'primary' : 'default'" @click="showFilterForm">筛选</bk-button>
             </div>
-            <filter-sideslider ref="filterSideslider" :scan-type="baseInfo.planType" @filter="filterHandler"></filter-sideslider>
+            <filter-sideslider ref="filterSideslider" :scan-type="scanPlan.planType" @filter="filterHandler"></filter-sideslider>
         </div>
         <div class="report-list flex-align-center" v-bkloading="{ isLoading }">
             <div class="mr20 view-task" v-show="viewType === 'TASKVIEW'">
@@ -94,7 +94,7 @@
                             <span class="ml5">{{replaceRepoName(row.repoName)}}</span>
                         </template>
                     </bk-table-column>
-                    <bk-table-column v-if="!baseInfo.planType.includes('LICENSE')" label="风险等级">
+                    <bk-table-column v-if="scanPlan.scanTypes.includes(SCAN_TYPE_SECURITY)" label="风险等级">
                         <template #default="{ row }">
                             <div v-if="row.highestLeakLevel" class="status-sign" :class="row.highestLeakLevel"
                                 :data-name="leakLevelEnum[row.highestLeakLevel]">
@@ -115,8 +115,8 @@
                             <operation-list
                                 :list="[
                                     viewType === 'OVERVIEW' && { label: '中止', clickEvent: () => stopScanHandler(row), disabled: row.status !== 'INIT' && row.status !== 'RUNNING' },
-                                    viewType === 'OVERVIEW' && !baseInfo.readOnly && {
-                                        label: '扫描',
+                                    viewType === 'OVERVIEW' && !scanPlan.readOnly && {
+                                        label: '重新扫描',
                                         clickEvent: () => startScanSingleHandler(row),
                                         disabled: !['UN_QUALITY', 'QUALITY_PASS', 'QUALITY_UNPASS', 'STOP', 'FAILED'].includes(row.status)
                                     }
@@ -147,7 +147,7 @@
     import filterSideslider from './filterSideslider'
     import { mapActions } from 'vuex'
     import { formatDate } from '@repository/utils'
-    import { scanStatusEnum, leakLevelEnum } from '@repository/store/publicEnum'
+    import { scanStatusEnum, leakLevelEnum, SCAN_TYPE_SECURITY } from '@repository/store/publicEnum'
     export default {
         name: 'scanReport',
         components: {
@@ -158,10 +158,11 @@
         },
         data () {
             return {
+                SCAN_TYPE_SECURITY: SCAN_TYPE_SECURITY,
                 scanStatusEnum,
                 leakLevelEnum,
-                baseInfo: {
-                    planType: ''
+                scanPlan: {
+                    scanTypes: []
                 },
                 formatISO: {},
                 filter: {},
@@ -208,6 +209,7 @@
             }
         },
         created () {
+            this.refreshScanPlan(this.projectId, this.planId)
             this.handlerTaskPaginationChange()
         },
         methods: {
@@ -218,13 +220,19 @@
                 'scanTaskReportList',
                 'startScanSingle',
                 'stopScanTask',
-                'stopScan'
+                'stopScan',
+                'getScanConfig'
             ]),
             refreshData (key, value) {
                 this[key] = value
             },
             refreshList (force) {
                 force ? this.handlerPaginationChange() : this.getReportListHandler()
+            },
+            refreshScanPlan (projectId, planId) {
+                this.getScanConfig({ projectId: projectId, id: planId }).then(res => {
+                    this.scanPlan = res
+                })
             },
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
                 this.pagination.current = current
@@ -283,7 +291,7 @@
                         ...this.$route.query,
                         viewType: this.viewType,
                         taskId: this.taskSelected.taskId,
-                        scanType: this.baseInfo.planType,
+                        scanType: this.scanPlan.type,
                         artiName: name
                     }
                 })
@@ -314,7 +322,7 @@
                 this.getScanTaskList({
                     planId: this.planId,
                     projectId: this.projectId,
-                    triggerType: this.baseInfo.readOnly ? 'PIPELINE' : 'MANUAL',
+                    triggerType: this.scanPlan.readOnly ? 'PIPELINE' : 'MANUAL',
                     namePrefix: this.taskNameSearch || undefined,
                     current: this.pagination.current,
                     limit: this.pagination.limit

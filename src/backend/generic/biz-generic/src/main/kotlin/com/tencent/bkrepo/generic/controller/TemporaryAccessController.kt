@@ -96,7 +96,19 @@ class TemporaryAccessController(
         val tokenInfo = temporaryAccessService.validateToken(token, artifactInfo, TokenType.DOWNLOAD)
         require(userId != ANONYMOUS_USER) { throw AuthenticationException() }
         temporaryAccessService.decrementPermits(tokenInfo)
-        downloadService.batchDownload(listOf(artifactInfo), true, true)
+    }
+
+    /**
+     * 扫描下载
+     */
+    @GetMapping("/download/scan/$GENERIC_MAPPING_URI")
+    fun scanDownload(
+        artifactInfo: GenericArtifactInfo,
+        @RequestParam token: String
+    ) {
+        val tokenInfo = temporaryAccessService.validateToken(token, artifactInfo, TokenType.DOWNLOAD)
+        temporaryAccessService.download(artifactInfo)
+        temporaryAccessService.decrementPermits(tokenInfo)
     }
 
     @CrossOrigin

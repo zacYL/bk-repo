@@ -96,6 +96,7 @@ class TemporaryAccessController(
         val tokenInfo = temporaryAccessService.validateToken(token, artifactInfo, TokenType.DOWNLOAD)
         require(userId != ANONYMOUS_USER) { throw AuthenticationException() }
         temporaryAccessService.decrementPermits(tokenInfo)
+        downloadService.batchDownload(listOf(artifactInfo), true, true)
     }
 
     /**

@@ -101,7 +101,13 @@
                     <operation-list
                         :list="[
                             { label: '设置', clickEvent: () => toRepoConfig(row) },
-                            { label: $t('delete'), clickEvent: () => deleteRepo(row) }
+                            (row.repoType !== 'generic' ||
+                                (row.repoType === 'generic'
+                                    && row.name !== 'custom'
+                                    && row.name !== 'report'
+                                    && row.name !== 'log'
+                                    && row.name !== 'pipeline'
+                                )) && { label: $t('delete'), clickEvent: () => deleteRepo(row) }
                         ]">
                     </operation-list>
                 </template>

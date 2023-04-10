@@ -65,6 +65,7 @@ import com.tencent.bkrepo.nuget.util.DecompressUtil.resolverNuspecMetadata
 import com.tencent.bkrepo.nuget.util.NugetUtils
 import com.tencent.bkrepo.nuget.util.NugetV3RegistrationUtils
 import com.tencent.bkrepo.nuget.util.NugetVersionUtils
+import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import org.slf4j.Logger
@@ -99,7 +100,10 @@ class NugetLocalRepository(
             }.toList()
             try {
                 val v3RegistrationUrl = NugetUtils.getV3Url(artifactInfo) + '/' + registrationPath
-                return NugetV3RegistrationUtils.metadataToRegistrationIndex(sortedVersionList, v3RegistrationUrl)
+                val registrationIndex =
+                    NugetV3RegistrationUtils.metadataToRegistrationIndex(sortedVersionList, v3RegistrationUrl)
+                registrationIndex.items.forEach { it.sourceType = ArtifactChannel.LOCAL }
+                return registrationIndex
             } catch (ignored: JsonProcessingException) {
                 logger.error("failed to deserialize metadata to registration index json")
                 throw ignored
@@ -194,6 +198,17 @@ class NugetLocalRepository(
             onDownloadManifest(context)
         } else {
             super.onDownload(context)
+        }
+    }
+
+    override fun buildDownloadRecord(
+        context: ArtifactDownloadContext,
+        artifactResource: ArtifactResource
+    ): PackageDownloadRecord? {
+        with(context.artifactInfo as NugetDownloadArtifactInfo) {
+            return if (type != MANIFEST) {
+                PackageDownloadRecord(projectId, repoName, PackageKeys.ofNuget(packageName), version, context.userId)
+            } else null
         }
     }
 

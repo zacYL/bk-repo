@@ -10,6 +10,7 @@ import com.tencent.bkrepo.nuget.pojo.v3.metadata.index.RegistrationIndex
 import com.tencent.bkrepo.nuget.pojo.v3.metadata.leaf.RegistrationLeaf
 import com.tencent.bkrepo.nuget.pojo.v3.metadata.page.RegistrationPage
 import com.tencent.bkrepo.nuget.util.NugetUtils
+import com.tencent.bkrepo.nuget.util.NugetVersionUtils
 import com.tencent.bkrepo.nuget.util.RemoteRegistrationUtils
 import com.tencent.bkrepo.repository.api.ProxyChannelClient
 import org.springframework.context.annotation.Primary
@@ -29,7 +30,9 @@ class NugetCompositeRepository(
             require(it is ArtifactQueryContext)
             remoteRepository.enumerateVersions(it, packageId)
         } ?: emptyList()
-        return localQueryResult.union(remoteQueryResult).sorted()
+        return localQueryResult.union(remoteQueryResult).sortedWith {
+            v1, v2 -> NugetVersionUtils.compareSemVer(v1, v2)
+        }
     }
 
     override fun feed(artifactInfo: NugetArtifactInfo): Feed {

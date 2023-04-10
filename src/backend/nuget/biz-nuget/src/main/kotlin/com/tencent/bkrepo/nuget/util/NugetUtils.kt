@@ -76,7 +76,7 @@ object NugetUtils {
         val packageContentUrl = StringJoiner("/")
             .add(
                 UrlFormatter.formatUrl(
-                    v3RegistrationUrl.removeSuffix("registration-semver2").plus("flatcontainer")
+                    v3RegistrationUrl.substringBeforeLast("/").plus("/flatcontainer")
                 )
             )
             .add(packageId.toLowerCase()).add(version).add(getNupkgFileName(packageId, version))

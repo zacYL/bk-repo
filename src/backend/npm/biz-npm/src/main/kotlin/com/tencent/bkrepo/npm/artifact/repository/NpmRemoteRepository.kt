@@ -95,7 +95,7 @@ class NpmRemoteRepository(
         executor.execute {
             cachePackageVersionMetadata(context)?.run {
                 npmPackageHandler.createVersion(
-                    context.userId, context.artifactInfo,this, artifactResource.getTotalSize()
+                    context.userId, context.artifactInfo, this, artifactResource.getTotalSize()
                 )
             }
             super.onDownloadSuccess(context, artifactResource, throughput)
@@ -165,7 +165,8 @@ class NpmRemoteRepository(
     private fun checkJsonFormat(response: Response): Boolean {
         val contentType = response.body()!!.contentType()
         if (!contentType.toString().contains("application/json")) {
-            logger.warn("Query Failed: Response from [${response.request().url()}] is not JSON format. " +
+            logger.warn(
+                "Query Failed: Response from [${response.request().url()}] is not JSON format. " +
                     "Content-Type: $contentType"
             )
             return false

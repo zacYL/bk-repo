@@ -77,7 +77,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
  */
 // TooGenericExceptionCaught: 需要捕捉文件传输阶段网络、IO等无法预知的异常
 // LateinitUsage: AbstractArtifactRepository有大量子类，使用构造器注入将造成不便
-@Suppress("TooGenericExceptionCaught", "LateinitUsage")
+@Suppress("TooGenericExceptionCaught", "LateinitUsage", "TooManyFunctions")
 abstract class AbstractArtifactRepository : ArtifactRepository {
 
     @Autowired
@@ -263,9 +263,11 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
         artifactResource: ArtifactResource,
         throughput: Throughput
     ) {
-        if (artifactResource.channel == ArtifactChannel.LOCAL
-            || (artifactResource.channel == ArtifactChannel.PROXY
-                && context.repo.category != RepositoryCategory.COMPOSITE)
+        if (artifactResource.channel == ArtifactChannel.LOCAL ||
+            (
+                artifactResource.channel == ArtifactChannel.PROXY &&
+                context.repo.category != RepositoryCategory.COMPOSITE
+            )
         ) {
             buildDownloadRecord(context, artifactResource)?.let {
                 packageClient.updateRecentlyUseDate(it.projectId, it.repoName, it.packageKey, it.packageVersion)

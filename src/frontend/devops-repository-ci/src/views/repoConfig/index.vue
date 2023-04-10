@@ -184,12 +184,9 @@
     import cleanConfig from '@repository/views/repoConfig/cleanConfig'
     import permissionConfig from './permissionConfig'
     import CheckTargetStore from '@repository/components/CheckTargetStore'
-
     import StoreSort from '@repository/components/StoreSort'
-
     import { mapState, mapActions } from 'vuex'
     import { isEmpty } from 'lodash'
-
     export default {
         name: 'repoConfig',
         components: {

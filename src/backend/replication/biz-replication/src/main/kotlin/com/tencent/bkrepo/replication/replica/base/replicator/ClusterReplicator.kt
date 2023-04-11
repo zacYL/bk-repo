@@ -185,7 +185,10 @@ class ClusterReplicator(
             retry(times = RETRY_COUNT, delayInSeconds = DELAY_IN_SECONDS) { retry ->
                 return buildNodeCreateRequest(this, node)?.let {
                     if (blobReplicaClient!!.check(it.sha256!!, remoteRepo?.storageCredentials?.key).data != true) {
-                        logger.info("blob not exist in remote server, sha256:${it.sha256}")
+                        logger.info(
+                            "The file [${node.fullPath}] with sha256 [${node.sha256}] " +
+                                "will be pushed to the remote server ${cluster.name}, try the $retry time!"
+                        )
                         val artifactInputStream = localDataManager.getBlobData(it.sha256!!, it.size!!, localRepo)
                         val rateLimitInputStream = artifactInputStream.rateLimit(
                             localDataManager.getRateLimit().toBytes()

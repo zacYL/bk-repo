@@ -248,6 +248,8 @@ class CompositeRepository(
             remoteConfiguration.credentials.username = tProxyChannel.username
             remoteConfiguration.credentials.password = tProxyChannel.password
             remoteConfiguration.network.proxy = tProxyChannel.networkProxy
+            remoteConfiguration.network.connectTimeout = tProxyChannel.connectTimeout
+            remoteConfiguration.network.readTimeout = tProxyChannel.readTimeout
             return remoteConfiguration
         }
     }

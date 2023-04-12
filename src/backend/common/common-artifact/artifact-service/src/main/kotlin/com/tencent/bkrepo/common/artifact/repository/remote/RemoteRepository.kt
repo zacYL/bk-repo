@@ -171,7 +171,7 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
                 onQueryResponse(context, response)
             } else null
         } catch (e: Exception) {
-            logger.warn("Failed to request or resolve response: ${e.message}")
+            logger.warn("Failed to request or resolve response: ${e.stackTraceToString()}")
             null
         }
     }

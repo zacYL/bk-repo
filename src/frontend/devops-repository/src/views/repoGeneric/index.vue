@@ -249,7 +249,8 @@
                     current: 1,
                     limit: 20,
                     limitList: [10, 20, 40]
-                }
+                },
+                debounceClickTreeNode: null
             }
         },
         computed: {
@@ -316,6 +317,7 @@
                     this.itemClickHandler(this.selectedTreeNode)
                 }
             }))
+            this.debounceClickTreeNode = debounce(this.clickTreeNodeHandler, 100)
         },
         beforeDestroy () {
             window.repositoryVue.$off('upload-refresh')
@@ -470,6 +472,9 @@
             },
             // 树组件选中文件夹
             itemClickHandler (node) {
+                this.debounceClickTreeNode(node)
+            },
+            clickTreeNodeHandler (node) {
                 this.selectedTreeNode = node
                 this.handlerPaginationChange()
                 // 更新已展开文件夹数据

@@ -243,7 +243,8 @@
                     current: 1,
                     limit: 20,
                     limitList: [10, 20, 40]
-                }
+                },
+                debounceClickTreeNode: null
             }
         },
         computed: {
@@ -311,6 +312,7 @@
                     this.itemClickHandler(this.selectedTreeNode)
                 }
             }))
+            this.debounceClickTreeNode = debounce(this.clickTreeNodeHandler, 100)
         },
         beforeDestroy () {
             window.repositoryVue.$off('upload-refresh')
@@ -465,8 +467,10 @@
             },
             // 树组件选中文件夹
             itemClickHandler (node) {
+                this.debounceClickTreeNode(node)
+            },
+            clickTreeNodeHandler (node) {
                 this.selectedTreeNode = node
-
                 this.handlerPaginationChange()
                 // 更新已展开文件夹数据
                 const reg = new RegExp(`^${node.roadMap}`)
@@ -533,7 +537,7 @@
             updateGenericTreeNode (item) {
                 this.$set(item, 'loading', true)
                 const name = item.roadMap.split(',').slice(0, 1)[0]
-                return debounce(this.getFolderList({
+                return this.getFolderList({
                     projectId: this.projectId,
                     repoName: name,
                     fullPath: item.fullPath,
@@ -551,7 +555,7 @@
                     })
                 }).finally(() => {
                     this.$set(item, 'loading', false)
-                }))
+                })
             },
             // 双击table打开文件夹
             openFolder (row) {

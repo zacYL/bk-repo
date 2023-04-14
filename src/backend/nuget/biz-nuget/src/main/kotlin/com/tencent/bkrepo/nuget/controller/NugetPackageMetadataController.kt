@@ -1,6 +1,9 @@
 package com.tencent.bkrepo.nuget.controller
 
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
+import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.constant.MediaTypes
+import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.nuget.pojo.artifact.NugetRegistrationArtifactInfo
 import com.tencent.bkrepo.nuget.service.NugetPackageMetadataService
 import org.springframework.http.ResponseEntity
@@ -31,6 +34,7 @@ class NugetPackageMetadataController(
         "/registration{feature}/{id}/index.json",
         produces = [MediaTypes.APPLICATION_JSON]
     )
+    @Permission(ResourceType.REPO, PermissionAction.READ)
     fun registrationIndex(
         artifactInfo: NugetRegistrationArtifactInfo,
         @PathVariable feature: String?
@@ -45,6 +49,7 @@ class NugetPackageMetadataController(
         "/registration{feature}/{id}/page/{lowerVersion}/{upperVersion}.json",
         produces = [MediaTypes.APPLICATION_JSON]
     )
+    @Permission(ResourceType.REPO, PermissionAction.READ)
     fun registrationPage(
         artifactInfo: NugetRegistrationArtifactInfo,
         @PathVariable feature: String?
@@ -59,6 +64,7 @@ class NugetPackageMetadataController(
         "/registration{feature}/{id}/{version}.json",
         produces = [MediaTypes.APPLICATION_JSON]
     )
+    @Permission(ResourceType.REPO, PermissionAction.READ)
     fun registrationLeaf(
         artifactInfo: NugetRegistrationArtifactInfo,
         @PathVariable feature: String?

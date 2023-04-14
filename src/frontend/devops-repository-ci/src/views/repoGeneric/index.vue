@@ -417,6 +417,9 @@
             },
             // 获取中间列表数据
             getArtifactories () {
+                if (!this.repoName || !this.projectId) {
+                    return
+                }
                 this.isLoading = true
                 this.getArtifactoryList({
                     projectId: this.projectId,

@@ -44,10 +44,10 @@
                 <bk-form-item label="关联扫描器">
                     <bk-select
                         class="w250"
-                        v-model="scannerType"
+                        v-model="scannerName"
                         placeholder="请选择扫描器"
                         :clearable="false">
-                        <bk-option v-for="scanner in scannerList" :key="scanner.type" :id="scanner.type" :name="scanner.name"></bk-option>
+                        <bk-option v-for="scanner in scannerList" :key="scanner.name" :id="scanner.name" :name="scanner.name"></bk-option>
                     </bk-select>
                 </bk-form-item>
             </bk-form>
@@ -65,7 +65,7 @@
             return {
                 isLoading: false,
                 scannerFilter: '',
-                scannerType: '',
+                scannerName: '',
                 scannerList: [],
                 dataList: [],
                 pagination: {
@@ -77,17 +77,16 @@
             }
         },
         watch: {
-            scannerType (val) {
+            scannerName (val) {
                 this.$refs.uploadDialog.setData({
-                    fullPath: `/${val}`
+                    fullPath: `${val}`
                 }, true)
             }
         },
         created () {
-            // 此时根据后端同学要求，获取扫描器时传参为安全问题扫描，即 SECURITY，此时写死这个参数
-            this.getScannerList({ scanType: 'SECURITY' }).then(res => {
+            this.getScannerList().then(res => {
                 this.scannerList = res.filter(v => v.type !== 'scancodeToolkit')
-                this.scannerType = this.scannerList[0]?.type || ''
+                this.scannerName = this.scannerList[0]?.name || ''
             })
             this.handlerPaginationChange()
         },
@@ -138,13 +137,16 @@
                     repoName: 'vuldb-repo',
                     show: true,
                     title: '上传',
-                    fullPath: `/${this.scannerType}`
+                    fullPath: `${this.scannerName}`
                 })
             },
             getScannerName ({ fullPath }) {
                 const scannerType = fullPath.replace(/^\/([^/]+)\/[^/]+$/, '$1')
-                const scanner = this.scannerList.find(s => s.type === scannerType)
-                return scanner?.name
+                const scanner = this.scannerList.find(s => s.name === scannerType)
+                // 根据后端同学要求，此处需要先根据当前行返回的数据的 path去除前后 / 后去匹配是否存在于支持的扫描器的数组中的name，
+                // 如果存在则回显匹配到的扫描器数组的name
+                // 如果不存在，则用当前行返回的数据的 path去除前后 / 后去匹配支持的扫描器数组中的 type ，然后返回匹配到的扫描器数组的 name
+                return scanner?.name || this.scannerList.find(s => s.type === scannerType)?.name
             }
         }
     }

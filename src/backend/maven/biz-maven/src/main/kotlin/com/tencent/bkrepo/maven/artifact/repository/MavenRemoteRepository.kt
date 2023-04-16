@@ -31,19 +31,61 @@
 
 package com.tencent.bkrepo.maven.artifact.repository
 
+import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.exception.ArtifactNotInWhitelistException
+import com.tencent.bkrepo.common.artifact.exception.VersionNotFoundException
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
 import com.tencent.bkrepo.common.artifact.repository.remote.RemoteRepository
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
+import com.tencent.bkrepo.common.artifact.stream.Range
+import com.tencent.bkrepo.common.artifact.stream.artifactStream
+import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.storage.monitor.Throughput
 import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
+import com.tencent.bkrepo.maven.artifact.MavenDeleteArtifactInfo
+import com.tencent.bkrepo.maven.constants.MAVEN_METADATA_FILE_NAME
+import com.tencent.bkrepo.maven.constants.PACKAGE_SUFFIX_REGEX
+import com.tencent.bkrepo.maven.enum.HashType
+import com.tencent.bkrepo.maven.exception.JarFormatException
+import com.tencent.bkrepo.maven.exception.MavenRequestForbiddenException
+import com.tencent.bkrepo.maven.pojo.MavenGAVC
+import com.tencent.bkrepo.maven.service.MavenExtService
+import com.tencent.bkrepo.maven.util.DigestUtils
+import com.tencent.bkrepo.maven.util.JarUtils
+import com.tencent.bkrepo.maven.util.MavenGAVCUtils.mavenGAVC
+import com.tencent.bkrepo.maven.util.MavenGAVCUtils.toMavenGAVC
+import com.tencent.bkrepo.maven.util.MavenStringUtils.formatSeparator
+import com.tencent.bkrepo.maven.util.MavenUtil
+import com.tencent.bkrepo.repository.api.VersionDependentsClient
+import com.tencent.bkrepo.repository.pojo.dependent.VersionDependentsRequest
+import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
+import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
+import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
+import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
+import com.tencent.bkrepo.repository.pojo.packages.PackageType
+import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
+import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
 import okhttp3.Request
+import okhttp3.Response
+import org.apache.commons.lang3.StringUtils
+import org.apache.maven.model.Model
+import org.apache.maven.model.io.xpp3.MavenXpp3Reader
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.dao.DuplicateKeyException
 import org.springframework.stereotype.Component
+import java.util.regex.Pattern
 
 @Component
-class MavenRemoteRepository : RemoteRepository() {
+class MavenRemoteRepository(
+    private val versionDependentsClient: VersionDependentsClient,
+    private val mavenExtService: MavenExtService
+) : RemoteRepository() {
 
     /**
      * 针对索引文件`maven-metadata.xml` 每次都尝试从远程拉取最新的索引文件，
@@ -78,6 +120,309 @@ class MavenRemoteRepository : RemoteRepository() {
                 throw ArtifactNotInWhitelistException()
             }
         }
+    }
+
+    override fun remove(context: ArtifactRemoveContext) {
+        when (context.artifactInfo) {
+            is MavenDeleteArtifactInfo -> {
+                deletePackage(context)
+            }
+            else -> {
+                deleteNode(context)
+            }
+        }
+    }
+
+    @Suppress("NestedBlockDepth")
+    override fun onDownloadResponse(context: ArtifactDownloadContext, response: Response): ArtifactResource {
+        val matcher = Pattern.compile(PACKAGE_SUFFIX_REGEX).matcher(context.artifactInfo.getArtifactFullPath())
+        logger.info(
+            "Resolving response of download file [${context.artifactInfo.getArtifactFullPath()}] " +
+                    "to repo ${context.artifactInfo.getRepoIdentify()}"
+        )
+        val artifactFile = createTempFile(response.body()!!)
+        if (matcher.matches()) {
+            var packaging = matcher.group(2)
+            val fileSuffix = packaging
+            logger.info("Downloaded File's type is $fileSuffix")
+            val model: Model? = if (fileSuffix == "pom") {
+                val mavenPomModel = artifactFile.getInputStream().use { MavenXpp3Reader().read(it) }
+                val version = if (mavenPomModel.version == null) {
+                    mavenPomModel.parent.version
+                } else {
+                    mavenPomModel.version
+                }
+                val verNotBlank = StringUtils.isNotBlank(version)
+                val isPom = mavenPomModel.packaging.equals("pom", ignoreCase = true)
+                if (!verNotBlank || !isPom) {
+                    packaging = mavenPomModel.packaging
+                }
+                mavenPomModel
+            } else {
+                artifactFile.apply {
+                    if (this.getFile() == null) this.flushToFile()
+                }
+                val file = artifactFile.getFile()!!
+                // pom.xml 可能为空
+                // reference: org.springframework:spring-webmvc:4.3.7.RELEASE
+                try {
+                    JarUtils.parseModelInJar(file)
+                } catch (e: JarFormatException) {
+                    null
+                }
+            }
+            val isArtifact = (packaging == fileSuffix)
+            logger.info("remote download: Current file is artifact: $isArtifact")
+            context.putAttribute("isArtifact", isArtifact)
+            context.putAttribute("packaging", packaging)
+            model?.let { context.putAttribute("model", it) }
+        }
+        val size = artifactFile.getSize()
+        val artifactStream = artifactFile.getInputStream().artifactStream(Range.full(size))
+        val node = cacheArtifactFile(context, artifactFile)
+        return ArtifactResource(
+            artifactStream,
+            context.artifactInfo.getResponseName(),
+            node,
+            ArtifactChannel.PROXY,
+            context.useDisposition
+        )
+    }
+
+    override fun onDownloadSuccess(
+        context: ArtifactDownloadContext,
+        artifactResource: ArtifactResource,
+        throughput: Throughput
+    ) {
+        val isArtifact = context.getBooleanAttribute("isArtifact") ?: false
+        logger.info("Current downloaded file is artifact: $isArtifact")
+        if (isArtifact) {
+            val size = artifactResource.getTotalSize()
+            val mavenGavc = (context.artifactInfo as MavenArtifactInfo).toMavenGAVC()
+            createMavenVersion(context, mavenGavc, context.artifactInfo.getArtifactFullPath(), size)
+            // 记录依赖信息
+            context.getAttribute<Model>("model")?.let {
+                mavenExtService.addVersionDependents(mavenGavc, it, context.projectId, context.repoName)
+            }
+        }
+        super.onDownloadSuccess(context, artifactResource, throughput)
+    }
+
+    // maven 客户端下载统计
+    override fun buildDownloadRecord(
+        context: ArtifactDownloadContext,
+        artifactResource: ArtifactResource
+    ): PackageDownloadRecord? {
+        with(context) {
+            val fullPath = artifactInfo.getArtifactFullPath()
+            val node = nodeClient.getNodeDetail(projectId, repoName, fullPath).data
+            val packaging = node?.metadata?.get("packaging")
+            if (packaging == null || node.name.endsWith(".pom") && packaging != "pom") {
+                return null
+            }
+            val mavenGAVC = fullPath.mavenGAVC()
+            val version = mavenGAVC.version
+            val artifactId = mavenGAVC.artifactId
+            val groupId = mavenGAVC.groupId.formatSeparator("/", ".")
+            val packageKey = PackageKeys.ofGav(groupId, artifactId)
+            return PackageDownloadRecord(projectId, repoName, packageKey, version, userId)
+        }
+    }
+
+    private fun createMavenVersion(
+        context: ArtifactDownloadContext,
+        mavenGAVC: MavenGAVC,
+        fullPath: String,
+        size: Long
+    ) {
+        val metadata: MutableMap<String, String> = mutableMapOf(
+            "groupId" to mavenGAVC.groupId,
+            "artifactId" to mavenGAVC.artifactId,
+            "version" to mavenGAVC.version,
+            "packaging" to mavenGAVC.packaging
+        )
+        mavenGAVC.classifier?.let {
+            metadata["classifier"] = it
+        }
+        try {
+            mavenGAVC.classifier?.let { metadata["classifier"] = it }
+            packageClient.createVersion(
+                PackageVersionCreateRequest(
+                    context.projectId,
+                    context.repoName,
+                    packageName = mavenGAVC.artifactId,
+                    packageKey = PackageKeys.ofGav(mavenGAVC.groupId, mavenGAVC.artifactId),
+                    packageType = PackageType.MAVEN,
+                    versionName = mavenGAVC.version,
+                    size = size,
+                    artifactPath = fullPath,
+                    overwrite = true,
+                    createdBy = context.userId,
+                    packageMetadata = metadata.map { MetadataModel(key = it.key, value = it.value) }
+                )
+            )
+        } catch (ignore: DuplicateKeyException) {
+            logger.warn(
+                "The package info has been created for version[${mavenGAVC.version}] " +
+                        "and package[${mavenGAVC.artifactId}] in repo ${context.artifactInfo.getRepoIdentify()}"
+            )
+        }
+    }
+
+    /**
+     * 删除package
+     */
+    fun deletePackage(context: ArtifactRemoveContext) {
+        with(context.artifactInfo as MavenDeleteArtifactInfo) {
+            logger.info("Will prepare to delete package [$packageName|$version] in repo ${getRepoIdentify()}")
+            if (version.isBlank()) {
+                packageClient.listAllVersion(projectId, repoName, packageName).data.orEmpty().forEach {
+                    removeVersion(context, it)
+                }
+                // 删除package下得metadata.xml文件
+                deleteNode(context, true)
+            } else {
+                packageClient.findVersionByName(projectId, repoName, packageName, version).data?.let {
+                    removeVersion(context, it)
+                } ?: throw VersionNotFoundException(version)
+            }
+        }
+    }
+
+    /**
+     * 删除[version] 对应的node节点也会一起删除
+     */
+    private fun removeVersion(context: ArtifactRemoveContext, version: PackageVersion) {
+        with(context.artifactInfo as MavenDeleteArtifactInfo) {
+            logger.info(
+                "Will delete package $packageName version ${version.name} in repo ${getRepoIdentify()}"
+            )
+            packageClient.deleteVersion(projectId, repoName, packageName, version.name)
+            // 删除版本对应的依赖关系记录
+            versionDependentsClient.delete(
+                VersionDependentsRequest(
+                    projectId = projectId,
+                    repoName = repoName,
+                    packageKey = packageName,
+                    version = version.name
+                )
+            )
+            val artifactPath = MavenUtil.extractPath(packageName) + "/${version.name}"
+            val request = NodeDeleteRequest(
+                projectId = projectId,
+                repoName = repoName,
+                fullPath = artifactPath,
+                operator = context.userId
+            )
+            nodeClient.deleteNode(request)
+        }
+    }
+
+    /**
+     * 删除单个节点
+     */
+    private fun deleteNode(context: ArtifactRemoveContext, forceDeleted: Boolean = false) {
+        with(context) {
+            val fullPath = artifactInfo.getArtifactFullPath()
+            logger.info("Will prepare to delete file $fullPath in repo ${artifactInfo.getRepoIdentify()} ")
+            // 如果删除单个文件不能删除metadata.xml文件, 如果文件删除了对应的校验文件也要删除
+            if (fullPath.endsWith(MAVEN_METADATA_FILE_NAME) && !forceDeleted) {
+                throw MavenRequestForbiddenException("$MAVEN_METADATA_FILE_NAME can not be deleted.")
+            }
+            val node = nodeClient.getNodeDetail(projectId, repoName, fullPath).data
+            if (node != null) {
+                if (checksumType(node.fullPath) == null) {
+                    deleteArtifactCheckSums(context, node)
+                }
+                val request = NodeDeleteRequest(
+                    projectId = projectId,
+                    repoName = repoName,
+                    fullPath = fullPath,
+                    operator = userId
+                )
+                nodeClient.deleteNode(request)
+            } else {
+                // 抛异常改为error日志
+                logger.error("Can not find node $fullPath in repo $artifactInfo")
+            }
+        }
+    }
+
+    /**
+     * 删除构件的checksum文件
+     */
+    private fun deleteArtifactCheckSums(
+        context: ArtifactContext,
+        node: NodeDetail,
+        typeArray: Array<HashType> = HashType.values()
+    ) {
+        with(node) {
+            for (hashType in typeArray) {
+                val fullPath = "${node.fullPath}.${hashType.ext}"
+                nodeClient.getNodeDetail(projectId, repoName, fullPath).data?.let {
+                    val request = NodeDeleteRequest(
+                        projectId = projectId,
+                        repoName = repoName,
+                        fullPath = fullPath,
+                        operator = context.userId
+                    )
+                    nodeClient.deleteNode(request)
+                }
+            }
+        }
+    }
+
+    /**
+     * 判断请求是否为checksum请求，并返回类型
+     */
+    private fun checksumType(artifactFullPath: String): HashType? {
+        var type: HashType? = null
+        for (hashType in HashType.values()) {
+            val suffix = ".${hashType.ext}"
+            if (artifactFullPath.endsWith(suffix)) {
+                type = hashType
+                break
+            }
+        }
+        logger.info("The hashType of the file $artifactFullPath is $type")
+        return type
+    }
+
+    override fun buildCacheNodeCreateRequest(context: ArtifactContext, artifactFile: ArtifactFile): NodeCreateRequest {
+        val nodeCreateRequest = super.buildCacheNodeCreateRequest(context, artifactFile)
+        val packaging = context.getStringAttribute("packaging")
+        if (packaging != null) {
+            val mavenGavc = (context.artifactInfo as MavenArtifactInfo).toMavenGAVC()
+            val metadata = nodeCreateRequest.nodeMetadata?.toMutableList() ?: mutableListOf()
+            createNodeMetaData(artifactFile).forEach {
+                metadata.add(it)
+            }
+            metadata.add(MetadataModel(key = "packaging", value = packaging))
+            metadata.add(MetadataModel(key = "groupId", value = mavenGavc.groupId))
+            metadata.add(MetadataModel(key = "artifactId", value = mavenGavc.artifactId))
+            metadata.add(MetadataModel(key = "version", value = mavenGavc.version))
+            mavenGavc.classifier?.let { metadata.add(MetadataModel(key = "classifier", value = it)) }
+            return nodeCreateRequest.copy(nodeMetadata = metadata)
+        }
+        return nodeCreateRequest
+    }
+
+    private fun createNodeMetaData(artifactFile: ArtifactFile): List<MetadataModel> {
+        val md5 = artifactFile.getFileMd5()
+        val sha1 = artifactFile.getFileSha1()
+        val sha256 = artifactFile.getFileSha256()
+        val sha512 = artifactFile.getInputStream().use {
+            val bytes = it.readBytes()
+            DigestUtils.sha512(bytes, 0, bytes.size)
+        }
+        return mutableMapOf(
+            HashType.MD5.ext to md5,
+            HashType.SHA1.ext to sha1,
+            HashType.SHA256.ext to sha256,
+            HashType.SHA512.ext to sha512
+        ).map {
+            MetadataModel(key = it.key, value = it.value)
+        }.toMutableList()
     }
 
     companion object {

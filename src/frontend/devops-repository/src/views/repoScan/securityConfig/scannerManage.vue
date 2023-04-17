@@ -6,7 +6,7 @@
                 class="mr20 w250"
                 v-model="scannerFilter"
                 @change="handlerPaginationChange()">
-                <bk-option v-for="scanner in scannerList" :key="scanner.typr" :id="scanner.type" :name="scanner.name"></bk-option>
+                <bk-option v-for="scanner in scannerList" :key="scanner.name" :id="scanner.name" :name="scanner.name"></bk-option>
             </bk-select>
         </div>
         <bk-table

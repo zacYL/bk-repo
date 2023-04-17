@@ -193,7 +193,8 @@ export default {
         )
     },
     // 获取扫描器列表
-    getScannerList (_, { packageType = null, scanType = null }) {
+    // 此时如果不传任何参数，直接调用，控制台会报错，所以默认用一个空对象去解构
+    getScannerList (_, { packageType = null, scanType = null } = {}) {
         return Vue.prototype.$ajax.get(
             '/analyst/api/scanners/base',
             {

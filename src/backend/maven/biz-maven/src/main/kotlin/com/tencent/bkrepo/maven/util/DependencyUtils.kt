@@ -15,8 +15,8 @@ object DependencyUtils {
     private const val PLACEHOLDER = StringPool.POUND
 
     fun parseDependency(dependency: Dependency, model: Model): MavenDependency {
-        val versionStr = if (dependency.version.isNullOrEmpty()) model.version else dependency.version
-        val version: String? = if (isProperty(versionStr)) {
+        val versionStr = dependency.version
+        val version: String? = if (versionStr != null && isProperty(versionStr)) {
             model.properties.getProperty(extractProperty(versionStr))
         } else {
             versionStr

@@ -103,15 +103,17 @@
             },
             getDataListHandler () {
                 this.isLoading = true
+                const currentScanner = this.scannerList.find(item => item.name === this.scannerFilter)
+                const currentScannerFilter = currentScanner?.type === 'standard' ? currentScanner?.name : currentScanner?.type
                 this.searchPackageList({
                     projectId: 'public-global',
                     repoType: 'generic',
                     repoName: 'vuldb-repo',
-                    extRules: this.scannerFilter
+                    extRules: currentScannerFilter
                         ? [
                             {
                                 field: 'path',
-                                value: `/${this.scannerFilter}/`,
+                                value: `/${currentScannerFilter}/`,
                                 operation: 'EQ'
                             }
                         ]

@@ -37,6 +37,7 @@ import com.tencent.bkrepo.common.artifact.exception.VersionNotFoundException
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
 import com.tencent.bkrepo.common.artifact.repository.remote.RemoteRepository
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
@@ -51,7 +52,10 @@ import com.tencent.bkrepo.maven.constants.MAVEN_METADATA_FILE_NAME
 import com.tencent.bkrepo.maven.constants.PACKAGE_SUFFIX_REGEX
 import com.tencent.bkrepo.maven.enum.HashType
 import com.tencent.bkrepo.maven.exception.JarFormatException
+import com.tencent.bkrepo.maven.exception.MavenArtifactNotFoundException
 import com.tencent.bkrepo.maven.exception.MavenRequestForbiddenException
+import com.tencent.bkrepo.maven.pojo.Basic
+import com.tencent.bkrepo.maven.pojo.MavenArtifactVersionData
 import com.tencent.bkrepo.maven.pojo.MavenGAVC
 import com.tencent.bkrepo.maven.service.MavenExtService
 import com.tencent.bkrepo.maven.util.DigestUtils
@@ -60,6 +64,7 @@ import com.tencent.bkrepo.maven.util.MavenGAVCUtils.mavenGAVC
 import com.tencent.bkrepo.maven.util.MavenGAVCUtils.toMavenGAVC
 import com.tencent.bkrepo.maven.util.MavenStringUtils.formatSeparator
 import com.tencent.bkrepo.maven.util.MavenUtil
+import com.tencent.bkrepo.repository.api.StageClient
 import com.tencent.bkrepo.repository.api.VersionDependentsClient
 import com.tencent.bkrepo.repository.pojo.dependent.VersionDependentsRequest
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
@@ -79,10 +84,12 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.stereotype.Component
+import java.time.format.DateTimeFormatter
 import java.util.regex.Pattern
 
 @Component
 class MavenRemoteRepository(
+    private val stageClient: StageClient,
     private val versionDependentsClient: VersionDependentsClient,
     private val mavenExtService: MavenExtService
 ) : RemoteRepository() {
@@ -119,6 +126,56 @@ class MavenRemoteRepository(
             ) {
                 throw ArtifactNotInWhitelistException()
             }
+        }
+    }
+
+    override fun query(context: ArtifactQueryContext): MavenArtifactVersionData? {
+        val packageKey = context.request.getParameter("packageKey")
+        val version = context.request.getParameter("version")
+        val artifactId = packageKey.split(":").last()
+        val groupId = packageKey.removePrefix("gav://").split(":")[0]
+        val trueVersion = packageClient.findVersionByName(
+            context.projectId,
+            context.repoName,
+            packageKey,
+            version
+        ).data ?: throw MavenArtifactNotFoundException("Can not find version $version of package $packageKey")
+        with(context.artifactInfo) {
+            val jarNode = nodeClient.getNodeDetail(
+                projectId,
+                repoName,
+                trueVersion.contentPath!!
+            ).data ?: return null
+            val type = (jarNode.metadata["packaging"] as? String) ?: "jar"
+            val classifier = jarNode.metadata["classifier"] as? String
+            val stageTag = stageClient.query(projectId, repoName, packageKey, version).data
+            val packageVersion = packageClient.findVersionByName(
+                projectId,
+                repoName,
+                packageKey,
+                version
+            ).data
+            val count = packageVersion?.downloads ?: 0
+            val createdDate = packageVersion?.createdDate?.format(DateTimeFormatter.ISO_DATE_TIME)
+                ?: jarNode.createdDate
+            val lastModifiedDate = packageVersion?.lastModifiedDate?.format(DateTimeFormatter.ISO_DATE_TIME)
+                ?: jarNode.lastModifiedDate
+            val mavenArtifactBasic = Basic(
+                groupId,
+                artifactId,
+                version,
+                classifier,
+                if (type == "jar") null else type,
+                jarNode.size, jarNode.fullPath,
+                jarNode.createdBy, createdDate,
+                jarNode.lastModifiedBy, lastModifiedDate,
+                count,
+                jarNode.sha256,
+                jarNode.md5,
+                stageTag,
+                null
+            )
+            return MavenArtifactVersionData(mavenArtifactBasic, packageVersion?.packageMetadata)
         }
     }
 

@@ -127,8 +127,8 @@ export const leakLevelEnum = {
     CRITICAL: '危急',
     HIGH: '高级',
     MEDIUM: '中级',
-    LOW: '低级',
-    WHITE: '白名单'
+    LOW: '低级'
+    // WHITE: '白名单'
 }
 // 制品仓库类型(本地/远程/虚拟)
 export const storeTypeEnum = [

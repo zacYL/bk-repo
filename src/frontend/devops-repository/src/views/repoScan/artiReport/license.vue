@@ -49,8 +49,8 @@
             <bk-table-column label="FSF开源" width="120">
                 <template #default="{ row }">{{ row.description ? `${row.isFsfLibre ? '已' : '未'}开源` : '/' }}</template>
             </bk-table-column>
-            <bk-table-column label="推荐使用" width="120">
-                <template #default="{ row }">{{ row.description ? `${row.recommended ? '' : '不'}推荐` : '/' }}</template>
+            <bk-table-column label="使用状态" width="120">
+                <template #default="{ row }">{{ row.description ? `${row.recommended ? '可用' : '废弃'}` : '/' }}</template>
             </bk-table-column>
             <bk-table-column label="合规性" width="120">
                 <template #default="{ row }">

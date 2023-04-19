@@ -32,8 +32,8 @@
 
 <script>
     import { mapActions } from 'vuex'
-    import { leakLevelEnum, SCAN_TYPE_SECURITY } from '../../../store/publicEnum'
-    import { segmentNumberThree } from '../../../utils'
+    import { leakLevelEnum, SCAN_TYPE_SECURITY } from '@repository/store/publicEnum'
+    import { segmentNumberThree } from '@repository/utils'
 
     export default {
         name: 'artifactInfo',

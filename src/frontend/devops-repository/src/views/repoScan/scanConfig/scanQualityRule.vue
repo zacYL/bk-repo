@@ -68,7 +68,6 @@
                     high: '',
                     medium: '',
                     low: '',
-                    white: '',
                     forbidScanUnFinished: false,
                     forbidQualityUnPass: false
                 },
@@ -76,8 +75,7 @@
                     critical: [validate],
                     high: [validate],
                     medium: [validate],
-                    low: [validate],
-                    white: [
+                    low: [
                         validate,
                         {
                             validator: () => this.editable ? this.computedEditable() : true,
@@ -120,7 +118,6 @@
                         high: '',
                         medium: '',
                         low: '',
-                        white: '',
                         forbidScanUnFinished: false,
                         forbidQualityUnPass: false
                     }
@@ -166,7 +163,7 @@
                 })
             },
             computedEditable () {
-                const { critical, high, medium, low, white, recommend, compliance, unknown } = this.rule
+                const { critical, high, medium, low, recommend, compliance, unknown } = this.rule
                 return this.scanTypes.includes('LICENSE')
                     ? Boolean(
                         recommend
@@ -178,7 +175,6 @@
                             || high !== ''
                             || medium !== ''
                             || low !== ''
-                            || white !== ''
                     )
             }
         }

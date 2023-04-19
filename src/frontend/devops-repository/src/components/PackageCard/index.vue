@@ -40,7 +40,7 @@
         <div class="card-operation flex-center">
             <Icon class="hover-btn" v-if="!readonly && !(storeType === 'virtual') " size="24" name="icon-delete" @click.native.stop="deleteCard" />
             <operation-list
-                v-if="!cardData.type"
+                v-if="!cardData.type && !readonly"
                 :list="[
                     { label: '详情', clickEvent: () => detail() },
                     !(cardData.metadata || {}).forbidStatus && { label: '下载', clickEvent: () => download() },

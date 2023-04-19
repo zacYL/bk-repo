@@ -76,7 +76,7 @@
                     })
 
                     const licenseRule = {
-                        recommend: '仅有推荐使用的许可证',
+                        recommend: '仅有可用许可证',
                         compliance: '仅有合规的许可证',
                         unknown: '无未知许可证'
                     }

@@ -231,7 +231,10 @@
             },
             refreshScanPlan (projectId, planId) {
                 this.getScanConfig({ projectId: projectId, id: planId }).then(res => {
-                    this.scanPlan = res
+                    this.scanPlan = {
+                        ...res,
+                        planType: res.type
+                    }
                 })
             },
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {

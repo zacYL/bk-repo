@@ -25,23 +25,55 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-dependencies {
-    implementation("com.alibaba:easyexcel:3.1.1")
-    implementation(project(":analyst:api-analyst"))
-    implementation(project(":analysis-executor:api-analysis-executor"))
-    implementation(project(":docker:api-docker"))
-    implementation(project(":common:common-notify:notify-service"))
-    implementation(project(":common:common-service"))
-    implementation("org.springframework.boot:spring-boot-starter-webflux")
-    implementation(project(":common:common-redis"))
-    implementation(project(":common:common-artifact:artifact-service"))
-    implementation(project(":common:common-security"))
-    implementation(project(":common:common-mongo"))
-    implementation(project(":common:common-query:query-mongo"))
-    implementation(project(":common:common-stream"))
-    implementation(project(":common:common-lock"))
-    implementation(project(":common:common-job"))
-    implementation(project(":common:common-statemachine"))
-    implementation("io.kubernetes:client-java:${Versions.KubernetesClient}")
-    testImplementation("org.mockito.kotlin:mockito-kotlin")
+package com.tencent.bkrepo.docker.pojo.digest
+
+import com.tencent.bkrepo.common.api.constant.CharPool
+import com.tencent.bkrepo.common.api.constant.StringPool
+import org.apache.commons.lang3.StringUtils
+
+/**
+ * OCI digest
+ */
+data class OciDigest(val digest: String? = null) {
+    var alg: String = StringPool.EMPTY
+    var hex: String = StringPool.EMPTY
+
+    init {
+        digest?.let {
+            val sepIndex = StringUtils.indexOf(digest, CharPool.COLON.toInt())
+            require(sepIndex >= 0) { "could not find ':' in digest: $digest" }
+            this.alg = StringUtils.substring(digest, 0, sepIndex)
+            this.hex = StringUtils.substring(digest, sepIndex + 1)
+        }
+    }
+
+    fun fileName(): String {
+        return this.alg + "__" + this.hex
+    }
+
+    fun getDigestAlg(): String {
+        return this.alg
+    }
+
+    fun getDigestHex(): String {
+        return this.hex
+    }
+
+    override fun toString(): String {
+        return this.alg + ":" + this.hex
+    }
+
+    companion object {
+
+        fun fromSha256(sha256: String): OciDigest {
+            return OciDigest("sha256:$sha256")
+        }
+
+        fun isValid(reference: String): Boolean {
+            if (reference.isEmpty()) return false
+            val sepIndex = StringUtils.indexOf(reference, ":")
+            if (sepIndex >= 0) return true
+            return false
+        }
+    }
 }

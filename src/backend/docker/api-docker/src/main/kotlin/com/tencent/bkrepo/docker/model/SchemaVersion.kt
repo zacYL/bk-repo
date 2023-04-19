@@ -1,7 +1,7 @@
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
- * Copyright (C) 2022 THL A29 Limited, a Tencent company.  All rights reserved.
+ * Copyright (C) 2019 THL A29 Limited, a Tencent company.  All rights reserved.
  *
  * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
  *
@@ -25,23 +25,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-dependencies {
-    implementation("com.alibaba:easyexcel:3.1.1")
-    implementation(project(":analyst:api-analyst"))
-    implementation(project(":analysis-executor:api-analysis-executor"))
-    implementation(project(":docker:api-docker"))
-    implementation(project(":common:common-notify:notify-service"))
-    implementation(project(":common:common-service"))
-    implementation("org.springframework.boot:spring-boot-starter-webflux")
-    implementation(project(":common:common-redis"))
-    implementation(project(":common:common-artifact:artifact-service"))
-    implementation(project(":common:common-security"))
-    implementation(project(":common:common-mongo"))
-    implementation(project(":common:common-query:query-mongo"))
-    implementation(project(":common:common-stream"))
-    implementation(project(":common:common-lock"))
-    implementation(project(":common:common-job"))
-    implementation(project(":common:common-statemachine"))
-    implementation("io.kubernetes:client-java:${Versions.KubernetesClient}")
-    testImplementation("org.mockito.kotlin:mockito-kotlin")
-}
+package com.tencent.bkrepo.docker.model
+
+open class SchemaVersion(
+    open var schemaVersion: Int
+)

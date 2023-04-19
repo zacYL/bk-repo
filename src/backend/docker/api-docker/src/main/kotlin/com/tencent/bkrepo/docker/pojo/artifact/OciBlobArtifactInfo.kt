@@ -25,23 +25,45 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-dependencies {
-    implementation("com.alibaba:easyexcel:3.1.1")
-    implementation(project(":analyst:api-analyst"))
-    implementation(project(":analysis-executor:api-analysis-executor"))
-    implementation(project(":docker:api-docker"))
-    implementation(project(":common:common-notify:notify-service"))
-    implementation(project(":common:common-service"))
-    implementation("org.springframework.boot:spring-boot-starter-webflux")
-    implementation(project(":common:common-redis"))
-    implementation(project(":common:common-artifact:artifact-service"))
-    implementation(project(":common:common-security"))
-    implementation(project(":common:common-mongo"))
-    implementation(project(":common:common-query:query-mongo"))
-    implementation(project(":common:common-stream"))
-    implementation(project(":common:common-lock"))
-    implementation(project(":common:common-job"))
-    implementation(project(":common:common-statemachine"))
-    implementation("io.kubernetes:client-java:${Versions.KubernetesClient}")
-    testImplementation("org.mockito.kotlin:mockito-kotlin")
+package com.tencent.bkrepo.docker.pojo.artifact
+
+import com.tencent.bkrepo.docker.pojo.digest.OciDigest
+import com.tencent.bkrepo.docker.util.OciLocationUtils
+
+/**
+ * oci blob信息
+ */
+class OciBlobArtifactInfo(
+    projectId: String,
+    repoName: String,
+    packageName: String,
+    version: String,
+    val digest: String? = null,
+    val uuid: String? = null,
+    val mount: String? = null,
+    val from: String? = null
+) : OciArtifactInfo(projectId, repoName, packageName, version) {
+    private val ociDigest = OciDigest(digest)
+
+    fun getDigestAlg(): String {
+        return ociDigest.getDigestAlg()
+    }
+
+    fun getDigestHex(): String {
+        return ociDigest.getDigestHex()
+    }
+
+    fun getDigest() = ociDigest
+
+    fun blobTempPath(): String {
+        return OciLocationUtils.buildDigestBlobsUploadPath(packageName, ociDigest)
+    }
+
+    override fun getArtifactFullPath(): String {
+        return if (digest.isNullOrBlank()) {
+            ""
+        } else {
+            OciLocationUtils.buildDigestBlobsPath(packageName, ociDigest)
+        }
+    }
 }

@@ -29,14 +29,15 @@
  * SOFTWARE.
  */
 
-dependencies {
-    api(project(":repository:api-repository"))
-    implementation(project(":common:common-api"))
-    api(project(":common:common-artifact:artifact-service"))
-    api("com.github.zafarkhaja:java-semver")
-    implementation(project(":common:common-artifact:artifact-api"))
-    compileOnly("javax.servlet:javax.servlet-api")
-    compileOnly("org.springframework:spring-web")
-    compileOnly("org.springframework.cloud:spring-cloud-openfeign-core")
-}
+package com.tencent.bkrepo.docker.pojo.metadata
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonInclude
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class HelmMaintainerMetadata(
+    val name: String?,
+    val email: String?,
+    val url: String?
+)

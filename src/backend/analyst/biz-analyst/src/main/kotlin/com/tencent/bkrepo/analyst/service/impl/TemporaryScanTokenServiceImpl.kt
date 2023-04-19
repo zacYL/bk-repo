@@ -48,7 +48,7 @@ import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.security.exception.AuthenticationException
 import com.tencent.bkrepo.common.storage.core.StorageService
-import com.tencent.bkrepo.oci.util.OciUtils
+import com.tencent.bkrepo.docker.util.OciUtils
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.StorageCredentialsClient
 import com.tencent.bkrepo.repository.api.TemporaryTokenClient

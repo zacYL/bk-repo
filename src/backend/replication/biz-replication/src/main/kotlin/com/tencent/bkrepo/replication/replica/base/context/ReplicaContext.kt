@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.replication.replica.base.context
 
+import com.tencent.bkrepo.common.artifact.cluster.ClusterInfo
 import com.tencent.bkrepo.common.artifact.cluster.FeignClientFactory
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
@@ -42,16 +43,20 @@ import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus
 import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordInfo
 import com.tencent.bkrepo.replication.pojo.task.ReplicaTaskDetail
 import com.tencent.bkrepo.replication.pojo.task.objects.ReplicaObjectInfo
+import com.tencent.bkrepo.replication.replica.base.interceptor.RetryInterceptor
 import com.tencent.bkrepo.replication.replica.base.replicator.ClusterReplicator
 import com.tencent.bkrepo.replication.replica.base.replicator.EdgeNodeReplicator
 import com.tencent.bkrepo.replication.replica.base.replicator.RemoteReplicator
 import com.tencent.bkrepo.replication.replica.base.replicator.Replicator
+import com.tencent.bkrepo.replication.util.OkHttpClientPool
 import com.tencent.bkrepo.replication.util.StreamRequestBody
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.slf4j.LoggerFactory
 import java.io.InputStream
+import java.time.Duration
 import java.util.concurrent.TimeUnit
 
 class ReplicaContext(
@@ -84,13 +89,13 @@ class ReplicaContext(
     var blobReplicaClient: BlobReplicaClient? = null
     val replicator: Replicator
 
-    // TODO: Feign暂时不支持Stream上传，11+之后支持，升级后可以移除HttpClient上传
+    var cluster: ClusterInfo
+
     private val pushBlobUrl = "${remoteCluster.url}/replica/blob/push"
-    val httpClient: OkHttpClient?
-    var cluster: RemoteClusterInfo
+    val httpClient: OkHttpClient
 
     init {
-        cluster = RemoteClusterInfo(
+        cluster = ClusterInfo(
             name = remoteCluster.name,
             url = remoteCluster.url,
             username = remoteCluster.username,
@@ -109,13 +114,22 @@ class ReplicaContext(
             ClusterNodeType.REMOTE -> SpringContextUtils.getBean<RemoteReplicator>()
             else -> throw UnsupportedOperationException()
         }
-        // 远端集群仓库特殊处理, 远端集群请求鉴权特殊处理
-        httpClient = if (remoteCluster.type != ClusterNodeType.REMOTE) {
-            HttpClientBuilderFactory.create(cluster.certificate).addInterceptor(
-                BasicAuthInterceptor(cluster.username.orEmpty(), cluster.password.orEmpty())
-            ).readTimeout(300, TimeUnit.SECONDS).build()
+
+        val readTimeout = Duration.ofMillis(READ_TIMEOUT)
+        val writeTimeout = Duration.ofMillis(WRITE_TIMEOUT)
+        httpClient = if (cluster.username != null) {
+            OkHttpClientPool.getHttpClient(
+                cluster,
+                readTimeout,
+                writeTimeout,
+                BasicAuthInterceptor(cluster.username!!, cluster.password!!)
+            )
         } else {
-            null
+            OkHttpClientPool.getHttpClient(
+                cluster,
+                readTimeout,
+                writeTimeout
+            )
         }
     }
 
@@ -136,5 +150,11 @@ class ReplicaContext(
         httpClient?.newCall(httpRequest)?.execute().use {
             it?.let { it1 -> check(it1.isSuccessful) { "Failed to replica file: ${it.body()?.string()}" } }
         }
+    }
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(ReplicaContext::class.java)
+        private const val READ_TIMEOUT = 60 * 60 * 1000L
+        private const val WRITE_TIMEOUT = 30 * 1000L
     }
 }

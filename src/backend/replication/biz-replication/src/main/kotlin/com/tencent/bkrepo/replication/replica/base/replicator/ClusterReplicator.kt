@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.replication.replica.base.replicator
 
+import com.google.common.base.Throwables
 import com.tencent.bkrepo.common.artifact.constant.RESERVED_KEY
 import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
@@ -40,7 +41,11 @@ import com.tencent.bkrepo.replication.constant.DEFAULT_VERSION
 import com.tencent.bkrepo.replication.constant.DELAY_IN_SECONDS
 import com.tencent.bkrepo.replication.constant.RETRY_COUNT
 import com.tencent.bkrepo.replication.manager.LocalDataManager
+import com.tencent.bkrepo.replication.pojo.request.PackageVersionExistCheckRequest
+import com.tencent.bkrepo.replication.pojo.task.setting.ConflictStrategy
+import com.tencent.bkrepo.replication.replica.base.context.FilePushContext
 import com.tencent.bkrepo.replication.replica.base.context.ReplicaContext
+import com.tencent.bkrepo.replication.replica.base.handler.FilePushHandler
 import com.tencent.bkrepo.replication.replica.base.impl.internal.PackageNodeMappings
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
@@ -64,6 +69,7 @@ import java.time.LocalDateTime
 @Component
 class ClusterReplicator(
     private val localDataManager: LocalDataManager,
+    private val filePushHandler: FilePushHandler,
     private val replicationProperties: ReplicationProperties
 ) : Replicator {
 
@@ -194,14 +200,22 @@ class ClusterReplicator(
                             localDataManager.getRateLimit().toBytes()
                         )
                         // 1. 同步文件数据
-                        logger.info("The file [${node.fullPath}] with sha256 [${node.sha256}] " +
-                            "will be pushed to the remote server ${cluster.name},try the $retry time!")
-                        pushBlob(
-                            inputStream = rateLimitInputStream,
-                            size = it.size!!,
-                            sha256 = it.sha256.orEmpty(),
-                            storageKey = remoteRepo?.storageCredentials?.key
-                        )
+                        try {
+                            filePushHandler.blobPush(
+                                filePushContext = FilePushContext(
+                                    context = context,
+                                    name = it.fullPath,
+                                    size = it.size,
+                                    sha256 = it.sha256
+                                )
+                            )
+                        } catch (throwable: Throwable) {
+                            logger.warn(
+                                "File replica push error $throwable, trace is " +
+                                    "${Throwables.getStackTraceAsString(throwable)}!"
+                            )
+                            throw throwable
+                        }
                     }
                     logger.info("The node [${node.fullPath}] will be pushed to the remote server!")
                     // 2. 同步节点信息

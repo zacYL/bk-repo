@@ -1,7 +1,7 @@
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
- * Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
+ * Copyright (C) 2022 THL A29 Limited, a Tencent company.  All rights reserved.
  *
  * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
  *
@@ -25,42 +25,39 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.replication.config
+package com.tencent.bkrepo.replication.util
 
-import org.springframework.boot.context.properties.ConfigurationProperties
-import org.springframework.util.unit.DataSize
+import com.tencent.bkrepo.common.artifact.cluster.ClusterInfo
+import com.tencent.bkrepo.common.artifact.util.okhttp.HttpClientBuilderFactory
+import okhttp3.Interceptor
+import okhttp3.OkHttpClient
+import okhttp3.Protocol
+import java.time.Duration
+import java.util.concurrent.ConcurrentHashMap
 
-@ConfigurationProperties("replication")
-data class ReplicationProperties(
-
-    /**
-     * 文件发送限速
-     */
-    var rateLimit: DataSize = DataSize.ofBytes(-1),
-
-    /**
-     * oci blob文件上传分块大小
-     */
-    var chunkedSize: Long = 1024 * 1024 * 5,
-    /**
-     * oci blob文件上传并发数
-     */
-    var threadNum: Int = 3,
-
-    /**
-     * manual分发并行数
-     */
-    var manualConcurrencyNum: Int = 3,
-
-    /**
-     * 签名过滤器body限制大小
-     * */
-    var bodyLimit: DataSize = DataSize.ofMegabytes(5),
-
-    /**
-     * 集群间制品同步方式：
-     * 追加上传：CHUNKED
-     * 普通上传（单个请求）：DEFAULT
-     * */
-    var pushType: String = "DEFAULT"
-)
+/**
+ * OkHttpClient池，提供OkHttpClient复用
+ * */
+object OkHttpClientPool {
+    private val clientCache = ConcurrentHashMap<ClusterInfo, OkHttpClient>()
+    fun getHttpClient(
+        clusterInfo: ClusterInfo,
+        readTimeout: Duration,
+        writeTimeout: Duration,
+        vararg interceptors: Interceptor
+    ): OkHttpClient {
+        return clientCache.getOrPut(clusterInfo) {
+            val builder = HttpClientBuilderFactory.create(
+                clusterInfo.certificate
+            ).protocols(listOf(Protocol.HTTP_1_1))
+                .readTimeout(readTimeout)
+                .writeTimeout(writeTimeout)
+            interceptors.forEach {
+                builder.addInterceptor(
+                    it,
+                )
+            }
+            builder.build()
+        }
+    }
+}

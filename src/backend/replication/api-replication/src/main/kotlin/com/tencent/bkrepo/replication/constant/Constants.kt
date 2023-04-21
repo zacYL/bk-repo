@@ -49,9 +49,19 @@ const val NODE_FULL_PATH = "fullPath"
 const val SIZE = "size"
 const val REPOSITORY_INFO = "repo"
 const val SHA256 = "sha256"
+const val FILE = "file"
+const val STORAGE_KEY = "storageKey"
 
 const val RETRY_COUNT = 2
 const val DELAY_IN_SECONDS: Long = 1
+
+const val PUSH_WITH_CHUNKED = "CHUNKED"
+const val PUSH_WITH_DEFAULT = "DEFAULT"
+
+const val PIPELINE_ID = "pipelineId"
+const val BUILD_ID = "buildId"
+const val TASK_ID = "taskId"
+const val NAME = "name"
 
 /**
  * metrics

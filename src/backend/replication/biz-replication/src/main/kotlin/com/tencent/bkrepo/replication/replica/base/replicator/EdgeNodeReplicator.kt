@@ -30,7 +30,9 @@ package com.tencent.bkrepo.replication.replica.base.replicator
 import com.tencent.bkrepo.common.artifact.stream.rateLimit
 import com.tencent.bkrepo.replication.config.ReplicationProperties
 import com.tencent.bkrepo.replication.manager.LocalDataManager
+import com.tencent.bkrepo.replication.replica.base.context.FilePushContext
 import com.tencent.bkrepo.replication.replica.base.context.ReplicaContext
+import com.tencent.bkrepo.replication.replica.base.handler.FilePushHandler
 import com.tencent.bkrepo.replication.replica.base.impl.internal.PackageNodeMappings
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
@@ -44,6 +46,7 @@ import org.springframework.stereotype.Component
 @Component
 class EdgeNodeReplicator(
     private val localDataManager: LocalDataManager,
+    private val filePushHandler: FilePushHandler,
     private val replicationProperties: ReplicationProperties
 ) : Replicator {
 
@@ -97,16 +100,17 @@ class EdgeNodeReplicator(
     override fun replicaFile(context: ReplicaContext, node: NodeInfo): Boolean {
         with(context) {
             val sha256 = node.sha256.orEmpty()
-            val artifactInputStream = localDataManager.getBlobData(sha256, node.size, localRepo)
-            val rateLimitInputStream = artifactInputStream.rateLimit(replicationProperties.rateLimit.toBytes())
-//            val file = InputStreamMultipartFile(rateLimitInputStream, node.size)
             if (blobReplicaClient?.check(sha256)?.data != true) {
-                pushBlob(
-                    inputStream = rateLimitInputStream,
-                    size = node.size,
-                    sha256 = sha256
+                val artifactInputStream = localDataManager.getBlobData(sha256, node.size, localRepo)
+                val rateLimitInputStream = artifactInputStream.rateLimit(replicationProperties.rateLimit.toBytes())
+                filePushHandler.blobPush(
+                    filePushContext = FilePushContext(
+                        context = context,
+                        name = node.fullPath,
+                        size = node.size,
+                        sha256 = node.sha256
+                    )
                 )
-//                blobReplicaClient.push(file = file, sha256 = sha256)
                 return true
             }
             return false

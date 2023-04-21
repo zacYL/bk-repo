@@ -31,13 +31,19 @@ import com.tencent.bkrepo.common.api.constant.HttpHeaders
 import com.tencent.bkrepo.common.api.constant.HttpStatus
 import com.tencent.bkrepo.common.api.constant.MediaTypes
 import com.tencent.bkrepo.common.api.constant.StringPool
+import com.tencent.bkrepo.common.artifact.cluster.ClusterInfo
 import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.security.util.BasicAuthUtils
+import com.tencent.bkrepo.common.storage.innercos.retry
 import com.tencent.bkrepo.replication.config.ReplicationProperties
 import com.tencent.bkrepo.replication.constant.DOCKER_MANIFEST_JSON_FULL_PATH
+import com.tencent.bkrepo.replication.constant.OCI_BLOBS_UPLOAD_FIRST_STEP_URL
+import com.tencent.bkrepo.replication.constant.OCI_BLOB_URL
 import com.tencent.bkrepo.replication.constant.OCI_MANIFEST_JSON_FULL_PATH
+import com.tencent.bkrepo.replication.constant.OCI_MANIFEST_URL
+import com.tencent.bkrepo.replication.constant.PUSH_WITH_CHUNKED
 import com.tencent.bkrepo.replication.constant.REPOSITORY_INFO
 import com.tencent.bkrepo.replication.constant.SHA256
 import com.tencent.bkrepo.replication.manager.LocalDataManager
@@ -45,8 +51,11 @@ import com.tencent.bkrepo.replication.pojo.cluster.RemoteClusterInfo
 import com.tencent.bkrepo.replication.pojo.docker.OciResponse
 import com.tencent.bkrepo.replication.pojo.remote.DefaultHandlerResult
 import com.tencent.bkrepo.replication.pojo.remote.RequestProperty
+import com.tencent.bkrepo.replication.replica.base.context.FilePushContext
+import com.tencent.bkrepo.replication.replica.base.context.ReplicaContext
 import com.tencent.bkrepo.replication.replica.base.executor.OciThreadPoolExecutor
-import com.tencent.bkrepo.replication.replica.base.impl.remote.base.DefaultHandler
+import com.tencent.bkrepo.replication.replica.base.handler.DefaultHandler
+import com.tencent.bkrepo.replication.replica.base.handler.FilePushHandler
 import com.tencent.bkrepo.replication.replica.base.impl.remote.base.PushClient
 import com.tencent.bkrepo.replication.replica.base.impl.remote.exception.ArtifactPushException
 import com.tencent.bkrepo.replication.util.HttpUtils
@@ -75,7 +84,8 @@ import java.util.concurrent.ThreadPoolExecutor
 class OciArtifactPushClient(
     private val authService: OciAuthorizationService,
     replicationProperties: ReplicationProperties,
-    localDataManager: LocalDataManager
+    localDataManager: LocalDataManager,
+    private val filePushHandler: FilePushHandler
 ) : PushClient(replicationProperties, localDataManager) {
 
     private val blobUploadExecutor: ThreadPoolExecutor = OciThreadPoolExecutor.instance
@@ -103,12 +113,12 @@ class OciArtifactPushClient(
         name: String,
         version: String,
         token: String?,
-        clusterInfo: RemoteClusterInfo
+        context: ReplicaContext
     ): Boolean {
         val manifestInput = localDataManager.loadInputStream(nodes[0])
         val manifestInfo = ManifestParser.parseManifest(manifestInput)
             ?: throw ArtifactNotFoundException("Can not read manifest info from content")
-        logger.info("$name|$version's artifact will be pushed to the third party cluster ${clusterInfo.name}")
+        logger.info("$name|$version's artifact will be pushed to the third party cluster ${context.cluster.name}")
         // 上传layer, 每次并发执行5个
         val semaphore = Semaphore(replicationProperties.threadNum)
         var result = true
@@ -118,15 +128,38 @@ class OciArtifactPushClient(
             futureList.add(
                 submit {
                     try {
-                        uploadBlobInChunks(
-                            token = token,
-                            digest = it,
-                            name = name,
-                            projectId = nodes[0].projectId,
-                            repoName = nodes[0].repoName,
-                            clusterUrl = clusterInfo.url,
-                            clusterName = clusterInfo.name
-                        )
+                        retry(times = RETRY_COUNT, delayInSeconds = DELAY_IN_SECONDS) { retries ->
+                            logger.info(
+                                "Blob $name|$it will be uploaded to the remote cluster " +
+                                    "${context.cluster.name.orEmpty()} from repo " +
+                                    "${nodes[0].projectId}|${nodes[0].repoName}, try the $retries time"
+                            )
+                            val checkHandlerResult = processBlobExistCheckHandler(
+                                token = token,
+                                name = name,
+                                digest = it,
+                                context = context
+                            )
+                            if (checkHandlerResult.isSuccess) {
+                                logger.info(
+                                    "The blob $name|$it is already exist in the " +
+                                                "remote cluster ${context.cluster.name}!"
+                                )
+                                true
+                            } else {
+                                filePushHandler.blobPush(
+                                    filePushContext = FilePushContext(
+                                        token = token,
+                                        digest = it,
+                                        context = context,
+                                        httpClient = httpClient,
+                                        responseType = OciResponse::class.java,
+                                        name = name
+                                    ),
+                                    pushType = PUSH_WITH_CHUNKED
+                                )
+                            }
+                        }
                     } finally {
                         semaphore.release()
                     }
@@ -144,19 +177,21 @@ class OciArtifactPushClient(
         }
         // 同步manifest
         if (result) {
-            val input = localDataManager.loadInputStream(nodes[0])
-            result = result && processManifestUploadHandler(
-                token = token,
-                name = name,
-                version = version,
-                input = Pair(input, nodes[0].size),
-                mediaType = manifestInfo.mediaType,
-                clusterUrl = clusterInfo.url
-            ).isSuccess
+            listOf(version).forEach {
+                val input = localDataManager.loadInputStream(nodes[0])
+                result = result && processManifestUploadHandler(
+                    token = token,
+                    name = name,
+                    version = it,
+                    input = Pair(input, nodes[0].size),
+                    mediaType = manifestInfo.mediaType,
+                    context = context
+                ).isSuccess
+            }
         }
         logger.info(
             "The result of uploading $name|$version's artifact " +
-                "to remote cluster ${clusterInfo.name} is $result"
+                "to remote cluster ${context.cluster.name} is $result"
         )
         return result
     }
@@ -171,7 +206,7 @@ class OciArtifactPushClient(
     /**
      * 获取auth处理器
      */
-    override fun getAuthorizationDetails(name: String, clusterInfo: RemoteClusterInfo): String? {
+    override fun getAuthorizationDetails(name: String, clusterInfo: ClusterInfo): String? {
         return authService.obtainAuthorizationCode(buildAuthRequestProperties(name, clusterInfo), httpClient)
     }
 
@@ -198,7 +233,7 @@ class OciArtifactPushClient(
     /**
      * auth鉴权属性配置
      */
-    private fun buildAuthRequestProperties(name: String, clusterInfo: RemoteClusterInfo): RequestProperty {
+    private fun buildAuthRequestProperties(name: String, clusterInfo: ClusterInfo): RequestProperty {
         val baseUrl = URL(clusterInfo.url)
         val v2Url = URL(baseUrl, "/v2/").toString()
         val target = baseUrl.path.removePrefix(StringPool.SLASH)
@@ -236,28 +271,19 @@ class OciArtifactPushClient(
         name: String,
         projectId: String,
         repoName: String,
-        clusterUrl: String,
-        clusterName: String
+        context: ReplicaContext
     ): Boolean {
+        val clusterUrl = context.cluster.url
+        val clusterName = context.cluster.name.orEmpty()
         logger.info(
             "Will try to upload $name's blob $digest " +
                 "in repo $projectId|$repoName to remote cluster $clusterName."
         )
-        val checkHandlerResult = processBlobExistCheckHandler(
-            token = token,
-            name = name,
-            digest = digest,
-            clusterUrl = clusterUrl
-        )
-        if (checkHandlerResult.isSuccess) {
-            logger.info("The blob $name|$digest is already exist in the remote cluster $clusterName!")
-            return true
-        }
         logger.info("Will try to obtain uuid from remote cluster $clusterName for blob $name|$digest")
         var sessionIdHandlerResult = processSessionIdHandler(
             token = token,
             name = name,
-            clusterUrl = clusterUrl
+            context = context
         )
         if (!sessionIdHandlerResult.isSuccess) {
             return false
@@ -292,7 +318,7 @@ class OciArtifactPushClient(
             sessionIdHandlerResult = processSessionIdHandler(
                 token = token,
                 name = name,
-                clusterUrl = clusterUrl
+                context = context
             )
             if (!sessionIdHandlerResult.isSuccess) {
                 return false
@@ -328,10 +354,10 @@ class OciArtifactPushClient(
         token: String?,
         name: String,
         digest: String,
-        clusterUrl: String
+        context: ReplicaContext
     ): DefaultHandlerResult {
         val headPath = OCI_BLOB_URL.format(name, digest)
-        val headUrl = buildUrl(clusterUrl, headPath)
+        val headUrl = filePushHandler.buildUrl(context.cluster.url, headPath, context)
         val property = RequestProperty(
             authorizationCode = token,
             requestMethod = RequestMethod.HEAD,
@@ -353,10 +379,10 @@ class OciArtifactPushClient(
     private fun processSessionIdHandler(
         token: String?,
         name: String,
-        clusterUrl: String
+        context: ReplicaContext
     ): DefaultHandlerResult {
         val postPath = OCI_BLOBS_UPLOAD_FIRST_STEP_URL.format(name)
-        val postUrl = buildUrl(clusterUrl, postPath)
+        val postUrl = filePushHandler.buildUrl(context.cluster.url, postPath, context)
         val postBody: RequestBody = RequestBody.create(
             MediaType.parse("application/json"), StringPool.EMPTY
         )
@@ -507,11 +533,11 @@ class OciArtifactPushClient(
         version: String,
         input: Pair<InputStream, Long>,
         mediaType: String?,
-        clusterUrl: String
+        context: ReplicaContext
     ): DefaultHandlerResult {
         logger.info("$name|$version's manifest will be pushed to the remote cluster")
         val path = OCI_MANIFEST_URL.format(name, version)
-        val putUrl = buildUrl(clusterUrl, path)
+        val putUrl = filePushHandler.buildUrl(context.cluster.url, path, context)
         val type = mediaType ?: "application/vnd.oci.image.manifest.v1+json"
         val manifestBody: RequestBody = RequestBody.create(
             MediaType.parse(type), input.first.readBytes()
@@ -533,23 +559,13 @@ class OciArtifactPushClient(
         )
     }
 
-    /**
-     * 拼接url
-     */
-    private fun buildUrl(
-        url: String,
-        path: String,
-        params: String = StringPool.EMPTY
-    ): String {
-        val baseUrl = URL(url)
-        val v2Url = URL(baseUrl, "/v2" + baseUrl.path)
-        return HttpUtils.buildUrl(v2Url.toString(), path, params)
-    }
 
     companion object {
         private val logger = LoggerFactory.getLogger(OciArtifactPushClient::class.java)
         const val OCI_BLOB_URL = "%s/blobs/%s"
         const val OCI_MANIFEST_URL = "%s/manifests/%s"
         const val OCI_BLOBS_UPLOAD_FIRST_STEP_URL = "%s/blobs/uploads/"
+        const val RETRY_COUNT = 2
+        const val DELAY_IN_SECONDS: Long = 1
     }
 }

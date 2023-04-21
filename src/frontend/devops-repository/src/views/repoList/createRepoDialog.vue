@@ -70,7 +70,7 @@
                         </store-sort>
                     </div>
                 </bk-form-item>
-                <bk-form-item :label="$t('uploadTargetStore')" property="uploadTargetStore">
+                <!-- <bk-form-item :label="$t('uploadTargetStore')" property="uploadTargetStore">
                     <bk-select
                         v-model="repoBaseInfo.deploymentRepo"
                         style="width:300px;"
@@ -83,7 +83,7 @@
                         </div>
                     </bk-select>
                     <div class="form-tip">{{$t('addPackagePrompt')}}</div>
-                </bk-form-item>
+                </bk-form-item> -->
             </template>
             <bk-form-item label="访问权限">
                 <card-radio-group
@@ -224,8 +224,8 @@
                 }
             },
             // 虚拟仓库的选中的存储库列表
-            virtualStoreList: [],
-            deploymentRepo: '' // 虚拟仓库中选择存储的本地仓库
+            virtualStoreList: []
+            // deploymentRepo: '' // 虚拟仓库中选择存储的本地仓库
         }
     }
 
@@ -386,11 +386,11 @@
             // 弹窗标题
             title () {
                 return this.$t('create') + this.$t('space') + this.$t(this.storeType + 'Store')
-            },
-            // 虚拟仓库中选择上传的目标仓库的下拉列表数据
-            deploymentRepoCheckList () {
-                return this.repoBaseInfo.virtualStoreList.filter(item => item.category === 'LOCAL')
             }
+            // 虚拟仓库中选择上传的目标仓库的下拉列表数据
+            // deploymentRepoCheckList () {
+            //     return this.repoBaseInfo.virtualStoreList.filter(item => item.category === 'LOCAL')
+            // }
         },
         watch: {
             storeType: {
@@ -401,14 +401,14 @@
                     this.repoBaseInfo.type = this.filterRepoEnum[0] || ''
                 }
             },
-            deploymentRepoCheckList: {
-                handler (val) {
-                    // 当选中的存储库中没有本地仓库或者当前选中的上传目标仓库不在被选中的存储库中时需要将当前选中的上传目标仓库重置为空
-                    if (!val.length || !(val.map((item) => item.name).includes(this.repoBaseInfo.deploymentRepo))) {
-                        this.repoBaseInfo.deploymentRepo = ''
-                    }
-                }
-            },
+            // deploymentRepoCheckList: {
+            //     handler (val) {
+            //         // 当选中的存储库中没有本地仓库或者当前选中的上传目标仓库不在被选中的存储库中时需要将当前选中的上传目标仓库重置为空
+            //         if (!val.length || !(val.map((item) => item.name).includes(this.repoBaseInfo.deploymentRepo))) {
+            //             this.repoBaseInfo.deploymentRepo = ''
+            //         }
+            //     }
+            // },
             'repoBaseInfo.type': {
                 // 当选择的仓库类型改变时需要将选择的存储库重置为空
                 handler () {
@@ -551,7 +551,7 @@
                             category: item.category
                         }
                     })
-                    body.configuration.deploymentRepo = this.repoBaseInfo.deploymentRepo || ''
+                    // body.configuration.deploymentRepo = this.repoBaseInfo.deploymentRepo || ''
                 }
                 this.createRepo({ body }).then(() => {
                     this.$bkMessage({

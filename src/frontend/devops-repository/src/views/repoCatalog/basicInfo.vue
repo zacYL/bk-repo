@@ -59,7 +59,7 @@
                         ></store-sort>
                     </div>
                 </bk-form-item>
-                <bk-form-item :label="$t('uploadTargetStore')">
+                <!-- <bk-form-item :label="$t('uploadTargetStore')">
                     <bk-select
                         v-model="detailInfo.deploymentRepo"
                         style="width:300px;"
@@ -70,7 +70,7 @@
                         </bk-option>
                     </bk-select>
                     <div class="form-tip">{{$t('addPackagePrompt')}}</div>
-                </bk-form-item>
+                </bk-form-item> -->
             </template>
             <bk-form-item label="访问权限">
                 <card-radio-group
@@ -231,11 +231,11 @@
                     { label: '系统内公开', value: 'system', tip: '系统内成员可以使用' },
                     { label: '可匿名下载', value: 'public', tip: '不鉴权，任意终端都可下载' }
                 ]
-            },
-            // 虚拟仓库中选择上传的目标仓库的下拉列表数据
-            deploymentRepoCheckList () {
-                return this.detailInfo.virtualStoreList.filter(item => item.category === 'LOCAL')
             }
+            // 虚拟仓库中选择上传的目标仓库的下拉列表数据
+            // deploymentRepoCheckList () {
+            //     return this.detailInfo.virtualStoreList.filter(item => item.category === 'LOCAL')
+            // }
         },
         watch: {
             repoType: {

@@ -3,8 +3,7 @@
         :is-show.sync="isVisible"
         :quick-close="true"
         :width="500"
-        @hidden="handleClickClose"
-    >
+        @hidden="handleClickClose">
         <div slot="header">{{ customSettings.title }}</div>
         <div class="content-container" slot="content">
             <div v-if="customSettings.uploadFlag">
@@ -12,7 +11,7 @@
                     请选择Maven制品包
                 </div>
                 <bk-upload
-                    v-bkloading="{ isLoading: isLoading, title: '文件正在上传中，请稍候' }"
+                    v-bkloading="{ isLoading: isLoading, title: '文件正在解析中，请稍候' }"
                     :with-credentials="true"
                     :size="5 * 1024"
                     :limit="1"
@@ -29,18 +28,15 @@
                     <bk-button v-if="uploadPercent > 0 && uploadPercent !== 1" class="upload-show-file-container-cancel" title="取消" theme="warning" :text="true" @click="onAbortUpload">
                         取消
                     </bk-button>
-                    <bk-button v-if="uploadPercent === 1" class="upload-show-file-container-cancel" title="上传成功" theme="success" :text="true">
-                        上传成功
+                    <bk-button v-if="uploadPercent === 1" class="upload-show-file-container-cancel" title="文件解析成功" theme="success" :text="true">
+                        文件解析成功
                     </bk-button>
                 </div>
                 <div class="error-upload-info" v-if="errorMsg">{{errorMsg || '无法识别包信息，请确认是否由Maven客户端打包，并重新上传'}}</div>
-
             </div>
             <div v-else>
                 <div class="content-file-info" v-if="currentFileName">
-                    <span>
-                        {{currentFileName}}
-                    </span>
+                    <span>{{currentFileName}}</span>
                     <bk-icon-plus type="plus-close" @click="() => {
                         currentFileName = ''
                     }" />
@@ -61,13 +57,18 @@
                     <bk-form-item label="Type" :required="true" :property="'type'">
                         <bk-input v-model="formData.type"></bk-input>
                     </bk-form-item>
-
                 </bk-form>
             </div>
         </div>
         <div slot="footer">
             <bk-button @click.stop.prevent="$emit('cancel',false)">{{$t('cancel')}}</bk-button>
-            <bk-button class="ml10" theme="primary" :disabled="customSettings.uploadFlag || customSettings.saveBtnDisable" @click.stop.prevent="submitData">{{$t('confirm')}}</bk-button>
+            <bk-button
+                class="ml10"
+                theme="primary"
+                :disabled="customSettings.uploadFlag || customSettings.saveBtnDisable"
+                @click.stop.prevent="submitData">
+                {{$t('confirm')}}
+            </bk-button>
         </div>
     </bk-sideslider>
 </template>
@@ -299,7 +300,7 @@
     width: 100% ;
     &-info{
         text-align: center;
-        width: 80%;
+        width: 78%;
     }
     &-cancel{
         margin: 22px 0 0 0;

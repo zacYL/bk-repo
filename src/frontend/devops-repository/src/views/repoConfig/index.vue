@@ -63,7 +63,7 @@
                                     @update="onUpdateList"></store-sort>
                             </div>
                         </bk-form-item>
-                        <bk-form-item :label="$t('uploadTargetStore')" property="deploymentRepo">
+                        <!-- <bk-form-item :label="$t('uploadTargetStore')" property="deploymentRepo">
                             <bk-select
                                 v-model="repoBaseInfo.deploymentRepo"
                                 style="width:300px;"
@@ -76,7 +76,7 @@
                                 </div>
                             </bk-select>
                             <div class="form-tip">{{$t('addPackagePrompt')}}</div>
-                        </bk-form-item>
+                        </bk-form-item> -->
                     </template>
                     <bk-form-item label="访问权限">
                         <card-radio-group
@@ -245,7 +245,7 @@
                     },
                     // 虚拟仓库的选中的存储库列表
                     virtualStoreList: [],
-                    deploymentRepo: '', // 虚拟仓库中选择存储的本地仓库
+                    // deploymentRepo: '', // 虚拟仓库中选择存储的本地仓库
                     // 是否展示tab标签页，因为代理设置和清理设置需要根据详情页接口返回的数据判断是否显示，解决异步导致的tab顺序错误的问题
                     showTabPanel: false
                 },
@@ -384,11 +384,11 @@
                     // 虚拟仓库的选择存储库的校验
                     virtualStoreList: this.repoBaseInfo.category === 'VIRTUAL' ? checkStorageRule : {}
                 }
-            },
-            // 虚拟仓库中选择上传的目标仓库的下拉列表数据
-            deploymentRepoCheckList () {
-                return this.repoBaseInfo.virtualStoreList.filter(item => item.category === 'LOCAL')
             }
+            // 虚拟仓库中选择上传的目标仓库的下拉列表数据
+            // deploymentRepoCheckList () {
+            //     return this.repoBaseInfo.virtualStoreList.filter(item => item.category === 'LOCAL')
+            // }
         },
         watch: {
             repoType: {
@@ -396,15 +396,15 @@
                     type && this.getDomain(type)
                 },
                 immediate: true
-            },
-            deploymentRepoCheckList: {
-                handler (val) {
-                    // 当选中的存储库中没有本地仓库或者当前选中的上传目标仓库不在被选中的存储库中时需要将当前选中的上传目标仓库重置为空
-                    if (!val.length || !(val.map((item) => item.name).includes(this.repoBaseInfo.deploymentRepo))) {
-                        this.repoBaseInfo.deploymentRepo = ''
-                    }
-                }
             }
+            // deploymentRepoCheckList: {
+            //     handler (val) {
+            //         // 当选中的存储库中没有本地仓库或者当前选中的上传目标仓库不在被选中的存储库中时需要将当前选中的上传目标仓库重置为空
+            //         if (!val.length || !(val.map((item) => item.name).includes(this.repoBaseInfo.deploymentRepo))) {
+            //             this.repoBaseInfo.deploymentRepo = ''
+            //         }
+            //     }
+            // }
         },
         created () {
             if (!this.repoName || !this.repoType) this.toRepoList()
@@ -507,7 +507,7 @@
                     if (res.category === 'VIRTUAL') {
                         this.repoBaseInfo.virtualStoreList = res.configuration.repositoryList
                         // 当后台返回的字段为null时需要将其设置为空字符串，否则会因为组件需要的参数类型不对应，导致选择框的placeholder不显示
-                        this.repoBaseInfo.deploymentRepo = res.configuration.deploymentRepo || ''
+                        // this.repoBaseInfo.deploymentRepo = res.configuration.deploymentRepo || ''
                     }
                     // 远程仓库，添加地址，账号密码和网络代理相关配置
                     if (res.category === 'REMOTE') {
@@ -602,7 +602,7 @@
                             category: item.category
                         }
                     })
-                    body.configuration.deploymentRepo = this.repoBaseInfo.deploymentRepo
+                    // body.configuration.deploymentRepo = this.repoBaseInfo.deploymentRepo
                 }
                 this.repoBaseInfo.loading = true
                 this.updateRepoInfo({

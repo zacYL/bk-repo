@@ -28,8 +28,11 @@
 package com.tencent.bkrepo.replication.replica.base.replicator
 
 import com.google.common.base.Throwables
+import com.tencent.bkrepo.common.api.constant.HttpStatus
+import com.tencent.bkrepo.common.artifact.cluster.ClusterInfo
 import com.tencent.bkrepo.common.artifact.constant.RESERVED_KEY
 import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
+import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.configuration.composite.CompositeConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.local.LocalConfiguration
@@ -38,6 +41,7 @@ import com.tencent.bkrepo.common.artifact.stream.rateLimit
 import com.tencent.bkrepo.common.storage.innercos.retry
 import com.tencent.bkrepo.replication.config.ReplicationProperties
 import com.tencent.bkrepo.replication.constant.DEFAULT_VERSION
+import com.tencent.bkrepo.replication.constant.PUSH_WITH_DEFAULT
 import com.tencent.bkrepo.replication.constant.DELAY_IN_SECONDS
 import com.tencent.bkrepo.replication.constant.RETRY_COUNT
 import com.tencent.bkrepo.replication.manager.LocalDataManager
@@ -47,6 +51,7 @@ import com.tencent.bkrepo.replication.replica.base.context.FilePushContext
 import com.tencent.bkrepo.replication.replica.base.context.ReplicaContext
 import com.tencent.bkrepo.replication.replica.base.handler.FilePushHandler
 import com.tencent.bkrepo.replication.replica.base.impl.internal.PackageNodeMappings
+import com.tencent.bkrepo.replication.replica.base.impl.remote.exception.ArtifactPushException
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
@@ -63,7 +68,7 @@ import org.springframework.stereotype.Component
 import java.time.LocalDateTime
 
 /**
- * 集群间数据同步类
+ * 集群数据同步类
  * 独立集群 同步到 独立集群 的同步实现类
  */
 @Component
@@ -149,11 +154,16 @@ class ClusterReplicator(
                 packageVersion = packageVersion,
                 type = localRepoType
             ).forEach {
-                val node = localDataManager.findNodeDetail(
-                    projectId = localProjectId,
-                    repoName = localRepoName,
-                    fullPath = it
-                )
+                val node = try {
+                    localDataManager.findNodeDetailInVersion(
+                        projectId = localProjectId,
+                        repoName = localRepoName,
+                        fullPath = it
+                    )
+                } catch (e: NodeNotFoundException) {
+                    logger.warn("Node $it not found in repo $localProjectId|$localRepoName")
+                    throw e
+                }
                 replicaFile(context, node.nodeInfo)
             }
             // filter system reserve metadata
@@ -188,16 +198,13 @@ class ClusterReplicator(
 
     override fun replicaFile(context: ReplicaContext, node: NodeInfo): Boolean {
         with(context) {
+            var type: String = replicationProperties.pushType
             retry(times = RETRY_COUNT, delayInSeconds = DELAY_IN_SECONDS) { retry ->
                 return buildNodeCreateRequest(this, node)?.let {
                     if (blobReplicaClient!!.check(it.sha256!!, remoteRepo?.storageCredentials?.key).data != true) {
                         logger.info(
                             "The file [${node.fullPath}] with sha256 [${node.sha256}] " +
                                 "will be pushed to the remote server ${cluster.name}, try the $retry time!"
-                        )
-                        val artifactInputStream = localDataManager.getBlobData(it.sha256!!, it.size!!, localRepo)
-                        val rateLimitInputStream = artifactInputStream.rateLimit(
-                            localDataManager.getRateLimit().toBytes()
                         )
                         // 1. 同步文件数据
                         try {
@@ -207,17 +214,27 @@ class ClusterReplicator(
                                     name = it.fullPath,
                                     size = it.size,
                                     sha256 = it.sha256
-                                )
+                                ),
+                                pushType = type
                             )
                         } catch (throwable: Throwable) {
                             logger.warn(
                                 "File replica push error $throwable, trace is " +
                                     "${Throwables.getStackTraceAsString(throwable)}!"
                             )
+                            // 当不支持分块上传时，降级为普通上传
+                            if (
+                                throwable is ArtifactPushException &&
+                                throwable.code == HttpStatus.METHOD_NOT_ALLOWED.value
+                            ) {
+                                type = PUSH_WITH_DEFAULT
+                            }
                             throw throwable
                         }
                     }
-                    logger.info("The node [${node.fullPath}] will be pushed to the remote server!")
+                    logger.info(
+                        "The node [${node.fullPath}] will be pushed to the remote server!"
+                    )
                     // 2. 同步节点信息
                     artifactReplicaClient!!.replicaNodeCreateRequest(it)
                     true
@@ -268,5 +285,11 @@ class ClusterReplicator(
 
     companion object {
         private val logger = LoggerFactory.getLogger(ClusterReplicator::class.java)
+        private const val RETRY_COUNT = 2
+        private const val DELAY_IN_SECONDS: Long = 1
+
+        fun buildRemoteRepoCacheKey(clusterInfo: ClusterInfo, projectId: String, repoName: String): String {
+            return "$projectId/$repoName/${clusterInfo.hashCode()}"
+        }
     }
 }

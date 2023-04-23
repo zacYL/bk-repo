@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.replication.manager
 
+import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
 import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.storage.core.StorageService
@@ -166,6 +167,22 @@ class LocalDataManager(
         val nodeDetail = findNode(projectId, repoName, fullPath)
         check(nodeDetail != null) { "Local node path [$fullPath] does not exist" }
         return nodeDetail
+    }
+
+    /**
+     * 查找package对应version下的节点
+     */
+    fun findNodeDetailInVersion(
+        projectId: String, repoName: String, fullPath: String
+    ): NodeDetail {
+        return findNode(projectId, repoName, fullPath) ?: findDeletedNodeDetail(projectId, repoName, fullPath)
+        ?: throw NodeNotFoundException(fullPath)
+    }
+
+    fun findDeletedNodeDetail(
+        projectId: String, repoName: String, fullPath: String
+    ): NodeDetail? {
+        return nodeClient.getDeletedNodeDetail(projectId, repoName, fullPath).data?.firstOrNull()
     }
 
     /**

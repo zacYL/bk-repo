@@ -65,12 +65,12 @@ object BlobUtil {
         val result = repo.getArtifactListByName(context.projectId, context.repoName, fileName)
         if (result.isEmpty()) return null
         val blob = result[0]
-        val length = blob[DOCKER_NODE_SIZE] as Int
+        val length = blob[DOCKER_NODE_SIZE].toLong()
         val fullPath = blob[DOCKER_NODE_FULL_PATH] as String
         with(context) {
             return DockerArtifact(projectId, repoName, artifactName)
                 .sha256(sha256FromFileName(fileName))
-                .length(length.toLong()).fullPath(fullPath)
+                .length(length!!).fullPath(fullPath)
         }
     }
 
@@ -108,5 +108,13 @@ object BlobUtil {
 
     private fun sha256FromFileName(fileName: String): String {
         return fileName.replace(SHA256_PREFIX, EMPTY)
+    }
+}
+
+private fun Any?.toLong(): Long? {
+    return when (this) {
+        is Int -> this.toLong()
+        is Long -> this
+        else -> null
     }
 }

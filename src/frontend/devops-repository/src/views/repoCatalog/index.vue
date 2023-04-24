@@ -394,7 +394,7 @@
                     this.$bkMessage({
                         theme: 'warning',
                         limit: 3,
-                        message: '文件过大，请下载文件到本地查看'
+                        message: '文件过大，无法预览，请下载后在本地查看'
                     })
                 }
             },

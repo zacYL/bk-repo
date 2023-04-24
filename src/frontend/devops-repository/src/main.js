@@ -9,10 +9,9 @@ import CanwayDialog from '@repository/components/CanwayDialog'
 import EmptyData from '@repository/components/EmptyData'
 import createLocale from '@locale'
 import { throttleMessage } from '@repository/utils'
-import JsonViewer from 'vue-json-viewer'
 
 const { i18n, setLocale } = createLocale(require.context('@locale/repository/', false, /\.json$/))
-Vue.use(JsonViewer)
+
 Vue.component('Icon', Icon)
 Vue.component('CanwayDialog', CanwayDialog)
 Vue.component('EmptyData', EmptyData)

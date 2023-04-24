@@ -10,6 +10,22 @@ export function convertFileSize (size, unit = 'B') {
         return `${index ? size.toFixed(2) : size}${unit}`
     }
 }
+/**
+ * 将string类型的文件大小转化为xxx B，并转化为纯数字
+ * @param {*} size 文件大小，string类型
+ * @returns 文件大小为 xxx，单位为B，但最后返回的不带单位
+ */
+export function convertFileByteSize (size) {
+    const arr = ['TB', 'GB', 'MB', 'KB', 'B']
+    if (typeof size === 'string') {
+        const index = arr.findIndex(v => size.includes(v))
+        if (index < arr.length - 1) {
+            return convertFileByteSize(size.replace(/[a-zA-Z]/g, '') * 1024 + arr[index + 1])
+        } else {
+            return size.replace(/[a-zA-Z]/g, '')
+        }
+    }
+}
 
 const DEFAULT_TIME_INTERVAL = 1000
 export function debounce (fn, interval = DEFAULT_TIME_INTERVAL) {

@@ -36,6 +36,14 @@ export default {
         sourceRepoName () {
             return this.$route.query.sourceName || ''
         },
+        // 是否是 软件源模式
+        whetherSoftware () {
+            return this.$route.path.startsWith('/software')
+        },
+        // 远程及虚拟仓库下，软件源模式下不显示某些操作
+        noShowOption () {
+            return this.storeType === 'remote' || this.storeType === 'virtual' || this.whetherSoftware
+        },
         dockerGuide () {
             return [
                 {
@@ -47,7 +55,7 @@ export default {
                         }
                     ]
                 },
-                (this.storeType === 'remote' || this.$route.path.startsWith('/software'))
+                this.noShowOption
                     ? undefined
                     : {
                         title: '推送',
@@ -137,7 +145,7 @@ export default {
                         }
                     ]
                 },
-                (this.storeType === 'remote' || this.$route.path.startsWith('/software'))
+                this.noShowOption
                     ? undefined
                     : {
                         title: '推送',
@@ -235,7 +243,7 @@ export default {
                         }
                     ]
                 },
-                (this.storeType === 'remote' || this.$route.path.startsWith('/software'))
+                this.noShowOption
                     ? undefined
                     : {
                         title: '推送',
@@ -461,7 +469,7 @@ export default {
                         }
                     ]
                 },
-                (this.storeType === 'remote' || this.$route.path.startsWith('/software'))
+                this.noShowOption
                     ? undefined
                     : {
                         title: '推送',
@@ -538,7 +546,7 @@ export default {
                         }
                     ]
                 },
-                (this.storeType === 'remote' || this.$route.path.startsWith('/software'))
+                this.noShowOption
                     ? undefined
                     : {
                         title: '推送',
@@ -629,7 +637,7 @@ export default {
                         }
                     ]
                 },
-                (this.storeType === 'remote' || this.$route.path.startsWith('/software'))
+                this.noShowOption
                     ? undefined
                     : {
                         title: '推送',
@@ -695,7 +703,7 @@ export default {
                         }
                     ]
                 },
-                (this.storeType === 'remote' || this.$route.path.startsWith('/software'))
+                this.noShowOption
                     ? undefined
                     : {
                         title: '推送',
@@ -752,7 +760,7 @@ export default {
                         }
                     ]
                 },
-                (this.storeType === 'remote' || this.$route.path.startsWith('/software'))
+                this.noShowOption
                     ? undefined
                     : {
                         title: '推送',
@@ -776,7 +784,7 @@ export default {
                         }
                     ]
                 },
-                (this.storeType === 'virtual' || this.$route.path.startsWith('/software'))
+                (this.storeType === 'virtual' || this.whetherSoftware)
                     ? undefined
                     : {
                         title: '删除',

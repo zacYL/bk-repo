@@ -342,8 +342,14 @@ class ReplicaTaskServiceImpl(
                 id = null,
                 key = copyKey,
                 name = name,
-                status = ReplicaStatus.WAITING,
-                lastExecutionStatus = null,
+                status = when (tReplicaTask.replicaType) {
+                    ReplicaType.REAL_TIME -> ReplicaStatus.REPLICATING
+                    ReplicaType.SCHEDULED -> ReplicaStatus.WAITING
+                },
+                lastExecutionStatus = when (tReplicaTask.replicaType) {
+                    ReplicaType.REAL_TIME -> ExecutionStatus.RUNNING
+                    ReplicaType.SCHEDULED -> null
+                },
                 lastExecutionTime = null,
                 nextExecutionTime = null,
                 executionTimes = 0L,
@@ -464,7 +470,7 @@ class ReplicaTaskServiceImpl(
 
     override fun countArtifactToReplica(taskDetail: ReplicaTaskDetail): Long {
         val projectId = taskDetail.task.projectId
-        return when(taskDetail.task.replicaObjectType) {
+        return when (taskDetail.task.replicaObjectType) {
             ReplicaObjectType.REPOSITORY -> {
                 var count = 0L
                 taskDetail.objects.forEach {

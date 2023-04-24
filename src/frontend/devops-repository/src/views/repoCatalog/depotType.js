@@ -47,12 +47,16 @@ export const depotTypeList = [
 ]
 export const fileTypeList = {
     // .md、.json、.txt、.LICENSE、.xml、POM、dependency
-
+    // 匹配所有的文件名后缀为 .sha*的文件,不再是匹配单独的 sha,sha1
     md: 'md',
     json: 'json',
     txt: 'js',
     license: 'js',
-    xml: 'xml'
+    xml: 'xml',
+    pom: 'xml'
+    // sha: 'md',
+    // sha1: 'md',
+    // sha256: 'md'
     // '.pom',
     // '.dependency'
 }

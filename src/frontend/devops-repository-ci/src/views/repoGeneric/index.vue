@@ -169,6 +169,7 @@
                     class="p10"
                     size="small"
                     align="right"
+                    show-total-count
                     @change="current => handlerPaginationChange({ current })"
                     @limit-change="limit => handlerPaginationChange({ limit })"
                     :current.sync="pagination.current"

@@ -4,7 +4,7 @@
             <bk-switcher v-model="editable" size="small" theme="primary" @change="$refs.ruleForm.clearError()"></bk-switcher>
         </bk-form-item>
         <template>
-            <bk-form-item v-if="ruleTypes.includes(SCAN_TYPE_LICENSE)" label="许可证规则">
+            <bk-form-item v-if="ruleTypes.includes(SCAN_TYPE_LICENSE)" label="许可证规则" property="recommend" error-display-type="normal">
                 <div style="color:var(--fontSubsidiaryColor);">当许可证中出现不符合以下规则的许可证时，则不通过质量规则</div>
                 <div class="mt10"><bk-checkbox :disabled="!editable" v-model="rule.recommend">仅有可用许可证</bk-checkbox></div>
                 <div class="mt10"><bk-checkbox :disabled="!editable" v-model="rule.compliance">仅有合规的许可证</bk-checkbox></div>
@@ -135,19 +135,23 @@
                     })
             },
             doSave (ruleType) {
+                // 当质量规则关闭时，调用后台接口传参为空对象，不然会导致质量规则一直无法关闭(开关是否开启由下方方法计算得到)
                 return this.saveQualityRule({
                     type: ruleType,
                     id: this.planId,
-                    body: Object.keys(this.rule).reduce((target, key) => {
-                        const value = this.rule[key]
-                        if (typeof value === 'string' && value.length > 0) {
-                            target[key] = Number(value)
-                        }
-                        if (typeof value === 'boolean' || typeof value === 'number') {
-                            target[key] = value
-                        }
-                        return target
-                    }, {})
+                    body: !this.editable
+                        ? {}
+                        : Object.keys(this.rule).reduce((target, key) => {
+                            const value = this.rule[key]
+                            if (typeof value === 'string' && value.length > 0) {
+                                console.log('string', Number(value))
+                                target[key] = Number(value)
+                            }
+                            if (typeof value === 'boolean' || typeof value === 'number') {
+                                target[key] = value
+                            }
+                            return target
+                        }, {})
                 })
             },
             getRules () {
@@ -162,6 +166,7 @@
                     this.editable = this.computedEditable()
                 })
             },
+            // 计算质量规则开关是否开启，当下方任何一个值存在时(数值不为空或其他值不为false)开关都需要设置为开启状态
             computedEditable () {
                 const { critical, high, medium, low, recommend, compliance, unknown } = this.rule
                 return this.scanTypes.includes('LICENSE')

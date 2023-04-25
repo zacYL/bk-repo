@@ -115,11 +115,12 @@ abstract class VirtualRepository : AbstractArtifactRepository() {
     }
 
     override fun upload(context: ArtifactUploadContext) {
-        context.getVirtualConfiguration().deploymentRepo.takeUnless { it.isNullOrBlank() }?.let {
-            val repositoryDetail = repositoryClient.getRepoDetail(context.projectId, it).data!!
-            modifyContext(context, repositoryDetail)
-            ArtifactContextHolder.getRepository(RepositoryCategory.LOCAL).upload(context)
-        } ?: throw MethodNotAllowedException()
+//        context.getVirtualConfiguration().deploymentRepo.takeUnless { it.isNullOrBlank() }?.let {
+//            val repositoryDetail = repositoryClient.getRepoDetail(context.projectId, it).data!!
+//            modifyContext(context, repositoryDetail)
+//            ArtifactContextHolder.getRepository(RepositoryCategory.LOCAL).upload(context)
+//        } ?: throw MethodNotAllowedException()
+        throw MethodNotAllowedException()
     }
 
     protected fun getTraversedList(context: ArtifactContext): MutableList<VirtualRepositoryMember> {

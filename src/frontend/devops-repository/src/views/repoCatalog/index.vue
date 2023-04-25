@@ -366,11 +366,11 @@
                     this.baseDetailInfo = {
                         ...res,
                         name: res.name || '',
-                        size: convertFileSize(res.size),
-                        createdBy: res.createdBy,
-                        createdDate: formatDate(res.createdDate),
-                        lastModifiedBy: res.lastModifiedBy,
-                        lastModifiedDate: formatDate(res.lastModifiedDate)
+                        size: res.size && convertFileSize(res.size),
+                        createdBy: this.userList[res.createdBy] ? this.userList[res.createdBy]?.name : res.createdBy,
+                        createdDate: res.createdDate && formatDate(res.createdDate),
+                        lastModifiedBy: this.userList[res.lastModifiedBy] ? this.userList[res.lastModifiedBy]?.name : res.lastModifiedBy,
+                        lastModifiedDate: res.lastModifiedDate && formatDate(res.lastModifiedDate)
                     }
                     this.getRepoInfoDetail({
                         projectId: projectId,

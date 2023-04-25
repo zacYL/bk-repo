@@ -28,7 +28,7 @@
                     <bk-button v-if="uploadPercent > 0 && uploadPercent !== 1" class="upload-show-file-container-cancel" title="取消" theme="warning" :text="true" @click="onAbortUpload">
                         取消
                     </bk-button>
-                    <bk-button v-if="uploadPercent === 1" class="upload-show-file-container-cancel" title="文件解析成功" theme="success" :text="true">
+                    <bk-button v-if="uploadPercent === 1 && !errorMsg" class="upload-show-file-container-cancel" title="文件解析成功" theme="success" :text="true">
                         文件解析成功
                     </bk-button>
                 </div>

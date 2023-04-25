@@ -40,8 +40,7 @@
 </template>
 <script>
     import { mapActions } from 'vuex'
-    import { leakLevelEnum } from '@repository/store/publicEnum'
-    import { SCAN_TYPE_LICENSE, SCAN_TYPE_SECURITY } from '../../../store/publicEnum'
+    import { leakLevelEnum, SCAN_TYPE_LICENSE, SCAN_TYPE_SECURITY } from '@repository/store/publicEnum'
     export default {
         name: 'scanQualityRule',
         props: {
@@ -131,6 +130,7 @@
                             theme: 'success',
                             message: this.$t('save') + this.$t('success')
                         })
+                        this.initData()
                         this.getRules()
                     })
             },
@@ -144,7 +144,6 @@
                         : Object.keys(this.rule).reduce((target, key) => {
                             const value = this.rule[key]
                             if (typeof value === 'string' && value.length > 0) {
-                                console.log('string', Number(value))
                                 target[key] = Number(value)
                             }
                             if (typeof value === 'boolean' || typeof value === 'number') {

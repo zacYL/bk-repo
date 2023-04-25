@@ -8,7 +8,7 @@ const repoToken = () => import('@repository/views/repoToken')
 const repoAudit = () => import('@repository/views/repoAudit')
 const nodeManage = () => import('@repository/views/nodeManage')
 const planManage = () => import('@repository/views/planManage')
-const createPlan = () => import('@repository/views/planManage/createPlan')
+// const createPlan = () => import('@repository/views/planManage/createPlan')
 const logDetail = () => import('@repository/views/planManage/logDetail')
 
 const repoGeneric = () => import('@/views/repoGeneric')
@@ -54,7 +54,7 @@ const routes = [
                 }
             },
             {
-                path: 'repoConfig/:repoType',
+                path: 'repoList/repoConfig/:repoType',
                 name: 'repoConfig',
                 component: repoConfig,
                 meta: {
@@ -124,39 +124,39 @@ const routes = [
                     ]
                 }
             },
-            {
-                path: 'planManage/createPlan',
-                name: 'createPlan',
-                component: createPlan,
-                meta: {
-                    breadcrumb: [
-                        { name: 'planManage', label: '制品分发' },
-                        { name: 'createPlan', label: '创建计划' }
-                    ]
-                }
-            },
-            {
-                path: 'planManage/editPlan/:planId',
-                name: 'editPlan',
-                component: createPlan,
-                meta: {
-                    breadcrumb: [
-                        { name: 'planManage', label: '{planName}', template: '制品分发' },
-                        { name: 'createPlan', label: '编辑计划' }
-                    ]
-                }
-            },
-            {
-                path: 'planManage/planDetail/:planId',
-                name: 'planDetail',
-                component: createPlan,
-                meta: {
-                    breadcrumb: [
-                        { name: 'planManage', label: '{planName}', template: '制品分发' },
-                        { name: 'createPlan', label: '计划详情' }
-                    ]
-                }
-            },
+            // {
+            //     path: 'planManage/createPlan',
+            //     name: 'createPlan',
+            //     component: createPlan,
+            //     meta: {
+            //         breadcrumb: [
+            //             { name: 'planManage', label: '制品分发' },
+            //             { name: 'createPlan', label: '创建计划' }
+            //         ]
+            //     }
+            // },
+            // {
+            //     path: 'planManage/editPlan/:planId',
+            //     name: 'editPlan',
+            //     component: createPlan,
+            //     meta: {
+            //         breadcrumb: [
+            //             { name: 'planManage', label: '{planName}', template: '制品分发' },
+            //             { name: 'createPlan', label: '编辑计划' }
+            //         ]
+            //     }
+            // },
+            // {
+            //     path: 'planManage/planDetail/:planId',
+            //     name: 'planDetail',
+            //     component: createPlan,
+            //     meta: {
+            //         breadcrumb: [
+            //             { name: 'planManage', label: '{planName}', template: '制品分发' },
+            //             { name: 'createPlan', label: '计划详情' }
+            //         ]
+            //     }
+            // },
             {
                 path: 'planManage/logDetail/:logId',
                 name: 'logDetail',
@@ -179,7 +179,7 @@ const routes = [
                 }
             },
             {
-                path: 'scanReport/:planId',
+                path: 'repoScan/scanReport/:planId',
                 name: 'scanReport',
                 component: scanReport,
                 meta: {
@@ -190,7 +190,7 @@ const routes = [
                 }
             },
             {
-                path: 'artiReport/:planId/:recordId',
+                path: 'repoScan/artiReport/:planId/:recordId',
                 name: 'artiReport',
                 component: artiReport,
                 beforeEnter: (to, from, next) => {
@@ -219,7 +219,7 @@ const routes = [
                 }
             },
             {
-                path: 'scanConfig/:planId',
+                path: 'repoScan/scanConfig/:planId',
                 name: 'scanConfig',
                 component: scanConfig,
                 meta: {
@@ -231,7 +231,7 @@ const routes = [
                 }
             },
             {
-                path: 'startScan/:planId',
+                path: 'repoScan/startScan/:planId',
                 name: 'startScan',
                 component: startScan,
                 meta: {
@@ -253,7 +253,7 @@ const routes = [
                 }
             },
             {
-                path: 'generic',
+                path: 'repoList/generic',
                 name: 'repoGeneric',
                 component: repoGeneric,
                 meta: {
@@ -264,7 +264,7 @@ const routes = [
                 }
             },
             {
-                path: ':repoType/list',
+                path: 'repoList/:repoType/list',
                 name: 'commonList',
                 component: commonPackageList,
                 meta: {
@@ -275,7 +275,7 @@ const routes = [
                 }
             },
             {
-                path: ':repoType/package',
+                path: 'repoList/:repoType/package',
                 name: 'commonPackage',
                 component: commonPackageDetail,
                 meta: {

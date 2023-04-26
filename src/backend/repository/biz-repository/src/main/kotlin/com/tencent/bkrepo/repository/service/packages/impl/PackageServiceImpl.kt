@@ -450,7 +450,7 @@ class PackageServiceImpl(
         val countQuery = Query.of(query).limit(0).skip(0)
         val totalRecords = packageDao.count(countQuery)
         val packageList = packageDao.find(query, MutableMap::class.java) as List<MutableMap<String, Any?>>
-        packageList.forEach continuing@{
+        packageList.forEach {
             val packageId = it[ID].toString()
             val name = it[LATEST].toString()
             packageVersionDao.findByName(packageId, name)?.metadata?.forEach { tMetadata ->
@@ -460,7 +460,6 @@ class PackageServiceImpl(
                 if (tMetadata.key == FORBID_STATUS) {
                     it[FORBID_STATUS] = tMetadata.value
                 }
-                return@continuing
             }
         }
         val pageNumber = if (query.limit == 0) 0 else (query.skip / query.limit).toInt()

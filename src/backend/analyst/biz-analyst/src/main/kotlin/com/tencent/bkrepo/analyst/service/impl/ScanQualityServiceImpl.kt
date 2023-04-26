@@ -58,7 +58,10 @@ class ScanQualityServiceImpl(
     override fun updateScanQuality(planId: String, request: ScanQualityUpdateRequest): Boolean {
         val scanPlan = scanPlanDao.get(planId)
         permissionCheckHandler.checkProjectPermission(scanPlan.projectId, PermissionAction.MANAGE)
-        val qualityMap = request.toMap().ifEmpty { return true }
+        val qualityMap = request.toMap().ifEmpty {
+            scanPlanDao.closeQuality(planId)
+            return true
+        }
         scanPlanDao.updateScanPlanQuality(planId, qualityMap)
         return true
     }

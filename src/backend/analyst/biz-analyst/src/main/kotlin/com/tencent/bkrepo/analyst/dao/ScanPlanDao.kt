@@ -221,6 +221,12 @@ class ScanPlanDao : ScannerSimpleMongoDao<TScanPlan>() {
         updateMulti(query, update)
     }
 
+    fun closeQuality(planId: String): UpdateResult {
+        val query = Query(Criteria.where(ID).isEqualTo(planId))
+        val update = Update.update(TScanPlan::scanQuality.name, emptyMap<String, Any>())
+        return updateFirst(query, update)
+    }
+
     private fun buildOverviewUpdate(overview: Map<String, Any?>, dec: Boolean = false): Update? {
         val update = Update()
         var hasUpdate = false

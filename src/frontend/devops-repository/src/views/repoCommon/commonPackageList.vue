@@ -195,7 +195,8 @@
             deletePackageHandler ({ key }) {
                 this.$confirm({
                     theme: 'danger',
-                    message: this.$t('deletePackageTitle', { name: key }),
+                    message: this.$t('deletePackageTitle', { name: '' }),
+                    subMessage: key,
                     confirmFn: () => {
                         return this.deletePackage({
                             projectId: this.projectId,

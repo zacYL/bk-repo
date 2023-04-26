@@ -1,5 +1,5 @@
 <template>
-    <bk-form style="max-width: 1080px;" :label-width="120" :model="rule" :rules="rules" ref="ruleForm">
+    <bk-form style="max-width: 1080px;" :label-width="120" :model="rule" :rules="rules" ref="ruleForm" v-bkloading="{ isLoading }">
         <bk-form-item label="质量规则">
             <bk-switcher v-model="editable" size="small" theme="primary" @change="$refs.ruleForm.clearError()"></bk-switcher>
         </bk-form-item>
@@ -34,7 +34,7 @@
             <div class="mt10"><bk-checkbox :disabled="!editable" v-model="rule.forbidQualityUnPass">自动禁止使用制品：质量规则未通过的制品</bk-checkbox></div>
         </bk-form-item>
         <bk-form-item>
-            <bk-button theme="primary" @click="save()">{{$t('save')}}</bk-button>
+            <bk-button :loading="isLoading" theme="primary" @click="save()">{{$t('save')}}</bk-button>
         </bk-form-item>
     </bk-form>
 </template>
@@ -59,6 +59,7 @@
                 SCAN_TYPE_LICENSE: SCAN_TYPE_LICENSE,
                 leakLevelEnum,
                 editable: false,
+                isLoading: false,
                 rule: {
                     recommend: false,
                     compliance: false,
@@ -105,14 +106,17 @@
             ...mapActions(['getQualityRule', 'saveQualityRule']),
             initData () {
                 this.rule = this.scanTypes.includes('LICENSE')
-                    ? {
+                    && {
+                        ...this.rule,
                         recommend: false,
                         compliance: false,
                         unknown: false,
                         forbidScanUnFinished: false,
                         forbidQualityUnPass: false
                     }
-                    : {
+                this.rule = this.scanTypes.includes('SECURITY')
+                    && {
+                        ...this.rule,
                         critical: '',
                         high: '',
                         medium: '',
@@ -123,6 +127,7 @@
             },
             async save () {
                 await this.$refs.ruleForm.validate()
+                this.isLoading = true
                 Promise
                     .all(this.ruleTypes.map(type => this.doSave(type)))
                     .then(() => {
@@ -132,6 +137,8 @@
                         })
                         this.initData()
                         this.getRules()
+                    }).finally(() => {
+                        this.isLoading = false
                     })
             },
             doSave (ruleType) {
@@ -168,18 +175,25 @@
             // 计算质量规则开关是否开启，当下方任何一个值存在时(数值不为空或其他值不为false)开关都需要设置为开启状态
             computedEditable () {
                 const { critical, high, medium, low, recommend, compliance, unknown } = this.rule
-                return this.scanTypes.includes('LICENSE')
-                    ? Boolean(
-                        recommend
-                            || compliance
-                            || unknown
-                    )
-                    : Boolean(
-                        critical !== ''
-                            || high !== ''
-                            || medium !== ''
-                            || low !== ''
-                    )
+                let licenseFlag = false
+                let securityFlag = false
+                licenseFlag = Boolean(
+                    recommend
+                        || compliance
+                        || unknown
+                )
+                securityFlag = Boolean(
+                    critical !== ''
+                        || high !== ''
+                        || medium !== ''
+                        || low !== ''
+                )
+                // docker仓库现在同时支持扫描许可和漏洞，两个规则只要其中任何一个有值就可以保存
+                if (this.scanTypes.includes('LICENSE') && this.scanTypes.includes('SECURITY')) {
+                    return licenseFlag || securityFlag
+                } else {
+                    return this.scanTypes.includes('LICENSE') ? licenseFlag : securityFlag
+                }
             }
         }
     }

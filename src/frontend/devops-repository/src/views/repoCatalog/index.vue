@@ -116,7 +116,7 @@
         </div>
         <canway-dialog
             v-if="baseDetailInfo && baseDetailInfo.fullPath"
-            v-model="previewDialogShow"
+            :value="previewDialogShow"
             width="800"
             height-num="600"
             :title="baseDetailInfo.name + ' 文件内容'"

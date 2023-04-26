@@ -38,6 +38,7 @@ import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.Preconditions
 import com.tencent.bkrepo.common.artifact.api.DefaultArtifactInfo
 import com.tencent.bkrepo.common.artifact.constant.ARTIFACT_INFO_KEY
+import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
 import com.tencent.bkrepo.common.artifact.constant.SCAN_STATUS
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
@@ -442,21 +443,24 @@ class PackageServiceImpl(
         packageDao.save(tPackage)
     }
 
+    @Suppress("UNCHECKED_CAST")
     override fun searchPackage(queryModel: QueryModel): Page<MutableMap<*, *>> {
         val context = packageSearchInterpreter.interpret(queryModel)
         val query = context.mongoQuery
         val countQuery = Query.of(query).limit(0).skip(0)
         val totalRecords = packageDao.count(countQuery)
-        val packageList = packageDao.find(query, MutableMap::class.java)
+        val packageList = packageDao.find(query, MutableMap::class.java) as List<MutableMap<String, Any?>>
         packageList.forEach continuing@{
-            it as MutableMap<String, Any>
             val packageId = it[ID].toString()
             val name = it[LATEST].toString()
             packageVersionDao.findByName(packageId, name)?.metadata?.forEach { tMetadata ->
                 if (tMetadata.key == SCAN_STATUS) {
                     it[SCAN_STATUS] = tMetadata.value
-                    return@continuing
                 }
+                if (tMetadata.key == FORBID_STATUS) {
+                    it[FORBID_STATUS] = tMetadata.value
+                }
+                return@continuing
             }
         }
         val pageNumber = if (query.limit == 0) 0 else (query.skip / query.limit).toInt()

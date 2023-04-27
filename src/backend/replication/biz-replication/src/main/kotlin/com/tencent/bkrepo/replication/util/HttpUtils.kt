@@ -40,7 +40,6 @@ import java.net.MalformedURLException
 import java.net.URL
 
 object HttpUtils {
-
     /**
      * 封装请求
      */

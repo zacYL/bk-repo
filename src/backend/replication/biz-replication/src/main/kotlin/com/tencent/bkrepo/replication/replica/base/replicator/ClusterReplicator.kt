@@ -41,6 +41,7 @@ import com.tencent.bkrepo.common.artifact.stream.rateLimit
 import com.tencent.bkrepo.common.storage.innercos.retry
 import com.tencent.bkrepo.replication.config.ReplicationProperties
 import com.tencent.bkrepo.replication.constant.DEFAULT_VERSION
+import com.tencent.bkrepo.replication.constant.DELAY_IN_SECONDS
 import com.tencent.bkrepo.replication.constant.PUSH_WITH_DEFAULT
 import com.tencent.bkrepo.replication.constant.DELAY_IN_SECONDS
 import com.tencent.bkrepo.replication.constant.RETRY_COUNT
@@ -49,7 +50,7 @@ import com.tencent.bkrepo.replication.pojo.request.PackageVersionExistCheckReque
 import com.tencent.bkrepo.replication.pojo.task.setting.ConflictStrategy
 import com.tencent.bkrepo.replication.replica.base.context.FilePushContext
 import com.tencent.bkrepo.replication.replica.base.context.ReplicaContext
-import com.tencent.bkrepo.replication.replica.base.handler.FilePushHandler
+import com.tencent.bkrepo.replication.replica.base.handler.ClusterArtifactReplicationHandler
 import com.tencent.bkrepo.replication.replica.base.impl.internal.PackageNodeMappings
 import com.tencent.bkrepo.replication.replica.base.impl.remote.exception.ArtifactPushException
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
@@ -74,7 +75,7 @@ import java.time.LocalDateTime
 @Component
 class ClusterReplicator(
     private val localDataManager: LocalDataManager,
-    private val filePushHandler: FilePushHandler,
+    private val artifactReplicationHandler: ClusterArtifactReplicationHandler,
     private val replicationProperties: ReplicationProperties
 ) : Replicator {
 
@@ -208,7 +209,7 @@ class ClusterReplicator(
                         )
                         // 1. 同步文件数据
                         try {
-                            filePushHandler.blobPush(
+                            artifactReplicationHandler.blobPush(
                                 filePushContext = FilePushContext(
                                     context = context,
                                     name = it.fullPath,
@@ -285,8 +286,7 @@ class ClusterReplicator(
 
     companion object {
         private val logger = LoggerFactory.getLogger(ClusterReplicator::class.java)
-        private const val RETRY_COUNT = 2
-        private const val DELAY_IN_SECONDS: Long = 1
+
 
         fun buildRemoteRepoCacheKey(clusterInfo: ClusterInfo, projectId: String, repoName: String): String {
             return "$projectId/$repoName/${clusterInfo.hashCode()}"

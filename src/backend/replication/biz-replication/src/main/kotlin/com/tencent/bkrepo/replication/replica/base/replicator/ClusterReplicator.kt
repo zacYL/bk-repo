@@ -80,7 +80,7 @@ class ClusterReplicator(
             // 外部集群仓库没有project/repoName
             if (remoteProjectId.isNullOrBlank()) return
             val localProject = localDataManager.findProjectById(localProjectId)
-            val combineName = "${localProject.displayName}_$remoteProjectId"
+            val combineName = "${localProject.displayName}---$remoteProjectId"
             val displayName = if (combineName.length > 100) combineName.substring(0, 100) else combineName
             val request = ProjectCreateRequest(
                 name = remoteProjectId,

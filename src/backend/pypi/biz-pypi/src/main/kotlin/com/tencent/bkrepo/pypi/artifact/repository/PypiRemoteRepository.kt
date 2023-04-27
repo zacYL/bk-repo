@@ -58,6 +58,8 @@ import com.tencent.bkrepo.pypi.constants.METADATA
 import com.tencent.bkrepo.pypi.constants.NAME
 import com.tencent.bkrepo.pypi.constants.VERSION
 import com.tencent.bkrepo.pypi.exception.PypiRemoteSearchException
+import com.tencent.bkrepo.pypi.pojo.Basic
+import com.tencent.bkrepo.pypi.pojo.PypiArtifactVersionData
 import com.tencent.bkrepo.pypi.pojo.PypiMetadata
 import com.tencent.bkrepo.pypi.util.DecompressUtil.getPypiMetadata
 import com.tencent.bkrepo.pypi.util.XmlUtils.readXml
@@ -105,7 +107,9 @@ class PypiRemoteRepository : RemoteRepository() {
     }
 
     override fun query(context: ArtifactQueryContext): Any? {
-        return if (context.artifactInfo.getArtifactFullPath() == "/") {
+        return if (context.request.servletPath.startsWith("/ext/version/detail")) {
+            getVersionDetail(context)
+        } else if (context.artifactInfo.getArtifactFullPath() == "/") {
             getCacheHtml(context)
         } else {
             remoteRequest(context)
@@ -374,6 +378,38 @@ class PypiRemoteRepository : RemoteRepository() {
 
     private fun getMetadataField(metadataString: String, field: String): String? {
         return Regex("^$field: (.+)", RegexOption.MULTILINE).find(metadataString)?.groupValues?.getOrNull(1)
+    }
+
+    private fun getVersionDetail(context: ArtifactQueryContext): Any? {
+        val packageKey = context.request.getParameter("packageKey")
+        val version = context.request.getParameter("version")
+        logger.info("Get version detail, packageKey: $packageKey, version: $version")
+        val name = PackageKeys.resolvePypi(packageKey)
+        val trueVersion = packageClient.findVersionByName(
+            context.projectId,
+            context.repoName,
+            packageKey,
+            version
+        ).data
+        val artifactPath = trueVersion?.contentPath ?: return null
+        with(context.artifactInfo) {
+            val node = nodeClient.getNodeDetail(projectId, repoName, artifactPath).data ?: return null
+            val packageVersion = packageClient.findVersionByName(projectId, repoName, packageKey, version).data
+            val count = packageVersion?.downloads ?: 0
+            val pypiArtifactBasic = Basic(
+                name,
+                version,
+                node.size, node.fullPath,
+                node.createdBy, node.createdDate,
+                node.lastModifiedBy, node.lastModifiedDate,
+                count,
+                node.sha256,
+                node.md5,
+                null,
+                null
+            )
+            return PypiArtifactVersionData(pypiArtifactBasic, packageVersion?.packageMetadata)
+        }
     }
 
     companion object {

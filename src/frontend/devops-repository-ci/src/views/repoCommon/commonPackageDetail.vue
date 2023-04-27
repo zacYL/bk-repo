@@ -46,7 +46,7 @@
                                         repoType !== 'docker' && { label: '下载', clickEvent: () => downloadPackageHandler($version) },
                                         isEnterprise && showRepoScan && { label: '扫描制品', clickEvent: () => scanPackageHandler($version) }
                                     ] : []),
-                                    showRepoScan && { clickEvent: () => changeForbidStatusHandler($version), label: $version.metadata.forbidStatus ? '解除禁止' : '禁止使用' },
+                                    !$route.path.startsWith('/software') && !(storeType === 'virtual') && { clickEvent: () => changeForbidStatusHandler($version), label: $version.metadata.forbidStatus ? '解除禁止' : '禁止使用' },
                                     (permission.delete && !(storeType === 'virtual')) && { label: '删除', clickEvent: () => deleteVersionHandler($version) }
                                 ]"></operation-list>
                         </div>

@@ -262,7 +262,7 @@
                             this.isEnterprise && this.showRepoScan && { clickEvent: () => this.$emit('scan'), label: '扫描制品' }
                         ]
                         : []),
-                    this.showRepoScan && { clickEvent: () => this.$emit('forbid'), label: metadataMap.forbidStatus ? '解除禁止' : '禁止使用' },
+                    !this.$route.path.startsWith('/software') && !(this.storeType === 'virtual') && { clickEvent: () => this.$emit('forbid'), label: metadataMap.forbidStatus ? '解除禁止' : '禁止使用' },
                     (this.permission.delete && !this.$route.path.startsWith('/software') && !(this.storeType === 'virtual')) && { clickEvent: () => this.$emit('delete'), label: this.$t('delete') }
                 ]
             }

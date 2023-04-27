@@ -11,7 +11,7 @@
                     readonly>
                 </scan-tag>
                 <forbid-tag class="ml10"
-                    v-if="!cardData.type && (cardData.metadata || {}).forbidStatus"
+                    v-if="((cardData.metadata || {}).forbidStatus || cardData.forbidStatus)"
                     v-bind="cardData.metadata">
                 </forbid-tag>
             </div>

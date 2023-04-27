@@ -86,6 +86,7 @@ import java.io.InputStreamReader
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.*
 
 @Component
 class PypiRemoteRepository : RemoteRepository() {
@@ -121,7 +122,12 @@ class PypiRemoteRepository : RemoteRepository() {
         logger.info("Remote list url: $listUri")
         val remoteConfiguration = context.getRemoteConfiguration()
         val okHttpClient: OkHttpClient = createHttpClient(remoteConfiguration)
-        val build: Request = Request.Builder().get().url(listUri).build()
+        val build: Request = Request.Builder()
+            .get()
+            .url(listUri)
+            .removeHeader("User-Agent")
+            .addHeader("User-Agent", "${UUID.randomUUID()}")
+            .build()
         return okHttpClient.newCall(build).execute().body()?.string()
     }
 

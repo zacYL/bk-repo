@@ -27,7 +27,7 @@
 
 package com.tencent.bkrepo.pypi.artifact.repository
 
-import com.tencent.bkrepo.common.api.constant.StringPool
+import com.tencent.bkrepo.common.api.constant.StringPool.SLASH
 import com.tencent.bkrepo.common.api.constant.ensureSuffix
 import com.tencent.bkrepo.common.api.exception.NotFoundException
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
@@ -295,7 +295,7 @@ class PypiLocalRepository(
     fun getRedirectUrl(request: HttpServletRequest): String {
         val domain = pypiProperties.domain
         val path = request.servletPath
-        return UrlFormatter.format(domain, path).ensureSuffix(StringPool.SLASH)
+        return UrlFormatter.format(domain, path).ensureSuffix(SLASH)
     }
 
     /**
@@ -306,9 +306,7 @@ class PypiLocalRepository(
         val request = HttpContextHolder.getRequest()
         if (!request.requestURI.endsWith("/")) {
             val response = HttpContextHolder.getResponse()
-            response.sendRedirect(getRedirectUrl(request))
-            response.writer.flush()
-            return null
+            return response.sendRedirect(request.requestURL.toString().ensureSuffix(SLASH))
         }
         with(artifactInfo) {
             val node = nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data

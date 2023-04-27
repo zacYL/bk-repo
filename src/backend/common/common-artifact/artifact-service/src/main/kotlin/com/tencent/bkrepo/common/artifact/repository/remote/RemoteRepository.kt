@@ -182,7 +182,10 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
     fun getResponse(remoteConfiguration: RemoteConfiguration): Response {
         with(remoteConfiguration) {
             val httpClient = createHttpClient(remoteConfiguration)
-            val request = Request.Builder().url(url).build()
+            val request = Request.Builder().url(url)
+                .removeHeader("User-Agent")
+                .addHeader("User-Agent", "${UUID.randomUUID()}")
+                .build()
             return httpClient.newCall(request).execute()
         }
     }

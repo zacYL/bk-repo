@@ -41,6 +41,7 @@ import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus
 import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordInfo
 import com.tencent.bkrepo.replication.pojo.task.ReplicaTaskDetail
 import com.tencent.bkrepo.replication.pojo.task.objects.ReplicaObjectInfo
+import com.tencent.bkrepo.replication.replica.base.interceptor.RetryInterceptor
 import com.tencent.bkrepo.replication.replica.base.replicator.ClusterReplicator
 import com.tencent.bkrepo.replication.replica.base.replicator.EdgeNodeReplicator
 import com.tencent.bkrepo.replication.replica.base.replicator.RemoteReplicator
@@ -83,7 +84,6 @@ class ReplicaContext(
 
     var cluster: ClusterInfo
 
-    private val pushBlobUrl = "${remoteCluster.url}/replica/blob/push"
     val httpClient: OkHttpClient
 
     init {
@@ -114,13 +114,15 @@ class ReplicaContext(
                 cluster,
                 readTimeout,
                 writeTimeout,
+                RetryInterceptor(),
                 BasicAuthInterceptor(cluster.username!!, cluster.password!!)
             )
         } else {
             OkHttpClientPool.getHttpClient(
                 cluster,
                 readTimeout,
-                writeTimeout
+                writeTimeout,
+                RetryInterceptor()
             )
         }
     }

@@ -217,8 +217,8 @@
                 let [startTime, endTime = new Date(nowTime)] = this.exportTime
                 startTime = startTime || new Date(endTime - 3600 * 1000 * 24 * 30)
                 const params = new URLSearchParams({
-                    projectId: this.projectId,
-                    id: this.planId,
+                    projectId: this.scanPlan.projectId,
+                    id: this.scanPlan.id,
                     ...(this.exportStatus === 'ALL'
                         ? {}
                         : {

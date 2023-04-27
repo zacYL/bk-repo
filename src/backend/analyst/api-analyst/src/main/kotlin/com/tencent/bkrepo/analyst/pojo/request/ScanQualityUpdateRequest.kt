@@ -37,7 +37,10 @@ data class ScanQualityUpdateRequest(
     val medium: Long? = null,
     val low: Long? = null,
     val forbidScanUnFinished: Boolean? = null,
-    val forbidQualityUnPass: Boolean? = null
+    val forbidQualityUnPass: Boolean? = null,
+    val recommend: Boolean = false,
+    val compliance: Boolean = false,
+    val unknown: Boolean = false
 ) {
     fun toMap(): Map<String, Any?> {
         val map = mutableMapOf<String, Any?>()
@@ -51,8 +54,15 @@ data class ScanQualityUpdateRequest(
             }
             redLine?.let { map[level.levelName] = redLine }
         }
-        this.forbidScanUnFinished?.let { map[ScanQualityUpdateRequest::forbidScanUnFinished.name] = it }
-        this.forbidQualityUnPass?.let { map[ScanQualityUpdateRequest::forbidQualityUnPass.name] = it }
+        this.forbidScanUnFinished?.let {
+            if (it) map[ScanQualityUpdateRequest::forbidScanUnFinished.name] = it
+        }
+        this.forbidQualityUnPass?.let {
+            if (it) map[ScanQualityUpdateRequest::forbidQualityUnPass.name] = it
+        }
+        if (recommend) map[LicenseScanQualityUpdateRequest::recommend.name] = recommend
+        if (compliance) map[LicenseScanQualityUpdateRequest::compliance.name] = compliance
+        if (unknown) map[LicenseScanQualityUpdateRequest::unknown.name] = unknown
         return map
     }
 }

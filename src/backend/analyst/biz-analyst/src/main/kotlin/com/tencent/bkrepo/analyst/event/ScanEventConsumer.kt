@@ -208,9 +208,10 @@ class ScanEventConsumer(
                 .forEach {
                     val request = ScanRequest(
                         planId = it.id!!,
-                        rule = RuleConverter.convert(projectId, repoName, resourceKey)
+                        rule = RuleConverter.convert(projectId, repoName, resourceKey),
+                        force = true
                     )
-                    scanService.scan(request, ScanTriggerType.ON_NEW_ARTIFACT, it.lastModifiedBy)
+                    scanService.scan(request, ScanTriggerType.ON_NEW_ARTIFACT, userId)
                     hasScanTask = true
                 }
         }
@@ -249,10 +250,11 @@ class ScanEventConsumer(
                     val packageVersion = data[VersionCreatedEvent::packageVersion.name] as String
                     val request = ScanRequest(
                         planId = it.id!!,
-                        rule = RuleConverter.convert(projectId, repoName, packageKey, packageVersion)
+                        rule = RuleConverter.convert(projectId, repoName, packageKey, packageVersion),
+                        force = true
                     )
                     logger.info("package auto scan request:${request.toJsonString()}")
-                    scanService.scan(request, ScanTriggerType.ON_NEW_ARTIFACT, it.lastModifiedBy)
+                    scanService.scan(request, ScanTriggerType.ON_NEW_ARTIFACT, userId)
                     hasScanTask = true
                 }
         }

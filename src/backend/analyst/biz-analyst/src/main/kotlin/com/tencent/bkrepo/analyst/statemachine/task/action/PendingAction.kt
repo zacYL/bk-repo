@@ -121,13 +121,7 @@ class PendingAction(
             val metadata = customMetadata(metadata, projectId, scanner)
 
             // 校验权限
-            if (userId != null) {
-                if (repoNames.isEmpty()) {
-                    permissionCheckHandler.checkProjectPermission(projectId, PermissionAction.MANAGE, userId)
-                } else {
-                    permissionCheckHandler.checkReposPermission(projectId, repoNames, PermissionAction.READ, userId)
-                }
-            }
+            userId?.let { permissionCheckHandler.checkProjectPermission(projectId, PermissionAction.MANAGE, it) }
 
             val rule = RuleConverter.convert(rule, plan?.type, projectId)
             val now = LocalDateTime.now()

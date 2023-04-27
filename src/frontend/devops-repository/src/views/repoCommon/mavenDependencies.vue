@@ -162,6 +162,14 @@
             },
             version () {
                 return this.$route.query.version || ''
+            },
+            // 当前仓库类型，本地/远程/虚拟
+            storeType () {
+                return this.$route.query.storeType || ''
+            },
+            // 虚拟仓库的仓库来源，虚拟仓库时需要更换repoName为此值
+            sourceRepoName () {
+                return this.$route.query.sourceName || ''
             }
         },
         created () {
@@ -180,10 +188,10 @@
             getCorrectList () {
                 this.isCorrectLoading = true
                 this.getCorrectDependencies({
-                    projectId: this.projectId || '',
-                    repoName: this.repoName || '',
-                    packageKey: this.packageKey || '',
-                    version: this.version || '',
+                    projectId: this.projectId,
+                    repoName: this.storeType === 'virtual' ? this.sourceRepoName : this.repoName,
+                    packageKey: this.packageKey,
+                    version: this.version,
                     pageNumber: this.correctDependencies.current || 1,
                     pageSize: this.correctDependencies.limit || 10
                 }).then(res => {
@@ -204,10 +212,10 @@
             getPluginList () {
                 this.isPluginLoading = true
                 this.getCorrectPlugins({
-                    projectId: this.projectId || '',
-                    repoName: this.repoName || '',
-                    packageKey: this.packageKey || '',
-                    version: this.version || '',
+                    projectId: this.projectId,
+                    repoName: this.storeType === 'virtual' ? this.sourceRepoName : this.repoName,
+                    packageKey: this.packageKey,
+                    version: this.version,
                     pageNumber: this.plugins.current || 1,
                     pageSize: this.plugins.limit || 10
                 }).then(res => {
@@ -228,10 +236,10 @@
             getReverseList () {
                 this.isReverseLoading = true
                 this.getReverseDependencies({
-                    projectId: this.projectId || '',
-                    repoName: this.repoName || '',
-                    packageKey: this.packageKey || '',
-                    version: this.version || '',
+                    projectId: this.projectId,
+                    repoName: this.storeType === 'virtual' ? this.sourceRepoName : this.repoName,
+                    packageKey: this.packageKey,
+                    version: this.version,
                     pageNumber: this.reverseDependencies.current || 1,
                     pageSize: this.reverseDependencies.limit || 10
                 }).then(res => {

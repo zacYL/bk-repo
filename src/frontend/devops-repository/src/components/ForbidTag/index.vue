@@ -1,6 +1,7 @@
 <template>
     <span class="repo-tag STOP" data-name="禁止使用"
-        v-bk-tooltips="{ content: tooltipContent, placements: ['top'] }"></span>
+        v-bk-tooltips=" { content: tooltipContent, placements: ['top'] ,disabled: !tooltipContent } "
+    ></span>
 </template>
 <script>
     import { mapState } from 'vuex'

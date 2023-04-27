@@ -61,7 +61,7 @@
             </div>
         </div>
         <div slot="footer">
-            <bk-button @click.stop.prevent="$emit('cancel',false)">{{$t('cancel')}}</bk-button>
+            <bk-button @click.stop.prevent="cancelUploadArtifact">{{$t('cancel')}}</bk-button>
             <bk-button
                 class="ml10"
                 theme="primary"
@@ -174,7 +174,8 @@
         methods: {
             ...mapActions([
                 'uploadArtifactory',
-                'submitMavenArtifactory'
+                'submitMavenArtifactory',
+                'deleteErrorPackage'
             ]),
             checkGroupOrArtifact (val) {
                 const reg = /^[a-zA-Z0-9_\-.]+$/
@@ -226,7 +227,7 @@
                     error && (this.errorMsg = error.message || error.error || error)
                 })
             },
-            // 取消上传操作
+            // 取消上传操作(此时还没有解析文件)
             onAbortUpload () {
                 this.isLoading = false
                 this.uploadXhr && this.uploadXhr.abort()
@@ -234,6 +235,19 @@
                 this.uploadPercent = 0
                 this.currentFileName = ''
                 this.errorMsg = ''
+            },
+            // 文件解析成功后点击取消按钮
+            cancelUploadArtifact () {
+                this.deleteErrorPackage({
+                    projectId: this.projectId,
+                    repoName: this.repoName,
+                    groupId: this.formData.groupId,
+                    artifactId: this.formData.artifactId,
+                    version: this.formData.version,
+                    artifactName: this.currentFileName
+                }).finally(() => {
+                    this.$emit('cancel', false)
+                })
             },
             submitData () {
                 this.$refs.productForm.validate().then(validator => {

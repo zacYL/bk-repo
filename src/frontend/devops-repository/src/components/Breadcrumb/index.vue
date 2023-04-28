@@ -6,6 +6,7 @@
             :key="item.name"
             :class="{ 'omit-middle': omitMiddle && list && list.length > 2 }">
             <span class="bk-breadcrumb-item-inner is-link"
+                v-bk-tooltips=" { content: item.name, placements: ['bottom'] ,disabled: !item.name }"
                 @click="() => item.cilckHandler && item.cilckHandler(item)">
                 {{ item.name }}
             </span>

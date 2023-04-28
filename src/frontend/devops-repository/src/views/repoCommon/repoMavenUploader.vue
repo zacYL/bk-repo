@@ -28,7 +28,7 @@
                     <bk-button v-if="uploadPercent > 0 && uploadPercent !== 1" class="upload-show-file-container-cancel" title="取消" theme="warning" :text="true" @click="onAbortUpload">
                         取消
                     </bk-button>
-                    <bk-button v-if="uploadPercent === 1 && !errorMsg" class="upload-show-file-container-cancel" title="文件解析成功" theme="success" :text="true">
+                    <bk-button v-if="uploadPercent === 1 && !errorMsg && !isLoading" class="upload-show-file-container-cancel" title="文件解析成功" theme="success" :text="true">
                         文件解析成功
                     </bk-button>
                 </div>
@@ -238,16 +238,23 @@
             },
             // 文件解析成功后点击取消按钮
             cancelUploadArtifact () {
-                this.deleteErrorPackage({
-                    projectId: this.projectId,
-                    repoName: this.repoName,
-                    groupId: this.formData.groupId,
-                    artifactId: this.formData.artifactId,
-                    version: this.formData.version,
-                    artifactName: this.currentFileName
-                }).finally(() => {
-                    this.$emit('cancel', false)
-                })
+                if (this.projectId
+                    && this.repoName
+                    && this.formData.groupId
+                    && this.formData.artifactId
+                    && this.formData.version
+                    && this.currentFileName
+                ) {
+                    this.deleteErrorPackage({
+                        projectId: this.projectId,
+                        repoName: this.repoName,
+                        groupId: this.formData.groupId,
+                        artifactId: this.formData.artifactId,
+                        version: this.formData.version,
+                        artifactName: this.currentFileName
+                    })
+                }
+                this.$emit('cancel', false)
             },
             submitData () {
                 this.$refs.productForm.validate().then(validator => {

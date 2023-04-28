@@ -43,7 +43,9 @@ request.interceptors.response.use(response => {
             window.repositoryVue.$store.commit('SHOW_LOGIN_DIALOG')
         }
     }
-    return Promise.reject({ status, message }) // eslint-disable-line
+    // 当用户没有权限去删除制品时，后端返回的报错信息(因为客户端上传需要这种格式的报错信息)是使用的{error:'xxxx'}
+    // 此时前端就需要先返回message的报错信息，如果message不存在则使用error
+    return Promise.reject({ status, message:message || error || '未知错误' }) // eslint-disable-line
 }, errorHandler)
 
 Vue.prototype.$ajax = request

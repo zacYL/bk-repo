@@ -114,9 +114,9 @@ class ReplicaContext(
                 cluster,
                 readTimeout,
                 writeTimeout,
-                RetryInterceptor(),
-                BasicAuthInterceptor(cluster.username!!, cluster.password!!)
-            )
+                BasicAuthInterceptor(cluster.username!!, cluster.password!!),
+                RetryInterceptor()
+                )
         } else {
             OkHttpClientPool.getHttpClient(
                 cluster,

@@ -131,9 +131,6 @@ class GenericLocalRepository : LocalRepository() {
         // preview == true时不设置Content-Dispostition响应头
         val preview = context.request.getParameter(PARAM_PREVIEW)?.toBoolean()
         context.useDisposition = preview == null || preview == false
-        if (context.repo.name == REPORT) {
-            context.useDisposition = false
-        }
     }
 
     /**

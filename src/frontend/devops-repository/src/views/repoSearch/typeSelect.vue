@@ -11,9 +11,12 @@
         <div v-show="showDropdown" class="dropdown-list" @click.stop="() => {}">
             <bk-radio-group :value="repoType" class="repo-type-radio-group" @change="changeType">
                 <bk-radio-button v-for="repo in repoList" :key="repo" :value="repo">
-                    <div class="flex-column flex-center repo-type-radio">
+                    <div class="flex-column flex-center repo-type-radio" :class="{ 'checked': repo === repoType }">
                         <Icon size="32" :name="repo" />
                         <span>{{repo}}</span>
+                        <span v-show="repo === repoType" class="top-right-selected">
+                            <i class="devops-icon icon-check-1"></i>
+                        </span>
                     </div>
                 </bk-radio-button>
             </bk-radio-group>
@@ -97,6 +100,23 @@
                 padding: 5px;
                 width: 88px;
                 height: 66px;
+                &.checked {
+                    background-color: var(--bgHoverLighterColor);
+                    color: var(--primaryColor) ;
+                }
+                .top-right-selected {
+                    position: absolute;
+                    top: 0;
+                    right: 0;
+                    border-width: 16px;
+                    border-style: solid;
+                    border-color: var(--primaryColor) var(--primaryColor) transparent transparent;
+                    i {
+                        position: absolute;
+                        margin-top: -12px;
+                        color: #fff;
+                    }
+                }
             }
         }
     }

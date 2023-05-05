@@ -52,6 +52,7 @@ import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.project.ProjectCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
+import com.tencent.bkrepo.repository.pojo.repo.RepoUpdateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
 import org.springframework.web.servlet.HandlerMapping
 import java.util.concurrent.TimeUnit
@@ -256,17 +257,32 @@ class ArtifactContextHolder(
         }
 
         private fun checkRepoExists(projectId: String, repoName: String, repoType: String) {
-            repositoryClient.getRepoDetail(projectId, repoName, repoType).data
-                ?: repositoryClient.createRepo(
+            val repoDetail = repositoryClient.getRepoDetail(projectId, repoName, repoType).data
+            if (repoDetail == null) {
+                repositoryClient.createRepo(
                     RepoCreateRequest(
                         projectId = projectId,
                         name = repoName,
                         type = RepositoryType.valueOf(repoType),
                         category = RepositoryCategory.LOCAL,
-                        public = false,
+                        public = true,
                         description = repoName
                     )
                 )
+            } else if (!repoDetail.public) {
+                repositoryClient.updateRepo(
+                    RepoUpdateRequest(
+                        projectId = repoDetail.projectId,
+                        name = repoDetail.name,
+                        public = true,
+                        description = repoDetail.description,
+                        configuration = repoDetail.configuration,
+                        quota = repoDetail.quota,
+                        coverStrategy = repoDetail.coverStrategy,
+                        operator = repoDetail.lastModifiedBy
+                    )
+                )
+            }
         }
     }
 

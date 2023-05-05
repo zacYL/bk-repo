@@ -2,13 +2,11 @@ package com.tencent.bkrepo.common.devops.repository.service
 
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.api.util.toJsonString
-import com.tencent.bkrepo.common.devops.BELONGCODE
-import com.tencent.bkrepo.common.devops.CANWAY_PERMISSION_API
+import com.tencent.bkrepo.common.devops.CANWAY_AUTH_API
 import com.tencent.bkrepo.common.devops.RESOURCECODE
 import com.tencent.bkrepo.common.devops.conf.DevopsConf
 import com.tencent.bkrepo.common.devops.enums.CanwayPermissionType
 import com.tencent.bkrepo.common.devops.pojo.request.CanwayPermissionRequest
-import com.tencent.bkrepo.common.devops.pojo.response.CanwayPermissionResponse
 import com.tencent.bkrepo.common.devops.pojo.response.CanwayResponse
 import com.tencent.bkrepo.common.devops.util.http.SimpleHttpUtils
 import org.slf4j.Logger
@@ -22,85 +20,47 @@ class CanwayPermissionService(
 
     private val devopsHost = devopsConf.devopsHost.removeSuffix("/")
 
-    /**
-     * 查询用户是否是指定租户下管理员
-     */
-    private fun checkUserHasProjectPermission(operator: String, tenantId: String?): Boolean {
-        val canwayPermissionResponse = getCanwayPermissionInstance(
-            tenantId ?: "bk_ci", operator, CanwayPermissionType.CREATE, "system", "project"
-        )
-        return checkInstance("bk_ci", canwayPermissionResponse)
-    }
 
     @Suppress("TooGenericExceptionCaught")
     fun checkCanwayPermission(
         projectId: String,
         repoName: String?,
-        operator: String,
-        action: CanwayPermissionType,
-        tenantId: String? = null
+        userId: String,
+        action: CanwayPermissionType
     ): Boolean {
-        if (checkUserHasProjectPermission(operator, tenantId)) return true
         return try {
-            val canwayPermissionResponse = getCanwayPermissionInstance(
-                projectId, operator, action, BELONGCODE, RESOURCECODE
-            )
-            checkInstance(repoName, canwayPermissionResponse)
+            checkPermissionInstance(
+                projectId = projectId,
+                userId = userId,
+                action = action
+            ) ?: false
         } catch (e: Exception) {
             logger.error("Devops permission request failed: ", e)
             false
         }
     }
 
-    private fun checkInstance(repoName: String?, canwayPermission: CanwayPermissionResponse?): Boolean {
-        canwayPermission?.let {
-            return matchInstance(repoName, it.instanceCodes.first().resourceInstance)
-        }
-        return false
-    }
-
-    private fun matchInstance(repoName: String?, instances: Set<String>?): Boolean {
-        instances?.let {
-            if (repoName == null) {
-                if (it.contains("*")) return true
-            } else {
-                if (it.contains("*") || it.contains(repoName)) return true
-            }
-        }
-        return false
-    }
-
-    fun getCanwayPermissionInstance(
+    fun checkPermissionInstance(
         projectId: String,
-        operator: String,
+        userId: String,
         action: CanwayPermissionType,
-        belongCode: String,
-        resourceCode: String
-    ): CanwayPermissionResponse? {
+        resourceCode: String? = null,
+        repoName: String? = null
+    ): Boolean? {
         val canwayCheckPermissionRequest = CanwayPermissionRequest(
-            userId = operator,
-            belongCode = belongCode,
-            belongInstance = projectId,
-            resourcesActions = setOf(
-                CanwayPermissionRequest.CanwayAction(
-                    actionCode = action,
-                    resourceCode = resourceCode,
-                    resourceInstance = setOf(
-                        CanwayPermissionRequest.CanwayAction.CanwayInstance(
-                            resourceCode = resourceCode
-                        )
-                    )
-                )
-            )
+            userId = userId,
+            instanceId = repoName ?: "*",
+            resourceCode = resourceCode ?: RESOURCECODE,
+            actionCodes = listOf(action.value),
         ).toJsonString()
-        val ciAddResourceUrl = "${devopsHost.removeSuffix("/")}$CANWAY_PERMISSION_API$ciCheckPermissionApi"
+        val ciAddResourceUrl =
+            String.format("${devopsHost.removeSuffix("/")}$CANWAY_AUTH_API$ciCheckPermissionApi", projectId)
         val responseContent = SimpleHttpUtils.doPost(ciAddResourceUrl, canwayCheckPermissionRequest).content
-
-        return responseContent.readJsonString<CanwayResponse<CanwayPermissionResponse>>().data
+        return responseContent.readJsonString<CanwayResponse<Boolean>>().data
     }
 
     companion object {
         val logger: Logger = LoggerFactory.getLogger(CanwayPermissionService::class.java)
-        const val ciCheckPermissionApi = "/api/service/resource_instance/query"
+        const val ciCheckPermissionApi = "/api/service/project/%s/permission/validate"
     }
 }

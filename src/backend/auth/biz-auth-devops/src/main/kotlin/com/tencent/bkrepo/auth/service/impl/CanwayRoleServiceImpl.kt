@@ -1,9 +1,8 @@
 package com.tencent.bkrepo.auth.service.impl
 
-import com.tencent.bkrepo.auth.CI_TENANT
-import com.tencent.bkrepo.auth.ciApi
-import com.tencent.bkrepo.auth.ciPermission
+import com.tencent.bkrepo.auth.*
 import com.tencent.bkrepo.auth.model.TRole
+import com.tencent.bkrepo.auth.pojo.CanwayRoleRequest
 import com.tencent.bkrepo.auth.pojo.enums.RoleType
 import com.tencent.bkrepo.auth.pojo.role.Role
 import com.tencent.bkrepo.auth.repository.RoleRepository
@@ -13,17 +12,23 @@ import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.readJsonString
+import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.devops.client.DevopsClient
 import com.tencent.bkrepo.common.devops.conf.DevopsConf
 import com.tencent.bkrepo.common.devops.pojo.CanwayGroup
+import com.tencent.bkrepo.common.devops.pojo.request.CanwayUserGroupRequest
 import com.tencent.bkrepo.common.devops.pojo.response.CanwayResponse
+import com.tencent.bkrepo.common.devops.pojo.response.CanwayTenantGroupResponse
 import com.tencent.bkrepo.common.devops.util.http.SimpleHttpUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Update
+
+
 
 class CanwayRoleServiceImpl(
     private val roleRepository: RoleRepository,
@@ -90,16 +95,32 @@ class CanwayRoleServiceImpl(
     /**
      * 查询租户下用户组
      */
-    private fun getGroupByTenantId(tenantId: String): List<CanwayGroup>? {
-        val uri = String.format(groupApi, tenantId)
+    private fun getGroupByTenantId(tenantId: String): List<CanwayGroup> {
+        logger.info("inquire [tenantId:${tenantId}] ")
+        val uri = String.format(groupApi)
         val requestUrl = getRequestUrl(uri)
-        val responseContent = SimpleHttpUtils.doGet(requestUrl).content
-        return responseContent.readJsonString<CanwayResponse<List<CanwayGroup>>>().data
+        val owner = CanwayRoleRequest.Owner(TENANT_SCOPECODE,tenantId)
+        val responseContent = SimpleHttpUtils.doPost(requestUrl,CanwayRoleRequest(owner).toJsonString()).content
+        val groupResponse=responseContent.readJsonString<CanwayResponse<List<CanwayTenantGroupResponse>>>().data ?: listOf()
+        if (groupResponse.isEmpty()) return listOf()
+        val groupInformations=devopsClient.groupInformationByGroupIds(CanwayUserGroupRequest(groupIds=groupResponse.map { it.id })) ?: listOf()
+        val canwayGroup= mutableListOf<CanwayGroup>()
+        groupResponse.forEach {group->
+            if (group.deleted) return@forEach
+            canwayGroup.add(CanwayGroup(
+                id=group.id,
+                name=group.name,
+                description= group.desc,
+                tenantCode= group.ownerId,
+                users=groupInformations.filter { group.id==it.userGroupId }.map { it.userId }
+            ))
+        }
+        return canwayGroup
     }
 
     private fun getRequestUrl(uri: String): String {
         val devopsHost = devopsConf.devopsHost
-        return "${devopsHost.removeSuffix("/")}$ciPermission$ciApi$uri"
+        return "${devopsHost.removeSuffix("/")}$ciAuth$ciApi$uri"
     }
 
     override fun systemRolesByProjectId(projectId: String): List<Role> {
@@ -110,6 +131,7 @@ class CanwayRoleServiceImpl(
     }
 
     companion object {
-        const val groupApi = "/service/tenant/%s/group"
+        const val groupApi = "/service/custom/user_group/query"
+        private val logger = LoggerFactory.getLogger(CanwayRoleServiceImpl::class.java)
     }
 }

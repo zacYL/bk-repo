@@ -585,4 +585,14 @@
     // 因为bk-form的行内表单会导致width变为auto，且是 !import的,此时的!import不可删除
     width: 100px !important;
 }
+// 产品要求：此处的选择目录虽然是只读的，但样式要和普通输入框一致
+::v-deep .bk-form-input[readonly]{
+    background-color: inherit !important;
+    color: inherit !important;
+}
+// 此时需要保证全仓库这个目录的禁用样式，不设置的话会被上面改变的只读样式修改，不符合产品要求
+::v-deep .bk-form-input[disabled]{
+    background-color: #fafbfd!important;
+    color: #8797aa!important;
+}
 </style>

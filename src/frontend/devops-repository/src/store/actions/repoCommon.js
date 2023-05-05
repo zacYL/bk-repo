@@ -39,7 +39,9 @@ export default {
         )
     },
     // 查询包版本列表
-    getVersionList (_, { projectId, repoName, packageKey, version, current = 1, limit = 10 }) {
+    // 虚拟仓库时需要添加仓库来源字段srcRepo，不然后端无法知道当前制品需要从当前的虚拟仓库中的哪个仓库中获取
+    // (同一个虚拟仓库中不同仓库中的制品可能重名)
+    getVersionList (_, { projectId, repoName, packageKey, version, srcRepo = undefined, current = 1, limit = 10 }) {
         return Vue.prototype.$ajax.get(
             `${prefix}/version/page/${projectId}/${repoName}`,
             {
@@ -47,7 +49,8 @@ export default {
                     pageNumber: current,
                     pageSize: limit,
                     packageKey,
-                    version
+                    version,
+                    srcRepo: srcRepo || undefined
                 }
             }
         )
@@ -144,7 +147,7 @@ export default {
                             ? [{
                                 field: 'name',
                                 value: `*${packageName}*`,
-                                operation: 'MATCH'
+                                operation: 'MATCH_I'
                             }]
                             : []),
                         ...(isGeneric
@@ -255,5 +258,19 @@ export default {
                 pageSize
             }
         })
+    },
+    /**
+     * maven上传制品解析成功后点击取消，实际上制品并没有上传成功，此时需要删除依赖目录中展示的jar包
+     * @param {*} _
+     * @param {*} projectId 项目Id
+     * @param {*} repoName 仓库名
+     * @param {*} groupId 后端解析上传的文件groupId
+     * @param {*} artifactId 后端解析上传的文件artifactId
+     * @param {*} version 后端解析上传的文件版本
+     * @param {*} artifactName 上传文件名
+     * @returns
+     */
+    deleteErrorPackage (_, { projectId, repoName, groupId, artifactId, version, artifactName }) {
+        return Vue.prototype.$ajax.delete(`${prefix}/node/delete/${projectId}/${repoName}/${groupId}/${artifactId}/${version}/${artifactName}`)
     }
 }

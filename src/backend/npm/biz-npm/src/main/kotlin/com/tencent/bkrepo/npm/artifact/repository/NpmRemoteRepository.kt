@@ -33,6 +33,7 @@ package com.tencent.bkrepo.npm.artifact.repository
 
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
+import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
 import com.tencent.bkrepo.common.artifact.exception.ArtifactNotInWhitelistException
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
@@ -40,21 +41,27 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactMigrateContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.migration.MigrateDetail
 import com.tencent.bkrepo.common.artifact.repository.remote.RemoteRepository
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
+import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
 import com.tencent.bkrepo.common.storage.monitor.Throughput
 import com.tencent.bkrepo.npm.constants.NPM_FILE_FULL_PATH
 import com.tencent.bkrepo.npm.exception.NpmBadRequestException
+import com.tencent.bkrepo.npm.handler.NpmPackageHandler
+import com.tencent.bkrepo.npm.model.metadata.NpmVersionMetadata
 import com.tencent.bkrepo.npm.pojo.NpmSearchInfoMap
 import com.tencent.bkrepo.npm.pojo.NpmSearchResponse
 import com.tencent.bkrepo.npm.utils.NpmUtils
+import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
+import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import okhttp3.Request
 import okhttp3.Response
 import org.slf4j.Logger
@@ -65,7 +72,8 @@ import java.io.InputStream
 
 @Component
 class NpmRemoteRepository(
-    private val executor: ThreadPoolTaskExecutor
+    private val executor: ThreadPoolTaskExecutor,
+    private val npmPackageHandler: NpmPackageHandler
 ) : RemoteRepository() {
 
     override fun whitelistInterceptor(context: ArtifactDownloadContext) {
@@ -83,12 +91,18 @@ class NpmRemoteRepository(
         artifactResource: ArtifactResource,
         throughput: Throughput
     ) {
-        super.onDownloadSuccess(context, artifactResource, throughput)
         // 存储package-version.json文件
-        executor.execute { cachePackageVersionMetadata(context) }
+        executor.execute {
+            cachePackageVersionMetadata(context)?.run {
+                npmPackageHandler.createVersion(
+                    context.userId, context.artifactInfo, this, artifactResource.getTotalSize()
+                )
+            }
+            super.onDownloadSuccess(context, artifactResource, throughput)
+        }
     }
 
-    private fun cachePackageVersionMetadata(context: ArtifactDownloadContext) {
+    private fun cachePackageVersionMetadata(context: ArtifactDownloadContext): NpmVersionMetadata? {
         with(context) {
             val packageInfo = NpmUtils.parseNameAndVersionFromFullPath(artifactInfo.getArtifactFullPath())
             val versionMetadataFullPath = NpmUtils.getVersionPackageMetadataPath(packageInfo.first, packageInfo.second)
@@ -97,7 +111,7 @@ class NpmRemoteRepository(
                     "version metadata [$versionMetadataFullPath] is already exits " +
                         "in repo [$projectId/$repoName]"
                 )
-                return
+                return null
             }
             val remoteConfiguration = context.getRemoteConfiguration()
             val httpClient = createHttpClient(remoteConfiguration)
@@ -110,12 +124,15 @@ class NpmRemoteRepository(
             val request = Request.Builder().url(downloadUri).build()
             val response = httpClient.newCall(request).execute()
             logger.info("$response")
-            if (checkResponse(response)) {
+            return if (checkResponse(response)) {
                 val artifactFile = createTempFile(response.body()!!)
                 context.putAttribute(NPM_FILE_FULL_PATH, versionMetadataFullPath)
                 cacheArtifactFile(context, artifactFile)
                 logger.info("cache version metadata [$versionMetadataFullPath] success.")
-            }
+                artifactFile.getInputStream().use {
+                    JsonUtils.objectMapper.readValue(it, NpmVersionMetadata::class.java)
+                }
+            } else null
         }
     }
 
@@ -133,26 +150,41 @@ class NpmRemoteRepository(
         val downloadUri = createRemoteSearchUrl(context)
         logger.info("Request url of package metadata: $downloadUri, NetworkProxy=${remoteConfiguration.network.proxy}")
         val request = Request.Builder().url(downloadUri).build()
-        val response = httpClient.newCall(request).execute()
-        logger.info("$response")
-        return if (validateResponse(context, response)) {
-            onQueryResponse(context, response)
-        } else null
+        try {
+            val response = httpClient.newCall(request).execute()
+            logger.info("$response")
+            if (checkResponse(response) && checkJsonFormat(response)) {
+                return onQueryResponse(context, response)
+            }
+        } catch (e: Exception) {
+            logger.warn("Failed to request or resolve response: ${e.message}")
+        }
+        return getCacheArtifactResource(buildDownloadCacheContext(context))?.getSingleStream()
     }
 
-    private fun validateResponse(context: ArtifactContext, response: Response): Boolean {
+    private fun checkJsonFormat(response: Response): Boolean {
         val contentType = response.body()!!.contentType()
-        return checkResponse(response) && contentType?.let {
-            if (it.toString().contains("application/json")) {
-                return@let true
-            } else {
-                logger.error(
-                    "Response from remote-repo[${context.repositoryDetail.name}] is not JSON format. " +
-                            "Please check the proxy configuration of repo[${context.artifactInfo.getRepoIdentify()}]"
+        if (!contentType.toString().contains("application/json")) {
+            logger.warn(
+                "Query Failed: Response from [${response.request().url()}] is not JSON format. " +
+                    "Content-Type: $contentType"
+            )
+            return false
+        }
+        return true
+    }
+
+    private fun buildDownloadCacheContext(context: ArtifactContext): ArtifactDownloadContext {
+        with(context) {
+            return ArtifactDownloadContext(
+                repositoryDetail,
+                ArtifactInfo(
+                    repositoryDetail.projectId,
+                    repositoryDetail.name,
+                    getStringAttribute(NPM_FILE_FULL_PATH) ?: artifactInfo.getArtifactFullPath()
                 )
-                return@let false
-            }
-        } ?: false
+            )
+        }
     }
 
     private fun createRemoteSearchUrl(context: ArtifactContext): String {
@@ -210,6 +242,30 @@ class NpmRemoteRepository(
             val message = "Unable to migrate npm package info a remote repository [$projectId/$repoName]"
             logger.warn(message)
             throw NpmBadRequestException(message)
+        }
+    }
+
+    override fun buildDownloadRecord(
+        context: ArtifactDownloadContext,
+        artifactResource: ArtifactResource
+    ): PackageDownloadRecord? {
+        with(context) {
+            val packageInfo = NpmUtils.parseNameAndVersionFromFullPath(artifactInfo.getArtifactFullPath())
+            with(packageInfo) {
+                return PackageDownloadRecord(projectId, repoName, PackageKeys.ofNpm(first), second, userId)
+            }
+        }
+    }
+
+    override fun remove(context: ArtifactRemoveContext) {
+        val repositoryDetail = context.repositoryDetail
+        val projectId = repositoryDetail.projectId
+        val repoName = repositoryDetail.name
+        val fullPath = context.getAttribute<List<*>>(NPM_FILE_FULL_PATH)
+        val userId = context.userId
+        fullPath?.forEach {
+            nodeClient.deleteNode(NodeDeleteRequest(projectId, repoName, it.toString(), userId))
+            logger.info("delete artifact $it success in repo [${context.artifactInfo.getRepoIdentify()}].")
         }
     }
 

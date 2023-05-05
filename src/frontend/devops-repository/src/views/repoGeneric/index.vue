@@ -61,7 +61,7 @@
                         @enter="searchFile"
                         @clear="searchFile">
                     </bk-input>
-                    <breadcrumb v-else :list="breadcrumb"></breadcrumb>
+                    <breadcrumb v-else :list="breadcrumb" omit-middle></breadcrumb>
                     <div class="repo-generic-actions bk-button-group">
                         <bk-button
                             v-if="multiSelect.length"
@@ -69,7 +69,7 @@
                             批量下载
                         </bk-button>
                         <bk-button class="ml10"
-                            v-if="multiSelect.length"
+                            v-if="multiSelect.length && !$route.path.startsWith('/software')"
                             @click="handlerMultiDelete()">
                             批量删除
                         </bk-button>
@@ -150,21 +150,21 @@
                                         !row.folder && handlerPreview(row) && { clickEvent: () => handlerPreview(row, true), label: $t('preview') },
                                         { clickEvent: () => handlerDownload(row), label: $t('download') },
                                         ...(repoName !== 'pipeline' ? [
-                                            permission.edit && { clickEvent: () => renameRes(row), label: $t('rename') },
-                                            permission.write && { clickEvent: () => moveRes(row), label: $t('move') },
-                                            permission.write && { clickEvent: () => copyRes(row), label: $t('copy') }
+                                            (permission.edit && !$route.path.startsWith('/software')) && { clickEvent: () => renameRes(row), label: $t('rename') },
+                                            (permission.write && !$route.path.startsWith('/software')) && { clickEvent: () => moveRes(row), label: $t('move') },
+                                            (permission.write && !$route.path.startsWith('/software')) && { clickEvent: () => copyRes(row), label: $t('copy') }
                                         ] : []),
                                         ...(!row.folder ? [
                                             { clickEvent: () => handlerShare(row), label: $t('share') },
-                                            genericScanFileTypes.includes(row.name.replace(/^.+\.([^.]+)$/, '$1'))
-                                                && { clickEvent: () => handlerScan(row), label: '安全扫描' }
+                                            ( genericScanFileTypes.includes(row.name.replace(/^.+\.([^.]+)$/, '$1')) && !$route.path.startsWith('/software'))
+                                                && { clickEvent: () => handlerScan(row), label: '扫描制品' }
                                         ] : []),
                                         ...(row.folder ? [
                                             { clickEvent: () => handlerShare(row), label: $t('share') }
                                         ] : [])
                                     ] : []),
-                                    !row.folder && { clickEvent: () => handlerForbid(row), label: row.metadata.forbidStatus ? '解除禁止' : '禁止使用' },
-                                    permission.delete && { clickEvent: () => deleteRes(row), label: $t('delete') }
+                                    (!row.folder && !$route.path.startsWith('/software') ) && { clickEvent: () => handlerForbid(row), label: row.metadata.forbidStatus ? '解除禁止' : '禁止使用' },
+                                    (permission.delete && !$route.path.startsWith('/software')) && { clickEvent: () => deleteRes(row), label: $t('delete') }
                                 ]">
                             </operation-list>
                         </template>
@@ -174,6 +174,7 @@
                     class="p10"
                     size="small"
                     align="right"
+                    show-total-count
                     @change="current => handlerPaginationChange({ current })"
                     @limit-change="limit => handlerPaginationChange({ limit })"
                     :current.sync="pagination.current"
@@ -249,7 +250,8 @@
                     current: 1,
                     limit: 20,
                     limitList: [10, 20, 40]
-                }
+                },
+                debounceClickTreeNode: null
             }
         },
         computed: {
@@ -316,6 +318,7 @@
                     this.itemClickHandler(this.selectedTreeNode)
                 }
             }))
+            this.debounceClickTreeNode = debounce(this.clickTreeNodeHandler, 100)
         },
         beforeDestroy () {
             window.repositoryVue.$off('upload-refresh')
@@ -420,6 +423,9 @@
             },
             // 获取中间列表数据
             getArtifactories () {
+                if (!this.repoName || !this.projectId) {
+                    return
+                }
                 this.isLoading = true
                 this.getArtifactoryList({
                     projectId: this.projectId,
@@ -470,6 +476,9 @@
             },
             // 树组件选中文件夹
             itemClickHandler (node) {
+                this.debounceClickTreeNode(node)
+            },
+            clickTreeNodeHandler (node) {
                 this.selectedTreeNode = node
                 this.handlerPaginationChange()
                 // 更新已展开文件夹数据
@@ -603,7 +612,7 @@
                 this.$refs.genericFormDialog.setData({
                     show: true,
                     loading: false,
-                    title: '安全扫描',
+                    title: '扫描制品',
                     type: 'scan',
                     id: '',
                     name,
@@ -842,7 +851,7 @@
         }
     }
     .repo-generic-main {
-        height: calc(100% - 100px);
+        height: calc(100% - 70px);
         .repo-generic-side {
             height: 100%;
             overflow: hidden;

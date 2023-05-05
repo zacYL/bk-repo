@@ -11,7 +11,7 @@
                     readonly>
                 </scan-tag>
                 <forbid-tag class="ml10"
-                    v-if="!cardData.type && (cardData.metadata || {}).forbidStatus"
+                    v-if="((cardData.metadata || {}).forbidStatus || cardData.forbidStatus)"
                     v-bind="cardData.metadata">
                 </forbid-tag>
             </div>
@@ -28,6 +28,7 @@
                     <div class="card-metadata" :title="`最后修改：${formatDate(cardData.lastModifiedDate)}`"></div>
                     <div class="card-metadata" :title="`版本数：${cardData.versions}`"></div>
                     <div class="card-metadata" :title="`下载统计：${cardData.downloads}`"></div>
+                    <div v-if="storeType === 'virtual'" class="card-metadata" :title="`仓库来源：${cardData.repoName}`"></div>
                 </template>
                 <template v-else>
                     <div class="card-metadata" :title="`所属仓库：${cardData.repoName}`"></div>
@@ -37,9 +38,9 @@
             </div>
         </div>
         <div class="card-operation flex-center">
-            <Icon class="hover-btn" v-if="!readonly" size="24" name="icon-delete" @click.native.stop="deleteCard" />
+            <Icon class="hover-btn" v-if="!readonly && !(storeType === 'virtual') " size="24" name="icon-delete" @click.native.stop="deleteCard" />
             <operation-list
-                v-if="!cardData.type"
+                v-if="!cardData.type && !readonly"
                 :list="[
                     { label: '详情', clickEvent: () => detail() },
                     !(cardData.metadata || {}).forbidStatus && { label: '下载', clickEvent: () => download() },
@@ -77,6 +78,10 @@
             ...mapGetters(['isEnterprise']),
             showRepoScan () {
                 return Object.keys(scanTypeEnum).join(',').includes(this.cardData.type)
+            },
+            // 当前仓库类型
+            storeType () {
+                return this.$route.query.storeType || ''
             }
         },
         methods: {
@@ -143,7 +148,7 @@
         }
         .package-card-data {
             display: grid;
-            grid-template: auto / repeat(4, 1fr);
+            grid-template: auto / repeat(5, 1fr);
             .card-metadata {
                 display: flex;
                 align-items: center;

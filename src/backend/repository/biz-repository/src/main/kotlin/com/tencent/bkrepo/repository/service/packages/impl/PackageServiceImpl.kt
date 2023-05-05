@@ -38,8 +38,11 @@ import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.Preconditions
 import com.tencent.bkrepo.common.artifact.api.DefaultArtifactInfo
 import com.tencent.bkrepo.common.artifact.constant.ARTIFACT_INFO_KEY
+import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
 import com.tencent.bkrepo.common.artifact.constant.SCAN_STATUS
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
+import com.tencent.bkrepo.common.artifact.pojo.configuration.virtual.VirtualConfiguration
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.util.version.SemVersion
@@ -62,6 +65,7 @@ import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateR
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionUpdateRequest
 import com.tencent.bkrepo.repository.search.packages.PackageSearchInterpreter
 import com.tencent.bkrepo.repository.service.packages.PackageService
+import com.tencent.bkrepo.repository.service.repo.RepositoryService
 import com.tencent.bkrepo.repository.util.MetadataUtils
 import com.tencent.bkrepo.repository.util.PackageEventFactory
 import com.tencent.bkrepo.repository.util.PackageEventFactory.buildCreatedEvent
@@ -83,7 +87,8 @@ import java.time.LocalDateTime
 class PackageServiceImpl(
     private val packageDao: PackageDao,
     private val packageVersionDao: PackageVersionDao,
-    private val packageSearchInterpreter: PackageSearchInterpreter
+    private val packageSearchInterpreter: PackageSearchInterpreter,
+    private val repositoryService: RepositoryService
 ) : PackageService {
 
     override fun findPackageByKey(projectId: String, repoName: String, packageKey: String): PackageSummary? {
@@ -169,7 +174,15 @@ class PackageServiceImpl(
         Preconditions.checkArgument(pageSize >= 0, "pageSize")
         val stageTag = option.stageTag?.split(StringPool.COMMA)
         val pageRequest = Pages.ofRequest(pageNumber, pageSize)
-        val tPackage = packageDao.findByKey(projectId, repoName, packageKey)
+        var realRepoName = repoName
+        option.srcRepo?.run {
+            val repoInfo = repositoryService.getRepoInfo(projectId, repoName)
+            if (repoInfo?.category == RepositoryCategory.VIRTUAL
+                && (repoInfo.configuration as VirtualConfiguration).repositoryList.map { it.name }.contains(this)) {
+                    realRepoName = this
+            }
+        }
+        val tPackage = packageDao.findByKey(projectId, realRepoName, packageKey)
         return if (tPackage == null) {
             Pages.ofResponse(pageRequest, 0, emptyList())
         } else {
@@ -430,20 +443,22 @@ class PackageServiceImpl(
         packageDao.save(tPackage)
     }
 
+    @Suppress("UNCHECKED_CAST")
     override fun searchPackage(queryModel: QueryModel): Page<MutableMap<*, *>> {
         val context = packageSearchInterpreter.interpret(queryModel)
         val query = context.mongoQuery
         val countQuery = Query.of(query).limit(0).skip(0)
         val totalRecords = packageDao.count(countQuery)
-        val packageList = packageDao.find(query, MutableMap::class.java)
-        packageList.forEach continuing@{
-            it as MutableMap<String, Any>
+        val packageList = packageDao.find(query, MutableMap::class.java) as List<MutableMap<String, Any?>>
+        packageList.forEach {
             val packageId = it[ID].toString()
             val name = it[LATEST].toString()
             packageVersionDao.findByName(packageId, name)?.metadata?.forEach { tMetadata ->
                 if (tMetadata.key == SCAN_STATUS) {
                     it[SCAN_STATUS] = tMetadata.value
-                    return@continuing
+                }
+                if (tMetadata.key == FORBID_STATUS) {
+                    it[FORBID_STATUS] = tMetadata.value
                 }
             }
         }

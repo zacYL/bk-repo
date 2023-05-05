@@ -8,7 +8,7 @@
                 </div>
             </div>
             <div class="flex-end-center flex-1">
-                <bk-button v-if="currentType === 'MAVEN'" theme="primary" @click="handleClickUpload">上传制品</bk-button>
+                <bk-button v-if="currentType === 'MAVEN' && !(storeType === 'remote') && !(storeType === 'virtual') && !$route.path.startsWith('/software')" theme="primary" @click="handleClickUpload">上传制品</bk-button>
                 <bk-button class="ml20 flex-align-center" text theme="primary" @click="showGuide = true">
                     <span class="flex-align-center">
                         <Icon class="mr5" name="hand-guide" size="16" />
@@ -58,7 +58,7 @@
                         <package-card
                             class="mb10"
                             v-for="pkg in packageList"
-                            :key="pkg.key"
+                            :key="pkg.repoName + pkg.key"
                             :card-data="pkg"
                             :readonly="!permission.delete"
                             @click.native="showCommonPackageDetail(pkg)"
@@ -87,7 +87,7 @@
         </bk-sideslider>
 
         <!-- maven包制上传侧边栏 -->
-        <repo-maven-uploader v-model="mavenUploader.isVisible" :project-id="projectId" :repo-name="repoName" @update="onUpdateUploader" @cancel="onCancelUploader" />
+        <repo-maven-uploader v-if="currentType === 'MAVEN' && mavenUploader.isVisible" v-model="mavenUploader.isVisible" :project-id="projectId" :repo-name="repoName" @update="onUpdateUploader" @cancel="onCancelUploader" />
         <!-- maven包制上传侧边栏 /-->
     </div>
 </template>
@@ -195,7 +195,8 @@
             deletePackageHandler ({ key }) {
                 this.$confirm({
                     theme: 'danger',
-                    message: this.$t('deletePackageTitle', { name: key }),
+                    message: this.$t('deletePackageTitle', { name: '' }),
+                    subMessage: key,
                     confirmFn: () => {
                         return this.deletePackage({
                             projectId: this.projectId,
@@ -217,7 +218,10 @@
                     name: 'commonPackage',
                     query: {
                         repoName: this.repoName,
-                        packageKey: pkg.key
+                        packageKey: pkg.key,
+                        storeType: this.storeType,
+                        // 虚拟仓库中需要添加仓库来源，供制品详情页获取制品版本列表数据使用
+                        sourceName: this.storeType === 'virtual' ? pkg.repoName || '' : undefined
                     }
                 })
             }
@@ -268,7 +272,7 @@
         }
     }
     .common-package-list {
-        height: calc(100% - 150px);
+        height: calc(100% - 120px);
         padding: 0 20px;
         background-color: white;
         .list-count {
@@ -277,7 +281,7 @@
         }
     }
     .empty-guide {
-        height: calc(100% - 100px);
+        height: calc(100% - 70px);
         background-color: white;
         overflow-y: auto;
     }

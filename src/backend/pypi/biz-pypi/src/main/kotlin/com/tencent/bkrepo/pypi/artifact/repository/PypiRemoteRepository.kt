@@ -33,25 +33,50 @@ package com.tencent.bkrepo.pypi.artifact.repository
 
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchContext
 import com.tencent.bkrepo.common.artifact.repository.remote.RemoteRepository
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.stream.Range
+import com.tencent.bkrepo.common.artifact.stream.artifactStream
+import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
+import com.tencent.bkrepo.common.storage.monitor.Throughput
 import com.tencent.bkrepo.pypi.FLUSH_CACHE_EXPIRE
 import com.tencent.bkrepo.pypi.REMOTE_HTML_CACHE_FULL_PATH
 import com.tencent.bkrepo.pypi.XML_RPC_URI
 import com.tencent.bkrepo.pypi.artifact.xml.XmlConvertUtil
+import com.tencent.bkrepo.pypi.constants.ARTIFACT_LIST
+import com.tencent.bkrepo.pypi.constants.FIELD_NAME
+import com.tencent.bkrepo.pypi.constants.FIELD_VERSION
+import com.tencent.bkrepo.pypi.constants.METADATA
+import com.tencent.bkrepo.pypi.constants.NAME
+import com.tencent.bkrepo.pypi.constants.VERSION
 import com.tencent.bkrepo.pypi.exception.PypiRemoteSearchException
+import com.tencent.bkrepo.pypi.pojo.Basic
+import com.tencent.bkrepo.pypi.pojo.PypiArtifactVersionData
+import com.tencent.bkrepo.pypi.pojo.PypiMetadata
+import com.tencent.bkrepo.pypi.util.DecompressUtil.getPypiMetadata
 import com.tencent.bkrepo.pypi.util.XmlUtils.readXml
+import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
+import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
+import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
+import com.tencent.bkrepo.repository.pojo.packages.PackageType
+import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
+import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import okhttp3.MediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
+import okhttp3.Response
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -61,6 +86,7 @@ import java.io.InputStreamReader
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.*
 
 @Component
 class PypiRemoteRepository : RemoteRepository() {
@@ -82,7 +108,9 @@ class PypiRemoteRepository : RemoteRepository() {
     }
 
     override fun query(context: ArtifactQueryContext): Any? {
-        return if (context.artifactInfo.getArtifactFullPath() == "/") {
+        return if (context.request.servletPath.startsWith("/ext/version/detail")) {
+            getVersionDetail(context)
+        } else if (context.artifactInfo.getArtifactFullPath() == "/") {
             getCacheHtml(context)
         } else {
             remoteRequest(context)
@@ -94,7 +122,12 @@ class PypiRemoteRepository : RemoteRepository() {
         logger.info("Remote list url: $listUri")
         val remoteConfiguration = context.getRemoteConfiguration()
         val okHttpClient: OkHttpClient = createHttpClient(remoteConfiguration)
-        val build: Request = Request.Builder().get().url(listUri).build()
+        val build: Request = Request.Builder()
+            .get()
+            .url(listUri)
+            .removeHeader("User-Agent")
+            .addHeader("User-Agent", "${UUID.randomUUID()}")
+            .build()
         return okHttpClient.newCall(build).execute().body()?.string()
     }
 
@@ -184,6 +217,205 @@ class PypiRemoteRepository : RemoteRepository() {
         artifactFile.delete()
         with(node) { logger.info("Success to store$projectId/$repoName/$fullPath") }
         logger.info("Success to insert $node")
+    }
+
+    override fun onDownloadResponse(context: ArtifactDownloadContext, response: Response): ArtifactResource {
+        val artifactFile = createTempFile(response.body()!!)
+        val fileName = context.artifactInfo.getResponseName()
+        try {
+            val metadataString = artifactFile.getInputStream().getPypiMetadata(fileName)
+            resolveMetadata(metadataString)?.let { context.putAttribute(METADATA, it) }
+        } catch (e: Exception) {
+            logger.warn("Cannot Resolve Pypi Package Metadata of [$fileName]. ${e.stackTraceToString()}")
+        }
+        val size = artifactFile.getSize()
+        val artifactStream = artifactFile.getInputStream().artifactStream(Range.full(size))
+        val node = cacheArtifactFile(context, artifactFile)
+        return ArtifactResource(
+            artifactStream,
+            context.artifactInfo.getResponseName(),
+            node,
+            ArtifactChannel.PROXY,
+            context.useDisposition
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun onDownloadSuccess(
+        context: ArtifactDownloadContext,
+        artifactResource: ArtifactResource,
+        throughput: Throughput
+    ) {
+        context.getAttribute<PypiMetadata>(METADATA)?.run {
+            val fullPath = context.artifactInfo.getArtifactFullPath()
+            val packageKey = PackageKeys.ofPypi(name)
+            val existVersion = packageClient.findVersionByName(
+                projectId = context.projectId,
+                repoName = context.repoName,
+                packageKey = packageKey,
+                version = version
+            ).data
+            val packageMetadata = existVersion?.packageMetadata?.toMutableList() ?: mutableListOf()
+            val artifactListMetadata = packageMetadata.find { it.key == ARTIFACT_LIST }
+            val artifactList = artifactListMetadata?.value as? MutableList<String> ?: mutableListOf()
+            artifactList.add(fullPath)
+            if (artifactListMetadata == null) {
+                packageMetadata.add(MetadataModel(key = ARTIFACT_LIST, value = artifactList))
+            } else {
+                artifactListMetadata.value = artifactList
+            }
+            packageClient.createVersion(
+                PackageVersionCreateRequest(
+                    projectId = context.projectId,
+                    repoName = context.repoName,
+                    packageName = name,
+                    packageKey = packageKey,
+                    packageType = PackageType.PYPI,
+                    versionName = version,
+                    size = artifactResource.getTotalSize(),
+                    artifactPath = fullPath,
+                    packageMetadata = packageMetadata,
+                    overwrite = true,
+                    createdBy = context.userId
+                ),
+                HttpContextHolder.getClientAddress()
+            )
+        }
+        super.onDownloadSuccess(context, artifactResource, throughput)
+    }
+
+    override fun buildDownloadRecord(
+        context: ArtifactDownloadContext,
+        artifactResource: ArtifactResource
+    ): PackageDownloadRecord? {
+        with(context) {
+            val node = artifactResource.node
+                ?: nodeClient.getNodeDetail(projectId, repoName, artifactInfo.getArtifactFullPath()).data
+            val metadata = node?.nodeMetadata
+            var name: String? = null
+            var version: String? = null
+            metadata?.forEach {
+                if (it.key == NAME) {
+                    name = it.value.toString()
+                } else if (it.key == VERSION) {
+                    version = it.value.toString()
+                }
+            }
+            return if (name != null && version != null) {
+                val packageKey = PackageKeys.ofPypi(name!!)
+                return PackageDownloadRecord(projectId, repoName, packageKey, version!!, userId)
+            } else {
+                null
+            }
+        }
+    }
+
+    override fun buildCacheNodeCreateRequest(context: ArtifactContext, artifactFile: ArtifactFile): NodeCreateRequest {
+        val nodeCreateRequest = super.buildCacheNodeCreateRequest(context, artifactFile)
+        val metadataList = nodeCreateRequest.nodeMetadata?.toMutableList() ?: mutableListOf()
+        context.getAttribute<PypiMetadata>(METADATA)?.run {
+            metadataList.add(MetadataModel(key = PypiMetadata::name.name, value = name))
+            metadataList.add(MetadataModel(key = PypiMetadata::version.name, value = version))
+            return nodeCreateRequest.copy(nodeMetadata = metadataList)
+        }
+        return nodeCreateRequest
+    }
+
+    override fun remove(context: ArtifactRemoveContext) {
+        val packageKey = HttpContextHolder.getRequest().getParameter("packageKey")
+        val version = HttpContextHolder.getRequest().getParameter("version")
+        if (version.isNullOrBlank()) {
+            // 删除包
+            val versionList = packageClient.listAllVersion(
+                projectId = context.projectId,
+                repoName = context.repoName,
+                packageKey = packageKey
+            ).data.takeUnless { it.isNullOrEmpty() } ?: run {
+                logger.warn("Remove pypi package: Cannot find any version of package [$packageKey]")
+                return
+            }
+            versionList.forEach {
+                deletePypiVersion(context, it, packageKey)
+            }
+        } else {
+            // 删除版本
+            val packageVersion = packageClient.findVersionByName(
+                context.projectId,
+                context.repoName,
+                packageKey,
+                version
+            ).data ?: run {
+                logger.warn("Remove pypi version: Cannot find version [$version] of package [$packageKey]")
+                return
+            }
+            deletePypiVersion(context, packageVersion, packageKey)
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun deletePypiVersion(
+        context: ArtifactRemoveContext,
+        packageVersion: PackageVersion,
+        packageKey: String
+    ) {
+        with(context) {
+            val artifactList = packageVersion.packageMetadata.find { it.key == ARTIFACT_LIST }?.value as? List<String>
+            if (!artifactList.isNullOrEmpty()) {
+                artifactList.forEach {
+                    nodeClient.deleteNode(NodeDeleteRequest(projectId, repoName, it, userId))
+                }
+            } else {
+                packageVersion.contentPath?.let {
+                    nodeClient.deleteNode(NodeDeleteRequest(projectId, repoName, it, userId))
+                }
+            }
+            packageClient.deleteVersion(
+                projectId, repoName, packageKey, packageVersion.name, HttpContextHolder.getClientAddress()
+            )
+        }
+    }
+
+    private fun resolveMetadata(metadataString: String): PypiMetadata? {
+        return PypiMetadata(
+            name = getMetadataField(metadataString, FIELD_NAME) ?: return null,
+            version = getMetadataField(metadataString, FIELD_VERSION) ?: return null
+        )
+    }
+
+    private fun getMetadataField(metadataString: String, field: String): String? {
+        return Regex("^$field: (.+)", RegexOption.MULTILINE).find(metadataString)?.groupValues?.getOrNull(1)
+    }
+
+    private fun getVersionDetail(context: ArtifactQueryContext): Any? {
+        val packageKey = context.request.getParameter("packageKey")
+        val version = context.request.getParameter("version")
+        logger.info("Get version detail, packageKey: $packageKey, version: $version")
+        val name = PackageKeys.resolvePypi(packageKey)
+        val trueVersion = packageClient.findVersionByName(
+            context.projectId,
+            context.repoName,
+            packageKey,
+            version
+        ).data
+        val artifactPath = trueVersion?.contentPath ?: return null
+        with(context.artifactInfo) {
+            val node = nodeClient.getNodeDetail(projectId, repoName, artifactPath).data ?: return null
+            val packageVersion = packageClient.findVersionByName(projectId, repoName, packageKey, version).data
+            val count = packageVersion?.downloads ?: 0
+            val pypiArtifactBasic = Basic(
+                name,
+                version,
+                node.size, node.fullPath,
+                node.createdBy, node.createdDate,
+                node.lastModifiedBy, node.lastModifiedDate,
+                count,
+                node.sha256,
+                node.md5,
+                null,
+                null
+            )
+            return PypiArtifactVersionData(pypiArtifactBasic, packageVersion?.packageMetadata)
+        }
     }
 
     companion object {

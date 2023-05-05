@@ -1,9 +1,7 @@
 package com.tencent.bkrepo.nuget.service
 
 import com.tencent.bkrepo.nuget.artifact.NugetArtifactInfo
-import com.tencent.bkrepo.nuget.model.v2.search.NuGetSearchRequest
 import com.tencent.bkrepo.nuget.pojo.artifact.NugetDeleteArtifactInfo
-import com.tencent.bkrepo.nuget.pojo.artifact.NugetDownloadArtifactInfo
 import com.tencent.bkrepo.nuget.pojo.domain.NugetDomainInfo
 import com.tencent.bkrepo.nuget.pojo.user.PackageVersionInfo
 
@@ -27,19 +25,4 @@ interface NugetWebService {
      * 获取nuget域名信息
      */
     fun getRegistryDomain(): NugetDomainInfo
-
-    /**
-     * 获取service_document.xml内容
-     */
-    fun getServiceDocument(artifactInfo: NugetArtifactInfo)
-
-    /**
-     * download nuget package
-     */
-    fun download(userId: String, artifactInfo: NugetDownloadArtifactInfo)
-
-    /**
-     * find packages By id
-     */
-    fun findPackagesById(artifactInfo: NugetArtifactInfo, searchRequest: NuGetSearchRequest)
 }

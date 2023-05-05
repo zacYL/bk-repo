@@ -2,15 +2,11 @@ package com.tencent.bkrepo.nuget.controller
 
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
-import com.tencent.bkrepo.common.api.constant.MediaTypes
 import com.tencent.bkrepo.common.api.pojo.Response
-import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.nuget.artifact.NugetArtifactInfo
-import com.tencent.bkrepo.nuget.model.v2.search.NuGetSearchRequest
 import com.tencent.bkrepo.nuget.pojo.artifact.NugetDeleteArtifactInfo
-import com.tencent.bkrepo.nuget.pojo.artifact.NugetDownloadArtifactInfo
 import com.tencent.bkrepo.nuget.pojo.domain.NugetDomainInfo
 import com.tencent.bkrepo.nuget.pojo.user.PackageVersionInfo
 import com.tencent.bkrepo.nuget.service.NugetWebService
@@ -25,7 +21,6 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @Api("NUGET web页面操作接口")
-@Suppress("MVCPathVariableInspection")
 @RestController
 @RequestMapping("/ext")
 class NugetWebController(
@@ -78,30 +73,5 @@ class NugetWebController(
     @GetMapping("/address")
     fun getRegistryDomain(): Response<NugetDomainInfo> {
         return ResponseBuilder.success(nugetWebService.getRegistryDomain())
-    }
-
-    @GetMapping(produces = [MediaTypes.APPLICATION_JSON])
-    fun getServiceDocument(
-        @ArtifactPathVariable artifactInfo: NugetArtifactInfo
-    ) {
-        nugetWebService.getServiceDocument(artifactInfo)
-    }
-
-    @GetMapping("/Download/{id}/{version}")
-    @Permission(ResourceType.REPO, PermissionAction.READ)
-    fun download(
-        @RequestAttribute userId: String,
-        artifactInfo: NugetDownloadArtifactInfo
-    ) {
-        nugetWebService.download(userId, artifactInfo)
-    }
-
-    @GetMapping("/packages/{projectId}/{repoName}", produces = ["application/xml"])
-    @Permission(ResourceType.REPO, PermissionAction.READ)
-    fun findPackagesById(
-        @ArtifactPathVariable artifactInfo: NugetArtifactInfo,
-        searchRequest: NuGetSearchRequest
-    ) {
-        nugetWebService.findPackagesById(artifactInfo, searchRequest)
     }
 }

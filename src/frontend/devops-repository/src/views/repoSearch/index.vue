@@ -166,7 +166,8 @@
                                 repoName: child.repoName,
                                 roadMap: '0,' + i,
                                 leaf: true,
-                                sum: child.packages || child.nodes
+                                sum: child.packages || child.nodes,
+                                repoCategory: child.repoCategory || ''
                             }
                         }),
                         sum: item.sum
@@ -208,8 +209,11 @@
                 this.handlerPaginationChange()
             },
             changeRepoType (repoType) {
-                this.repoType = repoType
-                this.packageName = ''
+                // 制品搜索页，当切换制品类型时将搜索的包名参数重置为空，否则不重置，解决复制url导致搜索参数丢失的问题
+                if (this.repoType !== repoType) {
+                    this.packageName = ''
+                    this.repoType = repoType
+                }
                 this.changePackageName()
             },
             changePackageName () {
@@ -247,6 +251,14 @@
                         }
                     })
                 } else {
+                    // 依赖源仓库进入制品详情需要知道仓库类型，根据仓库类型限制操作
+                    if (this.repoList[0].children.length > 0) {
+                        this.repoList[0].children.forEach((item) => {
+                            if (item.name === pkg.repoName) {
+                                pkg.repoCategory = item.repoCategory || ''
+                            }
+                        })
+                    }
                     this.$router.push({
                         name: 'commonPackage',
                         params: {
@@ -255,7 +267,8 @@
                         },
                         query: {
                             repoName: pkg.repoName,
-                            packageKey: pkg.key
+                            packageKey: pkg.key,
+                            storeType: pkg.repoCategory?.toLowerCase() || ''
                         }
                     })
                 }

@@ -29,6 +29,21 @@ export default {
         userName () {
             return this.userInfo.username || '<USERNAME>'
         },
+        storeType () {
+            return this.$route.query.storeType || ''
+        },
+        // 虚拟仓库的仓库来源，虚拟仓库时需要更换repoName为此值
+        sourceRepoName () {
+            return this.$route.query.sourceName || ''
+        },
+        // 是否是 软件源模式
+        whetherSoftware () {
+            return this.$route.path.startsWith('/software')
+        },
+        // 远程及虚拟仓库下，软件源模式下不显示某些操作
+        noShowOption () {
+            return this.storeType === 'remote' || this.storeType === 'virtual' || this.whetherSoftware
+        },
         dockerGuide () {
             return [
                 {
@@ -40,21 +55,23 @@ export default {
                         }
                     ]
                 },
+                this.noShowOption
+                    ? undefined
+                    : {
+                        title: '推送',
+                        main: [
+                            {
+                                subTitle: '1、在命令行执行以下命令给本地镜像打标签',
+                                codeList: [`docker tag <LOCAL_IMAGE_TAG> ${this.domain.docker}/${this.projectId}/${this.repoName}/${this.packageName}`]
+                            },
+                            {
+                                subTitle: '2、在命令行执行以下命令进行推送',
+                                codeList: [`docker push ${this.domain.docker}/${this.projectId}/${this.repoName}/${this.packageName}`]
+                            }
+                        ]
+                    },
                 {
-                    title: '推送',
-                    main: [
-                        {
-                            subTitle: '1、在命令行执行以下命令给本地镜像打标签',
-                            codeList: [`docker tag <LOCAL_IMAGE_TAG> ${this.domain.docker}/${this.projectId}/${this.repoName}/${this.packageName}`]
-                        },
-                        {
-                            subTitle: '2、在命令行执行以下命令进行推送',
-                            codeList: [`docker push ${this.domain.docker}/${this.projectId}/${this.repoName}/${this.packageName}`]
-                        }
-                    ]
-                },
-                {
-                    title: '使用',
+                    title: '拉取',
                     main: [
                         {
                             subTitle: '在命令行执行以下命令进行拉取',
@@ -62,7 +79,7 @@ export default {
                         }
                     ]
                 }
-            ]
+            ].filter(Boolean)
         },
         dockerInstall () {
             return [
@@ -128,17 +145,19 @@ export default {
                         }
                     ]
                 },
+                this.noShowOption
+                    ? undefined
+                    : {
+                        title: '推送',
+                        main: [
+                            {
+                                subTitle: '在命令行执行以下命令推送制品',
+                                codeList: ['npm publish']
+                            }
+                        ]
+                    },
                 {
-                    title: '推送',
-                    main: [
-                        {
-                            subTitle: '在命令行执行以下命令推送制品',
-                            codeList: ['npm publish']
-                        }
-                    ]
-                },
-                {
-                    title: '使用',
+                    title: '拉取',
                     main: [
                         {
                             subTitle: '1、在设置仓库地址之后就可以使用如下命令去拉取制品',
@@ -150,7 +169,7 @@ export default {
                         }
                     ]
                 }
-            ]
+            ].filter(Boolean)
         },
         npmInstall () {
             return [
@@ -224,99 +243,101 @@ export default {
                         }
                     ]
                 },
+                this.noShowOption
+                    ? undefined
+                    : {
+                        title: '推送',
+                        main: [
+                            {
+                                subTitle: '使用xml：将下列配置添加到 pom.xml 文件中',
+                                codeList: [
+                                    '<distributionManagement>',
+                                    '       <repository>',
+                                    '               <!--id值与配置的server id 一致-->',
+                                    `               <id>${this.projectId}-${this.repoName}</id>`,
+                                    `               <name>${this.repoName}</name>`,
+                                    `               <url>${this.repoUrl}/</url>`,
+                                    '       </repository>',
+                                    '</distributionManagement>'
+                                ]
+                            },
+                            {
+                                subTitle: '使用xml：在命令行执行以下命令推送制品',
+                                codeList: [
+                                    'mvn clean deploy'
+                                ]
+                            },
+                            {
+                                subTitle: '使用Groovy DSL：将下列配置添加到项目的 build.gradle 文件中',
+                                codeList: [
+                                    'plugins {',
+                                    '    id "maven-publish"',
+                                    '}',
+                                    'publishing {',
+                                    '    publications {',
+                                    '        maven(MavenPublication) {',
+                                    '            groupId = "com.company.group"',
+                                    '            version = "1.0"',
+                                    '            from components.java',
+                                    '        }',
+                                    '    }',
+                                    '    repositories {',
+                                    '        maven {',
+                                    '            url = "${cpackUrl}"',
+                                    '            credentials {',
+                                    '                username = "${cpackUsername}"',
+                                    '                password = "${cpackPassword}"',
+                                    '            }',
+                                    '        }',
+                                    '    }',
+                                    '}'
+                                ]
+                            },
+                            {
+                                subTitle: '使用Groovy DSL：在命令行执行以下命令推送制品',
+                                codeList: [
+                                    'gradle publish'
+                                ]
+                            },
+                            {
+                                subTitle: '使用Kotlin DSL：将下列配置添加到项目的 build.gradle 文件中',
+                                codeList: [
+                                    'plugins {',
+                                    '    `maven-publish`',
+                                    '}',
+                                    'publishing {',
+                                    '    publications {',
+                                    '        create<MavenPublication>("maven") {',
+                                    '            groupId = "com.company.group"',
+                                    '            version = "1.0"',
+                                    '            from(components["java"])',
+                                    '        }',
+                                    '    }',
+                                    '    repositories {',
+                                    '        maven {',
+                                    '            val cpackUrl: String by project',
+                                    '            val cpackUsername: String by project',
+                                    '            val cpackPassword: String by project',
+                                    '            url = uri(cpackUrl)',
+                                    '            credentials {',
+                                    '                username = cpackUsername',
+                                    '                password = cpackPassword',
+                                    '            }',
+                                    '        }',
+                                    '    }',
+                                    '}'
+                                ]
+                            },
+                            {
+                                subTitle: '使用Kotlin DSL：在命令行执行以下命令推送制品',
+                                codeList: [
+                                    'gradle publish'
+                                ]
+                            }
+                        ]
+                    },
                 {
-                    title: '推送',
-                    main: [
-                        {
-                            subTitle: '使用xml：将下列配置添加到 pom.xml 文件中',
-                            codeList: [
-                                '<distributionManagement>',
-                                '       <repository>',
-                                '               <!--id值与配置的server id 一致-->',
-                                `               <id>${this.projectId}-${this.repoName}</id>`,
-                                `               <name>${this.repoName}</name>`,
-                                `               <url>${this.repoUrl}/</url>`,
-                                '       </repository>',
-                                '</distributionManagement>'
-                            ]
-                        },
-                        {
-                            subTitle: '使用xml：在命令行执行以下命令推送制品',
-                            codeList: [
-                                'mvn clean deploy'
-                            ]
-                        },
-                        {
-                            subTitle: '使用Groovy DSL：将下列配置添加到项目的 build.gradle 文件中',
-                            codeList: [
-                                'plugins {',
-                                '    id "maven-publish"',
-                                '}',
-                                'publishing {',
-                                '    publications {',
-                                '        maven(MavenPublication) {',
-                                '            groupId = "com.company.group"',
-                                '            version = "1.0"',
-                                '            from components.java',
-                                '        }',
-                                '    }',
-                                '    repositories {',
-                                '        maven {',
-                                '            url = "${cpackUrl}"',
-                                '            credentials {',
-                                '                username = "${cpackUsername}"',
-                                '                password = "${cpackPassword}"',
-                                '            }',
-                                '        }',
-                                '    }',
-                                '}'
-                            ]
-                        },
-                        {
-                            subTitle: '使用Groovy DSL：在命令行执行以下命令推送制品',
-                            codeList: [
-                                'gradle publish'
-                            ]
-                        },
-                        {
-                            subTitle: '使用Kotlin DSL：将下列配置添加到项目的 build.gradle 文件中',
-                            codeList: [
-                                'plugins {',
-                                '    `maven-publish`',
-                                '}',
-                                'publishing {',
-                                '    publications {',
-                                '        create<MavenPublication>("maven") {',
-                                '            groupId = "com.company.group"',
-                                '            version = "1.0"',
-                                '            from(components["java"])',
-                                '        }',
-                                '    }',
-                                '    repositories {',
-                                '        maven {',
-                                '            val cpackUrl: String by project',
-                                '            val cpackUsername: String by project',
-                                '            val cpackPassword: String by project',
-                                '            url = uri(cpackUrl)',
-                                '            credentials {',
-                                '                username = cpackUsername',
-                                '                password = cpackPassword',
-                                '            }',
-                                '        }',
-                                '    }',
-                                '}'
-                            ]
-                        },
-                        {
-                            subTitle: '使用Kotlin DSL：在命令行执行以下命令推送制品',
-                            codeList: [
-                                'gradle publish'
-                            ]
-                        }
-                    ]
-                },
-                {
-                    title: '使用',
+                    title: '拉取',
                     main: [
                         {
                             subTitle: '使用xml: 将下列配置添加到 conf/settings.xml 文件中',
@@ -395,7 +416,7 @@ export default {
                         }
                     ]
                 }
-            ]
+            ].filter(Boolean)
         },
         mavenInstall () {
             return [
@@ -448,25 +469,27 @@ export default {
                         }
                     ]
                 },
+                this.noShowOption
+                    ? undefined
+                    : {
+                        title: '推送',
+                        main: [
+                            {
+                                subTitle: '使用 cURL 命令推送Chart',
+                                codeList: [
+                                    `curl -F "chart=@<FILE_NAME>" -u ${this.userName}:<PERSONAL_ACCESS_TOKEN> ${location.origin}/${this.repoType}/api/${this.projectId}/${this.repoName}/charts`
+                                ]
+                            },
+                            {
+                                subTitle: '使用 cURL 命令推送Chart Provenance',
+                                codeList: [
+                                    `curl -F "prov=@<PROV_FILE_NAME>" -u ${this.userName}:<PERSONAL_ACCESS_TOKEN> ${location.origin}/${this.repoType}/api/${this.projectId}/${this.repoName}/charts`
+                                ]
+                            }
+                        ]
+                    },
                 {
-                    title: '推送',
-                    main: [
-                        {
-                            subTitle: '使用 cURL 命令推送Chart',
-                            codeList: [
-                                `curl -F "chart=@<FILE_NAME>" -u ${this.userName}:<PERSONAL_ACCESS_TOKEN> ${location.origin}/${this.repoType}/api/${this.projectId}/${this.repoName}/charts`
-                            ]
-                        },
-                        {
-                            subTitle: '使用 cURL 命令推送Chart Provenance',
-                            codeList: [
-                                `curl -F "prov=@<PROV_FILE_NAME>" -u ${this.userName}:<PERSONAL_ACCESS_TOKEN> ${location.origin}/${this.repoType}/api/${this.projectId}/${this.repoName}/charts`
-                            ]
-                        }
-                    ]
-                },
-                {
-                    title: '使用',
+                    title: '拉取',
                     main: [
                         {
                             subTitle: '3、拉取',
@@ -476,7 +499,7 @@ export default {
                         }
                     ]
                 }
-            ]
+            ].filter(Boolean)
         },
         helmInstall () {
             return [
@@ -523,19 +546,21 @@ export default {
                         }
                     ]
                 },
+                this.noShowOption
+                    ? undefined
+                    : {
+                        title: '推送',
+                        main: [
+                            {
+                                subTitle: '在命令行执行以下命令推送制品',
+                                codeList: [
+                                    `curl -u ${this.userName}:<PERSONAL_ACCESS_TOKEN> -X PUT ${this.repoUrl}/ -T <RPM_FILE_NAME>`
+                                ]
+                            }
+                        ]
+                    },
                 {
-                    title: '推送',
-                    main: [
-                        {
-                            subTitle: '在命令行执行以下命令推送制品',
-                            codeList: [
-                                `curl -u ${this.userName}:<PERSONAL_ACCESS_TOKEN> -X PUT ${this.repoUrl}/ -T <RPM_FILE_NAME>`
-                            ]
-                        }
-                    ]
-                },
-                {
-                    title: '使用',
+                    title: '拉取',
                     main: [
                         {
                             subTitle: '使用 rpm 命令拉取',
@@ -551,7 +576,7 @@ export default {
                         }
                     ]
                 }
-            ]
+            ].filter(Boolean)
         },
         rpmInstall () {
             return [
@@ -612,19 +637,21 @@ export default {
                         }
                     ]
                 },
+                this.noShowOption
+                    ? undefined
+                    : {
+                        title: '推送',
+                        main: [
+                            {
+                                subTitle: '进入 Python 项目目录，在命令行执行以下命令进行推送',
+                                codeList: [
+                                    `python3 -m twine upload -r ${this.repoName} dist/*`
+                                ]
+                            }
+                        ]
+                    },
                 {
-                    title: '推送',
-                    main: [
-                        {
-                            subTitle: '进入 Python 项目目录，在命令行执行以下命令进行推送',
-                            codeList: [
-                                `python3 -m twine upload -r ${this.repoName} dist/*`
-                            ]
-                        }
-                    ]
-                },
-                {
-                    title: '使用',
+                    title: '拉取',
                     main: [
                         {
                             subTitle: '在命令行执行以下命令进行拉取',
@@ -634,7 +661,7 @@ export default {
                         }
                     ]
                 }
-            ]
+            ].filter(Boolean)
         },
         pypiInstall () {
             return [
@@ -676,19 +703,21 @@ export default {
                         }
                     ]
                 },
+                this.noShowOption
+                    ? undefined
+                    : {
+                        title: '推送',
+                        main: [
+                            {
+                                subTitle: '使用 cURL 命令将压缩包上传至仓库',
+                                codeList: [
+                                    `curl -X PUT -u ${this.userName}:<PERSONAL_ACCESS_TOKEN> "${this.repoUrl}/" -T <PACKAGE_FILE>`
+                                ]
+                            }
+                        ]
+                    },
                 {
-                    title: '推送',
-                    main: [
-                        {
-                            subTitle: '使用 cURL 命令将压缩包上传至仓库',
-                            codeList: [
-                                `curl -X PUT -u ${this.userName}:<PERSONAL_ACCESS_TOKEN> "${this.repoUrl}/" -T <PACKAGE_FILE>`
-                            ]
-                        }
-                    ]
-                },
-                {
-                    title: '使用',
+                    title: '拉取',
                     main: [
                         {
                             subTitle: '在命令行执行以下命令进行拉取',
@@ -698,7 +727,7 @@ export default {
                         }
                     ]
                 }
-            ]
+            ].filter(Boolean)
         },
         composerInstall () {
             return [
@@ -731,19 +760,21 @@ export default {
                         }
                     ]
                 },
+                this.noShowOption
+                    ? undefined
+                    : {
+                        title: '推送',
+                        main: [
+                            {
+                                subTitle: '将<LOCAL_PACKAGE_NAME>替换为本地制品名称，命令行执行以下命令推送制品：',
+                                codeList: [
+                                    `nuget push -Source "${this.repoName}" <LOCAL_PACKAGE_NAME>.nupkg`
+                                ]
+                            }
+                        ]
+                    },
                 {
-                    title: '推送',
-                    main: [
-                        {
-                            subTitle: '将<LOCAL_PACKAGE_NAME>替换为本地制品名称，命令行执行以下命令推送制品：',
-                            codeList: [
-                                `nuget push -ApiKey api -Source "${this.repoName}" <LOCAL_PACKAGE_NAME>.nupkg`
-                            ]
-                        }
-                    ]
-                },
-                {
-                    title: '使用',
+                    title: '拉取',
                     main: [
                         {
                             subTitle: '在命令行执行以下命令拉取制品：',
@@ -753,18 +784,20 @@ export default {
                         }
                     ]
                 },
-                {
-                    title: '删除',
-                    main: [
-                        {
-                            subTitle: '注意：通过本操作删除的制品无法恢复',
-                            codeList: [
-                                `nuget delete -ApiKey api -Source "${this.repoName}" ${this.packageName} ${this.versionLabel}`
-                            ]
-                        }
-                    ]
-                }
-            ]
+                (this.storeType === 'virtual' || this.whetherSoftware)
+                    ? undefined
+                    : {
+                        title: '删除',
+                        main: [
+                            {
+                                subTitle: '注意：通过本操作删除的制品无法恢复',
+                                codeList: [
+                                    `nuget delete -Source "${this.repoName}" ${this.packageName} ${this.versionLabel}`
+                                ]
+                            }
+                        ]
+                    }
+            ].filter(Boolean)
         },
         nugetInstall () {
             return [

@@ -16,6 +16,12 @@
                         <span class="text-overflow" :title="packageName">{{ packageName }}</span>
                         <span v-if="detail.basic.groupId" class="ml5 repo-tag"> {{ detail.basic.groupId }} </span>
                     </span>
+                    <template v-if="storeType === 'virtual'">
+                        <label class="grid-store-source">仓库来源</label>
+                        <span class="flex-1 flex-align-center text-overflow">
+                            <span class="text-overflow" :title="sourceRepoName || repoName">{{ sourceRepoName || repoName }}</span>
+                        </span>
+                    </template>
                 </div>
                 <template v-if="detail.basic.version">
                     <div class="grid-item"
@@ -41,7 +47,7 @@
                 </template>
                 <div class="package-description grid-item">
                     <label>描述</label>
-                    <span class="flex-1 text-overflow" :title="detail.basic.description">{{ detail.basic.description || '/' }}</span>
+                    <span class="flex-1 text-overflow" :title="detail.basic.description">{{ detail.basic.description || '' }}</span>
                 </div>
             </div>
             <div class="version-base-info base-info-guide display-block" :data-title="$t('useTips')">
@@ -161,7 +167,6 @@
     import forbidTag from '@repository/components/ForbidTag'
     import metadataTag from '@repository/views/repoCommon/metadataTag'
     import mavenDependencies from '@repository/views/repoCommon/mavenDependencies'
-    import { scanTypeEnum } from '@repository/store/publicEnum'
     import { mapState, mapActions } from 'vuex'
     import { convertFileSize, formatDate } from '@repository/utils'
     import repoGuideMixin from '@repository/views/repoCommon/repoGuideMixin'
@@ -213,7 +218,7 @@
             }
         },
         computed: {
-            ...mapState(['userList', 'permission']),
+            ...mapState(['userList', 'permission', 'scannerSupportPackageType']),
             detailInfoMap () {
                 return [
                     { name: 'version', label: this.$t('version') },
@@ -236,7 +241,7 @@
                 }, {})
             },
             showRepoScan () {
-                return Object.keys(scanTypeEnum).join(',').toLowerCase().includes(this.repoType)
+                return this.scannerSupportPackageType.join(',').toLowerCase().includes(this.repoType) && !this.$route.path.startsWith('/software') && !(this.storeType === 'virtual')
             },
             operationBtns () {
                 const basic = this.detail.basic
@@ -244,12 +249,12 @@
                 return [
                     ...(!metadataMap.forbidStatus
                         ? [
-                            this.permission.edit && { clickEvent: () => this.$emit('tag'), label: '晋级', disabled: (basic.stageTag || '').includes('@release') },
-                            this.showRepoScan && { clickEvent: () => this.$emit('scan'), label: '安全扫描' }
+                            (this.permission.edit && !(this.storeType === 'remote') && !(this.storeType === 'virtual')) && { clickEvent: () => this.$emit('tag'), label: '晋级', disabled: (basic.stageTag || '').includes('@release') },
+                            this.showRepoScan && { clickEvent: () => this.$emit('scan'), label: '扫描制品' }
                         ]
                         : []),
-                    this.showRepoScan && { clickEvent: () => this.$emit('forbid'), label: metadataMap.forbidStatus ? '解除禁止' : '禁止使用' },
-                    this.permission.delete && { clickEvent: () => this.$emit('delete'), label: this.$t('delete') }
+                    !this.$route.path.startsWith('/software') && !(this.storeType === 'virtual') && { clickEvent: () => this.$emit('forbid'), label: metadataMap.forbidStatus ? '解除禁止' : '禁止使用' },
+                    (this.permission.delete && !this.$route.path.startsWith('/software') && !(this.storeType === 'virtual')) && { clickEvent: () => this.$emit('delete'), label: this.$t('delete') }
                 ]
             }
         },
@@ -281,7 +286,7 @@
                 this.getVersionDetail({
                     projectId: this.projectId,
                     repoType: this.repoType,
-                    repoName: this.repoName,
+                    repoName: this.storeType === 'virtual' ? this.sourceRepoName : this.repoName,
                     packageKey: this.packageKey,
                     version: this.version
                 }).then(res => {
@@ -299,7 +304,7 @@
                         }
                     }
                     if (this.repoType === 'docker') {
-                        this.selectedHistory = res.history[0] || {}
+                        this.selectedHistory = (res?.history && res?.history[0]) || {}
                     }
                     // 此时不能在HTML中直接使用repoType，如果直接使用会导致该tab页提前被渲染，出现在其他tab页之前，不符合产品要求
                     this.detailType = this.repoType
@@ -403,6 +408,10 @@
         .block-header {
             border-bottom: 1px solid var(--borderWeightColor);
         }
+    }
+    .grid-store-source{
+        border-left: 1px solid var(--borderColor);;
+        margin:0 1px 0 0;
     }
     .version-history {
         height: 100%;

@@ -10,6 +10,7 @@ import com.tencent.bkrepo.common.query.util.MongoEscapeUtils
 import com.tencent.bkrepo.repository.pojo.software.CountResult
 import com.tencent.bkrepo.repository.pojo.software.ProjectPackageOverview
 import com.tencent.bkrepo.repository.service.packages.PackageStatisticsService
+import com.tencent.bkrepo.repository.service.repo.RepositoryService
 import org.springframework.data.mongodb.core.aggregation.Aggregation
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
@@ -19,7 +20,8 @@ import java.time.LocalDateTime
 @Service
 class PackageStatisticsServiceImpl(
     private val packageDao: PackageDao,
-    private val packageVersionDao: PackageVersionDao
+    private val packageVersionDao: PackageVersionDao,
+    private val repositoryService: RepositoryService
 ) : PackageStatisticsService {
     override fun packageTotal(projectId: String?, repoName: String?): Long {
         val criteria = Criteria()
@@ -70,7 +72,7 @@ class PackageStatisticsServiceImpl(
         packageName?.let {
             val escapedValue = MongoEscapeUtils.escapeRegexExceptWildcard(packageName)
             val regexPattern = escapedValue.replace("*", ".*")
-            criteria.and(TPackage::name.name).regex("^$regexPattern$")
+            criteria.and(TPackage::name.name).regex("^$regexPattern$", "i")
         }
         val aggregation = Aggregation.newAggregation(
             TPackage::class.java,
@@ -93,6 +95,7 @@ class PackageStatisticsServiceImpl(
         list.map { pojo ->
             val repoOverview = ProjectPackageOverview.RepoPackageOverview(
                 repoName = pojo.id,
+                repoCategory = repositoryService.getRepoInfo(projectId, pojo.id)?.category,
                 packages = pojo.count
             )
             projectSet.first().repos.add(repoOverview)

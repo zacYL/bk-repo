@@ -1,6 +1,6 @@
 <template>
     <bk-collapse class="permission-config-container" v-model="activeName" v-bkloading="{ isLoading }">
-        <bk-collapse-item v-for="section in [admin, user]" :key="section.name" :name="section.name">
+        <bk-collapse-item v-for="section in collapseList" :key="section.name" :name="section.name">
             <header class="section-header">
                 <div class="flex-align-center">
                     <Icon class="mr10" size="20" :name="section.icon" />
@@ -45,6 +45,7 @@
             </div></template>
         </bk-collapse-item>
         <canway-dialog
+            v-if="category !== 'VIRTUAL'"
             :value="editActionsDialog.show"
             width="400"
             height-num="450"
@@ -69,10 +70,15 @@
     import { mapActions } from 'vuex'
     export default {
         name: 'permissionConfig',
+        props: {
+            category: {
+                type: String,
+                default: ''
+            }
+        },
         data () {
             return {
                 isLoading: false,
-                activeName: ['admin', 'user'],
                 editActionsDialog: {
                     show: false,
                     loading: false,
@@ -126,40 +132,7 @@
                     }
                 },
                 userList: {},
-                roleList: {},
-                actionList: [
-                    {
-                        id: 'READ',
-                        name: '查看',
-                        tips: [
-                            '仓库内所有制品的查看和下载权限'
-                        ]
-                    },
-                    {
-                        id: 'WRITE',
-                        name: '上传',
-                        tips: [
-                            'Generic仓库：新建文件夹、上传文件、复制、移动',
-                            '依赖源仓库：上传制品版本'
-                        ]
-                    },
-                    {
-                        id: 'UPDATE',
-                        name: '修改',
-                        tips: [
-                            'Generic仓库：重命名、添加元数据、删除元数据',
-                            '依赖源仓库：制品版本晋级、添加元数据、删除元数据',
-                            '全仓库：禁止使用，解除禁止'
-                        ]
-                    },
-                    {
-                        id: 'DELETE',
-                        name: '删除',
-                        tips: [
-                            '仓库内所有制品的页面删除权限'
-                        ]
-                    }
-                ]
+                roleList: {}
             }
         },
         computed: {
@@ -181,6 +154,65 @@
             filterDeleteTagList () {
                 return (target) => {
                     return target.data.filter(v => !target.deleteList.find(w => w === v))
+                }
+            },
+            activeName () {
+                if (this.category === 'VIRTUAL') {
+                    return ['admin']
+                } else {
+                    return ['admin', 'user']
+                }
+            },
+            collapseList () {
+                if (this.category === 'VIRTUAL') {
+                    return [this.admin]
+                } else {
+                    return [this.admin, this.user]
+                }
+            },
+            actionList () {
+                // 虚拟仓库不需要
+                if (this.category === 'VIRTUAL') {
+                    return []
+                } else {
+                    const list = [
+                        {
+                            id: 'READ',
+                            name: '查看',
+                            tips: [
+                                '仓库内所有制品的查看和下载权限'
+                            ]
+                        },
+                        {
+                            id: 'UPDATE',
+                            name: '修改',
+                            tips: [
+                                'Generic仓库：重命名、添加元数据、删除元数据',
+                                '依赖源仓库：制品版本晋级',
+                                '全仓库：禁止使用，解除禁止'
+                            ]
+                        },
+                        {
+                            id: 'DELETE',
+                            name: '删除',
+                            tips: [
+                                '仓库内所有制品的页面删除权限'
+                            ]
+                        }
+                    ]
+                    // 当前仓库时远程仓库时需要屏蔽上传功能
+                    if (this.category !== 'REMOTE') {
+                        const write = {
+                            id: 'WRITE',
+                            name: '上传',
+                            tips: [
+                                'Generic仓库：新建文件夹、上传文件、复制、移动',
+                                '依赖源仓库：上传制品版本'
+                            ]
+                        }
+                        list.splice(1, 0, write)
+                    }
+                    return list.filter(Boolean)
                 }
             }
         },
@@ -221,7 +253,7 @@
                     case 'admin':
                         return '仓库管理，制品管理所有权限'
                     case 'user':
-                        return `制品管理权限：${actionsName.join('，')}`
+                        return `制品管理权限：${actionsName.filter(Boolean).join('，')}`
                 }
             },
             filterSelectOptions (target, part) {

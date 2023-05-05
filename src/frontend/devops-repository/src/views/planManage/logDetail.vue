@@ -40,7 +40,7 @@
                     <span class="ml5">{{ row.localRepoName }}</span>
                 </template>
             </bk-table-column>
-            <bk-table-column label="同步状态" width="90">
+            <bk-table-column label="同步状态" width="100">
                 <template #default="{ row }">
                     <div class="status-sign" :class="row.status" :data-name="asyncPlanStatusEnum[row.status] || '未执行'"></div>
                 </template>

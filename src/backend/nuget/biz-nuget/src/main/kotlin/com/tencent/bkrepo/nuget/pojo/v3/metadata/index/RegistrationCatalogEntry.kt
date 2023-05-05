@@ -19,15 +19,15 @@ data class RegistrationCatalogEntry(
     val dependencyGroups: List<DependencyGroups>? = null,
     val deprecation: Deprecation? = null,
     val description: String? = null,
-    val iconUrl: URI? = null,
+    val iconUrl: String? = null,
     @JsonProperty("id")
     val packageId: String,
-    val licenseUrl: URI? = null,
+    val licenseUrl: String? = null,
     val licenseExpression: String? = null,
     // Should be considered as listed if absent
     val listed: Boolean = true,
     val minClientVersion: String? = null,
-    val projectUrl: URI? = null,
+    val projectUrl: String? = null,
     val published: String? = null,
     val requireLicenseAcceptance: Boolean? = null,
     val summary: String? = null,

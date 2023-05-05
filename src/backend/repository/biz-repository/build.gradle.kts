@@ -31,7 +31,6 @@
 
 dependencies {
     api(project(":repository:api-repository"))
-    api(project(":scanner:api-scanner"))
     api(project(":common:common-job"))
     api(project(":common:common-mongo"))
     api(project(":common:common-query:query-mongo"))

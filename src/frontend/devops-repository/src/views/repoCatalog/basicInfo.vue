@@ -7,9 +7,71 @@
                     <span class="ml10">{{replaceRepoName(detailInfo.repoName || detailInfo.name)}}</span>
                 </div>
             </bk-form-item>
+            <bk-form-item :label="$t('storeTypes')">
+                <div class="flex-align-center">
+                    <icon size="20" :name="(detailInfo.category && detailInfo.category.toLowerCase() || 'local') + '-store'" />
+                    <span class="ml10">{{$t((detailInfo.category && detailInfo.category.toLowerCase() || 'local') + 'Store' ) }}</span>
+                </div>
+            </bk-form-item>
             <bk-form-item :label="$t('repoAddress')">
                 <span>{{repoAddress}}</span>
             </bk-form-item>
+            <template v-if="detailInfo.category === 'REMOTE'">
+                <bk-form-item :label="$t('address')">
+                    <bk-input :disabled="true" style="width:400px" v-model.trim="detailInfo.url"></bk-input>
+                </bk-form-item>
+                <bk-form-item :label="$t('account')">
+                    <bk-input :disabled="true" style="width:400px" v-model.trim="detailInfo.credentials.username"></bk-input>
+                </bk-form-item>
+                <bk-form-item :label="$t('password')">
+                    <bk-input :disabled="true" style="width:400px" type="password" v-model.trim="detailInfo.credentials.password"></bk-input>
+                </bk-form-item>
+                <bk-form-item :label="$t('networkProxy')">
+                    <template>
+                        <bk-switcher :disabled="true" v-model="detailInfo.network.switcher" theme="primary"></bk-switcher>
+                        <span>{{detailInfo.network.switcher ? $t('open') : $t('close')}}</span>
+                    </template>
+                </bk-form-item>
+                <template v-if="detailInfo.network.switcher">
+                    <bk-form-item label="IP">
+                        <bk-input :disabled="true" style="width:400px" v-model.trim="detailInfo.network.proxy.host"></bk-input>
+                    </bk-form-item>
+                    <bk-form-item :label="$t('port')">
+                        <bk-input :disabled="true" style="width:400px" type="number" :max="65535" :min="1" v-model.trim="detailInfo.network.proxy.port"></bk-input>
+                    </bk-form-item>
+                    <bk-form-item :label="$t('account')">
+                        <bk-input :disabled="true" style="width:400px" v-model.trim="detailInfo.network.proxy.username"></bk-input>
+                    </bk-form-item>
+                    <bk-form-item :label="$t('password')">
+                        <bk-input :disabled="true" style="width:400px" type="password" v-model.trim="detailInfo.network.proxy.password"></bk-input>
+                    </bk-form-item>
+                </template>
+            </template>
+            <template v-if="detailInfo.category === 'VIRTUAL'">
+                <bk-form-item :label=" $t('select') + $t('storageStore')">
+                    <div class="virtual-check-container">
+                        <store-sort
+                            v-if="detailInfo.virtualStoreList.length"
+                            :key="detailInfo.virtualStoreList"
+                            ref="storeSortRef"
+                            :disabled="true"
+                            :sort-list="detailInfo.virtualStoreList"
+                        ></store-sort>
+                    </div>
+                </bk-form-item>
+                <!-- <bk-form-item :label="$t('uploadTargetStore')">
+                    <bk-select
+                        v-model="detailInfo.deploymentRepo"
+                        style="width:300px;"
+                        :show-empty="false"
+                        :disabled="true"
+                        :placeholder="$t('noAddedLocalStore')">
+                        <bk-option v-for="item in deploymentRepoCheckList" :key="item.name" :id="item.name" :name="item.name">
+                        </bk-option>
+                    </bk-select>
+                    <div class="form-tip">{{$t('addPackagePrompt')}}</div>
+                </bk-form-item> -->
+            </template>
             <bk-form-item label="访问权限">
                 <card-radio-group
                     v-model="available"
@@ -18,7 +80,7 @@
                 </card-radio-group>
             </bk-form-item>
 
-            <bk-form-item label="版本策略" v-if="repoType === 'maven' || repoType === 'npm'">
+            <bk-form-item label="版本策略" v-if="!(detailInfo.category === 'REMOTE') && !(detailInfo.category === 'VIRTUAL') && (repoType === 'maven' || repoType === 'npm')">
                 <div class="flex-align-center">
                     <bk-switcher
                         v-model="detailInfo.override.switcher"
@@ -34,7 +96,7 @@
                     <bk-radio :value="true" disabled>允许覆盖</bk-radio>
                 </bk-radio-group>
             </bk-form-item>
-            <template v-if="repoType === 'rpm'">
+            <template v-if="!(detailInfo.category === 'REMOTE') && !(detailInfo.category === 'VIRTUAL') && repoType === 'rpm'">
                 <bk-form-item :label="$t('enabledFileLists')">
                     <bk-checkbox v-model="detailInfo.enabledFileLists" disabled></bk-checkbox>
                 </bk-form-item>
@@ -95,12 +157,13 @@
 </template>
 <script>
     import CardRadioGroup from '@repository/components/CardRadioGroup'
+    import StoreSort from '@repository/components/StoreSort'
     import { mapState, mapActions } from 'vuex'
     export default {
         name: 'repoConfig',
         components: {
-            CardRadioGroup
-
+            CardRadioGroup,
+            StoreSort
         },
         props: {
             nodeType: {
@@ -169,6 +232,10 @@
                     { label: '可匿名下载', value: 'public', tip: '不鉴权，任意终端都可下载' }
                 ]
             }
+            // 虚拟仓库中选择上传的目标仓库的下拉列表数据
+            // deploymentRepoCheckList () {
+            //     return this.detailInfo.virtualStoreList.filter(item => item.category === 'LOCAL')
+            // }
         },
         watch: {
             repoType: {
@@ -227,5 +294,7 @@
             }
         }
     }
-
+.virtual-check-container{
+    width: 96%;
+}
 </style>

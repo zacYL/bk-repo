@@ -28,17 +28,41 @@
 package com.tencent.bkrepo.nuget.service.impl
 
 import com.tencent.bkrepo.common.api.constant.HttpStatus
+import com.tencent.bkrepo.common.api.constant.MediaTypes
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.core.ArtifactService
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
+import com.tencent.bkrepo.nuget.artifact.NugetArtifactInfo
+import com.tencent.bkrepo.nuget.model.v2.search.NuGetSearchRequest
 import com.tencent.bkrepo.nuget.pojo.artifact.NugetDeleteArtifactInfo
+import com.tencent.bkrepo.nuget.pojo.artifact.NugetDownloadArtifactInfo
 import com.tencent.bkrepo.nuget.pojo.artifact.NugetPublishArtifactInfo
 import com.tencent.bkrepo.nuget.service.NugetClientService
+import com.tencent.bkrepo.nuget.util.NugetUtils
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.io.IOException
 
 @Service
 class NugetClientServiceImpl : NugetClientService, ArtifactService() {
+
+    override fun getServiceDocument(artifactInfo: NugetArtifactInfo) {
+        val response = HttpContextHolder.getResponse()
+        try {
+            var serviceDocument = NugetUtils.getServiceDocumentResource()
+            serviceDocument = serviceDocument.replace(
+                "\$\$baseUrl\$\$",
+                HttpContextHolder.getRequest().requestURL.toString()
+            )
+            response.contentType = MediaTypes.APPLICATION_XML
+            response.writer.write(serviceDocument)
+        } catch (exception: IOException) {
+            logger.error("unable to read resource: $exception")
+            throw exception
+        }
+    }
 
     override fun publish(userId: String, publishInfo: NugetPublishArtifactInfo) {
         logger.info("user [$userId] handling publish package request in repo [${publishInfo.getRepoIdentify()}]")
@@ -50,6 +74,15 @@ class NugetClientServiceImpl : NugetClientService, ArtifactService() {
         )
 //        context.response.status = HttpStatus.CREATED.value
 //        context.response.writer.write("Successfully published NuPkg to: ${publishInfo.getArtifactFullPath()}")
+    }
+
+    override fun download(userId: String, artifactInfo: NugetDownloadArtifactInfo) {
+        repository.download(ArtifactDownloadContext())
+    }
+
+    override fun findPackagesById(artifactInfo: NugetArtifactInfo, searchRequest: NuGetSearchRequest) {
+        // LegacyGallery查找包的接口，待完善
+        getServiceDocument(artifactInfo)
     }
 
     override fun delete(userId: String, artifactInfo: NugetDeleteArtifactInfo) {

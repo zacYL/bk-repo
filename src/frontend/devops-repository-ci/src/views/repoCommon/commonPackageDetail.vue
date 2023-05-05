@@ -39,15 +39,15 @@
                                 class="version-operation"
                                 :list="[
                                     ...(!$version.metadata.forbidStatus ? [
-                                        permission.edit && {
+                                        showPromotion && {
                                             label: '晋级', clickEvent: () => changeStageTagHandler($version),
                                             disabled: ($version.stageTag || '').includes('@release')
                                         },
                                         repoType !== 'docker' && { label: '下载', clickEvent: () => downloadPackageHandler($version) },
-                                        isEnterprise && showRepoScan && { label: '安全扫描', clickEvent: () => scanPackageHandler($version) }
+                                        isEnterprise && showRepoScan && { label: '扫描制品', clickEvent: () => scanPackageHandler($version) }
                                     ] : []),
-                                    showRepoScan && { clickEvent: () => changeForbidStatusHandler($version), label: $version.metadata.forbidStatus ? '解除禁止' : '禁止使用' },
-                                    permission.delete && { label: '删除', clickEvent: () => deleteVersionHandler($version) }
+                                    !$route.path.startsWith('/software') && !(storeType === 'virtual') && { clickEvent: () => changeForbidStatusHandler($version), label: $version.metadata.forbidStatus ? '解除禁止' : '禁止使用' },
+                                    (permission.delete && !(storeType === 'virtual')) && { label: '删除', clickEvent: () => deleteVersionHandler($version) }
                                 ]"></operation-list>
                         </div>
                     </infinite-scroll>
@@ -73,7 +73,6 @@
     import InfiniteScroll from '@repository/components/InfiniteScroll'
     import VersionDetail from '@repository/views/repoCommon/commonVersionDetail'
     import commonFormDialog from '@repository/views/repoCommon/commonFormDialog'
-    import { scanTypeEnum } from '@repository/store/publicEnum'
     import { mapState, mapGetters, mapActions } from 'vuex'
     export default {
         name: 'commonPackageDetail',
@@ -119,7 +118,7 @@
             }
         },
         computed: {
-            ...mapState(['permission']),
+            ...mapState(['permission', 'scannerSupportPackageType']),
             ...mapGetters(['isEnterprise']),
             projectId () {
                 return this.$route.params.projectId || ''
@@ -139,13 +138,29 @@
             currentVersion () {
                 return this.versionList.find(version => version.name === this.version)
             },
+            // 当前仓库类型，本地/远程/虚拟/组合
+            storeType () {
+                return this.$route.query.storeType || ''
+            },
             showRepoScan () {
-                return Object.keys(scanTypeEnum).join(',').toLowerCase().includes(this.repoType)
+                // 软件源模式下屏蔽安全扫描和禁用操作
+                // 虚拟仓库屏蔽安全扫描和禁用操作
+                return this.scannerSupportPackageType.join(',').toLowerCase().includes(this.repoType) && !(this.storeType === 'virtual')
+            },
+            // 是否显示晋级操作
+            showPromotion () {
+                // 远程或虚拟仓库不显示晋级操作
+                return this.permission.edit && !(this.storeType === 'remote') && !(this.storeType === 'virtual')
+            },
+            // 虚拟仓库的仓库来源，虚拟仓库时需要更换repoName为此值
+            sourceRepoName () {
+                return this.$route.query.sourceName || ''
             }
         },
         created () {
             this.getPackageInfoHandler()
             this.handlerPaginationChange()
+            this.refreshSupportPackageTypeList()
         },
         methods: {
             ...mapActions([
@@ -153,7 +168,8 @@
                 'getVersionList',
                 'changeStageTag',
                 'deleteVersion',
-                'forbidPackageMetadata'
+                'forbidPackageMetadata',
+                'refreshSupportPackageTypeList'
             ]),
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}, load) {
                 this.pagination.current = current
@@ -178,7 +194,8 @@
                     packageKey: this.packageKey,
                     current: this.pagination.current,
                     limit: this.pagination.limit,
-                    version: this.versionInput
+                    version: this.versionInput,
+                    srcRepo: this.sourceRepoName || undefined
                 }).then(({ records, totalRecords }) => {
                     load ? this.versionList.push(...records) : (this.versionList = records)
                     this.pagination.count = totalRecords
@@ -203,7 +220,7 @@
                 this.infoLoading = true
                 this.getPackageInfo({
                     projectId: this.projectId,
-                    repoName: this.repoName,
+                    repoName: this.storeType === 'virtual' ? this.sourceRepoName : this.repoName,
                     packageKey: this.packageKey
                 }).then(info => {
                     this.pkg = info
@@ -241,7 +258,7 @@
                 this.$refs.commonFormDialog.setData({
                     show: true,
                     loading: false,
-                    title: '安全扫描',
+                    title: '扫描制品',
                     type: 'scan',
                     id: '',
                     name: this.pkg.name,
@@ -267,7 +284,8 @@
             },
             downloadPackageHandler (row = this.currentVersion) {
                 if (this.repoType === 'docker') return
-                const url = `/repository/api/version/download/${this.projectId}/${this.repoName}?packageKey=${this.packageKey}&version=${row.name}&download=true`
+                const repoName = this.storeType === 'virtual' ? this.sourceRepoName : this.repoName
+                const url = `/repository/api/version/download/${this.projectId}/${repoName}?packageKey=${this.packageKey}&version=${row.name}&download=true`
                 this.$ajax.head(url).then(() => {
                     window.open(
                         '/web' + url,

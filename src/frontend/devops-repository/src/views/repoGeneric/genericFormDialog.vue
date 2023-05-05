@@ -109,11 +109,17 @@
                     ...data
                 }
                 if (data.type === 'scan') {
-                    Promise.all([
-                        this.getScanAll({ projectId: this.projectId, type: 'GENERIC' }),
-                        this.getScanAll({ projectId: this.projectId, type: 'GENERIC_LICENSE' })
-                    ]).then(([res1, res2]) => {
-                        this.scanList = [...res1, ...res2]
+                    let fileNameExt = ''
+                    const lastIndexOfDot = this.genericForm.path.lastIndexOf('.')
+                    if (lastIndexOfDot !== -1) {
+                        fileNameExt = this.genericForm.path.substring(lastIndexOfDot + 1)
+                    }
+                    this.getScanAll({
+                        projectId: this.projectId,
+                        type: 'GENERIC',
+                        fileNameExt: fileNameExt
+                    }).then(res => {
+                        this.scanList = res
                     })
                 }
             },

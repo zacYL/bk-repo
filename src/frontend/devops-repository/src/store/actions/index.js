@@ -50,13 +50,14 @@ export default {
         )
     },
     // 分页查询仓库列表
-    getRepoList (_, { projectId, current, limit, name, type }) {
+    getRepoList (_, { projectId, current, limit, name, type, category }) {
         return Vue.prototype.$ajax.get(
             `${prefix}/repo/page/${projectId}/${current}/${limit}`,
             {
                 params: {
                     name: name || undefined,
-                    type: type || undefined
+                    type: type || undefined,
+                    category: category || undefined
                 }
             }
         ).then(res => ({
@@ -115,5 +116,12 @@ export default {
             cookie.remove('bkrepo_ticket')
             commit('SHOW_LOGIN_DIALOG', true)
         }
+    },
+    // 创建远程仓库时测试链接
+    testRemoteUrl (_, { body }) {
+        return Vue.prototype.$ajax.post(
+            `${prefix}/repo/testremote`,
+            body
+        )
     }
 }

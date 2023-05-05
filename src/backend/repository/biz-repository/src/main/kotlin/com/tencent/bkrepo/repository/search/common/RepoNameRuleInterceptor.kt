@@ -32,6 +32,8 @@
 package com.tencent.bkrepo.repository.search.common
 
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
+import com.tencent.bkrepo.common.artifact.pojo.configuration.virtual.VirtualConfiguration
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.interceptor.QueryContext
 import com.tencent.bkrepo.common.query.interceptor.QueryRuleInterceptor
@@ -88,6 +90,13 @@ class RepoNameRuleInterceptor(
         projectId: String,
         value: String
     ): Rule.QueryRule {
+        val repoInfo = repositoryService.getRepoInfo(projectId, value)
+        if (repoInfo?.category == RepositoryCategory.VIRTUAL) {
+            val memberList = (repoInfo.configuration as VirtualConfiguration).repositoryList.map { it.name }
+            if (memberList.isNotEmpty()) {
+                return handleRepoNameIn(projectId, memberList)
+            }
+        }
         if (!hasRepoPermission(projectId, value)) {
             throw PermissionException()
         }
@@ -97,9 +106,9 @@ class RepoNameRuleInterceptor(
     private fun handleRepoNameIn(
         projectId: String,
         value: List<*>,
-        context: CommonQueryContext
+        context: CommonQueryContext? = null
     ): Rule.QueryRule {
-        val repoNameList = if (context.repoList != null) {
+        val repoNameList = if (context?.repoList != null) {
             context.repoList!!.filter { hasRepoPermission(projectId, it.name, it.public) }.map { it.name }
         } else {
             value.filter { hasRepoPermission(projectId, it.toString()) }.map { it.toString() }

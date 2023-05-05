@@ -1,6 +1,6 @@
 <template>
     <div class="repo-config-container" v-bkloading="{ isLoading }">
-        <bk-tab class="repo-config-tab page-tab" type="unborder-card" :active.sync="tabName">
+        <bk-tab v-if="showTabPanel" class="repo-config-tab page-tab" type="unborder-card" :active.sync="tabName">
             <bk-tab-panel name="baseInfo" :label="$t('repoBaseInfo')">
                 <bk-form ref="repoBaseInfo" class="repo-base-info" :label-width="120" :model="repoBaseInfo" :rules="rules">
                     <bk-form-item :label="$t('repoName')">
@@ -9,9 +9,74 @@
                             <span class="ml10">{{replaceRepoName(repoBaseInfo.name || repoName)}}</span>
                         </div>
                     </bk-form-item>
+                    <bk-form-item :label="$t('storeTypes')">
+                        <div class="flex-align-center">
+                            <icon size="20" :name="(repoBaseInfo.category && repoBaseInfo.category.toLowerCase() || 'local') + '-store'" />
+                            <span class="ml10">{{$t((repoBaseInfo.category.toLowerCase() || 'local') + 'Store' ) }}</span>
+                        </div>
+                    </bk-form-item>
                     <bk-form-item :label="$t('repoAddress')">
                         <span>{{repoAddress}}</span>
                     </bk-form-item>
+                    <template v-if="repoBaseInfo.category === 'REMOTE'">
+                        <bk-form-item :label="$t('address')" :required="true" property="url" error-display-type="normal">
+                            <bk-input style="width:400px" v-model.trim="repoBaseInfo.url"></bk-input>
+                            <bk-button theme="primary" :disabled="disableTestUrl" @click="onClickTestRemoteUrl">{{ $t('testRemoteUrl') }}</bk-button>
+                        </bk-form-item>
+                        <bk-form-item :label="$t('account')" property="credentials.username" error-display-type="normal">
+                            <bk-input style="width:400px" v-model.trim="repoBaseInfo.credentials.username"></bk-input>
+                        </bk-form-item>
+                        <bk-form-item :label="$t('password')" property="credentials.password" error-display-type="normal">
+                            <bk-input style="width:400px" type="password" v-model.trim="repoBaseInfo.credentials.password"></bk-input>
+                        </bk-form-item>
+                        <bk-form-item :label="$t('networkProxy')" property="switcher">
+                            <template>
+                                <bk-switcher v-model="repoBaseInfo.network.switcher" theme="primary"></bk-switcher>
+                                <span>{{repoBaseInfo.network.switcher ? $t('open') : $t('close')}}</span>
+                            </template>
+                        </bk-form-item>
+                        <template v-if="repoBaseInfo.network.switcher">
+                            <bk-form-item label="IP" property="network.proxy.host" :required="true" error-display-type="normal">
+                                <bk-input style="width:400px" v-model.trim="repoBaseInfo.network.proxy.host"></bk-input>
+                            </bk-form-item>
+                            <bk-form-item :label="$t('port')" property="network.proxy.port" :required="true" error-display-type="normal">
+                                <bk-input style="width:400px" type="number" :max="65535" :min="1" v-model.trim="repoBaseInfo.network.proxy.port"></bk-input>
+                            </bk-form-item>
+                            <bk-form-item :label="$t('account')" property="network.proxy.username">
+                                <bk-input style="width:400px" v-model.trim="repoBaseInfo.network.proxy.username"></bk-input>
+                            </bk-form-item>
+                            <bk-form-item :label="$t('password')" property="network.proxy.password">
+                                <bk-input style="width:400px" type="password" v-model.trim="repoBaseInfo.network.proxy.password"></bk-input>
+                            </bk-form-item>
+                        </template>
+                    </template>
+                    <template v-if="repoBaseInfo.category === 'VIRTUAL'">
+                        <bk-form-item :label="$t('select') + $t('storageStore')" property="virtualStoreList" :required="true" error-display-type="normal">
+                            <bk-button class="mb10" hover-theme="primary" @click="toCheckedStore">{{ $t('pleaseSelect') }}</bk-button>
+                            <div class="virtual-check-container">
+                                <store-sort
+                                    v-if="repoBaseInfo.virtualStoreList.length"
+                                    :key="repoBaseInfo.virtualStoreList"
+                                    ref="storeSortRef"
+                                    :sort-list="repoBaseInfo.virtualStoreList"
+                                    @update="onUpdateList"></store-sort>
+                            </div>
+                        </bk-form-item>
+                        <!-- <bk-form-item :label="$t('uploadTargetStore')" property="uploadTargetStore">
+                            <bk-select
+                                v-model="repoBaseInfo.deploymentRepo"
+                                style="width:300px;"
+                                :show-empty="false"
+                                :placeholder="$t('pleaseSelect') + $t('uploadTargetStore')">
+                                <bk-option v-for="item in deploymentRepoCheckList" :key="item.name" :id="item.name" :name="item.name">
+                                </bk-option>
+                                <div v-if="!deploymentRepoCheckList.length" class="form-tip mt10 ml10 mr10 mb10">
+                                    {{$t('noAddedLocalStore')}}
+                                </div>
+                            </bk-select>
+                            <div class="form-tip">{{$t('addPackagePrompt')}}</div>
+                        </bk-form-item> -->
+                    </template>
                     <bk-form-item label="访问权限">
                         <card-radio-group
                             v-model="available"
@@ -21,7 +86,7 @@
                         </card-radio-group>
                     </bk-form-item>
 
-                    <bk-form-item label="版本策略" v-if="repoType === 'maven' || repoType === 'npm'">
+                    <bk-form-item label="版本策略" v-if="!(repoBaseInfo.category === 'REMOTE') && !(repoBaseInfo.category === 'VIRTUAL') && (repoType === 'maven' || repoType === 'npm')">
                         <div class="flex-align-center">
                             <bk-switcher
                                 v-model="repoBaseInfo.override.switcher"
@@ -57,7 +122,7 @@
                             </template>
                         </bk-form-item>
                     </template>
-                    <template v-if="repoType === 'rpm'">
+                    <template v-if="!(repoBaseInfo.category === 'REMOTE') && !(repoBaseInfo.category === 'VIRTUAL') && repoType === 'rpm'">
                         <bk-form-item :label="$t('enabledFileLists')">
                             <bk-checkbox v-model="repoBaseInfo.enabledFileLists"></bk-checkbox>
                         </bk-form-item>
@@ -102,9 +167,15 @@
                 <clean-config :base-data="repoBaseInfo" @refresh="getRepoInfoHandler"></clean-config>
             </bk-tab-panel>
             <bk-tab-panel render-directive="if" name="permissionConfig" :label="$t('permissionConfig')">
-                <permission-config></permission-config>
+                <permission-config :category="repoBaseInfo.category"></permission-config>
             </bk-tab-panel>
         </bk-tab>
+        <check-target-store
+            ref="checkTargetStoreRef"
+            :repo-type="repoBaseInfo.type"
+            :check-list="repoBaseInfo.virtualStoreList"
+            @checkedTarget="onCheckedTargetStore">
+        </check-target-store>
     </div>
 </template>
 <script>
@@ -112,35 +183,21 @@
     import proxyConfig from '@repository/views/repoConfig/proxyConfig'
     import cleanConfig from '@repository/views/repoConfig/cleanConfig'
     import permissionConfig from './permissionConfig'
+    import CheckTargetStore from '@repository/components/CheckTargetStore'
+    import StoreSort from '@repository/components/StoreSort'
     import { mapState, mapActions } from 'vuex'
+    import { isEmpty } from 'lodash'
     export default {
         name: 'repoConfig',
         components: {
             CardRadioGroup,
             proxyConfig,
             cleanConfig,
-            permissionConfig
+            permissionConfig,
+            StoreSort,
+            CheckTargetStore
         },
         data () {
-            const filenameRule = [
-                {
-                    required: true,
-                    message: this.$t('pleaseFileName'),
-                    trigger: 'blur'
-                }
-            ]
-            const metadataRule = [
-                {
-                    required: true,
-                    message: this.$t('pleaseMetadata'),
-                    trigger: 'blur'
-                },
-                {
-                    regex: /^[^\s]+:[^\s]+/,
-                    message: this.$t('metadataRule'),
-                    trigger: 'blur'
-                }
-            ]
             return {
                 tabName: 'baseInfo',
                 isLoading: false,
@@ -150,6 +207,7 @@
                     public: false,
                     system: false,
                     repoType: '',
+                    category: '',
                     enabledFileLists: false,
                     repodataDepth: 0,
                     groupXmlSet: [],
@@ -167,32 +225,29 @@
                         enable: false,
                         filename: '',
                         metadata: ''
-                    }
+                    },
+                    // 远程仓库的地址下面的账号和密码
+                    credentials: {
+                        username: null,
+                        password: null
+                    },
+                    url: '', // 远程仓库的地址
+                    // 远程仓库的网络代理
+                    network: {
+                        proxy: {
+                            host: null,
+                            port: null,
+                            username: null,
+                            password: null
+                        }
+                    },
+                    // 虚拟仓库的选中的存储库列表
+                    virtualStoreList: []
+                    // deploymentRepo: '' // 虚拟仓库中选择存储的本地仓库
                 },
-                rules: {
-                    repodataDepth: [
-                        {
-                            regex: /^(0|[1-9][0-9]*)$/,
-                            message: this.$t('pleaseInput') + this.$t('legit') + this.$t('repodataDepth'),
-                            trigger: 'blur'
-                        }
-                    ],
-                    groupXmlSet: [
-                        {
-                            validator: arr => {
-                                return arr.every(v => {
-                                    return /\.xml$/.test(v)
-                                })
-                            },
-                            message: this.$t('pleaseInput') + this.$t('legit') + this.$t('groupXmlSet') + `(.xml${this.$t('type')})`,
-                            trigger: 'change'
-                        }
-                    ],
-                    'mobile.filename': filenameRule,
-                    'mobile.metadata': metadataRule,
-                    'web.filename': filenameRule,
-                    'web.metadata': metadataRule
-                }
+                // 是否展示tab标签页，因为代理设置和清理设置需要根据详情页接口返回的数据判断是否显示，解决异步导致的tab顺序错误的问题
+                showTabPanel: false,
+                disableTestUrl: false
             }
         },
         computed: {
@@ -207,10 +262,10 @@
                 return this.$route.params.repoType
             },
             showProxyConfigTab () {
-                return ['maven', 'npm', 'pypi', 'composer', 'nuget'].includes(this.repoType)
+                return this.repoBaseInfo.category === 'COMPOSITE' && ['maven', 'npm', 'pypi', 'composer', 'nuget'].includes(this.repoType)
             },
             showCleanConfigTab () {
-                return ['maven', 'docker', 'npm', 'helm', 'generic'].includes(this.repoType)
+                return (this.repoBaseInfo.category === 'LOCAL' || this.repoBaseInfo.category === 'COMPOSITE') && ['maven', 'docker', 'npm', 'helm', 'generic'].includes(this.repoType)
             },
             repoAddress () {
                 const { repoType, name } = this.repoBaseInfo
@@ -239,7 +294,99 @@
                     { label: '系统内公开', value: 'system', tip: '系统内成员可以使用' },
                     { label: '可匿名下载', value: 'public', tip: '不鉴权，任意终端都可下载' }
                 ]
+            },
+            rules () {
+                const filenameRule = [
+                    {
+                        required: true,
+                        message: this.$t('pleaseFileName'),
+                        trigger: 'blur'
+                    }
+                ]
+                const metadataRule = [
+                    {
+                        required: true,
+                        message: this.$t('pleaseMetadata'),
+                        trigger: 'blur'
+                    },
+                    {
+                        regex: /^[^\s]+:[^\s]+/,
+                        message: this.$t('metadataRule'),
+                        trigger: 'blur'
+                    }
+                ]
+                // 远程仓库的 地址校验规则
+                const urlRule = [
+                    {
+                        required: true,
+                        message: this.$t('pleaseInput') + this.$t('address'),
+                        trigger: 'blur'
+                    },
+                    {
+                        validator: this.checkRemoteUrl,
+                        message: this.$t('pleaseInput') + this.$t('legit') + this.$t('address'),
+                        trigger: 'blur'
+                    }
+                ]
+                // 远程仓库下代理的IP和端口的校验的校验规则
+                const proxyHostRule = [
+                    {
+                        required: true,
+                        message: this.$t('pleaseInput') + this.$t('networkProxy') + 'IP',
+                        trigger: 'blur'
+                    }
+                ]
+                const proxyPortRule = [
+                    {
+                        required: true,
+                        message: this.$t('pleaseInput') + this.$t('networkProxy') + this.$t('port'),
+                        trigger: 'blur'
+                    }
+                ]
+                // 虚拟仓库下选择存储库的校验
+                const checkStorageRule = [
+                    {
+                        required: true,
+                        message: this.$t('noSelectStorageStore') + this.$t('save'),
+                        trigger: 'blur'
+                    }
+                ]
+                return {
+                    repodataDepth: [
+                        {
+                            regex: /^(0|[1-9][0-9]*)$/,
+                            message: this.$t('pleaseInput') + this.$t('legit') + this.$t('repodataDepth'),
+                            trigger: 'blur'
+                        }
+                    ],
+                    groupXmlSet: [
+                        {
+                            validator: arr => {
+                                return arr.every(v => {
+                                    return /\.xml$/.test(v)
+                                })
+                            },
+                            message: this.$t('pleaseInput') + this.$t('legit') + this.$t('groupXmlSet') + `(.xml${this.$t('type')})`,
+                            trigger: 'change'
+                        }
+                    ],
+                    'mobile.filename': filenameRule,
+                    'mobile.metadata': metadataRule,
+                    'web.filename': filenameRule,
+                    'web.metadata': metadataRule,
+                    // 远程仓库才应该有地址的校验
+                    url: this.repoBaseInfo.category === 'REMOTE' ? urlRule : {},
+                    // 远程仓库且开启网络代理才应该设置代理的IP和端口的校验
+                    'network.proxy.host': (this.repoBaseInfo.category === 'REMOTE' && this.repoBaseInfo.network.switcher) ? proxyHostRule : {},
+                    'network.proxy.port': (this.repoBaseInfo.category === 'REMOTE' && this.repoBaseInfo.network.switcher) ? proxyPortRule : {},
+                    // 虚拟仓库的选择存储库的校验
+                    virtualStoreList: this.repoBaseInfo.category === 'VIRTUAL' ? checkStorageRule : {}
+                }
             }
+            // 虚拟仓库中选择上传的目标仓库的下拉列表数据
+            // deploymentRepoCheckList () {
+            //     return this.repoBaseInfo.virtualStoreList.filter(item => item.category === 'LOCAL')
+            // }
         },
         watch: {
             repoType: {
@@ -248,13 +395,75 @@
                 },
                 immediate: true
             }
+            // deploymentRepoCheckList: {
+            //     handler (val) {
+            //         // 当选中的存储库中没有本地仓库或者当前选中的上传目标仓库不在被选中的存储库中时需要将当前选中的上传目标仓库重置为空
+            //         if (!val.length || !(val.map((item) => item.name).includes(this.repoBaseInfo.deploymentRepo))) {
+            //             this.repoBaseInfo.deploymentRepo = ''
+            //         }
+            //     }
+            // }
         },
         created () {
             if (!this.repoName || !this.repoType) this.toRepoList()
             this.getRepoInfoHandler()
         },
         methods: {
-            ...mapActions(['getRepoInfo', 'updateRepoInfo', 'getDomain']),
+            ...mapActions(['getRepoInfo', 'updateRepoInfo', 'getDomain', 'testRemoteUrl']),
+            // 打开选择存储库弹窗
+            toCheckedStore () {
+                this.$refs.checkTargetStoreRef && (this.$refs.checkTargetStoreRef.show = true)
+            },
+            // 当删除了选中的存储库时
+            onUpdateList (list) {
+                this.repoBaseInfo.virtualStoreList = list
+            },
+            // 选中的存储库弹窗确认事件
+            onCheckedTargetStore (list) {
+                this.repoBaseInfo.virtualStoreList = list
+            },
+            checkRemoteUrl (val) {
+                const reg = /^https?:\/\/(([a-zA-Z0-9_-])+(\.)?)*(:\d+)?(\/((\.)?(\?)?=?&?[a-zA-Z0-9_-](\?)?)*)*$/
+                return reg.test(val)
+            },
+            // 创建远程仓库弹窗中测试远程链接
+            onClickTestRemoteUrl () {
+                if (!this.repoBaseInfo?.url || isEmpty(this.repoBaseInfo.url) || !this.checkRemoteUrl(this.repoBaseInfo?.url)) {
+                    this.$bkMessage({
+                        theme: 'warning',
+                        limit: 3,
+                        message: this.$t('pleaseInput') + this.$t('legit') + this.$t('address')
+                    })
+                } else {
+                    const body = {
+                        type: this.repoBaseInfo.type.toUpperCase(),
+                        url: this.repoBaseInfo.url,
+                        credentials: this.repoBaseInfo.credentials,
+                        network: {
+                            proxy: null
+                        }
+                    }
+                    if (this.repoBaseInfo.network.switcher) {
+                        body.network.proxy = this.repoBaseInfo.network.proxy
+                    }
+                    this.disableTestUrl = true
+                    this.testRemoteUrl({ body }).then((res) => {
+                        if (res.success) {
+                            this.$bkMessage({
+                                theme: 'success',
+                                message: this.$t('successConnectServer')
+                            })
+                        } else {
+                            this.$bkMessage({
+                                theme: 'error',
+                                message: this.$t('connectFailed') + `: ${res.message}`
+                            })
+                        }
+                    }).finally(() => {
+                        this.disableTestUrl = false
+                    })
+                }
+            },
             toRepoList () {
                 this.$router.push({
                     name: 'repoList'
@@ -274,7 +483,8 @@
                         ...this.repoBaseInfo,
                         ...res,
                         ...res.configuration.settings,
-                        repoType: res.type.toLowerCase()
+                        repoType: res.type.toLowerCase(),
+                        category: res.category
                     }
                     if (res.type === 'MAVEN' || res.type === 'NPM') {
                         switch (res.coverStrategy) {
@@ -291,6 +501,34 @@
                                 this.repoBaseInfo.override.isFlag = true
                         }
                     }
+                    // 虚拟仓库，添加可选仓库穿梭框及上传目标仓库下拉框
+                    if (res.category === 'VIRTUAL') {
+                        this.repoBaseInfo.virtualStoreList = res.configuration.repositoryList
+                        // 当后台返回的字段为null时需要将其设置为空字符串，否则会因为组件需要的参数类型不对应，导致选择框的placeholder不显示
+                        // this.repoBaseInfo.deploymentRepo = res.configuration.deploymentRepo || ''
+                    }
+                    // 远程仓库，添加地址，账号密码和网络代理相关配置
+                    if (res.category === 'REMOTE') {
+                        this.repoBaseInfo.url = res.configuration.url
+                        this.repoBaseInfo.credentials = res.configuration.credentials
+                      
+                        if (res.configuration.network.proxy === null) {
+                            this.repoBaseInfo.network = {
+                                proxy: {
+                                    host: null,
+                                    port: null,
+                                    username: null,
+                                    password: null
+                                },
+                                switcher: false
+                            }
+                        } else {
+                            this.repoBaseInfo.network = {
+                                proxy: res.configuration.network.proxy,
+                                switcher: true
+                            }
+                        }
+                    }
 
                     const { interceptors } = res.configuration.settings
                     if (interceptors instanceof Array) {
@@ -303,10 +541,12 @@
                     }
                 }).finally(() => {
                     this.isLoading = false
+                    // 不论接口返回数据是否成功，都需要显示tab标签页
+                    this.showTabPanel = true
                 })
             },
             async saveBaseInfo () {
-                ['generic', 'rpm'].includes(this.repoType) && await this.$refs.repoBaseInfo.validate()
+                await this.$refs.repoBaseInfo.validate()
                 const interceptors = []
                 if (this.repoType === 'generic') {
                     ['mobile', 'web'].forEach(type => {
@@ -340,6 +580,30 @@
                 if (this.repoType === 'maven' || this.repoType === 'npm') {
                     body.coverStrategy = !this.repoBaseInfo.override.switcher ? 'DISABLE' : this.repoBaseInfo.override.isFlag ? 'COVER' : 'UNCOVER'
                 }
+                // 远程仓库，此时需要添加 地址，账号密码和网络代理相关的配置
+                if (this.repoBaseInfo.category === 'REMOTE') {
+                    body.configuration.url = this.repoBaseInfo.url
+                    body.configuration.credentials = this.repoBaseInfo.credentials
+                    body.configuration.network = {
+                        proxy: null
+                    }
+                    if (this.repoBaseInfo.network.switcher) {
+                        body.configuration.network = {
+                            proxy: this.repoBaseInfo.network.proxy
+                        }
+                    }
+                }
+                // 虚拟仓库需要添加存储库相关配置
+                if (this.repoBaseInfo.category === 'VIRTUAL') {
+                    body.configuration.repositoryList = this.repoBaseInfo.virtualStoreList.map(item => {
+                        return {
+                            name: item.name,
+                            category: item.category
+                        }
+                    })
+                    // body.configuration.deploymentRepo = this.repoBaseInfo.deploymentRepo
+                }
+
                 this.repoBaseInfo.loading = true
                 this.updateRepoInfo({
                     projectId: this.projectId,
@@ -372,5 +636,8 @@
             max-width: 800px;
         }
     }
+}
+.virtual-check-container{
+    width: 96%;
 }
 </style>

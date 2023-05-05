@@ -45,5 +45,7 @@ data class VersionListOption(
     @ApiModelProperty("版本")
     val version: String? = null,
     @ApiModelProperty("晋级tag, 多个tag以逗号分隔")
-    val stageTag: String? = null
+    val stageTag: String? = null,
+    @ApiModelProperty("查询虚拟仓库时的制品来源仓库")
+    val srcRepo: String? = null
 )

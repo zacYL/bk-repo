@@ -11,6 +11,18 @@
                 right-icon="bk-icon icon-search">
             </bk-input>
             <bk-select
+                v-model="query.category"
+                class="ml10 w250"
+                @change="handlerPaginationChange()"
+                :placeholder="$t('allStoreTypes')">
+                <bk-option v-for="category in storeTypeEnum" :key="category.id" :id="category.id" :name="$t(category.name)">
+                    <div class="flex-align-center">
+                        <Icon size="20" :name="category.icon" />
+                        <span class="ml10 flex-1 text-overflow">{{$t(category.name)}}</span>
+                    </div>
+                </bk-option>
+            </bk-select>
+            <bk-select
                 v-model="query.type"
                 class="ml10 w250"
                 @change="handlerPaginationChange()"
@@ -54,10 +66,14 @@
             </bk-table-column>
             <bk-table-column :label="$t('repoName')" show-overflow-tooltip>
                 <template #default="{ row }">
-                    <span v-if="row.public"
-                        class="mr5 repo-tag WARNING" data-name="公开"></span>
                     <Icon class="mr5 table-svg" size="16" :name="row.repoType" />
                     <span class="hover-btn" @click="toPackageList(row)">{{replaceRepoName(row.name)}}</span>
+                    <span v-if="row.public" class="mr5 repo-tag WARNING" data-name="公开"></span>
+                </template>
+            </bk-table-column>
+            <bk-table-column :label="$t('storeTypes')" width="120">
+                <template #default="{ row }">
+                    <span>{{$t((row.category.toLowerCase() || 'local') + 'Store')}}</span>
                 </template>
             </bk-table-column>
             <bk-table-column :label="$t('createdDate')" width="250">
@@ -85,19 +101,21 @@
 </template>
 <script>
     import { mapState, mapActions } from 'vuex'
-    import { repoEnum } from '@repository/store/publicEnum'
+    import { repoEnum, storeTypeEnum } from '@repository/store/publicEnum'
     import { formatDate } from '@repository/utils'
     export default {
         name: 'repoList',
         data () {
             return {
                 repoEnum,
+                storeTypeEnum,
                 isLoading: false,
                 repoList: [],
                 query: {
                     projectId: this.$route.query.projectId,
                     name: this.$route.query.name,
-                    type: this.$route.query.type
+                    type: this.$route.query.type,
+                    category: this.$route.query.category
                 },
                 pagination: {
                     count: 0,
@@ -138,7 +156,7 @@
                 })
                 this.getListData()
             },
-            toPackageList ({ projectId, repoType, name }) {
+            toPackageList ({ projectId, repoType, name, category }) {
                 this.$router.push({
                     name: repoType === 'generic' ? 'repoGeneric' : 'commonList',
                     params: {
@@ -146,7 +164,8 @@
                         repoType
                     },
                     query: {
-                        repoName: name
+                        repoName: name,
+                        storeType: category?.toLowerCase() || ''
                     }
                 })
             }

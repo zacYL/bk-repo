@@ -33,6 +33,7 @@ package com.tencent.bkrepo.npm.service.impl
 
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
@@ -123,7 +124,7 @@ open class AbstractNpmService {
 		val packageFullPath = NpmUtils.getPackageMetadataPath(name)
 		val context = ArtifactQueryContext()
 		context.putAttribute(NPM_FILE_FULL_PATH, packageFullPath)
-		context.putAttribute("requestURI", "/$name")
+		context.putAttribute("requestURI", name)
 		val inputStream =
 			ArtifactContextHolder.getRepository().query(context) as? InputStream
 				?: throw NpmArtifactNotFoundException("document not found")
@@ -133,7 +134,12 @@ open class AbstractNpmService {
 
 			// 对于下载前的查询包信息请求，检查包数据是否完整，避免package.json缺失内容导致无法下载的问题
 			val versions = versionsMap.keys
-			checkAndCompletePackageMetadata(artifactInfo, packageMetaData, versions)
+			val repoCategory = ArtifactContextHolder.getRepoDetail()?.category
+			if (repoCategory != RepositoryCategory.VIRTUAL) {
+				checkAndCompletePackageMetadata(
+					artifactInfo, packageMetaData, versions, repoCategory != RepositoryCategory.REMOTE
+				)
+			}
 
 			val iterator = versionsMap.entries.iterator()
 			while (iterator.hasNext()) {
@@ -166,19 +172,21 @@ open class AbstractNpmService {
 	private fun checkAndCompletePackageMetadata(
 		artifactInfo: NpmArtifactInfo,
 		packageMetaData: NpmPackageMetaData,
-		versionsInPackageMetadata: Set<String>
-
+		versionsInPackageMetadata: Set<String>,
+		upload: Boolean
 	) {
 		val name = packageMetaData.name.orEmpty()
 		val existVersions = queryExistVersion(artifactInfo.projectId, artifactInfo.repoName, name)
-		val missingVersions = existVersions - versionsInPackageMetadata
+		val missingVersions = (existVersions - versionsInPackageMetadata).takeUnless { it.isEmpty() } ?: return
 
 		missingVersions.forEach {
 			val versionMetaData = queryVersionMetadata(artifactInfo, name, it) ?: return@forEach
 			modifyPackageMetadata(packageMetaData, versionMetaData, it)
 			logger.info("complete package.json of [$name]: add metadata of version [$it] when query package info")
 		}
-		uploadPackageMetadata(packageMetaData)
+		if (upload) {
+			uploadPackageMetadata(packageMetaData)
+		}
 	}
 
 	protected fun modifyPackageMetadata(

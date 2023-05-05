@@ -9,11 +9,13 @@ import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.query.util.MongoEscapeUtils
 import com.tencent.bkrepo.repository.dao.PackageDao
 import com.tencent.bkrepo.repository.model.TPackage
+import com.tencent.bkrepo.repository.pojo.repo.RepoListOption
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
 import com.tencent.bkrepo.repository.pojo.software.ProjectPackageOverview
 import com.tencent.bkrepo.repository.pojo.software.SoftwarePackageSearchPojo
 import com.tencent.bkrepo.repository.search.software.packages.SoftwarePackageSearchInterpreter
 import com.tencent.bkrepo.repository.service.packages.SoftwarePackageService
+import com.tencent.bkrepo.repository.service.repo.RepositoryService
 import com.tencent.bkrepo.repository.service.repo.SoftwareRepositoryService
 import org.springframework.data.mongodb.core.aggregation.Aggregation
 import org.springframework.data.mongodb.core.query.Criteria
@@ -24,7 +26,8 @@ import org.springframework.stereotype.Service
 class SoftwarePackageServiceImpl(
     private val packageDao: PackageDao,
     private val softwareRepositoryService: SoftwareRepositoryService,
-    private val softwarePackageSearchInterpreter: SoftwarePackageSearchInterpreter
+    private val softwarePackageSearchInterpreter: SoftwarePackageSearchInterpreter,
+    private val repositoryService: RepositoryService
 ) : SoftwarePackageService {
 
     override fun packageOverview(
@@ -39,12 +42,14 @@ class SoftwarePackageServiceImpl(
             if (repoName != null) {
                 criteria.and(TPackage::repoName.name).`is`(repoName)
             } else {
-                val allSoftRepo = softwareRepositoryService.listRepo(projectId, includeGeneric = false)
+                val allSoftRepo =
+                    softwareRepositoryService.listRepo(projectId, RepoListOption(), includeGeneric = false)
                 val repoNames = allSoftRepo.map { it.name }
                 criteria.and(TPackage::repoName.name).`in`(repoNames)
             }
         } else {
-            val allSoftRepo = softwareRepositoryService.listRepo(type = repoType, includeGeneric = false)
+            val option = RepoListOption(type = repoType.name)
+            val allSoftRepo = softwareRepositoryService.listRepo(option = option, includeGeneric = false)
             if(allSoftRepo.isEmpty()) return listOf()
             transCri(criteria, allSoftRepo)
         }
@@ -92,6 +97,7 @@ class SoftwarePackageServiceImpl(
         list.map { pojo ->
             val repoOverview = ProjectPackageOverview.RepoPackageOverview(
                 repoName = pojo.id.repoName,
+                repoCategory = repositoryService.getRepoInfo(pojo.id.projectId, pojo.id.repoName)?.category,
                 packages = pojo.count
             )
             projectSet.filter { it.projectId == pojo.id.projectId }.apply {
@@ -116,20 +122,21 @@ class SoftwarePackageServiceImpl(
         val rules = (queryModel.rule as Rule.NestedRule).rules
         var repoName: String? = null
         var projectId: String? = null
-        var repoType: RepositoryType? = null
+        var repoType: String? = null
         val projectSubRule = mutableListOf<Rule>()
         for (rule in rules) {
             val queryRule = rule as Rule.QueryRule
             when (queryRule.field) {
                 "repoName" -> repoName = queryRule.value as String
                 "projectId" -> projectId = queryRule.value as String
-                "repoType" -> repoType = RepositoryType.valueOf(queryRule.value as String)
+                "repoType" -> repoType = queryRule.value as String
                 else -> projectSubRule.add(queryRule)
             }
         }
+        val option = RepoListOption(type = repoType)
         if (projectId == null) {
             val projectsRule = mutableListOf<Rule>()
-            val allSoftRepo = softwareRepositoryService.listRepo(type = repoType, includeGeneric = false)
+            val allSoftRepo = softwareRepositoryService.listRepo(option = option, includeGeneric = false)
             if(allSoftRepo.isEmpty()) return Page(1, queryModel.page.pageSize, 0, listOf())
             val projectMap = transRepoTree(allSoftRepo)
             projectMap.map { project ->
@@ -153,7 +160,7 @@ class SoftwarePackageServiceImpl(
         }
         if (projectId != null && repoName == null) {
             val genericRepos =
-                softwareRepositoryService.listRepo(projectId, type = repoType, includeGeneric = false).map { it.name }
+                softwareRepositoryService.listRepo(projectId, option = option, includeGeneric = false).map { it.name }
             rules.add(Rule.QueryRule(field = "repoName", value = genericRepos, operation = OperationType.IN))
         }
         val context = softwarePackageSearchInterpreter.interpret(queryModel)

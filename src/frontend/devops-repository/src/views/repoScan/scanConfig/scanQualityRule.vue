@@ -1,33 +1,32 @@
 <template>
-    <bk-form style="max-width: 1080px;" :label-width="120" :model="rule" :rules="rules" ref="ruleForm">
+    <bk-form style="max-width: 1080px;" :label-width="120" :model="rule" :rules="rules" ref="ruleForm" v-bkloading="{ isLoading }">
         <bk-form-item label="质量规则">
             <bk-switcher v-model="editable" size="small" theme="primary" @change="$refs.ruleForm.clearError()"></bk-switcher>
         </bk-form-item>
-        <template v-if="scanType.includes('LICENSE')">
-            <bk-form-item label="规则设置" property="recommend" error-display-type="normal">
+        <template>
+            <bk-form-item v-if="ruleTypes.includes(SCAN_TYPE_LICENSE)" label="许可证规则" property="recommend" error-display-type="normal">
                 <div style="color:var(--fontSubsidiaryColor);">当许可证中出现不符合以下规则的许可证时，则不通过质量规则</div>
                 <div class="mt10"><bk-checkbox :disabled="!editable" v-model="rule.recommend">仅有可用许可证</bk-checkbox></div>
                 <div class="mt10"><bk-checkbox :disabled="!editable" v-model="rule.compliance">仅有合规的许可证</bk-checkbox></div>
                 <div class="mt10"><bk-checkbox :disabled="!editable" v-model="rule.unknown">无未知许可证</bk-checkbox></div>
             </bk-form-item>
-        </template>
-        <template v-else>
-            <bk-form-item label="规则设置">
+            <bk-form-item v-if="ruleTypes.includes(SCAN_TYPE_SECURITY)" label="安全规则">
                 <div style="color:var(--fontSubsidiaryColor);">当扫描的制品漏洞超过下方任意一条规则中设定的数量，则制品未通过质量规则</div>
             </bk-form-item>
-
-            <bk-form-item label="" v-for="[id, name] in LeakLevelEnumArr" :key="id"
-                :property="id.toLowerCase()" error-display-type="normal">
-                <div class="flex-align-center">
-                    <div :class="`status-sign ${id}`" :data-name="`${name}漏洞≦`"></div>
-                    <bk-input class="ml10 mr10" style="width: 80px;"
-                        :disabled="!editable" v-model.trim="rule[id.toLowerCase()]"
-                        @focus="$refs.ruleForm.clearError()"
-                        @blur="$refs.ruleForm.validate()">
-                    </bk-input>
-                    <span>个</span>
-                </div>
-            </bk-form-item>
+            <template v-if="ruleTypes.includes(SCAN_TYPE_SECURITY)">
+                <bk-form-item label="" v-for="[id, name] in Object.entries(leakLevelEnum)" :key="id"
+                    :property="id.toLowerCase()" error-display-type="normal">
+                    <div class="flex-align-center">
+                        <div :class="`status-sign ${id}`" :data-name="`${name}漏洞≦`"></div>
+                        <bk-input class="ml10 mr10" style="width: 80px;"
+                            :disabled="!editable" v-model.trim="rule[id.toLowerCase()]"
+                            @focus="$refs.ruleForm.clearError()"
+                            @blur="$refs.ruleForm.validate()">
+                        </bk-input>
+                        <span>个</span>
+                    </div>
+                </bk-form-item>
+            </template>
         </template>
         <bk-form-item label="触发事件">
             <div style="color:var(--fontSubsidiaryColor);">可勾选下方按钮，在扫描或扫描结束后触发勾选项</div>
@@ -35,15 +34,20 @@
             <div class="mt10"><bk-checkbox :disabled="!editable" v-model="rule.forbidQualityUnPass">自动禁止使用制品：质量规则未通过的制品</bk-checkbox></div>
         </bk-form-item>
         <bk-form-item>
-            <bk-button theme="primary" @click="save()">{{$t('save')}}</bk-button>
+            <bk-button :loading="isLoading" theme="primary" @click="save()">{{$t('save')}}</bk-button>
         </bk-form-item>
     </bk-form>
 </template>
 <script>
     import { mapActions } from 'vuex'
-    import { leakLevelEnum } from '@repository/store/publicEnum'
+    import { leakLevelEnum, SCAN_TYPE_LICENSE, SCAN_TYPE_SECURITY } from '@repository/store/publicEnum'
     export default {
         name: 'scanQualityRule',
+        props: {
+            projectId: String,
+            planId: String,
+            scanTypes: Array
+        },
         data () {
             const validate = {
                 regex: /^[0-9]*$/,
@@ -51,9 +55,15 @@
                 trigger: 'blur'
             }
             return {
+                SCAN_TYPE_SECURITY: SCAN_TYPE_SECURITY,
+                SCAN_TYPE_LICENSE: SCAN_TYPE_LICENSE,
                 leakLevelEnum,
                 editable: false,
+                isLoading: false,
                 rule: {
+                    recommend: false,
+                    compliance: false,
+                    unknown: false,
                     critical: '',
                     high: '',
                     medium: '',
@@ -84,20 +94,8 @@
             }
         },
         computed: {
-            projectId () {
-                return this.$route.params.projectId
-            },
-            scanType () {
-                return this.$route.query.scanType
-            },
-            planId () {
-                return this.$route.params.planId
-            },
-            // 白名单漏洞不需要计入质量规则
-            LeakLevelEnumArr () {
-                const arr = Object.entries(this.leakLevelEnum)
-                arr.splice(arr.findIndex(item => item[0] === 'WHITE'), 1)
-                return arr
+            ruleTypes () {
+                return this.scanTypes.filter(scanType => scanType === SCAN_TYPE_SECURITY || scanType === SCAN_TYPE_LICENSE)
             }
         },
         created () {
@@ -107,15 +105,18 @@
         methods: {
             ...mapActions(['getQualityRule', 'saveQualityRule']),
             initData () {
-                this.rule = this.scanType.includes('LICENSE')
-                    ? {
+                this.rule = this.scanTypes.includes('LICENSE')
+                    && {
+                        ...this.rule,
                         recommend: false,
                         compliance: false,
                         unknown: false,
                         forbidScanUnFinished: false,
                         forbidQualityUnPass: false
                     }
-                    : {
+                this.rule = this.scanTypes.includes('SECURITY')
+                    && {
+                        ...this.rule,
                         critical: '',
                         high: '',
                         medium: '',
@@ -126,11 +127,28 @@
             },
             async save () {
                 await this.$refs.ruleForm.validate()
-                this.saveQualityRule({
-                    type: this.scanType,
+                this.isLoading = true
+                Promise
+                    .all(this.ruleTypes.map(type => this.doSave(type)))
+                    .then(() => {
+                        this.$bkMessage({
+                            theme: 'success',
+                            message: this.$t('save') + this.$t('success')
+                        })
+                        this.initData()
+                        this.getRules()
+                    }).finally(() => {
+                        this.isLoading = false
+                    })
+            },
+            doSave (ruleType) {
+                // 当质量规则关闭时，调用后台接口传参为空对象，不然会导致质量规则一直无法关闭(开关是否开启由下方方法计算得到)
+                return this.saveQualityRule({
+                    type: ruleType,
                     id: this.planId,
-                    body: this.editable
-                        ? Object.keys(this.rule).reduce((target, key) => {
+                    body: !this.editable
+                        ? {}
+                        : Object.keys(this.rule).reduce((target, key) => {
                             const value = this.rule[key]
                             if (typeof value === 'string' && value.length > 0) {
                                 target[key] = Number(value)
@@ -140,41 +158,42 @@
                             }
                             return target
                         }, {})
-                        : {}
-                }).then(() => {
-                    this.$bkMessage({
-                        theme: 'success',
-                        message: this.$t('save') + this.$t('success')
-                    })
-                    this.getRules()
                 })
             },
             getRules () {
-                this.getQualityRule({
-                    type: this.scanType,
-                    id: this.planId
-                }).then(res => {
-                    this.initData()
-                    Object.keys(res).forEach(k => {
-                        res[k] !== null && (this.rule[k] = res[k])
+                Promise.all(
+                    this.ruleTypes.map(type => this.getQualityRule({ type: type, id: this.planId }))
+                ).then(qualityRules => {
+                    qualityRules.forEach(qualityRule => {
+                        Object.keys(qualityRule).forEach(k => {
+                            qualityRule[k] !== null && (this.rule[k] = qualityRule[k])
+                        })
                     })
                     this.editable = this.computedEditable()
                 })
             },
+            // 计算质量规则开关是否开启，当下方任何一个值存在时(数值不为空或其他值不为false)开关都需要设置为开启状态
             computedEditable () {
                 const { critical, high, medium, low, recommend, compliance, unknown } = this.rule
-                return this.scanType.includes('LICENSE')
-                    ? Boolean(
-                        recommend
-                            || compliance
-                            || unknown
-                    )
-                    : Boolean(
-                        critical !== ''
-                            || high !== ''
-                            || medium !== ''
-                            || low !== ''
-                    )
+                let licenseFlag = false
+                let securityFlag = false
+                licenseFlag = Boolean(
+                    recommend
+                        || compliance
+                        || unknown
+                )
+                securityFlag = Boolean(
+                    critical !== ''
+                        || high !== ''
+                        || medium !== ''
+                        || low !== ''
+                )
+                // docker仓库现在同时支持扫描许可和漏洞，两个规则只要其中任何一个有值就可以保存
+                if (this.scanTypes.includes('LICENSE') && this.scanTypes.includes('SECURITY')) {
+                    return licenseFlag || securityFlag
+                } else {
+                    return this.scanTypes.includes('LICENSE') ? licenseFlag : securityFlag
+                }
             }
         }
     }

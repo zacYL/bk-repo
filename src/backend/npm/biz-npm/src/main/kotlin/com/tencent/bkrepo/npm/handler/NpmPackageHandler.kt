@@ -32,6 +32,7 @@
 package com.tencent.bkrepo.npm.handler
 
 import com.tencent.bkrepo.common.api.util.JsonUtils
+import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
@@ -96,7 +97,8 @@ class NpmPackageHandler {
                     dist.any()[SIZE].toString().toLong()
                 }
                 with(tgzNodeInfo) {
-                    val metadata = buildProperties(next.value).map { MetadataModel(key = it.key, value = it.value) }
+                    val metadata =
+                        buildProperties(next.value).map { MetadataModel(key = it.key, value = it.value ?: "null") }
                     val populatedPackageVersion = PopulatedPackageVersion(
                         createdBy = createdBy,
                         createdDate = LocalDateTime.parse(createdDate),
@@ -137,7 +139,7 @@ class NpmPackageHandler {
      */
     fun createVersion(
         userId: String,
-        artifactInfo: NpmArtifactInfo,
+        artifactInfo: ArtifactInfo,
         versionMetaData: NpmVersionMetadata,
         size: Long
     ) {
@@ -161,7 +163,7 @@ class NpmPackageHandler {
                     manifestPath = manifestPath,
                     artifactPath = contentPath,
                     stageTag = null,
-                    packageMetadata = metadata.map { MetadataModel(key = it.key, value = it.value) },
+                    packageMetadata = metadata.map { MetadataModel(key = it.key, value = it.value ?: "null") },
                     overwrite = true,
                     createdBy = userId
                 )
@@ -172,7 +174,7 @@ class NpmPackageHandler {
         }
     }
 
-    private fun buildProperties(npmVersionMetadata: NpmVersionMetadata?): Map<String, String> {
+    private fun buildProperties(npmVersionMetadata: NpmVersionMetadata?): Map<String, Any?> {
         return npmVersionMetadata?.let {
             val value = JsonUtils.objectMapper.writeValueAsString(it)
             val npmProperties = JsonUtils.objectMapper.readValue(value, PackageProperties::class.java)

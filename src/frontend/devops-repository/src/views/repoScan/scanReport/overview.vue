@@ -14,15 +14,15 @@
                     @change="changeFilterTime">
                 </bk-date-picker>
                 <bk-button class="mr10" theme="default" @click="stopScanHandler">中止扫描</bk-button>
-                <bk-button v-if="!baseInfo.readOnly" class="mr10" theme="default" @click="startScanHandler">立即扫描</bk-button>
-                <bk-button v-if="!baseInfo.readOnly" theme="default" @click="scanSettingHandler">设置</bk-button>
+                <bk-button v-if="!scanPlan.readOnly" class="mr10" theme="default" @click="startScanHandler">立即扫描</bk-button>
+                <bk-button v-if="!scanPlan.readOnly" theme="default" @click="scanSettingHandler">设置</bk-button>
             </div>
         </div>
         <div class="mt10 flex-align-center">
             <div class="base-info-item flex-column"
-                v-for="item in baseInfoList" :key="item.key">
+                v-for="item in overviewList" :key="item.key">
                 <span class="base-info-key">{{ item.label }}</span>
-                <span class="base-info-value" :style="{ color: item.color }">{{ segmentNumberThree(baseInfo[item.key] || 0) }}</span>
+                <span class="base-info-value" :style="{ color: item.color }">{{ segmentNumberThree(overview[item.key]) }}</span>
             </div>
         </div>
         <canway-dialog
@@ -61,6 +61,7 @@
 <script>
     import { segmentNumberThree } from '@repository/utils'
     import { mapActions } from 'vuex'
+    import { SCAN_TYPE_LICENSE, SCAN_TYPE_SECURITY } from '@repository/store/publicEnum'
     const nowTime = new Date(
         `${new Date().getFullYear()}-${new Date().getMonth() + 1}-${new Date().getDate()}`
     ).getTime() + 3600 * 1000 * 24
@@ -85,6 +86,9 @@
         }
     ]
     export default {
+        props: {
+            scanPlan: Object
+        },
         data () {
             return {
                 shortcuts,
@@ -92,36 +96,39 @@
                 showExportDialog: false,
                 exportTime: [new Date(nowTime - 3600 * 1000 * 24 * 30), new Date(nowTime)],
                 exportStatus: 'ALL',
-                baseInfo: {}
+                baseInfo: {},
+                overview: {
+                    artifactCount: 0,
+                    critical: 0,
+                    high: 0,
+                    medium: 0,
+                    low: 0,
+                    total: 0,
+                    unRecommend: 0,
+                    unknown: 0,
+                    unCompliance: 0
+                }
             }
         },
         computed: {
-            projectId () {
-                return this.$route.params.projectId
-            },
-            planId () {
-                return this.$route.params.planId
-            },
-            scanType () {
-                return this.$route.query.scanType
-            },
-            baseInfoList () {
-                return this.scanType.includes('LICENSE')
-                    ? [
-                        { key: 'artifactCount', label: '扫描制品数量' },
+            overviewList () {
+                const info = [{ key: 'artifactCount', label: '扫描制品数量' }]
+                if (this.scanPlan.scanTypes.includes(SCAN_TYPE_SECURITY)) {
+                    info.push(
+                        { key: 'critical', label: '危急漏洞', color: '#EA3736' },
+                        { key: 'high', label: '高级漏洞', color: '#FFB549' },
+                        { key: 'medium', label: '中级漏洞', color: '#3A84FF' },
+                        { key: 'low', label: '低级漏洞', color: '#979BA5' })
+                }
+                if (this.scanPlan.scanTypes.includes(SCAN_TYPE_LICENSE)) {
+                    info.push(
                         { key: 'total', label: '许可证总数' },
                         { key: 'unRecommend', label: '废弃许可证数' },
                         { key: 'unknown', label: '未知许可证数' },
                         { key: 'unCompliance', label: '不合规数' }
-                    ]
-                    : [
-                        { key: 'artifactCount', label: '扫描制品数量' },
-                        { key: 'total', label: '漏洞总量' },
-                        { key: 'critical', label: '危急漏洞', color: '#EA3736' },
-                        { key: 'high', label: '高级漏洞', color: '#FFB549' },
-                        { key: 'medium', label: '中级漏洞', color: '#3A84FF' },
-                        { key: 'low', label: '低级漏洞', color: '#979BA5' }
-                    ]
+                    )
+                }
+                return info
             },
             formatISO () {
                 const [startTime, endTime] = this.filterTime
@@ -131,8 +138,10 @@
                 }
             }
         },
-        created () {
-            this.changeFilterTime()
+        watch: {
+            scanPlan: function () {
+                this.changeFilterTime()
+            }
         },
         methods: {
             segmentNumberThree,
@@ -142,16 +151,25 @@
                 'stopScan'
             ]),
             getScanReportOverview () {
-                const fn = this.scanType.includes('LICENSE')
-                    ? this.scanLicenseOverview
-                    : this.scanReportOverview
-                fn({
-                    projectId: this.projectId,
-                    id: this.planId,
-                    ...this.formatISO
-                }).then(res => {
-                    this.baseInfo = res
-                    this.$emit('refreshData', 'baseInfo', this.baseInfo)
+                const reqs = []
+                if (this.scanPlan.scanTypes.includes(SCAN_TYPE_SECURITY)) {
+                    reqs.push(this.scanReportOverview)
+                }
+                if (this.scanPlan.scanTypes.includes(SCAN_TYPE_LICENSE)) {
+                    reqs.push(this.scanLicenseOverview)
+                }
+                Promise.all(reqs.map(req =>
+                    req({
+                        projectId: this.scanPlan.projectId,
+                        id: this.scanPlan.id,
+                        ...this.formatISO
+                    })
+                )).then(res => {
+                    res.forEach(planCount =>
+                        Object.keys(this.overview).forEach(key => {
+                            this.overview[key] = planCount[key] ?? this.overview[key]
+                        })
+                    )
                 })
             },
             changeFilterTime () {
@@ -162,11 +180,11 @@
             stopScanHandler () {
                 this.$confirm({
                     theme: 'danger',
-                    message: `确认中止扫描方案 ${this.baseInfo.name} 的所有扫描任务?`,
+                    message: `确认中止扫描方案 ${this.scanPlan.name} 的所有扫描任务?`,
                     confirmFn: () => {
                         return this.stopScan({
-                            projectId: this.projectId,
-                            id: this.planId
+                            projectId: this.scanPlan.projectId,
+                            id: this.scanPlan.id
                         }).then(() => {
                             this.$bkMessage({
                                 theme: 'success',
@@ -187,12 +205,11 @@
                 this.$router.push({
                     name: 'scanConfig',
                     params: {
-                        ...this.$route.params,
-                        planId: this.baseInfo.id
+                        projectId: this.scanPlan.projectId,
+                        planId: this.scanPlan.id
                     },
                     query: {
-                        scanType: this.scanType,
-                        scanName: this.baseInfo.name
+                        scanName: this.scanPlan.name
                     }
                 })
             },
@@ -200,8 +217,8 @@
                 let [startTime, endTime = new Date(nowTime)] = this.exportTime
                 startTime = startTime || new Date(endTime - 3600 * 1000 * 24 * 30)
                 const params = new URLSearchParams({
-                    projectId: this.projectId,
-                    id: this.planId,
+                    projectId: this.scanPlan.projectId,
+                    id: this.scanPlan.id,
                     ...(this.exportStatus === 'ALL'
                         ? {}
                         : {
@@ -210,7 +227,7 @@
                     startTime: startTime.toISOString(),
                     endTime: endTime.toISOString()
                 })
-                const url = `/web/scanner/api/scan/plan/export?${params.toString()}`
+                const url = `/web/analyst/api/scan/plan/export?${params.toString()}`
                 window.open(url, '_self')
             }
         }

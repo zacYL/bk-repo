@@ -75,6 +75,7 @@ import java.util.concurrent.TimeUnit
 /**
  * 远程仓库抽象逻辑
  */
+@Suppress("TooManyFunctions")
 abstract class RemoteRepository : AbstractArtifactRepository() {
 
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
@@ -164,11 +165,28 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
         val httpClient = createHttpClient(remoteConfiguration)
         val downloadUri = createRemoteDownloadUrl(context)
         val request = Request.Builder().url(downloadUri).build()
-        val response = httpClient.newCall(request).execute()
-        return if (checkResponse(response)) {
-            onQueryResponse(context, response)
-        } else {
+        return try {
+            val response = httpClient.newCall(request).execute()
+            if (checkQueryResponse(response)) {
+                onQueryResponse(context, response)
+            } else null
+        } catch (e: Exception) {
+            logger.warn("Failed to request or resolve response: ${e.stackTraceToString()}")
             null
+        }
+    }
+
+    /**
+     *  根据远程仓库配置获取响应
+     */
+    fun getResponse(remoteConfiguration: RemoteConfiguration): Response {
+        with(remoteConfiguration) {
+            val httpClient = createHttpClient(remoteConfiguration)
+            val request = Request.Builder().url(url)
+                .removeHeader("User-Agent")
+                .addHeader("User-Agent", "${UUID.randomUUID()}")
+                .build()
+            return httpClient.newCall(request).execute()
         }
     }
 
@@ -196,7 +214,13 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
             if (logger.isDebugEnabled) {
                 logger.debug("Cached remote artifact[${context.repositoryDetail}] is hit.")
             }
-            ArtifactResource(this, context.artifactInfo.getResponseName(), cacheNode, ArtifactChannel.PROXY)
+            ArtifactResource(
+                this,
+                context.artifactInfo.getResponseName(),
+                cacheNode,
+                ArtifactChannel.PROXY,
+                context.useDisposition
+            )
         }
     }
 
@@ -241,7 +265,13 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
         val size = artifactFile.getSize()
         val artifactStream = artifactFile.getInputStream().artifactStream(Range.full(size))
         val node = cacheArtifactFile(context, artifactFile)
-        return ArtifactResource(artifactStream, context.artifactInfo.getResponseName(), node, ArtifactChannel.PROXY)
+        return ArtifactResource(
+            artifactStream,
+            context.artifactInfo.getResponseName(),
+            node,
+            ArtifactChannel.PROXY,
+            context.useDisposition
+        )
     }
 
     /**
@@ -348,6 +378,17 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
     protected fun checkResponse(response: Response): Boolean {
         if (!response.isSuccessful) {
             logger.warn("Download artifact from remote failed: [${response.code()}]")
+            return false
+        }
+        return true
+    }
+
+    /**
+     * 检查查询响应
+     */
+    open fun checkQueryResponse(response: Response): Boolean {
+        if (!response.isSuccessful) {
+            logger.warn("Query artifact info from remote failed: [${response.code()}]")
             return false
         }
         return true

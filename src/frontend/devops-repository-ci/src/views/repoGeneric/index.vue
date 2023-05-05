@@ -61,7 +61,7 @@
                         @enter="searchFile"
                         @clear="searchFile">
                     </bk-input>
-                    <breadcrumb v-else :list="breadcrumb"></breadcrumb>
+                    <breadcrumb v-else :list="breadcrumb" omit-middle></breadcrumb>
                     <div class="repo-generic-actions bk-button-group">
                         <bk-button
                             v-if="multiSelect.length"
@@ -152,7 +152,7 @@
                                             { clickEvent: () => handlerShare(row), label: $t('share') },
                                             isEnterprise
                                                 && genericScanFileTypes.includes(row.name.replace(/^.+\.([^.]+)$/, '$1'))
-                                                && { clickEvent: () => handlerScan(row), label: '安全扫描' }
+                                                && { clickEvent: () => handlerScan(row), label: '扫描制品' }
                                         ] : []),
                                         ...(row.folder ? [
                                             { clickEvent: () => handlerShare(row), label: $t('share') }
@@ -169,6 +169,7 @@
                     class="p10"
                     size="small"
                     align="right"
+                    show-total-count
                     @change="current => handlerPaginationChange({ current })"
                     @limit-change="limit => handlerPaginationChange({ limit })"
                     :current.sync="pagination.current"
@@ -243,7 +244,8 @@
                     current: 1,
                     limit: 20,
                     limitList: [10, 20, 40]
-                }
+                },
+                debounceClickTreeNode: null
             }
         },
         computed: {
@@ -311,6 +313,7 @@
                     this.itemClickHandler(this.selectedTreeNode)
                 }
             }))
+            this.debounceClickTreeNode = debounce(this.clickTreeNodeHandler, 100)
         },
         beforeDestroy () {
             window.repositoryVue.$off('upload-refresh')
@@ -415,6 +418,9 @@
             },
             // 获取中间列表数据
             getArtifactories () {
+                if (!this.repoName || !this.projectId) {
+                    return
+                }
                 this.isLoading = true
                 this.getArtifactoryList({
                     projectId: this.projectId,
@@ -465,8 +471,10 @@
             },
             // 树组件选中文件夹
             itemClickHandler (node) {
+                this.debounceClickTreeNode(node)
+            },
+            clickTreeNodeHandler (node) {
                 this.selectedTreeNode = node
-
                 this.handlerPaginationChange()
                 // 更新已展开文件夹数据
                 const reg = new RegExp(`^${node.roadMap}`)
@@ -533,7 +541,7 @@
             updateGenericTreeNode (item) {
                 this.$set(item, 'loading', true)
                 const name = item.roadMap.split(',').slice(0, 1)[0]
-                return debounce(this.getFolderList({
+                return this.getFolderList({
                     projectId: this.projectId,
                     repoName: name,
                     fullPath: item.fullPath,
@@ -551,7 +559,7 @@
                     })
                 }).finally(() => {
                     this.$set(item, 'loading', false)
-                }))
+                })
             },
             // 双击table打开文件夹
             openFolder (row) {
@@ -599,7 +607,7 @@
                 this.$refs.genericFormDialog.setData({
                     show: true,
                     loading: false,
-                    title: '安全扫描',
+                    title: '扫描制品',
                     type: 'scan',
                     id: '',
                     name,
@@ -842,7 +850,7 @@
         }
     }
     .repo-generic-main {
-        height: calc(100% - 100px);
+        height: calc(100% - 70px);
         .repo-generic-side {
             height: 100%;
             overflow: hidden;
@@ -872,4 +880,5 @@
 ::v-deep .bk-table-row.selected-row {
     background-color: var(--bgHoverColor);
 }
+
 </style>

@@ -3,6 +3,7 @@ body {
     .bk-page.bk-page-small {
         display: flex;
         align-items: center;
+        justify-content: space-between;
         margin-top: -1px;
         border-top: 1px solid var(--borderColor);
         .bk-page-total-count-left,
@@ -15,6 +16,9 @@ body {
             .bk-select {
                 margin: 0 10px;
             }
+        }
+        .bk-page-count {
+            margin-right: auto;
         }
         .bk-page-list {
             flex: 1;
@@ -75,8 +79,14 @@ body {
             margin: 0;
             font-size: 20px;
         }
+        .bk-breadcrumb-item-inner{
+            max-width: 200px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
         &:last-child .bk-breadcrumb-item-inner.is-link {
-            cursor: initial;
+            cursor: initial;    
         }
     }
     /* 字体颜色重置 */
@@ -147,6 +157,7 @@ body {
     .bk-breadcrumb,
     .bk-button,
     .bk-button-text,
+    .bk-link .bk-link-text,
     .bk-form-radio {
         font-size: 12px;
     }

@@ -95,9 +95,18 @@
                             </bk-form-item>
                             <bk-form-item label="文件暂存时间" :rules="genericRules.reserveDays"
                                 :property="`rules.${index}.reserveDays`" error-display-type="normal">
-                                <bk-input class="w250" type="number"
+                                <!-- rule.rules.length 表明当前设置的保留规则的数量 -->
+                                <!-- 当设置保留规则为全部时，为空对象，经过下方过滤之后会去除空对象，所以如果保留规则设置的存在全部，遍历之后的数量会和之前的数量不一致 -->
+                                <!-- rule.rules.filter(v => Object.keys(v).length).length 表明当前设置的保留规则去除全部(保留规则为全部)的数量 -->
+                                <bk-input
+                                    class="w250"
+                                    type="number"
                                     :max="maxReserveDay"
-                                    :min="1" :precision="0" v-model="rule.reserveDays" :disabled="!config.autoClean"></bk-input>
+                                    :min="1"
+                                    :precision="0"
+                                    v-model="rule.reserveDays"
+                                    :disabled="!config.autoClean || rule.rules.length !== rule.rules.filter(v => Object.keys(v).length).length">
+                                </bk-input>
                                 <span class="ml10 mr10">天</span>
                             </bk-form-item>
                             <bk-form-item>
@@ -250,7 +259,6 @@
                                     }
                                     return target
                                 })
-
                             }
                         })
                     } else {

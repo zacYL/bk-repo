@@ -222,7 +222,7 @@ export default {
                     title: '配置依赖源地址',
                     main: [
                         {
-                            subTitle: '1、全局配置，将下列配置添加到conf/setting.xml文件中',
+                            subTitle: this.noShowOption ? '1、全局配置，将下列配置添加到conf/setting.xml文件中' : '1、全局配置，将下列配置添加到conf/setting.xml文件中，推送制品无需添加',
                             codeList: [
                                 '<mirror>',
                                 `       <id>${this.projectId}-${this.repoName}</id>`,

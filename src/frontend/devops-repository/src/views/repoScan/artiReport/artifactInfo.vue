@@ -10,10 +10,11 @@
                 <span class="ml20">{{ item.value }}</span>
             </div>
         </div>
-        <div v-if="subtaskOverview.qualityRedLine !== null" class="arti-quality">
+        <div class="arti-quality">
             <div class="flex-align-center">
                 <span class="mr20" style="color:var(--fontSubsidiaryColor);">质量规则</span>
-                <span v-if="subtaskOverview.qualityRedLine" class="repo-tag SUCCESS">通过</span>
+                <span v-if="subtaskOverview.qualityRedLine === null" class="repo-tag INIT">未设置</span>
+                <span v-else-if="subtaskOverview.qualityRedLine" class="repo-tag SUCCESS">通过</span>
                 <span v-else class="repo-tag FAILED">不通过</span>
             </div>
             <div v-for="item in qualityRules" :key="item">{{ item }}</div>

@@ -8,6 +8,7 @@ import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.query.model.Sort
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
+import com.tencent.bkrepo.maven.constants.PACKAGE_SUFFIX_REGEX
 import com.tencent.bkrepo.maven.exception.MavenArtifactNotFoundException
 import com.tencent.bkrepo.maven.exception.MavenBadRequestException
 import com.tencent.bkrepo.maven.pojo.MavenDependency
@@ -29,6 +30,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.util.regex.Pattern
 
 @Service
 class MavenExtService(
@@ -138,11 +140,18 @@ class MavenExtService(
         // 先找到制品包信息
         val packageVersion = packageClient.findVersionByName(projectId, repoName, packageKey, version).data
             ?: throw MavenArtifactNotFoundException("")
+        val type = packageVersion.metadata["packaging"] as String? ?: run {
+            val matcher = Pattern.compile(PACKAGE_SUFFIX_REGEX).matcher(packageVersion.contentPath!!)
+            require(matcher.matches()) {
+                "Invalid artifact file format [${packageVersion.contentPath}] in $projectId/$repoName"
+            }
+            matcher.group(2)
+        }
         val mavenDependency = MavenDependency(
             groupId = packageVersion.metadata["groupId"] as String,
             artifactId = packageVersion.metadata["artifactId"] as String,
             version = packageVersion.metadata["version"] as String,
-            type = packageVersion.metadata["packaging"] as String,
+            type = type,
             classifier = packageVersion.metadata["classifier"] as? String,
             scope = null,
             optional = null

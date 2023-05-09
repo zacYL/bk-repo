@@ -2,6 +2,7 @@
     <bk-form class="clean-config-container" :label-width="120" :model="config" :rules="rules" ref="cleanForm">
         <bk-form-item label="自动清理">
             <bk-switcher v-model="config.autoClean" size="small" theme="primary" @change="clearError"></bk-switcher>
+            <span class="ml20">开启自动清理后，每日定时将仓库内不符合下方保留规则的制品/文件删除。</span>
         </bk-form-item>
         <bk-form-item v-if="repoType !== 'generic'" label="最少保留版本" required property="reserveVersions" error-display-type="normal">
             <bk-input class="w250" v-model="config.reserveVersions" :disabled="!config.autoClean"></bk-input>
@@ -10,7 +11,7 @@
         <bk-form-item v-if="repoType !== 'generic'" label="最少保留时间(天)" required property="reserveDays" error-display-type="normal">
             <bk-input class="w250" v-model="config.reserveDays" :disabled="!config.autoClean"></bk-input>
         </bk-form-item>
-        <bk-form-item :label="repoType === 'generic' ? '清理机制' : '保留规则'">
+        <bk-form-item :label="repoType === 'generic' ? '保留机制' : '保留规则'">
             <template v-if="repoType !== 'generic'">
                 <bk-button :disabled="!config.autoClean" icon="plus" @click="addRule()">添加规则</bk-button>
                 <div class="form-tip">
@@ -95,9 +96,18 @@
                             </bk-form-item>
                             <bk-form-item label="文件暂存时间" :rules="genericRules.reserveDays"
                                 :property="`rules.${index}.reserveDays`" error-display-type="normal">
-                                <bk-input class="w250" type="number"
+                                <!-- rule.rules.length 表明当前设置的保留规则的数量 -->
+                                <!-- 当设置保留规则为全部时，为空对象，经过下方过滤之后会去除空对象，所以如果保留规则设置的存在全部，遍历之后的数量会和之前的数量不一致 -->
+                                <!-- rule.rules.filter(v => Object.keys(v).length).length 表明当前设置的保留规则去除全部(保留规则为全部)的数量 -->
+                                <bk-input
+                                    class="w250"
+                                    type="number"
                                     :max="maxReserveDay"
-                                    :min="1" :precision="0" v-model="rule.reserveDays" :disabled="!config.autoClean"></bk-input>
+                                    :min="1"
+                                    :precision="0"
+                                    v-model="rule.reserveDays"
+                                    :disabled="!config.autoClean || rule.rules.length !== rule.rules.filter(v => Object.keys(v).length).length">
+                                </bk-input>
                                 <span class="ml10 mr10">天</span>
                             </bk-form-item>
                             <bk-form-item>
@@ -250,7 +260,6 @@
                                     }
                                     return target
                                 })
-
                             }
                         })
                     } else {
@@ -261,7 +270,7 @@
                             rule = { rules: [] }
                         } = val.configuration.cleanStrategy
                         this.config = { ...this.config, autoClean, reserveVersions, reserveDays }
-                        const rules = rule.rules.find(r => r.rules)?.rules || []
+                        const rules = rule?.rules?.find(r => r.rules)?.rules || []
                         this.config.rules = rules.map(r => {
                             return r.rules?.reduce((target, item) => {
                                 target[item.field] = {

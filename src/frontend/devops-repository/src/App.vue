@@ -114,7 +114,7 @@
         flex-direction:column;
         align-items: center;
         justify-content: center;
-        height: 100%;
+        height: calc(100% - 50px);
     }
     .empty-project-title{
         font-weight: bold;

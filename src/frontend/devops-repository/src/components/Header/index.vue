@@ -44,7 +44,7 @@
         computed: {
             ...mapState(['projectList']),
             projectId () {
-                return this.$route.params.projectId
+                return this.projectList.length === 0 ? '' : this.$route.params.projectId || ''
             },
             title () {
                 return document.title

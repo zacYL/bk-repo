@@ -18,6 +18,7 @@ import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.time.format.DateTimeFormatter
 
 @Service
 class NugetWebServiceImpl(
@@ -71,9 +72,9 @@ class NugetWebServiceImpl(
                     repoName,
                     packageVersion.downloads,
                     createdBy,
-                    createdDate,
+                    packageVersion.createdDate.format(DateTimeFormatter.ISO_DATE_TIME),
                     lastModifiedBy,
-                    lastModifiedDate
+                    packageVersion.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME)
                 )
             }
         }

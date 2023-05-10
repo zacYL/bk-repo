@@ -74,6 +74,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.io.BufferedReader
 import java.io.ByteArrayInputStream
 import java.io.InputStreamReader
+import java.time.format.DateTimeFormatter
 
 @Component
 class ComposerLocalRepository(private val stageClient: StageClient) : LocalRepository() {
@@ -513,13 +514,20 @@ class ComposerLocalRepository(private val stageClient: StageClient) : LocalRepos
             val packageVersion = packageClient.findVersionByName(
                 projectId, repoName, packageKey, version
             ).data
+            val createdDate = packageVersion?.createdDate?.format(DateTimeFormatter.ISO_DATE_TIME)
+                ?: jarNode.createdDate
+            val lastModifiedDate = packageVersion?.lastModifiedDate?.format(DateTimeFormatter.ISO_DATE_TIME)
+                ?: jarNode.lastModifiedDate
             val count = packageVersion?.downloads ?: 0
             val composerArtifactBasic = Basic(
                 name,
                 version,
-                jarNode.size, jarNode.fullPath,
-                jarNode.createdBy, jarNode.createdDate,
-                jarNode.lastModifiedBy, jarNode.lastModifiedDate,
+                jarNode.size,
+                jarNode.fullPath,
+                jarNode.createdBy,
+                createdDate,
+                jarNode.lastModifiedBy,
+                lastModifiedDate,
                 count,
                 jarNode.sha256,
                 jarNode.md5,

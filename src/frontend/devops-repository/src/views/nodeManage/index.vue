@@ -10,7 +10,7 @@
                     placeholder="节点名称"
                     right-icon="bk-icon icon-search">
                 </bk-input>
-                <bk-select
+                <!-- <bk-select
                     class="ml10 w250"
                     v-model="search.type"
                     placeholder="节点类型">
@@ -20,7 +20,7 @@
                         :id="type"
                         :name="label">
                     </bk-option>
-                </bk-select>
+                </bk-select> -->
             </div>
         </div>
         <bk-table

@@ -128,6 +128,11 @@
                             {{ userList[row.lastModifiedBy] ? userList[row.lastModifiedBy].name : row.lastModifiedBy }}
                         </template>
                     </bk-table-column>
+                    <bk-table-column :label="$t('createdBy')" width="90" show-overflow-tooltip>
+                        <template #default="{ row }">
+                            {{ userList[row.createdBy] ? userList[row.createdBy].name : row.createdBy }}
+                        </template>
+                    </bk-table-column>
 
                     <bk-table-column :label="$t('size')" width="90" show-overflow-tooltip>
                         <template #default="{ row }">

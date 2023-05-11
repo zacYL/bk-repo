@@ -66,8 +66,8 @@ export default {
                     pageSize: 10000
                 },
                 sort: {
-                    properties: [isPipeline ? 'lastModifiedDate' : 'name'],
-                    direction: isPipeline ? 'DESC' : 'ASC'
+                    properties: ['lastModifiedDate'],
+                    direction: 'DESC'
                 },
                 rule: {
                     rules: [

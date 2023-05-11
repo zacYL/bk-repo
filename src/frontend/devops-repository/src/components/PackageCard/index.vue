@@ -25,7 +25,7 @@
                             readonly>
                         </scan-tag>
                     </div>
-                    <div class="card-metadata" :title="`最后修改：${formatDate(cardData.lastModifiedDate)}`"></div>
+                    <div class="card-metadata" :title="$t('lastModifiedDate') + `：${formatDate(cardData.lastModifiedDate)}`"></div>
                     <div class="card-metadata" :title="`版本数：${cardData.versions}`"></div>
                     <div class="card-metadata" :title="`下载统计：${cardData.downloads}`"></div>
                     <div v-if="storeType === 'virtual'" class="card-metadata" :title="`仓库来源：${cardData.repoName}`"></div>
@@ -33,7 +33,7 @@
                 <template v-else>
                     <div class="card-metadata" :title="`所属仓库：${cardData.repoName}`"></div>
                     <div class="card-metadata" :title="`文件大小：${convertFileSize(cardData.size)}`"></div>
-                    <div class="card-metadata" :title="`最后修改：${formatDate(cardData.lastModifiedDate)}`"></div>
+                    <div class="card-metadata" :title="$t('lastModifiedDate') + `：${formatDate(cardData.lastModifiedDate)}`"></div>
                 </template>
             </div>
         </div>

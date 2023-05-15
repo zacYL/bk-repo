@@ -67,7 +67,7 @@ class UserDepartmentController {
         return ResponseBuilder.success(departmentService.listDepartmentById(userId, departmentId, projectId))
     }
 
-    @ApiOperation("查询项目下有权限的部门列表: CI 项目下有权限的部门")
+    @ApiOperation("查询项目下有权限的部门列表-CI 项目下有权限的部门")
     @GetMapping("/list/{projectId}")
     fun listDepartmentByProjectId(
         @RequestAttribute("userId") userId: String,

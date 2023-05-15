@@ -523,7 +523,7 @@
     {
       "code": "GET__api_department_list_{projectId}",
       "name": "GET__api_department_list_{projectId}",
-      "desc": "查询项目下有权限的部门列表: CI 项目下有权限的部门",
+      "desc": "查询项目下有权限的部门列表-CI 项目下有权限的部门",
       "path": "/api/department/list/{projectId}",
       "method": "GET",
       "headers": [],
@@ -532,7 +532,7 @@
       "targetMethod": "GET",
       "timeout": 30,
       "retryTimes": 10,
-      "docName": "查询项目下有权限的部门列表: CI 项目下有权限的部门_1098f677.md"
+      "docName": "查询项目下有权限的部门列表-CI 项目下有权限的部门_1098f677.md"
     },
     {
       "code": "POST__api_department_listByIds",

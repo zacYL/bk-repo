@@ -12,10 +12,10 @@
                 <span>{{ currentProject.id }}</span>
             </bk-form-item>
             <bk-form-item label="项目名称">
-                <span>{{ currentProject.name }}</span>
+                <span class="break-all">{{ currentProject.name }}</span>
             </bk-form-item>
             <bk-form-item label="项目描述">
-                <span>{{ currentProject.description }}</span>
+                <span class="break-all">{{ currentProject.description }}</span>
             </bk-form-item>
             <bk-form-item>
                 <bk-button theme="primary" @click="showProjectDialog">修改</bk-button>

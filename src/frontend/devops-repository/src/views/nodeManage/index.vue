@@ -39,10 +39,10 @@
                 </template>
             </bk-table-column>
             <bk-table-column label="节点名称" prop="name" width="250" show-overflow-tooltip></bk-table-column>
-            <bk-table-column label="节点类型" width="120">
+            <bk-table-column label="节点类型" width="120" show-overflow-tooltip>
                 <template #default="{ row }">{{ nodeTypeEnum[row.type] }}</template>
             </bk-table-column>
-            <bk-table-column :label="$t('address')">
+            <bk-table-column :label="$t('address')" show-overflow-tooltip>
                 <template #default="{ row }">
                     <a class="hover-btn" :href="row.url" target="_blank">{{ row.url }}</a>
                 </template>

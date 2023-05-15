@@ -2,9 +2,9 @@
     <div class="proxy-manage-container" v-bkloading="{ isLoading }">
         <div class="mt10 flex-between-center">
             <div class="btn-group">
-                <bk-button class="ml20" theme="primary" icon="plus" @click="handleClickShowDialog('add')">添加</bk-button>
-                <bk-button class="ml20" @click="handleClickShowDialog('api')">API调用</bk-button>
-                <bk-button class="ml20" @click="handleClickShowDialog('status')">启用状态</bk-button>
+                <bk-button class="ml10" theme="primary" icon="plus" @click="handleClickShowDialog('add')">添加</bk-button>
+                <bk-button class="ml10" @click="handleClickShowDialog('api')">API调用</bk-button>
+                <bk-button class="ml10" @click="handleClickShowDialog('status')">启用状态</bk-button>
             </div>
             <!-- 筛选框 -->
             <div class="mr20 flex-align-center">
@@ -41,11 +41,11 @@
             <template #empty>
                 <empty-data :is-loading="isLoading"></empty-data>
             </template>
-            <bk-table-column label="制品名称" prop="packageKey" min-width="300px" />
-            <bk-table-column label="版本" v-slot="{ row }">
+            <bk-table-column label="制品名称" prop="packageKey" min-width="300px" show-overflow-tooltip />
+            <bk-table-column label="版本" v-slot="{ row }" show-overflow-tooltip>
                 <div>{{ row.versions.join(', ') }}</div>
             </bk-table-column>
-            <bk-table-column label="制品类型" prop="type" width="200px" />
+            <bk-table-column label="制品类型" prop="type" width="120px" />
             <bk-table-column label="操作" v-slot="{ row }" width="150px">
                 <bk-button class="mr10" theme="primary" text @click="handleClickShowDialog('edit', row)">编辑</bk-button>
                 <bk-button theme="primary" text @click="handleClickDelArtifact(row)">删除</bk-button>

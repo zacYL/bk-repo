@@ -48,7 +48,7 @@
                 </template>
             </bk-table-column>
             <bk-table-column :label="$t('account')" prop="username" width="120" show-overflow-tooltip></bk-table-column>
-            <bk-table-column :label="$t('createdDate')" width="200">
+            <bk-table-column :label="$t('createdDate')" width="200" show-overflow-tooltip>
                 <template #default="{ row }">{{formatDate(row.createdDate)}}</template>
             </bk-table-column>
             <bk-table-column :label="$t('operation')" width="70">

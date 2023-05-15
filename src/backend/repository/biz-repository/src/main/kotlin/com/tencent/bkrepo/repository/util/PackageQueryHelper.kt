@@ -79,7 +79,7 @@ object PackageQueryHelper {
 
     fun versionListQuery(packageId: String, name: String? = null, stageTag: List<String>? = null): Query {
         return Query(versionListCriteria(packageId, name, stageTag))
-            .with(Sort.by(Sort.Order(Sort.Direction.DESC, TPackageVersion::ordinal.name)))
+            .with(Sort.by(Sort.Order(Sort.Direction.DESC, TPackageVersion::createdDate.name)))
     }
 
     fun versionLatestQuery(packageId: String): Query {

@@ -40,21 +40,21 @@
             <template #empty>
                 <empty-data :is-loading="isLoading" :search="Boolean(isSearching)"></empty-data>
             </template>
-            <bk-table-column :label="$t('account')" prop="userId"></bk-table-column>
-            <bk-table-column :label="$t('chineseName')" prop="name"></bk-table-column>
-            <bk-table-column :label="$t('email')" prop="email"></bk-table-column>
-            <bk-table-column label="电话" prop="phone">
+            <bk-table-column :label="$t('account')" prop="userId" show-overflow-tooltip></bk-table-column>
+            <bk-table-column :label="$t('chineseName')" prop="name" show-overflow-tooltip></bk-table-column>
+            <bk-table-column :label="$t('email')" prop="email" show-overflow-tooltip></bk-table-column>
+            <bk-table-column label="电话" prop="phone" show-overflow-tooltip>
                 <template #default="{ row }">{{row.phone || '/'}}</template>
             </bk-table-column>
-            <bk-table-column :label="$t('createdDate')">
+            <bk-table-column :label="$t('createdDate')" show-overflow-tooltip>
                 <template #default="{ row }">{{formatDate(row.createdDate)}}</template>
             </bk-table-column>
-            <bk-table-column label="系统管理员">
+            <bk-table-column label="系统管理员" width="90">
                 <template #default="{ row }">
                     <bk-switcher class="m5" v-model="row.admin" size="small" theme="primary" @change="changeAdminStatus(row)"></bk-switcher>
                 </template>
             </bk-table-column>
-            <bk-table-column label="启用账号">
+            <bk-table-column label="启用账号" width="80">
                 <template #default="{ row }">
                     <bk-switcher class="m5" :value="!row.locked" size="small" theme="primary" @change="changeUserStatus(row)"></bk-switcher>
                 </template>

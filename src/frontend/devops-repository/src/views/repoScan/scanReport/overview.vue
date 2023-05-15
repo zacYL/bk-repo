@@ -92,7 +92,7 @@
         data () {
             return {
                 shortcuts,
-                filterTime: [new Date(nowTime - 3600 * 1000 * 24 * 30), new Date(nowTime)],
+                filterTime: [],
                 showExportDialog: false,
                 exportTime: [new Date(nowTime - 3600 * 1000 * 24 * 30), new Date(nowTime)],
                 exportStatus: 'ALL',

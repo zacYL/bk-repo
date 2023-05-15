@@ -19,8 +19,8 @@
             <template #empty>
                 <empty-data :is-loading="isLoading"></empty-data>
             </template>
-            <bk-table-column label="漏洞包名称" prop="name"></bk-table-column>
-            <bk-table-column label="关联扫描器">
+            <bk-table-column label="漏洞包名称" prop="name" show-overflow-tooltip></bk-table-column>
+            <bk-table-column label="关联扫描器" show-overflow-tooltip>
                 <template #default="{ row }">{{ getScannerName(row) }}</template>
             </bk-table-column>
             <bk-table-column :label="$t('lastModifiedDate')" prop="lastModifiedDate" width="200">

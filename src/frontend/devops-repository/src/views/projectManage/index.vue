@@ -30,7 +30,7 @@
             <bk-table-column label="项目描述" show-overflow-tooltip>
                 <template #default="{ row }">{{row.description || '/'}}</template>
             </bk-table-column>
-            <bk-table-column :label="$t('createdDate')">
+            <bk-table-column :label="$t('createdDate')" show-overflow-tooltip>
                 <template #default="{ row }">{{ formatDate(row.createdDate) }}</template>
             </bk-table-column>
             <bk-table-column :label="$t('createdBy')" show-overflow-tooltip>

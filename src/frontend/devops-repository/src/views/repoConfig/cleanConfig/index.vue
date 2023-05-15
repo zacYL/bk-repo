@@ -2,7 +2,7 @@
     <bk-form class="clean-config-container" :label-width="120" :model="config" :rules="rules" ref="cleanForm">
         <bk-form-item label="自动清理">
             <bk-switcher v-model="config.autoClean" size="small" theme="primary" @change="clearError"></bk-switcher>
-            <span class="ml20">开启自动清理后，每日定时将仓库内不符合下方保留规则的制品/文件删除。</span>
+            <span class="auto-clean-info">开启自动清理后，每日定时将仓库内不符合下方保留规则的制品/文件删除。</span>
         </bk-form-item>
         <bk-form-item v-if="repoType !== 'generic'" label="最少保留版本" required property="reserveVersions" error-display-type="normal">
             <bk-input class="w250" v-model="config.reserveVersions" :disabled="!config.autoClean"></bk-input>
@@ -55,10 +55,10 @@
                                 <bk-popover :disabled="!config.autoClean || index === 0"
                                     placement="top-end" trigger="click" theme="light"
                                     ref="genericPopoverRefs"
-                                    :max-width="300" :width="300"
+                                    :max-width="250" :width="250"
                                     :arrow="false" flip-on-update
                                     :distance="0">
-                                    <bk-input class="generic-input-common"
+                                    <bk-input class="w250"
                                         readonly placeholder="请选择文件目录"
                                         :disabled="!config.autoClean || index === 0"
                                         right-icon="bk-icon icon-angle-down"
@@ -100,7 +100,7 @@
                                 <!-- 当设置保留规则为全部时，为空对象，经过下方过滤之后会去除空对象，所以如果保留规则设置的存在全部，遍历之后的数量会和之前的数量不一致 -->
                                 <!-- rule.rules.filter(v => Object.keys(v).length).length 表明当前设置的保留规则去除全部(保留规则为全部)的数量 -->
                                 <bk-input
-                                    class="w250"
+                                    class="reserve-time-input"
                                     type="number"
                                     :max="maxReserveDay"
                                     :min="1"
@@ -574,9 +574,6 @@
 .generic-rule-icon{
     margin: 0 5px 0 -15px;
 }
-.generic-input-common{
-    width: 300px;
-}
 .generic-rule-tree{
     max-height: 200px;
     overflow-y: auto;
@@ -584,6 +581,13 @@
 .generic-rule-tree-btn{
     float: right;
     margin:0 10px 0 0;
+}
+.auto-clean-info{
+    vertical-align: middle;
+    margin-left: 70px;
+}
+.reserve-time-input{
+    width: 80px;
 }
 ::v-deep .bk-form-input{
     white-space: nowrap;

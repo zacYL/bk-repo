@@ -79,9 +79,10 @@ class UserScannerController @Autowired constructor(
     @GetMapping("/base")
     fun listBaseInf(
         @RequestParam(required = false) packageType: String? = null,
-        @RequestParam(required = false) scanType: String? = null
+        @RequestParam(required = false) scanType: String? = null,
+        @RequestParam(required = false) scannerType: String? = null
     ): Response<List<ScannerBase>> {
-        val scannerBaseList = scannerService.find(packageType, scanType)
+        val scannerBaseList = scannerService.find(packageType, scanType, scannerType)
         return ResponseBuilder.success(scannerBaseList.map {
             ScannerBase(
                 it.name, it.type, it.description, it.supportFileNameExt, it.supportPackageTypes, it.supportScanTypes

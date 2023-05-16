@@ -95,7 +95,7 @@
             <bk-table-column :label="$t('createdDate')" width="150">
                 <template #default="{ row }">{{ formatDate(row.createdDate) }}</template>
             </bk-table-column>
-            <bk-table-column :label="$t('createdBy')" width="90">
+            <bk-table-column :label="$t('createdBy')" width="100" show-overflow-tooltip>
                 <template #default="{ row }">
                     {{ userList[row.createdBy] ? userList[row.createdBy].name : row.createdBy }}
                 </template>

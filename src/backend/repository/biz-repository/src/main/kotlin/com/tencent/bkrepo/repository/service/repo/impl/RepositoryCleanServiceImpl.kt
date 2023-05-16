@@ -355,8 +355,8 @@ class RepositoryCleanServiceImpl(
         reserveDays: Long
     ): List<PackageVersion> {
         val filterVersions: MutableList<PackageVersion> = mutableListOf()
-        // 根据 【版本序列号】 降序排序
-        val sortedByDesc = versions.sortedByDescending { it.ordinal }
+        // 根据 【版本上传时间】 降序排序
+        val sortedByDesc = versions.sortedByDescending { it.createdDate }
         // 截取超过【保留版本数】的版本，进行保留天数过滤
         val reserveDaysFilter =
             sortedByDesc.subList(reserveVersions.toInt(), versions.size).sortedByDescending { it.recentlyUseDate }

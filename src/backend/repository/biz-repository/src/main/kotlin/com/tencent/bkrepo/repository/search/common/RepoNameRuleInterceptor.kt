@@ -34,6 +34,8 @@ package com.tencent.bkrepo.repository.search.common
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.configuration.virtual.VirtualConfiguration
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.interceptor.QueryContext
 import com.tencent.bkrepo.common.query.interceptor.QueryRuleInterceptor
@@ -136,10 +138,7 @@ class RepoNameRuleInterceptor(
             repositoryService.listRepo(projectId = projectId)
         }?.map { it.name }?.filter { repo -> repo !in (value.map { it.toString() }) }
         return if (repoNameList.isNullOrEmpty()) {
-            throw PermissionException(
-                "${SecurityUtils.getUserId()} hasn't any PermissionRepo in project [$projectId], " +
-                    "or project [$projectId] hasn't any repo"
-            )
+            throw ErrorCodeException(CommonMessageCode.REPO_PERMISSION_DENIED, SecurityUtils.getUserId(), projectId)
         } else if (repoNameList.size == 1) {
             Rule.QueryRule(NodeInfo::repoName.name, repoNameList.first(), OperationType.EQ)
         } else {

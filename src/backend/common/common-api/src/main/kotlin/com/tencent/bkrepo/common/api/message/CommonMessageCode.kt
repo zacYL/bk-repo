@@ -60,7 +60,8 @@ enum class CommonMessageCode(private val key: String) : MessageCode {
     LICENSE_ENTERPRISE_UNSUPPORTED("license.enterprise.unsupported"),
     PARAMETER_INCOMPLETE("request.parameter.incomplete"),
     PACKAGEKEY_INVALID("packageKey.invalid"),
-    REPO_CLEAN_PATH_EXISTED("repo.clean.path.repeat")
+    REPO_CLEAN_PATH_EXISTED("repo.clean.path.repeat"),
+    REPO_PERMISSION_DENIED("projcet.repo.permission.denied")
     ;
 
     override fun getBusinessCode() = ordinal + 1

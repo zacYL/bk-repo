@@ -927,34 +927,6 @@
       "docName": "重置用户密码_c4edb913.md"
     },
     {
-      "code": "PATCH__api_user_role_add_{rid}",
-      "name": "PATCH__api_user_role_add_{rid}",
-      "desc": "批量新增用户所属角色",
-      "path": "/api/user/role/add/{rid}",
-      "method": "PATCH",
-      "headers": [],
-      "targetService": "repo-auth",
-      "targetPath": "/api/user/role/add/{rid}",
-      "targetMethod": "PATCH",
-      "timeout": 30,
-      "retryTimes": 10,
-      "docName": "批量新增用户所属角色_05f2cb2f.md"
-    },
-    {
-      "code": "PATCH__api_user_role_delete_{rid}",
-      "name": "PATCH__api_user_role_delete_{rid}",
-      "desc": "批量删除用户所属角色",
-      "path": "/api/user/role/delete/{rid}",
-      "method": "PATCH",
-      "headers": [],
-      "targetService": "repo-auth",
-      "targetPath": "/api/user/role/delete/{rid}",
-      "targetMethod": "PATCH",
-      "timeout": 30,
-      "retryTimes": 10,
-      "docName": "批量删除用户所属角色_4b7f2ac7.md"
-    },
-    {
       "code": "POST__api_user_role_{uid}_{rid}",
       "name": "POST__api_user_role_{uid}_{rid}",
       "desc": "新增用户所属角色",

@@ -84,8 +84,8 @@
             }
         },
         created () {
-            this.getScannerList().then(res => {
-                this.scannerList = res.filter(v => v.type !== 'scancodeToolkit')
+            this.getScannerList({ scannerType: 'standard' }).then(res => {
+                this.scannerList = res
                 this.scannerName = this.scannerList[0]?.name || ''
             })
             this.handlerPaginationChange()

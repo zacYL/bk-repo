@@ -53,6 +53,14 @@ class NodeCpackServiceImpl(
             try {
                 quotaService.decreaseUsedVolume(projectId, repoName, deleteNodesSize)
                 nodeDao.updateMulti(query, NodeQueryHelper.nodeDeleteUpdate(operator))
+                // 批量更新上层目录的修改信息
+                val parentFullPaths = existNodes
+                    .map { PathUtils.toFullPath(PathUtils.resolveParent(it)) }
+                    .distinct()
+                    .filterNot { PathUtils.isRoot(it) }
+                val parentNodeQuery = NodeQueryHelper.nodeQuery(projectId, repoName, parentFullPaths)
+                val parentNodeUpdate = NodeQueryHelper.update(operator)
+                nodeDao.updateMulti(parentNodeQuery, parentNodeUpdate)
                 publishEvent(NodeEventFactory.buildBatchDeletedEvent(projectId, repoName, existNodes, operator))
             } catch (exception: DuplicateKeyException) {
                 logger.warn(

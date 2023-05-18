@@ -60,6 +60,9 @@ open class NodeRenameSupport(
             val node = nodeDao.findNode(projectId, repoName, fullPath)
                 ?: throw ErrorCodeException(ArtifactMessageCode.NODE_NOT_FOUND, fullPath)
             doRename(node, newFullPath, operator)
+            // 更新父目录的最后修改信息
+            val parentFullPath = PathUtils.toFullPath(PathUtils.resolveParent(fullPath))
+            nodeBaseService.updateModifiedInfo(projectId, repoName, parentFullPath, operator)
             publishEvent(buildRenamedEvent(renameRequest))
             logger.info("Rename node [$this] success.")
         }

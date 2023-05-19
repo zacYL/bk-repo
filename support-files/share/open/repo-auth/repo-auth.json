@@ -227,20 +227,6 @@
       "docName": "仓库列表_f17f85d0.md"
     },
     {
-      "code": "GET__api_permission_migrate",
-      "name": "GET__api_permission_migrate",
-      "desc": "migrate",
-      "path": "/api/permission/migrate",
-      "method": "GET",
-      "headers": [],
-      "targetService": "repo-auth",
-      "targetPath": "/api/permission/migrate",
-      "targetMethod": "GET",
-      "timeout": 30,
-      "retryTimes": 10,
-      "docName": "migrate_2433f583.md"
-    },
-    {
       "code": "GET__api_ext-permission",
       "name": "GET__api_ext-permission",
       "desc": "分页查询外部权限",
@@ -297,20 +283,6 @@
       "docName": "删除外部权限_f5dba0b2.md"
     },
     {
-      "code": "GET__info_release",
-      "name": "GET__info_release",
-      "desc": "version",
-      "path": "/info/release",
-      "method": "GET",
-      "headers": [],
-      "targetService": "repo-auth",
-      "targetPath": "/info/release",
-      "targetMethod": "GET",
-      "timeout": 30,
-      "retryTimes": 10,
-      "docName": "version_5ca46d73.md"
-    },
-    {
       "code": "POST__api_key_create",
       "name": "POST__api_key_create",
       "desc": "新增密钥",
@@ -351,34 +323,6 @@
       "timeout": 30,
       "retryTimes": 10,
       "docName": "查询公钥列表_357a4c23.md"
-    },
-    {
-      "code": "POST__notify_mail",
-      "name": "POST__notify_mail",
-      "desc": "mail",
-      "path": "/notify/mail",
-      "method": "POST",
-      "headers": [],
-      "targetService": "repo-auth",
-      "targetPath": "/notify/mail",
-      "targetMethod": "POST",
-      "timeout": 30,
-      "retryTimes": 10,
-      "docName": "mail_06178022.md"
-    },
-    {
-      "code": "POST__notify_mail_user",
-      "name": "POST__notify_mail_user",
-      "desc": "mailUser",
-      "path": "/notify/mail/user",
-      "method": "POST",
-      "headers": [],
-      "targetService": "repo-auth",
-      "targetPath": "/notify/mail/user",
-      "targetMethod": "POST",
-      "timeout": 30,
-      "retryTimes": 10,
-      "docName": "mailUser_c048584c.md"
     },
     {
       "code": "POST__api_oauth_authorize",
@@ -563,20 +507,6 @@
       "docName": "更新权限绑定动作_da4f8833.md"
     },
     {
-      "code": "GET__api_permission_admin",
-      "name": "GET__api_permission_admin",
-      "desc": "isAdmin",
-      "path": "/api/permission/admin",
-      "method": "GET",
-      "headers": [],
-      "targetService": "repo-auth",
-      "targetPath": "/api/permission/admin",
-      "targetMethod": "GET",
-      "timeout": 30,
-      "retryTimes": 10,
-      "docName": "isAdmin_f5bb0407.md"
-    },
-    {
       "code": "PUT__api_permission_department",
       "name": "PUT__api_permission_department",
       "desc": "更新权限绑定部门",
@@ -717,34 +647,6 @@
       "docName": "编辑用户组信息_30662c1a.md"
     },
     {
-      "code": "GET__api_sys_role_list",
-      "name": "GET__api_sys_role_list",
-      "desc": "allRole",
-      "path": "/api/sys/role/list",
-      "method": "GET",
-      "headers": [],
-      "targetService": "repo-auth",
-      "targetPath": "/api/sys/role/list",
-      "targetMethod": "GET",
-      "timeout": 30,
-      "retryTimes": 10,
-      "docName": "allRole_cc8eebbc.md"
-    },
-    {
-      "code": "GET__api_sys_role_list_{projectId}",
-      "name": "GET__api_sys_role_list_{projectId}",
-      "desc": "roleByProjectId",
-      "path": "/api/sys/role/list/{projectId}",
-      "method": "GET",
-      "headers": [],
-      "targetService": "repo-auth",
-      "targetPath": "/api/sys/role/list/{projectId}",
-      "targetMethod": "GET",
-      "timeout": 30,
-      "retryTimes": 10,
-      "docName": "roleByProjectId_4133ecf5.md"
-    },
-    {
       "code": "PUT__api_user_admin_batch_{admin}",
       "name": "PUT__api_user_admin_batch_{admin}",
       "desc": "软件源--批量 添加/删除 管理员",
@@ -757,20 +659,6 @@
       "timeout": 30,
       "retryTimes": 10,
       "docName": "软件源--批量 添加_删除 管理员_a41663a0.md"
-    },
-    {
-      "code": "GET__api_user_admin_{projectId}",
-      "name": "GET__api_user_admin_{projectId}",
-      "desc": "isProjectAdmin",
-      "path": "/api/user/admin/{projectId}",
-      "method": "GET",
-      "headers": [],
-      "targetService": "repo-auth",
-      "targetPath": "/api/user/admin/{projectId}",
-      "targetMethod": "GET",
-      "timeout": 30,
-      "retryTimes": 10,
-      "docName": "isProjectAdmin_e126aa43.md"
     },
     {
       "code": "POST__api_user_batch",
@@ -829,20 +717,6 @@
       "docName": "获取用户信息_ddd12e80.md"
     },
     {
-      "code": "GET__api_user_list",
-      "name": "GET__api_user_list",
-      "desc": "allUser",
-      "path": "/api/user/list",
-      "method": "GET",
-      "headers": [],
-      "targetService": "repo-auth",
-      "targetPath": "/api/user/list",
-      "targetMethod": "GET",
-      "timeout": 30,
-      "retryTimes": 10,
-      "docName": "allUser_e6a6cbb1.md"
-    },
-    {
       "code": "GET__api_user_list_token",
       "name": "GET__api_user_list_token",
       "desc": "查询用户token列表",
@@ -855,20 +729,6 @@
       "timeout": 30,
       "retryTimes": 10,
       "docName": "查询用户token列表_e56910d4.md"
-    },
-    {
-      "code": "GET__api_user_list_{projectId}",
-      "name": "GET__api_user_list_{projectId}",
-      "desc": "userByProjectId",
-      "path": "/api/user/list/{projectId}",
-      "method": "GET",
-      "headers": [],
-      "targetService": "repo-auth",
-      "targetPath": "/api/user/list/{projectId}",
-      "targetMethod": "GET",
-      "timeout": 30,
-      "retryTimes": 10,
-      "docName": "userByProjectId_188e22e0.md"
     },
     {
       "code": "POST__api_user_login",

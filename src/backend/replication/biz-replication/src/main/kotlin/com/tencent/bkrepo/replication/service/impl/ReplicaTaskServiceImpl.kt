@@ -180,6 +180,7 @@ class ReplicaTaskServiceImpl(
                 nextExecutionTime = null,
                 executionTimes = 0L,
                 enabled = enabled,
+                notRecord = notRecord,
                 createdBy = userId,
                 createdDate = LocalDateTime.now(),
                 lastModifiedBy = userId,
@@ -405,7 +406,8 @@ class ReplicaTaskServiceImpl(
                 status = ReplicaStatus.WAITING,
                 description = description,
                 lastModifiedBy = userId,
-                lastModifiedDate = LocalDateTime.now()
+                lastModifiedDate = LocalDateTime.now(),
+                notRecord = notRecord
             )
             // 创建replicaObject
             val replicaObjectList = replicaTaskObjects.map {
@@ -517,6 +519,7 @@ class ReplicaTaskServiceImpl(
                     nextExecutionTime = it.nextExecutionTime,
                     executionTimes = it.executionTimes,
                     enabled = it.enabled,
+                    notRecord = it.notRecord,
                     createdBy = it.createdBy,
                     createdDate = it.createdDate.format(DateTimeFormatter.ISO_DATE_TIME),
                     lastModifiedBy = it.lastModifiedBy,

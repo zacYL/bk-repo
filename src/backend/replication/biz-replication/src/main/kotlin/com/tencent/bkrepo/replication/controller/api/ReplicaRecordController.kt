@@ -32,18 +32,23 @@ import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.security.permission.Principal
 import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
+import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus
+import com.tencent.bkrepo.replication.pojo.record.RecordOverview
 import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordDetail
 import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordDetailListOption
 import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordInfo
 import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordListOption
 import com.tencent.bkrepo.replication.pojo.record.ReplicaTaskRecordInfo
+import com.tencent.bkrepo.replication.pojo.record.request.RecordDetailSearchRequest
 import com.tencent.bkrepo.replication.service.ReplicaRecordService
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 /**
@@ -77,6 +82,17 @@ class ReplicaRecordController(
         return ResponseBuilder.success(replicaRecordService.listRecordsPage(key, option))
     }
 
+    @ApiOperation("删除指定时间范围内的分发任务记录")
+    @DeleteMapping("/delete/{key}")
+    fun deleteRecord(
+        @PathVariable key: String,
+        @RequestParam startTime: String,
+        @RequestParam endTime: String,
+    ): Response<Void> {
+        replicaRecordService.deleteRecord(key, startTime, endTime)
+        return ResponseBuilder.success()
+    }
+
     @ApiOperation("根据recordId查询任务执行日志详情")
     @GetMapping("/detail/list/{recordId}")
     fun listDetailsByRecordId(@PathVariable recordId: String): Response<List<ReplicaRecordDetail>> {
@@ -91,5 +107,22 @@ class ReplicaRecordController(
         option: ReplicaRecordDetailListOption
     ): Response<Page<ReplicaRecordDetail>> {
         return ResponseBuilder.success(replicaRecordService.listRecordDetailPage(recordId, option))
+    }
+
+    @ApiOperation("根据recordId查询任务执行日志详情总览")
+    @GetMapping("/detail/overview/{recordId}")
+    fun recordDetailOverview(
+        @ApiParam(value = "执行记录id", required = true)
+        @PathVariable recordId: String,
+    ): Response<RecordOverview> {
+        return ResponseBuilder.success(replicaRecordService.recordDetailOverview(recordId))
+    }
+
+    @ApiOperation("搜索任务执行日志详情记录")
+    @GetMapping("/detail/search")
+    fun searchRecordDetail(
+        searchRequest: RecordDetailSearchRequest
+    ): Response<Map<ExecutionStatus, Long>> {
+        return ResponseBuilder.success(replicaRecordService.searchRecordDetail(searchRequest))
     }
 }

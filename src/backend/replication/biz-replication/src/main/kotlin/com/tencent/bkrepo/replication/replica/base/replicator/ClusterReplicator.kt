@@ -29,7 +29,6 @@ package com.tencent.bkrepo.replication.replica.base.replicator
 
 import com.tencent.bkrepo.common.artifact.constant.RESERVED_KEY
 import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
-import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.stream.rateLimit
 import com.tencent.bkrepo.replication.config.ReplicationProperties
@@ -219,37 +218,13 @@ class ClusterReplicator(
             // 外部集群仓库没有project/repoName
             if (remoteProjectId.isNullOrBlank() || remoteRepoName.isNullOrBlank()) return null
             val fullPath = "${node.projectId}/${node.repoName}${node.fullPath}"
-            // 节点冲突检查，generic仓库根据 fullPath 和 MD5 同时检查
-            if (localRepoType == RepositoryType.GENERIC) {
-                // md5相同，return true
-                if (artifactReplicaClient!!.checkNodeExistAndMd5(
-                        remoteProjectId,
-                        remoteRepoName,
-                        node.fullPath,
-                        node.md5!!
-                    ).data == true
-                ) {
-                    when (task.setting.conflictStrategy) {
-                        ConflictStrategy.SKIP -> return null
-                        ConflictStrategy.FAST_FAIL -> throw IllegalArgumentException("File[$fullPath] conflict.")
-                        else -> {
-                            // do nothing
-                        }
-                    }
-                }
-            } else {
-                if (artifactReplicaClient!!.checkNodeExist(
-                        remoteProjectId,
-                        remoteRepoName,
-                        node.fullPath,
-                    ).data == true
-                ) {
-                    when (task.setting.conflictStrategy) {
-                        ConflictStrategy.SKIP -> return null
-                        ConflictStrategy.FAST_FAIL -> throw IllegalArgumentException("File[$fullPath] conflict.")
-                        else -> {
-                            // do nothing
-                        }
+            // 节点冲突检查
+            if (artifactReplicaClient!!.checkNodeExist(remoteProjectId, remoteRepoName, node.fullPath).data == true) {
+                when (task.setting.conflictStrategy) {
+                    ConflictStrategy.SKIP -> return null
+                    ConflictStrategy.FAST_FAIL -> throw IllegalArgumentException("File[$fullPath] conflict.")
+                    else -> {
+                        // do nothing
                     }
                 }
             }

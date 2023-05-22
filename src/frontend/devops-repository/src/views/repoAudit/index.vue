@@ -90,7 +90,7 @@
                     <span>{{ row.content.des }}</span>
                 </template>
             </bk-table-column>
-            <bk-table-column label="客户端IP" prop="clientAddress"></bk-table-column>
+            <bk-table-column label="客户端IP" prop="clientAddress" show-overflow-tooltip></bk-table-column>
             <bk-table-column label="结果" width="80">
                 <template #default="{ row }">
                     <span class="repo-tag" :class="[row.result ? 'SUCCESS' : 'FAILED']">{{ row.result ? '成功' : '失败' }}</span>

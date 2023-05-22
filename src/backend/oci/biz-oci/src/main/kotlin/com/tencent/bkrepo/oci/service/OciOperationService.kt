@@ -50,7 +50,8 @@ interface OciOperationService {
         projectId: String,
         repoName: String,
         fullPath: String,
-        metadata: MutableMap<String, Any>
+        metadata: MutableMap<String, Any>,
+        userId: String
     )
 
     /**
@@ -149,7 +150,7 @@ interface OciOperationService {
         projectId: String,
         repoName: String,
         digestStr: String
-    ): String?
+    ): Pair<String?, String?>
 
     /**
      * 针对老的docker仓库的数据做兼容性处理

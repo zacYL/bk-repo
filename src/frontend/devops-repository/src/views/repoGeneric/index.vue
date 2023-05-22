@@ -111,10 +111,16 @@
                     </bk-table-column>
 
                     <bk-table-column v-if="searchFileName" :label="$t('path')" prop="fullPath" show-overflow-tooltip></bk-table-column>
+
+                    <bk-table-column :label="$t('clusterNames')" prop="clusterNames" width="150">
+                        <template #default="{ row }">
+                            {{ row.clusterNames.join() }}
+                        </template>
+                    </bk-table-column>
                     <bk-table-column :label="$t('lastModifiedDate')" prop="lastModifiedDate" width="150" :render-header="renderHeader">
                         <template #default="{ row }">{{ formatDate(row.lastModifiedDate) }}</template>
                     </bk-table-column>
-                    <bk-table-column :label="$t('lastModifiedBy')" width="90" show-overflow-tooltip>
+                    <bk-table-column :label="$t('lastModifiedBy')" width="150" show-overflow-tooltip>
                         <template #default="{ row }">
                             {{ userList[row.lastModifiedBy] ? userList[row.lastModifiedBy].name : row.lastModifiedBy }}
                         </template>
@@ -130,7 +136,7 @@
                             </span>
                         </template>
                     </bk-table-column>
-                    <bk-table-column :label="$t('operation')" width="70">
+                    <bk-table-column :label="$t('operation')" width="100">
                         <template #default="{ row }">
                             <operation-list
                                 :list="[
@@ -146,7 +152,7 @@
                                         ] : []),
                                         ...(!row.folder ? [
                                             !community && { clickEvent: () => handlerShare(row), label: $t('share') },
-                                            showRepoScan(row) && { clickEvent: () => handlerScan(row), label: $t('scanProduct') }
+                                            showRepoScan(row) && { clickEvent: () => handlerScan(row), label: $t('scanArtifact') }
                                         ] : [])
                                     ] : []),
                                     !row.folder && { clickEvent: () => handlerForbid(row), label: row.metadata.forbidStatus ? $t('liftBan') : $t('forbiddenUse') },
@@ -293,7 +299,7 @@
         created () {
             this.getRepoListAll({ projectId: this.projectId })
             this.initPage()
-            if (!this.community) {
+            if (!this.community || SHOW_ANALYST_MENU) {
                 this.refreshSupportFileNameExtList()
             }
         },
@@ -316,7 +322,8 @@
                 'previewCompressedBasicFile',
                 'previewCompressedFileList',
                 'forbidMetadata',
-                'refreshSupportFileNameExtList'
+                'refreshSupportFileNameExtList',
+                'getMultiFolderNumOfFolder'
             ]),
             showRepoScan (node) {
                 const indexOfLastDot = node.name.lastIndexOf('.')
@@ -326,7 +333,8 @@
                 } else {
                     supportFileNameExt = this.scannerSupportFileNameExt.includes(node.name.substring(indexOfLastDot + 1))
                 }
-                return !node.folder && !this.community && supportFileNameExt
+                const show = !this.community || SHOW_ANALYST_MENU
+                return !node.folder && show && supportFileNameExt
             },
             tooltipContent ({ forbidType, forbidUser }) {
                 switch (forbidType) {
@@ -432,6 +440,7 @@
 
                         return {
                             metadata: {},
+                            clusterNames: v.clusterNames || [],
                             ...v,
                             // 流水线文件夹名称替换
                             name: v.metadata?.displayName || v.name
@@ -558,7 +567,7 @@
                 this.$refs.genericFormDialog.setData({
                     show: true,
                     loading: false,
-                    title: this.$t('scanProduct'),
+                    title: this.$t('scanArtifact'),
                     type: 'scan',
                     id: '',
                     name,
@@ -586,28 +595,48 @@
             async deleteRes ({ name, folder, fullPath }) {
                 if (!fullPath) return
                 let totalRecords
+                let totalFolderNum
                 if (folder) {
-                    totalRecords = await this.getFileNumOfFolder({
+                    totalRecords = await this.getMultiFileNumOfFolder({
                         projectId: this.projectId,
                         repoName: this.repoName,
-                        fullPath
+                        paths: [fullPath]
+                    })
+                    totalFolderNum = await this.getMultiFolderNumOfFolder({
+                        projectId: this.projectId,
+                        repoName: this.repoName,
+                        paths: [fullPath],
+                        isFolder: true
                     })
                 }
                 this.$confirm({
                     theme: 'danger',
-                    message: `${this.$t('confirm') + this.$t('delete')}${folder ? this.$t('folder') : this.$t('file')} ${name} ？`,
+                    message: `${this.$t('confirm') + this.$t('space') + this.$t('delete') + this.$t('space')}${folder ? this.$t('folder') : this.$t('file')} ${name} ？`,
                     subMessage: `${folder && totalRecords ? this.$t('totalFilesMsg', [totalRecords]) : ''}`,
                     confirmFn: () => {
                         return this.deleteArtifactory({
                             projectId: this.projectId,
                             repoName: this.repoName,
                             fullPath
-                        }).then(() => {
+                        }).then(res => {
                             this.refreshNodeChange()
-                            this.$bkMessage({
-                                theme: 'success',
-                                message: this.$t('delete') + this.$t('success')
-                            })
+                            if (folder && totalRecords === res.deletedNumber - totalFolderNum) {
+                                this.$bkMessage({
+                                    theme: 'success',
+                                    message: this.$t('delete') + this.$t('space') + this.$t('success')
+                                })
+                            } else if (!folder && res.deletedNumber === 1) {
+                                this.$bkMessage({
+                                    theme: 'success',
+                                    message: this.$t('delete') + this.$t('space') + this.$t('success')
+                                })
+                            } else {
+                                const failNum = folder ? totalRecords + totalFolderNum - res.deletedNumber : 1
+                                this.$bkMessage({
+                                    theme: 'error',
+                                    message: this.$t('delete') + this.$t('space') + res.deletedNumber + this.$t('per') + this.$t('file') + this.$t('space') + this.$t('success') + ',' + this.$t('delete') + this.$t('space') + failNum + this.$t('per') + this.$t('file') + this.$t('space') + this.$t('fail')
+                                })
+                            }
                         })
                     }
                 })
@@ -687,7 +716,13 @@
                 const totalRecords = await this.getMultiFileNumOfFolder({
                     projectId: this.projectId,
                     repoName: this.repoName,
-                    paths
+                    paths: paths
+                })
+                const folderNum = await this.getMultiFolderNumOfFolder({
+                    projectId: this.projectId,
+                    repoName: this.repoName,
+                    paths: paths,
+                    isFolder: true
                 })
                 this.$confirm({
                     theme: 'danger',
@@ -698,12 +733,20 @@
                             projectId: this.projectId,
                             repoName: this.repoName,
                             paths
-                        }).then(() => {
+                        }).then(res => {
                             this.refreshNodeChange()
-                            this.$bkMessage({
-                                theme: 'success',
-                                message: this.$t('delete') + this.$t('space') + this.$t('success')
-                            })
+                            if (res.deletedNumber === totalRecords + folderNum) {
+                                this.$bkMessage({
+                                    theme: 'success',
+                                    message: this.$t('delete') + this.$t('space') + this.$t('success')
+                                })
+                            } else {
+                                const failNum = totalRecords + folderNum - res.deletedNumber
+                                this.$bkMessage({
+                                    theme: 'error',
+                                    message: this.$t('delete') + this.$t('space') + res.deletedNumber + this.$t('per') + this.$t('file') + this.$t('space') + this.$t('success') + ',' + this.$t('delete') + this.$t('space') + failNum + this.$t('per') + this.$t('file') + this.$t('space') + this.$t('fail')
+                                })
+                            }
                         })
                     }
                 })
@@ -826,6 +869,7 @@
         .repo-generic-table {
             flex: 1;
             height: 100%;
+            width:0;
             background-color: white;
             .multi-operation {
                 height: 50px;

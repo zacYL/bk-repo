@@ -38,14 +38,12 @@
             </template>
             <bk-table-column :label="$t('repoName')" show-overflow-tooltip>
                 <template #default="{ row }">
-                    <span v-if="MODE_CONFIG === 'ci' && ['custom', 'pipeline'].includes(row.name)"
-                        class="mr5 repo-tag SUCCESS" :data-name="$t('built-in')"></span>
-                    <span v-if="row.configuration.settings.system"
-                        class="mr5 repo-tag" :data-name="$t('system')"></span>
-                    <span v-if="row.public"
-                        class="mr5 repo-tag WARNING" :data-name="$t('public')"></span>
                     <Icon class="mr5 table-svg" size="16" :name="row.repoType" />
                     <span class="hover-btn" @click="toPackageList(row)">{{replaceRepoName(row.name)}}</span>
+                    <span v-if="MODE_CONFIG === 'ci' && ['custom', 'pipeline'].includes(row.name)"
+                        class="mr5 repo-tag SUCCESS" :data-name="$t('built-in')"></span>
+                    <span v-if="row.configuration.settings.system" class="mr5 repo-tag" :data-name="$t('system')"></span>
+                    <span v-if="row.public" class="mr5 repo-tag WARNING" :data-name="$t('public')"></span>
                 </template>
             </bk-table-column>
             <bk-table-column :label="$t('repoQuota')" width="250">
@@ -68,12 +66,18 @@
                     {{ userList[row.createdBy] ? userList[row.createdBy].name : row.createdBy }}
                 </template>
             </bk-table-column>
-            <bk-table-column :label="$t('operation')" width="70">
+            <bk-table-column :label="$t('operation')" width="100">
                 <template #default="{ row }">
                     <operation-list
                         :list="[
                             { label: $t('setting'), clickEvent: () => toRepoConfig(row) },
-                            row.repoType !== 'generic' && { label: $t('delete'), clickEvent: () => deleteRepo(row) }
+                            (row.repoType !== 'generic' ||
+                                (row.repoType === 'generic'
+                                    && row.name !== 'custom'
+                                    && row.name !== 'report'
+                                    && row.name !== 'log'
+                                    && row.name !== 'pipeline'
+                                )) && { label: $t('delete'), clickEvent: () => deleteRepo(row) }
                         ]">
                     </operation-list>
                 </template>
@@ -141,20 +145,41 @@
             convertFileSize,
             ...mapActions([
                 'getRepoList',
-                'deleteRepoList'
+                'deleteRepoList',
+                'getRepoListWithoutPage'
             ]),
             getListData () {
                 this.isLoading = true
-                this.getRepoList({
+                this.getRepoListWithoutPage({
                     projectId: this.projectId,
-                    ...this.pagination,
                     ...this.query
                 }).then(({ records, totalRecords }) => {
-                    this.repoList = records.map(v => ({ ...v, repoType: v.type.toLowerCase() }))
-                    this.pagination.count = totalRecords
+                    this.pagination.count = records.length
+                    let allRepo
+                    if (this.MODE_CONFIG === 'ci') {
+                        const resRecords = records.map(v => ({ ...v, repoType: v.type.toLowerCase() }))
+                        allRepo = this.shiftListByName('pipeline', this.shiftListByName('custom', resRecords))
+                    } else {
+                        allRepo = records.map(v => ({ ...v, repoType: v.type.toLowerCase() }))
+                    }
+                    this.repoList = allRepo.slice((this.pagination.current - 1) * this.pagination.limit, this.pagination.current * this.pagination.limit >= records.length ? records.length : this.pagination.current * this.pagination.limit)
                 }).finally(() => {
                     this.isLoading = false
                 })
+            },
+            shiftListByName (name, records) {
+                let target = null
+                for (let i = 0; i < records.length; i++) {
+                    if (records[i].name === name) {
+                        target = records[i]
+                        records.splice(i, 1)
+                        break
+                    }
+                }
+                if (target !== null) {
+                    records.unshift(target)
+                }
+                return records
             },
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
                 this.pagination.current = current

@@ -33,6 +33,7 @@ import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
+import com.tencent.bkrepo.common.artifact.exception.PackageNotFoundException
 import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
@@ -41,12 +42,12 @@ import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.conan.config.ConanProperties
 import com.tencent.bkrepo.conan.constant.CONANS_URL_TAG
+import com.tencent.bkrepo.conan.constant.ConanMessageCode
 import com.tencent.bkrepo.conan.constant.DEFAULT_REVISION_V1
 import com.tencent.bkrepo.conan.constant.MD5
 import com.tencent.bkrepo.conan.constant.UPLOAD_URL_PREFIX
 import com.tencent.bkrepo.conan.constant.URL
 import com.tencent.bkrepo.conan.exception.ConanFileNotFoundException
-import com.tencent.bkrepo.conan.exception.ConanPackageNotFoundException
 import com.tencent.bkrepo.conan.exception.ConanRecipeNotFoundException
 import com.tencent.bkrepo.conan.pojo.ConanFileReference
 import com.tencent.bkrepo.conan.pojo.ConanInfo
@@ -224,7 +225,7 @@ class CommonService(
         try {
             getRecipeSnapshot(projectId, repoName, latestRef.conRef)
         } catch (e: ConanFileNotFoundException) {
-            throw ConanPackageNotFoundException(latestRef.toString())
+            throw PackageNotFoundException(latestRef.toString())
         }
         val path = buildPackageRevisionFolderPath(latestRef)
         val result = mutableMapOf<String, String>()
@@ -262,7 +263,7 @@ class CommonService(
         path: String,
     ): NodeDetail {
         return nodeClient.getNodeDetail(projectId, repoName, path).data
-            ?: throw ConanRecipeNotFoundException("Could not find $path in repo $projectId|$repoName")
+            ?: throw ConanRecipeNotFoundException(ConanMessageCode.CONAN_RECIPE_NOT_FOUND, path, "$projectId|$repoName")
     }
 
     fun getContentOfConanInfoFile(

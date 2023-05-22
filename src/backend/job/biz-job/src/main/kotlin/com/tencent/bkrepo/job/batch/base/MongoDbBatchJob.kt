@@ -28,15 +28,16 @@
 package com.tencent.bkrepo.job.batch.base
 
 import com.tencent.bkrepo.common.api.util.HumanReadable
+import com.tencent.bkrepo.common.mongo.constant.ID
+import com.tencent.bkrepo.common.mongo.constant.MIN_OBJECT_ID
 import com.tencent.bkrepo.common.service.log.LoggerHolder
-import com.tencent.bkrepo.job.ID
-import com.tencent.bkrepo.job.MIN_OBJECT_ID
 import com.tencent.bkrepo.job.config.properties.MongodbJobProperties
 import com.tencent.bkrepo.job.executor.BlockThreadPoolTaskExecutorDecorator
 import com.tencent.bkrepo.job.executor.IdentityTask
 import net.javacrumbs.shedlock.core.LockingTaskExecutor
 import org.bson.types.ObjectId
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.find
 import org.springframework.data.mongodb.core.query.Criteria
@@ -134,7 +135,10 @@ abstract class MongoDbBatchJob<Entity, Context : JobContext>(
         var sum = 0L
         measureNanoTime {
             do {
-                val query = buildQuery().addCriteria(Criteria.where(ID).gt(lastId)).limit(batchSize)
+                val query = buildQuery()
+                    .addCriteria(Criteria.where(ID).gt(lastId))
+                    .limit(batchSize)
+                    .with(Sort.by(ID).ascending())
                 entityClass().fields.forEach {
                     val filedName = if (it.name.equals(JAVA_ID)) ID else it.name
                     query.fields().include(filedName)

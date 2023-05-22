@@ -55,6 +55,7 @@ import org.springframework.data.redis.core.RedisTemplate
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(
     ScannerProperties::class,
+    ReportExportProperties::class,
     KubernetesDispatcherProperties::class,
     DockerDispatcherProperties::class
 )
@@ -89,7 +90,7 @@ class ScannerConfiguration {
         temporaryScanTokenService: TemporaryScanTokenService,
         @Qualifier(STATE_MACHINE_ID_SUB_SCAN_TASK)
         subtaskStateMachine: StateMachine,
-        executorClient: ExecutorClient
+        executorClient: ObjectProvider<ExecutorClient>
     ): SubtaskPoller {
         return SubtaskPoller(
             dispatcher, scanService, scannerService, temporaryScanTokenService, subtaskStateMachine, executorClient

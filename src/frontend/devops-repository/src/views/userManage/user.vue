@@ -59,7 +59,7 @@
                     <bk-switcher class="m5" :value="!row.locked" size="small" theme="primary" @change="changeUserStatus(row)"></bk-switcher>
                 </template>
             </bk-table-column>
-            <bk-table-column :label="$t('operation')" width="70">
+            <bk-table-column :label="$t('operation')" width="100">
                 <template #default="{ row }">
                     <operation-list
                         :list="[
@@ -99,7 +99,7 @@
                     <bk-input v-model.trim="editUserDialog.userId"
                         :disabled="!editUserDialog.add"
                         maxlength="32" show-word-limit
-                        :placeholder="$t('userIdPlacehodler')">
+                        :placeholder="$t('userIdPlaceHolder')">
                     </bk-input>
                 </bk-form-item>
                 <bk-form-item :label="$t('chineseName')" :required="true" property="name" error-display-type="normal">

@@ -36,7 +36,7 @@ spec:
       {{- else }}
       affinity:
         {{- if eq .Values.persistence.accessMode "ReadWriteOnce" }}
-        podAffinity: {{- include "common.affinities.pods" (dict "type" "hard" "component" "repository" "context" $) | nindent 10 }}
+        podAffinity: {{- include "common.affinities.pods" (dict "type" "soft" "component" "repository" "context" $) | nindent 10 }}
         {{- else }}
         podAffinity: {{- include "common.affinities.pods" (dict "type" .Values.repository.podAffinityPreset "component" "replication" "context" $) | nindent 10 }}
         {{- end }}
@@ -76,6 +76,9 @@ spec:
             - name: http
               containerPort: 25903
               protocol: TCP
+            - name: fdtp
+              containerPort: 25903
+              protocol: UDP
           livenessProbe:
             httpGet:
               path: /actuator/health/livenessState

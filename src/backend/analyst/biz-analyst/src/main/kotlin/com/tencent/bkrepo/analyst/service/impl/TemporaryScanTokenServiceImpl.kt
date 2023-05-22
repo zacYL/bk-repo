@@ -31,6 +31,9 @@ import com.tencent.bkrepo.analyst.configuration.ScannerProperties
 import com.tencent.bkrepo.analyst.pojo.SubScanTask
 import com.tencent.bkrepo.analyst.service.ScanService
 import com.tencent.bkrepo.analyst.service.TemporaryScanTokenService
+import com.tencent.bkrepo.auth.api.ServiceTemporaryTokenClient
+import com.tencent.bkrepo.auth.pojo.token.TemporaryTokenCreateRequest
+import com.tencent.bkrepo.auth.pojo.token.TokenType
 import com.tencent.bkrepo.common.analysis.pojo.scanner.standard.FileUrl
 import com.tencent.bkrepo.common.analysis.pojo.scanner.standard.StandardScanner
 import com.tencent.bkrepo.common.analysis.pojo.scanner.standard.ToolInput
@@ -38,6 +41,7 @@ import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_NUMBER
 import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_SIZE
 import com.tencent.bkrepo.common.api.constant.StringPool.SLASH
 import com.tencent.bkrepo.common.api.constant.StringPool.uniqueId
+import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.exception.SystemErrorException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode.RESOURCE_NOT_FOUND
@@ -47,25 +51,25 @@ import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.security.exception.AuthenticationException
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.storage.core.StorageService
 import com.tencent.bkrepo.oci.util.OciUtils
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.StorageCredentialsClient
-import com.tencent.bkrepo.repository.api.TemporaryTokenClient
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.search.NodeQueryBuilder
-import com.tencent.bkrepo.repository.pojo.token.TemporaryTokenCreateRequest
 import org.slf4j.LoggerFactory
 import org.springframework.data.redis.connection.RedisStringCommands.SetOption.UPSERT
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.data.redis.core.types.Expiration
 import org.springframework.stereotype.Service
+import java.time.Duration
 import java.util.concurrent.TimeUnit
 
 @Service
 class TemporaryScanTokenServiceImpl(
     private val scanService: ScanService,
-    private val temporaryTokenClient: TemporaryTokenClient,
+    private val temporaryTokenClient: ServiceTemporaryTokenClient,
     private val redisTemplate: RedisTemplate<String, String>,
     private val scannerProperties: ScannerProperties,
     private val storageService: StorageService,
@@ -107,6 +111,10 @@ class TemporaryScanTokenServiceImpl(
 
     override fun getToolInput(subtaskId: String): ToolInput {
         val subtask = scanService.get(subtaskId)
+
+        // 设置后续操作使用的用户的身份为任务触发者
+        HttpContextHolder.getRequestOrNull()?.setAttribute(USER_KEY, subtask.createdBy)
+
         val scanner = subtask.scanner as StandardScanner
         with(subtask) {
             val fullPaths = getFullPaths(subtask)
@@ -115,9 +123,9 @@ class TemporaryScanTokenServiceImpl(
                 projectId = projectId,
                 repoName = repoName,
                 fullPathSet = fullPaths.keys,
-                expireSeconds = java.time.Duration.ofMinutes(30L).seconds,
+                expireSeconds = Duration.ofMinutes(30L).seconds,
                 permits = 1,
-                type = com.tencent.bkrepo.repository.pojo.token.TokenType.DOWNLOAD
+                type = TokenType.DOWNLOAD
             )
             val tokens = temporaryTokenClient.createToken(req)
             if (tokens.isNotOk()) {
@@ -133,7 +141,8 @@ class TemporaryScanTokenServiceImpl(
                 value.copy(url = url)
             }
 
-            return ToolInput.create(taskId, scanner, repoType, subtask.packageSize, fileUrls)
+            val args = ToolInput.generateArgs(scanner, repoType, packageSize, packageKey, version)
+            return ToolInput.create(taskId, fileUrls, args)
         }
     }
 
@@ -141,7 +150,7 @@ class TemporaryScanTokenServiceImpl(
         return if (repoType == RepositoryType.DOCKER.name) {
             val storageCredentials = credentialsKey?.let { storageCredentialsClient.findByKey(it).data!! }
             val manifestContent = storageService.load(sha256, Range.full(size), storageCredentials)?.readText()
-                ?: throw ErrorCodeException(RESOURCE_NOT_FOUND, "file [${projectId}:${repoName}:${fullPath}] not found")
+                ?: throw ErrorCodeException(RESOURCE_NOT_FOUND, "file [$projectId:$repoName:$fullPath] not found")
             val schemeVersion = OciUtils.schemeVersion(manifestContent)
             val fullPaths = LinkedHashMap<String, FileUrl>()
             // 将manifest下载链接加入fullPaths列表，需要保证map第一项是manifest文件

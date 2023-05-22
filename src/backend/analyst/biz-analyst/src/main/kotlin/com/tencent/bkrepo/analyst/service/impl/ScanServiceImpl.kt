@@ -28,6 +28,7 @@
 package com.tencent.bkrepo.analyst.service.impl
 
 import com.tencent.bkrepo.analyst.component.AnalystLoadBalancer
+import com.tencent.bkrepo.analyst.component.ReportExporter
 import com.tencent.bkrepo.analyst.dao.PlanArtifactLatestSubScanTaskDao
 import com.tencent.bkrepo.analyst.dao.ScanTaskDao
 import com.tencent.bkrepo.analyst.dao.SubScanTaskDao
@@ -88,10 +89,11 @@ class ScanServiceImpl @Autowired constructor(
     private val taskStateMachine: StateMachine,
     @Qualifier(STATE_MACHINE_ID_SUB_SCAN_TASK)
     private val subtaskStateMachine: StateMachine,
-    private val redisTemplate: RedisTemplate<String, String>
+    private val redisTemplate: RedisTemplate<String, String>,
+    private val reportExporter: ReportExporter
 ) : ScanService {
 
-    override fun scan(scanRequest: ScanRequest, triggerType: ScanTriggerType, userId: String?): ScanTask {
+    override fun scan(scanRequest: ScanRequest, triggerType: ScanTriggerType, userId: String): ScanTask {
         val context = CreateTaskContext(scanRequest = scanRequest, triggerType = triggerType, userId = userId)
         val event = Event(ScanTaskEvent.CREATE.name, context)
         val transitResult = taskStateMachine.sendEvent(ScanTaskStatus.PENDING.name, event)
@@ -177,6 +179,7 @@ class ScanServiceImpl @Autowired constructor(
             val subtask = subScanTaskDao.findById(subTaskId) ?: return
             logger.info("report result, parentTask[${subtask.parentScanTaskId}], subTask[$subTaskId]")
             finishSubtask(subtask = subtask, targetState = scanStatus, scanExecutorResult = scanExecutorResult)
+            scanExecutorResult?.let { reportExporter.export(subtask, it) }
         }
     }
 

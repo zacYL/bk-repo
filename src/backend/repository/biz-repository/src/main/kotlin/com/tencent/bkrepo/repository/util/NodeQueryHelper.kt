@@ -184,9 +184,9 @@ object NodeQueryHelper {
         return update(operator).set(TNode::recentlyUseDate.name, recentlyUseDate)
     }
 
-    private fun update(operator: String): Update {
+    fun update(operator: String, time: LocalDateTime = LocalDateTime.now()): Update {
         return Update()
-            .set(TNode::lastModifiedDate.name, LocalDateTime.now())
+            .set(TNode::lastModifiedDate.name, time)
             .set(TNode::lastModifiedBy.name, operator)
     }
 }

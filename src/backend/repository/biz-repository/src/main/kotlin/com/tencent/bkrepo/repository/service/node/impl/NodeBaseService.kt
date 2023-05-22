@@ -242,7 +242,13 @@ abstract class NodeBaseService(
     /**
      * 递归创建目录
      */
-    fun mkdirs(projectId: String, repoName: String, path: String, createdBy: String) {
+    fun mkdirs(
+        projectId: String,
+        repoName: String,
+        path: String,
+        createdBy: String,
+        currentTime: LocalDateTime = LocalDateTime.now()
+    ) {
         // 格式化
         val fullPath = PathUtils.toFullPath(path)
         val creatingNode = nodeDao.findNode(projectId, repoName, fullPath)
@@ -252,7 +258,7 @@ abstract class NodeBaseService(
         if (creatingNode == null) {
             val parentPath = PathUtils.resolveParent(fullPath)
             val name = PathUtils.resolveName(fullPath)
-            mkdirs(projectId, repoName, parentPath, createdBy)
+            mkdirs(projectId, repoName, parentPath, createdBy, currentTime)
             val node = TNode(
                 folder = true,
                 path = parentPath,
@@ -264,12 +270,30 @@ abstract class NodeBaseService(
                 projectId = projectId,
                 repoName = repoName,
                 createdBy = createdBy,
-                createdDate = LocalDateTime.now(),
+                createdDate = currentTime,
                 lastModifiedBy = createdBy,
-                lastModifiedDate = LocalDateTime.now()
+                lastModifiedDate = currentTime
             )
             doCreate(node)
+        } else {
+            // 更新已存在的最近父目录的最后修改信息
+            updateModifiedInfo(projectId, repoName, fullPath, createdBy, currentTime)
         }
+    }
+
+    fun updateModifiedInfo(
+        projectId: String,
+        repoName: String,
+        fullPath: String,
+        modifiedBy: String,
+        modifiedDate: LocalDateTime = LocalDateTime.now()
+    ) {
+        if (PathUtils.isRoot(fullPath)) {
+            return
+        }
+        val query = NodeQueryHelper.nodeQuery(projectId, repoName, fullPath)
+        val update = NodeQueryHelper.update(modifiedBy, modifiedDate)
+        nodeDao.updateFirst(query, update)
     }
 
     private fun checkConflictAndQuota(createRequest: NodeCreateRequest, fullPath: String) {

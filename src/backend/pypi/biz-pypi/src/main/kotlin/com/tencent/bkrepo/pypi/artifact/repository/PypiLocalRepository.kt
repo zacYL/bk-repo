@@ -70,6 +70,7 @@ import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateR
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
+import java.time.format.DateTimeFormatter
 import javax.servlet.http.HttpServletRequest
 
 @Component
@@ -272,13 +273,20 @@ class PypiLocalRepository(
             val jarNode = nodeClient.getNodeDetail(projectId, repoName, artifactPath).data ?: return null
             val stageTag = stageClient.query(projectId, repoName, packageKey, version).data
             val packageVersion = packageClient.findVersionByName(projectId, repoName, packageKey, version).data
+            val createdDate = packageVersion?.createdDate?.format(DateTimeFormatter.ISO_DATE_TIME)
+                ?: jarNode.createdDate
+            val lastModifiedDate = packageVersion?.lastModifiedDate?.format(DateTimeFormatter.ISO_DATE_TIME)
+                ?: jarNode.lastModifiedDate
             val count = packageVersion?.downloads ?: 0
             val pypiArtifactBasic = Basic(
                 name,
                 version,
-                jarNode.size, jarNode.fullPath,
-                jarNode.createdBy, jarNode.createdDate,
-                jarNode.lastModifiedBy, jarNode.lastModifiedDate,
+                jarNode.size,
+                jarNode.fullPath,
+                jarNode.createdBy,
+                createdDate,
+                jarNode.lastModifiedBy,
+                lastModifiedDate,
                 count,
                 jarNode.sha256,
                 jarNode.md5,

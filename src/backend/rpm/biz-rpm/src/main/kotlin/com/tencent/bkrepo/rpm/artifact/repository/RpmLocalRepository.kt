@@ -124,6 +124,7 @@ import java.io.FileOutputStream
 import java.io.InputStreamReader
 import java.nio.channels.Channels
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @Component
 class RpmLocalRepository(
@@ -658,14 +659,21 @@ class RpmLocalRepository(
             val packageVersion = packageClient.findVersionByName(
                 projectId, repoName, packageKey, version
             ).data
+            val createdDate = packageVersion?.createdDate?.format(DateTimeFormatter.ISO_DATE_TIME)
+                ?: jarNode.createdDate
+            val lastModifiedDate = packageVersion?.lastModifiedDate?.format(DateTimeFormatter.ISO_DATE_TIME)
+                ?: jarNode.lastModifiedDate
             val count = packageVersion?.downloads ?: 0
             val rpmArtifactBasic = Basic(
                 path,
                 name,
                 version,
-                jarNode.size, jarNode.fullPath,
-                jarNode.createdBy, jarNode.createdDate,
-                jarNode.lastModifiedBy, jarNode.lastModifiedDate,
+                jarNode.size,
+                jarNode.fullPath,
+                jarNode.createdBy,
+                createdDate,
+                jarNode.lastModifiedBy,
+                lastModifiedDate,
                 count,
                 jarNode.sha256,
                 jarNode.md5,

@@ -39,6 +39,8 @@ scanner:
   dispatcher:
     docker:
       enabled: __DISPATCHER_DOCKER_ENABLED__
+      username: __BK_CI_DOCKER_REGISTRY_USER__
+      password: __BK_CI_DOCKER_REGISTRY_PASSWORD__
     k8s:
       # 是否启用
       enabled: __DISPATCHER_K8S_ENABLED__

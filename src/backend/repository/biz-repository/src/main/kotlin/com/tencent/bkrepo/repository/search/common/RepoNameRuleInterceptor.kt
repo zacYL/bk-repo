@@ -34,6 +34,8 @@ package com.tencent.bkrepo.repository.search.common
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.configuration.virtual.VirtualConfiguration
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.interceptor.QueryContext
 import com.tencent.bkrepo.common.query.interceptor.QueryRuleInterceptor
@@ -43,6 +45,7 @@ import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.repo.RepoListOption
+import com.tencent.bkrepo.repository.service.repo.ProjectService
 import com.tencent.bkrepo.repository.service.repo.RepositoryService
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.stereotype.Component
@@ -55,7 +58,8 @@ import org.springframework.stereotype.Component
 @Component
 class RepoNameRuleInterceptor(
     private val permissionManager: PermissionManager,
-    private val repositoryService: RepositoryService
+    private val repositoryService: RepositoryService,
+    private val projectService: ProjectService
 ) : QueryRuleInterceptor {
 
     override fun match(rule: Rule): Boolean {
@@ -136,10 +140,8 @@ class RepoNameRuleInterceptor(
             repositoryService.listRepo(projectId = projectId)
         }?.map { it.name }?.filter { repo -> repo !in (value.map { it.toString() }) }
         return if (repoNameList.isNullOrEmpty()) {
-            throw PermissionException(
-                "${SecurityUtils.getUserId()} hasn't any PermissionRepo in project [$projectId], " +
-                    "or project [$projectId] hasn't any repo"
-            )
+            val projectName=projectService.getProjectInfo(projectId)?.displayName ?: projectId
+            throw ErrorCodeException(CommonMessageCode.REPO_PERMISSION_DENIED, SecurityUtils.getUserId(), projectName)
         } else if (repoNameList.size == 1) {
             Rule.QueryRule(NodeInfo::repoName.name, repoNameList.first(), OperationType.EQ)
         } else {

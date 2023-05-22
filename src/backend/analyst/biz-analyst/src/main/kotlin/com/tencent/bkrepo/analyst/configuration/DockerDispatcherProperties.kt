@@ -39,5 +39,7 @@ data class DockerDispatcherProperties (
     var version: String = "1.23",
     var connectTimeout: Int = 5000,
     var readTimeout: Int = 0,
-    var maxTaskCount: Int = 1
+    var maxTaskCount: Int = 1,
+    var username: String? = null,
+    var password: String? = null
 )

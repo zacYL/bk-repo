@@ -57,6 +57,15 @@ class DockerDispatcher(
         val dockerConfig = DefaultDockerClientConfig.createDefaultConfigBuilder()
             .withDockerHost(dockerDispatcherProperties.host)
             .withApiVersion(dockerDispatcherProperties.version)
+            .apply {
+                if (
+                    !dockerDispatcherProperties.username.isNullOrBlank() &&
+                    !dockerDispatcherProperties.password.isNullOrBlank()
+                ) {
+                    withRegistryUsername(dockerDispatcherProperties.username)
+                    withRegistryPassword(dockerDispatcherProperties.password)
+                }
+            }
             .build()
 
         val longHttpClient = OkDockerHttpClient.Builder()

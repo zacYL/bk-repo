@@ -69,7 +69,7 @@
                     <div class="status-sign" :class="row.status" :data-name="asyncPlanStatusEnum[row.status] || '未执行'"></div>
                 </template>
             </bk-table-column>
-            <bk-table-column label="冲突策略" width="90">
+            <bk-table-column label="冲突策略" width="100">
                 <template #default="{ row }">
                     <span>{{ conflictStrategyEnum[row.conflictStrategy] || '/'}}</span>
                 </template>

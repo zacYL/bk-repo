@@ -156,3 +156,9 @@ export const planLogEnum = {
     fail: '失败次数',
     conflict: '冲突次数'
 }
+
+export const conflictStrategyEnum = {
+    SKIP: '跳过冲突',
+    OVERWRITE: '替换制品',
+    FAST_FAIL: '终止同步'
+}

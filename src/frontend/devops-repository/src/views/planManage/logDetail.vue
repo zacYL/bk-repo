@@ -71,7 +71,7 @@
             </bk-table-column>
             <bk-table-column label="冲突策略" width="90">
                 <template #default="{ row }">
-                    <span>{{row.conflictStrategy || '/'}}</span>
+                    <span>{{ conflictStrategyEnum[row.conflictStrategy] || '/'}}</span>
                 </template>
             </bk-table-column>
             <bk-table-column label="开始时间" width="150">
@@ -101,13 +101,14 @@
 <script>
     import { mapGetters, mapActions } from 'vuex'
     import { formatDate } from '@repository/utils'
-    import { asyncPlanStatusEnum, planLogEnum } from '@repository/store/publicEnum'
+    import { asyncPlanStatusEnum, planLogEnum, conflictStrategyEnum } from '@repository/store/publicEnum'
     export default {
         name: 'logDetail',
         data () {
             return {
                 asyncPlanStatusEnum,
                 planLogEnum,
+                conflictStrategyEnum,
                 isLoading: false,
                 logDetail: {},
                 pkgList: [],

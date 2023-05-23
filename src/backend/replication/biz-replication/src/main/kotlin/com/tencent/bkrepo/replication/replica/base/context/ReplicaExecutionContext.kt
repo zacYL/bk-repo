@@ -51,16 +51,6 @@ class ReplicaExecutionContext(
      * 执行状态
      */
     var status = ExecutionStatus.SUCCESS
-//
-//    /**
-//     * 制品名称，Generic 为 fullPath
-//     */
-//    var artifactName = detail.artifactName
-//
-//    /**
-//     * 制品版本
-//     */
-//    var version = detail.version
 
     /**
      * 同步进度

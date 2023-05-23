@@ -31,6 +31,7 @@ import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_NUMBER
 import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_SIZE
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.pojo.Page
+import com.tencent.bkrepo.common.api.util.TimeUtils
 import com.tencent.bkrepo.common.artifact.cluster.ClusterProperties
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.replication.dao.ReplicaRecordDao
@@ -203,14 +204,22 @@ class ReplicaRecordServiceImpl(
         return Pages.ofResponse(pageRequest, totalRecords, records)
     }
 
-    override fun deleteRecord(key: String, startTime: String, endTime: String) {
+    override fun deleteRecord(key: String, startTime: String, endTime: String): Long {
+        var deleteCount = 0L
+        val localStart = TimeUtils.toSystemZoneTime(startTime)
+        val localEnd = TimeUtils.toSystemZoneTime(endTime)
+        require(localStart.isBefore(localEnd)) {
+            throw IllegalArgumentException("startTime must before endTime")
+        }
         val criteria = Criteria.where(TReplicaRecord::taskKey.name).`is`(key)
-            .and(TReplicaRecord::startTime.name).gte(startTime)
-            .and(TReplicaRecord::endTime.name).lte(endTime)
+            .and(TReplicaRecord::startTime.name).gte(localStart)
+            .and(TReplicaRecord::endTime.name).lte(localEnd)
         replicaRecordDao.find(Query(criteria)).forEach {
             replicaRecordDetailDao.deleteByRecordId(it.id!!)
             replicaRecordDao.removeById(it.id!!)
+            deleteCount++
         }
+        return deleteCount
     }
 
     override fun listDetailsByRecordId(recordId: String): List<ReplicaRecordDetail> {

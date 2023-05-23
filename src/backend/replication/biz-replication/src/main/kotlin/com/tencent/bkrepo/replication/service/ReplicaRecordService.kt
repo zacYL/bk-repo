@@ -106,7 +106,7 @@ interface ReplicaRecordService {
     /**
      * 删除时间段内的分发记录
      */
-    fun deleteRecord(key: String, startTime: String, endTime: String)
+    fun deleteRecord(key: String, startTime: String, endTime: String):Long
 
     /**
      * 根据[recordId]查询执行详情列表

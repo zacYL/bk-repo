@@ -30,7 +30,6 @@ package com.tencent.bkrepo.replication.replica.base
 import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.replication.manager.LocalDataManager
-import com.tencent.bkrepo.replication.pojo.cluster.ClusterNodeType
 import com.tencent.bkrepo.replication.pojo.record.ExecutionResult
 import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus
 import com.tencent.bkrepo.replication.pojo.record.request.RecordDetailInitialRequest
@@ -60,13 +59,12 @@ abstract class AbstractReplicaService(
     private val localDataManager: LocalDataManager
 ) : ReplicaService {
 
+    private val logger = LoggerFactory.getLogger(AbstractReplicaService::class.java)
+
     /**
      * 同步整个仓库数据
      */
     protected fun replicaByRepo(replicaContext: ReplicaContext) {
-        // TODO 初始化去掉
-//        val context = initialExecutionContext(replicaContext)
-//        try {
         if (replicaContext.taskObject.repoType == RepositoryType.GENERIC) {
             // 同步generic节点
             val root = localDataManager.findNodeDetail(
@@ -95,20 +93,12 @@ abstract class AbstractReplicaService(
                 option = option
             )
         }
-//        }
-//        catch (throwable: Throwable) {
-//            setErrorStatus(context, throwable)
-//        } finally {
-//            completeRecordDetail(context)
-//        }
     }
 
     /**
      * 同步指定包的数据
      */
     protected fun replicaByPackageConstraint(replicaContext: ReplicaContext, constraint: PackageConstraint) {
-//        val context = initialExecutionContext(replicaContext, packageConstraint = constraint)
-//        try {
         // 查询本地包信息
         val packageSummary = localDataManager.findPackageByKey(
             projectId = replicaContext.localProjectId,
@@ -116,51 +106,18 @@ abstract class AbstractReplicaService(
             packageKey = constraint.packageKey!!
         )
         replicaByPackage(replicaContext, packageSummary, constraint.versions)
-//        } catch (throwable: Throwable) {
-//            setErrorStatus(context, throwable)
-//        } finally {
-//            completeRecordDetail(context)
-//        }
     }
 
     /**
      * 同步指定路径的数据
      */
     protected fun replicaByPathConstraint(replicaContext: ReplicaContext, constraint: PathConstraint) {
-//        val context = initialExecutionContext(replicaContext, pathConstraint = constraint)
-//        try {
         val nodeInfo = localDataManager.findNodeDetail(
             projectId = replicaContext.localProjectId,
             repoName = replicaContext.localRepoName,
             fullPath = constraint.path!!
         ).nodeInfo
         replicaByPath(replicaContext, nodeInfo)
-//        } catch (throwable: Throwable) {
-//            setErrorStatus(context, throwable)
-//        } finally {
-//            completeRecordDetail(context)
-//        }
-    }
-
-    /**
-     * 同步路径
-     * 采用广度优先遍历
-     */
-    private fun replicaByPath(context: ReplicaExecutionContext, node: NodeInfo) {
-        with(context) {
-            if (!node.folder) {
-                replicaFile(context, node)
-                return
-            }
-            // 查询子节点
-            localDataManager.listNode(
-                projectId = replicaContext.localProjectId,
-                repoName = replicaContext.localRepoName,
-                fullPath = node.fullPath
-            ).forEach {
-                replicaByPath(this, it)
-            }
-        }
     }
 
     /**
@@ -214,13 +171,9 @@ abstract class AbstractReplicaService(
     private fun replicaFile(context: ReplicaExecutionContext, node: NodeInfo) {
         with(context) {
             try {
-                val executed = replicaContext.replicator.replicaFile(replicaContext, node)
-                // TODO 是否需要去掉？去掉是否会影响进度统计
-                updateProgress(executed)
+                replicaContext.replicator.replicaFile(replicaContext, node)
                 return
             } catch (throwable: Throwable) {
-                // TODO 是否需要去掉？
-//                progress.failed += 1
                 setErrorStatus(this, throwable)
                 if (replicaContext.task.setting.errorStrategy == ErrorStrategy.FAST_FAIL) {
                     throw throwable
@@ -235,43 +188,6 @@ abstract class AbstractReplicaService(
                 } else {
                     completeRecordDetail(context)
                 }
-            }
-        }
-    }
-
-    /**
-     * 根据[packageSummary]和版本列表[versionNames]执行同步
-     */
-    private fun replicaByPackage(
-        context: ReplicaExecutionContext,
-        packageSummary: PackageSummary,
-        versionNames: List<String>? = null
-    ) {
-        with(context) {
-            replicator.replicaPackage(replicaContext, packageSummary)
-            // 同步package功能： 对应内部集群配置是当version不存在时则同步全部的package version
-            // 而对于外部集群配置而言，当version不存在时，则不进行同步
-            val versions = versionNames?.map {
-                localDataManager.findPackageVersion(
-                    projectId = replicaContext.localProjectId,
-                    repoName = replicaContext.localRepoName,
-                    packageKey = packageSummary.key,
-                    version = it
-                )
-            } ?: run {
-                if (replicaContext.remoteCluster.type == ClusterNodeType.REMOTE) {
-                    emptyList()
-                } else {
-                    localDataManager.listAllVersion(
-                        projectId = replicaContext.localProjectId,
-                        repoName = replicaContext.localRepoName,
-                        packageKey = packageSummary.key,
-                        option = VersionListOption()
-                    )
-                }
-            }
-            versions.forEach {
-                replicaPackageVersion(this, packageSummary, it)
             }
         }
     }
@@ -341,10 +257,9 @@ abstract class AbstractReplicaService(
     ) {
         with(context) {
             try {
-                val executed = replicator.replicaPackageVersion(replicaContext, packageSummary, version)
-                updateProgress(executed)
+                replicator.replicaPackageVersion(replicaContext, packageSummary, version)
+                return
             } catch (throwable: Throwable) {
-//                progress.failed += 1
                 setErrorStatus(this, throwable)
                 if (replicaContext.task.setting.errorStrategy == ErrorStrategy.FAST_FAIL) {
                     throw throwable

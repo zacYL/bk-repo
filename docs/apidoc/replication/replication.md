@@ -537,7 +537,8 @@
       }
     ],
     "remoteClusterIds": ["651095dfe0524ce9b3ab53d13532361c","329fbcda45944fb9ae5c2573acd7bd2a"],
-    "description": "test replica task"
+    "description": "test replica task",
+    "notRecord":true
   }
   ```
 
@@ -552,6 +553,7 @@
   |replicaTaskObjects|object|是|无|同步对象信息|replication object info|
   |remoteClusterIds|list|是|无|远程集成节点id|the remote cluster node ids|
   |description|sting|否|无|描述|description|
+  |notRecord|bool|是|true|同步仓库是否不记录制品同步详情|replica repo is not record detail|
   
 - replicaTaskObjects对象说明
 

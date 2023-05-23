@@ -88,9 +88,10 @@ class ReplicaRecordController(
         @PathVariable key: String,
         @RequestParam startTime: String,
         @RequestParam endTime: String,
-    ): Response<Void> {
-        replicaRecordService.deleteRecord(key, startTime, endTime)
-        return ResponseBuilder.success()
+    ): Response<Long> {
+        return ResponseBuilder.success(
+            replicaRecordService.deleteRecord(key, startTime, endTime)
+        )
     }
 
     @ApiOperation("根据recordId查询任务执行日志详情")

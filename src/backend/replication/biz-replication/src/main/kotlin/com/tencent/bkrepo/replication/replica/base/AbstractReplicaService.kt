@@ -60,8 +60,6 @@ abstract class AbstractReplicaService(
     private val localDataManager: LocalDataManager
 ) : ReplicaService {
 
-    private val logger = LoggerFactory.getLogger(AbstractReplicaService::class.java)
-
     /**
      * 同步整个仓库数据
      */
@@ -190,8 +188,6 @@ abstract class AbstractReplicaService(
                 } else {
                     null
                 }
-                logger.info("=============conflictStrategy:${artifactReplicaClient.checkNodeExist(remoteProjectId, remoteRepoName, node.fullPath).data}=================")
-                logger.info("=============conflictStrategy:$conflictStrategy=================")
                 // 初始化分发记录详情 & 记录 artifactName
                 val replicaExecutionContext = initialExecutionContext(
                     context = replicaContext,

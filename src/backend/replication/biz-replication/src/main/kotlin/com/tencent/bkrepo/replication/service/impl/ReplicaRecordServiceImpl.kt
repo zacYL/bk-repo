@@ -297,7 +297,7 @@ class ReplicaRecordServiceImpl(
     override fun searchRecordDetail(searchRequest: RecordDetailSearchRequest): Map<ExecutionStatus, Long> {
         val resultMap = mutableMapOf(SUCCESS to 0L, FAILED to 0L)
         var pageNumber = DEFAULT_PAGE_NUMBER
-        val records = listRecordsPage(
+        var records = listRecordsPage(
             searchRequest.taskKey,
             ReplicaRecordListOption(pageNumber, DEFAULT_PAGE_SIZE * 5)
         ).records
@@ -325,6 +325,10 @@ class ReplicaRecordServiceImpl(
                 }
             }
             pageNumber++
+            records = listRecordsPage(
+                searchRequest.taskKey,
+                ReplicaRecordListOption(pageNumber, DEFAULT_PAGE_SIZE * 5)
+            ).records
         }
         return resultMap
     }

@@ -190,6 +190,8 @@ abstract class AbstractReplicaService(
                 } else {
                     null
                 }
+                logger.info("=============conflictStrategy:${artifactReplicaClient.checkNodeExist(remoteProjectId, remoteRepoName, node.fullPath).data}=================")
+                logger.info("=============conflictStrategy:$conflictStrategy=================")
                 // 初始化分发记录详情 & 记录 artifactName
                 val replicaExecutionContext = initialExecutionContext(
                     context = replicaContext,

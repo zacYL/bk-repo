@@ -278,9 +278,9 @@ class ReplicaRecordServiceImpl(
         val result = replicaRecordDetailDao.aggregate(aggregation, Overview::class.java).mappedResults
 
         result.forEach {
-            when (it.status) {
-                SUCCESS -> success = it.count
-                FAILED -> fail = it.count
+            when (it._id) {
+                SUCCESS -> success = it.count.toLong()
+                FAILED -> fail = it.count.toLong()
                 RUNNING -> TODO()
             }
         }
@@ -316,9 +316,9 @@ class ReplicaRecordServiceImpl(
                     aggregation,
                     Overview::class.java
                 ).mappedResults.forEach { overview ->
-                    when (overview.status) {
-                        SUCCESS -> resultMap[SUCCESS] = resultMap[SUCCESS]!!.plus(overview.count)
-                        FAILED -> resultMap[FAILED] = resultMap[FAILED]!!.plus(overview.count)
+                    when (overview._id) {
+                        SUCCESS -> resultMap[SUCCESS] = resultMap[SUCCESS]!!.plus(overview.count.toLong())
+                        FAILED -> resultMap[FAILED] = resultMap[FAILED]!!.plus(overview.count.toLong())
                         RUNNING -> TODO()
                     }
                 }
@@ -375,6 +375,6 @@ class ReplicaRecordServiceImpl(
 }
 
 data class Overview(
-    val status: ExecutionStatus,
-    val count: Long
+    val _id: ExecutionStatus,
+    val count: Double
 )

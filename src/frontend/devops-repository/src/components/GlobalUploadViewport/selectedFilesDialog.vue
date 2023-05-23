@@ -13,7 +13,7 @@
         <div class="flex-between-center">
             <bk-button @click="selectFiles">继续上传</bk-button>
             <div class="flex-align-center">
-                <label style="white-space:nowrap;">覆盖：</label>
+                <label style="white-space:nowrap;">对当前路径内的同名文件覆盖：</label>
                 <bk-radio-group v-model="overwrite">
                     <bk-radio class="ml20" :value="true">{{ $t('allow') }}</bk-radio>
                     <bk-radio class="ml20" :value="false">{{ $t('notAllow') }}</bk-radio>

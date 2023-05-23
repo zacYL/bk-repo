@@ -149,3 +149,10 @@ export const storeTypeEnum = [
         icon: 'virtual-store'
     }
 ]
+
+export const planLogEnum = {
+    total: '同步总次数',
+    success: '成功次数',
+    fail: '失败次数',
+    conflict: '冲突次数'
+}

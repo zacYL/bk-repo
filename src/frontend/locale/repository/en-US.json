@@ -221,5 +221,13 @@
     "addPackagePrompt":"The uploaded package in the virtual store can only be uploaded to the added local store, if the target store is not set, it will not be uploaded",
     "space":" ",
     "inFolderSearchPlaceholder":"Please enter a file/folder name to search",
-    "folderDirectory":"Folder directory"
+    "folderDirectory":"Folder directory",
+    "noDistributionRecord":"The log does not record the distribution records of products/documents",
+    "planTaskLogInfo":"[{name}] has been set not to record product/file logs, and cannot view task log details",
+    "planLogEnum" :{
+        "total": "Total number of syncs",
+        "success": "Number of successes",
+        "fail": "Number of failures",
+        "conflict": "Number of conflicts"
+    }
 }

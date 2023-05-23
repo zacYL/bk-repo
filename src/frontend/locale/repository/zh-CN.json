@@ -229,5 +229,13 @@
     "addPackagePrompt":"虚拟仓库中上传包仅可上传到已添加的本地仓库中，未设置目标仓库将无法上传",
     "space":"",
     "inFolderSearchPlaceholder":"请输入文件/文件夹名称搜索",
-    "folderDirectory":"文件夹目录"
+    "folderDirectory":"文件夹目录",
+    "noDistributionRecord":"日志不记载制品/文件的分发记录",
+    "planTaskLogInfo":"[{name}] 已设置不记录制品/文件的日志，无法查看任务日志详情",
+    "planLogEnum" :{
+        "total": "同步总次数",
+        "success": "成功次数",
+        "fail": "失败次数",
+        "conflict": "冲突次数"
+    }
 }

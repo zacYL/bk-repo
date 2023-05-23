@@ -137,5 +137,15 @@ export default {
                 }
             }
         )
+    },
+    /**
+     *  根据 recordId 查询任务执行日志详情总览，显示同步数量(同步总次数、成功、失败、冲突次数)
+     * @param {id} 任务执行日志唯一id
+     * @returns
+     */
+    getPlanLogDetailOverview (_, { id }) {
+        return Vue.prototype.$ajax.get(
+            `${prefix}/task/record/detail/overview/${id}`
+        )
     }
 }

@@ -103,7 +103,7 @@
                 </bk-select>
             </bk-form-item>
             <bk-form-item label="创建者" v-if="routeName !== 'createPlan'">
-                {{ userList[planForm.createdBy] && userList[planForm.createdBy].name }}
+                {{ userList[planForm.createdBy] && userList[planForm.createdBy].name || planForm.createdBy }}
             </bk-form-item>
             <bk-form-item label="创建时间" v-if="routeName !== 'createPlan'">{{ formatDate(planForm.createdDate) }}</bk-form-item>
             <bk-form-item :label="$t('description')">
@@ -115,6 +115,13 @@
                     maxlength="200"
                     :disabled="disabled">
                 </bk-input>
+            </bk-form-item>
+            <bk-form-item v-if="planForm.replicaObjectType === 'REPOSITORY'">
+                <bk-checkbox
+                    v-model="noRecordsCheck"
+                    :disabled="disabled">
+                    {{$t('noDistributionRecord')}}
+                </bk-checkbox>
             </bk-form-item>
             <bk-form-item v-if="!disabled">
                 <bk-button @click="$emit('close')">{{$t('cancel')}}</bk-button>
@@ -212,7 +219,8 @@
                         }
                     ]
                 },
-                replicaTaskObjects: []
+                replicaTaskObjects: [],
+                noRecordsCheck: true
             }
         },
         computed: {
@@ -279,7 +287,8 @@
                             conflictStrategy,
                             executionStrategy,
                             executionPlan: { executeTime, cronExpression }
-                        }
+                        },
+                        notRecord
                     },
                     objects
                 }) => {
@@ -305,6 +314,7 @@
                         createdDate
                     }
                     this.replicaTaskObjects = objects
+                    this.noRecordsCheck = notRecord
                 }).finally(() => {
                     this.isLoading = false
                 })
@@ -365,6 +375,9 @@
                     remoteClusterIds: this.planForm.remoteClusterIds,
                     enabled: true,
                     description: this.planForm.description
+                }
+                if (this.planForm?.replicaObjectType === 'REPOSITORY') {
+                    body.notRecord = this.noRecordsCheck
                 }
                 const request = this.routeName === 'createPlan'
                     ? this.createPlan({ body })

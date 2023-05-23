@@ -38,8 +38,8 @@
                     <div class="status-sign" :class="row.status" :data-name="row.status === 'HEALTHY' ? '正常' : '异常'"></div>
                 </template>
             </bk-table-column>
-            <bk-table-column label="节点名称" prop="name" width="250" show-overflow-tooltip></bk-table-column>
-            <bk-table-column label="节点类型" width="120" show-overflow-tooltip>
+            <bk-table-column label="节点名称" prop="name" show-overflow-tooltip></bk-table-column>
+            <bk-table-column label="节点类型" width="90" show-overflow-tooltip>
                 <template #default="{ row }">{{ nodeTypeEnum[row.type] }}</template>
             </bk-table-column>
             <bk-table-column :label="$t('address')" show-overflow-tooltip>
@@ -48,7 +48,7 @@
                 </template>
             </bk-table-column>
             <bk-table-column :label="$t('account')" prop="username" width="120" show-overflow-tooltip></bk-table-column>
-            <bk-table-column :label="$t('createdDate')" width="200" show-overflow-tooltip>
+            <bk-table-column :label="$t('createdDate')" width="150" show-overflow-tooltip>
                 <template #default="{ row }">{{formatDate(row.createdDate)}}</template>
             </bk-table-column>
             <bk-table-column :label="$t('operation')" width="70">

@@ -178,6 +178,7 @@ class ReplicaRecordServiceImpl(
                 pathConstraint = pathConstraint,
                 artifactName = artifactName,
                 version = version,
+                conflictStrategy = conflictStrategy,
                 status = result.status,
                 progress = result.progress!!,
                 startTime = startTime,

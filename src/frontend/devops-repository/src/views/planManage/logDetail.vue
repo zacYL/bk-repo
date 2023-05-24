@@ -66,7 +66,7 @@
             </bk-table-column>
             <bk-table-column label="同步状态" width="100">
                 <template #default="{ row }">
-                    <div class="status-sign" :class="row.status" :data-name="asyncPlanStatusEnum[row.status] || '未执行'"></div>
+                    <div class="status-sign" :class="row.status" :data-name="planLogDetailStatusEnum[row.status] || '未执行'"></div>
                 </template>
             </bk-table-column>
             <bk-table-column label="冲突策略" width="100">
@@ -101,12 +101,12 @@
 <script>
     import { mapGetters, mapActions } from 'vuex'
     import { formatDate } from '@repository/utils'
-    import { asyncPlanStatusEnum, planLogEnum, conflictStrategyEnum } from '@repository/store/publicEnum'
+    import { planLogDetailStatusEnum, planLogEnum, conflictStrategyEnum } from '@repository/store/publicEnum'
     export default {
         name: 'logDetail',
         data () {
             return {
-                asyncPlanStatusEnum,
+                planLogDetailStatusEnum,
                 planLogEnum,
                 conflictStrategyEnum,
                 isLoading: false,

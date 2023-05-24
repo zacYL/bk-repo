@@ -77,6 +77,13 @@ export const asyncPlanStatusEnum = {
     FAILED: '同步异常'
 }
 
+// 制品分发日志详情执行状态
+export const planLogDetailStatusEnum = {
+    SUCCESS: '同步成功',
+    FAILED: '同步失败',
+    RUNNING: '运行中'
+}
+
 // 扫描方案类型
 export const scanTypeEnum = {
     GENERIC: 'Generic制品分析',

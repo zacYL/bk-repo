@@ -158,10 +158,10 @@ export const storeTypeEnum = [
 ]
 
 export const planLogEnum = {
-    total: '同步总次数',
-    success: '成功次数',
-    fail: '失败次数',
-    conflict: '冲突次数'
+    total: '同步总数量',
+    success: '成功数量',
+    fail: '失败数量',
+    conflict: '冲突数量'
 }
 
 export const conflictStrategyEnum = {

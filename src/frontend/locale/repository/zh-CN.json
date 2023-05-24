@@ -233,9 +233,9 @@
     "noDistributionRecord":"日志不记载制品/文件的分发记录",
     "planTaskLogInfo":"[{name}] 已设置不记录制品/文件的日志，无法查看任务日志详情",
     "planLogEnum" :{
-        "total": "同步总次数",
-        "success": "成功次数",
-        "fail": "失败次数",
-        "conflict": "冲突次数"
+        "total": "同步总数量",
+        "success": "成功数量",
+        "fail": "失败数量",
+        "conflict": "冲突数量"
     }
 }

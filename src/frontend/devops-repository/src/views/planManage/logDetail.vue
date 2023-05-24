@@ -49,8 +49,8 @@
             <template #empty>
                 <empty-data :is-loading="isLoading" :search="Boolean(searchGroup.length || status)"></empty-data>
             </template>
-            <bk-table-column label="同步节点" show-overflow-tooltip>
-                <template #default="{ row }">{{ `${masterNode.name} - ${row.remoteCluster}` }}</template>
+            <bk-table-column label="目标节点" show-overflow-tooltip>
+                <template #default="{ row }">{{ row.remoteCluster}}</template>
             </bk-table-column>
             <bk-table-column label="同步仓库" show-overflow-tooltip>
                 <template #default="{ row }">

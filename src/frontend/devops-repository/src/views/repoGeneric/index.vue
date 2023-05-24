@@ -522,7 +522,7 @@
             },
             updateGenericTreeNode (item) {
                 this.$set(item, 'loading', true)
-                const name = item.roadMap.split(',').slice(0, 1)[0]
+                const name = item?.roadMap && item?.roadMap.split(',').slice(0, 1)[0]
                 return this.getFolderList({
                     projectId: this.projectId,
                     repoName: name,
@@ -590,7 +590,11 @@
                     path: fullPath
                 })
             },
-            refreshNodeChange () {
+            refreshNodeChange (destTreeData) {
+                // 在当前仓库中复制或移动文件夹后需要更新选中目录的上层目录
+                if (destTreeData?.repoName && destTreeData?.folder && destTreeData?.repoName === this.repoName) {
+                    this.updateGenericTreeNode(destTreeData)
+                }
                 this.updateGenericTreeNode(this.selectedTreeNode)
                 this.getArtifactories()
             },
@@ -637,23 +641,25 @@
                     }
                 })
             },
-            moveRes ({ name, fullPath }) {
+            moveRes ({ name, fullPath, folder }) {
                 this.initGenericOperateTree().then(() => {
                     this.$refs.genericTreeDialog.setTreeData({
                         show: true,
                         type: 'move',
                         title: `${this.$t('move')} (${name})`,
-                        path: fullPath
+                        path: fullPath,
+                        folder: folder
                     })
                 })
             },
-            copyRes ({ name, fullPath }) {
+            copyRes ({ name, fullPath, folder }) {
                 this.initGenericOperateTree().then(() => {
                     this.$refs.genericTreeDialog.setTreeData({
                         show: true,
                         type: 'copy',
                         title: `${this.$t('copy')} (${name})`,
-                        path: fullPath
+                        path: fullPath,
+                        folder: folder
                     })
                 })
             },

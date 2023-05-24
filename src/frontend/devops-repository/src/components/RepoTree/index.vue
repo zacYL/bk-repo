@@ -3,7 +3,7 @@
         <ul class="repo-tree-list">
             <li class="repo-tree-item" :key="item.roadMap" v-for="item of treeList">
                 <div class="repo-tree-title"
-                    :class="{ 'selected': selectedNode.name === item.name }"
+                    :class="{ 'selected': selectedNode.roadMap === item.roadMap }"
                     :style="{ 'padding-left': 20 * computedDepth(item) + 'px' }"
                     @click.stop="itemClickHandler(item)">
                     <i v-if="item.loading" class="mr5 loading spin-icon"></i>

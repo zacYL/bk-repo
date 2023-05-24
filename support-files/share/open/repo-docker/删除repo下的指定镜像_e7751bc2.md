@@ -1,0 +1,37 @@
+# 删除repo下的指定镜像
+功能描述：删除repo下的指定镜像
+
+### 请求地址
+```
+/ext/package/delete/{projectId}/{repoName}
+```
+
+### 请求方法
+`DELETE`
+### 请求参数
+#### 路径参数
+
+| 字段 | 类型 | 必填 | 描述 |
+| -------- | -------- | -------- | -------- |
+| projectId     | string   | true       | projectId |
+| repoName     | string   | true       | repoName |
+
+#### 查询参数
+
+| 字段 | 类型 | 必填 | 描述 |
+| -------- | -------- | -------- | -------- |
+| packageKey     | string   | true       | packageKey |
+
+
+#### 请求体参数
+| 字段 | 类型 | 必填 | 描述 |
+| -------- | -------- | -------- | -------- |
+
+### 返回结果
+| 字段 | 类型 | 描述 |
+| -------- | -------- | -------- |
+| code     | integer , format:int32  | 返回码 |
+| data     | boolean   | 数据 |
+| message     | string   | 错误信息 |
+| traceId     | string   | 链路追踪id |
+

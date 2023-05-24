@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController
 class UserRepositoryDebugController(
     private val repositoryCleanService: RepositoryCleanService
 ) {
-    @ApiOperation("仓库清理debug接口，调用该方法后会立即执行仓库清理动作")
+    @ApiOperation("仓库清理debug接口-调用该方法后会立即执行仓库清理动作")
     @Principal(PrincipalType.ADMIN)
     @GetMapping("/clean/{projectId}/{repoName}")
     fun cleanRepo(

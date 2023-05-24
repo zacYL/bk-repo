@@ -999,7 +999,7 @@
     {
       "code": "GET__api_repo_migrate_cleanStrategy",
       "name": "GET__api_repo_migrate_cleanStrategy",
-      "desc": "仓库清理策略数据迁移接口：将全局的保留时间迁移至具体每条目录清理条件中",
+      "desc": "仓库清理策略数据迁移接口-将全局的保留时间迁移至具体每条目录清理条件中",
       "path": "/api/repo/migrate/cleanStrategy",
       "method": "GET",
       "headers": [],
@@ -1008,7 +1008,7 @@
       "targetMethod": "GET",
       "timeout": 30,
       "retryTimes": 10,
-      "docName": "仓库清理策略数据迁移接口：将全局的保留时间迁移至具体每条目录清理条件中_7efab13f.md"
+      "docName": "仓库清理策略数据迁移接口-将全局的保留时间迁移至具体每条目录清理条件中_7efab13f.md"
     },
     {
       "code": "GET__api_repo_page_{projectId}_{pageNumber}_{pageSize}",
@@ -1083,7 +1083,7 @@
     {
       "code": "GET__api_repo_debug_clean_{projectId}_{repoName}",
       "name": "GET__api_repo_debug_clean_{projectId}_{repoName}",
-      "desc": "仓库清理debug接口，调用该方法后会立即执行仓库清理动作",
+      "desc": "仓库清理debug接口-调用该方法后会立即执行仓库清理动作",
       "path": "/api/repo/debug/clean/{projectId}/{repoName}",
       "method": "GET",
       "headers": [],
@@ -1092,7 +1092,7 @@
       "targetMethod": "GET",
       "timeout": 30,
       "retryTimes": 10,
-      "docName": "仓库清理debug接口，调用该方法后会立即执行仓库清理动作_0fefed94.md"
+      "docName": "仓库清理debug接口-调用该方法后会立即执行仓库清理动作_0fefed94.md"
     },
     {
       "code": "POST__api_share_batch",

@@ -49,7 +49,7 @@ data class RecordDetailInitialRequest(
     @ApiModelProperty("路径名称")
     var pathConstraint: PathConstraint? = null,
     @ApiModelProperty("制品名称")
-    var artifactName: String? = null,
+    var artifactName: String,
     @ApiModelProperty("版本")
     var version: String? = null,
     @ApiModelProperty("冲突策略")

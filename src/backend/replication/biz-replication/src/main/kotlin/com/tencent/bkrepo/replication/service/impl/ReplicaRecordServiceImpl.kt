@@ -47,6 +47,7 @@ import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus.FAILED
 import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus.RUNNING
 import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus.SUCCESS
 import com.tencent.bkrepo.replication.pojo.record.RecordOverview
+import com.tencent.bkrepo.replication.pojo.record.ReplicaArtifactStatistics
 import com.tencent.bkrepo.replication.pojo.record.ReplicaProgress
 import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordDetail
 import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordDetailListOption
@@ -62,6 +63,7 @@ import com.tencent.bkrepo.replication.util.CronUtils
 import com.tencent.bkrepo.replication.util.TaskRecordQueryHelper
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
+import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.aggregation.Aggregation
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
@@ -342,6 +344,40 @@ class ReplicaRecordServiceImpl(
         return resultMap
     }
 
+    override fun statisticsArtifactRecordDetail(key: String): List<ReplicaArtifactStatistics> {
+        var replicaArtifactStatistics = listOf<ReplicaArtifactStatistics>()
+        // 查找最新的执行记录
+        val recordQuery = Query.query(Criteria.where(TReplicaRecord::taskKey.name).`is`(key))
+            .with(Sort.by(Sort.Direction.DESC, TReplicaRecord::startTime.name)).limit(1)
+        recordQuery.fields().include(TReplicaRecord::id.name)
+        val recordIds = replicaRecordDao.find(recordQuery, Id::class.java)
+        if (recordIds.isNotEmpty()) {
+            val detailQuery = Query.query(Criteria.where(TReplicaRecordDetail::recordId.name).`is`(recordIds[0].id))
+                .with(Sort.by(Sort.Direction.DESC, TReplicaRecordDetail::startTime.name))
+            detailQuery.fields().include(
+                TReplicaRecordDetail::localRepoName.name,
+                TReplicaRecordDetail::artifactName.name,
+                TReplicaRecordDetail::version.name
+            )
+            replicaArtifactStatistics = replicaRecordDetailDao.find(detailQuery, ReplicaArtifactStatistics::class.java)
+            replicaArtifactStatistics.forEach {
+                val resultMap = searchRecordDetail(
+                    RecordDetailSearchRequest(
+                        taskKey = key,
+                        repoName = it.localRepoName,
+                        artifactName = it.artifactName,
+                        version = it.version
+                    )
+                )
+                it.success = resultMap[SUCCESS]!!
+                it.failed = resultMap[FAILED]!!
+            }
+        } else {
+            logger.warn("get records is empty by taskKey[$key]")
+        }
+        return replicaArtifactStatistics
+    }
+
     companion object {
         private val logger = LoggerFactory.getLogger(ReplicaRecordServiceImpl::class.java)
 
@@ -392,3 +428,5 @@ data class Overview(
     val _id: ExecutionStatus,
     val count: Double
 )
+
+data class Id(val id: String)

@@ -285,7 +285,7 @@ abstract class AbstractReplicaService(
         context: ReplicaContext,
         packageConstraint: PackageConstraint? = null,
         pathConstraint: PathConstraint? = null,
-        artifactName: String? = null,
+        artifactName: String,
         version: String? = null,
         conflictStrategy: ConflictStrategy? = null
     ): ReplicaExecutionContext {

@@ -51,9 +51,9 @@ object TaskRecordQueryHelper {
                 .apply {
                     packageName?.let { and("packageConstraint.packageKey").regex("^$it") }
                 }.apply {
-                    repoName?.let { and(TReplicaRecordDetail::localRepoName).isEqualTo(it) }
+                    repoName?.let { and(TReplicaRecordDetail::localRepoName).regex(".*$it.*") }
                 }.apply {
-                    clusterName?.let { and(TReplicaRecordDetail::remoteCluster).isEqualTo(it) }
+                    clusterName?.let { and(TReplicaRecordDetail::remoteCluster).regex(".*$it.*") }
                 }.apply {
                     path?.let { and("pathConstraint.path").isEqualTo("^$it") }
                 }.apply {

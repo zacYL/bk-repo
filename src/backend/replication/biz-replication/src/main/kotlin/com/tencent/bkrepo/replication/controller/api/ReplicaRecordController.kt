@@ -34,6 +34,7 @@ import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus
 import com.tencent.bkrepo.replication.pojo.record.RecordOverview
+import com.tencent.bkrepo.replication.pojo.record.ReplicaArtifactStatistics
 import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordDetail
 import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordDetailListOption
 import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordInfo
@@ -125,5 +126,13 @@ class ReplicaRecordController(
         searchRequest: RecordDetailSearchRequest
     ): Response<Map<ExecutionStatus, Long>> {
         return ResponseBuilder.success(replicaRecordService.searchRecordDetail(searchRequest))
+    }
+
+    @ApiOperation("统计每个制品的执行次数")
+    @GetMapping("/detail/artifact/statistics/{key}")
+    fun statisticsArtifactRecordDetail(
+        @PathVariable key: String
+    ): Response<List<ReplicaArtifactStatistics>> {
+        return ResponseBuilder.success(replicaRecordService.statisticsArtifactRecordDetail(key))
     }
 }

@@ -54,9 +54,9 @@ data class ReplicaRecordDetail(
     @ApiModelProperty("路径名称")
     var pathConstraint: PathConstraint? = null,
     @ApiModelProperty("制品名称")
-    var artifactName: String,
+    var artifactName: String? = null,
     @ApiModelProperty("包版本")
-    var version: String?,
+    var version: String? = null,
     @ApiModelProperty("冲突策略")
     var conflictStrategy: ConflictStrategy?,
     @ApiModelProperty("运行状态")

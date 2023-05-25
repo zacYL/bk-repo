@@ -77,7 +77,7 @@ data class TReplicaRecordDetail(
     /**
      * 制品名称，Generic 为 fullPath
      */
-    val artifactName: String,
+    val artifactName: String? = null,
 
     /**
      * 依赖源包版本

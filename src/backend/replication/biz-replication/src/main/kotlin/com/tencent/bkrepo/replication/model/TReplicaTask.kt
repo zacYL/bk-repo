@@ -106,7 +106,7 @@ data class TReplicaTask(
     /**
      * 不记录制品的分发记录
      */
-    val notRecord: Boolean = true,
+    val notRecord: Boolean = false,
 
     /**
      * 审计信息

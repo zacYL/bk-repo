@@ -67,7 +67,7 @@ data class ReplicaTaskInfo(
     @ApiModelProperty("是否启用")
     var enabled: Boolean = true,
     @ApiModelProperty("不记录制品的分发记录")
-    var notRecord: Boolean = true,
+    var notRecord: Boolean,
     @ApiModelProperty("创建者")
     val createdBy: String,
     @ApiModelProperty("创建日期")

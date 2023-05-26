@@ -32,14 +32,14 @@
                     class="w250"
                     placeholder="请输入仓库名称, 按Enter键搜索"
                     clearable
-                    @enter="handlerPaginationChange()"
-                    @clear="handlerPaginationChange()"
+                    @enter="handlerPaginationChange"
+                    @clear="handlerPaginationChange"
                     right-icon="bk-icon icon-search">
                 </bk-input>
                 <bk-select
                     v-model="query.category"
                     class="ml10 w250"
-                    @change="handlerPaginationChange()"
+                    @change="handlerPaginationChange"
                     :placeholder="$t('allStoreTypes')">
                     <bk-option v-for="category in storeTypeEnum" :key="category.id" :id="category.id" :name="$t(category.name)">
                         <div class="flex-align-center">
@@ -51,7 +51,7 @@
                 <bk-select
                     v-model="query.type"
                     class="ml10 w250"
-                    @change="handlerPaginationChange()"
+                    @change="handlerPaginationChange"
                     :placeholder="$t('allTypes')">
                     <bk-option v-for="type in repoEnum" :key="type" :id="type" :name="type">
                         <div class="flex-align-center">
@@ -125,7 +125,7 @@
             @change="current => handlerPaginationChange({ current })"
             @limit-change="limit => handlerPaginationChange({ limit })">
         </bk-pagination>
-        <create-repo-dialog ref="createRepo" :store-type="currentStoreType" @refresh="handlerPaginationChange()" @close="onCloseDialog"></create-repo-dialog>
+        <create-repo-dialog ref="createRepo" :store-type="currentStoreType" @refresh="handlerPaginationChange" @close="onCloseDialog"></create-repo-dialog>
     </div>
 </template>
 <script>
@@ -133,7 +133,7 @@
     import createRepoDialog from '@repository/views/repoList/createRepoDialog'
     import { mapState, mapActions } from 'vuex'
     import { repoEnum, storeTypeEnum } from '@repository/store/publicEnum'
-    import { formatDate } from '@repository/utils'
+    import { formatDate, debounce } from '@repository/utils'
     export default {
         name: 'repoList',
         components: { OperationList, createRepoDialog },
@@ -147,7 +147,9 @@
                 query: {
                     name: this.$route.query.name,
                     type: this.$route.query.type,
-                    category: this.$route.query.category
+                    category: this.$route.query.category,
+                    c: this.$route.query.c || 1,
+                    l: this.$route.query.l || 20
                 },
                 pagination: {
                     count: 0,
@@ -156,7 +158,8 @@
                     limitList: [10, 20, 40]
                 },
                 isDropdownShow: false,
-                currentStoreType: 'local' // 当前选择的仓库类型
+                currentStoreType: 'local', // 当前选择的仓库类型
+                debounceGetListData: null
             }
         },
         computed: {
@@ -167,11 +170,26 @@
         },
         watch: {
             projectId () {
+                // 切换项目时需要将之前的筛选条件清空，页码相关的重置为 1/20，否则会保留之前的筛选条件
+                this.query = {
+                    c: 1,
+                    l: 20
+                }
                 this.handlerPaginationChange()
+            },
+            '$route.query' () {
+                if (Object.values(this.$route.query).filter(Boolean)?.length === 0) {
+                    // 此时需要将筛选条件清空，否则会导致点击菜单的时候筛选条件还在，不符合产品要求(点击菜单清空筛选条件，重新请求最新数据)
+                    this.query = {}
+                    // 此时需要加上防抖，否则在点击菜单的时候会直接触发bk-select的change事件，导致出现多个请求
+                    this.debounceGetListData && this.debounceGetListData()
+                }
             }
         },
         created () {
-            this.handlerPaginationChange()
+            // 此处的两个顺序不能更换，否则会导致请求数据时报错，防抖这个方法不是function
+            this.debounceGetListData = debounce(this.getListData, 100)
+            this.handlerPaginationChange({ current: this.$route.query.c, limit: this.$route.query.l })
         },
         methods: {
             formatDate,
@@ -202,7 +220,7 @@
                 this.$router.replace({
                     query: this.query
                 })
-                this.getListData()
+                this.debounceGetListData()
             },
             // 点击下拉菜单，隐藏下拉框，打开创建仓库弹窗
             handlerCreateStore (type) {
@@ -223,7 +241,10 @@
                     },
                     query: {
                         repoName: name,
-                        storeType: category?.toLowerCase() || ''
+                        storeType: category?.toLowerCase() || '',
+                        ...this.$route.query,
+                        c: this.pagination.current,
+                        l: this.pagination.limit
                     }
                 })
             },
@@ -248,7 +269,7 @@
                             projectId: this.projectId,
                             name
                         }).then(() => {
-                            this.getListData()
+                            this.debounceGetListData()
                             this.$bkMessage({
                                 theme: 'success',
                                 message: this.$t('delete') + this.$t('success')

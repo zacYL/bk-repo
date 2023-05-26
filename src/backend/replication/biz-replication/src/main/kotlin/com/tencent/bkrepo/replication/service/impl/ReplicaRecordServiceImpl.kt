@@ -293,7 +293,7 @@ class ReplicaRecordServiceImpl(
             when (it._id) {
                 SUCCESS -> success = it.count.toLong()
                 FAILED -> fail = it.count.toLong()
-                RUNNING -> TODO()
+                RUNNING -> {}
             }
         }
         val conflict = replicaRecordDetailDao.find(
@@ -331,7 +331,7 @@ class ReplicaRecordServiceImpl(
                     when (overview._id) {
                         SUCCESS -> resultMap[SUCCESS] = resultMap[SUCCESS]!!.plus(overview.count.toLong())
                         FAILED -> resultMap[FAILED] = resultMap[FAILED]!!.plus(overview.count.toLong())
-                        RUNNING -> TODO()
+                        RUNNING -> {}
                     }
                 }
             }

@@ -282,6 +282,7 @@ class ReplicaRecordServiceImpl(
     override fun recordDetailOverview(recordId: String): RecordOverview {
         var success = 0L
         var fail = 0L
+        var running = 0L
         val aggregation = Aggregation.newAggregation(
             TReplicaRecordDetail::class.java,
             Aggregation.match(Criteria.where(TReplicaRecordDetail::recordId.name).`is`(recordId)),
@@ -293,7 +294,7 @@ class ReplicaRecordServiceImpl(
             when (it._id) {
                 SUCCESS -> success = it.count.toLong()
                 FAILED -> fail = it.count.toLong()
-                RUNNING -> {}
+                RUNNING -> running = it.count.toLong()
             }
         }
         val conflict = replicaRecordDetailDao.find(
@@ -302,7 +303,7 @@ class ReplicaRecordServiceImpl(
                     .and(TReplicaRecordDetail::conflictStrategy.name).ne(null)
             )
         ).count().toLong()
-        return RecordOverview(success + fail, success, fail, conflict)
+        return RecordOverview(success + fail + running, success, fail, conflict)
     }
 
     override fun searchRecordDetail(searchRequest: RecordDetailSearchRequest): Map<ExecutionStatus, Long> {

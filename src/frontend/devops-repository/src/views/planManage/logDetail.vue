@@ -237,6 +237,8 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        display: inline-block;
+        vertical-align: middle;
     }
 }
 </style>

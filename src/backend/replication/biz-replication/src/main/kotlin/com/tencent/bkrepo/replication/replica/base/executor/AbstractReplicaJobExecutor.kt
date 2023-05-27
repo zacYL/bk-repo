@@ -37,6 +37,7 @@ import com.tencent.bkrepo.replication.pojo.task.ReplicaTaskDetail
 import com.tencent.bkrepo.replication.replica.base.ReplicaService
 import com.tencent.bkrepo.replication.replica.base.context.ReplicaContext
 import com.tencent.bkrepo.replication.service.ClusterNodeService
+import org.slf4j.LoggerFactory
 import java.util.concurrent.Future
 import java.util.concurrent.ThreadPoolExecutor
 
@@ -50,6 +51,7 @@ open class AbstractReplicaJobExecutor(
 ) {
 
     private val threadPoolExecutor: ThreadPoolExecutor = ReplicaThreadPoolExecutor.instance
+    private val logger = LoggerFactory.getLogger(AbstractReplicaJobExecutor::class.java)
 
     /**
      * 提交任务到线程池执行
@@ -84,7 +86,11 @@ open class AbstractReplicaJobExecutor(
                 }
                 ExecutionResult(status)
             } catch (exception: Throwable) {
-                ExecutionResult.fail(exception.message)
+                logger.error(
+                    "task[${taskDetail.task.key}/${taskDetail.task.name}" +
+                            "/$clusterNodeName] replica exception:[${exception}]"
+                )
+                ExecutionResult.fail("${clusterNodeName.name}:${exception.message}\n")
             }
         }
     }

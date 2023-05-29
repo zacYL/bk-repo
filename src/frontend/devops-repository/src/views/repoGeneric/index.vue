@@ -10,9 +10,12 @@
         </header>
         <div class="repo-generic-main flex-align-center"
             :style="{ 'margin-left': `${searchFileName ? -(sideBarWidth + moveBarWidth) : 0}px` }">
-            <div class="repo-generic-side pt20 pb20"
+            <div class="repo-generic-side"
                 :style="{ 'flex-basis': `${sideBarWidth}px` }"
                 v-bkloading="{ isLoading: treeLoading }">
+                <div class="repo-generic-side-info">
+                    <span>{{$t('folderDirectory')}}</span>
+                </div>
                 <repo-tree
                     class="repo-generic-tree"
                     ref="repoTree"
@@ -845,6 +848,12 @@
             height: 100%;
             overflow: hidden;
             background-color: white;
+            &-info{
+                height: 50px;
+                display: flex;
+                align-items: center;
+                padding-left: 20px;
+            }
             .repo-generic-tree {
                 border-top: 1px solid var(--borderColor);
                 height: calc(100% - 50px);

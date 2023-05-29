@@ -220,5 +220,6 @@
     "noAddedLocalStore":"No local store has been added, please select the local store and then select",
     "addPackagePrompt":"The uploaded package in the virtual store can only be uploaded to the added local store, if the target store is not set, it will not be uploaded",
     "space":" ",
-    "inFolderSearchPlaceholder":"Please enter a file/folder name to search"
+    "inFolderSearchPlaceholder":"Please enter a file/folder name to search",
+    "folderDirectory":"Folder directory"
 }

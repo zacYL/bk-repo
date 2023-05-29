@@ -119,7 +119,7 @@
             align="right"
             show-total-count
             :current.sync="pagination.current"
-            :limit="pagination.limit"
+            :limit.sync="pagination.limit"
             :count="pagination.count"
             :limit-list="pagination.limitList"
             @change="current => handlerPaginationChange({ current })"
@@ -134,6 +134,13 @@
     import { mapState, mapActions } from 'vuex'
     import { repoEnum, storeTypeEnum } from '@repository/store/publicEnum'
     import { formatDate, debounce } from '@repository/utils'
+    import { cloneDeep } from 'lodash'
+    const paginationParams = {
+        count: 0,
+        current: 1,
+        limit: 20,
+        limitList: [10, 20, 40]
+    }
     export default {
         name: 'repoList',
         components: { OperationList, createRepoDialog },
@@ -151,12 +158,7 @@
                     c: this.$route.query.c || 1,
                     l: this.$route.query.l || 20
                 },
-                pagination: {
-                    count: 0,
-                    current: 1,
-                    limit: 20,
-                    limitList: [10, 20, 40]
-                },
+                pagination: cloneDeep(paginationParams),
                 isDropdownShow: false,
                 currentStoreType: 'local', // 当前选择的仓库类型
                 debounceGetListData: null
@@ -180,7 +182,12 @@
             '$route.query' () {
                 if (Object.values(this.$route.query).filter(Boolean)?.length === 0) {
                     // 此时需要将筛选条件清空，否则会导致点击菜单的时候筛选条件还在，不符合产品要求(点击菜单清空筛选条件，重新请求最新数据)
-                    this.query = {}
+                    this.query = {
+                        c: 1,
+                        l: 20
+                    }
+                    // 此时需要将页码相关参数重置，否则会导致点击制品列表菜单后不能返回首页(页码为1，每页大小为20)
+                    this.pagination = cloneDeep(paginationParams)
                     // 此时需要加上防抖，否则在点击菜单的时候会直接触发bk-select的change事件，导致出现多个请求
                     this.debounceGetListData && this.debounceGetListData()
                 }
@@ -189,7 +196,11 @@
         created () {
             // 此处的两个顺序不能更换，否则会导致请求数据时报错，防抖这个方法不是function
             this.debounceGetListData = debounce(this.getListData, 100)
-            this.handlerPaginationChange({ current: this.$route.query.c, limit: this.$route.query.l })
+            // 当从制品仓库列表页进入依赖源仓库的详情页后点击上方面包屑返回会导致页码相关参数变为string类型，
+            // 而bk-pagination的页码相关参数要求为number类型，导致页码不对应，出现一系列问题
+            const dependentCurrent = parseInt(this.$route.query.c || 1)
+            const dependentLimit = parseInt(this.$route.query.l || 20)
+            this.handlerPaginationChange({ current: dependentCurrent, limit: dependentLimit })
         },
         methods: {
             formatDate,

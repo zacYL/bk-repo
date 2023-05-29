@@ -14,7 +14,7 @@
                 :style="{ 'flex-basis': `${sideBarWidth}px` }"
                 v-bkloading="{ isLoading: treeLoading }">
                 <div class="repo-generic-side-info">
-                    <span>文件夹目录</span>
+                    <span>{{$t('folderDirectory')}}</span>
                 </div>
                 <repo-tree
                     class="repo-generic-tree"

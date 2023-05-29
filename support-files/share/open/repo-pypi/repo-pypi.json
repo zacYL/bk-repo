@@ -3,7 +3,7 @@
   "systemName": " 制品库",
   "openApiList": [
     {
-      "code": "DELETE__ext_package_delete_{projectId}_{repoName}",
+      "code": "DELETE__ext_package_delete_{projectId}_{repoName}_repo-pypi",
       "name": "DELETE__ext_package_delete_{projectId}_{repoName}",
       "desc": "pypi 包删除接口",
       "path": "/ext/package/delete/{projectId}/{repoName}",
@@ -17,7 +17,7 @@
       "docName": "pypi 包删除接口_e7751bc2.md"
     },
     {
-      "code": "DELETE__ext_version_delete_{projectId}_{repoName}",
+      "code": "DELETE__ext_version_delete_{projectId}_{repoName}_repo-pypi",
       "name": "DELETE__ext_version_delete_{projectId}_{repoName}",
       "desc": "pypi 版本删除接口",
       "path": "/ext/version/delete/{projectId}/{repoName}",
@@ -31,7 +31,7 @@
       "docName": "pypi 版本删除接口_8e1ef71c.md"
     },
     {
-      "code": "GET__ext_version_detail_{projectId}_{repoName}",
+      "code": "GET__ext_version_detail_{projectId}_{repoName}_repo-pypi",
       "name": "GET__ext_version_detail_{projectId}_{repoName}",
       "desc": "pypi 版本详情接口",
       "path": "/ext/version/detail/{projectId}/{repoName}",

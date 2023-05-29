@@ -3,7 +3,7 @@
   "systemName": " 制品库",
   "openApiList": [
     {
-      "code": "GET__ext_dependencies_reverse_{projectId}_{repoName}",
+      "code": "GET__ext_dependencies_reverse_{projectId}_{repoName}_repo-maven",
       "name": "GET__ext_dependencies_reverse_{projectId}_{repoName}",
       "desc": "查询仓库中依赖该制品的制品",
       "path": "/ext/dependencies/reverse/{projectId}/{repoName}",
@@ -17,7 +17,7 @@
       "docName": "查询仓库中依赖该制品的制品_630109a0.md"
     },
     {
-      "code": "GET__ext_dependencies_{projectId}_{repoName}",
+      "code": "GET__ext_dependencies_{projectId}_{repoName}_repo-maven",
       "name": "GET__ext_dependencies_{projectId}_{repoName}",
       "desc": "查询包的依赖项",
       "path": "/ext/dependencies/{projectId}/{repoName}",
@@ -31,7 +31,7 @@
       "docName": "查询包的依赖项_ecd622af.md"
     },
     {
-      "code": "DELETE__ext_package_delete_{projectId}_{repoName}",
+      "code": "DELETE__ext_package_delete_{projectId}_{repoName}_repo-maven",
       "name": "DELETE__ext_package_delete_{projectId}_{repoName}",
       "desc": "maven jar 包删除接口",
       "path": "/ext/package/delete/{projectId}/{repoName}",
@@ -45,7 +45,7 @@
       "docName": "maven jar 包删除接口_e7751bc2.md"
     },
     {
-      "code": "GET__ext_plugins_{projectId}_{repoName}",
+      "code": "GET__ext_plugins_{projectId}_{repoName}_repo-maven",
       "name": "GET__ext_plugins_{projectId}_{repoName}",
       "desc": "查询包依赖的插件",
       "path": "/ext/plugins/{projectId}/{repoName}",
@@ -59,7 +59,7 @@
       "docName": "查询包依赖的插件_910cc531.md"
     },
     {
-      "code": "GET__ext_search_gavc_{projectId}_{pageNumber}_{pageSize}",
+      "code": "GET__ext_search_gavc_{projectId}_{pageNumber}_{pageSize}_repo-maven",
       "name": "GET__ext_search_gavc_{projectId}_{pageNumber}_{pageSize}",
       "desc": "maven gavc 搜索接口",
       "path": "/ext/search/gavc/{projectId}/{pageNumber}/{pageSize}",
@@ -73,7 +73,7 @@
       "docName": "maven gavc 搜索接口_19de8968.md"
     },
     {
-      "code": "DELETE__ext_version_delete_{projectId}_{repoName}",
+      "code": "DELETE__ext_version_delete_{projectId}_{repoName}_repo-maven",
       "name": "DELETE__ext_version_delete_{projectId}_{repoName}",
       "desc": "maven jar 包版本删除接口",
       "path": "/ext/version/delete/{projectId}/{repoName}",
@@ -87,7 +87,7 @@
       "docName": "maven jar 包版本删除接口_8e1ef71c.md"
     },
     {
-      "code": "GET__ext_version_detail_{projectId}_{repoName}",
+      "code": "GET__ext_version_detail_{projectId}_{repoName}_repo-maven",
       "name": "GET__ext_version_detail_{projectId}_{repoName}",
       "desc": "maven jar 版本详情接口",
       "path": "/ext/version/detail/{projectId}/{repoName}",

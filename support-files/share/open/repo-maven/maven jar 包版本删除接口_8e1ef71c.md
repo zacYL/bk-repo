@@ -22,8 +22,8 @@
 | repoIdentify     | string   | false       |  |
 | repoName     | string   | false       |  |
 | responseName     | string   | false       |  |
-| version     | string   | true       | version |
 | packageKey     | string   | true       | packageKey |
+| version     | string   | true       | version |
 
 
 

@@ -3,7 +3,7 @@
   "systemName": " 制品库",
   "openApiList": [
     {
-      "code": "GET__ext_dependent_page_{projectId}_{repoName}",
+      "code": "GET__ext_dependent_page_{projectId}_{repoName}_repo-npm",
       "name": "GET__ext_dependent_page_{projectId}_{repoName}",
       "desc": "分页查询某个资源节点被依赖的所有资源名称",
       "path": "/ext/dependent/page/{projectId}/{repoName}",
@@ -17,7 +17,7 @@
       "docName": "分页查询某个资源节点被依赖的所有资源名称_8f8034a2.md"
     },
     {
-      "code": "GET__ext_address",
+      "code": "GET__ext_address_repo-npm",
       "name": "GET__ext_address",
       "desc": "获取npm域名地址",
       "path": "/ext/address",
@@ -31,7 +31,7 @@
       "docName": "获取npm域名地址_6fdaa543.md"
     },
     {
-      "code": "DELETE__ext_package_delete_{projectId}_{repoName}",
+      "code": "DELETE__ext_package_delete_{projectId}_{repoName}_repo-npm",
       "name": "DELETE__ext_package_delete_{projectId}_{repoName}",
       "desc": "删除仓库下的包",
       "path": "/ext/package/delete/{projectId}/{repoName}",
@@ -45,7 +45,7 @@
       "docName": "删除仓库下的包_e7751bc2.md"
     },
     {
-      "code": "DELETE__ext_version_delete_{projectId}_{repoName}",
+      "code": "DELETE__ext_version_delete_{projectId}_{repoName}_repo-npm",
       "name": "DELETE__ext_version_delete_{projectId}_{repoName}",
       "desc": "删除仓库下的包版本",
       "path": "/ext/version/delete/{projectId}/{repoName}",
@@ -59,7 +59,7 @@
       "docName": "删除仓库下的包版本_8e1ef71c.md"
     },
     {
-      "code": "GET__ext_version_detail_{projectId}_{repoName}",
+      "code": "GET__ext_version_detail_{projectId}_{repoName}_repo-npm",
       "name": "GET__ext_version_detail_{projectId}_{repoName}",
       "desc": "查询包的版本详情",
       "path": "/ext/version/detail/{projectId}/{repoName}",

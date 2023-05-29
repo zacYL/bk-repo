@@ -3,7 +3,7 @@
   "systemName": " 制品库",
   "openApiList": [
     {
-      "code": "GET__ext_addr",
+      "code": "GET__ext_addr_repo-docker",
       "name": "GET__ext_addr",
       "desc": "获取docker仓库地址",
       "path": "/ext/addr",
@@ -17,7 +17,7 @@
       "docName": "获取docker仓库地址_753d1c88.md"
     },
     {
-      "code": "GET__ext_layer_{projectId}_{repoName}_**_{id}",
+      "code": "GET__ext_layer_{projectId}_{repoName}_**_{id}_repo-docker",
       "name": "GET__ext_layer_{projectId}_{repoName}_**_{id}",
       "desc": "获取layer文件",
       "path": "/ext/layer/{projectId}/{repoName}/**/{id}",
@@ -31,7 +31,7 @@
       "docName": "获取layer文件_c62097fb.md"
     },
     {
-      "code": "GET__ext_manifest_{projectId}_{repoName}_**_{tag}",
+      "code": "GET__ext_manifest_{projectId}_{repoName}_**_{tag}_repo-docker",
       "name": "GET__ext_manifest_{projectId}_{repoName}_**_{tag}",
       "desc": "获取manifest文件",
       "path": "/ext/manifest/{projectId}/{repoName}/**/{tag}",
@@ -45,7 +45,7 @@
       "docName": "获取manifest文件_d3403c30.md"
     },
     {
-      "code": "DELETE__ext_package_delete_{projectId}_{repoName}",
+      "code": "DELETE__ext_package_delete_{projectId}_{repoName}_repo-docker",
       "name": "DELETE__ext_package_delete_{projectId}_{repoName}",
       "desc": "删除repo下的指定镜像",
       "path": "/ext/package/delete/{projectId}/{repoName}",
@@ -59,7 +59,7 @@
       "docName": "删除repo下的指定镜像_e7751bc2.md"
     },
     {
-      "code": "GET__ext_repo_{projectId}_{repoName}",
+      "code": "GET__ext_repo_{projectId}_{repoName}_repo-docker",
       "name": "GET__ext_repo_{projectId}_{repoName}",
       "desc": "获取所有image",
       "path": "/ext/repo/{projectId}/{repoName}",
@@ -73,7 +73,7 @@
       "docName": "获取所有image_bdc00a4a.md"
     },
     {
-      "code": "GET__ext_tag_{projectId}_{repoName}_**",
+      "code": "GET__ext_tag_{projectId}_{repoName}_**_repo-docker",
       "name": "GET__ext_tag_{projectId}_{repoName}_**",
       "desc": "获取repo所有的tag",
       "path": "/ext/tag/{projectId}/{repoName}/**",
@@ -87,7 +87,7 @@
       "docName": "获取repo所有的tag_020409f8.md"
     },
     {
-      "code": "DELETE__ext_version_delete_{projectId}_{repoName}",
+      "code": "DELETE__ext_version_delete_{projectId}_{repoName}_repo-docker",
       "name": "DELETE__ext_version_delete_{projectId}_{repoName}",
       "desc": "删除repo下的指定镜像",
       "path": "/ext/version/delete/{projectId}/{repoName}",
@@ -101,7 +101,7 @@
       "docName": "删除repo下的指定镜像_8e1ef71c.md"
     },
     {
-      "code": "GET__ext_version_detail_{projectId}_{repoName}",
+      "code": "GET__ext_version_detail_{projectId}_{repoName}_repo-docker",
       "name": "GET__ext_version_detail_{projectId}_{repoName}",
       "desc": "获取镜像tag下的详情",
       "path": "/ext/version/detail/{projectId}/{repoName}",

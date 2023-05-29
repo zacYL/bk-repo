@@ -13,21 +13,13 @@
             <div class="repo-generic-side"
                 :style="{ 'flex-basis': `${sideBarWidth}px` }"
                 v-bkloading="{ isLoading: treeLoading }">
-                <div class="p10">
-                    <bk-input
-                        v-model.trim="importantSearch"
-                        placeholder="请输入关键字，按Enter键搜索"
-                        clearable
-                        right-icon="bk-icon icon-search"
-                        @enter="searchFile"
-                        @clear="searchFile">
-                    </bk-input>
+                <div class="repo-generic-side-info">
+                    <span>文件夹目录</span>
                 </div>
                 <repo-tree
                     class="repo-generic-tree"
                     ref="repoTree"
                     :tree="genericTree"
-                    :important-search="importantSearch"
                     :open-list="sideTreeOpenList"
                     :selected-node="selectedTreeNode"
                     @icon-click="iconClickHandler"
@@ -51,17 +43,7 @@
             />
             <div class="repo-generic-table" v-bkloading="{ isLoading }">
                 <div class="p10 multi-operation flex-between-center">
-                    <bk-input
-                        class="w250"
-                        v-if="searchFileName"
-                        v-model.trim="importantSearch"
-                        placeholder="请输入关键字，按Enter键搜索"
-                        clearable
-                        right-icon="bk-icon icon-search"
-                        @enter="searchFile"
-                        @clear="searchFile">
-                    </bk-input>
-                    <breadcrumb v-else :list="breadcrumb" omit-middle></breadcrumb>
+                    <breadcrumb :list="breadcrumb" omit-middle></breadcrumb>
                     <div class="repo-generic-actions bk-button-group">
                         <bk-button
                             v-if="multiSelect.length"
@@ -73,6 +55,15 @@
                             @click="handlerMultiDelete()">
                             批量删除
                         </bk-button>
+                        <bk-input
+                            class="w250 ml10"
+                            v-model.trim="inFolderSearchName"
+                            :placeholder="$t('inFolderSearchPlaceholder')"
+                            clearable
+                            right-icon="bk-icon icon-search"
+                            @enter="inFolderSearchFile"
+                            @clear="inFolderSearchFile">
+                        </bk-input>
                         <bk-button class="ml10"
                             @click="getArtifactories">
                             {{ $t('refresh') }}
@@ -232,9 +223,6 @@
                 moveBarWidth: 10,
                 isLoading: false,
                 treeLoading: false,
-                importantSearch: this.$route.query.fileName,
-                // 搜索路径文件夹下的内容
-                searchFullPath: '',
                 // 左侧树处于打开状态的目录
                 sideTreeOpenList: [],
                 sortType: 'lastModifiedDate',
@@ -250,7 +238,8 @@
                     limit: 20,
                     limitList: [10, 20, 40]
                 },
-                debounceClickTreeNode: null
+                debounceClickTreeNode: null,
+                inFolderSearchName: this.$route.query.fileName
             }
         },
         computed: {
@@ -431,13 +420,11 @@
                     projectId: this.projectId,
                     repoName: this.repoName,
                     fullPath: this.selectedTreeNode.fullPath,
-                    ...(this.searchFullPath
+                    ...(this.inFolderSearchName
                         ? {
-                            fullPath: this.searchFullPath
-                        }
-                        : {
                             name: this.searchFileName
                         }
+                        : {}
                     ),
                     current: this.pagination.current,
                     limit: this.pagination.limit,
@@ -456,18 +443,6 @@
                 }).finally(() => {
                     this.isLoading = false
                 })
-            },
-            searchFile () {
-                if (this.importantSearch || this.searchFileName) {
-                    this.$router.replace({
-                        query: {
-                            ...this.$route.query,
-                            fileName: this.importantSearch
-                        }
-                    })
-                    this.searchFullPath = ''
-                    this.handlerPaginationChange()
-                }
             },
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
                 this.pagination.current = current
@@ -569,14 +544,8 @@
             // 双击table打开文件夹
             openFolder (row) {
                 if (!row.folder) return
-                if (this.searchFileName) {
-                    // 搜索中打开文件夹
-                    this.searchFullPath = row.fullPath
-                    this.handlerPaginationChange()
-                } else {
-                    const node = this.selectedTreeNode.children.find(v => v.fullPath === row.fullPath)
-                    this.itemClickHandler(node)
-                }
+                const node = this.selectedTreeNode.children.find(v => v.fullPath === row.fullPath)
+                this.itemClickHandler(node)
             },
             showDetail ({ folder, fullPath }) {
                 this.$refs.genericDetail.setData({
@@ -831,6 +800,18 @@
                     repoName: row.repoName,
                     fullPath: row.fullPath
                 })
+            },
+            // 文件夹内部的搜索，根据文件名或文件夹名搜索
+            inFolderSearchFile () {
+                if (this.inFolderSearchName || this.searchFileName) {
+                    this.$router.replace({
+                        query: {
+                            ...this.$route.query,
+                            fileName: this.inFolderSearchName
+                        }
+                    })
+                    this.handlerPaginationChange()
+                }
             }
         }
     }
@@ -866,6 +847,12 @@
             height: 100%;
             overflow: hidden;
             background-color: white;
+            &-info{
+                height: 50px;
+                display: flex;
+                align-items: center;
+                padding-left: 20px;
+            }
             .repo-generic-tree {
                 border-top: 1px solid var(--borderColor);
                 height: calc(100% - 50px);

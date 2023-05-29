@@ -94,6 +94,11 @@ export default {
                                 value: repoName,
                                 operation: 'EQ'
                             },
+                            {
+                                field: 'path',
+                                value: `${fullPath === '/' ? '' : fullPath}/`,
+                                operation: 'EQ'
+                            },
                             ...(name
                                 ? [
                                     {
@@ -102,13 +107,7 @@ export default {
                                         operation: 'MATCH'
                                     }
                                 ]
-                                : [
-                                    {
-                                        field: 'path',
-                                        value: `${fullPath === '/' ? '' : fullPath}/`,
-                                        operation: 'EQ'
-                                    }
-                                ]
+                                : []
                             )
                         ],
                         relation: 'AND'

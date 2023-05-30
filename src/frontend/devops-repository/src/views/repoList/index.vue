@@ -177,6 +177,7 @@
                     c: 1,
                     l: 20
                 }
+                this.pagination = cloneDeep(paginationParams)
                 this.handlerPaginationChange()
             },
             '$route.query' () {

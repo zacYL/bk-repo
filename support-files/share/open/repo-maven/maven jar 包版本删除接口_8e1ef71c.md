@@ -3,7 +3,7 @@
 
 ### 请求地址
 ```
-/ext/version/delete/{projectId}/{repoName}
+/repo-maven/ext/version/delete/{projectId}/{repoName}
 ```
 
 ### 请求方法
@@ -22,8 +22,8 @@
 | repoIdentify     | string   | false       |  |
 | repoName     | string   | false       |  |
 | responseName     | string   | false       |  |
-| packageKey     | string   | true       | packageKey |
 | version     | string   | true       | version |
+| packageKey     | string   | true       | packageKey |
 
 
 

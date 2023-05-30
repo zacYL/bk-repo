@@ -3,7 +3,7 @@
 
 ### 请求地址
 ```
-/ext/address
+/repo-helm/ext/address
 ```
 
 ### 请求方法

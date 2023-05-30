@@ -3,7 +3,7 @@
 
 ### 请求地址
 ```
-/api/software/package/search/overview
+/repo-repository/api/software/package/search/overview
 ```
 
 ### 请求方法

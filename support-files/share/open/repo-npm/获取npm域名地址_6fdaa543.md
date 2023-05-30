@@ -3,7 +3,7 @@
 
 ### 请求地址
 ```
-/ext/address
+/repo-npm/ext/address
 ```
 
 ### 请求方法

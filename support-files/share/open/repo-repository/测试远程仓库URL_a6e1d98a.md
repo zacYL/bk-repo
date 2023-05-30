@@ -3,7 +3,7 @@
 
 ### 请求地址
 ```
-/api/repo/testremote
+/repo-repository/api/repo/testremote
 ```
 
 ### 请求方法

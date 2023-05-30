@@ -3,7 +3,7 @@
 
 ### 请求地址
 ```
-/ext/package/delete/{projectId}/{repoName}
+/repo-pypi/ext/package/delete/{projectId}/{repoName}
 ```
 
 ### 请求方法

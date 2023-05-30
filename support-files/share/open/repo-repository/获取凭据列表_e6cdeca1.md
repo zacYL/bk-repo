@@ -3,7 +3,7 @@
 
 ### 请求地址
 ```
-/api/storage/credentials
+/repo-repository/api/storage/credentials
 ```
 
 ### 请求方法

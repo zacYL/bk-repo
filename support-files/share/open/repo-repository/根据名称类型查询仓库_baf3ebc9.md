@@ -3,7 +3,7 @@
 
 ### 请求地址
 ```
-/api/repo/info/{projectId}/{repoName}
+/repo-repository/api/repo/info/{projectId}/{repoName}
 ```
 
 ### 请求方法

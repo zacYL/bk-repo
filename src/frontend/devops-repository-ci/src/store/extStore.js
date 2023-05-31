@@ -70,7 +70,7 @@ export default {
         },
         // 仓库内自定义查询
         // override
-        getArtifactoryList (_, { projectId, repoName, name, fullPath, current, limit, sortType = 'lastModifiedDate' }) {
+        getArtifactoryList (_, { projectId, repoName, name, fullPath, current, limit, sortType = 'lastModifiedDate', searchFlag }) {
             return Vue.prototype.$ajax.post(
                 'repository/api/node/search',
                 {
@@ -97,7 +97,7 @@ export default {
                             {
                                 field: 'path',
                                 value: `${fullPath === '/' ? '' : fullPath}/`,
-                                operation: 'EQ'
+                                operation: searchFlag ? 'PREFIX' : 'EQ'
                             },
                             ...(name
                                 ? [

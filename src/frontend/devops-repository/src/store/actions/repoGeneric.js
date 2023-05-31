@@ -106,7 +106,7 @@ export default {
         )
     },
     // 仓库内自定义查询
-    getArtifactoryList (_, { projectId, repoName, name, fullPath, current, limit, isPipeline = false, sortType = 'lastModifiedDate' }) {
+    getArtifactoryList (_, { projectId, repoName, name, fullPath, current, limit, isPipeline = false, sortType = 'lastModifiedDate', searchFlag }) {
         // if (isPipeline && !fullPath && !name) {
         //     return Vue.prototype.$ajax.get(
         //         `${prefix}/pipeline/list/${projectId}`
@@ -138,7 +138,7 @@ export default {
                         {
                             field: 'path',
                             value: `${fullPath === '/' ? '' : fullPath}/`,
-                            operation: 'EQ'
+                            operation: searchFlag ? 'PREFIX' : 'EQ'
                         },
                         ...(name
                             ? [

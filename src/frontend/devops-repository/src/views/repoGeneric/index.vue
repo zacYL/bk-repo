@@ -245,7 +245,8 @@
                     limitList: [10, 20, 40]
                 },
                 debounceClickTreeNode: null,
-                inFolderSearchName: this.$route.query.fileName
+                inFolderSearchName: this.$route.query.fileName,
+                searchFullPath: ''
             }
         },
         computed: {
@@ -424,9 +425,10 @@
                 this.getArtifactoryList({
                     projectId: this.projectId,
                     repoName: this.repoName,
-                    fullPath: this.selectedTreeNode.fullPath,
+                    fullPath: this.selectedTreeNode?.fullPath,
                     ...(this.inFolderSearchName
                         ? {
+                            fullPath: this.searchFullPath,
                             name: this.searchFileName
                         }
                         : {}
@@ -434,7 +436,8 @@
                     current: this.pagination.current,
                     limit: this.pagination.limit,
                     sortType: this.sortType,
-                    isPipeline: this.repoName === 'pipeline'
+                    isPipeline: this.repoName === 'pipeline',
+                    searchFlag: this.searchFileName
                 }).then(({ records, totalRecords }) => {
                     this.pagination.count = totalRecords
                     this.artifactoryList = records.map(v => {
@@ -549,8 +552,14 @@
             // 双击table打开文件夹
             openFolder (row) {
                 if (!row.folder) return
-                const node = this.selectedTreeNode.children.find(v => v.fullPath === row.fullPath)
-                this.itemClickHandler(node)
+                if (this.searchFileName) {
+                    // 搜索中打开文件夹
+                    this.searchFullPath = row.fullPath
+                    this.handlerPaginationChange()
+                } else {
+                    const node = this.selectedTreeNode.children.find(v => v.fullPath === row.fullPath)
+                    this.itemClickHandler(node)
+                }
             },
             showDetail ({ folder, fullPath }) {
                 this.$refs.genericDetail.setData({
@@ -811,6 +820,7 @@
                             fileName: this.inFolderSearchName
                         }
                     })
+                    this.searchFullPath = ''
                     this.handlerPaginationChange()
                 }
             }

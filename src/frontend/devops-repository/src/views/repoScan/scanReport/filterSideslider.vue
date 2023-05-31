@@ -82,6 +82,15 @@
             }
         },
         created () {
+            // 需要根据VueRouter中的参数设置筛选框的默认值
+            this.filter = {
+                name: this.$route.query?.name || '',
+                repoName: this.$route.query?.repoName || '',
+                highestLeakLevel: this.$route.query?.highestLeakLevel || '',
+                status: this.$route.query?.status || ''
+            }
+            // 设置了默认值后需要将参数同步父组件，否则会导致面包屑回退后筛选参数会是之前设置的值
+            this.filterHandler()
             this.getRepoListAll({ projectId: this.$route.params.projectId })
         },
         methods: {

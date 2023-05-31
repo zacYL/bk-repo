@@ -140,6 +140,11 @@
         },
         watch: {
             scanPlan: function () {
+                // 在点击面包屑回退时需要设置时间选择的默认值
+                const startTime = this.$route.query?.startTime || ''
+                const endTime = this.$route.query?.endTime || ''
+                const backData = [startTime ? new Date(startTime) : '', endTime ? new Date(endTime) : '']?.filter(Boolean) || []
+                this.filterTime = backData || []
                 this.changeFilterTime()
             }
         },

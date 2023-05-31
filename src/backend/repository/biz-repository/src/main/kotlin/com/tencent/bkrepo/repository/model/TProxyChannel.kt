@@ -93,5 +93,13 @@ data class TProxyChannel(
     /**
      * 网络代理配置
      */
-    var networkProxy: NetworkProxyConfiguration? = null
+    var networkProxy: NetworkProxyConfiguration? = null,
+    /**
+     * 远程请求连接超时时间，单位ms
+     */
+    var connectTimeout: Long = 10 * 1000L,
+    /**
+     * 远程请求读超时时间，单位ms
+     */
+    var readTimeout: Long = 10 * 1000L
 )

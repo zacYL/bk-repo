@@ -975,7 +975,9 @@ class RepositoryServiceImpl(
             password = proxy.password,
             public = proxy.public,
             credentialKey = proxy.credentialKey,
-            networkProxy = proxy.networkProxy
+            networkProxy = proxy.networkProxy,
+            connectTimeout = proxy.connectTimeout,
+            readTimeout = proxy.readTimeout
         )
         proxyChannelService.createProxy(operator, proxyRepository)
         logger.info("Success to create private proxy repository[$proxyRepository]")
@@ -993,7 +995,9 @@ class RepositoryServiceImpl(
             password = proxy.password,
             public = proxy.public,
             credentialKey = proxy.credentialKey,
-            networkProxy = proxy.networkProxy
+            networkProxy = proxy.networkProxy,
+            connectTimeout = proxy.connectTimeout,
+            readTimeout = proxy.readTimeout
         )
         proxyChannelService.updateProxy(operator, proxyRepository)
         logger.info("Success to update private proxy repository[$proxyRepository]")

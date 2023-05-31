@@ -3,7 +3,7 @@
 
 ### 请求地址
 ```
-/api/node/delete/{projectId}/{repoName}/**
+/repo-repository/api/node/delete/{projectId}/{repoName}/**
 ```
 
 ### 请求方法

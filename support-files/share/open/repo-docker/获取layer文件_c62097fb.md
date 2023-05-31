@@ -3,7 +3,7 @@
 
 ### 请求地址
 ```
-/ext/layer/{projectId}/{repoName}/**/{id}
+/repo-docker/ext/layer/{projectId}/{repoName}/**/{id}
 ```
 
 ### 请求方法

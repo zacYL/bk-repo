@@ -3,7 +3,7 @@
 
 ### 请求地址
 ```
-/ext/addr
+/repo-docker/ext/addr
 ```
 
 ### 请求方法

@@ -3,7 +3,7 @@
 
 ### 请求地址
 ```
-/api/node/rename
+/repo-repository/api/node/rename
 ```
 
 ### 请求方法

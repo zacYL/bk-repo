@@ -59,5 +59,9 @@ data class ProxyChannelInfo(
     @ApiModelProperty("代理源认证密码")
     val password: String? = null,
     @ApiModelProperty("网络代理配置")
-    val networkProxy: NetworkProxyConfiguration? = null
+    val networkProxy: NetworkProxyConfiguration? = null,
+    @ApiModelProperty("远程请求连接超时时间，单位ms", required = false)
+    var connectTimeout: Long = 10 * 1000L,
+    @ApiModelProperty("远程请求读超时时间，单位ms", required = false)
+    var readTimeout: Long = 10 * 1000L
 )

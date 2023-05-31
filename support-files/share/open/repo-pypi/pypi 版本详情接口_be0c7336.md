@@ -3,7 +3,7 @@
 
 ### 请求地址
 ```
-/ext/version/detail/{projectId}/{repoName}
+/repo-pypi/ext/version/detail/{projectId}/{repoName}
 ```
 
 ### 请求方法

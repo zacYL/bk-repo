@@ -3,7 +3,7 @@
 
 ### 请求地址
 ```
-/ext/search/gavc/{projectId}/{pageNumber}/{pageSize}
+/repo-maven/ext/search/gavc/{projectId}/{pageNumber}/{pageSize}
 ```
 
 ### 请求方法

@@ -3,7 +3,7 @@
 
 ### 请求地址
 ```
-/ext/dependencies/{projectId}/{repoName}
+/repo-maven/ext/dependencies/{projectId}/{repoName}
 ```
 
 ### 请求方法

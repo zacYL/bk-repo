@@ -75,7 +75,9 @@ class ProxyChannelServiceImpl(
                 createdDate = LocalDateTime.now(),
                 lastModifiedBy = userId,
                 lastModifiedDate = LocalDateTime.now(),
-                networkProxy = networkProxy
+                networkProxy = networkProxy,
+                connectTimeout = connectTimeout,
+                readTimeout = readTimeout
             )
             proxyChannelDao.insert(tProxyChannel)
         }
@@ -102,6 +104,8 @@ class ProxyChannelServiceImpl(
                 tProxyChannel.username = username
                 tProxyChannel.password = pw
                 tProxyChannel.networkProxy = networkProxy
+                tProxyChannel.connectTimeout = connectTimeout
+                tProxyChannel.readTimeout = readTimeout
                 proxyChannelDao.save(tProxyChannel)
             }
         }
@@ -181,7 +185,9 @@ class ProxyChannelServiceImpl(
                     password = pw,
                     projectId = it.projectId,
                     repoName = it.repoName,
-                    networkProxy = it.networkProxy
+                    networkProxy = it.networkProxy,
+                    connectTimeout = it.connectTimeout,
+                    readTimeout = it.readTimeout
                 )
             }
         }

@@ -3,7 +3,7 @@
 
 ### 请求地址
 ```
-/api/repo/debug/clean/{projectId}/{repoName}
+/repo-repository/api/repo/debug/clean/{projectId}/{repoName}
 ```
 
 ### 请求方法

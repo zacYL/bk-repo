@@ -3,7 +3,7 @@
 
 ### 请求地址
 ```
-/api/metadata/{projectId}/{repoName}/**
+/repo-repository/api/metadata/{projectId}/{repoName}/**
 ```
 
 ### 请求方法

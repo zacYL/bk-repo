@@ -96,7 +96,15 @@ class NodeSearchServiceImpl(
             repos.filter { it !in (exRepo.split(',')) }
         } else repos
 
-        if (genericRepos.isEmpty()) return listOf()
+        if (genericRepos.isEmpty()) {
+            return listOf(
+                ProjectPackageOverview(
+                    projectId = projectId,
+                    repos = mutableSetOf(),
+                    sum = 0L
+                )
+            )
+        }
         val criteria = Criteria.where(TNode::repoName.name).`in`(genericRepos)
         criteria.and(TNode::projectId.name).`is`(projectId)
             .and(TNode::deleted.name).`is`(null)

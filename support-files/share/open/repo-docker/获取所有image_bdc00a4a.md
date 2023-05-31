@@ -3,7 +3,7 @@
 
 ### 请求地址
 ```
-/ext/repo/{projectId}/{repoName}
+/repo-docker/ext/repo/{projectId}/{repoName}
 ```
 
 ### 请求方法

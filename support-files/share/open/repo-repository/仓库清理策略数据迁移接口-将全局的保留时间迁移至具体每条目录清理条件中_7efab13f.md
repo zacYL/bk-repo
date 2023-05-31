@@ -3,7 +3,7 @@
 
 ### 请求地址
 ```
-/api/repo/migrate/cleanStrategy
+/repo-repository/api/repo/migrate/cleanStrategy
 ```
 
 ### 请求方法

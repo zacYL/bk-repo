@@ -189,8 +189,7 @@
                     }
                     // 此时需要将页码相关参数重置，否则会导致点击制品列表菜单后不能返回首页(页码为1，每页大小为20)
                     this.pagination = cloneDeep(paginationParams)
-                    // 此时需要加上防抖，否则在点击菜单的时候会直接触发bk-select的change事件，导致出现多个请求
-                    this.debounceGetListData && this.debounceGetListData()
+                    this.handlerPaginationChange()
                 }
             }
         },
@@ -213,6 +212,16 @@
             onCloseDialog () {
                 this.currentStoreType = ''
             },
+            initData () {
+                // 切换项目或者点击菜单时需要将筛选条件清空，并将页码相关参数重置，否则会导致点击菜单的时候筛选条件还在，不符合产品要求(点击菜单清空筛选条件，重新请求最新数据)
+                this.query = {
+                    c: 1,
+                    l: 20
+                }
+                // 此时需要将页码相关参数重置，否则会导致点击制品列表菜单后不能返回首页(页码为1，每页大小为20)
+                this.pagination = cloneDeep(paginationParams)
+                this.handlerPaginationChange()
+            },
             getListData () {
                 this.isLoading = true
                 this.getRepoList({
@@ -232,7 +241,8 @@
                 this.$router.replace({
                     query: this.query
                 })
-                this.debounceGetListData()
+                // 此时需要加上防抖，否则在点击菜单的时候会直接触发bk-select的change事件，导致出现多个请求
+                this.debounceGetListData ? this.debounceGetListData() : this.getListData()
             },
             // 点击下拉菜单，隐藏下拉框，打开创建仓库弹窗
             handlerCreateStore (type) {

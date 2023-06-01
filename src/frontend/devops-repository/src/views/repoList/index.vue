@@ -173,23 +173,11 @@
         watch: {
             projectId () {
                 // 切换项目时需要将之前的筛选条件清空，页码相关的重置为 1/20，否则会保留之前的筛选条件
-                this.query = {
-                    c: 1,
-                    l: 20
-                }
-                this.pagination = cloneDeep(paginationParams)
-                this.handlerPaginationChange()
+                this.initData()
             },
             '$route.query' () {
                 if (Object.values(this.$route.query).filter(Boolean)?.length === 0) {
-                    // 此时需要将筛选条件清空，否则会导致点击菜单的时候筛选条件还在，不符合产品要求(点击菜单清空筛选条件，重新请求最新数据)
-                    this.query = {
-                        c: 1,
-                        l: 20
-                    }
-                    // 此时需要将页码相关参数重置，否则会导致点击制品列表菜单后不能返回首页(页码为1，每页大小为20)
-                    this.pagination = cloneDeep(paginationParams)
-                    this.handlerPaginationChange()
+                    this.initData()
                 }
             }
         },

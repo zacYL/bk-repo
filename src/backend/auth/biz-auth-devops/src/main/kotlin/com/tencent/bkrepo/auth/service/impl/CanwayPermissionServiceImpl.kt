@@ -9,11 +9,7 @@ import com.tencent.bkrepo.auth.pojo.RegisterResourceRequest
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.auth.pojo.enums.RoleType
-import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
-import com.tencent.bkrepo.auth.pojo.permission.CreatePermissionRequest
-import com.tencent.bkrepo.auth.pojo.permission.Permission
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionPathRequest
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRepoRequest
+import com.tencent.bkrepo.auth.pojo.permission.*
 import com.tencent.bkrepo.auth.repository.PermissionRepository
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
@@ -396,15 +392,18 @@ class CanwayPermissionServiceImpl(
      */
     @Suppress("TooGenericExceptionCaught")
     private fun isCIAdmin(userId: String, projectId: String? = null, tenantId: String? = null): Boolean {
+        logger.info("check user $userId is CI admin")
+        if (devopsClient.identifySystemManageAuth(userId) ?: false){
+            return true
+        }
         return if (projectId != null && tenantId == null) {
             logger.info("check user $userId is CI project admin of [project: $projectId]")
             devopsClient.identifyProjectManageAuth(userId, projectId) ?: false
         } else if (projectId == null && tenantId != null) {
             logger.info("check user $userId is CI tenant admin of [tenant: $tenantId]")
             devopsClient.identifyTenantManageAuth(userId, tenantId) ?: false
-        } else {
-            logger.info("check user $userId is CI super admin")
-            devopsClient.identifySystemManageAuth(userId) ?: false
+        } else{
+            return false
         }
     }
 

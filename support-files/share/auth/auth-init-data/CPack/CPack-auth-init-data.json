@@ -424,23 +424,6 @@
                         "updatedTime": "2023-01-10 14:22:12"
                     },
                     {
-                        "id": "a0333ca1097d480aa02563503e12b339",
-                        "name": "列表",
-                        "actionCode": "list",
-                        "resourceCode": "artifactory",
-                        "parentResourceCode": "project",
-                        "associateInstance": false,
-                        "weight": 10,
-                        "module": "CCI",
-                        "license": "STANDARD",
-                        "createdBy": "carroll",
-                        "createdByName": "carroll",
-                        "createdTime": "2020-06-29 11:32:28",
-                        "updatedBy": "carroll",
-                        "updatedByName": "carroll",
-                        "updatedTime": "2020-06-29 11:32:28"
-                    },
-                    {
                         "id": "5b7a4cad86dd436795e28ed463a0ed47",
                         "name": "移动",
                         "actionCode": "move",

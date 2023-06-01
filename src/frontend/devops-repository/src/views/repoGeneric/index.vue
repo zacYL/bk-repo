@@ -43,7 +43,8 @@
             />
             <div class="repo-generic-table" v-bkloading="{ isLoading }">
                 <div class="multi-operation flex-between-center">
-                    <breadcrumb :list="breadcrumb" omit-middle></breadcrumb>
+                    <breadcrumb v-if="!searchFileName" :list="breadcrumb" omit-middle></breadcrumb>
+                    <span v-else> {{repoName + (searchFullPath || (selectedTreeNode && selectedTreeNode.fullPath) || '') }}</span>
                     <div class="repo-generic-actions bk-button-group">
                         <bk-button
                             v-if="multiSelect.length"
@@ -425,10 +426,9 @@
                 this.getArtifactoryList({
                     projectId: this.projectId,
                     repoName: this.repoName,
-                    fullPath: this.selectedTreeNode?.fullPath,
+                    fullPath: this.searchFullPath || this.selectedTreeNode?.fullPath,
                     ...(this.inFolderSearchName
                         ? {
-                            fullPath: this.searchFullPath,
                             name: this.searchFileName
                         }
                         : {}
@@ -813,16 +813,16 @@
             },
             // 文件夹内部的搜索，根据文件名或文件夹名搜索
             inFolderSearchFile () {
-                if (this.inFolderSearchName || this.searchFileName) {
-                    this.$router.replace({
-                        query: {
-                            ...this.$route.query,
-                            fileName: this.inFolderSearchName
-                        }
-                    })
+                this.$router.replace({
+                    query: {
+                        ...this.$route.query,
+                        fileName: this.inFolderSearchName
+                    }
+                })
+                if (!this.inFolderSearchName) {
                     this.searchFullPath = ''
-                    this.handlerPaginationChange()
                 }
+                this.handlerPaginationChange()
             }
         }
     }

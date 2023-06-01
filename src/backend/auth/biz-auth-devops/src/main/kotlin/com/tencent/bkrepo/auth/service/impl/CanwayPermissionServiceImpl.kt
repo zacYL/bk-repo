@@ -398,7 +398,12 @@ class CanwayPermissionServiceImpl(
     private fun isCIAdmin(userId: String, projectId: String? = null, tenantId: String? = null): Boolean {
         return if (projectId != null && tenantId == null) {
             logger.info("check user $userId is CI project admin of [project: $projectId]")
-            devopsClient.identifyProjectManageAuth(userId, projectId) ?: false
+            try {
+                devopsClient.identifyProjectManageAuth(userId, projectId) ?: false
+            }catch (e:Exception){
+                //以防外一出现不存在项目ID的存在
+                devopsClient.identifySystemManageAuth(userId) ?: false
+            }
         } else if (projectId == null && tenantId != null) {
             logger.info("check user $userId is CI tenant admin of [tenant: $tenantId]")
             devopsClient.identifyTenantManageAuth(userId, tenantId) ?: false

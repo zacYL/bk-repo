@@ -9,9 +9,9 @@ spring:
   cloud:
     stream:
       function:
-        definition: artifactEvent
+        definition: scanEventConsumer
       bindings:
-        artifactEvent-in-0:
+        scanEventConsumer-in-0:
           group: analyst
           destination: artifactEvent
           binder: pulsar

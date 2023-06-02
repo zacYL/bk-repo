@@ -31,16 +31,42 @@ import io.kubernetes.client.custom.Quantity
 import io.kubernetes.client.openapi.models.V1Container
 import io.kubernetes.client.openapi.models.V1Job
 import io.kubernetes.client.openapi.models.V1JobSpec
+import io.kubernetes.client.openapi.models.V1LocalObjectReference
 import io.kubernetes.client.openapi.models.V1ObjectMeta
 import io.kubernetes.client.openapi.models.V1PodSpec
 import io.kubernetes.client.openapi.models.V1PodTemplateSpec
 import io.kubernetes.client.openapi.models.V1ResourceRequirements
+import io.kubernetes.client.openapi.models.V1Secret
 
 /**
  * 创建job并配置
  */
 fun v1Job(configuration: V1Job.() -> Unit): V1Job {
     return V1Job().apply(configuration)
+}
+
+/**
+ * Create secret
+ */
+fun v1Secret(configuration: V1Secret.() -> Unit): V1Secret {
+    return V1Secret().apply(configuration)
+}
+
+/**
+ * Create v1LocalObjectReference
+ */
+fun v1LocalObjectReference(configuration: V1LocalObjectReference.() -> Unit): V1LocalObjectReference {
+    return V1LocalObjectReference().apply (configuration)
+}
+
+/**
+ * Configure secret metadata
+ */
+fun V1Secret.metadata(configuration: V1ObjectMeta.() -> Unit) {
+    if (metadata == null) {
+        metadata = V1ObjectMeta()
+    }
+    metadata!!.configuration()
 }
 
 /**

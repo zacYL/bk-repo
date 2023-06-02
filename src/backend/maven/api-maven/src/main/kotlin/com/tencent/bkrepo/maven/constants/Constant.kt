@@ -38,6 +38,7 @@ const val FULL_PATH = "fullPath"
 const val PACKAGE_KEY = "packageKey"
 const val VERSION = "version"
 const val SNAPSHOT_TIMESTAMP = "snapshot-timestamp"
+const val SNAPSHOT_BUILD_NUMBER = "snapshot-build-number"
 
 const val PACKAGE_SUFFIX_REGEX =
     "(.+)\\.(jar|war|tar|ear|ejb|rar|msi|aar|module|kar|rpm|tar\\.bz2|tar\\.gz|tar\\.xz|tbz|zip|pom)\$"

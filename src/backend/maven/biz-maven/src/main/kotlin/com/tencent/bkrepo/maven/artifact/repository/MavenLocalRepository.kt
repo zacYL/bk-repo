@@ -58,6 +58,7 @@ import com.tencent.bkrepo.maven.artifact.MavenDeleteArtifactInfo
 import com.tencent.bkrepo.maven.constants.FULL_PATH
 import com.tencent.bkrepo.maven.constants.MAVEN_METADATA_FILE_NAME
 import com.tencent.bkrepo.maven.constants.PACKAGE_SUFFIX_REGEX
+import com.tencent.bkrepo.maven.constants.SNAPSHOT_BUILD_NUMBER
 import com.tencent.bkrepo.maven.constants.SNAPSHOT_SUFFIX
 import com.tencent.bkrepo.maven.constants.SNAPSHOT_TIMESTAMP
 import com.tencent.bkrepo.maven.constants.X_CHECKSUM_SHA1
@@ -84,9 +85,11 @@ import com.tencent.bkrepo.maven.util.MavenConfiguration.versionBehaviorConflict
 import com.tencent.bkrepo.maven.util.MavenGAVCUtils.mavenGAVC
 import com.tencent.bkrepo.maven.util.MavenGAVCUtils.toMavenGAVC
 import com.tencent.bkrepo.maven.util.MavenMetadataUtils.reRender
+import com.tencent.bkrepo.maven.util.MavenStringUtils.checksumType
 import com.tencent.bkrepo.maven.util.MavenStringUtils.fileMimeType
 import com.tencent.bkrepo.maven.util.MavenStringUtils.formatSeparator
 import com.tencent.bkrepo.maven.util.MavenStringUtils.httpStatusCode
+import com.tencent.bkrepo.maven.util.MavenStringUtils.isSnapshotMetadataChecksumUri
 import com.tencent.bkrepo.maven.util.MavenStringUtils.isSnapshotMetadataUri
 import com.tencent.bkrepo.maven.util.MavenStringUtils.isSnapshotNonUniqueUri
 import com.tencent.bkrepo.maven.util.MavenStringUtils.isSnapshotUri
@@ -291,7 +294,7 @@ class MavenLocalRepository(
                     context.artifactInfo.repoName,
                     path
                 ).data
-                if (node != null && checksumType(path) == null) {
+                if (node != null && path.checksumType() == null) {
                     val message = "The File $path already existed in the ${context.artifactInfo.getRepoIdentify()}, " +
                         "please check your overwrite configuration."
                     logger.warn(message)
@@ -456,25 +459,9 @@ class MavenLocalRepository(
     private fun artifactUploadHandler(artifactFullPath: String, context: ArtifactContext): Boolean {
         val repoConf = getRepoConf(context)
         return (
-            checksumType(artifactFullPath) != null &&
+            artifactFullPath.checksumType() != null &&
                 repoConf.versionBehaviorConflict(artifactFullPath)
             )
-    }
-
-    /**
-     * 判断请求是否为checksum请求，并返回类型
-     */
-    private fun checksumType(artifactFullPath: String): HashType? {
-        var type: HashType? = null
-        for (hashType in HashType.values()) {
-            val suffix = ".${hashType.ext}"
-            if (artifactFullPath.endsWith(suffix)) {
-                type = hashType
-                break
-            }
-        }
-        logger.info("The hashType of the file $artifactFullPath is $type")
-        return type
     }
 
     /**
@@ -533,7 +520,7 @@ class MavenLocalRepository(
             verifyMetadataContent(context)
             return
         }
-        if (checksumType(artifactFullPath) == null) {
+        if (artifactFullPath.checksumType() == null) {
             // 处理maven2 *1.0-SNAPSHOT/1.0-SNAPSHOT.jar 格式构件
             // 对应 checksum 有客户端请求时再去生成，因为客户端 在上传时 不知道由服务器生成的 时间戳
             // 在.pom 上传完之后需要重新生成 maven-metadata.xml , 已记录由服务器生成的最新构件
@@ -583,7 +570,8 @@ class MavenLocalRepository(
                     "${artifactPath.substringBeforeLast('/')}/$MAVEN_METADATA_FILE_NAME"
                 }
                 val snapshotTimestamp = metadata.versioning?.snapshot?.timestamp?.replace(".", "")
-                updateMetadata(path, artifactFile, snapshotTimestamp)
+                val snapshotBuildNumber = metadata.versioning?.snapshot?.buildNumber
+                updateMetadata(path, artifactFile, snapshotTimestamp, snapshotBuildNumber)
                 verifyPath(context, path)
             } finally {
                 artifactFile.delete()
@@ -784,15 +772,19 @@ class MavenLocalRepository(
             node.nodeMetadata.find { it.key == HashType.SHA1.ext }?.let {
                 response.addHeader(X_CHECKSUM_SHA1, it.value.toString())
             }
-            if (node.fullPath.isSnapshotMetadataUri()) {
-                val timestamp = node.nodeMetadata.find { it.key == SNAPSHOT_TIMESTAMP }?.value
+            if (node.fullPath.isSnapshotMetadataUri() || node.fullPath.isSnapshotMetadataChecksumUri()) {
+                val metadataNode = if (node.fullPath.checksumType() == null) node else {
+                    val metadataFullPath = artifactInfo.getArtifactFullPath().substringBeforeLast(".")
+                    nodeClient.getNodeDetail(projectId, repoName, metadataFullPath).data
+                }
+                val timestamp = metadataNode?.nodeMetadata?.find { it.key == SNAPSHOT_TIMESTAMP }?.value
                     ?: try {
                         MetadataXpp3Reader().read(storageManager.loadArtifactInputStream(node, storageCredentials))
                             ?.versioning?.snapshot?.timestamp?.replace(".", "")
-                    } catch (e: Exception) {
+                    } catch (ignore: Exception) {
                         null
                     }
-                timestamp?.let { context.putAttribute(SNAPSHOT_TIMESTAMP, timestamp) }
+                timestamp?.let { context.putAttribute(SNAPSHOT_TIMESTAMP, it) }
             }
             val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials) ?: return null
             val responseName = artifactInfo.getResponseName()
@@ -806,7 +798,7 @@ class MavenLocalRepository(
     private fun getNodeInfoForDownload(context: ArtifactDownloadContext): NodeDetail? {
         with(context) {
             var fullPath = artifactInfo.getArtifactFullPath()
-            val checksumType = checksumType(fullPath)
+            val checksumType = fullPath.checksumType()
             logger.info("Will download node $fullPath in repo ${artifactInfo.getRepoIdentify()}")
             // 针对正常路径
             var node = findNode(context, fullPath, checksumType)
@@ -1007,12 +999,18 @@ class MavenLocalRepository(
         }
     }
 
-    fun updateMetadata(fullPath: String, metadataArtifact: ArtifactFile, snapshotTimestamp: String? = null) {
+    fun updateMetadata(
+        fullPath: String,
+        metadataArtifact: ArtifactFile,
+        snapshotTimestamp: String? = null,
+        snapshotBuildNumber: Int? = null
+    ) {
         val uploadContext = ArtifactUploadContext(metadataArtifact)
         val metadataNode = buildNodeCreateRequest(uploadContext).run {
             val metadata = nodeMetadata?.toMutableList() ?: mutableListOf()
-            if (fullPath.isSnapshotMetadataUri() && snapshotTimestamp != null) {
-                metadata.add(MetadataModel(key = SNAPSHOT_TIMESTAMP, value = snapshotTimestamp))
+            if (fullPath.isSnapshotMetadataUri()) {
+                snapshotTimestamp?.let { metadata.add(MetadataModel(key = SNAPSHOT_TIMESTAMP, value = it)) }
+                snapshotBuildNumber?.let { metadata.add(MetadataModel(key = SNAPSHOT_BUILD_NUMBER, value = it)) }
             }
             copy(fullPath = fullPath, nodeMetadata = metadata)
         }
@@ -1108,7 +1106,7 @@ class MavenLocalRepository(
             }
             val node = nodeClient.getNodeDetail(projectId, repoName, fullPath).data
             if (node != null) {
-                if (checksumType(node.fullPath) == null) {
+                if (node.fullPath.checksumType() == null) {
                     deleteArtifactCheckSums(context, node)
                 }
                 // 需要删除对应的metadata表记录

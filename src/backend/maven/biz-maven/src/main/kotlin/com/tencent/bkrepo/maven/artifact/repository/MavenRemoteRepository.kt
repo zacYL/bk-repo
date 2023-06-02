@@ -50,7 +50,9 @@ import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
 import com.tencent.bkrepo.maven.artifact.MavenDeleteArtifactInfo
 import com.tencent.bkrepo.maven.constants.MAVEN_METADATA_FILE_NAME
 import com.tencent.bkrepo.maven.constants.PACKAGE_SUFFIX_REGEX
+import com.tencent.bkrepo.maven.constants.SNAPSHOT_BUILD_NUMBER
 import com.tencent.bkrepo.maven.constants.SNAPSHOT_TIMESTAMP
+import com.tencent.bkrepo.maven.constants.X_CHECKSUM_SHA1
 import com.tencent.bkrepo.maven.enum.HashType
 import com.tencent.bkrepo.maven.exception.JarFormatException
 import com.tencent.bkrepo.maven.exception.MavenArtifactNotFoundException
@@ -63,7 +65,9 @@ import com.tencent.bkrepo.maven.util.DigestUtils
 import com.tencent.bkrepo.maven.util.JarUtils
 import com.tencent.bkrepo.maven.util.MavenGAVCUtils.mavenGAVC
 import com.tencent.bkrepo.maven.util.MavenGAVCUtils.toMavenGAVC
+import com.tencent.bkrepo.maven.util.MavenStringUtils.checksumType
 import com.tencent.bkrepo.maven.util.MavenStringUtils.formatSeparator
+import com.tencent.bkrepo.maven.util.MavenStringUtils.isSnapshotMetadataChecksumUri
 import com.tencent.bkrepo.maven.util.MavenStringUtils.isSnapshotMetadataUri
 import com.tencent.bkrepo.maven.util.MavenUtil
 import com.tencent.bkrepo.repository.api.StageClient
@@ -226,14 +230,33 @@ class MavenRemoteRepository(
             context.putAttribute("packaging", packaging)
             model?.let { context.putAttribute("model", it) }
         }
-        var node: NodeDetail? = null
-        if (!fullPath.isSnapshotMetadataUri() || isNewerSnapshotTimestamp(context, artifactFile)) {
-            node = cacheArtifactFile(context, artifactFile)
+        if (fullPath.isSnapshotMetadataUri()) {
+            artifactFile.getInputStream().use { MetadataXpp3Reader().read(it) }?.versioning?.snapshot?.run {
+                context.putAttribute(SNAPSHOT_TIMESTAMP, timestamp.replace(".", ""))
+                context.putAttribute(SNAPSHOT_BUILD_NUMBER, buildNumber)
+            }
+        }
+        if (fullPath.isSnapshotMetadataChecksumUri()) {
+            val metadataNode = nodeClient.getNodeDetail(
+                context.projectId, context.repoName, fullPath.substringBeforeLast(".")
+            ).data
+            metadataNode?.nodeMetadata?.find { it.key == SNAPSHOT_TIMESTAMP }?.value?.let {
+                context.putAttribute(SNAPSHOT_TIMESTAMP, it)
+            }
+        }
+        if (fullPath.checksumType() == null) {
+            context.response.setHeader(X_CHECKSUM_SHA1, artifactFile.getFileSha1())
         }
         val size = artifactFile.getSize()
         val artifactStream = artifactFile.getInputStream().artifactStream(Range.full(size))
-        val artifactName = context.artifactInfo.getResponseName()
-        return ArtifactResource(artifactStream, artifactName, node, ArtifactChannel.PROXY, context.useDisposition)
+        val node = cacheArtifactFile(context, artifactFile)
+        return ArtifactResource(
+            artifactStream,
+            context.artifactInfo.getResponseName(),
+            node,
+            ArtifactChannel.PROXY,
+            context.useDisposition
+        )
     }
 
     override fun onDownloadSuccess(
@@ -378,7 +401,7 @@ class MavenRemoteRepository(
             }
             val node = nodeClient.getNodeDetail(projectId, repoName, fullPath).data
             if (node != null) {
-                if (checksumType(node.fullPath) == null) {
+                if (node.fullPath.checksumType() == null) {
                     deleteArtifactCheckSums(context, node)
                 }
                 val request = NodeDeleteRequest(
@@ -419,36 +442,29 @@ class MavenRemoteRepository(
         }
     }
 
-    /**
-     * 判断请求是否为checksum请求，并返回类型
-     */
-    private fun checksumType(artifactFullPath: String): HashType? {
-        var type: HashType? = null
-        for (hashType in HashType.values()) {
-            val suffix = ".${hashType.ext}"
-            if (artifactFullPath.endsWith(suffix)) {
-                type = hashType
-                break
-            }
-        }
-        logger.info("The hashType of the file $artifactFullPath is $type")
-        return type
-    }
-
     override fun buildCacheNodeCreateRequest(context: ArtifactContext, artifactFile: ArtifactFile): NodeCreateRequest {
         val nodeCreateRequest = super.buildCacheNodeCreateRequest(context, artifactFile)
         val packaging = context.getStringAttribute("packaging")
-        if (packaging != null) {
-            val mavenGavc = (context.artifactInfo as MavenArtifactInfo).toMavenGAVC()
+        val fullPath = context.artifactInfo.getArtifactFullPath()
+        if (packaging != null || fullPath.endsWith(MAVEN_METADATA_FILE_NAME)) {
             val metadata = nodeCreateRequest.nodeMetadata?.toMutableList() ?: mutableListOf()
-            createNodeMetaData(artifactFile).forEach {
-                metadata.add(it)
+            createNodeMetaData(artifactFile).forEach { metadata.add(it) }
+            if (packaging != null) {
+                val mavenGavc = (context.artifactInfo as MavenArtifactInfo).toMavenGAVC()
+                metadata.add(MetadataModel(key = "packaging", value = packaging))
+                metadata.add(MetadataModel(key = "groupId", value = mavenGavc.groupId))
+                metadata.add(MetadataModel(key = "artifactId", value = mavenGavc.artifactId))
+                metadata.add(MetadataModel(key = "version", value = mavenGavc.version))
+                mavenGavc.classifier?.let { metadata.add(MetadataModel(key = "classifier", value = it)) }
             }
-            metadata.add(MetadataModel(key = "packaging", value = packaging))
-            metadata.add(MetadataModel(key = "groupId", value = mavenGavc.groupId))
-            metadata.add(MetadataModel(key = "artifactId", value = mavenGavc.artifactId))
-            metadata.add(MetadataModel(key = "version", value = mavenGavc.version))
-            mavenGavc.classifier?.let { metadata.add(MetadataModel(key = "classifier", value = it)) }
+            if (fullPath.isSnapshotMetadataUri()) {
+                context.getStringAttribute(SNAPSHOT_TIMESTAMP)?.let {
+                    metadata.add(MetadataModel(SNAPSHOT_TIMESTAMP, it))
+                }
+                context.getStringAttribute(SNAPSHOT_BUILD_NUMBER)?.let {
+                    metadata.add(MetadataModel(SNAPSHOT_BUILD_NUMBER, it))
+                }
+            }
             return nodeCreateRequest.copy(nodeMetadata = metadata)
         }
         return nodeCreateRequest
@@ -472,11 +488,17 @@ class MavenRemoteRepository(
         }.toMutableList()
     }
 
-    private fun isNewerSnapshotTimestamp(context: ArtifactDownloadContext, artifactFile: ArtifactFile): Boolean {
-        val localTimeStamp = context.getAttribute<String>(SNAPSHOT_TIMESTAMP) ?: return true
-        val remoteTimestamp = MetadataXpp3Reader().read(artifactFile.getInputStream())
-            ?.versioning?.snapshot?.timestamp?.replace(".", "")
-        return remoteTimestamp != null && localTimeStamp < remoteTimestamp
+    override fun loadArtifactResource(cacheNode: NodeDetail, context: ArtifactDownloadContext): ArtifactResource? {
+        return super.loadArtifactResource(cacheNode, context)?.also {
+            cacheNode.nodeMetadata.find { it.key == HashType.SHA1.ext }?.let {
+                context.response.setHeader(X_CHECKSUM_SHA1, it.value.toString())
+            }
+            if (context.artifactInfo.getArtifactFullPath().isSnapshotMetadataUri()) {
+                cacheNode.nodeMetadata.find { it.key == SNAPSHOT_TIMESTAMP }?.let {
+                    context.putAttribute(SNAPSHOT_TIMESTAMP, it.value)
+                }
+            }
+        }
     }
 
     companion object {

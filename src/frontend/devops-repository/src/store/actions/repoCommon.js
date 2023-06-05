@@ -121,13 +121,6 @@ export default {
                                 operation: 'EQ'
                             }]
                             : []),
-                        ...(repoType
-                            ? [{
-                                field: 'repoType',
-                                value: repoType.toUpperCase(),
-                                operation: 'EQ'
-                            }]
-                            : []),
                         ...(repoName
                             ? [{
                                 field: 'repoName',
@@ -140,6 +133,15 @@ export default {
                                         field: 'repoName',
                                         value: ['log'],
                                         operation: 'NIN'
+                                    }]
+                                    : []),
+                                // 因为在仓库数量太大(例如超过1000)，package/search接口在存在repoType时响应太慢，所以只有在必须通过repoType确认仓库时才需要
+                                // 依赖源仓库进入仓库的包列表页不需要传此参数，目前只有制品搜索需要传repoType，其他的都可以通过projectId和repoName唯一确认
+                                ...(repoType
+                                    ? [{
+                                        field: 'repoType',
+                                        value: repoType.toUpperCase(),
+                                        operation: 'EQ'
                                     }]
                                     : [])
                             ]),

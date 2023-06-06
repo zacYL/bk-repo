@@ -246,7 +246,7 @@ class ReplicaRecordServiceImpl(
     }
 
     override fun deleteRecordDetailById(id: String) {
-        replicaRecordDao.removeById(id)
+        replicaRecordDetailDao.removeById(id)
     }
 
     private fun findRecordDetailById(id: String): TReplicaRecordDetail? {

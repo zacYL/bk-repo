@@ -7,18 +7,35 @@
         "resourceTypes": [
             {
                 "id": "0622848f290b4401a2e1087635b176da",
-                "resourceName": "首页",
+                "resourceName": "制品仓库",
                 "resourceCode": "bkrepo",
                 "parentResourceCode": "project",
                 "groupId": "15",
                 "weight": 11,
-                "instanceSourceUrl": "",
+                "instanceSourceUrl": "/ms/cpack/auth/api/extAuth/instanceld",
                 "managedByAuth": true,
                 "module": "CPack",
                 "license": "STANDARD",
-                "hasInstance": false,
-                "permissionMode": "NOT_INSTANCE",
+                "hasInstance": true,
+                "permissionMode": "INSTANCE_ONLY",
                 "actions": [
+                    {
+                        "id": "736679bf6c384d01a6fd2ec3b5a566de",
+                        "name": "列表",
+                        "actionCode": "access",
+                        "resourceCode": "bkrepo",
+                        "parentResourceCode": "project",
+                        "associateInstance": false,
+                        "weight": 10,
+                        "module": "CPack",
+                        "license": "STANDARD",
+                        "createdBy": "admin",
+                        "createdByName": "超级管理员[admin]",
+                        "createdTime": "2020-12-16 13:53:20",
+                        "updatedBy": "admin",
+                        "updatedByName": "超级管理员[admin]",
+                        "updatedTime": "2023-06-12 09:57:59"
+                    },
                     {
                         "id": "2093e9c815b54e9db06e9ea60227a1be",
                         "name": "创建",
@@ -26,40 +43,91 @@
                         "resourceCode": "bkrepo",
                         "parentResourceCode": "project",
                         "associateInstance": false,
-                        "weight": 30,
-                        "module": "CPack",
-                        "license": "STANDARD",
-                        "createdBy": "admin",
-                        "createdByName": "",
-                        "createdTime": "2020-12-16 10:49:33",
-                        "updatedBy": "admin",
-                        "updatedByName": "",
-                        "updatedTime": "2023-01-10 14:22:11"
-                    },
-                    {
-                        "id": "736679bf6c384d01a6fd2ec3b5a566de",
-                        "name": "访问仓库",
-                        "actionCode": "access",
-                        "resourceCode": "bkrepo",
-                        "parentResourceCode": "project",
-                        "associateInstance": true,
                         "weight": 10,
                         "module": "CPack",
                         "license": "STANDARD",
                         "createdBy": "admin",
-                        "createdByName": "",
-                        "createdTime": "2020-12-16 13:53:20",
+                        "createdByName": "超级管理员[admin]",
+                        "createdTime": "2020-12-16 10:49:33",
                         "updatedBy": "admin",
-                        "updatedByName": "",
-                        "updatedTime": "2023-01-10 14:22:11"
+                        "updatedByName": "超级管理员[admin]",
+                        "updatedTime": "2023-06-07 16:54:10"
+                    },
+                    {
+                        "id": "7b7b859b797f45609c98da0b98b30f8f",
+                        "name": "查看",
+                        "actionCode": "read",
+                        "resourceCode": "bkrepo",
+                        "parentResourceCode": "project",
+                        "associateInstance": true,
+                        "weight": 9,
+                        "module": "",
+                        "license": "",
+                        "createdBy": "admin",
+                        "createdByName": "超级管理员[admin]",
+                        "createdTime": "2023-06-07 11:29:17",
+                        "updatedBy": "admin",
+                        "updatedByName": "超级管理员[admin]",
+                        "updatedTime": "2023-06-07 14:58:03"
+                    },
+                    {
+                        "id": "5edf5a9f2f434eacb6b6aca9ebc2648b",
+                        "name": "上传",
+                        "actionCode": "write",
+                        "resourceCode": "bkrepo",
+                        "parentResourceCode": "project",
+                        "associateInstance": true,
+                        "weight": 8,
+                        "module": "",
+                        "license": "",
+                        "createdBy": "admin",
+                        "createdByName": "超级管理员[admin]",
+                        "createdTime": "2023-06-07 14:56:53",
+                        "updatedBy": "admin",
+                        "updatedByName": "超级管理员[admin]",
+                        "updatedTime": "2023-06-07 14:58:22"
+                    },
+                    {
+                        "id": "9e2ee6b416bb4e53bc2ccc26536d11f9",
+                        "name": "编辑",
+                        "actionCode": "update",
+                        "resourceCode": "bkrepo",
+                        "parentResourceCode": "project",
+                        "associateInstance": true,
+                        "weight": 7,
+                        "module": "",
+                        "license": "",
+                        "createdBy": "admin",
+                        "createdByName": "超级管理员[admin]",
+                        "createdTime": "2023-06-07 14:57:28",
+                        "updatedBy": "admin",
+                        "updatedByName": "超级管理员[admin]",
+                        "updatedTime": "2023-06-07 14:58:26"
+                    },
+                    {
+                        "id": "3881f1fb36fc4ac98dda4fbd16e07f64",
+                        "name": "删除",
+                        "actionCode": "delete",
+                        "resourceCode": "bkrepo",
+                        "parentResourceCode": "project",
+                        "associateInstance": true,
+                        "weight": 6,
+                        "module": "",
+                        "license": "",
+                        "createdBy": "admin",
+                        "createdByName": "超级管理员[admin]",
+                        "createdTime": "2023-06-07 14:57:43",
+                        "updatedBy": "admin",
+                        "updatedByName": "超级管理员[admin]",
+                        "updatedTime": "2023-06-07 14:58:30"
                     }
                 ],
                 "createdBy": "admin",
-                "createdByName": "",
-                "createdTime": "2023-04-03 19:26:23",
+                "createdByName": "超级管理员[admin]",
+                "createdTime": "2023-06-12 15:01:45",
                 "updatedBy": "admin",
-                "updatedByName": "",
-                "updatedTime": "2023-04-04 11:01:25"
+                "updatedByName": "超级管理员[admin]",
+                "updatedTime": "2023-06-12 15:01:45"
             },
             {
                 "id": "9a217fa49a5a4b0f9dd490d03879cf9f",
@@ -77,7 +145,7 @@
                 "actions": [
                     {
                         "id": "8d642409434a4c55b53168f9896065a9",
-                        "name": "查看",
+                        "name": "列表",
                         "actionCode": "view",
                         "resourceCode": "repoCatalog",
                         "parentResourceCode": "project",
@@ -86,19 +154,19 @@
                         "module": "CPack",
                         "license": "STANDARD",
                         "createdBy": "admin",
-                        "createdByName": "",
+                        "createdByName": "超级管理员[admin]",
                         "createdTime": "2023-03-31 14:34:12",
                         "updatedBy": "admin",
-                        "updatedByName": "",
-                        "updatedTime": "2023-03-31 14:34:12"
+                        "updatedByName": "超级管理员[admin]",
+                        "updatedTime": "2023-06-12 16:14:38"
                     }
                 ],
                 "createdBy": "admin",
-                "createdByName": "",
-                "createdTime": "2023-04-03 19:26:23",
+                "createdByName": "超级管理员[admin]",
+                "createdTime": "2023-06-12 15:01:45",
                 "updatedBy": "admin",
-                "updatedByName": "",
-                "updatedTime": "2023-04-04 11:01:29"
+                "updatedByName": "超级管理员[admin]",
+                "updatedTime": "2023-06-12 15:01:45"
             },
             {
                 "id": "d40c0bd6c9794297b336a16fe7f8ab29",
@@ -116,7 +184,7 @@
                 "actions": [
                     {
                         "id": "d40c0bd6c9794297b336a16fe7f8ab29",
-                        "name": "查看",
+                        "name": "列表",
                         "actionCode": "view",
                         "resourceCode": "v_pack_search",
                         "parentResourceCode": "project",
@@ -125,19 +193,19 @@
                         "module": "CPack",
                         "license": "STANDARD",
                         "createdBy": "admin",
-                        "createdByName": "",
+                        "createdByName": "超级管理员[admin]",
                         "createdTime": "2021-11-10 22:38:02",
                         "updatedBy": "admin",
-                        "updatedByName": "",
-                        "updatedTime": "2023-01-10 14:22:11"
+                        "updatedByName": "超级管理员[admin]",
+                        "updatedTime": "2023-06-12 16:14:43"
                     }
                 ],
                 "createdBy": "admin",
-                "createdByName": "",
-                "createdTime": "2023-04-03 19:26:23",
+                "createdByName": "超级管理员[admin]",
+                "createdTime": "2023-06-12 15:01:45",
                 "updatedBy": "admin",
-                "updatedByName": "",
-                "updatedTime": "2023-04-03 19:26:23"
+                "updatedByName": "超级管理员[admin]",
+                "updatedTime": "2023-06-12 15:01:45"
             },
             {
                 "id": "491430c311d14c03b47aadd331edcbc1",
@@ -155,7 +223,7 @@
                 "actions": [
                     {
                         "id": "491430c311d14c03b47aadd331edcbc1",
-                        "name": "查看",
+                        "name": "列表",
                         "actionCode": "view",
                         "resourceCode": "v_pack_replica",
                         "parentResourceCode": "project",
@@ -164,19 +232,19 @@
                         "module": "CPack",
                         "license": "ENTERPRISE",
                         "createdBy": "admin",
-                        "createdByName": "",
+                        "createdByName": "超级管理员[admin]",
                         "createdTime": "2021-11-10 22:41:05",
                         "updatedBy": "admin",
-                        "updatedByName": "",
-                        "updatedTime": "2023-01-10 14:22:11"
+                        "updatedByName": "超级管理员[admin]",
+                        "updatedTime": "2023-06-12 16:14:50"
                     }
                 ],
                 "createdBy": "admin",
-                "createdByName": "",
-                "createdTime": "2023-04-03 19:26:23",
+                "createdByName": "超级管理员[admin]",
+                "createdTime": "2023-06-12 15:01:45",
                 "updatedBy": "admin",
-                "updatedByName": "",
-                "updatedTime": "2023-04-04 11:01:33"
+                "updatedByName": "超级管理员[admin]",
+                "updatedTime": "2023-06-12 15:01:45"
             },
             {
                 "id": "bada9ac029e849429f21282954e2d825",
@@ -194,7 +262,7 @@
                 "actions": [
                     {
                         "id": "bada9ac029e849429f21282954e2d825",
-                        "name": "查看",
+                        "name": "列表",
                         "actionCode": "view",
                         "resourceCode": "repoScan",
                         "parentResourceCode": "project",
@@ -203,19 +271,19 @@
                         "module": "CPack",
                         "license": "STANDARD",
                         "createdBy": "admin",
-                        "createdByName": "",
+                        "createdByName": "超级管理员[admin]",
                         "createdTime": "2022-04-21 10:58:07",
                         "updatedBy": "admin",
-                        "updatedByName": "",
-                        "updatedTime": "2023-01-10 14:22:12"
+                        "updatedByName": "超级管理员[admin]",
+                        "updatedTime": "2023-06-12 16:14:54"
                     }
                 ],
                 "createdBy": "admin",
-                "createdByName": "",
-                "createdTime": "2023-04-03 19:26:23",
+                "createdByName": "超级管理员[admin]",
+                "createdTime": "2023-06-12 15:01:45",
                 "updatedBy": "admin",
-                "updatedByName": "",
-                "updatedTime": "2023-04-04 10:33:03"
+                "updatedByName": "超级管理员[admin]",
+                "updatedTime": "2023-06-12 15:01:45"
             },
             {
                 "id": "e7cc790661444727ae6d2cb52e6705f8",
@@ -233,7 +301,7 @@
                 "actions": [
                     {
                         "id": "e7cc790661444727ae6d2cb52e6705f8",
-                        "name": "查看",
+                        "name": "列表",
                         "actionCode": "view",
                         "resourceCode": "v_pack_token",
                         "parentResourceCode": "project",
@@ -242,19 +310,19 @@
                         "module": "CPack",
                         "license": "STANDARD",
                         "createdBy": "admin",
-                        "createdByName": "",
+                        "createdByName": "超级管理员[admin]",
                         "createdTime": "2021-11-10 22:41:35",
                         "updatedBy": "admin",
-                        "updatedByName": "",
-                        "updatedTime": "2023-01-10 14:22:11"
+                        "updatedByName": "超级管理员[admin]",
+                        "updatedTime": "2023-06-12 16:14:59"
                     }
                 ],
                 "createdBy": "admin",
-                "createdByName": "",
-                "createdTime": "2023-04-03 19:26:23",
+                "createdByName": "超级管理员[admin]",
+                "createdTime": "2023-06-12 15:01:45",
                 "updatedBy": "admin",
-                "updatedByName": "",
-                "updatedTime": "2023-04-04 11:01:37"
+                "updatedByName": "超级管理员[admin]",
+                "updatedTime": "2023-06-12 15:01:45"
             },
             {
                 "id": "967b804ed6a740ce9fda257c7d0a74bc",
@@ -281,10 +349,10 @@
                         "module": "CPack",
                         "license": "STANDARD",
                         "createdBy": "admin",
-                        "createdByName": "",
+                        "createdByName": "超级管理员[admin]",
                         "createdTime": "2020-06-12 10:46:49",
                         "updatedBy": "admin",
-                        "updatedByName": "",
+                        "updatedByName": "超级管理员[admin]",
                         "updatedTime": "2023-01-10 14:22:12"
                     },
                     {
@@ -298,10 +366,10 @@
                         "module": "CPack",
                         "license": "STANDARD",
                         "createdBy": "admin",
-                        "createdByName": "",
+                        "createdByName": "超级管理员[admin]",
                         "createdTime": "2020-06-12 10:46:49",
                         "updatedBy": "admin",
-                        "updatedByName": "",
+                        "updatedByName": "超级管理员[admin]",
                         "updatedTime": "2023-01-10 14:22:12"
                     },
                     {
@@ -315,10 +383,10 @@
                         "module": "CPack",
                         "license": "STANDARD",
                         "createdBy": "admin",
-                        "createdByName": "",
+                        "createdByName": "超级管理员[admin]",
                         "createdTime": "2020-06-12 10:46:49",
                         "updatedBy": "admin",
-                        "updatedByName": "",
+                        "updatedByName": "超级管理员[admin]",
                         "updatedTime": "2023-01-10 14:22:12"
                     },
                     {
@@ -332,10 +400,10 @@
                         "module": "CPack",
                         "license": "STANDARD",
                         "createdBy": "admin",
-                        "createdByName": "",
+                        "createdByName": "超级管理员[admin]",
                         "createdTime": "2020-06-12 10:46:49",
                         "updatedBy": "admin",
-                        "updatedByName": "",
+                        "updatedByName": "超级管理员[admin]",
                         "updatedTime": "2023-01-10 14:22:12"
                     },
                     {
@@ -349,10 +417,10 @@
                         "module": "CPack",
                         "license": "STANDARD",
                         "createdBy": "admin",
-                        "createdByName": "",
+                        "createdByName": "超级管理员[admin]",
                         "createdTime": "2020-06-12 10:46:49",
                         "updatedBy": "admin",
-                        "updatedByName": "",
+                        "updatedByName": "超级管理员[admin]",
                         "updatedTime": "2023-01-10 14:22:12"
                     },
                     {
@@ -366,10 +434,10 @@
                         "module": "CPack",
                         "license": "STANDARD",
                         "createdBy": "admin",
-                        "createdByName": "",
+                        "createdByName": "超级管理员[admin]",
                         "createdTime": "2020-06-12 10:46:49",
                         "updatedBy": "admin",
-                        "updatedByName": "",
+                        "updatedByName": "超级管理员[admin]",
                         "updatedTime": "2023-01-10 14:22:12"
                     },
                     {
@@ -383,10 +451,10 @@
                         "module": "CPack",
                         "license": "STANDARD",
                         "createdBy": "admin",
-                        "createdByName": "",
+                        "createdByName": "超级管理员[admin]",
                         "createdTime": "2020-06-12 10:46:49",
                         "updatedBy": "admin",
-                        "updatedByName": "",
+                        "updatedByName": "超级管理员[admin]",
                         "updatedTime": "2023-01-10 14:22:12"
                     },
                     {
@@ -400,10 +468,10 @@
                         "module": "CPack",
                         "license": "STANDARD",
                         "createdBy": "admin",
-                        "createdByName": "",
+                        "createdByName": "超级管理员[admin]",
                         "createdTime": "2020-06-12 10:46:49",
                         "updatedBy": "admin",
-                        "updatedByName": "",
+                        "updatedByName": "超级管理员[admin]",
                         "updatedTime": "2023-01-10 14:22:12"
                     },
                     {
@@ -417,10 +485,10 @@
                         "module": "CPack",
                         "license": "STANDARD",
                         "createdBy": "admin",
-                        "createdByName": "",
+                        "createdByName": "超级管理员[admin]",
                         "createdTime": "2020-06-12 10:46:49",
                         "updatedBy": "admin",
-                        "updatedByName": "",
+                        "updatedByName": "超级管理员[admin]",
                         "updatedTime": "2023-01-10 14:22:12"
                     },
                     {
@@ -434,10 +502,10 @@
                         "module": "CPack",
                         "license": "STANDARD",
                         "createdBy": "admin",
-                        "createdByName": "",
+                        "createdByName": "超级管理员[admin]",
                         "createdTime": "2020-06-12 10:46:49",
                         "updatedBy": "admin",
-                        "updatedByName": "",
+                        "updatedByName": "超级管理员[admin]",
                         "updatedTime": "2023-01-10 14:22:12"
                     },
                     {
@@ -451,26 +519,26 @@
                         "module": "",
                         "license": "",
                         "createdBy": "admin",
-                        "createdByName": "",
+                        "createdByName": "超级管理员[admin]",
                         "createdTime": "2023-03-23 15:17:19",
                         "updatedBy": "admin",
-                        "updatedByName": "",
+                        "updatedByName": "超级管理员[admin]",
                         "updatedTime": "2023-03-23 15:17:19"
                     }
                 ],
                 "createdBy": "admin",
-                "createdByName": "",
-                "createdTime": "2023-04-03 19:26:23",
+                "createdByName": "超级管理员[admin]",
+                "createdTime": "2023-06-12 15:01:45",
                 "updatedBy": "admin",
-                "updatedByName": "",
-                "updatedTime": "2023-04-04 10:32:49"
+                "updatedByName": "超级管理员[admin]",
+                "updatedTime": "2023-06-12 15:01:45"
             }
         ],
         "createdBy": "admin",
-        "createdByName": "",
+        "createdByName": "超级管理员[admin]",
         "createdTime": "2023-03-29 15:29:29",
         "updatedBy": "admin",
-        "updatedByName": "",
+        "updatedByName": "超级管理员[admin]",
         "updatedTime": "2023-03-29 15:29:29"
     }
 ]

@@ -115,6 +115,9 @@
                     highestLeakLevel: '',
                     status: ''
                 }
+                this.showSideslider = false
+                // 此时只能向父组件返回一个空对象，不能将上面的属性值都为空的对象返回，会导致关闭弹窗后请求携带了这些空值的参数，导致返回数据为空数组
+                this.$emit('filter', {})
             }
         }
     }

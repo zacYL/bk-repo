@@ -21,7 +21,7 @@ object AuthConstant {
 
     const val TOKEN_EXPIRE_TIME_IN_MS = TOKEN_EXPIRE_TIME_IN_SECOND * 1000L
 
-    const val DEVOPS_AUTH_NAME = "auth-devops"
+    const val DEVOPS_AUTH_NAME = "auth\${service-suffix:}"
 
     const val AUTH_HEADER_USER_ID = "X-DEVOPS-UID"
 

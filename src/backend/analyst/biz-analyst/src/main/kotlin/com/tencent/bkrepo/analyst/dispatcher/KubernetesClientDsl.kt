@@ -39,91 +39,76 @@ import io.kubernetes.client.openapi.models.V1ResourceRequirements
 import io.kubernetes.client.openapi.models.V1Secret
 
 /**
- * 创建job并配置
+ * 创建Job并配置
  */
-fun v1Job(configuration: V1Job.() -> Unit): V1Job {
+inline fun v1Job(crossinline configuration: V1Job.() -> Unit): V1Job {
     return V1Job().apply(configuration)
 }
 
 /**
- * Create secret
+ * 创建Secret并配置
  */
-fun v1Secret(configuration: V1Secret.() -> Unit): V1Secret {
+inline fun v1Secret(crossinline configuration: V1Secret.() -> Unit): V1Secret {
     return V1Secret().apply(configuration)
 }
 
 /**
- * Create v1LocalObjectReference
+ * 创建V1LocalObjectReference并配置
  */
-fun v1LocalObjectReference(configuration: V1LocalObjectReference.() -> Unit): V1LocalObjectReference {
-    return V1LocalObjectReference().apply (configuration)
+inline fun v1LocalObjectReference(
+    crossinline configuration: V1LocalObjectReference.() -> Unit
+): V1LocalObjectReference {
+    return V1LocalObjectReference().apply(configuration)
 }
 
 /**
- * Configure secret metadata
+ * 配置Secret元数据
  */
-fun V1Secret.metadata(configuration: V1ObjectMeta.() -> Unit) {
-    if (metadata == null) {
-        metadata = V1ObjectMeta()
-    }
-    metadata!!.configuration()
+
+inline fun V1Secret.metadata(crossinline configuration: V1ObjectMeta.() -> Unit) {
+    metadata?.apply(configuration) ?: V1ObjectMeta().apply(configuration).also { metadata = it }
 }
 
 /**
  * 配置Job元数据
  */
-fun V1Job.metadata(configuration: V1ObjectMeta.() -> Unit) {
-    if (metadata == null) {
-        metadata = V1ObjectMeta()
-    }
-    metadata!!.configuration()
+inline fun V1Job.metadata(crossinline configuration: V1ObjectMeta.() -> Unit) {
+    metadata?.apply(configuration) ?: V1ObjectMeta().apply(configuration).also { metadata = it }
 }
 
 /**
  * 配置Job执行方式
  */
-fun V1Job.spec(configuration: V1JobSpec.() -> Unit) {
-    if (spec == null) {
-        spec = V1JobSpec()
-    }
-    spec!!.configuration()
+inline fun V1Job.spec(crossinline configuration: V1JobSpec.() -> Unit) {
+    spec?.apply(configuration) ?: V1JobSpec().apply(configuration).also { spec = it }
 }
 
 /**
  * 配置Job用于创建Pod的模板
  */
-fun V1JobSpec.template(configuration: V1PodTemplateSpec.() -> Unit) {
-    if (template == null) {
-        template = V1PodTemplateSpec()
-    }
-    template.configuration()
+inline fun V1JobSpec.template(crossinline configuration: V1PodTemplateSpec.() -> Unit) {
+    template?.apply(configuration) ?: V1PodTemplateSpec().apply(configuration).also { template = it }
 }
 
 /**
  * 配置Pod
  */
-fun V1PodTemplateSpec.spec(configuration: V1PodSpec.() -> Unit) {
-    if (spec == null) {
-        spec = V1PodSpec()
-    }
-    spec!!.configuration()
+inline fun V1PodTemplateSpec.spec(crossinline configuration: V1PodSpec.() -> Unit) {
+    spec?.apply(configuration) ?: V1PodSpec().apply(configuration).also { spec = it }
 }
 
 /**
  * 为Pod添加Container配置
  */
-fun V1PodSpec.addContainerItem(configuration: V1Container.() -> Unit) {
+inline fun V1PodSpec.addContainerItem(crossinline configuration: V1Container.() -> Unit) {
     addContainersItem(V1Container().apply(configuration))
 }
 
 /**
  * 配置资源需求
  */
-fun V1Container.resources(configuration: V1ResourceRequirements.() -> Unit) {
-    if (resources == null) {
-        resources = V1ResourceRequirements()
-    }
-    resources!!.configuration()
+inline fun V1Container.resources(crossinline configuration: V1ResourceRequirements.() -> Unit) {
+    resources?.apply(configuration) ?: V1ResourceRequirements().apply(configuration).also { resources = it }
 }
 
 /**

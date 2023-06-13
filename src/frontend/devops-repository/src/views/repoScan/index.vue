@@ -218,6 +218,7 @@
                         planId: id
                     },
                     query: {
+                        ...this.$route.query,
                         scanType: planType,
                         scanName: name
                     }

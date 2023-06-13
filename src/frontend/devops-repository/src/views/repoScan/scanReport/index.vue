@@ -210,6 +210,7 @@
         },
         watch: {
             viewType (val) {
+                this.$route.query.viewType = val
                 this.handlerPaginationChange()
                 if (val === 'TASKVIEW') this.handlerTaskPaginationChange()
             }

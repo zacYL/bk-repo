@@ -282,6 +282,7 @@ class NugetRemoteRepository(
             it.getSingleStream().use { inputStream -> JsonUtils.objectMapper.readValue(inputStream, Feed::class.java) }
         } ?: run {
             val requestUrl = context.getRemoteConfiguration().url
+            context.putAttribute(REMOTE_URL, requestUrl)
             logger.info("Query Remote Service Index from [$requestUrl]")
             query(context)?.let { JsonUtils.objectMapper.readValue(it as InputStream, Feed::class.java) }
                 ?: throw NugetFeedNotFoundException("query remote feed index.json for [$requestUrl] failed!")

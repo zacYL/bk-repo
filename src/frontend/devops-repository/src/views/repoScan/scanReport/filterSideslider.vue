@@ -82,6 +82,15 @@
             }
         },
         created () {
+            // 需要根据VueRouter中的参数设置筛选框的默认值
+            this.filter = {
+                name: this.$route.query?.name || '',
+                repoName: this.$route.query?.repoName || '',
+                highestLeakLevel: this.$route.query?.highestLeakLevel || '',
+                status: this.$route.query?.status || ''
+            }
+            // 设置了默认值后需要将参数同步父组件，否则会导致面包屑回退后筛选参数会是之前设置的值
+            this.filterHandler()
             this.getRepoListAll({ projectId: this.$route.params.projectId })
         },
         methods: {
@@ -106,6 +115,9 @@
                     highestLeakLevel: '',
                     status: ''
                 }
+                this.showSideslider = false
+                // 此时只能向父组件返回一个空对象，不能将上面的属性值都为空的对象返回，会导致关闭弹窗后请求携带了这些空值的参数，导致返回数据为空数组
+                this.$emit('filter', {})
             }
         }
     }

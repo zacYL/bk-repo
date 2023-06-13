@@ -10,6 +10,7 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadCon
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
+import com.tencent.bkrepo.maven.util.MavenStringUtils.isSnapshotMetadataChecksumUri
 import com.tencent.bkrepo.maven.util.MavenStringUtils.isSnapshotMetadataUri
 import com.tencent.bkrepo.repository.api.ProxyChannelClient
 import org.slf4j.LoggerFactory
@@ -28,9 +29,12 @@ class MavenCompositeRepository(
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         var artifactResource: ArtifactResource? = null
         try {
-            artifactResource = mavenLocalRepository.onDownload(context)?.run {
-                getNewerSnapshotMetadataFromRemote(context) ?: this
-            } ?: downloadFromFirstProxyRepo(context)
+            val fullPath = context.artifactInfo.getArtifactFullPath()
+            artifactResource = if (fullPath.isSnapshotMetadataUri() || fullPath.isSnapshotMetadataChecksumUri()) {
+                downloadFromFirstProxyRepo(context) ?: mavenLocalRepository.onDownload(context)
+            } else {
+                mavenLocalRepository.onDownload(context) ?: downloadFromFirstProxyRepo(context)
+            }
         } catch (notFoundException: NotFoundException) {
             artifactResource = downloadFromFirstProxyRepo(context)
             // 这里是为了保留各依赖源实现的异常
@@ -86,13 +90,6 @@ class MavenCompositeRepository(
             // 这里只会返回空，异常不会抛出
             mavenRemoteRepository.onDownload(it)
         }
-    }
-
-    private fun getNewerSnapshotMetadataFromRemote(context: ArtifactDownloadContext): ArtifactResource? {
-        if (context.artifactInfo.getArtifactFullPath().isSnapshotMetadataUri()) {
-            return downloadFromFirstProxyRepo(context)?.takeIf { it.node != null }
-        }
-        return null
     }
 
     companion object {

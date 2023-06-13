@@ -93,7 +93,8 @@
                                 v-if="!row.folder && row.metadata.forbidStatus"
                                 v-bk-tooltips="{ content: tooltipContent(row.metadata), placements: ['top'] }"
                             >{{row.name}}</span>
-                            <span v-else>{{ row.name }}</span>
+                            <!-- 文件夹支持: 鼠标悬浮时显示小手样式 -->
+                            <span v-else :class="{ 'hover-btn': row.folder }">{{ row.name }}</span>
                             <scan-tag class="mr5 table-svg"
                                 v-if="!row.folder && genericScanFileTypes.includes(row.name.replace(/^.+\.([^.]+)$/, '$1'))"
                                 :status="row.metadata.scanStatus"

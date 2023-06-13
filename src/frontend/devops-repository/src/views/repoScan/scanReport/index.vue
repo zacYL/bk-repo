@@ -148,6 +148,12 @@
     import { mapActions } from 'vuex'
     import { formatDate } from '@repository/utils'
     import { scanStatusEnum, leakLevelEnum, SCAN_TYPE_SECURITY } from '@repository/store/publicEnum'
+    const filterParams = {
+        name: '',
+        repoName: '',
+        highestLeakLevel: '',
+        status: ''
+    }
     export default {
         name: 'scanReport',
         components: {
@@ -225,6 +231,14 @@
             ]),
             refreshData (key, value) {
                 this[key] = value
+                // 当设置时间之后，需要将设置的时间更新到VueRouter的query中，即浏览器的url中
+                this.$router.replace({
+                    query: {
+                        ...this.$route.query,
+                        startTime: this.formatISO?.startTime || '',
+                        endTime: this.formatISO?.endTime || ''
+                    }
+                })
             },
             refreshList (force) {
                 force ? this.handlerPaginationChange() : this.getReportListHandler()
@@ -267,6 +281,13 @@
             },
             filterHandler (filter) {
                 this.filter = filter
+                this.$router.replace({
+                    query: {
+                        ...this.$route.query,
+                        ...filterParams,
+                        ...this.filter
+                    }
+                })
                 this.handlerPaginationChange()
             },
             stopScanHandler ({ recordId }) {

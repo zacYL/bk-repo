@@ -28,32 +28,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
-package com.tencent.bkrepo.auth.config
-
-import com.tencent.bkrepo.auth.interceptor.AuthInterceptor
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
-
-@Configuration
-class AuthConfig : WebMvcConfigurer {
-
-    override fun addInterceptors(registry: InterceptorRegistry) {
-        registry.addInterceptor(clientAuthInterceptor())
-            .addPathPatterns("/api/**")
-            .excludePathPatterns("/external/**")
-            .excludePathPatterns("/api/user/login")
-            .excludePathPatterns("/api/user/info")
-            .excludePathPatterns("/api/user/verify")
-            .excludePathPatterns("/api/user/rsa")
-            .excludePathPatterns("/api/oauth/token")
-            .excludePathPatterns("/api/extAuth/instanceld")
-            .order(0)
-        super.addInterceptors(registry)
-    }
-
-    @Bean
-    fun clientAuthInterceptor() = AuthInterceptor()
+dependencies {
+    api(project(":common:common-api"))
+    api("net.canway.devops:devops-boot-starter-api:6.0.0-SNAPSHOT")
+    api("com.fasterxml.jackson.core:jackson-annotations")
+    api("io.swagger.core.v3:swagger-jaxrs2:2.1.10")
+    compileOnly("org.springframework:spring-web")
+    compileOnly("jakarta.servlet:jakarta.servlet-api")
+    compileOnly("org.springframework.boot:spring-boot-starter-aop")
+    compileOnly("org.springframework.cloud:spring-cloud-openfeign-core")
 }

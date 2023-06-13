@@ -80,35 +80,16 @@ class CanwayPermissionServiceImpl(
                 }
 
                 else -> {
-                    if (request.action == PermissionAction.MANAGE) {
-                        with(request) {
-                            devOpsAuthGeneral.validateUserPermission(
-                                projectId = projectId!!,
-                                option = UserPermissionValidateDTO(
-                                    userId = uid,
-                                    instanceId = repoName ?: ANY_RESOURCE_CODE,
-                                    resourceCode = RESOURCECODE,
-                                    actionCodes = listOf(
-                                        PermissionAction.READ.name.toLowerCase(),
-                                        PermissionAction.WRITE.name.toLowerCase(),
-                                        PermissionAction.UPDATE.name.toLowerCase(),
-                                        PermissionAction.DELETE.name.toLowerCase()
-                                    )
-                                )
+                    with(request) {
+                        devOpsAuthGeneral.validateUserPermission(
+                            projectId = projectId!!,
+                            option = UserPermissionValidateDTO(
+                                userId = uid,
+                                instanceId = repoName ?: ANY_RESOURCE_CODE,
+                                resourceCode = RESOURCECODE,
+                                actionCodes = listOf(action.toString().toLowerCase())
                             )
-                        }
-                    } else {
-                        with(request) {
-                            devOpsAuthGeneral.validateUserPermission(
-                                projectId = projectId!!,
-                                option = UserPermissionValidateDTO(
-                                    userId = uid,
-                                    instanceId = repoName ?: ANY_RESOURCE_CODE,
-                                    resourceCode = RESOURCECODE,
-                                    actionCodes = listOf(action.toString().toLowerCase())
-                                )
-                            )
-                        }
+                        )
                     }
                 }
             }

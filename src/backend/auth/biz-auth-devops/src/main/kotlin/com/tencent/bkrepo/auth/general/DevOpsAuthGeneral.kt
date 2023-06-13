@@ -45,7 +45,7 @@ class DevOpsAuthGeneral(
      */
 
     fun isProjectMemberOrAdmin(userId: String, projectId: String): Boolean {
-        return canwayProjectClient.isProjectMemberOrAdmin(userId, projectId).data ?: false
+        return canwayProjectClient.isProjectMemberOrAdmin(projectId, userId).data ?: false
     }
 
     /**

@@ -42,7 +42,6 @@ interface CanwayProjectClient {
         projectId: String,
         @ApiParam(value = "待校验用户ID", required = true)
         @PathVariable
-
         targetUserId: String,
     ): Response<Boolean?>
 

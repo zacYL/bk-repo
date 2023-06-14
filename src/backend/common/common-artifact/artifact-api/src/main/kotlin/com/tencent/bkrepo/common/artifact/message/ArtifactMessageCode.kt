@@ -69,6 +69,8 @@ enum class ArtifactMessageCode(private val key: String) : MessageCode {
     ARTIFACT_SIZE_TOO_LARGE("artifact.size.too-large"),
     ARTIFACT_TYPE_UNSUPPORTED("artifact.type.unsupported"),
     ARTIFACT_FORBIDDEN("artifact.forbidden"),
+    NODE_CREATE_TIMEOUT("artifact.node.create.timeout"),
+    SIZE_CHECK_FAILED("artifact.size.check-failed"),
     FILE_LIST_EMPTY("artifact.file.list.empty"),
     ARTIFACT_FORBIDDEN_WHITELIST("artifact.forbidden.whitelist"),
     ARTIFACT_TASK_LOCK("artifact.task.lock"),

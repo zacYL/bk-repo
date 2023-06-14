@@ -27,8 +27,6 @@
 
 package com.tencent.bkrepo.replication.service.impl
 
-import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_NUMBER
-import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_SIZE
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.TimeUtils
@@ -46,8 +44,8 @@ import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus
 import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus.FAILED
 import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus.RUNNING
 import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus.SUCCESS
+import com.tencent.bkrepo.replication.pojo.record.RecordCountResult
 import com.tencent.bkrepo.replication.pojo.record.RecordOverview
-import com.tencent.bkrepo.replication.pojo.record.ReplicaArtifactStatistics
 import com.tencent.bkrepo.replication.pojo.record.ReplicaProgress
 import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordDetail
 import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordDetailListOption
@@ -55,7 +53,6 @@ import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordInfo
 import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordListOption
 import com.tencent.bkrepo.replication.pojo.record.ReplicaTaskRecordInfo
 import com.tencent.bkrepo.replication.pojo.record.request.RecordDetailInitialRequest
-import com.tencent.bkrepo.replication.pojo.record.request.RecordDetailSearchRequest
 import com.tencent.bkrepo.replication.pojo.request.ReplicaType
 import com.tencent.bkrepo.replication.pojo.task.ReplicaStatus
 import com.tencent.bkrepo.replication.service.ReplicaRecordService
@@ -63,7 +60,6 @@ import com.tencent.bkrepo.replication.util.CronUtils
 import com.tencent.bkrepo.replication.util.TaskRecordQueryHelper
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
-import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.aggregation.Aggregation
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
@@ -288,13 +284,12 @@ class ReplicaRecordServiceImpl(
             Aggregation.match(Criteria.where(TReplicaRecordDetail::recordId.name).`is`(recordId)),
             Aggregation.group("\$${TReplicaRecordDetail::status.name}").count().`as`("count")
         )
-        val result = replicaRecordDetailDao.aggregate(aggregation, Overview::class.java).mappedResults
-
+        val result = replicaRecordDetailDao.aggregate(aggregation, RecordCountResult::class.java).mappedResults
         result.forEach {
-            when (it._id) {
-                SUCCESS -> success = it.count.toLong()
-                FAILED -> fail = it.count.toLong()
-                RUNNING -> running = it.count.toLong()
+            when (it.id) {
+                SUCCESS -> success = it.count
+                FAILED -> fail = it.count
+                RUNNING -> running = it.count
             }
         }
         val conflict = replicaRecordDetailDao.find(
@@ -304,79 +299,6 @@ class ReplicaRecordServiceImpl(
             )
         ).count().toLong()
         return RecordOverview(success + fail + running, success, fail, conflict)
-    }
-
-    override fun searchRecordDetail(searchRequest: RecordDetailSearchRequest): Map<ExecutionStatus, Long> {
-        val resultMap = mutableMapOf(SUCCESS to 0L, FAILED to 0L)
-        var pageNumber = DEFAULT_PAGE_NUMBER
-        var records = listRecordsPage(
-            searchRequest.taskKey,
-            ReplicaRecordListOption(pageNumber, DEFAULT_PAGE_SIZE * 5)
-        ).records
-        while (records.isNotEmpty()) {
-            records.forEach {
-                val criteria = Criteria.where(TReplicaRecordDetail::recordId.name).`is`(it.id)
-                    .and(TReplicaRecordDetail::artifactName.name).`is`(searchRequest.artifactName)
-                searchRequest.version?.let {
-                    criteria.and(TReplicaRecordDetail::version.name).`is`(searchRequest.version)
-                }
-                val aggregation = Aggregation.newAggregation(
-                    TReplicaRecordDetail::class.java,
-                    Aggregation.match(criteria),
-                    Aggregation.group("\$${TReplicaRecordDetail::status.name}").count().`as`("count")
-                )
-                replicaRecordDetailDao.aggregate(
-                    aggregation,
-                    Overview::class.java
-                ).mappedResults.forEach { overview ->
-                    when (overview._id) {
-                        SUCCESS -> resultMap[SUCCESS] = resultMap[SUCCESS]!!.plus(overview.count.toLong())
-                        FAILED -> resultMap[FAILED] = resultMap[FAILED]!!.plus(overview.count.toLong())
-                        RUNNING -> {}
-                    }
-                }
-            }
-            pageNumber++
-            records = listRecordsPage(
-                searchRequest.taskKey,
-                ReplicaRecordListOption(pageNumber, DEFAULT_PAGE_SIZE * 5)
-            ).records
-        }
-        return resultMap
-    }
-
-    override fun statisticsArtifactRecordDetail(key: String): List<ReplicaArtifactStatistics> {
-        var replicaArtifactStatistics = listOf<ReplicaArtifactStatistics>()
-        // 查找最新的执行记录
-        val recordQuery = Query.query(Criteria.where(TReplicaRecord::taskKey.name).`is`(key))
-            .with(Sort.by(Sort.Direction.DESC, TReplicaRecord::startTime.name)).limit(1)
-        recordQuery.fields().include(TReplicaRecord::id.name)
-        val recordIds = replicaRecordDao.find(recordQuery, Id::class.java)
-        if (recordIds.isNotEmpty()) {
-            val detailQuery = Query.query(Criteria.where(TReplicaRecordDetail::recordId.name).`is`(recordIds[0].id))
-                .with(Sort.by(Sort.Direction.DESC, TReplicaRecordDetail::startTime.name))
-            detailQuery.fields().include(
-                TReplicaRecordDetail::localRepoName.name,
-                TReplicaRecordDetail::artifactName.name,
-                TReplicaRecordDetail::version.name
-            )
-            replicaArtifactStatistics = replicaRecordDetailDao.find(detailQuery, ReplicaArtifactStatistics::class.java)
-            replicaArtifactStatistics.forEach {
-                val resultMap = searchRecordDetail(
-                    RecordDetailSearchRequest(
-                        taskKey = key,
-                        repoName = it.localRepoName,
-                        artifactName = it.artifactName,
-                        version = it.version
-                    )
-                )
-                it.success = resultMap[SUCCESS]!!
-                it.failed = resultMap[FAILED]!!
-            }
-        } else {
-            logger.warn("get records is empty by taskKey[$key]")
-        }
-        return replicaArtifactStatistics
     }
 
     companion object {
@@ -424,10 +346,3 @@ class ReplicaRecordServiceImpl(
         }
     }
 }
-
-data class Overview(
-    val _id: ExecutionStatus,
-    val count: Double
-)
-
-data class Id(val id: String)

@@ -31,7 +31,6 @@ import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.replication.pojo.record.ExecutionResult
 import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus
 import com.tencent.bkrepo.replication.pojo.record.RecordOverview
-import com.tencent.bkrepo.replication.pojo.record.ReplicaArtifactStatistics
 import com.tencent.bkrepo.replication.pojo.record.ReplicaProgress
 import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordDetail
 import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordDetailListOption
@@ -39,7 +38,6 @@ import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordInfo
 import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordListOption
 import com.tencent.bkrepo.replication.pojo.record.ReplicaTaskRecordInfo
 import com.tencent.bkrepo.replication.pojo.record.request.RecordDetailInitialRequest
-import com.tencent.bkrepo.replication.pojo.record.request.RecordDetailSearchRequest
 
 /**
  * 同步任务执行记录服务接口
@@ -171,14 +169,4 @@ interface ReplicaRecordService {
      * @param recordId 日志id
      */
     fun recordDetailOverview(recordId: String): RecordOverview
-
-    /**
-     * 根据条件搜索分发执行日志详情
-     */
-    fun searchRecordDetail(searchRequest: RecordDetailSearchRequest): Map<ExecutionStatus, Long>
-
-    /**
-     * 统计每个制品的执行次数
-     */
-    fun statisticsArtifactRecordDetail(key: String): List<ReplicaArtifactStatistics>
 }

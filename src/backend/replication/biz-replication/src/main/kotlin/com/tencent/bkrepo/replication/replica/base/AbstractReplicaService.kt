@@ -127,24 +127,17 @@ abstract class AbstractReplicaService(
     private fun replicaByPath(replicaContext: ReplicaContext, node: NodeInfo) {
         with(replicaContext) {
             if (!node.folder) {
-                // TODO 代码优化 此处判断是否冲突，后续同步可以不用判断，将当前是否冲突的结果传递
-                // 存在冲突：记录冲突策略
                 // 外部集群仓库没有project/repoName
                 if (remoteProjectId.isNullOrBlank() || remoteRepoName.isNullOrBlank()) {
                     logger.warn("remoteProjectId or remoteRepoName is empty, replica end")
                     return
                 }
+                // 存在冲突：记录冲突策略
                 val conflictStrategy = if (
-                    artifactReplicaClient!!.checkNodeExist(
-                        remoteProjectId,
-                        remoteRepoName,
-                        node.fullPath
-                    ).data == true
+                    artifactReplicaClient!!.checkNodeExist(remoteProjectId, remoteRepoName, node.fullPath).data == true
                 ) {
                     task.setting.conflictStrategy
-                } else {
-                    null
-                }
+                } else null
                 // 初始化分发记录详情 & 记录 artifactName
                 val replicaExecutionContext = initialExecutionContext(
                     context = replicaContext,
@@ -217,7 +210,6 @@ abstract class AbstractReplicaService(
             )
 
             versions.forEach {
-                // 存在冲突：记录冲突策略
                 // 外部集群仓库没有project/repoName
                 if (remoteProjectId.isNullOrBlank() || remoteRepoName.isNullOrBlank()) {
                     logger.warn("remoteProjectId or remoteRepoName is empty, replica end")
@@ -229,13 +221,11 @@ abstract class AbstractReplicaService(
                     packageKey = packageSummary.key,
                     versionName = it.name
                 )
-                // TODO 代码优化 此处判断是否冲突，后续同步可以不用判断，将当前是否冲突的结果传递
+                // 存在冲突：记录冲突策略
                 val conflictStrategy =
                     if (artifactReplicaClient!!.checkPackageVersionExist(checkRequest).data == true) {
                         task.setting.conflictStrategy
-                    } else {
-                        null
-                    }
+                    } else null
                 val replicaExecutionContext = initialExecutionContext(
                     context = replicaContext,
                     artifactName = packageSummary.name,

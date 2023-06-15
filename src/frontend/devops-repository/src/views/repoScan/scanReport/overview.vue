@@ -210,10 +210,12 @@
                 this.$router.push({
                     name: 'scanConfig',
                     params: {
+                        ...this.$route.params,
                         projectId: this.scanPlan.projectId,
                         planId: this.scanPlan.id
                     },
                     query: {
+                        ...this.$route.query,
                         scanName: this.scanPlan.name
                     }
                 })

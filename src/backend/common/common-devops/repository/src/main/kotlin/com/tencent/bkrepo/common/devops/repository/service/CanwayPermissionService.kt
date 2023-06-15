@@ -1,26 +1,18 @@
 package com.tencent.bkrepo.common.devops.repository.service
 
-import com.tencent.bkrepo.common.api.util.readJsonString
-import com.tencent.bkrepo.common.api.util.toJsonString
-import com.tencent.bkrepo.common.devops.CANWAY_AUTH_API
+import com.tencent.bkrepo.auth.api.CanwayProjectClient
+import com.tencent.bkrepo.auth.constant.AuthConstant.ANY_RESOURCE_CODE
 import com.tencent.bkrepo.common.devops.RESOURCECODE
-import com.tencent.bkrepo.common.devops.conf.DevopsConf
 import com.tencent.bkrepo.common.devops.enums.CanwayPermissionType
-import com.tencent.bkrepo.common.devops.pojo.request.CanwayPermissionRequest
-import com.tencent.bkrepo.common.devops.pojo.response.CanwayResponse
-import com.tencent.bkrepo.common.devops.util.http.SimpleHttpUtils
+import net.canway.devops.auth.pojo.UserPermissionValidateDTO
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
 class CanwayPermissionService(
-    devopsConf: DevopsConf
+    private val canwayProjectClient: CanwayProjectClient,
 ) {
-
-    private val devopsHost = devopsConf.devopsHost.removeSuffix("/")
-
-
     @Suppress("TooGenericExceptionCaught")
     fun checkCanwayPermission(
         projectId: String,
@@ -47,20 +39,18 @@ class CanwayPermissionService(
         resourceCode: String? = null,
         repoName: String? = null
     ): Boolean? {
-        val canwayCheckPermissionRequest = CanwayPermissionRequest(
-            userId = userId,
-            instanceId = repoName ?: "*",
-            resourceCode = resourceCode ?: RESOURCECODE,
-            actionCodes = listOf(action.value),
-        ).toJsonString()
-        val ciAddResourceUrl =
-            String.format("${devopsHost.removeSuffix("/")}$CANWAY_AUTH_API$ciCheckPermissionApi", projectId)
-        val responseContent = SimpleHttpUtils.doPost(ciAddResourceUrl, canwayCheckPermissionRequest).content
-        return responseContent.readJsonString<CanwayResponse<Boolean>>().data
+        return canwayProjectClient.validateUserPermission(
+            projectId = projectId,
+            option = UserPermissionValidateDTO(
+                userId = userId,
+                instanceId = repoName ?: ANY_RESOURCE_CODE,
+                resourceCode = resourceCode ?: RESOURCECODE,
+                actionCodes = listOf(action.value)
+            )
+        ).data
     }
 
     companion object {
         val logger: Logger = LoggerFactory.getLogger(CanwayPermissionService::class.java)
-        const val ciCheckPermissionApi = "/api/service/project/%s/permission/validate"
     }
 }

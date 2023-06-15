@@ -1,25 +1,43 @@
 <template>
     <main class="log-detail-container" v-bkloading="{ isLoading }">
-        <div class="mr20 mt10 log-package-seach flex-align-center">
-            <bk-search-select
-                class="search-group"
-                clearable
-                v-model="searchGroup"
-                placeholder="按下Enter键搜索"
-                :show-condition="false"
-                :data="searchGroupList"
-                @change="handlerSearchSelectChange()"
-                @clear="handlerSearchSelectChange()"
-                @search="handlerSearchSelectChange()">
-            </bk-search-select>
-            <bk-select
-                class="ml10 w250"
-                v-model="status"
-                placeholder="同步状态"
-                @change="handlerSearchSelectChange()">
-                <bk-option id="SUCCESS" name="成功"></bk-option>
-                <bk-option id="FAILED" name="失败"></bk-option>
-            </bk-select>
+        <div class="mr20 mt10 ml20 log-package-seach flex-align-center">
+            <div class="flex-align-center">
+                <div v-for="(value,key) in countList" :key="key" class="mr30">
+                    <span>
+                        {{$t(`planLogEnum.${key}`)}}
+                    </span>
+                    <span>：</span>
+                    <span class="log-count"
+                        v-bk-tooltips="{
+                            content: $t(`planLogEnum.${key}`) + '：' + value,
+                            placements: ['top'],
+                            disabled: ((value + '').length || 0) < 6
+                        }">
+                        {{value}}
+                    </span>
+                </div>
+            </div>
+            <div class="flex-end-center">
+                <bk-search-select
+                    class="search-group"
+                    clearable
+                    v-model="searchGroup"
+                    placeholder="按下Enter键搜索"
+                    :show-condition="false"
+                    :data="searchGroupList"
+                    @change="handlerSearchSelectChange"
+                    @clear="handlerSearchSelectChange"
+                    @search="handlerSearchSelectChange">
+                </bk-search-select>
+                <bk-select
+                    class="ml10 w250"
+                    v-model="status"
+                    placeholder="同步状态"
+                    @change="handlerSearchSelectChange()">
+                    <bk-option id="SUCCESS" name="成功"></bk-option>
+                    <bk-option id="FAILED" name="失败"></bk-option>
+                </bk-select>
+            </div>
         </div>
         <bk-table
             class="mt10"
@@ -31,8 +49,8 @@
             <template #empty>
                 <empty-data :is-loading="isLoading" :search="Boolean(searchGroup.length || status)"></empty-data>
             </template>
-            <bk-table-column label="同步节点" show-overflow-tooltip>
-                <template #default="{ row }">{{ `${masterNode.name} - ${row.remoteCluster}` }}</template>
+            <bk-table-column label="目标节点" show-overflow-tooltip>
+                <template #default="{ row }">{{ row.remoteCluster}}</template>
             </bk-table-column>
             <bk-table-column label="同步仓库" show-overflow-tooltip>
                 <template #default="{ row }">
@@ -40,28 +58,28 @@
                     <span class="ml5">{{ row.localRepoName }}</span>
                 </template>
             </bk-table-column>
+            <bk-table-column label="制品名称 / 文件路径" show-overflow-tooltip>
+                <template #default="{ row }">{{ row.artifactName || row.packageKey || row.path || '/' }}</template>
+            </bk-table-column>
+            <bk-table-column label="版本" show-overflow-tooltip>
+                <template #default="{ row }">{{ row.version || (row.versions || ['/']).join('、') }}</template>
+            </bk-table-column>
             <bk-table-column label="同步状态" width="100">
                 <template #default="{ row }">
-                    <div class="status-sign" :class="row.status" :data-name="asyncPlanStatusEnum[row.status] || '未执行'"></div>
+                    <div class="status-sign" :class="row.status" :data-name="planLogDetailStatusEnum[row.status] || '未执行'"></div>
                 </template>
             </bk-table-column>
-            <template v-if="logDetail.replicaType === 'REAL_TIME' || logDetail.replicaObjectType !== 'REPOSITORY'">
-                <bk-table-column label="制品名称 / 文件路径" show-overflow-tooltip>
-                    <template #default="{ row }">{{ row.packageKey || row.path || '/' }}</template>
-                </bk-table-column>
-                <bk-table-column label="版本" show-overflow-tooltip>
-                    <template #default="{ row }">{{ (row.versions || ['/']).join('、') }}</template>
-                </bk-table-column>
-            </template>
+            <bk-table-column label="冲突策略" width="100">
+                <template #default="{ row }">
+                    <span>{{ conflictStrategyEnum[row.conflictStrategy] || '/'}}</span>
+                </template>
+            </bk-table-column>
             <bk-table-column label="开始时间" width="150">
                 <template #default="{ row }">{{formatDate(row.startTime)}}</template>
             </bk-table-column>
             <bk-table-column label="结束时间" width="150">
                 <template #default="{ row }">{{formatDate(row.endTime)}}</template>
             </bk-table-column>
-            <bk-table-column label="成功数量" prop="success"></bk-table-column>
-            <bk-table-column label="跳过数量" prop="skip"></bk-table-column>
-            <bk-table-column label="失败数量" prop="failed"></bk-table-column>
             <bk-table-column label="备注" show-overflow-tooltip>
                 <template #default="{ row }">{{row.errorReason || '/'}}</template>
             </bk-table-column>
@@ -83,12 +101,14 @@
 <script>
     import { mapGetters, mapActions } from 'vuex'
     import { formatDate } from '@repository/utils'
-    import { asyncPlanStatusEnum } from '@repository/store/publicEnum'
+    import { planLogDetailStatusEnum, planLogEnum, conflictStrategyEnum } from '@repository/store/publicEnum'
     export default {
         name: 'logDetail',
         data () {
             return {
-                asyncPlanStatusEnum,
+                planLogDetailStatusEnum,
+                planLogEnum,
+                conflictStrategyEnum,
                 isLoading: false,
                 logDetail: {},
                 pkgList: [],
@@ -99,6 +119,13 @@
                     current: 1,
                     limit: 20,
                     limitList: [10, 20, 40]
+                },
+                // 分发计划日志详情的同步数量
+                countList: {
+                    total: 0,
+                    success: 0,
+                    fail: 0,
+                    conflict: 0
                 }
             }
         },
@@ -132,10 +159,11 @@
                     })
                 }
             })
+            this.getPlanLogCountList()
         },
         methods: {
             formatDate,
-            ...mapActions(['getPlanLogDetail', 'getPlanLogPackageList']),
+            ...mapActions(['getPlanLogDetail', 'getPlanLogPackageList', 'getPlanLogDetailOverview']),
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
                 this.pagination.current = current
                 this.pagination.limit = limit
@@ -182,6 +210,12 @@
                     target[item.id] = item.values[0].id
                     return target
                 }, {})
+            },
+            // 获取任务执行日志详情总览，显示同步数量(同步总次数、成功、失败、冲突次数)
+            getPlanLogCountList () {
+                this.getPlanLogDetailOverview({ id: this.logId }).then(res => {
+                    this.countList = res
+                })
             }
         }
     }
@@ -191,10 +225,20 @@
     height: 100%;
     background-color: white;
     .log-package-seach {
-        justify-content: flex-end;
+        justify-content: space-between;
         .search-group {
             min-width: 250px;
         }
+    }
+    .log-count{
+        font-size: 14px;
+        font-weight: bold;
+        max-width: 50px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: inline-block;
+        vertical-align: middle;
     }
 }
 </style>

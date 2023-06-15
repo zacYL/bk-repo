@@ -1,5 +1,6 @@
 package com.tencent.bkrepo.auth.config
 
+import com.tencent.bkrepo.auth.general.DevOpsAuthGeneral
 import com.tencent.bkrepo.auth.repository.PermissionRepository
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
@@ -32,13 +33,15 @@ class CanwayAuthServiceConfig {
         @Autowired permissionRepository: PermissionRepository,
         @Autowired mongoTemplate: MongoTemplate,
         @Autowired repositoryClient: RepositoryClient,
-        @Autowired projectClient: ProjectClient
-    ): PermissionService {
+        @Autowired projectClient: ProjectClient,
+        @Autowired devOpsAuthGeneral: DevOpsAuthGeneral,
+        ): PermissionService {
         logger.debug("init CanwayPermissionServiceImpl")
         return CanwayPermissionServiceImpl(
             userRepository,
             roleRepository,
             permissionRepository,
+            devOpsAuthGeneral,
             mongoTemplate,
             repositoryClient,
             projectClient

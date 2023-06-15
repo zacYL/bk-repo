@@ -46,7 +46,7 @@
                                         repoType !== 'docker' && { label: '下载', clickEvent: () => downloadPackageHandler($version) },
                                         isEnterprise && showRepoScan && { label: '扫描制品', clickEvent: () => scanPackageHandler($version) }
                                     ] : []),
-                                    !$route.path.startsWith('/software') && !(storeType === 'virtual') && { clickEvent: () => changeForbidStatusHandler($version), label: $version.metadata.forbidStatus ? '解除禁止' : '禁止使用' },
+                                    !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => changeForbidStatusHandler($version), label: $version.metadata.forbidStatus ? '解除禁止' : '禁止使用' },
                                     (permission.delete && !(storeType === 'virtual')) && { label: '删除', clickEvent: () => deleteVersionHandler($version) }
                                 ]"></operation-list>
                         </div>
@@ -142,15 +142,19 @@
             storeType () {
                 return this.$route.query.storeType || ''
             },
+            // 是否是 软件源模式
+            whetherSoftware () {
+                return this.$route.path.startsWith('/software')
+            },
             showRepoScan () {
                 // 软件源模式下屏蔽安全扫描和禁用操作
                 // 虚拟仓库屏蔽安全扫描和禁用操作
-                return this.scannerSupportPackageType.join(',').toLowerCase().includes(this.repoType) && !(this.storeType === 'virtual')
+                return this.scannerSupportPackageType.join(',').toLowerCase().includes(this.repoType) && !(this.storeType === 'virtual') && !this.whetherSoftware
             },
             // 是否显示晋级操作
             showPromotion () {
                 // 远程或虚拟仓库不显示晋级操作
-                return this.permission.edit && !(this.storeType === 'remote') && !(this.storeType === 'virtual')
+                return this.permission.edit && !(this.storeType === 'remote') && !(this.storeType === 'virtual') && !this.whetherSoftware
             },
             // 虚拟仓库的仓库来源，虚拟仓库时需要更换repoName为此值
             sourceRepoName () {

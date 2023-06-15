@@ -8,7 +8,7 @@
                 </div>
             </div>
             <div class="flex-end-center flex-1">
-                <bk-button v-if="currentType === 'MAVEN' && !(storeType === 'remote') && !(storeType === 'virtual') && !$route.path.startsWith('/software')" theme="primary" @click="handleClickUpload">上传制品</bk-button>
+                <bk-button v-if="showUploadRepo" theme="primary" @click="handleClickUpload">上传制品</bk-button>
                 <bk-button class="ml20 flex-align-center" text theme="primary" @click="showGuide = true">
                     <span class="flex-align-center">
                         <Icon class="mr5" name="hand-guide" size="16" />
@@ -129,6 +129,14 @@
             },
             currentType () {
                 return this.currentRepo.type || ''
+            },
+            // 是否是 软件源模式
+            whetherSoftware () {
+                return this.$route.path.startsWith('/software')
+            },
+            // 是否显示上传制品按钮
+            showUploadRepo () {
+                return this.currentType === 'MAVEN' && !(this.storeType === 'remote') && !(this.storeType === 'virtual') && !this.whetherSoftware
             }
         },
         created () {

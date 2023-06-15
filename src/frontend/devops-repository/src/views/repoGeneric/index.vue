@@ -52,7 +52,7 @@
                             批量下载
                         </bk-button>
                         <bk-button class="ml10"
-                            v-if="multiSelect.length && !$route.path.startsWith('/software')"
+                            v-if="multiSelect.length && !whetherSoftware"
                             @click="handlerMultiDelete()">
                             批量删除
                         </bk-button>
@@ -148,21 +148,21 @@
                                         !row.folder && handlerPreview(row) && { clickEvent: () => handlerPreview(row, true), label: $t('preview') },
                                         { clickEvent: () => handlerDownload(row), label: $t('download') },
                                         ...(repoName !== 'pipeline' ? [
-                                            (permission.edit && !$route.path.startsWith('/software')) && { clickEvent: () => renameRes(row), label: $t('rename') },
-                                            (permission.write && !$route.path.startsWith('/software')) && { clickEvent: () => moveRes(row), label: $t('move') },
-                                            (permission.write && !$route.path.startsWith('/software')) && { clickEvent: () => copyRes(row), label: $t('copy') }
+                                            (permission.edit && !whetherSoftware) && { clickEvent: () => renameRes(row), label: $t('rename') },
+                                            (permission.write && !whetherSoftware) && { clickEvent: () => moveRes(row), label: $t('move') },
+                                            (permission.write && !whetherSoftware) && { clickEvent: () => copyRes(row), label: $t('copy') }
                                         ] : []),
                                         ...(!row.folder ? [
                                             { clickEvent: () => handlerShare(row), label: $t('share') },
-                                            ( genericScanFileTypes.includes(row.name.replace(/^.+\.([^.]+)$/, '$1')) && !$route.path.startsWith('/software'))
+                                            ( genericScanFileTypes.includes(row.name.replace(/^.+\.([^.]+)$/, '$1')) && !whetherSoftware)
                                                 && { clickEvent: () => handlerScan(row), label: '扫描制品' }
                                         ] : []),
                                         ...(row.folder ? [
                                             { clickEvent: () => handlerShare(row), label: $t('share') }
                                         ] : [])
                                     ] : []),
-                                    (!row.folder && !$route.path.startsWith('/software') ) && { clickEvent: () => handlerForbid(row), label: row.metadata.forbidStatus ? '解除禁止' : '禁止使用' },
-                                    (permission.delete && !$route.path.startsWith('/software')) && { clickEvent: () => deleteRes(row), label: $t('delete') }
+                                    (!row.folder && !whetherSoftware) && { clickEvent: () => handlerForbid(row), label: row.metadata.forbidStatus ? '解除禁止' : '禁止使用' },
+                                    (permission.delete && !whetherSoftware) && { clickEvent: () => deleteRes(row), label: $t('delete') }
                                 ]">
                             </operation-list>
                         </template>
@@ -282,6 +282,10 @@
             },
             searchFileName () {
                 return this.$route.query.fileName
+            },
+            // 是否是 软件源模式
+            whetherSoftware () {
+                return this.$route.path.startsWith('/software')
             }
         },
         watch: {

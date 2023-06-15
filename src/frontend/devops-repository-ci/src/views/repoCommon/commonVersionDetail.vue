@@ -249,8 +249,12 @@
                     return target
                 }, {})
             },
+            // 是否是 软件源模式
+            whetherSoftware () {
+                return this.$route.path.startsWith('/software')
+            },
             showRepoScan () {
-                return this.scannerSupportPackageType.join(',').toLowerCase().includes(this.repoType) && !this.$route.path.startsWith('/software') && !(this.storeType === 'virtual')
+                return this.scannerSupportPackageType.join(',').toLowerCase().includes(this.repoType) && !this.whetherSoftware && !(this.storeType === 'virtual')
             },
             operationBtns () {
                 const basic = this.detail.basic
@@ -262,8 +266,8 @@
                             this.isEnterprise && this.showRepoScan && { clickEvent: () => this.$emit('scan'), label: '扫描制品' }
                         ]
                         : []),
-                    !this.$route.path.startsWith('/software') && !(this.storeType === 'virtual') && { clickEvent: () => this.$emit('forbid'), label: metadataMap.forbidStatus ? '解除禁止' : '禁止使用' },
-                    (this.permission.delete && !this.$route.path.startsWith('/software') && !(this.storeType === 'virtual')) && { clickEvent: () => this.$emit('delete'), label: this.$t('delete') }
+                    !this.whetherSoftware && !(this.storeType === 'virtual') && { clickEvent: () => this.$emit('forbid'), label: metadataMap.forbidStatus ? '解除禁止' : '禁止使用' },
+                    (this.permission.delete && !this.whetherSoftware && !(this.storeType === 'virtual')) && { clickEvent: () => this.$emit('delete'), label: this.$t('delete') }
                 ]
             }
         },

@@ -36,6 +36,17 @@ pluginManagement {
         mavenLocal()
         maven(url = "https://mirrors.tencent.com/nexus/repository/gradle-plugins/")
         maven(url = "https://mirrors.tencent.com/nexus/repository/maven-public")
+        maven(url = "https://maven.aliyun.com/repository/public")
+
+        maven {
+            name = "canway"
+            url = uri(extra["canwayRepoUrl"] as String)
+            credentials {
+                username = extra["canwayRepoUser"] as String
+                password = extra["canwayRepoPassword"] as String
+            }
+        }
+        maven(url = extra["MAVEN_REPO_URL"] as String)
         gradlePluginPortal()
         mavenCentral()
     }

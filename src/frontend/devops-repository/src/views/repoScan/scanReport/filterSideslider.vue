@@ -41,8 +41,8 @@
                     </bk-form-item>
                 </bk-form>
                 <div class="pr30 sideslider-footer flex-end-center">
-                    <bk-button class="mr10" theme="default" @click="reset()">重置</bk-button>
-                    <bk-button theme="primary" @click="filterHandler()">筛选</bk-button>
+                    <bk-button class="mr10" theme="default" @click="reset">重置</bk-button>
+                    <bk-button theme="primary" @click="filterHandler">筛选</bk-button>
                 </div>
             </div>
         </template>
@@ -90,7 +90,8 @@
                 status: this.$route.query?.status || ''
             }
             // 设置了默认值后需要将参数同步父组件，否则会导致面包屑回退后筛选参数会是之前设置的值
-            this.filterHandler()
+            // 初始化设置筛选状态时需要告知父组件，让父组件保留扫描记录列表的页码及每页大小等参数
+            this.filterHandler('initFlag')
             this.getRepoListAll({ projectId: this.$route.params.projectId })
         },
         methods: {
@@ -100,13 +101,17 @@
             show () {
                 this.showSideslider = true
             },
-            filterHandler () {
+            filterHandler (flag) {
                 this.showSideslider = false
                 const filter = Object.keys(this.filter).reduce((target, key) => {
                     this.filter[key].toString() && (target[key] = this.filter[key])
                     return target
                 }, {})
-                this.$emit('filter', filter)
+                const backFilter = {
+                    ...filter,
+                    flag
+                }
+                this.$emit('filter', backFilter)
             },
             reset () {
                 this.filter = {

@@ -27,12 +27,11 @@
 
 package com.tencent.bkrepo.pypi.artifact.repository
 
-import com.tencent.bkrepo.common.api.constant.StringPool.SLASH
-import com.tencent.bkrepo.common.api.constant.ensureSuffix
 import com.tencent.bkrepo.common.api.exception.NotFoundException
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
+import com.tencent.bkrepo.common.artifact.path.PathUtils.ROOT
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
@@ -42,7 +41,6 @@ import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.file.multipart.MultipartArtifactFile
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
-import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.common.query.model.QueryModel
@@ -56,6 +54,7 @@ import com.tencent.bkrepo.pypi.artifact.xml.Value
 import com.tencent.bkrepo.pypi.artifact.xml.XmlUtil
 import com.tencent.bkrepo.pypi.pojo.Basic
 import com.tencent.bkrepo.pypi.pojo.PypiArtifactVersionData
+import com.tencent.bkrepo.pypi.util.HttpUtil.getRedirectUrl
 import com.tencent.bkrepo.pypi.util.PypiVersionUtils.toPypiPackagePojo
 import com.tencent.bkrepo.pypi.util.XmlUtils
 import com.tencent.bkrepo.pypi.util.XmlUtils.readXml
@@ -71,7 +70,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.time.format.DateTimeFormatter
-import javax.servlet.http.HttpServletRequest
 
 @Component
 class PypiLocalRepository(
@@ -297,24 +295,13 @@ class PypiLocalRepository(
         }
     }
 
-    /**
-     * 本地调试删除 pypi.domain 配置
-     */
-    fun getRedirectUrl(request: HttpServletRequest): String {
-        val domain = pypiProperties.domain
-        val path = request.servletPath
-        return UrlFormatter.format(domain, path).ensureSuffix(SLASH)
-    }
-
-    /**
-     *
-     */
     fun getSimpleHtml(artifactInfo: ArtifactInfo): Any? {
         logger.info("Get simple html, artifactInfo: ${artifactInfo.getArtifactFullPath()}")
         val request = HttpContextHolder.getRequest()
         if (!request.requestURI.endsWith("/")) {
             val response = HttpContextHolder.getResponse()
-            return response.sendRedirect(request.requestURL.toString().ensureSuffix(SLASH))
+            response.sendRedirect(getRedirectUrl(pypiProperties.domain, request.servletPath))
+            return null
         }
         with(artifactInfo) {
             val node = nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data
@@ -322,15 +309,11 @@ class PypiLocalRepository(
             if (!node.folder) return null
             // 请求不带包名，返回包名列表.
             if (getArtifactFullPath() == "/") {
-                val nodeList = nodeClient.listNode(
-                    projectId,
-                    repoName,
-                    getArtifactFullPath(),
-                    includeFolder = true,
-                    deep = true
-                ).data ?: throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, getArtifactFullPath())
+                val nodeList = nodeClient.listNode(projectId, repoName, ROOT, includeFolder = true).data
+                    ?.filter { it.folder }?.takeIf { it.isNotEmpty() }
+                    ?: throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, getArtifactFullPath())
                 // 过滤掉'根节点',
-                return buildPackageListContent(nodeList.filter { it.folder }.filter { it.path == "/" })
+                return buildPackageListContent(nodeList)
             }
             // 请求中带包名，返回对应包的文件列表。
             else {

@@ -164,7 +164,12 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
         val remoteConfiguration = context.getRemoteConfiguration()
         val httpClient = createHttpClient(remoteConfiguration)
         val downloadUri = createRemoteDownloadUrl(context)
-        val request = Request.Builder().url(downloadUri).build()
+        logger.info("Remote query url: $downloadUri")
+        val request = Request.Builder()
+            .removeHeader(HttpHeaders.USER_AGENT)
+            .addHeader(HttpHeaders.USER_AGENT, "${UUID.randomUUID()}")
+            .url(downloadUri)
+            .build()
         return try {
             val response = httpClient.newCall(request).execute()
             if (checkQueryResponse(response)) {

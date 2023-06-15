@@ -270,9 +270,14 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
             )
         ) {
             buildDownloadRecord(context, artifactResource)?.let {
-                packageClient.updateRecentlyUseDate(it.projectId, it.repoName, it.packageKey, it.packageVersion)
-                taskAsyncExecutor.execute { packageDownloadsClient.record(it) }
-                publishPackageDownloadEvent(context, it)
+                val packageVersion = packageClient.findVersionByName(
+                    it.projectId, it.repoName, it.packageKey, it.packageVersion
+                ).data
+                if (packageVersion != null) {
+                    packageClient.updateRecentlyUseDate(it.projectId, it.repoName, it.packageKey, it.packageVersion)
+                    taskAsyncExecutor.execute { packageDownloadsClient.record(it) }
+                    publishPackageDownloadEvent(context, it)
+                }
             }
         }
         if (throughput != Throughput.EMPTY) {

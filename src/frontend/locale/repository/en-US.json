@@ -229,5 +229,8 @@
         "success": "Number of successes",
         "fail": "Number of failures",
         "conflict": "Number of conflicts"
-    }
+    },
+    "localStoreInfo":"Upload and resolve your own packages",
+    "remoteStoreInfo":"Proxy and cache packages hosted remotely",
+    "virtualStoreInfo":"Combine local and remote packages in one place"
 }

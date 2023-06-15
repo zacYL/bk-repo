@@ -18,14 +18,17 @@
                 </div>
                 <ul class="bk-dropdown-list" slot="dropdown-content">
                     <li v-for="item in storeTypeEnum" :key="item.name">
-                        <a href="javascript:;" @click="handlerCreateStore(item.id)">
-                            <div class="flex-align-center">
-                                <Icon class="pr5" :name="item.icon" size="16" />
-                                <span>
-                                    {{$t(item.name)}}
-                                </span>
-                            </div>
-                        </a>
+                        <bk-link theme="default" href="javascript:;" @click="handlerCreateStore(item.id)">
+                            <dl>
+                                <dt class="flex-align-center">
+                                    <Icon class="pr5" :name="item.icon" size="16" />
+                                    <span> {{$t(item.name)}} </span>
+                                </dt>
+                                <dd>
+                                    <span class="dropdown-list-info">{{$t(item.info)}}</span>
+                                </dd>
+                            </dl>
+                        </bk-link>
                     </li>
                 </ul>
             </bk-dropdown-menu>
@@ -305,6 +308,20 @@
     // 解决右边icon图标没有垂直居中的问题
     ::v-deep .bk-dropdown-menu .bk-dropdown-trigger .right-icon {
         top: 0;
+    }
+    .dropdown-list-info{
+        color: #8797aa;
+        margin-left: -24px;
+    }
+    ::v-deep .bk-dropdown-menu .bk-dropdown-content .bk-dropdown-list li{
+        height: 100%;
+    }
+    ::v-deep .bk-dropdown-menu .bk-dropdown-list>li>a{
+        height: 60px;
+        line-height: 26px;
+    }
+    ::v-deep .bk-dropdown-menu .bk-dropdown-list {
+        max-height: 220px;
     }
 }
 </style>

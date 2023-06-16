@@ -42,14 +42,23 @@ import com.tencent.bkrepo.replication.util.StreamRequestBody
 import okhttp3.MultipartBody
 import okhttp3.Request
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.cloud.context.config.annotation.RefreshScope
 import org.springframework.stereotype.Component
 
+@RefreshScope
 @Component
 class ClusterArtifactReplicationHandler(
     localDataManager: LocalDataManager,
     replicationProperties: ReplicationProperties
 ) : ArtifactReplicationHandler(localDataManager, replicationProperties) {
 
+    //不支持yaml list配置 https://github.com/spring-projects/spring-framework/issues/16381
+    @Value("\${replication.chunkedRepos:}")
+    private var chunkedRepos: List<String> = emptyList()
+
+    @Value("\${replication.httpRepos:}")
+    private var httpRepos: List<String> = emptyList()
 
     override fun blobPush(
         filePushContext: FilePushContext,

@@ -37,17 +37,13 @@ import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.configuration.composite.CompositeConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.local.LocalConfiguration
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
-import com.tencent.bkrepo.common.artifact.stream.rateLimit
 import com.tencent.bkrepo.common.storage.innercos.retry
 import com.tencent.bkrepo.replication.config.ReplicationProperties
 import com.tencent.bkrepo.replication.constant.DEFAULT_VERSION
 import com.tencent.bkrepo.replication.constant.DELAY_IN_SECONDS
 import com.tencent.bkrepo.replication.constant.PUSH_WITH_DEFAULT
-import com.tencent.bkrepo.replication.constant.DELAY_IN_SECONDS
 import com.tencent.bkrepo.replication.constant.RETRY_COUNT
 import com.tencent.bkrepo.replication.manager.LocalDataManager
-import com.tencent.bkrepo.replication.pojo.request.PackageVersionExistCheckRequest
-import com.tencent.bkrepo.replication.pojo.task.setting.ConflictStrategy
 import com.tencent.bkrepo.replication.replica.base.context.FilePushContext
 import com.tencent.bkrepo.replication.replica.base.context.ReplicaContext
 import com.tencent.bkrepo.replication.replica.base.handler.ClusterArtifactReplicationHandler
@@ -67,6 +63,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime
+import java.util.concurrent.TimeUnit
 
 /**
  * 集群数据同步类
@@ -79,7 +76,7 @@ class ClusterReplicator(
     private val replicationProperties: ReplicationProperties
 ) : Replicator {
 
-    @Value("\${spring.application.version}")
+    @Value("\${spring.application.version:$DEFAULT_VERSION}")
     private var version: String = DEFAULT_VERSION
 
     override fun checkVersion(context: ReplicaContext) {
@@ -202,12 +199,13 @@ class ClusterReplicator(
             var type: String = replicationProperties.pushType
             retry(times = RETRY_COUNT, delayInSeconds = DELAY_IN_SECONDS) { retry ->
                 return buildNodeCreateRequest(this, node)?.let {
-                    if (blobReplicaClient!!.check(it.sha256!!, remoteRepo?.storageCredentials?.key).data != true) {
+                    if (blobReplicaClient!!.check(it.sha256!!, remoteRepo?.storageCredentials?.key).data != true
+                    ) {
+                        // 1. 同步文件数据
                         logger.info(
                             "The file [${node.fullPath}] with sha256 [${node.sha256}] " +
                                 "will be pushed to the remote server ${cluster.name}, try the $retry time!"
                         )
-                        // 1. 同步文件数据
                         try {
                             artifactReplicationHandler.blobPush(
                                 filePushContext = FilePushContext(
@@ -235,6 +233,8 @@ class ClusterReplicator(
                             throw throwable
                         }
                     }
+                    // 再次确认下文件是否已经可见(cfs可见性问题)
+                    doubleCheck(context, it.sha256!!)
                     logger.info(
                         "The node [${node.fullPath}] will be pushed to the remote server!"
                     )
@@ -242,6 +242,18 @@ class ClusterReplicator(
                     artifactReplicaClient!!.replicaNodeCreateRequest(it)
                     true
                 } ?: false
+            }
+        }
+    }
+
+    private fun doubleCheck(context: ReplicaContext, sha256: String) {
+        var count = 0
+        while (count < FILE_EXIST_CHECK_RETRY_COUNT) {
+            if (context.blobReplicaClient!!.check(sha256, context.remoteRepo?.storageCredentials?.key).data == true){
+                break
+            } else {
+                TimeUnit.SECONDS.sleep(1)
+                count++
             }
         }
     }
@@ -288,7 +300,7 @@ class ClusterReplicator(
 
     companion object {
         private val logger = LoggerFactory.getLogger(ClusterReplicator::class.java)
-
+        private const val FILE_EXIST_CHECK_RETRY_COUNT = 10
 
         fun buildRemoteRepoCacheKey(clusterInfo: ClusterInfo, projectId: String, repoName: String): String {
             return "$projectId/$repoName/${clusterInfo.hashCode()}"

@@ -38,6 +38,8 @@ import com.tencent.bkrepo.replication.pojo.request.ReplicaObjectType
 import com.tencent.bkrepo.replication.pojo.task.objects.PackageConstraint
 import com.tencent.bkrepo.replication.pojo.task.objects.PathConstraint
 import com.tencent.bkrepo.replication.pojo.task.setting.ConflictStrategy
+import com.tencent.bkrepo.replication.pojo.task.setting.ConflictStrategy.FAST_FAIL
+import com.tencent.bkrepo.replication.pojo.task.setting.ConflictStrategy.SKIP
 import com.tencent.bkrepo.replication.pojo.task.setting.ErrorStrategy
 import com.tencent.bkrepo.replication.replica.base.context.ReplicaContext
 import com.tencent.bkrepo.replication.replica.base.context.ReplicaExecutionContext
@@ -164,7 +166,15 @@ abstract class AbstractReplicaService(
     private fun replicaFile(context: ReplicaExecutionContext, node: NodeInfo) {
         with(context) {
             try {
-                replicaContext.replicator.replicaFile(replicaContext, node)
+                val fullPath = "${node.projectId}/${node.repoName}${node.fullPath}"
+                when (context.detail.conflictStrategy) {
+                    SKIP -> return
+                    FAST_FAIL -> throw IllegalArgumentException("File[$fullPath] conflict.")
+                    else -> {
+                        // not conflict or overwrite
+                        replicaContext.replicator.replicaFile(replicaContext, node)
+                    }
+                }
                 return
             } catch (throwable: Throwable) {
                 setErrorStatus(this, throwable)
@@ -246,8 +256,16 @@ abstract class AbstractReplicaService(
         version: PackageVersion
     ) {
         with(context) {
+            val fullPath = "${packageSummary.name}-${version.name}"
             try {
-                replicator.replicaPackageVersion(replicaContext, packageSummary, version)
+                when(context.detail.conflictStrategy){
+                    SKIP -> return
+                    FAST_FAIL -> throw IllegalArgumentException("File[$fullPath] conflict.")
+                    else -> {
+                        // not conflict or overwrite
+                        replicator.replicaPackageVersion(replicaContext, packageSummary, version)
+                    }
+                }
                 return
             } catch (throwable: Throwable) {
                 setErrorStatus(this, throwable)

@@ -111,16 +111,14 @@
 
     export default {
 
-        props: {
-        },
         data () {
             return {
                 // 正向依赖
                 correctDependencies: {
                     current: 1,
                     limit: 10,
-                    count: 60,
-                    limitList: [10, 20, 50, 100]
+                    count: 0,
+                    limitList: [10, 20, 40]
                 },
                 correctList: [],
                 isCorrectLoading: false,
@@ -129,8 +127,8 @@
                 plugins: {
                     current: 1,
                     limit: 10,
-                    count: 60,
-                    limitList: [10, 20, 50, 100]
+                    count: 0,
+                    limitList: [10, 20, 40]
                 },
                 pluginList: [],
                 isPluginLoading: false,
@@ -139,12 +137,11 @@
                 reverseDependencies: {
                     current: 1,
                     limit: 10,
-                    count: 60,
-                    limitList: [10, 20, 50, 100]
+                    count: 0,
+                    limitList: [10, 20, 40]
                 },
                 reverseList: [],
                 isReverseLoading: false
-
             }
         },
         computed: {
@@ -152,7 +149,7 @@
                 return this.$route.params.projectId || ''
             },
             repoType () {
-                return this.$route.params.repoType || 'maven'
+                return this.$route.params.repoType || ''
             },
             repoName () {
                 return this.$route.query.repoName || ''
@@ -253,8 +250,14 @@
             },
             // 反向依赖列表中点击跳转
             onJumpDetail (row) {
-                const href = window.location.origin + '/ui/'
-                    + `${row.projectId || this.projectId || ''}/${this.repoType}/package?repoName=${row.repoName || this.repoName}&packageKey=${row.packageKey}&version=${row.version}`
+                let frontUrl
+                // 集成CI模式下跳转的路径与独立部署模式下的不同，因为底座与制品库的配置，window.location.origin拿到的是iframeURL的值，不是真实访问的域名
+                if (MODE_CONFIG === 'ci') {
+                    frontUrl = window.DEVOPS_SITE_URL + '/console/repository/' + `${row.projectId || this.projectId || ''}` + '/repoList'
+                } else {
+                    frontUrl = window.location.origin + '/ui/' + `${row.projectId || this.projectId || ''}`
+                }
+                const href = `${frontUrl}/${this.repoType}/package?repoName=${row.repoName || this.repoName}&packageKey=${row.packageKey}&version=${row.version}`
                 window.open(href, '_blank')
             }
         }

@@ -49,6 +49,7 @@ class AuthConfig : WebMvcConfigurer {
             .excludePathPatterns("/api/user/verify")
             .excludePathPatterns("/api/user/rsa")
             .excludePathPatterns("/api/oauth/token")
+            .excludePathPatterns("/api/extAuth/instanceld")
             .order(0)
         super.addInterceptors(registry)
     }

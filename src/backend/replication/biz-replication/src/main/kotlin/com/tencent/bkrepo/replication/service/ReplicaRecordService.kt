@@ -30,6 +30,7 @@ package com.tencent.bkrepo.replication.service
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.replication.pojo.record.ExecutionResult
 import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus
+import com.tencent.bkrepo.replication.pojo.record.RecordOverview
 import com.tencent.bkrepo.replication.pojo.record.ReplicaProgress
 import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordDetail
 import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordDetailListOption
@@ -102,6 +103,11 @@ interface ReplicaRecordService {
     fun listRecordsPage(key: String, option: ReplicaRecordListOption): Page<ReplicaRecordInfo>
 
     /**
+     * 删除时间段内的分发记录
+     */
+    fun deleteRecord(key: String, startTime: String, endTime: String): Long
+
+    /**
      * 根据[recordId]查询执行详情列表
      * 返回结果按照开始时间倒排，最后执行的在最前
      * @param recordId 执行记录id
@@ -130,6 +136,13 @@ interface ReplicaRecordService {
     fun getRecordDetailById(id: String): ReplicaRecordDetail?
 
     /**
+     * 根据[id]删除执行记录详情
+     *
+     * @param id 记录详情id
+     */
+    fun deleteRecordDetailById(id: String)
+
+    /**
      * 根据任务[key]删除执行记录
      * @param key 任务key
      */
@@ -149,4 +162,11 @@ interface ReplicaRecordService {
      * @param key 任务key
      */
     fun findOrCreateLatestRecord(key: String): ReplicaRecordInfo
+
+    /**
+     * 查询执行日志详情总览
+     *
+     * @param recordId 日志id
+     */
+    fun recordDetailOverview(recordId: String): RecordOverview
 }

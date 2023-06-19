@@ -51,13 +51,17 @@ object TaskRecordQueryHelper {
                 .apply {
                     packageName?.let { and("packageConstraint.packageKey").regex("^$it") }
                 }.apply {
-                    repoName?.let { and(TReplicaRecordDetail::localRepoName).isEqualTo(it) }
+                    repoName?.let { and(TReplicaRecordDetail::localRepoName).regex(".*$it.*") }
                 }.apply {
-                    clusterName?.let { and(TReplicaRecordDetail::remoteCluster).isEqualTo(it) }
+                    clusterName?.let { and(TReplicaRecordDetail::remoteCluster).regex(".*$it.*") }
                 }.apply {
                     path?.let { and("pathConstraint.path").isEqualTo("^$it") }
                 }.apply {
                     status?.let { and(TReplicaRecordDetail::status).isEqualTo(it) }
+                }.apply {
+                    artifactName?.let { and(TReplicaRecordDetail::artifactName).isEqualTo(it) }
+                }.apply {
+                    version?.let { and(TReplicaRecordDetail::version).isEqualTo(it) }
                 }
             return Query(criteria)
                 .with(Sort.by(Sort.Order(Sort.Direction.DESC, TReplicaRecordDetail::startTime.name)))

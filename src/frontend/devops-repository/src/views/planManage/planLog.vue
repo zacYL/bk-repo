@@ -1,5 +1,5 @@
 <template>
-    <bk-sideslider :is-show.sync="showSideslider" :quick-close="true" :width="850" :title="`${planData.name} 执行日志`">
+    <bk-sideslider :is-show.sync="showSideslider" :quick-close="true" :width="800" :title="`${planData.name} 执行任务记录`">
         <template #content>
             <div class="plan-detail-container" v-bkloading="{ isLoading }">
                 <bk-radio-group
@@ -22,15 +22,15 @@
                     size="small"
                     @row-click="showLogDetailHandler">
                     <bk-table-column type="index" label="编号" width="60"></bk-table-column>
-                    <bk-table-column label="运行状态" width="80">
+                    <bk-table-column label="运行状态" width="90">
                         <template #default="{ row }">
                             <span class="repo-tag" :class="row.status">{{asyncPlanStatusEnum[row.status] || '未执行'}}</span>
                         </template>
                     </bk-table-column>
-                    <bk-table-column label="开始执行时间" width="150">
+                    <bk-table-column label="开始执行时间" width="150" show-overflow-tooltip>
                         <template #default="{ row }">{{formatDate(row.startTime)}}</template>
                     </bk-table-column>
-                    <bk-table-column v-if="planData.replicaType !== 'REAL_TIME'" label="结束执行时间" width="150">
+                    <bk-table-column v-if="planData.replicaType !== 'REAL_TIME'" label="结束执行时间" width="150" show-overflow-tooltip>
                         <template #default="{ row }">{{formatDate(row.endTime)}}</template>
                     </bk-table-column>
                     <bk-table-column label="备注" show-overflow-tooltip>
@@ -122,16 +122,26 @@
                 })
             },
             showLogDetailHandler ({ id }) {
-                this.$router.push({
-                    name: 'logDetail',
-                    params: {
-                        ...this.$route.params,
-                        logId: id
-                    },
-                    query: {
-                        planName: this.planData.name
-                    }
-                })
+                if (this.planData.notRecord) {
+                    const name = this.planData.name
+                    this.$bkMessage({
+                        message: this.$t('planTaskLogInfo', { name }),
+                        theme: 'warning',
+                        limit: 1,
+                        offsetY: 50
+                    })
+                } else {
+                    this.$router.push({
+                        name: 'logDetail',
+                        params: {
+                            ...this.$route.params,
+                            logId: id
+                        },
+                        query: {
+                            planName: this.planData.name
+                        }
+                    })
+                }
             }
         }
     }

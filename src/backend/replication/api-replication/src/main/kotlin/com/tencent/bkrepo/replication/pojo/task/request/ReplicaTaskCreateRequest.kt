@@ -53,5 +53,7 @@ data class ReplicaTaskCreateRequest(
     @ApiModelProperty("是否启用", required = true)
     val enabled: Boolean = true,
     @ApiModelProperty("任务描述", required = false)
-    val description: String? = null
+    val description: String? = null,
+    @ApiModelProperty("不记录制品的分发记录", required = false)
+    val notRecord: Boolean = true,
 )

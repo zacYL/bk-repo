@@ -29,6 +29,7 @@ package com.tencent.bkrepo.replication.service.impl
 
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.pojo.Page
+import com.tencent.bkrepo.common.api.util.TimeUtils
 import com.tencent.bkrepo.common.artifact.cluster.ClusterProperties
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.replication.dao.ReplicaRecordDao
@@ -40,6 +41,11 @@ import com.tencent.bkrepo.replication.model.TReplicaRecordDetail
 import com.tencent.bkrepo.replication.model.TReplicaTask
 import com.tencent.bkrepo.replication.pojo.record.ExecutionResult
 import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus
+import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus.FAILED
+import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus.RUNNING
+import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus.SUCCESS
+import com.tencent.bkrepo.replication.pojo.record.RecordCountResult
+import com.tencent.bkrepo.replication.pojo.record.RecordOverview
 import com.tencent.bkrepo.replication.pojo.record.ReplicaProgress
 import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordDetail
 import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordDetailListOption
@@ -54,6 +60,9 @@ import com.tencent.bkrepo.replication.util.CronUtils
 import com.tencent.bkrepo.replication.util.TaskRecordQueryHelper
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
+import org.springframework.data.mongodb.core.aggregation.Aggregation
+import org.springframework.data.mongodb.core.query.Criteria
+import org.springframework.data.mongodb.core.query.Query
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 
@@ -75,7 +84,7 @@ class ReplicaRecordServiceImpl(
             tReplicaTask.nextExecutionTime =
                 CronUtils.getNextTriggerTime(tReplicaTask.setting.executionPlan.cronExpression.orEmpty())
         }
-        tReplicaTask.lastExecutionStatus = ExecutionStatus.RUNNING
+        tReplicaTask.lastExecutionStatus = RUNNING
         replicaTaskDao.save(tReplicaTask)
         return initialRecord
     }
@@ -83,7 +92,7 @@ class ReplicaRecordServiceImpl(
     override fun initialRecord(taskKey: String): ReplicaRecordInfo {
         val record = TReplicaRecord(
             taskKey = taskKey,
-            status = ExecutionStatus.RUNNING,
+            status = RUNNING,
             startTime = LocalDateTime.now()
         )
         return try {
@@ -126,7 +135,10 @@ class ReplicaRecordServiceImpl(
                 repoType = repoType,
                 packageConstraint = packageConstraint,
                 pathConstraint = pathConstraint,
-                status = ExecutionStatus.RUNNING,
+                artifactName = artifactName,
+                version = version,
+                conflictStrategy = conflictStrategy,
+                status = RUNNING,
                 progress = ReplicaProgress(),
                 startTime = LocalDateTime.now()
             )
@@ -163,6 +175,9 @@ class ReplicaRecordServiceImpl(
                 repoType = repoType,
                 packageConstraint = packageConstraint,
                 pathConstraint = pathConstraint,
+                artifactName = artifactName,
+                version = version,
+                conflictStrategy = conflictStrategy,
                 status = result.status,
                 progress = result.progress!!,
                 startTime = startTime,
@@ -187,6 +202,24 @@ class ReplicaRecordServiceImpl(
         return Pages.ofResponse(pageRequest, totalRecords, records)
     }
 
+    override fun deleteRecord(key: String, startTime: String, endTime: String): Long {
+        var deleteCount = 0L
+        val localStart = TimeUtils.toSystemZoneTime(startTime)
+        val localEnd = TimeUtils.toSystemZoneTime(endTime)
+        require(localStart.isBefore(localEnd)) {
+            throw IllegalArgumentException("startTime must before endTime")
+        }
+        val criteria = Criteria.where(TReplicaRecord::taskKey.name).`is`(key)
+            .and(TReplicaRecord::startTime.name).gte(localStart)
+            .and(TReplicaRecord::endTime.name).lte(localEnd)
+        replicaRecordDao.find(Query(criteria)).forEach {
+            replicaRecordDetailDao.deleteByRecordId(it.id!!)
+            replicaRecordDao.removeById(it.id!!)
+            deleteCount++
+        }
+        return deleteCount
+    }
+
     override fun listDetailsByRecordId(recordId: String): List<ReplicaRecordDetail> {
         return replicaRecordDetailDao.listByRecordId(recordId).map { convert(it)!! }
     }
@@ -206,6 +239,10 @@ class ReplicaRecordServiceImpl(
 
     override fun getRecordDetailById(id: String): ReplicaRecordDetail? {
         return convert(findRecordDetailById(id))
+    }
+
+    override fun deleteRecordDetailById(id: String) {
+        replicaRecordDetailDao.removeById(id)
     }
 
     private fun findRecordDetailById(id: String): TReplicaRecordDetail? {
@@ -238,12 +275,38 @@ class ReplicaRecordServiceImpl(
         return initialRecord(key)
     }
 
+    override fun recordDetailOverview(recordId: String): RecordOverview {
+        var success = 0L
+        var fail = 0L
+        var running = 0L
+        val aggregation = Aggregation.newAggregation(
+            TReplicaRecordDetail::class.java,
+            Aggregation.match(Criteria.where(TReplicaRecordDetail::recordId.name).`is`(recordId)),
+            Aggregation.group("\$${TReplicaRecordDetail::status.name}").count().`as`("count")
+        )
+        val result = replicaRecordDetailDao.aggregate(aggregation, RecordCountResult::class.java).mappedResults
+        result.forEach {
+            when (it.id) {
+                SUCCESS -> success = it.count
+                FAILED -> fail = it.count
+                RUNNING -> running = it.count
+            }
+        }
+        val conflict = replicaRecordDetailDao.find(
+            Query.query(
+                Criteria.where(TReplicaRecordDetail::recordId.name).`is`(recordId)
+                    .and(TReplicaRecordDetail::conflictStrategy.name).ne(null)
+            )
+        ).count().toLong()
+        return RecordOverview(success + fail + running, success, fail, conflict)
+    }
+
     companion object {
         private val logger = LoggerFactory.getLogger(ReplicaRecordServiceImpl::class.java)
 
         private fun isCronJob(tReplicaTask: TReplicaTask): Boolean {
             return !tReplicaTask.setting.executionPlan.cronExpression.isNullOrBlank() &&
-                tReplicaTask.replicaType == ReplicaType.SCHEDULED
+                    tReplicaTask.replicaType == ReplicaType.SCHEDULED
         }
 
         private fun convert(tReplicaRecord: TReplicaRecord?): ReplicaRecordInfo? {
@@ -270,6 +333,9 @@ class ReplicaRecordServiceImpl(
                     repoType = it.repoType,
                     packageConstraint = it.packageConstraint,
                     pathConstraint = it.pathConstraint,
+                    artifactName = it.artifactName,
+                    version = it.version,
+                    conflictStrategy = it.conflictStrategy,
                     status = it.status,
                     progress = it.progress,
                     startTime = it.startTime,

@@ -186,6 +186,9 @@
           "versions": ["1.1.0","1.3.0"]
         },
         "pathConstraint": null,
+        "artifactName": null,
+        "version": null,
+        "conflictStrategy": null,
         "status": "SUCCESS",
         "progress": {
           "success": 10,
@@ -212,8 +215,11 @@
   |remoteCluster|string|远程集群名称|remote cluster node name|
   |localRepoName|string|本地仓库名称|local repository name|
   |repoType|enum|[DOCKER,NPM,RPM,...]|local repository type|
-  |packageConstraints|object|否|无|包限制|package constraints|
-  |pathConstraints|object|否|无|路径限制|path constraints|
+  |packageConstraints|object|否|无|
+  |pathConstraints|object|否|无|
+  |artifactName|String|制品名称|artifact name|
+  |version|String|版本|version|
+  |conflictStrategy|enum|[SKIP,OVERWRITE,FAST_FAIL]|conflict strategy|
   |status|enum|[RUNNING,SUCCESS,FAILED]|task execute status|
   |progress|object|同步进度|task execute progress|
   |startTime|date|任务开始执行时间|task execute start time|
@@ -277,6 +283,9 @@
           "pathConstraint": {
             "path": "/busy/box.txt"
           },
+          "artifactName": null,
+          "version": null,
+          "conflictStrategy": null,
           "status": "SUCCESS",
           "progress": {
             "success": 10,
@@ -304,8 +313,11 @@
   |remoteCluster|string|远程集群名称|remote cluster node name|
   |localRepoName|string|本地仓库名称|local repository name|
   |repoType|enum|[DOCKER,NPM,RPM,...]|local repository type|
-  |packageConstraints|object|否|无|包限制|package constraints|
-  |pathConstraints|object|否|无|路径限制|path constraints|
+  |packageConstraints|object|否|无|
+  |pathConstraints|object|否|无|
+  |artifactName|String|制品名称|artifact name|
+  |version|String|版本|version|
+  | conflictStrategy   | enum   | [SKIP,OVERWRITE,FAST_FAIL]         | conflict strategy        |
   |status|enum|[RUNNING,SUCCESS,FAILED]|task execute status|
   |progress|object|同步进度|task execute progress|
   |startTime|date|任务开始执行时间|task execute start time|
@@ -320,3 +332,34 @@
   |skip|long|跳过数量|skip size|
   |failed|long|失败数量|failed size|
   |totalSize|long|数据总量|total size|
+
+
+
+## 根据recordId分页查询任务执行日志详情列表
+
+- API: GET /replication/api/task/record/detail/overview/{recordId}
+- API 名称: list_task_record_detail_overview
+- 功能说明：
+  - 中文：查询任务日志详情总览
+  - English：list task record detail overview
+- 请求体
+  此接口无请求体
+- 请求字段说明
+
+| 字段     | 类型   | 是否必须 | 默认值 | 说明               | Description |
+| -------- | ------ | -------- | ------ | ------------------ | ----------- |
+| recordId | string | 是       | 无     | 任务执行日志唯一id | record id   |
+
+- 响应体
+
+
+
+- 响应字段说明
+
+| 字段     | 类型   | 说明       | Description    |
+| -------- | ------ | ---------- | -------------- |
+| recordId | string | 记录唯一id | record id      |
+| total    | Long   | 总数量     | total count    |
+| success  | Long   | 成功数量   | success count  |
+| fail     | Long   | 失败数量   | fail count     |
+| conflict | Long   | 冲突数量   | conflict count |

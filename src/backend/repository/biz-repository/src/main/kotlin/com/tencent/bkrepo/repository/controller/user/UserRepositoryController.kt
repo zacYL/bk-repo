@@ -83,7 +83,6 @@ class UserRepositoryController(
         @ApiParam(value = "仓库类型", required = true)
         @PathVariable type: String? = null
     ): Response<RepositoryInfo?> {
-        permissionManager.checkPermission(ResourceType.REPO, PermissionAction.READ, projectId, repoName)
         return ResponseBuilder.success(repositoryService.getRepoInfo(projectId, repoName, type))
     }
 

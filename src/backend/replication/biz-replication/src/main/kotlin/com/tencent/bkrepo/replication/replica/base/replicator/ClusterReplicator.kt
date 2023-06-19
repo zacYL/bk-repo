@@ -29,14 +29,11 @@ package com.tencent.bkrepo.replication.replica.base.replicator
 
 import com.tencent.bkrepo.common.artifact.constant.RESERVED_KEY
 import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
-import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.stream.rateLimit
 import com.tencent.bkrepo.replication.config.ReplicationProperties
 import com.tencent.bkrepo.replication.constant.DEFAULT_VERSION
 import com.tencent.bkrepo.replication.manager.LocalDataManager
-import com.tencent.bkrepo.replication.pojo.request.PackageVersionExistCheckRequest
-import com.tencent.bkrepo.replication.pojo.task.setting.ConflictStrategy
 import com.tencent.bkrepo.replication.replica.base.context.ReplicaContext
 import com.tencent.bkrepo.replication.replica.base.impl.internal.PackageNodeMappings
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
@@ -123,23 +120,6 @@ class ClusterReplicator(
         with(context) {
             // 外部集群仓库没有project/repoName
             if (remoteProjectId.isNullOrBlank() || remoteRepoName.isNullOrBlank()) return true
-            // 包版本冲突检查
-            val fullPath = "${packageSummary.name}-${packageVersion.name}"
-            val checkRequest = PackageVersionExistCheckRequest(
-                projectId = remoteProjectId,
-                repoName = remoteRepoName,
-                packageKey = packageSummary.key,
-                versionName = packageVersion.name
-            )
-            if (artifactReplicaClient!!.checkPackageVersionExist(checkRequest).data == true) {
-                when (task.setting.conflictStrategy) {
-                    ConflictStrategy.SKIP -> return false
-                    ConflictStrategy.FAST_FAIL -> throw IllegalArgumentException("Package [$fullPath] conflict.")
-                    else -> {
-                        // do nothing
-                    }
-                }
-            }
             // 文件数据
             PackageNodeMappings.map(
                 packageSummary = packageSummary,
@@ -193,12 +173,6 @@ class ClusterReplicator(
                     sha256 = it.sha256.orEmpty(),
                     storageKey = remoteRepo?.storageCredentials?.key
                 )
-//                val file = InputStreamMultipartFile(rateLimitInputStream, it.size!!)
-//                blobReplicaClient.push(
-//                    file = file,
-//                    sha256 = it.sha256.orEmpty(),
-//                    storageKey = remoteRepo.storageCredentials?.key
-//                )
                 // 2. 同步节点信息
                 artifactReplicaClient!!.replicaNodeCreateRequest(it)
                 true
@@ -218,41 +192,6 @@ class ClusterReplicator(
         with(context) {
             // 外部集群仓库没有project/repoName
             if (remoteProjectId.isNullOrBlank() || remoteRepoName.isNullOrBlank()) return null
-            val fullPath = "${node.projectId}/${node.repoName}${node.fullPath}"
-            // 节点冲突检查，generic仓库根据 fullPath 和 MD5 同时检查
-            if (localRepoType == RepositoryType.GENERIC) {
-                // md5相同，return true
-                if (artifactReplicaClient!!.checkNodeExistAndMd5(
-                        remoteProjectId,
-                        remoteRepoName,
-                        node.fullPath,
-                        node.md5!!
-                    ).data == true
-                ) {
-                    when (task.setting.conflictStrategy) {
-                        ConflictStrategy.SKIP -> return null
-                        ConflictStrategy.FAST_FAIL -> throw IllegalArgumentException("File[$fullPath] conflict.")
-                        else -> {
-                            // do nothing
-                        }
-                    }
-                }
-            } else {
-                if (artifactReplicaClient!!.checkNodeExist(
-                        remoteProjectId,
-                        remoteRepoName,
-                        node.fullPath,
-                    ).data == true
-                ) {
-                    when (task.setting.conflictStrategy) {
-                        ConflictStrategy.SKIP -> return null
-                        ConflictStrategy.FAST_FAIL -> throw IllegalArgumentException("File[$fullPath] conflict.")
-                        else -> {
-                            // do nothing
-                        }
-                    }
-                }
-            }
             // 查询元数据
             val metadata = if (task.setting.includeMetadata) {
                 // filter system reserve metadata

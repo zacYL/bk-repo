@@ -111,16 +111,14 @@
 
     export default {
 
-        props: {
-        },
         data () {
             return {
                 // 正向依赖
                 correctDependencies: {
                     current: 1,
                     limit: 10,
-                    count: 60,
-                    limitList: [10, 20, 50, 100]
+                    count: 0,
+                    limitList: [10, 20, 40]
                 },
                 correctList: [],
                 isCorrectLoading: false,
@@ -129,8 +127,8 @@
                 plugins: {
                     current: 1,
                     limit: 10,
-                    count: 60,
-                    limitList: [10, 20, 50, 100]
+                    count: 0,
+                    limitList: [10, 20, 40]
                 },
                 pluginList: [],
                 isPluginLoading: false,
@@ -139,12 +137,11 @@
                 reverseDependencies: {
                     current: 1,
                     limit: 10,
-                    count: 60,
-                    limitList: [10, 20, 50, 100]
+                    count: 0,
+                    limitList: [10, 20, 40]
                 },
                 reverseList: [],
                 isReverseLoading: false
-
             }
         },
         computed: {
@@ -152,7 +149,7 @@
                 return this.$route.params.projectId || ''
             },
             repoType () {
-                return this.$route.params.repoType || 'maven'
+                return this.$route.params.repoType || ''
             },
             repoName () {
                 return this.$route.query.repoName || ''
@@ -179,6 +176,25 @@
         },
         methods: {
             ...mapActions(['getCorrectDependencies', 'getCorrectPlugins', 'getReverseDependencies']),
+            // 抽离接口请求传参的公共代码，根据传参不同，返回不同的请求参数
+            getCommonParams (item) {
+                return {
+                    projectId: this.projectId,
+                    repoName: this.storeType === 'virtual' ? this.sourceRepoName : this.repoName,
+                    packageKey: this.packageKey,
+                    version: this.version,
+                    pageNumber: item?.current || 1,
+                    pageSize: item?.limit || 10
+                }
+            },
+            // 抽离接口返回数据的公共代码，根据参数不同，设置不同的数据
+            setBackData (list, dependencies, res) {
+                this[list] = res.records
+                this[dependencies].count = res.count
+                this[dependencies].current = res.pageNumber
+                this[dependencies].limit = res.pageSize
+            },
+            // 正向依赖
             handlerCorrectPaginationChange ({ current = 1, limit = this.correctDependencies.limit } = {}) {
                 this.correctDependencies.current = current
                 this.correctDependencies.limit = limit
@@ -187,22 +203,13 @@
             // 获取正向依赖列表数据
             getCorrectList () {
                 this.isCorrectLoading = true
-                this.getCorrectDependencies({
-                    projectId: this.projectId,
-                    repoName: this.storeType === 'virtual' ? this.sourceRepoName : this.repoName,
-                    packageKey: this.packageKey,
-                    version: this.version,
-                    pageNumber: this.correctDependencies.current || 1,
-                    pageSize: this.correctDependencies.limit || 10
-                }).then(res => {
-                    this.correctList = res.records
-                    this.correctDependencies.count = res.count
-                    this.correctDependencies.current = res.pageNumber
-                    this.correctDependencies.limit = res.pageSize
+                this.getCorrectDependencies(this.getCommonParams(this.correctDependencies)).then(res => {
+                    this.setBackData('correctList', 'correctDependencies', res)
                 }).finally(() => {
                     this.isCorrectLoading = false
                 })
             },
+            // 插件
             handlerPluginsPaginationChange ({ current = 1, limit = this.plugins.limit } = {}) {
                 this.plugins.current = current
                 this.plugins.limit = limit
@@ -211,22 +218,13 @@
             // 获取插件列表数据
             getPluginList () {
                 this.isPluginLoading = true
-                this.getCorrectPlugins({
-                    projectId: this.projectId,
-                    repoName: this.storeType === 'virtual' ? this.sourceRepoName : this.repoName,
-                    packageKey: this.packageKey,
-                    version: this.version,
-                    pageNumber: this.plugins.current || 1,
-                    pageSize: this.plugins.limit || 10
-                }).then(res => {
-                    this.pluginList = res.records
-                    this.plugins.count = res.count
-                    this.plugins.current = res.pageNumber
-                    this.plugins.limit = res.pageSize
+                this.getCorrectPlugins(this.getCommonParams(this.plugins)).then(res => {
+                    this.setBackData('pluginList', 'plugins', res)
                 }).finally(() => {
                     this.isPluginLoading = false
                 })
             },
+            // 反向依赖
             handlerReversePaginationChange ({ current = 1, limit = this.reverseDependencies.limit } = {}) {
                 this.reverseDependencies.current = current
                 this.reverseDependencies.limit = limit
@@ -235,31 +233,24 @@
             // 获取反向依赖列表数据
             getReverseList () {
                 this.isReverseLoading = true
-                this.getReverseDependencies({
-                    projectId: this.projectId,
-                    repoName: this.storeType === 'virtual' ? this.sourceRepoName : this.repoName,
-                    packageKey: this.packageKey,
-                    version: this.version,
-                    pageNumber: this.reverseDependencies.current || 1,
-                    pageSize: this.reverseDependencies.limit || 10
-                }).then(res => {
-                    this.reverseList = res.records
-                    this.reverseDependencies.count = res.count
-                    this.reverseDependencies.current = res.pageNumber
-                    this.reverseDependencies.limit = res.pageSize
+                this.getReverseDependencies(this.getCommonParams(this.reverseDependencies)).then(res => {
+                    this.setBackData('reverseList', 'reverseDependencies', res)
                 }).finally(() => {
                     this.isReverseLoading = false
                 })
             },
             // 反向依赖列表中点击跳转
             onJumpDetail (row) {
-                const href = window.location.origin + '/ui/'
-                    + `${row.projectId || this.projectId || ''}/${this.repoType}/package?repoName=${row.repoName || this.repoName}&packageKey=${row.packageKey}&version=${row.version}`
+                let frontUrl
+                // 集成CI模式下跳转的路径与独立部署模式下的不同，因为底座与制品库的配置，window.location.origin拿到的是iframeURL的值，不是真实访问的域名
+                if (MODE_CONFIG === 'ci') {
+                    frontUrl = window.DEVOPS_SITE_URL + '/console/repository/' + `${row.projectId || this.projectId || ''}` + '/repoList'
+                } else {
+                    frontUrl = window.location.origin + '/ui/' + `${row.projectId || this.projectId || ''}`
+                }
+                const href = `${frontUrl}/${this.repoType}/package?repoName=${row.repoName || this.repoName}&packageKey=${row.packageKey}&version=${row.version}`
                 window.open(href, '_blank')
             }
         }
     }
 </script>
-
-<style lang="scss" scoped>
-</style>

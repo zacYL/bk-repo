@@ -59,6 +59,7 @@ class CanwayPermissionServiceImpl(
 
     /**
      * 根据制品库资源类型进行分类处理
+     * 优先判断用户是否为超管
      * 系统类型->判断是否为超管
      * 项目类型->判断是否为项目成员/项目管理员
      * 仓库类型-管理员权限->判断是否为项目管理员
@@ -66,9 +67,12 @@ class CanwayPermissionServiceImpl(
      */
     override fun checkPermission(request: CheckPermissionRequest): Boolean {
         try {
+            if (devOpsAuthGeneral.isSystemAdmin(request.uid)){
+                return true
+            }
             return when (request.resourceType) {
                 ResourceType.SYSTEM -> {
-                    devOpsAuthGeneral.isSystemAdmin(request.uid)
+                    true
                 }
 
                 ResourceType.PROJECT -> {

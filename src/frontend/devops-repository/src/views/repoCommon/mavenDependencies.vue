@@ -176,6 +176,25 @@
         },
         methods: {
             ...mapActions(['getCorrectDependencies', 'getCorrectPlugins', 'getReverseDependencies']),
+            // 抽离接口请求传参的公共代码，根据传参不同，返回不同的请求参数
+            getCommonParams (item) {
+                return {
+                    projectId: this.projectId,
+                    repoName: this.storeType === 'virtual' ? this.sourceRepoName : this.repoName,
+                    packageKey: this.packageKey,
+                    version: this.version,
+                    pageNumber: item?.current || 1,
+                    pageSize: item?.limit || 10
+                }
+            },
+            // 抽离接口返回数据的公共代码，根据参数不同，设置不同的数据
+            setBackData (list, dependencies, res) {
+                this[list] = res.records
+                this[dependencies].count = res.count
+                this[dependencies].current = res.pageNumber
+                this[dependencies].limit = res.pageSize
+            },
+            // 正向依赖
             handlerCorrectPaginationChange ({ current = 1, limit = this.correctDependencies.limit } = {}) {
                 this.correctDependencies.current = current
                 this.correctDependencies.limit = limit
@@ -184,22 +203,13 @@
             // 获取正向依赖列表数据
             getCorrectList () {
                 this.isCorrectLoading = true
-                this.getCorrectDependencies({
-                    projectId: this.projectId,
-                    repoName: this.storeType === 'virtual' ? this.sourceRepoName : this.repoName,
-                    packageKey: this.packageKey,
-                    version: this.version,
-                    pageNumber: this.correctDependencies.current || 1,
-                    pageSize: this.correctDependencies.limit || 10
-                }).then(res => {
-                    this.correctList = res.records
-                    this.correctDependencies.count = res.count
-                    this.correctDependencies.current = res.pageNumber
-                    this.correctDependencies.limit = res.pageSize
+                this.getCorrectDependencies(this.getCommonParams(this.correctDependencies)).then(res => {
+                    this.setBackData('correctList', 'correctDependencies', res)
                 }).finally(() => {
                     this.isCorrectLoading = false
                 })
             },
+            // 插件
             handlerPluginsPaginationChange ({ current = 1, limit = this.plugins.limit } = {}) {
                 this.plugins.current = current
                 this.plugins.limit = limit
@@ -208,22 +218,13 @@
             // 获取插件列表数据
             getPluginList () {
                 this.isPluginLoading = true
-                this.getCorrectPlugins({
-                    projectId: this.projectId,
-                    repoName: this.storeType === 'virtual' ? this.sourceRepoName : this.repoName,
-                    packageKey: this.packageKey,
-                    version: this.version,
-                    pageNumber: this.plugins.current || 1,
-                    pageSize: this.plugins.limit || 10
-                }).then(res => {
-                    this.pluginList = res.records
-                    this.plugins.count = res.count
-                    this.plugins.current = res.pageNumber
-                    this.plugins.limit = res.pageSize
+                this.getCorrectPlugins(this.getCommonParams(this.plugins)).then(res => {
+                    this.setBackData('pluginList', 'plugins', res)
                 }).finally(() => {
                     this.isPluginLoading = false
                 })
             },
+            // 反向依赖
             handlerReversePaginationChange ({ current = 1, limit = this.reverseDependencies.limit } = {}) {
                 this.reverseDependencies.current = current
                 this.reverseDependencies.limit = limit
@@ -232,18 +233,8 @@
             // 获取反向依赖列表数据
             getReverseList () {
                 this.isReverseLoading = true
-                this.getReverseDependencies({
-                    projectId: this.projectId,
-                    repoName: this.storeType === 'virtual' ? this.sourceRepoName : this.repoName,
-                    packageKey: this.packageKey,
-                    version: this.version,
-                    pageNumber: this.reverseDependencies.current || 1,
-                    pageSize: this.reverseDependencies.limit || 10
-                }).then(res => {
-                    this.reverseList = res.records
-                    this.reverseDependencies.count = res.count
-                    this.reverseDependencies.current = res.pageNumber
-                    this.reverseDependencies.limit = res.pageSize
+                this.getReverseDependencies(this.getCommonParams(this.reverseDependencies)).then(res => {
+                    this.setBackData('reverseList', 'reverseDependencies', res)
                 }).finally(() => {
                     this.isReverseLoading = false
                 })
@@ -263,6 +254,3 @@
         }
     }
 </script>
-
-<style lang="scss" scoped>
-</style>

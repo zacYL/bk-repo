@@ -40,6 +40,7 @@ enum class ScannerMessageCode(
     SCAN_PLAN_DELETE_FAILED("scanner.plan.delete-failed", 4),
     SCAN_TASK_COUNT_EXCEED_LIMIT("scanner.task.count.exceed-limit", 5),
     SCAN_TASK_NAME_BATCH_SCAN("scanner.task.name.manual", 6),
+    // 手动单次扫描已弃用, 与批量扫描合并和为手动扫描
     SCAN_TASK_NAME_SINGLE_SCAN("scanner.task.name.manual.single", 7),
     SCAN_REPORT_NOTIFY_MESSAGE_SCANNED("scanner.report.notify.message.scanned",8),
     SCAN_REPORT_NOTIFY_MESSAGE_CVE("scanner.report.notify.message.cve",9),

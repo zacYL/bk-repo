@@ -45,7 +45,6 @@ import com.tencent.bkrepo.analyst.pojo.TaskMetadata.Companion.TASK_METADATA_PLUG
 import com.tencent.bkrepo.analyst.pojo.request.PipelineScanRequest
 import com.tencent.bkrepo.analyst.pojo.request.ReportResultRequest
 import com.tencent.bkrepo.analyst.pojo.request.ScanRequest
-import com.tencent.bkrepo.analyst.pojo.request.SingleScanRequest
 import com.tencent.bkrepo.analyst.service.ScanPlanService
 import com.tencent.bkrepo.analyst.service.ScanService
 import com.tencent.bkrepo.analyst.service.ScannerService
@@ -60,25 +59,14 @@ import com.tencent.bkrepo.analyst.statemachine.task.context.CreateTaskContext
 import com.tencent.bkrepo.analyst.statemachine.task.context.ResetTaskContext
 import com.tencent.bkrepo.analyst.statemachine.task.context.StopTaskContext
 import com.tencent.bkrepo.analyst.utils.SubtaskConverter
-import com.tencent.bkrepo.analyst.statemachine.task.context.TaskContext
-import com.tencent.bkrepo.analyst.utils.Converter
-import com.tencent.bkrepo.analyst.utils.RuleConverter
-import com.tencent.bkrepo.analyst.utils.ScanParamUtil
 import com.tencent.bkrepo.common.analysis.pojo.scanner.ScanExecutorResult
 import com.tencent.bkrepo.common.analysis.pojo.scanner.SubScanTaskStatus
-import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.exception.NotFoundException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
-import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
-import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
-import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.statemachine.Event
 import com.tencent.bkrepo.statemachine.StateMachine
-import com.tencent.bkrepo.repository.api.NodeClient
-import com.tencent.bkrepo.repository.api.PackageClient
-import com.tencent.bkrepo.repository.api.RepositoryClient
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
@@ -100,9 +88,6 @@ class ScanServiceImpl @Autowired constructor(
     private val taskStateMachine: StateMachine,
     @Qualifier(STATE_MACHINE_ID_SUB_SCAN_TASK)
     private val subtaskStateMachine: StateMachine,
-    private val repositoryClient: RepositoryClient,
-    private val nodeClient: NodeClient,
-    private val packageClient: PackageClient,
     private val redisTemplate: RedisTemplate<String, String>
 ) : ScanService {
 
@@ -112,38 +97,6 @@ class ScanServiceImpl @Autowired constructor(
         val event = Event(ScanTaskEvent.CREATE.name, context)
         val transitResult = taskStateMachine.sendEvent(ScanTaskStatus.PENDING.name, event)
         return transitResult.result as ScanTask
-    }
-
-    override fun scanSingle(request: SingleScanRequest, triggerType: ScanTriggerType, userId: String?): ScanTask {
-        with(request) {
-            val repo = repositoryClient.getRepoInfo(projectId, repoName).data ?: throw RepoNotFoundException(repoName)
-
-            ScanParamUtil.checkParam(repo.type, packageKey, version, fullPath)
-            if (!checkArtifactExist(request, repo.type))
-                throw ErrorCodeException(ArtifactMessageCode.ARTIFACT_DATA_NOT_FOUND)
-
-            val rule = if (repo.type == RepositoryType.GENERIC) {
-                RuleConverter.convert(projectId, repoName, fullPath!!)
-            } else {
-                RuleConverter.convert(projectId, repoName, packageKey!!, version!!)
-            }
-            val scanRequest = ScanRequest(planId = planId, rule = rule, force = force)
-            return scan(scanRequest, triggerType, userId)
-        }
-    }
-
-    /**
-     * 校验制品是否存在
-     */
-    private fun checkArtifactExist(request: SingleScanRequest, repoType: RepositoryType): Boolean {
-        with(request) {
-            return if (repoType == RepositoryType.GENERIC) {
-                nodeClient.checkExist(projectId, repoName, fullPath!!).data ?: false
-            } else {
-                packageClient.findVersionByName(projectId, repoName, packageKey!!, version!!).data?.let { true }
-                    ?: false
-            }
-        }
     }
 
     @Transactional(rollbackFor = [Throwable::class])

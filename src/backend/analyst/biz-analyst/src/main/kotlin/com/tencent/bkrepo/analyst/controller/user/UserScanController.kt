@@ -39,7 +39,10 @@ import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.analyst.pojo.ScanTask
 import com.tencent.bkrepo.analyst.pojo.ScanTriggerType
-import com.tencent.bkrepo.analyst.pojo.request.*
+import com.tencent.bkrepo.analyst.pojo.request.PipelineScanRequest
+import com.tencent.bkrepo.analyst.pojo.request.ScanRequest
+import com.tencent.bkrepo.analyst.pojo.request.ScanTaskQuery
+import com.tencent.bkrepo.analyst.pojo.request.SubtaskInfoRequest
 import com.tencent.bkrepo.analyst.pojo.response.FileLicensesResultOverview
 import com.tencent.bkrepo.analyst.pojo.response.SubtaskInfo
 import com.tencent.bkrepo.analyst.pojo.response.SubtaskResultOverview
@@ -66,18 +69,10 @@ class UserScanController @Autowired constructor(
     private val scanTaskService: ScanTaskService
 ) {
 
-    @ApiOperation("创建扫描任务")
+    @ApiOperation("手动创建扫描任务")
     @PostMapping
     fun scan(@RequestBody scanRequest: ScanRequest): Response<ScanTask> {
         return ResponseBuilder.success(scanService.scan(scanRequest, ScanTriggerType.MANUAL, SecurityUtils.getUserId()))
-    }
-
-    @ApiOperation("创建单个扫描任务")
-    @PostMapping("/single")
-    fun scanSingle(@RequestBody request: SingleScanRequest): Response<ScanTask> {
-        return ResponseBuilder.success(
-            scanService.scanSingle(request, ScanTriggerType.MANUAL_SINGLE, SecurityUtils.getUserId())
-        )
     }
 
     @ApiOperation("从流水线触发扫描")

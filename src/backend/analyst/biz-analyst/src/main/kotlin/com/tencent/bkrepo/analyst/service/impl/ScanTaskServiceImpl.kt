@@ -305,6 +305,30 @@ class ScanTaskServiceImpl(
         ) ?: Pages.buildPage(emptyList(), request.pageSize, request.pageNumber)
     }
 
+    override fun exportResultDetail(request: ArtifactLicensesDetailRequest) {
+        val resultList = mutableListOf<FileLicensesResultDetail>()
+        val subtask = planArtifactLatestSubScanTaskDao.findById(request.subScanTaskId!!)
+            ?: throw ErrorCodeException(CommonMessageCode.RESOURCE_NOT_FOUND, request.subScanTaskId!!)
+
+        var resultDetailPage = resultDetail(request)
+        var pageNumber = 1
+        while (resultDetailPage.records.isNotEmpty()) {
+            resultList.addAll(resultDetailPage.records)
+            resultDetailPage = resultDetail(
+                ArtifactLicensesDetailRequest(
+                    projectId = request.projectId,
+                    subScanTaskId = request.subScanTaskId,
+                    pageNumber = ++pageNumber
+                )
+            )
+        }
+        val resultListConvert = mutableListOf<LicenseScanDetailExport>()
+        resultList.forEach {
+            resultListConvert.add(ScanLicenseConverter.convert(it))
+        }
+        EasyExcelUtils.download(resultListConvert, subtask.artifactName, LicenseScanDetailExport::class.java)
+    }
+
     override fun planLicensesArtifact(projectId: String, subScanTaskId: String): FileLicensesResultOverview {
         return planLicensesArtifact(subScanTaskId, planArtifactLatestSubScanTaskDao)
     }
@@ -360,29 +384,5 @@ class ScanTaskServiceImpl(
             permissionCheckHandler.checkProjectPermission(subtask.projectId, PermissionAction.MANAGE)
         }
         return ScanLicenseConverter.convert(subtask)
-    }
-
-    override fun exportResultDetail(request: ArtifactLicensesDetailRequest) {
-        val resultList = mutableListOf<FileLicensesResultDetail>()
-        val subtask = planArtifactLatestSubScanTaskDao.findById(request.subScanTaskId!!)
-            ?: throw ErrorCodeException(CommonMessageCode.RESOURCE_NOT_FOUND, request.subScanTaskId!!)
-
-        var resultDetailPage = resultDetail(request)
-        var pageNumber = 1
-        while (resultDetailPage.records.isNotEmpty()) {
-            resultList.addAll(resultDetailPage.records)
-            resultDetailPage = resultDetail(
-                ArtifactLicensesDetailRequest(
-                    projectId = request.projectId,
-                    subScanTaskId = request.subScanTaskId,
-                    pageNumber = ++pageNumber
-                )
-            )
-        }
-        val resultListConvert = mutableListOf<LicenseScanDetailExport>()
-        resultList.forEach {
-            resultListConvert.add(ScanLicenseConverter.convert(it))
-        }
-        EasyExcelUtils.download(resultListConvert, subtask.artifactName, LicenseScanDetailExport::class.java)
     }
 }

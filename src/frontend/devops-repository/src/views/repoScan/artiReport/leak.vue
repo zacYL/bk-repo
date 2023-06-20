@@ -18,6 +18,7 @@
                 <bk-option v-for="[id, name] in Object.entries(leakLevelEnum)" :key="id" :id="id" :name="name"></bk-option>
             </bk-select>
             <div class="flex-1 flex-end-center">
+                <bk-button class="mr10" theme="default" @click="exportReport">导出报告</bk-button>
                 <bk-button theme="default" @click="$emit('rescan')">重新扫描</bk-button>
             </div>
         </div>
@@ -140,6 +141,15 @@
                 }).finally(() => {
                     this.isLoading = false
                 })
+            },
+            exportReport () {
+                this.$bkNotify({
+                    title: '安全漏洞信息正在生成报告中，请稍等...',
+                    position: 'bottom-right',
+                    theme: 'success'
+                })
+                const url = `/web/analyst/api/scan/export/artifact/leak/${this.projectId}/${this.subtaskOverview.recordId}`
+                window.open(url, '_self')
             }
         }
     }

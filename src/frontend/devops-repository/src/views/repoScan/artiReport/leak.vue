@@ -2,7 +2,7 @@
     <div class="leak-list">
         <div class="flex-align-center">
             <bk-input
-                class="w250"
+                class="input-common"
                 v-model.trim="filter.vulId"
                 clearable
                 placeholder="请输入漏洞ID, 按Enter键搜索"
@@ -11,7 +11,7 @@
                 @clear="handlerPaginationChange()">
             </bk-input>
             <bk-select
-                class="ml10 w250"
+                class="ml10 input-level"
                 v-model="filter.severity"
                 placeholder="漏洞等级"
                 @change="handlerPaginationChange()">
@@ -165,6 +165,12 @@
     .leak-tip {
         padding: 0 20px 5px;
         color: var(--fontDisableColor);
+    }
+    .input-common{
+        width: 220px;
+    }
+    .input-level{
+        width: 150px;
     }
 }
 .status-id {

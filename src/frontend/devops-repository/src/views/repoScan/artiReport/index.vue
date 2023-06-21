@@ -1,7 +1,7 @@
 <template>
     <div class="container">
         <artifact-info :scan-types="scanTypes" :subtask-overview="subtaskOverview"></artifact-info>
-        <bk-tab type="unborder-card" style="width: 100%;height: 100%">
+        <bk-tab type="unborder-card" class="arti-tab">
             <bk-tab-panel v-for="(panel, index) in panels" v-bind="panel" :key="index" style="height: 100%">
                 <component
                     @rescan="rescan"
@@ -137,6 +137,10 @@
     ::v-deep .bk-tab-section {
         height: 100%;
         padding-right: 0;
+    }
+    .arti-tab{
+        width: calc(100% - 334px);
+        height: 100%;
     }
 }
 </style>

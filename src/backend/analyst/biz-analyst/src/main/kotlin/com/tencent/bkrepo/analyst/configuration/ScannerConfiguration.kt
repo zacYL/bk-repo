@@ -36,11 +36,7 @@ import com.tencent.bkrepo.analyst.dispatcher.SubtaskPoller
 import com.tencent.bkrepo.analyst.service.ScanService
 import com.tencent.bkrepo.analyst.service.ScannerService
 import com.tencent.bkrepo.analyst.service.TemporaryScanTokenService
-import com.tencent.bkrepo.analyst.service.impl.OperateLogServiceImpl
 import com.tencent.bkrepo.analyst.statemachine.TaskStateMachineConfiguration.Companion.STATE_MACHINE_ID_SUB_SCAN_TASK
-import com.tencent.bkrepo.common.operate.api.OperateLogService
-//import com.tencent.bkrepo.common.service.condition.ConditionalOnNotAssembly
-import com.tencent.bkrepo.repository.api.OperateLogClient
 import com.tencent.bkrepo.statemachine.StateMachine
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Qualifier

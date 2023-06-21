@@ -55,7 +55,12 @@ data class ScannerProperties(
     /**
      * 默认分发器
      */
-    var defaultDispatcher: String = ""
+    var defaultDispatcher: String = "",
+    /**
+     * 分发器携带的认证参数,访问的目标仓库为公开仓库时不需要以下2个参数,或参数值可以为空
+     */
+    var username: String? = null,
+    var password: String? = null
 ) {
     companion object {
         const val DEFAULT_PROJECT_SCAN_PRIORITY = 0

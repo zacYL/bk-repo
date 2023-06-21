@@ -32,7 +32,9 @@ import com.tencent.bkrepo.analyst.configuration.ScannerProperties
 import com.tencent.bkrepo.analyst.pojo.SubScanTask
 import com.tencent.bkrepo.common.analysis.pojo.scanner.SubScanTaskStatus
 import com.tencent.bkrepo.common.analysis.pojo.scanner.standard.StandardScanner
+import com.tencent.bkrepo.common.api.constant.CharPool
 import com.tencent.bkrepo.common.api.constant.HttpStatus
+import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.util.toJsonString
 import io.kubernetes.client.openapi.ApiException
 import io.kubernetes.client.openapi.Configuration
@@ -42,7 +44,9 @@ import io.kubernetes.client.util.ClientBuilder
 import io.kubernetes.client.util.Config
 import io.kubernetes.client.util.credentials.AccessTokenAuthentication
 import org.slf4j.LoggerFactory
+import org.springframework.util.Base64Utils
 import java.time.Duration
+import kotlin.collections.ArrayList
 import kotlin.math.max
 import kotlin.math.min
 
@@ -52,23 +56,34 @@ class KubernetesDispatcher(
 ) : SubtaskDispatcher {
 
     private val batchV1Api by lazy { BatchV1Api() }
+    private val coreV1Api by lazy { CoreV1Api() }
 
     init {
-        val client = if (k8sProperties.token != null && k8sProperties.apiServer != null) {
-            ClientBuilder()
-                .setBasePath(k8sProperties.apiServer)
-                .setAuthentication(AccessTokenAuthentication(k8sProperties.token))
-                .setVerifyingSsl(k8sProperties.verifyingSsl)
-                .build()
-        } else {
-            // 可通过KUBECONFIG环境变量设置config file路径
-            Config.defaultClient()
+        val client = with(k8sProperties) {
+            if (token != null && apiServer != null) {
+                ClientBuilder()
+                    .setBasePath(apiServer)
+                    .setAuthentication(AccessTokenAuthentication(token))
+                    .setVerifyingSsl(verifyingSsl)
+                    .build()
+            } else {
+                // 可通过KUBECONFIG环境变量设置config file路径
+                Config.defaultClient()
+            }
         }
         Configuration.setDefaultApiClient(client)
     }
 
     override fun dispatch(subtask: SubScanTask): Boolean {
         logger.info("dispatch subtask[${subtask.taskId}] with $NAME")
+        var secretExists = false
+        try {
+            secretExists = with(scannerProperties) {
+                createSecretOfPrivateRegistry(subtask, username, password)
+            }
+        } catch (e: ApiException) {
+            logger.error("subtask[${subtask.taskId}]: create k8s secret failed: ${e.string()}")
+        }
         var result = false
         var retry = true
         var retryTimes = MAX_RETRY_TIMES
@@ -76,7 +91,7 @@ class KubernetesDispatcher(
             retry = false
             retryTimes--
             try {
-                result = createJob(subtask)
+                result = createJob(subtask, secretExists)
             } catch (e: ApiException) {
                 retry = resolveCreateJobFailed(e, subtask)
                 if (retry && retryTimes > 0) {
@@ -86,7 +101,7 @@ class KubernetesDispatcher(
         }
 
         if (retryTimes == 0) {
-            logger.error("subtask[${subtask.taskId}] dispatch failed after $MAX_RETRY_TIMES times retry")
+            logger.error("subtask[${subtask.taskId}]: dispatch failed after $MAX_RETRY_TIMES times retry")
         }
 
         return result
@@ -102,8 +117,7 @@ class KubernetesDispatcher(
     }
 
     override fun availableCount(): Int {
-        val api = CoreV1Api()
-        val quota = api.listNamespacedResourceQuota(
+        val quota = coreV1Api.listNamespacedResourceQuota(
             k8sProperties.namespace,
             null, null, null,
             null, null, null,
@@ -135,13 +149,92 @@ class KubernetesDispatcher(
         return NAME
     }
 
-    private fun createJob(subtask: SubScanTask): Boolean {
+    /**
+     * 设置 docker-secret, 用于与Container关联作private docker registry认证
+     *
+     * @param username docker registry用户名
+     * @param password docker registry密码
+     * @param namespaceOfAnalyst 命名空间
+     *
+     * @return secret or null
+     */
+    private fun createSecretOfPrivateRegistry(
+        subtask: SubScanTask,
+        username: String?,
+        password: String?,
+        namespaceOfAnalyst: String = k8sProperties.namespace
+    ): Boolean {
+        val scanner = subtask.scanner
+        require(scanner is StandardScanner)
+        val privateRegistry = scanner.image.substringBefore(CharPool.SLASH, StringPool.EMPTY)
+
+        if (username.isNullOrBlank() || password.isNullOrBlank()) {
+            logger.info("subtask[${subtask.taskId}]: don't configure username or password")
+            return false
+        }
+
+        val secretList = coreV1Api.listNamespacedSecret(
+            namespaceOfAnalyst,
+            null,
+            null,
+            null,
+            "metadata.name=${KubernetesStringPool.DOCKER_SECRET_NAME.value}",
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        )
+        logger.info("subtask[${subtask.taskId}]: secret list: $secretList")
+        if (secretList.items.size == 1) {
+            logger.info("subtask[${subtask.taskId}]: secret already existed")
+            return true
+        }
+
+//        val secretData = createSecretData(privateRegistry, username, password)
+//        val dockerCredentials = mapOf( //写一个data class
+//            "auths" to mapOf(
+//                privateRegistry to mapOf(
+//                    "auth" to Base64Utils.encodeToString("$username:$password".toByteArray())//工具类代替
+//                )
+//            )
+//        )
+//        val secretData = mapOf(
+//            KubernetesStringPool.DOCKER_SECRET_TYPE.value to dockerCredentials.toJsonString().toByteArray()
+//        )
+        val secret = v1Secret {
+            apiVersion = KubernetesStringPool.API_VERSION.value
+            kind = KubernetesStringPool.SECRET_KIND.value
+            metadata {
+                name = KubernetesStringPool.DOCKER_SECRET_NAME.value
+                namespace = namespaceOfAnalyst
+            }
+            data = createSecretData(privateRegistry, username, password)
+            type = KubernetesStringPool.DOCKER_SECRET_YAML_TYPE.value
+        }
+        coreV1Api.createNamespacedSecret(namespaceOfAnalyst, secret, null, null, null)
+        logger.info("subtask[${subtask.taskId}]: created secret: $secret")
+        return true
+    }
+
+    private fun createSecretData(privateRegistry: String, username: String, password: String): Map<String, ByteArray> {
+        val auths = mapOf(
+            privateRegistry to mapOf(
+                "auth" to Base64Utils.encodeToString("$username:$password".toByteArray())
+            )
+        )
+        val dockerCredentialsJson = mapOf("auths" to auths).toJsonString()
+        return mapOf(KubernetesStringPool.DOCKER_SECRET_TYPE.value to dockerCredentialsJson.toByteArray())
+    }
+
+    private fun createJob(subtask: SubScanTask, secretExists: Boolean): Boolean {
         val scanner = subtask.scanner
         require(scanner is StandardScanner)
         val jobName = jobName(subtask)
         val containerImage = scanner.image
         val cmd = buildCmd(subtask)
-        logger.info("job cmd:$cmd")
+        logger.info("subtask[${subtask.taskId}]: job cmd:$cmd")
         val requestStorageSize = maxStorageSize(subtask.packageSize)
         val jobActiveDeadlineSeconds = subtask.scanner.maxScanDuration(subtask.packageSize)
         val body = v1Job {
@@ -172,12 +265,17 @@ class KubernetesDispatcher(
                                 )
                             }
                         }
-                        restartPolicy = "Never"
+                        if (secretExists) {
+                            imagePullSecrets = listOf(v1LocalObjectReference {
+                                name = KubernetesStringPool.DOCKER_SECRET_NAME.value
+                            })
+                        }
+                        restartPolicy = KubernetesStringPool.JOB_RESTART_POLICY_NEVER.value
                     }
                 }
             }
         }
-        logger.info("create job body:${body.toJsonString()}")
+        logger.info("subtask[${subtask.taskId}]: job body to k8s server:${body.toJsonString()}")
 
         batchV1Api.createNamespacedJob(k8sProperties.namespace, body, null, null, null)
         logger.info("dispatch subtask[${subtask.taskId}] success")
@@ -195,7 +293,7 @@ class KubernetesDispatcher(
     private fun resolveCreateJobFailed(e: ApiException, subtask: SubScanTask): Boolean {
         // 处理job名称冲突的情况
         if (e.code == HttpStatus.CONFLICT.value) {
-            logger.warn("subtask[${subtask.taskId}] job already exists, try to clean")
+            logger.warn("subtask[${subtask.taskId}]: job already exists, try to clean")
             val jobName = jobName(subtask)
             val namespace = k8sProperties.namespace
             val job = batchV1Api.readNamespacedJob(jobName, namespace, null, null, null)
@@ -254,9 +352,9 @@ class KubernetesDispatcher(
 
     private fun ApiException.string(): String {
         return "message: $message\n" +
-            "code: $code\n" +
-            "headers: $responseHeaders\n" +
-            "body: $responseBody"
+                "code: $code\n" +
+                "headers: $responseHeaders\n" +
+                "body: $responseBody"
     }
 
     companion object {

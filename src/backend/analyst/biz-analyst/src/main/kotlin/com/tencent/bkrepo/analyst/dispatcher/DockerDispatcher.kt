@@ -59,11 +59,11 @@ class DockerDispatcher(
             .withApiVersion(dockerDispatcherProperties.version)
             .apply {
                 if (
-                    !dockerDispatcherProperties.username.isNullOrBlank() &&
-                    !dockerDispatcherProperties.password.isNullOrBlank()
+                    !scannerProperties.username.isNullOrBlank() &&
+                    !scannerProperties.password.isNullOrBlank()
                 ) {
-                    withRegistryUsername(dockerDispatcherProperties.username)
-                    withRegistryPassword(dockerDispatcherProperties.password)
+                    withRegistryUsername(scannerProperties.username)
+                    withRegistryPassword(scannerProperties.password)
                 }
             }
             .build()

@@ -96,7 +96,6 @@
                 showExportDialog: false,
                 exportTime: [new Date(nowTime - 3600 * 1000 * 24 * 30), new Date(nowTime)],
                 exportStatus: 'ALL',
-                baseInfo: {},
                 overview: {
                     artifactCount: 0,
                     critical: 0,
@@ -233,6 +232,12 @@
                         }),
                     startTime: startTime.toISOString(),
                     endTime: endTime.toISOString()
+                })
+                this.showExportDialog = false
+                this.$bkNotify({
+                    title: this.$t('exportReportInfo'),
+                    position: 'bottom-right',
+                    theme: 'success'
                 })
                 const url = `/web/analyst/api/scan/plan/export?${params.toString()}`
                 window.open(url, '_self')

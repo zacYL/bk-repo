@@ -232,5 +232,6 @@
     },
     "localStoreInfo":"Upload and resolve your own packages",
     "remoteStoreInfo":"Proxy and cache packages hosted remotely",
-    "virtualStoreInfo":"Combine local and remote packages in one place"
+    "virtualStoreInfo":"Combine local and remote packages in one place",
+    "exportReportInfo":"Artifact scan record is generating report, please wait ..."
 }

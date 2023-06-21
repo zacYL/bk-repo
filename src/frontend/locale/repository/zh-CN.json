@@ -237,5 +237,6 @@
         "success": "成功数量",
         "fail": "失败数量",
         "conflict": "冲突数量"
-    }
+    },
+    "exportReportInfo":"制品扫描记录正在生成报告中，请稍等..."
 }

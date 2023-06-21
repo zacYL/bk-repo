@@ -229,5 +229,6 @@
         "success": "Number of successes",
         "fail": "Number of failures",
         "conflict": "Number of conflicts"
-    }
+    },
+    "exportReportInfo":"Artifact scan record is generating report, please wait ..."
 }

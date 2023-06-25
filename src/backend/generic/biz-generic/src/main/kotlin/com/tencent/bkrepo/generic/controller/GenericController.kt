@@ -199,4 +199,14 @@ class GenericController(
     ) {
         compressedFileService.previewCompressedFile(artifactInfo, filePath)
     }
+
+    @Permission(ResourceType.NODE, PermissionAction.READ)
+    @GetMapping("/allow/download/$GENERIC_MAPPING_URI")
+    fun allowDownload(
+        @ArtifactPathVariable artifactInfo: GenericArtifactInfo,
+        @RequestParam ip: String,
+        @RequestParam fromApp: Boolean
+    ): Response<Boolean> {
+        return ResponseBuilder.success(downloadService.allowDownload(artifactInfo, ip, fromApp))
+    }
 }

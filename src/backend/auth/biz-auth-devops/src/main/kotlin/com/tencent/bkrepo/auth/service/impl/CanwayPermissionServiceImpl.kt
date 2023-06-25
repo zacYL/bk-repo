@@ -67,7 +67,7 @@ class CanwayPermissionServiceImpl(
      */
     override fun checkPermission(request: CheckPermissionRequest): Boolean {
         try {
-            if (devOpsAuthGeneral.isSystemAdmin(request.uid)){
+            if (devOpsAuthGeneral.isSystemAdmin(request.uid)) {
                 return true
             }
             return when (request.resourceType) {
@@ -205,23 +205,33 @@ class CanwayPermissionServiceImpl(
      * 用户可查看的有权限仓库
      * 1、管理员可查看全部；
      * 2、公开仓库全部人都可查看；
-     * 3、用户只能查看到”查看“权限仓库；
+     * 3、判断查询是否为”上传“权限仓库列表，反之为查询“访问”权限与公开仓库列表；
      */
-    override fun listPermissionRepo(projectId: String, userId: String, appId: String?): List<String> {
+    override fun listPermissionRepo(
+        projectId: String,
+        userId: String,
+        appId: String?,
+        actions: List<PermissionAction>?
+    ): List<String> {
         logger.debug("list repo permission request : [$projectId, $userId] ")
 
         // 用户是否为DevOps管理员
         if (isCIAdmin(userId, projectId)) {
             return getAllRepoByProjectId(projectId)
         }
-
-        // 获取所有项目公开仓库名称
         val repoList = mutableListOf<String>()
-        repoList.addAll(listProjectPublicRepo(projectId))
 
-        // 获取该用户可查看的所有制品库仓库名称
-        repoList.addAll(devOpsAuthGeneral.getUserPermission(projectId, userId))
-        logger.info("repoList:${repoList}")
+        if (actions == null){
+            // 获取所有项目公开仓库名称
+            repoList.addAll(listProjectPublicRepo(projectId))
+            // 获取该用户可查看的所有制品库仓库名称
+            repoList.addAll(devOpsAuthGeneral.getUserPermission(projectId, userId))
+            logger.info("repoList:${repoList}")
+        }else{
+            repoList.addAll(devOpsAuthGeneral.getUserActionPermission(projectId, userId, actions))
+            logger.info("repoList:${repoList}")
+        }
+
 
         return repoList.distinct()
     }

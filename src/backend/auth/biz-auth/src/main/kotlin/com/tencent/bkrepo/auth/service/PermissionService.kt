@@ -32,6 +32,7 @@
 package com.tencent.bkrepo.auth.service
 
 import com.tencent.bkrepo.auth.pojo.RegisterResourceRequest
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.CreatePermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.Permission
@@ -46,7 +47,7 @@ interface PermissionService {
 
     fun checkPermission(request: CheckPermissionRequest): Boolean
 
-    fun listPermissionRepo(projectId: String, userId: String, appId: String?): List<String>
+    fun listPermissionRepo(projectId: String, userId: String, appId: String?, actions: List<PermissionAction>?): List<String>
 
     fun listPermissionProject(userId: String): List<String>
 

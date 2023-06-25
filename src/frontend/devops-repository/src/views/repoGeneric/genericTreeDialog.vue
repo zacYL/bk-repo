@@ -41,7 +41,7 @@
                 genericTreeData: {
                     show: false,
                     loading: false,
-                    type: 'move',
+                    type: '',
                     title: '',
                     path: '',
                     openList: [],
@@ -52,7 +52,7 @@
         computed: {
             ...mapState(['operateTree']),
             genericTree () {
-                return this.operateTree
+                return ['move', 'copy'].includes(this.genericTreeData.type) ? this.operateTree.filter(item => !['pipeline', 'report'].includes(item.name)) : this.operateTree
             },
             projectId () {
                 return this.$route.params.projectId

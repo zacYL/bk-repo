@@ -68,7 +68,7 @@ export default {
         })) // 前端隐藏report仓库/log仓库
     },
     getGenericList (_, { projectId }) {
-        return Vue.prototype.$ajax.get(`${prefix}/repo/list/${projectId}?name=&type=GENERIC`)
+        return Vue.prototype.$ajax.get(`${prefix}/repo/list/${projectId}?type=GENERIC`)
     },
     // 查询仓库列表
     getRepoListAll ({ commit }, { projectId }) {

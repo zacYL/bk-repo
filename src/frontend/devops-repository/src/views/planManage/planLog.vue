@@ -27,10 +27,10 @@
                             <span class="repo-tag" :class="row.status">{{asyncPlanStatusEnum[row.status] || '未执行'}}</span>
                         </template>
                     </bk-table-column>
-                    <bk-table-column label="开始执行时间" width="150" show-overflow-tooltip>
+                    <bk-table-column label="开始时间" width="150" show-overflow-tooltip>
                         <template #default="{ row }">{{formatDate(row.startTime)}}</template>
                     </bk-table-column>
-                    <bk-table-column v-if="planData.replicaType !== 'REAL_TIME'" label="结束执行时间" width="150" show-overflow-tooltip>
+                    <bk-table-column v-if="planData.replicaType !== 'REAL_TIME'" label="结束时间" width="150" show-overflow-tooltip>
                         <template #default="{ row }">{{formatDate(row.endTime)}}</template>
                     </bk-table-column>
                     <bk-table-column label="备注" show-overflow-tooltip>

@@ -122,8 +122,8 @@
                 })
             },
             showLogDetailHandler ({ id }) {
-                if (this.planData.notRecord) {
-                    const name = this.planData.name
+                if (this.planData?.replicaObjectType === 'REPOSITORY' && this.planData?.notRecord) {
+                    const name = this.planData?.name
                     this.$bkMessage({
                         message: this.$t('planTaskLogInfo', { name }),
                         theme: 'warning',

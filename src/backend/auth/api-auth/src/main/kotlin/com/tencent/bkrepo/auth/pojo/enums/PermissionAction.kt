@@ -56,3 +56,7 @@ enum class PermissionAction {
 
     fun id() = this.name.toLowerCase()
 }
+
+fun convertEnumListToStringList(enumList: List<PermissionAction>): List<String> {
+    return enumList.map { it.name.toLowerCase() }
+}

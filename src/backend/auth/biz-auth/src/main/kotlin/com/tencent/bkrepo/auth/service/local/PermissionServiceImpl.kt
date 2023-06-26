@@ -31,26 +31,14 @@
 
 package com.tencent.bkrepo.auth.service.local
 
-import com.tencent.bkrepo.auth.constant.AUTH_ADMIN
-import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_ADMIN
-import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_USER
-import com.tencent.bkrepo.auth.constant.PROJECT_MANAGE_PERMISSION
-import com.tencent.bkrepo.auth.constant.PROJECT_VIEW_PERMISSION
+import com.tencent.bkrepo.auth.constant.*
 import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.model.TPermission
 import com.tencent.bkrepo.auth.pojo.RegisterResourceRequest
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.auth.pojo.enums.RoleType
-import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
-import com.tencent.bkrepo.auth.pojo.permission.CreatePermissionRequest
-import com.tencent.bkrepo.auth.pojo.permission.Permission
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionActionRequest
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionDepartmentRequest
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionPathRequest
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRepoRequest
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRoleRequest
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionUserRequest
+import com.tencent.bkrepo.auth.pojo.permission.*
 import com.tencent.bkrepo.auth.repository.PermissionRepository
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
@@ -233,11 +221,11 @@ open class PermissionServiceImpl constructor(
     private fun checkProjectUserAdmin(request: CheckPermissionRequest): Boolean {
         request.projectId?.let {
             if (permissionRepository.findAllByResourceTypeAndPermNameAndProjectIdAndUsersIn(
-                ResourceType.PROJECT,
-                PROJECT_MANAGE_PERMISSION,
-                it,
-                listOf(request.uid)
-            ).isNotEmpty()
+                    ResourceType.PROJECT,
+                    PROJECT_MANAGE_PERMISSION,
+                    it,
+                    listOf(request.uid)
+                ).isNotEmpty()
             ) return true
         }
         return false
@@ -284,7 +272,7 @@ open class PermissionServiceImpl constructor(
         with(request) {
             if (resourceType == ResourceType.REPO && repoName != null) {
                 val query = PermissionQueryHelper.buildPermissionCheck(
-                        projectId!!, repoName!!, uid, action, resourceType, roles
+                    projectId!!, repoName!!, uid, action, resourceType, roles
                 )
                 val result = mongoTemplate.find(query, TPermission::class.java)
                 if (result.isEmpty()) return false
@@ -362,7 +350,12 @@ open class PermissionServiceImpl constructor(
         }?.map { it.name } ?: listOf()
     }
 
-    override fun listPermissionRepo(projectId: String, userId: String, appId: String?): List<String> {
+    override fun listPermissionRepo(
+        projectId: String,
+        userId: String,
+        appId: String?,
+        actions: List<PermissionAction>?
+    ): List<String> {
         logger.debug("list repo permission request : [$projectId, $userId] ")
         val user = userRepository.findFirstByUserId(userId) ?: run {
             return listProjectPublicRepo(projectId)
@@ -483,16 +476,16 @@ open class PermissionServiceImpl constructor(
         if (user.admin) return true
         val roles = user.roles
         if (permissionRepository.findAllByResourceTypeAndPermNameAndUsersIn(
-            ResourceType.PROJECT,
-            PROJECT_MANAGE_PERMISSION,
-            listOf(userId)
-        ).isNotEmpty()
+                ResourceType.PROJECT,
+                PROJECT_MANAGE_PERMISSION,
+                listOf(userId)
+            ).isNotEmpty()
         ) return true
         if (permissionRepository.findAllByResourceTypeAndPermNameAndRolesIn(
-            ResourceType.PROJECT,
-            PROJECT_MANAGE_PERMISSION,
-            roles
-        ).isNotEmpty()
+                ResourceType.PROJECT,
+                PROJECT_MANAGE_PERMISSION,
+                roles
+            ).isNotEmpty()
         ) return true
         return false
     }
@@ -567,6 +560,7 @@ open class PermissionServiceImpl constructor(
             else -> listOf(PermissionAction.READ)
         }
     }
+
     private fun convActions(actions: List<PermissionAction>): List<String> {
         var result = mutableListOf<String>()
         actions.forEach {

@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.repository.pojo.repo
 
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
 
@@ -37,5 +38,7 @@ data class RepoListOption(
     @ApiModelProperty("仓库类型", required = false)
     val type: String? = null,
     @ApiModelProperty("仓库类别", required = false)
-    val category: List<String>? = null
+    val category: List<String>? = null,
+    @ApiModelProperty("动作权限类型", required = false)
+    val actions: List<PermissionAction>? = null
 )

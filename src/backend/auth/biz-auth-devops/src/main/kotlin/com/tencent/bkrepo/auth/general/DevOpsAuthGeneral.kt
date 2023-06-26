@@ -6,6 +6,7 @@ import com.tencent.bkrepo.auth.api.CanwayTenantClient
 import com.tencent.bkrepo.auth.constant.AuthConstant.ANY_RESOURCE_CODE
 import com.tencent.bkrepo.auth.pojo.UserPermissionQueryDTO
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
+import com.tencent.bkrepo.auth.pojo.enums.convertEnumListToStringList
 import com.tencent.bkrepo.auth.service.impl.CanwayPermissionServiceImpl
 import com.tencent.bkrepo.common.devops.RESOURCECODE
 import net.canway.devops.auth.pojo.UserPermissionValidateDTO
@@ -70,6 +71,29 @@ class DevOpsAuthGeneral(
             )
         ).data?.let { repoList.addAll(it.permissions.map { it.instanceId }) }
         logger.info("Read Permission repoNameList:${repoList}")
+
+        if (repoList.contains(ANY_RESOURCE_CODE)) {
+            repoList.remove(ANY_RESOURCE_CODE)
+        }
+
+        return repoList
+    }
+
+    /**
+     * 获取项目下用户拥有各种权限的仓库列表
+     */
+    fun getUserActionPermission(projectId: String, userId: String,actions: List<PermissionAction>): List<String> {
+        val repoList = mutableListOf<String>()
+        canwayProjectClient.getUserPermission(
+            projectId = projectId,
+            option = UserPermissionQueryDTO(
+                userId = userId,
+                resourceCode = RESOURCECODE,
+                actionCodes = convertEnumListToStringList(actions),
+                paddingInstancePermission = true
+            )
+        ).data?.let { repoList.addAll(it.permissions.map { it.instanceId }) }
+        logger.info("${actions} Permission repoNameList:${repoList}")
 
         if (repoList.contains(ANY_RESOURCE_CODE)) {
             repoList.remove(ANY_RESOURCE_CODE)

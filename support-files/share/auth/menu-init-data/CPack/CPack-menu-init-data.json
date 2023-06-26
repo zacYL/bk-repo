@@ -11,42 +11,10 @@
         "childrenMenus": [],
         "createdBy": "admin",
         "createdByName": "超级管理员[admin]",
-        "createdTime": "2023-06-13 15:56:41",
+        "createdTime": "2023-06-19 16:26:23",
         "updatedBy": "admin",
         "updatedByName": "超级管理员[admin]",
-        "updatedTime": "2023-06-13 15:56:41"
-    },
-    {
-        "id": 311,
-        "name": "制品库",
-        "englishName": "Artifactory",
-        "parentMenu": 15,
-        "menuLevel": "project",
-        "injectType": "amd",
-        "routeType": "path",
-        "routeLink": "/artifactory/",
-        "iframeUrl": "",
-        "jsUrl": "/artifactory/artifactory.979b1d4bb60fd2e98348.min.js",
-        "cssUrl": "/artifactory/artifactory.c6754c117a3cb41277ee.css",
-        "showRoute": true,
-        "status": "ok",
-        "weight": 0,
-        "webSocket": "",
-        "logoUrl": "artifactory",
-        "showMenu": false,
-        "showProjectList": true,
-        "desc": "",
-        "resourceCode": "artifactory",
-        "resourceAction": "view",
-        "module": "CPack",
-        "license": "STANDARD",
-        "childrenMenus": [],
-        "createdBy": "admin",
-        "createdByName": "超级管理员[admin]",
-        "createdTime": "2023-06-13 15:56:41",
-        "updatedBy": "admin",
-        "updatedByName": "超级管理员[admin]",
-        "updatedTime": "2023-06-13 15:56:41"
+        "updatedTime": "2023-06-19 16:26:23"
     },
     {
         "id": 401,
@@ -69,16 +37,16 @@
         "showProjectList": true,
         "desc": "",
         "resourceCode": "bkrepo",
-        "resourceAction": "view",
+        "resourceAction": "access",
         "module": "CPack",
         "license": "STANDARD",
         "childrenMenus": [],
         "createdBy": "admin",
         "createdByName": "超级管理员[admin]",
-        "createdTime": "2023-06-13 16:10:53",
+        "createdTime": "2023-06-24 17:34:24",
         "updatedBy": "admin",
         "updatedByName": "超级管理员[admin]",
-        "updatedTime": "2023-06-13 16:10:53"
+        "updatedTime": "2023-06-24 17:34:24"
     },
     {
         "id": 403,
@@ -107,10 +75,10 @@
         "childrenMenus": [],
         "createdBy": "admin",
         "createdByName": "超级管理员[admin]",
-        "createdTime": "2023-06-13 15:56:41",
+        "createdTime": "2023-06-19 16:26:23",
         "updatedBy": "admin",
         "updatedByName": "超级管理员[admin]",
-        "updatedTime": "2023-06-13 15:56:41"
+        "updatedTime": "2023-06-19 16:26:23"
     },
     {
         "id": 404,
@@ -139,10 +107,10 @@
         "childrenMenus": [],
         "createdBy": "admin",
         "createdByName": "超级管理员[admin]",
-        "createdTime": "2023-06-13 15:56:41",
+        "createdTime": "2023-06-19 16:26:23",
         "updatedBy": "admin",
         "updatedByName": "超级管理员[admin]",
-        "updatedTime": "2023-06-13 15:56:41"
+        "updatedTime": "2023-06-19 16:26:23"
     },
     {
         "id": 406,
@@ -171,10 +139,10 @@
         "childrenMenus": [],
         "createdBy": "admin",
         "createdByName": "超级管理员[admin]",
-        "createdTime": "2023-06-13 15:56:41",
+        "createdTime": "2023-06-19 16:26:23",
         "updatedBy": "admin",
         "updatedByName": "超级管理员[admin]",
-        "updatedTime": "2023-06-13 15:56:41"
+        "updatedTime": "2023-06-19 16:26:23"
     },
     {
         "id": 436,
@@ -203,10 +171,10 @@
         "childrenMenus": [],
         "createdBy": "admin",
         "createdByName": "超级管理员[admin]",
-        "createdTime": "2023-06-13 15:56:41",
+        "createdTime": "2023-06-19 16:26:23",
         "updatedBy": "admin",
         "updatedByName": "超级管理员[admin]",
-        "updatedTime": "2023-06-13 15:56:41"
+        "updatedTime": "2023-06-19 16:26:23"
     },
     {
         "id": 7493,
@@ -234,9 +202,9 @@
         "childrenMenus": [],
         "createdBy": "admin",
         "createdByName": "超级管理员[admin]",
-        "createdTime": "2023-06-13 15:56:41",
+        "createdTime": "2023-06-19 16:26:23",
         "updatedBy": "admin",
         "updatedByName": "超级管理员[admin]",
-        "updatedTime": "2023-06-13 15:56:41"
+        "updatedTime": "2023-06-19 16:26:23"
     }
 ]

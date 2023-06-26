@@ -97,6 +97,7 @@ security:
 service: 
   suffix: "-__BKCI_CONSUL_TAG__"
   prefix: "__BK_REPO_SERVICE_PREFIX__"
+  devops-prefix: "__BK_DEVOPS_SERVICE_PREFIX__"
 
 # 许可需要的配置  
 service-suffix: "-devops"  

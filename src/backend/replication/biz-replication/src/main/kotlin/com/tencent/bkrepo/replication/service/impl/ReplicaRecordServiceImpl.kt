@@ -105,7 +105,7 @@ class ReplicaRecordServiceImpl(
 
     override fun completeRecord(recordId: String, status: ExecutionStatus, errorReason: String?) {
         val replicaRecordInfo = getRecordById(recordId)
-            ?: throw ErrorCodeException(ReplicationMessageCode.REPLICA_TASK_NOT_FOUND, recordId)
+            ?: throw ErrorCodeException(ReplicationMessageCode.REPLICA_RECORD_NOT_FOUND, recordId)
         val record = with(replicaRecordInfo) {
             TReplicaRecord(
                 id = id,
@@ -153,7 +153,7 @@ class ReplicaRecordServiceImpl(
 
     override fun updateRecordDetailProgress(detailId: String, progress: ReplicaProgress) {
         val replicaRecordDetail = findRecordDetailById(detailId)
-            ?: throw ErrorCodeException(ReplicationMessageCode.REPLICA_TASK_NOT_FOUND, detailId)
+            ?: throw ErrorCodeException(ReplicationMessageCode.REPLICA_RECORD_DETAIL_NOT_FOUND, detailId)
         replicaRecordDetail.progress.success = progress.success
         replicaRecordDetail.progress.skip = progress.skip
         replicaRecordDetail.progress.failed = progress.failed
@@ -164,7 +164,7 @@ class ReplicaRecordServiceImpl(
 
     override fun completeRecordDetail(detailId: String, result: ExecutionResult) {
         val replicaRecordDetail = getRecordDetailById(detailId)
-            ?: throw ErrorCodeException(ReplicationMessageCode.REPLICA_TASK_NOT_FOUND, detailId)
+            ?: throw ErrorCodeException(ReplicationMessageCode.REPLICA_RECORD_DETAIL_NOT_FOUND, detailId)
         val recordDetail = with(replicaRecordDetail) {
             TReplicaRecordDetail(
                 id = detailId,

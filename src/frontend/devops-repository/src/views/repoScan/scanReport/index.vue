@@ -1,7 +1,7 @@
 <template>
     <div class="scan-report-container">
         <report-overview
-            v-if="scanPlan.planType"
+            v-if="scanPlan.id"
             class="mb10"
             :scan-plan="scanPlan"
             @refreshData="refreshData"
@@ -16,7 +16,7 @@
                 </operation-list>
                 <bk-button class="ml10" :theme="isfiltering ? 'primary' : 'default'" @click="showFilterForm">筛选</bk-button>
             </div>
-            <filter-sideslider v-if="scanPlan.planType" ref="filterSideslider" :scan-type="scanPlan.planType" @filter="filterHandler"></filter-sideslider>
+            <filter-sideslider v-if="scanPlan.id" ref="filterSideslider" :scan-type="scanPlan.planType" @filter="filterHandler"></filter-sideslider>
         </div>
         <div class="report-list flex-align-center" v-bkloading="{ isLoading }">
             <div class="mr20 view-task" v-show="viewType === 'TASKVIEW'">
@@ -255,7 +255,18 @@
                 })
             },
             refreshList (force) {
-                force ? this.handlerPaginationChange() : this.getReportListHandler()
+                if (force.forceFlag) {
+                    const initFlag = force.initFlag
+                    delete force.initFlag
+                    // 此时表明是点击面包屑返回或者当前url中携带了相关参数，此时需要根据url中的页码参数筛选
+                    if (initFlag === 'initFlag') {
+                        this.handlerPaginationChange({ current: this.dependentCurrent, limit: this.dependentLimit })
+                    } else {
+                        this.handlerPaginationChange()
+                    }
+                } else {
+                    this.getReportListHandler()
+                }
             },
             refreshScanPlan (projectId, planId) {
                 this.getScanConfig({ projectId: projectId, id: planId }).then(res => {

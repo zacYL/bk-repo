@@ -11,6 +11,7 @@ import com.tencent.bkrepo.auth.repository.PermissionRepository
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.devops.REPLICA_RESOURCECODE
 import com.tencent.bkrepo.common.devops.RESOURCECODE
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
@@ -90,7 +91,7 @@ class CanwayPermissionServiceImpl(
                             option = UserPermissionValidateDTO(
                                 userId = uid,
                                 instanceId = repoName ?: ANY_RESOURCE_CODE,
-                                resourceCode = RESOURCECODE,
+                                resourceCode = if (request.resourceType == ResourceType.REPLICATION) REPLICA_RESOURCECODE else RESOURCECODE,
                                 actionCodes = listOf(action.toString().toLowerCase())
                             )
                         )
@@ -221,13 +222,13 @@ class CanwayPermissionServiceImpl(
         }
         val repoList = mutableListOf<String>()
 
-        if (actions == null){
+        if (actions == null) {
             // 获取系统内公开于匿名公开仓库名称
             repoList.addAll(listPublicRepo(projectId))
             // 获取该用户可查看的所有制品库仓库名称
             repoList.addAll(devOpsAuthGeneral.getUserPermission(projectId, userId))
             logger.info("repoList:${repoList}")
-        }else{
+        } else {
             repoList.addAll(devOpsAuthGeneral.getUserActionPermission(projectId, userId, actions))
             logger.info("repoList:${repoList}")
         }

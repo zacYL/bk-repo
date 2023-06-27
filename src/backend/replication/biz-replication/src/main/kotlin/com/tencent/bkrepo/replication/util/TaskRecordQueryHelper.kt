@@ -59,9 +59,9 @@ object TaskRecordQueryHelper {
                 }.apply {
                     status?.let { and(TReplicaRecordDetail::status).isEqualTo(it) }
                 }.apply {
-                    artifactName?.let { and(TReplicaRecordDetail::artifactName).isEqualTo(it) }
+                    artifactName?.let { and(TReplicaRecordDetail::artifactName).regex(".*$it.*") }
                 }.apply {
-                    version?.let { and(TReplicaRecordDetail::version).isEqualTo(it) }
+                    version?.let { and(TReplicaRecordDetail::version).regex(".*$it.*") }
                 }
             return Query(criteria)
                 .with(Sort.by(Sort.Order(Sort.Direction.DESC, TReplicaRecordDetail::startTime.name)))

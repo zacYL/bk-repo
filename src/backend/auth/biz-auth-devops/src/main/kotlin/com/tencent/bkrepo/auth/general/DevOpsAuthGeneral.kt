@@ -82,7 +82,7 @@ class DevOpsAuthGeneral(
     /**
      * 获取项目下用户拥有各种权限的仓库列表
      */
-    fun getUserActionPermission(projectId: String, userId: String,actions: List<PermissionAction>): List<String> {
+    fun getUserActionPermission(projectId: String, userId: String, actions: List<PermissionAction>): List<String> {
         val repoList = mutableListOf<String>()
         canwayProjectClient.getUserPermission(
             projectId = projectId,
@@ -92,7 +92,11 @@ class DevOpsAuthGeneral(
                 actionCodes = convertEnumListToStringList(actions),
                 paddingInstancePermission = true
             )
-        ).data?.let { repoList.addAll(it.permissions.map { it.instanceId }) }
+        ).data?.let {
+            repoList.addAll(it.permissions
+                .filter { it.actionCodes.toSet() == convertEnumListToStringList(actions).toSet() }
+                .map { it.instanceId })
+        }
         logger.info("${actions} Permission repoNameList:${repoList}")
 
         if (repoList.contains(ANY_RESOURCE_CODE)) {

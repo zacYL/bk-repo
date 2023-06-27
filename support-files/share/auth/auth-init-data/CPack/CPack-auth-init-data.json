@@ -141,10 +141,10 @@
                 ],
                 "createdBy": "admin",
                 "createdByName": "超级管理员[admin]",
-                "createdTime": "2023-06-25 18:09:56",
+                "createdTime": "2023-06-28 15:11:15",
                 "updatedBy": "admin",
                 "updatedByName": "超级管理员[admin]",
-                "updatedTime": "2023-06-25 18:09:56"
+                "updatedTime": "2023-06-28 15:11:15"
             },
             {
                 "id": "9a217fa49a5a4b0f9dd490d03879cf9f",
@@ -180,10 +180,10 @@
                 ],
                 "createdBy": "admin",
                 "createdByName": "超级管理员[admin]",
-                "createdTime": "2023-06-25 18:09:56",
+                "createdTime": "2023-06-28 15:11:15",
                 "updatedBy": "admin",
                 "updatedByName": "超级管理员[admin]",
-                "updatedTime": "2023-06-25 18:09:56"
+                "updatedTime": "2023-06-28 15:11:15"
             },
             {
                 "id": "d40c0bd6c9794297b336a16fe7f8ab29",
@@ -219,10 +219,10 @@
                 ],
                 "createdBy": "admin",
                 "createdByName": "超级管理员[admin]",
-                "createdTime": "2023-06-25 18:09:56",
+                "createdTime": "2023-06-28 15:11:15",
                 "updatedBy": "admin",
                 "updatedByName": "超级管理员[admin]",
-                "updatedTime": "2023-06-25 18:09:56"
+                "updatedTime": "2023-06-28 15:11:15"
             },
             {
                 "id": "491430c311d14c03b47aadd331edcbc1",
@@ -254,14 +254,116 @@
                         "updatedBy": "admin",
                         "updatedByName": "超级管理员[admin]",
                         "updatedTime": "2023-06-13 14:05:59"
+                    },
+                    {
+                        "id": "067d3174500b41ad9f050ce2e9bfa433",
+                        "name": "创建",
+                        "actionCode": "create",
+                        "resourceCode": "v_pack_replica",
+                        "parentResourceCode": "project",
+                        "associateInstance": false,
+                        "weight": 10,
+                        "module": "CPack",
+                        "license": "ENTERPRISE",
+                        "createdBy": "admin",
+                        "createdByName": "超级管理员[admin]",
+                        "createdTime": "2023-06-29 10:14:50",
+                        "updatedBy": "admin",
+                        "updatedByName": "超级管理员[admin]",
+                        "updatedTime": "2023-06-29 10:14:50"
+                    },
+                    {
+                        "id": "b6bbad113d1d496b9e0bd6298a5131d8",
+                        "name": "编辑",
+                        "actionCode": "update",
+                        "resourceCode": "v_pack_replica",
+                        "parentResourceCode": "project",
+                        "associateInstance": false,
+                        "weight": 9,
+                        "module": "CPack",
+                        "license": "ENTERPRISE",
+                        "createdBy": "admin",
+                        "createdByName": "超级管理员[admin]",
+                        "createdTime": "2023-06-29 10:15:44",
+                        "updatedBy": "admin",
+                        "updatedByName": "超级管理员[admin]",
+                        "updatedTime": "2023-06-29 10:15:44"
+                    },
+                    {
+                        "id": "edbd20919d274a34b8731b58e7569b9b",
+                        "name": "启用",
+                        "actionCode": "enable",
+                        "resourceCode": "v_pack_replica",
+                        "parentResourceCode": "project",
+                        "associateInstance": false,
+                        "weight": 8,
+                        "module": "CPack",
+                        "license": "ENTERPRISE",
+                        "createdBy": "admin",
+                        "createdByName": "超级管理员[admin]",
+                        "createdTime": "2023-06-29 10:15:18",
+                        "updatedBy": "admin",
+                        "updatedByName": "超级管理员[admin]",
+                        "updatedTime": "2023-06-29 10:15:27"
+                    },
+                    {
+                        "id": "2e0b47fa098a462fa27cf84047ac49b6",
+                        "name": "执行",
+                        "actionCode": "execute",
+                        "resourceCode": "v_pack_replica",
+                        "parentResourceCode": "project",
+                        "associateInstance": false,
+                        "weight": 7,
+                        "module": "CPack",
+                        "license": "ENTERPRISE",
+                        "createdBy": "admin",
+                        "createdByName": "超级管理员[admin]",
+                        "createdTime": "2023-06-29 10:16:30",
+                        "updatedBy": "admin",
+                        "updatedByName": "超级管理员[admin]",
+                        "updatedTime": "2023-06-29 10:16:30"
+                    },
+                    {
+                        "id": "26f4470a77754b73af4159c8431fff2c",
+                        "name": "复制",
+                        "actionCode": "copy",
+                        "resourceCode": "v_pack_replica",
+                        "parentResourceCode": "project",
+                        "associateInstance": false,
+                        "weight": 6,
+                        "module": "CPack",
+                        "license": "ENTERPRISE",
+                        "createdBy": "admin",
+                        "createdByName": "超级管理员[admin]",
+                        "createdTime": "2023-06-29 10:16:50",
+                        "updatedBy": "admin",
+                        "updatedByName": "超级管理员[admin]",
+                        "updatedTime": "2023-06-29 10:16:50"
+                    },
+                    {
+                        "id": "9e1049d3a05d4fd0b48268875aff7195",
+                        "name": "删除",
+                        "actionCode": "delete",
+                        "resourceCode": "v_pack_replica",
+                        "parentResourceCode": "project",
+                        "associateInstance": false,
+                        "weight": 0,
+                        "module": "CPack",
+                        "license": "ENTERPRISE",
+                        "createdBy": "admin",
+                        "createdByName": "超级管理员[admin]",
+                        "createdTime": "2023-06-29 10:17:06",
+                        "updatedBy": "admin",
+                        "updatedByName": "超级管理员[admin]",
+                        "updatedTime": "2023-06-29 10:17:06"
                     }
                 ],
                 "createdBy": "admin",
                 "createdByName": "超级管理员[admin]",
-                "createdTime": "2023-06-25 18:09:56",
+                "createdTime": "2023-06-28 15:11:15",
                 "updatedBy": "admin",
                 "updatedByName": "超级管理员[admin]",
-                "updatedTime": "2023-06-25 18:09:56"
+                "updatedTime": "2023-06-28 15:11:15"
             },
             {
                 "id": "bada9ac029e849429f21282954e2d825",
@@ -271,7 +373,7 @@
                 "groupId": "15",
                 "weight": 7,
                 "instanceSourceUrl": "",
-                "managedByAuth": true,
+                "managedByAuth": false,
                 "module": "CPack",
                 "license": "ENTERPRISE",
                 "hasInstance": false,
@@ -297,10 +399,10 @@
                 ],
                 "createdBy": "admin",
                 "createdByName": "超级管理员[admin]",
-                "createdTime": "2023-06-25 18:09:56",
+                "createdTime": "2023-06-28 15:11:15",
                 "updatedBy": "admin",
                 "updatedByName": "超级管理员[admin]",
-                "updatedTime": "2023-06-25 18:09:56"
+                "updatedTime": "2023-06-28 15:11:15"
             },
             {
                 "id": "e7cc790661444727ae6d2cb52e6705f8",
@@ -336,10 +438,10 @@
                 ],
                 "createdBy": "admin",
                 "createdByName": "超级管理员[admin]",
-                "createdTime": "2023-06-25 18:09:56",
+                "createdTime": "2023-06-28 15:11:15",
                 "updatedBy": "admin",
                 "updatedByName": "超级管理员[admin]",
-                "updatedTime": "2023-06-25 18:09:56"
+                "updatedTime": "2023-06-28 15:11:15"
             }
         ],
         "createdBy": "admin",

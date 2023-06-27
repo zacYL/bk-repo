@@ -271,6 +271,7 @@
                         repoType
                     },
                     query: {
+                        ...this.$route.query,
                         repoName: name
                     }
                 })
@@ -284,7 +285,7 @@
                             projectId: this.projectId,
                             name
                         }).then(() => {
-                            this.debounceGetListData()
+                            this.debounceGetListData ? this.debounceGetListData() : this.getListData()
                             this.$bkMessage({
                                 theme: 'success',
                                 message: this.$t('delete') + this.$t('success')

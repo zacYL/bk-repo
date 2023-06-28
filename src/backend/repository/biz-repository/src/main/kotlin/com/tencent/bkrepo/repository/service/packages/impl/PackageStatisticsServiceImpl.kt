@@ -1,12 +1,14 @@
 package com.tencent.bkrepo.repository.service.packages.impl
 
+import com.tencent.bkrepo.auth.api.ServicePermissionResource
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
+import com.tencent.bkrepo.common.query.util.MongoEscapeUtils
+import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.repository.dao.PackageDao
 import com.tencent.bkrepo.repository.dao.PackageVersionDao
 import com.tencent.bkrepo.repository.model.TPackage
 import com.tencent.bkrepo.repository.model.TPackageVersion
 import com.tencent.bkrepo.repository.pojo.metric.PackageDetail
-import com.tencent.bkrepo.common.query.util.MongoEscapeUtils
 import com.tencent.bkrepo.repository.pojo.software.CountResult
 import com.tencent.bkrepo.repository.pojo.software.ProjectPackageOverview
 import com.tencent.bkrepo.repository.service.packages.PackageStatisticsService
@@ -21,7 +23,8 @@ import java.time.LocalDateTime
 class PackageStatisticsServiceImpl(
     private val packageDao: PackageDao,
     private val packageVersionDao: PackageVersionDao,
-    private val repositoryService: RepositoryService
+    private val repositoryService: RepositoryService,
+    private val servicePermissionResource: ServicePermissionResource
 ) : PackageStatisticsService {
     override fun packageTotal(projectId: String?, repoName: String?): Long {
         val criteria = Criteria()
@@ -67,8 +70,15 @@ class PackageStatisticsServiceImpl(
         projectId: String,
         packageName: String?
     ): List<ProjectPackageOverview> {
+        val repoNames = servicePermissionResource.listPermissionRepo(
+            projectId = projectId,
+            userId = SecurityUtils.getUserId(),
+            appId = SecurityUtils.getPlatformId(),
+            actions = null
+        ).data.orEmpty()
         val criteria = Criteria.where(TPackage::type.name).`is`(repoType.toUpperCase())
         projectId.let { criteria.and(TPackage::projectId.name).`is`(projectId) }
+        repoNames.let { criteria.and(TPackage::repoName.name).`in`(repoNames) }
         packageName?.let {
             val escapedValue = MongoEscapeUtils.escapeRegexExceptWildcard(packageName)
             val regexPattern = escapedValue.replace("*", ".*")

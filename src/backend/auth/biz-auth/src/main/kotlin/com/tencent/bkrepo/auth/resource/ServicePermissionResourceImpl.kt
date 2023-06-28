@@ -33,15 +33,8 @@ package com.tencent.bkrepo.auth.resource
 
 import com.tencent.bkrepo.auth.api.ServicePermissionResource
 import com.tencent.bkrepo.auth.pojo.RegisterResourceRequest
-import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
-import com.tencent.bkrepo.auth.pojo.permission.CreatePermissionRequest
-import com.tencent.bkrepo.auth.pojo.permission.Permission
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionActionRequest
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionDepartmentRequest
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionPathRequest
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRepoRequest
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRoleRequest
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionUserRequest
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
+import com.tencent.bkrepo.auth.pojo.permission.*
 import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.auth.service.UserService
 import com.tencent.bkrepo.common.api.pojo.Response
@@ -74,8 +67,13 @@ class ServicePermissionResourceImpl @Autowired constructor(
         return ResponseBuilder.success(permissionService.checkPermission(request))
     }
 
-    override fun listPermissionRepo(projectId: String, userId: String, appId: String?): Response<List<String>> {
-        return ResponseBuilder.success(permissionService.listPermissionRepo(projectId, userId, appId))
+    override fun listPermissionRepo(
+        projectId: String,
+        userId: String,
+        appId: String?,
+        actions: List<PermissionAction>?
+    ): Response<List<String>> {
+        return ResponseBuilder.success(permissionService.listPermissionRepo(projectId, userId, appId, actions))
     }
 
     override fun listPermissionProject(userId: String): Response<List<String>> {

@@ -192,7 +192,8 @@ class RepositoryServiceImpl(
         var names = servicePermissionResource.listPermissionRepo(
             projectId = projectId,
             userId = userId,
-            appId = SecurityUtils.getPlatformId()
+            appId = SecurityUtils.getPlatformId(),
+            actions = option.actions
         ).data.orEmpty()
         if (!option.name.isNullOrBlank()) {
             names = names.filter { it.contains(option.name.orEmpty(), true) }

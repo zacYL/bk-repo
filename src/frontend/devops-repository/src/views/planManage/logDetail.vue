@@ -58,7 +58,7 @@
                     <span class="ml5">{{ row.localRepoName }}</span>
                 </template>
             </bk-table-column>
-            <bk-table-column label="制品名称 / 文件路径" show-overflow-tooltip>
+            <bk-table-column label="制品名称" show-overflow-tooltip>
                 <template #default="{ row }">{{ row.artifactName || row.packageKey || row.path || '/' }}</template>
             </bk-table-column>
             <bk-table-column label="版本" show-overflow-tooltip>
@@ -138,8 +138,7 @@
                 return [
                     { name: '节点名称', id: 'clusterName' },
                     { name: '仓库名称', id: 'repoName' },
-                    ...(this.logDetail.replicaObjectType === 'PACKAGE' ? [{ name: '制品名称', id: 'packageName' }] : []),
-                    ...(this.logDetail.replicaObjectType === 'PATH' ? [{ name: '文件路径', id: 'path' }] : [])
+                    { name: '制品名称', id: 'artifactName' }
                 ]
             }
         },

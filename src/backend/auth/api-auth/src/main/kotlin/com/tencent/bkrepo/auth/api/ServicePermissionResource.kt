@@ -33,6 +33,7 @@ package com.tencent.bkrepo.auth.api
 
 import com.tencent.bkrepo.auth.constant.AUTH_SERVICE_PERMISSION_PREFIX
 import com.tencent.bkrepo.auth.pojo.RegisterResourceRequest
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.CreatePermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.Permission
@@ -72,7 +73,9 @@ interface ServicePermissionResource {
         @ApiParam(value = "用户ID")
         @RequestParam userId: String,
         @ApiParam(value = "应用ID")
-        @RequestParam appId: String?
+        @RequestParam appId: String?,
+        @ApiParam(value = "权限动作")
+        @RequestParam actions: List<PermissionAction>?
     ): Response<List<String>>
 
     @ApiOperation("list有权限项目")

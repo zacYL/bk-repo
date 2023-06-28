@@ -132,10 +132,10 @@ export const scanStatusEnum = {
 
 // 漏洞风险等级
 export const leakLevelEnum = {
-    CRITICAL: '危急',
-    HIGH: '高级',
-    MEDIUM: '中级',
-    LOW: '低级'
+    CRITICAL: '严重',
+    HIGH: '高危',
+    MEDIUM: '中危',
+    LOW: '低危'
     // WHITE: '白名单'
 }
 // 制品仓库类型(本地/远程/虚拟)

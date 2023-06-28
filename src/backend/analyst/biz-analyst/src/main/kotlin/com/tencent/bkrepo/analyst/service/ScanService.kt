@@ -33,7 +33,6 @@ import com.tencent.bkrepo.analyst.pojo.SubScanTask
 import com.tencent.bkrepo.analyst.pojo.request.PipelineScanRequest
 import com.tencent.bkrepo.analyst.pojo.request.ReportResultRequest
 import com.tencent.bkrepo.analyst.pojo.request.ScanRequest
-import com.tencent.bkrepo.analyst.pojo.request.SingleScanRequest
 
 /**
  * 扫描服务
@@ -47,15 +46,6 @@ interface ScanService {
      * @param userId 用户id，传入null时表示系统触发扫描，不校验用户权限
      */
     fun scan(scanRequest: ScanRequest, triggerType: ScanTriggerType, userId: String? = null): ScanTask
-
-    /**
-     * 创建单个扫描任务，启动扫描
-     *
-     * @param request 扫描参数，指定需要扫描的文件
-     * @param triggerType 触发类型
-     * @param userId 用户id，传入null时表示系统触发扫描，不校验用户权限
-     */
-    fun scanSingle(request: SingleScanRequest, triggerType: ScanTriggerType, userId: String? = null): ScanTask
 
     /**
      * 从流水线创建扫描任务

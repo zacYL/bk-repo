@@ -169,11 +169,70 @@ export default {
             body
         )
     },
-    // 单个扫描
-    startScanSingle (_, body) {
+    /**
+     * 单个制品扫描,此处包含二进制及依赖源仓库的扫描，二进制仓库没有packageKey字段，需要传参为 fullPath
+     * @param {*} _
+     * @param {id}  string
+     * @param {projectId}  string
+     * @param {repoName}  string
+     * @param {packageKey}  string
+     * @param {version}  string
+     * @param {fullPath}  string
+     * @returns
+     */
+    startScanSingle  (_, { id, projectId, repoName, packageKey, version, fullPath }) {
         return Vue.prototype.$ajax.post(
-            `${prefix}/single`,
-            body
+            `${prefix}`,
+            {
+                id,
+                force: true,
+                rule: {
+                    rules: [
+                        {
+                            field: 'projectId',
+                            value: projectId,
+                            operation: 'EQ'
+                        },
+                        {
+                            field: 'repoName',
+                            value: [repoName],
+                            operation: 'IN'
+                        },
+                        {
+                            rules: [
+                                {
+                                    rules: [
+                                        packageKey
+                                            ? {
+                                                field: 'version',
+                                                operation: 'EQ',
+                                                value: version
+                                            }
+                                            : undefined,
+                                        packageKey
+                                            ? {
+                                                field: 'key',
+                                                operation: 'EQ',
+                                                value: packageKey
+                                            }
+                                            : undefined,
+                                        !packageKey
+                                            ? {
+                                                field: 'fullPath',
+                                                operation: 'EQ',
+                                                value: fullPath
+                                            }
+                                            : undefined
+                                    ].filter(Boolean),
+                                    relation: 'AND'
+                                }
+                            ],
+                            relation: 'OR'
+                        }
+                    ],
+                    relation: 'AND'
+                }
+            }
         )
     },
     // 制品关联的扫描方案

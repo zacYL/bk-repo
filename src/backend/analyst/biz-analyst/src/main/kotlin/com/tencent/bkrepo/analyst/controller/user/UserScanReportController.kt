@@ -144,7 +144,7 @@ class UserScanReportController(private val scanTaskService: ScanTaskService) {
     }
 
     @ApiOperation("制品详情--许可数据--导出")
-    @GetMapping("export/artifact/license/leak/{projectId}/{subScanTaskId}")
+    @GetMapping("/export/artifact/license/leak/{projectId}/{subScanTaskId}")
     fun exportArtifactLicenseLeak(
         @ApiParam(value = "projectId", required = true) @PathVariable projectId: String,
         @ApiParam(value = "扫描记录id", required = true) @PathVariable subScanTaskId: String,

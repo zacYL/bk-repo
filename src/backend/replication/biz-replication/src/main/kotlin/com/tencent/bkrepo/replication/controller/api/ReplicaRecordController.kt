@@ -29,15 +29,8 @@ package com.tencent.bkrepo.replication.controller.api
 
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
-import com.tencent.bkrepo.common.security.permission.Principal
-import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
-import com.tencent.bkrepo.replication.pojo.record.RecordOverview
-import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordDetail
-import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordDetailListOption
-import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordInfo
-import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordListOption
-import com.tencent.bkrepo.replication.pojo.record.ReplicaTaskRecordInfo
+import com.tencent.bkrepo.replication.pojo.record.*
 import com.tencent.bkrepo.replication.service.ReplicaRecordService
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
@@ -51,7 +44,6 @@ import org.springframework.web.bind.annotation.RestController
  * 任务执行日志接口
  */
 @Api("任务执行日志接口")
-@Principal(type = PrincipalType.ADMIN)
 @RestController
 @RequestMapping("/api/task/record")
 class ReplicaRecordController(

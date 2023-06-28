@@ -87,12 +87,15 @@ class BkAuthPermissionServiceImpl constructor(
                 CUSTOM, LOG -> {
                     checkProjectPermission(uid, projectId!!, action)
                 }
+
                 PIPELINE -> {
                     checkPipelineOrProjectPermission(request)
                 }
+
                 REPORT -> {
                     checkReportPermission(action)
                 }
+
                 else -> {
                     super.checkPermission(request) || checkProjectPermission(uid, projectId!!, action)
                 }
@@ -121,8 +124,8 @@ class BkAuthPermissionServiceImpl constructor(
 
     private fun checkReportPermission(action: PermissionAction): Boolean {
         return action == PermissionAction.READ ||
-            action == PermissionAction.WRITE ||
-            action == PermissionAction.VIEW
+                action == PermissionAction.WRITE ||
+                action == PermissionAction.VIEW
     }
 
     private fun checkPipelinePermission(
@@ -138,6 +141,7 @@ class BkAuthPermissionServiceImpl constructor(
                 val pipelineId = parsePipelineId(path ?: return false) ?: return false
                 pipelinePermission(uid, projectId, pipelineId, action)
             }
+
             else -> throw RuntimeException("resource type not supported: $resourceType")
         }
     }
@@ -160,7 +164,12 @@ class BkAuthPermissionServiceImpl constructor(
         }
     }
 
-    override fun listPermissionRepo(projectId: String, userId: String, appId: String?): List<String> {
+    override fun listPermissionRepo(
+        projectId: String,
+        userId: String,
+        appId: String?,
+        actions: List<PermissionAction>?
+    ): List<String> {
         // 用户为系统管理员
         if (isUserLocalAdmin(userId)) {
             return getAllRepoByProjectId(projectId)
@@ -176,7 +185,7 @@ class BkAuthPermissionServiceImpl constructor(
                 return emptyList()
             }
         }
-        return super.listPermissionRepo(projectId, userId, appId)
+        return super.listPermissionRepo(projectId, userId, appId, actions)
     }
 
     override fun checkPermission(request: CheckPermissionRequest): Boolean {

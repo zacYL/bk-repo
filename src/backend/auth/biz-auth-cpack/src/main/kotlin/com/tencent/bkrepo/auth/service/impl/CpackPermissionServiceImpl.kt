@@ -31,26 +31,14 @@
 
 package com.tencent.bkrepo.auth.service.impl
 
-import com.tencent.bkrepo.auth.constant.AUTH_ADMIN
-import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_ADMIN
-import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_USER
-import com.tencent.bkrepo.auth.constant.PROJECT_MANAGE_PERMISSION
-import com.tencent.bkrepo.auth.constant.PROJECT_VIEW_PERMISSION
+import com.tencent.bkrepo.auth.constant.*
 import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.model.TPermission
 import com.tencent.bkrepo.auth.pojo.RegisterResourceRequest
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.auth.pojo.enums.RoleType
-import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
-import com.tencent.bkrepo.auth.pojo.permission.CreatePermissionRequest
-import com.tencent.bkrepo.auth.pojo.permission.Permission
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionActionRequest
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionDepartmentRequest
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionPathRequest
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRepoRequest
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRoleRequest
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionUserRequest
+import com.tencent.bkrepo.auth.pojo.permission.*
 import com.tencent.bkrepo.auth.repository.PermissionRepository
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
@@ -193,7 +181,9 @@ open class CpackPermissionServiceImpl constructor(
 
     private fun deleteRepoPermissionUserId(permission: Permission, userList: List<String>) {
         val deleteUsers = permission.users.filter { !userList.contains(it) }
-        if (deleteUsers.isEmpty()) { return }
+        if (deleteUsers.isEmpty()) {
+            return
+        }
         for (userId in deleteUsers) {
             userRepository.findFirstByUserId(userId)?.let { tUser ->
                 val query = PermissionQueryHelper.buildProjectUserCheck(
@@ -203,7 +193,9 @@ open class CpackPermissionServiceImpl constructor(
                 )
                 val result = mongoTemplate.find(query, TPermission::class.java)
                     .filter { it.id != permission.id }
-                if (result.isNotEmpty()) { return }
+                if (result.isNotEmpty()) {
+                    return
+                }
                 val permissions = permissionRepository.findAllByProjectIdAndResourceTypeAndUsersIn(
                     permission.projectId!!,
                     ResourceType.REPO,
@@ -446,7 +438,18 @@ open class CpackPermissionServiceImpl constructor(
         }?.map { it.name } ?: listOf()
     }
 
-    override fun listPermissionRepo(projectId: String, userId: String, appId: String?): List<String> {
+    fun listPublicRepo(projectId: String): List<String>{
+        return repositoryClient.listRepo(projectId).data?.filter {
+            it.configuration.settings["system"] == true || it.public
+        }?.map { it.name } ?: listOf()
+    }
+
+    override fun listPermissionRepo(
+        projectId: String,
+        userId: String,
+        appId: String?,
+        actions: List<PermissionAction>?
+    ): List<String> {
         logger.debug("list repo permission request : [$projectId, $userId] ")
         val user = userRepository.findFirstByUserId(userId) ?: run {
             return listProjectPublicRepo(projectId)

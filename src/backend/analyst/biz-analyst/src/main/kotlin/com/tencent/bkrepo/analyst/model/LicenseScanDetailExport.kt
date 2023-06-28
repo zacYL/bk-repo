@@ -11,8 +11,8 @@ data class LicenseScanDetailExport(
     val osi: String,
     @ExcelProperty("FSF开源")
     val fsf: String,
-    @ExcelProperty("推荐使用")
-    val recommended: String,
+    @ExcelProperty("使用状态")
+    val deprecated: String,
     @ExcelProperty("合规性")
     val compliance: String?,
     @ExcelProperty("证书信息")

@@ -48,7 +48,7 @@ object ScanLicenseConverter {
                 dependentPath = dependentPath,
                 osi = isOsiApproved?.let { if (it) "已认证" else "未认证" } ?: "/",
                 fsf = isFsfLibre?.let { if (it) "已开源" else "未开源" } ?: "/",
-                recommended = recommended?.let { if (it) "推荐" else "不推荐" } ?: "/",
+                deprecated = deprecated?.let { if (it) "可用" else "废弃" } ?: "/",
                 compliance = compliance?.let { if (it) "合规" else "不合规" } ?: "/",
                 description = description
             )

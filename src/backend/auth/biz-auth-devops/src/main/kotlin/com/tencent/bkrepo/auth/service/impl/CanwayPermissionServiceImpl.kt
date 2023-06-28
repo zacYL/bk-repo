@@ -222,8 +222,8 @@ class CanwayPermissionServiceImpl(
         val repoList = mutableListOf<String>()
 
         if (actions == null){
-            // 获取所有项目公开仓库名称
-            repoList.addAll(listProjectPublicRepo(projectId))
+            // 获取系统内公开于匿名公开仓库名称
+            repoList.addAll(listPublicRepo(projectId))
             // 获取该用户可查看的所有制品库仓库名称
             repoList.addAll(devOpsAuthGeneral.getUserPermission(projectId, userId))
             logger.info("repoList:${repoList}")

@@ -438,6 +438,12 @@ open class CpackPermissionServiceImpl constructor(
         }?.map { it.name } ?: listOf()
     }
 
+    fun listPublicRepo(projectId: String): List<String>{
+        return repositoryClient.listRepo(projectId).data?.filter {
+            it.configuration.settings["system"] == true || it.public
+        }?.map { it.name } ?: listOf()
+    }
+
     override fun listPermissionRepo(
         projectId: String,
         userId: String,

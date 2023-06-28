@@ -11,7 +11,7 @@ data class LeakScanPlanExport(
     val repoName: String,
     @ExcelProperty("质量规则")
     val qualityRedLine: String,
-    @ExcelProperty("危急漏洞数")
+    @ExcelProperty("严重漏洞数")
     val critical: Long = 0,
     @ExcelProperty("高危漏洞数")
     val high: Long = 0,

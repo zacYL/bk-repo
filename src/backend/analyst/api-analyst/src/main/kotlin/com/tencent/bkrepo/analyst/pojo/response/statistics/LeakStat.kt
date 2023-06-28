@@ -5,7 +5,7 @@ import io.swagger.annotations.ApiModelProperty
 
 @ApiModel("漏洞统计信息")
 data class LeakStat(
-    @ApiModelProperty("危急漏洞数")
+    @ApiModelProperty("严重漏洞数")
     var critical: Long = 0,
     @ApiModelProperty("高危漏洞数")
     var high: Long = 0,

@@ -77,6 +77,7 @@ import com.tencent.bkrepo.analyst.utils.Converter
 import com.tencent.bkrepo.analyst.utils.RuleUtil
 import com.tencent.bkrepo.analyst.utils.ScanLicenseConverter
 import com.tencent.bkrepo.analyst.utils.EasyExcelUtils
+import com.tencent.bkrepo.common.analysis.pojo.scanner.ScanType
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.format.DateTimeFormatter
@@ -147,37 +148,31 @@ class ScanTaskServiceImpl(
 
     override fun exportScanPlanRecords(request: SubtaskInfoRequest) {
         logger.info("exportScanPlanRecords request:${request.toJsonString()}")
-        with(request) {
-            if (id == null) {
-                throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID)
-            }
-            // 方案信息，获取方案名称
-            val scanPlan = scanPlanDao.find(projectId, id!!)
-                ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID)
-
-            val isLicenseScan = scanPlan.type.endsWith("_LICENSE")
-            // 获取任务信息
-            var pageNumber = 1
-            var page = planArtifactLatestSubScanTaskDao.pageBy(request)
-            val dataList = mutableListOf<Any>()
-            while (page.records.isNotEmpty()) {
-                page.records.forEach {
-                    if (isLicenseScan) {
-                        dataList.add(ScanLicenseConverter.convert(it))
-                    } else {
-                        dataList.add(Converter.convertToPlanExport(it))
-                    }
-                }
-                request.pageNumber = ++pageNumber
-                page = planArtifactLatestSubScanTaskDao.pageBy(request)
-            }
-
-            if (isLicenseScan) {
-                EasyExcelUtils.download(dataList, scanPlan.name, LicenseScanPlanExport::class.java)
-            } else {
-                EasyExcelUtils.download(dataList, scanPlan.name, LeakScanPlanExport::class.java)
-            }
+        if (request.id == null) {
+            throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID)
         }
+        // 方案信息，获取方案名称
+        val scanPlan = scanPlanDao.find(request.projectId, request.id!!)
+            ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID)
+
+        val isLicenseScan = scanPlan.scanTypes.contains(ScanType.LICENSE.name)
+        // 获取任务信息
+        var pageNumber = 1
+        var page = planArtifactLatestSubScanTaskDao.pageBy(request)
+        val dataList = mutableListOf<Any>()
+        while (page.records.isNotEmpty()) {
+            page.records.forEach {
+                dataList.add(
+                    if (isLicenseScan) ScanLicenseConverter.convert(it)
+                    else Converter.convertToPlanExport(it)
+                )
+            }
+            request.pageNumber = ++pageNumber
+            page = planArtifactLatestSubScanTaskDao.pageBy(request)
+        }
+
+        val exportClass = if (isLicenseScan) LicenseScanPlanExport::class.java else LeakScanPlanExport::class.java
+        EasyExcelUtils.download(dataList, scanPlan.name, exportClass)
     }
 
     override fun planArtifactSubtaskOverview(subtaskId: String): SubtaskResultOverview {

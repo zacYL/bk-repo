@@ -25,6 +25,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+@file:Suppress("DEPRECATION")
+
 package com.tencent.bkrepo.analyst.utils
 
 import com.tencent.bkrepo.analyst.model.LeakDetailExport

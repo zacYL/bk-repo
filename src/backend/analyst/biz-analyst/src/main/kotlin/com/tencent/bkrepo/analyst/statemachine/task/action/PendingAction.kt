@@ -116,7 +116,6 @@ class PendingAction(
 
             val plan = planId?.let { scanPlanDao.get(it) }
             val projectId = projectId(rule, plan)
-            val repoNames = RuleUtil.getRepoNames(rule)
             val scanner = scannerService.get(scanner ?: plan!!.scanner)
             val metadata = customMetadata(metadata, projectId, scanner)
 

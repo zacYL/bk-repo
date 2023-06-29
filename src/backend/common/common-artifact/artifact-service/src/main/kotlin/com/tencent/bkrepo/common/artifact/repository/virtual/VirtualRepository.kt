@@ -36,7 +36,7 @@ import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
 import com.tencent.bkrepo.common.artifact.constant.REPO_KEY
 import com.tencent.bkrepo.common.artifact.constant.TRAVERSED_LIST
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
-import com.tencent.bkrepo.common.artifact.pojo.configuration.virtual.VirtualRepositoryMember
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
@@ -127,11 +127,11 @@ abstract class VirtualRepository : AbstractArtifactRepository() {
         throw MethodNotAllowedException()
     }
 
-    protected fun getTraversedList(context: ArtifactContext): MutableList<VirtualRepositoryMember> {
-        return context.getAttribute(TRAVERSED_LIST) as? MutableList<VirtualRepositoryMember> ?: let {
+    protected fun getTraversedList(context: ArtifactContext): MutableList<RepositoryIdentify> {
+        return context.getAttribute(TRAVERSED_LIST) as? MutableList<RepositoryIdentify> ?: let {
             val selfRepoInfo = context.repositoryDetail
             val traversedList =
-                mutableListOf(VirtualRepositoryMember(selfRepoInfo.name, selfRepoInfo.category))
+                mutableListOf(RepositoryIdentify(selfRepoInfo.projectId, selfRepoInfo.name, selfRepoInfo.category))
             context.putAttribute(TRAVERSED_LIST, traversedList)
             return traversedList
         }
@@ -248,7 +248,7 @@ abstract class VirtualRepository : AbstractArtifactRepository() {
     private fun queryMemberList(
         context: ArtifactContext,
         category: RepositoryCategory? = null
-    ): List<VirtualRepositoryMember> {
+    ): List<RepositoryIdentify> {
         if (context.repositoryDetail.category != RepositoryCategory.VIRTUAL) {
             modifyContext(context, HttpContextHolder.getRequest().getAttribute(REPO_KEY) as RepositoryDetail)
         }

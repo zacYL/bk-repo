@@ -25,49 +25,48 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+@file:Suppress("DEPRECATION")
+
 package com.tencent.bkrepo.analyst.utils
 
-import com.tencent.bkrepo.analyst.model.*
 import com.tencent.bkrepo.common.analysis.pojo.scanner.Level
 import com.tencent.bkrepo.common.analysis.pojo.scanner.LicenseNature
 import com.tencent.bkrepo.common.analysis.pojo.scanner.LicenseOverviewKey
 import com.tencent.bkrepo.common.analysis.pojo.scanner.LicenseOverviewKey.NIL
 import com.tencent.bkrepo.common.analysis.pojo.scanner.LicenseOverviewKey.TOTAL
+import com.tencent.bkrepo.analyst.model.LicenseScanDetailExport
+import com.tencent.bkrepo.analyst.model.SubScanTaskDefinition
+import com.tencent.bkrepo.analyst.model.TPlanArtifactLatestSubScanTask
+import com.tencent.bkrepo.analyst.model.TScanPlan
+import com.tencent.bkrepo.analyst.model.TScanTask
 import com.tencent.bkrepo.analyst.pojo.ScanStatus
 import com.tencent.bkrepo.analyst.pojo.response.FileLicensesResultDetail
 import com.tencent.bkrepo.analyst.pojo.response.FileLicensesResultOverview
 import com.tencent.bkrepo.analyst.pojo.response.ScanLicensePlanInfo
+import com.tencent.bkrepo.common.api.constant.StringPool
 import java.time.format.DateTimeFormatter
 
 object ScanLicenseConverter {
 
     fun convert(licensesResultDetail: FileLicensesResultDetail): LicenseScanDetailExport {
         with(licensesResultDetail) {
-            return LicenseScanDetailExport(
-                fullName = if(fullName.isEmpty()) licenseId else fullName,
+            return if (description.isEmpty()) LicenseScanDetailExport(
+                fullName = fullName.ifEmpty { licenseId },
                 dependentPath = dependentPath,
-                osi = isOsiApproved?.let { if (it) "已认证" else "未认证" } ?: "/",
-                fsf = isFsfLibre?.let { if (it) "已开源" else "未开源" } ?: "/",
-                deprecated = deprecated?.let { if (it) "可用" else "废弃" } ?: "/",
-                compliance = compliance?.let { if (it) "合规" else "不合规" } ?: "/",
+                osi = StringPool.SLASH,
+                fsf = StringPool.SLASH,
+                deprecated = StringPool.SLASH,
+                compliance = StringPool.SLASH,
+                description = StringPool.EMPTY
+            ) else LicenseScanDetailExport(
+                fullName = fullName.ifEmpty { licenseId },
+                dependentPath = dependentPath,
+                osi = isOsiApproved?.let { if (it) "已认证" else "未认证" } ?: StringPool.SLASH,
+                fsf = isFsfLibre?.let { if (it) "已开源" else "未开源" } ?: StringPool.SLASH,
+                // 导出与前端保持一致, 使用recommended, 后面前后端一起升级时再修改
+                deprecated =  recommended?.let { if (it) "可用" else "废弃" } ?: StringPool.SLASH,
+                compliance =  compliance?.let { if (it) "合规" else "不合规" } ?: StringPool.SLASH,
                 description = description
-            )
-        }
-    }
-
-    fun convert(subScanTask: TPlanArtifactLatestSubScanTask): LicenseScanPlanExport {
-        with(subScanTask) {
-            return LicenseScanPlanExport(
-                name = artifactName,
-                versionOrFullPath = version ?: fullPath,
-                repoName = repoName,
-                qualityRedLine = qualityRedLine?.let { if (it) "通过" else "不通过" } ?: "/",
-                total = getLicenseCount(LICENSE_TOTAL, subScanTask),
-                unRecommend = getLicenseCount(LicenseNature.UN_RECOMMEND.natureName, subScanTask),
-                unknown = getLicenseCount(LicenseNature.UNKNOWN.natureName, subScanTask),
-                unCompliance = getLicenseCount(LicenseNature.UN_COMPLIANCE.natureName, subScanTask),
-                finishTime = finishedDateTime?.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) ?: "/",
-                duration = ScanPlanConverter.duration(startDateTime, finishedDateTime) / 1000
             )
         }
     }
@@ -172,9 +171,7 @@ object ScanLicenseConverter {
         }
     }
 
-    // 报告许可总数
-    private const val LICENSE_TOTAL = "total"
-    private fun getLicenseCount(level: String, subtask: SubScanTaskDefinition): Long {
+    fun getLicenseCount(level: String, subtask: SubScanTaskDefinition): Long {
         return getLicenseCount(level, subtask.scanResultOverview)
     }
 

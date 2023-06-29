@@ -30,7 +30,6 @@
 package com.tencent.bkrepo.analyst.utils
 
 import com.tencent.bkrepo.analyst.model.LeakDetailExport
-import com.tencent.bkrepo.analyst.model.LeakScanPlanExport
 import com.tencent.bkrepo.analyst.model.SubScanTaskDefinition
 import com.tencent.bkrepo.analyst.model.TProjectScanConfiguration
 import com.tencent.bkrepo.analyst.model.TScanPlan
@@ -45,7 +44,6 @@ import com.tencent.bkrepo.common.analysis.pojo.scanner.CveOverviewKey
 import com.tencent.bkrepo.common.analysis.pojo.scanner.Level
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.api.util.toJsonString
-import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 object Converter {
@@ -122,26 +120,6 @@ object Converter {
                 createdBy = createdBy,
                 createdDate = createdDate.format(DateTimeFormatter.ISO_DATE_TIME),
                 qualityRedLine = qualityRedLine
-            )
-        }
-    }
-
-    fun convertToPlanExport(subScanTask: SubScanTaskDefinition): LeakScanPlanExport {
-
-        return with(convert(subScanTask, emptyList())) {
-            LeakScanPlanExport(
-                name = name,
-                versionOrFullPath = version ?: fullPath!!,
-                repoName = repoName,
-                qualityRedLine = qualityRedLine?.let { if (it) "通过" else "不通过" } ?: "/",
-                critical = critical,
-                high = high,
-                medium = medium,
-                low = low,
-                finishTime = finishTime?.let {
-                    LocalDateTime.parse(it).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-                } ?: "/",
-                duration = duration / 1000
             )
         }
     }

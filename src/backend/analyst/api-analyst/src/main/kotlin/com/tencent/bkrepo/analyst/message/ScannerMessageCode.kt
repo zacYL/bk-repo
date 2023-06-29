@@ -40,7 +40,6 @@ enum class ScannerMessageCode(
     SCAN_PLAN_DELETE_FAILED("scanner.plan.delete-failed", 4),
     SCAN_TASK_COUNT_EXCEED_LIMIT("scanner.task.count.exceed-limit", 5),
     SCAN_TASK_NAME_BATCH_SCAN("scanner.task.name.manual", 6),
-    // 手动单次扫描已弃用, 与批量扫描合并和为手动扫描
     SCAN_TASK_NAME_SINGLE_SCAN("scanner.task.name.manual.single", 7),
     SCAN_REPORT_NOTIFY_MESSAGE_SCANNED("scanner.report.notify.message.scanned",8),
     SCAN_REPORT_NOTIFY_MESSAGE_CVE("scanner.report.notify.message.cve",9),
@@ -51,7 +50,15 @@ enum class ScannerMessageCode(
     LICENSE_NOT_FOUND("license.not-found",14),
     SCAN_REPORT_NOTIFY_MESSAGE_LICENSE("scanner.report.notify.message.license",15),
     SCAN_REPORT_NOTIFY_MESSAGE_SENSITIVE("scanner.report.notify.message.sensitive",16),
-    EXPORT_REPORT_FAIL("export.report.fail", 17);
+    EXPORT_REPORT_FAIL("export.report.fail", 17),
+    EXPORT_REPORT_STATUS_INIT("export.report.status.init", 18),
+    EXPORT_REPORT_STATUS_RUNNING("export.report.status.running", 19),
+    EXPORT_REPORT_STATUS_STOP("export.report.status.stop", 20),
+    EXPORT_REPORT_STATUS_SUCCESS("export.report.status.success", 21),
+    EXPORT_REPORT_STATUS_UN_QUALITY("export.report.status.un.quality", 22),
+    EXPORT_REPORT_STATUS_QUALITY_PASS("export.report.status.quality.pass", 23),
+    EXPORT_REPORT_STATUS_QUALITY_UN_PASS("export.report.status.quality.un.pass", 24),
+    EXPORT_REPORT_STATUS_FAILED("export.report.status.failed", 25);
 
     override fun getBusinessCode() = businessCode
     override fun getKey() = key

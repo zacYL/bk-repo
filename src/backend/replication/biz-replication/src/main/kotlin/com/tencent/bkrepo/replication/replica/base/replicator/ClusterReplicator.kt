@@ -29,6 +29,9 @@ package com.tencent.bkrepo.replication.replica.base.replicator
 
 import com.tencent.bkrepo.common.artifact.constant.RESERVED_KEY
 import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
+import com.tencent.bkrepo.common.artifact.pojo.configuration.composite.CompositeConfiguration
+import com.tencent.bkrepo.common.artifact.pojo.configuration.local.LocalConfiguration
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.stream.rateLimit
 import com.tencent.bkrepo.replication.config.ReplicationProperties
@@ -94,6 +97,16 @@ class ClusterReplicator(
             // 外部集群仓库没有project/repoName
             if (remoteProjectId.isNullOrBlank() || remoteRepoName.isNullOrBlank()) return
             val localRepo = localDataManager.findRepoByName(localProjectId, localRepoName, localRepoType.name)
+            // 兼容仓库拆分
+            val configuration = if (localRepo.category == RepositoryCategory.LOCAL &&
+                localRepo.configuration is CompositeConfiguration) {
+                val compositeConfiguration = localRepo.configuration as CompositeConfiguration
+                LocalConfiguration(compositeConfiguration.webHook, compositeConfiguration.cleanStrategy).apply {
+                    this.settings = compositeConfiguration.settings
+                }
+            }else{
+                localRepo.configuration
+            }
             val request = RepoCreateRequest(
                 projectId = remoteProjectId,
                 name = remoteRepoName,
@@ -101,7 +114,7 @@ class ClusterReplicator(
                 category = localRepo.category,
                 public = localRepo.public,
                 description = localRepo.description,
-                configuration = localRepo.configuration,
+                configuration = configuration,
                 operator = localRepo.createdBy
             )
             context.remoteRepo = artifactReplicaClient!!.replicaRepoCreateRequest(request).data!!

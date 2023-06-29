@@ -41,21 +41,21 @@
                         currentFileName = ''
                     }" />
                 </div>
-                <bk-form :label-width="200" :model="formData" :rules="rules" form-type="vertical" ref="productForm">
-                    <bk-form-item label="Group ID" :required="true" :property="'groupId'">
-                        <bk-input v-model="formData.groupId"></bk-input>
+                <bk-form :label-width="200" :model="formData" form-type="vertical">
+                    <bk-form-item label="Group ID" property="groupId">
+                        <bk-input readonly v-model="formData.groupId"></bk-input>
                     </bk-form-item>
-                    <bk-form-item label="Artifact ID" :required="true" :property="'artifactId'">
-                        <bk-input v-model="formData.artifactId"></bk-input>
+                    <bk-form-item label="Artifact ID" property="artifactId">
+                        <bk-input readonly v-model="formData.artifactId"></bk-input>
                     </bk-form-item>
-                    <bk-form-item label="Version" :required="true" :property="'version'">
-                        <bk-input v-model="formData.version"></bk-input>
+                    <bk-form-item label="Version" property="version">
+                        <bk-input readonly v-model="formData.version"></bk-input>
                     </bk-form-item>
-                    <bk-form-item label="Classifier" :property="'classifier'">
-                        <bk-input v-model="formData.classifier"></bk-input>
+                    <bk-form-item v-if="formData.classifier" label="Classifier" property="classifier">
+                        <bk-input readonly v-model="formData.classifier"></bk-input>
                     </bk-form-item>
-                    <bk-form-item label="Type" :required="true" :property="'type'">
-                        <bk-input v-model="formData.type"></bk-input>
+                    <bk-form-item label="Type" property="type">
+                        <bk-input readonly v-model="formData.type"></bk-input>
                     </bk-form-item>
                 </bk-form>
             </div>
@@ -114,53 +114,6 @@
                 currentFileName: '', // 当前上传的文件名
                 errorMsg: '', // 上传接口后台返回的错误信息
                 uploadPercent: 0,
-                rules: {
-                    groupId: [
-                        {
-                            required: true,
-                            message: '请输入Group ID',
-                            trigger: 'blur'
-                        },
-                        {
-                            validator: this.checkGroupOrArtifact,
-                            message: '请输入正确的Group ID',
-                            trigger: 'blur'
-                        }
-                    ],
-                    artifactId: [
-                        {
-                            required: true,
-                            message: '请输入Artifact ID',
-                            trigger: 'blur'
-                        },
-                        {
-                            validator: this.checkGroupOrArtifact,
-                            message: '请输入正确的Artifact ID',
-                            trigger: 'blur'
-                        }
-                    ],
-                    version: [
-                        {
-                            required: true,
-                            message: '请输入Version',
-                            trigger: 'blur'
-                        },
-                        // \/:"<>|?*[](){},
-                        {
-                            validator: this.checkVersion,
-                            message: '请输入正确的Version,不包括\/:"<>|?*[](){},',
-                            trigger: 'blur'
-                        }
-
-                    ],
-                    type: [
-                        {
-                            required: true,
-                            message: '请输入Type',
-                            trigger: 'blur'
-                        }
-                    ]
-                },
                 uploadXhr: null, // 上传请求的xhr对象，用于上传和取消上传时所用
                 isLoading: false // 上传选择框是否在加载中状态，因为不能禁用，所以选择使用loading代替
 
@@ -177,14 +130,6 @@
                 'submitMavenArtifactory',
                 'deleteErrorPackage'
             ]),
-            checkGroupOrArtifact (val) {
-                const reg = /^[a-zA-Z0-9_\-.]+$/
-                return reg.test(val)
-            },
-            checkVersion (val) {
-                const reg = /[\\+/:："”<>|?*(){},，\[\]]/
-                return !reg.test(val)
-            },
             handleClickClose () {
                 this.customSettings = {
                     isShow: false,
@@ -257,26 +202,21 @@
                 this.$emit('cancel', false)
             },
             submitData () {
-                this.$refs.productForm.validate().then(validator => {
-                    this.customSettings.saveBtnDisable = true
-                    const params = {
-                        projectId: this.projectId,
-                        repoName: this.repoName,
-                        body: { ...this.formData }
-                    }
-                    this.submitMavenArtifactory(params).then(res => {
-                        this.$emit('update', false)
-                    }).catch(error => {
-                        this.$bkMessage({
-                            theme: 'error',
-                            message: `${error.message || '上传出错了，请重新上传'}`
-                        })
-                    }).finally(() => {
-                        this.customSettings.saveBtnDisable = false
+                this.customSettings.saveBtnDisable = true
+                const params = {
+                    projectId: this.projectId,
+                    repoName: this.repoName,
+                    body: { ...this.formData }
+                }
+                this.submitMavenArtifactory(params).then(res => {
+                    this.$emit('update', false)
+                }).catch(error => {
+                    this.$bkMessage({
+                        theme: 'error',
+                        message: `${error.message || '上传出错了，请重新上传'}`
                     })
-                }, validator => {
-                    // console.log('表单校验出错了')
-                    // 显示第一个出错位置
+                }).finally(() => {
+                    this.customSettings.saveBtnDisable = false
                 })
             }
         }

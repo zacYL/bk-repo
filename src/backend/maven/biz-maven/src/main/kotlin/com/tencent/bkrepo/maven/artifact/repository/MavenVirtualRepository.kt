@@ -66,7 +66,9 @@ class MavenVirtualRepository : VirtualRepository() {
                     Triple(timestamp, resource, sha1)
                 } else null
             } as List<Triple<String, ArtifactResource, String?>>
-            return resources.maxByOrNull { it.first }?.run {
+            val latestResource = resources.maxByOrNull { it.first }
+            resources.filterNot { it == latestResource }.forEach { it.second.getSingleStream().close() }
+            return latestResource?.run {
                 third?.let { context.response.setHeader(X_CHECKSUM_SHA1, it) }
                 second
             }

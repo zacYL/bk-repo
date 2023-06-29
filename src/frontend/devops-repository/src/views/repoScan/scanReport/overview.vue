@@ -114,10 +114,10 @@
                 const info = [{ key: 'artifactCount', label: '扫描制品数量' }]
                 if (this.scanPlan.scanTypes.includes(SCAN_TYPE_SECURITY)) {
                     info.push(
-                        { key: 'critical', label: '危急漏洞', color: '#EA3736' },
-                        { key: 'high', label: '高级漏洞', color: '#FFB549' },
-                        { key: 'medium', label: '中级漏洞', color: '#3A84FF' },
-                        { key: 'low', label: '低级漏洞', color: '#979BA5' })
+                        { key: 'critical', label: '严重漏洞', color: '#EA3736' },
+                        { key: 'high', label: '高危漏洞', color: '#FFB549' },
+                        { key: 'medium', label: '中危漏洞', color: '#3A84FF' },
+                        { key: 'low', label: '低危漏洞', color: '#979BA5' })
                 }
                 if (this.scanPlan.scanTypes.includes(SCAN_TYPE_LICENSE)) {
                     info.push(

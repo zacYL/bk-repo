@@ -131,6 +131,9 @@
         },
         computed: {
             ...mapGetters(['masterNode']),
+            projectId () {
+                return this.$route.params.projectId
+            },
             logId () {
                 return this.$route.params.logId
             },
@@ -145,6 +148,7 @@
         created () {
             this.handlerPaginationChange()
             this.getPlanLogDetail({
+                projectId: this.projectId,
                 id: this.logId
             }).then(res => {
                 if (res) {
@@ -171,6 +175,7 @@
             getPlanLogPackageListHandler () {
                 this.isLoading = true
                 this.getPlanLogPackageList({
+                    projectId: this.projectId,
                     current: this.pagination.current,
                     limit: this.pagination.limit,
                     id: this.logId,
@@ -212,7 +217,7 @@
             },
             // 获取任务执行日志详情总览，显示同步数量(同步总次数、成功、失败、冲突次数)
             getPlanLogCountList () {
-                this.getPlanLogDetailOverview({ id: this.logId }).then(res => {
+                this.getPlanLogDetailOverview({ projectId: this.projectId, id: this.logId }).then(res => {
                     this.countList = res
                 })
             }

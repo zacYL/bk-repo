@@ -1,7 +1,7 @@
 <template>
     <div class="plan-container" v-bkloading="{ isLoading }">
-        <div class="ml20 mr20 mt10 flex-between-center">
-            <bk-button icon="plus" theme="primary" @click="handleClickCreatePlan">{{ $t('create') }}</bk-button>
+        <div class="ml20 mr20 mt10" :class="createPlanPermission ? 'flex-between-center' : 'flex-end-center' ">
+            <bk-button v-if="createPlanPermission" icon="plus" theme="primary" @click="handleClickCreatePlan">{{ $t('create') }}</bk-button>
             <div class="flex-align-center">
                 <bk-input
                     class="w250"
@@ -169,14 +169,26 @@
                     name: '',
                     planKey: '',
                     description: ''
-                }
+                },
+                // 当前用户所拥有的权限集合
+                currentPermissionList: []
             }
         },
         computed: {
-            ...mapState(['userList'])
+            ...mapState(['userList']),
+            projectId () {
+                return this.$route.params.projectId
+            },
+            // 是否有创建权限
+            createPlanPermission () {
+                return this.currentPermissionList?.includes('create')
+            }
         },
         created () {
             this.handlerPaginationChange()
+            this.getPlanOperationPermission({ projectId: this.projectId }).then((res) => {
+                this.currentPermissionList = res
+            })
         },
         methods: {
             formatDate,
@@ -184,8 +196,17 @@
                 'getPlanList',
                 'changeEnabled',
                 'executePlan',
-                'deletePlan'
+                'deletePlan',
+                'getPlanOperationPermission'
             ]),
+            noPermissionHandler (key) {
+                if (!key) return
+                this.$bkMessage({
+                    message: this.$t('noPlanPermissionInfo', { permission: this.$t(key) }),
+                    theme: 'warning',
+                    limit: 3
+                })
+            },
             getExecutionStrategy ({ replicaType, setting: { executionStrategy } }) {
                 return replicaType === 'REAL_TIME'
                     ? '实时同步'
@@ -225,6 +246,7 @@
                     message: `确认执行计划 ${name} ?`,
                     confirmFn: () => {
                         return this.executePlan({
+                            projectId: this.projectId,
                             key
                         }).then(() => {
                             this.getPlanListHandler()
@@ -255,6 +277,10 @@
                 this.getPlanListHandler()
             },
             editPlanHandler ({ name, key, lastExecutionStatus }) {
+                if (!this.currentPermissionList?.includes('update')) {
+                    this.noPermissionHandler('edit')
+                    return
+                }
                 if (lastExecutionStatus) return
                 this.drawerSlider = {
                     isShow: true,
@@ -278,6 +304,10 @@
                 // })
             },
             copyPlanHandler ({ name, key, description }) {
+                if (!this.currentPermissionList?.includes('copy')) {
+                    this.noPermissionHandler('copy')
+                    return
+                }
                 this.planCopy = {
                     show: true,
                     name,
@@ -286,11 +316,16 @@
                 }
             },
             deletePlanHandler ({ key, name }) {
+                if (!this.currentPermissionList?.includes('delete')) {
+                    this.noPermissionHandler('delete')
+                    return
+                }
                 this.$confirm({
                     theme: 'danger',
                     message: `确认删除计划 ${name} ?`,
                     confirmFn: () => {
                         return this.deletePlan({
+                            projectId: this.projectId,
                             key
                         }).then(() => {
                             this.handlerPaginationChange()
@@ -318,6 +353,7 @@
             },
             changeEnabledHandler ({ key, enabled }) {
                 this.changeEnabled({
+                    projectId: this.projectId,
                     key
                 }).then(res => {
                     this.$bkMessage({

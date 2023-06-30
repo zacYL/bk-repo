@@ -52,60 +52,54 @@ export default {
         )
     },
     // 创建分发计划
-    createPlan (_, { body }) {
+    createPlan (_, { projectId, body }) {
         return Vue.prototype.$ajax.post(
-            `${prefix}/task/create`,
+            `${prefix}/task/${projectId}/create`,
             body
         )
     },
-    // 能否编辑分发计划
-    checkUpdatePlan (_, { key }) {
-        return Vue.prototype.$ajax.get(
-            `${prefix}/task/canUpdated/${key}`
-        )
-    },
     // 编辑分发计划
-    updatePlan (_, { body }) {
+    updatePlan (_, { projectId, body }) {
         return Vue.prototype.$ajax.post(
-            `${prefix}/task/update`,
+            `${prefix}/task/${projectId}/update`,
             body
         )
     },
     // 启用/停用计划
-    changeEnabled (_, { key }) {
+    changeEnabled (_, { projectId, key }) {
         return Vue.prototype.$ajax.post(
-            `${prefix}/task/toggle/status/${key}`
+            `${prefix}/task/toggle/status/${projectId}/${key}`
         )
     },
     // 执行计划
-    executePlan (_, { key }) {
+    executePlan (_, { projectId, key }) {
         return Vue.prototype.$ajax.post(
-            `${prefix}/task/execute/${key}`
+            `${prefix}/task/execute/${projectId}/${key}`
         )
     },
     // 复制计划
-    copyPlan (_, { body }) {
+    copyPlan (_, { projectId, body }) {
         return Vue.prototype.$ajax.post(
-            `${prefix}/task/copy`,
+            `${prefix}/task/${projectId}/copy`,
             body
         )
     },
     // 计划详情
-    getPlanDetail (_, { key }) {
+    getPlanDetail (_, { projectId, key }) {
         return Vue.prototype.$ajax.get(
-            `${prefix}/task/detail/${key}`
+            `${prefix}/task/detail/${projectId}/${key}`
         )
     },
     // 删除计划
-    deletePlan (_, { key }) {
+    deletePlan (_, { projectId, key }) {
         return Vue.prototype.$ajax.delete(
-            `${prefix}/task/delete/${key}`
+            `${prefix}/task/delete/${projectId}/${key}`
         )
     },
     // 计划执行日志
-    getPlanLogList (_, { key, status, current = 1, limit = 10 }) {
+    getPlanLogList (_, { key, status, projectId, current = 1, limit = 10 }) {
         return Vue.prototype.$ajax.get(
-            `${prefix}/task/record/page/${key}`,
+            `${prefix}/task/record/page/${projectId}/${key}`,
             {
                 params: {
                     pageNumber: current,
@@ -116,15 +110,15 @@ export default {
         )
     },
     // 计划执行日志
-    getPlanLogDetail (_, { id }) {
+    getPlanLogDetail (_, { projectId, id }) {
         return Vue.prototype.$ajax.get(
-            `${prefix}/task/record/${id}`
+            `${prefix}/task/record/${projectId}/${id}`
         )
     },
     // 计划执行日志制品详情
-    getPlanLogPackageList (_, { id, status, artifactName, repoName, clusterName, current = 1, limit = 10 }) {
+    getPlanLogPackageList (_, { projectId, id, status, artifactName, repoName, clusterName, current = 1, limit = 10 }) {
         return Vue.prototype.$ajax.get(
-            `${prefix}/task/record/detail/page/${id}`,
+            `${prefix}/task/record/detail/page/${projectId}/${id}`,
             {
                 params: {
                     pageNumber: current,
@@ -142,9 +136,19 @@ export default {
      * @param {id} 任务执行日志唯一id
      * @returns
      */
-    getPlanLogDetailOverview (_, { id }) {
+    getPlanLogDetailOverview (_, { projectId, id }) {
         return Vue.prototype.$ajax.get(
-            `${prefix}/task/record/detail/overview/${id}`
+            `${prefix}/task/record/detail/overview/${projectId}/${id}`
+        )
+    },
+    /**
+     *  获取当前用户有权限的操作集合
+     * @param {projectId} 项目id
+     * @returns
+     */
+    getPlanOperationPermission (_, { projectId }) {
+        return Vue.prototype.$ajax.get(
+            `${prefix}/permission/${projectId}/query`
         )
     }
 }

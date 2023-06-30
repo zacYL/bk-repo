@@ -225,9 +225,9 @@
         },
         computed: {
             ...mapState(['clusterList', 'userList']),
-            // projectId () {
-            //     return this.$route.params.projectId
-            // },
+            projectId () {
+                return this.$route.params.projectId
+            },
             routeName () {
                 return this.rowsData.routeName
             },
@@ -273,6 +273,7 @@
             handlePlanDetail () {
                 this.isLoading = true
                 this.getPlanDetail({
+                    projectId: this.projectId,
                     key: this.rowsData.planId
                 }).then(({
                     task: {
@@ -380,8 +381,8 @@
                     body.notRecord = this.noRecordsCheck
                 }
                 const request = this.routeName === 'createPlan'
-                    ? this.createPlan({ body })
-                    : this.updatePlan({ body: { ...body, key: this.rowsData.planId } })
+                    ? this.createPlan({ projectId: this.projectId, body })
+                    : this.updatePlan({ projectId: this.projectId, body: { ...body, key: this.rowsData.planId } })
                 request.then(() => {
                     this.$bkMessage({
                         theme: 'success',

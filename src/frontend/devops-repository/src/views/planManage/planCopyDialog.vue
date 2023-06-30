@@ -53,6 +53,11 @@
                 }
             }
         },
+        computed: {
+            projectId () {
+                return this.$route.params.projectId
+            }
+        },
         watch: {
             show (val) {
                 this.$refs.planCopyForm.clearError()
@@ -67,6 +72,7 @@
                 await this.$refs.planCopyForm.validate()
                 this.loading = true
                 this.copyPlan({
+                    projectId: this.projectId,
                     body: {
                         name: this.formData.name,
                         key: this.planKey,

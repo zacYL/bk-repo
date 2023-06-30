@@ -85,6 +85,9 @@
             }
         },
         computed: {
+            projectId () {
+                return this.$route.params.projectId
+            },
             showSideslider: {
                 get () {
                     return this.show
@@ -112,6 +115,7 @@
                 this.getPlanLogList({
                     key: this.planData.key,
                     status: this.status || undefined,
+                    projectId: this.projectId,
                     current: this.pagination.current,
                     limit: this.pagination.limit
                 }).then(({ records, totalRecords }) => {

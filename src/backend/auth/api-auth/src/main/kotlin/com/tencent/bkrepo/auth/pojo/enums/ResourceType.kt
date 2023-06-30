@@ -39,7 +39,9 @@ enum class ResourceType(val nick: String) {
     METADATA("元数据"),
     PACKAGE("包"),
     USER("用户"),
-    ADMIN("管理员");
+    ADMIN("管理员"),
+    REPLICATION("分发计划");
+
 
     fun id() = this.name.toLowerCase()
 }

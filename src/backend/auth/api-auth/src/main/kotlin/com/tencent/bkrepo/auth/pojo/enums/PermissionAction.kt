@@ -38,6 +38,13 @@ enum class PermissionAction {
     VIEW,
     UPDATE,
     DELETE,
+    /**
+     * 新增分发计划额外权限动作
+     */
+    CREATE,
+    ENABLE,
+    EXECUTE,
+    COPY,
 
     /*canway extend
       从4.3.1 开始不再使用

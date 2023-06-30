@@ -205,6 +205,23 @@ open class PermissionManager(
             anonymous = anonymous
         )
     }
+    /**
+     * 校验分发计划权限
+     * @param action 动作
+     * @param projectId 项目id
+     */
+    open fun checkReplicationPermission(
+        action: PermissionAction,
+        projectId: String,
+        userId: String = SecurityUtils.getUserId()
+    ) {
+        checkPermission(
+            type = ResourceType.REPLICATION,
+            action = action,
+            projectId = projectId,
+            userId = userId
+        )
+    }
 
     /**
      * 校验身份

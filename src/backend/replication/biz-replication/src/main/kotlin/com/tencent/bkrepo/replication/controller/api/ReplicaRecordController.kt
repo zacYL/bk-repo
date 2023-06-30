@@ -27,8 +27,11 @@
 
 package com.tencent.bkrepo.replication.controller.api
 
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
+import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
+import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.replication.pojo.record.*
 import com.tencent.bkrepo.replication.service.ReplicaRecordService
@@ -50,20 +53,30 @@ class ReplicaRecordController(
     private val replicaRecordService: ReplicaRecordService
 ) {
     @ApiOperation("根据recordId查询任务执行日志详情")
-    @GetMapping("/{recordId}")
-    fun getRecordAndTaskInfoByRecordId(@PathVariable recordId: String): Response<ReplicaTaskRecordInfo> {
+    @GetMapping("/{projectId}/{recordId}")
+    @Permission(ResourceType.REPLICATION, PermissionAction.VIEW)
+    fun getRecordAndTaskInfoByRecordId(
+        @PathVariable projectId: String,
+        @PathVariable recordId: String
+    ): Response<ReplicaTaskRecordInfo> {
         return ResponseBuilder.success(replicaRecordService.getRecordAndTaskInfoByRecordId(recordId))
     }
 
     @ApiOperation("根据taskKey查询任务执行日志")
-    @GetMapping("/list/{key}")
-    fun listRecordsByTaskKey(@PathVariable key: String): Response<List<ReplicaRecordInfo>> {
+    @GetMapping("/list/{projectId}/{key}")
+    @Permission(ResourceType.REPLICATION, PermissionAction.VIEW)
+    fun listRecordsByTaskKey(
+        @PathVariable projectId: String,
+        @PathVariable key: String
+    ): Response<List<ReplicaRecordInfo>> {
         return ResponseBuilder.success(replicaRecordService.listRecordsByTaskKey(key))
     }
 
     @ApiOperation("根据taskKey分页查询任务执行日志")
-    @GetMapping("/page/{key}")
+    @GetMapping("/page/{projectId}/{key}")
+    @Permission(ResourceType.REPLICATION, PermissionAction.VIEW)
     fun listRecordsPage(
+        @PathVariable projectId: String,
         @PathVariable key: String,
         option: ReplicaRecordListOption
     ): Response<Page<ReplicaRecordInfo>> {
@@ -71,14 +84,20 @@ class ReplicaRecordController(
     }
 
     @ApiOperation("根据recordId查询任务执行日志详情")
-    @GetMapping("/detail/list/{recordId}")
-    fun listDetailsByRecordId(@PathVariable recordId: String): Response<List<ReplicaRecordDetail>> {
+    @GetMapping("/detail/list/{projectId}/{recordId}")
+    @Permission(ResourceType.REPLICATION, PermissionAction.VIEW)
+    fun listDetailsByRecordId(
+        @PathVariable projectId: String,
+        @PathVariable recordId: String
+    ): Response<List<ReplicaRecordDetail>> {
         return ResponseBuilder.success(replicaRecordService.listDetailsByRecordId(recordId))
     }
 
     @ApiOperation("根据recordId分页查询任务执行日志详情")
-    @GetMapping("/detail/page/{recordId}")
+    @GetMapping("/detail/page/{projectId}/{recordId}")
+    @Permission(ResourceType.REPLICATION, PermissionAction.VIEW)
     fun listRecordDetailPage(
+        @PathVariable projectId: String,
         @ApiParam(value = "执行记录id", required = true)
         @PathVariable recordId: String,
         option: ReplicaRecordDetailListOption
@@ -87,8 +106,10 @@ class ReplicaRecordController(
     }
 
     @ApiOperation("根据recordId查询任务执行日志详情总览")
-    @GetMapping("/detail/overview/{recordId}")
+    @GetMapping("/detail/overview/{projectId}/{recordId}")
+    @Permission(ResourceType.REPLICATION, PermissionAction.VIEW)
     fun recordDetailOverview(
+        @PathVariable projectId: String,
         @ApiParam(value = "执行记录id", required = true)
         @PathVariable recordId: String,
     ): Response<RecordOverview> {

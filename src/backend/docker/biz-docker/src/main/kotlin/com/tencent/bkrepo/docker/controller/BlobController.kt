@@ -86,11 +86,10 @@ class BlobController @Autowired constructor(val dockerRepo: DockerV2LocalRepoSer
         digest: String?,
         artifactFile: ArtifactFile
     ): DockerResponse {
-        dockerRepo.httpHeaders = headers
         val uId = getContextUserId(userId)
         val name = PathUtil.artifactName(request, BLOB_PATTERN, projectId, repoName)
-        val pathContext = RequestContext(uId, projectId, repoName, name)
-        return dockerRepo.uploadBlob(pathContext, DockerDigest(digest), uuid, artifactFile)
+        val requestContext = RequestContext(uId, projectId, repoName, name, headers)
+        return dockerRepo.uploadBlob(requestContext, DockerDigest(digest), uuid, artifactFile)
     }
 
     @RequestMapping(method = [RequestMethod.HEAD], value = [DOCKER_BLOB_DIGEST_SUFFIX])
@@ -152,11 +151,10 @@ class BlobController @Autowired constructor(val dockerRepo: DockerV2LocalRepoSer
         @ApiParam(value = "mount", required = false)
         mount: String?
     ): ResponseEntity<Any> {
-        dockerRepo.httpHeaders = headers
         val uId = getContextUserId(userId)
         val name = PathUtil.artifactName(request, BLOB_PATTERN, projectId, repoName)
-        val pathContext = RequestContext(uId, projectId, repoName, name)
-        return dockerRepo.startBlobUpload(pathContext, mount)
+        val requestContext = RequestContext(uId, projectId, repoName, name, headers)
+        return dockerRepo.startBlobUpload(requestContext, mount)
     }
 
     @RequestMapping(method = [RequestMethod.PATCH], value = [DOCKER_BLOB_UUID_SUFFIX])
@@ -177,10 +175,9 @@ class BlobController @Autowired constructor(val dockerRepo: DockerV2LocalRepoSer
         uuid: String,
         artifactFile: ArtifactFile
     ): DockerResponse {
-        dockerRepo.httpHeaders = headers
         val uId = getContextUserId(userId)
         val name = PathUtil.artifactName(request, BLOB_PATTERN, projectId, repoName)
-        val pathContext = RequestContext(uId, projectId, repoName, name)
-        return dockerRepo.patchUpload(pathContext, uuid, artifactFile)
+        val requestContext = RequestContext(uId, projectId, repoName, name, headers)
+        return dockerRepo.patchUpload(requestContext, uuid, artifactFile)
     }
 }

@@ -37,8 +37,6 @@ import com.tencent.bkrepo.common.api.constant.StringPool.EMPTY
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.security.permission.Permission
-import com.tencent.bkrepo.common.security.permission.Principal
-import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.docker.api.User
 import com.tencent.bkrepo.docker.context.RequestContext

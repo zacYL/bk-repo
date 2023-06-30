@@ -31,6 +31,8 @@
 
 package com.tencent.bkrepo.docker.context
 
+import org.springframework.http.HttpHeaders
+
 /**
  * docker registry request context
  */
@@ -42,5 +44,7 @@ data class RequestContext(
 
     var repoName: String,
 
-    var artifactName: String
+    var artifactName: String,
+
+    var httpHeaders: HttpHeaders = HttpHeaders()
 )

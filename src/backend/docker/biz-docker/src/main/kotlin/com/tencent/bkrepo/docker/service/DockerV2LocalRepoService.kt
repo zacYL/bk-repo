@@ -113,8 +113,6 @@ class DockerV2LocalRepoService @Autowired constructor(
     val nodeClient: NodeClient
 ) : DockerV2RepoService {
 
-    var httpHeaders: HttpHeaders = HttpHeaders()
-
     val manifestProcess = ManifestProcess(artifactRepo, nodeClient)
 
     override fun ping(): DockerResponse {
@@ -151,14 +149,14 @@ class DockerV2LocalRepoService @Autowired constructor(
         DockerCatalogTagsSlicer.sliceCatalog(elementsHolder, maxEntries, lastEntry)
         val shouldAddLinkHeader = elementsHolder.hasMoreElements
         val tagsResponse = TagsResponse(elementsHolder, context.artifactName)
-        httpHeaders.set(DOCKER_HEADER_API_VERSION, DOCKER_API_VERSION)
+        context.httpHeaders.set(DOCKER_HEADER_API_VERSION, DOCKER_API_VERSION)
         if (shouldAddLinkHeader) {
             val last = tagsResponse.tags.last() as String
             val name = context.artifactName
             val link = "</v2/$name/tags/list?last=$last&n=$maxEntries>; rel=\"next\""
-            httpHeaders.set(DOCKER_LINK, link)
+            context.httpHeaders.set(DOCKER_LINK, link)
         }
-        return ResponseEntity(tagsResponse, httpHeaders, HttpStatus.OK)
+        return ResponseEntity(tagsResponse, context.httpHeaders, HttpStatus.OK)
     }
 
     override fun catalog(context: RequestContext, maxEntries: Int, lastEntry: String): DockerResponse {
@@ -176,12 +174,12 @@ class DockerV2LocalRepoService @Autowired constructor(
         }
         val shouldAddLinkHeader = elementsHolder.hasMoreElements
         val catalogResponse = CatalogResponse(elementsHolder)
-        httpHeaders.set(DOCKER_HEADER_API_VERSION, DOCKER_API_VERSION)
+        context.httpHeaders.set(DOCKER_HEADER_API_VERSION, DOCKER_API_VERSION)
         if (shouldAddLinkHeader) {
             val last = catalogResponse.repositories.last() as String
-            httpHeaders.set(DOCKER_LINK, "</v2/_catalog?last=$last&n=$maxEntries>; rel=\"next\"")
+            context.httpHeaders.set(DOCKER_LINK, "</v2/_catalog?last=$last&n=$maxEntries>; rel=\"next\"")
         }
-        return ResponseEntity(catalogResponse, httpHeaders, HttpStatus.OK)
+        return ResponseEntity(catalogResponse, context.httpHeaders, HttpStatus.OK)
     }
 
     override fun getManifest(context: RequestContext, reference: String): DockerResponse {
@@ -197,7 +195,7 @@ class DockerV2LocalRepoService @Autowired constructor(
         // get manifest by sha256
         return if (DockerDigest.isValid(reference)) {
             val digest = DockerDigest(reference)
-            val manifest = manifestProcess.getManifestByDigest(context, digest, httpHeaders)
+            val manifest = manifestProcess.getManifestByDigest(context, digest, context.httpHeaders)
             try {
                 if(isGetRequest) packageRepo.addDownloadStatic(context, manifest.tag)
             } catch (e: ErrorCodeException) {
@@ -213,7 +211,7 @@ class DockerV2LocalRepoService @Autowired constructor(
             } catch (e: ErrorCodeException) {
                 logger.error("$e")
             }
-            manifestProcess.getManifestByTag(context, reference, httpHeaders)
+            manifestProcess.getManifestByTag(context, reference, context.httpHeaders)
         }
     }
 
@@ -384,14 +382,14 @@ class DockerV2LocalRepoService @Autowired constructor(
         logger.info("get blob [$digest] from repo [${context.artifactName}] ,length [${blob.length}]")
         val downloadContext = DownloadContext(context).sha256(digest.getDigestHex()).length(blob.length)
         val inputStream = artifactRepo.download(downloadContext)
-        httpHeaders.apply {
+        context.httpHeaders.apply {
             set(DOCKER_HEADER_API_VERSION, DOCKER_API_VERSION)
         }.apply {
             set(DOCKER_CONTENT_DIGEST, digest.toString())
         }
         val resource = InputStreamResource(inputStream)
         return ResponseEntity.ok().apply {
-            headers(httpHeaders)
+            headers(context.httpHeaders)
         }.apply {
             contentLength(blob.length)
         }.apply {
@@ -412,7 +410,7 @@ class DockerV2LocalRepoService @Autowired constructor(
             val mountableBlob = BlobUtil.getBlobByName(artifactRepo, context, mountDigest.fileName())
             mountableBlob?.let {
                 val path = "${context.artifactName}$BLOB_PATTERN/$mount"
-                val location = ResponseUtil.getDockerURI(path, httpHeaders, artifactRepo.enableHttp)
+                val location = ResponseUtil.getDockerURI(path, context.httpHeaders, artifactRepo.enableHttp)
                 logger.info("found accessible blob at [$mountableBlob] to mount  [$context,$mount]")
                 return ResponseEntity.status(HttpStatus.CREATED).apply {
                     header(DOCKER_HEADER_API_VERSION, DOCKER_API_VERSION)
@@ -431,7 +429,7 @@ class DockerV2LocalRepoService @Autowired constructor(
             path = "$projectId/$repoName/$artifactName/blobs/uploads/$uuid"
         }
 
-        val location = ResponseUtil.getDockerURI(path, httpHeaders, artifactRepo.enableHttp)
+        val location = ResponseUtil.getDockerURI(path, context.httpHeaders, artifactRepo.enableHttp)
         logger.info("upload location [$location]")
         return ResponseEntity.status(HttpStatus.ACCEPTED).apply {
             header(DOCKER_HEADER_API_VERSION, DOCKER_API_VERSION)
@@ -451,7 +449,7 @@ class DockerV2LocalRepoService @Autowired constructor(
     ): DockerResponse {
         logger.info("upload blob [$context,$digest ,$uuid]")
         RepoUtil.loadContext(artifactRepo, context)
-        return if (ResponseUtil.putHasStream(httpHeaders)) {
+        return if (ResponseUtil.putHasStream(context.httpHeaders)) {
             uploadBlobFromPut(context, digest, file)
         } else {
             finishPatchUpload(context, digest, uuid)
@@ -525,7 +523,7 @@ class DockerV2LocalRepoService @Autowired constructor(
     }
 
     private fun getManifestData(context: RequestContext, tag: String): ByteArray? {
-        val useManifestType = manifestProcess.chooseManifestType(context, tag, httpHeaders)
+        val useManifestType = manifestProcess.chooseManifestType(context, tag, context.httpHeaders)
         val manifestPath = ResponseUtil.buildManifestPath(context.artifactName, tag, useManifestType)
         val manifest = artifactRepo.getArtifact(context.projectId, context.repoName, manifestPath) ?: run {
             logger.warn("node not exist [$context]")
@@ -592,7 +590,7 @@ class DockerV2LocalRepoService @Autowired constructor(
             return DockerV2Errors.blobUploadInvalid(context.artifactName)
         }
         val path = "${context.artifactName}$BLOB_PATTERN/$digest"
-        val location = ResponseUtil.getDockerURI(path, httpHeaders, artifactRepo.enableHttp)
+        val location = ResponseUtil.getDockerURI(path, context.httpHeaders, artifactRepo.enableHttp)
         return ResponseEntity.created(location).apply {
             header(DOCKER_HEADER_API_VERSION, DOCKER_API_VERSION)
         }.apply {
@@ -611,7 +609,7 @@ class DockerV2LocalRepoService @Autowired constructor(
         with(context) {
             url = "$projectId/$repoName/$artifactName$BLOB_PATTERN/$digest"
         }
-        val location = ResponseUtil.getDockerURI(url, httpHeaders, artifactRepo.enableHttp)
+        val location = ResponseUtil.getDockerURI(url, context.httpHeaders, artifactRepo.enableHttp)
         return ResponseEntity.created(location).apply {
             header(DOCKER_HEADER_API_VERSION, DOCKER_API_VERSION)
         }.apply {

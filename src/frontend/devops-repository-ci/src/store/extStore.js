@@ -70,7 +70,7 @@ export default {
         },
         // 仓库内自定义查询
         // override
-        getArtifactoryList (_, { projectId, repoName, name, fullPath, current, limit, sortType = 'lastModifiedDate', searchFlag }) {
+        getArtifactoryList (_, { projectId, repoName, name, fullPath, current, limit, sortType = 'lastModifiedDate', sortDirection = 'DESC', searchFlag }) {
             return Vue.prototype.$ajax.post(
                 'repository/api/node/search',
                 {
@@ -80,7 +80,7 @@ export default {
                     },
                     sort: {
                         properties: ['folder', sortType],
-                        direction: 'DESC'
+                        direction: sortDirection
                     },
                     rule: {
                         rules: [

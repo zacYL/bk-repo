@@ -83,7 +83,7 @@
                         <empty-data :is-loading="isLoading" :search="Boolean(searchFileName)"></empty-data>
                     </template>
                     <bk-table-column type="selection" width="60"></bk-table-column>
-                    <bk-table-column :label="$t('fileName')" prop="name" show-overflow-tooltip :render-header="renderHeader">
+                    <bk-table-column :label="$t('fileName')" prop="name" show-overflow-tooltip>
                         <template #default="{ row }">
                             <Icon class="table-svg mr5" size="16" :name="row.folder ? 'folder' : getIconName(row.name)" />
                             <span
@@ -228,6 +228,7 @@
                 // 左侧树处于打开状态的目录
                 sideTreeOpenList: [],
                 sortType: 'lastModifiedDate',
+                sortDirection: 'DESC',
                 // 中间展示的table数据
                 artifactoryList: [],
                 multiSelect: [],
@@ -358,13 +359,15 @@
                     on: {
                         click: () => {
                             this.sortType = column.property
+                            // 当点击切换排序时需要将升序修改为降序，降序修改为升序
+                            this.sortDirection = this.sortDirection === 'DESC' ? 'ASC' : 'DESC'
                             this.handlerPaginationChange()
                         }
                     }
                 }, [
                     h('span', column.label),
                     h('i', {
-                        class: 'ml5 devops-icon icon-down-shape'
+                        class: `ml5 devops-icon ${this.sortDirection === 'DESC' ? 'icon-down-shape' : 'icon-up-shape'}`
                     })
                 ])
             },
@@ -433,6 +436,7 @@
                     limit: this.pagination.limit,
                     sortType: this.sortType,
                     isPipeline: this.repoName === 'pipeline',
+                    sortDirection: this.sortDirection,
                     searchFlag: this.searchFileName
                 }).then(({ records, totalRecords }) => {
                     this.pagination.count = totalRecords
@@ -879,6 +883,9 @@
             ::v-deep .selected-header {
                 color: var(--fontPrimaryColor);
                 .icon-down-shape {
+                    color: var(--primaryColor);
+                }
+                .icon-up-shape {
                     color: var(--primaryColor);
                 }
             }

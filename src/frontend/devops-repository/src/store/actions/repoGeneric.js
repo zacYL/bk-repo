@@ -106,7 +106,7 @@ export default {
         )
     },
     // 仓库内自定义查询
-    getArtifactoryList (_, { projectId, repoName, name, fullPath, current, limit, isPipeline = false, sortType = 'lastModifiedDate', searchFlag }) {
+    getArtifactoryList (_, { projectId, repoName, name, fullPath, current, limit, isPipeline = false, sortType = 'lastModifiedDate', sortDirection = 'DESC', searchFlag }) {
         // if (isPipeline && !fullPath && !name) {
         //     return Vue.prototype.$ajax.get(
         //         `${prefix}/pipeline/list/${projectId}`
@@ -121,7 +121,7 @@ export default {
                 },
                 sort: {
                     properties: ['folder', sortType],
-                    direction: 'DESC'
+                    direction: sortDirection
                 },
                 rule: {
                     rules: [

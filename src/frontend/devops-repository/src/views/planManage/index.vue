@@ -338,7 +338,7 @@
                 })
             },
             copyUrlHandler ({ key }) {
-                const url = window.location.origin + `/replication/api/task/execute/${key}`
+                const url = window.location.origin + `/replication/api/task/execute/${this.projectId}/${key}`
                 copyToClipboard(url).then(() => {
                     this.$bkMessage({
                         theme: 'success',

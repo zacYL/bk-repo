@@ -167,6 +167,9 @@
             <bk-tab-panel v-if="showCleanConfigTab" render-directive="if" name="cleanConfig" label="清理设置">
                 <clean-config :base-data="repoBaseInfo" @refresh="getRepoInfoHandler"></clean-config>
             </bk-tab-panel>
+            <bk-tab-panel render-directive="if" name="permissionConfig" :label="$t('permissionConfig')">
+                <permission-config :category="repoBaseInfo.category"></permission-config>
+            </bk-tab-panel>
         </bk-tab>
         <check-target-store
             ref="checkTargetStoreRef"
@@ -180,6 +183,7 @@
     import CardRadioGroup from '@repository/components/CardRadioGroup'
     import proxyConfig from '@repository/views/repoConfig/proxyConfig'
     import cleanConfig from '@repository/views/repoConfig/cleanConfig'
+    import permissionConfig from './permissionConfig'
     import CheckTargetStore from '@repository/components/CheckTargetStore'
     import StoreSort from '@repository/components/StoreSort'
     import { mapState, mapActions } from 'vuex'
@@ -191,6 +195,7 @@
             CardRadioGroup,
             proxyConfig,
             cleanConfig,
+            permissionConfig,
             StoreSort,
             CheckTargetStore
         },

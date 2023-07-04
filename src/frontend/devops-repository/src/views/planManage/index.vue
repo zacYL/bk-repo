@@ -141,6 +141,7 @@
         components: { planLog, planCopyDialog, OperationList, createPlan },
         data () {
             return {
+                ciMode: MODE_CONFIG === 'ci',
                 drawerSlider: {
                     isShow: false,
                     title: '',
@@ -181,14 +182,16 @@
             },
             // 是否有创建权限
             createPlanPermission () {
-                return this.currentPermissionList?.includes('create')
+                return !this.ciMode ? true : this.currentPermissionList?.includes('create')
             }
         },
         created () {
             this.handlerPaginationChange()
-            this.getPlanOperationPermission({ projectId: this.projectId }).then((res) => {
-                this.currentPermissionList = res
-            })
+            if (this.ciMode) {
+                this.getPlanOperationPermission({ projectId: this.projectId }).then((res) => {
+                    this.currentPermissionList = res
+                })
+            }
         },
         methods: {
             formatDate,
@@ -277,7 +280,7 @@
                 this.getPlanListHandler()
             },
             editPlanHandler ({ name, key, lastExecutionStatus }) {
-                if (!this.currentPermissionList?.includes('update')) {
+                if (this.ciMode && !this.currentPermissionList?.includes('update')) {
                     this.noPermissionHandler('edit')
                     return
                 }
@@ -304,7 +307,7 @@
                 // })
             },
             copyPlanHandler ({ name, key, description }) {
-                if (!this.currentPermissionList?.includes('copy')) {
+                if (this.ciMode && !this.currentPermissionList?.includes('copy')) {
                     this.noPermissionHandler('copy')
                     return
                 }
@@ -316,7 +319,7 @@
                 }
             },
             deletePlanHandler ({ key, name }) {
-                if (!this.currentPermissionList?.includes('delete')) {
+                if (this.ciMode && !this.currentPermissionList?.includes('delete')) {
                     this.noPermissionHandler('delete')
                     return
                 }

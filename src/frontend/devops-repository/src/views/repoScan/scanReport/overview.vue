@@ -220,7 +220,7 @@
             },
             exportReport () {
                 let [startTime, endTime = new Date(nowTime)] = this.exportTime
-                startTime = startTime || new Date(endTime - 3600 * 1000 * 24 * 30)
+                startTime = startTime || (endTime instanceof Date ? new Date(endTime - 3600 * 1000 * 24 * 30) : '')
                 const params = new URLSearchParams({
                     projectId: this.scanPlan.projectId,
                     id: this.scanPlan.id,
@@ -229,8 +229,8 @@
                         : {
                             status: this.exportStatus
                         }),
-                    startTime: startTime.toISOString(),
-                    endTime: endTime.toISOString()
+                    ...(startTime instanceof Date ? { startTime: startTime.toISOString() } : {}),
+                    ...(endTime instanceof Date ? { endTime: endTime.toISOString() } : {})
                 })
                 this.showExportDialog = false
                 this.$bkNotify({
@@ -305,5 +305,8 @@
             color: var(--subsidiaryColor)
         }
     }
+}
+::v-deep .bk-select{
+    width: 261px;
 }
 </style>

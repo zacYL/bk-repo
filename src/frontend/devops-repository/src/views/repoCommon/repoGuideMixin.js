@@ -101,7 +101,22 @@ export default {
                     title: '设置凭证',
                     main: [
                         {
-                            subTitle: '方式一、使用个人令牌'
+                            subTitle: '方式一：使用交互式命令行设置凭证（推荐）'
+                        },
+                        {
+                            subTitle: '使用命令行窗口，设置 npm registry 为当前制品库仓库',
+                            codeList: [
+                                `npm config set registry ${this.domain.npm}/${this.projectId}/${this.repoName}/`
+                            ]
+                        },
+                        {
+                            subTitle: '进入命令行窗口根据用户凭证登录',
+                            codeList: [
+                                'npm login'
+                            ]
+                        },
+                        {
+                            subTitle: '方式二：使用个人令牌'
                         },
                         {
                             subTitle: '将下列配置添加到项目的 package.json 文件同一级目录下的 .npmrc 文件中',
@@ -127,21 +142,6 @@ export default {
                         },
                         {
                             subTitle: '3、复制编码后的token，替换<BASE64_ENCODE_PERSONAL_ACCESS_TOKEN>'
-                        },
-                        {
-                            subTitle: '方式二：使用交互式命令行设置凭证'
-                        },
-                        {
-                            subTitle: '使用命令行窗口，设置 npm registry 为当前制品库仓库',
-                            codeList: [
-                                `npm config set registry ${this.domain.npm}/${this.projectId}/${this.repoName}/`
-                            ]
-                        },
-                        {
-                            subTitle: '进入命令行窗口根据用户凭证登录',
-                            codeList: [
-                                'npm login'
-                            ]
                         }
                     ]
                 },

@@ -9,7 +9,8 @@
                 <div class="pt20 section-main">
                     <bk-button text theme="primary" @click="createToken">{{ $t('createToken') }}</bk-button>
                     {{ $t('tokenSubTitle') }}
-                    <router-link :to="{ name: 'repoToken' }">{{ $t('token') }}</router-link>
+                    <bk-button v-if="ciMode" text theme="primary" @click="jumpCCommonUserToken">{{ $t('token') }}</bk-button>
+                    <router-link v-else :to="{ name: 'repoToken' }">{{ $t('token') }}</router-link>
                 </div>
             </template>
             <create-token-dialog ref="createToken"></create-token-dialog>
@@ -42,12 +43,17 @@
         },
         data () {
             return {
+                ciMode: MODE_CONFIG === 'ci',
                 activeName: ['token', ...[0, 1, 2, 3, 4].map(v => `section${v}`)]
             }
         },
         methods: {
             createToken () {
                 this.$refs.createToken.showDialogHandler()
+            },
+            // 集成CI模式下需要跳转到用户个人中心的访问令牌页面
+            jumpCCommonUserToken () {
+                window.open(window.DEVOPS_SITE_URL + '/console/userCenter/userToken', '_blank')
             }
         }
     }

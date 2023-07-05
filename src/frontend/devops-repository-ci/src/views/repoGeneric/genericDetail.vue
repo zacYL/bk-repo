@@ -29,7 +29,7 @@
                     <div class="pl30">
                         <bk-button text theme="primary" @click="createToken">{{ $t('createToken') }}</bk-button>
                         {{ $t('tokenSubTitle') }}
-                        <router-link :to="{ name: 'repoToken' }">{{ $t('token') }}</router-link>
+                        <bk-button text theme="primary" @click="jumpCCommonUserToken">{{ $t('token') }}</bk-button>
                     </div>
                     <code-area class="mt10" :code-list="codeList"></code-area>
                     <create-token-dialog ref="createToken"></create-token-dialog>
@@ -196,6 +196,10 @@
             },
             createToken () {
                 this.$refs.createToken.showDialogHandler()
+            },
+            // 集成CI模式下需要跳转到用户个人中心的访问令牌页面
+            jumpCCommonUserToken () {
+                window.open(window.DEVOPS_SITE_URL + '/console/userCenter/userToken', '_blank')
             },
             showAddMetadata () {
                 this.metadata = {

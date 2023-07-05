@@ -60,7 +60,7 @@
     "fileName": "文件名",
     "artiStatus": "制品状态",
     "lastModifiedDate": "修改时间",
-    "lastModifiedBy": "更新人",
+    "lastModifiedBy": "Last modified by",
     "size": "大小",
     "search": "搜索",
     "searchInRepo": "仓库内搜索",
@@ -234,5 +234,6 @@
     "remoteStoreInfo":"Proxy and cache packages hosted remotely",
     "virtualStoreInfo":"Combine local and remote packages in one place",
     "exportReportInfo":"Artifact scan record is generating report, please wait ...",
-    "noPlanPermissionInfo":"You do not have permission to {permission}, please contact the administrator to authorize"
+    "noPlanPermissionInfo":"You do not have permission to {permission}, please contact the administrator to authorize",
+    "recentlyUseDate":"Download time"
 }

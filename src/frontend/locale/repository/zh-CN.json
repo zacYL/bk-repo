@@ -61,7 +61,7 @@
     "fileName": "文件名",
     "artiStatus": "制品状态",
     "lastModifiedDate": "修改时间",
-    "lastModifiedBy": "更新人",
+    "lastModifiedBy": "修改人",
     "size": "大小",
     "search": "搜索",
     "searchInRepo": "仓库内搜索",
@@ -242,5 +242,6 @@
     "remoteStoreInfo":"代理和缓存远程托管的软件包",
     "virtualStoreInfo":"将本地和远程软件包合并到一个地方",
     "exportReportInfo":"制品扫描记录正在生成报告中，请稍等...",
-    "noPlanPermissionInfo":"您没有{permission}权限，请联系管理员授权"
+    "noPlanPermissionInfo":"您没有{permission}权限，请联系管理员授权",
+    "recentlyUseDate":"下载时间"
 }

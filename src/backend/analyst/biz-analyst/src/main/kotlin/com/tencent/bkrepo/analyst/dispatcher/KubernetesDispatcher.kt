@@ -192,17 +192,6 @@ class KubernetesDispatcher(
             return true
         }
 
-//        val secretData = createSecretData(privateRegistry, username, password)
-//        val dockerCredentials = mapOf( //写一个data class
-//            "auths" to mapOf(
-//                privateRegistry to mapOf(
-//                    "auth" to Base64Utils.encodeToString("$username:$password".toByteArray())//工具类代替
-//                )
-//            )
-//        )
-//        val secretData = mapOf(
-//            KubernetesStringPool.DOCKER_SECRET_TYPE.value to dockerCredentials.toJsonString().toByteArray()
-//        )
         val secret = v1Secret {
             apiVersion = KubernetesStringPool.API_VERSION.value
             kind = KubernetesStringPool.SECRET_KIND.value

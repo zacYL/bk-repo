@@ -55,7 +55,10 @@ import com.tencent.bkrepo.analyst.dao.ScanPlanDao
 import com.tencent.bkrepo.analyst.dao.ScanTaskDao
 import com.tencent.bkrepo.analyst.dao.SubScanTaskDao
 import com.tencent.bkrepo.analyst.exception.ScanTaskNotFoundException
-import com.tencent.bkrepo.analyst.model.*
+import com.tencent.bkrepo.analyst.model.LeakDetailExport
+import com.tencent.bkrepo.analyst.model.LicenseScanDetailExport
+import com.tencent.bkrepo.analyst.model.ScanPlanExport
+import com.tencent.bkrepo.analyst.model.TPlanArtifactLatestSubScanTask
 import com.tencent.bkrepo.analyst.pojo.ScanTask
 import com.tencent.bkrepo.analyst.pojo.request.ArtifactVulnerabilityRequest
 import com.tencent.bkrepo.analyst.pojo.request.FileScanResultDetailRequest
@@ -74,9 +77,10 @@ import com.tencent.bkrepo.analyst.pojo.response.SubtaskResultOverview
 import com.tencent.bkrepo.analyst.service.ScanTaskService
 import com.tencent.bkrepo.analyst.service.ScannerService
 import com.tencent.bkrepo.analyst.utils.Converter
+import com.tencent.bkrepo.analyst.utils.EasyExcelUtils
 import com.tencent.bkrepo.analyst.utils.RuleUtil
 import com.tencent.bkrepo.analyst.utils.ScanLicenseConverter
-import com.tencent.bkrepo.analyst.utils.EasyExcelUtils
+import com.tencent.bkrepo.analyst.utils.ScanPlanConverter
 import com.tencent.bkrepo.common.analysis.pojo.scanner.ScanType
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -151,28 +155,38 @@ class ScanTaskServiceImpl(
         if (request.id == null) {
             throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID)
         }
-        // 方案信息，获取方案名称
+
+        // 获取方案信息
         val scanPlan = scanPlanDao.find(request.projectId, request.id!!)
             ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID)
-
-        val isLicenseScan = scanPlan.scanTypes.contains(ScanType.LICENSE.name)
+        val containLicense = scanPlan.scanTypes.contains(ScanType.LICENSE.name)
         // 获取任务信息
-        var pageNumber = 1
-        var page = planArtifactLatestSubScanTaskDao.pageBy(request)
-        val dataList = mutableListOf<Any>()
-        while (page.records.isNotEmpty()) {
-            page.records.forEach {
-                dataList.add(
-                    if (isLicenseScan) ScanLicenseConverter.convert(it)
-                    else Converter.convertToPlanExport(it)
-                )
-            }
-            request.pageNumber = ++pageNumber
-            page = planArtifactLatestSubScanTaskDao.pageBy(request)
-        }
+        val records = planArtifactLatestSubScanTaskDao.planLatestRecords(request)
 
-        val exportClass = if (isLicenseScan) LicenseScanPlanExport::class.java else LeakScanPlanExport::class.java
-        EasyExcelUtils.download(dataList, scanPlan.name, exportClass)
+        // 导出
+        val includeColumns = mutableSetOf(
+            ScanPlanExport::name.name,
+            ScanPlanExport::versionOrFullPath.name,
+            ScanPlanExport::repoName.name,
+            ScanPlanExport::status.name,
+            ScanPlanExport::critical.name,
+            ScanPlanExport::high.name,
+            ScanPlanExport::medium.name,
+            ScanPlanExport::low.name,
+            ScanPlanExport::finishTime.name,
+            ScanPlanExport::duration.name
+        ).apply {
+            if (containLicense) this.addAll(
+                setOf(
+                    ScanPlanExport::total.name,
+                    ScanPlanExport::unRecommend.name,
+                    ScanPlanExport::unknown.name,
+                    ScanPlanExport::unCompliance.name
+                )
+            )
+        }
+        val dataList = ScanPlanConverter.convertToPlanExport(records)
+        EasyExcelUtils.download(dataList, scanPlan.name, ScanPlanExport::class.java, includeColumns)
     }
 
     override fun planArtifactSubtaskOverview(subtaskId: String): SubtaskResultOverview {
@@ -235,6 +249,7 @@ class ScanTaskServiceImpl(
     }
 
     override fun exportLeakDetail(request: ArtifactVulnerabilityRequest) {
+        logger.info("exportLeakDetail request:${request.toJsonString()}")
         with(request) {
             val subtask = planArtifactLatestSubScanTaskDao.findById(subScanTaskId!!)
                 ?: throw ErrorCodeException(CommonMessageCode.RESOURCE_NOT_FOUND, subScanTaskId!!)
@@ -301,6 +316,7 @@ class ScanTaskServiceImpl(
     }
 
     override fun exportResultDetail(request: ArtifactLicensesDetailRequest) {
+        logger.info("exportResultDetail request:${request.toJsonString()}")
         val resultList = mutableListOf<FileLicensesResultDetail>()
         val subtask = planArtifactLatestSubScanTaskDao.findById(request.subScanTaskId!!)
             ?: throw ErrorCodeException(CommonMessageCode.RESOURCE_NOT_FOUND, request.subScanTaskId!!)

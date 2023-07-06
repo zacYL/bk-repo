@@ -32,7 +32,9 @@ import com.tencent.bkrepo.analyst.component.manager.standard.model.TLicenseResul
 import com.tencent.bkrepo.analyst.pojo.request.LoadResultArguments
 import com.tencent.bkrepo.analyst.pojo.request.standard.StandardLoadResultArguments
 import com.tencent.bkrepo.common.analysis.pojo.scanner.standard.LicenseResult
+import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.query.Criteria
+import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.inValues
 import org.springframework.stereotype.Repository
 
@@ -44,5 +46,9 @@ class LicenseResultDao : ResultItemDao<TLicenseResult>() {
             criteria.and(dataKey(LicenseResult::licenseName.name)).inValues(arguments.licenseIds)
         }
         return criteria
+    }
+
+    override fun customizeQuery(query: Query, arguments: LoadResultArguments): Query {
+        return query.with(Sort.by(Sort.Order(Sort.Direction.ASC, TLicenseResult::id.name)))
     }
 }

@@ -122,7 +122,7 @@ class UserScanReportController(private val scanTaskService: ScanTaskService) {
         scanTaskService.exportLeakDetail(request)
     }
 
-    @ApiOperation("制品详情--漏洞数据")
+    @ApiOperation("制品详情--漏洞基本数据")
     @GetMapping("/artifact/count/{projectId}/{subScanTaskId}")
     fun artifactCount(
         @ApiParam(value = "projectId") @PathVariable projectId: String,
@@ -155,7 +155,8 @@ class UserScanReportController(private val scanTaskService: ScanTaskService) {
         scanTaskService.exportResultDetail(request)
     }
 
-    @ApiOperation("制品详情--许可数据")
+    // 6.0合并了许可和漏洞扫描显示, 此接口不再使用
+    @ApiOperation("制品详情--许可基本数据")
     @GetMapping("/artifact/license/count/{projectId}/{subScanTaskId}")
     fun artifactLicenseCount(
         @ApiParam(value = "projectId", required = true) @PathVariable projectId: String,

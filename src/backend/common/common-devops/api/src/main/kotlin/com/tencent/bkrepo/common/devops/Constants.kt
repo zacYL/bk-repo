@@ -2,6 +2,9 @@ package com.tencent.bkrepo.common.devops
 
 const val RESOURCECODE = "bkrepo"
 const val REPLICA_RESOURCECODE = "v_pack_replica"
+const val CATELOG_RESOURCECODE = "repoCatalog"
+const val SEARCH_RESOURCECODE = "v_pack_search"
+
 
 const val BKUSERNAME = "bk_username"
 const val CANWAY_PERMISSION = "请在ci权限中心授权"

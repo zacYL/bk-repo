@@ -1,7 +1,7 @@
 package com.tencent.bkrepo.auth.controller.service
 
 import com.tencent.bkrepo.auth.api.CanwayAuthClient
-import com.tencent.bkrepo.auth.pojo.CanwayBkrepoInstance
+import com.tencent.bkrepo.auth.pojo.permission.CanwayBkrepoInstance
 import com.tencent.bkrepo.auth.service.CanwayAuthService
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.service.util.ResponseBuilder

@@ -39,6 +39,10 @@ enum class PermissionAction {
     UPDATE,
     DELETE,
     /**
+     * 新增平台制品库菜单权限动作
+     */
+    ACCESS,
+    /**
      * 新增分发计划额外权限动作
      */
     CREATE,

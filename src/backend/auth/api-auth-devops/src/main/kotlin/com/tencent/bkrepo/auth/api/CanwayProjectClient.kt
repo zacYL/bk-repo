@@ -1,14 +1,16 @@
 package com.tencent.bkrepo.auth.api
 
 import com.tencent.bkrepo.auth.constant.AuthConstant.DEVOPS_AUTH_NAME
-import com.tencent.bkrepo.auth.pojo.ProjectPermissionAndAdminVO
-import com.tencent.bkrepo.auth.pojo.UserPermissionQueryDTO
+import com.tencent.bkrepo.auth.pojo.permission.ProjectPermissionAndAdminVO
+import com.tencent.bkrepo.auth.pojo.permission.UserPermissionQueryDTO
 import com.tencent.bkrepo.common.api.pojo.Response
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
 import net.canway.devops.api.constants.Constants
-import net.canway.devops.auth.pojo.UserPermissionValidateDTO
+import com.tencent.bkrepo.auth.pojo.permission.UserPermissionValidateDTO
+import com.tencent.bkrepo.auth.pojo.project.ProjectMemberVO
+import io.swagger.v3.oas.annotations.Parameter
 import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.context.annotation.Primary
 import org.springframework.http.MediaType
@@ -76,4 +78,23 @@ interface CanwayProjectClient {
     ): Response<Boolean>
 
 
+    @ApiOperation("获取项目成员，支持携带管理员信息")
+    @GetMapping("/{projectId}/member/list")
+    fun listMember(
+        @PathVariable
+        @Parameter(description = "项目ID", required = true)
+        projectId: String,
+        @RequestParam
+        @Parameter(description = "是否携带禁用用户", required = false)
+        withDisabled: Boolean = false,
+        @RequestParam
+        @Parameter(description = "是否包含租户管理员", required = false)
+        withTenantAdmin: Boolean = false,
+        @RequestParam
+        @Parameter(description = "是否包含系统管理员", required = false)
+        withSystemAdmin: Boolean = false,
+        @RequestParam
+        @Parameter(description = "是否包含用户关联的角色", required = false)
+        withRole: Boolean = false,
+    ): Response<List<ProjectMemberVO>>
 }

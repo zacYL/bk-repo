@@ -1,6 +1,6 @@
 package com.tencent.bkrepo.auth.service.impl
 
-import com.tencent.bkrepo.auth.pojo.CanwayBkrepoInstance
+import com.tencent.bkrepo.auth.pojo.permission.CanwayBkrepoInstance
 import com.tencent.bkrepo.auth.service.CanwayAuthService
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import org.slf4j.Logger

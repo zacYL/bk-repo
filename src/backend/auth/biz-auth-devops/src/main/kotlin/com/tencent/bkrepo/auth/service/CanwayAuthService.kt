@@ -1,6 +1,6 @@
 package com.tencent.bkrepo.auth.service
 
-import com.tencent.bkrepo.auth.pojo.CanwayBkrepoInstance
+import com.tencent.bkrepo.auth.pojo.permission.CanwayBkrepoInstance
 
 
 interface CanwayAuthService {

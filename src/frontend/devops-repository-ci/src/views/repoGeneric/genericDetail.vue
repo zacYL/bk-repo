@@ -32,7 +32,7 @@
                         <bk-button text theme="primary" @click="jumpCCommonUserToken">{{ $t('token') }}</bk-button>
                     </div>
                     <code-area class="mt10" :code-list="codeList"></code-area>
-                    <create-token-dialog ref="createToken"></create-token-dialog>
+                    <ci-create-token-dialog ref="ciCreateToken"></ci-create-token-dialog>
                 </div>
             </bk-tab-panel>
             <bk-tab-panel v-if="!detailSlider.folder" name="metaDate" :label="$t('metaData')">
@@ -96,7 +96,7 @@
 </template>
 <script>
     import CodeArea from '@repository/components/CodeArea'
-    import createTokenDialog from '@repository/views/repoToken/createTokenDialog'
+    import ciCreateTokenDialog from '@repository/views/repoToken/ciCreateTokenDialog'
     import metadataTag from '@repository/views/repoCommon/metadataTag'
     import topo from '@/components/topo'
     import topoDataMixin from './artiTopoMixin'
@@ -104,7 +104,7 @@
     import { convertFileSize, formatDate } from '@repository/utils'
     export default {
         name: 'genericDetail',
-        components: { CodeArea, createTokenDialog, topo, metadataTag },
+        components: { CodeArea, ciCreateTokenDialog, topo, metadataTag },
         mixins: [topoDataMixin],
         data () {
             return {
@@ -195,7 +195,7 @@
                 })
             },
             createToken () {
-                this.$refs.createToken.showDialogHandler()
+                this.$refs.ciCreateToken.showDialogHandler()
             },
             // 集成CI模式下需要跳转到用户个人中心的访问令牌页面
             jumpCCommonUserToken () {

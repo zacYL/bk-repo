@@ -235,5 +235,6 @@
     "virtualStoreInfo":"Combine local and remote packages in one place",
     "exportReportInfo":"Artifact scan record is generating report, please wait ...",
     "noPlanPermissionInfo":"You do not have permission to {permission}, please contact the administrator to authorize",
-    "recentlyUseDate":"Download time"
+    "recentlyUseDate":"Download time",
+    "planLogErrorReason":"Error reason"
 }

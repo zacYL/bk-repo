@@ -122,6 +122,10 @@
                     :disabled="disabled">
                     {{$t('noDistributionRecord')}}
                 </bk-checkbox>
+                <div>
+                    <span>{{$t('planLogReserve')}}</span>
+                    <bk-input class="reserve-input" type="number" :max="30" :min="1" v-model="reserveDays"></bk-input>
+                </div>
             </bk-form-item>
             <bk-form-item v-if="!disabled">
                 <bk-button @click="$emit('close')">{{$t('cancel')}}</bk-button>
@@ -220,7 +224,8 @@
                     ]
                 },
                 replicaTaskObjects: [],
-                noRecordsCheck: true
+                noRecordsCheck: true,
+                reserveDays: 7
             }
         },
         computed: {
@@ -289,7 +294,8 @@
                             executionStrategy,
                             executionPlan: { executeTime, cronExpression }
                         },
-                        notRecord
+                        notRecord,
+                        reserveDays
                     },
                     objects
                 }) => {
@@ -316,6 +322,7 @@
                     }
                     this.replicaTaskObjects = objects
                     this.noRecordsCheck = notRecord
+                    this.reserveDays = reserveDays
                 }).finally(() => {
                     this.isLoading = false
                 })
@@ -379,6 +386,8 @@
                 }
                 if (this.planForm?.replicaObjectType === 'REPOSITORY') {
                     body.notRecord = this.noRecordsCheck
+                    // 此时需要保证传参是 number 类型
+                    body.reserveDays = isNaN(Number(this.reserveDays)) ? 7 : Number(this.reserveDays)
                 }
                 const request = this.routeName === 'createPlan'
                     ? this.createPlan({ projectId: this.projectId, body })
@@ -429,6 +438,9 @@
                 border-style: solid;
                 transform: rotate(45deg);
             }
+        }
+        .reserve-input{
+            width: 100px;
         }
         .plan-object-container {
             display: grid;

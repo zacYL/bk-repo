@@ -236,5 +236,6 @@
     "exportReportInfo":"Artifact scan record is generating report, please wait ...",
     "noPlanPermissionInfo":"You do not have permission to {permission}, please contact the administrator to authorize",
     "recentlyUseDate":"Download time",
-    "planLogErrorReason":"Error reason"
+    "planLogErrorReason":"Error reason",
+    "planLogReserve":"Log reserve days:"
 }

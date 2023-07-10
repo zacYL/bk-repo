@@ -382,18 +382,15 @@ class ScanTaskServiceImpl(
             ?.let { convertToRes(scannerConverter, it, subtask.cveWhite) }
     }
 
+    // code和tx保持同步:
+    // 6.0合并了单独的许可扫描, 此函数不再使用, 因此不存在删除仓库后查看制品扫描记录鉴权异常的情况
     private fun planLicensesArtifact(
         subScanTaskId: String,
         subtaskDao: AbsSubScanTaskDao<*>
     ): FileLicensesResultOverview {
         val subtask = subtaskDao.findById(subScanTaskId)
             ?: throw NotFoundException(CommonMessageCode.RESOURCE_NOT_FOUND, subScanTaskId)
-        try {
-            permissionCheckHandler.checkSubtaskPermission(subtask, PermissionAction.READ)
-        } catch (e: UncheckedExecutionException) {
-            logger.error("Failed to checkSubtaskPermission $e")
-            permissionCheckHandler.checkProjectPermission(subtask.projectId, PermissionAction.MANAGE)
-        }
+        permissionCheckHandler.checkSubtaskPermission(subtask, PermissionAction.READ)
         return ScanLicenseConverter.convert(subtask)
     }
 }

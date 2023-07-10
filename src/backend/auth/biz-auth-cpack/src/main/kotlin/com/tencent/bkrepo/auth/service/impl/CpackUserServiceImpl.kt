@@ -382,6 +382,16 @@ open class CpackUserServiceImpl constructor(
         return Pages.ofResponse(pageRequest, totalRecords, records)
     }
 
+    override fun userAll(
+        userName: String?,
+        admin: Boolean?,
+        locked: Boolean?
+    ): List<TUser> {
+        val query = UserQueryHelper.getUserByName(userName, admin, locked)
+        val records = mongoTemplate.find(query, TUser::class.java)
+        return records
+    }
+
     override fun getUserInfoById(userId: String): UserInfo? {
         val tUser = userRepository.findFirstByUserId(userId) ?: return null
         return transferUserInfo(tUser)

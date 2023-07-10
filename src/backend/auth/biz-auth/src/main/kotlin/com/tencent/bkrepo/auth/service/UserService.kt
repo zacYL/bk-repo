@@ -31,6 +31,7 @@
 
 package com.tencent.bkrepo.auth.service
 
+import com.tencent.bkrepo.auth.model.TUser
 import com.tencent.bkrepo.auth.pojo.token.Token
 import com.tencent.bkrepo.auth.pojo.token.TokenResult
 import com.tencent.bkrepo.auth.pojo.user.CreateUserRequest
@@ -79,6 +80,8 @@ interface UserService {
     fun findUserByUserToken(userId: String, pwd: String): User?
 
     fun userPage(pageNumber: Int, pageSize: Int, userName: String?, admin: Boolean?, locked: Boolean?): Page<UserInfo>
+
+    fun userAll(userName: String?, admin: Boolean?, locked: Boolean?): List<TUser>
 
     fun getUserInfoById(userId: String): UserInfo?
 

@@ -11,47 +11,79 @@
 ### 请求参数
 #### 路径参数
 
-| 字段 | 类型 | 必填 | 描述 |
-| -------- | -------- | -------- | -------- |
-| projectId     | string   | true       | projectId |
-| repoName     | string   | true       | repoName |
+| 字段        | 类型     | 必填  | 描述         |
+|-----------|--------|-----|------------|
+| projectId | String | 是   | 项目id       |
+| repoName  | String | 是   | 仓库名称       |
+| name      | String | 是   | docker镜像名称 |
 
 #### 查询参数
 
-| 字段 | 类型 | 必填 | 描述 |
-| -------- | -------- | -------- | -------- |
-| userId     | string   | false       | userId |
-| pageNumber     | integer   | true       | pageNumber |
-| pageSize     | integer   | true       | pageSize |
-| tag     | string   | true       | tag |
-
-
+| 字段         | 类型     | 必填  | 描述    |
+|------------|--------|-----|-------|
+| pageNumber | Int    | 是   | 页码数   |
+| pageSize   | Int    | 是   | 每页大小  |
+| tag        | String | 是   | tag名称 |
 
 ### 返回结果
-| 字段 | 类型 | 描述 |
-| -------- | -------- | -------- |
-| code     | integer , format:int32  | 返回码 |
-| data     | DockerTagResult   | 数据 |
-| message     | string   | 错误信息 |
-| traceId     | string   | 链路追踪id |
-#### DockerTagResult
-| 字段 | 类型 | 描述 |
-| -------- | -------- | -------- |
-| records     | array<docker镜像tag信息>   | records |
-| totalRecords     | integer , format:int64  | totalRecords |
-#### docker镜像tag信息
-| 字段 | 类型 | 描述 |
-| -------- | -------- | -------- |
-| basic     |    | basic |
-| history     | array<object>   | history |
-| layers     | array<object>   | layers |
-| manifest     |    | manifest |
-| metadata     | array<MetadataModel>   | metadata |
-#### MetadataModel
-| 字段 | 类型 | 描述 |
-| -------- | -------- | -------- |
-| description     | string   |  |
-| key     | string   |  |
-| system     | boolean   |  |
-| value     |    |  |
 
+| 字段      | 说明     |
+|---------|--------|
+| code    | 返回码    |
+| message | 错误信息   |
+| data    | 数据     |
+| traceId | 链路追踪id |
+
+#### 响应体示例
+
+```json
+{
+  "code":0,
+  "message":null,
+  "data":{
+    "toatalRecords":100,
+    "records":[
+      {
+        "tag":"latest",
+        "stageTag":"",
+        "size":524,
+        "lastModifiedBy":"admin",
+        "lastModifiedDate":"2020-09-10T14:48:22.846",
+        "downloadCount":0,
+        "registryUrl":"bkrepo.example.com/test/test/php:latest"
+      },
+      {
+        "tag":"v1",
+        "stageTag":"",
+        "size":524,
+        "lastModifiedBy":"admin",
+        "lastModifiedDate":"2020-09-10T14:49:37.904",
+        "downloadCount":0,
+        "registryUrl":"bkrepo.example.com/test/test/php:v1"
+      }
+    ]
+  },
+  "traceId":""
+}
+```
+
+#### data 字段说明
+
+镜像tag信息
+
+| 字段           | 描述    |
+|--------------|-------|
+| records      | tag列表 |
+| totalRecords | tag数量 |
+
+#### records 字段说明
+
+| 字段               | 描述    |
+|------------------|-------|
+| tag              | tag名称 |
+| stageTag         | 制品状态  |
+| size             | 镜像大小  |
+| lastModifiedBy   | 更新人   |
+| lastModifiedDate | 更新时间  |
+| downloadCount    | 下载次数  |
+| registryUrl      | 镜像地址  |

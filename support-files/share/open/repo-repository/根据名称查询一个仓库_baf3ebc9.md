@@ -1,11 +1,11 @@
 # 根据名称类型查询仓库
 
-功能描述：根据名称类型查询仓库
+功能描述：根据名称查询一个仓库
 
 ### 请求地址
 
 ```
-/repo-repository/api/repo/info/{projectId}/{repoName}/{type}
+/repo-repository/api/repo/info/{projectId}/{repoName}
 ```
 
 ### 请求方法
@@ -20,7 +20,6 @@
 |-----------|--------|-----|------|
 | projectId | String | 是   | 所属项目 |
 | repoName  | String | 是   | 仓库名称 |
-| type      | String | 是   | 仓库类型 |
 
 ### 返回结果
 
@@ -69,7 +68,6 @@
   "traceId": ""
 }
 ```
-
 #### data 字段说明
 
 仓库信息
@@ -94,3 +92,5 @@
 | quota                 | 仓库配额                     |
 | used                  | 仓库已使用容量                  |
 | coverStrategy         | 覆盖策略                     |
+
+

@@ -283,34 +283,6 @@
       "docName": "分页查询节点_80170432.md"
     },
     {
-      "code": "POST__api_node_query_repo-repository",
-      "name": "POST__api_node_query",
-      "desc": "自定义查询节点",
-      "path": "/repo-repository/api/node/query",
-      "method": "POST",
-      "headers": [],
-      "targetService": "repo-repository",
-      "targetPath": "/api/node/query",
-      "targetMethod": "POST",
-      "timeout": 30,
-      "retryTimes": 10,
-      "docName": "自定义查询节点_5716c316.md"
-    },
-    {
-      "code": "POST__api_node_rename_repo-repository",
-      "name": "POST__api_node_rename",
-      "desc": "重命名节点",
-      "path": "/repo-repository/api/node/rename",
-      "method": "POST",
-      "headers": [],
-      "targetService": "repo-repository",
-      "targetPath": "/api/node/rename",
-      "targetMethod": "POST",
-      "timeout": 30,
-      "retryTimes": 10,
-      "docName": "重命名节点_be9d0ab5.md"
-    },
-    {
       "code": "POST__api_node_rename_{projectId}_{repoName}_**_repo-repository",
       "name": "POST__api_node_rename_{projectId}_{repoName}_**",
       "desc": "重命名节点",
@@ -393,48 +365,6 @@
       "timeout": 30,
       "retryTimes": 10,
       "docName": "更新节点_83545c0f.md"
-    },
-    {
-      "code": "GET__api_node_{projectId}_{repoName}_**_repo-repository",
-      "name": "GET__api_node_{projectId}_{repoName}_**",
-      "desc": "根据路径查看节点详情",
-      "path": "/repo-repository/api/node/{projectId}/{repoName}/**",
-      "method": "GET",
-      "headers": [],
-      "targetService": "repo-repository",
-      "targetPath": "/api/node/{projectId}/{repoName}/**",
-      "targetMethod": "GET",
-      "timeout": 30,
-      "retryTimes": 10,
-      "docName": "根据路径查看节点详情_1911fb72.md"
-    },
-    {
-      "code": "POST__api_node_{projectId}_{repoName}_**_repo-repository",
-      "name": "POST__api_node_{projectId}_{repoName}_**",
-      "desc": "创建文件夹",
-      "path": "/repo-repository/api/node/{projectId}/{repoName}/**",
-      "method": "POST",
-      "headers": [],
-      "targetService": "repo-repository",
-      "targetPath": "/api/node/{projectId}/{repoName}/**",
-      "targetMethod": "POST",
-      "timeout": 30,
-      "retryTimes": 10,
-      "docName": "创建文件夹_32e6d197.md"
-    },
-    {
-      "code": "DELETE__api_node_{projectId}_{repoName}_**_repo-repository",
-      "name": "DELETE__api_node_{projectId}_{repoName}_**",
-      "desc": "删除节点",
-      "path": "/repo-repository/api/node/{projectId}/{repoName}/**",
-      "method": "DELETE",
-      "headers": [],
-      "targetService": "repo-repository",
-      "targetPath": "/api/node/{projectId}/{repoName}/**",
-      "targetMethod": "DELETE",
-      "timeout": 30,
-      "retryTimes": 10,
-      "docName": "删除节点_853a667e.md"
     },
     {
       "code": "GET__api_log_event_type_repo-repository",
@@ -717,20 +647,6 @@
       "docName": "修改历史版本_0f990834.md"
     },
     {
-      "code": "POST__api_project_repo-repository",
-      "name": "POST__api_project",
-      "desc": "创建项目",
-      "path": "/repo-repository/api/project",
-      "method": "POST",
-      "headers": [],
-      "targetService": "repo-repository",
-      "targetPath": "/api/project",
-      "targetMethod": "POST",
-      "timeout": 30,
-      "retryTimes": 10,
-      "docName": "创建项目_5dd202aa.md"
-    },
-    {
       "code": "POST__api_project_create_repo-repository",
       "name": "POST__api_project_create",
       "desc": "创建项目",
@@ -899,20 +815,6 @@
       "docName": "查询代理源信息_90854cb0.md"
     },
     {
-      "code": "POST__api_repo_repo-repository",
-      "name": "POST__api_repo",
-      "desc": "创建仓库",
-      "path": "/repo-repository/api/repo",
-      "method": "POST",
-      "headers": [],
-      "targetService": "repo-repository",
-      "targetPath": "/api/repo",
-      "targetMethod": "POST",
-      "timeout": 30,
-      "retryTimes": 10,
-      "docName": "创建仓库_d1f8c0f1.md"
-    },
-    {
       "code": "POST__api_repo_create_repo-repository",
       "name": "POST__api_repo_create",
       "desc": "创建仓库",
@@ -957,7 +859,7 @@
     {
       "code": "GET__api_repo_info_{projectId}_{repoName}_repo-repository",
       "name": "GET__api_repo_info_{projectId}_{repoName}",
-      "desc": "根据名称类型查询仓库",
+      "desc": "根据名称查询一个仓库",
       "path": "/repo-repository/api/repo/info/{projectId}/{repoName}",
       "method": "GET",
       "headers": [],
@@ -966,7 +868,7 @@
       "targetMethod": "GET",
       "timeout": 30,
       "retryTimes": 10,
-      "docName": "根据名称类型查询仓库_baf3ebc9.md"
+      "docName": "根据名称查询一个仓库_baf3ebc9.md"
     },
     {
       "code": "GET__api_repo_info_{projectId}_{repoName}_{type}_repo-repository",
@@ -1163,20 +1065,6 @@
       "timeout": 30,
       "retryTimes": 10,
       "docName": "自定义查询节点_d6988390.md"
-    },
-    {
-      "code": "GET__api_software_node_search_overview_repo-repository",
-      "name": "GET__api_software_node_search_overview",
-      "desc": "仓库 包数量 总览",
-      "path": "/repo-repository/api/software/node/search/overview",
-      "method": "GET",
-      "headers": [],
-      "targetService": "repo-repository",
-      "targetPath": "/api/software/node/search/overview",
-      "targetMethod": "GET",
-      "timeout": 30,
-      "retryTimes": 10,
-      "docName": "仓库 包数量 总览_bc7c751c.md"
     },
     {
       "code": "POST__api_software_package_search_repo-repository",

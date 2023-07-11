@@ -124,7 +124,7 @@
                 </bk-checkbox>
                 <div>
                     <span>{{$t('planLogReserve')}}</span>
-                    <bk-input class="reserve-input" type="number" :max="30" :min="1" v-model="reserveDays"></bk-input>
+                    <bk-input class="reserve-input" type="number" :max="60" :min="1" v-model="reserveDays"></bk-input>
                 </div>
             </bk-form-item>
             <bk-form-item v-if="!disabled">
@@ -225,7 +225,7 @@
                 },
                 replicaTaskObjects: [],
                 noRecordsCheck: true,
-                reserveDays: 7
+                reserveDays: 30
             }
         },
         computed: {
@@ -387,7 +387,7 @@
                 if (this.planForm?.replicaObjectType === 'REPOSITORY') {
                     body.notRecord = this.noRecordsCheck
                     // 此时需要保证传参是 number 类型
-                    body.reserveDays = isNaN(Number(this.reserveDays)) ? 7 : Number(this.reserveDays)
+                    body.reserveDays = isNaN(Number(this.reserveDays)) ? 30 : Number(this.reserveDays)
                 }
                 const request = this.routeName === 'createPlan'
                     ? this.createPlan({ projectId: this.projectId, body })

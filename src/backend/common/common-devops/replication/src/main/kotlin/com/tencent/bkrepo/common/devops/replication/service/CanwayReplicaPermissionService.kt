@@ -2,10 +2,10 @@ package com.tencent.bkrepo.common.devops.replication.service
 
 import com.tencent.bkrepo.auth.api.CanwayProjectClient
 import com.tencent.bkrepo.auth.constant.AuthConstant.ANY_RESOURCE_CODE
-import com.tencent.bkrepo.auth.pojo.UserPermissionQueryDTO
+import com.tencent.bkrepo.auth.pojo.permission.UserPermissionQueryDTO
 import com.tencent.bkrepo.common.devops.REPLICA_RESOURCECODE
 import com.tencent.bkrepo.common.devops.enums.CanwayPermissionType
-import net.canway.devops.auth.pojo.UserPermissionValidateDTO
+import com.tencent.bkrepo.auth.pojo.permission.UserPermissionValidateDTO
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service

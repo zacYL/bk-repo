@@ -1,13 +1,31 @@
 package com.tencent.bkrepo.auth.service.impl
 
-import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_ADMIN
-import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_USER
-import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_VIEWER
-import com.tencent.bkrepo.auth.constant.PROJECT_VIEW_PERMISSION
+import com.tencent.bkrepo.auth.api.CanwayCustomPermissionClient
+import com.tencent.bkrepo.auth.api.CanwayCustomRoleClient
+import com.tencent.bkrepo.auth.api.CanwayProjectClient
+import com.tencent.bkrepo.auth.api.ServicePermissionResource
+import com.tencent.bkrepo.auth.constant.*
+import com.tencent.bkrepo.auth.constant.AuthConstant.CPACK_MANAGER
+import com.tencent.bkrepo.auth.constant.AuthConstant.CPACK_USER
+import com.tencent.bkrepo.auth.constant.AuthConstant.CPACK_VIEWERS
+import com.tencent.bkrepo.auth.constant.AuthConstant.SCOPECODE
+import com.tencent.bkrepo.auth.constant.AuthConstant.SUBJECTCODE
+import com.tencent.bkrepo.auth.constant.AuthRoleType.PROJECT_ROLE
+import com.tencent.bkrepo.auth.constant.AuthSubjectCode.GROUP
+import com.tencent.bkrepo.auth.constant.AuthSubjectCode.USER
+import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.model.TPermission
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
+import com.tencent.bkrepo.auth.pojo.permission.AnyResourcePermissionSaveDTO
 import com.tencent.bkrepo.auth.pojo.permission.Permission
+import com.tencent.bkrepo.auth.pojo.role.RoleCreateDTO
+import com.tencent.bkrepo.auth.pojo.role.RoleVO
+import com.tencent.bkrepo.auth.pojo.role.SubjectDTO
 import com.tencent.bkrepo.auth.service.PermissionService
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.devops.CATELOG_RESOURCECODE
+import com.tencent.bkrepo.common.devops.RESOURCECODE
+import com.tencent.bkrepo.common.devops.SEARCH_RESOURCECODE
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import org.slf4j.Logger
@@ -18,7 +36,11 @@ import org.springframework.stereotype.Service
 class ExtPermissionServiceImpl(
     private val permissionService: PermissionService,
     private val projectClient: ProjectClient,
-    private val repositoryClient: RepositoryClient
+    private val repositoryClient: RepositoryClient,
+    private val canwayCustomPermissionClient: CanwayCustomPermissionClient,
+    private val canwayCustomRoleClient: CanwayCustomRoleClient,
+    private val canwayProjectClient: CanwayProjectClient,
+    private val servicePermissionResource: ServicePermissionResource
 ) {
     @Suppress("TooGenericExceptionCaught")
     fun migHistoryPermissionData() {
@@ -45,6 +67,98 @@ class ExtPermissionServiceImpl(
                         }.id!!
                     )
                 }
+            }
+        }
+    }
+
+    @Suppress("TooGenericExceptionCaught")
+    fun migrateToDevOps() {
+        //获取所有项目
+        val projectList = projectClient.listProject().data ?: listOf()
+        //每个项目创建角色（查看者、使用者与仓库管理者）
+        projectList.forEach { project ->
+            try {
+                logger.info("${project.name} project start creating role")
+                val cpackViewer = roleCreate(project.name, CPACK_VIEWERS)
+                val cpackUser = roleCreate(project.name, CPACK_USER)
+                val cpackManager = roleCreate(project.name, CPACK_MANAGER)
+
+                //查询项目所有成员
+                val projectMember =
+                    canwayProjectClient.listMember(projectId = project.name).data?.map { it.userId } ?: listOf()
+
+                logger.info("${project.name} project starting to obtain product library permissions user")
+                //创建角色用户与用户组
+                val projectRepoUserIdList = mutableListOf<SubjectDTO>()
+                val projectRepoUserRoleList = mutableListOf<SubjectDTO>()
+
+                val projectRepoManagerIdList = mutableListOf<SubjectDTO>()
+                val projectRepoManagerRoleList = mutableListOf<SubjectDTO>()
+
+                //查询项目下所有仓库的内置权限
+                val allRepo = repositoryClient.listRepo(projectId = project.name).data?.map { it.name } ?: listOf()
+                allRepo.forEach { repoName ->
+                    val repoPermission = servicePermissionResource.listRepoBuiltinPermission(
+                        projectId = project.name,
+                        repoName = repoName
+                    ).data ?: listOf()
+                    //仓库管理员加入用户与用户组
+                    projectRepoManagerIdList.addAll(repoPermission.filter { it.permName == AUTH_BUILTIN_ADMIN }
+                        .flatMap { it.users }.map { SubjectDTO(subjectCode = USER, subjectId = it) })
+                    projectRepoManagerRoleList.addAll(repoPermission.filter { it.permName == AUTH_BUILTIN_ADMIN }
+                        .flatMap { it.roles }.map { SubjectDTO(subjectCode = GROUP, subjectId = it) })
+
+                    //仓库使用者加入用户与用户组
+                    projectRepoUserIdList.addAll(repoPermission.filter { it.permName == AUTH_BUILTIN_USER }
+                        .flatMap { it.users }.map { SubjectDTO(subjectCode = USER, subjectId = it) })
+                    projectRepoUserRoleList.addAll(repoPermission.filter { it.permName == AUTH_BUILTIN_USER }
+                        .flatMap { it.roles }.map { SubjectDTO(subjectCode = GROUP, subjectId = it) })
+                }
+
+                logger.info("${project.name} project start migrating users")
+                //查看者加入用户与用户组
+                canwayCustomRoleClient.batchAddRoleMember(
+                    userId = AUTH_ADMIN,
+                    scopeCode = SCOPECODE,
+                    scopeId = project.name,
+                    id = cpackViewer.id,
+                    subjects = projectMember.map { SubjectDTO(subjectCode = USER, subjectId = it) }.distinct()
+                )
+
+                //使用者加入用户与用户组
+                canwayCustomRoleClient.batchAddRoleMember(
+                    userId = AUTH_ADMIN,
+                    scopeCode = SCOPECODE,
+                    scopeId = project.name,
+                    id = cpackUser.id,
+                    subjects = projectRepoUserIdList.distinct()
+                )
+                canwayCustomRoleClient.batchAddRoleMember(
+                    userId = AUTH_ADMIN,
+                    scopeCode = SCOPECODE,
+                    scopeId = project.name,
+                    id = cpackUser.id,
+                    subjects = projectRepoUserRoleList.distinct()
+                )
+
+                //管理者加入用户与用户组
+                canwayCustomRoleClient.batchAddRoleMember(
+                    userId = AUTH_ADMIN,
+                    scopeCode = SCOPECODE,
+                    scopeId = project.name,
+                    id = cpackManager.id,
+                    subjects = projectRepoManagerIdList.distinct()
+                )
+                canwayCustomRoleClient.batchAddRoleMember(
+                    userId = AUTH_ADMIN,
+                    scopeCode = SCOPECODE,
+                    scopeId = project.name,
+                    id = cpackManager.id,
+                    subjects = projectRepoManagerRoleList.distinct()
+                )
+                logger.info("${project.name} project migration completed")
+            } catch (exception: Exception) {
+                logger.error("${project.name} project permission merge fail:${exception.message}")
             }
         }
     }
@@ -132,6 +246,7 @@ class ExtPermissionServiceImpl(
                     .first { it.permName == PROJECT_VIEW_PERMISSION }
                 mergePermissionData(projectView, permission, isRepeat = false)
             }
+
             else -> permissionService.deletePermission(permission.id!!)
         }
     }
@@ -147,6 +262,7 @@ class ExtPermissionServiceImpl(
                 }
                 set
             }
+
             else -> return
         }
         try {
@@ -178,6 +294,96 @@ class ExtPermissionServiceImpl(
             PermissionAction.ARTIFACT_DELETE -> setOf(PermissionAction.DELETE)
             else -> setOf()
         }
+    }
+
+    private fun roleCreate(projectId: String, roleType: String): RoleVO {
+        //创建权限中心角色
+        val cpackRole = canwayCustomRoleClient.createRole(
+            userId = AUTH_ADMIN,
+            scopeCode = SCOPECODE,
+            scopeId = projectId,
+            role = RoleCreateDTO(
+                name = roleType,
+                desc = roleType,
+                type = PROJECT_ROLE
+            )
+        ).data ?: throw ErrorCodeException(AuthMessageCode.AUTH_DUP_APPID)
+        //权限列表
+        val permissionList = mutableListOf<AnyResourcePermissionSaveDTO>()
+        permissionList.addAll(
+            listOf(
+                AnyResourcePermissionSaveDTO(
+                    resourceCode = RESOURCECODE,
+                    actionCode = PermissionAction.ACCESS.name.toLowerCase()
+                ),
+                AnyResourcePermissionSaveDTO(
+                    resourceCode = RESOURCECODE,
+                    actionCode = PermissionAction.READ.name.toLowerCase()
+                ),
+                AnyResourcePermissionSaveDTO(
+                    resourceCode = CATELOG_RESOURCECODE,
+                    actionCode = PermissionAction.VIEW.name.toLowerCase()
+                ),
+                AnyResourcePermissionSaveDTO(
+                    resourceCode = SEARCH_RESOURCECODE,
+                    actionCode = PermissionAction.VIEW.name.toLowerCase()
+                ),
+            )
+        )
+        when (roleType) {
+            CPACK_USER -> {
+                permissionList.addAll(
+                    listOf(
+                        AnyResourcePermissionSaveDTO(
+                            resourceCode = RESOURCECODE,
+                            actionCode = PermissionAction.WRITE.name.toLowerCase()
+                        ),
+                        AnyResourcePermissionSaveDTO(
+                            resourceCode = RESOURCECODE,
+                            actionCode = PermissionAction.UPDATE.name.toLowerCase()
+                        )
+                    )
+                )
+            }
+
+            CPACK_MANAGER -> {
+                permissionList.addAll(
+                    listOf(
+                        AnyResourcePermissionSaveDTO(
+                            resourceCode = RESOURCECODE,
+                            actionCode = PermissionAction.WRITE.name.toLowerCase()
+                        ),
+                        AnyResourcePermissionSaveDTO(
+                            resourceCode = RESOURCECODE,
+                            actionCode = PermissionAction.UPDATE.name.toLowerCase()
+                        ),
+                        AnyResourcePermissionSaveDTO(
+                            resourceCode = RESOURCECODE,
+                            actionCode = PermissionAction.CREATE.name.toLowerCase()
+                        ),
+                        AnyResourcePermissionSaveDTO(
+                            resourceCode = RESOURCECODE,
+                            actionCode = PermissionAction.DELETE.name.toLowerCase()
+                        ),
+                        AnyResourcePermissionSaveDTO(
+                            resourceCode = RESOURCECODE,
+                            actionCode = PermissionAction.MANAGE.name.toLowerCase()
+                        ),
+                    )
+                )
+            }
+        }
+        //查看者授权
+        canwayCustomPermissionClient.saveAnyPermissions(
+            userId = AUTH_ADMIN,
+            scopeCode = SCOPECODE,
+            scopeId = projectId,
+            subjectCode = SUBJECTCODE,
+            subjectId = cpackRole.id,
+            resourceLevel = SCOPECODE,
+            permissions = permissionList
+        )
+        return cpackRole
     }
 
     companion object {

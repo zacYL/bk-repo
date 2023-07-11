@@ -3,10 +3,6 @@ package com.tencent.bkrepo.auth.constant
 object AuthConstant {
     const val ANY_RESOURCE_CODE = "*"
 
-    const val TOKEN_EXPIRE_TIME_IN_SECOND = 2 * 60 * 60L
-
-    const val TOKEN_EXPIRE_TIME_IN_MS = TOKEN_EXPIRE_TIME_IN_SECOND * 1000L
-
     const val DEVOPS_AUTH_NAME = "\${service.devops-prefix:}auth\${service.suffix:}"
 
     const val DEVOPS_USER_NAME = "\${service.devops-prefix:}usermanager\${service.suffix:}"
@@ -16,4 +12,14 @@ object AuthConstant {
     const val AUTH_HEADER_PROJECT_ID = "X-DEVOPS-PROJECT-ID"
 
     const val CANWAY_AUTH_SERVICE = "/api/extAuth"
+
+    const val CPACK_VIEWERS = "制品库查看者"
+
+    const val CPACK_USER = "制品库使用者"
+
+    const val CPACK_MANAGER = "制品库管理者"
+
+    const val SCOPECODE = "project"
+
+    const val SUBJECTCODE = "ROLE"
 }

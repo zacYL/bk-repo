@@ -2,7 +2,7 @@ package com.tencent.bkrepo.auth.api
 
 import com.tencent.bkrepo.auth.constant.AuthConstant.AUTH_HEADER_PROJECT_ID
 import com.tencent.bkrepo.auth.constant.AuthConstant.CANWAY_AUTH_SERVICE
-import com.tencent.bkrepo.auth.pojo.CanwayBkrepoInstance
+import com.tencent.bkrepo.auth.pojo.permission.CanwayBkrepoInstance
 import com.tencent.bkrepo.common.api.constant.AUTH_SERVICE_NAME
 import com.tencent.bkrepo.common.api.pojo.Response
 import io.swagger.annotations.Api

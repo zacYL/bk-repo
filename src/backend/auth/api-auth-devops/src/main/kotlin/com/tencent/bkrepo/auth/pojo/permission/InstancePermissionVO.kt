@@ -1,4 +1,4 @@
-package com.tencent.bkrepo.auth.pojo
+package com.tencent.bkrepo.auth.pojo.permission
 
 class InstancePermissionVO(
     val instanceId: String,

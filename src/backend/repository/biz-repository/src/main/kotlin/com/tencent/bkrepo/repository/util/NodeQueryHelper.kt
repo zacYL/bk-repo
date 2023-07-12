@@ -180,8 +180,8 @@ object NodeQueryHelper {
         return update(operator).set(TNode::deleted.name, deleteTime)
     }
 
-    fun nodeRecentlyUseDateUpdate(operator: String, recentlyUseDate: LocalDateTime = LocalDateTime.now()): Update {
-        return update(operator).set(TNode::recentlyUseDate.name, recentlyUseDate)
+    fun nodeRecentlyUseDateUpdate(recentlyUseDate: LocalDateTime = LocalDateTime.now()): Update {
+        return Update().set(TNode::recentlyUseDate.name, recentlyUseDate)
     }
 
     fun update(operator: String, time: LocalDateTime = LocalDateTime.now()): Update {

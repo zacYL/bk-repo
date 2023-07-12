@@ -87,8 +87,7 @@ interface NodeClient {
     fun updateRecentlyUseDate(
         @PathVariable projectId: String,
         @PathVariable repoName: String,
-        @RequestParam fullPath: String,
-        @RequestParam operator:String
+        @RequestParam fullPath: String
     ): Response<Void>
 
     @ApiOperation("根据路径查看节点是否存在")

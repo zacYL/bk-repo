@@ -76,10 +76,9 @@ class NodeController(
     override fun updateRecentlyUseDate(
         projectId: String,
         repoName: String,
-        fullPath: String,
-        operator: String
+        fullPath: String
     ): Response<Void> {
-        nodeService.updateRecentlyUseDate(projectId, repoName, fullPath, operator)
+        nodeService.updateRecentlyUseDate(projectId, repoName, fullPath)
         return ResponseBuilder.success()
     }
 

@@ -128,15 +128,15 @@
                     <span>{{$t('planLogReserve')}}</span>
                     <bk-input
                         class="w180"
-                        :class="{ 'bk-form-item is-error': !Number(recordReverseDays) && errorRecordReverseDaysInfo }"
+                        :class="{ 'bk-form-item is-error': !Number(recordReserveDays) && errorRecordReserveDaysInfo }"
                         type="number"
                         :max="60"
                         :min="1"
-                        v-model="recordReverseDays"
-                        :placeholder="$t('planRecordReverseDaysInfo')"
-                        @blur="onBlurRecordReverseDays">
+                        v-model="recordReserveDays"
+                        :placeholder="$t('planRecordReserveDaysInfo')"
+                        @blur="onBlurRecordReserveDays">
                     </bk-input>
-                    <p class="form-error-tip" v-if="!Number(recordReverseDays) && errorRecordReverseDaysInfo">{{$t('planRecordReverseDaysInfo')}}</p>
+                    <p class="form-error-tip" v-if="!Number(recordReserveDays) && errorRecordReserveDaysInfo">{{$t('planRecordReserveDaysInfo')}}</p>
                 </bk-form-item>
             </template>
             <bk-form-item v-if="!disabled">
@@ -237,8 +237,8 @@
                 },
                 replicaTaskObjects: [],
                 noRecordsCheck: true,
-                recordReverseDays: 30,
-                errorRecordReverseDaysInfo: false
+                recordReserveDays: 30,
+                errorRecordReserveDaysInfo: false
             }
         },
         computed: {
@@ -308,7 +308,7 @@
                             executionPlan: { executeTime, cronExpression }
                         },
                         notRecord,
-                        recordReverseDays
+                        recordReserveDays
                     },
                     objects
                 }) => {
@@ -335,7 +335,7 @@
                     }
                     this.replicaTaskObjects = objects
                     this.noRecordsCheck = notRecord
-                    this.recordReverseDays = recordReverseDays
+                    this.recordReserveDays = recordReserveDays
                 }).finally(() => {
                     this.isLoading = false
                 })
@@ -349,12 +349,12 @@
                 this.$refs.planForm.clearError()
             },
             // 日志保留天数的离焦事件，用于校验输入是否符合规则
-            onBlurRecordReverseDays () {
-                if (isNaN(Number(this.recordReverseDays)) || this.recordReverseDays === null || this.recordReverseDays === '') {
-                    this.recordReverseDays = ''
-                    this.errorRecordReverseDaysInfo = true
+            onBlurRecordReserveDays () {
+                if (isNaN(Number(this.recordReserveDays)) || this.recordReserveDays === null || this.recordReserveDays === '') {
+                    this.recordReserveDays = ''
+                    this.errorRecordReserveDaysInfo = true
                 } else {
-                    this.errorRecordReverseDaysInfo = false
+                    this.errorRecordReserveDaysInfo = false
                 }
             },
             async save () {
@@ -366,7 +366,7 @@
                 }
                 await this.$refs.planForm.validate()
 
-                if (this.errorRecordReverseDaysInfo) return
+                if (this.errorRecordReserveDaysInfo) return
                 if (this.planForm.loading) return
                 this.planForm.loading = true
 
@@ -410,7 +410,7 @@
                 if (this.planForm?.replicaObjectType === 'REPOSITORY') {
                     body.notRecord = this.noRecordsCheck
                     // 此时需要保证传参是 number 类型
-                    body.recordReverseDays = isNaN(Number(this.recordReverseDays)) ? 30 : Number(this.recordReverseDays)
+                    body.recordReserveDays = isNaN(Number(this.recordReserveDays)) ? 30 : Number(this.recordReserveDays)
                 }
                 const request = this.routeName === 'createPlan'
                     ? this.createPlan({ projectId: this.projectId, body })

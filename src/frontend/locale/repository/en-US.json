@@ -238,5 +238,5 @@
     "recentlyUseDate":"Download time",
     "planLogErrorReason":"Error reason",
     "planLogReserve":"Log reserve days(within 60 days):",
-    "planRecordReverseDaysInfo":"Please enter a number between 1-60"
+    "planRecordReserveDaysInfo":"Please enter a number between 1-60"
 }

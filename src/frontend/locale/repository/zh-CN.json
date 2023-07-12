@@ -246,5 +246,5 @@
     "recentlyUseDate":"下载时间",
     "planLogErrorReason":"异常原因",
     "planLogReserve":"日志保留天数(60天内)：",
-    "planRecordReverseDaysInfo":"请输入 1-60 之间的数字"
+    "planRecordReserveDaysInfo":"请输入 1-60 之间的数字"
 }

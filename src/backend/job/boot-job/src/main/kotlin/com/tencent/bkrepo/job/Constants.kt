@@ -56,6 +56,9 @@ const val TYPE = "type"
 const val CATEGORY = "category"
 const val CREATED_DATE = "createdDate"
 const val LAST_MODIFIED_DATE = "lastModifiedDate"
+const val KEY = "key"
+const val RECORD_RESERVE_DAYS = "recordReserveDays"
+const val REPLICA_TYPE = "replicaType"
 
 /**
  * metrics

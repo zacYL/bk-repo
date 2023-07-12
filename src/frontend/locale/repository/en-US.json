@@ -237,5 +237,6 @@
     "noPlanPermissionInfo":"You do not have permission to {permission}, please contact the administrator to authorize",
     "recentlyUseDate":"Download time",
     "planLogErrorReason":"Error reason",
-    "planLogReserve":"Log reserve days:"
+    "planLogReserve":"Log reserve days(within 60 days):",
+    "planRecordReverseDaysInfo":"Please enter a number between 1-60"
 }

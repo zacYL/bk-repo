@@ -245,5 +245,6 @@
     "noPlanPermissionInfo":"您没有{permission}权限，请联系管理员授权",
     "recentlyUseDate":"下载时间",
     "planLogErrorReason":"异常原因",
-    "planLogReserve":"日志保留天数："
+    "planLogReserve":"日志保留天数(60天内)：",
+    "planRecordReverseDaysInfo":"请输入 1-60 之间的数字"
 }

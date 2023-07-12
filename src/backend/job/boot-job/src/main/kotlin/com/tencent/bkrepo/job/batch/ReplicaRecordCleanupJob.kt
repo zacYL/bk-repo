@@ -3,6 +3,7 @@ package com.tencent.bkrepo.job.batch
 import com.tencent.bkrepo.job.ID
 import com.tencent.bkrepo.job.KEY
 import com.tencent.bkrepo.job.RECORD_RESERVE_DAYS
+import com.tencent.bkrepo.job.REPLICA_OBJECT_TYPE
 import com.tencent.bkrepo.job.REPLICA_TYPE
 import com.tencent.bkrepo.job.batch.base.MongoDbBatchJob
 import com.tencent.bkrepo.job.batch.context.ReplicaRecordCleanupJobContext
@@ -46,6 +47,7 @@ class ReplicaRecordCleanupJob(
             id = row[ID].toString(),
             key = row[KEY].toString(),
             replicaType = row[REPLICA_TYPE].toString(),
+            replicaObjectType = row[REPLICA_OBJECT_TYPE].toString(),
             recordReserveDays = row[RECORD_RESERVE_DAYS]?.toString()?.toLong()
         )
     }
@@ -60,7 +62,9 @@ class ReplicaRecordCleanupJob(
         } else {
             LocalDateTime.now().minusDays(60)
         }
-        cleanUpReplicaTask(row.key, row.replicaType, expireDate, context)
+        if (row.replicaObjectType == "REPOSITORY") {
+            cleanUpReplicaTask(row.key, row.replicaType, expireDate, context)
+        }
     }
 
     override fun createJobContext(): ReplicaRecordCleanupJobContext {
@@ -132,6 +136,7 @@ class ReplicaRecordCleanupJob(
         val id: String,
         val key: String,
         val replicaType: String,
+        val replicaObjectType: String,
         val recordReserveDays: Long?
     )
 

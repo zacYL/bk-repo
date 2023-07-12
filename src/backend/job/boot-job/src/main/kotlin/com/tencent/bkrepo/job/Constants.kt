@@ -59,6 +59,7 @@ const val LAST_MODIFIED_DATE = "lastModifiedDate"
 const val KEY = "key"
 const val RECORD_RESERVE_DAYS = "recordReserveDays"
 const val REPLICA_TYPE = "replicaType"
+const val REPLICA_OBJECT_TYPE = "replicaObjectType"
 
 /**
  * metrics

@@ -116,13 +116,30 @@
                     :disabled="disabled">
                 </bk-input>
             </bk-form-item>
-            <bk-form-item v-if="planForm.replicaObjectType === 'REPOSITORY'">
-                <bk-checkbox
-                    v-model="noRecordsCheck"
-                    :disabled="disabled">
-                    {{$t('noDistributionRecord')}}
-                </bk-checkbox>
-            </bk-form-item>
+            <template v-if="planForm.replicaObjectType === 'REPOSITORY'">
+                <bk-form-item>
+                    <bk-checkbox
+                        v-model="noRecordsCheck"
+                        :disabled="disabled">
+                        {{$t('noDistributionRecord')}}
+                    </bk-checkbox>
+                </bk-form-item>
+                <bk-form-item>
+                    <span>{{$t('planLogReserve')}}</span>
+                    <bk-input
+                        class="w180"
+                        :class="{ 'bk-form-item is-error': !Number(recordReserveDays) && errorRecordReserveDaysInfo }"
+                        type="number"
+                        :max="60"
+                        :min="1"
+                        v-model="recordReserveDays"
+                        :disabled="disabled"
+                        :placeholder="$t('planRecordReserveDaysInfo')"
+                        @blur="onBlurRecordReserveDays">
+                    </bk-input>
+                    <p class="form-error-tip" v-if="!Number(recordReserveDays) && errorRecordReserveDaysInfo">{{$t('planRecordReserveDaysInfo')}}</p>
+                </bk-form-item>
+            </template>
             <bk-form-item v-if="!disabled">
                 <bk-button @click="$emit('close')">{{$t('cancel')}}</bk-button>
                 <bk-button class="ml10" theme="primary" :loading="planForm.loading" @click="save">{{$t('confirm')}}</bk-button>
@@ -226,7 +243,9 @@
                     ]
                 },
                 replicaTaskObjects: [],
-                noRecordsCheck: true
+                noRecordsCheck: true,
+                recordReserveDays: 30,
+                errorRecordReserveDaysInfo: false
             }
         },
         computed: {
@@ -295,7 +314,8 @@
                             executionStrategy,
                             executionPlan: { executeTime, cronExpression }
                         },
-                        notRecord
+                        notRecord,
+                        recordReserveDays
                     },
                     objects
                 }) => {
@@ -322,6 +342,7 @@
                     }
                     this.replicaTaskObjects = objects
                     this.noRecordsCheck = notRecord
+                    this.recordReserveDays = recordReserveDays
                 }).finally(() => {
                     this.isLoading = false
                 })
@@ -334,6 +355,15 @@
             clearError () {
                 this.$refs.planForm.clearError()
             },
+            // 日志保留天数的离焦事件，用于校验输入是否符合规则
+            onBlurRecordReserveDays () {
+                if (isNaN(Number(this.recordReserveDays)) || this.recordReserveDays === null || this.recordReserveDays === '') {
+                    this.recordReserveDays = ''
+                    this.errorRecordReserveDaysInfo = true
+                } else {
+                    this.errorRecordReserveDaysInfo = false
+                }
+            },
             async save () {
                 if (this.planForm.remoteClusterIds.length > 0) {
                     const clusterArr = this.clusterList.filter(v => v.type !== 'CENTER').map(v => v.id)
@@ -343,6 +373,7 @@
                 }
                 await this.$refs.planForm.validate()
 
+                if (this.errorRecordReserveDaysInfo) return
                 if (this.planForm.loading) return
                 this.planForm.loading = true
 
@@ -385,6 +416,8 @@
                 }
                 if (this.planForm?.replicaObjectType === 'REPOSITORY') {
                     body.notRecord = this.noRecordsCheck
+                    // 此时需要保证传参是 number 类型
+                    body.recordReserveDays = isNaN(Number(this.recordReserveDays)) ? 30 : Number(this.recordReserveDays)
                 }
                 const request = this.routeName === 'createPlan'
                     ? this.createPlan({ projectId: this.projectId, body })

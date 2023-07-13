@@ -109,6 +109,11 @@ data class TReplicaTask(
     val notRecord: Boolean = false,
 
     /**
+     * 不记录制品的分发记录
+     */
+    val recordReserveDays: Long = 60,
+
+    /**
      * 审计信息
      */
     var createdBy: String,

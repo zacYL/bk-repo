@@ -181,6 +181,7 @@ class ReplicaTaskServiceImpl(
                 executionTimes = 0L,
                 enabled = enabled,
                 notRecord = notRecord,
+                recordReserveDays = recordReserveDays,
                 createdBy = userId,
                 createdDate = LocalDateTime.now(),
                 lastModifiedBy = userId,
@@ -220,6 +221,10 @@ class ReplicaTaskServiceImpl(
             Preconditions.checkNotBlank(localProjectId, this::name.name)
             Preconditions.checkNotBlank(replicaTaskObjects, this::replicaTaskObjects.name)
             Preconditions.checkNotBlank(remoteClusterIds, this::remoteClusterIds.name)
+            Preconditions.checkArgument(
+                recordReserveDays in RECORD_RESERVE_DAYS_MIN..RECORD_RESERVE_DAYS_MAX,
+                "recordReserveDays"
+            )
             // 校验计划名称长度
             if (name.length < TASK_NAME_LENGTH_MIN || name.length > TASK_NAME_LENGTH_MAX) {
                 throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, request::name.name)
@@ -387,6 +392,10 @@ class ReplicaTaskServiceImpl(
                     throw ErrorCodeException(ReplicationMessageCode.TASK_DISABLE_UPDATE, key)
                 }
             }
+            Preconditions.checkArgument(
+                recordReserveDays in RECORD_RESERVE_DAYS_MIN..RECORD_RESERVE_DAYS_MAX,
+                "recordReserveDays"
+            )
             // 校验同步对象
             validateReplicaObject(replicaObjectType, replicaTaskObjects)
             // 更新任务
@@ -407,7 +416,8 @@ class ReplicaTaskServiceImpl(
                 description = description,
                 lastModifiedBy = userId,
                 lastModifiedDate = LocalDateTime.now(),
-                notRecord = notRecord
+                notRecord = notRecord,
+                recordReserveDays = recordReserveDays
             )
             // 创建replicaObject
             val replicaObjectList = replicaTaskObjects.map {
@@ -501,6 +511,8 @@ class ReplicaTaskServiceImpl(
         private val logger = LoggerFactory.getLogger(ReplicaTaskServiceImpl::class.java)
         private const val TASK_NAME_LENGTH_MIN = 2
         private const val TASK_NAME_LENGTH_MAX = 64
+        private const val RECORD_RESERVE_DAYS_MIN = 1
+        private const val RECORD_RESERVE_DAYS_MAX = 60
 
         private fun convert(tReplicaTask: TReplicaTask?): ReplicaTaskInfo? {
             return tReplicaTask?.let {
@@ -520,6 +532,7 @@ class ReplicaTaskServiceImpl(
                     executionTimes = it.executionTimes,
                     enabled = it.enabled,
                     notRecord = it.notRecord,
+                    recordReserveDays = it.recordReserveDays,
                     createdBy = it.createdBy,
                     createdDate = it.createdDate.format(DateTimeFormatter.ISO_DATE_TIME),
                     lastModifiedBy = it.lastModifiedBy,

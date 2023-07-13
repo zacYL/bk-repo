@@ -205,4 +205,13 @@ interface ServicePermissionResource {
         @ApiParam(value = "租户id")
         @RequestParam tenantId: String? = null
     ): Response<Boolean>
+
+    @ApiOperation("删除仓库权限数据")
+    @DeleteMapping("/delete/{projectId}/{repoName}")
+    fun deletePermissionData(
+        @ApiParam(value = "项目id")
+        @PathVariable projectId: String,
+        @ApiParam(value = "项目名称")
+        @PathVariable repoName: String
+    ): Response<Boolean>
 }

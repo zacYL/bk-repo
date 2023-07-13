@@ -401,6 +401,12 @@ class RepositoryServiceImpl(
                 updateAssociatedVirtualRepos(projectId, name, repository.type.name, operator)
             }
         }
+        //删除仓库权限中心数据
+        try {
+            servicePermissionResource.deletePermissionData(repoDeleteRequest.projectId,repoDeleteRequest.name)
+        }catch (exception: Exception){
+            logger.error("Permission data cleaning failed: ${exception}")
+        }
         publishEvent(buildDeletedEvent(repoDeleteRequest, repository.type))
         logger.info("Delete repository [$repoDeleteRequest] success.")
     }

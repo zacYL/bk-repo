@@ -3,6 +3,7 @@ package com.tencent.bkrepo.auth.api
 import com.tencent.bkrepo.auth.constant.AuthConstant
 import com.tencent.bkrepo.auth.pojo.permission.AnyResourcePermissionSaveDTO
 import com.tencent.bkrepo.auth.pojo.permission.PermissionVO
+import com.tencent.bkrepo.auth.pojo.permission.RemoveInstancePermissionsRequest
 import com.tencent.bkrepo.auth.pojo.role.*
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
@@ -49,4 +50,19 @@ interface CanwayCustomPermissionClient {
             @RequestBody
             permissions: List<AnyResourcePermissionSaveDTO>,
     ): Response<List<PermissionVO>>
+
+        @ApiOperation("根据资源实例ID和资源类型删除授权记录表的所有数据（仅用于调用方删除资源实例后，权限中心删除对应的所有授权记录）")
+        @PostMapping(
+                "/resource/remove",
+                produces = [MediaType.APPLICATION_JSON_VALUE],
+                consumes = [MediaType.APPLICATION_JSON_VALUE]
+        )
+        fun removeResourcePermissions(
+                @RequestHeader(Constants.AUTH_HEADER_USER_ID)
+                @Parameter(description = "删除者", required = true)
+                userId: String,
+                @RequestBody
+                @Parameter(description = "请求参数", required = true)
+                request: RemoveInstancePermissionsRequest
+        ): Response<Boolean>
 }

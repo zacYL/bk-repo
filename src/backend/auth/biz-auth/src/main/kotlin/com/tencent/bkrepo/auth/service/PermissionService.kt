@@ -91,4 +91,6 @@ interface PermissionService {
      * @param tenantId 租户ID
      */
     fun isAdmin(userId: String, projectId: String?, tenantId: String?): Boolean
+
+    fun deletePermissionData(projectId: String, repoName: String): Boolean
 }

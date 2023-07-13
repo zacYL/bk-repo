@@ -108,6 +108,10 @@ open class CpackPermissionServiceImpl constructor(
         return userRepository.findFirstByUserId(userId)?.admin ?: false
     }
 
+    override fun deletePermissionData(projectId: String, repoName: String): Boolean {
+        return true
+    }
+
     override fun createPermission(request: CreatePermissionRequest): Boolean {
         logger.info("create  permission request : [$request]")
         // todo check request

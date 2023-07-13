@@ -102,6 +102,9 @@ open class PermissionServiceImpl constructor(
     override fun isAdmin(userId: String, projectId: String?, tenantId: String?): Boolean {
         TODO("Not yet implemented")
     }
+    override fun deletePermissionData(projectId: String, repoName: String): Boolean {
+        TODO("Not yet implemented")
+    }
 
     override fun createPermission(request: CreatePermissionRequest): Boolean {
         logger.info("create  permission request : [$request]")

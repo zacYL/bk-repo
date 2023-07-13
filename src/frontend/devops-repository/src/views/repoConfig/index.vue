@@ -40,7 +40,17 @@
                                 <bk-input style="width:400px" v-model.trim="repoBaseInfo.network.proxy.host"></bk-input>
                             </bk-form-item>
                             <bk-form-item :label="$t('port')" property="network.proxy.port" :required="true" error-display-type="normal">
-                                <bk-input style="width:400px" type="number" :max="65535" :min="1" v-model.trim="repoBaseInfo.network.proxy.port"></bk-input>
+                                <bk-input
+                                    style="width:400px"
+                                    type="number"
+                                    :max="65535"
+                                    :min="1"
+                                    :class="{ 'bk-form-item is-error': errorProxyPortInfo }"
+                                    v-model.trim="repoBaseInfo.network.proxy.port"
+                                    @blur="onBlurProxyPort"
+                                    @focus="errorProxyPortInfo = false">
+                                </bk-input>
+                                <p class="form-error-tip" v-if="errorProxyPortInfo">{{$t('repositoryProxyPortInfo')}}</p>
                             </bk-form-item>
                             <bk-form-item :label="$t('account')" property="network.proxy.username">
                                 <bk-input style="width:400px" v-model.trim="repoBaseInfo.network.proxy.username"></bk-input>
@@ -249,7 +259,8 @@
                     // 是否展示tab标签页，因为代理设置和清理设置需要根据详情页接口返回的数据判断是否显示，解决异步导致的tab顺序错误的问题
                     showTabPanel: false
                 },
-                disableTestUrl: false
+                disableTestUrl: false,
+                errorProxyPortInfo: false
             }
         },
         computed: {
@@ -420,6 +431,9 @@
             onUpdateList (list) {
                 this.repoBaseInfo.virtualStoreList = list
             },
+            onBlurProxyPort () {
+                this.errorProxyPortInfo = isNaN(Number(this.repoBaseInfo.network.proxy.port))
+            },
             // 选中的存储库弹窗确认事件
             onCheckedTargetStore (list) {
                 this.repoBaseInfo.virtualStoreList = list
@@ -438,6 +452,16 @@
             },
             // 创建远程仓库弹窗中测试远程链接
             onClickTestRemoteUrl () {
+                if (this.errorProxyPortInfo) return
+                this.$refs.repoBaseInfo.validate()
+                if (this.repoBaseInfo.network.switcher && (!this.repoBaseInfo.network.proxy.host || !this.repoBaseInfo.network.proxy.port)) {
+                    this.$bkMessage({
+                        theme: 'warning',
+                        limit: 3,
+                        message: this.$t('pleaseInput') + this.$t('legit') + this.$t('networkProxy')
+                    })
+                    return
+                }
                 if (!this.repoBaseInfo?.url || isEmpty(this.repoBaseInfo.url) || !this.checkRemoteUrl(this.repoBaseInfo?.url)) {
                     this.$bkMessage({
                         theme: 'warning',
@@ -547,6 +571,7 @@
                 })
             },
             async saveBaseInfo () {
+                if (this.errorProxyPortInfo) return
                 await this.$refs.repoBaseInfo.validate()
                 const interceptors = []
                 if (this.repoType === 'generic') {

@@ -38,31 +38,29 @@ data class ScanQualityUpdateRequest(
     val low: Long? = null,
     val forbidScanUnFinished: Boolean? = null,
     val forbidQualityUnPass: Boolean? = null,
-    val recommend: Boolean = false,
-    val compliance: Boolean = false,
-    val unknown: Boolean = false
+    val recommend: Boolean? = null,
+    val compliance: Boolean? = null,
+    val unknown: Boolean? = null
 ) {
     fun toMap(): Map<String, Any?> {
         val map = mutableMapOf<String, Any?>()
         Level.values().forEach { level ->
             val methodName = "get${level.levelName.capitalize()}"
-            val method = ScanQualityUpdateRequest::class.java.getDeclaredMethod(methodName)
-
+            val method = this::class.java.getDeclaredMethod(methodName)
             val redLine = method.invoke(this) as Long?
-            if (redLine != null && redLine < 0) {
-                throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, level.levelName)
+            redLine?.let {
+                if (it < 0) {
+                    throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, level.levelName)
+                }
+                map[level.levelName] = it
             }
-            redLine?.let { map[level.levelName] = redLine }
         }
-        this.forbidScanUnFinished?.let {
-            if (it) map[ScanQualityUpdateRequest::forbidScanUnFinished.name] = it
-        }
-        this.forbidQualityUnPass?.let {
-            if (it) map[ScanQualityUpdateRequest::forbidQualityUnPass.name] = it
-        }
-        if (recommend) map[LicenseScanQualityUpdateRequest::recommend.name] = recommend
-        if (compliance) map[LicenseScanQualityUpdateRequest::compliance.name] = compliance
-        if (unknown) map[LicenseScanQualityUpdateRequest::unknown.name] = unknown
+
+        this.forbidScanUnFinished?.let { map[::forbidScanUnFinished.name] = it }
+        this.forbidQualityUnPass?.let { map[::forbidQualityUnPass.name] = it }
+        this.recommend?.let { map[::recommend.name] = it }
+        this.compliance?.let { map[::compliance.name] = it }
+        this.unknown?.let { map[::unknown.name] = it }
         return map
     }
 }

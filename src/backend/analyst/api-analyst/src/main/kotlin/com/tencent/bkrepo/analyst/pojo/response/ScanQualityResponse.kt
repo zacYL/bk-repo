@@ -34,8 +34,11 @@ data class ScanQualityResponse(
     val high: Long?,
     val medium: Long?,
     val low: Long?,
-    val forbidScanUnFinished: Boolean,
-    val forbidQualityUnPass: Boolean
+    val forbidScanUnFinished: Boolean?,
+    val forbidQualityUnPass: Boolean?,
+    val recommend: Boolean?,
+    val compliance: Boolean?,
+    val unknown: Boolean?
 ) {
 
     companion object {
@@ -45,7 +48,10 @@ data class ScanQualityResponse(
             medium = map[Level.MEDIUM.levelName] as? Long,
             low = map[Level.LOW.levelName] as? Long,
             forbidScanUnFinished = map[ScanQualityResponse::forbidScanUnFinished.name] as? Boolean ?: false,
-            forbidQualityUnPass = map[ScanQualityResponse::forbidQualityUnPass.name] as? Boolean ?: false
+            forbidQualityUnPass = map[ScanQualityResponse::forbidQualityUnPass.name] as? Boolean ?: false,
+            recommend = map[ScanQualityResponse::recommend.name] as? Boolean ?: false,
+            compliance = map[ScanQualityResponse::compliance.name] as? Boolean ?: false,
+            unknown = map[ScanQualityResponse::unknown.name] as? Boolean ?: false
         )
     }
 }

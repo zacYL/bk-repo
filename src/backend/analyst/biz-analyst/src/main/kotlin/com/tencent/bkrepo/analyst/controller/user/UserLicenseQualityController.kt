@@ -27,15 +27,14 @@
 
 package com.tencent.bkrepo.analyst.controller.user
 
-import com.tencent.bkrepo.analyst.pojo.request.LicenseScanQualityUpdateRequest
+import com.tencent.bkrepo.analyst.pojo.request.ScanQualityUpdateRequest
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
-import com.tencent.bkrepo.analyst.pojo.response.LicenseScanQualityResponse
-import com.tencent.bkrepo.analyst.service.LicenseScanQualityService
+import com.tencent.bkrepo.analyst.pojo.response.ScanQualityResponse
+import com.tencent.bkrepo.analyst.service.ScanQualityService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -43,28 +42,20 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/scan/license/quality")
 class UserLicenseQualityController(
-    private val licenseScanQualityService: LicenseScanQualityService
+    private val scanQualityService: ScanQualityService
 ){
     @GetMapping("/{planId}")
     fun getScanQuality(
         @PathVariable("planId") planId: String
-    ): Response<LicenseScanQualityResponse> {
-        return ResponseBuilder.success(licenseScanQualityService.getScanQuality(planId))
-    }
-
-    @PutMapping("/{planId}")
-    fun createScanQuality(
-        @PathVariable("planId") planId: String,
-        @RequestBody request: LicenseScanQualityUpdateRequest
-    ): Response<Boolean> {
-        return ResponseBuilder.success(licenseScanQualityService.updateScanQuality(planId, request))
+    ): Response<ScanQualityResponse> {
+        return ResponseBuilder.success(scanQualityService.getScanQuality(planId))
     }
 
     @PostMapping("/{planId}")
     fun updateScanQuality(
         @PathVariable("planId") planId: String,
-        @RequestBody request: LicenseScanQualityUpdateRequest
+        @RequestBody request: ScanQualityUpdateRequest
     ): Response<Boolean> {
-        return ResponseBuilder.success(licenseScanQualityService.updateScanQuality(planId, request))
+        return ResponseBuilder.success(true)
     }
 }

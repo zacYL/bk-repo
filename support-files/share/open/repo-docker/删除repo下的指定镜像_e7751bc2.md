@@ -11,27 +11,37 @@
 ### 请求参数
 #### 路径参数
 
-| 字段 | 类型 | 必填 | 描述 |
-| -------- | -------- | -------- | -------- |
-| projectId     | string   | true       | projectId |
-| repoName     | string   | true       | repoName |
+| 字段        | 类型     | 必填  | 描述         |
+|-----------|--------|-----|------------|
+| projectId | String | 是   | 项目id       |
+| repoName  | String | 是   | 仓库名称       |
 
 #### 查询参数
 
-| 字段 | 类型 | 必填 | 描述 |
-| -------- | -------- | -------- | -------- |
-| packageKey     | string   | true       | packageKey |
-
-
-#### 请求体参数
-| 字段 | 类型 | 必填 | 描述 |
-| -------- | -------- | -------- | -------- |
+| 字段         | 类型     | 必填  | 描述     |
+|------------|--------|-----|--------|
+| packageKey | String | 是   | 包唯一key |
 
 ### 返回结果
-| 字段 | 类型 | 描述 |
-| -------- | -------- | -------- |
-| code     | integer , format:int32  | 返回码 |
-| data     | boolean   | 数据 |
-| message     | string   | 错误信息 |
-| traceId     | string   | 链路追踪id |
 
+| 字段      | 说明     |
+|---------|--------|
+| code    | 返回码    |
+| message | 错误信息   |
+| data    | 数据     |
+| traceId | 链路追踪id |
+
+#### 响应体示例
+
+```json
+{
+  "code":0,
+  "message":null,
+  "traceId":"",
+  "data":true
+}
+```
+
+#### data 字段说明
+
+是否删除成功

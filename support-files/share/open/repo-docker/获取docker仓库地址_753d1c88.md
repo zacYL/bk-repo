@@ -10,19 +10,28 @@
 `GET`
 ### 请求参数
 
-#### 查询参数
-
-| 字段 | 类型 | 必填 | 描述 |
-| -------- | -------- | -------- | -------- |
-| userId     | string   | false       | userId |
-
-
+无
 
 ### 返回结果
-| 字段 | 类型 | 描述 |
-| -------- | -------- | -------- |
-| code     | integer , format:int32  | 返回码 |
-| data     | string   | 数据 |
-| message     | string   | 错误信息 |
-| traceId     | string   | 链路追踪id |
 
+| 字段      | 说明     |
+|---------|--------|
+| code    | 返回码    |
+| message | 错误信息   |
+| data    | 数据     |
+| traceId | 链路追踪id |
+
+#### 响应体示例
+
+```json
+{
+  "code": 0,
+  "message": null,
+  "data": "docker.bkrepo.center.canway.com",
+  "traceId": ""
+}
+```
+
+#### data 字段说明
+
+docker仓库地址

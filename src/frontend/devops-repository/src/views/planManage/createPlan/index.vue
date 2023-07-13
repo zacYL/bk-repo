@@ -198,6 +198,12 @@
                             required: true,
                             message: this.$t('pleaseInput') + '计划名称',
                             trigger: 'blur'
+                        },
+                        {
+                            min: 2,
+                            max: 32,
+                            message: this.$t('errorPlanNameTips'),
+                            trigger: 'blur'
                         }
                     ],
                     time: [

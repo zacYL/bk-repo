@@ -41,5 +41,21 @@ export default {
             formData,
             { headers: { 'Content-Type': 'multipart/form-data' } }
         )
+    },
+    /**
+     * 集成CI模式下生成个人访问令牌
+     * @param {tokenName} String token名称
+     * @param {tokenScope} Array token范围，此时需要写死传 ['CPack]
+     * @returns
+     */
+    ciCreateToken (_, { tokenName, tokenScope = ['CPack'] }) {
+        return Vue.prototype.$ajax.post(
+            'usermanager/api/user/token/add',
+            {
+                tokenName,
+                tokenScope
+            },
+            { baseURL: `${window.DEVOPS_SITE_URL}/ms/` }
+        )
     }
 }

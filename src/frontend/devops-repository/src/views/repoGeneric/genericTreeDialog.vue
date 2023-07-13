@@ -25,7 +25,7 @@
         </div>
         <template #footer>
             <bk-button @click="genericTreeData.show = false">{{ $t('cancel') }}</bk-button>
-            <bk-button class="ml10" :loading="genericTreeData.loading" theme="primary" @click="submit">{{ $t('confirm') }}</bk-button>
+            <bk-button class="ml10" :loading="genericTreeData.loading" theme="primary" :disabled="!genericTree.length" @click="submit">{{ $t('confirm') }}</bk-button>
         </template>
     </canway-dialog>
 </template>
@@ -107,8 +107,8 @@
                         srcRepoName: this.repoName,
                         srcFullPath: path,
                         destProjectId: this.projectId,
-                        destRepoName: selectedNode.repoName || selectedNode.name,
-                        destFullPath: `${selectedNode.fullPath || '/'}`,
+                        destRepoName: selectedNode?.repoName || selectedNode?.name,
+                        destFullPath: `${selectedNode?.fullPath || '/'}`,
                         overwrite: false
                     }
                 }).then(() => {

@@ -3,20 +3,6 @@
   "systemName": " 制品库",
   "openApiList": [
     {
-      "code": "GET__ext_dependent_page_{projectId}_{repoName}_repo-npm",
-      "name": "GET__ext_dependent_page_{projectId}_{repoName}",
-      "desc": "分页查询某个资源节点被依赖的所有资源名称",
-      "path": "/repo-npm/ext/dependent/page/{projectId}/{repoName}",
-      "method": "GET",
-      "headers": [],
-      "targetService": "repo-npm",
-      "targetPath": "/ext/dependent/page/{projectId}/{repoName}",
-      "targetMethod": "GET",
-      "timeout": 30,
-      "retryTimes": 10,
-      "docName": "分页查询某个资源节点被依赖的所有资源名称_8f8034a2.md"
-    },
-    {
       "code": "GET__ext_address_repo-npm",
       "name": "GET__ext_address",
       "desc": "获取npm域名地址",

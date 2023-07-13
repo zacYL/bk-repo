@@ -141,10 +141,10 @@
                 ],
                 "createdBy": "admin",
                 "createdByName": "超级管理员[admin]",
-                "createdTime": "2023-06-28 15:11:15",
+                "createdTime": "2023-06-30 15:12:15",
                 "updatedBy": "admin",
                 "updatedByName": "超级管理员[admin]",
-                "updatedTime": "2023-06-28 15:11:15"
+                "updatedTime": "2023-06-30 15:12:15"
             },
             {
                 "id": "9a217fa49a5a4b0f9dd490d03879cf9f",
@@ -180,10 +180,10 @@
                 ],
                 "createdBy": "admin",
                 "createdByName": "超级管理员[admin]",
-                "createdTime": "2023-06-28 15:11:15",
+                "createdTime": "2023-06-30 15:12:15",
                 "updatedBy": "admin",
                 "updatedByName": "超级管理员[admin]",
-                "updatedTime": "2023-06-28 15:11:15"
+                "updatedTime": "2023-06-30 15:12:15"
             },
             {
                 "id": "d40c0bd6c9794297b336a16fe7f8ab29",
@@ -219,10 +219,10 @@
                 ],
                 "createdBy": "admin",
                 "createdByName": "超级管理员[admin]",
-                "createdTime": "2023-06-28 15:11:15",
+                "createdTime": "2023-06-30 15:12:15",
                 "updatedBy": "admin",
                 "updatedByName": "超级管理员[admin]",
-                "updatedTime": "2023-06-28 15:11:15"
+                "updatedTime": "2023-06-30 15:12:15"
             },
             {
                 "id": "491430c311d14c03b47aadd331edcbc1",
@@ -360,10 +360,10 @@
                 ],
                 "createdBy": "admin",
                 "createdByName": "超级管理员[admin]",
-                "createdTime": "2023-06-28 15:11:15",
+                "createdTime": "2023-06-30 15:12:15",
                 "updatedBy": "admin",
                 "updatedByName": "超级管理员[admin]",
-                "updatedTime": "2023-06-28 15:11:15"
+                "updatedTime": "2023-06-30 15:12:15"
             },
             {
                 "id": "bada9ac029e849429f21282954e2d825",
@@ -399,49 +399,10 @@
                 ],
                 "createdBy": "admin",
                 "createdByName": "超级管理员[admin]",
-                "createdTime": "2023-06-28 15:11:15",
+                "createdTime": "2023-06-30 15:12:15",
                 "updatedBy": "admin",
                 "updatedByName": "超级管理员[admin]",
-                "updatedTime": "2023-06-28 15:11:15"
-            },
-            {
-                "id": "e7cc790661444727ae6d2cb52e6705f8",
-                "resourceName": "访问令牌",
-                "resourceCode": "v_pack_token",
-                "parentResourceCode": "project",
-                "groupId": "15",
-                "weight": 6,
-                "instanceSourceUrl": "",
-                "managedByAuth": true,
-                "module": "CPack",
-                "license": "STANDARD",
-                "hasInstance": false,
-                "permissionMode": "NOT_INSTANCE",
-                "actions": [
-                    {
-                        "id": "e7cc790661444727ae6d2cb52e6705f8",
-                        "name": "查看",
-                        "actionCode": "view",
-                        "resourceCode": "v_pack_token",
-                        "parentResourceCode": "project",
-                        "associateInstance": false,
-                        "weight": 50,
-                        "module": "CPack",
-                        "license": "STANDARD",
-                        "createdBy": "admin",
-                        "createdByName": "超级管理员[admin]",
-                        "createdTime": "2021-11-10 22:41:35",
-                        "updatedBy": "admin",
-                        "updatedByName": "超级管理员[admin]",
-                        "updatedTime": "2023-06-13 14:06:30"
-                    }
-                ],
-                "createdBy": "admin",
-                "createdByName": "超级管理员[admin]",
-                "createdTime": "2023-06-28 15:11:15",
-                "updatedBy": "admin",
-                "updatedByName": "超级管理员[admin]",
-                "updatedTime": "2023-06-28 15:11:15"
+                "updatedTime": "2023-06-30 15:12:15"
             }
         ],
         "createdBy": "admin",

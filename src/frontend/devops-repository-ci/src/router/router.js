@@ -4,7 +4,6 @@ const scanTask = () => import('@repository/views/preview/scanTask')
 const repoHome = () => import('@/views')
 const repoList = () => import('@/views/repoList')
 const repoConfig = () => import('@/views/repoConfig')
-const repoToken = () => import('@repository/views/repoToken')
 const repoAudit = () => import('@repository/views/repoAudit')
 const nodeManage = () => import('@repository/views/nodeManage')
 const planManage = () => import('@repository/views/planManage')
@@ -81,16 +80,6 @@ const routes = [
                 meta: {
                     breadcrumb: [
                         { name: 'repoSearch', label: '制品搜索' }
-                    ]
-                }
-            },
-            {
-                path: 'repoToken',
-                name: 'repoToken',
-                component: repoToken,
-                meta: {
-                    breadcrumb: [
-                        { name: 'repoToken', label: '访问令牌' }
                     ]
                 }
             },

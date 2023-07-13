@@ -9,10 +9,12 @@
                 <div class="pt20 section-main">
                     <bk-button text theme="primary" @click="createToken">{{ $t('createToken') }}</bk-button>
                     {{ $t('tokenSubTitle') }}
-                    <router-link :to="{ name: 'repoToken' }">{{ $t('token') }}</router-link>
+                    <bk-button v-if="ciMode" text theme="primary" @click="jumpCCommonUserToken">{{ $t('token') }}</bk-button>
+                    <router-link v-else :to="{ name: 'repoToken' }">{{ $t('token') }}</router-link>
                 </div>
             </template>
-            <create-token-dialog ref="createToken"></create-token-dialog>
+            <ci-create-token-dialog v-if="ciMode" ref="ciCreateToken"></ci-create-token-dialog>
+            <create-token-dialog v-else ref="createToken"></create-token-dialog>
         </bk-collapse-item>
         <bk-collapse-item v-for="(section, index) in article" :key="`section${index}`" :name="`section${index}`">
             <header v-if="section.title" class="section-header">
@@ -31,9 +33,10 @@
 <script>
     import CodeArea from '@repository/components/CodeArea'
     import createTokenDialog from '@repository/views/repoToken/createTokenDialog'
+    import ciCreateTokenDialog from '@repository/views/repoToken/ciCreateTokenDialog'
     export default {
         name: 'repoGuide',
-        components: { CodeArea, createTokenDialog },
+        components: { CodeArea, createTokenDialog, ciCreateTokenDialog },
         props: {
             article: {
                 type: Array,
@@ -42,12 +45,17 @@
         },
         data () {
             return {
+                ciMode: MODE_CONFIG === 'ci',
                 activeName: ['token', ...[0, 1, 2, 3, 4].map(v => `section${v}`)]
             }
         },
         methods: {
             createToken () {
-                this.$refs.createToken.showDialogHandler()
+                this.ciMode ? this.$refs.ciCreateToken.showDialogHandler() : this.$refs.createToken.showDialogHandler()
+            },
+            // 集成CI模式下需要跳转到用户个人中心的访问令牌页面
+            jumpCCommonUserToken () {
+                window.open(window.DEVOPS_SITE_URL + '/console/userCenter/userToken', '_blank')
             }
         }
     }

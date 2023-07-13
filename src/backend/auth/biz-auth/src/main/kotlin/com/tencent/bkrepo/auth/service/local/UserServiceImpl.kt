@@ -37,13 +37,7 @@ import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.model.TUser
 import com.tencent.bkrepo.auth.pojo.token.Token
 import com.tencent.bkrepo.auth.pojo.token.TokenResult
-import com.tencent.bkrepo.auth.pojo.user.CreateUserRequest
-import com.tencent.bkrepo.auth.pojo.user.CreateUserToProjectRequest
-import com.tencent.bkrepo.auth.pojo.user.CreateUserToRepoRequest
-import com.tencent.bkrepo.auth.pojo.user.UpdateUserRequest
-import com.tencent.bkrepo.auth.pojo.user.User
-import com.tencent.bkrepo.auth.pojo.user.UserInfo
-import com.tencent.bkrepo.auth.pojo.user.UserResult
+import com.tencent.bkrepo.auth.pojo.user.*
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
 import com.tencent.bkrepo.auth.service.UserService
@@ -379,6 +373,16 @@ open class UserServiceImpl constructor(
         val totalRecords = mongoTemplate.count(query, TUser::class.java)
         val records = mongoTemplate.find(query.with(pageRequest), TUser::class.java).map { transferUserInfo(it) }
         return Pages.ofResponse(pageRequest, totalRecords, records)
+    }
+
+    override fun userAll(
+        userName: String?,
+        admin: Boolean?,
+        locked: Boolean?
+    ): List<TUser> {
+        val query = UserQueryHelper.getUserByName(userName, admin, locked)
+        val records = mongoTemplate.find(query, TUser::class.java)
+        return records
     }
 
     override fun getUserInfoById(userId: String): UserInfo? {

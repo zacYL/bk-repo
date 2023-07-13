@@ -4,12 +4,12 @@ import com.tencent.bkrepo.auth.api.CanwayProjectClient
 import com.tencent.bkrepo.auth.api.CanwaySystemClient
 import com.tencent.bkrepo.auth.api.CanwayTenantClient
 import com.tencent.bkrepo.auth.constant.AuthConstant.ANY_RESOURCE_CODE
-import com.tencent.bkrepo.auth.pojo.UserPermissionQueryDTO
+import com.tencent.bkrepo.auth.pojo.permission.UserPermissionQueryDTO
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.convertEnumListToStringList
 import com.tencent.bkrepo.auth.service.impl.CanwayPermissionServiceImpl
 import com.tencent.bkrepo.common.devops.RESOURCECODE
-import net.canway.devops.auth.pojo.UserPermissionValidateDTO
+import com.tencent.bkrepo.auth.pojo.permission.UserPermissionValidateDTO
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component

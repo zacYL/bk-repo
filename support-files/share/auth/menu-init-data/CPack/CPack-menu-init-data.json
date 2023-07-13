@@ -11,10 +11,10 @@
         "childrenMenus": [],
         "createdBy": "admin",
         "createdByName": "超级管理员[admin]",
-        "createdTime": "2023-06-19 16:26:23",
+        "createdTime": "2023-07-06 10:33:04",
         "updatedBy": "admin",
         "updatedByName": "超级管理员[admin]",
-        "updatedTime": "2023-06-19 16:26:23"
+        "updatedTime": "2023-07-06 10:33:04"
     },
     {
         "id": 401,
@@ -43,10 +43,10 @@
         "childrenMenus": [],
         "createdBy": "admin",
         "createdByName": "超级管理员[admin]",
-        "createdTime": "2023-06-24 17:34:24",
+        "createdTime": "2023-07-06 10:33:04",
         "updatedBy": "admin",
         "updatedByName": "超级管理员[admin]",
-        "updatedTime": "2023-06-24 17:34:24"
+        "updatedTime": "2023-07-06 10:33:04"
     },
     {
         "id": 403,
@@ -75,10 +75,10 @@
         "childrenMenus": [],
         "createdBy": "admin",
         "createdByName": "超级管理员[admin]",
-        "createdTime": "2023-06-19 16:26:23",
+        "createdTime": "2023-07-06 10:33:04",
         "updatedBy": "admin",
         "updatedByName": "超级管理员[admin]",
-        "updatedTime": "2023-06-19 16:26:23"
+        "updatedTime": "2023-07-06 10:33:04"
     },
     {
         "id": 404,
@@ -107,42 +107,10 @@
         "childrenMenus": [],
         "createdBy": "admin",
         "createdByName": "超级管理员[admin]",
-        "createdTime": "2023-06-19 16:26:23",
+        "createdTime": "2023-07-06 10:33:04",
         "updatedBy": "admin",
         "updatedByName": "超级管理员[admin]",
-        "updatedTime": "2023-06-19 16:26:23"
-    },
-    {
-        "id": 406,
-        "name": "访问令牌",
-        "englishName": "repoToken",
-        "parentMenu": 15,
-        "menuLevel": "project",
-        "injectType": "iframe",
-        "routeType": "path",
-        "routeLink": "/repository/{projectId}/repoToken",
-        "iframeUrl": "http://bkrepo.onlycteam.net/ui/",
-        "jsUrl": "",
-        "cssUrl": "",
-        "showRoute": true,
-        "status": "ok",
-        "weight": 6,
-        "webSocket": "",
-        "logoUrl": "repoToken",
-        "showMenu": true,
-        "showProjectList": true,
-        "desc": "",
-        "resourceCode": "v_pack_token",
-        "resourceAction": "view",
-        "module": "CPack",
-        "license": "STANDARD",
-        "childrenMenus": [],
-        "createdBy": "admin",
-        "createdByName": "超级管理员[admin]",
-        "createdTime": "2023-06-19 16:26:23",
-        "updatedBy": "admin",
-        "updatedByName": "超级管理员[admin]",
-        "updatedTime": "2023-06-19 16:26:23"
+        "updatedTime": "2023-07-06 10:33:04"
     },
     {
         "id": 436,
@@ -171,10 +139,10 @@
         "childrenMenus": [],
         "createdBy": "admin",
         "createdByName": "超级管理员[admin]",
-        "createdTime": "2023-06-19 16:26:23",
+        "createdTime": "2023-07-06 10:33:04",
         "updatedBy": "admin",
         "updatedByName": "超级管理员[admin]",
-        "updatedTime": "2023-06-19 16:26:23"
+        "updatedTime": "2023-07-06 10:33:04"
     },
     {
         "id": 7493,
@@ -202,9 +170,9 @@
         "childrenMenus": [],
         "createdBy": "admin",
         "createdByName": "超级管理员[admin]",
-        "createdTime": "2023-06-19 16:26:23",
+        "createdTime": "2023-07-06 10:33:04",
         "updatedBy": "admin",
         "updatedByName": "超级管理员[admin]",
-        "updatedTime": "2023-06-19 16:26:23"
+        "updatedTime": "2023-07-06 10:33:04"
     }
 ]

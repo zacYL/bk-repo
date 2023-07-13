@@ -1,5 +1,7 @@
 package com.tencent.bkrepo.auth.service.impl
 
+import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_ADMIN
+import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_USER
 import com.tencent.bkrepo.auth.constant.AuthConstant.ANY_RESOURCE_CODE
 import com.tencent.bkrepo.auth.general.DevOpsAuthGeneral
 import com.tencent.bkrepo.auth.message.AuthMessageCode
@@ -15,7 +17,7 @@ import com.tencent.bkrepo.common.devops.REPLICA_RESOURCECODE
 import com.tencent.bkrepo.common.devops.RESOURCECODE
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
-import net.canway.devops.auth.pojo.UserPermissionValidateDTO
+import com.tencent.bkrepo.auth.pojo.permission.UserPermissionValidateDTO
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.data.mongodb.core.MongoTemplate
@@ -145,11 +147,17 @@ class CanwayPermissionServiceImpl(
     }
 
     /**
-     * 无法获取仓库内置权限列表
+     * 获取仓库内置权限列表
      */
     override fun listBuiltinPermission(projectId: String, repoName: String): List<Permission> {
-        logger.info("Cpack listBuiltinPermission does not exist")
-        return emptyList()
+        val repoAdmin = getOnePermission(projectId, repoName, AUTH_BUILTIN_ADMIN, listOf(PermissionAction.MANAGE))
+        val repoUser = getOnePermission(
+            projectId,
+            repoName,
+            AUTH_BUILTIN_USER,
+            listOf(PermissionAction.WRITE, PermissionAction.DELETE, PermissionAction.UPDATE)
+        )
+        return listOf(repoAdmin, repoUser).map { transferPermission(it) }
     }
 
     /**

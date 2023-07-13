@@ -93,7 +93,7 @@ interface NodeBaseOperation {
     /**
      * 更新节点的【最近使用时间】
      */
-    fun updateRecentlyUseDate(projectId: String, repoName: String, fullPath: String, operator: String)
+    fun updateRecentlyUseDate(projectId: String, repoName: String, fullPath: String)
 
     /**
      * 更新节点访问时间

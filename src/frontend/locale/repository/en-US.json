@@ -125,7 +125,7 @@
     "tokenSubTitle": "替换<PERSONAL_ACCESS_TOKEN>值，管理访问令牌请跳转",
     "tokenExpiressTip": "请选择过期时间，默认永久",
     "tokenIs": "Token值为：",
-    "tokenCopyTip": "请确保已复制上述令牌。我们不存储它，之后将无法再次看到它",
+    "tokenCopyTip": "Please make sure you have copied the above token. We don't store it and you won't be able to see it again later",
     "neverExpires": "永久有效",
     "expired": "已过期",
     "deleteTokenTitle": "确认删除Token: {name} ?",
@@ -238,5 +238,11 @@
     "recentlyUseDate":"Download time",
     "planLogErrorReason":"Error reason",
     "planLogReserve":"Log reserve days(within 60 days):",
-    "planRecordReserveDaysInfo":"Please enter a number between 1-60"
+    "planRecordReserveDaysInfo":"Please enter a number between 1-60",
+    "errorPlanNameTips":"Please enter a plan name of 2-32 characters",
+    "tokenScope":"Token scope",
+    "CPack":"CPack artifact repositories",
+    "CPackTokenInfo":"Grant all API permissions on CPack artifact repositories",
+    "generateCiToken":"Generate personal token",
+    "generate":"Generate"
 }

@@ -82,15 +82,14 @@ class NodeServiceImpl(
     override fun updateRecentlyUseDate(
         projectId: String,
         repoName: String,
-        fullPath: String,
-        operator: String
+        fullPath: String
     ) {
         val criteria = where(TNode::projectId).isEqualTo(projectId)
             .and(TNode::repoName).isEqualTo(repoName)
             .and(TNode::fullPath).isEqualTo(fullPath)
         val query = Query(criteria)
         val recentlyUseDate = LocalDateTime.now()
-        nodeDao.updateFirst(query, NodeQueryHelper.nodeRecentlyUseDateUpdate(operator, recentlyUseDate))
+        nodeDao.updateFirst(query, NodeQueryHelper.nodeRecentlyUseDateUpdate(recentlyUseDate))
     }
 
     override fun computeSize(artifact: ArtifactInfo): NodeSizeInfo {

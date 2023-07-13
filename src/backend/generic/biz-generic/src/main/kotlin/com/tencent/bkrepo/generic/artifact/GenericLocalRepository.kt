@@ -163,7 +163,7 @@ class GenericLocalRepository : LocalRepository() {
             downloadIntercept(this, node)
             val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials) ?: return null
             val responseName = artifactInfo.getResponseName()
-            nodeClient.updateRecentlyUseDate(node.projectId, node.repoName, node.fullPath, context.userId)
+            nodeClient.updateRecentlyUseDate(node.projectId, node.repoName, node.fullPath)
             return ArtifactResource(inputStream, responseName, node, ArtifactChannel.LOCAL, useDisposition)
         }
     }
@@ -247,7 +247,7 @@ class GenericLocalRepository : LocalRepository() {
                     if (it.folder) {
                         emptyArtifactInputStream
                     } else {
-                        nodeClient.updateRecentlyUseDate(it.projectId, it.repoName, it.fullPath, this.userId)
+                        nodeClient.updateRecentlyUseDate(it.projectId, it.repoName, it.fullPath)
                         storageManager.loadArtifactInputStream(it, storageCredentials)
                             ?: throw ArtifactNotFoundException(it.fullPath)
                     }
@@ -329,7 +329,7 @@ class GenericLocalRepository : LocalRepository() {
         // 构造name-node map
         val prefix = "${node.fullPath}/"
         val nodeMap = nodes.associate {
-            nodeClient.updateRecentlyUseDate(it.projectId, it.repoName, it.fullPath, context.userId)
+            nodeClient.updateRecentlyUseDate(it.projectId, it.repoName, it.fullPath)
             val name = it.fullPath.removePrefix(prefix)
             val inputStream = storageManager.loadArtifactInputStream(it, context.storageCredentials) ?: return null
             name to inputStream

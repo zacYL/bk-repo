@@ -133,6 +133,7 @@
                         :max="60"
                         :min="1"
                         v-model="recordReserveDays"
+                        :disabled="disabled"
                         :placeholder="$t('planRecordReserveDaysInfo')"
                         @blur="onBlurRecordReserveDays">
                     </bk-input>

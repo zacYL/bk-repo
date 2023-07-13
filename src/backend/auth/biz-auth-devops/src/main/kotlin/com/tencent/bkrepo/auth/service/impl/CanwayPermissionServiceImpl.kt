@@ -48,7 +48,7 @@ class CanwayPermissionServiceImpl(
     }
 
     /**
-     * 待处理
+     * 权限列表
      */
     override fun listPermission(projectId: String, repoName: String?): List<Permission> {
         logger.debug("list  permission  projectId: [$projectId], repoName: [$repoName]")
@@ -111,39 +111,35 @@ class CanwayPermissionServiceImpl(
      * 增加权限方法（无法增加，因集成环境下不再保存制品库权限）
      */
     override fun createPermission(request: CreatePermissionRequest): Boolean {
-        logger.info("Cpack permission does not exist, devops platform cannot create permission")
-        return true
+        TODO("Not yet implemented")
     }
 
     /**
      * 无法更新权限include path
      */
     override fun updateIncludePath(request: UpdatePermissionPathRequest): Boolean {
-        logger.info("Cpack permission does not exist")
-        return true
+        TODO("Not yet implemented")
     }
 
     /**
      * 无法更新权限exclude path
      */
     override fun updateExcludePath(request: UpdatePermissionPathRequest): Boolean {
-        logger.info("Cpack permission does not exist")
-        return true
+        TODO("Not yet implemented")
     }
 
     /**
      * 无法更新权限权限绑定repo
      */
     override fun updateRepoPermission(request: UpdatePermissionRepoRequest): Boolean {
-        logger.info("Cpack permission does not exist")
-        return true
+        TODO("Not yet implemented")
     }
 
     /**
      * 无需注册资源
      */
     override fun registerResource(request: RegisterResourceRequest) {
-        return
+        TODO("Not yet implemented")
     }
 
     /**
@@ -166,6 +162,13 @@ class CanwayPermissionServiceImpl(
     override fun isAdmin(userId: String, projectId: String?, tenantId: String?): Boolean {
         if (isCIAdmin(userId = userId, projectId = projectId, tenantId = tenantId)) return true
         return false
+    }
+
+    /**
+     * 删除权限中心数据
+     */
+    override fun deletePermissionData(projectId: String, repoName: String): Boolean {
+        return devOpsAuthGeneral.removeResourcePermissions(projectId,repoName)
     }
 
     /**

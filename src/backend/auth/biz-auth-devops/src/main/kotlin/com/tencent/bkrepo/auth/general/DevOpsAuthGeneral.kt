@@ -1,15 +1,19 @@
 package com.tencent.bkrepo.auth.general
 
+import com.tencent.bkrepo.auth.api.CanwayCustomPermissionClient
 import com.tencent.bkrepo.auth.api.CanwayProjectClient
 import com.tencent.bkrepo.auth.api.CanwaySystemClient
 import com.tencent.bkrepo.auth.api.CanwayTenantClient
+import com.tencent.bkrepo.auth.constant.AUTH_ADMIN
 import com.tencent.bkrepo.auth.constant.AuthConstant.ANY_RESOURCE_CODE
-import com.tencent.bkrepo.auth.pojo.permission.UserPermissionQueryDTO
+import com.tencent.bkrepo.auth.constant.AuthConstant.SCOPECODE
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.convertEnumListToStringList
+import com.tencent.bkrepo.auth.pojo.permission.RemoveInstancePermissionsRequest
+import com.tencent.bkrepo.auth.pojo.permission.UserPermissionQueryDTO
+import com.tencent.bkrepo.auth.pojo.permission.UserPermissionValidateDTO
 import com.tencent.bkrepo.auth.service.impl.CanwayPermissionServiceImpl
 import com.tencent.bkrepo.common.devops.RESOURCECODE
-import com.tencent.bkrepo.auth.pojo.permission.UserPermissionValidateDTO
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -18,7 +22,8 @@ import org.springframework.stereotype.Component
 class DevOpsAuthGeneral(
     private val canwayProjectClient: CanwayProjectClient,
     private val canwaySystemClient: CanwaySystemClient,
-    private val canwayTenantClient: CanwayTenantClient
+    private val canwayTenantClient: CanwayTenantClient,
+    private val canwayCustomPermissionClient: CanwayCustomPermissionClient
 ) {
     /**
      * 判断用户是否为系统管理员
@@ -104,6 +109,21 @@ class DevOpsAuthGeneral(
         }
 
         return repoList
+    }
+
+    /**
+     * 删除实例权限数据
+     */
+    fun removeResourcePermissions(projectId: String, repoName: String):Boolean {
+        return canwayCustomPermissionClient.removeResourcePermissions(
+            userId = AUTH_ADMIN,
+            request =  RemoveInstancePermissionsRequest(
+                instanceIds = listOf(repoName),
+                resourceCode = RESOURCECODE,
+                scope = Pair(SCOPECODE, projectId)
+            )
+        ).data ?: false
+
     }
 
     companion object {

@@ -244,5 +244,6 @@
     "CPack":"CPack artifact repositories",
     "CPackTokenInfo":"Grant all API permissions on CPack artifact repositories",
     "generateCiToken":"Generate personal token",
-    "generate":"Generate"
+    "generate":"Generate",
+    "repositoryProxyPortInfo":"Please enter an integer between 1-65535"
 }

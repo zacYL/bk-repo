@@ -252,5 +252,6 @@
     "CPack":"CPack制品库",
     "CPackTokenInfo":"授予对CPack制品库API的所有权限",
     "generateCiToken":"生成个人令牌",
-    "generate":"生成"
+    "generate":"生成",
+    "repositoryProxyPortInfo":"请输入 1-65535 之间的整数"
 }

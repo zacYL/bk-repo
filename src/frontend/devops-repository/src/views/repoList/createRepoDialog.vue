@@ -425,6 +425,10 @@
                 handler () {
                     this.repoBaseInfo.virtualStoreList = []
                 }
+            },
+            // 当网络代理关闭时需要将判断端口输入框的输入是否符合规范的错误提示是否出现重置为 false，否则会导致再次打开出现错误提示
+            'repoBaseInfo.network.switcher' (val) {
+                !val && (this.errorProxyPortInfo = false)
             }
         },
         methods: {
@@ -461,8 +465,6 @@
             },
             // 创建远程仓库弹窗中测试远程链接
             onClickTestRemoteUrl () {
-                if (this.errorProxyPortInfo) return
-                this.$refs.repoBaseInfo.validate()
                 if (this.repoBaseInfo.network.switcher && (!this.repoBaseInfo.network.proxy.host || !this.repoBaseInfo.network.proxy.port)) {
                     this.$bkMessage({
                         theme: 'warning',
@@ -471,6 +473,7 @@
                     })
                     return
                 }
+                if (this.repoBaseInfo.network.switcher && this.errorProxyPortInfo) return
                 if (!this.repoBaseInfo?.url || isEmpty(this.repoBaseInfo.url) || !this.checkRemoteUrl(this.repoBaseInfo?.url)) {
                     this.$bkMessage({
                         theme: 'warning',
@@ -515,7 +518,7 @@
                 this.repoBaseInfo.virtualStoreList = list
             },
             async confirm () {
-                if (this.errorProxyPortInfo) return
+                if (this.repoBaseInfo.network.switcher && this.errorProxyPortInfo) return
                 await this.$refs.repoBaseInfo.validate()
                 const interceptors = []
                 if (this.repoBaseInfo.type === 'generic') {

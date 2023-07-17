@@ -9,6 +9,9 @@
             </div>
             <div class="flex-end-center flex-1">
                 <bk-button v-if="showUploadRepo" theme="primary" @click="handleClickUpload">上传制品</bk-button>
+                <bk-button class="ml10" @click="handlerPaginationChange">
+                    {{ $t('refresh') }}
+                </bk-button>
                 <bk-button class="ml20 flex-align-center" text theme="primary" @click="showGuide = true">
                     <span class="flex-align-center">
                         <Icon class="mr5" name="hand-guide" size="16" />
@@ -196,6 +199,16 @@
                 }).then(({ records, totalRecords }) => {
                     load ? this.packageList.push(...records) : (this.packageList = records)
                     this.pagination.count = totalRecords
+                }).catch((e) => {
+                    this.$bkMessage({
+                        message: e.message,
+                        theme: 'error'
+                    })
+                    if ((e.status === 404 && e?.error?.code === 251006) || ((e.status === 403 && e?.error?.code === 250111))) {
+                        // e.status === 404 && e?.error?.code === 251006 此时表明当前仓库不存在了
+                        // e.status === 403 && e?.error?.code === 250111 此时表明当前用户没有当前仓库的查看权限了
+                        this.$router.push({ name: 'repoList' })
+                    }
                 }).finally(() => {
                     this.isLoading = false
                 })

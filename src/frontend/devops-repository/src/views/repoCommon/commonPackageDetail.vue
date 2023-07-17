@@ -7,6 +7,9 @@
                     {{ pkg.name }}
                 </div>
             </div>
+            <bk-button class="common-package-header-refresh" @click="refresh((currentVersion || {}).name)">
+                {{ $t('refresh') }}
+            </bk-button>
         </header>
         <div class="common-version-main flex-align-center">
             <aside class="common-version" v-bkloading="{ isLoading }">
@@ -333,6 +336,9 @@
     .common-package-header{
         height: 60px;
         background-color: white;
+        &-refresh{
+            margin-left: auto !important ;
+        }
         .package-img {
             border-radius: 4px;
         }

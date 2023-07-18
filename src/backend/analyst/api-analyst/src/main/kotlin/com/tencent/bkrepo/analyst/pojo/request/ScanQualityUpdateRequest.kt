@@ -30,16 +30,28 @@ package com.tencent.bkrepo.analyst.pojo.request
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.analysis.pojo.scanner.Level
+import io.swagger.annotations.ApiModel
+import io.swagger.annotations.ApiModelProperty
 
+@ApiModel("更新质量规则")
 data class ScanQualityUpdateRequest(
+    @ApiModelProperty("严重漏洞数")
     val critical: Long? = null,
+    @ApiModelProperty("高危漏洞数")
     val high: Long? = null,
+    @ApiModelProperty("中危漏洞数")
     val medium: Long? = null,
+    @ApiModelProperty("低危漏洞数")
     val low: Long? = null,
+    @ApiModelProperty("扫描未完成是否禁用制品")
     val forbidScanUnFinished: Boolean? = null,
+    @ApiModelProperty("质量规则未通过是否禁用制品")
     val forbidQualityUnPass: Boolean? = null,
+    @ApiModelProperty("许可是否推荐使用")
     val recommend: Boolean? = null,
+    @ApiModelProperty("许可是否合规")
     val compliance: Boolean? = null,
+    @ApiModelProperty("许可是否未知")
     val unknown: Boolean? = null
 ) {
     fun toMap(): Map<String, Any?> {

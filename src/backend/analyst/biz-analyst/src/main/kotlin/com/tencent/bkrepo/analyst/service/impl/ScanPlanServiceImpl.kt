@@ -149,9 +149,7 @@ class ScanPlanServiceImpl(
 		planNameContains: String?,
 		pageLimit: PageLimit
 	): Page<ScanPlanInfo> {
-		// 对照ScanPlanConverter###planType
-		val (planType, scanType) = planTypes(type)
-		val page = scanPlanDao.page(projectId, planType, scanType, planNameContains, pageLimit)
+		val page = scanPlanDao.page(projectId, type, planNameContains, pageLimit)
 
 		val scanTaskIds = page.records.filter { it.latestScanTaskId != null }.map { it.latestScanTaskId!! }
 		val scanTaskMap = scanTaskDao.findByIds(scanTaskIds).associateBy { it.id }
@@ -169,17 +167,6 @@ class ScanPlanServiceImpl(
 		}
 
 		return Page(page.pageNumber, page.pageSize, page.totalRecords, scanPlanInfoList)
-	}
-
-	private fun planTypes(type: String?): Pair<String?, String?> {
-		type?.let {
-			return if (!it.contains("_")) {
-				Pair(it.substringBefore("_"), ScanType.SECURITY.name)
-			} else {
-				Pair(it.substringBefore("_"), it.substringAfter("_"))
-			}
-		}
-		return Pair(null, null)
 	}
 
 	override fun find(projectId: String, id: String): ScanPlan? {

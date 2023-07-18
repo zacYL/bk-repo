@@ -34,7 +34,7 @@ import com.tencent.bkrepo.common.analysis.pojo.scanner.Scanner
 import com.tencent.bkrepo.analyst.component.ScannerPermissionCheckHandler
 import com.tencent.bkrepo.analyst.dao.ScanPlanDao
 import com.tencent.bkrepo.analyst.pojo.request.ScanQualityUpdateRequest
-import com.tencent.bkrepo.analyst.pojo.response.ScanQualityResponse
+import com.tencent.bkrepo.analyst.pojo.response.ScanQuality
 import com.tencent.bkrepo.analyst.service.LicenseScanQualityService
 import com.tencent.bkrepo.analyst.service.ScanQualityService
 import com.tencent.bkrepo.analyst.service.ScannerService
@@ -47,16 +47,19 @@ class ScanQualityServiceImpl(
     private val scannerService: ScannerService,
     private val licenseScanQualityService: LicenseScanQualityService
 ) : ScanQualityService {
-    override fun getScanQuality(planId: String): ScanQualityResponse {
+    override fun getScanQuality(planId: String): ScanQuality {
         val scanPlan = scanPlanDao.get(planId)
         permissionCheckHandler.checkProjectPermission(scanPlan.projectId, PermissionAction.MANAGE)
-        return ScanQualityResponse.create(scanPlan.scanQuality)
+        return ScanQuality.create(scanPlan.scanQuality)
     }
 
     override fun updateScanQuality(planId: String, request: ScanQualityUpdateRequest): Boolean {
         val scanPlan = scanPlanDao.get(planId)
         permissionCheckHandler.checkProjectPermission(scanPlan.projectId, PermissionAction.MANAGE)
-        scanPlanDao.updateQuality(planId, request.toMap())
+        val updateResult = scanPlanDao.updateQuality(planId, request.toMap())
+        if (updateResult.matchedCount == 0L) {
+            return false
+        }
         return true
     }
 

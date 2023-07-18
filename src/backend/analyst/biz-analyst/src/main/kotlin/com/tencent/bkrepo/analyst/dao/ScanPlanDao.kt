@@ -124,10 +124,9 @@ class ScanPlanDao : ScannerSimpleMongoDao<TScanPlan>() {
         return find(query)
     }
 
-    fun page(projectId: String, planType: String?, scanType: String?, planNameContains: String?, pageLimit: PageLimit): Page<TScanPlan> {
+    fun page(projectId: String, type: String?, planNameContains: String?, pageLimit: PageLimit): Page<TScanPlan> {
         val criteria = projectCriteria(projectId)
-        planType?.let { criteria.and(TScanPlan::type.name).isEqualTo(it) }
-        scanType?.let { criteria.and(TScanPlan::scanTypes.name).inValues(it) }
+        type?.let { criteria.and(TScanPlan::type.name).isEqualTo(type) }
         planNameContains?.let { criteria.and(TScanPlan::name.name).regex(".*${EscapeUtils.escapeRegex(it)}.*", "i") }
         val pageRequest = Pages.ofRequest(pageLimit.getNormalizedPageNumber(), pageLimit.getNormalizedPageSize())
         val query = Query(criteria).with(Sort.by(TScanPlan::createdDate.name).descending())
@@ -215,12 +214,6 @@ class ScanPlanDao : ScannerSimpleMongoDao<TScanPlan>() {
         updateFirst(Query(criteria), update)
     }
 
-    fun updateScanPlanQuality(planId: String, quality: Map<String, Any?>) {
-        val query = Query(criteria().and(ID).isEqualTo(planId))
-        val update = buildQualityUpdate(quality)
-        updateMulti(query, update)
-    }
-
     fun updateQuality(planId: String, quality: Map<String, Any?>): UpdateResult {
         val query = Query(Criteria.where(ID).isEqualTo(planId))
         val update = Update.update(TScanPlan::scanQuality.name, quality)
@@ -248,14 +241,6 @@ class ScanPlanDao : ScannerSimpleMongoDao<TScanPlan>() {
         } else {
             null
         }
-    }
-
-    private fun buildQualityUpdate(quality: Map<String, Any?>): Update {
-        val update = Update()
-        quality.forEach { entry ->
-            update.set("${TScanPlan::scanQuality.name}.${entry.key}", entry.value)
-        }
-        return update
     }
 
     private fun projectCriteria(projectId: String, includeDeleted: Boolean = false): Criteria {

@@ -128,23 +128,8 @@
             async save () {
                 await this.$refs.ruleForm.validate()
                 this.isLoading = true
-                Promise
-                    .all(this.ruleTypes.map(type => this.doSave(type)))
-                    .then(() => {
-                        this.$bkMessage({
-                            theme: 'success',
-                            message: this.$t('save') + this.$t('success')
-                        })
-                        this.initData()
-                        this.getRules()
-                    }).finally(() => {
-                        this.isLoading = false
-                    })
-            },
-            doSave (ruleType) {
-                // 当质量规则关闭时，调用后台接口传参为空对象，不然会导致质量规则一直无法关闭(开关是否开启由下方方法计算得到)
-                return this.saveQualityRule({
-                    type: ruleType,
+                //  当质量规则关闭时，调用后台接口传参为空对象，不然会导致质量规则一直无法关闭(开关是否开启由下方方法计算得到)
+                this.saveQualityRule({
                     id: this.planId,
                     body: !this.editable
                         ? {}
@@ -158,16 +143,21 @@
                             }
                             return target
                         }, {})
+                }).then(() => {
+                    this.$bkMessage({
+                        theme: 'success',
+                        message: this.$t('save') + this.$t('success')
+                    })
+                    this.initData()
+                    this.getRules()
+                }).finally(() => {
+                    this.isLoading = false
                 })
             },
             getRules () {
-                Promise.all(
-                    this.ruleTypes.map(type => this.getQualityRule({ type: type, id: this.planId }))
-                ).then(qualityRules => {
-                    qualityRules.forEach(qualityRule => {
-                        Object.keys(qualityRule).forEach(k => {
-                            qualityRule[k] !== null && (this.rule[k] = qualityRule[k])
-                        })
+                this.getQualityRule({ id: this.planId }).then((res) => {
+                    Object.keys(res).forEach(k => {
+                        res[k] !== null && (this.rule[k] = res[k])
                     })
                     this.editable = this.computedEditable()
                 })

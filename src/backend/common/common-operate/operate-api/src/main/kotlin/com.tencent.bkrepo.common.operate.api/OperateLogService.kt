@@ -44,6 +44,14 @@ interface OperateLogService {
      */
     fun saveEventAsync(event: ArtifactEvent, address: String)
 
+    fun save(operateLog: OperateLog)
+
+    fun saveAsync(operateLog: OperateLog)
+
+    fun save(operateLogs: Collection<OperateLog>)
+
+    fun saveAsync(operateLogs: Collection<OperateLog>)
+
     fun saveEventsAsync(eventList: List<ArtifactEvent>, address: String)
 
     fun listPage(option: OpLogListOption): Page<OperateLog>

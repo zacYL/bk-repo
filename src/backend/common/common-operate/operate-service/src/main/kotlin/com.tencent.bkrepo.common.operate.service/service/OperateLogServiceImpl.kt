@@ -75,7 +75,7 @@ open class OperateLogServiceImpl(
 
     @Async
     override fun saveEventAsync(event: ArtifactEvent, address: String) {
-        if (notNeedRecord(event)) {
+        if (notNeedRecord(event.type.name, event.projectId, event.repoName)) {
             return
         }
         val log = TOperateLog(
@@ -90,11 +90,44 @@ open class OperateLogServiceImpl(
         operateLogDao.insert(log)
     }
 
+    override fun save(operateLog: OperateLog) {
+        with(operateLog) {
+            if (notNeedRecord(this.type.name, projectId, repoName)) {
+                return
+            }
+            operateLogDao.insert(convert(operateLog))
+        }
+    }
+
+    override fun save(operateLogs: Collection<OperateLog>) {
+        val logs = ArrayList<TOperateLog>(operateLogs.size)
+        for (operateLog in operateLogs) {
+            if (notNeedRecord(operateLog.type.name, operateLog.projectId, operateLog.repoName)) {
+                continue
+            }
+            logs.add(convert(operateLog))
+        }
+
+        if (logs.isNotEmpty()) {
+            operateLogDao.insert(logs)
+        }
+    }
+
+    @Async
+    override fun saveAsync(operateLog: OperateLog) {
+        save(operateLog)
+    }
+
+    @Async
+    override fun saveAsync(operateLogs: Collection<OperateLog>) {
+        save(operateLogs)
+    }
+
     @Async
     override fun saveEventsAsync(eventList: List<ArtifactEvent>, address: String) {
         val logs = mutableListOf<TOperateLog>()
         eventList.forEach {
-            if (notNeedRecord(it)) {
+            if (notNeedRecord(it.type.name, it.projectId, it.repoName)) {
                 return@forEach
             }
             logs.add(
@@ -217,10 +250,9 @@ open class OperateLogServiceImpl(
         }
     }
 
-    private fun notNeedRecord(event: ArtifactEvent): Boolean {
-        val eventType = event.type.name
-        val projectRepoKey = "${event.projectId}/${event.repoName}"
-        if (match(operateProperties.eventType, eventType)) {
+    private fun notNeedRecord(type: String, projectId: String?, repoName: String?): Boolean {
+        val projectRepoKey = "$projectId/$repoName"
+        if (match(operateProperties.eventType, type)) {
             return true
         }
         if (match(operateProperties.projectRepoKey, projectRepoKey)) {
@@ -356,6 +388,18 @@ open class OperateLogServiceImpl(
                 description = description
             )
         }
+    }
+
+    private fun convert(operateLog: OperateLog) = with(operateLog) {
+        TOperateLog(
+            type = type,
+            resourceKey = resourceKey,
+            projectId = projectId,
+            repoName = repoName,
+            description = description,
+            userId = userId,
+            clientAddress = clientAddress
+        )
     }
 
     companion object {

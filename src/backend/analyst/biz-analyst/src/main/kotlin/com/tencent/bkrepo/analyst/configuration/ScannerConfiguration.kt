@@ -36,11 +36,14 @@ import com.tencent.bkrepo.analyst.dispatcher.SubtaskPoller
 import com.tencent.bkrepo.analyst.service.ScanService
 import com.tencent.bkrepo.analyst.service.ScannerService
 import com.tencent.bkrepo.analyst.service.TemporaryScanTokenService
+import com.tencent.bkrepo.analyst.service.impl.OperateLogServiceImpl
 import com.tencent.bkrepo.analyst.statemachine.TaskStateMachineConfiguration.Companion.STATE_MACHINE_ID_SUB_SCAN_TASK
+import com.tencent.bkrepo.common.operate.api.OperateLogService
+import com.tencent.bkrepo.common.service.condition.ConditionalOnNotAssembly
+import com.tencent.bkrepo.repository.api.OperateLogClient
 import com.tencent.bkrepo.statemachine.StateMachine
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.cloud.loadbalancer.annotation.LoadBalancerClients
@@ -77,7 +80,6 @@ class ScannerConfiguration {
     }
 
     @Bean
-    @ConditionalOnBean(SubtaskDispatcher::class)
     fun poller(
         dispatcher: SubtaskDispatcher,
         scanService: ScanService,
@@ -92,9 +94,9 @@ class ScannerConfiguration {
         )
     }
 
-//    @Bean
-//    @ConditionalOnNotAssembly // 仅在非单体包部署时创建，避免循环依赖问题
-//    fun operateLogService(operateLogClient: OperateLogClient): OperateLogService {
-//        return OperateLogServiceImpl(operateLogClient)
-//    }
+    @Bean
+    @ConditionalOnNotAssembly // 仅在非单体包部署时创建，避免循环依赖问题
+    fun operateLogService(operateLogClient: OperateLogClient): OperateLogService {
+        return OperateLogServiceImpl(operateLogClient)
+    }
 }

@@ -43,7 +43,7 @@ open class OperateLogServiceImpl(private val operateLogClient: OperateLogClient)
         throw UnsupportedOperationException()
     }
 
-    /*override fun save(operateLog: OperateLog) {
+    override fun save(operateLog: OperateLog) {
         operateLogClient.save(operateLog)
     }
 
@@ -59,7 +59,7 @@ open class OperateLogServiceImpl(private val operateLogClient: OperateLogClient)
     @Async
     override fun saveAsync(operateLogs: Collection<OperateLog>) {
         operateLogClient.batchSave(operateLogs.toList())
-    }*/
+    }
 
     override fun saveEventsAsync(eventList: List<ArtifactEvent>, address: String) {
         throw UnsupportedOperationException()

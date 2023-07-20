@@ -21,7 +21,7 @@
                     </bk-form-item>
                 </bk-form>
             </bk-tab-panel>
-            <bk-tab-panel v-if="!['DOCKER', 'PYPI'].includes(scanBaseInfo.type)" render-directive="if" name="autoConfig" label="监控设置">
+            <bk-tab-panel v-if="showMonitor" render-directive="if" name="autoConfig" label="监控设置">
                 <auto-scan-config :data="scanBaseInfo" @save="ajaxSaveConfig"></auto-scan-config>
             </bk-tab-panel>
             <bk-tab-panel render-directive="if" name="qualityRule" label="质量规则">
@@ -41,6 +41,7 @@
         components: { autoScanConfig, scanQualityRule },
         data () {
             return {
+                isLoading: false,
                 scanTypeEnum,
                 tabName: 'baseInfo',
                 scanBaseInfo: {
@@ -53,7 +54,8 @@
                     rule: {
                         rules: []
                     }
-                }
+                },
+                showMonitor: false
             }
         },
         computed: {
@@ -63,6 +65,14 @@
             planId () {
                 return this.$route.params.planId
             }
+        },
+        watch: {
+            'scanBaseInfo.type': {
+                handler (val) {
+                    this.showMonitor = !['DOCKER', 'PYPI'].includes(val)
+                }
+            }
+
         },
         created () {
             this.ajaxScanConfig()
@@ -79,14 +89,18 @@
                 })
             },
             ajaxScanConfig () {
+                this.isLoading = true
                 this.getScanConfig({
                     projectId: this.projectId,
                     id: this.planId
                 }).then(res => {
                     this.scanBaseInfo = res
+                }).finally(() => {
+                    this.isLoading = false
                 })
             },
             ajaxSaveConfig (body) {
+                this.isLoading = true
                 this.saveScanConfig({
                     id: this.planId,
                     projectId: this.projectId,
@@ -97,6 +111,8 @@
                         message: this.$t('save') + this.$t('success')
                     })
                     this.ajaxScanConfig()
+                }).finally(() => {
+                    this.isLoading = false
                 })
             }
         }

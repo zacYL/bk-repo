@@ -39,10 +39,10 @@ spring:
       max-connection-idle-time: 60000
       autoConnectRetry: true
       socketTimeout: 1500
-      ### 单机情况下关闭事物，否则报错
+      ### 单机情况下关闭事务，否则报错
       transaction:
         enabled: false
-      uri: mongodb://__CPACK_MONGODB_USER__:__CPACK_MONGODB_PASSWORD__@__CPACK_MONGODB_ADDR__/__CPACK_MONGODB_DB_NAME__?maxPoolSize=50&replicaSet=rs&slaveOk=true&safe=true&w=__MONGODB_RES__&readPreference=secondaryPreferred&wtimeoutMS=2000
+      uri: mongodb://__CPACK_MONGODB_USER__:__CPACK_MONGODB_PASSWORD__@__CPACK_MONGODB_ADDR__/__CPACK_MONGODB_DB_NAME__?maxPoolSize=50&replicaSet=rs
   redis:
     host: __CPACK_REDIS_HOST__
     port: __CPACK_REDIS_PORT__

@@ -41,6 +41,7 @@ dependencies {
     implementation(project(":nuget:biz-nuget"))
     implementation(project(":pypi:biz-pypi"))
     implementation(project(":rpm:biz-rpm"))
+    implementation(project(":git-lfs:biz-git-lfs"))
 }
 
 configurations.all {

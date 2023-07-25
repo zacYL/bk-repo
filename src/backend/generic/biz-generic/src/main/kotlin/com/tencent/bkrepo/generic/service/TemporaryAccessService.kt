@@ -44,6 +44,7 @@ import com.tencent.bkrepo.common.api.util.Preconditions
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.repository.redirect.EdgeNodeRedirectService
 import com.tencent.bkrepo.common.artifact.constant.REPO_KEY
 import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
@@ -94,6 +95,7 @@ class TemporaryAccessService(
     private val pluginManager: PluginManager,
     private val deltaSyncService: DeltaSyncService,
     private val storageService: StorageService,
+    private val redirectService: EdgeNodeRedirectService
     ) {
 
     /**
@@ -116,6 +118,11 @@ class TemporaryAccessService(
             val repo = repositoryClient.getRepoDetail(projectId, repoName).data
                 ?: throw ErrorCodeException(ArtifactMessageCode.REPOSITORY_NOT_FOUND, repoName)
             val context = ArtifactDownloadContext(repo)
+            if (redirectService.shouldRedirect(context)) {
+                // 节点来自其他集群，重定向到其他节点。
+                redirectService.redirect(context)
+                return
+            }
             ArtifactContextHolder.getRepository(repo.category).download(context)
         }
     }

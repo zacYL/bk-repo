@@ -35,6 +35,7 @@ import com.tencent.bkrepo.common.api.constant.CLIENT_ADDRESS
 import com.tencent.bkrepo.common.api.constant.DOWNLOAD_SOURCE
 import com.tencent.bkrepo.common.api.constant.HttpStatus
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.artifact.repository.redirect.EdgeNodeRedirectService
 import com.tencent.bkrepo.common.artifact.constant.DownloadInterceptorType
 import com.tencent.bkrepo.common.artifact.constant.PARAM_DOWNLOAD
 import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
@@ -66,7 +67,8 @@ import org.springframework.stereotype.Service
 @Service
 class DownloadService(
     private val nodeClient: NodeClient,
-    private val viewModelService: ViewModelService
+    private val viewModelService: ViewModelService,
+    private val redirectService: EdgeNodeRedirectService
 ) : ArtifactService() {
 
     @Value("\${spring.application.name}")
@@ -98,7 +100,11 @@ class DownloadService(
                     repository.download(context)
                 }
             } else {
-                // 如果仓库类型不是Local，可能Node在远程仓库中，尝试下载
+                if (redirectService.shouldRedirect(context)) {
+                    // 节点来自其他集群，重定向到其他节点。
+                    redirectService.redirect(context)
+                    return
+                }
                 repository.download(context)
             }
         }

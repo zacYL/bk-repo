@@ -56,6 +56,7 @@ open class ArtifactDownloadContext(
     var download: Boolean = true
 ) : ArtifactContext(repo, artifact, userId) {
 
+    val redirectTo: String? = request.getHeader("X-BKREPO-DOWNLOAD-REDIRECT-TO")
     val repo = repo ?: request.getAttribute(REPO_KEY) as RepositoryDetail
     val artifacts = artifacts
     var shareUserId: String = StringPool.EMPTY

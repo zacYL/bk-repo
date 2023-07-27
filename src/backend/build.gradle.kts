@@ -78,6 +78,7 @@ allprojects {
                 entry("swagger-annotations")
                 entry("swagger-models")
             }
+            dependency("com.tencent.bk.sdk:crypto-java-sdk:${Versions.CryptoJavaSdk}")
         }
     }
     ext["netty.version"] = Versions.Netty

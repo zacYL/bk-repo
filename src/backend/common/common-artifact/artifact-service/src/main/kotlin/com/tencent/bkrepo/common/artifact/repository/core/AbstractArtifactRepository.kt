@@ -144,7 +144,7 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
     override fun download(context: ArtifactDownloadContext) {
         try {
             this.onDownloadBefore(context)
-            if (supportRedirect(context) && redirectManager.redirect(context)) {
+            if (supportRedirect(context) && this.onDownloadRedirect(context)) {
                 return
             }
             val artifactResponse = this.onDownload(context) ?: if (!context.download) return else {
@@ -365,6 +365,17 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
      * @return true 支持重定向 false 不支持重定向
      */
     open fun supportRedirect(context: ArtifactDownloadContext): Boolean = false
+
+    /**
+     * 重定向下载请求
+     *
+     * @param context 下载请求上下文
+     *
+     * @return true 重定向成功 false 重定向失败
+     */
+    open fun onDownloadRedirect(context: ArtifactDownloadContext): Boolean {
+        return redirectManager.redirect(context)
+    }
 
     fun downloadIntercept(context: ArtifactDownloadContext, node: NodeDetail?) {
         node?.let { nodeDownloadIntercept(context, node) }

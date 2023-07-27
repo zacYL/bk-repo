@@ -92,6 +92,7 @@ class GenericRemoteRepository(
     private val asyncCacheWriter: AsyncRemoteArtifactCacheWriter,
     private val cacheLocks: RemoteArtifactCacheLocks,
 ) : RemoteRepository() {
+    override fun supportRedirect(context: ArtifactDownloadContext): Boolean = true
 
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         return getCacheArtifactResource(context) ?: run {

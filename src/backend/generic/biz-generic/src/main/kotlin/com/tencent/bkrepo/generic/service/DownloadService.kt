@@ -100,9 +100,6 @@ class DownloadService(
                     repository.download(context)
                 }
             } else {
-                if (redirectManager.redirect(context)) {
-                    return
-                }
                 repository.download(context)
             }
         }

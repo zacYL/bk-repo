@@ -43,6 +43,7 @@ import org.springframework.stereotype.Component
  */
 @Component
 class CommonLocalRepository : LocalRepository() {
+    override fun supportRedirect(context: ArtifactDownloadContext): Boolean = true
 
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         with(context) {

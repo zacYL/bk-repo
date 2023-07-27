@@ -34,6 +34,7 @@ package com.tencent.bkrepo.repository.config
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.remote.RemoteRepository
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
@@ -89,6 +90,8 @@ class CommonRemoteRepository(
             )
         }
     }
+
+    override fun supportRedirect(context: ArtifactDownloadContext): Boolean = true
 
     override fun getCacheArtifactResource(context: ArtifactContext): ArtifactResource? {
         return findCacheNodeDetail(context)?.takeIf { !it.folder }?.let { loadArtifactResource(it, context) }

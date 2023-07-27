@@ -92,9 +92,6 @@ class ListViewServiceImpl(
         } else {
             val context = ArtifactDownloadContext()
             context.getNodeInterceptors().forEach { it.intercept(context.projectId, node) }
-            if (redirectManager.redirect(context)) {
-                return
-            }
             ArtifactContextHolder.getRepository().download(context)
         }
     }

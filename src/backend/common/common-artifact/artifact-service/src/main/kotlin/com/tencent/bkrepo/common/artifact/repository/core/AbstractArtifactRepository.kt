@@ -50,6 +50,7 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveConte
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.migration.MigrateDetail
+import com.tencent.bkrepo.common.artifact.repository.redirect.DownloadRedirectManager
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResourceWriter
@@ -125,6 +126,9 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
     @Autowired
     lateinit var remotePackageClient: RemotePackageWhitelistClient
 
+    @Autowired
+    lateinit var redirectManager: DownloadRedirectManager
+
     override fun upload(context: ArtifactUploadContext) {
         try {
             this.onUploadBefore(context)
@@ -140,6 +144,9 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
     override fun download(context: ArtifactDownloadContext) {
         try {
             this.onDownloadBefore(context)
+            if (supportRedirect(context) && redirectManager.redirect(context)) {
+                return
+            }
             val artifactResponse = this.onDownload(context) ?: if (!context.download) return else {
                     throw ArtifactNotFoundException(context.artifactInfo.toString())
                 }
@@ -349,6 +356,15 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
     open fun onDownloadFinished(context: ArtifactDownloadContext) {
         artifactMetrics.downloadingCount.decrementAndGet()
     }
+
+    /**
+     * 是否支持重定向下载请求
+     *
+     * @param context 下载请求上下文
+     *
+     * @return true 支持重定向 false 不支持重定向
+     */
+    open fun supportRedirect(context: ArtifactDownloadContext): Boolean = false
 
     fun downloadIntercept(context: ArtifactDownloadContext, node: NodeDetail?) {
         node?.let { nodeDownloadIntercept(context, node) }

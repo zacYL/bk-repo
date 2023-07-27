@@ -8,16 +8,18 @@ import com.tencent.bkrepo.repository.service.packages.PackageRepairService
 import io.swagger.annotations.ApiOperation
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
+@RequestMapping("/api/repair")
 class UserPackageRepairController(
     private val packageRepairService: PackageRepairService
 ) {
 
     @ApiOperation("修改历史版本")
     @Principal(PrincipalType.ADMIN)
-    @GetMapping("/version/history/repair")
+    @GetMapping("/package/history-version")
     fun repairHistoryVersion(): Response<Void> {
         packageRepairService.repairHistoryVersion()
         return ResponseBuilder.success()
@@ -25,7 +27,7 @@ class UserPackageRepairController(
 
     @ApiOperation("修正包的版本数")
     @Principal(PrincipalType.ADMIN)
-    @PutMapping("/package/version/recount")
+    @PutMapping("/package/version-count")
     fun repairVersionCount(): Response<Void> {
         packageRepairService.repairVersionCount()
         return ResponseBuilder.success()

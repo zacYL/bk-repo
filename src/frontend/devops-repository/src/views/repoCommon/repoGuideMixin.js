@@ -18,7 +18,8 @@ export default {
             return this.$route.query.version || ''
         },
         packageName () {
-            return this.packageKey.replace(/^.*:\/\/(?:.*:)*([^:]+)$/, '$1') || '<PACKAGE_NAME>'
+            // 包列表页不需要指定具体的包名，直接都指定为<PACKAGE_NAME>即可
+            return this.$route.path.endsWith('/list') ? '<PACKAGE_NAME>' : this.packageKey.replace(/^.*:\/\/(?:.*:)*([^:]+)$/, '$1') || '<PACKAGE_NAME>'
         },
         versionLabel () {
             return this.version || '<PACKAGE_VERSION>'

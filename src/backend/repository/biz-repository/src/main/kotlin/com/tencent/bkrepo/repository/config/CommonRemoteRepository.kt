@@ -91,7 +91,9 @@ class CommonRemoteRepository(
         }
     }
 
-    override fun supportRedirect(context: ArtifactDownloadContext): Boolean = true
+    override fun onDownloadRedirect(context: ArtifactDownloadContext): Boolean {
+        return redirectManager.redirect(context)
+    }
 
     override fun getCacheArtifactResource(context: ArtifactContext): ArtifactResource? {
         return findCacheNodeDetail(context)?.takeIf { !it.folder }?.let { loadArtifactResource(it, context) }

@@ -453,7 +453,9 @@ class GenericLocalRepository(
         )
     }
 
-    override fun supportRedirect(context: ArtifactDownloadContext): Boolean = true
+    override fun onDownloadRedirect(context: ArtifactDownloadContext): Boolean {
+        return redirectManager.redirect(context)
+    }
 
     override fun query(context: ArtifactQueryContext): Any? {
         val artifactInfo = context.artifactInfo

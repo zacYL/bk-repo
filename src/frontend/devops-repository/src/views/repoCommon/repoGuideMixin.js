@@ -22,7 +22,8 @@ export default {
             return this.$route.path.endsWith('/list') ? '<PACKAGE_NAME>' : this.packageKey.replace(/^.*:\/\/(?:.*:)*([^:]+)$/, '$1') || '<PACKAGE_NAME>'
         },
         versionLabel () {
-            return this.version || '<PACKAGE_VERSION>'
+            // 包列表页不需要指定具体的版本号，直接都指定为 <PACKAGE_VERSION> 即可
+            return this.$route.path.endsWith('/list') ? '<PACKAGE_VERSION>' : this.version || '<PACKAGE_VERSION>'
         },
         repoUrl () {
             return `${location.origin}/${this.repoType}/${this.projectId}/${this.repoName}`

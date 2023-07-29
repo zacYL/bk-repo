@@ -628,7 +628,7 @@ export default {
                         {
                             subTitle: '配置拉取依赖源地址',
                             codeList: [
-                                `pip config set global.index-url http://admin:<PERSONAL_ACCESS_TOKEN>@${location.host}/${this.repoType}/${this.projectId}/${this.repoName}/simple`
+                                `pip config set global.index-url ${location.protocol}//${this.userName}:<PERSONAL_ACCESS_TOKEN>@${location.host}/${this.repoType}/${this.projectId}/${this.repoName}/simple`
                             ]
                         },
                         {

@@ -31,7 +31,9 @@
 
 package com.tencent.bkrepo.repository.util
 
+import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
 import com.tencent.bkrepo.common.artifact.constant.FORBID_TYPE
 import com.tencent.bkrepo.common.artifact.constant.FORBID_USER
@@ -186,6 +188,18 @@ object MetadataUtils {
                 tMetadata
             }
             .toMutableList()
+    }
+
+    fun checkEmptyAndLength(metadataList: List<TMetadata>) {
+        if (metadataList.any {
+                it.key.trim() == StringPool.EMPTY || (it.value is String && it.value.toString()
+                    .trim() == StringPool.EMPTY)
+            }) {
+            throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, metadataList)
+        }
+        if (metadataList.any { it.key.length > 30 || (it.value is String && it.value.toString().length > 500) }) {
+            throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, metadataList)
+        }
     }
 
     private fun checkReservedKey(key: String, operator: String) {

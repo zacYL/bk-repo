@@ -73,14 +73,15 @@ class PackageMetadataServiceImpl(
     @Transactional(rollbackFor = [Throwable::class])
     override fun saveMetadata(request: PackageMetadataSaveRequest) {
         with(request) {
-            if (versionMetadata.isNullOrEmpty()) {
-                logger.info("Metadata key list is empty, skip saving[$this]")
+            if (metadata.isNullOrEmpty() && versionMetadata.isNullOrEmpty()) {
+                logger.error("Metadata key list is empty, skip saving[$this]")
                 return
             }
             val tPackage = getPackage(projectId, repoName, packageKey)
             val tPackageVersion = getPackageVersion(tPackage.id!!, version)
             val oldMetadata = tPackageVersion.metadata
-            val newMetadata = versionMetadata!!.map { MetadataUtils.convertAndCheck(it, operator) }
+            val newMetadata = MetadataUtils.compatibleFromAndCheck(metadata, versionMetadata, operator)
+            MetadataUtils.checkEmptyAndLength(newMetadata)
             tPackageVersion.metadata = MetadataUtils.checkAndMerge(oldMetadata, newMetadata, operator)
             packageVersionDao.save(tPackageVersion)
             logger.info("Save package metadata [$this] success.")

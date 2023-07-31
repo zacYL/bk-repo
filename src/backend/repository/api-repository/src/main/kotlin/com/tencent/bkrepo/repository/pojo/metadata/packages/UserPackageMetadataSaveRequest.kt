@@ -45,5 +45,8 @@ data class UserPackageMetadataSaveRequest(
     @ApiModelProperty("包版本", required = true)
     val version: String,
     @ApiModelProperty("元数据")
-    val versionMetadata: List<MetadataModel>? = null
+    val versionMetadata: List<MetadataModel>? = null,
+    @ApiModelProperty("元数据key-value数据")
+    @Deprecated("仅用于兼容旧接口", replaceWith = ReplaceWith("versionMetadata"))
+    val metadata: Map<String, String>? = null
 )

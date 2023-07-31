@@ -83,6 +83,7 @@ class MetadataServiceImpl(
 
             val oldMetadata = node.metadata ?: ArrayList()
             val newMetadata = MetadataUtils.compatibleFromAndCheck(metadata, nodeMetadata, operator)
+            MetadataUtils.checkEmptyAndLength(newMetadata)
             node.metadata = MetadataUtils.checkAndMerge(oldMetadata, newMetadata, operator)
 
             val currentTime = LocalDateTime.now()

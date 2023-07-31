@@ -43,15 +43,7 @@ import com.tencent.bkrepo.repository.pojo.metadata.packages.UserPackageMetadataS
 import com.tencent.bkrepo.repository.service.metadata.PackageMetadataService
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
-import org.springframework.web.bind.annotation.DeleteMapping
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestAttribute
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 /**
  * 元数据接口实现类
@@ -91,7 +83,8 @@ class UserPackageMetadataController(
                 repoName = repoName,
                 packageKey = packageKey,
                 version = version,
-                versionMetadata = metadataSaveRequest.versionMetadata
+                versionMetadata = metadataSaveRequest.versionMetadata,
+                metadata = metadataSaveRequest.metadata
             )
         }
         packageMetadataService.saveMetadata(request)

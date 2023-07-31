@@ -96,6 +96,8 @@
     "metaData": "元数据",
     "key": "属性键",
     "value": "属性值",
+    "metadataNoLegalKeyInfo":"Please enter an attribute key of 1-30 digits",
+    "metadataNoLegalValueInfo":"Please enter an attribute value from 1-500 digits",
     "validity": "有效期",
     "day": "天",
     "upgradeTo": "晋级为",

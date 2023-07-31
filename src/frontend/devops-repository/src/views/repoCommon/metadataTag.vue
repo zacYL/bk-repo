@@ -20,7 +20,7 @@
             </li>
         </template>
         <li v-else>
-            <span class="key">{{ metadata.key }}</span>
+            <span class="key" v-bk-overflow-tips>{{ metadata.key }}</span>
             <span :class="getColor" v-bk-overflow-tips>{{ metadata.value }}</span>
         </li>
     </ul>
@@ -90,6 +90,8 @@
         }
 
         &.key {
+            max-width: 150px;
+            overflow: hidden;
             background-color: #363c5e;
             background-image: linear-gradient(#606164, #4D4D4D);
         }

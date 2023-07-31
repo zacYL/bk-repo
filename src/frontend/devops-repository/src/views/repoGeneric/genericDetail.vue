@@ -131,12 +131,24 @@
                             required: true,
                             message: this.$t('pleaseInput') + this.$t('key'),
                             trigger: 'blur'
+                        },
+                        {
+                            min: 1,
+                            max: 30,
+                            message: this.$t('metadataNoLegalKeyInfo'),
+                            trigger: 'blur'
                         }
                     ],
                     value: [
                         {
                             required: true,
                             message: this.$t('pleaseInput') + this.$t('value'),
+                            trigger: 'blur'
+                        },
+                        {
+                            min: 1,
+                            max: 30,
+                            message: this.$t('metadataNoLegalValueInfo'),
                             trigger: 'blur'
                         }
                     ]

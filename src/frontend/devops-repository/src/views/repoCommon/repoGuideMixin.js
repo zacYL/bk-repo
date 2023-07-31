@@ -596,7 +596,7 @@ export default {
                         {
                             subTitle: 'yum',
                             codeList: [
-                                `yum install --repo ${this.repoName} ${this.packageName}`
+                                `yum install ${this.packageName}`
                             ]
                         }
                     ]

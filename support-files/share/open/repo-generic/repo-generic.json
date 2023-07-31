@@ -1,0 +1,48 @@
+{
+  "systemCode": "CPack",
+  "systemName": " 制品库",
+  "openApiList": [
+    {
+      "code": "GET__{projectId}_{repoName}_**_repo-generic",
+      "name": "GET__{projectId}_{repoName}_**",
+      "desc": "下载文件或目录",
+      "path": "/repo-generic/{projectId}/{repoName}/**",
+      "method": "GET",
+      "headers": [],
+      "targetService": "repo-generic",
+      "targetPath": "/{projectId}/{repoName}/**",
+      "targetMethod": "GET",
+      "timeout": 30,
+      "retryTimes": 10,
+      "docName": "下载文件或目录_244cda26.md"
+    },
+    {
+      "code": "PUT__{projectId}_{repoName}_**_repo-generic",
+      "name": "PUT__{projectId}_{repoName}_**",
+      "desc": "上传文件",
+      "path": "/repo-generic/{projectId}/{repoName}/**",
+      "method": "PUT",
+      "headers": [],
+      "targetService": "repo-generic",
+      "targetPath": "/{projectId}/{repoName}/**",
+      "targetMethod": "PUT",
+      "timeout": 30,
+      "retryTimes": 10,
+      "docName": "上传文件_c0b11536.md"
+    },
+    {
+      "code": "DELETE__{projectId}_{repoName}_**_repo-generic",
+      "name": "DELETE__{projectId}_{repoName}_**",
+      "desc": "删除文件或空目录",
+      "path": "/repo-generic/{projectId}/{repoName}/**",
+      "method": "DELETE",
+      "headers": [],
+      "targetService": "repo-generic",
+      "targetPath": "/{projectId}/{repoName}/**",
+      "targetMethod": "DELETE",
+      "timeout": 30,
+      "retryTimes": 10,
+      "docName": "删除文件或空目录_dbd00a12.md"
+    }
+  ]
+}

@@ -108,8 +108,9 @@ class EdgeNodeReplicator(
         with(context) {
             val sha256 = node.sha256.orEmpty()
             var type: String = replicationProperties.pushType
+            val remoteRepositoryType = context.remoteRepoType
             retry(times = RETRY_COUNT, delayInSeconds = DELAY_IN_SECONDS) { retry ->
-                if (blobReplicaClient?.check(sha256)?.data != true) {
+                if (blobReplicaClient?.check(sha256 = sha256, repoType = remoteRepositoryType)?.data != true) {
                     try {
                         artifactReplicationHandler.blobPush(
                             filePushContext = FilePushContext(
@@ -128,8 +129,10 @@ class EdgeNodeReplicator(
                         // 当不支持分块上传时，降级为普通上传
                         if (
                             throwable is ArtifactPushException &&
-                            (throwable.code == HttpStatus.METHOD_NOT_ALLOWED.value ||
-                                throwable.code == HttpStatus.UNAUTHORIZED.value )
+                            (
+                                throwable.code == HttpStatus.METHOD_NOT_ALLOWED.value ||
+                                    throwable.code == HttpStatus.UNAUTHORIZED.value
+                                )
                         ) {
                             type = PUSH_WITH_DEFAULT
                         }

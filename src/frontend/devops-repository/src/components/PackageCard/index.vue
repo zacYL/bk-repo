@@ -4,7 +4,6 @@
         <div class="mr20 package-card-main flex-column">
             <div class="flex-align-center">
                 <span class="card-name text-overflow" :title="cardData.name">{{ cardData.name }}</span>
-                <span class="ml10 repo-tag" v-if="['MAVEN'].includes(cardData.type)">{{ cardData.key.replace(/^.*\/\/(.+):.*$/, '$1') }}</span>
                 <scan-tag class="ml10"
                     v-if="isEnterprise && !cardData.type && genericScanFileTypes.includes(cardData.name.replace(/^.+\.([^.]+)$/, '$1'))"
                     :status="(cardData.metadata || {}).scanStatus"

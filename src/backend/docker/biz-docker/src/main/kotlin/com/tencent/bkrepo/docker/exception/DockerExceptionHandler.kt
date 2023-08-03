@@ -37,6 +37,8 @@ import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.security.exception.AuthenticationException
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.docker.constant.AUTH_CHALLENGE_SERVICE_SCOPE
+import com.tencent.bkrepo.docker.constant.DOCKER_API_PREFIX
+import com.tencent.bkrepo.docker.constant.DOCKER_API_SUFFIX
 import com.tencent.bkrepo.docker.constant.DOCKER_API_VERSION
 import com.tencent.bkrepo.docker.constant.DOCKER_HEADER_API_VERSION
 import com.tencent.bkrepo.docker.constant.ERROR_MESSAGE
@@ -65,12 +67,15 @@ class DockerExceptionHandler {
     @ExceptionHandler(AuthenticationException::class)
     fun handleException(exception: AuthenticationException) {
 //        logger.warn("Failed with authentication exception:[${exception.message}]")
+        val request = HttpContextHolder.getRequest()
         val response = HttpContextHolder.getResponse()
         val scopeStr = "repository:*/*/tb:push,pull"
+        val bearerRealm = authUrl.takeIf { it.isNotBlank() }
+            ?: "${request.requestURL.removeSuffix(request.servletPath)}$DOCKER_API_PREFIX$DOCKER_API_SUFFIX"
         response.setHeader(DOCKER_HEADER_API_VERSION, DOCKER_API_VERSION)
         response.setHeader(
             HttpHeaders.WWW_AUTHENTICATE,
-            AUTH_CHALLENGE_SERVICE_SCOPE.format(authUrl, REGISTRY_SERVICE, scopeStr)
+            AUTH_CHALLENGE_SERVICE_SCOPE.format(bearerRealm, REGISTRY_SERVICE, scopeStr)
         )
         response.status = HttpStatus.UNAUTHORIZED.value()
         response.contentType = APPLICATION_JSON

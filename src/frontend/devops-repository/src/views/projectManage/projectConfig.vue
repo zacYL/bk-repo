@@ -29,6 +29,7 @@
                     multiple
                     searchable
                     placeholder="请选择用户"
+                    :show-select-all="tabName === '项目管理员' ? false : true"
                     :enable-virtual-scroll="selectList(activeTabObj).length > 3000"
                     :list="selectList(activeTabObj)">
                     <bk-option v-for="option in selectList(activeTabObj)"

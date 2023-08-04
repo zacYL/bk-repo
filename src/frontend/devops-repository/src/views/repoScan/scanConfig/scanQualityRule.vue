@@ -50,8 +50,8 @@
         },
         data () {
             const validate = {
-                regex: /^[0-9]*$/,
-                message: '输入格式错误，请输入非负整数',
+                validator: this.securityNumberValidate,
+                message: '请填写 0 - 10000 之间的非负整数',
                 trigger: 'blur'
             }
             return {
@@ -104,6 +104,9 @@
         },
         methods: {
             ...mapActions(['getQualityRule', 'saveQualityRule']),
+            securityNumberValidate (value) {
+                return (/^[0-9]*$/).test(value) && value <= 10000
+            },
             initData () {
                 this.rule = this.scanTypes.includes('LICENSE')
                     && {

@@ -15,7 +15,8 @@ server:
   port: __BK_REPO_DOCKER_PORT__
 auth:
   enable: true
-  url: http://${docker.domain}/v2/auth
+  # auth.url为空时, 根据docker.domain和Host请求头生成
+  url:
 logging:
   level:
     com.tencent.bkrepo.docker: DEBUG

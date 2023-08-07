@@ -34,6 +34,7 @@ package com.tencent.bkrepo.docker.exception
 import com.tencent.bkrepo.common.api.constant.HttpHeaders
 import com.tencent.bkrepo.common.api.constant.MediaTypes.APPLICATION_JSON
 import com.tencent.bkrepo.common.api.constant.StringPool
+import com.tencent.bkrepo.common.api.constant.ensureSuffix
 import com.tencent.bkrepo.common.security.exception.AuthenticationException
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.docker.constant.AUTH_CHALLENGE_SERVICE_SCOPE
@@ -64,14 +65,26 @@ class DockerExceptionHandler {
     @Value("\${auth.url:}")
     private var authUrl: String = StringPool.EMPTY
 
+    @Value("\${docker.domain:}")
+    private val domain: String = StringPool.EMPTY
+
     @ExceptionHandler(AuthenticationException::class)
     fun handleException(exception: AuthenticationException) {
 //        logger.warn("Failed with authentication exception:[${exception.message}]")
         val request = HttpContextHolder.getRequest()
         val response = HttpContextHolder.getResponse()
         val scopeStr = "repository:*/*/tb:push,pull"
-        val bearerRealm = authUrl.takeIf { it.isNotBlank() }
-            ?: "${request.requestURL.removeSuffix(request.servletPath)}$DOCKER_API_PREFIX$DOCKER_API_SUFFIX"
+        val bearerRealm =
+            if (authUrl.isBlank() && domain.isNotBlank()) {
+                val host = request.getHeader(HttpHeaders.HOST)
+                val port = request.serverPort
+                val portString = if (host.endsWith(":$port")) ":$port" else ""
+                logger.info("To construct authUrl: Host[$host], serverPort[$port], requestURL[${request.requestURL}]")
+                "${request.scheme}://${domain.ensureSuffix(portString)}$DOCKER_API_PREFIX$DOCKER_API_SUFFIX"
+            } else {
+                authUrl
+            }
+        logger.info("Bearer Realm: [$bearerRealm]")
         response.setHeader(DOCKER_HEADER_API_VERSION, DOCKER_API_VERSION)
         response.setHeader(
             HttpHeaders.WWW_AUTHENTICATE,

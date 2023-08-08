@@ -272,7 +272,8 @@ class ClusterReplicator(
                 TimeUnit.SECONDS.sleep(1)
                 costTime++
             }
-            logger.info("the result of storage consistency check for $sha256 is $checkResult, costTime: $costTime seconds")
+            logger.info("the result of storage consistency check for $sha256 is $checkResult," +
+                            " costTime: $costTime seconds")
         }
     }
 

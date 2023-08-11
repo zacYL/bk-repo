@@ -63,6 +63,7 @@ import com.tencent.bkrepo.repository.pojo.packages.request.PackagePopulateReques
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageUpdateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionUpdateRequest
+import com.tencent.bkrepo.repository.search.packages.PackageQueryContext
 import com.tencent.bkrepo.repository.search.packages.PackageSearchInterpreter
 import com.tencent.bkrepo.repository.service.packages.PackageService
 import com.tencent.bkrepo.repository.service.repo.RepositoryService
@@ -445,7 +446,7 @@ class PackageServiceImpl(
 
     @Suppress("UNCHECKED_CAST")
     override fun searchPackage(queryModel: QueryModel): Page<MutableMap<*, *>> {
-        val context = packageSearchInterpreter.interpret(queryModel)
+        val context = packageSearchInterpreter.interpret(queryModel) as PackageQueryContext
         val query = context.mongoQuery
         val countQuery = Query.of(query).limit(0).skip(0)
         val totalRecords = packageDao.count(countQuery)
@@ -461,6 +462,7 @@ class PackageServiceImpl(
                     it[FORBID_STATUS] = tMetadata.value
                 }
             }
+            context.matchedVersions[packageId]?.apply { it[MATCHED_VERSIONS] = this }
         }
         val pageNumber = if (query.limit == 0) 0 else (query.skip / query.limit).toInt()
         return Page(pageNumber + 1, query.limit, totalRecords, packageList)
@@ -652,6 +654,7 @@ class PackageServiceImpl(
         private const val LOWEST_ORDINAL = 0L
         private const val ID = "_id"
         private const val LATEST = "latest"
+        private const val MATCHED_VERSIONS = "matchedVersions"
 
         private fun convert(tPackage: TPackage?): PackageSummary? {
             return tPackage?.let {

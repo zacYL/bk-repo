@@ -34,9 +34,10 @@ package com.tencent.bkrepo.repository.search.software.packages
 import com.tencent.bkrepo.common.query.builder.MongoQueryInterpreter
 import com.tencent.bkrepo.common.query.interceptor.QueryContext
 import com.tencent.bkrepo.common.query.model.QueryModel
-import com.tencent.bkrepo.repository.search.common.MetadataRuleInterceptor
 import com.tencent.bkrepo.repository.search.common.SelectFieldInterceptor
 import com.tencent.bkrepo.repository.search.packages.PackageQueryContext
+import com.tencent.bkrepo.repository.search.packages.VersionChecksumRuleInterceptor
+import com.tencent.bkrepo.repository.search.packages.VersionMetadataRuleInterceptor
 import com.tencent.bkrepo.repository.search.software.interceptor.SoftwareModelValidateInterceptor
 import com.tencent.bkrepo.repository.search.software.interceptor.SoftwareRepoNameRuleInterceptor
 import com.tencent.bkrepo.repository.search.software.interceptor.SoftwareRepoTypeRuleInterceptor
@@ -47,7 +48,10 @@ import javax.annotation.PostConstruct
 @Component
 class SoftwarePackageSearchInterpreter(
     private val softwareRepoNameRuleInterceptor: SoftwareRepoNameRuleInterceptor,
-    private val softwareRepoTypeRuleInterceptor: SoftwareRepoTypeRuleInterceptor
+    private val softwareRepoTypeRuleInterceptor: SoftwareRepoTypeRuleInterceptor,
+    private val versionNameRuleInterceptor: SoftwareRepoNameRuleInterceptor,
+    private val versionMetadataRuleInterceptor: VersionMetadataRuleInterceptor,
+    private val versionChecksumRuleInterceptor: VersionChecksumRuleInterceptor
 ) : MongoQueryInterpreter() {
 
     @PostConstruct
@@ -56,7 +60,9 @@ class SoftwarePackageSearchInterpreter(
         addModelInterceptor(SelectFieldInterceptor())
         addRuleInterceptor(softwareRepoTypeRuleInterceptor)
         addRuleInterceptor(softwareRepoNameRuleInterceptor)
-        addRuleInterceptor(MetadataRuleInterceptor())
+        addRuleInterceptor(versionNameRuleInterceptor)
+        addRuleInterceptor(versionMetadataRuleInterceptor)
+        addRuleInterceptor(versionChecksumRuleInterceptor)
     }
 
     override fun initContext(queryModel: QueryModel, mongoQuery: Query): QueryContext {

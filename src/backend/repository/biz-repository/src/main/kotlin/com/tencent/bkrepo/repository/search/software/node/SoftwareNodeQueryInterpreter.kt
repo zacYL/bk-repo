@@ -44,7 +44,8 @@ import javax.annotation.PostConstruct
 
 @Component
 class SoftwareNodeQueryInterpreter(
-    private val softwareRepoNameRuleInterceptor: SoftwareRepoNameRuleInterceptor
+    private val softwareRepoNameRuleInterceptor: SoftwareRepoNameRuleInterceptor,
+    private val metadataRuleInterceptor: MetadataRuleInterceptor
 ) : MongoQueryInterpreter() {
 
     @PostConstruct
@@ -52,7 +53,7 @@ class SoftwareNodeQueryInterpreter(
 //        addModelInterceptor(CpackNodeModelInterceptor())
         addModelInterceptor(SelectFieldInterceptor())
         addRuleInterceptor(softwareRepoNameRuleInterceptor)
-        addRuleInterceptor(MetadataRuleInterceptor())
+        addRuleInterceptor(metadataRuleInterceptor)
     }
 
     override fun initContext(queryModel: QueryModel, mongoQuery: Query): QueryContext {

@@ -40,4 +40,11 @@ class PackageQueryContext(
     override var queryModel: QueryModel,
     override val mongoQuery: Query,
     override val interpreter: MongoQueryInterpreter
-) : CommonQueryContext(queryModel, mongoQuery, interpreter)
+) : CommonQueryContext(queryModel, mongoQuery, interpreter) {
+
+    private var repoType: String? = null
+
+    val matchedVersions: MutableMap<String, MutableSet<String>> = mutableMapOf()
+
+    fun findRepoType(): String = if (repoType != null) repoType!! else find("repoType")
+}

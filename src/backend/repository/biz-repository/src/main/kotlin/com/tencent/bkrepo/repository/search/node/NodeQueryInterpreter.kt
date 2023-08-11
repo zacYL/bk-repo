@@ -49,7 +49,8 @@ class NodeQueryInterpreter(
     private val permissionManager: PermissionManager,
     private val repoNameRuleInterceptor: RepoNameRuleInterceptor,
     private val repoTypeRuleInterceptor: RepoTypeRuleInterceptor,
-    private val localDatetimeRuleInterceptor: LocalDatetimeRuleInterceptor
+    private val localDatetimeRuleInterceptor: LocalDatetimeRuleInterceptor,
+    private val metadataRuleInterceptor: MetadataRuleInterceptor
 ) : MongoQueryInterpreter() {
 
     @PostConstruct
@@ -58,7 +59,7 @@ class NodeQueryInterpreter(
         addModelInterceptor(SelectFieldInterceptor())
         addRuleInterceptor(repoTypeRuleInterceptor)
         addRuleInterceptor(repoNameRuleInterceptor)
-        addRuleInterceptor(MetadataRuleInterceptor())
+        addRuleInterceptor(metadataRuleInterceptor)
         addRuleInterceptor(localDatetimeRuleInterceptor)
     }
 

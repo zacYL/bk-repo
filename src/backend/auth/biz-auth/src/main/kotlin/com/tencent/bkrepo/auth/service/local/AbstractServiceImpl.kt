@@ -202,6 +202,10 @@ open class AbstractServiceImpl constructor(
         return repos
     }
 
+    fun matchToken(pwd: String, hashPwd: String, token: String): Boolean {
+        return token == pwd || token == hashPwd
+    }
+
     companion object {
         private val logger = LoggerFactory.getLogger(AbstractServiceImpl::class.java)
     }

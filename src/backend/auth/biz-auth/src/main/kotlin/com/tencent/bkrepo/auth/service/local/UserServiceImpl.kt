@@ -37,7 +37,13 @@ import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.model.TUser
 import com.tencent.bkrepo.auth.pojo.token.Token
 import com.tencent.bkrepo.auth.pojo.token.TokenResult
-import com.tencent.bkrepo.auth.pojo.user.*
+import com.tencent.bkrepo.auth.pojo.user.CreateUserRequest
+import com.tencent.bkrepo.auth.pojo.user.CreateUserToProjectRequest
+import com.tencent.bkrepo.auth.pojo.user.CreateUserToRepoRequest
+import com.tencent.bkrepo.auth.pojo.user.UpdateUserRequest
+import com.tencent.bkrepo.auth.pojo.user.User
+import com.tencent.bkrepo.auth.pojo.user.UserInfo
+import com.tencent.bkrepo.auth.pojo.user.UserResult
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
 import com.tencent.bkrepo.auth.service.UserService
@@ -292,13 +298,15 @@ open class UserServiceImpl constructor(
                 // conv time
                 expiredTime = expiredTime!!.plusHours(8)
             }
+            val sm3Id = DataDigestUtils.sm3FromStr(id)
             val userToken = Token(name = name, id = id, createdAt = createdTime, expiredAt = expiredTime)
-            update.addToSet(TUser::tokens.name, userToken)
+            val dataToken = Token(name = name, id = sm3Id, createdAt = createdTime, expiredAt = expiredTime)
+            update.addToSet(TUser::tokens.name, dataToken)
             mongoTemplate.upsert(query, update, TUser::class.java)
             val userInfo = getUserById(userId)
             val tokens = userInfo!!.tokens
             tokens.forEach {
-                if (it.name == name) return it
+                if (it.name == name) return userToken
             }
             return null
         } catch (ignored: DateTimeParseException) {
@@ -342,8 +350,10 @@ open class UserServiceImpl constructor(
                 return null
             }
         }
+        logger.debug("find user userId : [$userId]")
         val hashPwd = DataDigestUtils.md5FromStr(pwd)
-        val query = UserQueryHelper.buildPermissionCheck(userId, pwd, hashPwd)
+        val sm3HashPwd = DataDigestUtils.sm3FromStr(pwd)
+        val query = UserQueryHelper.buildUserPasswordCheck(userId, pwd, hashPwd, sm3HashPwd)
         val result = mongoTemplate.findOne(query, TUser::class.java) ?: run {
             return null
         }
@@ -355,9 +365,11 @@ open class UserServiceImpl constructor(
         // token 匹配成功
         result.tokens.forEach {
             // 永久token，校验通过，临时token校验有效期
-            if (it.id == pwd && it.expiredAt == null) {
+            if (matchToken(pwd, sm3HashPwd, it.id) && it.expiredAt == null) {
                 return transferUser(result)
-            } else if (it.id == pwd && it.expiredAt != null && it.expiredAt!!.isAfter(LocalDateTime.now())) {
+            } else if (matchToken(pwd, sm3HashPwd, it.id) &&
+                it.expiredAt != null && it.expiredAt!!.isAfter(LocalDateTime.now())
+            ) {
                 return transferUser(result)
             }
         }

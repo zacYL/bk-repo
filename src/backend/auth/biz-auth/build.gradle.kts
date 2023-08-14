@@ -40,4 +40,5 @@ dependencies {
     api(project(":common:common-redis"))
     implementation("cn.hutool:hutool-crypto:5.5.4")
     implementation("org.apache.httpcomponents:httpclient")
+    implementation("com.tencent.bk.sdk:crypto-java-sdk")
 }

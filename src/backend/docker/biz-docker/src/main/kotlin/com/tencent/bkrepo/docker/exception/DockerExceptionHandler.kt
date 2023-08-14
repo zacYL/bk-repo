@@ -43,6 +43,8 @@ import com.tencent.bkrepo.docker.constant.DOCKER_API_SUFFIX
 import com.tencent.bkrepo.docker.constant.DOCKER_API_VERSION
 import com.tencent.bkrepo.docker.constant.DOCKER_HEADER_API_VERSION
 import com.tencent.bkrepo.docker.constant.ERROR_MESSAGE
+import com.tencent.bkrepo.docker.constant.HTTPS_PROTOCOL
+import com.tencent.bkrepo.docker.constant.HTTP_PROTOCOL
 import com.tencent.bkrepo.docker.constant.REGISTRY_SERVICE
 import com.tencent.bkrepo.docker.errors.DockerV2Errors
 import org.slf4j.LoggerFactory
@@ -65,6 +67,9 @@ class DockerExceptionHandler {
     @Value("\${auth.url:}")
     private var authUrl: String = StringPool.EMPTY
 
+    @Value("\${auth.scheme:#{null}}")
+    private var authScheme: String? = null
+
     @Value("\${docker.domain:}")
     private val domain: String = StringPool.EMPTY
 
@@ -79,8 +84,12 @@ class DockerExceptionHandler {
                 val host = request.getHeader(HttpHeaders.HOST)
                 val port = request.serverPort
                 val portString = if (host.endsWith(":$port")) ":$port" else ""
-                logger.info("To construct authUrl: Host[$host], serverPort[$port], requestURL[${request.requestURL}]")
-                "${request.scheme}://${domain.ensureSuffix(portString)}$DOCKER_API_PREFIX$DOCKER_API_SUFFIX"
+                val scheme = authScheme?.run { takeIf { it == HTTPS_PROTOCOL } ?: HTTP_PROTOCOL } ?: request.scheme
+                logger.info(
+                    "To construct authUrl: Host[$host], serverPort[$port], requestURL[${request.requestURL}], " +
+                    "new scheme[$scheme]"
+                )
+                "$scheme://${domain.ensureSuffix(portString)}$DOCKER_API_PREFIX$DOCKER_API_SUFFIX"
             } else {
                 authUrl
             }

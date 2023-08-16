@@ -172,3 +172,25 @@ export const conflictStrategyEnum = {
     OVERWRITE: '替换制品',
     FAST_FAIL: '终止同步'
 }
+
+/**
+ * 制品搜索方式的下拉框
+ */
+export const repoSearchMannerMap = [
+    {
+        id: 'fileName',
+        name: 'searchMannerFileName'
+    },
+    {
+        id: 'packageVersion',
+        name: 'searchMannerPackageVersion'
+    },
+    {
+        id: 'checkSum',
+        name: 'searchMannerCheckSum'
+    },
+    {
+        id: 'metadata',
+        name: 'searchMannerMetadata'
+    }
+]

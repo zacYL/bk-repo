@@ -1,27 +1,161 @@
 <template>
-    <!-- 制品类型下拉筛选项 -->
-    <div class="type-select-container flex-center"
-        :class="{ 'active': showDropdown }"
-        @click="showDropdown = !showDropdown"
-        v-bk-clickoutside="hiddenDropdown">
-        <div class="flex-align-center">
-            <Icon size="20" :name="repoType" />
-            <span class="ml5">{{repoType}}</span>
+    <div class="repo-search-container">
+        <!-- 制品类型下拉筛选项 -->
+        <div class="type-select-container flex-center"
+            :class="{ 'active': showDropdown }"
+            @click="showDropdown = !showDropdown"
+            v-bk-clickoutside="hiddenDropdown">
+            <div class="flex-align-center">
+                <Icon size="20" :name="repoType" />
+                <span class="ml5">{{repoType}}</span>
+            </div>
+            <i class="ml5 devops-icon" :class="showDropdown ? 'icon-angle-up' : 'icon-angle-down'"></i>
+            <div v-show="showDropdown" class="dropdown-list" @click.stop="() => {}">
+                <bk-radio-group :value="repoType" class="repo-type-radio-group" @change="changeType">
+                    <bk-radio-button v-for="repo in repoList" :key="repo" :value="repo">
+                        <div class="flex-align-center repo-type-radio" :class="{ 'checked': repo === repoType }">
+                            <Icon size="20" :name="repo" />
+                            <span class="ml10">{{repo}}</span>
+                        </div>
+                    </bk-radio-button>
+                </bk-radio-group>
+            </div>
         </div>
-        <i class="ml5 devops-icon" :class="showDropdown ? 'icon-angle-up' : 'icon-angle-down'"></i>
-        <div v-show="showDropdown" class="dropdown-list" @click.stop="() => {}">
-            <bk-radio-group :value="repoType" class="repo-type-radio-group" @change="changeType">
-                <bk-radio-button v-for="repo in repoList" :key="repo" :value="repo">
-                    <div class="flex-align-center repo-type-radio" :class="{ 'checked': repo === repoType }">
-                        <Icon size="20" :name="repo" />
-                        <span class="ml10">{{repo}}</span>
-                    </div>
-                </bk-radio-button>
-            </bk-radio-group>
-        </div>
+        <bk-input
+            class="w480"
+            v-model="searchParams"
+            size="large"
+            :placeholder="$t('pleaseInput') + $t('space') + $t('packageName')">
+        </bk-input>
+        <bk-popover
+            ref="popoverSearchRef"
+            placement="bottom-start"
+            theme="light"
+            :max-width="580"
+            :width="580"
+            :arrow="false"
+            :distance="0"
+            offset="[-480, 0]"
+            :tippy-options="{ hideOnClick: false,trigger: 'click' }"
+            :on-show="onShowPopoverSearch">
+            <Icon size="20" :name="showPopover ? 'search-drop-down' : 'search-drop-up'" class="popover-search-icon" @click.native.stop="onClickPopoverIcon" />
+            <template #content>
+                <div class="search-filter-container">
+                    <bk-form ref="searchFilterFormRef" :label-width="110" :model="searchFilterForm" class="search-filter-form">
+                        <!-- 搜索方式下拉框 -->
+                        <bk-form-item :label="$t('repoSearchMannerInfo')">
+                            <div class="flex-between-center">
+                                <bk-select
+                                    v-model="searchManner"
+                                    :clearable="false"
+                                    class="w250"
+                                    :placeholder="$t('pleaseSelect') + $t('space') + $t('repoSearchMannerInfo')"
+                                    @change="onChangeSearchManner">
+                                    <bk-option v-for="manner in mannerMap" :key="manner.id" :id="manner.id" :name="$t(manner.name)">
+                                    </bk-option>
+                                </bk-select>
+                                <template v-if="searchManner === 'metadata'">
+                                    <div class="flex-center" style="margin-right:40px;">
+                                        <Icon name="repoHelp" size="16" v-bk-tooltips=" { content: $t('searchMetadataInfo') }" />
+                                        <bk-button class="ml10" icon="plus" theme="primary" @click="onCheckAndAddMetadata">{{ $t('add') }}</bk-button>
+                                    </div>
+                                </template>
+                            </div>
+                        </bk-form-item>
+                        <!-- 文件名称 -->
+                        <template v-if="searchManner === 'fileName'">
+                            <bk-form-item :label="$t('searchMannerFileName')">
+                                <bk-input
+                                    class="w410"
+                                    v-model.lazy="searchFileName"
+                                    size="large"
+                                    :placeholder="$t('searchMannerFileNamePlaceholder')">
+                                </bk-input>
+                            </bk-form-item>
+                        </template>
+                        <!-- checkSum -->
+                        <template v-if="searchManner === 'checkSum'">
+                            <bk-form-item :label="$t('searchMannerCheckSum')">
+                                <bk-input
+                                    class="w410"
+                                    v-model.trim="searchCheckSum"
+                                    size="large"
+                                    :placeholder="repoType === 'docker' ? $t('searchMannerSHA256Placeholder') : $t('searchMannerChecksumPlaceholder')"
+                                    @blur="onVerifyCheckSum">
+                                </bk-input>
+                            </bk-form-item>
+                        </template>
+                        <!-- 包版本 -->
+                        <template v-if="searchManner === 'packageVersion'">
+                            <bk-form-item :label="$t('packageName')">
+                                <bk-input
+                                    class="w410"
+                                    v-model.trim="searchPackageName"
+                                    size="large"
+                                    :placeholder="$t('pleaseInput') + $t('space') + $t('packageName')">
+                                </bk-input>
+                            </bk-form-item>
+                            <bk-form-item :label="$t('version')">
+                                <bk-input
+                                    class="w410"
+                                    v-model.trim="searchPackageVersion"
+                                    size="large"
+                                    :disabled="!searchPackageName.length"
+                                    :placeholder="$t('pleaseInput') + $t('space') + $t('version')">
+                                </bk-input>
+                            </bk-form-item>
+                        </template>
+                        <!-- 元数据 -->
+                        <template v-if="searchManner === 'metadata'">
+                            <div v-for="(metadata, index) in searchMetadataList" :key="index">
+                                <div class="search-metadata-item" :style="{ 'margin-left': (index === 0 && searchMetadataList.length === 1) ? '-40px' : '-18px' }">
+                                    <bk-form-item :label="$t('key')">
+                                        <bk-input
+                                            class="w170"
+                                            v-model.trim="metadata.key"
+                                            size="large"
+                                            :placeholder="$t('pleaseInput') + $t('space') + $t('key')">
+                                        </bk-input>
+                                    </bk-form-item>
+                                    <bk-form-item :label="$t('value')" :label-width="70" class="mt0">
+                                        <bk-input
+                                            class="w170"
+                                            v-model.trim="metadata.value"
+                                            size="large"
+                                            :placeholder="$t('pleaseInput') + $t('space') + $t('value')">
+                                        </bk-input>
+                                    </bk-form-item>
+                                    <Icon
+                                        v-if="searchMetadataList.length > 1"
+                                        class="ml10"
+                                        name="icon-delete"
+                                        size="12"
+                                        @click.native.stop="deleteMetadataSearch(index)" />
+                                </div>
+                            </div>
+                        </template>
+                        <bk-form-item class="flex-end-center popover-search-footer">
+                            <bk-button @click="onHidePopoverSearch">{{$t('cancel')}}</bk-button>
+                            <bk-button class="ml10" theme="primary" @click="onSearchConfirm">{{$t('search')}}</bk-button>
+                        </bk-form-item>
+                    </bk-form>
+                </div>
+            </template>
+        </bk-popover>
+        <i class="name-search devops-icon icon-search flex-center" @click.stop="onSearchArtifact"></i>
     </div>
 </template>
 <script>
+    import { repoSearchMannerMap, repoEnum } from '@repository/store/publicEnum'
+    // 自定义Error，防止直接使用 new Error 导致把文件源码暴露
+    function CustomError (message) {
+        this.name = 'CustomError'
+        this.message = message || 'Default error message'
+        this.stack = (new Error()).stack
+    }
+
+    CustomError.prototype = Object.create(Error.prototype)
+    CustomError.prototype.constructor = CustomError
     export default {
         name: 'typeSelect',
         props: {
@@ -36,78 +170,423 @@
         },
         data () {
             return {
-                showDropdown: false
+                showDropdown: false,
+                repoEnum,
+                repoSearchMannerMap,
+                searchParams: '',
+                searchManner: '',
+                searchFileName: '',
+                searchCheckSum: '',
+                searchPackageName: '',
+                searchPackageVersion: '',
+                searchMetadataList: [],
+                showPopover: false
             }
         },
+        computed: {
+            // generic仓库不能使用包版本搜素，依赖源仓库不能使用文件名称搜索
+            mannerMap () {
+                return this.repoType === 'generic'
+                    ? this.repoSearchMannerMap.filter(item => item.id !== 'packageVersion')
+                    : this.repoSearchMannerMap.filter(item => item.id !== 'fileName')
+            },
+            // 根据下拉框中输入框同步修改非元数据的值回显
+            composedSearchParamsWithoutMetadata () {
+                const mannerData = `${this.searchManner ? 'manner:' + this.searchManner + ';' : ''}`
+                const fileNameData = `${this.searchFileName ? 'fileName:' + this.searchFileName : ''}`
+                const checkSumData = `${this.searchCheckSum ? 'checkSum:' + this.searchCheckSum : ''}`
+                const packageNameData = `${this.searchPackageName ? 'packageName:' + this.searchPackageName + ';' : ''}`
+                const packageVersionData = `${this.searchPackageVersion ? 'packageVersion:' + this.searchPackageVersion : ''}`
+                return mannerData + fileNameData + checkSumData + packageNameData + packageVersionData
+            },
+            // 根据下方输入框同步修改元数据值的回显
+            composedMetadataSearchParams () {
+                const mannerData = this.searchManner ? 'manner:' + this.searchManner + ';' : ''
+                const metadataData = this.searchMetadataList
+                    .filter(item => item.key && item.value)
+                    .map(item => `${item.key}=${item.value}`)
+                    .join(',')
+                const metadataPrefix = this.searchMetadataList.length > 0 ? 'metadata:' : ''
+                return mannerData + metadataPrefix + metadataData
+            }
+        },
+        watch: {
+            // 监视 searchParams 值的改变，同步修改下方下拉框中数据值
+            searchParams (value) {
+                // 只有搜索的下拉打开的时候才更新下拉框中的数据
+                if (this.showPopover) {
+                    const paramsArray = value.split(';')
+                    this.searchManner = this.extractValue(paramsArray, 'manner')
+                    this.searchFileName = this.extractValue(paramsArray, 'fileName')
+                    this.searchCheckSum = this.extractValue(paramsArray, 'checkSum')
+                    this.searchPackageName = this.extractValue(paramsArray, 'packageName')
+                    this.searchPackageVersion = this.extractValue(paramsArray, 'packageVersion')
+                    this.searchMetadataList = this.extractMetadata(paramsArray)
+                }
+            },
+            // 当搜索方式被改变时，同步修改上方回显值
+            searchManner (value) {
+                // 当用户手动删除了 searchManner时，需要将输入框清空，并关闭popover
+                if (!value && this.showPopover) {
+                    this.closePopoverSearch()
+                }
+                this.updateSearchParams()
+            },
+            // 当文件名称被改变时，同步修改上方回显值
+            searchFileName () {
+                this.updateSearchParams()
+            },
+            searchCheckSum () {
+                this.updateSearchParams()
+            },
+            searchPackageName () {
+                this.updateSearchParams()
+            },
+            searchPackageVersion () {
+                this.updateSearchParams()
+            }
+        },
+        created () {
+            this.commonInitData()
+        },
         methods: {
+            // 更新上方输入框
+            updateSearchParams () {
+                const hasMetadata = this.searchMetadataList.some(item => item.key && item.value)
+                if (hasMetadata) {
+                    this.searchParams = this.composedMetadataSearchParams
+                } else {
+                    this.searchParams = this.composedSearchParamsWithoutMetadata
+                }
+            },
+            // 更新非元数据的输入框数据，根据上方输入框输入的值，双向绑定
+            extractValue (paramsArray, key) {
+                const param = paramsArray.find(param => param.startsWith(`${key}:`))
+                return param ? param.split(':')[1] : ''
+            },
+            // 更新元数据输入框数据，根据上方输入框输入的值，双向绑定
+            extractMetadata (paramsArray) {
+                const metadataParams = paramsArray.filter(param => param.startsWith('metadata:'))
+                if (metadataParams.length === 0) {
+                    return [{ key: '', value: '' }]
+                } else {
+                    const metadataValue = metadataParams[0].split('metadata:')[1]
+                    return metadataValue.split(',').map(param => {
+                        const [key, value] = param.split('=')
+                        return { key, value }
+                    })
+                }
+            },
+            // 公共代码，用于还原输入框的数据及初始化数据
+            commonInitData () {
+                this.searchFileName = ''
+                this.searchCheckSum = ''
+                this.searchPackageName = ''
+                this.searchPackageVersion = ''
+                this.searchMetadataList = [
+                    {
+                        key: '',
+                        value: ''
+                    }
+                ]
+            },
+            // 抽离公共代码，用于初始化搜索方式
+            commonInitManner () {
+                this.searchManner = this.repoType === 'generic' ? 'fileName' : 'packageVersion'
+            },
+            // 隐藏制品类型的下拉选择框
             hiddenDropdown () {
                 this.showDropdown = false
             },
+            // 改变制品类型
             changeType (type) {
                 this.$emit('change', type)
                 this.hiddenDropdown()
+                this.onHidePopoverSearch()
+            },
+            // popover 显示触发事件
+            onShowPopoverSearch () {
+                !this.searchManner && this.commonInitManner()
+                this.showPopover = true
+            },
+            // 点击取消按钮隐藏popover的搜索
+            onHidePopoverSearch () {
+                this.commonInitData()
+                this.searchManner = ''
+                this.closePopoverSearch()
+            },
+            closePopoverSearch () {
+                this.$refs.popoverSearchRef.hideHandler()
+                this.showPopover = false
+            },
+            onClickPopoverIcon () {
+                if (this.showPopover) {
+                    this.closePopoverSearch()
+                } else {
+                    this.$refs.popoverSearchRef.showHandler()
+                }
+            },
+            // 改变了搜索方式，此时需要将各个输入框数据重置
+            onChangeSearchManner () {
+                this.commonInitData()
+            },
+            // 增加一条元数据记录
+            addMetadataSearch () {
+                this.searchMetadataList.push({
+                    key: '',
+                    value: ''
+                })
+            },
+            // 删除元数据列表中的某一条记录
+            deleteMetadataSearch (index) {
+                this.searchMetadataList.splice(index, 1)
+            },
+            onCheckMetadataKeyInput () {
+                // 获取所有 key 值
+                const keys = this.searchMetadataList.map(obj => {
+                    if (!obj.key) {
+                        this.$bkMessage({
+                            theme: 'warning',
+                            limit: 3,
+                            message: this.$t('searchMetadataKeyEmptyTips')
+                        })
+                        throw new CustomError(this.$t('searchMetadataKeyEmptyTips'))
+                    } else {
+                        return obj.key
+                    }
+                })
+                this.searchMetadataList.map(obj => {
+                    if (!obj.value) {
+                        this.$bkMessage({
+                            theme: 'warning',
+                            limit: 3,
+                            message: this.$t('searchMetadataValueEmptyTips')
+                        })
+                        throw new CustomError(this.$t('searchMetadataValueEmptyTips'))
+                    } else {
+                        return obj.value
+                    }
+                })
+                // 检查 key 值是否重复
+                const isKeyDuplicate = keys.some((key, index) => keys.indexOf(key) !== index)
+                if (isKeyDuplicate) {
+                    this.$bkMessage({
+                        theme: 'warning',
+                        limit: 3,
+                        message: this.$t('searchMetadataRepeatKeyTips')
+                    })
+                    return Promise.reject(new CustomError(this.$t('searchMetadataRepeatKeyTips')))
+                }
+                return Promise.resolve()
+            },
+            // 先校验元数据的输入是否符合规则，在符合规范之后添加一条新的元数据记录
+            onCheckAndAddMetadata () {
+                this.onCheckMetadataKeyInput().then(() => {
+                    // 此时表明key及value都不为空，且key不重复
+                    this.updateSearchParams()
+                    // 此时不能继续直接添加一条记录，会导致不生效
+                    this.$nextTick(() => {
+                        this.addMetadataSearch()
+                    })
+                })
+            },
+            // checksum 输入框的校验事件
+            onVerifyCheckSum () {
+                // docker 只有sha256的搜索，即只能输入64位
+                if (this.repoType === 'docker') {
+                    if (this.searchCheckSum && this.searchCheckSum.length !== 64) {
+                        this.$bkMessage({
+                            theme: 'warning',
+                            limit: 3,
+                            message: this.$t('searchMannerSHA256ErrorTips')
+                        })
+                        return Promise.reject(new CustomError(this.$t('searchMannerSHA256ErrorTips')))
+                    }
+                } else {
+                    if (this.searchCheckSum && (this.searchCheckSum.length !== 64 && this.searchCheckSum.length !== 32)) {
+                        this.$bkMessage({
+                            theme: 'warning',
+                            limit: 3,
+                            message: this.$t('searchMannerChecksumErrorTips')
+                        })
+                        return Promise.reject(new CustomError(this.$t('searchMannerChecksumErrorTips')))
+                    }
+                }
+                return Promise.resolve()
+            },
+            // 组装数据
+            constructionSearchData () {
+                const backData = {
+                    manner: this.searchManner
+                }
+                switch (this.searchManner) {
+                    case 'fileName':
+                        backData.name = this.searchFileName
+                        break
+                    case 'checkSum':
+                        backData[this.searchCheckSum.length === 32 ? 'md5' : 'sha256'] = this.searchCheckSum
+                        break
+                    case 'packageVersion':
+                        backData.name = this.searchPackageName
+                        if (this.searchPackageVersion) {
+                            backData.version = this.searchPackageVersion
+                        }
+                        break
+                    case 'metadata':
+                        backData.metadataList = this.searchMetadataList.map(item => {
+                            return {
+                                field: 'metadata.' + item.key,
+                                value: item.value,
+                                operation: 'EQ'
+                            }
+                        })
+                        break
+                    default:
+                        backData.name = this.searchParams
+                }
+                return backData
+            },
+            // 点击下拉筛选框的搜索按钮
+            onSearchConfirm () {
+                let promise
+                if (this.searchManner === 'checkSum') {
+                    promise = this.onVerifyCheckSum()
+                } else if (this.searchManner === 'metadata') {
+                    promise = this.onCheckMetadataKeyInput().then(() => {
+                        this.updateSearchParams()
+                    })
+                } else {
+                    //  其余的 searchManner 值
+                    promise = Promise.resolve()
+                }
+                promise.then(() => {
+                    this.onSearchArtifact()
+                    this.closePopoverSearch()
+                })
+            },
+            // 搜索操作
+            onSearchArtifact () {
+                const params = this.constructionSearchData()
+                this.$emit('search-artifact', params)
             }
         }
     }
 </script>
 <style lang="scss" scoped>
-.type-select-container {
-    position: relative;
-    width: 120px;
-    height: 48px;
-    margin-right: -1px;
-    border-radius: 2px 0 0 2px;
-    border: 1px solid var(--borderWeightColor);
-    cursor: pointer;
-    &.active {
-        color: var(--primaryColor);
-        border-color: var(--primaryColor);
-        z-index: 1;
-    }
-    .icon-angle-up,
-    .icon-angle-down {
-        font-size: 12px;
-        font-weight: bold;
-        color: var(--fontSubsidiaryColor);
-        transform: scale(0.8)
-    }
-    .dropdown-list {
-        position: absolute;
-        top: calc(100% + 10px);
-        left: 0;
+.repo-search-container{
+    display: flex;
+    .type-select-container {
+        position: relative;
         width: 120px;
-        max-height: 216px;
-        overflow-y: auto;
-        padding: 5px 10px;
-        background-color: white;
-        box-shadow: 0px 0px 6px 0px rgba(167, 167, 167, 0.5);
-        z-index: 1;
-        cursor: default;
-        .repo-type-radio-group {
-            display: grid;
-            grid-template: auto / repeat(1, 50px);
-            gap: 6px;
-            justify-items: start;
-            ::v-deep .bk-form-radio-button {
-                .bk-radio-button-text {
-                    height: 100%;
-                    line-height: initial;
-                    padding: 0;
-                    border: none;
+        height: 48px;
+        margin-right: -1px;
+        border-radius: 2px 0 0 2px;
+        border: 1px solid var(--borderWeightColor);
+        cursor: pointer;
+        &.active {
+            color: var(--primaryColor);
+            border-color: var(--primaryColor);
+            z-index: 1;
+        }
+        .icon-angle-up,
+        .icon-angle-down {
+            font-size: 12px;
+            font-weight: bold;
+            color: var(--fontSubsidiaryColor);
+            transform: scale(0.8)
+        }
+        .dropdown-list {
+            position: absolute;
+            top: calc(100% + 10px);
+            left: 0;
+            width: 120px;
+            max-height: 216px;
+            overflow-y: auto;
+            padding: 5px 10px;
+            background-color: white;
+            box-shadow: 0px 0px 6px 0px rgba(167, 167, 167, 0.5);
+            z-index: 1;
+            cursor: default;
+            .repo-type-radio-group {
+                display: grid;
+                grid-template: auto / repeat(1, 50px);
+                gap: 6px;
+                justify-items: start;
+                ::v-deep .bk-form-radio-button {
+                    .bk-radio-button-text {
+                        height: 100%;
+                        line-height: initial;
+                        padding: 0;
+                        border: none;
+                    }
                 }
-            }
-            .repo-type-radio {
-                position: relative;
-                padding: 0 0 0 5px;
-                width: 100px;
-                height: 30px;
-                &.checked {
+                .repo-type-radio {
+                    position: relative;
+                    padding: 0 0 0 5px;
+                    width: 100px;
                     height: 30px;
-                    background-color: var(--bgHoverLighterColor);
-                    color: var(--primaryColor) ;
+                    &.checked {
+                        height: 30px;
+                        background-color: var(--bgHoverLighterColor);
+                        color: var(--primaryColor) ;
+                    }
                 }
             }
         }
     }
+    .name-search {
+        width: 50px;
+        height: 48px;
+        margin-left: -1px;
+        color: white;
+        font-size: 16px;
+        font-weight: bold;
+        background-color: var(--primaryColor);
+        border-radius: 0 2px 2px 0;
+        cursor: pointer;
+    }
+   
+    ::v-deep .bk-input-large {
+        height: 48px;
+        line-height: 48px;
+    }
+    ::v-deep .bk-tooltip-ref{
+        height: 48px;
+        border-top: 1px solid #cbd5e0;
+        border-bottom: 1px solid #cbd5e0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+.popover-search-icon{
+    width: 50px;
+    cursor: pointer;
+}
+.search-filter-container{
+    width: 580px;
+    max-height: 370px;
+    overflow-y: auto;
+    // bk-popover 有一个 上 10px 左14px的偏移
+    margin: 0 0 0 -14px;
+}
+.search-filter-form{
+    width: calc(100% - 20px);
+    margin: 10px;
+}
+.search-metadata-item{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 20px 0 0 -14px;
+}
+.w170{
+    width: 170px;
+}
+.w410{
+    width: 410px;
+}
+.popover-search-footer{
+    margin: 20px 40px 0 0;
 }
 </style>

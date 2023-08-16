@@ -2,16 +2,12 @@
     <div class="repo-search-container" v-bkloading="{ isLoading }">
         <div class="repo-search-tools flex-column">
             <div class="name-tool flex-center">
-                <type-select :repo-list="repoEnum" :repo-type="repoType" @change="changeRepoType"></type-select>
-                <bk-input
-                    v-focus
-                    style="width:390px"
-                    v-model.trim="packageName"
-                    size="large"
-                    :placeholder="$t('pleaseInput') + $t('packageName')"
-                    @enter="changePackageName()">
-                </bk-input>
-                <i class="name-search devops-icon icon-search flex-center" @click="changePackageName()"></i>
+                <type-select
+                    :repo-list="repoEnum"
+                    :repo-type="repoType"
+                    @change="changeRepoType"
+                    @search-artifact="onSearchArtifact">
+                </type-select>
             </div>
             <div v-if="pagination.count" class="mt20 flex-end-center" style="align-items:flex-end;">
                 <div class="sort-tool flex-align-center">
@@ -114,7 +110,8 @@
                     limit: 20,
                     count: 0
                 },
-                resultList: []
+                resultList: [],
+                searchArtifactParams: {}
             }
         },
         computed: {
@@ -175,11 +172,15 @@
                     projectId: this.projectId,
                     repoType: this.repoType,
                     repoName: this.repoName,
-                    packageName: this.packageName,
+                    packageName: this.searchArtifactParams.name,
                     property: this.property,
                     direction: this.direction,
                     current: this.pagination.current,
-                    limit: this.pagination.limit
+                    limit: this.pagination.limit,
+                    version: this.searchArtifactParams.version,
+                    md5: this.searchArtifactParams.md5,
+                    sha256: this.searchArtifactParams.sha256,
+                    metadataList: this.searchArtifactParams.metadataList
                 }).then(({ records, totalRecords }) => {
                     this.pagination.count = totalRecords
                     scrollLoad ? this.resultList.push(...records) : (this.resultList = records)
@@ -192,6 +193,12 @@
                 this.pagination.limit = limit
                 this.searckPackageHandler(scrollLoad)
                 !scrollLoad && this.$refs.infiniteScroll && this.$refs.infiniteScroll.scrollToTop()
+            },
+            // 搜索制品
+            onSearchArtifact (params) {
+                this.searchArtifactParams = params
+                this.searchRepoHandler()
+                this.handlerPaginationChange()
             },
             changeSortType () {
                 this.refreshRoute()
@@ -208,6 +215,8 @@
                     this.packageName = ''
                     this.repoType = repoType
                 }
+                // 改变制品类型之后需要把搜索相关的参数重置为空，否则会保留之前的搜索参数，导致结果有误
+                this.searchArtifactParams = {}
                 this.changePackageName()
             },
             changePackageName () {
@@ -305,25 +314,6 @@
         z-index: 1;
         background-color: white;
         border-bottom: 1px solid var(--borderColor);
-        .name-tool {
-            height: 48px;
-            ::v-deep .bk-input-large {
-                border-radius: 0;
-                height: 48px;
-                line-height: 48px;
-            }
-            .name-search {
-                width: 81px;
-                height: 100%;
-                margin-left: -1px;
-                color: white;
-                font-size: 16px;
-                font-weight: bold;
-                background-color: var(--primaryColor);
-                border-radius: 0 2px 2px 0;
-                cursor: pointer;
-            }
-        }
         .result-count {
             color: var(--fontSubsidiaryColor);
         }

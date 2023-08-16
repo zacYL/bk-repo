@@ -43,6 +43,7 @@ import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
+import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
 import com.tencent.bkrepo.repository.pojo.project.ProjectCreateRequest
@@ -151,6 +152,7 @@ class ClusterReplicator(
                 it.key !in RESERVED_KEY
             } as MutableList<MetadataModel>
             packageMetadata.add(MetadataModel(SOURCE_TYPE, ArtifactChannel.REPLICATION))
+            val manifestPath = if (packageSummary.type == PackageType.DOCKER) packageVersion.manifestPath else null
             // 包数据
             val request = PackageVersionCreateRequest(
                 projectId = remoteProjectId,
@@ -161,7 +163,7 @@ class ClusterReplicator(
                 packageDescription = packageSummary.description,
                 versionName = packageVersion.name,
                 size = packageVersion.size,
-                manifestPath = null,
+                manifestPath = manifestPath,
                 artifactPath = packageVersion.contentPath,
                 stageTag = packageVersion.stageTag,
                 packageMetadata = packageMetadata,

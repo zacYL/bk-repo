@@ -263,5 +263,7 @@
     "searchMannerChecksumErrorTips":"Please enter the correct SHA256 value or MD5 value",
     "searchMetadataRepeatKeyTips":"Please don't fill in the same attribute key repeatedly",
     "searchMetadataKeyEmptyTips":"The attribute key is required, please fill in",
-    "searchMetadataValueEmptyTips":"The attribute value is required, please fill in"
+    "searchMetadataValueEmptyTips":"The attribute value is required, please fill in",
+    "searchCheckVersionToDetail":"Select version to enter details",
+    "searchVersionResultInfo":"Search results"
 }

@@ -57,8 +57,12 @@
                         :key="pkg.repoName + (pkg.key || pkg.fullPath)"
                         :card-data="pkg"
                         readonly
+                        :show-search-version-list="((pkg.matchedVersions || []).length > 0 && repoType !== 'generic') ? true : false"
                         @show-detail="showDetail"
                         @share="handlerShare"
+                        @jump-to-specific-version="(version) => {
+                            showCommonPackageDetail(pkg,version)
+                        }"
                         @click.native="showCommonPackageDetail(pkg)">
                     </package-card>
                 </infinite-scroll>
@@ -240,7 +244,7 @@
                 this.refreshRoute()
                 this.handlerPaginationChange()
             },
-            showCommonPackageDetail (pkg) {
+            showCommonPackageDetail (pkg, version) {
                 if (pkg.fullPath) {
                     // generic
                     this.$router.push({
@@ -271,7 +275,8 @@
                         query: {
                             repoName: pkg.repoName,
                             packageKey: pkg.key,
-                            storeType: pkg.repoCategory?.toLowerCase() || ''
+                            storeType: pkg.repoCategory?.toLowerCase() || '',
+                            version
                         }
                     })
                 }

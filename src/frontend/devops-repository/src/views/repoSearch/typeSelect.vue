@@ -136,7 +136,7 @@
                         </template>
                         <bk-form-item class="flex-end-center popover-search-footer">
                             <bk-button @click="onHidePopoverSearch">{{$t('cancel')}}</bk-button>
-                            <bk-button class="ml10" theme="primary" @click="onSearchConfirm">{{$t('search')}}</bk-button>
+                            <bk-button class="ml10" theme="primary" @click="onSearchArtifact">{{$t('search')}}</bk-button>
                         </bk-form-item>
                     </bk-form>
                 </div>
@@ -212,16 +212,10 @@
         },
         watch: {
             // 监视 searchParams 值的改变，同步修改下方下拉框中数据值
-            searchParams (value) {
+            searchParams () {
                 // 只有搜索的下拉打开的时候才更新下拉框中的数据
                 if (this.showPopover) {
-                    const paramsArray = value.split(';')
-                    this.searchManner = this.extractValue(paramsArray, 'manner')
-                    this.searchFileName = this.extractValue(paramsArray, 'fileName')
-                    this.searchCheckSum = this.extractValue(paramsArray, 'checkSum')
-                    this.searchPackageName = this.extractValue(paramsArray, 'packageName')
-                    this.searchPackageVersion = this.extractValue(paramsArray, 'packageVersion')
-                    this.searchMetadataList = this.extractMetadata(paramsArray)
+                    this.accordingParamsSetData()
                 }
             },
             // 当搜索方式被改变时，同步修改上方回显值
@@ -262,7 +256,7 @@
             // 更新非元数据的输入框数据，根据上方输入框输入的值，双向绑定
             extractValue (paramsArray, key) {
                 const param = paramsArray.find(param => param.startsWith(`${key}:`))
-                return param ? param.split(':')[1] : ''
+                return param ? param.split(`${key}:`)[1] : ''
             },
             // 更新元数据输入框数据，根据上方输入框输入的值，双向绑定
             extractMetadata (paramsArray) {
@@ -276,6 +270,18 @@
                         return { key, value }
                     })
                 }
+            },
+            // 根据上方输入框中的数据(searchParams)同步下方搜索方式及输入框数据
+            accordingParamsSetData () {
+                const paramsArray = this.searchParams.split(';')
+                // 此时需要防止用户在popover关闭的时候手动修改 manner的值，导致再次展开popover时 赋值给 searchManner时是数组中不存在的值
+                const mannerParam = this.extractValue(paramsArray, 'manner')
+                this.searchManner = this.mannerMap.map(item => item.id).includes(mannerParam) ? mannerParam : ''
+                this.searchFileName = this.extractValue(paramsArray, 'fileName')
+                this.searchCheckSum = this.extractValue(paramsArray, 'checkSum')
+                this.searchPackageName = this.extractValue(paramsArray, 'packageName')
+                this.searchPackageVersion = this.extractValue(paramsArray, 'packageVersion')
+                this.searchMetadataList = this.extractMetadata(paramsArray)
             },
             // 公共代码，用于还原输入框的数据及初始化数据
             commonInitData () {
@@ -306,6 +312,8 @@
             },
             // popover 显示触发事件
             onShowPopoverSearch () {
+                // 如果用户在关闭popover之后手动修改了searchParams的值，此时在重新打开时需要将下方的搜索方式及输入框重新赋值
+                this.accordingParamsSetData()
                 !this.searchManner && this.commonInitManner()
                 this.showPopover = true
             },
@@ -315,16 +323,14 @@
                 this.searchManner = ''
                 this.closePopoverSearch()
             },
+            // 手动调用组件关闭popover
             closePopoverSearch () {
                 this.$refs.popoverSearchRef.hideHandler()
                 this.showPopover = false
             },
+            // 点击icon可以打开下拉框，当下拉框已经被打开的情况下再次点击可以收起下拉框
             onClickPopoverIcon () {
-                if (this.showPopover) {
-                    this.closePopoverSearch()
-                } else {
-                    this.$refs.popoverSearchRef.showHandler()
-                }
+                this.showPopover ? this.closePopoverSearch() : this.$refs.popoverSearchRef.showHandler()
             },
             // 改变了搜索方式，此时需要将各个输入框数据重置
             onChangeSearchManner () {
@@ -344,6 +350,7 @@
             onCheckMetadataKeyInput () {
                 // 获取所有 key 值
                 const keys = this.searchMetadataList.map(obj => {
+                    // key不允许为空
                     if (!obj.key) {
                         this.$bkMessage({
                             theme: 'warning',
@@ -356,6 +363,7 @@
                     }
                 })
                 this.searchMetadataList.map(obj => {
+                    // value不允许为空
                     if (!obj.value) {
                         this.$bkMessage({
                             theme: 'warning',
@@ -446,8 +454,9 @@
                 }
                 return backData
             },
-            // 点击下拉筛选框的搜索按钮
-            onSearchConfirm () {
+            // 校验输入数据是否合法
+            onCheckParamsValidate () {
+                this.accordingParamsSetData()
                 let promise
                 if (this.searchManner === 'checkSum') {
                     promise = this.onVerifyCheckSum()
@@ -459,15 +468,16 @@
                     //  其余的 searchManner 值
                     promise = Promise.resolve()
                 }
-                promise.then(() => {
-                    this.onSearchArtifact()
-                    this.closePopoverSearch()
-                })
+                return promise
             },
             // 搜索操作
             onSearchArtifact () {
-                const params = this.constructionSearchData()
-                this.$emit('search-artifact', params)
+                // 此时需要校验下用户
+                this.onCheckParamsValidate().then(() => {
+                    const params = this.constructionSearchData()
+                    this.$emit('search-artifact', params)
+                    this.showPopover && this.closePopoverSearch()
+                })
             }
         }
     }

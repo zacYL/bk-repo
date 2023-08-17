@@ -19,6 +19,7 @@
                             multiple
                             clearable
                             searchable
+                            :show-select-all="section.name === 'admin' ? false : true"
                             :title="section[part].addList.map(u => userList[u] ? userList[u].name : u)"
                             :enable-virtual-scroll="filterSelectOptions(section[part], part).length > 3000"
                             :list="filterSelectOptions(section[part], part)">

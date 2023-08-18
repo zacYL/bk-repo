@@ -30,21 +30,6 @@
         </div>
         <main class="repo-search-result flex-align-center">
             <template v-if="resultList.length">
-                <repo-tree
-                    class="repo-tree"
-                    ref="dialogTree"
-                    :tree="repoList"
-                    :open-list="openList"
-                    :selected-node="selectedNode"
-                    @icon-click="iconClickHandler"
-                    @item-click="itemClickHandler">
-                    <template #icon><span></span></template>
-                    <template #text="{ item: { name } }">
-                        <div class="flex-1 flex-between-center">
-                            <span class="text-overflow">{{ name }}</span>
-                        </div>
-                    </template>
-                </repo-tree>
                 <infinite-scroll
                     ref="infiniteScroll"
                     class="package-list flex-1"
@@ -74,7 +59,6 @@
     </div>
 </template>
 <script>
-    import repoTree from '@repository/components/RepoTree'
     import packageCard from '@repository/components/PackageCard'
     import InfiniteScroll from '@repository/components/InfiniteScroll'
     import genericDetail from '@repository/views/repoGeneric/genericDetail'
@@ -85,7 +69,7 @@
     import { repoEnum } from '@repository/store/publicEnum'
     export default {
         name: 'repoSearch',
-        components: { repoTree, packageCard, InfiniteScroll, typeSelect, genericDetail, genericShareDialog },
+        components: { packageCard, InfiniteScroll, typeSelect, genericDetail, genericShareDialog },
         directives: {
             focus: {
                 inserted (el) {
@@ -101,13 +85,6 @@
                 direction: this.$route.query.direction || 'DESC',
                 packageName: this.$route.query.packageName || '',
                 repoType: this.$route.query.repoType || 'generic',
-                repoList: [{
-                    name: '全部',
-                    roadMap: '0',
-                    children: []
-                }],
-                selectedNode: {},
-                openList: [],
                 repoName: this.$route.query.repoName || '',
                 pagination: {
                     current: 1,
@@ -122,10 +99,6 @@
             ...mapState(['userList']),
             projectId () {
                 return this.$route.params.projectId
-            },
-            isSearching () {
-                const { packageName, repoType, repoName } = this.$route.query
-                return Boolean(packageName || repoType || repoName)
             }
         },
         created () {
@@ -134,41 +107,7 @@
         },
         methods: {
             formatDate,
-            ...mapActions(['searchPackageList', 'searchRepoList']),
-            refreshRoute () {
-                this.$router.replace({
-                    query: {
-                        repoType: this.repoType,
-                        repoName: this.repoName,
-                        packageName: this.packageName,
-                        property: this.property,
-                        direction: this.direction
-                    }
-                })
-            },
-            searchRepoHandler () {
-                this.searchRepoList({
-                    projectId: this.projectId,
-                    repoType: this.repoType,
-                    packageName: this.packageName || ''
-                }).then(([item]) => {
-                    this.repoList = [{
-                        name: '全部',
-                        roadMap: '0',
-                        children: item.repos.map((child, i) => {
-                            return {
-                                name: this.replaceRepoName(child.repoName),
-                                repoName: child.repoName,
-                                roadMap: '0,' + i,
-                                leaf: true,
-                                sum: child.packages || child.nodes,
-                                repoCategory: child.repoCategory || ''
-                            }
-                        }),
-                        sum: item.sum
-                    }]
-                })
-            },
+            ...mapActions(['searchPackageList']),
             searckPackageHandler (scrollLoad) {
                 if (this.isLoading) return
                 this.isLoading = !scrollLoad
@@ -184,7 +123,8 @@
                     version: this.searchArtifactParams.version,
                     md5: this.searchArtifactParams.md5,
                     sha256: this.searchArtifactParams.sha256,
-                    metadataList: this.searchArtifactParams.metadataList
+                    metadataList: this.searchArtifactParams.metadataList,
+                    artifactList: this.searchArtifactParams.artifactList
                 }).then(({ records, totalRecords }) => {
                     this.pagination.count = totalRecords
                     scrollLoad ? this.resultList.push(...records) : (this.resultList = records)
@@ -201,16 +141,13 @@
             // 搜索制品
             onSearchArtifact (params) {
                 this.searchArtifactParams = params
-                this.searchRepoHandler()
                 this.handlerPaginationChange()
             },
             changeSortType () {
-                this.refreshRoute()
                 this.handlerPaginationChange()
             },
             changeDirection () {
                 this.direction = this.direction === 'ASC' ? 'DESC' : 'ASC'
-                this.refreshRoute()
                 this.handlerPaginationChange()
             },
             changeRepoType (repoType) {
@@ -221,29 +158,9 @@
                 }
                 // 改变制品类型之后需要把搜索相关的参数重置为空，否则会保留之前的搜索参数，导致结果有误
                 this.searchArtifactParams = {}
-                this.changePackageName()
-            },
-            changePackageName () {
-                this.searchRepoHandler()
-                this.itemClickHandler(this.repoList[0]) // 重置树
-            },
-            iconClickHandler (node) {
-                const openList = this.openList
-                if (openList.includes(node.roadMap)) {
-                    openList.splice(0, openList.length, ...openList.filter(v => v !== node.roadMap))
-                } else {
-                    openList.push(node.roadMap)
-                }
-            },
-            itemClickHandler (node) {
-                this.selectedNode = node
-                this.openList.push(node.roadMap)
-
-                this.repoName = node.repoName
-
-                this.refreshRoute()
                 this.handlerPaginationChange()
             },
+
             showCommonPackageDetail (pkg, version) {
                 if (pkg.fullPath) {
                     // generic
@@ -340,12 +257,6 @@
     }
     .repo-search-result {
         height: calc(100% - 130px);
-        .repo-tree {
-            width: 200px;
-            height: 100%;
-            overflow: auto;
-            border-right: 1px solid var(--borderColor);
-        }
         .package-list {
             padding: 10px 20px 0;
         }

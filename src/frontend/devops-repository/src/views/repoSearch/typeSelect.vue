@@ -21,6 +21,26 @@
                 </bk-radio-group>
             </div>
         </div>
+        <!-- 仓库名称选择框，多选 -->
+        <bk-select
+            class="w250 search-artifact-select"
+            searchable
+            multiple
+            display-tag
+            v-model="checkedArtifactList">
+            <bk-option-group
+                v-for="(artifact, index) in artifactList"
+                :name="artifact.name"
+                :key="index"
+                :show-collapse="true"
+                :is-collapse.sync="artifact.isCollapse">
+                <bk-option v-for="option in artifact.children"
+                    :key="option.name"
+                    :id="option.name"
+                    :name="option.name">
+                </bk-option>
+            </bk-option-group>
+        </bk-select>
         <bk-input
             class="w480"
             v-model="searchParams"
@@ -146,6 +166,7 @@
     </div>
 </template>
 <script>
+    import { mapActions } from 'vuex'
     import { repoSearchMannerMap, repoEnum } from '@repository/store/publicEnum'
     // 自定义Error，防止直接使用 new Error 导致把文件源码暴露
     function CustomError (message) {
@@ -180,10 +201,36 @@
                 searchPackageName: '',
                 searchPackageVersion: '',
                 searchMetadataList: [],
-                showPopover: false
+                showPopover: false,
+                // 当前类型的仓库列表，不分页
+                artifactList: [
+                    {
+                        id: 'local',
+                        name: this.$t('localStore'),
+                        // 该分组是否收起
+                        isCollapse: false,
+                        children: []
+                    },
+                    {
+                        id: 'remote',
+                        name: this.$t('remoteStore'),
+                        isCollapse: true,
+                        children: []
+                    },
+                    {
+                        id: 'composite',
+                        name: this.$t('compositeStore'),
+                        isCollapse: true,
+                        children: []
+                    }
+                ],
+                checkedArtifactList: []
             }
         },
         computed: {
+            projectId () {
+                return this.$route.params.projectId
+            },
             // generic仓库不能使用包版本搜素，依赖源仓库不能使用文件名称搜索
             mannerMap () {
                 return this.repoType === 'generic'
@@ -246,8 +293,46 @@
         },
         created () {
             this.commonInitData()
+            this.getRepoArtifactList()
         },
         methods: {
+            ...mapActions(['getRepoListAll']),
+            // 获取当前类型的全部仓库列表，不分页
+            getRepoArtifactList () {
+                this.getRepoListAll({ projectId: this.projectId, type: this.repoType, searchFlag: true }).then((res) => {
+                    const localArtifactList = []
+                    const remoteArtifactList = []
+                    const compositeArtifactList = []
+                    res.forEach((item) => {
+                        switch (item.category) {
+                            case 'LOCAL':
+                                localArtifactList.push(item)
+                                break
+                            case 'REMOTE':
+                                remoteArtifactList.push(item)
+                                break
+                            case 'COMPOSITE':
+                                compositeArtifactList.push(item)
+                                break
+                            // 搜索不支持虚拟仓库，虚拟仓库本身不存储任何制品
+                        }
+                    })
+                    this.artifactList = this.artifactList.map((item) => {
+                        switch (item.id) {
+                            case 'local':
+                                item.children = localArtifactList
+                                break
+                            case 'remote':
+                                item.children = remoteArtifactList
+                                break
+                            default:
+                                item.children = compositeArtifactList
+                                break
+                        }
+                        return item
+                    })
+                })
+            },
             // 更新上方输入框
             updateSearchParams () {
                 const hasMetadata = this.searchMetadataList.some(item => item.key && item.value)
@@ -313,6 +398,9 @@
                 this.$emit('change', type)
                 this.hiddenDropdown()
                 this.onHidePopoverSearch()
+                this.$nextTick(() => {
+                    this.getRepoArtifactList()
+                })
             },
             // popover 显示触发事件
             onShowPopoverSearch () {
@@ -506,6 +594,7 @@
                         this.searchParams = ''
                     }
                     const params = this.constructionSearchData()
+                    params.artifactList = this.checkedArtifactList
                     this.$emit('search-artifact', params)
                     this.showPopover && this.closePopoverSearch()
                 })
@@ -630,4 +719,17 @@
 .popover-search-footer{
     margin: 20px 40px 0 0;
 }
+.search-artifact-select{
+    border: none;
+    border-left:  1px solid var(--borderWeightColor);
+}
+::v-deep .bk-select {
+    line-height: 48px;
+}
+::v-deep .bk-select .bk-select-angle {
+    top: 0;
+    height: 48px;
+    line-height: 48px;
+}
+
 </style>

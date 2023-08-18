@@ -99,7 +99,7 @@ export default {
         )
     },
     // 跨仓库搜索
-    searchPackageList (_, { projectId, repoType, repoName, packageName, property = 'name', direction = 'ASC', current = 1, limit = 20, extRules = [], version = '', metadataList = [], sha256 = '', md5 = '' }) {
+    searchPackageList (_, { projectId, repoType, repoName, packageName, property = 'name', direction = 'ASC', current = 1, limit = 20, extRules = [], version = '', metadataList = [], sha256 = '', md5 = '', artifactList = [] }) {
         const isGeneric = repoType === 'generic'
         return Vue.prototype.$ajax.post(
             `${prefix}/${isGeneric ? 'node/query' : 'package/search'}`,
@@ -120,6 +120,15 @@ export default {
                                 value: projectId,
                                 operation: 'EQ'
                             }]
+                            : []),
+                        ...(artifactList.length > 0
+                            ? [
+                                {
+                                    field: 'repoName',
+                                    value: artifactList,
+                                    operation: 'IN'
+                                }
+                            ]
                             : []),
                         ...(repoName
                             ? [{

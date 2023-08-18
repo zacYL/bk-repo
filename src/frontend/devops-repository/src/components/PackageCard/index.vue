@@ -43,7 +43,6 @@
             <Icon class="hover-btn" v-if="!readonly && !(storeType === 'virtual') " size="24" name="icon-delete" @click.native.stop="deleteCard" />
             <bk-popover
                 v-if="showRepoSearchVersion"
-                v-focus
                 ref="popoverVersionsRef"
                 placement="left-start"
                 theme="light"

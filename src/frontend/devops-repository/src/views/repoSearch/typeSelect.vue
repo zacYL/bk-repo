@@ -27,7 +27,8 @@
             searchable
             multiple
             display-tag
-            v-model="checkedArtifactList">
+            v-model="checkedArtifactList"
+            :placeholder="$t('allStore')">
             <bk-option-group
                 v-for="(artifact, index) in artifactList"
                 :name="artifact.name"

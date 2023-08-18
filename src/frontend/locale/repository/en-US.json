@@ -265,5 +265,6 @@
     "searchMetadataKeyEmptyTips":"The attribute key is required, please fill in",
     "searchMetadataValueEmptyTips":"The attribute value is required, please fill in",
     "searchCheckVersionToDetail":"Select version to enter details",
-    "searchVersionResultInfo":"Search results"
+    "searchVersionResultInfo":"Search results",
+    "allStore" :"All store"
 }

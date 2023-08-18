@@ -190,6 +190,10 @@
                     ? this.repoSearchMannerMap.filter(item => item.id !== 'packageVersion')
                     : this.repoSearchMannerMap.filter(item => item.id !== 'fileName')
             },
+            // 搜索方式支持选择的id，用于下方判断
+            mannerIdMap () {
+                return this.mannerMap.map(item => item.id)
+            },
             // 根据下拉框中输入框同步修改非元数据的值回显
             composedSearchParamsWithoutMetadata () {
                 const mannerData = `${this.searchManner ? 'manner:' + this.searchManner + ';' : ''}`
@@ -276,7 +280,7 @@
                 const paramsArray = this.searchParams.split(';')
                 // 此时需要防止用户在popover关闭的时候手动修改 manner的值，导致再次展开popover时 赋值给 searchManner时是数组中不存在的值
                 const mannerParam = this.extractValue(paramsArray, 'manner')
-                this.searchManner = this.mannerMap.map(item => item.id).includes(mannerParam) ? mannerParam : ''
+                this.searchManner = this.mannerIdMap.includes(mannerParam) ? mannerParam : ''
                 this.searchFileName = this.extractValue(paramsArray, 'fileName')
                 this.searchCheckSum = this.extractValue(paramsArray, 'checkSum')
                 this.searchPackageName = this.extractValue(paramsArray, 'packageName')
@@ -348,6 +352,15 @@
                 this.searchMetadataList.splice(index, 1)
             },
             onCheckMetadataKeyInput () {
+                // 当下拉框没有展开，但是搜索方式是元数据，此时需要看用户输入是否是以metadata:开头的，不是的话，直接清空searchParams并返回成功
+                if (!this.showPopover) {
+                    const paramArr = this.searchParams.split(';')
+                    const metadataList = paramArr.filter(param => param.startsWith('metadata:'))
+                    if (metadataList.length === 0) {
+                        this.searchParams = ''
+                        return Promise.resolve()
+                    }
+                }
                 // 获取所有 key 值
                 const keys = this.searchMetadataList.map(obj => {
                     // key不允许为空
@@ -442,12 +455,18 @@
                         break
                     case 'metadata':
                         backData.metadataList = this.searchMetadataList.map(item => {
-                            return {
-                                field: 'metadata.' + item.key,
-                                value: item.value,
-                                operation: 'EQ'
+                            // 展开下拉框选择了元数据之后，直接关闭下拉框，然后在上面输入框中输入数据，此时直接触发元数据的校验不合适，
+                            // 但是不做下面的判断会导致接口传参添加了field: 'metadata.' 的对象，会导致搜索结果为空
+                            if (item.key && item.value) {
+                                return {
+                                    field: 'metadata.' + item.key,
+                                    value: item.value,
+                                    operation: 'EQ'
+                                }
+                            } else {
+                                return ''
                             }
-                        })
+                        }).filter(Boolean)
                         break
                     default:
                         backData.name = this.searchParams
@@ -456,7 +475,8 @@
             },
             // 校验输入数据是否合法
             onCheckParamsValidate () {
-                this.accordingParamsSetData()
+                // 当用户直接在上方的输入框中输入数据时需要先对输入框数据拆解赋值给下拉框中的输入框，然后再进行校验数据是否合法
+                !this.showPopover && this.accordingParamsSetData()
                 let promise
                 if (this.searchManner === 'checkSum') {
                     promise = this.onVerifyCheckSum()
@@ -474,6 +494,17 @@
             onSearchArtifact () {
                 // 此时需要校验下用户
                 this.onCheckParamsValidate().then(() => {
+                    // 展开下拉框输入数据后，关闭下拉框，然后修改上方输入框的值(不改变前面的manner:xxxx，直接删除后面的参数设置或修改metadata:之类的，导致参数不能配置)，
+                    // 此时搜索不带条件(是对的)，但是输入框依旧保留了搜索方式的回显，不太合适，此时相当于是没有添加任何搜索条件的，需要重置searchParams为空字符串
+                    const isEmptySearch = this.mannerIdMap.includes(this.searchManner)
+                        && this.searchFileName === ''
+                        && this.searchCheckSum === ''
+                        && this.searchMetadataList[0].key === ''
+                        && this.searchPackageName === ''
+                        && this.searchPackageVersion === ''
+                    if (isEmptySearch) {
+                        this.searchParams = ''
+                    }
                     const params = this.constructionSearchData()
                     this.$emit('search-artifact', params)
                     this.showPopover && this.closePopoverSearch()

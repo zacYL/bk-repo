@@ -27,6 +27,7 @@
             searchable
             multiple
             display-tag
+            :show-select-all="false"
             v-model="checkedArtifactList"
             :placeholder="$t('allStore')">
             <bk-option-group

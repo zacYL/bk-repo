@@ -2,16 +2,12 @@
     <div class="repo-search-container" v-bkloading="{ isLoading }">
         <div class="repo-search-tools flex-column">
             <div class="name-tool flex-center">
-                <type-select :repo-list="repoEnum" :repo-type="repoType" @change="changeRepoType"></type-select>
-                <bk-input
-                    v-focus
-                    style="width:390px"
-                    v-model.trim="packageName"
-                    size="large"
-                    :placeholder="$t('pleaseInput') + $t('packageName')"
-                    @enter="changePackageName()">
-                </bk-input>
-                <i class="name-search devops-icon icon-search flex-center" @click="changePackageName()"></i>
+                <type-select
+                    :repo-list="repoEnum"
+                    :repo-type="repoType"
+                    @change="changeRepoType"
+                    @search-artifact="onSearchArtifact">
+                </type-select>
             </div>
             <div v-if="pagination.count" class="mt20 flex-end-center" style="align-items:flex-end;">
                 <div class="sort-tool flex-align-center">
@@ -34,21 +30,6 @@
         </div>
         <main class="repo-search-result flex-align-center">
             <template v-if="resultList.length">
-                <repo-tree
-                    class="repo-tree"
-                    ref="dialogTree"
-                    :tree="repoList"
-                    :open-list="openList"
-                    :selected-node="selectedNode"
-                    @icon-click="iconClickHandler"
-                    @item-click="itemClickHandler">
-                    <template #icon><span></span></template>
-                    <template #text="{ item: { name } }">
-                        <div class="flex-1 flex-between-center">
-                            <span class="text-overflow">{{ name }}</span>
-                        </div>
-                    </template>
-                </repo-tree>
                 <infinite-scroll
                     ref="infiniteScroll"
                     class="package-list flex-1"
@@ -61,8 +42,12 @@
                         :key="pkg.repoName + (pkg.key || pkg.fullPath)"
                         :card-data="pkg"
                         readonly
+                        :show-search-version-list="((pkg.matchedVersions || []).length > 0 && repoType !== 'generic') ? true : false"
                         @show-detail="showDetail"
                         @share="handlerShare"
+                        @jump-to-specific-version="(version) => {
+                            showCommonPackageDetail(pkg,version)
+                        }"
                         @click.native="showCommonPackageDetail(pkg)">
                     </package-card>
                 </infinite-scroll>
@@ -74,7 +59,6 @@
     </div>
 </template>
 <script>
-    import repoTree from '@repository/components/RepoTree'
     import packageCard from '@repository/components/PackageCard'
     import InfiniteScroll from '@repository/components/InfiniteScroll'
     import genericDetail from '@repository/views/repoGeneric/genericDetail'
@@ -85,7 +69,7 @@
     import { repoEnum } from '@repository/store/publicEnum'
     export default {
         name: 'repoSearch',
-        components: { repoTree, packageCard, InfiniteScroll, typeSelect, genericDetail, genericShareDialog },
+        components: { packageCard, InfiniteScroll, typeSelect, genericDetail, genericShareDialog },
         directives: {
             focus: {
                 inserted (el) {
@@ -101,30 +85,20 @@
                 direction: this.$route.query.direction || 'DESC',
                 packageName: this.$route.query.packageName || '',
                 repoType: this.$route.query.repoType || 'generic',
-                repoList: [{
-                    name: '全部',
-                    roadMap: '0',
-                    children: []
-                }],
-                selectedNode: {},
-                openList: [],
                 repoName: this.$route.query.repoName || '',
                 pagination: {
                     current: 1,
                     limit: 20,
                     count: 0
                 },
-                resultList: []
+                resultList: [],
+                searchArtifactParams: {}
             }
         },
         computed: {
             ...mapState(['userList']),
             projectId () {
                 return this.$route.params.projectId
-            },
-            isSearching () {
-                const { packageName, repoType, repoName } = this.$route.query
-                return Boolean(packageName || repoType || repoName)
             }
         },
         created () {
@@ -133,41 +107,7 @@
         },
         methods: {
             formatDate,
-            ...mapActions(['searchPackageList', 'searchRepoList']),
-            refreshRoute () {
-                this.$router.replace({
-                    query: {
-                        repoType: this.repoType,
-                        repoName: this.repoName,
-                        packageName: this.packageName,
-                        property: this.property,
-                        direction: this.direction
-                    }
-                })
-            },
-            searchRepoHandler () {
-                this.searchRepoList({
-                    projectId: this.projectId,
-                    repoType: this.repoType,
-                    packageName: this.packageName || ''
-                }).then(([item]) => {
-                    this.repoList = [{
-                        name: '全部',
-                        roadMap: '0',
-                        children: item.repos.map((child, i) => {
-                            return {
-                                name: this.replaceRepoName(child.repoName),
-                                repoName: child.repoName,
-                                roadMap: '0,' + i,
-                                leaf: true,
-                                sum: child.packages || child.nodes,
-                                repoCategory: child.repoCategory || ''
-                            }
-                        }),
-                        sum: item.sum
-                    }]
-                })
-            },
+            ...mapActions(['searchPackageList']),
             searckPackageHandler (scrollLoad) {
                 if (this.isLoading) return
                 this.isLoading = !scrollLoad
@@ -175,11 +115,16 @@
                     projectId: this.projectId,
                     repoType: this.repoType,
                     repoName: this.repoName,
-                    packageName: this.packageName,
+                    packageName: this.searchArtifactParams.name,
                     property: this.property,
                     direction: this.direction,
                     current: this.pagination.current,
-                    limit: this.pagination.limit
+                    limit: this.pagination.limit,
+                    version: this.searchArtifactParams.version,
+                    md5: this.searchArtifactParams.md5,
+                    sha256: this.searchArtifactParams.sha256,
+                    metadataList: this.searchArtifactParams.metadataList,
+                    artifactList: this.searchArtifactParams.artifactList
                 }).then(({ records, totalRecords }) => {
                     this.pagination.count = totalRecords
                     scrollLoad ? this.resultList.push(...records) : (this.resultList = records)
@@ -193,13 +138,16 @@
                 this.searckPackageHandler(scrollLoad)
                 !scrollLoad && this.$refs.infiniteScroll && this.$refs.infiniteScroll.scrollToTop()
             },
+            // 搜索制品
+            onSearchArtifact (params) {
+                this.searchArtifactParams = params
+                this.handlerPaginationChange()
+            },
             changeSortType () {
-                this.refreshRoute()
                 this.handlerPaginationChange()
             },
             changeDirection () {
                 this.direction = this.direction === 'ASC' ? 'DESC' : 'ASC'
-                this.refreshRoute()
                 this.handlerPaginationChange()
             },
             changeRepoType (repoType) {
@@ -208,30 +156,12 @@
                     this.packageName = ''
                     this.repoType = repoType
                 }
-                this.changePackageName()
-            },
-            changePackageName () {
-                this.searchRepoHandler()
-                this.itemClickHandler(this.repoList[0]) // 重置树
-            },
-            iconClickHandler (node) {
-                const openList = this.openList
-                if (openList.includes(node.roadMap)) {
-                    openList.splice(0, openList.length, ...openList.filter(v => v !== node.roadMap))
-                } else {
-                    openList.push(node.roadMap)
-                }
-            },
-            itemClickHandler (node) {
-                this.selectedNode = node
-                this.openList.push(node.roadMap)
-
-                this.repoName = node.repoName
-
-                this.refreshRoute()
+                // 改变制品类型之后需要把搜索相关的参数重置为空，否则会保留之前的搜索参数，导致结果有误
+                this.searchArtifactParams = {}
                 this.handlerPaginationChange()
             },
-            showCommonPackageDetail (pkg) {
+
+            showCommonPackageDetail (pkg, version) {
                 if (pkg.fullPath) {
                     // generic
                     this.$router.push({
@@ -262,7 +192,8 @@
                         query: {
                             repoName: pkg.repoName,
                             packageKey: pkg.key,
-                            storeType: pkg.repoCategory?.toLowerCase() || ''
+                            storeType: pkg.repoCategory?.toLowerCase() || '',
+                            version
                         }
                     })
                 }
@@ -305,25 +236,6 @@
         z-index: 1;
         background-color: white;
         border-bottom: 1px solid var(--borderColor);
-        .name-tool {
-            height: 48px;
-            ::v-deep .bk-input-large {
-                border-radius: 0;
-                height: 48px;
-                line-height: 48px;
-            }
-            .name-search {
-                width: 81px;
-                height: 100%;
-                margin-left: -1px;
-                color: white;
-                font-size: 16px;
-                font-weight: bold;
-                background-color: var(--primaryColor);
-                border-radius: 0 2px 2px 0;
-                cursor: pointer;
-            }
-        }
         .result-count {
             color: var(--fontSubsidiaryColor);
         }
@@ -345,12 +257,6 @@
     }
     .repo-search-result {
         height: calc(100% - 130px);
-        .repo-tree {
-            width: 200px;
-            height: 100%;
-            overflow: auto;
-            border-right: 1px solid var(--borderColor);
-        }
         .package-list {
             padding: 10px 20px 0;
         }

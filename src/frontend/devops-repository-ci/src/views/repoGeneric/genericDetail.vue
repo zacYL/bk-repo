@@ -36,28 +36,8 @@
                 </div>
             </bk-tab-panel>
             <bk-tab-panel v-if="!detailSlider.folder" name="metaDate" :label="$t('metaData')">
-                <div class="version-metadata display-block" data-title="元数据">
-                    <div class="version-metadata-add" v-bk-clickoutside="hiddenAddMetadata">
-                        <i @click="metadata.show ? hiddenAddMetadata() : showAddMetadata()" class="devops-icon icon-plus flex-center hover-btn"></i>
-                        <div class="version-metadata-add-board"
-                            :style="{ height: metadata.show ? '230px' : '0' }">
-                            <bk-form class="p20" :label-width="80" :model="metadata" :rules="rules" ref="metadatForm">
-                                <bk-form-item :label="$t('key')" :required="true" property="key">
-                                    <bk-input size="small" v-model.trim="metadata.key" :placeholder="$t('key')"></bk-input>
-                                </bk-form-item>
-                                <bk-form-item :label="$t('value')" :required="true" property="value">
-                                    <bk-input size="small" v-model.trim="metadata.value" :placeholder="$t('value')"></bk-input>
-                                </bk-form-item>
-                                <bk-form-item :label="$t('description')">
-                                    <bk-input size="small" v-model.trim="metadata.description" :placeholder="$t('description')"></bk-input>
-                                </bk-form-item>
-                                <bk-form-item>
-                                    <bk-button size="small" theme="default" @click.stop="hiddenAddMetadata">{{$t('cancel')}}</bk-button>
-                                    <bk-button class="ml5" size="small" :loading="metadata.loading" theme="primary" @click="addMetadataHandler">{{$t('confirm')}}</bk-button>
-                                </bk-form-item>
-                            </bk-form>
-                        </div>
-                    </div>
+                <div class="display-block" :data-title="$t('metadata')">
+                    <metadataDialog ref="metadataDialogRef" @add-metadata="addMetadataHandler"></metadataDialog>
                     <bk-table
                         :data="(detailSlider.data.nodeMetadata || []).filter(m => !m.system)"
                         :outer-border="false"
@@ -76,10 +56,17 @@
 
                         <bk-table-column :label="$t('description')" prop="description" show-overflow-tooltip></bk-table-column>
 
-                        <bk-table-column width="60">
+                        <bk-table-column width="70">
                             <template #default="{ row }">
-                                <Icon class="hover-btn" size="24" name="icon-delete"
-                                    @click.native.stop="deleteMetadataHandler(row)" />
+                                <bk-popconfirm trigger="click" width="230" @confirm="deleteMetadataHandler(row)">
+                                    <div slot="content">
+                                        <div class="flex-align-center pb10">
+                                            <i class="bk-icon icon-info-circle-shape pr5 content-icon"></i>
+                                            <div class="content-text">{{$t('deleteMetadataConfirm')}}</div>
+                                        </div>
+                                    </div>
+                                    <Icon class="hover-btn" size="24" name="icon-delete" />
+                                </bk-popconfirm>
                             </template>
                         </bk-table-column>
                     </bk-table>
@@ -99,12 +86,13 @@
     import ciCreateTokenDialog from '@repository/views/repoToken/ciCreateTokenDialog'
     import metadataTag from '@repository/views/repoCommon/metadataTag'
     import topo from '@/components/topo'
+    import metadataDialog from '@repository/components/metadataDialog'
     import topoDataMixin from './artiTopoMixin'
     import { mapState, mapActions } from 'vuex'
     import { convertFileSize, formatDate } from '@repository/utils'
     export default {
         name: 'genericDetail',
-        components: { CodeArea, ciCreateTokenDialog, topo, metadataTag },
+        components: { CodeArea, ciCreateTokenDialog, topo, metadataTag, metadataDialog },
         mixins: [topoDataMixin],
         data () {
             return {
@@ -117,41 +105,6 @@
                     folder: false,
                     path: '',
                     data: {}
-                },
-                metadata: {
-                    show: false,
-                    loading: false,
-                    key: '',
-                    value: '',
-                    description: ''
-                },
-                rules: {
-                    key: [
-                        {
-                            required: true,
-                            message: this.$t('pleaseInput') + this.$t('key'),
-                            trigger: 'blur'
-                        },
-                        {
-                            min: 1,
-                            max: 30,
-                            message: this.$t('metadataNoLegalKeyInfo'),
-                            trigger: 'blur'
-                        }
-                    ],
-                    value: [
-                        {
-                            required: true,
-                            message: this.$t('pleaseInput') + this.$t('value'),
-                            trigger: 'blur'
-                        },
-                        {
-                            min: 1,
-                            max: 500,
-                            message: this.$t('metadataNoLegalValueInfo'),
-                            trigger: 'blur'
-                        }
-                    ]
                 }
             }
         },
@@ -213,23 +166,9 @@
             jumpCCommonUserToken () {
                 window.open(window.DEVOPS_SITE_URL + '/console/userCenter/userToken', '_blank')
             },
-            showAddMetadata () {
-                this.metadata = {
-                    show: true,
-                    loading: false,
-                    key: '',
-                    value: '',
-                    description: ''
-                }
-            },
-            hiddenAddMetadata () {
-                this.metadata.show = false
-                this.$refs.metadatForm.clearError()
-            },
-            async addMetadataHandler () {
-                await this.$refs.metadatForm.validate()
-                this.metadata.loading = true
-                const { key, value, description } = this.metadata
+           
+            addMetadataHandler (item) {
+                const { key, value, description } = item
                 this.addMetadata({
                     projectId: this.detailSlider.projectId,
                     repoName: this.detailSlider.repoName,
@@ -240,12 +179,11 @@
                 }).then(() => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: this.$t('add') + this.$t('success')
+                        message: this.$t('add') + this.$t('space') + this.$t('success')
                     })
-                    this.hiddenAddMetadata()
+                    // 此时添加成功，需要通过ref调用组件的关闭弹窗方法
+                    this.$refs.metadataDialogRef.hiddenAddMetadata()
                     this.getDetail()
-                }).finally(() => {
-                    this.metadata.loading = false
                 })
             },
             deleteMetadataHandler (row) {
@@ -259,7 +197,7 @@
                 }).then(() => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: '删除元数据' + this.$t('success')
+                        message: this.$t('delete') + this.$t('space') + this.$t('metadata') + this.$t('space') + this.$t('success')
                     })
                     this.getDetail()
                 })
@@ -296,30 +234,8 @@
             }
         }
     }
-    .version-metadata {
-        .version-metadata-add {
-            position: absolute;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            top: 0;
-            right: 25px;
-            width: 35px;
-            height: 40px;
-            z-index: 1;
-            .version-metadata-add-board {
-                position: absolute;
-                top: 42px;
-                right: -25px;
-                width: 300px;
-                overflow: hidden;
-                background: white;
-                border-radius: 2px;
-                box-shadow: 0 3px 6px rgba(51, 60, 72, 0.4);
-                will-change: height;
-                transition: all .3s;
-            }
-        }
-    }
+}
+.content-icon {
+    color: var(--dangerColor);
 }
 </style>

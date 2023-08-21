@@ -47,7 +47,7 @@
     "deleteNpmSubTitle": "此操作不可撤销，将永久删除Npm制品和其下所有版本",
     "deleteVersionSubTitle": "此操作不可撤销，将永久删除该版本",
     "add": "add",
-    "delete": "删除",
+    "delete": "Delete",
     "success": "成功",
     "fail": "失败",
     "pleaseSelect": "Please select",
@@ -267,5 +267,6 @@
     "reset": "reset",
     "searchCondition":"Condition",
     "searchName":"Name",
-    "searchNamePlaceholder":"Please enter the keyword in the name"
+    "searchNamePlaceholder":"Please enter the keyword in the name",
+    "deleteMetadataConfirm":"Do you want to delete metadata?"
 }

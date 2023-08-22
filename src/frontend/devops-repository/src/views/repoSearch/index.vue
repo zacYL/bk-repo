@@ -5,6 +5,7 @@
                 <type-select
                     :repo-list="repoEnum"
                     :repo-type="repoType"
+                    :artifact-original-list="artifactOriginalList"
                     @change="changeRepoType"
                     @search-artifact="onSearchArtifact">
                 </type-select>
@@ -92,7 +93,9 @@
                     count: 0
                 },
                 resultList: [],
-                searchArtifactParams: {}
+                searchArtifactParams: {},
+                // 根据制品类型获取到的仓库列表集合
+                artifactOriginalList: []
             }
         },
         computed: {
@@ -107,7 +110,7 @@
         },
         methods: {
             formatDate,
-            ...mapActions(['searchPackageList']),
+            ...mapActions(['searchPackageList', 'getRepoListAll']),
             searckPackageHandler (scrollLoad) {
                 if (this.isLoading) return
                 this.isLoading = !scrollLoad
@@ -158,9 +161,15 @@
                 }
                 // 改变制品类型之后需要把搜索相关的参数重置为空，否则会保留之前的搜索参数，导致结果有误
                 this.searchArtifactParams = {}
+                this.getRepoSearchArtifactList()
                 this.handlerPaginationChange()
             },
-
+            // 获取仓库下拉选择框原始数据，不分页
+            getRepoSearchArtifactList () {
+                this.getRepoListAll({ projectId: this.projectId, type: this.repoType, searchFlag: true }).then((res) => {
+                    this.artifactOriginalList = res
+                })
+            },
             showCommonPackageDetail (pkg, version) {
                 if (pkg.fullPath) {
                     // generic
@@ -175,14 +184,12 @@
                         }
                     })
                 } else {
-                    // 依赖源仓库进入制品详情需要知道仓库类型，根据仓库类型限制操作
-                    if (this.repoList[0].children.length > 0) {
-                        this.repoList[0].children.forEach((item) => {
+                    // 依赖源仓库进入制品详情需要知道仓库类型(远程、本地、组合)，根据仓库类型限制操作
+                        this.artifactOriginalList?.forEach((item) => {
                             if (item.name === pkg.repoName) {
-                                pkg.repoCategory = item.repoCategory || ''
+                                pkg.repoCategory = item.category || ''
                             }
                         })
-                    }
                     this.$router.push({
                         name: 'commonPackage',
                         params: {

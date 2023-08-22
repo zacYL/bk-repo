@@ -182,6 +182,7 @@
     export default {
         name: 'typeSelect',
         props: {
+            // 制品类型集合
             repoList: {
                 type: Array,
                 default: () => []
@@ -189,6 +190,11 @@
             repoType: {
                 type: String,
                 default: 'generic'
+            },
+            // 仓库名集合
+            artifactOriginalList: {
+                type: Array,
+                default: () => []
             }
         },
         data () {
@@ -291,48 +297,51 @@
             },
             searchPackageVersion () {
                 this.updateSearchParams()
+            },
+            artifactOriginalList: {
+                deep: true,
+                handler () {
+                    this.constructRepoArtifactList()
+                }
             }
         },
         created () {
             this.commonInitData()
-            this.getRepoArtifactList()
         },
         methods: {
             ...mapActions(['getRepoListAll']),
-            // 获取当前类型的全部仓库列表，不分页
-            getRepoArtifactList () {
-                this.getRepoListAll({ projectId: this.projectId, type: this.repoType, searchFlag: true }).then((res) => {
-                    const localArtifactList = []
-                    const remoteArtifactList = []
-                    const compositeArtifactList = []
-                    res.forEach((item) => {
-                        switch (item.category) {
-                            case 'LOCAL':
-                                localArtifactList.push(item)
-                                break
-                            case 'REMOTE':
-                                remoteArtifactList.push(item)
-                                break
-                            case 'COMPOSITE':
-                                compositeArtifactList.push(item)
-                                break
+            // 构造当前制品类型的全部仓库列表，并根据远程本地区分
+            constructRepoArtifactList () {
+                const localArtifactList = []
+                const remoteArtifactList = []
+                const compositeArtifactList = []
+                this.artifactOriginalList.forEach((item) => {
+                    switch (item.category) {
+                        case 'LOCAL':
+                            localArtifactList.push(item)
+                            break
+                        case 'REMOTE':
+                            remoteArtifactList.push(item)
+                            break
+                        case 'COMPOSITE':
+                            compositeArtifactList.push(item)
+                            break
                             // 搜索不支持虚拟仓库，虚拟仓库本身不存储任何制品
-                        }
-                    })
-                    this.artifactList = this.artifactList.map((item) => {
-                        switch (item.id) {
-                            case 'local':
-                                item.children = localArtifactList
-                                break
-                            case 'remote':
-                                item.children = remoteArtifactList
-                                break
-                            default:
-                                item.children = compositeArtifactList
-                                break
-                        }
-                        return item
-                    })
+                    }
+                })
+                this.artifactList = this.artifactList.map((item) => {
+                    switch (item.id) {
+                        case 'local':
+                            item.children = localArtifactList
+                            break
+                        case 'remote':
+                            item.children = remoteArtifactList
+                            break
+                        default:
+                            item.children = compositeArtifactList
+                            break
+                    }
+                    return item
                 })
             },
             // 更新上方输入框
@@ -400,9 +409,6 @@
                 this.$emit('change', type)
                 this.hiddenDropdown()
                 this.onHidePopoverSearch()
-                this.$nextTick(() => {
-                    this.getRepoArtifactList()
-                })
             },
             // popover 显示触发事件
             onShowPopoverSearch () {

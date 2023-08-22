@@ -48,11 +48,7 @@ import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.storage.monitor.Throughput
 import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
 import com.tencent.bkrepo.maven.artifact.MavenDeleteArtifactInfo
-import com.tencent.bkrepo.maven.constants.MAVEN_METADATA_FILE_NAME
-import com.tencent.bkrepo.maven.constants.PACKAGE_SUFFIX_REGEX
-import com.tencent.bkrepo.maven.constants.SNAPSHOT_BUILD_NUMBER
-import com.tencent.bkrepo.maven.constants.SNAPSHOT_TIMESTAMP
-import com.tencent.bkrepo.maven.constants.X_CHECKSUM_SHA1
+import com.tencent.bkrepo.maven.constants.*
 import com.tencent.bkrepo.maven.enum.HashType
 import com.tencent.bkrepo.maven.exception.JarFormatException
 import com.tencent.bkrepo.maven.exception.MavenArtifactNotFoundException
@@ -268,7 +264,7 @@ class MavenRemoteRepository(
         logger.info("Current downloaded file is artifact: $isArtifact")
         if (isArtifact) {
             val size = artifactResource.getTotalSize()
-            val mavenGavc = (context.artifactInfo as MavenArtifactInfo).toMavenGAVC()
+            val mavenGavc = (context.artifactInfo as MavenArtifactInfo).toMavenGAVC(null)
             createMavenVersion(context, mavenGavc, context.artifactInfo.getArtifactFullPath(), size)
             // 记录依赖信息
             context.getAttribute<Model>("model")?.let {
@@ -450,7 +446,7 @@ class MavenRemoteRepository(
             val metadata = nodeCreateRequest.nodeMetadata?.toMutableList() ?: mutableListOf()
             createNodeMetaData(artifactFile).forEach { metadata.add(it) }
             if (packaging != null) {
-                val mavenGavc = (context.artifactInfo as MavenArtifactInfo).toMavenGAVC()
+                val mavenGavc = (context.artifactInfo as MavenArtifactInfo).toMavenGAVC(null)
                 metadata.add(MetadataModel(key = "packaging", value = packaging))
                 metadata.add(MetadataModel(key = "groupId", value = mavenGavc.groupId))
                 metadata.add(MetadataModel(key = "artifactId", value = mavenGavc.artifactId))

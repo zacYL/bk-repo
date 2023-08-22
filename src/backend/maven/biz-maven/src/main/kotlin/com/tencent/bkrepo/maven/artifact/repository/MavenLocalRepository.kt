@@ -31,6 +31,7 @@
 
 package com.tencent.bkrepo.maven.artifact.repository
 
+import com.tencent.bkrepo.common.api.constant.StringPool.SLASH
 import com.tencent.bkrepo.common.api.exception.NotFoundException
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
@@ -39,11 +40,7 @@ import com.tencent.bkrepo.common.artifact.exception.VersionNotFoundException
 import com.tencent.bkrepo.common.artifact.hash.sha1
 import com.tencent.bkrepo.common.artifact.hash.sha512
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
+import com.tencent.bkrepo.common.artifact.repository.context.*
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
@@ -55,13 +52,7 @@ import com.tencent.bkrepo.common.service.util.HeaderUtils
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
 import com.tencent.bkrepo.maven.artifact.MavenDeleteArtifactInfo
-import com.tencent.bkrepo.maven.constants.FULL_PATH
-import com.tencent.bkrepo.maven.constants.MAVEN_METADATA_FILE_NAME
-import com.tencent.bkrepo.maven.constants.PACKAGE_SUFFIX_REGEX
-import com.tencent.bkrepo.maven.constants.SNAPSHOT_BUILD_NUMBER
-import com.tencent.bkrepo.maven.constants.SNAPSHOT_SUFFIX
-import com.tencent.bkrepo.maven.constants.SNAPSHOT_TIMESTAMP
-import com.tencent.bkrepo.maven.constants.X_CHECKSUM_SHA1
+import com.tencent.bkrepo.maven.constants.*
 import com.tencent.bkrepo.maven.enum.HashType
 import com.tencent.bkrepo.maven.enum.SnapshotBehaviorType
 import com.tencent.bkrepo.maven.exception.ConflictException
@@ -70,11 +61,7 @@ import com.tencent.bkrepo.maven.exception.MavenArtifactNotFoundException
 import com.tencent.bkrepo.maven.exception.MavenRequestForbiddenException
 import com.tencent.bkrepo.maven.message.MavenMessageCode
 import com.tencent.bkrepo.maven.model.TMavenMetadataRecord
-import com.tencent.bkrepo.maven.pojo.Basic
-import com.tencent.bkrepo.maven.pojo.MavenArtifactVersionData
-import com.tencent.bkrepo.maven.pojo.MavenGAVC
-import com.tencent.bkrepo.maven.pojo.MavenMetadataSearchPojo
-import com.tencent.bkrepo.maven.pojo.MavenRepoConf
+import com.tencent.bkrepo.maven.pojo.*
 import com.tencent.bkrepo.maven.pojo.response.MavenArtifactResponse
 import com.tencent.bkrepo.maven.service.MavenExtService
 import com.tencent.bkrepo.maven.service.MavenMetadataService
@@ -253,10 +240,12 @@ class MavenLocalRepository(
     ): NodeCreateRequest {
         val request = buildMavenArtifactNodeCreateRequest(context)
         val metadata = request.nodeMetadata as? MutableList
-        metadata?.add(MetadataModel(key = "packaging", value = packaging))
-        metadata?.add(MetadataModel(key = "groupId", value = mavenGavc.groupId))
-        metadata?.add(MetadataModel(key = "artifactId", value = mavenGavc.artifactId))
-        metadata?.add(MetadataModel(key = "version", value = mavenGavc.version))
+        metadata?.add(MetadataModel(key = "packaging", value = packaging, system = true))
+        metadata?.add(MetadataModel(key = "groupId", value = mavenGavc.groupId, system = true))
+        metadata?.add(MetadataModel(key = "artifactId", value = mavenGavc.artifactId, system = true))
+        metadata?.add(MetadataModel(key = "version", value = mavenGavc.version, system = true))
+        metadata?.add(MetadataModel(key = "modelVersion", value = mavenGavc.modelVersion ?: SLASH, system = true))
+        metadata?.add(MetadataModel(key = "name", value = mavenGavc.name ?: SLASH, system = true))
         mavenGavc.classifier?.let { metadata?.add(MetadataModel(key = "classifier", value = it)) }
         return request
     }
@@ -388,7 +377,7 @@ class MavenLocalRepository(
             }
             val isArtifact = (packaging == fileSuffix)
             logger.info("Current file is artifact: $isArtifact")
-            val mavenGavc = (context.artifactInfo as MavenArtifactInfo).toMavenGAVC()
+            val mavenGavc = (context.artifactInfo as MavenArtifactInfo).toMavenGAVC(model)
             val node = buildMavenArtifactNode(context, packaging, mavenGavc)
             storageManager.storeArtifactFile(
                 request = node,
@@ -965,17 +954,16 @@ class MavenLocalRepository(
     }
 
     private fun createMavenVersion(context: ArtifactUploadContext, mavenGAVC: MavenGAVC, fullPath: String) {
-        val metadata: MutableMap<String, String> = mutableMapOf(
-            "groupId" to mavenGAVC.groupId,
-            "artifactId" to mavenGAVC.artifactId,
-            "version" to mavenGAVC.version,
-            "packaging" to mavenGAVC.packaging
+        val metadata = mutableListOf(
+            MetadataModel(key = "packaging", value = mavenGAVC.packaging, system = true),
+            MetadataModel(key = "groupId", value = mavenGAVC.groupId, system = true),
+            MetadataModel(key = "artifactId", value = mavenGAVC.artifactId, system = true),
+            MetadataModel(key = "version", value = mavenGAVC.version, system = true),
+            MetadataModel(key = "modelVersion", value = mavenGAVC.modelVersion ?: SLASH, system = true),
+            MetadataModel(key = "name", value = mavenGAVC.name ?: SLASH, system = true)
         )
-        mavenGAVC.classifier?.let {
-            metadata["classifier"] = it
-        }
+        mavenGAVC.classifier?.let { metadata.add(MetadataModel(key = "classifier", value = it)) }
         try {
-            mavenGAVC.classifier?.let { metadata["classifier"] = it }
             packageClient.createVersion(
                 PackageVersionCreateRequest(
                     context.projectId,
@@ -988,7 +976,7 @@ class MavenLocalRepository(
                     artifactPath = fullPath,
                     overwrite = true,
                     createdBy = context.userId,
-                    packageMetadata = metadata.map { MetadataModel(key = it.key, value = it.value) }
+                    packageMetadata = metadata
                 )
             )
         } catch (ignore: DuplicateKeyException) {
@@ -1081,7 +1069,7 @@ class MavenLocalRepository(
             val artifactPath = MavenUtil.extractPath(packageName) + "/${version.name}"
             // 需要删除对应的metadata表记录
             val (artifactId, groupId) = MavenUtil.extractGrounpIdAndArtifactId(packageName)
-            val mavenGAVC = MavenGAVC(groupId, artifactId, version.name, null)
+            val mavenGAVC = MavenGAVC(groupId=groupId, artifactId = artifactId, version = version.name, classifier = null)
             mavenMetadataService.delete(context.artifactInfo, null, mavenGAVC)
             val request = NodeDeleteRequest(
                 projectId = projectId,

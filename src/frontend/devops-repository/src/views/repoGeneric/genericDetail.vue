@@ -39,7 +39,7 @@
                 <div class="display-block" :data-title="$t('metadata')">
                     <metadataDialog ref="metadataDialogRef" @add-metadata="addMetadataHandler"></metadataDialog>
                     <bk-table
-                        :data="(detailSlider.data.nodeMetadata || []).filter(m => !m.system)"
+                        :data="(detailSlider.data.nodeMetadata || []).filter(m => m.display)"
                         :outer-border="false"
                         :row-border="false"
                         size="small">
@@ -56,7 +56,7 @@
                         <bk-table-column :label="$t('description')" prop="description" show-overflow-tooltip></bk-table-column>
                         <bk-table-column width="70">
                             <template #default="{ row }">
-                                <bk-popconfirm trigger="click" width="230" @confirm="deleteMetadataHandler(row)">
+                                <bk-popconfirm v-if="!row.system" trigger="click" width="230" @confirm="deleteMetadataHandler(row)">
                                     <div slot="content">
                                         <div class="flex-align-center pb10">
                                             <i class="bk-icon icon-info-circle-shape pr5 content-icon"></i>

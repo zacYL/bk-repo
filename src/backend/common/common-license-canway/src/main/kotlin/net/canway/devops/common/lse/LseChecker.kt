@@ -45,7 +45,7 @@ import org.springframework.scheduling.annotation.Scheduled
 class LseChecker {
 	private var lseCache: AuthResponse? = null
 
-	@Value("\${bk.paas.host:}")
+	@Value("\${bk.ci.domain:}")
 	private val domain: String = ""
 
 	@Autowired

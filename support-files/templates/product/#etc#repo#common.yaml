@@ -176,6 +176,9 @@ mail:
 service-suffix: "-devops"
 
 bk:
+  ci:
+    # license使用的域名
+    domain: __CPACK_DOMAIN__
   paas:
     host: http://paas.__CPACK_DOMAIN__
     version: "3.0.0"

@@ -157,6 +157,9 @@ cluster:
     password: __BK_REPO_CLUSTER_CENTER_PASSWORD__
 
 bk:
+  ci:
+    # license使用的域名
+    domain: __BK_DOMAIN__
   paas:
     host: __BK_PAAS_PUBLIC_URL__
     version: "__BK_PAAS_VERSION__"

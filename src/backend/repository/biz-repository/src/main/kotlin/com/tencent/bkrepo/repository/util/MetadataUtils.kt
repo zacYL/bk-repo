@@ -159,7 +159,7 @@ object MetadataUtils {
     }
 
     fun checkPermission(metadata: TMetadata?, operator: String) {
-        if (metadata?.system == true && operator != SYSTEM_USER) {
+        if (metadata?.system == true && (operator != SYSTEM_USER && !SecurityUtils.isServiceRequest())) {
             throw PermissionException("No permission to update system metadata[${metadata.key}]")
         }
     }
@@ -170,7 +170,8 @@ object MetadataUtils {
                 key = key,
                 value = value,
                 system = system,
-                description = description
+                description = description,
+                display = display
             )
             checkReservedKey(key, operator)
             checkPermission(tMetadata, operator)

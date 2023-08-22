@@ -43,5 +43,9 @@ data class MetadataModel(
     /**
      * 元数据描述信息
      */
-    val description: String? = null
+    val description: String? = null,
+    /**
+     * 是否可见
+     */
+    val display: Boolean? = true
 )

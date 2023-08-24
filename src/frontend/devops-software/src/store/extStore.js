@@ -43,7 +43,7 @@ export default {
         },
         // 跨仓库搜索
         // override
-        searchPackageList (_, { projectId, repoType, repoName, packageName, property = 'name', direction = 'ASC', current = 1, limit = 20 }) {
+        searchPackageList (_, { projectId, repoType, repoName, packageName, property = 'name', direction = 'ASC', current = 1, limit = 20, version = '', metadataList = [], sha256 = '', md5 = '', artifactList = [] }) {
             const isGeneric = repoType === 'generic'
             return Vue.prototype.$ajax.post(
                 `repository/api/software/${isGeneric ? 'node/search' : 'package/search'}`,
@@ -65,6 +65,15 @@ export default {
                                     operation: 'EQ'
                                 }]
                                 : []),
+                            ...(artifactList.length > 0
+                                ? [
+                                    {
+                                        field: 'repoName',
+                                        value: artifactList,
+                                        operation: 'IN'
+                                    }
+                                ]
+                                : []),
                             ...(repoType
                                 ? [{
                                     field: 'repoType',
@@ -83,7 +92,29 @@ export default {
                                 ? [{
                                     field: 'name',
                                     value: `*${packageName}*`,
-                                    operation: 'MATCH'
+                                    operation: 'MATCH_I'
+                                }]
+                                : []),
+                            ...(version
+                                ? [{
+                                    field: 'version',
+                                    value: `*${version}*`,
+                                    operation: 'MATCH_I'
+                                }]
+                                : []),
+                            ...(metadataList || []),
+                            ...(md5
+                                ? [{
+                                    field: 'md5',
+                                    value: `${md5}`,
+                                    operation: 'EQ'
+                                }]
+                                : []),
+                            ...(sha256
+                                ? [{
+                                    field: 'sha256',
+                                    value: `${sha256}`,
+                                    operation: 'EQ'
                                 }]
                                 : []),
                             ...(isGeneric
@@ -96,6 +127,17 @@ export default {
                             
                         ],
                         relation: 'AND'
+                    }
+                }
+            )
+        },
+        // 查询仓库列表，不分页
+        getRepoListAll ({ commit }, { type }) {
+            return Vue.prototype.$ajax.get(
+                'repository/api/software/repo/list',
+                {
+                    params: {
+                        type: type || ''
                     }
                 }
             )

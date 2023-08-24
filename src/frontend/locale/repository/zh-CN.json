@@ -274,5 +274,6 @@
     "searchMetadataValueEmptyTips":"属性值为必填项，请填写",
     "searchCheckVersionToDetail":"选择版本进入详情",
     "searchVersionResultInfo":"搜索结果",
-    "allStore" :"全部仓库"
+    "allStore" :"全部仓库",
+    "createLogStoreErrorTips":"不允许创建名称为log的仓库"
 }

@@ -266,5 +266,6 @@
     "searchMetadataValueEmptyTips":"The attribute value is required, please fill in",
     "searchCheckVersionToDetail":"Select version to enter details",
     "searchVersionResultInfo":"Search results",
-    "allStore" :"All store"
+    "allStore" :"All store",
+    "createLogStoreErrorTips":"It is not allowed to create a repository named log"
 }

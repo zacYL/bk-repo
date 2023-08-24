@@ -75,7 +75,7 @@
                 <!-- 虚拟仓库及软件源模式下不支持更新元数据 -->
                 <metadataDialog v-if="storeType !== 'virtual' && !whetherSoftware" ref="metadataDialogRef" @add-metadata="addMetadataHandler"></metadataDialog>
                 <bk-table
-                    :data="detail.metadata.filter(m => m.display)"
+                    :data="metadataDataList"
                     :outer-border="false"
                     :row-border="false"
                     size="small">
@@ -277,6 +277,12 @@
                     !this.whetherSoftware && !(this.storeType === 'virtual') && { clickEvent: () => this.$emit('forbid'), label: metadataMap.forbidStatus ? '解除禁止' : '禁止使用' },
                     (this.permission.delete && !this.whetherSoftware && !(this.storeType === 'virtual')) && { clickEvent: () => this.$emit('delete'), label: this.$t('delete') }
                 ]
+            },
+            metadataDataList () {
+                // JavaScript中，true 被视为 1，false 被视为 0
+                return this.detail.metadata
+                    .filter(item => item.display) // 先过滤出 display 为 true 的对象
+                    .sort((a, b) => b.system - a.system) // 然后根据 system 排序， system 为 true 的对象排在前面
             }
         },
         watch: {

@@ -27,16 +27,13 @@
 
 package com.tencent.bkrepo.pypi.artifact.repository
 
+import com.tencent.bkrepo.common.api.constant.StringPool.SLASH
 import com.tencent.bkrepo.common.api.exception.NotFoundException
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.path.PathUtils.ROOT
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
+import com.tencent.bkrepo.common.artifact.repository.context.*
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.file.multipart.MultipartArtifactFile
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
@@ -108,8 +105,14 @@ class PypiLocalRepository(
     override fun onUpload(context: ArtifactUploadContext) {
         val nodeCreateRequest = buildNodeCreateRequest(context)
         val artifactFile = context.getArtifactFile("content")
-        val name: String = context.request.getParameter("name")
-        val version: String = context.request.getParameter("version")
+        val name = context.request.getParameter("name") ?: SLASH
+        val version = context.request.getParameter("version") ?: SLASH
+        val auther = context.request.getParameter("author") ?: SLASH
+        val metadata = mutableListOf(
+            MetadataModel(key = "name", value = name, system = true, display = true),
+            MetadataModel(key = "version", value = version, system = true, display = true),
+            MetadataModel(key = "author", value = auther, system = true, display = true)
+        )
         packageClient.createVersion(
             PackageVersionCreateRequest(
                 projectId = context.projectId,
@@ -121,7 +124,8 @@ class PypiLocalRepository(
                 size = context.getArtifactFile("content").getSize(),
                 artifactPath = nodeCreateRequest.fullPath,
                 overwrite = true,
-                createdBy = context.userId
+                createdBy = context.userId,
+                packageMetadata = metadata
             ),
             HttpContextHolder.getClientAddress()
         )

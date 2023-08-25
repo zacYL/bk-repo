@@ -33,24 +33,10 @@ package com.tencent.bkrepo.rpm.util.rpm
 
 import com.google.common.collect.Lists
 import com.tencent.bkrepo.rpm.util.redline.model.RpmFormat
-import com.tencent.bkrepo.rpm.util.xStream.pojo.RpmChangeLog
-import com.tencent.bkrepo.rpm.util.xStream.pojo.RpmChecksum
-import com.tencent.bkrepo.rpm.util.xStream.pojo.RpmEntry
-import com.tencent.bkrepo.rpm.util.xStream.pojo.RpmFile
-import com.tencent.bkrepo.rpm.util.xStream.pojo.RpmHeaderRange
-import com.tencent.bkrepo.rpm.util.xStream.pojo.RpmLocation
-import com.tencent.bkrepo.rpm.util.xStream.pojo.RpmMetadata
-import com.tencent.bkrepo.rpm.util.xStream.pojo.RpmPackage
-import com.tencent.bkrepo.rpm.util.xStream.pojo.RpmSize
-import com.tencent.bkrepo.rpm.util.xStream.pojo.RpmTime
-import com.tencent.bkrepo.rpm.util.xStream.pojo.RpmVersion
+import com.tencent.bkrepo.rpm.util.xStream.pojo.*
 import org.apache.commons.lang3.StringUtils
-import org.redline_rpm.header.AbstractHeader
-import org.redline_rpm.header.Flags
-import org.redline_rpm.header.Header
-import org.redline_rpm.header.RpmType
-import org.redline_rpm.header.Signature
-import java.util.LinkedList
+import org.redline_rpm.header.*
+import java.util.*
 
 object RpmMetadataUtils {
 
@@ -77,7 +63,7 @@ object RpmMetadataUtils {
                     RpmTime(System.currentTimeMillis(), getBuildTime(header)),
                     RpmSize(size, getInstalledSize(header), getArchiveSize(signature)),
                     RpmLocation(href),
-                    com.tencent.bkrepo.rpm.util.xStream.pojo.RpmFormat(
+                    RpmFormat(
                         getLicense(header),
                         getVendor(header),
                         getGroup(header),

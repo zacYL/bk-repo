@@ -41,12 +41,7 @@ import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.hash.md5
 import com.tencent.bkrepo.common.artifact.hash.sha1
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
+import com.tencent.bkrepo.common.artifact.repository.context.*
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
@@ -80,19 +75,10 @@ import com.tencent.bkrepo.rpm.REPODATA
 import com.tencent.bkrepo.rpm.exception.RpmArtifactFormatNotSupportedException
 import com.tencent.bkrepo.rpm.exception.RpmArtifactMetadataResolveException
 import com.tencent.bkrepo.rpm.job.JobService
-import com.tencent.bkrepo.rpm.pojo.ArtifactFormat
+import com.tencent.bkrepo.rpm.pojo.*
 import com.tencent.bkrepo.rpm.pojo.ArtifactFormat.RPM
 import com.tencent.bkrepo.rpm.pojo.ArtifactFormat.XML
-import com.tencent.bkrepo.rpm.pojo.ArtifactRepeat
-import com.tencent.bkrepo.rpm.pojo.ArtifactRepeat.FULLPATH
-import com.tencent.bkrepo.rpm.pojo.ArtifactRepeat.FULLPATH_SHA256
-import com.tencent.bkrepo.rpm.pojo.ArtifactRepeat.NONE
-import com.tencent.bkrepo.rpm.pojo.Basic
-import com.tencent.bkrepo.rpm.pojo.IndexType
-import com.tencent.bkrepo.rpm.pojo.RepoDataPojo
-import com.tencent.bkrepo.rpm.pojo.RpmArtifactVersionData
-import com.tencent.bkrepo.rpm.pojo.RpmRepoConf
-import com.tencent.bkrepo.rpm.pojo.RpmUploadResponse
+import com.tencent.bkrepo.rpm.pojo.ArtifactRepeat.*
 import com.tencent.bkrepo.rpm.pojo.RpmVersion
 import com.tencent.bkrepo.rpm.util.GZipUtils.gZip
 import com.tencent.bkrepo.rpm.util.GZipUtils.unGzipInputStream
@@ -107,21 +93,12 @@ import com.tencent.bkrepo.rpm.util.XmlStrUtils
 import com.tencent.bkrepo.rpm.util.XmlStrUtils.getGroupNodeFullPath
 import com.tencent.bkrepo.rpm.util.rpm.RpmFormatUtils
 import com.tencent.bkrepo.rpm.util.rpm.RpmMetadataUtils
-import com.tencent.bkrepo.rpm.util.xStream.pojo.RpmMetadataChangeLog
-import com.tencent.bkrepo.rpm.util.xStream.pojo.RpmMetadataFileList
-import com.tencent.bkrepo.rpm.util.xStream.pojo.RpmPackageChangeLog
-import com.tencent.bkrepo.rpm.util.xStream.pojo.RpmPackageFileList
-import com.tencent.bkrepo.rpm.util.xStream.pojo.RpmXmlMetadata
+import com.tencent.bkrepo.rpm.util.xStream.pojo.*
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.util.StopWatch
-import java.io.BufferedReader
-import java.io.ByteArrayInputStream
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.InputStreamReader
+import java.io.*
 import java.nio.channels.Channels
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -448,6 +425,13 @@ class RpmLocalRepository(
                         val metadata = rpmVersion.toMetadata()
                         metadata["action"] = repeat.name
                         val rpmPackagePojo = rpmVersion.toRpmPackagePojo(context.artifactInfo.getArtifactFullPath())
+                        //包元数据
+                        val packageMetadata= mutableListOf(
+                            MetadataModel(key = "name", value = rpmVersion.name, system = true, display = true),
+                            MetadataModel(key = "version", value = rpmVersion.ver, system = true, display = true),
+                            MetadataModel(key = "release", value = rpmVersion.rel, system = true, display = true),
+                            MetadataModel(key = "arch", value = rpmVersion.arch, system = true, display = true)
+                        )
                         // 保存包版本
                         val packageKey = PackageKeys.ofRpm(rpmPackagePojo.path, rpmPackagePojo.name)
                         packageClient.createVersion(
@@ -461,7 +445,8 @@ class RpmLocalRepository(
                                 size = context.getArtifactFile().getSize(),
                                 artifactPath = context.artifactInfo.getArtifactFullPath(),
                                 overwrite = true,
-                                createdBy = context.userId
+                                createdBy = context.userId,
+                                packageMetadata = packageMetadata
                             ),
                             HttpContextHolder.getClientAddress()
                         )

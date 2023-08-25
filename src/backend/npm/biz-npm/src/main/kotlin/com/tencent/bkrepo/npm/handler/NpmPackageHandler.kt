@@ -31,6 +31,7 @@
 
 package com.tencent.bkrepo.npm.handler
 
+import com.tencent.bkrepo.common.api.constant.StringPool.SLASH
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
@@ -83,7 +84,7 @@ class NpmPackageHandler {
                 // tgz包不存在，补全包版本数据失败
                 if (!tgzNodeInfoMap.containsKey(version)) {
                     val message = "the version [$version] for package [$name] with tgz file not found " +
-                        "in repo [${nodeInfo.projectId}/${nodeInfo.repoName}]."
+                            "in repo [${nodeInfo.projectId}/${nodeInfo.repoName}]."
                     logger.warn(message)
                     val failVersionDetail = FailVersionDetail(version, message)
                     failPackageDetail.failedVersionSet.add(failVersionDetail)
@@ -163,7 +164,12 @@ class NpmPackageHandler {
                     manifestPath = manifestPath,
                     artifactPath = contentPath,
                     stageTag = null,
-                    packageMetadata = metadata.map { MetadataModel(key = it.key, value = it.value ?: "null") },
+                    packageMetadata = metadata.map {
+                        MetadataModel(
+                            key = it.key,
+                            value = it.value ?: SLASH
+                        )
+                    },
                     overwrite = true,
                     createdBy = userId
                 )

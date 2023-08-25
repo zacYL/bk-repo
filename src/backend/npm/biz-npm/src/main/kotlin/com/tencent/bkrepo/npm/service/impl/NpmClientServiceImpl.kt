@@ -33,31 +33,20 @@ package com.tencent.bkrepo.npm.service.impl
 
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
+import com.tencent.bkrepo.common.api.constant.StringPool.SLASH
 import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
 import com.tencent.bkrepo.common.api.util.JsonUtils.objectMapper
 import com.tencent.bkrepo.common.artifact.constant.REPO_KEY
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.configuration.virtual.VirtualConfiguration
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
+import com.tencent.bkrepo.common.artifact.repository.context.*
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
-import com.tencent.bkrepo.npm.constants.ATTRIBUTE_OCTET_STREAM_SHA1
-import com.tencent.bkrepo.npm.constants.CREATED
-import com.tencent.bkrepo.npm.constants.LATEST
-import com.tencent.bkrepo.npm.constants.MODIFIED
-import com.tencent.bkrepo.npm.constants.NPM_FILE_FULL_PATH
-import com.tencent.bkrepo.npm.constants.NPM_PACKAGE_TGZ_FILE
-import com.tencent.bkrepo.npm.constants.SEARCH_REQUEST
-import com.tencent.bkrepo.npm.constants.SIZE
+import com.tencent.bkrepo.npm.constants.*
 import com.tencent.bkrepo.npm.exception.NpmArtifactExistException
 import com.tencent.bkrepo.npm.exception.NpmArtifactNotFoundException
 import com.tencent.bkrepo.npm.exception.NpmBadRequestException
@@ -499,7 +488,7 @@ class NpmClientServiceImpl(
                 it.any()["deprecated"] as? String
             )
             BeanUtils.beanToMap(npmProperties).map { metadata ->
-                MetadataModel(key = metadata.key, value = metadata.value ?: "null")
+                MetadataModel(key = metadata.key, value = metadata.value ?: SLASH)
             }
         } ?: emptyList()
     }

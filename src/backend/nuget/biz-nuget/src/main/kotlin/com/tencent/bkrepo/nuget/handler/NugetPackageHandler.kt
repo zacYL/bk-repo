@@ -1,21 +1,13 @@
 package com.tencent.bkrepo.nuget.handler
 
+import com.tencent.bkrepo.common.api.constant.StringPool.EMPTY
+import com.tencent.bkrepo.common.api.constant.StringPool.SLASH
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.nuget.artifact.NugetArtifactInfo
-import com.tencent.bkrepo.nuget.constant.DEPENDENCY
-import com.tencent.bkrepo.nuget.constant.FRAMEWORKS
-import com.tencent.bkrepo.nuget.constant.ID
-import com.tencent.bkrepo.nuget.constant.PACKAGE
-import com.tencent.bkrepo.nuget.constant.REFERENCE
-import com.tencent.bkrepo.nuget.constant.VERSION
-import com.tencent.bkrepo.nuget.pojo.nuspec.Dependency
-import com.tencent.bkrepo.nuget.pojo.nuspec.DependencyGroup
-import com.tencent.bkrepo.nuget.pojo.nuspec.FrameworkAssembly
-import com.tencent.bkrepo.nuget.pojo.nuspec.NuspecMetadata
-import com.tencent.bkrepo.nuget.pojo.nuspec.Reference
-import com.tencent.bkrepo.nuget.pojo.nuspec.ReferenceGroup
+import com.tencent.bkrepo.nuget.constant.*
+import com.tencent.bkrepo.nuget.pojo.nuspec.*
 import com.tencent.bkrepo.nuget.util.NugetV3RegistrationUtils
 import com.tencent.bkrepo.repository.api.PackageClient
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
@@ -25,8 +17,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
-import java.util.StringJoiner
-import kotlin.collections.HashSet
+import java.util.*
 
 @Component
 class NugetPackageHandler {
@@ -51,10 +42,11 @@ class NugetPackageHandler {
             val metadata = mutableMapOf<String, Any>()
             metadata[ID] = id
             metadata[VERSION] = version
-            dependencies?.let { metadata[DEPENDENCY] = NugetV3RegistrationUtils.metadataToDependencyGroups(it) }
-            references?.let { metadata[REFERENCE] = buildReferences(it) }
-            frameworkAssemblies?.let { metadata[FRAMEWORKS] = buildFrameworks(it) }
-
+            metadata[AUTHORS] = if (authors == EMPTY) SLASH else authors
+            metadata[OWNERS] = owners ?: SLASH
+            metadata[DEPENDENCY] = dependencies?.let { NugetV3RegistrationUtils.metadataToDependencyGroups(it) } ?: SLASH
+//            metadata[REFERENCE] = references?.let { buildReferences(it) } ?: SLASH
+//            metadata[FRAMEWORKS] = frameworkAssemblies?.let { buildFrameworks(it) } ?: SLASH
 //                measureTimeMillis { metadata = indexMetadata(this) }.apply {
 //                    logger.info(
 //                        "finished index nuget metadata for package [$id] and version [$version] " +

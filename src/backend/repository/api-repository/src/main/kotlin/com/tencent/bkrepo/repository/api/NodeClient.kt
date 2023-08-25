@@ -39,24 +39,13 @@ import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.node.NodeListOption
 import com.tencent.bkrepo.repository.pojo.node.NodeSizeInfo
-import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
-import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
-import com.tencent.bkrepo.repository.pojo.node.service.NodeMoveCopyRequest
-import com.tencent.bkrepo.repository.pojo.node.service.NodeRenameRequest
-import com.tencent.bkrepo.repository.pojo.node.service.NodeUpdateAccessDateRequest
-import com.tencent.bkrepo.repository.pojo.node.service.NodeUpdateRequest
+import com.tencent.bkrepo.repository.pojo.node.service.*
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
 import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.context.annotation.Primary
-import org.springframework.web.bind.annotation.DeleteMapping
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.*
 
 /**
  * 资源节点服务接口
@@ -193,6 +182,6 @@ interface NodeClient {
         @ApiParam(value = "是否深度查询文件", required = false, defaultValue = "false")
         @RequestParam deep: Boolean = false,
         @ApiParam(value = "是否包含元数据", required = false, defaultValue = "false")
-        @RequestParam includeMetadata: Boolean = false,
+        @RequestParam includeMetadata: Boolean = false
     ): Response<List<NodeInfo>>
 }

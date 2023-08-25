@@ -53,6 +53,7 @@ import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
 import com.tencent.bkrepo.repository.dao.PackageDao
 import com.tencent.bkrepo.repository.dao.PackageVersionDao
+import com.tencent.bkrepo.repository.model.TMetadata
 import com.tencent.bkrepo.repository.model.TPackage
 import com.tencent.bkrepo.repository.model.TPackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.PackageListOption
@@ -75,12 +76,7 @@ import com.tencent.bkrepo.repository.util.PackageQueryHelper
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.domain.Sort
-import org.springframework.data.mongodb.core.query.Criteria
-import org.springframework.data.mongodb.core.query.Query
-import org.springframework.data.mongodb.core.query.Update
-import org.springframework.data.mongodb.core.query.and
-import org.springframework.data.mongodb.core.query.isEqualTo
-import org.springframework.data.mongodb.core.query.where
+import org.springframework.data.mongodb.core.query.*
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 
@@ -179,8 +175,9 @@ class PackageServiceImpl(
         option.srcRepo?.run {
             val repoInfo = repositoryService.getRepoInfo(projectId, repoName)
             if (repoInfo?.category == RepositoryCategory.VIRTUAL
-                && (repoInfo.configuration as VirtualConfiguration).repositoryList.map { it.name }.contains(this)) {
-                    realRepoName = this
+                && (repoInfo.configuration as VirtualConfiguration).repositoryList.map { it.name }.contains(this)
+            ) {
+                realRepoName = this
             }
         }
         val tPackage = packageDao.findByKey(projectId, realRepoName, packageKey)
@@ -251,6 +248,7 @@ class PackageServiceImpl(
                     artifactPath = request.artifactPath
                     stageTag = request.stageTag.orEmpty()
                     metadata = MetadataUtils.compatibleFromAndCheck(request.metadata, packageMetadata, createdBy)
+                        .map { TMetadata(key = it.key, value = it.value, system = true, display = it.display) }
                     tags = request.tags?.filter { it.isNotBlank() }.orEmpty()
                     extension = request.extension.orEmpty()
                 }
@@ -272,7 +270,8 @@ class PackageServiceImpl(
                     manifestPath = manifestPath,
                     artifactPath = artifactPath,
                     stageTag = stageTag.orEmpty(),
-                    metadata = MetadataUtils.compatibleFromAndCheck(metadata, packageMetadata, createdBy),
+                    metadata = MetadataUtils.compatibleFromAndCheck(metadata, packageMetadata, createdBy)
+                        .map { TMetadata(key = it.key, value = it.value, system = true, display = it.display) },
                     tags = request.tags?.filter { it.isNotBlank() }.orEmpty(),
                     extension = request.extension.orEmpty()
                 )
@@ -536,7 +535,7 @@ class PackageServiceImpl(
         while (true) {
             val packages = listPackagePage(projectId, repoName, option).records
                 .takeUnless { it.isEmpty() } ?: return count
-            option.pageNumber ++
+            option.pageNumber++
             count += packages.sumOf { it.versions }
         }
     }

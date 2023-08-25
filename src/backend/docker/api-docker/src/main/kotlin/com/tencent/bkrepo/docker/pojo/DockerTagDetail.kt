@@ -42,9 +42,5 @@ data class DockerTagDetail(
     @ApiModelProperty("history")
     val history: List<Any>,
     @ApiModelProperty("metadata")
-    val metadata: List<MetadataModel>,
-    @ApiModelProperty("layers")
-    val layers: List<Any>,
-    @ApiModelProperty("manifest")
-    val manifest: Map<String, Any>
+    val metadata: List<MetadataModel>
 )

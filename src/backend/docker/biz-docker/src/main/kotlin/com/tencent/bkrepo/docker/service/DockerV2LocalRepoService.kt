@@ -40,28 +40,7 @@ import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.docker.artifact.DockerArtifactRepo
 import com.tencent.bkrepo.docker.artifact.DockerPackageRepo
-import com.tencent.bkrepo.docker.constant.BLOB_PATTERN
-import com.tencent.bkrepo.docker.constant.DOCKER_API_VERSION
-import com.tencent.bkrepo.docker.constant.DOCKER_CONTENT_DIGEST
-import com.tencent.bkrepo.docker.constant.DOCKER_CREATE_BY
-import com.tencent.bkrepo.docker.constant.DOCKER_CREATE_DATE
-import com.tencent.bkrepo.docker.constant.DOCKER_DIGEST_SHA256
-import com.tencent.bkrepo.docker.constant.DOCKER_HEADER_API_VERSION
-import com.tencent.bkrepo.docker.constant.DOCKER_LENGTH_EMPTY
-import com.tencent.bkrepo.docker.constant.DOCKER_LINK
-import com.tencent.bkrepo.docker.constant.DOCKER_MANIFEST
-import com.tencent.bkrepo.docker.constant.DOCKER_NODE_FULL_PATH
-import com.tencent.bkrepo.docker.constant.DOCKER_NODE_PATH
-import com.tencent.bkrepo.docker.constant.DOCKER_NODE_SIZE
-import com.tencent.bkrepo.docker.constant.DOCKER_OS
-import com.tencent.bkrepo.docker.constant.DOCKER_TMP_UPLOAD_PATH
-import com.tencent.bkrepo.docker.constant.DOCKER_UPLOAD_UUID
-import com.tencent.bkrepo.docker.constant.DOCKER_VERSION
-import com.tencent.bkrepo.docker.constant.DOCKER_VERSION_DOMAIN
-import com.tencent.bkrepo.docker.constant.DOWNLOAD_COUNT
-import com.tencent.bkrepo.docker.constant.LAST_MODIFIED_BY
-import com.tencent.bkrepo.docker.constant.LAST_MODIFIED_DATE
-import com.tencent.bkrepo.docker.constant.STAGE_TAG
+import com.tencent.bkrepo.docker.constant.*
 import com.tencent.bkrepo.docker.context.DownloadContext
 import com.tencent.bkrepo.docker.context.RequestContext
 import com.tencent.bkrepo.docker.context.UploadContext
@@ -87,6 +66,7 @@ import com.tencent.bkrepo.docker.util.ResponseUtil.emptyBlobGetResponse
 import com.tencent.bkrepo.docker.util.ResponseUtil.emptyBlobHeadResponse
 import com.tencent.bkrepo.docker.util.ResponseUtil.isEmptyBlob
 import com.tencent.bkrepo.repository.api.NodeClient
+import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
 import org.apache.commons.lang3.StringUtils
@@ -314,6 +294,15 @@ class DockerV2LocalRepoService @Autowired constructor(
         val manifestPath = ResponseUtil.buildManifestPath(context.artifactName, tag, manifestType)
         logger.info("upload manifest path [$context,$tag] ,media [$mediaType , manifestPath]")
         val uploadResult = manifestProcess.uploadManifestByType(context, tag, manifestPath, manifestType, file)
+        val packageMetadata= uploadResult.metadata?.let {
+            mutableListOf<MetadataModel>(
+                MetadataModel(key = DOCKER_MANIFEST_NAME, value = it[DOCKER_MANIFEST_NAME]?:SLASH ),
+                MetadataModel(key = DOCKER_DIGEST_SHA256, value = it[DOCKER_DIGEST_SHA256]?:SLASH ),
+                MetadataModel(key = DOCKER_REPONAME, value = it[DOCKER_REPONAME]?:SLASH ),
+                MetadataModel(key = DOCKER_MANIFEST_DIGEST, value = it[DOCKER_MANIFEST_DIGEST]?:SLASH ),
+                MetadataModel(key = DOCKER_MANIFEST_TYPE, value = it[DOCKER_MANIFEST_TYPE]?:SLASH )
+            )
+        }
         with(context) {
             val request =
                 PackageVersionCreateRequest(
@@ -324,12 +313,13 @@ class DockerV2LocalRepoService @Autowired constructor(
                     packageType = PackageType.DOCKER,
                     packageDescription = null,
                     versionName = tag,
-                    size = uploadResult.second,
+                    size = uploadResult.size,
                     manifestPath = manifestPath,
                     artifactPath = null,
                     stageTag = null,
                     overwrite = true,
-                    createdBy = artifactRepo.userId
+                    createdBy = artifactRepo.userId,
+                    packageMetadata = packageMetadata
                 )
             packageRepo.createVersion(request)
         }
@@ -337,7 +327,7 @@ class DockerV2LocalRepoService @Autowired constructor(
         return ResponseEntity.status(HttpStatus.CREATED).apply {
             header(DOCKER_HEADER_API_VERSION, DOCKER_API_VERSION)
         }.apply {
-            header(DOCKER_CONTENT_DIGEST, uploadResult.first.toString())
+            header(DOCKER_CONTENT_DIGEST, uploadResult.dockerDigest.toString())
         }.build()
     }
 
@@ -488,7 +478,6 @@ class DockerV2LocalRepoService @Autowired constructor(
         val manifestBytes = getManifestData(context, tag) ?: return null
         try {
             val manifest = JsonUtils.objectMapper.readValue(manifestBytes, DockerSchema2::class.java)
-            val layers = manifest.layers
 
             val configBytes = manifestProcess.getSchema2ConfigContent(context, manifestBytes, tag)
             val configBlob = JsonUtils.objectMapper.readValue(configBytes, DockerSchema2Config::class.java)
@@ -508,9 +497,7 @@ class DockerV2LocalRepoService @Autowired constructor(
             return DockerTagDetail(
                 basic = basic,
                 history = configBlob.history,
-                manifest = nodeDetail.metadata,
-                layers = layers,
-                metadata = versionDetail.packageMetadata,
+                metadata = versionDetail.packageMetadata
             )
         } catch (ignored: Exception) {
             return null

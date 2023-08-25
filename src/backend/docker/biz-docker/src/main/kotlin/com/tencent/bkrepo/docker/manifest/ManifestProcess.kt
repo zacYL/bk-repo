@@ -33,22 +33,13 @@ package com.tencent.bkrepo.docker.manifest
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.google.common.collect.HashMultimap
-import com.google.common.collect.Multimap
 import com.tencent.bkrepo.common.api.constant.StringPool.EMPTY
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.docker.artifact.DockerArtifact
 import com.tencent.bkrepo.docker.artifact.DockerArtifactRepo
-import com.tencent.bkrepo.docker.constant.DOCKER_API_VERSION
-import com.tencent.bkrepo.docker.constant.DOCKER_CONTENT_DIGEST
-import com.tencent.bkrepo.docker.constant.DOCKER_DIGEST
-import com.tencent.bkrepo.docker.constant.DOCKER_HEADER_API_VERSION
-import com.tencent.bkrepo.docker.constant.DOCKER_MANIFEST
-import com.tencent.bkrepo.docker.constant.DOCKER_MANIFEST_LIST
-import com.tencent.bkrepo.docker.constant.DOCKER_MANIFEST_TYPE
-import com.tencent.bkrepo.docker.constant.DOCKER_NODE_FULL_PATH
-import com.tencent.bkrepo.docker.constant.DOCKER_NODE_SIZE
+import com.tencent.bkrepo.docker.constant.*
 import com.tencent.bkrepo.docker.context.DownloadContext
 import com.tencent.bkrepo.docker.context.RequestContext
 import com.tencent.bkrepo.docker.errors.DockerV2Errors
@@ -62,6 +53,7 @@ import com.tencent.bkrepo.docker.manifest.ManifestContext.buildPropertyMap
 import com.tencent.bkrepo.docker.manifest.ManifestContext.buildUploadContext
 import com.tencent.bkrepo.docker.model.DockerBlobInfo
 import com.tencent.bkrepo.docker.model.DockerDigest
+import com.tencent.bkrepo.docker.model.DockerUploadResult
 import com.tencent.bkrepo.docker.model.ManifestMetadata
 import com.tencent.bkrepo.docker.pojo.DockerResponseWithTag
 import com.tencent.bkrepo.docker.response.DockerResponse
@@ -110,13 +102,13 @@ class ManifestProcess(val repo: DockerArtifactRepo, val nodeClient: NodeClient) 
         manifestPath: String,
         manifestType: ManifestType,
         artifactFile: ArtifactFile
-    ): Triple<DockerDigest, Long, Multimap<String, String>> {
+    ): DockerUploadResult {
         val manifestBytes = artifactFile.getInputStream().readBytes()
         val digest = DockerManifestDigester.calcDigest(manifestBytes)
         logger.info("manifest file digest content digest : [$digest]")
         if (ManifestType.Schema2List == manifestType) {
             processManifestList(context, tag, manifestPath, digest!!, manifestBytes)
-            return Triple(digest, 0L, HashMultimap.create())
+            return DockerUploadResult(digest, 0L, HashMultimap.create())
         }
 
         // process scheme2 manifest
@@ -142,7 +134,7 @@ class ManifestProcess(val repo: DockerArtifactRepo, val nodeClient: NodeClient) 
             logger.warn("upload manifest fail [$uploadContext]")
             throw DockerFileSaveFailedException(manifestPath)
         }
-        return Triple(digest, size, labels)
+        return DockerUploadResult(digest, size, labels, params)
     }
 
     /**

@@ -97,6 +97,9 @@ const val DOCKER_REFERENCE = "reference"
 const val DOCKER_UUID = "uuid"
 const val DOCKER_TAG = "tag"
 
+const val DOCKER_MANIFEST_NAME = "docker.manifest"
+const val DOCKER_REPONAME = "docker.repoName"
+const val DOCKER_MANIFEST_DIGEST = "docker.manifest.digest"
 const val DOCKER_MANIFEST_TYPE = "docker.manifest.type"
 
 const val DOCKER_LINK = "Link"

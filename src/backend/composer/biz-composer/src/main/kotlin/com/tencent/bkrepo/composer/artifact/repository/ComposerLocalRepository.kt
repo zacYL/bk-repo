@@ -27,14 +27,11 @@
 
 package com.tencent.bkrepo.composer.artifact.repository
 
+import com.tencent.bkrepo.common.api.constant.StringPool.SLASH
 import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
+import com.tencent.bkrepo.common.artifact.repository.context.*
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
@@ -42,17 +39,13 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.artifact.stream.closeQuietly
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
-import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.composer.COMPOSER_VERSION_INIT
 import com.tencent.bkrepo.composer.DIRECT_DISTS
 import com.tencent.bkrepo.composer.INIT_PACKAGES
 import com.tencent.bkrepo.composer.exception.ComposerArtifactMetadataException
-import com.tencent.bkrepo.composer.pojo.ArtifactRepeat
-import com.tencent.bkrepo.composer.pojo.ArtifactUploadResponse
-import com.tencent.bkrepo.composer.pojo.ArtifactVersionDetail
-import com.tencent.bkrepo.composer.pojo.Basic
+import com.tencent.bkrepo.composer.pojo.*
 import com.tencent.bkrepo.composer.util.DecompressUtil.wrapperJson
 import com.tencent.bkrepo.composer.util.JsonUtil
 import com.tencent.bkrepo.composer.util.JsonUtil.wrapperJson
@@ -239,8 +232,12 @@ class ComposerLocalRepository(private val stageClient: StageClient) : LocalRepos
         }
         // 保存节点
         val metadata = mutableMapOf<String, String>()
+        val composerMetadata = JsonUtil.mapper.readValue(composerArtifact.json, ComposerMetadata::class.java)
         metadata["packageKey"] = PackageKeys.ofComposer(composerArtifact.name)
         metadata["version"] = composerArtifact.version
+        metadata["description"] = composerMetadata.description ?: SLASH
+        metadata["type"] = composerMetadata.type
+        metadata["keywords"] = (composerMetadata.keywords ?: SLASH).toString()
         val nodeCreateRequest = getCompressNodeCreateRequest(context, metadata)
         store(nodeCreateRequest, context.getArtifactFile(), context.storageCredentials)
         // 更新索引
@@ -259,7 +256,8 @@ class ComposerLocalRepository(private val stageClient: StageClient) : LocalRepos
                 manifestPath = null,
                 artifactPath = context.artifactInfo.getArtifactFullPath(),
                 overwrite = true,
-                createdBy = context.userId
+                createdBy = context.userId,
+                packageMetadata =  metadata.map { MetadataModel(key = it.key, value = it.value) }
             ),
             HttpContextHolder.getClientAddress()
         )

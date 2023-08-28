@@ -29,6 +29,7 @@
             display-tag
             :show-select-all="false"
             v-model="checkedArtifactList"
+            ext-cls="search-select-ext"
             :placeholder="$t('allStore')">
             <bk-option-group
                 v-for="(artifact, index) in artifactList"
@@ -731,13 +732,15 @@
     border: none;
     border-left:  1px solid var(--borderWeightColor);
 }
-::v-deep .bk-select {
-    line-height: 48px;
-}
-::v-deep .bk-select .bk-select-angle {
-    top: 0;
+.search-select-ext{
     height: 48px;
     line-height: 48px;
 }
-
+::v-deep .bk-icon, .bk-icon-custom, .bk-icon-plus{
+    line-height: inherit;
+    top: 0;
+}
+::v-deep .bk-select.is-focus .bk-select-angle {
+    top: inherit;
+}
 </style>

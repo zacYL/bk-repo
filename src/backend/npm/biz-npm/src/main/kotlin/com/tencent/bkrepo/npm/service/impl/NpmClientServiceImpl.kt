@@ -488,7 +488,7 @@ class NpmClientServiceImpl(
                 it.any()["deprecated"] as? String
             )
             BeanUtils.beanToMap(npmProperties).map { metadata ->
-                MetadataModel(key = metadata.key, value = metadata.value ?: SLASH)
+                MetadataModel(key = metadata.key, value = metadata.value ?: SLASH, system = true, display = true)
             }
         } ?: emptyList()
     }

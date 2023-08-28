@@ -6,11 +6,7 @@ import com.tencent.bkrepo.maven.exception.JarFormatException
 import com.tencent.bkrepo.maven.service.MavenExtService
 import com.tencent.bkrepo.maven.util.JarUtils
 import com.tencent.bkrepo.maven.util.MavenGAVCUtils.toMavenGAVC
-import com.tencent.bkrepo.repository.api.NodeClient
-import com.tencent.bkrepo.repository.api.PackageClient
-import com.tencent.bkrepo.repository.api.PackageMetadataClient
-import com.tencent.bkrepo.repository.api.ProjectClient
-import com.tencent.bkrepo.repository.api.RepositoryClient
+import com.tencent.bkrepo.repository.api.*
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.metadata.packages.PackageMetadataSaveRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageListOption
@@ -108,7 +104,7 @@ class MavenDebugService(
                         repoName = repo.name,
                         packageKey = packageKey,
                         version = version.name,
-                        versionMetadata = metadata.map { MetadataModel(key = it.key, value = it.value) }
+                        versionMetadata = metadata.map { MetadataModel(key = it.key, value = it.value, system = true, display = true) }
                     )
                 )
                 val model = if (mavenGAVC.packaging == "pom") {

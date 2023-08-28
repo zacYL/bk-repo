@@ -90,7 +90,7 @@ object ObjectBuildUtils {
         fullPath: String,
         metadata: Map<String, Any>? = null
     ): MetadataSaveRequest {
-        val metadataModels = metadata?.map { MetadataModel(key = it.key, value = it.value) }
+        val metadataModels = metadata?.map { MetadataModel(key = it.key, value = it.value, system = true, display = true) }
         return MetadataSaveRequest(
             projectId = projectId,
             repoName = repoName,

@@ -632,7 +632,7 @@ class MavenLocalRepository(
                     projectId = context.projectId,
                     repoName = context.repoName,
                     fullPath = node.fullPath,
-                    metadata = mapOf(hashType.ext to it)
+                    nodeMetadata = listOf(MetadataModel(key= hashType.ext, value = it ,system = true, display = true))
                 )
             )
         }

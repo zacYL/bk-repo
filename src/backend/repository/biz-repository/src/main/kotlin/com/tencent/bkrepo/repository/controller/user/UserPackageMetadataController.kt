@@ -84,7 +84,8 @@ class UserPackageMetadataController(
                 packageKey = packageKey,
                 version = version,
                 versionMetadata = metadataSaveRequest.versionMetadata,
-                metadata = metadataSaveRequest.metadata
+                metadata = metadataSaveRequest.metadata,
+                operator = userId
             )
         }
         packageMetadataService.saveMetadata(request)
@@ -128,7 +129,8 @@ class UserPackageMetadataController(
                 repoName = repoName,
                 packageKey = packageKey,
                 version = version,
-                keyList = metadataDeleteRequest.keyList
+                keyList = metadataDeleteRequest.keyList,
+                operator = userId
             )
         }
         packageMetadataService.deleteMetadata(request)

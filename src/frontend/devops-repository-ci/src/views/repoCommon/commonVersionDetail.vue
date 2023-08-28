@@ -14,6 +14,7 @@
                     <label>制品名称</label>
                     <span class="flex-1 flex-align-center text-overflow">
                         <span class="text-overflow" :title="packageName">{{ packageName }}</span>
+                        <span v-if="detail.basic.groupId" class="ml5 repo-tag"> {{ detail.basic.groupId }} </span>
                     </span>
                     <template v-if="storeType === 'virtual'">
                         <label class="grid-store-source">仓库来源</label>

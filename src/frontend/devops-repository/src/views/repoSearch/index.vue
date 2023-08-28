@@ -10,7 +10,7 @@
                     @search-artifact="onSearchArtifact">
                 </type-select>
             </div>
-            <div v-if="pagination.count" class="mt20 flex-end-center" style="align-items:flex-end;">
+            <div v-if="resultList.length" class="mt20 flex-end-center" style="align-items:flex-end;">
                 <div class="sort-tool flex-align-center">
                     <bk-select
                         style="width:150px;"

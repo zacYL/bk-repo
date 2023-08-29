@@ -75,7 +75,8 @@ object MetadataUtils {
                 key = it.key,
                 value = it.value,
                 system = it.system,
-                description = it.description
+                description = it.description,
+                display = it.display
             )
         }.orEmpty()
     }

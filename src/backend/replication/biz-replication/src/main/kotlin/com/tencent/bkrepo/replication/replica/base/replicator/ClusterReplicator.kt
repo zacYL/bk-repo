@@ -151,7 +151,7 @@ class ClusterReplicator(
             val packageMetadata = packageVersion.packageMetadata.filter {
                 it.key !in RESERVED_KEY
             } as MutableList<MetadataModel>
-            packageMetadata.add(MetadataModel(SOURCE_TYPE, ArtifactChannel.REPLICATION))
+            packageMetadata.add(MetadataModel(SOURCE_TYPE, ArtifactChannel.REPLICATION, system = true, display = true))
             val manifestPath = if (packageSummary.type == PackageType.DOCKER) packageVersion.manifestPath else null
             // 包数据
             val request = PackageVersionCreateRequest(

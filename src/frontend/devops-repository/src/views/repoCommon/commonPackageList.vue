@@ -55,7 +55,7 @@
                     <infinite-scroll
                         ref="infiniteScroll"
                         :is-loading="isLoading"
-                        :has-next="packageList.length < pagination.count"
+                        :has-next="hasNextData"
                         @load="handlerPaginationChange({ current: pagination.current + 1 }, true)">
                         <div class="mb10 list-count">共计{{ pagination.count }}个制品</div>
                         <package-card
@@ -199,6 +199,8 @@
                 }).then(({ records, totalRecords }) => {
                     load ? this.packageList.push(...records) : (this.packageList = records)
                     this.pagination.count = totalRecords
+                    // 后端接口返回的数组数量是否大于等于当前页码，如果大于等于，表示可能还有下一页，需要支持加载下一页
+                    this.hasNextData = records?.length >= this.pagination.limit
                 }).catch((e) => {
                     this.$bkMessage({
                         message: e.message,

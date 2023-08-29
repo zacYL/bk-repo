@@ -35,7 +35,7 @@
                     ref="infiniteScroll"
                     class="package-list flex-1"
                     :is-loading="isLoading"
-                    :has-next="resultList.length < pagination.count"
+                    :has-next="hasNextData"
                     @load="handlerPaginationChange({ current: pagination.current + 1 }, true)">
                     <package-card
                         class="mb10"
@@ -90,13 +90,14 @@
                 repoName: this.$route.query.repoName || '',
                 pagination: {
                     current: 1,
-                    limit: 20,
-                    count: 0
+                    limit: 20
                 },
                 resultList: [],
                 searchArtifactParams: {},
                 // 根据制品类型获取到的仓库列表集合
-                artifactOriginalList: []
+                artifactOriginalList: [],
+                // 是否支持滚动加载下一页
+                hasNextData: false
             }
         },
         computed: {
@@ -130,9 +131,10 @@
                     sha256: this.searchArtifactParams.sha256,
                     metadataList: this.searchArtifactParams.metadataList,
                     artifactList: this.searchArtifactParams.artifactList
-                }).then(({ records, totalRecords }) => {
-                    this.pagination.count = totalRecords
+                }).then(({ records }) => {
                     scrollLoad ? this.resultList.push(...records) : (this.resultList = records)
+                    // 后端接口返回的数组数量是否大于等于当前页码，如果大于等于，表示可能还有下一页，需要支持加载下一页
+                    this.hasNextData = records?.length >= this.pagination.limit
                 }).finally(() => {
                     this.isLoading = false
                 })

@@ -33,7 +33,6 @@ package com.tencent.bkrepo.npm.service.impl
 
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
-import com.tencent.bkrepo.common.api.constant.StringPool.SLASH
 import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
 import com.tencent.bkrepo.common.api.util.JsonUtils.objectMapper
 import com.tencent.bkrepo.common.artifact.constant.REPO_KEY
@@ -487,8 +486,8 @@ class NpmClientServiceImpl(
                 it.maintainers,
                 it.any()["deprecated"] as? String
             )
-            BeanUtils.beanToMap(npmProperties).map { metadata ->
-                MetadataModel(key = metadata.key, value = metadata.value ?: SLASH, system = true, display = true)
+            BeanUtils.beanToMap(npmProperties).mapNotNull  { metadata ->
+                metadata.value?.let { MetadataModel(key = metadata.key, value = it) }
             }
         } ?: emptyList()
     }

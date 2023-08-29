@@ -1,7 +1,5 @@
 package com.tencent.bkrepo.nuget.handler
 
-import com.tencent.bkrepo.common.api.constant.StringPool.EMPTY
-import com.tencent.bkrepo.common.api.constant.StringPool.SLASH
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
@@ -42,9 +40,9 @@ class NugetPackageHandler {
             val metadata = mutableMapOf<String, Any>()
             metadata[ID] = id
             metadata[VERSION] = version
-            metadata[AUTHORS] = if (authors == EMPTY) SLASH else authors
-            metadata[OWNERS] = owners ?: SLASH
-            metadata[DEPENDENCY] = dependencies?.let { NugetV3RegistrationUtils.metadataToDependencyGroups(it) } ?: SLASH
+            metadata[AUTHORS] = authors
+            owners?.let { metadata[OWNERS] = it }
+            dependencies?.let { metadata[DEPENDENCY] = NugetV3RegistrationUtils.metadataToDependencyGroups(it) }
 //            metadata[REFERENCE] = references?.let { buildReferences(it) } ?: SLASH
 //            metadata[FRAMEWORKS] = frameworkAssemblies?.let { buildFrameworks(it) } ?: SLASH
 //                measureTimeMillis { metadata = indexMetadata(this) }.apply {

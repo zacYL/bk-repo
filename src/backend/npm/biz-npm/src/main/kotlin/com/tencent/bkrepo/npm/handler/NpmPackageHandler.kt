@@ -31,7 +31,6 @@
 
 package com.tencent.bkrepo.npm.handler
 
-import com.tencent.bkrepo.common.api.constant.StringPool.SLASH
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
@@ -164,11 +163,8 @@ class NpmPackageHandler {
                     manifestPath = manifestPath,
                     artifactPath = contentPath,
                     stageTag = null,
-                    packageMetadata = metadata.map {
-                        MetadataModel(
-                            key = it.key,
-                            value = it.value ?: SLASH
-                        )
+                    packageMetadata = metadata.mapNotNull { (key, value) ->
+                        value?.let { MetadataModel(key = key, value = it) }
                     },
                     overwrite = true,
                     createdBy = userId

@@ -294,14 +294,13 @@ class DockerV2LocalRepoService @Autowired constructor(
         val manifestPath = ResponseUtil.buildManifestPath(context.artifactName, tag, manifestType)
         logger.info("upload manifest path [$context,$tag] ,media [$mediaType , manifestPath]")
         val uploadResult = manifestProcess.uploadManifestByType(context, tag, manifestPath, manifestType, file)
-        val packageMetadata= uploadResult.metadata?.let {
-            mutableListOf<MetadataModel>(
-                MetadataModel(key = DOCKER_MANIFEST_NAME, value = it[DOCKER_MANIFEST_NAME]?:SLASH ),
-                MetadataModel(key = DOCKER_DIGEST_SHA256, value = it[DOCKER_DIGEST_SHA256]?:SLASH ),
-                MetadataModel(key = DOCKER_REPONAME, value = it[DOCKER_REPONAME]?:SLASH ),
-                MetadataModel(key = DOCKER_MANIFEST_DIGEST, value = it[DOCKER_MANIFEST_DIGEST]?:SLASH ),
-                MetadataModel(key = DOCKER_MANIFEST_TYPE, value = it[DOCKER_MANIFEST_TYPE]?:SLASH )
-            )
+        val packageMetadata= mutableListOf<MetadataModel>()
+        uploadResult.metadata?.let { metadata->
+            metadata[DOCKER_MANIFEST_NAME]?.let { packageMetadata.add(MetadataModel(key = DOCKER_MANIFEST_NAME, value = it)) }
+            metadata[DOCKER_DIGEST_SHA256]?.let { packageMetadata.add(MetadataModel(key = DOCKER_DIGEST_SHA256, value = it)) }
+            metadata[DOCKER_REPONAME]?.let { packageMetadata.add(MetadataModel(key = DOCKER_REPONAME, value = it)) }
+            metadata[DOCKER_MANIFEST_DIGEST]?.let { packageMetadata.add(MetadataModel(key = DOCKER_MANIFEST_DIGEST, value = it)) }
+            metadata[DOCKER_MANIFEST_TYPE]?.let { packageMetadata.add(MetadataModel(key = DOCKER_MANIFEST_TYPE, value = it)) }
         }
         with(context) {
             val request =

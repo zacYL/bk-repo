@@ -27,7 +27,6 @@
 
 package com.tencent.bkrepo.pypi.artifact.repository
 
-import com.tencent.bkrepo.common.api.constant.StringPool.SLASH
 import com.tencent.bkrepo.common.api.exception.NotFoundException
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
@@ -105,14 +104,14 @@ class PypiLocalRepository(
     override fun onUpload(context: ArtifactUploadContext) {
         val nodeCreateRequest = buildNodeCreateRequest(context)
         val artifactFile = context.getArtifactFile("content")
-        val name = context.request.getParameter("name") ?: SLASH
-        val version = context.request.getParameter("version") ?: SLASH
-        val auther = context.request.getParameter("author") ?: SLASH
+        val name = context.request.getParameter("name")
+        val version = context.request.getParameter("version")
+        val author= context.request.getParameter("author")
         val metadata = mutableListOf(
             MetadataModel(key = "name", value = name, system = true, display = true),
-            MetadataModel(key = "version", value = version, system = true, display = true),
-            MetadataModel(key = "author", value = auther, system = true, display = true)
+            MetadataModel(key = "version", value = version, system = true, display = true)
         )
+        author?.let { metadata.add(MetadataModel(key = "author", value = it, system = true, display = true)) }
         packageClient.createVersion(
             PackageVersionCreateRequest(
                 projectId = context.projectId,

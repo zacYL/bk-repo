@@ -27,7 +27,6 @@
 
 package com.tencent.bkrepo.composer.artifact.repository
 
-import com.tencent.bkrepo.common.api.constant.StringPool.SLASH
 import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
@@ -235,9 +234,9 @@ class ComposerLocalRepository(private val stageClient: StageClient) : LocalRepos
         val composerMetadata = JsonUtil.mapper.readValue(composerArtifact.json, ComposerMetadata::class.java)
         metadata["packageKey"] = PackageKeys.ofComposer(composerArtifact.name)
         metadata["version"] = composerArtifact.version
-        metadata["description"] = composerMetadata.description ?: SLASH
         metadata["type"] = composerMetadata.type
-        metadata["keywords"] = (composerMetadata.keywords ?: SLASH).toString()
+        composerMetadata.description?.let { metadata["description"] = it }
+        composerMetadata.keywords?.let { metadata["keywords"] = it.toString() }
         val nodeCreateRequest = getCompressNodeCreateRequest(context, metadata)
         store(nodeCreateRequest, context.getArtifactFile(), context.storageCredentials)
         // 更新索引

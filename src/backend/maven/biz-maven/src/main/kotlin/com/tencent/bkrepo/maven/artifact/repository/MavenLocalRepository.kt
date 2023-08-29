@@ -958,10 +958,10 @@ class MavenLocalRepository(
             MetadataModel(key = "packaging", value = mavenGAVC.packaging, system = true),
             MetadataModel(key = "groupId", value = mavenGAVC.groupId, system = true),
             MetadataModel(key = "artifactId", value = mavenGAVC.artifactId, system = true),
-            MetadataModel(key = "version", value = mavenGAVC.version, system = true),
-            MetadataModel(key = "modelVersion", value = mavenGAVC.modelVersion ?: SLASH, system = true),
-            MetadataModel(key = "name", value = mavenGAVC.name ?: SLASH, system = true)
+            MetadataModel(key = "version", value = mavenGAVC.version, system = true)
         )
+        mavenGAVC.name?.let { metadata.add(MetadataModel(key = "name", value = it)) }
+        mavenGAVC.modelVersion?.let{ metadata.add(MetadataModel(key = "modelVersion", value = it)) }
         mavenGAVC.classifier?.let { metadata.add(MetadataModel(key = "classifier", value = it)) }
         try {
             packageClient.createVersion(

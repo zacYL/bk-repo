@@ -34,13 +34,7 @@ import com.tencent.bkrepo.repository.model.TNode
 import com.tencent.bkrepo.repository.pojo.node.NodeListOption
 import org.bson.types.ObjectId
 import org.springframework.data.domain.Sort
-import org.springframework.data.mongodb.core.query.Criteria
-import org.springframework.data.mongodb.core.query.Query
-import org.springframework.data.mongodb.core.query.Update
-import org.springframework.data.mongodb.core.query.and
-import org.springframework.data.mongodb.core.query.inValues
-import org.springframework.data.mongodb.core.query.isEqualTo
-import org.springframework.data.mongodb.core.query.where
+import org.springframework.data.mongodb.core.query.*
 import java.time.LocalDateTime
 
 /**
@@ -156,6 +150,16 @@ object NodeQueryHelper {
         } else {
             criteria.and(TNode::path).isEqualTo(nodePath)
         }
+        return Query(criteria)
+    }
+
+    /**
+     * 查询项目所有文件节点
+     */
+    fun nodeFileQuery(projectId: String): Query {
+        val criteria = where(TNode::projectId).isEqualTo(projectId)
+            .and(TNode::folder).isEqualTo(false)
+            .and(TNode::deleted).isEqualTo(null)
         return Query(criteria)
     }
 

@@ -96,6 +96,13 @@ class NodeDao : HashShardingMongoDao<TNode>() {
         return pageWithoutShardingKey(pageRequest, query)
     }
 
+    /**
+     * 查询项目下所有文件节点
+     */
+    fun findFileNode(projectId: String): List<TNode> {
+        return this.find(NodeQueryHelper.nodeFileQuery(projectId))
+    }
+
     companion object {
         fun buildRootNode(projectId: String, repoName: String): TNode {
             return TNode(

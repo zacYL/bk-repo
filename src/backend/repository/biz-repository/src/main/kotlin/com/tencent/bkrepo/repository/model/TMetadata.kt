@@ -46,13 +46,13 @@ data class TMetadata(
     /**
      * 是否为属于系统创建的元数据
      */
-    val system: Boolean = false,
+    var system: Boolean = false,
     /**
      * 元数据描述信息
      */
-    val description: String? = null,
+    var description: String? = null,
     /**
      * 是否可见
      */
-    val display: Boolean? = true
+    var display: Boolean? = true
 )

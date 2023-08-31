@@ -137,7 +137,7 @@ object MetadataUtils {
         result.add(forbidMetadata.copy(system = true, display = false))
         // 添加禁用操作用户和类型
         result.add(MetadataModel(key = FORBID_USER, value = operator, system = true, display = false))
-        result.add(MetadataModel(key = FORBID_TYPE, value = ForbidType.MANUAL.name, system = true, display = false))
+        result.add(MetadataModel(key = FORBID_TYPE, value = ForbidType.MANUAL.name, system = true, display = false, description = forbidMetadata.description ))
 
         return result
     }

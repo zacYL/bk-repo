@@ -176,21 +176,17 @@ export const conflictStrategyEnum = {
 /**
  * 制品搜索方式的下拉框
  */
-export const repoSearchMannerMap = [
+export const repoSearchConditionMap = [
     {
-        id: 'fileName',
-        name: 'searchMannerFileName'
-    },
-    {
-        id: 'packageVersion',
-        name: 'searchMannerPackageVersion'
+        id: 'version',
+        name: 'searchConditionVersion'
     },
     {
         id: 'checkSum',
-        name: 'searchMannerCheckSum'
+        name: 'searchConditionCheckSum'
     },
     {
         id: 'metadata',
-        name: 'searchMannerMetadata'
+        name: 'searchConditionMetadata'
     }
 ]

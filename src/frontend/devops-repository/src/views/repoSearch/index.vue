@@ -1,7 +1,7 @@
 <template>
     <div class="repo-search-container" v-bkloading="{ isLoading }">
         <div class="repo-search-tools flex-column">
-            <div class="name-tool flex-center">
+            <div class="flex-align-center">
                 <type-select
                     :repo-list="repoEnum"
                     :repo-type="repoType"
@@ -10,7 +10,7 @@
                     @search-artifact="onSearchArtifact">
                 </type-select>
             </div>
-            <div v-if="resultList.length" class="mt20 flex-end-center" style="align-items:flex-end;">
+            <div v-if="resultList.length" class="mt10 flex-end-center" style="align-items:flex-end;">
                 <div class="sort-tool flex-align-center">
                     <bk-select
                         style="width:150px;"
@@ -245,7 +245,6 @@
         padding: 20px 20px 10px;
         z-index: 1;
         background-color: white;
-        border-bottom: 1px solid var(--borderColor);
         .sort-tool {
             color: var(--fontSubsidiaryColor);
             .sort-order {

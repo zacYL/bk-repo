@@ -1,7 +1,7 @@
 <template>
     <div class="repo-search-container" v-bkloading="{ isLoading }">
         <div class="repo-search-tools flex-column">
-            <div class="name-tool flex-center">
+            <div class="flex-align-center">
                 <type-select
                     :repo-list="repoEnum.filter(r => r !== 'generic')"
                     :repo-type="repoType"
@@ -10,7 +10,7 @@
                     @search-artifact="onSearchArtifact">
                 </type-select>
             </div>
-            <div v-if="resultList.length" class="mt20 flex-end-center">
+            <div v-if="resultList.length" class="mt10 flex-end-center">
                 <div class="sort-tool flex-align-center">
                     <bk-select
                         style="width:150px;"
@@ -247,26 +247,6 @@
         padding: 20px 20px 10px;
         z-index: 1;
         background-color: white;
-        border-bottom: 1px solid var(--borderColor);
-        .name-tool {
-            height: 48px;
-            ::v-deep .bk-input-large {
-                border-radius: 0;
-                height: 48px;
-                line-height: 48px;
-            }
-            .name-search {
-                width: 81px;
-                height: 100%;
-                margin-left: -1px;
-                color: white;
-                font-size: 16px;
-                font-weight: bold;
-                background-color: var(--primaryColor);
-                border-radius: 0 2px 2px 0;
-                cursor: pointer;
-            }
-        }
         .sort-tool {
             color: var(--fontSubsidiaryColor);
             .sort-order {

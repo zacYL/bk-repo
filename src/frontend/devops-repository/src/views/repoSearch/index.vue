@@ -1,7 +1,7 @@
 <template>
     <div class="repo-search-container" v-bkloading="{ isLoading }">
         <div class="repo-search-tools flex-column">
-            <div class="name-tool flex-align-center">
+            <div class="flex-align-center">
                 <type-select
                     :repo-list="repoEnum"
                     :repo-type="repoType"

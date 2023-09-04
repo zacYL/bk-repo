@@ -305,5 +305,33 @@ export default {
      */
     deleteErrorPackage (_, { projectId, repoName, groupId, artifactId, version, artifactName }) {
         return Vue.prototype.$ajax.delete(`${prefix}/node/delete/${projectId}/${repoName}/${groupId}/${artifactId}/${version}/${artifactName}`)
+    },
+    /**
+     * 包版本添加元数据
+     * @param {*} _
+     * @param {*} projectId 项目Id
+     * @param {*} repoName 仓库名
+     * @param {*} body
+     * @returns
+     */
+    addPackageMetadata (_, { projectId, repoName, body }) {
+        return Vue.prototype.$ajax.post(
+            `${prefix}/metadata/package/${projectId}/${repoName}`,
+            body
+        )
+    },
+    /**
+     * 包版本删除元数据
+     * @param {*} _
+     * @param {*} projectId 项目Id
+     * @param {*} repoName 仓库名
+     * @param {*} body
+     * @returns
+     */
+    deletePackageMetadata (_, { projectId, repoName, body }) {
+        return Vue.prototype.$ajax.delete(
+            `${prefix}/metadata/package/${projectId}/${repoName}`,
+            { data: body }
+        )
     }
 }

@@ -101,8 +101,8 @@
             background-image: linear-gradient(#2F79BA, #1E68A8);
         }
         &.green {
-            background-color: #4CC71F;
-            background-image: linear-gradient(#66BF3F, #54AD2D);
+            background-color: #55AC8E;
+            background-image: linear-gradient(#60B094, #4F9F83);
         }
         &.red {
             background-color: #CA553E;

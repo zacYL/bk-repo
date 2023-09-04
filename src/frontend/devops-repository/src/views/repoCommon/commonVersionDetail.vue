@@ -71,9 +71,11 @@
             <div class="version-detail-readme" v-html="readmeContent"></div>
         </bk-tab-panel>
         <bk-tab-panel v-if="detail.metadata" name="metadata" :label="$t('metaData')">
-            <div class="version-metadata display-block" :data-title="$t('metaData')">
+            <div class="display-block" :data-title="$t('metaData')">
+                <!-- 虚拟仓库及软件源模式下不支持更新元数据 -->
+                <metadataDialog v-if="storeType !== 'virtual' && !whetherSoftware" ref="metadataDialogRef" @add-metadata="addMetadataHandler"></metadataDialog>
                 <bk-table
-                    :data="detail.metadata.filter(m => !m.system)"
+                    :data="metadataDataList"
                     :outer-border="false"
                     :row-border="false"
                     size="small">
@@ -88,11 +90,24 @@
                         </template>
                     </bk-table-column>
                     <bk-table-column :label="$t('description')" prop="description" show-overflow-tooltip></bk-table-column>
+                    <bk-table-column v-if="storeType !== 'virtual' && !whetherSoftware" width="70">
+                        <template #default="{ row }">
+                            <bk-popconfirm v-if="!row.system" trigger="click" width="230" @confirm="deleteMetadataHandler(row)">
+                                <div slot="content">
+                                    <div class="flex-align-center pb10">
+                                        <i class="bk-icon icon-info-circle-shape pr5 content-icon"></i>
+                                        <div class="content-text">{{$t('deleteMetadataConfirm')}}</div>
+                                    </div>
+                                </div>
+                                <Icon class="hover-btn" size="24" name="icon-delete" />
+                            </bk-popconfirm>
+                        </template>
+                    </bk-table-column>
                 </bk-table>
             </div>
         </bk-tab-panel>
         <bk-tab-panel v-if="detail.manifest" name="manifest" label="Manifest">
-            <div class="version-metadata display-block" data-title="Manifest">
+            <div class="display-block" data-title="Manifest">
                 <bk-table
                     :data="Object.entries(detail.manifest)"
                     :outer-border="false"
@@ -167,6 +182,7 @@
     import forbidTag from '@repository/components/ForbidTag'
     import metadataTag from '@repository/views/repoCommon/metadataTag'
     import mavenDependencies from '@repository/views/repoCommon/mavenDependencies'
+    import metadataDialog from '@repository/components/metadataDialog'
     import { mapState, mapActions } from 'vuex'
     import { convertFileSize, formatDate } from '@repository/utils'
     import repoGuideMixin from '@repository/views/repoCommon/repoGuideMixin'
@@ -178,7 +194,8 @@
             ScanTag,
             forbidTag,
             metadataTag,
-            mavenDependencies
+            mavenDependencies,
+            metadataDialog
         },
         mixins: [repoGuideMixin],
         data () {
@@ -260,6 +277,12 @@
                     !this.whetherSoftware && !(this.storeType === 'virtual') && { clickEvent: () => this.$emit('forbid'), label: metadataMap.forbidStatus ? '解除禁止' : '禁止使用' },
                     (this.permission.delete && !this.whetherSoftware && !(this.storeType === 'virtual')) && { clickEvent: () => this.$emit('delete'), label: this.$t('delete') }
                 ]
+            },
+            metadataDataList () {
+                // JavaScript中，true 被视为 1，false 被视为 0
+                return this.detail.metadata
+                    .filter(item => item.display) // 先过滤出 display 为 true 的对象
+                    .sort((a, b) => b.system - a.system) // 然后根据 system 排序， system 为 true 的对象排在前面
             }
         },
         watch: {
@@ -281,7 +304,9 @@
         methods: {
             convertFileSize,
             ...mapActions([
-                'getVersionDetail'
+                'getVersionDetail',
+                'addPackageMetadata',
+                'deletePackageMetadata'
             ]),
             getDetail () {
                 this.isLoading = true
@@ -314,6 +339,45 @@
                     this.detailType = this.repoType
                 }).finally(() => {
                     this.isLoading = false
+                })
+            },
+            // 添加元数据
+            addMetadataHandler (item) {
+                const { key, value, description } = item
+                this.addPackageMetadata({
+                    projectId: this.projectId,
+                    repoName: this.storeType === 'virtual' ? this.sourceRepoName : this.repoName,
+                    body: {
+                        packageKey: this.packageKey,
+                        version: this.version,
+                        versionMetadata: [{ key, value, description, system: false }]
+                    }
+                }).then(() => {
+                    this.$bkMessage({
+                        theme: 'success',
+                        message: this.$t('add') + this.$t('space') + this.$t('success')
+                    })
+                    // 此时添加成功，需要通过ref调用组件的关闭弹窗方法
+                    this.$refs.metadataDialogRef?.hiddenAddMetadata()
+                    this.getDetail()
+                })
+            },
+            // 删除元数据
+            deleteMetadataHandler (row) {
+                this.deletePackageMetadata({
+                    projectId: this.projectId,
+                    repoName: this.storeType === 'virtual' ? this.sourceRepoName : this.repoName,
+                    body: {
+                        packageKey: this.packageKey,
+                        version: this.version,
+                        keyList: [row.key]
+                    }
+                }).then(() => {
+                    this.$bkMessage({
+                        theme: 'success',
+                        message: this.$t('delete') + this.$t('space') + this.$t('metadata') + this.$t('space') + this.$t('success')
+                    })
+                    this.getDetail()
                 })
             }
         }
@@ -369,31 +433,6 @@
             padding: 20px 10px;
             display: grid;
             background-color: var(--bgLighterColor);
-        }
-    }
-    .version-metadata {
-        .version-metadata-add {
-            position: absolute;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            top: 0;
-            right: 25px;
-            width: 35px;
-            height: 40px;
-            z-index: 1;
-            .version-metadata-add-board {
-                position: absolute;
-                top: 42px;
-                right: -25px;
-                width: 300px;
-                overflow: hidden;
-                background: white;
-                border-radius: 2px;
-                box-shadow: 0 3px 6px rgba(51, 60, 72, 0.4);
-                will-change: height;
-                transition: all .3s;
-            }
         }
     }
     .version-layers {
@@ -491,6 +530,9 @@
             background-color: white;
         }
     }
+}
+.content-icon {
+    color: var(--dangerColor);
 }
 </style>
 <style lang="scss">

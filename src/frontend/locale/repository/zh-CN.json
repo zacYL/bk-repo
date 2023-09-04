@@ -275,5 +275,6 @@
     "reset": "重置",
     "searchCondition":"搜索条件",
     "searchName":"名称搜索",
-    "searchNamePlaceholder":"请输入名称中的关键字"
+    "searchNamePlaceholder":"请输入名称中的关键字",
+    "deleteMetadataConfirm":"是否删除元数据？"
 }

@@ -1,5 +1,5 @@
 <template>
-    <div class="base-info flex-column">
+    <div class="base-info flex-column" v-if="!isEmpty(subtaskOverview)">
         <div class="pt20 pb20 flex-align-center">
             <Icon class="mr10" size="40" :name="(subtaskOverview.repoType || '').toLowerCase()" />
             <span class="arti-name text-overflow" :title="subtaskOverview.name">{{ subtaskOverview.name }}</span>
@@ -35,6 +35,7 @@
     import { mapActions } from 'vuex'
     import { leakLevelEnum, SCAN_TYPE_SECURITY } from '@repository/store/publicEnum'
     import { segmentNumberThree } from '@repository/utils'
+    import { isEmpty } from 'lodash'
 
     export default {
         name: 'artifactInfo',
@@ -45,7 +46,8 @@
         data () {
             return {
                 SCAN_TYPE_SECURITY: SCAN_TYPE_SECURITY,
-                leakLevelEnum: leakLevelEnum
+                leakLevelEnum: leakLevelEnum,
+                isEmpty
             }
         },
         computed: {

@@ -1,5 +1,5 @@
 <template>
-    <div class="container">
+    <div class="container" v-bkloading="{ isLoading }">
         <artifact-info :scan-types="scanTypes" :subtask-overview="subtaskOverview"></artifact-info>
         <bk-tab type="unborder-card" class="arti-tab">
             <bk-tab-panel v-for="(panel, index) in panels" v-bind="panel" :key="index" style="height: 100%">
@@ -40,7 +40,8 @@
                 },
                 scanTypes: [],
                 panels: [],
-                subtaskOverview: {}
+                subtaskOverview: {},
+                isLoading: false
             }
         },
         computed: {
@@ -61,6 +62,7 @@
             }
         },
         created () {
+            this.isLoading = true
             this.artiReportOverview({
                 projectId: this.projectId,
                 recordId: this.recordId,
@@ -75,6 +77,8 @@
                     duration: formatDuration(res.duration / 1000),
                     finishTime: formatDate(res.finishTime)
                 }
+            }).finally(() => {
+                this.isLoading = false
             })
         },
         methods: {

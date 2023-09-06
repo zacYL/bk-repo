@@ -69,6 +69,7 @@
     import { mapState, mapActions } from 'vuex'
     import { formatDate } from '@repository/utils'
     import { repoEnum } from '@repository/store/publicEnum'
+    import { cloneDeep, isEmpty } from 'lodash'
     export default {
         name: 'repoSearch',
         components: { packageCard, InfiniteScroll, typeSelect, genericDetail, genericShareDialog },
@@ -106,10 +107,6 @@
                 return this.$route.params.projectId
             }
         },
-        created () {
-            // 更新程度：类型 》 包名 》 树/排序 》 滚动加载
-            this.changeRepoType(this.repoType)
-        },
         methods: {
             formatDate,
             ...mapActions(['searchPackageList', 'getRepoListAll']),
@@ -143,6 +140,31 @@
                 this.pagination.limit = limit
                 this.searckPackageHandler(scrollLoad)
                 !scrollLoad && this.$refs.infiniteScroll && this.$refs.infiniteScroll.scrollToTop()
+                if (!isEmpty(this.searchArtifactParams)) {
+                    const urlParams = cloneDeep(this.searchArtifactParams)
+                    // 元数据需要转化后才能显示到url中，例如 metadataProperties[key] = value & metadataProperties[111] = 222
+                    if (urlParams.metadataList?.length > 0) {
+                        urlParams.metadataList.forEach((metadata) => {
+                            urlParams[`metadataProperties[${metadata.key}]`] = metadata.value
+                        })
+                        delete urlParams.metadataList
+                    }
+                    // 选择的仓库列表处理，例如artifactProperties[0] = test & artifactProperties[1] = test2
+                    if (urlParams.artifactList?.length > 0) {
+                        urlParams.artifactList.forEach((artifact, index) => {
+                            urlParams[`artifactProperties[${index}]`] = artifact
+                        })
+                        delete urlParams.artifactList
+                    }
+                    this.$router.replace({
+                        query: {
+                            repoType: this.repoType,
+                            property: this.property,
+                            direction: this.direction,
+                            ...urlParams
+                        }
+                    })
+                }
             },
             // 搜索制品
             onSearchArtifact (params) {

@@ -127,7 +127,6 @@
         this.message = message || 'Default error message'
         this.stack = (new Error()).stack
     }
-
     CustomError.prototype = Object.create(Error.prototype)
     CustomError.prototype.constructor = CustomError
     export default {
@@ -155,7 +154,7 @@
                 repoSearchConditionMap,
                 // 搜索条件所在表单
                 repoSearchConditionInfo: {
-                    name: ''
+                    name: this.$route.query.name || ''
                 },
                 // 当前类型的仓库列表，不分页
                 artifactList: [
@@ -207,6 +206,39 @@
                     this.constructRepoArtifactList()
                 }
             }
+        },
+        created () {
+            // 回显checkSum，因为可能之前没有添加这个搜索条件，所以需要先判断在route.query中是否存在checkSum相关的
+            if (this.$route.query.sha256 || this.$route.query.md5) {
+                this.repoSearchConditionInfo.checkSum = this.$route.query.sha256 || this.$route.query.md5
+            }
+            // 回显 版本号
+            if (this.$route.query.version) {
+                this.repoSearchConditionInfo.version = this.$route.query.version
+            }
+            // 回显当前选择的仓库
+            this.checkedArtifactList = Object.keys(this.$route.query)
+                .filter(key => key.startsWith('artifactProperties'))
+                .map(key => this.$route.query[key])
+            
+            // 回显元数据
+            const metadataKeys = Object.keys(this.$route.query)
+                .filter(key => key.startsWith('metadataProperties['))
+            if (metadataKeys?.length) {
+                const metadataList = metadataKeys
+                    .map(key => {
+                        const matchKey = key.match(/metadataProperties\[(.+?)\]/)
+                        return {
+                            key: matchKey ? matchKey[1] : '',
+                            value: this.$route.query[key]
+                        }
+                    })
+                this.$set(this.repoSearchConditionInfo, 'metadata', [...metadataList])
+            }
+            this.$nextTick(() => {
+                // 此时需要再次触发一下搜索，初始化时子组件直接触发父组件的搜索
+                this.onSearchArtifact()
+            })
         },
         methods: {
             ...mapActions(['getRepoListAll']),
@@ -332,28 +364,18 @@
             },
             // 组装数据
             constructionSearchData () {
-                const backData = {
-                    name: this.repoSearchConditionInfo.name
+                const { name, checkSum, version, metadata } = this.repoSearchConditionInfo
+                const backData = { name }
+                // 如果不存在 checkSum 相关的参数时子组件传参中不能携带 checkSum 这个参数
+                if (checkSum) {
+                    backData[checkSum.length === 32 ? 'md5' : 'sha256'] = checkSum
                 }
-                if ('checkSum' in this.repoSearchConditionInfo) {
-                    backData[this.repoSearchConditionInfo.checkSum.length === 32 ? 'md5' : 'sha256'] = this.repoSearchConditionInfo.checkSum
+                // 如果不存在version的参数时子组件传参中不能携带version这个参数
+                if (version) {
+                    backData.version = version
                 }
-                if ('version' in this.repoSearchConditionInfo) {
-                    backData.version = this.repoSearchConditionInfo.version
-                }
-                if ('metadata' in this.repoSearchConditionInfo) {
-                    backData.metadataList = this.repoSearchConditionInfo.metadata.map(item => {
-                        // 不做下面的判断会导致接口传参添加了field: 'metadata.' 的对象，会导致搜索结果为空
-                        if (item.key && item.value) {
-                            return {
-                                field: `metadata.${item.key}`,
-                                value: item.value,
-                                operation: 'EQ'
-                            }
-                        } else {
-                            return ''
-                        }
-                    }).filter(Boolean)
+                if (metadata) {
+                    backData.metadataList = metadata
                 }
                 return backData
             },

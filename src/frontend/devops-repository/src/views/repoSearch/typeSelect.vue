@@ -51,15 +51,19 @@
             <bk-form-item :label="$t('searchName')">
                 <bk-input
                     class="w250 input-common"
+                    clearable
                     v-model="repoSearchConditionInfo.name"
-                    :placeholder="$t('searchNamePlaceholder')">
+                    :placeholder="$t('searchNamePlaceholder')"
+                    @clear="onSearchArtifact"
+                    @enter="onSearchArtifact">
                 </bk-input>
             </bk-form-item>
             <bk-form-item v-if="repoSearchConditionInfo.hasOwnProperty('version')" :label="$t('searchConditionVersion')">
                 <bk-input
                     class="w250 input-common condition-item-common"
                     v-model="repoSearchConditionInfo.version"
-                    :placeholder="$t('pleaseInput') + $t('space') + $t('searchConditionVersion')">
+                    :placeholder="$t('pleaseInput') + $t('space') + $t('searchConditionVersion')"
+                    @enter="onSearchArtifact">
                 </bk-input>
                 <span class="search-close-icon" @click="onClearCondition('version')">
                     <Icon size="8" name="close" />
@@ -70,7 +74,8 @@
                     class="w250 input-common condition-item-common"
                     v-model="repoSearchConditionInfo.checkSum"
                     :placeholder="$t('searchConditionChecksumPlaceholder')"
-                    @blur="onVerifyCheckSum">
+                    @blur="onVerifyCheckSum"
+                    @enter="onSearchArtifact">
                 </bk-input>
                 <span class="search-close-icon" @click="onClearCondition('checkSum')">
                     <Icon size="8" name="close" />
@@ -87,7 +92,8 @@
                         <bk-input
                             class="w125 input-common"
                             v-model="item.value"
-                            :placeholder="$t('value')">
+                            :placeholder="$t('value')"
+                            @enter="onSearchArtifact">
                         </bk-input>
                     </div>
                     <span class="search-close-icon" @click="onClearCondition('metadata',index)">

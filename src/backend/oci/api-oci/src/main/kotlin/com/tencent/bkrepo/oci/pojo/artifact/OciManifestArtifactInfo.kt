@@ -39,15 +39,18 @@ class OciManifestArtifactInfo(
     // is manifest list
     var isFat: Boolean
 ) : OciArtifactInfo(projectId, repoName, packageName, version) {
+
     override fun getArtifactFullPath(): String {
-        return if (isValidDigest) {
-            OciLocationUtils.buildDigestManifestPathWithReference(packageName, reference, isFat)
-        } else {
-            if (isFat) {
-                OciLocationUtils.buildManifestListPath(packageName, reference)
+        return if(getArtifactMappingUri().isNullOrEmpty()) {
+            if (isValidDigest) {
+                OciLocationUtils.buildDigestManifestPathWithReference(packageName, reference, isFat)
             } else {
-                OciLocationUtils.buildManifestPath(packageName, reference)
+                if (isFat) {
+                    OciLocationUtils.buildManifestListPath(packageName, reference)
+                } else {
+                    OciLocationUtils.buildManifestPath(packageName, reference)
+                }
             }
-        }
+        } else getArtifactMappingUri()!!
     }
 }

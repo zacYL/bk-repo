@@ -43,6 +43,7 @@ import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.pojo.configuration.virtual.VirtualConfiguration
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
@@ -886,11 +887,8 @@ class MavenLocalRepository(
         checksumType: HashType? = null
     ): NodeDetail? {
         with(context) {
-            var node = nodeClient.getNodeDetail(
-                projectId = projectId,
-                repoName = repoName,
-                fullPath = fullPath
-            ).data
+            artifactInfo.setArtifactMappingUri(fullPath)
+            var node = ArtifactContextHolder.getNodeDetail(artifactInfo)
             if (node != null || checksumType == null) {
                 return node
             }
@@ -900,19 +898,13 @@ class MavenLocalRepository(
                     "in ${artifactInfo.getRepoIdentify()}"
             )
             val temPath = fullPath.removeSuffix(".${checksumType.ext}")
-            node = nodeClient.getNodeDetail(
-                projectId = projectId,
-                repoName = repoName,
-                fullPath = temPath
-            ).data
+            artifactInfo.setArtifactMappingUri(temPath)
+            node = ArtifactContextHolder.getNodeDetail(artifactInfo)
             // 源文件存在，但是对应checksum文件不存在，需要生成
             if (node != null) {
                 verifyPath(context, temPath, checksumType)
-                node = nodeClient.getNodeDetail(
-                    projectId = projectId,
-                    repoName = repoName,
-                    fullPath = fullPath
-                ).data
+                artifactInfo.setArtifactMappingUri(fullPath)
+                node = ArtifactContextHolder.getNodeDetail(artifactInfo)
             }
             return node
         }

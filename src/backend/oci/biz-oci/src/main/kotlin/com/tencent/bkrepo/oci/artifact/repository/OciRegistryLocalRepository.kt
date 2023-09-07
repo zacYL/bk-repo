@@ -397,16 +397,19 @@ class OciRegistryLocalRepository(
     }
 
     private fun getNodeDetail(artifactInfo: OciArtifactInfo, fullPath: String): NodeDetail? {
-        val nodeDetail = ArtifactContextHolder.getNodeDetail(fullPath = fullPath) ?: run {
+        artifactInfo.setArtifactMappingUri(fullPath)
+        val nodeDetail = ArtifactContextHolder.getNodeDetail(artifactInfo) ?: run {
             val oldDockerPath = ociOperationService.getDockerNode(artifactInfo)
                 ?: return null
-            ArtifactContextHolder.getNodeDetail(fullPath = oldDockerPath) ?: run {
+            artifactInfo.setArtifactMappingUri(oldDockerPath)
+            ArtifactContextHolder.getNodeDetail(artifactInfo) ?: run {
                 if (artifactInfo !is OciManifestArtifactInfo) return null
                 // 兼容 list.manifest.json
                 val manifestListPath = OciLocationUtils.buildManifestListPath(
                     artifactInfo.packageName, artifactInfo.reference
                 )
-                ArtifactContextHolder.getNodeDetail(fullPath = manifestListPath)
+                artifactInfo.setArtifactMappingUri(manifestListPath)
+                ArtifactContextHolder.getNodeDetail(artifactInfo)
             }
         }
         return nodeDetail

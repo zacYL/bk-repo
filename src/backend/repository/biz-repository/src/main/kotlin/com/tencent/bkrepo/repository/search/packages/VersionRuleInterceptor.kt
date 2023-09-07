@@ -24,7 +24,8 @@ abstract class VersionRuleInterceptor(
         for ((key, value) in versionMap) {
             context.matchedVersions.putIfAbsent(key, value.toMutableSet())?.retainAll(value.toSet())
         }
-        val packageIdList = versionMap.keys.toList()
+        val emptyKeys = context.matchedVersions.filterValues { it.isEmpty() }.keys
+        val packageIdList = (versionMap.keys - emptyKeys).toList()
         val newRule = if (packageIdList.size == 1) {
             Rule.QueryRule(ID, packageIdList.first(), OperationType.EQ)
         } else {

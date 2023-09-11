@@ -2,6 +2,8 @@ package com.tencent.bkrepo.repository.controller.user
 
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
+import com.tencent.bkrepo.common.security.permission.Principal
+import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.repository.pojo.repo.RepoListOption
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
@@ -23,7 +25,7 @@ class UserSoftwareRepositoryController(
     private val softwareRepositoryService: SoftwareRepositoryService
 ) {
 
-    @ApiOperation("软件源仓库列表")
+    @ApiOperation("软件源分页仓库列表")
     @GetMapping("/page/{pageNumber}/{pageSize}")
     fun softwareRepoPage(
         @RequestAttribute userId: String,
@@ -42,5 +44,16 @@ class UserSoftwareRepositoryController(
             option
         )
         return ResponseBuilder.success(page)
+    }
+
+    @ApiOperation("软件源仓库列表")
+    @Principal(PrincipalType.GENERAL)
+    @GetMapping("/list")
+    fun listSoftwareRepo(
+        @ApiParam(value = "项目id", required = false)
+        @RequestParam projectId: String?,
+        option: RepoListOption
+    ): Response<List<RepositoryInfo>> {
+        return ResponseBuilder.success(softwareRepositoryService.listRepo(projectId, option, false))
     }
 }

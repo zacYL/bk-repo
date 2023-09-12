@@ -38,6 +38,7 @@ import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.pojo.project.ProjectCreateRequest
 import com.tencent.bkrepo.repository.pojo.project.ProjectInfo
+import com.tencent.bkrepo.repository.pojo.project.ProjectMetricsInfo
 import com.tencent.bkrepo.repository.pojo.project.ProjectRangeQueryRequest
 import com.tencent.bkrepo.repository.service.repo.ProjectService
 import org.springframework.web.bind.annotation.RestController
@@ -64,6 +65,10 @@ class ProjectController(
 
     override fun createProject(request: ProjectCreateRequest): Response<ProjectInfo> {
         return ResponseBuilder.success(projectService.createProject(request))
+    }
+
+    override fun getProjectMetrics(name: String): Response<ProjectMetricsInfo?> {
+        return ResponseBuilder.success(projectService.getProjectMetricsInfo(name))
     }
 
     override fun deleteProject(name: String): Response<Void> {

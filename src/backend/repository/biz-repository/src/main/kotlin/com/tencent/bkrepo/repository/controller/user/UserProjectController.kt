@@ -37,6 +37,7 @@ import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.repository.pojo.project.ProjectCreateRequest
 import com.tencent.bkrepo.repository.pojo.project.ProjectInfo
 import com.tencent.bkrepo.repository.pojo.project.ProjectListOption
+import com.tencent.bkrepo.repository.pojo.project.ProjectMetricsInfo
 import com.tencent.bkrepo.repository.pojo.project.ProjectSearchOption
 import com.tencent.bkrepo.repository.pojo.project.ProjectUpdateRequest
 import com.tencent.bkrepo.repository.pojo.project.UserProjectCreateRequest
@@ -135,16 +136,26 @@ class UserProjectController(
         return ResponseBuilder.success(projectService.listPermissionProject(userId, option))
     }
 
-	@Deprecated("waiting kb-ci", replaceWith = ReplaceWith("createProject"))
-	@ApiOperation("创建项目")
-	@Principal(PrincipalType.PLATFORM)
-	@PostMapping
-	fun create(
-		@RequestAttribute userId: String,
-		@RequestBody userProjectRequest: UserProjectCreateRequest
-	): Response<Void> {
-		return this.createProject(userId, userProjectRequest)
-	}
+    @Deprecated("waiting kb-ci", replaceWith = ReplaceWith("createProject"))
+    @ApiOperation("创建项目")
+    @Principal(PrincipalType.PLATFORM)
+    @PostMapping
+    fun create(
+        @RequestAttribute userId: String,
+        @RequestBody userProjectRequest: UserProjectCreateRequest
+    ): Response<Void> {
+        return this.createProject(userId, userProjectRequest)
+    }
+
+    @ApiOperation("项目仓库统计信息列表")
+    @GetMapping("/metrics/{projectId}")
+    fun projectMetricsList(
+        @ApiParam(value = "项目ID", required = true)
+        @PathVariable projectId: String
+    ): Response<ProjectMetricsInfo?> {
+        permissionManager.checkProjectPermission(PermissionAction.READ, projectId)
+        return ResponseBuilder.success(projectService.getProjectMetricsInfo(projectId))
+    }
 
 	@ApiOperation("删除项目")
 	@Principal(PrincipalType.ADMIN)

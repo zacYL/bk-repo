@@ -274,5 +274,6 @@
     "versionDetail":"Version detail",
     "artifactVersion": "Artifact version",
     "total":"Total",
-    "per": " "
+    "per": " ",
+    "repo": "Repository"
 }

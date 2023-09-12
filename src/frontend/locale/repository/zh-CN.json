@@ -282,5 +282,6 @@
     "versionDetail":"版本详情",
     "artifactVersion": "制品版本",
     "total":"共",
-    "per": "个"
+    "per": "个",
+    "repo": "所属仓库"
 }

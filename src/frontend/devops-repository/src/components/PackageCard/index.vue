@@ -27,6 +27,7 @@
                         </scan-tag>
                     </div>
                     <div class="card-metadata" :title="$t('lastModifiedDate') + `：${formatDate(cardData.lastModifiedDate)}`"></div>
+                    <div v-if="whetherRepoSearch" class="card-metadata" :title="$t('repo') + `：${cardData.repoName}`"></div>
                     <div class="card-metadata" :title="`版本数：${cardData.versions}`"></div>
                     <div class="card-metadata" :title="`下载统计：${cardData.downloads}`"></div>
                     <div v-if="storeType === 'virtual'" class="card-metadata" :title="`仓库来源：${cardData.repoName}`"></div>
@@ -34,7 +35,7 @@
                 </template>
                 <!-- generic 仓库 -->
                 <template v-else>
-                    <div class="card-metadata" :title="`所属仓库：${cardData.repoName}`"></div>
+                    <div class="card-metadata" :title="$t('repo') + `：${cardData.repoName}`"></div>
                     <div class="card-metadata" :title="`文件大小：${convertFileSize(cardData.size)}`"></div>
                     <div class="card-metadata" :title="$t('lastModifiedDate') + `：${formatDate(cardData.lastModifiedDate)}`"></div>
                 </template>
@@ -93,6 +94,9 @@
             },
             showRepoSearchVersion () {
                 return this.showSearchVersionList && (this.cardData.matchedVersions || []).length > 0
+            },
+            whetherRepoSearch () {
+                return this.$route.path.endsWith('repoSearch')
             }
         },
         methods: {

@@ -6,6 +6,7 @@
                     :repo-list="repoEnum.filter(r => r !== 'generic')"
                     :repo-type="repoType"
                     :artifact-original-list="artifactOriginalList"
+                    :condition-list="repoSearchConditionMap.filter((item) => item.id !== 'checkSum')"
                     @change="changeRepoType"
                     @search-artifact="onSearchArtifact">
                 </type-select>
@@ -73,7 +74,7 @@
     import searchDependDetail from '@repository/components/searchDependDetail'
     import { mapState, mapActions } from 'vuex'
     import { formatDate } from '@repository/utils'
-    import { repoEnum } from '@repository/store/publicEnum'
+    import { repoSearchConditionMap, repoEnum } from '@repository/store/publicEnum'
     import { cloneDeep, isEmpty } from 'lodash'
     export default {
         name: 'repoSearch',
@@ -95,6 +96,7 @@
         data () {
             return {
                 repoEnum,
+                repoSearchConditionMap,
                 isLoading: false,
                 property: this.$route.query.property || 'lastModifiedDate',
                 direction: this.$route.query.direction || 'DESC',
@@ -116,11 +118,7 @@
             }
         },
         computed: {
-            ...mapState(['projectList', 'userList']),
-            isSearching () {
-                const { packageName, repoType, repoName } = this.$route.query
-                return Boolean(packageName || repoType || repoName)
-            }
+            ...mapState(['projectList', 'userList'])
         },
         methods: {
             formatDate,

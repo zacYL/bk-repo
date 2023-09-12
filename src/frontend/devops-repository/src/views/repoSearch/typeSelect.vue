@@ -125,7 +125,6 @@
     </div>
 </template>
 <script>
-    import { mapActions } from 'vuex'
     import { repoSearchConditionMap, repoEnum } from '@repository/store/publicEnum'
     // 自定义Error，防止直接使用 new Error 导致把文件源码暴露
     function CustomError (message) {
@@ -151,13 +150,19 @@
             artifactOriginalList: {
                 type: Array,
                 default: () => []
+            },
+            // 搜索方式下拉框中可选择项
+            conditionList: {
+                type: Array,
+                default () {
+                    return repoSearchConditionMap || []
+                }
             }
         },
         data () {
             return {
                 showDropdown: false,
                 repoEnum,
-                repoSearchConditionMap,
                 // 搜索条件所在表单
                 repoSearchConditionInfo: {
                     name: this.$route.query.name || ''
@@ -194,8 +199,8 @@
             // generic仓库不能使用包版本搜素
             conditionMap () {
                 return this.repoType === 'generic'
-                    ? this.repoSearchConditionMap.filter(item => item.id !== 'version')
-                    : this.repoSearchConditionMap
+                    ? this.conditionList.filter(item => item.id !== 'version')
+                    : this.conditionList
             },
             // 添加搜索条件按钮是否整体被禁用
             allConditionWhetherDisabled () {
@@ -203,6 +208,10 @@
                 const checkSumFlag = conditionIdMap.includes('checkSum') ? 'checkSum' in this.repoSearchConditionInfo : true
                 const versionFlag = conditionIdMap.includes('version') ? 'version' in this.repoSearchConditionInfo : true
                 return checkSumFlag && versionFlag && this.repoSearchConditionInfo?.metadata?.length === 4
+            },
+            // 是否是 软件源模式
+            whetherSoftware () {
+                return this.$route.path.startsWith('/software')
             }
         },
         watch: {
@@ -215,7 +224,7 @@
         },
         created () {
             // 回显checkSum，因为可能之前没有添加这个搜索条件，所以需要先判断在route.query中是否存在checkSum相关的
-            if (this.$route.query.sha256 || this.$route.query.md5) {
+            if (!this.whetherSoftware && (this.$route.query.sha256 || this.$route.query.md5)) {
                 this.repoSearchConditionInfo.checkSum = this.$route.query.sha256 || this.$route.query.md5
             }
             // 回显 版本号
@@ -247,7 +256,6 @@
             })
         },
         methods: {
-            ...mapActions(['getRepoListAll']),
             onClickSearchOperation (type) {
                 if (type === 'metadata' && !('metadata' in this.repoSearchConditionInfo)) {
                     // 第一次点击添加元数据
@@ -358,7 +366,7 @@
             },
             // checksum 输入框的校验事件
             onVerifyCheckSum () {
-                if (this.repoSearchConditionInfo.checkSum && this.repoSearchConditionInfo.checkSum?.length !== 64 && this.repoSearchConditionInfo.checkSum?.length !== 32) {
+                if (!this.whetherSoftware && this.repoSearchConditionInfo.checkSum && this.repoSearchConditionInfo.checkSum?.length !== 64 && this.repoSearchConditionInfo.checkSum?.length !== 32) {
                     this.$bkMessage({
                         theme: 'warning',
                         limit: 3,
@@ -373,7 +381,7 @@
                 const { name, checkSum, version, metadata } = this.repoSearchConditionInfo
                 const backData = { name }
                 // 如果不存在 checkSum 相关的参数时子组件传参中不能携带 checkSum 这个参数
-                if (checkSum) {
+                if (!this.whetherSoftware && checkSum) {
                     backData[checkSum.length === 32 ? 'md5' : 'sha256'] = checkSum
                 }
                 // 如果不存在version的参数时子组件传参中不能携带version这个参数

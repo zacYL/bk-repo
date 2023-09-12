@@ -122,6 +122,10 @@
                 return this.$route.params.projectId
             }
         },
+        created () {
+            // 默认请求获取当前类型的仓库数据，否则会导致刷新时不会请求，进而导致下拉仓库数据无法回显
+            this.getRepoSearchArtifactList()
+        },
         methods: {
             formatDate,
             ...mapActions(['searchPackageList', 'getRepoListAll']),

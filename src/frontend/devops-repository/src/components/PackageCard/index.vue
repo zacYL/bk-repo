@@ -42,37 +42,6 @@
         </div>
         <div class="card-operation flex-center">
             <Icon class="hover-btn" v-if="!readonly && !(storeType === 'virtual') " size="24" name="icon-delete" @click.native.stop="deleteCard" />
-            <bk-popover
-                v-if="showRepoSearchVersion"
-                ref="popoverVersionsRef"
-                placement="left-start"
-                theme="light"
-                :max-width="210"
-                :width="210"
-                :arrow="false"
-                :distance="0"
-                trigger="click"
-                :on-show="() => {
-                    showSearchVersionListPopover = true
-                } "
-                :on-hide="() => {
-                    showSearchVersionListPopover = false
-                } ">
-                <Icon class="hover-btn" size="24" name="portrait-more" @click.native.stop="onClickSearchMoreIcon" />
-                <template #content>
-                    <div class="search-version-container">
-                        <span>{{$t('searchCheckVersionToDetail')}}</span>
-                        <div v-for="version in cardData.matchedVersions" :key="version">
-                            <span
-                                class="search-version-item text-overflow pl10"
-                                :title="(version || '').length > 13 ? version : ''"
-                                @click.stop="onJumpToSpecificVersion(version)">
-                                {{version}}
-                            </span>
-                        </div>
-                    </div>
-                </template>
-            </bk-popover>
             <operation-list
                 v-if="!cardData.type && !readonly"
                 :list="[
@@ -102,7 +71,7 @@
                 type: Boolean,
                 default: false
             },
-            // 是否需要展示版本相关信息，展示搜索结果及更多按钮，点击显示版本列表
+            // 是否需要展示版本相关信息，展示搜索结果
             showSearchVersionList: {
                 type: Boolean,
                 default: false
@@ -110,8 +79,7 @@
         },
         data () {
             return {
-                genericScanFileTypes,
-                showSearchVersionListPopover: false
+                genericScanFileTypes
             }
         },
         computed: {
@@ -154,16 +122,6 @@
             },
             share () {
                 this.$emit('share', this.cardData)
-            },
-            // 点击展开更多按钮可以打开弹窗，再次点击关闭弹窗
-            onClickSearchMoreIcon () {
-                this.$nextTick(() => {
-                    this.$refs.popoverVersionsRef[this.showSearchVersionListPopover ? 'hideHandler' : 'showHandler']()
-                })
-            },
-            // 跳转到具体的版本
-            onJumpToSpecificVersion (version) {
-                this.$emit('jump-to-specific-version', version)
             }
         }
     }
@@ -229,29 +187,6 @@
         .card-operation {
             visibility: visible;
         }
-    }
-}
-.search-version-container {
-    max-height: 200px;
-    min-height: 60px;
-    overflow-y: auto;
-}
-.search-version-item {
-    display: block;
-    height: 30px;
-    line-height: 30px;
-    border-radius: 2px;
-    background-color: var(--bgLightColor);
-    cursor: pointer;
-    min-width: 120px;
-    max-width: 180px;
-    margin-bottom:10px;
-    &:first-child {
-        margin-top: 10px;
-    }
-    &:hover{
-        background-color: var(--primaryColor);;
-        color: #fff;
     }
 }
 </style>

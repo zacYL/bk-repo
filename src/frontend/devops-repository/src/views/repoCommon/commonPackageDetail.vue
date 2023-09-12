@@ -164,6 +164,8 @@
             }
         },
         created () {
+            // 制品搜索且选择了指定的版本详情时需要默认触发版本的搜索
+            this.versionInput = this.$route.query.searchFlag ? this.version : ''
             this.getPackageInfoHandler()
             this.handlerPaginationChange()
             this.refreshSupportPackageTypeList()

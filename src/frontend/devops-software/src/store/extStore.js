@@ -150,7 +150,7 @@ export default {
                 'repository/api/software/repo/list',
                 {
                     params: {
-                        type: type || ''
+                        ...(type || '')
                     }
                 }
             )

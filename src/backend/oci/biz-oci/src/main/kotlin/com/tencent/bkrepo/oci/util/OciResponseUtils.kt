@@ -49,6 +49,7 @@ import com.tencent.bkrepo.oci.constant.HTTP_PROTOCOL_HTTP
 import com.tencent.bkrepo.oci.constant.HTTP_PROTOCOL_HTTPS
 import com.tencent.bkrepo.oci.constant.OCI_API_PREFIX
 import com.tencent.bkrepo.oci.pojo.digest.OciDigest
+import com.tencent.bkrepo.oci.pojo.response.ResponseProperty
 import org.springframework.http.HttpHeaders
 import java.io.UnsupportedEncodingException
 import java.net.URI
@@ -63,7 +64,7 @@ import javax.ws.rs.core.UriBuilder
 object OciResponseUtils {
     private const val LOCAL_HOST = "localhost"
 
-    fun getResponseURI(request: HttpServletRequest, enableHttp: Boolean): URI {
+    fun getResponseURI(request: HttpServletRequest, enableHttps: Boolean, domain: String): URI {
         val hostHeaders = request.getHeaders(HOST)
         var host = LOCAL_HOST
         if (hostHeaders != null) {
@@ -71,7 +72,11 @@ object OciResponseUtils {
             val parts = (headers[0] as String).split(":".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
             host = parts[0]
         }
-        val builder = UriBuilder.fromPath(OCI_API_PREFIX).host(host).scheme(getProtocol(request, enableHttp))
+        // domain为ip,port组合
+        if (domain.split(":").size > 1) {
+            host = domain
+        }
+        val builder = UriBuilder.fromPath(OCI_API_PREFIX).host(host).scheme(getProtocol(request, enableHttps))
         return builder.build()
     }
 
@@ -79,8 +84,8 @@ object OciResponseUtils {
      * determine to return http protocol
      * prefix or https prefix
      */
-    private fun getProtocol(request: HttpServletRequest, enableHttp: Boolean): String {
-        if (enableHttp) return HTTP_PROTOCOL_HTTP
+    private fun getProtocol(request: HttpServletRequest, enableHttps: Boolean): String {
+        if (enableHttps) return HTTP_PROTOCOL_HTTPS
         val protocolHeaders = request.getHeaders(HTTP_FORWARDED_PROTO) ?: return HTTP_PROTOCOL_HTTP
         return if (protocolHeaders.hasMoreElements()) {
             protocolHeaders.iterator().next() as String
@@ -95,58 +100,11 @@ object OciResponseUtils {
         )
     }
 
-    fun buildUploadResponse(domain: String, digest: OciDigest, locationStr: String, response: HttpServletResponse) {
+    fun buildUploadResponse(domain: String, responseProperty: ResponseProperty, response: HttpServletResponse) {
         uploadResponse(
             domain = domain,
             response = response,
-            status = HttpStatus.CREATED,
-            locationStr = locationStr,
-            digest = digest.toString(),
-            contentLength = 0
-        )
-    }
-
-    fun buildBlobUploadUUIDResponse(domain: String, uuid: String, locationStr: String, response: HttpServletResponse) {
-        uploadResponse(
-            domain = domain,
-            response = response,
-            status = HttpStatus.ACCEPTED,
-            locationStr = locationStr,
-            uuid = uuid,
-            contentLength = 0
-        )
-    }
-
-    fun buildBlobUploadPatchResponse(
-        domain: String,
-        uuid: String,
-        locationStr: String,
-        status: HttpStatus = HttpStatus.ACCEPTED,
-        response: HttpServletResponse,
-        range: Long
-    ) {
-        uploadResponse(
-            domain = domain,
-            response = response,
-            status = status,
-            locationStr = locationStr,
-            uuid = uuid,
-            contentLength = 0,
-            range = range
-        )
-    }
-
-    fun buildBlobMountResponse(
-        domain: String,
-        locationStr: String,
-        status: HttpStatus = HttpStatus.ACCEPTED,
-        response: HttpServletResponse
-    ) {
-        uploadResponse(
-            domain = domain,
-            response = response,
-            status = status,
-            locationStr = locationStr
+            responseProperty = responseProperty
         )
     }
 
@@ -171,29 +129,26 @@ object OciResponseUtils {
     private fun uploadResponse(
         domain: String,
         response: HttpServletResponse = HttpContextHolder.getResponse(),
-        status: HttpStatus,
-        locationStr: String,
-        digest: String? = null,
-        uuid: String? = null,
-        range: Long? = null,
-        contentLength: Int? = null
+        responseProperty: ResponseProperty
     ) {
-        val location = getResponseLocationURI(locationStr, domain)
-        response.status = status.value
-        response.addHeader(DOCKER_HEADER_API_VERSION, DOCKER_API_VERSION)
-        digest?.let {
-            response.addHeader(DOCKER_CONTENT_DIGEST, digest)
-        }
-        response.addHeader(HttpHeaders.LOCATION, location)
-        uuid?.let {
-            response.addHeader(BLOB_UPLOAD_SESSION_ID, uuid)
-            response.addHeader(DOCKER_UPLOAD_UUID, uuid)
-        }
-        contentLength?.let {
-            response.addHeader(CONTENT_LENGTH, contentLength.toString())
-        }
-        range?.let {
-            response.addHeader(RANGE, "0-${range - 1}")
+        with(responseProperty) {
+            val location = getResponseLocationURI(location!!, domain)
+            response.status = status!!.value
+            response.addHeader(DOCKER_HEADER_API_VERSION, DOCKER_API_VERSION)
+            digest?.let {
+                response.addHeader(DOCKER_CONTENT_DIGEST, digest.toString())
+            }
+            response.addHeader(HttpHeaders.LOCATION, location)
+            uuid?.let {
+                response.addHeader(BLOB_UPLOAD_SESSION_ID, uuid)
+                response.addHeader(DOCKER_UPLOAD_UUID, uuid)
+            }
+            contentLength?.let {
+                response.addHeader(CONTENT_LENGTH, contentLength.toString())
+            }
+            range?.let {
+                response.addHeader(RANGE, "0-${range!! - 1}")
+            }
         }
     }
 

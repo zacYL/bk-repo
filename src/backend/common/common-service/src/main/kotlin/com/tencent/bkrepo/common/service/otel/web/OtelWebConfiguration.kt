@@ -25,31 +25,22 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.oci.util
+package com.tencent.bkrepo.common.service.otel.web
 
-import com.tencent.bkrepo.common.api.util.JsonUtils
-import com.tencent.bkrepo.oci.constant.IMAGE_VERSION
-import com.tencent.bkrepo.oci.constant.MANIFEST_INVALID_CODE
-import com.tencent.bkrepo.oci.constant.MANIFEST_INVALID_DESCRIPTION
-import com.tencent.bkrepo.oci.constant.MANIFEST_INVALID_MESSAGE
-import com.tencent.bkrepo.oci.constant.MEDIA_TYPE
-import com.tencent.bkrepo.oci.exception.OciBadRequestException
-import com.tencent.bkrepo.oci.model.ManifestSchema2
-import java.io.InputStream
+import org.springframework.boot.web.servlet.FilterRegistrationBean
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import org.springframework.core.Ordered
 
-object OciAttributesUtils {
+@Configuration
+class OtelWebConfiguration {
 
-    fun streamToManifest(inputStream: InputStream): ManifestSchema2 {
-        try {
-            return JsonUtils.objectMapper.readValue(
-                inputStream, ManifestSchema2::class.java
-            )
-        } catch (e: Exception) {
-            throw OciBadRequestException(MANIFEST_INVALID_MESSAGE, MANIFEST_INVALID_CODE, MANIFEST_INVALID_DESCRIPTION)
-        }
-    }
-
-    fun createMetadata(mediaType: String, version: String = ""): Map<String, String> {
-        return mapOf(MEDIA_TYPE to mediaType, IMAGE_VERSION to version)
+    @Bean
+    fun otelWebFilter(): FilterRegistrationBean<OtelWebFilter> {
+        val registrationBean = FilterRegistrationBean<OtelWebFilter>()
+        registrationBean.filter = OtelWebFilter()
+        registrationBean.order = Ordered.HIGHEST_PRECEDENCE
+        registrationBean.addUrlPatterns("/*")
+        return registrationBean
     }
 }

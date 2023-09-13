@@ -37,6 +37,7 @@ import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.config.ArtifactConfigurer
 import com.tencent.bkrepo.common.artifact.constant.ARTIFACT_CONFIGURER
 import com.tencent.bkrepo.common.artifact.constant.ARTIFACT_INFO_KEY
+import com.tencent.bkrepo.common.artifact.constant.NODE_DETAIL_KEY
 import com.tencent.bkrepo.common.artifact.constant.PROJECT_ID
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_GLOBAL_PROJECT
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_VULDB_REPO
@@ -47,13 +48,17 @@ import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.repository.composite.CompositeRepository
 import com.tencent.bkrepo.common.artifact.repository.core.ArtifactRepository
+import com.tencent.bkrepo.common.security.http.core.HttpAuthSecurity
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
+import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.project.ProjectCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepoUpdateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
+import org.springframework.beans.factory.ObjectProvider
 import org.springframework.web.servlet.HandlerMapping
 import java.util.concurrent.TimeUnit
 import javax.servlet.http.HttpServletRequest
@@ -63,7 +68,8 @@ class ArtifactContextHolder(
     artifactConfigurers: List<ArtifactConfigurer>,
     compositeRepository: CompositeRepository,
     repositoryClient: RepositoryClient,
-    projectClient: ProjectClient
+    projectClient: ProjectClient,
+    nodeClient: NodeClient,
 ) {
 
     init {
@@ -71,6 +77,7 @@ class ArtifactContextHolder(
         Companion.compositeRepository = compositeRepository
         Companion.repositoryClient = repositoryClient
         Companion.projectClient = projectClient
+        Companion.nodeClient = nodeClient
         require(artifactConfigurers.isNotEmpty()) { "No ArtifactConfigurer found!" }
         artifactConfigurers.forEach {
             artifactConfigurerMap[it.getRepositoryType()] = it
@@ -82,13 +89,15 @@ class ArtifactContextHolder(
         private lateinit var compositeRepository: CompositeRepository
         private lateinit var repositoryClient: RepositoryClient
         private lateinit var projectClient: ProjectClient
+        private lateinit var nodeClient: NodeClient
+        private lateinit var httpAuthSecurity: ObjectProvider<HttpAuthSecurity>
 
         private val artifactConfigurerMap = mutableMapOf<RepositoryType, ArtifactConfigurer>()
         private val repositoryDetailCache = CacheBuilder.newBuilder()
             .maximumSize(1000)
             .expireAfterWrite(30, TimeUnit.SECONDS)
             .build<RepositoryId, RepositoryDetail>()
-
+        private val regex = Regex("""com\.tencent\.bkrepo\.(\w+)\..*""")
         /**
          * 获取当前服务对应的[ArtifactConfigurer]
          */
@@ -184,6 +193,26 @@ class ArtifactContextHolder(
             return repositoryDetailCache.get(repositoryId) {
                 queryRepoDetail(repositoryId)
             }
+        }
+
+        /**
+         * 获取url path。自动处理url前缀
+         * @param className 调用者的类名
+         * */
+        fun getUrlPath(className: String): String? {
+            val request = HttpContextHolder.getRequestOrNull() ?: return null
+            val realPath = request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE).toString()
+            val serviceName = regex.find(className)?.groupValues?.get(1)
+            val security = httpAuthSecurity.stream().filter {
+                it.prefix == "/$serviceName"
+            }.findFirst()
+            var path = realPath
+            security.ifPresent {
+                if (it.prefixEnabled) {
+                    path = realPath.removePrefix(it.prefix)
+                }
+            }
+            return path
         }
 
         /**
@@ -283,6 +312,29 @@ class ArtifactContextHolder(
                     )
                 )
             }
+        }
+
+        fun getNodeDetail(projectId: String? = null, repoName: String? = null, fullPath: String? = null): NodeDetail? {
+            val request = HttpContextHolder.getRequestOrNull() ?: return null
+            val artifactInfo = getArtifactInfo(request) ?: return null
+            val finalProjectId = projectId ?: artifactInfo.projectId
+            val finalRepoName = repoName ?: artifactInfo.repoName
+            val finalFullPath = fullPath ?: artifactInfo.getArtifactFullPath()
+
+            val attrKey = "$NODE_DETAIL_KEY:$finalProjectId:$finalRepoName$finalFullPath"
+            val nodeDetailAttribute = request.getAttribute(attrKey)
+            if (nodeDetailAttribute != null) {
+                require(nodeDetailAttribute is NodeDetail)
+                return nodeDetailAttribute
+            }
+
+            val nodeDetail = nodeClient.getNodeDetail(
+                projectId = finalProjectId,
+                repoName = finalRepoName,
+                fullPath = finalFullPath
+            ).data
+            nodeDetail?.let { request.setAttribute(attrKey, nodeDetail) }
+            return nodeDetail
         }
     }
 

@@ -29,7 +29,7 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.oci.controller.service
+package com.tencent.bkrepo.oci.controller.user
 
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
@@ -106,7 +106,7 @@ class OciBlobController(
     }
 
     /**
-     * 删除manifest文件
+     * 删除blob文件
      * 只能通过digest删除
      */
     @DeleteMapping(BOLBS_URL)

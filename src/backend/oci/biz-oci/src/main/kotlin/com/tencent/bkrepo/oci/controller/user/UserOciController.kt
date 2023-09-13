@@ -25,7 +25,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.oci.controller.service
+package com.tencent.bkrepo.oci.controller.user
 
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
@@ -41,13 +41,13 @@ import com.tencent.bkrepo.oci.constant.PAGE_NUMBER
 import com.tencent.bkrepo.oci.constant.PAGE_SIZE
 import com.tencent.bkrepo.oci.constant.USER_API_PREFIX
 import com.tencent.bkrepo.oci.pojo.artifact.OciArtifactInfo
+import com.tencent.bkrepo.oci.pojo.artifact.OciArtifactInfo.Companion.OCI_PACKAGE_DELETE_URL
 import com.tencent.bkrepo.oci.pojo.artifact.OciArtifactInfo.Companion.OCI_USER_MANIFEST_SUFFIX
 import com.tencent.bkrepo.oci.pojo.artifact.OciArtifactInfo.Companion.OCI_USER_REPO_SUFFIX
 import com.tencent.bkrepo.oci.pojo.artifact.OciArtifactInfo.Companion.OCI_USER_TAG_SUFFIX
+import com.tencent.bkrepo.oci.pojo.artifact.OciArtifactInfo.Companion.OCI_VERSION_DELETE_URL
 import com.tencent.bkrepo.oci.pojo.artifact.OciArtifactInfo.Companion.OCI_VERSION_DETAIL
 import com.tencent.bkrepo.oci.pojo.artifact.OciDeleteArtifactInfo
-import com.tencent.bkrepo.oci.pojo.artifact.OciDeleteArtifactInfo.Companion.OCI_PACKAGE_DELETE_URL
-import com.tencent.bkrepo.oci.pojo.artifact.OciDeleteArtifactInfo.Companion.OCI_VERSION_DELETE_URL
 import com.tencent.bkrepo.oci.pojo.artifact.OciManifestArtifactInfo
 import com.tencent.bkrepo.oci.pojo.response.OciImageResult
 import com.tencent.bkrepo.oci.pojo.response.OciTagResult

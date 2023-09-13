@@ -37,6 +37,7 @@ import com.tencent.bkrepo.common.artifact.api.DefaultArtifactInfo
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.repository.api.NodeClient
+import com.tencent.bkrepo.repository.pojo.node.NodeDeleteResult
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.node.NodeListOption
@@ -47,6 +48,7 @@ import com.tencent.bkrepo.repository.pojo.node.service.NodeMoveCopyRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeRenameRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeUpdateAccessDateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeUpdateRequest
+import com.tencent.bkrepo.repository.pojo.node.service.NodesDeleteRequest
 import com.tencent.bkrepo.repository.service.node.NodeSearchService
 import com.tencent.bkrepo.repository.service.node.NodeService
 import com.tencent.bkrepo.repository.service.repo.ProjectService
@@ -139,6 +141,10 @@ class NodeController(
         return ResponseBuilder.success()
     }
 
+    override fun deleteNodes(nodesDeleteRequest: NodesDeleteRequest): Response<NodeDeleteResult> {
+        return ResponseBuilder.success(nodeService.deleteNodes(nodesDeleteRequest))
+    }
+
     override fun computeSize(projectId: String, repoName: String, fullPath: String): Response<NodeSizeInfo> {
         val artifactInfo = DefaultArtifactInfo(projectId, repoName, fullPath)
         return ResponseBuilder.success(nodeService.computeSize(artifactInfo))
@@ -172,6 +178,19 @@ class NodeController(
             deep = deep
         )
         return ResponseBuilder.success(nodeService.listNode(artifactInfo, nodeListOption))
+    }
+
+    override fun getDeletedNodeDetail(
+        projectId: String, repoName: String, fullPath: String
+    ): Response<List<NodeDetail>> {
+        val artifactInfo = DefaultArtifactInfo(projectId, repoName, fullPath)
+        return ResponseBuilder.success(nodeService.getDeletedNodeDetail(artifactInfo))
+    }
+
+    override fun getDeletedNodeDetailBySha256(
+        projectId: String, repoName: String, sha256: String
+    ): Response<NodeDetail?> {
+        return ResponseBuilder.success(nodeService.getDeletedNodeDetailBySha256(projectId, repoName, sha256))
     }
 
     companion object {

@@ -29,14 +29,19 @@ package com.tencent.bkrepo.oci.util
 
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.security.util.SecurityUtils
+import com.tencent.bkrepo.oci.constant.BLOB_PATH_REFRESHED_KEY
+import com.tencent.bkrepo.oci.constant.DIGEST_LIST
 import com.tencent.bkrepo.oci.constant.IMAGE_VERSION
 import com.tencent.bkrepo.oci.constant.MEDIA_TYPE
 import com.tencent.bkrepo.oci.pojo.artifact.OciManifestArtifactInfo
 import com.tencent.bkrepo.oci.pojo.user.BasicInfo
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataSaveRequest
+import com.tencent.bkrepo.repository.pojo.metadata.packages.PackageMetadataSaveRequest
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
@@ -44,7 +49,6 @@ import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageUpdateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionUpdateRequest
-import java.time.format.DateTimeFormatter
 
 object ObjectBuildUtils {
 
@@ -55,15 +59,36 @@ object ObjectBuildUtils {
         fullPath: String,
         metadata: List<MetadataModel>? = null
     ): NodeCreateRequest {
+        return buildNodeCreateRequest(
+            projectId = projectId,
+            repoName = repoName,
+            size = artifactFile.getSize(),
+            sha256 = artifactFile.getFileSha256(),
+            md5 = artifactFile.getFileMd5(),
+            fullPath = fullPath,
+            metadata = metadata
+        )
+    }
+
+    fun buildNodeCreateRequest(
+        projectId: String,
+        repoName: String,
+        size: Long,
+        fullPath: String,
+        sha256: String,
+        md5: String,
+        metadata: List<MetadataModel>? = null,
+        userId: String = SecurityUtils.getUserId()
+    ): NodeCreateRequest {
         return NodeCreateRequest(
             projectId = projectId,
             repoName = repoName,
             folder = false,
             fullPath = fullPath,
-            size = artifactFile.getSize(),
-            sha256 = artifactFile.getFileSha256(),
-            md5 = artifactFile.getFileMd5(),
-            operator = SecurityUtils.getUserId(),
+            size = size,
+            sha256 = sha256,
+            md5 = md5,
+            operator = userId,
             overwrite = true,
             nodeMetadata = metadata
         )
@@ -72,15 +97,16 @@ object ObjectBuildUtils {
     fun buildMetadata(
         mediaType: String,
         version: String?,
-        yamlData: Map<String, Any>? = null
+        digestList: List<String>? = null,
+        sourceType: ArtifactChannel? = null
     ): MutableMap<String, Any> {
         return mutableMapOf<String, Any>(
-            MEDIA_TYPE to mediaType
+            MEDIA_TYPE to mediaType,
+            BLOB_PATH_REFRESHED_KEY to true
         ).apply {
             version?.let { this.put(IMAGE_VERSION, version) }
-            yamlData?.let {
-                this.putAll(yamlData)
-            }
+            digestList?.let { this.put(DIGEST_LIST, digestList) }
+            sourceType?.let { this.put(SOURCE_TYPE, sourceType) }
         }
     }
 
@@ -88,15 +114,35 @@ object ObjectBuildUtils {
         projectId: String,
         repoName: String,
         fullPath: String,
+        userId: String,
         metadata: Map<String, Any>? = null
-    ): MetadataSaveRequest {
-        val metadataModels = metadata?.map { MetadataModel(key = it.key, value = it.value, system = true, display = true) }
+        ): MetadataSaveRequest {
+        val metadataModels = metadata?.map { MetadataModel(key = it.key, value = it.value, system = true) }
         return MetadataSaveRequest(
             projectId = projectId,
             repoName = repoName,
             fullPath = fullPath,
             nodeMetadata = metadataModels,
-            operator = SecurityUtils.getUserId()
+            operator = userId
+        )
+    }
+
+    fun buildPackageMetadataSaveRequest(
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        version: String,
+        userId: String,
+        metadata: Map<String, Any>? = null
+    ): PackageMetadataSaveRequest {
+        val metadataModels = metadata?.map { MetadataModel(key = it.key, value = it.value, system = true) }
+        return PackageMetadataSaveRequest(
+            projectId = projectId,
+            repoName = repoName,
+            packageKey = packageKey,
+            version = version,
+            versionMetadata = metadataModels,
+            operator = userId
         )
     }
 
@@ -107,7 +153,7 @@ object ObjectBuildUtils {
         size: Long,
         manifestPath: String,
         repoType: String,
-        metadata: Map<String, Any>? = null
+        userId: String
     ): PackageVersionCreateRequest {
         with(ociArtifactInfo) {
             // 兼容多仓库类型支持
@@ -123,9 +169,8 @@ object ObjectBuildUtils {
                 size = size,
                 artifactPath = manifestPath,
                 manifestPath = manifestPath,
-                packageMetadata = metadata?.map { MetadataModel(key = it.key, value = it.value) },
                 overwrite = true,
-                createdBy = SecurityUtils.getUserId()
+                createdBy = userId
             )
         }
     }
@@ -135,7 +180,6 @@ object ObjectBuildUtils {
         version: String,
         size: Long,
         manifestPath: String,
-        metadata: Map<String, Any>? = null,
         packageKey: String
     ): PackageVersionUpdateRequest {
         with(ociArtifactInfo) {
@@ -146,8 +190,7 @@ object ObjectBuildUtils {
                 versionName = version,
                 size = size,
                 artifactPath = manifestPath,
-                manifestPath = manifestPath,
-                packageMetadata = metadata?.map { MetadataModel(key = it.key, value = it.value) }
+                manifestPath = manifestPath
             )
         }
     }
@@ -182,9 +225,9 @@ object ObjectBuildUtils {
                 repoName = repoName,
                 downloadCount = packageVersion.downloads,
                 createdBy = createdBy,
-                createdDate = packageVersion.createdDate.format(DateTimeFormatter.ISO_DATE_TIME),
+                createdDate = createdDate,
                 lastModifiedBy = lastModifiedBy,
-                lastModifiedDate = packageVersion.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME)
+                lastModifiedDate = lastModifiedDate
             )
         }
     }

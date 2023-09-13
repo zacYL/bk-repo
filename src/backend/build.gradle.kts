@@ -46,6 +46,12 @@ allprojects {
     apply(plugin = "jacoco")
 
     dependencyManagement {
+        applyMavenExclusions(false)
+
+        imports {
+            mavenBom("org.springframework.cloud:spring-cloud-sleuth-otel-dependencies:${Versions.SleuthOtel}")
+        }
+
         dependencies {
             dependency("com.github.zafarkhaja:java-semver:${Versions.JavaSemver}")
             dependency("org.apache.skywalking:apm-toolkit-logback-1.x:${Versions.SkyWalkingApmToolkit}")

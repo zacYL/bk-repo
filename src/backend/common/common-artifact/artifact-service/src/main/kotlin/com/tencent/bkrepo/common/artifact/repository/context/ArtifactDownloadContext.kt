@@ -31,15 +31,16 @@
 
 package com.tencent.bkrepo.common.artifact.repository.context
 
+import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.constant.DownloadInterceptorType
 import com.tencent.bkrepo.common.artifact.constant.REPO_KEY
 import com.tencent.bkrepo.common.artifact.interceptor.DownloadInterceptor
 import com.tencent.bkrepo.common.artifact.interceptor.DownloadInterceptorFactory
-import com.tencent.bkrepo.common.artifact.interceptor.impl.ForbidStatusInterceptor
 import com.tencent.bkrepo.common.security.util.SecurityUtils
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
+import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
-import org.slf4j.LoggerFactory
 
 /**
  * 构件下载context
@@ -56,31 +57,15 @@ open class ArtifactDownloadContext(
 
     val repo = repo ?: request.getAttribute(REPO_KEY) as RepositoryDetail
     val artifacts = artifacts
+    var shareUserId: String = StringPool.EMPTY
 
     @Suppress("UNCHECKED_CAST")
-    fun getInterceptors(): List<DownloadInterceptor<*>> {
-        val interceptorList = mutableListOf<DownloadInterceptor<*>>()
-        try {
-            val settings = repo.configuration.settings
-            val interceptors = settings[INTERCEPTORS] as? List<Map<String, Any>>
-            interceptors?.forEach {
-                val type: DownloadInterceptorType = DownloadInterceptorType.valueOf(it[TYPE].toString())
-                val rules: Map<String, Any> by it
-                val interceptor = DownloadInterceptorFactory.buildInterceptor(type, rules)
-                interceptor?.let { interceptorList.add(interceptor) }
-            }
-            interceptorList.add(ForbidStatusInterceptor())
-            logger.debug("get repo[${repo.projectId}/${repo.name}] download interceptor: $interceptorList")
-        } catch (e: Exception) {
-            logger.warn("fail to get repo[${repo.projectId}/${repo.name}] download interceptor: $e")
-        }
-        return interceptorList
+    fun getInterceptors(): List<DownloadInterceptor<*, NodeDetail>> {
+        return DownloadInterceptorFactory.buildInterceptors(repo.configuration.settings)
     }
 
-    companion object {
-        private val logger = LoggerFactory.getLogger(ArtifactDownloadContext::class.java)
-        private const val INTERCEPTORS = "interceptors"
-        private const val TYPE = "type"
+    fun getPackageInterceptors(): List<DownloadInterceptor<*, PackageVersion>> {
+        return listOf(DownloadInterceptorFactory.buildPackageInterceptor(DownloadInterceptorType.PACKAGE_FORBID)!!)
     }
 
 }

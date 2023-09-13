@@ -34,7 +34,13 @@ import com.tencent.bkrepo.repository.model.TNode
 import com.tencent.bkrepo.repository.pojo.node.NodeListOption
 import org.bson.types.ObjectId
 import org.springframework.data.domain.Sort
-import org.springframework.data.mongodb.core.query.*
+import org.springframework.data.mongodb.core.query.Criteria
+import org.springframework.data.mongodb.core.query.Query
+import org.springframework.data.mongodb.core.query.Update
+import org.springframework.data.mongodb.core.query.and
+import org.springframework.data.mongodb.core.query.inValues
+import org.springframework.data.mongodb.core.query.isEqualTo
+import org.springframework.data.mongodb.core.query.where
 import java.time.LocalDateTime
 
 /**
@@ -116,6 +122,17 @@ object NodeQueryHelper {
         val criteria = where(TNode::projectId).isEqualTo(projectId)
             .and(TNode::repoName).isEqualTo(repoName)
             .and(TNode::fullPath).isEqualTo(toFullPath(fullPath))
+            .and(TNode::deleted).ne(null)
+        return Query(criteria).with(Sort.by(Sort.Direction.DESC, TNode::deleted.name))
+    }
+
+    /**
+     * 通过sha256查询被删除节点详情
+     */
+    fun nodeDeletedPointListQueryBySha256(projectId: String, repoName: String, sha256: String): Query {
+        val criteria = where(TNode::projectId).isEqualTo(projectId)
+            .and(TNode::repoName).isEqualTo(repoName)
+            .and(TNode::sha256).isEqualTo(sha256)
             .and(TNode::deleted).ne(null)
         return Query(criteria).with(Sort.by(Sort.Direction.DESC, TNode::deleted.name))
     }

@@ -47,6 +47,11 @@ const val ARTIFACT_INFO_KEY = "artifact"
 const val ARTIFACT_CONFIGURER = "artifact-configurer"
 
 /**
+ * 查询构件节点信息后许如request attributes的key
+ */
+const val NODE_DETAIL_KEY = "node-detail"
+
+/**
  * 项目id字段
  */
 const val PROJECT_ID = "projectId"
@@ -146,3 +151,6 @@ const val SCAN_STATUS = "scanStatus"
  * 元数据KEY保留字，仅允许系统使用
  */
 val RESERVED_KEY = setOf(SCAN_STATUS, FORBID_STATUS, FORBID_USER, FORBID_TYPE, QUALITY_STATUS)
+
+const val METADATA_KEY_PACKAGE_NAME = "packageName"
+const val METADATA_KEY_PACKAGE_VERSION = "packageVersion"

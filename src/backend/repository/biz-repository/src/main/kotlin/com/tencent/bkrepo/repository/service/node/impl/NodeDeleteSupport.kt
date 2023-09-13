@@ -37,14 +37,17 @@ import com.tencent.bkrepo.repository.model.TNode
 import com.tencent.bkrepo.repository.pojo.node.NodeDeleteResult
 import com.tencent.bkrepo.repository.pojo.node.NodeListOption
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
+import com.tencent.bkrepo.repository.pojo.node.service.NodesDeleteRequest
 import com.tencent.bkrepo.repository.service.node.NodeDeleteOperation
 import com.tencent.bkrepo.repository.service.repo.QuotaService
 import com.tencent.bkrepo.repository.util.NodeEventFactory.buildDeletedEvent
 import com.tencent.bkrepo.repository.util.NodeQueryHelper
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
+import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.and
+import org.springframework.data.mongodb.core.query.inValues
 import org.springframework.data.mongodb.core.query.isEqualTo
 import org.springframework.data.mongodb.core.query.where
 import java.time.LocalDateTime
@@ -69,14 +72,27 @@ open class NodeDeleteSupport(
         }
     }
 
+    override fun deleteNodes(nodesDeleteRequest: NodesDeleteRequest): NodeDeleteResult {
+        with(nodesDeleteRequest) {
+            if (fullPaths.isEmpty()) {
+                throw ErrorCodeException(CommonMessageCode.PARAMETER_EMPTY, "fullPaths is empty.")
+            }
+            fullPaths.forEach {
+                // 不允许直接删除根目录
+                if (PathUtils.isRoot(it)) {
+                    throw ErrorCodeException(CommonMessageCode.METHOD_NOT_ALLOWED, "Can't delete root node.")
+                }
+            }
+            return deleteByPaths(projectId, repoName, fullPaths, operator)
+        }
+    }
+
     override fun deleteByPath(
         projectId: String,
         repoName: String,
         fullPath: String,
         operator: String
     ): NodeDeleteResult {
-        var deletedSize = 0L
-        var deletedNum = 0L
         val normalizedFullPath = PathUtils.normalizeFullPath(fullPath)
         val normalizedPath = PathUtils.toPath(normalizedFullPath)
         val escapedPath = PathUtils.escapeRegex(normalizedPath)
@@ -88,22 +104,30 @@ open class NodeDeleteSupport(
                 where(TNode::fullPath).isEqualTo(normalizedFullPath)
             )
         val query = Query(criteria)
-        val deleteTime = LocalDateTime.now()
-        try {
-            val updateResult = nodeDao.updateMulti(query, NodeQueryHelper.nodeDeleteUpdate(operator, deleteTime))
-            deletedNum = updateResult.modifiedCount
-            deletedSize = nodeBaseService.aggregateComputeSize(criteria.and(TNode::deleted).isEqualTo(deleteTime))
-            quotaService.decreaseUsedVolume(projectId, repoName, deletedSize)
-            // 更新父目录的修改信息
-            val parentFullPath = PathUtils.toFullPath(PathUtils.resolveParent(fullPath))
-            nodeBaseService.updateModifiedInfo(projectId, repoName, parentFullPath, operator, deleteTime)
-            publishEvent(buildDeletedEvent(projectId, repoName, fullPath, operator))
-        } catch (exception: DuplicateKeyException) {
-            logger.warn("Delete node[/$projectId/$repoName$fullPath] by [$operator] error: [${exception.message}]")
+        return delete(query, operator, criteria, projectId, repoName, listOf(fullPath))
+    }
+
+    override fun deleteByPaths(
+        projectId: String,
+        repoName: String,
+        fullPaths: List<String>,
+        operator: String
+    ): NodeDeleteResult {
+        val normalizedFullPaths = fullPaths.map { PathUtils.normalizeFullPath(it) }
+        val orOperation = mutableListOf(
+            where(TNode::fullPath).inValues(normalizedFullPaths)
+        )
+        normalizedFullPaths.forEach {
+            val normalizedPath = PathUtils.toPath(it)
+            val escapedPath = PathUtils.escapeRegex(normalizedPath)
+            orOperation.add(where(TNode::fullPath).regex("^$escapedPath"))
         }
-        logger.info("Delete node[/$projectId/$repoName$fullPath] by [$operator] success." +
-            "$deletedNum nodes have been deleted. The size is ${HumanReadable.size(deletedSize)}")
-        return NodeDeleteResult(deletedNum, deletedSize)
+        val criteria = where(TNode::projectId).isEqualTo(projectId)
+            .and(TNode::repoName).isEqualTo(repoName)
+            .and(TNode::deleted).isEqualTo(null)
+            .orOperator(*orOperation.toTypedArray())
+        val query = Query(criteria)
+        return delete(query, operator, criteria, projectId, repoName, fullPaths)
     }
 
     override fun deleteBeforeDate(
@@ -112,32 +136,62 @@ open class NodeDeleteSupport(
         date: LocalDateTime,
         operator: String
     ): NodeDeleteResult {
-        var deletedSize = 0L
-        var deletedNum = 0L
         val option = NodeListOption(includeFolder = false, deep = true)
         val criteria = NodeQueryHelper.nodeListCriteria(projectId, repoName, PathUtils.ROOT, option)
             .and(TNode::createdDate).lt(date)
         val query = Query(criteria)
+        return delete(query, operator, criteria, projectId, repoName)
+    }
+
+    private fun delete(
+        query: Query,
+        operator: String,
+        criteria: Criteria,
+        projectId: String,
+        repoName: String,
+        fullPaths: List<String>? = null
+    ): NodeDeleteResult {
+        var deletedNum = 0L
+        var deletedSize = 0L
         val deleteTime = LocalDateTime.now()
+        var existFullPaths: List<String>? = null
+        val resourceKey = if (fullPaths == null) {
+            "/$projectId/$repoName"
+        } else if (fullPaths.size == 1) {
+            "/$projectId/$repoName${fullPaths[0]}"
+        } else {
+            existFullPaths = nodeBaseService.listExistFullPath(projectId, repoName, fullPaths)
+            "/$projectId/$repoName$existFullPaths"
+        }
         try {
-            val parentFullPaths = nodeDao.find(query)
-                .map { PathUtils.toFullPath(PathUtils.resolveParent(it.fullPath)) }
-                .distinct()
-                .filterNot { PathUtils.isRoot(it) }
             val updateResult = nodeDao.updateMulti(query, NodeQueryHelper.nodeDeleteUpdate(operator, deleteTime))
             deletedNum = updateResult.modifiedCount
+            if (deletedNum == 0L) {
+                return NodeDeleteResult(deletedNum, deletedSize, deleteTime)
+            }
+            // 获取被删除节点的父目录并更新修改信息
+            val parentFullPaths = if (fullPaths?.size == 1) {
+                nodeBaseService.cancelUpdateModifiedInfo(projectId, repoName, fullPaths)
+                listOf(PathUtils.toFullPath(PathUtils.resolveParent(fullPaths[0])))
+            } else {
+                existFullPaths?.map { PathUtils.toFullPath(PathUtils.resolveParent(it)) }
+                    ?.distinct()?.filterNot { PathUtils.isRoot(it) }
+                    ?.also { nodeBaseService.cancelUpdateModifiedInfo(projectId, repoName, it) }
+            }
+            parentFullPaths?.forEach {
+                nodeBaseService.updateModifiedInfo(projectId, repoName, it, operator, deleteTime)
+            }
             deletedSize = nodeBaseService.aggregateComputeSize(criteria.and(TNode::deleted).isEqualTo(deleteTime))
             quotaService.decreaseUsedVolume(projectId, repoName, deletedSize)
-            // 批量更新上层目录的修改信息
-            val parentNodeQuery = NodeQueryHelper.nodeQuery(projectId, repoName, parentFullPaths)
-            val parentNodeUpdate = NodeQueryHelper.update(operator)
-            nodeDao.updateMulti(parentNodeQuery, parentNodeUpdate)
+            fullPaths?.forEach { publishEvent(buildDeletedEvent(projectId, repoName, it, operator)) }
         } catch (exception: DuplicateKeyException) {
-            logger.warn("Delete node[/$projectId/$repoName] created before $date error: [${exception.message}]")
+            logger.warn("Delete node[$resourceKey] by [$operator] error: [${exception.message}]")
         }
-        logger.info("Delete node [/$projectId/$repoName] created before $date by [$operator] success. " +
-            "$deletedNum nodes have been deleted. The size is ${HumanReadable.size(deletedSize)}")
-        return NodeDeleteResult(deletedNum, deletedSize)
+        logger.info(
+            "Delete node[$resourceKey] by [$operator] success." +
+                "$deletedNum nodes have been deleted. The size is ${HumanReadable.size(deletedSize)}"
+        )
+        return NodeDeleteResult(deletedNum, deletedSize, deleteTime)
     }
 
     companion object {

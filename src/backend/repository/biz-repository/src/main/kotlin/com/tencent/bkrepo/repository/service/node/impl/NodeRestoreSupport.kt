@@ -38,16 +38,13 @@ import com.tencent.bkrepo.common.artifact.path.PathUtils.isRoot
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.repository.dao.NodeDao
 import com.tencent.bkrepo.repository.model.TNode
-import com.tencent.bkrepo.repository.pojo.node.ConflictStrategy
-import com.tencent.bkrepo.repository.pojo.node.NodeDeletedPoint
-import com.tencent.bkrepo.repository.pojo.node.NodeListOption
-import com.tencent.bkrepo.repository.pojo.node.NodeRestoreOption
-import com.tencent.bkrepo.repository.pojo.node.NodeRestoreResult
+import com.tencent.bkrepo.repository.pojo.node.*
 import com.tencent.bkrepo.repository.service.node.NodeRestoreOperation
 import com.tencent.bkrepo.repository.util.MetadataUtils
 import com.tencent.bkrepo.repository.util.NodeQueryHelper
 import com.tencent.bkrepo.repository.util.NodeQueryHelper.nodeDeletedFolderQuery
 import com.tencent.bkrepo.repository.util.NodeQueryHelper.nodeDeletedPointListQuery
+import com.tencent.bkrepo.repository.util.NodeQueryHelper.nodeDeletedPointListQueryBySha256
 import com.tencent.bkrepo.repository.util.NodeQueryHelper.nodeDeletedPointQuery
 import com.tencent.bkrepo.repository.util.NodeQueryHelper.nodeListQuery
 import com.tencent.bkrepo.repository.util.NodeQueryHelper.nodeQuery
@@ -66,6 +63,19 @@ open class NodeRestoreSupport(
 ) : NodeRestoreOperation {
 
     private val nodeDao: NodeDao = nodeBaseService.nodeDao
+
+    override fun getDeletedNodeDetail(artifact: ArtifactInfo): List<NodeDetail> {
+        with(artifact) {
+            val query = nodeDeletedPointListQuery(projectId, repoName, getArtifactFullPath())
+            return nodeDao.find(query).map { NodeBaseService.convertToDetail(it)!! }
+        }
+    }
+
+    override fun getDeletedNodeDetailBySha256(projectId: String, repoName: String, sha256: String): NodeDetail? {
+        val query = nodeDeletedPointListQueryBySha256(projectId, repoName, sha256)
+        val node = nodeDao.findOne(query)
+        return NodeBaseService.convertToDetail(node)
+    }
 
     override fun restoreNode(artifact: ArtifactInfo, nodeRestoreOption: NodeRestoreOption): NodeRestoreResult {
         with(resolveContext(artifact, nodeRestoreOption)) {

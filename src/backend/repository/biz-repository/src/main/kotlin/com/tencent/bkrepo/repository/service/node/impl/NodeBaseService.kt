@@ -27,6 +27,10 @@
 
 package com.tencent.bkrepo.repository.service.node.impl
 
+import com.google.common.cache.CacheBuilder
+import com.google.common.cache.RemovalCause
+import com.google.common.cache.RemovalListeners
+import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.Preconditions
@@ -61,9 +65,14 @@ import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Update
+import org.springframework.data.mongodb.core.query.where
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.Executors
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 
 /**
  * 节点基础服务，实现了CRUD基本操作
@@ -77,6 +86,37 @@ abstract class NodeBaseService(
     open val quotaService: QuotaService,
     open val repositoryProperties: RepositoryProperties
 ) : NodeService, NodeBaseOperation {
+
+    init {
+        // 定时清理过期缓存, 否则写入不频繁时可能很长时间也不触发数据库更新
+        scheduler.scheduleWithFixedDelay(
+            { lastModifiedInfoUpdateCache.cleanUp() },
+            UPDATE_LAST_MODIFIED_INFO_INTERVAL,
+            UPDATE_LAST_MODIFIED_INFO_INTERVAL,
+            TimeUnit.MINUTES
+        )
+    }
+
+    // 目录最后修改信息更新缓存, 缓存过期后才可能写入数据库
+    private val lastModifiedInfoUpdateCache = CacheBuilder.newBuilder()
+        .maximumSize(1000)
+        .expireAfterWrite(UPDATE_LAST_MODIFIED_INFO_INTERVAL, TimeUnit.MINUTES)
+        .removalListener(
+            RemovalListeners.asynchronous<Triple<String, String, String>, Pair<String, LocalDateTime>> (
+                {
+                    if (it.cause == RemovalCause.EXPIRED || it.cause == RemovalCause.SIZE) {
+                        val (projectId, repoName, fullPath) = it.key!!
+                        val (lastModifiedBy, lastModifiedDate) = it.value!!
+                        val query = NodeQueryHelper.nodeQuery(projectId, repoName, fullPath)
+                        query.addCriteria(where(TNode::createdDate).lt(lastModifiedDate))
+                        val update = NodeQueryHelper.update(lastModifiedBy, lastModifiedDate)
+                        nodeDao.updateFirst(query, update)
+                    }
+                },
+                updateLastModifiedInfoExecutor
+            )
+        )
+        .build<Triple<String, String, String>, Pair<String, LocalDateTime>>()
 
     override fun getNodeDetail(artifact: ArtifactInfo, repoType: String?): NodeDetail? {
         with(artifact) {
@@ -288,12 +328,19 @@ abstract class NodeBaseService(
         modifiedBy: String,
         modifiedDate: LocalDateTime = LocalDateTime.now()
     ) {
-        if (PathUtils.isRoot(fullPath)) {
-            return
+        if (!PathUtils.isRoot(fullPath)) {
+            lastModifiedInfoUpdateCache.put(Triple(projectId, repoName, fullPath), Pair(modifiedBy, modifiedDate))
         }
-        val query = NodeQueryHelper.nodeQuery(projectId, repoName, fullPath)
-        val update = NodeQueryHelper.update(modifiedBy, modifiedDate)
-        nodeDao.updateFirst(query, update)
+    }
+
+    fun cancelUpdateModifiedInfo(projectId: String, repoName: String, fullPathList: List<String>) {
+        val keys = lastModifiedInfoUpdateCache.asMap().keys.filter { key ->
+            key.first == projectId && key.second == repoName &&
+                fullPathList.any { key.third == it || key.third.startsWith(PathUtils.toPath(it)) }
+        }
+        if (keys.isNotEmpty()) {
+            lastModifiedInfoUpdateCache.invalidateAll(keys)
+        }
     }
 
     private fun checkConflictAndQuota(createRequest: NodeCreateRequest, fullPath: String) {
@@ -329,6 +376,20 @@ abstract class NodeBaseService(
     companion object {
         private val logger = LoggerFactory.getLogger(NodeServiceImpl::class.java)
 
+        private const val UPDATE_LAST_MODIFIED_INFO_INTERVAL = 5L
+        private val scheduler = Executors.newSingleThreadScheduledExecutor()
+
+        // 更新目录最后修改信息任务线程池
+        private val updateLastModifiedInfoExecutor = ThreadPoolExecutor(
+            4,
+            8,
+            60,
+            TimeUnit.SECONDS,
+            ArrayBlockingQueue(1024),
+            ThreadFactoryBuilder().setNameFormat("update-lastModified-info-%d").build(),
+            ThreadPoolExecutor.CallerRunsPolicy()
+        )
+
         private fun convert(tNode: TNode?): NodeInfo? {
             return tNode?.let {
                 val metadata = MetadataUtils.toMap(it.metadata)
@@ -357,7 +418,7 @@ abstract class NodeBaseService(
             }
         }
 
-        private fun convertToDetail(tNode: TNode?): NodeDetail? {
+        fun convertToDetail(tNode: TNode?): NodeDetail? {
             return convert(tNode)?.let { NodeDetail(it) }
         }
 

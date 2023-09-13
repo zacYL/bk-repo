@@ -38,7 +38,8 @@
                             <scan-tag v-if="isEnterprise && showRepoScan" class="ml10" :status="metadataMap.scanStatus"></scan-tag>
                             <forbid-tag class="ml10"
                                 v-if="metadataMap.forbidStatus"
-                                v-bind="metadataMap">
+                                :forbid-user="metadataMap.forbidUser"
+                                :forbid-type="metadataMap.forbidType">
                             </forbid-tag>
                         </template>
                     </span>

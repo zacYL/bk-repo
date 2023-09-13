@@ -12,7 +12,8 @@
                 </scan-tag>
                 <forbid-tag class="ml10"
                     v-if="((cardData.metadata || {}).forbidStatus || cardData.forbidStatus)"
-                    v-bind="cardData.metadata">
+                    :forbid-user="(cardData.metadata || {}).forbidUser"
+                    :forbid-type="(cardData.metadata || {}).forbidType">
                 </forbid-tag>
             </div>
             <span class="package-card-description text-overflow" :title="cardData.description">{{ cardData.description }}</span>

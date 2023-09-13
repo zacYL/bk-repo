@@ -275,5 +275,6 @@
     "artifactVersion": "Artifact version",
     "total":"Total",
     "per": " ",
-    "repo": "Repository"
+    "repo": "Repository",
+    "nodeAccount":"Node account"
 }

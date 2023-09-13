@@ -283,5 +283,6 @@
     "artifactVersion": "制品版本",
     "total":"共",
     "per": "个",
-    "repo": "所属仓库"
+    "repo": "所属仓库",
+    "nodeAccount":"节点账号"
 }

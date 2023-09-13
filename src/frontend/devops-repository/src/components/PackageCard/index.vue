@@ -16,7 +16,7 @@
                 </forbid-tag>
             </div>
             <span class="package-card-description text-overflow" :title="cardData.description">{{ cardData.description }}</span>
-            <div class="package-card-data">
+            <div class="package-card-data" :style="dynamicStyle">
                 <!-- 依赖源仓库 -->
                 <template v-if="cardData.type">
                     <div class="card-metadata" :title="`最新版本：${cardData.latest}`">
@@ -30,7 +30,7 @@
                     <div v-if="whetherRepoSearch" class="card-metadata" :title="$t('repo') + `：${cardData.repoName}`"></div>
                     <div class="card-metadata" :title="`版本数：${cardData.versions}`"></div>
                     <div class="card-metadata" :title="`下载统计：${cardData.downloads}`"></div>
-                    <div v-if="storeType === 'virtual'" class="card-metadata" :title="`仓库来源：${cardData.repoName}`"></div>
+                    <div v-if="whetherRepoVirtual" class="card-metadata" :title="`仓库来源：${cardData.repoName}`"></div>
                     <div v-if="showRepoSearchVersion" class="card-metadata" :title="$t('searchVersionResultInfo') + `： ${cardData.matchedVersions.length}`"></div>
                 </template>
                 <!-- generic 仓库 -->
@@ -42,7 +42,7 @@
             </div>
         </div>
         <div class="card-operation flex-center">
-            <Icon class="hover-btn" v-if="!readonly && !(storeType === 'virtual') " size="24" name="icon-delete" @click.native.stop="deleteCard" />
+            <Icon class="hover-btn" v-if="!readonly && !whetherRepoVirtual" size="24" name="icon-delete" @click.native.stop="deleteCard" />
             <operation-list
                 v-if="!cardData.type && !readonly"
                 :list="[
@@ -92,11 +92,37 @@
             storeType () {
                 return this.$route.query.storeType || ''
             },
+            // 是否是搜索状态，即是否需要显示搜索结果等字段
             showRepoSearchVersion () {
                 return this.showSearchVersionList && (this.cardData.matchedVersions || []).length > 0
             },
+            // 是否是制品搜索页面
             whetherRepoSearch () {
                 return this.$route.path.endsWith('repoSearch')
+            },
+            // 是否是虚拟仓库
+            whetherRepoVirtual () {
+                return this.storeType === 'virtual'
+            },
+            // grid 布局根据依赖源、搜索、虚拟仓库等 需要拆分为 几部分
+            dynamicStyle () {
+                let style = 4
+                if (this.whetherRepoSearch) {
+                    // 在制品搜索页面时
+                    if (this.cardData.type) {
+                        // 依赖源仓库，添加了所属仓库，所以默认值为 4 + 1 = 5
+                        // 搜索条件有值的状态下，因为添加了搜索结果字段，需要加 1
+                        style = this.showRepoSearchVersion ? 6 : 5
+                    } else {
+                        // generic 仓库
+                        style = 3
+                    }
+                } else {
+                    // 非搜索页面，因为generic仓库没有使用到此组件，只有依赖源仓库在用，所以最小为 4
+                    // 虚拟仓库，因为添加了仓库来源，需要加 1
+                    style = this.whetherRepoVirtual ? 5 : 4
+                }
+                return { 'grid-template': `auto / repeat( ${style}, 1fr)` }
             }
         },
         methods: {
@@ -163,7 +189,7 @@
         }
         .package-card-data {
             display: grid;
-            grid-template: auto / repeat(5, 1fr);
+            // grid-template: auto / repeat(6, 1fr);
             .card-metadata {
                 display: flex;
                 align-items: center;

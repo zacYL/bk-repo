@@ -31,6 +31,7 @@
 
 package com.tencent.bkrepo.repository.service.metadata
 
+import com.tencent.bkrepo.repository.pojo.metadata.LimitType
 import com.tencent.bkrepo.repository.pojo.metadata.packages.PackageMetadataDeleteRequest
 import com.tencent.bkrepo.repository.pojo.metadata.packages.PackageMetadataSaveRequest
 
@@ -55,11 +56,11 @@ interface PackageMetadataService {
     fun saveMetadata(request: PackageMetadataSaveRequest)
 
     /**
-     * 根据请求[request]保存或者更新禁用元数据
+     * 根据请求[request]保存或者更新限制元数据，只更新限制相关元数据（禁用/锁定）
      *
      * 如果元数据`key`已经存在则更新，否则创建新的
      */
-    fun addForbidMetadata(request: PackageMetadataSaveRequest)
+    fun addLimitMetadata(request: PackageMetadataSaveRequest, limitType: LimitType)
 
     /**
      * 根据请求[request]删除元数据

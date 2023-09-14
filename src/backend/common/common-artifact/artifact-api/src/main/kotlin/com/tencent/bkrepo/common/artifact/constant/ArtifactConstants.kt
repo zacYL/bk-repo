@@ -136,6 +136,11 @@ const val FORBID_STATUS = "forbidStatus"
 const val FORBID_USER = "forbidUser"
 const val FORBID_TYPE = "forbidType"
 
+// 制品锁定信息
+const val LOCK_STATUS = "lockStatus"
+const val LOCK_USER = "lockUser"
+const val LOCK_TYPE = "lockType"
+
 // 质量状态
 const val QUALITY_STATUS = "qualityRedLine"
 

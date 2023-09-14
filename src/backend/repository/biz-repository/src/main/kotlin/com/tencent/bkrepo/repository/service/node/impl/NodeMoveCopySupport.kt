@@ -33,6 +33,7 @@ package com.tencent.bkrepo.repository.service.node.impl
 
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
+import com.tencent.bkrepo.common.artifact.constant.LOCK_STATUS
 import com.tencent.bkrepo.common.artifact.constant.RESERVED_KEY
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.path.PathUtils
@@ -96,6 +97,9 @@ open class NodeMoveCopySupport(
             if (srcNode.folder) {
                 moveCopyFolder(this)
             } else {
+                if (srcNode.metadata?.any { it.key == LOCK_STATUS && it.value == true } == true) {
+                    throw ErrorCodeException(ArtifactMessageCode.NODE_LOCK, srcNode.fullPath)
+                }
                 moveCopyFile(this)
             }
             // 更新源节点父目录的最后修改信息
@@ -290,6 +294,21 @@ open class NodeMoveCopySupport(
      */
     private fun moveCopyFolder(context: MoveCopyContext) {
         with(context) {
+            //判断是否存在锁定文件
+            val normalizedFullPath = PathUtils.normalizeFullPath(srcNode.fullPath)
+            val normalizedPath = toPath(normalizedFullPath)
+            val escapedPath = PathUtils.escapeRegex(normalizedPath)
+            val folderNodeQuery = NodeQueryHelper.nodeFoldQuery(
+                projectId = srcNode.projectId,
+                repoName = srcNode.repoName,
+                escapedPath = escapedPath,
+                normalizedFullPath = normalizedFullPath
+            )
+            val node = nodeDao.find(folderNodeQuery)
+            if (node.any { it.metadata?.any { it.key == LOCK_STATUS && it.value == true } == true }) {
+                val errorCode = if (node.size == 1) ArtifactMessageCode.NODE_LOCK else ArtifactMessageCode.NODE_CHILD_LOCK
+                throw ErrorCodeException(errorCode, normalizedPath)
+            }
             // 目录 -> 文件: error
             if (dstNode?.folder == false) {
                 throw ErrorCodeException(ArtifactMessageCode.NODE_CONFLICT, dstFullPath)

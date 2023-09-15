@@ -42,6 +42,10 @@ allprojects {
     group = Release.Group
     version = Release.Version
 
+    repositories {
+        maven(url = "https://repo.spring.io/milestone")
+    }
+
     apply(plugin = "com.tencent.devops.boot")
     apply(plugin = "jacoco")
 

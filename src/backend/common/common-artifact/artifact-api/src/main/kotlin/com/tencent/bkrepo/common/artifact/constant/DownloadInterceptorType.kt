@@ -36,5 +36,9 @@ enum class DownloadInterceptorType {
     WEB,
     MOBILE,
     OFFICE_NETWORK,
+    NODE_FORBID,
+    PACKAGE_FORBID,
+    NODE_LOCK,
+    PACKAGE_LOCK
     ;
 }

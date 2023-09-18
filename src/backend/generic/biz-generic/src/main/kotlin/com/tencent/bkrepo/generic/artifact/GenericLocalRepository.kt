@@ -54,15 +54,7 @@ import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.service.util.HeaderUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
-import com.tencent.bkrepo.generic.constant.BKREPO_META
-import com.tencent.bkrepo.generic.constant.BKREPO_META_PREFIX
-import com.tencent.bkrepo.generic.constant.GenericMessageCode
-import com.tencent.bkrepo.generic.constant.HEADER_EXPIRES
-import com.tencent.bkrepo.generic.constant.HEADER_MD5
-import com.tencent.bkrepo.generic.constant.HEADER_OVERWRITE
-import com.tencent.bkrepo.generic.constant.HEADER_SEQUENCE
-import com.tencent.bkrepo.generic.constant.HEADER_SHA256
-import com.tencent.bkrepo.generic.constant.HEADER_UPLOAD_ID
+import com.tencent.bkrepo.generic.constant.*
 import com.tencent.bkrepo.repository.constant.NODE_DETAIL_LIST_KEY
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
@@ -73,7 +65,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.util.unit.DataSize
 import java.net.URLDecoder
-import java.util.Base64
+import java.util.*
 import javax.servlet.http.HttpServletRequest
 
 @Component
@@ -341,10 +333,6 @@ class GenericLocalRepository : LocalRepository() {
         return ArtifactResource(nodeMap, srcRepo, node, useDisposition = true)
     }
 
-    private fun downloadIntercept(context: ArtifactDownloadContext, nodeDetail: NodeDetail) {
-        val interceptors = context.getInterceptors()
-        interceptors.forEach { it.intercept(nodeDetail) }
-    }
 
     private fun getNodeDetailsFromReq(allowFolder: Boolean): List<NodeDetail>? {
         val nodeDetailList = HttpContextHolder.getRequest().getAttribute(NODE_DETAIL_LIST_KEY) as? List<NodeDetail>

@@ -27,27 +27,31 @@
 
 package com.tencent.bkrepo.common.artifact.interceptor.impl
 
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
-import com.tencent.bkrepo.common.artifact.exception.ArtifactDownloadForbiddenByBusinessException
 import com.tencent.bkrepo.common.artifact.interceptor.DownloadInterceptor
-import com.tencent.bkrepo.repository.pojo.node.NodeDetail
+import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 
 /**
  * 制品禁用拦截器
  */
-class ForbidStatusInterceptor : DownloadInterceptor<Any>(emptyMap()) {
+abstract class ForbidStatusInterceptor<A> : DownloadInterceptor<Any, A>(emptyMap()) {
 
     override fun parseRule() {
         throw UnsupportedOperationException()
     }
 
-    override fun matcher(node: NodeDetail, rule: Any): Boolean {
+    override fun matcher(artifact: A, rule: Any): Boolean {
         throw UnsupportedOperationException()
     }
 
-    override fun intercept(node: NodeDetail) {
-        if (node.metadata[FORBID_STATUS] == true) {
-            throw ArtifactDownloadForbiddenByBusinessException(node.fullPath)
+    override fun intercept(projectId: String, artifact: A) {
+        if (artifactMetadata(artifact)[FORBID_STATUS] == true) {
+            throw ErrorCodeException(ArtifactMessageCode.ARTIFACT_FORBIDDEN, artifactFullPath(artifact))
         }
     }
+
+    abstract fun artifactMetadata(artifact: A): Map<String, Any>
+
+    abstract fun artifactFullPath(artifact: A): String
 }

@@ -44,16 +44,7 @@ import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.artifact.util.FileNameParser
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
-import com.tencent.bkrepo.helm.constants.CHART
-import com.tencent.bkrepo.helm.constants.FILE_TYPE
-import com.tencent.bkrepo.helm.constants.FORCE
-import com.tencent.bkrepo.helm.constants.FULL_PATH
-import com.tencent.bkrepo.helm.constants.META_DETAIL
-import com.tencent.bkrepo.helm.constants.NAME
-import com.tencent.bkrepo.helm.constants.OVERWRITE
-import com.tencent.bkrepo.helm.constants.PROV
-import com.tencent.bkrepo.helm.constants.SIZE
-import com.tencent.bkrepo.helm.constants.VERSION
+import com.tencent.bkrepo.helm.constants.*
 import com.tencent.bkrepo.helm.exception.HelmBadRequestException
 import com.tencent.bkrepo.helm.exception.HelmFileAlreadyExistsException
 import com.tencent.bkrepo.helm.exception.HelmFileNotFoundException
@@ -70,7 +61,9 @@ import com.tencent.bkrepo.helm.utils.HelmUtils
 import com.tencent.bkrepo.helm.utils.ObjectBuilderUtil
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
+import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -170,6 +163,8 @@ class HelmLocalRepository(
         node?.let {
             node.metadata[NAME]?.let { context.putAttribute(NAME, it) }
             node.metadata[VERSION]?.let { context.putAttribute(VERSION, it) }
+            downloadIntercept(context, node)
+            packageVersion(context, node)?.let { packageVersion -> downloadIntercept(context, packageVersion) }
         }
         val inputStream = storageManager.loadArtifactInputStream(node, context.storageCredentials)
         inputStream?.let {
@@ -237,6 +232,14 @@ class HelmLocalRepository(
                 )
             }
             publishEvent(event)
+        }
+    }
+    private fun packageVersion(context: ArtifactDownloadContext, node: NodeDetail): PackageVersion? {
+        with(context) {
+            val packageName = node.metadata[NAME] ?: return null
+            val packageVersion = node.metadata[VERSION] ?: return null
+            val packageKey = PackageKeys.ofHelm(packageName.toString())
+            return packageClient.findVersionByName(projectId, repoName, packageKey, packageVersion.toString()).data
         }
     }
 

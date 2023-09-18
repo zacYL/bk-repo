@@ -36,6 +36,8 @@ import com.tencent.bkrepo.common.api.constant.StringPool.SLASH
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
+import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
+import com.tencent.bkrepo.common.artifact.exception.ArtifactDownloadForbiddenException
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.docker.artifact.DockerArtifactRepo
@@ -176,10 +178,21 @@ class DockerV2LocalRepoService @Autowired constructor(
         return if (DockerDigest.isValid(reference)) {
             val digest = DockerDigest(reference)
             val manifest = manifestProcess.getManifestByDigest(context, digest, context.httpHeaders)
+            val versionDetail = packageRepo.getPackageVersion(context, manifest.tag)
+            versionDetail?.let { packageVersion ->
+                if (packageVersion.packageMetadata.any { it.key == FORBID_STATUS && it.value == true }) {
+                    throw ArtifactDownloadForbiddenException(context.projectId)
+                }
+            }
             try {
                 if(isGetRequest) packageRepo.addDownloadStatic(context, manifest.tag)
-            } catch (e: ErrorCodeException) {
-                logger.error("$e")
+            } catch (exception: ErrorCodeException) {
+                when (exception) {
+                    is ArtifactDownloadForbiddenException -> throw exception
+                    else -> {
+                        logger.error("$exception")
+                    }
+                }
             }
 
             manifest.dockerResponse
@@ -187,9 +200,20 @@ class DockerV2LocalRepoService @Autowired constructor(
             // get manifest by tag
             logger.info("unable to parse digest, get manifest by tag [$context,$reference]")
             try {
+                val versionDetail = packageRepo.getPackageVersion(context, reference)
+                versionDetail?.let { packageVersion ->
+                    if (packageVersion.packageMetadata.any { it.key == FORBID_STATUS && it.value == true }) {
+                        throw ArtifactDownloadForbiddenException(context.projectId)
+                    }
+                }
                 if(isGetRequest) packageRepo.addDownloadStatic(context, reference)
-            } catch (e: ErrorCodeException) {
-                logger.error("$e")
+            } catch (exception: ErrorCodeException) {
+                when (exception) {
+                    is ArtifactDownloadForbiddenException -> throw exception
+                    else -> {
+                        logger.error("$exception")
+                    }
+                }
             }
             manifestProcess.getManifestByTag(context, reference, context.httpHeaders)
         }

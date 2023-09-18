@@ -32,6 +32,7 @@
 package com.tencent.bkrepo.common.artifact.util
 
 import com.tencent.bkrepo.common.api.constant.StringPool
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 
 /**
  * 包唯一id工具类
@@ -222,6 +223,23 @@ object PackageKeys {
      */
     fun resolveComposer(composerKey: String): String {
         return resolveName(COMPOSER, composerKey)
+    }
+    /**
+     * 生成name格式key
+     *
+     * 例子: {schema}://test
+     *
+     * @param repositoryType repository type
+     * @param name package name
+     *
+     * @return package key
+     */
+    fun ofName(repositoryType: RepositoryType, name: String): String {
+        val schema = when(repositoryType) {
+            RepositoryType.MAVEN -> MAVEN
+            else -> repositoryType.name.toLowerCase()
+        }
+        return ofName(schema, name)
     }
 
     /**

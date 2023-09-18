@@ -45,14 +45,7 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.stream.ArtifactInputStream
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
-import com.tencent.bkrepo.oci.constant.FORCE
-import com.tencent.bkrepo.oci.constant.LAST_TAG
-import com.tencent.bkrepo.oci.constant.MEDIA_TYPE
-import com.tencent.bkrepo.oci.constant.N
-import com.tencent.bkrepo.oci.constant.OCI_IMAGE_MANIFEST_MEDIA_TYPE
-import com.tencent.bkrepo.oci.constant.OLD_DOCKER_MEDIA_TYPE
-import com.tencent.bkrepo.oci.constant.PATCH
-import com.tencent.bkrepo.oci.constant.POST
+import com.tencent.bkrepo.oci.constant.*
 import com.tencent.bkrepo.oci.exception.OciFileNotFoundException
 import com.tencent.bkrepo.oci.pojo.artifact.OciArtifactInfo
 import com.tencent.bkrepo.oci.pojo.artifact.OciBlobArtifactInfo
@@ -67,6 +60,7 @@ import com.tencent.bkrepo.oci.util.OciResponseUtils
 import com.tencent.bkrepo.oci.util.OciUtils
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
+import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
@@ -302,6 +296,11 @@ class OciRegistryLocalRepository(
     private fun downloadArtifact(context: ArtifactDownloadContext, fullPath: String?): ArtifactResource? {
         if (fullPath == null) return null
         val node = getNodeDetail(context.artifactInfo as OciArtifactInfo, fullPath)
+        // 拦截制品下载
+        node?.let {
+            downloadIntercept(context, it)
+            packageVersion(context, it)?.let { packageVersion -> downloadIntercept(context, packageVersion) }
+        }
         logger.info(
             "Starting to download $fullPath " +
                 "in repo: ${context.artifactInfo.getRepoIdentify()}"
@@ -386,6 +385,15 @@ class OciRegistryLocalRepository(
             return queryManifest(context)
         }
         return null
+    }
+
+    private fun packageVersion(context: ArtifactDownloadContext, node: NodeDetail): PackageVersion? {
+        with(context) {
+            val artifactInfo = context.artifactInfo as OciManifestArtifactInfo
+            val packageKey = PackageKeys.ofName(repo.type.name.toLowerCase(), artifactInfo.packageName)
+            val version = node.metadata[IMAGE_VERSION]?.toString() ?: return null
+            return packageClient.findVersionByName(projectId, repoName, packageKey, version).data
+        }
     }
 
     /**

@@ -77,11 +77,12 @@ class GenericLocalRepository : LocalRepository() {
         val overwrite = HeaderUtils.getBooleanHeader(HEADER_OVERWRITE)
         val uploadId = HeaderUtils.getHeader(HEADER_UPLOAD_ID)
         val sequence = HeaderUtils.getHeader(HEADER_SEQUENCE)?.toInt()
-        if (!overwrite && !isBlockUpload(uploadId, sequence)) {
-            with(context.artifactInfo) {
-                nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data?.let {
+        with(context.artifactInfo){
+            nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data?.let {
+                if (!overwrite && !isBlockUpload(uploadId, sequence)){
                     throw ErrorCodeException(ArtifactMessageCode.NODE_EXISTED, getArtifactName())
                 }
+                uploadIntercept(context, it)
             }
         }
         // 校验sha256

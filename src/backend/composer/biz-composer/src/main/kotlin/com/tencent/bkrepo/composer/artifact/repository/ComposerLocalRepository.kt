@@ -224,6 +224,18 @@ class ComposerLocalRepository(private val stageClient: StageClient) : LocalRepos
         }
     }
 
+    override fun onUploadBefore(context: ArtifactUploadContext) {
+        super.onUploadBefore(context)
+        with(context){
+            val artifactPath = artifactInfo.getArtifactFullPath().removePrefix("/$DIRECT_DISTS")
+            val node = nodeClient.getNodeDetail(projectId, repoName, artifactPath).data
+            node?.let {
+                uploadIntercept(context, it)
+                packageVersion(it)?.let { packageVersion -> uploadIntercept(context, packageVersion) }
+            }
+        }
+    }
+
     @Transactional(rollbackFor = [Throwable::class])
     override fun onUpload(context: ArtifactUploadContext) {
         val repeat = checkRepeatArtifact(context)

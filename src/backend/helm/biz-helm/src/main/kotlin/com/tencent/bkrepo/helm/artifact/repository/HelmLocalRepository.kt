@@ -32,10 +32,7 @@
 package com.tencent.bkrepo.helm.artifact.repository
 
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
+import com.tencent.bkrepo.common.artifact.repository.context.*
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
@@ -101,15 +98,16 @@ class HelmLocalRepository(
             // 判断是否是强制上传
             val isForce = request.getParameter(FORCE)?.let { true } ?: false
             putAttribute(FORCE, isForce)
-            val repositoryDetail = repositoryDetail
-            val projectId = repositoryDetail.projectId
-            val repoName = repositoryDetail.name
             val fullPath = getStringAttribute(FULL_PATH).orEmpty()
-            val isExist = nodeClient.checkExist(projectId, repoName, fullPath).data!!
+            val node = nodeClient.getNodeDetail(repositoryDetail.projectId, repositoryDetail.name, fullPath).data
             val isOverwrite = isOverwrite(fullPath, isForce)
             putAttribute(OVERWRITE, isOverwrite)
-            if (isExist && !isOverwrite) {
+            if (node!=null && !isOverwrite) {
                 throw HelmFileAlreadyExistsException("${fullPath.trimStart('/')} already exists")
+            }
+            node?.let {
+                uploadIntercept(context, node)
+                packageVersion(context, node)?.let { packageVersion -> uploadIntercept(context, packageVersion) }
             }
         }
     }
@@ -234,7 +232,7 @@ class HelmLocalRepository(
             publishEvent(event)
         }
     }
-    private fun packageVersion(context: ArtifactDownloadContext, node: NodeDetail): PackageVersion? {
+    private fun packageVersion(context: ArtifactContext, node: NodeDetail): PackageVersion? {
         with(context) {
             val packageName = node.metadata[NAME] ?: return null
             val packageVersion = node.metadata[VERSION] ?: return null

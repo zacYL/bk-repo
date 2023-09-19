@@ -30,6 +30,7 @@ package com.tencent.bkrepo.common.artifact.interceptor
 import com.tencent.bkrepo.common.api.constant.HttpHeaders
 import com.tencent.bkrepo.common.artifact.constant.DownloadInterceptorType
 import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
+import com.tencent.bkrepo.common.artifact.constant.LOCK_STATUS
 import com.tencent.bkrepo.common.artifact.interceptor.config.DownloadInterceptorProperties
 import com.tencent.bkrepo.common.artifact.interceptor.impl.*
 import com.tencent.bkrepo.common.service.util.HeaderUtils
@@ -54,6 +55,10 @@ class DownloadInterceptorFactory(
             MetadataInterceptor.METADATA to "$FORBID_STATUS:true",
             DownloadInterceptor.ALLOWED to false
         )
+        private val lockRule = mapOf(
+            MetadataInterceptor.METADATA to "$LOCK_STATUS:true",
+            DownloadInterceptor.ALLOWED to false
+        )
 
         fun buildInterceptor(
             type: DownloadInterceptorType,
@@ -67,6 +72,7 @@ class DownloadInterceptorFactory(
                 type == DownloadInterceptorType.MOBILE && type == downloadSource -> MobileInterceptor(rules)
                 type == DownloadInterceptorType.OFFICE_NETWORK -> OfficeNetworkInterceptor(rules, properties)
                 type == DownloadInterceptorType.NODE_FORBID -> NodeMetadataInterceptor(forbidRule)
+                type == DownloadInterceptorType.NODE_LOCK -> NodeMetadataInterceptor(lockRule)
                 else -> null
             }
         }
@@ -75,6 +81,7 @@ class DownloadInterceptorFactory(
         fun buildPackageInterceptor(type: DownloadInterceptorType): DownloadInterceptor<*, PackageVersion>? {
             return when(type) {
                 DownloadInterceptorType.PACKAGE_FORBID -> PackageMetadataInterceptor(forbidRule)
+                DownloadInterceptorType.PACKAGE_LOCK -> PackageMetadataInterceptor(lockRule)
                 else -> null
             }
         }

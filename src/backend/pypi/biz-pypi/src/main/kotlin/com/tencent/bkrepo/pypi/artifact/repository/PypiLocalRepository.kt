@@ -101,6 +101,11 @@ class PypiLocalRepository(
             nodeMetadata = metadata
         )
     }
+    override fun onUploadBefore(context: ArtifactUploadContext) {
+        super.onUploadBefore(context)
+        // 不为空说明上传的是tgz文件
+        packageVersion(context)?.let { uploadIntercept(context, it) }
+    }
 
     override fun onUpload(context: ArtifactUploadContext) {
         val nodeCreateRequest = buildNodeCreateRequest(context)
@@ -414,7 +419,7 @@ class PypiLocalRepository(
             return PackageDownloadRecord(projectId, repoName, packageKey, pypiPackagePojo.version, userId)
         }
     }
-    private fun packageVersion(context: ArtifactDownloadContext): PackageVersion? {
+    private fun packageVersion(context: ArtifactContext): PackageVersion? {
         with(context) {
             val pypiPackagePojo = try {
                 artifactInfo.getArtifactFullPath().toPypiPackagePojo()

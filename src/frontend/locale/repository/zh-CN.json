@@ -284,5 +284,13 @@
     "total":"共",
     "per": "个",
     "repo": "所属仓库",
-    "nodeAccount":"节点账号"
+    "nodeAccount":"节点账号",
+    "operationConfirmation":"操作确认",
+    "forbidReasonInfo":"禁用原因",
+    "lockReasonInfo":"锁定原因",
+    "forbid":"禁用",
+    "lock":"锁定",
+    "remove":"解除",
+    "confirmLimitOperationInfo":"确认{limit}当前所选{type}？",
+    "confirmRemoveLimitOperationInfo":"确认解除{limit}当前所选{type}？"
 }

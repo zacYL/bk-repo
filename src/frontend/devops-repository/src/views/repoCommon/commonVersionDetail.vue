@@ -36,7 +36,8 @@
                                     :key="tag">
                                     {{ tag }}
                                 </span>
-                                <scan-tag v-if="showRepoScan" class="ml10" :status="metadataMap.scanStatus"></scan-tag>
+                                <scan-tag v-if="showRepoScan" class="ml5" :status="metadataMap.scanStatus"></scan-tag>
+                                <Icon v-if="metadataMap.lockStatus" class="table-svg ml5" size="20" name="lock" />
                                 <forbid-tag class="ml10"
                                     v-if="metadataMap.forbidStatus"
                                     :forbid-user="metadataMap.forbidUser"
@@ -276,6 +277,7 @@
                         ]
                         : []),
                     !this.whetherSoftware && !(this.storeType === 'virtual') && { clickEvent: () => this.$emit('forbid'), label: metadataMap.forbidStatus ? '解除禁止' : '禁止使用' },
+                    !this.whetherSoftware && !(this.storeType === 'virtual') && { clickEvent: () => this.$emit('lock'), label: metadataMap.lockStatus ? '解除锁定' : '锁定' },
                     (this.permission.delete && !this.whetherSoftware && !(this.storeType === 'virtual')) && { clickEvent: () => this.$emit('delete'), label: this.$t('delete') }
                 ]
             },

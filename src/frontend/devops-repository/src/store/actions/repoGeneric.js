@@ -269,6 +269,13 @@ export default {
             body
         )
     },
+    // package 锁定/解除锁定
+    lockPackageMetadata (_, { projectId, repoName, body }) {
+        return Vue.prototype.$ajax.post(
+            `${prefix}/metadata/package/lock/${projectId}/${repoName}`,
+            body
+        )
+    },
     // 删除元数据
     deleteMetadata (_, { projectId, repoName, fullPath, body }) {
         return Vue.prototype.$ajax.delete(

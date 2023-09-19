@@ -99,6 +99,7 @@
                                 repo-type="generic"
                                 :full-path="row.fullPath">
                             </scan-tag>
+                            <Icon v-if="row.metadata.lockStatus" class="table-svg" size="20" name="lock" />
                         </template>
                     </bk-table-column>
 
@@ -156,7 +157,8 @@
                                             { clickEvent: () => handlerShare(row), label: $t('share') }
                                         ] : [])
                                     ] : []),
-                                    !row.folder && { clickEvent: () => handlerForbid(row), label: row.metadata.forbidStatus ? '解除禁止' : '禁止使用' },
+                                    !row.folder && { clickEvent: () => showLimitDialog('forbid',row), label: row.metadata.forbidStatus ? '解除禁止' : '禁止使用' },
+                                    !row.folder && { clickEvent: () => showLimitDialog('lock',row), label: row.metadata.lockStatus ? '解除锁定' : '锁定' },
                                     permission.delete && { clickEvent: () => deleteRes(row), label: $t('delete') }
                                 ].filter(Boolean)">
                             </operation-list>
@@ -184,6 +186,7 @@
         <generic-tree-dialog ref="genericTreeDialog" @update="updateOperateTreeNode" @refresh="refreshNodeChange"></generic-tree-dialog>
         <preview-basic-file-dialog ref="previewBasicFileDialog"></preview-basic-file-dialog>
         <compressed-file-table ref="compressedFileTable" @show-preview="handlerPreviewBasicsFile"></compressed-file-table>
+        <operationLimitConfirmDialog ref="operationLimitConfirmDialog" @confirm="handlerLimitOperation"></operationLimitConfirmDialog>
     </div>
 </template>
 <script>
@@ -191,6 +194,7 @@
     import Breadcrumb from '@repository/components/Breadcrumb'
     import MoveSplitBar from '@repository/components/MoveSplitBar'
     import RepoTree from '@repository/components/RepoTree'
+    import operationLimitConfirmDialog from '@repository/components/operationLimitConfirmDialog'
     import ScanTag from '@repository/views/repoScan/scanTag'
     // import metadataTag from '@repository/views/repoCommon/metadataTag'
     import genericDetail from './genericDetail'
@@ -216,7 +220,8 @@
             genericShareDialog,
             genericTreeDialog,
             previewBasicFileDialog,
-            compressedFileTable
+            compressedFileTable,
+            operationLimitConfirmDialog
         },
         data () {
             return {
@@ -331,6 +336,7 @@
                 'getFileNumOfFolder',
                 'getMultiFileNumOfFolder',
                 'forbidMetadata',
+                'lockMetadata',
                 'getGenericList'
             ]),
             tooltipContent ({ forbidType, forbidUser }) {
@@ -713,20 +719,36 @@
                     )
                 })
             },
-            handlerForbid ({ fullPath, metadata: { forbidStatus } }) {
-                this.forbidMetadata({
+            showLimitDialog (limitType, row) {
+                this.$refs.operationLimitConfirmDialog.setData({
+                    show: true,
+                    loading: false,
+                    limitType: limitType,
+                    theme: 'danger',
+                    limitStatus: row.metadata[`${limitType}Status`],
+                    limitReason: '',
+                    name: row.fullPath,
+                    message: this.$t(row.metadata[`${limitType}Status`] ? 'confirmRemoveLimitOperationInfo' : 'confirmLimitOperationInfo', { limit: this.$t(limitType), type: this.$t('file') })
+                })
+            },
+            handlerLimitOperation (data) {
+                const { name, limitType } = data
+                this[`${limitType}Metadata`]({
                     projectId: this.projectId,
                     repoName: this.repoName,
-                    fullPath,
+                    fullPath: name,
                     body: {
-                        nodeMetadata: [{ key: 'forbidStatus', value: !forbidStatus }]
+                        nodeMetadata: [{ key: `${limitType}Status`, value: !data.limitStatus, description: data.limitReason }]
                     }
                 }).then(() => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: (forbidStatus ? '解除禁止' : '禁止使用') + this.$t('success')
+                        message: (data.limitStatus ? this.$t('remove') + this.$t('space') + this.$t(limitType) : this.$t(limitType)) + this.$t('success')
                     })
+                    this.$refs.operationLimitConfirmDialog.dialogData.show = false
                     this.getArtifactories()
+                }).finally(() => {
+                    this.$refs.operationLimitConfirmDialog.dialogData.loading = false
                 })
             },
             calculateFolderSize (row) {

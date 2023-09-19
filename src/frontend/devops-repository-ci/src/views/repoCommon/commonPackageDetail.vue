@@ -49,7 +49,8 @@
                                         repoType !== 'docker' && { label: '下载', clickEvent: () => downloadPackageHandler($version) },
                                         isEnterprise && showRepoScan && { label: '扫描制品', clickEvent: () => scanPackageHandler($version) }
                                     ] : []),
-                                    !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => changeForbidStatusHandler($version), label: $version.metadata.forbidStatus ? '解除禁止' : '禁止使用' },
+                                    !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('forbid',$version), label: $version.metadata.forbidStatus ? '解除禁止' : '禁止使用' },
+                                    !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('lock',$version), label: $version.metadata.lockStatus ? '解除锁定' : '锁定' },
                                     (permission.delete && !(storeType === 'virtual')) && { label: '删除', clickEvent: () => deleteVersionHandler($version) }
                                 ]"></operation-list>
                         </div>
@@ -61,25 +62,27 @@
                     ref="versionDetail"
                     @tag="changeStageTagHandler()"
                     @scan="scanPackageHandler()"
-                    @forbid="changeForbidStatusHandler()"
+                    @forbid="showLimitDialog('forbid')"
+                    @lock="showLimitDialog('lock')"
                     @download="downloadPackageHandler()"
                     @delete="deleteVersionHandler()">
                 </version-detail>
             </div>
         </div>
-
         <common-form-dialog ref="commonFormDialog" @refresh="refresh"></common-form-dialog>
+        <operationLimitConfirmDialog ref="operationLimitConfirmDialog" @confirm="changeLimitStatusHandler"></operationLimitConfirmDialog>
     </div>
 </template>
 <script>
     import OperationList from '@repository/components/OperationList'
     import InfiniteScroll from '@repository/components/InfiniteScroll'
+    import operationLimitConfirmDialog from '@repository/components/operationLimitConfirmDialog'
     import VersionDetail from '@repository/views/repoCommon/commonVersionDetail'
     import commonFormDialog from '@repository/views/repoCommon/commonFormDialog'
     import { mapState, mapGetters, mapActions } from 'vuex'
     export default {
         name: 'commonPackageDetail',
-        components: { OperationList, InfiniteScroll, VersionDetail, commonFormDialog },
+        components: { OperationList, InfiniteScroll, VersionDetail, commonFormDialog, operationLimitConfirmDialog },
         data () {
             return {
                 tabName: 'commonVersion',
@@ -178,6 +181,7 @@
                 'changeStageTag',
                 'deleteVersion',
                 'forbidPackageMetadata',
+                'lockPackageMetadata',
                 'refreshSupportPackageTypeList'
             ]),
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}, load) {
@@ -274,21 +278,38 @@
                     version: row.name
                 })
             },
-            changeForbidStatusHandler (row = this.currentVersion) {
-                this.forbidPackageMetadata({
+            // 打开二次确认弹窗
+            showLimitDialog (limitType, row = this.currentVersion) {
+                this.$refs.operationLimitConfirmDialog.setData({
+                    show: true,
+                    loading: false,
+                    limitType: limitType,
+                    theme: 'danger',
+                    limitStatus: row.metadata[`${limitType}Status`],
+                    limitReason: '',
+                    name: row.name,
+                    message: this.$t(row.metadata[`${limitType}Status`] ? 'confirmRemoveLimitOperationInfo' : 'confirmLimitOperationInfo', { limit: this.$t(limitType), type: this.$t('version') })
+                })
+            },
+            // 改变制品的禁用或锁定状态
+            changeLimitStatusHandler (row = this.currentVersion) {
+                this[`${row.limitType}PackageMetadata`]({
                     projectId: this.projectId,
                     repoName: this.repoName,
                     body: {
                         packageKey: this.packageKey,
                         version: row.name,
-                        versionMetadata: [{ key: 'forbidStatus', value: !row.metadata.forbidStatus }]
+                        versionMetadata: [{ key: `${row.limitType}Status`, value: !row.limitStatus, description: row.limitReason }]
                     }
                 }).then(() => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: (row.metadata.forbidStatus ? '解除禁止' : '禁止使用') + this.$t('success')
+                        message: (row.limitStatus ? this.$t('remove') + this.$t('space') + this.$t(row.limitType) : this.$t(row.limitType)) + this.$t('success')
                     })
+                    this.$refs.operationLimitConfirmDialog.dialogData.show = false
                     this.refresh(row.name)
+                }).finally(() => {
+                    this.$refs.operationLimitConfirmDialog.dialogData.loading = false
                 })
             },
             downloadPackageHandler (row = this.currentVersion) {

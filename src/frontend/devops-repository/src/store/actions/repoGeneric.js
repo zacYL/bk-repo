@@ -262,6 +262,13 @@ export default {
             body
         )
     },
+    // generic 锁定/解除锁定
+    lockMetadata (_, { projectId, repoName, fullPath, body }) {
+        return Vue.prototype.$ajax.post(
+            `${prefix}/metadata/lock/${projectId}/${repoName}/${encodeURIComponent(fullPath)}`,
+            body
+        )
+    },
     // package禁止使用/解除禁止
     forbidPackageMetadata (_, { projectId, repoName, body }) {
         return Vue.prototype.$ajax.post(

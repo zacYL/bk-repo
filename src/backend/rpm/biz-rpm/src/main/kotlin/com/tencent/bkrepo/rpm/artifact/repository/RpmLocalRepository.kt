@@ -128,12 +128,13 @@ class RpmLocalRepository(
     override fun onUploadBefore(context: ArtifactUploadContext) {
         super.onUploadBefore(context)
         val overwrite = HeaderUtils.getRpmBooleanHeader("X-BKREPO-OVERWRITE")
-        if (!overwrite) {
-            with(context.artifactInfo) {
-                val node = nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data
-                if (node != null) {
+        with(context.artifactInfo) {
+            nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data?.let {
+                if (!overwrite) {
                     throw ErrorCodeException(ArtifactMessageCode.NODE_EXISTED, getArtifactFullPath())
                 }
+                uploadIntercept(context, it)
+                packageVersion(context, it)?.let { packageVersion -> uploadIntercept(context, packageVersion) }
             }
         }
     }
@@ -506,7 +507,7 @@ class RpmLocalRepository(
             }
         }
     }
-    private fun packageVersion(context: ArtifactDownloadContext, node: NodeDetail): PackageVersion? {
+    private fun packageVersion(context: ArtifactContext, node: NodeDetail): PackageVersion? {
         with(context) {
             val fullPath = artifactInfo.getArtifactFullPath()
             if (!fullPath.endsWith(".rpm")) {

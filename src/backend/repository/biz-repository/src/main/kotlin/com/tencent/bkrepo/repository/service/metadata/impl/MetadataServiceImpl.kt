@@ -33,6 +33,7 @@ package com.tencent.bkrepo.repository.service.metadata.impl
 
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.artifact.constant.LOCK_STATUS
+import com.tencent.bkrepo.common.artifact.constant.RESERVED_KEY
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.artifact.path.PathUtils.normalizeFullPath
@@ -82,8 +83,8 @@ class MetadataServiceImpl(
             val fullPath = normalizeFullPath(fullPath)
             val node = nodeDao.findNode(projectId, repoName, fullPath)
                 ?: throw ErrorCodeException(ArtifactMessageCode.NODE_NOT_FOUND, fullPath)
-            val lockMetadata=nodeMetadata?.filter { it.key == LOCK_STATUS}
-            if (lockMetadata.isNullOrEmpty() && (node.metadata?.any { it.key == LOCK_STATUS && it.value == true } == true)) {
+            val systemMetadata=nodeMetadata?.filter { it.key in RESERVED_KEY }
+            if (systemMetadata.isNullOrEmpty() && (node.metadata?.any { it.key == LOCK_STATUS && it.value == true } == true)) {
                 throw ErrorCodeException(ArtifactMessageCode.NODE_LOCK, node.fullPath)
             }
             val oldMetadata = node.metadata ?: ArrayList()

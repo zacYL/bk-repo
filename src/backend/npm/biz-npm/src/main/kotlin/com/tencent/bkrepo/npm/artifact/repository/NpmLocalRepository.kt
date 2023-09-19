@@ -83,6 +83,7 @@ class NpmLocalRepository(
         // 不为空说明上传的是tgz文件
         context.getStringAttribute("attachments.content_type")?.let {
             // 计算sha1并校验
+            packageVersion(context)?.let { uploadIntercept(context, it) }
             val calculatedSha1 = context.getArtifactFile().getInputStream().sha1()
             val uploadSha1 = context.getStringAttribute(ATTRIBUTE_OCTET_STREAM_SHA1)
             if (uploadSha1 != null && calculatedSha1 != uploadSha1) {
@@ -201,7 +202,7 @@ class NpmLocalRepository(
         }
     }
 
-    private fun packageVersion(context: ArtifactDownloadContext): PackageVersion? {
+    private fun packageVersion(context: ArtifactContext): PackageVersion? {
         with(context) {
             val (packageName, packageVersion) =
                 NpmUtils.parseNameAndVersionFromFullPath(artifactInfo.getArtifactFullPath())

@@ -283,14 +283,14 @@ class MavenLocalRepository(
         val noOverwrite = HeaderUtils.getBooleanHeader("X-BKREPO-NO-OVERWRITE")
         val path = context.artifactInfo.getArtifactFullPath()
         logger.info("The File $path does not want to be overwritten: $noOverwrite")
+        val node = nodeClient.getNodeDetail(
+            context.artifactInfo.projectId,
+            context.artifactInfo.repoName,
+            path
+        ).data
         if (noOverwrite) {
             // -SNAPSHOT/** 路径下的metadata.xml 文件不做判断
             if (!path.endsWith(MAVEN_METADATA_FILE_NAME)) {
-                val node = nodeClient.getNodeDetail(
-                    context.artifactInfo.projectId,
-                    context.artifactInfo.repoName,
-                    path
-                ).data
                 if (node != null && path.checksumType() == null) {
                     val message = "The File $path already existed in the ${context.artifactInfo.getRepoIdentify()}, " +
                         "please check your overwrite configuration."
@@ -298,6 +298,10 @@ class MavenLocalRepository(
                     throw MavenRequestForbiddenException(message)
                 }
             }
+        }
+        node?.let {
+            uploadIntercept(context, it)
+            packageVersion(node)?.let { packageVersion -> uploadIntercept(context, packageVersion) }
         }
         for (hashType in HashType.values()) {
             val artifactFullPath = context.artifactInfo.getArtifactFullPath()
@@ -767,7 +771,7 @@ class MavenLocalRepository(
         with(context) {
             val node = getNodeInfoForDownload(context) ?: return null
             // 制品下载拦截
-            node?.let {
+            node.let {
                 downloadIntercept(context, it)
                 packageVersion(node)?.let { packageVersion -> downloadIntercept(context, packageVersion) }
             }

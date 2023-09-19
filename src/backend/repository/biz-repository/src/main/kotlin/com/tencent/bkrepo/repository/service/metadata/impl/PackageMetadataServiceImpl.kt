@@ -34,6 +34,7 @@ package com.tencent.bkrepo.repository.service.metadata.impl
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.artifact.constant.LOCK_STATUS
+import com.tencent.bkrepo.common.artifact.constant.RESERVED_KEY
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.dao.PackageDao
@@ -82,8 +83,8 @@ class PackageMetadataServiceImpl(
             }
             val tPackage = getPackage(projectId, repoName, packageKey)
             val tPackageVersion = getPackageVersion(tPackage.id!!, version)
-            val lockMetadata = versionMetadata?.filter { it.key == LOCK_STATUS}
-            if (lockMetadata.isNullOrEmpty() && tPackageVersion.metadata.any { it.key == LOCK_STATUS && it.value == true }) {
+            val systemMetadata = versionMetadata?.filter { it.key in RESERVED_KEY }
+            if (systemMetadata.isNullOrEmpty() && tPackageVersion.metadata.any { it.key == LOCK_STATUS && it.value == true }) {
                 throw ErrorCodeException(ArtifactMessageCode.PACKAGE_LOCK, packageKey)
             }
             val oldMetadata = tPackageVersion.metadata

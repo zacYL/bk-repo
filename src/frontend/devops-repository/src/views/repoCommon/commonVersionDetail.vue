@@ -75,7 +75,7 @@
         <bk-tab-panel v-if="detail.metadata" name="metadata" :label="$t('metaData')">
             <div class="display-block" :data-title="$t('metaData')">
                 <!-- 虚拟仓库及软件源模式下不支持更新元数据 -->
-                <metadataDialog v-if="storeType !== 'virtual' && !whetherSoftware" ref="metadataDialogRef" @add-metadata="addMetadataHandler"></metadataDialog>
+                <metadataDialog v-if="storeType !== 'virtual' && !whetherSoftware && !hasLockMetadata" ref="metadataDialogRef" @add-metadata="addMetadataHandler"></metadataDialog>
                 <bk-table
                     :data="metadataDataList"
                     :outer-border="false"
@@ -92,7 +92,7 @@
                         </template>
                     </bk-table-column>
                     <bk-table-column :label="$t('description')" prop="description" show-overflow-tooltip></bk-table-column>
-                    <bk-table-column v-if="storeType !== 'virtual' && !whetherSoftware" width="70">
+                    <bk-table-column v-if="storeType !== 'virtual' && !whetherSoftware && !hasLockMetadata" width="70">
                         <template #default="{ row }">
                             <bk-popconfirm v-if="!row.system" trigger="click" width="230" @confirm="deleteMetadataHandler(row)">
                                 <div slot="content">
@@ -272,13 +272,13 @@
                 return [
                     ...(!metadataMap.forbidStatus
                         ? [
-                            (this.permission.edit && !(this.storeType === 'remote') && !(this.storeType === 'virtual')) && { clickEvent: () => this.$emit('tag'), label: '晋级', disabled: (basic.stageTag || '').includes('@release') },
+                            (this.permission.edit && !(this.storeType === 'remote') && !(this.storeType === 'virtual') && !metadataMap.lockStatus) && { clickEvent: () => this.$emit('tag'), label: '晋级', disabled: (basic.stageTag || '').includes('@release') },
                             this.showRepoScan && { clickEvent: () => this.$emit('scan'), label: '扫描制品' }
                         ]
                         : []),
                     !this.whetherSoftware && !(this.storeType === 'virtual') && { clickEvent: () => this.$emit('forbid'), label: metadataMap.forbidStatus ? '解除禁止' : '禁止使用' },
                     !this.whetherSoftware && !(this.storeType === 'virtual') && { clickEvent: () => this.$emit('lock'), label: metadataMap.lockStatus ? '解除锁定' : '锁定' },
-                    (this.permission.delete && !this.whetherSoftware && !(this.storeType === 'virtual')) && { clickEvent: () => this.$emit('delete'), label: this.$t('delete') }
+                    (this.permission.delete && !this.whetherSoftware && !(this.storeType === 'virtual') && !metadataMap.lockStatus) && { clickEvent: () => this.$emit('delete'), label: this.$t('delete') }
                 ]
             },
             metadataDataList () {
@@ -286,6 +286,10 @@
                 return this.detail.metadata
                     .filter(item => item.display) // 先过滤出 display 为 true 的对象
                     .sort((a, b) => b.system - a.system) // 然后根据 system 排序， system 为 true 的对象排在前面
+            },
+            // 用户是否设置了锁定，当前制品版本处于锁定状态下时不允许添加及删除任何元数据
+            hasLockMetadata () {
+                return this.detail.metadata?.find((m) => m.key === 'lockStatus')?.value
             }
         },
         watch: {

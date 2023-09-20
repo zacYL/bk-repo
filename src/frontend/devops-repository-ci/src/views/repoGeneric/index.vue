@@ -142,7 +142,7 @@
                                     ...(!row.metadata.forbidStatus ? [
                                         !row.folder && handlerPreview(row) && { clickEvent: () => handlerPreview(row, true), label: $t('preview') },
                                         { clickEvent: () => handlerDownload(row), label: $t('download') },
-                                        ...(repoName !== 'pipeline' ? [
+                                        ...((repoName !== 'pipeline' && !row.metadata.lockStatus) ? [
                                             permission.edit && { clickEvent: () => renameRes(row), label: $t('rename') },
                                             permission.write && { clickEvent: () => moveRes(row), label: $t('move') },
                                             permission.write && { clickEvent: () => copyRes(row), label: $t('copy') }
@@ -159,7 +159,7 @@
                                     ] : []),
                                     !row.folder && { clickEvent: () => showLimitDialog('forbid',row), label: row.metadata.forbidStatus ? '解除禁止' : '禁止使用' },
                                     !row.folder && { clickEvent: () => showLimitDialog('lock',row), label: row.metadata.lockStatus ? '解除锁定' : '锁定' },
-                                    permission.delete && { clickEvent: () => deleteRes(row), label: $t('delete') }
+                                    (permission.delete && !row.metadata.lockStatus) && { clickEvent: () => deleteRes(row), label: $t('delete') }
                                 ].filter(Boolean)">
                             </operation-list>
                         </template>

@@ -42,7 +42,7 @@
                                 class="version-operation"
                                 :list="[
                                     ...(!$version.metadata.forbidStatus ? [
-                                        showPromotion && {
+                                        (showPromotion && !$version.metadata.lockStatus) && {
                                             label: '晋级', clickEvent: () => changeStageTagHandler($version),
                                             disabled: ($version.stageTag || '').includes('@release')
                                         },
@@ -50,8 +50,8 @@
                                         showRepoScan && { label: '扫描制品', clickEvent: () => scanPackageHandler($version) }
                                     ] : []),
                                     !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('forbid',$version), label: $version.metadata.forbidStatus ? '解除禁止' : '禁止使用' },
-                                    !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('lock',$version), label: $version.metadata.lockStatus ? '取消锁定' : '锁定' },
-                                    (permission.delete && !whetherSoftware && !(storeType === 'virtual')) && { label: '删除', clickEvent: () => deleteVersionHandler($version) }
+                                    !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('lock',$version), label: $version.metadata.lockStatus ? '解除锁定' : '锁定' },
+                                    (permission.delete && !whetherSoftware && !(storeType === 'virtual') && !$version.metadata.lockStatus) && { label: '删除', clickEvent: () => deleteVersionHandler($version) }
                                 ]"></operation-list>
                         </div>
                     </infinite-scroll>

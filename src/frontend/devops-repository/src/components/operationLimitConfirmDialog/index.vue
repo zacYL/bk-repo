@@ -7,7 +7,7 @@
         @cancel="cancel">
         <div>
             <div v-if="!dialogData.limitStatus" class="flex-align-center">
-                <span>{{$t(`${dialogData.limitType }ReasonInfo`)}}</span>
+                <span>{{$t(`${dialogData.limitType}ReasonInfo`)}}</span>
                 <bk-input
                     class="ml10 w250"
                     v-model.trim="dialogData.limitReason"
@@ -46,7 +46,7 @@
                     limitType: '',
                     theme: '',
                     message: '',
-                    limitStatus: false,
+                    limitStatus: true,
                     name: ''
                 }
             }

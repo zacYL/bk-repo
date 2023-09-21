@@ -96,8 +96,8 @@ const val RPM_SERVICE_NAME = "\${service.prefix:repo-}rpm\${service.suffix:}"
 const val SCANNER_SERVICE_NAME = "\${service.prefix:repo-}analyst\${service.suffix:}"
 const val ANALYSIS_EXECUTOR_SERVICE_NAME = "\${service.prefix:repo-}analysis-executor\${service.suffix:}"
 const val LICENSE_SERVICE_NAME = "\${service-prefix:}license\${service-suffix:}"
-const val JOB_SERVICE_NAME = "\${service.prefix:}job\${service.suffix:}"
-const val OCI_SERVICE_NAME = "\${service.prefix:}docker\${service.suffix:}"
+const val JOB_SERVICE_NAME = "\${service.prefix:repo-}job\${service.suffix:}"
+const val OCI_SERVICE_NAME = "\${service.prefix:repo-}docker\${service.suffix:}"
 
 /**
  * 认证相关

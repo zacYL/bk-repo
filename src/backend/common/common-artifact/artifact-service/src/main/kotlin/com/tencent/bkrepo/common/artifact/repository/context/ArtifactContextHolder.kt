@@ -70,6 +70,7 @@ class ArtifactContextHolder(
     repositoryClient: RepositoryClient,
     projectClient: ProjectClient,
     nodeClient: NodeClient,
+    httpAuthSecurity: ObjectProvider<HttpAuthSecurity>
 ) {
 
     init {
@@ -78,6 +79,7 @@ class ArtifactContextHolder(
         Companion.repositoryClient = repositoryClient
         Companion.projectClient = projectClient
         Companion.nodeClient = nodeClient
+        Companion.httpAuthSecurity = httpAuthSecurity
         require(artifactConfigurers.isNotEmpty()) { "No ArtifactConfigurer found!" }
         artifactConfigurers.forEach {
             artifactConfigurerMap[it.getRepositoryType()] = it

@@ -91,7 +91,7 @@
                             <span
                                 class="hover-btn disabled"
                                 v-if="!row.folder && row.metadata.forbidStatus"
-                                v-bk-tooltips="{ content: tooltipContent(row.metadata), placements: ['top'] }"
+                                v-bk-tooltips="{ content: tooltipContent(row), placements: ['top'] }"
                             >{{row.name}}</span>
                             <!-- 文件夹支持: 鼠标悬浮时显示小手样式 -->
                             <span v-else :class="{ 'hover-btn': row.folder }">{{ row.name }}</span>
@@ -101,7 +101,7 @@
                                 repo-type="generic"
                                 :full-path="row.fullPath">
                             </scan-tag>
-                            <Icon v-if="row.metadata.lockStatus" class="table-svg mr5" size="20" name="lock" />
+                            <lock-tag v-if="row.metadata.lockStatus" :lock-user="row.metadata.lockUser" :lock-description="(row.nodeMetadata.find(m => m.key === 'lockType') || {}).description"></lock-tag>
                         </template>
                     </bk-table-column>
 
@@ -199,6 +199,7 @@
     import Breadcrumb from '@repository/components/Breadcrumb'
     import MoveSplitBar from '@repository/components/MoveSplitBar'
     import RepoTree from '@repository/components/RepoTree'
+    import LockTag from '@repository/components/LockTag'
     import operationLimitConfirmDialog from '@repository/components/operationLimitConfirmDialog'
     import ScanTag from '@repository/views/repoScan/scanTag'
     // import metadataTag from '@repository/views/repoCommon/metadataTag'
@@ -226,7 +227,8 @@
             genericTreeDialog,
             previewBasicFileDialog,
             compressedFileTable,
-            operationLimitConfirmDialog
+            operationLimitConfirmDialog,
+            LockTag
         },
         data () {
             return {
@@ -349,14 +351,16 @@
                 'lockMetadata',
                 'getGenericList'
             ]),
-            tooltipContent ({ forbidType, forbidUser }) {
+            tooltipContent (row) {
+                const { forbidType, forbidUser } = row.metadata
+                const forbidDescription = row.nodeMetadata.find(m => m.key === 'forbidType')?.description
                 switch (forbidType) {
                     case 'SCANNING':
                         return '制品正在扫描中'
                     case 'QUALITY_UNPASS':
                         return '制品扫描质量规则未通过'
                     case 'MANUAL':
-                        return `${this.userList[forbidUser]?.name || forbidUser} 手动禁止`
+                        return `${this.userList[forbidUser]?.name || forbidUser} ${this.$t('manualBan')} ${forbidDescription ? this.$t('limitTagReason') + forbidDescription : ''}`
                     default:
                         return ''
                 }

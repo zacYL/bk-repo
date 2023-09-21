@@ -1,15 +1,15 @@
 <template>
     <canway-dialog
         v-model="dialogData.show"
-        width="380"
+        width="400"
         height-num="221"
         :title="title"
         @cancel="cancel">
         <div>
             <div v-if="!dialogData.limitStatus" class="flex-align-center">
-                <span>{{$t(`${dialogData.limitType}ReasonInfo`)}}</span>
+                <span style="white-space: nowrap;">{{$t(`${dialogData.limitType}ReasonInfo`)}}</span>
                 <bk-input
-                    class="ml10 w250"
+                    class="ml10"
                     v-model.trim="dialogData.limitReason"
                     maxlength="30"
                     show-word-limit

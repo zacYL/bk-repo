@@ -37,7 +37,7 @@
                                     {{ tag }}
                                 </span>
                                 <scan-tag v-if="showRepoScan" class="ml5" :status="metadataMap.scanStatus"></scan-tag>
-                                <Icon v-if="metadataMap.lockStatus" class="table-svg ml5" size="20" name="lock" />
+                                <lock-tag v-if="metadataMap.lockStatus" :lock-user="metadataMap.lockUser" :lock-description="(detail.metadata.find(m => m.key === 'lockType') || {}).description"></lock-tag>
                                 <forbid-tag class="ml10"
                                     v-if="metadataMap.forbidStatus"
                                     :forbid-user="metadataMap.forbidUser"
@@ -183,6 +183,7 @@
     import ScanTag from '@repository/views/repoScan/scanTag'
     import forbidTag from '@repository/components/ForbidTag'
     import metadataTag from '@repository/views/repoCommon/metadataTag'
+    import LockTag from '@repository/components/LockTag'
     import mavenDependencies from '@repository/views/repoCommon/mavenDependencies'
     import metadataDialog from '@repository/components/metadataDialog'
     import { mapState, mapActions } from 'vuex'
@@ -197,7 +198,8 @@
             forbidTag,
             metadataTag,
             mavenDependencies,
-            metadataDialog
+            metadataDialog,
+            LockTag
         },
         mixins: [repoGuideMixin],
         data () {

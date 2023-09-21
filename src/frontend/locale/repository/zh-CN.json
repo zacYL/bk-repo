@@ -292,5 +292,7 @@
     "lock":"锁定",
     "remove":"解除",
     "confirmLimitOperationInfo":"确认{limit}当前所选{type}？",
-    "confirmRemoveLimitOperationInfo":"确认解除{limit}当前所选{type}？"
+    "confirmRemoveLimitOperationInfo":"确认解除{limit}当前所选{type}？",
+    "limitTagReason":"，原因：",
+    "manualBan":"手动禁止"
 }

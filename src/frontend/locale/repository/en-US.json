@@ -65,7 +65,7 @@
     "search": "search",
     "searchInRepo": "仓库内搜索",
     "enterConfirm": "按下Enter键确认",
-    "confirm": "确认",
+    "confirm": "Confirm",
     "searchForPkg": "跨仓库搜索",
     "status": "状态",
     "upload": "上传",
@@ -284,5 +284,7 @@
     "lock":"lock",
     "remove":"remove",
     "confirmLimitOperationInfo":"Confirm to {limit} the currently selected {type}?",
-    "confirmRemoveLimitOperationInfo":"Confirm to remove {limit} the currently selected {type}?"
+    "confirmRemoveLimitOperationInfo":"Confirm to remove {limit} the currently selected {type}?",
+    "limitTagReason":", reason : ",
+    "manualBan":"Manual ban"
 }

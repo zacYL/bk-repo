@@ -31,6 +31,8 @@ import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
 import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.storage.core.StorageService
+import com.tencent.bkrepo.common.storage.pojo.FileInfo
+import com.tencent.bkrepo.replication.constant.MD5
 import com.tencent.bkrepo.replication.constant.NODE_FULL_PATH
 import com.tencent.bkrepo.replication.constant.SIZE
 import com.tencent.bkrepo.repository.api.GlobalConfigClient
@@ -63,8 +65,8 @@ class LocalDataManager(
     private val repositoryClient: RepositoryClient,
     private val nodeClient: NodeClient,
     private val packageClient: PackageClient,
-    private val metadataClient: MetadataClient,
     private val storageService: StorageService,
+    private val metadataClient: MetadataClient,
     private val globalConfigClient: GlobalConfigClient
 ) {
 
@@ -199,9 +201,9 @@ class LocalDataManager(
         projectId: String,
         repoName: String,
         sha256: String
-    ): Long {
+    ): FileInfo {
         val queryModel = NodeQueryBuilder()
-            .select(NODE_FULL_PATH, SIZE)
+            .select(NODE_FULL_PATH, SIZE, MD5)
             .projectId(projectId)
             .repoName(repoName)
             .sha256(sha256)
@@ -211,7 +213,11 @@ class LocalDataManager(
         check(result.records.isNotEmpty()) {
             "Local node path with [$sha256] in repo $projectId|$repoName does not exist"
         }
-        return result.records[0][SIZE].toString().toLong()
+        return FileInfo(
+            sha256 = sha256,
+            md5 = result.records[0][MD5].toString(),
+            size = result.records[0][SIZE].toString().toLong()
+        )
     }
 
     /**

@@ -47,10 +47,10 @@
                                             disabled: ($version.stageTag || '').includes('@release')
                                         },
                                         repoType !== 'docker' && { label: '下载', clickEvent: () => downloadPackageHandler($version) },
-                                        isEnterprise && showRepoScan && { label: '扫描制品', clickEvent: () => scanPackageHandler($version) }
+                                        isEnterprise && showRepoScan && { label: $t('scan'), clickEvent: () => scanPackageHandler($version) }
                                     ] : []),
-                                    !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('forbid',$version), label: $version.metadata.forbidStatus ? '解除禁止' : '禁止使用' },
-                                    !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('lock',$version), label: $version.metadata.lockStatus ? '解除锁定' : '锁定' },
+                                    !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('forbid',$version), label: $version.metadata.forbidStatus ? $t('remove') + $t('space') + $t('forbid') : $t('forbid') },
+                                    !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('lock',$version), label: $version.metadata.lockStatus ? $t('remove') + $t('space') + $t('lock') : $t('lock') },
                                     (permission.delete && !(storeType === 'virtual') && !$version.metadata.lockStatus) && { label: '删除', clickEvent: () => deleteVersionHandler($version) }
                                 ]"></operation-list>
                         </div>
@@ -271,7 +271,7 @@
                 this.$refs.commonFormDialog.setData({
                     show: true,
                     loading: false,
-                    title: '扫描制品',
+                    title: this.$t('scan') + this.$t('space') + this.$t('artifact'),
                     type: 'scan',
                     id: '',
                     name: this.pkg.name,

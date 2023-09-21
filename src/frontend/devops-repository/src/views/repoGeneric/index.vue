@@ -156,14 +156,14 @@
                                         ...(!row.folder ? [
                                             { clickEvent: () => handlerShare(row), label: $t('share') },
                                             ( genericScanFileTypes.includes(row.name.replace(/^.+\.([^.]+)$/, '$1')) && !whetherSoftware)
-                                                && { clickEvent: () => handlerScan(row), label: '扫描制品' }
+                                                && { clickEvent: () => handlerScan(row), label: $t('scan') }
                                         ] : []),
                                         ...(row.folder ? [
                                             { clickEvent: () => handlerShare(row), label: $t('share') }
                                         ] : [])
                                     ] : []),
-                                    (!row.folder && !whetherSoftware) && { clickEvent: () => showLimitDialog('forbid',row), label: row.metadata.forbidStatus ? '解除禁止' : '禁止使用' },
-                                    (!row.folder && !whetherSoftware) && { clickEvent: () => showLimitDialog('lock',row), label: row.metadata.lockStatus ? '解除锁定' : '锁定' },
+                                    (!row.folder && !whetherSoftware) && { clickEvent: () => showLimitDialog('forbid',row), label: row.metadata.forbidStatus ? $t('remove') + $t('space') + $t('forbid') : $t('forbid') },
+                                    (!row.folder && !whetherSoftware) && { clickEvent: () => showLimitDialog('lock',row), label: row.metadata.lockStatus ? $t('remove') + $t('space') + $t('lock') : $t('lock') },
                                     (permission.delete && !whetherSoftware && !row.metadata.lockStatus) && { clickEvent: () => deleteRes(row), label: $t('delete') }
                                 ]">
                             </operation-list>
@@ -614,7 +614,7 @@
                 this.$refs.genericFormDialog.setData({
                     show: true,
                     loading: false,
-                    title: '扫描制品',
+                    title: this.$t('scan') + this.$t('space') + this.$t('file'),
                     type: 'scan',
                     id: '',
                     name,

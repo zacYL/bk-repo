@@ -275,11 +275,11 @@
                     ...(!metadataMap.forbidStatus
                         ? [
                             (this.permission.edit && !(this.storeType === 'remote') && !(this.storeType === 'virtual') && !metadataMap.lockStatus) && { clickEvent: () => this.$emit('tag'), label: '晋级', disabled: (basic.stageTag || '').includes('@release') },
-                            this.showRepoScan && { clickEvent: () => this.$emit('scan'), label: '扫描制品' }
+                            this.showRepoScan && { clickEvent: () => this.$emit('scan'), label: this.$t('scan') }
                         ]
                         : []),
-                    !this.whetherSoftware && !(this.storeType === 'virtual') && { clickEvent: () => this.$emit('forbid'), label: metadataMap.forbidStatus ? '解除禁止' : '禁止使用' },
-                    !this.whetherSoftware && !(this.storeType === 'virtual') && { clickEvent: () => this.$emit('lock'), label: metadataMap.lockStatus ? '解除锁定' : '锁定' },
+                    !this.whetherSoftware && !(this.storeType === 'virtual') && { clickEvent: () => this.$emit('forbid'), label: metadataMap.forbidStatus ? this.$t('remove') + this.$t('space') + this.$t('forbid') : this.$t('forbid') },
+                    !this.whetherSoftware && !(this.storeType === 'virtual') && { clickEvent: () => this.$emit('lock'), label: metadataMap.lockStatus ? this.$t('remove') + this.$t('space') + this.$t('lock') : this.$t('lock') },
                     (this.permission.delete && !this.whetherSoftware && !(this.storeType === 'virtual') && !metadataMap.lockStatus) && { clickEvent: () => this.$emit('delete'), label: this.$t('delete') }
                 ]
             },

@@ -1,5 +1,5 @@
 <template>
-    <span class="repo-tag STOP" data-name="禁止使用"
+    <span class="repo-tag STOP" :data-name="$t('forbid')"
         v-bk-tooltips=" { content: tooltipContent, placements: ['top'] ,disabled: !tooltipContent } "
     ></span>
 </template>

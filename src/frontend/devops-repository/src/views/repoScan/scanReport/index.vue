@@ -63,7 +63,7 @@
                     <div class="overview-value">{{ formatDate(taskSelected.startDateTime) }}</div>
                     <div class="overview-key">结束时间</div>
                     <div class="overview-value">{{ formatDate(taskSelected.finishedDateTime) }}</div>
-                    <div class="overview-key">扫描制品数</div>
+                    <div class="overview-key">{{$t('scanArtifactNum')}}</div>
                     <div class="overview-value">{{ taskSelected.total }}</div>
                 </div>
                 <bk-table

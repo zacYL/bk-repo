@@ -286,5 +286,8 @@
     "confirmLimitOperationInfo":"Confirm to {limit} the currently selected {type}?",
     "confirmRemoveLimitOperationInfo":"Confirm to remove {limit} the currently selected {type}?",
     "limitTagReason":", reason : ",
-    "manualBan":"Manual ban"
+    "manualBan":"Manual ban",
+    "scan": "Scan",
+    "artifact":"Artifact",
+    "scanArtifactNum":"Artifacts scanned quantity"
 }

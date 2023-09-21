@@ -50,6 +50,7 @@ import com.tencent.bkrepo.pypi.artifact.xml.Value
 import com.tencent.bkrepo.pypi.artifact.xml.XmlUtil
 import com.tencent.bkrepo.pypi.pojo.Basic
 import com.tencent.bkrepo.pypi.pojo.PypiArtifactVersionData
+import com.tencent.bkrepo.pypi.pojo.PypiPackagePojo
 import com.tencent.bkrepo.pypi.util.HttpUtil.getRedirectUrl
 import com.tencent.bkrepo.pypi.util.PypiVersionUtils.toPypiPackagePojo
 import com.tencent.bkrepo.pypi.util.XmlUtils
@@ -101,6 +102,7 @@ class PypiLocalRepository(
             nodeMetadata = metadata
         )
     }
+
     override fun onUploadBefore(context: ArtifactUploadContext) {
         super.onUploadBefore(context)
         // 不为空说明上传的是tgz文件
@@ -112,7 +114,7 @@ class PypiLocalRepository(
         val artifactFile = context.getArtifactFile("content")
         val name = context.request.getParameter("name")
         val version = context.request.getParameter("version")
-        val author= context.request.getParameter("author")
+        val author = context.request.getParameter("author")
         val metadata = mutableListOf(
             MetadataModel(key = "name", value = name, system = true, display = true),
             MetadataModel(key = "version", value = version, system = true, display = true)
@@ -419,15 +421,19 @@ class PypiLocalRepository(
             return PackageDownloadRecord(projectId, repoName, packageKey, pypiPackagePojo.version, userId)
         }
     }
+
     private fun packageVersion(context: ArtifactContext): PackageVersion? {
         with(context) {
-            val pypiPackagePojo = try {
-                artifactInfo.getArtifactFullPath().toPypiPackagePojo()
-            } catch (e: Exception) {
-                logger.error("parse pypi package failed", e)
-                null
-            } ?: return null
-
+            val pypiPackagePojo = if (context is ArtifactUploadContext) {
+                PypiPackagePojo(request.getParameter("name"), request.getParameter("version"))
+            } else {
+                try {
+                    artifactInfo.getArtifactFullPath().toPypiPackagePojo()
+                } catch (e: Exception) {
+                    logger.error("parse pypi package failed", e)
+                    null
+                } ?: return null
+            }
             val packageKey = PackageKeys.ofPypi(pypiPackagePojo.name)
             return packageClient.findVersionByName(projectId, repoName, packageKey, pypiPackagePojo.version).data
         }

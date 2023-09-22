@@ -853,7 +853,7 @@ class OciOperationServiceImpl(
         logger.info("oci ociProperties ,${ociProperties}")
         return OciResponseUtils.getResponseURI(
             request = request,
-            enableHttps = ociProperties.https,
+            enableHttp = ociProperties.http,
             domain = ociProperties.domain,
         ).toString()
     }

@@ -484,7 +484,7 @@ class MavenRemoteRepository(
         }.toMutableList()
     }
 
-    override fun loadArtifactResource(cacheNode: NodeDetail, context: ArtifactDownloadContext): ArtifactResource? {
+    override fun loadArtifactResource(cacheNode: NodeDetail, context: ArtifactContext): ArtifactResource? {
         return super.loadArtifactResource(cacheNode, context)?.also {
             cacheNode.nodeMetadata.find { it.key == HashType.SHA1.ext }?.let {
                 context.response.setHeader(X_CHECKSUM_SHA1, it.value.toString())

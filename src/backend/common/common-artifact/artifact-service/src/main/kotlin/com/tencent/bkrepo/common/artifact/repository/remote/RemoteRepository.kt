@@ -198,34 +198,24 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
     /**
      * 尝试读取缓存的远程构件
      */
-    fun getCacheArtifactResource(context: ArtifactDownloadContext): ArtifactResource? {
+    open fun getCacheArtifactResource(context: ArtifactContext): ArtifactResource? {
         val configuration = context.getRemoteConfiguration()
         if (!configuration.cache.enabled) return null
 
         val cacheNode = findCacheNodeDetail(context)
-        if (cacheNode == null || cacheNode.folder) return null
-        return if (!isExpired(cacheNode, configuration.cache.expiration)) {
-            loadArtifactResource(cacheNode, context)
-        } else {
-            null
-        }
+        return if (cacheNode == null || cacheNode.folder || isExpired(cacheNode, configuration.cache.expiration)) null
+        else loadArtifactResource(cacheNode, context)
     }
 
     /**
      * 加载要返回的资源
      */
-    open fun loadArtifactResource(cacheNode: NodeDetail, context: ArtifactDownloadContext): ArtifactResource? {
+    open fun loadArtifactResource(cacheNode: NodeDetail, context: ArtifactContext): ArtifactResource? {
         return storageService.load(cacheNode.sha256!!, Range.full(cacheNode.size), context.storageCredentials)?.run {
             if (logger.isDebugEnabled) {
-                logger.debug("Cached remote artifact[${context.repositoryDetail}] is hit.")
+                logger.debug("Cached remote artifact[${context.artifactInfo}] is hit.")
             }
-            ArtifactResource(
-                this,
-                context.artifactInfo.getResponseName(),
-                cacheNode,
-                ArtifactChannel.PROXY,
-                context.useDisposition
-            )
+            ArtifactResource(this, context.artifactInfo.getResponseName(), cacheNode, ArtifactChannel.PROXY)
         }
     }
 
@@ -243,9 +233,9 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
     /**
      * 尝试获取缓存的远程构件节点
      */
-    open fun findCacheNodeDetail(context: ArtifactDownloadContext): NodeDetail? {
-        with(context.repositoryDetail) {
-            return nodeClient.getNodeDetail(projectId, name, context.artifactInfo.getArtifactFullPath()).data
+    open fun findCacheNodeDetail(context: ArtifactContext): NodeDetail? {
+        with(context) {
+            return nodeClient.getNodeDetail(projectId, repoName, artifactInfo.getArtifactFullPath()).data
         }
     }
 
@@ -270,13 +260,7 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
         val size = artifactFile.getSize()
         val artifactStream = artifactFile.getInputStream().artifactStream(Range.full(size))
         val node = cacheArtifactFile(context, artifactFile)
-        return ArtifactResource(
-            artifactStream,
-            context.artifactInfo.getResponseName(),
-            node,
-            ArtifactChannel.PROXY,
-            context.useDisposition
-        )
+        return ArtifactResource(artifactStream, context.artifactInfo.getResponseName(), node, ArtifactChannel.PROXY)
     }
 
     /**

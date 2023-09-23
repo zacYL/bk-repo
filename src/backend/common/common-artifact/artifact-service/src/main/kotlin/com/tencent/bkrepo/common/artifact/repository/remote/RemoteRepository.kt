@@ -83,20 +83,14 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
         whitelistInterceptor(context)
         return getCacheArtifactResource(context) ?: run {
             val remoteConfiguration = context.getRemoteConfiguration()
-            logger.info(
-                "Remote download: not found artifact in cache, " +
-                    "download from remote repository: $remoteConfiguration"
-            )
             val httpClient = createHttpClient(remoteConfiguration)
             val downloadUrl = createRemoteDownloadUrl(context)
             val request = Request.Builder().url(downloadUrl).build()
-            logger.info("Remote download: download url: $downloadUrl")
-            val response = downloadRetry(request, httpClient)
-            return if (response != null && checkResponse(response)) {
+            logger.info("Remote download url: $downloadUrl, network config: ${remoteConfiguration.network}")
+            val response = httpClient.newCall(request).execute()
+            return if (checkResponse(response)) {
                 onDownloadResponse(context, response)
-            } else {
-                null
-            }
+            } else null
         }
     }
 

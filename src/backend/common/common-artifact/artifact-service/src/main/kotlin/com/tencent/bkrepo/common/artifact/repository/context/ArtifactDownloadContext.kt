@@ -64,7 +64,7 @@ open class ArtifactDownloadContext(
     ): ArtifactContext {
         return super.copyBy(repositoryDetail) { artifactInfo ->
             this::class.primaryConstructor!!.call(
-                repositoryDetail, artifactInfo, artifacts, this.userId, useDisposition
+                repositoryDetail, artifactInfo, artifacts, this.userId, useDisposition, false, true
             )
         }
     }

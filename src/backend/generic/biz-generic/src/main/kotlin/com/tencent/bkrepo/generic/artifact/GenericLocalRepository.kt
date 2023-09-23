@@ -41,6 +41,7 @@ import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
 import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.path.PathUtils
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
@@ -164,7 +165,8 @@ class GenericLocalRepository : LocalRepository() {
             val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials) ?: return null
             val responseName = artifactInfo.getResponseName()
             nodeClient.updateRecentlyUseDate(node.projectId, node.repoName, node.fullPath)
-            return ArtifactResource(inputStream, responseName, node, ArtifactChannel.LOCAL, useDisposition)
+            val srcRepo = RepositoryIdentify(projectId, repoName)
+            return ArtifactResource(inputStream, responseName, srcRepo, node, ArtifactChannel.LOCAL, useDisposition)
         }
     }
 
@@ -196,7 +198,7 @@ class GenericLocalRepository : LocalRepository() {
                     ?: throw ArtifactNotFoundException(it.fullPath)
                 name to inputStream
             }
-            return ArtifactResource(nodeMap, useDisposition = true)
+            return ArtifactResource(nodeMap, RepositoryIdentify(projectId, repoName), useDisposition = true)
         }
     }
 
@@ -254,7 +256,8 @@ class GenericLocalRepository : LocalRepository() {
                 }
             )
             val node = if (allNodes.size == 1) allNodes.first() else null
-            return if (download) ArtifactResource(nodeMap, node, useDisposition = true) else null
+            val srcRepo = RepositoryIdentify(context.projectId, context.repoName)
+            return if (download) ArtifactResource(nodeMap, srcRepo, node, useDisposition = true) else null
         }
     }
 
@@ -334,7 +337,8 @@ class GenericLocalRepository : LocalRepository() {
             val inputStream = storageManager.loadArtifactInputStream(it, context.storageCredentials) ?: return null
             name to inputStream
         }
-        return ArtifactResource(nodeMap, node, useDisposition = true)
+        val srcRepo = RepositoryIdentify(context.projectId, context.repoName)
+        return ArtifactResource(nodeMap, srcRepo, node, useDisposition = true)
     }
 
     private fun downloadIntercept(context: ArtifactDownloadContext, nodeDetail: NodeDetail) {

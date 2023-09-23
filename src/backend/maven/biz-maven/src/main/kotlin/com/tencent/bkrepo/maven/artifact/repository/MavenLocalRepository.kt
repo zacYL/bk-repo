@@ -40,6 +40,9 @@ import com.tencent.bkrepo.common.artifact.exception.VersionNotFoundException
 import com.tencent.bkrepo.common.artifact.hash.sha1
 import com.tencent.bkrepo.common.artifact.hash.sha512
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
+import com.tencent.bkrepo.common.artifact.pojo.configuration.virtual.VirtualConfiguration
 import com.tencent.bkrepo.common.artifact.repository.context.*
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
@@ -133,7 +136,12 @@ class MavenLocalRepository(
      */
     override fun buildNodeCreateRequest(context: ArtifactUploadContext): NodeCreateRequest {
         val request = super.buildNodeCreateRequest(context)
+        val deploymentRepo = if (context.repositoryDetail.category == RepositoryCategory.VIRTUAL) {
+            val repo = repositoryClient.getRepoDetail(context.projectId, context.repoName).data!!
+            (repo.configuration as VirtualConfiguration).deploymentRepo.takeIf { !it.isNullOrEmpty() }
+        } else null
         return request.copy(
+            repoName = deploymentRepo ?: request.repoName,
             overwrite = true,
             nodeMetadata = createNodeMetaData(context)
         )
@@ -777,7 +785,8 @@ class MavenLocalRepository(
             }
             val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials) ?: return null
             val responseName = artifactInfo.getResponseName()
-            return ArtifactResource(inputStream, responseName, node, ArtifactChannel.LOCAL, useDisposition)
+            val srcRepo = RepositoryIdentify(projectId, repoName)
+            return ArtifactResource(inputStream, responseName, srcRepo, node, ArtifactChannel.LOCAL, useDisposition)
         }
     }
 

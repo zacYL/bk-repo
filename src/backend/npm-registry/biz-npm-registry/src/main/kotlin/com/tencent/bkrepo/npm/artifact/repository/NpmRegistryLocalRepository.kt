@@ -34,6 +34,7 @@ package com.tencent.bkrepo.npm.artifact.repository
 import com.tencent.bkrepo.common.api.constant.HttpStatus
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.util.toJsonString
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
@@ -104,7 +105,8 @@ class NpmRegistryLocalRepository(
                 val node = nodeClient.getNodeDetail(projectId, repoName, compatiblePath).data
                 val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials) ?: return null
                 val responseName = artifactInfo.getResponseName()
-                return ArtifactResource(inputStream, responseName, node, ArtifactChannel.LOCAL, useDisposition)
+                val srcRepo = RepositoryIdentify(projectId, repoName)
+                return ArtifactResource(inputStream, responseName, srcRepo, node, ArtifactChannel.LOCAL, useDisposition)
             }
         }
     }

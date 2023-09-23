@@ -31,6 +31,7 @@
 
 package com.tencent.bkrepo.helm.artifact.repository
 
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
@@ -175,6 +176,7 @@ class HelmLocalRepository(
             return ArtifactResource(
                 inputStream,
                 context.artifactInfo.getResponseName(),
+                RepositoryIdentify(context.projectId, context.repoName),
                 node,
                 ArtifactChannel.LOCAL,
                 context.useDisposition

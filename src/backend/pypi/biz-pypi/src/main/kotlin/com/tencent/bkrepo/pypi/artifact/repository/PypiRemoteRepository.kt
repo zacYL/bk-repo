@@ -31,8 +31,10 @@
 
 package com.tencent.bkrepo.pypi.artifact.repository
 
+import com.tencent.bkrepo.common.api.constant.HttpHeaders
 import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
@@ -111,9 +113,31 @@ class PypiRemoteRepository : RemoteRepository() {
         return if (context.request.servletPath.startsWith("/ext/version/detail")) {
             getVersionDetail(context)
         } else if (context.artifactInfo.getArtifactFullPath() == "/") {
-            getCacheHtml(context) ?: super.query(context)
+            getCacheHtml(context) ?: remoteQuery(context)
         } else {
-            super.query(context)
+            remoteQuery(context)
+        }
+    }
+
+    private fun remoteQuery(context: ArtifactQueryContext): Any? {
+        val remoteConfiguration = context.getRemoteConfiguration()
+        val httpClient = createHttpClient(remoteConfiguration)
+        val downloadUri = createRemoteDownloadUrl(context)
+        logger.info("Remote query url: $downloadUri, network config: ${remoteConfiguration.network}")
+        val request = Request.Builder().url(downloadUri).apply {
+            if (downloadUri.contains(TSINGHUA_MIRROR_KEY)) {
+                removeHeader(HttpHeaders.USER_AGENT)
+                addHeader(HttpHeaders.USER_AGENT, "${UUID.randomUUID()}")
+            }
+        }.build()
+        return try {
+            val response = httpClient.newCall(request).execute()
+            if (checkQueryResponse(response)) {
+                onQueryResponse(context, response)
+            } else null
+        } catch (ignore: Exception) {
+            logger.warn("Failed to request or resolve response", ignore)
+            null
         }
     }
 
@@ -124,6 +148,26 @@ class PypiRemoteRepository : RemoteRepository() {
                 storeCacheHtml(context, it)
             }
             body.close()
+        }
+    }
+
+    override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
+        return getCacheArtifactResource(context) ?: run {
+            val remoteConfiguration = context.getRemoteConfiguration()
+            val httpClient = createHttpClient(remoteConfiguration)
+            val downloadUrl = createRemoteDownloadUrl(context)
+            val request = Request.Builder().url(downloadUrl).apply {
+                // PyPI清华源会根据User-Agent阻断频繁请求, 因此随机化这个请求头
+                if (downloadUrl.contains(TSINGHUA_MIRROR_KEY)) {
+                    removeHeader(HttpHeaders.USER_AGENT)
+                    addHeader(HttpHeaders.USER_AGENT, "${UUID.randomUUID()}")
+                }
+            }.build()
+            logger.info("Remote download url: $downloadUrl, network config: ${remoteConfiguration.network}")
+            val response = httpClient.newCall(request).execute()
+            return if (checkResponse(response)) {
+                onDownloadResponse(context, response)
+            } else null
         }
     }
 
@@ -198,8 +242,8 @@ class PypiRemoteRepository : RemoteRepository() {
         try {
             val metadataString = artifactFile.getInputStream().getPypiMetadata(fileName)
             resolveMetadata(metadataString)?.let { context.putAttribute(METADATA, it) }
-        } catch (e: Exception) {
-            logger.warn("Cannot Resolve Pypi Package Metadata of [$fileName]. ${e.stackTraceToString()}")
+        } catch (ignore: Exception) {
+            logger.warn("Cannot resolve pypi package metadata of [$fileName]", ignore)
         }
         val size = artifactFile.getSize()
         val artifactStream = artifactFile.getInputStream().artifactStream(Range.full(size))
@@ -207,6 +251,7 @@ class PypiRemoteRepository : RemoteRepository() {
         return ArtifactResource(
             artifactStream,
             context.artifactInfo.getResponseName(),
+            RepositoryIdentify(context.projectId, context.repoName),
             node,
             ArtifactChannel.PROXY,
             context.useDisposition
@@ -392,6 +437,7 @@ class PypiRemoteRepository : RemoteRepository() {
     }
 
     companion object {
+        private const val TSINGHUA_MIRROR_KEY = "tsinghua"
         val logger: Logger = LoggerFactory.getLogger(PypiRemoteRepository::class.java)
     }
 }

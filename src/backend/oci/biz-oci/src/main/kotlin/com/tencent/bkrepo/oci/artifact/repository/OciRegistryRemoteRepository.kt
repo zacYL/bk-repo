@@ -38,6 +38,7 @@ import com.tencent.bkrepo.common.api.constant.MediaTypes
 import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
@@ -327,6 +328,7 @@ class OciRegistryRemoteRepository(
         val artifactResource = ArtifactResource(
             inputStream = artifactStream,
             artifactName = context.artifactInfo.getResponseName(),
+            srcRepo = RepositoryIdentify(context.projectId, context.repoName),
             node = node,
             channel = ArtifactChannel.LOCAL
         )
@@ -360,6 +362,7 @@ class OciRegistryRemoteRepository(
             val artifactResource = ArtifactResource(
                 inputStream = this,
                 artifactName = context.artifactInfo.getResponseName(),
+                srcRepo = RepositoryIdentify(context.projectId, context.repoName),
                 node = cacheNode,
                 channel = ArtifactChannel.PROXY
             )

@@ -31,6 +31,7 @@
 
 package com.tencent.bkrepo.common.artifact.repository.local
 
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.core.AbstractArtifactRepository
@@ -59,7 +60,8 @@ abstract class LocalRepository : AbstractArtifactRepository() {
             val node = nodeClient.getNodeDetail(projectId, repoName, artifactInfo.getArtifactFullPath()).data
             val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials) ?: return null
             val responseName = artifactInfo.getResponseName()
-            return ArtifactResource(inputStream, responseName, node, ArtifactChannel.LOCAL, useDisposition)
+            val srcRepo = RepositoryIdentify(projectId, repoName)
+            return ArtifactResource(inputStream, responseName, srcRepo, node, ArtifactChannel.LOCAL, useDisposition)
         }
     }
 

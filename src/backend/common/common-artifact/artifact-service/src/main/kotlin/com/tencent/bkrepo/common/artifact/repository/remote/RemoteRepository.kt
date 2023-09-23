@@ -35,6 +35,7 @@ import com.tencent.bkrepo.common.api.constant.HttpHeaders
 import com.tencent.bkrepo.common.api.constant.HttpStatus
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.NetworkProxyConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteCredentialsConfiguration
@@ -88,11 +89,7 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
             )
             val httpClient = createHttpClient(remoteConfiguration)
             val downloadUrl = createRemoteDownloadUrl(context)
-            val request = Request.Builder()
-                .removeHeader("User-Agent")
-                .addHeader("User-Agent", "${UUID.randomUUID()}")
-                .url(downloadUrl)
-                .build()
+            val request = Request.Builder().url(downloadUrl).build()
             logger.info("Remote download: download url: $downloadUrl")
             val response = downloadRetry(request, httpClient)
             return if (response != null && checkResponse(response)) {
@@ -164,19 +161,15 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
         val remoteConfiguration = context.getRemoteConfiguration()
         val httpClient = createHttpClient(remoteConfiguration)
         val downloadUri = createRemoteDownloadUrl(context)
-        logger.info("Remote query url: $downloadUri")
-        val request = Request.Builder()
-            .removeHeader(HttpHeaders.USER_AGENT)
-            .addHeader(HttpHeaders.USER_AGENT, "${UUID.randomUUID()}")
-            .url(downloadUri)
-            .build()
+        logger.info("Remote query url: $downloadUri, network config: ${remoteConfiguration.network}")
+        val request = Request.Builder().url(downloadUri).build()
         return try {
             val response = httpClient.newCall(request).execute()
             if (checkQueryResponse(response)) {
                 onQueryResponse(context, response)
             } else null
-        } catch (e: Exception) {
-            logger.warn("Failed to request or resolve response: ${e.stackTraceToString()}")
+        } catch (ignore: Exception) {
+            logger.warn("Failed to request or resolve response", ignore)
             null
         }
     }
@@ -215,7 +208,8 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
             if (logger.isDebugEnabled) {
                 logger.debug("Cached remote artifact[${context.artifactInfo}] is hit.")
             }
-            ArtifactResource(this, context.artifactInfo.getResponseName(), cacheNode, ArtifactChannel.PROXY)
+            val srcRepo = RepositoryIdentify(context.projectId, context.repoName)
+            ArtifactResource(this, context.artifactInfo.getResponseName(), srcRepo, cacheNode, ArtifactChannel.PROXY)
         }
     }
 
@@ -260,7 +254,9 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
         val size = artifactFile.getSize()
         val artifactStream = artifactFile.getInputStream().artifactStream(Range.full(size))
         val node = cacheArtifactFile(context, artifactFile)
-        return ArtifactResource(artifactStream, context.artifactInfo.getResponseName(), node, ArtifactChannel.PROXY)
+        val responseName = context.artifactInfo.getResponseName()
+        val srcRepo = RepositoryIdentify(context.projectId, context.repoName)
+        return ArtifactResource(artifactStream, responseName, srcRepo, node, ArtifactChannel.PROXY)
     }
 
     /**

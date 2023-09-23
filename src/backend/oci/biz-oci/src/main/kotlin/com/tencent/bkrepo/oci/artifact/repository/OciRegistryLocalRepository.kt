@@ -34,6 +34,7 @@ package com.tencent.bkrepo.oci.artifact.repository
 import com.tencent.bkrepo.common.api.constant.HttpStatus
 import com.tencent.bkrepo.common.api.constant.MediaTypes
 import com.tencent.bkrepo.common.artifact.config.ArtifactConfigurerSupport
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
@@ -332,6 +333,7 @@ class OciRegistryLocalRepository(
         val resource = ArtifactResource(
             inputStream = inputStream,
             artifactName = context.artifactInfo.getResponseName(),
+            srcRepo = RepositoryIdentify(context.projectId, context.repoName),
             node = node,
             channel = ArtifactChannel.LOCAL,
             useDisposition = context.useDisposition

@@ -31,6 +31,7 @@ import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.util.readYamlString
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
@@ -280,7 +281,8 @@ class ChartRepositoryServiceImpl(
             val artifactInputStream = repository.query(context) as ArtifactInputStream
             nodeMap[it[NODE_NAME] as String] = artifactInputStream
         }
-        artifactResourceWriter.write(ArtifactResource(nodeMap, useDisposition = true))
+        val srcRepo = RepositoryIdentify(artifactInfo.projectId, artifactInfo.repoName)
+        artifactResourceWriter.write(ArtifactResource(nodeMap, srcRepo, useDisposition = true))
     }
 
     companion object {

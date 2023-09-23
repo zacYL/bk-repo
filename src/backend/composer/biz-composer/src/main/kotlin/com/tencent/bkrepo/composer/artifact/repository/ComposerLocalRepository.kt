@@ -30,6 +30,7 @@ package com.tencent.bkrepo.composer.artifact.repository
 import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.*
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
@@ -215,7 +216,8 @@ class ComposerLocalRepository(private val stageClient: StageClient) : LocalRepos
             val node = nodeClient.getNodeDetail(projectId, repoName, artifactPath).data
             val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials) ?: return null
             val responseName = artifactInfo.getResponseName()
-            return ArtifactResource(inputStream, responseName, node, ArtifactChannel.LOCAL, useDisposition)
+            val srcRepo = RepositoryIdentify(projectId, repoName)
+            return ArtifactResource(inputStream, responseName, srcRepo, node, ArtifactChannel.LOCAL, useDisposition)
         }
     }
 

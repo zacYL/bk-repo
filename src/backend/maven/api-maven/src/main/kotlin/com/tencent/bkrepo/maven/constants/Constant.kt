@@ -42,6 +42,7 @@ const val SNAPSHOT_BUILD_NUMBER = "snapshot-build-number"
 
 const val PACKAGE_SUFFIX_REGEX =
     "(.+)\\.(jar|war|tar|ear|ejb|rar|msi|aar|module|kar|rpm|tar\\.bz2|tar\\.gz|tar\\.xz|tbz|zip|pom)\$"
+const val PACKAGE_METADATA_AND_CHECKSUM_REGEX = "^maven-metadata\\.xml(\\.([a-z0-9]+))*"
 
 const val ARTIFACT_FORMAT = "^%s-%s-?(SNAPSHOT|[0-9]{8}\\.[0-9]{6}-[0-9]+)?-?(.+)?.%s\$"
 

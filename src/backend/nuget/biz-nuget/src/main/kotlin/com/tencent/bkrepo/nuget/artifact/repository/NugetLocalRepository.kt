@@ -37,6 +37,7 @@ import com.tencent.bkrepo.common.api.constant.MediaTypes
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.artifact.exception.PackageNotFoundException
 import com.tencent.bkrepo.common.artifact.exception.VersionNotFoundException
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
@@ -99,7 +100,7 @@ class NugetLocalRepository(
                 NugetVersionUtils.compareSemVer(o1.name, o2.name)
             }.toList()
             try {
-                val v3RegistrationUrl = NugetUtils.getV3Url(artifactInfo) + '/' + registrationPath
+                val v3RegistrationUrl = NugetUtils.getV3Url() + '/' + registrationPath
                 val registrationIndex =
                     NugetV3RegistrationUtils.metadataToRegistrationIndex(sortedVersionList, v3RegistrationUrl)
                 registrationIndex.items.forEach { it.sourceType = ArtifactChannel.LOCAL }
@@ -123,7 +124,7 @@ class NugetLocalRepository(
                 NugetVersionUtils.compareSemVer(o1.name, o2.name)
             }.toList()
             try {
-                val v3RegistrationUrl = NugetUtils.getV3Url(artifactInfo) + '/' + registrationPath
+                val v3RegistrationUrl = NugetUtils.getV3Url() + '/' + registrationPath
                 return NugetV3RegistrationUtils.metadataToRegistrationPage(
                     sortedVersionList,
                     nugetArtifactInfo.packageName,
@@ -147,7 +148,7 @@ class NugetLocalRepository(
             packageClient.findVersionByName(projectId, repoName, packageKey, nugetArtifactInfo.version).data
                 ?: return null
             try {
-                val v3RegistrationUrl = NugetUtils.getV3Url(artifactInfo) + '/' + registrationPath
+                val v3RegistrationUrl = NugetUtils.getV3Url() + '/' + registrationPath
                 return NugetV3RegistrationUtils.metadataToRegistrationLeaf(
                     nugetArtifactInfo.packageName, nugetArtifactInfo.version, true, v3RegistrationUrl
                 )
@@ -268,8 +269,9 @@ class NugetLocalRepository(
             val artifactFile = ArtifactFileFactory.build(inputStream)
             val size = artifactFile.getSize()
             val artifactStream = artifactFile.getInputStream().artifactStream(Range.full(size))
+            val srcRepo = RepositoryIdentify(projectId, repoName)
             val artifactResource = ArtifactResource(
-                artifactStream, responseName, nuspecNode, ArtifactChannel.LOCAL, useDisposition
+                artifactStream, responseName, srcRepo, nuspecNode, ArtifactChannel.LOCAL, useDisposition
             )
             // 临时文件删除
             artifactFile.delete()

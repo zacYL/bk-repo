@@ -31,6 +31,7 @@
 
 package com.tencent.bkrepo.repository.config
 
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
@@ -49,7 +50,8 @@ class CommonLocalRepository : LocalRepository() {
             node?.let { getInterceptors().forEach { it.intercept(node) } }
             val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials) ?: return null
             val responseName = artifactInfo.getResponseName()
-            return ArtifactResource(inputStream, responseName, node, ArtifactChannel.LOCAL, useDisposition)
+            val srcRepo = RepositoryIdentify(projectId, repoName)
+            return ArtifactResource(inputStream, responseName, srcRepo, node, ArtifactChannel.LOCAL, useDisposition)
         }
     }
 }

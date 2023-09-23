@@ -34,6 +34,7 @@ package com.tencent.bkrepo.maven.artifact.repository
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.exception.ArtifactNotInWhitelistException
 import com.tencent.bkrepo.common.artifact.exception.VersionNotFoundException
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
@@ -249,6 +250,7 @@ class MavenRemoteRepository(
         return ArtifactResource(
             artifactStream,
             context.artifactInfo.getResponseName(),
+            RepositoryIdentify(context.projectId, context.repoName),
             node,
             ArtifactChannel.PROXY,
             context.useDisposition

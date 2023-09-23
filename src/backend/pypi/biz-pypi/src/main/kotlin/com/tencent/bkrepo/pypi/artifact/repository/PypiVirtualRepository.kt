@@ -57,10 +57,9 @@ class PypiVirtualRepository(
             response.sendRedirect(getRedirectUrl(pypiProperties.domain, request.servletPath))
             return null
         }
-        return mapFirstRepo(context) {
-            require(it is ArtifactQueryContext)
-            val repository = ArtifactContextHolder.getRepository(it.repositoryDetail.category)
-            repository.query(it)
+        return mapFirstRepo(context) { sub, repository ->
+            require(sub is ArtifactQueryContext)
+            repository.query(sub)
         }
     }
 

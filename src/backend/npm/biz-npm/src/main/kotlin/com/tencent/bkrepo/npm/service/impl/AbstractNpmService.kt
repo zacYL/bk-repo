@@ -44,6 +44,7 @@ import com.tencent.bkrepo.npm.constants.MODIFIED
 import com.tencent.bkrepo.npm.constants.NPM_FILE_FULL_PATH
 import com.tencent.bkrepo.npm.constants.NPM_PKG_METADATA_FULL_PATH
 import com.tencent.bkrepo.npm.constants.NPM_TGZ_TARBALL_PREFIX
+import com.tencent.bkrepo.npm.constants.REQUEST_URI
 import com.tencent.bkrepo.npm.exception.NpmArtifactNotFoundException
 import com.tencent.bkrepo.npm.exception.NpmRepoNotFoundException
 import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
@@ -122,11 +123,12 @@ open class AbstractNpmService {
 		showCustomTarball: Boolean = true
 	): NpmPackageMetaData {
 		val packageFullPath = NpmUtils.getPackageMetadataPath(name)
-		val context = ArtifactQueryContext()
+		val repoDetail = repositoryClient.getRepoDetail(artifactInfo.projectId, artifactInfo.repoName).data!!
+		val context = ArtifactQueryContext(repoDetail, artifactInfo)
 		context.putAttribute(NPM_FILE_FULL_PATH, packageFullPath)
-		context.putAttribute("requestURI", name)
+		context.putAttribute(REQUEST_URI, name)
 		val inputStream =
-			ArtifactContextHolder.getRepository().query(context) as? InputStream
+			ArtifactContextHolder.getRepository(repoDetail.category).query(context) as? InputStream
 				?: throw NpmArtifactNotFoundException("document not found")
 		val packageMetaData = inputStream.use { JsonUtils.objectMapper.readValue(it, NpmPackageMetaData::class.java) }
 		if (showCustomTarball && !showDefaultTarball()) {

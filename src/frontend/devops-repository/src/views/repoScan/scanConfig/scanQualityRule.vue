@@ -108,16 +108,7 @@
                 return (/^[0-9]*$/).test(value) && value <= 10000
             },
             initData () {
-                this.rule = this.scanTypes.includes('LICENSE')
-                    && {
-                        ...this.rule,
-                        recommend: false,
-                        compliance: false,
-                        unknown: false,
-                        forbidScanUnFinished: false,
-                        forbidQualityUnPass: false
-                    }
-                this.rule = this.scanTypes.includes('SECURITY')
+                this.rule = (this.scanTypes.includes('SECURITY')
                     && {
                         ...this.rule,
                         critical: '',
@@ -126,7 +117,16 @@
                         low: '',
                         forbidScanUnFinished: false,
                         forbidQualityUnPass: false
-                    }
+                    }) || this.rule
+                this.rule = (this.scanTypes.includes('LICENSE')
+                    && {
+                        ...this.rule,
+                        recommend: false,
+                        compliance: false,
+                        unknown: false,
+                        forbidScanUnFinished: false,
+                        forbidQualityUnPass: false
+                    }) || this.rule
             },
             async save () {
                 await this.$refs.ruleForm.validate()

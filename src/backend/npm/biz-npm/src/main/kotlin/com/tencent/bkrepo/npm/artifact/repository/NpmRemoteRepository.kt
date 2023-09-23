@@ -164,8 +164,7 @@ class NpmRemoteRepository(
     override fun createRemoteDownloadUrl(context: ArtifactContext): String {
         val configuration = context.getRemoteConfiguration()
         val requestURI = context.getStringAttribute(REQUEST_URI)
-        val artifactUri =
-            requestURI ?: context.request.requestURI.substringAfterLast(context.artifactInfo.getRepoIdentify())
+        val artifactUri = requestURI ?: context.artifactInfo.getArtifactName()
         val queryString = context.request.queryString
         return UrlFormatter.format(configuration.url, artifactUri, queryString)
     }

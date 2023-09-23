@@ -1,5 +1,5 @@
 <template>
-    <span class="repo-tag STOP" data-name="禁止使用"
+    <span class="repo-tag STOP" :data-name="$t('forbid')"
         v-bk-tooltips=" { content: tooltipContent, placements: ['top'] ,disabled: !tooltipContent } "
     ></span>
 </template>
@@ -9,7 +9,8 @@
         name: 'forbidTag',
         props: {
             forbidUser: String,
-            forbidType: String
+            forbidType: String,
+            forbidDescription: String
         },
         computed: {
             ...mapState(['userList']),
@@ -20,7 +21,7 @@
                     case 'QUALITY_UNPASS':
                         return '制品扫描质量规则未通过'
                     case 'MANUAL':
-                        return `${this.userList[this.forbidUser]?.name || this.forbidUser} 手动禁止`
+                        return `${(this.userList[this.forbidUser]?.name || this.forbidUser) || this.forbidUser} ${this.$t('manualBan')} ${this.forbidDescription ? this.$t('limitTagReason') + this.forbidDescription : ''}`
                     default:
                         return ''
                 }

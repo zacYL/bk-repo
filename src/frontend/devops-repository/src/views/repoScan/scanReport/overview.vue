@@ -111,7 +111,7 @@
         },
         computed: {
             overviewList () {
-                const info = [{ key: 'artifactCount', label: '扫描制品数量' }]
+                const info = [{ key: 'artifactCount', label: this.$t('scanArtifactNum') }]
                 if (this.scanPlan.scanTypes.includes(SCAN_TYPE_SECURITY)) {
                     info.push(
                         { key: 'critical', label: '严重漏洞', color: '#EA3736' },

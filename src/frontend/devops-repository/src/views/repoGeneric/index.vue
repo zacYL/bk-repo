@@ -91,7 +91,7 @@
                             <span
                                 class="hover-btn disabled"
                                 v-if="!row.folder && row.metadata.forbidStatus"
-                                v-bk-tooltips="{ content: tooltipContent(row.metadata), placements: ['top'] }"
+                                v-bk-tooltips="{ content: tooltipContent(row), placements: ['top'] }"
                             >{{row.name}}</span>
                             <!-- 文件夹支持: 鼠标悬浮时显示小手样式 -->
                             <span v-else :class="{ 'hover-btn': row.folder }">{{ row.name }}</span>
@@ -101,6 +101,7 @@
                                 repo-type="generic"
                                 :full-path="row.fullPath">
                             </scan-tag>
+                            <lock-tag v-if="row.metadata.lockStatus" :lock-user="row.metadata.lockUser" :lock-description="(row.nodeMetadata.find(m => m.key === 'lockType') || {}).description"></lock-tag>
                         </template>
                     </bk-table-column>
 
@@ -147,7 +148,7 @@
                                     ...(!row.metadata.forbidStatus ? [
                                         !row.folder && handlerPreview(row) && { clickEvent: () => handlerPreview(row, true), label: $t('preview') },
                                         { clickEvent: () => handlerDownload(row), label: $t('download') },
-                                        ...(repoName !== 'pipeline' ? [
+                                        ...((repoName !== 'pipeline' && !row.metadata.lockStatus) ? [
                                             (permission.edit && !whetherSoftware) && { clickEvent: () => renameRes(row), label: $t('rename') },
                                             (permission.write && !whetherSoftware) && { clickEvent: () => moveRes(row), label: $t('move') },
                                             (permission.write && !whetherSoftware) && { clickEvent: () => copyRes(row), label: $t('copy') }
@@ -155,14 +156,15 @@
                                         ...(!row.folder ? [
                                             { clickEvent: () => handlerShare(row), label: $t('share') },
                                             ( genericScanFileTypes.includes(row.name.replace(/^.+\.([^.]+)$/, '$1')) && !whetherSoftware)
-                                                && { clickEvent: () => handlerScan(row), label: '扫描制品' }
+                                                && { clickEvent: () => handlerScan(row), label: $t('scan') }
                                         ] : []),
                                         ...(row.folder ? [
                                             { clickEvent: () => handlerShare(row), label: $t('share') }
                                         ] : [])
                                     ] : []),
-                                    (!row.folder && !whetherSoftware) && { clickEvent: () => handlerForbid(row), label: row.metadata.forbidStatus ? '解除禁止' : '禁止使用' },
-                                    (permission.delete && !whetherSoftware) && { clickEvent: () => deleteRes(row), label: $t('delete') }
+                                    (!row.folder && !whetherSoftware) && { clickEvent: () => showLimitDialog('forbid',row), label: row.metadata.forbidStatus ? $t('remove') + $t('space') + $t('forbid') : $t('forbid') },
+                                    (!row.folder && !whetherSoftware) && { clickEvent: () => showLimitDialog('lock',row), label: row.metadata.lockStatus ? $t('remove') + $t('space') + $t('lock') : $t('lock') },
+                                    (permission.delete && !whetherSoftware && !row.metadata.lockStatus) && { clickEvent: () => deleteRes(row), label: $t('delete') }
                                 ]">
                             </operation-list>
                         </template>
@@ -189,6 +191,7 @@
         <generic-tree-dialog ref="genericTreeDialog" @update="updateOperateTreeNode" @refresh="refreshNodeChange"></generic-tree-dialog>
         <preview-basic-file-dialog ref="previewBasicFileDialog"></preview-basic-file-dialog>
         <compressed-file-table ref="compressedFileTable" @show-preview="handlerPreviewBasicsFile"></compressed-file-table>
+        <operationLimitConfirmDialog ref="operationLimitConfirmDialog" @confirm="handlerLimitOperation"></operationLimitConfirmDialog>
     </div>
 </template>
 <script>
@@ -196,6 +199,8 @@
     import Breadcrumb from '@repository/components/Breadcrumb'
     import MoveSplitBar from '@repository/components/MoveSplitBar'
     import RepoTree from '@repository/components/RepoTree'
+    import LockTag from '@repository/components/LockTag'
+    import operationLimitConfirmDialog from '@repository/components/operationLimitConfirmDialog'
     import ScanTag from '@repository/views/repoScan/scanTag'
     // import metadataTag from '@repository/views/repoCommon/metadataTag'
     import genericDetail from '@repository/views/repoGeneric/genericDetail'
@@ -221,7 +226,9 @@
             genericShareDialog,
             genericTreeDialog,
             previewBasicFileDialog,
-            compressedFileTable
+            compressedFileTable,
+            operationLimitConfirmDialog,
+            LockTag
         },
         data () {
             return {
@@ -341,16 +348,19 @@
                 'getFileNumOfFolder',
                 'getMultiFileNumOfFolder',
                 'forbidMetadata',
+                'lockMetadata',
                 'getGenericList'
             ]),
-            tooltipContent ({ forbidType, forbidUser }) {
+            tooltipContent (row) {
+                const { forbidType, forbidUser } = row.metadata
+                const forbidDescription = row.nodeMetadata.find(m => m.key === 'forbidType')?.description
                 switch (forbidType) {
                     case 'SCANNING':
                         return '制品正在扫描中'
                     case 'QUALITY_UNPASS':
                         return '制品扫描质量规则未通过'
                     case 'MANUAL':
-                        return `${this.userList[forbidUser]?.name || forbidUser} 手动禁止`
+                        return `${this.userList[forbidUser]?.name || forbidUser} ${this.$t('manualBan')} ${forbidDescription ? this.$t('limitTagReason') + forbidDescription : ''}`
                     default:
                         return ''
                 }
@@ -604,7 +614,7 @@
                 this.$refs.genericFormDialog.setData({
                     show: true,
                     loading: false,
-                    title: '扫描制品',
+                    title: this.$t('scan') + this.$t('space') + this.$t('file'),
                     type: 'scan',
                     id: '',
                     name,
@@ -718,20 +728,36 @@
                     )
                 })
             },
-            handlerForbid ({ fullPath, metadata: { forbidStatus } }) {
-                this.forbidMetadata({
+            showLimitDialog (limitType, row) {
+                this.$refs.operationLimitConfirmDialog.setData({
+                    show: true,
+                    loading: false,
+                    limitType: limitType,
+                    theme: 'danger',
+                    limitStatus: row.metadata[`${limitType}Status`],
+                    limitReason: '',
+                    name: row.fullPath,
+                    message: this.$t(row.metadata[`${limitType}Status`] ? 'confirmRemoveLimitOperationInfo' : 'confirmLimitOperationInfo', { limit: this.$t(limitType), type: this.$t('file') })
+                })
+            },
+            handlerLimitOperation (data) {
+                const { name, limitType } = data
+                this[`${limitType}Metadata`]({
                     projectId: this.projectId,
                     repoName: this.repoName,
-                    fullPath,
+                    fullPath: name,
                     body: {
-                        nodeMetadata: [{ key: 'forbidStatus', value: !forbidStatus }]
+                        nodeMetadata: [{ key: `${limitType}Status`, value: !data.limitStatus, description: data.limitReason }]
                     }
                 }).then(() => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: (forbidStatus ? '解除禁止' : '禁止使用') + this.$t('success')
+                        message: (data.limitStatus ? this.$t('remove') + this.$t('space') + this.$t(limitType) : this.$t(limitType)) + this.$t('success')
                     })
+                    this.$refs.operationLimitConfirmDialog.dialogData.show = false
                     this.getArtifactories()
+                }).finally(() => {
+                    this.$refs.operationLimitConfirmDialog.dialogData.loading = false
                 })
             },
             calculateFolderSize (row) {

@@ -85,6 +85,7 @@ class NpmClientServiceImpl(
     private val npmPackageHandler: NpmPackageHandler
 ) : NpmClientService, AbstractNpmService() {
 
+    @Permission(ResourceType.REPO, PermissionAction.WRITE)
     @Transactional(rollbackFor = [Throwable::class])
     override fun publishOrUpdatePackage(
         userId: String,

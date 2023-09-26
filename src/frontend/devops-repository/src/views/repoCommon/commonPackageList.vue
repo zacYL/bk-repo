@@ -245,6 +245,9 @@
                         ...this.$route.query,
                         repoName: this.repoName,
                         packageKey: pkg.key,
+                        // 此时需要将version清除掉，否则在进入仓库详情页后再返回包列表页，然后选择其他的包进入版本详情页，
+                        // 会导致出现无效请求，且packageKey为最新版本的，但是版本号是之前版本的，进而导致请求出错
+                        version: undefined,
                         storeType: this.storeType,
                         // 虚拟仓库中需要添加仓库来源，供制品详情页获取制品版本列表数据使用
                         sourceName: this.storeType === 'virtual' ? pkg.repoName || '' : undefined

@@ -33,12 +33,16 @@ package com.tencent.bkrepo.repository.service.metadata.impl
 
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
+import com.tencent.bkrepo.common.artifact.constant.LOCK_STATUS
+import com.tencent.bkrepo.common.artifact.constant.RESERVED_KEY
+import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.dao.PackageDao
 import com.tencent.bkrepo.repository.dao.PackageVersionDao
 import com.tencent.bkrepo.repository.model.TMetadata
 import com.tencent.bkrepo.repository.model.TPackage
 import com.tencent.bkrepo.repository.model.TPackageVersion
+import com.tencent.bkrepo.repository.pojo.metadata.LimitType
 import com.tencent.bkrepo.repository.pojo.metadata.packages.PackageMetadataDeleteRequest
 import com.tencent.bkrepo.repository.pojo.metadata.packages.PackageMetadataSaveRequest
 import com.tencent.bkrepo.repository.service.metadata.PackageMetadataService
@@ -79,6 +83,10 @@ class PackageMetadataServiceImpl(
             }
             val tPackage = getPackage(projectId, repoName, packageKey)
             val tPackageVersion = getPackageVersion(tPackage.id!!, version)
+            val systemMetadata = versionMetadata?.filter { it.key in RESERVED_KEY }
+            if (systemMetadata.isNullOrEmpty() && tPackageVersion.metadata.any { it.key == LOCK_STATUS && it.value == true }) {
+                throw ErrorCodeException(ArtifactMessageCode.PACKAGE_LOCK, packageKey)
+            }
             val oldMetadata = tPackageVersion.metadata
             val newMetadata = MetadataUtils.compatibleFromAndCheck(metadata, versionMetadata, operator)
             MetadataUtils.checkEmptyAndLength(newMetadata)
@@ -89,14 +97,14 @@ class PackageMetadataServiceImpl(
     }
 
     @Transactional(rollbackFor = [Throwable::class])
-    override fun addForbidMetadata(request: PackageMetadataSaveRequest) {
+    override fun addLimitMetadata(request: PackageMetadataSaveRequest, limitType: LimitType) {
         with(request) {
-            val forbidMetadata = MetadataUtils.extractForbidMetadata(versionMetadata!!)
-            if (forbidMetadata.isNullOrEmpty()) {
-                logger.info("forbidMetadata is empty, skip saving[$this]")
+            val limitMetadata = MetadataUtils.extractLimitMetadata(metadata = versionMetadata!!,limitType =limitType)
+            if (limitMetadata.isNullOrEmpty()) {
+                logger.info("[${limitType}]limitMetadata is empty, skip saving[$this]")
                 return
             }
-            saveMetadata(request.copy(versionMetadata = forbidMetadata, operator = SYSTEM_USER))
+            saveMetadata(request.copy(versionMetadata = limitMetadata, operator = SYSTEM_USER))
         }
     }
 

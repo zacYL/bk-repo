@@ -39,6 +39,7 @@ import com.tencent.bkrepo.common.api.util.Preconditions
 import com.tencent.bkrepo.common.artifact.api.DefaultArtifactInfo
 import com.tencent.bkrepo.common.artifact.constant.ARTIFACT_INFO_KEY
 import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
+import com.tencent.bkrepo.common.artifact.constant.LOCK_STATUS
 import com.tencent.bkrepo.common.artifact.constant.SCAN_STATUS
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
@@ -286,6 +287,10 @@ class PackageServiceImpl(
 
     override fun deletePackage(projectId: String, repoName: String, packageKey: String, realIpAddress: String?) {
         val tPackage = packageDao.findByKey(projectId, repoName, packageKey) ?: return
+        val tPackageVersionList = packageVersionDao.listByPackageId(tPackage.id!!)
+        if (tPackageVersionList.any { it.metadata.any { it.key == LOCK_STATUS && it.value == true } }) {
+            throw ErrorCodeException(ArtifactMessageCode.PACKAGE_LOCK, packageKey)
+        }
         packageVersionDao.deleteByPackageId(tPackage.id!!)
         packageDao.deleteByKey(projectId, repoName, packageKey)
         publishEvent(
@@ -312,6 +317,9 @@ class PackageServiceImpl(
     ) {
         val tPackage = packageDao.findByKey(projectId, repoName, packageKey) ?: return
         val tPackageVersion = packageVersionDao.findByName(tPackage.id.orEmpty(), versionName) ?: return
+        if (tPackageVersion.metadata.any { it.key == LOCK_STATUS && it.value == true } == true) {
+            throw ErrorCodeException(ArtifactMessageCode.PACKAGE_LOCK, packageKey)
+        }
         packageVersionDao.deleteByName(tPackageVersion.packageId, tPackageVersion.name)
         tPackage.versions -= 1
         if (tPackage.versions <= 0L) {
@@ -413,6 +421,9 @@ class PackageServiceImpl(
         }
         val artifactInfo = DefaultArtifactInfo(projectId, repoName, tPackageVersion.artifactPath!!)
         val context = ArtifactDownloadContext(artifact = artifactInfo, useDisposition = true)
+        // 拦截package下载
+        val packageVersion = convert(tPackageVersion)!!
+        context.getPackageInterceptors().forEach { it.intercept(projectId, packageVersion) }
         // context 复制时会从request map中获取对应的artifactInfo， 而artifactInfo设置到map中是在接口url解析时
         HttpContextHolder.getRequestOrNull()?.setAttribute(ARTIFACT_INFO_KEY, artifactInfo)
         ArtifactContextHolder.getRepository().download(context)

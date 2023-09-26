@@ -40,20 +40,11 @@ import com.tencent.bkrepo.common.artifact.api.DefaultArtifactInfo.Companion.DEFA
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
-import com.tencent.bkrepo.repository.pojo.metadata.MetadataDeleteRequest
-import com.tencent.bkrepo.repository.pojo.metadata.MetadataSaveRequest
-import com.tencent.bkrepo.repository.pojo.metadata.UserMetadataDeleteRequest
-import com.tencent.bkrepo.repository.pojo.metadata.UserMetadataSaveRequest
+import com.tencent.bkrepo.repository.pojo.metadata.*
 import com.tencent.bkrepo.repository.service.metadata.MetadataService
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
-import org.springframework.web.bind.annotation.DeleteMapping
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestAttribute
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 /**
  * 元数据接口实现类
@@ -99,7 +90,7 @@ class UserMetadataController(
         }
     }
 
-    @ApiOperation("创建/更新禁用元数据")
+    @ApiOperation("创建/更新禁止元数据")
     @Permission(type = ResourceType.REPO, action = PermissionAction.UPDATE)
     @PostMapping("/forbid$DEFAULT_MAPPING_URI")
     fun forbidMetadata(
@@ -114,7 +105,27 @@ class UserMetadataController(
                 fullPath = getArtifactFullPath(),
                 nodeMetadata = metadataSaveRequest.nodeMetadata
             )
-            metadataService.addForbidMetadata(request)
+            metadataService.addLimitMetadata(request,LimitType.FORBID)
+            return ResponseBuilder.success()
+        }
+    }
+
+    @ApiOperation("创建/更新锁定元数据")
+    @Permission(type = ResourceType.REPO, action = PermissionAction.UPDATE)
+    @PostMapping("/lock$DEFAULT_MAPPING_URI")
+    fun lockMetadata(
+        @RequestAttribute userId: String,
+        @ArtifactPathVariable artifactInfo: ArtifactInfo,
+        @RequestBody metadataSaveRequest: UserMetadataSaveRequest
+    ): Response<Void> {
+        artifactInfo.run {
+            val request = MetadataSaveRequest(
+                projectId = projectId,
+                repoName = repoName,
+                fullPath = getArtifactFullPath(),
+                nodeMetadata = metadataSaveRequest.nodeMetadata
+            )
+            metadataService.addLimitMetadata(request,LimitType.LOCK)
             return ResponseBuilder.success()
         }
     }

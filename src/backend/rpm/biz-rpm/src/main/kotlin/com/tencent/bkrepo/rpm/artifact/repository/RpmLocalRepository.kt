@@ -41,9 +41,11 @@ import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.hash.md5
 import com.tencent.bkrepo.common.artifact.hash.sha1
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.*
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
@@ -64,6 +66,7 @@ import com.tencent.bkrepo.repository.pojo.node.NodeListOption
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
+import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.VersionListOption
 import com.tencent.bkrepo.repository.pojo.packages.request.PackagePopulateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
@@ -108,16 +111,30 @@ class RpmLocalRepository(
     private val stageClient: StageClient,
     private val jobService: JobService
 ) : LocalRepository() {
-
+    override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
+        with(context) {
+            val node = nodeClient.getNodeDetail(projectId, repoName, artifactInfo.getArtifactFullPath()).data
+            node?.let {
+                downloadIntercept(context, it)
+                // TODO NODE中统一存储packageKey与version元数据后可移除下方的package下载拦截
+                packageVersion(context, it)?.let { packageVersion -> downloadIntercept(context, packageVersion) }
+            }
+            val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials) ?: return null
+            val responseName = artifactInfo.getResponseName()
+            val srcRepo = RepositoryIdentify(projectId, repoName)
+            return ArtifactResource(inputStream, responseName, srcRepo, node, ArtifactChannel.LOCAL, useDisposition)
+        }
+    }
     override fun onUploadBefore(context: ArtifactUploadContext) {
         super.onUploadBefore(context)
         val overwrite = HeaderUtils.getRpmBooleanHeader("X-BKREPO-OVERWRITE")
-        if (!overwrite) {
-            with(context.artifactInfo) {
-                val node = nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data
-                if (node != null) {
+        with(context.artifactInfo) {
+            nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data?.let {
+                if (!overwrite) {
                     throw ErrorCodeException(ArtifactMessageCode.NODE_EXISTED, getArtifactFullPath())
                 }
+                uploadIntercept(context, it)
+                packageVersion(context, it)?.let { packageVersion -> uploadIntercept(context, packageVersion) }
             }
         }
     }
@@ -488,6 +505,23 @@ class RpmLocalRepository(
             } else {
                 null
             }
+        }
+    }
+    private fun packageVersion(context: ArtifactContext, node: NodeDetail): PackageVersion? {
+        with(context) {
+            val fullPath = artifactInfo.getArtifactFullPath()
+            if (!fullPath.endsWith(".rpm")) {
+                return null
+            }
+
+            val rpmPackage = try {
+                node.metadata.toRpmVersion(fullPath).toRpmPackagePojo(fullPath)
+            } catch (e: ErrorCodeException) {
+                logger.error("rpm node[$node] metadata invalid")
+                null
+            } ?: return null
+            val packageKey = PackageKeys.ofRpm(rpmPackage.path, rpmPackage.name)
+            return packageClient.findVersionByName(projectId, repoName, packageKey, rpmPackage.version).data
         }
     }
 

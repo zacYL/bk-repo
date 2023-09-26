@@ -32,6 +32,8 @@
 package com.tencent.bkrepo.repository.service.metadata.impl
 
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.artifact.constant.LOCK_STATUS
+import com.tencent.bkrepo.common.artifact.constant.RESERVED_KEY
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.artifact.path.PathUtils.normalizeFullPath
@@ -40,6 +42,7 @@ import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.dao.NodeDao
 import com.tencent.bkrepo.repository.model.TMetadata
 import com.tencent.bkrepo.repository.model.TNode
+import com.tencent.bkrepo.repository.pojo.metadata.LimitType
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataDeleteRequest
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataSaveRequest
 import com.tencent.bkrepo.repository.service.metadata.MetadataService
@@ -80,7 +83,10 @@ class MetadataServiceImpl(
             val fullPath = normalizeFullPath(fullPath)
             val node = nodeDao.findNode(projectId, repoName, fullPath)
                 ?: throw ErrorCodeException(ArtifactMessageCode.NODE_NOT_FOUND, fullPath)
-
+            val systemMetadata=nodeMetadata?.filter { it.key in RESERVED_KEY }
+            if (systemMetadata.isNullOrEmpty() && (node.metadata?.any { it.key == LOCK_STATUS && it.value == true } == true)) {
+                throw ErrorCodeException(ArtifactMessageCode.NODE_LOCK, node.fullPath)
+            }
             val oldMetadata = node.metadata ?: ArrayList()
             val newMetadata = MetadataUtils.compatibleFromAndCheck(metadata, nodeMetadata, operator)
             MetadataUtils.checkEmptyAndLength(newMetadata)
@@ -99,14 +105,14 @@ class MetadataServiceImpl(
     }
 
     @Transactional(rollbackFor = [Throwable::class])
-    override fun addForbidMetadata(request: MetadataSaveRequest) {
+    override fun addLimitMetadata(request: MetadataSaveRequest, limitType: LimitType) {
         with(request) {
-            val forbidMetadata = MetadataUtils.extractForbidMetadata(nodeMetadata!!)
-            if (forbidMetadata.isNullOrEmpty()) {
-                logger.info("forbidMetadata is empty, skip saving[$request]")
+            val limitMetadata = MetadataUtils.extractLimitMetadata(metadata = nodeMetadata!!, limitType = limitType)
+            if (limitMetadata.isNullOrEmpty()) {
+                logger.info("limitMetadata is empty, skip saving[$request]")
                 return
             }
-            saveMetadata(request.copy(metadata = null, nodeMetadata = forbidMetadata, operator = SYSTEM_USER))
+            saveMetadata(request.copy(metadata = null, nodeMetadata = limitMetadata, operator = SYSTEM_USER))
         }
     }
 

@@ -248,12 +248,12 @@ class MavenLocalRepository(
     ): NodeCreateRequest {
         val request = buildMavenArtifactNodeCreateRequest(context)
         val metadata = request.nodeMetadata as? MutableList
-        metadata?.add(MetadataModel(key = "packaging", value = packaging, system = true))
-        metadata?.add(MetadataModel(key = "groupId", value = mavenGavc.groupId, system = true))
-        metadata?.add(MetadataModel(key = "artifactId", value = mavenGavc.artifactId, system = true))
-        metadata?.add(MetadataModel(key = "version", value = mavenGavc.version, system = true))
-        metadata?.add(MetadataModel(key = "modelVersion", value = mavenGavc.modelVersion ?: SLASH, system = true))
-        metadata?.add(MetadataModel(key = "name", value = mavenGavc.name ?: SLASH, system = true))
+        metadata?.add(MetadataModel(key = METADATA_KEY_PACKAGING, value = packaging, system = true))
+        metadata?.add(MetadataModel(key = METADATA_KEY_GROUP_ID, value = mavenGavc.groupId, system = true))
+        metadata?.add(MetadataModel(key = METADATA_KEY_ARTIFACT_ID, value = mavenGavc.artifactId, system = true))
+        metadata?.add(MetadataModel(key = METADATA_KEY_VERSION, value = mavenGavc.version, system = true))
+        metadata?.add(MetadataModel(key = METADATA_KEY_MODEL_VERSION, value = mavenGavc.modelVersion ?: SLASH, system = true))
+        metadata?.add(MetadataModel(key = METADATA_KEY_NAME, value = mavenGavc.name ?: SLASH, system = true))
         mavenGavc.classifier?.let { metadata?.add(MetadataModel(key = "classifier", value = it)) }
         return request
     }
@@ -283,14 +283,14 @@ class MavenLocalRepository(
         val noOverwrite = HeaderUtils.getBooleanHeader("X-BKREPO-NO-OVERWRITE")
         val path = context.artifactInfo.getArtifactFullPath()
         logger.info("The File $path does not want to be overwritten: $noOverwrite")
+        val node = nodeClient.getNodeDetail(
+            context.artifactInfo.projectId,
+            context.artifactInfo.repoName,
+            path
+        ).data
         if (noOverwrite) {
             // -SNAPSHOT/** 路径下的metadata.xml 文件不做判断
             if (!path.endsWith(MAVEN_METADATA_FILE_NAME)) {
-                val node = nodeClient.getNodeDetail(
-                    context.artifactInfo.projectId,
-                    context.artifactInfo.repoName,
-                    path
-                ).data
                 if (node != null && path.checksumType() == null) {
                     val message = "The File $path already existed in the ${context.artifactInfo.getRepoIdentify()}, " +
                         "please check your overwrite configuration."
@@ -298,6 +298,10 @@ class MavenLocalRepository(
                     throw MavenRequestForbiddenException(message)
                 }
             }
+        }
+        node?.let {
+            uploadIntercept(context, it)
+            packageVersion(node)?.let { packageVersion -> uploadIntercept(context, packageVersion) }
         }
         for (hashType in HashType.values()) {
             val artifactFullPath = context.artifactInfo.getArtifactFullPath()
@@ -766,6 +770,11 @@ class MavenLocalRepository(
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         with(context) {
             val node = getNodeInfoForDownload(context) ?: return null
+            // 制品下载拦截
+            node.let {
+                downloadIntercept(context, it)
+                packageVersion(node)?.let { packageVersion -> downloadIntercept(context, packageVersion) }
+            }
             node.nodeMetadata.find { it.key == HashType.SHA1.ext }?.let {
                 response.addHeader(X_CHECKSUM_SHA1, it.value.toString())
             }
@@ -964,14 +973,14 @@ class MavenLocalRepository(
 
     private fun createMavenVersion(context: ArtifactUploadContext, mavenGAVC: MavenGAVC, fullPath: String) {
         val metadata = mutableListOf(
-            MetadataModel(key = "packaging", value = mavenGAVC.packaging, system = true),
-            MetadataModel(key = "groupId", value = mavenGAVC.groupId, system = true),
-            MetadataModel(key = "artifactId", value = mavenGAVC.artifactId, system = true),
-            MetadataModel(key = "version", value = mavenGAVC.version, system = true)
+            MetadataModel(key = METADATA_KEY_PACKAGING, value = mavenGAVC.packaging, system = true),
+            MetadataModel(key = METADATA_KEY_GROUP_ID, value = mavenGAVC.groupId, system = true),
+            MetadataModel(key = METADATA_KEY_ARTIFACT_ID, value = mavenGAVC.artifactId, system = true),
+            MetadataModel(key = METADATA_KEY_VERSION, value = mavenGAVC.version, system = true)
         )
-        mavenGAVC.name?.let { metadata.add(MetadataModel(key = "name", value = it)) }
-        mavenGAVC.modelVersion?.let{ metadata.add(MetadataModel(key = "modelVersion", value = it)) }
-        mavenGAVC.classifier?.let { metadata.add(MetadataModel(key = "classifier", value = it)) }
+        mavenGAVC.name?.let { metadata.add(MetadataModel(key = METADATA_KEY_NAME, value = it)) }
+        mavenGAVC.modelVersion?.let{ metadata.add(MetadataModel(key = METADATA_KEY_MODEL_VERSION, value = it)) }
+        mavenGAVC.classifier?.let { metadata.add(MetadataModel(key = METADATA_KEY_CLASSIFIER, value = it)) }
         try {
             packageClient.createVersion(
                 PackageVersionCreateRequest(
@@ -1259,7 +1268,7 @@ class MavenLocalRepository(
         with(context) {
             val fullPath = artifactInfo.getArtifactFullPath()
             val node = nodeClient.getNodeDetail(projectId, repoName, fullPath).data ?: return null
-            val packaging = node.metadata["packaging"] ?: return null
+            val packaging = node.metadata[METADATA_KEY_PACKAGING] ?: return null
             if (node.name.endsWith(".pom") && packaging != "pom") {
                 return null
             }
@@ -1269,6 +1278,18 @@ class MavenLocalRepository(
             val groupId = mavenGAVC.groupId.formatSeparator("/", ".")
             val packageKey = PackageKeys.ofGav(groupId, artifactId)
             return PackageDownloadRecord(projectId, repoName, packageKey, version, userId)
+        }
+    }
+
+    private fun packageVersion(node: NodeDetail): PackageVersion? {
+        val groupId = node.metadata[METADATA_KEY_GROUP_ID]?.toString()
+        val artifactId = node.metadata[METADATA_KEY_ARTIFACT_ID]?.toString()
+        val version = node.metadata[METADATA_KEY_VERSION]?.toString()
+        return if (groupId != null && artifactId != null && version != null) {
+            val packageKey = PackageKeys.ofGav(groupId, artifactId)
+            packageClient.findVersionByName(node.projectId, node.repoName, packageKey, version).data
+        } else {
+            null
         }
     }
 

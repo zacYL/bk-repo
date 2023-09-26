@@ -27,18 +27,12 @@
 
 package com.tencent.bkrepo.npm.artifact.repository
 
-import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.hash.sha1
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactMigrateContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
+import com.tencent.bkrepo.common.artifact.repository.context.*
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.repository.migration.MigrateDetail
 import com.tencent.bkrepo.common.artifact.repository.migration.PackageMigrateDetail
@@ -48,12 +42,7 @@ import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
 import com.tencent.bkrepo.common.query.enums.OperationType
-import com.tencent.bkrepo.npm.constants.ATTRIBUTE_OCTET_STREAM_SHA1
-import com.tencent.bkrepo.npm.constants.METADATA
-import com.tencent.bkrepo.npm.constants.NPM_FILE_FULL_PATH
-import com.tencent.bkrepo.npm.constants.NPM_PACKAGE_TGZ_FILE
-import com.tencent.bkrepo.npm.constants.SEARCH_REQUEST
-import com.tencent.bkrepo.npm.constants.SIZE
+import com.tencent.bkrepo.npm.constants.*
 import com.tencent.bkrepo.npm.handler.NpmDependentHandler
 import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
 import com.tencent.bkrepo.npm.model.metadata.NpmVersionMetadata
@@ -65,10 +54,10 @@ import com.tencent.bkrepo.npm.properties.NpmProperties
 import com.tencent.bkrepo.npm.utils.NpmUtils
 import com.tencent.bkrepo.npm.utils.OkHttpUtil
 import com.tencent.bkrepo.npm.utils.TimeUtil
-import com.tencent.bkrepo.repository.constant.CoverStrategy
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
+import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.search.NodeQueryBuilder
 import okhttp3.Response
 import org.slf4j.Logger
@@ -79,7 +68,7 @@ import java.io.InputStream
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.Collections
+import java.util.*
 import kotlin.system.measureTimeMillis
 
 @Component
@@ -94,6 +83,7 @@ class NpmLocalRepository(
         // 不为空说明上传的是tgz文件
         context.getStringAttribute("attachments.content_type")?.let {
             // 计算sha1并校验
+            packageVersion(context)?.let { uploadIntercept(context, it) }
             val calculatedSha1 = context.getArtifactFile().getInputStream().sha1()
             val uploadSha1 = context.getStringAttribute(ATTRIBUTE_OCTET_STREAM_SHA1)
             if (uploadSha1 != null && calculatedSha1 != uploadSha1) {
@@ -101,6 +91,11 @@ class NpmLocalRepository(
             }
         }
     }
+    override fun onDownloadBefore(context: ArtifactDownloadContext) {
+        super.onDownloadBefore(context)
+        packageVersion(context)?.let { downloadIntercept(context, it) }
+    }
+
 
     override fun buildNodeCreateRequest(context: ArtifactUploadContext): NodeCreateRequest {
         return NodeCreateRequest(
@@ -204,6 +199,18 @@ class NpmLocalRepository(
         fullPath?.forEach {
             nodeClient.deleteNode(NodeDeleteRequest(projectId, repoName, it.toString(), userId))
             logger.info("delete artifact $it success in repo [${context.artifactInfo.getRepoIdentify()}].")
+        }
+    }
+
+    private fun packageVersion(context: ArtifactContext): PackageVersion? {
+        with(context) {
+            val (packageName, packageVersion) = if (context is ArtifactUploadContext){
+                NpmUtils.parseNameAndVersionFromFullPath(getAttributes()[NPM_FILE_FULL_PATH] as String)
+            }else{
+                NpmUtils.parseNameAndVersionFromFullPath(artifactInfo.getArtifactFullPath())
+            }
+            val packageKey = PackageKeys.ofNpm(packageName)
+            return packageClient.findVersionByName(projectId, repoName, packageKey, packageVersion).data
         }
     }
 

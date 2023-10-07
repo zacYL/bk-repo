@@ -85,7 +85,7 @@ class DeletedNodeCleanupJob(
 
     data class FileReference(
         val sha256: String,
-        val credentialsKey: String,
+        val credentialsKey: String?,
         val count: String
     )
 

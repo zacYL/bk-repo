@@ -297,5 +297,6 @@
     "manualBan":"手动禁止",
     "scan": "扫描",
     "artifact":"制品",
-    "scanArtifactNum":"扫描制品数"
+    "scanArtifactNum":"扫描制品数",
+    "remoteArtifactUrlInfo":"不允许填写当前远程仓库地址"
 }

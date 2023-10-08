@@ -339,6 +339,11 @@
                         validator: this.checkRemoteUrl,
                         message: this.$t('pleaseInput') + this.$t('legit') + this.$t('address'),
                         trigger: 'blur'
+                    },
+                    {
+                        validator: this.checkRemoteRepeatUrl,
+                        message: this.$t('remoteArtifactUrlInfo'),
+                        trigger: 'blur'
                     }
                 ]
                 // 远程仓库下代理的IP和端口的校验的校验规则
@@ -453,6 +458,13 @@
             checkRemoteUrl (val) {
                 const reg = /^https?:\/\/(([a-zA-Z0-9_-])+(\.)?)*(:\d+)?(\/((\.)?(\?)?=?&?[a-zA-Z0-9_-](\?)?)*)*$/
                 return reg.test(val)
+            },
+            // 校验当前输入的远程代理源地址是否是当前仓库
+            checkRemoteRepeatUrl (val) {
+                const originHref = window.location.origin
+                const urlSplicing = originHref + '/' + this.repoBaseInfo.type?.toLowerCase() + '/' + this.projectId + '/' + this.repoBaseInfo.name
+                const urlSplicingSpecial = urlSplicing + '/'
+                return !(urlSplicing === val || urlSplicingSpecial === val)
             },
             // 创建远程仓库弹窗中测试远程链接
             onClickTestRemoteUrl () {

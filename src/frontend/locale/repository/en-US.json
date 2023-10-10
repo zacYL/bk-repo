@@ -289,5 +289,6 @@
     "manualBan":"Manual ban",
     "scan": "Scan",
     "artifact":"Artifact",
-    "scanArtifactNum":"Artifacts scanned quantity"
+    "scanArtifactNum":"Artifacts scanned quantity",
+    "remoteArtifactUrlInfo":"Not allowed to fill in the current remote artifact address"
 }

@@ -21,7 +21,7 @@
             </bk-form-item>
             <bk-form-item :label="$t('repoName')" :required="true" property="name" error-display-type="normal">
                 <bk-input style="width:400px" v-model.trim="repoBaseInfo.name" maxlength="32" show-word-limit
-                    :placeholder="$t(repoBaseInfo.type === 'docker' ? 'repoDockerNamePlacehodler' : 'repoNamePlacehodler')">
+                    :placeholder="$t(repoBaseInfo.type === 'docker' ? 'repoDockerNamePlaceholder' : 'repoNamePlaceholder')">
                 </bk-input>
                 <div v-if="repoBaseInfo.type === 'docker'" class="form-tip">docker仓库名称不支持大写英文字母</div>
             </bk-form-item>
@@ -125,7 +125,7 @@
                 <bk-form-item :label="$t('enabledFileLists')">
                     <bk-checkbox v-model="repoBaseInfo.enabledFileLists"></bk-checkbox>
                 </bk-form-item>
-                <bk-form-item :label="$t('repodataDepth')" property="repodataDepth" error-display-type="normal">
+                <bk-form-item :label="$t('repoDataDepth')" property="repodataDepth" error-display-type="normal">
                     <bk-input class="w480" v-model.trim="repoBaseInfo.repodataDepth"></bk-input>
                 </bk-form-item>
                 <bk-form-item :label="$t('groupXmlSet')" property="groupXmlSet" error-display-type="normal">
@@ -168,7 +168,7 @@
                     maxlength="200"
                     :rows="6"
                     v-model.trim="repoBaseInfo.description"
-                    :placeholder="$t('repoDescriptionPlacehodler')">
+                    :placeholder="$t('repoDescriptionPlaceholder')">
                 </bk-input>
             </bk-form-item>
         </bk-form>
@@ -342,7 +342,7 @@
                         },
                         {
                             regex: this.repoBaseInfo.type === 'docker' ? /^[a-z][a-z0-9\-_]{1,31}$/ : /^[a-zA-Z][a-zA-Z0-9\-_]{1,31}$/,
-                            message: this.$t(this.repoBaseInfo.type === 'docker' ? 'repoDockerNamePlacehodler' : 'repoNamePlacehodler'),
+                            message: this.$t(this.repoBaseInfo.type === 'docker' ? 'repoDockerNamePlaceholder' : 'repoNamePlaceholder'),
                             trigger: 'blur'
                         },
                         {
@@ -362,7 +362,7 @@
                     repodataDepth: [
                         {
                             regex: /^(0|[1-9][0-9]*)$/,
-                            message: this.$t('pleaseInput') + this.$t('legit') + this.$t('repodataDepth'),
+                            message: this.$t('pleaseInput') + this.$t('legit') + this.$t('repoDataDepth'),
                             trigger: 'blur'
                         }
                     ],

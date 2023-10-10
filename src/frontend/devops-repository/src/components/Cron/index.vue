@@ -35,7 +35,7 @@
                                     <bk-option
                                         v-for="option in cron[tab].enumerationList.map(v => ({
                                             id: v,
-                                            name: tab === 'week' ? $t(`cron.${tab}`) + $t(`cron.${v}`) : v + $t(`cron.${tab}`)
+                                            name: tab === 'week' ? $t(`cron.${v}`) : v
                                         }))"
                                         :key="option.id"
                                         :id="option.id"
@@ -50,7 +50,7 @@
                                     <bk-option
                                         v-for="option in cron[tab].enumerationList.map(v => ({
                                             id: v,
-                                            name: tab === 'week' ? $t(`cron.${tab}`) + $t(`cron.${v}`) : v + $t(`cron.${tab}`)
+                                            name: tab === 'week' ? $t(`cron.${v}`) : v
                                         }))"
                                         :key="option.id"
                                         :id="option.id"

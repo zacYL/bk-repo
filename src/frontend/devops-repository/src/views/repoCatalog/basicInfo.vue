@@ -100,7 +100,7 @@
                 <bk-form-item :label="$t('enabledFileLists')">
                     <bk-checkbox v-model="detailInfo.enabledFileLists" disabled></bk-checkbox>
                 </bk-form-item>
-                <bk-form-item :label="$t('repodataDepth')" property="repodataDepth" error-display-type="normal">
+                <bk-form-item :label="$t('repoDataDepth')" property="repodataDepth" error-display-type="normal">
                     <bk-input class="w480" v-model.trim="detailInfo.repodataDepth" disabled></bk-input>
                 </bk-form-item>
                 <bk-form-item :label="$t('groupXmlSet')" property="groupXmlSet" error-display-type="normal">
@@ -127,7 +127,7 @@
                     maxlength="200"
                     :rows="6"
                     v-model.trim="detailInfo.description"
-                    :placeholder="$t('repoDescriptionPlacehodler')"
+                    :placeholder="$t('repoDescriptionPlaceholder')"
                     disabled>
                 </bk-input>
             </bk-form-item>

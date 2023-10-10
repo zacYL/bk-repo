@@ -136,7 +136,7 @@
                         <bk-form-item :label="$t('enabledFileLists')">
                             <bk-checkbox v-model="repoBaseInfo.enabledFileLists"></bk-checkbox>
                         </bk-form-item>
-                        <bk-form-item :label="$t('repodataDepth')" property="repodataDepth" error-display-type="normal">
+                        <bk-form-item :label="$t('repoDataDepth')" property="repodataDepth" error-display-type="normal">
                             <bk-input class="w480" v-model.trim="repoBaseInfo.repodataDepth"></bk-input>
                         </bk-form-item>
                         <bk-form-item :label="$t('groupXmlSet')" property="groupXmlSet" error-display-type="normal">
@@ -162,7 +162,7 @@
                             maxlength="200"
                             :rows="6"
                             v-model.trim="repoBaseInfo.description"
-                            :placeholder="$t('repoDescriptionPlacehodler')">
+                            :placeholder="$t('repoDescriptionPlaceholder')">
                         </bk-input>
                     </bk-form-item>
                     <bk-form-item>
@@ -368,7 +368,7 @@
                     repodataDepth: [
                         {
                             regex: /^(0|[1-9][0-9]*)$/,
-                            message: this.$t('pleaseInput') + this.$t('legit') + this.$t('repodataDepth'),
+                            message: this.$t('pleaseInput') + this.$t('legit') + this.$t('repoDataDepth'),
                             trigger: 'blur'
                         }
                     ],

@@ -10,14 +10,14 @@
                 <bk-form-item :label="$t('createFolderLabel')" :required="true" property="path" error-display-type="normal">
                     <bk-input v-model.trim="genericForm.path"
                         type="textarea" :rows="6"
-                        :placeholder="$t('folderPathPlacehodler')">
+                        :placeholder="$t('folderPathPlaceholder')">
                     </bk-input>
                     <div class="form-tip">支持 / 分隔符级联创建文件夹</div>
                 </bk-form-item>
             </template>
             <template v-else-if="genericForm.type === 'rename'">
                 <bk-form-item :label="$t('file') + $t('name')" :required="true" property="name" error-display-type="normal">
-                    <bk-input v-model.trim="genericForm.name" :placeholder="$t('folderNamePlacehodler')" maxlength="255" show-word-limit></bk-input>
+                    <bk-input v-model.trim="genericForm.name" :placeholder="$t('folderNamePlaceholder')" maxlength="255" show-word-limit></bk-input>
                 </bk-form-item>
             </template>
             <template v-else-if="genericForm.type === 'scan'">
@@ -61,7 +61,7 @@
                         },
                         {
                             regex: /^(\/[^\\:*?"<>|]{1,255})+$/,
-                            message: this.$t('folderPathPlacehodler'),
+                            message: this.$t('folderPathPlaceholder'),
                             trigger: 'blur'
                         }
                     ],
@@ -73,7 +73,7 @@
                         },
                         {
                             regex: /^([^\\/:*?"<>|]){1,255}$/,
-                            message: this.$t('folderNamePlacehodler'),
+                            message: this.$t('folderNamePlaceholder'),
                             trigger: 'blur'
                         }
                     ],

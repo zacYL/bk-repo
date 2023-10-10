@@ -49,8 +49,8 @@
                                         repoType !== 'docker' && { label: '下载', clickEvent: () => downloadPackageHandler($version) },
                                         showRepoScan && { label: $t('scan'), clickEvent: () => scanPackageHandler($version) }
                                     ] : []),
-                                    !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('forbid',$version), label: $version.metadata.forbidStatus ? $t('remove') + $t('space') + $t('forbid') : $t('forbid') },
-                                    !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('lock',$version), label: $version.metadata.lockStatus ? $t('remove') + $t('space') + $t('lock') : $t('lock') },
+                                    !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('forbid',$version), label: $version.metadata.forbidStatus ? $t('relieve') + $t('space') + $t('forbid') : $t('forbid') },
+                                    !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('lock',$version), label: $version.metadata.lockStatus ? $t('relieve') + $t('space') + $t('lock') : $t('lock') },
                                     (permission.delete && !whetherSoftware && !(storeType === 'virtual') && !$version.metadata.lockStatus) && { label: '删除', clickEvent: () => deleteVersionHandler($version) }
                                 ]"></operation-list>
                         </div>
@@ -303,7 +303,7 @@
                 }).then(() => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: (row.limitStatus ? this.$t('remove') + this.$t('space') + this.$t(row.limitType) : this.$t(row.limitType)) + this.$t('success')
+                        message: (row.limitStatus ? this.$t('relieve') + this.$t('space') + this.$t(row.limitType) : this.$t(row.limitType)) + this.$t('success')
                     })
                     this.$refs.operationLimitConfirmDialog.dialogData.show = false
                     this.refresh(row.name)

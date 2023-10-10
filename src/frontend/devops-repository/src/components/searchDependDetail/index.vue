@@ -169,7 +169,7 @@
                 return this.info.key.replace(/^.*:\/\/(?:.*:)*([^:]+)$/, '$1')
             },
             versionTotalInfo () {
-                return this.$t('artifactVersion') + this.$t('space') + '(' + this.$t('total') + this.$t('space') + (this.versionList.length || 0) + this.$t('per') + ')'
+                return this.$t('artifactVersionTotalInfo', this.versionList?.length || 0)
             }
         },
         watch: {

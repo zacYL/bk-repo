@@ -157,8 +157,8 @@
                                             { clickEvent: () => handlerShare(row), label: $t('share') }
                                         ] : [])
                                     ] : []),
-                                    !row.folder && { clickEvent: () => showLimitDialog('forbid',row), label: row.metadata.forbidStatus ? $t('remove') + $t('space') + $t('forbid') : $t('forbid') },
-                                    !row.folder && { clickEvent: () => showLimitDialog('lock',row), label: row.metadata.lockStatus ? $t('remove') + $t('space') + $t('lock') : $t('lock') },
+                                    !row.folder && { clickEvent: () => showLimitDialog('forbid',row), label: row.metadata.forbidStatus ? $t('relieve') + $t('space') + $t('forbid') : $t('forbid') },
+                                    !row.folder && { clickEvent: () => showLimitDialog('lock',row), label: row.metadata.lockStatus ? $t('relieve') + $t('space') + $t('lock') : $t('lock') },
                                     (permission.delete && !row.metadata.lockStatus) && { clickEvent: () => deleteRes(row), label: $t('delete') }
                                 ].filter(Boolean)">
                             </operation-list>
@@ -747,7 +747,7 @@
                 }).then(() => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: (data.limitStatus ? this.$t('remove') + this.$t('space') + this.$t(limitType) : this.$t(limitType)) + this.$t('success')
+                        message: (data.limitStatus ? this.$t('relieve') + this.$t('space') + this.$t(limitType) : this.$t(limitType)) + this.$t('success')
                     })
                     this.$refs.operationLimitConfirmDialog.dialogData.show = false
                     this.getArtifactories()

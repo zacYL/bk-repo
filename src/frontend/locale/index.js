@@ -50,6 +50,7 @@ export default (r) => {
     const initLocale = getLsLocale()
     // export localeList
     const i18n = new VueI18n({
+        silentFallbackWarn: true,
         locale: initLocale,
         fallbackLocale: initLocale,
         messages
@@ -88,6 +89,9 @@ export default (r) => {
         setLsLocale(localeLang)
         locale.use(lang[localeLang.replace('-', '')])
         axios.defaults.headers.common['Accept-Language'] = localeLang
+        if (Vue.prototype.$ajax?.defaults) {
+            Vue.prototype.$ajax.defaults.headers.common['Accept-Language'] = localeLang
+        }
         document.querySelector('html').setAttribute('lang', localeLang)
         
         return localeLang

@@ -118,6 +118,12 @@ class PackageMetadataServiceImpl(
         request.apply {
             val tPackage = getPackage(projectId, repoName, packageKey)
             val query = PackageQueryHelper.versionQuery(tPackage.id!!, version)
+            val tPackageVersion = getPackageVersion(tPackage.id!!, version)
+            tPackageVersion.metadata.forEach {
+                if (it.key in keyList) {
+                    MetadataUtils.checkPermission(it, operator)
+                }
+            }
             val update = Update().pull(
                 TPackageVersion::metadata.name,
                 Query.query(Criteria.where(TMetadata::key.name).`in`(keyList))

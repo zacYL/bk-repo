@@ -14,6 +14,8 @@ data class NodeDelete(
     val fullPath: String,
     @ApiModelProperty("创建时间")
     val createdDate: LocalDateTime,
+    @ApiModelProperty("最近修改时间")
+    val lastModifiedDate: LocalDateTime,
     @ApiModelProperty("最近使用时间")
     val recentlyUseDate: LocalDateTime?
 

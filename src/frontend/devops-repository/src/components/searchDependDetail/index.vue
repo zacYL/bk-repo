@@ -49,7 +49,8 @@
                                         <forbid-tag class="ml10"
                                             v-if="metadataMap.forbidStatus"
                                             :forbid-user="metadataMap.forbidUser"
-                                            :forbid-type="metadataMap.forbidType">
+                                            :forbid-type="metadataMap.forbidType"
+                                            :forbid-description="forbidDescription">
                                         </forbid-tag>
                                     </template>
                                 </span>
@@ -164,6 +165,10 @@
                 // JavaScript中，true 被视为 1，false 被视为 0
                 return this.detail.metadata?.filter(item => item.display) // 先过滤出 display 为 true 的对象
                     .sort((a, b) => b.system - a.system) // 然后根据 system 排序， system 为 true 的对象排在前面
+            },
+            // 获取元数据中的禁用原因
+            forbidDescription () {
+                return this.detail.metadata?.find((m) => m.key === 'forbidStatus')?.description
             },
             packageName () {
                 return this.info.key.replace(/^.*:\/\/(?:.*:)*([^:]+)$/, '$1')

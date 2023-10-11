@@ -10,10 +10,12 @@
                     :status="(cardData.metadata || {}).scanStatus"
                     readonly>
                 </scan-tag>
+                <!-- generic 仓库才需要显示禁用的相关具体信息(禁用人、禁用原因等) -->
                 <forbid-tag class="ml10"
                     v-if="((cardData.metadata || {}).forbidStatus || cardData.forbidStatus)"
                     :forbid-user="(cardData.metadata || {}).forbidUser"
-                    :forbid-type="(cardData.metadata || {}).forbidType">
+                    :forbid-type="(cardData.metadata || {}).forbidType"
+                    :forbid-description="cardData.type ? '' : forbidDescription">
                 </forbid-tag>
             </div>
             <span class="package-card-description text-overflow" :title="cardData.description">{{ cardData.description }}</span>
@@ -124,6 +126,10 @@
                     style = this.whetherRepoVirtual ? 5 : 4
                 }
                 return { 'grid-template': `auto / repeat( ${style}, 1fr)` }
+            },
+            // 获取元数据中的禁用原因
+            forbidDescription () {
+                return this.cardData?.nodeMetadata?.find((m) => m.key === 'forbidStatus')?.description
             }
         },
         methods: {

@@ -223,9 +223,12 @@
                     // 依赖源仓库
                     if ((isEmpty(this.searchArtifactParams?.name)
                         && isEmpty(this.searchArtifactParams?.version)
-                        && (isEmpty(this.searchArtifactParams?.md5) && isEmpty(this.searchArtifactParams?.sha256))
-                        && (this.searchArtifactParams?.metadataList?.length || 0) === 0) || (pkg.versions === pkg.matchedVersions?.length)) {
-                        // 此时表明不是搜索状态下或当前包下的所有版本都符合搜索条件
+                        && isEmpty(this.searchArtifactParams?.md5)
+                        && isEmpty(this.searchArtifactParams?.sha256)
+                        && !this.searchArtifactParams?.metadataList?.length)
+                        || (pkg.versions === pkg.matchedVersions?.length)
+                        || !pkg.matchedVersions?.length) {
+                        // 此时表明不是搜索状态下或当前包下的所有版本都符合搜索条件或者后端没有返回匹配到的版本列表这个字段
                         this.showCommonPackageDetail(pkg)
                     } else {
                         this.commonPackageInfo = pkg

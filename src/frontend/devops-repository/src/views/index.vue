@@ -104,7 +104,7 @@
     height: 100%;
     .nav-submain-list {
         position: relative;
-        width: 180px;
+        width: 210px;
         height: 100%;
         overflow-y: auto;
         padding-top: 12px;

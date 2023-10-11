@@ -41,7 +41,8 @@
                                 <forbid-tag class="ml10"
                                     v-if="metadataMap.forbidStatus"
                                     :forbid-user="metadataMap.forbidUser"
-                                    :forbid-type="metadataMap.forbidType">
+                                    :forbid-type="metadataMap.forbidType"
+                                    :forbid-description="forbidDescription">
                                 </forbid-tag>
                             </template>
                         </span>
@@ -292,6 +293,10 @@
             // 用户是否设置了锁定，当前制品版本处于锁定状态下时不允许添加及删除任何元数据
             hasLockMetadata () {
                 return this.detail.metadata?.find((m) => m.key === 'lockStatus')?.value
+            },
+            // 获取元数据中的禁用原因
+            forbidDescription () {
+                return this.detail.metadata?.find((m) => m.key === 'forbidStatus')?.description
             }
         },
         watch: {

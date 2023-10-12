@@ -232,9 +232,14 @@
                         this.showCommonPackageDetail(pkg)
                     } else {
                         this.commonPackageInfo = pkg
-                        this.$nextTick(() => {
-                            this.$refs.searchDependDetailRef && (this.$refs.searchDependDetailRef.show = true)
-                        })
+                        if (pkg.matchedVersions?.length === 1) {
+                            // 此时表明搜索结果只有一个，此时也不需要在打开版本详情快照,直接进入版本详情即可，携带当前搜索的版本号
+                            this.showCommonPackageDetail(this.commonPackageInfo, pkg.matchedVersions[0])
+                        } else {
+                            this.$nextTick(() => {
+                                this.$refs.searchDependDetailRef && (this.$refs.searchDependDetailRef.show = true)
+                            })
+                        }
                     }
                 }
             },

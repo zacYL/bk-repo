@@ -39,7 +39,8 @@
                             <forbid-tag class="ml10"
                                 v-if="metadataMap.forbidStatus"
                                 :forbid-user="metadataMap.forbidUser"
-                                :forbid-type="metadataMap.forbidType">
+                                :forbid-type="metadataMap.forbidType"
+                                :forbid-description="forbidDescription">
                             </forbid-tag>
                         </template>
                     </span>
@@ -249,6 +250,10 @@
                     target[meta.key] = meta.value
                     return target
                 }, {})
+            },
+            // 获取元数据中的禁用原因
+            forbidDescription () {
+                return this.detail.metadata?.find((m) => m.key === 'forbidStatus')?.description
             },
             // 是否是 软件源模式
             whetherSoftware () {

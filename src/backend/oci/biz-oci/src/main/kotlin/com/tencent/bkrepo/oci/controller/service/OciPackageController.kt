@@ -48,7 +48,7 @@ class OciPackageController(
     private val operationService: OciOperationService,
     private val ociReplicationRecordDao: OciReplicationRecordDao,
     private val eventExecutor: EventExecutor
-    ): OciClient {
+) : OciClient {
     override fun packageCreate(record: OciReplicationRecordInfo): Response<Void> {
         with(record) {
             val ociArtifactInfo = OciManifestArtifactInfo(
@@ -86,10 +86,10 @@ class OciPackageController(
     ): Response<Boolean> {
         return ResponseBuilder.success(
             operationService.refreshBlobNode(
-            projectId = projectId,
-            repoName = repoName,
-            pName = packageName,
-            pVersion = version
+                projectId = projectId,
+                repoName = repoName,
+                pName = packageName,
+                pVersion = version
             ))
     }
 

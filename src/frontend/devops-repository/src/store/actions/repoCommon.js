@@ -165,7 +165,7 @@ export default {
                             ? [{
                                 field: 'version',
                                 value: `*${version}*`,
-                                operation: 'MATCH_I'
+                                operation: 'EQ'
                             }]
                             : []),
                         ...(metadataList

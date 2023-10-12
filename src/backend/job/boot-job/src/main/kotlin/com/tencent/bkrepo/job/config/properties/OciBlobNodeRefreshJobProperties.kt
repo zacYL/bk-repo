@@ -35,6 +35,6 @@ class OciBlobNodeRefreshJobProperties(
      * 需要进行远端分发集群推送的仓库类型
      * */
     var repositoryTypes: List<String> = listOf("OCI", "DOCKER"),
-    override var enabled: Boolean = true,
+    override var enabled: Boolean = false,
     override var cron: String = "0 0 4/24 * * ?"
-    ) : MongodbJobProperties()
+) : MongodbJobProperties()

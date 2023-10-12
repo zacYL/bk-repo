@@ -5,7 +5,7 @@
                 <div class="flex-align-center">
                     <Icon class="mr10" size="20" :name="section.icon" />
                     <span>{{ section.title }}</span>
-                    <span class="mr5 permission-actions">（{{ getActions(section.name) }}）</span>
+                    <span class="mr5 permission-actions">({{ getActions(section.name) }})</span>
                     <Icon v-if="section === user" class="hover-btn" size="24" name="icon-edit" @click.native.stop="editActionsDialogHandler(section)" />
                 </div>
             </header>
@@ -179,25 +179,25 @@
                     const list = [
                         {
                             id: 'READ',
-                            name: '查看',
+                            name: this.$t('view'),
                             tips: [
-                                '仓库内所有制品的查看和下载权限'
+                                this.$t('readActionTip')
                             ]
                         },
                         {
                             id: 'UPDATE',
-                            name: '修改',
+                            name: this.$t('modify'),
                             tips: [
-                                'Generic仓库：重命名、添加元数据、删除元数据',
-                                '依赖源仓库：制品版本晋级',
-                                '全仓库：禁用，解除禁用'
+                                this.$t('updateActionTip1'),
+                                this.$t('updateActionTip2'),
+                                this.$t('updateActionTip3')
                             ]
                         },
                         {
                             id: 'DELETE',
-                            name: '删除',
+                            name: this.$t('delete'),
                             tips: [
-                                '仓库内所有制品的页面删除权限'
+                                this.$t('deleteActionTip')
                             ]
                         }
                     ]
@@ -205,10 +205,10 @@
                     if (this.category !== 'REMOTE') {
                         const write = {
                             id: 'WRITE',
-                            name: '上传',
+                            name: this.$t('upload'),
                             tips: [
-                                'Generic仓库：新建文件夹、上传文件、复制、移动',
-                                '依赖源仓库：上传制品版本'
+                                this.$t('writeActionTip1'),
+                                this.$t('writeActionTip2')
                             ]
                         }
                         list.splice(1, 0, write)
@@ -252,9 +252,9 @@
                 const actionsName = ['READ', ...this[name].actions.data].map(id => this.actionList.find(action => action.id === id)?.name)
                 switch (name) {
                     case 'admin':
-                        return '仓库管理，制品管理所有权限'
+                        return this.$t('adminPermission')
                     case 'user':
-                        return `制品管理权限：${actionsName.filter(Boolean).join('，')}`
+                        return this.$t('normalPermission') + `${actionsName.filter(Boolean).join(',')}`
                 }
             },
             filterSelectOptions (target, part) {
@@ -311,7 +311,7 @@
                 }).then(() => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: (type === 'add' ? this.$t('add') : this.$t('delete')) + this.$t('success')
+                        message: (type === 'add' ? this.$t('add') : this.$t('delete')) + this.$t('space') + this.$t('success')
                     })
                     this.handlePermissionDetail(part, section.name, section.id).then(() => {
                         section[part][`${type}List`] = []
@@ -329,7 +329,7 @@
                     loading: false,
                     id: data.id,
                     name: data.name,
-                    title: data.title + '权限配置',
+                    title: data.title + this.$t('permissionSetting'),
                     actions: ['READ', ...JSON.parse(JSON.stringify(data.actions.data))]
                 }
             },
@@ -344,7 +344,7 @@
                 }).then(res => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: this.$t('save') + this.$t('success')
+                        message: this.$t('save') + this.$t('space') + this.$t('success')
                     })
                     this.editActionsDialog.show = false
                     this.handlePermissionDetail('actions', this.editActionsDialog.name, this.editActionsDialog.id)
@@ -392,7 +392,7 @@
         .section-sub-title {
             padding: 20px 10px 10px;
             > :first-child {
-                flex-basis: 45px;
+                flex-basis: 70px;
                 text-align: right;
             }
             .section-sub-add-btn {
@@ -412,7 +412,7 @@
         .section-sub {
             display: flex;
             flex-wrap: wrap;
-            padding-left: 75px;
+            padding-left: 100px;
             padding-bottom: 10px;
             border-bottom: 1px solid var(--borderColor);
             margin-bottom: -1px;

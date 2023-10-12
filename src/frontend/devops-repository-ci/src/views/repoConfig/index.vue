@@ -77,7 +77,7 @@
                                 v-model="repoBaseInfo.deploymentRepo"
                                 style="width:300px;"
                                 :show-empty="false"
-                                :placeholder="$t('pleaseSelect') + $t('uploadTargetStore')">
+                                :placeholder="$t('pleaseSelect') + $t('space') + $t('uploadTargetStore')">
                                 <bk-option v-for="item in deploymentRepoCheckList" :key="item.name" :id="item.name" :name="item.name">
                                 </bk-option>
                                 <div v-if="!deploymentRepoCheckList.length" class="form-tip mt10 ml10 mr10 mb10">
@@ -87,7 +87,7 @@
                             <div class="form-tip">{{$t('addPackagePrompt')}}</div>
                         </bk-form-item> -->
                     </template>
-                    <bk-form-item label="访问权限">
+                    <bk-form-item :label="$t('accessPermission')">
                         <card-radio-group
                             v-model="available"
                             :list="availableList"
@@ -96,7 +96,7 @@
                         </card-radio-group>
                     </bk-form-item>
 
-                    <bk-form-item label="版本策略" v-if="!(repoBaseInfo.category === 'REMOTE') && !(repoBaseInfo.category === 'VIRTUAL') && (repoType === 'maven' || repoType === 'npm')">
+                    <bk-form-item :label="$t('versionStrategy')" v-if="!(repoBaseInfo.category === 'REMOTE') && !(repoBaseInfo.category === 'VIRTUAL') && (repoType === 'maven' || repoType === 'npm')">
                         <div class="flex-align-center">
                             <bk-switcher
                                 v-model="repoBaseInfo.override.switcher"
@@ -104,11 +104,11 @@
                                 theme="primary"
                                 @change="handleOverrideChange"
                             ></bk-switcher>
-                            <span class="ml10">开启后上传同名称版本制品将会根据版本策略决定是否覆盖</span>
+                            <span class="ml10">{{$t('coverStrategyInfo')}}</span>
                         </div>
                         <bk-radio-group v-model="repoBaseInfo.override.isFlag" v-if="repoBaseInfo.override.switcher">
-                            <bk-radio class="mr20" :value="false">不允许覆盖</bk-radio>
-                            <bk-radio :value="true">允许覆盖</bk-radio>
+                            <bk-radio class="mr20" :value="false">{{$t('notAllowCover')}}</bk-radio>
+                            <bk-radio :value="true">{{$t('allowCover')}}</bk-radio>
                         </bk-radio-group>
                     </bk-form-item>
 
@@ -173,7 +173,7 @@
             <bk-tab-panel v-if="showProxyConfigTab" name="proxyConfig" :label="$t('proxyConfig')">
                 <proxy-config :base-data="repoBaseInfo" @refresh="getRepoInfoHandler"></proxy-config>
             </bk-tab-panel>
-            <bk-tab-panel v-if="showCleanConfigTab" render-directive="if" name="cleanConfig" label="清理设置">
+            <bk-tab-panel v-if="showCleanConfigTab" render-directive="if" name="cleanConfig" :label="$t('cleanSetting')">
                 <clean-config :base-data="repoBaseInfo" @refresh="getRepoInfoHandler"></clean-config>
             </bk-tab-panel>
         </bk-tab>
@@ -298,9 +298,9 @@
             },
             availableList () {
                 return [
-                    { label: '项目内公开', value: 'project', tip: '项目内成员可以使用' },
-                    { label: '系统内公开', value: 'system', tip: '系统内成员可以使用' },
-                    { label: '可匿名下载', value: 'public', tip: '不鉴权，任意终端都可下载' }
+                    { label: this.$t('openProjectLabel'), value: 'project', tip: this.$t('openProjectTip') },
+                    { label: this.$t('systemPublic'), value: 'system', tip: this.$t('systemPublicTip') },
+                    { label: this.$t('openPublicLabel'), value: 'public', tip: this.$t('openPublicTip') }
                 ]
             },
             rules () {
@@ -697,7 +697,7 @@
             overflow-y: auto;
         }
         .repo-base-info {
-            max-width: 800px;
+            max-width: 966px;
         }
     }
 }

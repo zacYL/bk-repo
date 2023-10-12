@@ -21,7 +21,7 @@
                 <bk-input v-model.trim="editProxyData.url"></bk-input>
             </bk-form-item>
         </bk-form>
-        <label class="ml20 mr20 mt20 mb10 form-label">凭证信息</label>
+        <label class="ml20 mr20 mt20 mb10 form-label">{{$t('credentialInformation')}}</label>
         <bk-form class="ml20 mr20" :label-width="85">
             <bk-form-item :label="$t('account')" property="username">
                 <bk-input v-model.trim="editProxyData.username"></bk-input>
@@ -30,18 +30,18 @@
                 <bk-input type="password" v-model.trim="editProxyData.password"></bk-input>
             </bk-form-item>
         </bk-form>
-        <label class="ml20 mr20 mt20 mb10 form-label">网络代理</label>
+        <label class="ml20 mr20 mt20 mb10 form-label">{{$t('networkProxy')}}</label>
         <bk-form class="ml20 mr20" ref="proxyNetworkRefs" :label-width="85" :model="editNetworkProxyData" :rules="networkRules">
-            <bk-form-item label="开关" property="switcher">
+            <bk-form-item :label="$t('proxySwitch')" property="switcher">
                 <template>
                     <bk-switcher v-model="editNetworkProxyData.switcher" theme="primary"></bk-switcher>
-                    <span>{{editNetworkProxyData.switcher ? '开启' : '关闭'}}</span>
+                    <span>{{editNetworkProxyData.switcher ? $t('open') : $t('close')}}</span>
                 </template>
             </bk-form-item>
             <bk-form-item v-if="editNetworkProxyData.switcher" label="IP" property="host" :required="true" error-display-type="normal">
                 <bk-input v-model.trim="editNetworkProxyData.host"></bk-input>
             </bk-form-item>
-            <bk-form-item v-if="editNetworkProxyData.switcher" label="端口" property="port" :required="true" error-display-type="normal">
+            <bk-form-item v-if="editNetworkProxyData.switcher" :label="$t('port')" property="port" :required="true" error-display-type="normal">
                 <bk-input v-model.trim="editNetworkProxyData.port"></bk-input>
                 <!-- type="number" :max="65535" :min="1"  -->
             </bk-form-item>
@@ -85,14 +85,14 @@
                     name: [
                         {
                             required: true,
-                            message: '请输入代理源名称',
+                            message: this.$t('proxyNameRule'),
                             trigger: 'blur'
                         }
                     ],
                     url: [
                         {
                             required: true,
-                            message: '请输入代理源url地址',
+                            message: this.$t('proxyUrlRule'),
                             trigger: 'blur'
                         }
                     ]
@@ -101,14 +101,14 @@
                     host: [
                         {
                             required: true,
-                            message: '请输入网络代理IP',
+                            message: this.$t('proxyIpPlaceholder'),
                             trigger: 'blur'
                         }
                     ],
                     port: [
                         {
                             required: true,
-                            message: '请输入网络代理端口',
+                            message: this.$t('proxyPortPlaceholder'),
                             trigger: 'blur'
                         }
                     ]

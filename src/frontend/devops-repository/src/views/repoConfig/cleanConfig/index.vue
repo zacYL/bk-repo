@@ -1,21 +1,21 @@
 <template>
     <bk-form class="clean-config-container" :label-width="120" :model="config" :rules="rules" ref="cleanForm">
-        <bk-form-item label="自动清理">
+        <bk-form-item :label="$t('autoCleanup')">
             <bk-switcher v-model="config.autoClean" size="small" theme="primary" @change="clearError"></bk-switcher>
-            <span class="auto-clean-info">开启自动清理后，除符合下方保留规则与被锁定的制品/文件，将被定时删除。</span>
+            <span class="auto-clean-info">{{$t('autoCleanInfo')}}</span>
         </bk-form-item>
-        <bk-form-item v-if="repoType !== 'generic'" label="最少保留版本" required property="reserveVersions" error-display-type="normal">
+        <bk-form-item v-if="repoType !== 'generic'" :label="$t('minimumVersion')" required property="reserveVersions" error-display-type="normal">
             <bk-input class="w250" v-model="config.reserveVersions" :disabled="!config.autoClean"></bk-input>
-            <div class="form-tip">制品版本数量超过保留版本数，且在保留时间内没有使用过的制品版本将会被清理</div>
+            <div class="form-tip">{{$t('dependencyCleanTip')}}</div>
         </bk-form-item>
-        <bk-form-item v-if="repoType !== 'generic'" label="最少保留时间(天)" required property="reserveDays" error-display-type="normal">
+        <bk-form-item v-if="repoType !== 'generic'" :label="$t('minRetentionTime')" required property="reserveDays" error-display-type="normal">
             <bk-input class="w250" v-model="config.reserveDays" :disabled="!config.autoClean"></bk-input>
         </bk-form-item>
-        <bk-form-item :label="repoType === 'generic' ? '保留机制' : '保留规则'">
+        <bk-form-item :label="repoType === 'generic' ? $t('genericRetention') : $t('retentionRules')">
             <template v-if="repoType !== 'generic'">
-                <bk-button :disabled="!config.autoClean" icon="plus" @click="addRule()">添加规则</bk-button>
+                <bk-button :disabled="!config.autoClean" icon="plus" @click="addRule()">{{$t('addRules')}}</bk-button>
                 <div class="form-tip">
-                    符合规则的制品将不会被自动清理
+                    {{$t('notGenericTip')}}
                 </div>
                 <div class="rule-list">
                     <package-clean-rule
@@ -33,21 +33,21 @@
                 <div class="flex-align-center">
                     <span class="generic-rule-icon"><i class="bk-icon icon-question-circle" v-bk-tooltips="htmlConfig"></i></span>
                     <div id="generic-rule-info">
-                        <p>1. 在目录下符合保留规则的文件永久不会被清理，文件不符合任意保留规则但是存储未超过暂存时间不会被清理，文件被下载、编辑将刷新保留时间。</p>
-                        <p>2. 开启自动清理后，未设置保留规则和暂存时间的文件，将按照文件目录1（仓库全局规则）的暂存时间与规则做保留，文件目录1不可删除。</p>
-                        <p>3. 添加文件目录后，文件目录下的所有文件按照所属目录的暂存时间与规则做保留，不再按照全局规则做保留。</p>
-                        <p>4. 在父目录存在多个子目录与保留规则时，添加子目录1保留规则，仅子目录1内的文件按照子目录1的规则进行保留，其他子目录按照父目录规则做保留。</p>
+                        <p>{{$t('genericRuleInfo1')}}</p>
+                        <p>{{$t('genericRuleInfo2')}}</p>
+                        <p>{{$t('genericRuleInfo3')}}</p>
+                        <p>{{$t('genericRuleInfo4')}}</p>
                     </div>
-                    <bk-button :disabled="!config.autoClean" icon="plus" @click="addGenericCatalog()">添加目录</bk-button>
+                    <bk-button :disabled="!config.autoClean" icon="plus" @click="addGenericCatalog()">{{$t('addGenericCatalog')}}</bk-button>
                 </div>
                 <div v-for="(rule, index) in genericConfig.rules"
                     :key="index">
                     <div class="generic-config-container">
                         <bk-form class=""
-                            :label-width="100" form-type="inline"
+                            :label-width="140" form-type="inline"
                             ref="genericFormRefs" :model="genericConfig"
                             :rules="genericRules">
-                            <bk-form-item :label="'文件目录' + (index + 1)"
+                            <bk-form-item :label="$t('genericRulesIndexInfo') + $t('space') + (index + 1)"
                                 :rules="genericRules.catalogValue"
                                 :property="`rules.${index }.catalogValue`"
                                 error-display-type="normal"
@@ -59,7 +59,7 @@
                                     :arrow="false" flip-on-update
                                     :distance="0">
                                     <bk-input class="w250"
-                                        readonly placeholder="请选择文件目录"
+                                        readonly :placeholder="$t('genericRulePlaceHolder')"
                                         :disabled="!config.autoClean || index === 0"
                                         right-icon="bk-icon icon-angle-down"
                                         v-model="rule.catalogValue"
@@ -89,12 +89,12 @@
                                                 </span>
                                             </template>
                                         </vue-tree>
-                                        <bk-button class="generic-rule-tree-btn" :disabled="!config.autoClean" theme="primary" title="确定" @click="onConfirmCheck(index)">确定</bk-button>
+                                        <bk-button class="generic-rule-tree-btn" :disabled="!config.autoClean" theme="primary" :title="$t('confirm')" @click="onConfirmCheck(index)"> {{$t('confirm')}}</bk-button>
                                     </div>
                                 </bk-popover>
 
                             </bk-form-item>
-                            <bk-form-item label="文件暂存时间" :rules="genericRules.reserveDays"
+                            <bk-form-item :label="$t('genericFileTempTime')" :rules="genericRules.reserveDays"
                                 :property="`rules.${index}.reserveDays`" error-display-type="normal">
                                 <!-- rule.rules.length 表明当前设置的保留规则的数量 -->
                                 <!-- 当设置保留规则为全部时，为空对象，经过下方过滤之后会去除空对象，所以如果保留规则设置的存在全部，遍历之后的数量会和之前的数量不一致 -->
@@ -108,10 +108,10 @@
                                     v-model="rule.reserveDays"
                                     :disabled="!config.autoClean || rule.rules.length !== rule.rules.filter(v => Object.keys(v).length).length">
                                 </bk-input>
-                                <span class="ml10 mr10">天</span>
+                                <span class="ml10 mr10">{{$t('day')}}</span>
                             </bk-form-item>
                             <bk-form-item>
-                                <bk-button :disabled="!config.autoClean" icon="plus" @click="onAddGenericRule(index)">添加保留规则</bk-button>
+                                <bk-button :disabled="!config.autoClean" icon="plus" @click="onAddGenericRule(index)">{{$t('addRetentionRules')}}</bk-button>
                             </bk-form-item>
                         </bk-form>
                         <bk-icon class="ml5 hover-btn" v-if="index !== 0" type="close-circle" :disabled="!config.autoClean" @click="onDeleteGenericCatalog(index)" />
@@ -177,14 +177,14 @@
                     reserveVersions: [
                         {
                             regex: /^[0-9]+$/,
-                            message: '请填写非负整数',
+                            message: this.$t('nonNegativeIntegerTip'),
                             trigger: 'blur'
                         }
                     ],
                     reserveDays: [
                         {
                             regex: /^[0-9]+$/,
-                            message: '请填写非负整数',
+                            message: this.$t('nonNegativeIntegerTip'),
                             trigger: 'blur'
                         }
                     ]
@@ -193,7 +193,7 @@
                     catalogValue: [
                         {
                             required: true,
-                            message: '请选择文件目录',
+                            message: this.$t('genericRulePlaceHolder'),
                             trigger: 'blur'
                         }
 
@@ -201,7 +201,7 @@
                     reserveDays: [
                         {
                             required: true,
-                            message: '请输入文件保留时间',
+                            message: this.$t('genericFileRetentionTimeTips'),
                             trigger: 'blur'
                         }
                     ]
@@ -240,7 +240,7 @@
                             const pathValue = r.rules.find(item => item.field === 'path')?.value || ''
                             const ruleArr = r.rules.find(item => item.rules)?.rules || []
                             return {
-                                catalogValue: pathValue === '/' ? '全仓库' : pathValue,
+                                catalogValue: pathValue === '/' ? this.$t('genericRetentionRuleAllInfo') : pathValue,
                                 reserveDays: r.rules.find(item => item.field === 'reserveDays')?.value || 30,
                                 clearable: false,
                                 treeData: [{
@@ -356,7 +356,7 @@
                 const checkArr = this.$refs.genericTreeRefs[index - 1].getCheckedKeys() || []
                 if (allCheck.includes(checkArr?.[0])) {
                     this.$bkMessage({
-                        message: '已经选择了当前目录，请检查后重新选择',
+                        message: this.$t('checkDirectoryRepeatTip'),
                         theme: 'error'
                     })
                 } else {
@@ -390,7 +390,7 @@
                         rules: []
                     }
                     if (this.genericConfig.rules.length === 0) {
-                        ruleObj.catalogValue = '全仓库'
+                        ruleObj.catalogValue = this.$t('genericRetentionRuleAllInfo')
                     }
                     this.genericConfig.rules.push(ruleObj)
                 }
@@ -399,8 +399,8 @@
             onDeleteGenericCatalog (index) {
                 if (this.config.autoClean) {
                     this.$bkInfoDevopsConfirm({
-                        title: '删除目录',
-                        subTitle: '确定删除当前目录吗？',
+                        title: this.$t('deleteDirectory'),
+                        subTitle: this.$t('deleteDirectoryConfirmTip'),
                         theme: 'warning',
                         confirmFn: () => {
                             this.genericConfig.rules.splice(index, 1)
@@ -443,7 +443,7 @@
                             rules: [
                                 {
                                     field: 'path',
-                                    value: rs.catalogValue === '全仓库' ? '/' : rs.catalogValue,
+                                    value: rs.catalogValue === this.$t('genericRetentionRuleAllInfo') ? '/' : rs.catalogValue,
                                     operation: 'REGEX'
                                 },
                                 {
@@ -545,7 +545,7 @@
                     this.$emit('refresh')
                     this.$bkMessage({
                         theme: 'success',
-                        message: this.$t('save') + this.$t('success')
+                        message: this.$t('save') + this.$t('space') + this.$t('success')
                     })
                 }).finally(() => {
                     this.loading = false
@@ -556,7 +556,7 @@
 </script>
 <style lang="scss" scoped>
 .clean-config-container {
-    max-width: 1080px;
+    max-width: 1280px;
 }
 .generic-tip{
     font-size: 12px;
@@ -569,7 +569,7 @@
     margin: 10px 0;
 }
 .generic-config-rules{
-    margin: 0 0 0 100px;
+    margin: 0 0 0 140px;
 }
 .generic-rule-icon{
     margin: 0 5px 0 -15px;
@@ -600,7 +600,7 @@
 }
 ::v-deep .bk-form.bk-inline-form .bk-form-item .bk-label{
     // 因为bk-form的行内表单会导致width变为auto，且是 !import的,此时的!import不可删除
-    width: 100px !important;
+    width: 140px !important;
 }
 // 产品要求：此处的选择目录虽然是只读的，但样式要和普通输入框一致
 ::v-deep .bk-form-input[readonly]{

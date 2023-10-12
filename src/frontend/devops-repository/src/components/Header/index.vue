@@ -20,7 +20,7 @@
                 :value="projectId"
                 searchable
                 :clearable="false"
-                placeholder="请选择项目"
+                :placeholder="$t('inputProject')"
                 @change="changeProject"
                 size="small"
                 :enable-virtual-scroll="projectList && projectList.length > 3000"

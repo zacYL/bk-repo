@@ -35,7 +35,7 @@
                 <bk-input
                     v-model.trim="query.name"
                     class="w250"
-                    placeholder="请输入仓库名称, 按Enter键搜索"
+                    :placeholder="$t('repoEnterTip')"
                     clearable
                     @enter="handlerPaginationChange"
                     @clear="handlerPaginationChange"
@@ -82,10 +82,10 @@
                     <Icon class="mr5 table-svg" size="16" :name="row.repoType" />
                     <span class="hover-btn" @click="toPackageList(row)">{{replaceRepoName(row.name)}}</span>
                     <span v-if="MODE_CONFIG === 'ci' && ['custom', 'pipeline'].includes(row.name)"
-                        class="mr5 repo-tag SUCCESS" data-name="内置">
+                        class="mr5 repo-tag SUCCESS" :data-name="$t('builtIn')">
                     </span>
-                    <span v-if="row.configuration.settings.system" class="mr5 repo-tag" data-name="系统"></span>
-                    <span v-if="row.public" class="mr5 repo-tag WARNING" data-name="公开"></span>
+                    <span v-if="row.configuration.settings.system" class="mr5 repo-tag" :data-name="$t('system')"></span>
+                    <span v-if="row.public" class="mr5 repo-tag WARNING" :data-name="$t('public')"></span>
                 </template>
             </bk-table-column>
             <bk-table-column :label="$t('storeTypes')" width="120">
@@ -105,7 +105,7 @@
                 <template #default="{ row }">
                     <operation-list
                         :list="[
-                            { label: '设置', clickEvent: () => toRepoConfig(row) },
+                            { label: $t('setting'), clickEvent: () => toRepoConfig(row) },
                             (row.repoType !== 'generic' ||
                                 (row.repoType === 'generic'
                                     && row.name !== 'custom'
@@ -288,7 +288,7 @@
                             this.debounceGetListData ? this.debounceGetListData() : this.getListData()
                             this.$bkMessage({
                                 theme: 'success',
-                                message: this.$t('delete') + this.$t('success')
+                                message: this.$t('delete') + this.$t('space') + this.$t('success')
                             })
                         })
                     }

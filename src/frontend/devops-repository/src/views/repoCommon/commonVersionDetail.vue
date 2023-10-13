@@ -2,7 +2,7 @@
     <bk-tab class="common-version-container" type="unborder-card" :active.sync="tabName" v-bkloading="{ isLoading }">
         <template #setting>
             <bk-button v-if="!metadataMap.forbidStatus && repoType !== 'docker'"
-                outline class="mr10" @click="$emit('download')">下载</bk-button>
+                outline class="mr10" @click="$emit('download')">{{$t('download')}}</bk-button>
             <operation-list class="mr20"
                 :list="operationBtns">
                 <bk-button icon="ellipsis"></bk-button>
@@ -11,13 +11,13 @@
         <bk-tab-panel v-if="detail.basic" name="basic" :label="$t('baseInfo')">
             <div class="version-base-info base-info display-block" :data-title="$t('baseInfo')">
                 <div class="package-name grid-item">
-                    <label>制品名称</label>
+                    <label>{{$t('artifactName')}}</label>
                     <span class="flex-1 flex-align-center text-overflow">
                         <span class="text-overflow" :title="packageName">{{ packageName }}</span>
                         <span v-if="detail.basic.groupId" class="ml5 repo-tag"> {{ detail.basic.groupId }} </span>
                     </span>
                     <template v-if="storeType === 'virtual'">
-                        <label class="grid-store-source">仓库来源</label>
+                        <label class="grid-store-source">{{$t('repositorySource')}}</label>
                         <span class="flex-1 flex-align-center text-overflow">
                             <span class="text-overflow" :title="sourceRepoName || repoName">{{ sourceRepoName || repoName }}</span>
                         </span>
@@ -48,7 +48,7 @@
                     </div>
                 </template>
                 <div class="package-description grid-item">
-                    <label>描述</label>
+                    <label>{{$t('description')}}</label>
                     <span class="flex-1 text-overflow" :title="detail.basic.description">{{ detail.basic.description || '' }}</span>
                 </div>
             </div>
@@ -69,7 +69,7 @@
                 </div>
             </div>
         </bk-tab-panel>
-        <bk-tab-panel v-if="detail.basic.readme" name="readme" label="详细描述">
+        <bk-tab-panel v-if="detail.basic.readme" name="readme" :label="$t('readMe')">
             <div class="version-detail-readme" v-html="readmeContent"></div>
         </bk-tab-panel>
         <bk-tab-panel v-if="detail.metadata" name="metadata" :label="$t('metaData')">
@@ -223,14 +223,14 @@
                     key: [
                         {
                             required: true,
-                            message: this.$t('pleaseInput') + this.$t('key'),
+                            message: this.$t('pleaseInput') + this.$t('space') + this.$t('key'),
                             trigger: 'blur'
                         }
                     ],
                     value: [
                         {
                             required: true,
-                            message: this.$t('pleaseInput') + this.$t('value'),
+                            message: this.$t('pleaseInput') + this.$t('space') + this.$t('value'),
                             trigger: 'blur'
                         }
                     ]
@@ -274,7 +274,7 @@
                 return [
                     ...(!metadataMap.forbidStatus
                         ? [
-                            (this.permission.edit && !(this.storeType === 'remote') && !(this.storeType === 'virtual') && !metadataMap.lockStatus) && { clickEvent: () => this.$emit('tag'), label: '晋级', disabled: (basic.stageTag || '').includes('@release') },
+                            (this.permission.edit && !(this.storeType === 'remote') && !(this.storeType === 'virtual') && !metadataMap.lockStatus) && { clickEvent: () => this.$emit('tag'), label: this.$t('promotion'), disabled: (basic.stageTag || '').includes('@release') },
                             this.showRepoScan && { clickEvent: () => this.$emit('scan'), label: this.$t('scan') }
                         ]
                         : []),

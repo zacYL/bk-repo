@@ -45,7 +45,7 @@
                     key: [
                         {
                             required: true,
-                            message: this.$t('pleaseInput') + this.$t('key'),
+                            message: this.$t('pleaseInput') + this.$t('space') + this.$t('key'),
                             trigger: 'blur'
                         },
                         {
@@ -58,7 +58,7 @@
                     value: [
                         {
                             required: true,
-                            message: this.$t('pleaseInput') + this.$t('value'),
+                            message: this.$t('pleaseInput') + this.$t('space') + this.$t('value'),
                             trigger: 'blur'
                         },
                         {

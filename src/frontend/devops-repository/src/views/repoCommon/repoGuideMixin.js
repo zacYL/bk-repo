@@ -49,10 +49,10 @@ export default {
         dockerGuide () {
             return [
                 {
-                    title: '设置凭证',
+                    title: this.$t('setCredentials'),
                     main: [
                         {
-                            subTitle: '在命令行执行以下命令登陆仓库',
+                            subTitle: this.$t('dockerGuideSubTitle'),
                             codeList: [`docker login -u ${this.userName} -p <PERSONAL_ACCESS_TOKEN> ${this.domain.docker}`]
                         }
                     ]
@@ -60,23 +60,23 @@ export default {
                 this.noShowOption
                     ? undefined
                     : {
-                        title: '推送',
+                        title: this.$t('push'),
                         main: [
                             {
-                                subTitle: '1、在命令行执行以下命令给本地镜像打标签',
+                                subTitle: this.$t('dockerPushGuideSubTitle1'),
                                 codeList: [`docker tag <LOCAL_IMAGE_TAG> ${this.domain.docker}/${this.projectId}/${this.repoName}/${this.packageName}`]
                             },
                             {
-                                subTitle: '2、在命令行执行以下命令进行推送',
+                                subTitle: this.$t('dockerPushGuideSubTitle2'),
                                 codeList: [`docker push ${this.domain.docker}/${this.projectId}/${this.repoName}/${this.packageName}`]
                             }
                         ]
                     },
                 {
-                    title: '拉取',
+                    title: this.$t('pull'),
                     main: [
                         {
-                            subTitle: '在命令行执行以下命令进行拉取',
+                            subTitle: this.$t('dockerDownloadGuideSubTitle'),
                             codeList: [`docker pull ${this.domain.docker}/${this.projectId}/${this.repoName}/${this.packageName}`]
                         }
                     ]
@@ -88,7 +88,7 @@ export default {
                 {
                     main: [
                         {
-                            subTitle: '使用如下命令去拉取制品',
+                            subTitle: this.$t('useSubTips'),
                             codeList: [
                                 `docker pull ${this.domain.docker}/${this.projectId}/${this.repoName}/${this.packageName}:${this.versionLabel}`
                             ]
@@ -100,28 +100,28 @@ export default {
         npmGuide () {
             return [
                 {
-                    title: '设置凭证',
+                    title: this.$t('setCredentials'),
                     main: [
                         {
-                            subTitle: '方式一：使用交互式命令行设置凭证（推荐）'
+                            subTitle: this.$t('npmCreditGuideSubTitle6')
                         },
                         {
-                            subTitle: '使用命令行窗口，设置 npm registry 为当前制品库仓库',
+                            subTitle: this.$t('npmCreditGuideSubTitle7'),
                             codeList: [
                                 `npm config set registry ${this.domain.npm}/${this.projectId}/${this.repoName}/`
                             ]
                         },
                         {
-                            subTitle: '进入命令行窗口根据用户凭证登录',
+                            subTitle: this.$t('npmCreditGuideSubTitle8'),
                             codeList: [
                                 'npm login'
                             ]
                         },
                         {
-                            subTitle: '方式二：使用个人令牌'
+                            subTitle: this.$t('npmCreditGuideSubTitle1')
                         },
                         {
-                            subTitle: '将下列配置添加到项目的 package.json 文件同一级目录下的 .npmrc 文件中',
+                            subTitle: this.$t('npmCreditGuideSubTitle2'),
                             codeList: [
                                 `registry=${this.domain.npm}/${this.projectId}/${this.repoName}/`,
                                 'always-auth=true',
@@ -131,42 +131,42 @@ export default {
                             ]
                         },
                         {
-                            subTitle: '生成<BASE64_ENCODE_PERSONAL_ACCESS_TOKEN>'
+                            subTitle: this.$t('generate') + this.$t('space') + '<BASE64_ENCODE_PERSONAL_ACCESS_TOKEN>'
                         },
                         {
-                            subTitle: '1、在command/shell命令行窗口运行以下代码',
+                            subTitle: this.$t('npmCreditGuideSubTitle3'),
                             codeList: [
                                 'node -e "require(\'readline\') .createInterface({input:process.stdin,output:process.stdout,historySize:0}) .question(\'PAT> \',p => { b64=Buffer.from(p.trim()).toString(\'base64\');console.log(b64);process.exit(); })"'
                             ]
                         },
                         {
-                            subTitle: '2、复制<PERSONAL_ACCESS_TOKEN>至命令行窗口后，按下Enter键'
+                            subTitle: this.$t('npmCreditGuideSubTitle4')
                         },
                         {
-                            subTitle: '3、复制编码后的token，替换<BASE64_ENCODE_PERSONAL_ACCESS_TOKEN>'
+                            subTitle: this.$t('npmCreditGuideSubTitle5') + this.$t('space') + '<BASE64_ENCODE_PERSONAL_ACCESS_TOKEN>'
                         }
                     ]
                 },
                 this.noShowOption
                     ? undefined
                     : {
-                        title: '推送',
+                        title: this.$t('push'),
                         main: [
                             {
-                                subTitle: '在命令行执行以下命令推送制品',
+                                subTitle: this.$t('pushGuideSubTitle'),
                                 codeList: ['npm publish']
                             }
                         ]
                     },
                 {
-                    title: '拉取',
+                    title: this.$t('pull'),
                     main: [
                         {
-                            subTitle: '1、在设置仓库地址之后就可以使用如下命令去拉取制品',
+                            subTitle: this.$t('npmDownloadGuideSubTitle1'),
                             codeList: [`npm install ${this.packageName}`]
                         },
                         {
-                            subTitle: '2、也可以通过指定registry的方式去拉取制品，如下命令',
+                            subTitle: this.$t('npmDownloadGuideSubTitle2'),
                             codeList: [`npm install ${this.packageName} --registry ${this.domain.npm}/${this.projectId}/${this.repoName}/`]
                         }
                     ]
@@ -178,13 +178,13 @@ export default {
                 {
                     main: [
                         {
-                            subTitle: '1、在设置仓库地址之后就可以使用如下命令去拉取制品',
+                            subTitle: this.$t('npmDownloadGuideSubTitle1'),
                             codeList: [
                                 `npm install ${this.packageName}@${this.versionLabel}`
                             ]
                         },
                         {
-                            subTitle: '2、也可以通过指定registry的方式去拉取制品，如下命令',
+                            subTitle: this.$t('npmDownloadGuideSubTitle2'),
                             codeList: [
                                 `npm install ${this.packageName}@${this.versionLabel} --registry ${this.domain.npm}/${this.projectId}/${this.repoName}/`
                             ]
@@ -196,10 +196,10 @@ export default {
         mavenGuide () {
             return [
                 {
-                    title: '设置凭证',
+                    title: this.$t('setCredentials'),
                     main: [
                         {
-                            subTitle: '使用xml：在配置文件 conf/settings.xml设置账户密码；项目内 settings.xml 也可以设置，高优先级',
+                            subTitle: this.$t('mavenCreditGuideSubTitle1'),
                             codeList: [
                                 '<servers>',
                                 '       <server>',
@@ -211,7 +211,7 @@ export default {
                             ]
                         },
                         {
-                            subTitle: '使用Groovy DSL/Kotlin DSL：将下列配置添加到项目文件 build.gradle 同一级目录下的 gradle.properties 文件中',
+                            subTitle: this.$t('mavenCreditGuideSubTitle2'),
                             codeList: [
                                 `cpackUrl=${this.repoUrl}`,
                                 `cpackUsername=${this.userName}`,
@@ -221,10 +221,10 @@ export default {
                     ]
                 },
                 {
-                    title: '配置依赖源地址',
+                    title: this.$t('mavenGuideTitle'),
                     main: [
                         {
-                            subTitle: this.noShowOption ? '1、全局配置，将下列配置添加到conf/setting.xml文件中' : '1、全局配置，将下列配置添加到conf/setting.xml文件中，推送制品无需添加',
+                            subTitle: this.noShowOption ? this.$t('mavenGuideSubTitle1') : this.$t('mavenGuideSubTitle1Special'),
                             codeList: [
                                 '<mirror>',
                                 `       <id>${this.projectId}-${this.repoName}</id>`,
@@ -235,7 +235,7 @@ export default {
                             ]
                         },
                         {
-                            subTitle: '2、项目设置，将下列配置添加到项目的pom.xml文件中',
+                            subTitle: this.$t('mavenGuideSubTitle2'),
                             codeList: [
                                 '<repository>',
                                 `       <id>${this.projectId}-${this.repoName}</id>`,
@@ -248,14 +248,14 @@ export default {
                 this.noShowOption
                     ? undefined
                     : {
-                        title: '推送',
+                        title: this.$t('push'),
                         main: [
                             {
-                                subTitle: '使用xml：将下列配置添加到 pom.xml 文件中',
+                                subTitle: this.$t('mavenPushGuideSubTitle1'),
                                 codeList: [
                                     '<distributionManagement>',
                                     '       <repository>',
-                                    '               <!--id值与配置的server id 一致-->',
+                                    `               <!--${this.$t('mavenPushGuideCodeListAnnotate')}-->`,
                                     `               <id>${this.projectId}-${this.repoName}</id>`,
                                     `               <name>${this.repoName}</name>`,
                                     `               <url>${this.repoUrl}/</url>`,
@@ -264,13 +264,13 @@ export default {
                                 ]
                             },
                             {
-                                subTitle: '使用xml：在命令行执行以下命令推送制品',
+                                subTitle: this.$t('mavenPushGuideSubTitle2'),
                                 codeList: [
                                     'mvn clean deploy'
                                 ]
                             },
                             {
-                                subTitle: '使用Groovy DSL：将下列配置添加到项目的 build.gradle 文件中',
+                                subTitle: this.$t('mavenPushGuideSubTitle3'),
                                 codeList: [
                                     'plugins {',
                                     '    id "maven-publish"',
@@ -296,13 +296,13 @@ export default {
                                 ]
                             },
                             {
-                                subTitle: '使用Groovy DSL：在命令行执行以下命令推送制品',
+                                subTitle: this.$t('mavenPushGuideSubTitle4'),
                                 codeList: [
                                     'gradle publish'
                                 ]
                             },
                             {
-                                subTitle: '使用Kotlin DSL：将下列配置添加到项目的 build.gradle 文件中',
+                                subTitle: this.$t('mavenPushGuideSubTitle5'),
                                 codeList: [
                                     'plugins {',
                                     '    `maven-publish`',
@@ -331,7 +331,7 @@ export default {
                                 ]
                             },
                             {
-                                subTitle: '使用Kotlin DSL：在命令行执行以下命令推送制品',
+                                subTitle: this.$t('mavenPushGuideSubTitle6'),
                                 codeList: [
                                     'gradle publish'
                                 ]
@@ -339,10 +339,10 @@ export default {
                         ]
                     },
                 {
-                    title: '拉取',
+                    title: this.$t('pull'),
                     main: [
                         {
-                            subTitle: '使用xml: 将下列配置添加到 conf/settings.xml 文件中',
+                            subTitle: this.$t('mavenPullGuideSubTitle1'),
                             codeList: [
                                 '<profiles>',
                                 '       <profile>',
@@ -368,13 +368,13 @@ export default {
                             ]
                         },
                         {
-                            subTitle: '使用xml: 在命令行执行以下命令拉取制品',
+                            subTitle: this.$t('mavenPullGuideSubTitle2'),
                             codeList: [
                                 'mvn clean package'
                             ]
                         },
                         {
-                            subTitle: '使用Groovy DSL: 将下列配置添加项目的 build.gradle 文件中',
+                            subTitle: this.$t('mavenPullGuideSubTitle3'),
                             codeList: [
                                 'repositories {',
                                 '    maven {',
@@ -388,13 +388,13 @@ export default {
                             ]
                         },
                         {
-                            subTitle: '使用Groovy DSL: 在命令行执行以下命令拉取制品',
+                            subTitle: this.$t('mavenPullGuideSubTitle4'),
                             codeList: [
                                 'gradle dependencies'
                             ]
                         },
                         {
-                            subTitle: '使用Kotlin DSL: 将下列配置添加项目的 build.gradle 文件中',
+                            subTitle: this.$t('mavenPullGuideSubTitle5'),
                             codeList: [
                                 'repositories {',
                                 '    maven {',
@@ -411,7 +411,7 @@ export default {
                             ]
                         },
                         {
-                            subTitle: '使用Kotlin DSL: 在命令行执行以下命令拉取制品',
+                            subTitle: this.$t('mavenPullGuideSubTitle6'),
                             codeList: [
                                 'gradle dependencies'
                             ]
@@ -455,16 +455,16 @@ export default {
         helmGuide () {
             return [
                 {
-                    title: '设置凭证',
+                    title: this.$t('setCredentials'),
                     main: [
                         {
-                            subTitle: '1、在命令行执行以下命令配置制品仓库凭据',
+                            subTitle: this.$t('helmCreditGuideSubTitle1'),
                             codeList: [
                                 `helm repo add --username ${this.userName} --password <PERSONAL_ACCESS_TOKEN> ${this.repoName} "${this.repoUrl}"`
                             ]
                         },
                         {
-                            subTitle: '2、更新本地repo信息',
+                            subTitle: this.$t('helmCreditGuideSubTitle2'),
                             codeList: [
                                 'helm repo update'
                             ]
@@ -474,16 +474,16 @@ export default {
                 this.noShowOption
                     ? undefined
                     : {
-                        title: '推送',
+                        title: this.$t('push'),
                         main: [
                             {
-                                subTitle: '使用 cURL 命令推送Chart',
+                                subTitle: this.$t('helmPushGuideSubTitle1'),
                                 codeList: [
                                     `curl -F "chart=@<FILE_NAME>" -u ${this.userName}:<PERSONAL_ACCESS_TOKEN> ${location.origin}/${this.repoType}/api/${this.projectId}/${this.repoName}/charts`
                                 ]
                             },
                             {
-                                subTitle: '使用 cURL 命令推送Chart Provenance',
+                                subTitle: this.$t('helmPushGuideSubTitle2'),
                                 codeList: [
                                     `curl -F "prov=@<PROV_FILE_NAME>" -u ${this.userName}:<PERSONAL_ACCESS_TOKEN> ${location.origin}/${this.repoType}/api/${this.projectId}/${this.repoName}/charts`
                                 ]
@@ -491,10 +491,10 @@ export default {
                         ]
                     },
                 {
-                    title: '拉取',
+                    title: this.$t('pull'),
                     main: [
                         {
-                            subTitle: '3、拉取',
+                            subTitle: this.$t('helmPullGuideSubTitle'),
                             codeList: [
                                 `helm install ${this.repoName}/${this.packageName}`
                             ]
@@ -508,19 +508,19 @@ export default {
                 {
                     main: [
                         {
-                            subTitle: '1、手动配置',
+                            subTitle: this.$t('helmInstallGuideSubTitle1'),
                             codeList: [
                                 `helm repo add --username ${this.userName} --password <PERSONAL_ACCESS_TOKEN> ${this.repoName} "${this.repoUrl}"`
                             ]
                         },
                         {
-                            subTitle: '2、更新本地的repo信息',
+                            subTitle: this.$t('helmInstallGuideSubTitle2'),
                             codeList: [
                                 'helm repo update'
                             ]
                         },
                         {
-                            subTitle: '3、拉取',
+                            subTitle: this.$t('helmPullGuideSubTitle'),
                             codeList: [
                                 `helm fetch ${this.repoName}/${this.packageName}`
                             ]
@@ -532,10 +532,10 @@ export default {
         rpmGuide () {
             return [
                 {
-                    title: '设置凭证',
+                    title: this.$t('setCredentials'),
                     main: [
                         {
-                            subTitle: `将下列配置添加到 /etc/yum.repos.d/${this.repoName}.repo 文件中`,
+                            subTitle: this.$t('rpmCreditGuideSubTitle', [this.repoName]),
                             codeList: [
                                 `[${this.repoName}]`,
                                 `name=${this.repoName}`,
@@ -551,10 +551,10 @@ export default {
                 this.noShowOption
                     ? undefined
                     : {
-                        title: '推送',
+                        title: this.$t('push'),
                         main: [
                             {
-                                subTitle: '在命令行执行以下命令推送制品',
+                                subTitle: this.$t('pushGuideSubTitle'),
                                 codeList: [
                                     `curl -u ${this.userName}:<PERSONAL_ACCESS_TOKEN> -X PUT ${this.repoUrl}/ -T <RPM_FILE_NAME>`
                                 ]
@@ -562,16 +562,16 @@ export default {
                         ]
                     },
                 {
-                    title: '拉取',
+                    title: this.$t('pull'),
                     main: [
                         {
-                            subTitle: '使用 rpm 命令拉取',
+                            subTitle: this.$t('rpmPullGuideSunTitle1'),
                             codeList: [
                                 `rpm -i ${location.protocol}//${this.userName}:<PERSONAL_ACCESS_TOKEN>@${location.host}/${this.repoType}/${this.projectId}/${this.repoName}/<RPM_FILE_NAME>`
                             ]
                         },
                         {
-                            subTitle: '使用 yum 命令拉取',
+                            subTitle: this.$t('rpmPullGuideSunTitle2'),
                             codeList: [
                                 `yum install ${this.packageName}`
                             ]
@@ -585,7 +585,7 @@ export default {
                 {
                     main: [
                         {
-                            subTitle: '使用RPM或者yum方式拉取制品'
+                            subTitle: this.$t('rpmInstallGuideSubTitle')
                         },
                         {
                             subTitle: 'RPM',
@@ -606,13 +606,13 @@ export default {
         pypiGuide () {
             return [
                 {
-                    title: '设置凭证',
+                    title: this.$t('setCredentials'),
                     main: [
                         {
-                            subTitle: '设置推送凭证'
+                            subTitle: this.$t('pypiCreditGuideSubTitle1')
                         },
                         {
-                            subTitle: '将下列配置添加到 $HOME/.pypirc 文件中',
+                            subTitle: this.$t('pypiCreditGuideSubTitle2'),
                             codeList: [
                                 '[distutils]',
                                 `index-servers = ${this.repoName}`,
@@ -623,16 +623,16 @@ export default {
                             ]
                         },
                         {
-                            subTitle: '设置拉取凭证'
+                            subTitle: this.$t('pypiCreditGuideSubTitle3')
                         },
                         {
-                            subTitle: '配置拉取依赖源地址',
+                            subTitle: this.$t('pypiCreditGuideSubTitle6'),
                             codeList: [
                                 `pip config set global.index-url ${location.protocol}//${this.userName}:<PERSONAL_ACCESS_TOKEN>@${location.host}/${this.repoType}/${this.projectId}/${this.repoName}/simple`
                             ]
                         },
                         {
-                            subTitle: '如果服务地址为http, 还需额外配置授信该站点',
+                            subTitle: this.$t('pypiCreditGuideSubTitle7'),
                             codeList: [
                                 `pip config set install.trusted-host ${location.host}`
                             ]
@@ -642,10 +642,10 @@ export default {
                 this.noShowOption
                     ? undefined
                     : {
-                        title: '推送',
+                        title: this.$t('push'),
                         main: [
                             {
-                                subTitle: '进入 Python 项目目录，在命令行执行以下命令进行推送',
+                                subTitle: this.$t('pypiPushGuideSubTitle'),
                                 codeList: [
                                     `python3 -m twine upload -r ${this.repoName} dist/*`
                                 ]
@@ -653,10 +653,10 @@ export default {
                         ]
                     },
                 {
-                    title: '拉取',
+                    title: this.$t('pull'),
                     main: [
                         {
-                            subTitle: '在命令行执行以下命令进行拉取',
+                            subTitle: this.$t('cmdPullGuideSubTitle'),
                             codeList: [
                                 `pip3 install ${this.packageName}==${this.versionLabel}`
                             ]
@@ -670,7 +670,7 @@ export default {
                 {
                     main: [
                         {
-                            subTitle: '通过指定registry的方式去拉取制品',
+                            subTitle: this.$t('pypiInstallGuideSubTitle'),
                             codeList: [
                                 `pip3 install -i ${this.repoUrl}/simple ${this.packageName}==${this.versionLabel}`
                             ]
@@ -682,16 +682,16 @@ export default {
         composerGuide () {
             return [
                 {
-                    title: '设置凭证',
+                    title: this.$t('setCredentials'),
                     main: [
                         {
-                            subTitle: '1、在 Composer 制品的文件目录，用命令行执行以下命令配置制品仓库凭据',
+                            subTitle: this.$t('composerCreditGuideSubTitle1'),
                             codeList: [
                                 `composer config repo.packagist composer ${this.repoUrl}`
                             ]
                         },
                         {
-                            subTitle: '2、 在 Composer 制品的文件目录添加 auth.json，配置仓库认证信息',
+                            subTitle: this.$t('composerCreditGuideSubTitle2'),
                             codeList: [
                                 '{',
                                 '       "http-basic": {',
@@ -708,10 +708,10 @@ export default {
                 this.noShowOption
                     ? undefined
                     : {
-                        title: '推送',
+                        title: this.$t('push'),
                         main: [
                             {
-                                subTitle: '使用 cURL 命令将压缩包上传至仓库',
+                                subTitle: this.$t('composerPushGuideSubTitle'),
                                 codeList: [
                                     `curl -X PUT -u ${this.userName}:<PERSONAL_ACCESS_TOKEN> "${this.repoUrl}/" -T <PACKAGE_FILE>`
                                 ]
@@ -719,10 +719,10 @@ export default {
                         ]
                     },
                 {
-                    title: '拉取',
+                    title: this.$t('pull'),
                     main: [
                         {
-                            subTitle: '在命令行执行以下命令进行拉取',
+                            subTitle: this.$t('cmdPullGuideSubTitle'),
                             codeList: [
                                 `composer require ${this.packageName} ${this.versionLabel}`
                             ]
@@ -736,7 +736,7 @@ export default {
                 {
                     main: [
                         {
-                            subTitle: '使用如下命令去拉取制品',
+                            subTitle: this.$t('useSubTips'),
                             codeList: [
                                 `composer require ${this.packageName} ${this.versionLabel}`
                             ]
@@ -754,10 +754,10 @@ export default {
         nugetGuide () {
             return [
                 {
-                    title: '设置凭证',
+                    title: this.$t('setCredentials'),
                     main: [
                         {
-                            subTitle: '在命令行执行以下命令配置制品仓库凭据：',
+                            subTitle: this.$t('nugetCreditGuideSubTitle'),
                             codeList: [`nuget sources Add -Username "${this.userName}" -Password "<PERSONAL_ACCESS_TOKEN>" -Name "${this.repoName}" -Source "${location.origin}/${this.repoType}/${this.projectId}/${this.repoName}/v3/index.json"`]
                         }
                     ]
@@ -765,10 +765,10 @@ export default {
                 this.noShowOption
                     ? undefined
                     : {
-                        title: '推送',
+                        title: this.$t('push'),
                         main: [
                             {
-                                subTitle: '将<LOCAL_PACKAGE_NAME>替换为本地制品名称，命令行执行以下命令推送制品：',
+                                subTitle: this.$t('nugetPushGuideSubTitle'),
                                 codeList: [
                                     `nuget push -Source "${this.repoName}" <LOCAL_PACKAGE_NAME>.nupkg`
                                 ]
@@ -776,10 +776,10 @@ export default {
                         ]
                     },
                 {
-                    title: '拉取',
+                    title: this.$t('pull'),
                     main: [
                         {
-                            subTitle: '在命令行执行以下命令拉取制品：',
+                            subTitle: this.$t('nugetPullGuideSubTitle'),
                             codeList: [
                                 `nuget install -Source "${this.repoName}" -Version ${this.versionLabel} ${this.packageName}`
                             ]
@@ -789,10 +789,10 @@ export default {
                 (this.storeType === 'virtual' || this.whetherSoftware)
                     ? undefined
                     : {
-                        title: '删除',
+                        title: this.$t('delete'),
                         main: [
                             {
-                                subTitle: '注意：通过本操作删除的制品无法恢复',
+                                subTitle: this.$t('nugetDeleteGuideSubTitle'),
                                 codeList: [
                                     `nuget delete -Source "${this.repoName}" ${this.packageName} ${this.versionLabel}`
                                 ]
@@ -806,7 +806,7 @@ export default {
                 {
                     main: [
                         {
-                            subTitle: '使用如下命令去拉取制品',
+                            subTitle: this.$t('useSubTips'),
                             codeList: [
                                 `nuget install -Source "${this.repoName}" -Version ${this.versionLabel} ${this.packageName}`
                             ]

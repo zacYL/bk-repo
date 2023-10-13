@@ -8,7 +8,7 @@
                 </div>
             </div>
             <div class="flex-end-center flex-1">
-                <bk-button v-if="showUploadRepo" theme="primary" @click="handleClickUpload">上传制品</bk-button>
+                <bk-button v-if="showUploadRepo" theme="primary" @click="handleClickUpload">{{$t('uploadArtifact')}}</bk-button>
                 <bk-button class="ml10" @click="handlerPaginationChange">
                     {{ $t('refresh') }}
                 </bk-button>
@@ -26,7 +26,7 @@
                 <bk-input
                     class="w250"
                     v-model.trim="packageNameVal"
-                    placeholder="请输入制品名称, 按Enter键搜索"
+                    :placeholder="$t('artifactPlaceholder')"
                     clearable
                     @enter="handlerPaginationChange()"
                     @clear="handlerPaginationChange()"
@@ -34,16 +34,16 @@
                 </bk-input>
                 <div class="sort-tool flex-align-center">
                     <bk-select
-                        style="width:150px;"
+                        style="width:200px;"
                         v-model="property"
                         :clearable="false"
                         @change="handlerPaginationChange()">
-                        <bk-option id="name" name="名称排序"></bk-option>
-                        <bk-option id="lastModifiedDate" name="最后修改时间排序"></bk-option>
-                        <bk-option id="createdDate" name="最初创建时间排序"></bk-option>
-                        <bk-option id="downloads" name="下载量排序"></bk-option>
+                        <bk-option id="name" :name="$t('nameSorting')"></bk-option>
+                        <bk-option id="lastModifiedDate" :name="$t('lastModifiedTimeSorting')"></bk-option>
+                        <bk-option id="createdDate" :name="$t('createTimeSorting')"></bk-option>
+                        <bk-option id="downloads" :name="$t('downloadSorting')"></bk-option>
                     </bk-select>
-                    <bk-popover :content="`切换为${direction === 'ASC' ? '降序' : '升序'}`" placement="top">
+                    <bk-popover :content="$t('toggle') + $t('space') + `${direction === 'ASC' ? $t('desc') : $t('asc')}`" placement="top">
                         <div class="ml10 sort-order flex-center" @click="changeDirection">
                             <Icon :name="`order-${direction.toLowerCase()}`" size="16"></Icon>
                         </div>
@@ -58,7 +58,7 @@
                         :is-loading="isLoading"
                         :has-next="hasNextData"
                         @load="handlerPaginationChange({ current: pagination.current + 1 }, true)">
-                        <div class="mb10 list-count">共计{{ pagination.count }}个制品</div>
+                        <div class="mb10 list-count">{{$t('totalArtifactCount', { length: pagination.count })}} </div>
                         <package-card
                             class="mb10"
                             v-for="pkg in packageList"
@@ -83,7 +83,7 @@
 
         <bk-sideslider :is-show.sync="showGuide" :quick-close="true" :width="600">
             <template #header>
-                <div class="flex-align-center"><icon class="mr5" :name="repoType" size="32"></icon>{{ replaceRepoName(repoName) + $t('guide') }}</div>
+                <div class="flex-align-center"><icon class="mr5" :name="repoType" size="32"></icon>{{ replaceRepoName(repoName) + $t('space') + $t('guide') }}</div>
             </template>
             <template #content>
                 <repo-guide class="pt20 pb20 pl10 pr10" :article="articleGuide"></repo-guide>
@@ -231,7 +231,7 @@
                             this.handlerPaginationChange()
                             this.$bkMessage({
                                 theme: 'success',
-                                message: this.$t('delete') + this.$t('success')
+                                message: this.$t('delete') + this.$t('space') + this.$t('success')
                             })
                         })
                     }

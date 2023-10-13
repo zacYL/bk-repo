@@ -15,10 +15,10 @@
                 </bk-form-item>
             </template>
             <template v-else-if="formDialog.type === 'scan'">
-                <bk-form-item label="扫描方案" :required="true" property="id" error-display-type="normal">
+                <bk-form-item :label="$t('scanScheme')" :required="true" property="id" error-display-type="normal">
                     <bk-select
                         v-model="formDialog.id"
-                        placeholder="请选择扫描方案">
+                        :placeholder="$t('scanningSchemeTip')">
                         <bk-option v-for="scan in scanList" :key="scan.id" :id="scan.id" :name="scan.name"></bk-option>
                     </bk-select>
                 </bk-form-item>
@@ -51,14 +51,14 @@
                     tag: [
                         {
                             required: true,
-                            message: this.$t('pleaseSelect') + this.$t('tag'),
+                            message: this.$t('pleaseSelect') + this.$t('space') + this.$t('tag'),
                             trigger: 'blur'
                         }
                     ],
                     id: [
                         {
                             required: true,
-                            message: this.$t('pleaseSelect') + '扫描方案',
+                            message: this.$t('pleaseSelect') + this.$t('space') + this.$t('scanScheme'),
                             trigger: 'change'
                         }
                     ]
@@ -141,14 +141,14 @@
                         break
                     case 'scan':
                         fn = this.submitScanFile()
-                        message = '加入扫描队列'
+                        message = this.$t('joinScanMsg')
                         break
                 }
                 fn.then(() => {
                     this.$emit('refresh', this.formDialog.version)
                     this.$bkMessage({
                         theme: 'success',
-                        message: message + this.$t('success')
+                        message: message + this.$t('space') + this.$t('success')
                     })
                     this.formDialog.show = false
                 }).finally(() => {

@@ -20,25 +20,25 @@
             <div class="package-card-data" :style="dynamicStyle">
                 <!-- 依赖源仓库 -->
                 <template v-if="cardData.type">
-                    <div class="card-metadata" :title="`最新版本：${cardData.latest}`">
+                    <div class="card-metadata" :title="$t('latestVersion') + `:${cardData.latest}`">
                         <scan-tag class="ml5"
                             v-if="isEnterprise && showRepoScan"
                             :status="cardData.scanStatus"
                             readonly>
                         </scan-tag>
                     </div>
-                    <div class="card-metadata" :title="$t('lastModifiedDate') + `：${formatDate(cardData.lastModifiedDate)}`"></div>
-                    <div v-if="whetherRepoSearch" class="card-metadata" :title="$t('repo') + `：${cardData.repoName}`"></div>
-                    <div class="card-metadata" :title="`版本数：${cardData.versions}`"></div>
-                    <div class="card-metadata" :title="`下载统计：${cardData.downloads}`"></div>
-                    <div v-if="whetherRepoVirtual" class="card-metadata" :title="`仓库来源：${cardData.repoName}`"></div>
-                    <div v-if="showRepoSearchVersion" class="card-metadata" :title="$t('searchVersionResultInfo') + `： ${cardData.matchedVersions.length}`"></div>
+                    <div class="card-metadata" :title="$t('lastModifiedDate') + `: ${formatDate(cardData.lastModifiedDate)}`"></div>
+                    <div v-if="whetherRepoSearch" class="card-metadata" :title="$t('repo') + `: ${cardData.repoName}`"></div>
+                    <div class="card-metadata" :title="$t('versions') + `: ${cardData.versions}`"></div>
+                    <div class="card-metadata" :title="$t('downloadStats') + `: ${cardData.downloads}`"></div>
+                    <div v-if="whetherRepoVirtual" class="card-metadata" :title="$t('repositorySource') + `: ${cardData.repoName}`"></div>
+                    <div v-if="showRepoSearchVersion" class="card-metadata" :title="$t('searchVersionResultInfo') + `: ${cardData.matchedVersions.length}`"></div>
                 </template>
                 <!-- generic 仓库 -->
                 <template v-else>
-                    <div class="card-metadata" :title="$t('repo') + `：${cardData.repoName}`"></div>
-                    <div class="card-metadata" :title="`文件大小：${convertFileSize(cardData.size)}`"></div>
-                    <div class="card-metadata" :title="$t('lastModifiedDate') + `：${formatDate(cardData.lastModifiedDate)}`"></div>
+                    <div class="card-metadata" :title="$t('repo') + `: ${cardData.repoName}`"></div>
+                    <div class="card-metadata" :title="$t('fileSize') + `: ${convertFileSize(cardData.size)}`"></div>
+                    <div class="card-metadata" :title="$t('lastModifiedDate') + `: ${formatDate(cardData.lastModifiedDate)}`"></div>
                 </template>
             </div>
         </div>
@@ -47,9 +47,9 @@
             <operation-list
                 v-if="!cardData.type && !readonly"
                 :list="[
-                    { label: '详情', clickEvent: () => detail() },
-                    !(cardData.metadata || {}).forbidStatus && { label: '下载', clickEvent: () => download() },
-                    !(cardData.metadata || {}).forbidStatus && { label: '共享', clickEvent: () => share() }
+                    { label: $t('detail'), clickEvent: () => detail() },
+                    !(cardData.metadata || {}).forbidStatus && { label: $t('download'), clickEvent: () => download() },
+                    !(cardData.metadata || {}).forbidStatus && { label: $t('share'), clickEvent: () => share() }
                 ]"></operation-list>
         </div>
     </div>

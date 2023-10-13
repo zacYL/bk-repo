@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div class="display-block" data-title="正向依赖" v-bkloading="{ isLoading: isCorrectLoading }">
+        <div class="display-block" :data-title="$t('correctDependence')" v-bkloading="{ isLoading: isCorrectLoading }">
             <bk-table
                 class="mt10"
                 height="300px"
@@ -33,7 +33,7 @@
                 @limit-change="limit => handlerCorrectPaginationChange({ limit })">
             </bk-pagination>
         </div>
-        <div class="display-block" data-title="插件" v-bkloading="{ isLoading: isPluginLoading }">
+        <div class="display-block" :data-title="$t('plugin')" v-bkloading="{ isLoading: isPluginLoading }">
             <bk-table
                 class="mt10"
                 height="300px"
@@ -64,7 +64,7 @@
                 @limit-change="limit => handlerPluginsPaginationChange({ limit })">
             </bk-pagination>
         </div>
-        <div class="display-block" data-title="反向依赖" v-bkloading="{ isLoading: isReverseLoading }">
+        <div class="display-block" :data-title="$t('reverseDependence')" v-bkloading="{ isLoading: isReverseLoading }">
             <bk-table
                 class="mt10"
                 height="300px"

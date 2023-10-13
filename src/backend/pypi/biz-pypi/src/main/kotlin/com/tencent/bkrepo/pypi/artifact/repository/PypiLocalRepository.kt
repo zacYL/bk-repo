@@ -319,10 +319,10 @@ class PypiLocalRepository(
 
     fun getSimpleHtml(artifactInfo: ArtifactInfo): Any? {
         logger.info("Get simple html, artifactInfo: ${artifactInfo.getArtifactFullPath()}")
-        val request = HttpContextHolder.getRequest()
-        if (!request.requestURI.endsWith("/")) {
+        val path = ArtifactContextHolder.getUrlPath(this.javaClass.name)!!
+        if (!path.endsWith("/")) {
             val response = HttpContextHolder.getResponse()
-            response.sendRedirect(getRedirectUrl(pypiProperties.domain, request.servletPath))
+            response.sendRedirect(getRedirectUrl(pypiProperties.domain, path))
             return null
         }
         with(artifactInfo) {

@@ -36,6 +36,7 @@ import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
@@ -110,7 +111,8 @@ class PypiRemoteRepository : RemoteRepository() {
     }
 
     override fun query(context: ArtifactQueryContext): Any? {
-        return if (context.request.servletPath.startsWith("/ext/version/detail")) {
+        val path = ArtifactContextHolder.getUrlPath(this.javaClass.name)!!
+        return if (path.startsWith("/ext/version/detail")) {
             getVersionDetail(context)
         } else if (context.artifactInfo.getArtifactFullPath() == "/") {
             getCacheHtml(context) ?: remoteQuery(context)

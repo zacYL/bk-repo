@@ -51,10 +51,10 @@ class PypiVirtualRepository(
      * 整合多个仓库的内容。
      */
     override fun query(context: ArtifactQueryContext): Any? {
-        val request = context.request
-        if (!request.servletPath.startsWith("/ext/version/detail") && !request.requestURI.endsWith(SLASH)) {
+        val path = ArtifactContextHolder.getUrlPath(this.javaClass.name)!!
+        if (!path.startsWith("/ext/version/detail") && !path.endsWith(SLASH)) {
             val response = HttpContextHolder.getResponse()
-            response.sendRedirect(getRedirectUrl(pypiProperties.domain, request.servletPath))
+            response.sendRedirect(getRedirectUrl(pypiProperties.domain, path))
             return null
         }
         return mapFirstRepo(context) { sub, repository ->

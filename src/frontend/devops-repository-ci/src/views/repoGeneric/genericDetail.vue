@@ -11,21 +11,21 @@
                     <div class="grid-item"
                         v-for="{ name, label, value } in detailInfoMap"
                         :key="name">
-                        <label>{{ label }}：</label>
+                        <label>{{ label }}: </label>
                         <span class="flex-1 text-overflow" :title="value">{{ value }}</span>
                     </div>
                 </div>
                 <div v-if="!detailSlider.folder" class="version-base-info base-info-checksums display-block" data-title="Checksums" v-bkloading="{ isLoading: detailSlider.loading }">
                     <div v-if="detailSlider.data.sha256" class="grid-item">
-                        <label>SHA256：</label>
+                        <label>SHA256: </label>
                         <span class="flex-1 text-overflow" :title="detailSlider.data.sha256">{{ detailSlider.data.sha256 }}</span>
                     </div>
                     <div v-if="detailSlider.data.md5" class="grid-item">
-                        <label>MD5：</label>
+                        <label>MD5: </label>
                         <span class="flex-1 text-overflow" :title="detailSlider.data.md5">{{ detailSlider.data.md5 }}</span>
                     </div>
                 </div>
-                <div v-if="!detailSlider.folder" class="display-block" data-title="命令行下载">
+                <div v-if="!detailSlider.folder" class="display-block" :data-title="$t('commandDownload')">
                     <div class="pl30">
                         <bk-button text theme="primary" @click="createToken">{{ $t('createToken') }}</bk-button>
                         {{ $t('tokenSubTitle') }}
@@ -74,7 +74,8 @@
             </bk-tab-panel>
             <bk-tab-panel v-if="!detailSlider.folder && detailSlider.data.metadata"
                 render-directive="if"
-                name="topo" label="CI/CD关联信息"
+                name="topo"
+                :label="$t('CICDRelatedInformation')"
                 style="height:100%;">
                 <topo :root-node="rootNode" :left-tree="leftTree" :right-tree="rightTree" />
             </bk-tab-panel>

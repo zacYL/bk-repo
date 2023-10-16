@@ -7,17 +7,17 @@
         @cancel="cancel">
         <div v-if="shareUrl" class="share-result">
             <bk-form class="flex-1" form-type="vertical">
-                <bk-form-item label="共享链接地址">
+                <bk-form-item :label="$t('genericShareUrl')">
                     <bk-input :value="shareUrl" readonly></bk-input>
-                    <bk-button class="mt5" theme="primary" @click="copyShareUrl(shareUrl)">复制链接</bk-button>
+                    <bk-button class="mt5" theme="primary" @click="copyShareUrl(shareUrl)">{{$t('copyGenericShareUrl')}}</bk-button>
                 </bk-form-item>
-                <bk-form-item label="邮件方式分享">
+                <bk-form-item :label="$t('genericEmailShare')">
                     <bk-select
                         v-model="genericShare.user"
                         multiple
                         clearable
                         searchable
-                        placeholder="请选择用户"
+                        :placeholder="$t('selectUserMsg')"
                         :title="genericShare.user.map(u => userList[u] ? userList[u].name : u)"
                         :enable-virtual-scroll="Object.values(userList).length > 3000"
                         :list="Object.values(userList).filter(user => user.id !== 'anonymous')">
@@ -27,27 +27,27 @@
                             :name="option.name">
                         </bk-option>
                     </bk-select>
-                    <bk-button class="mt5" :disabled="!Boolean(genericShare.user.length)" theme="primary" :loading="sending" @click="sendEmailHandler">发送邮件</bk-button>
+                    <bk-button class="mt5" :disabled="!Boolean(genericShare.user.length)" theme="primary" :loading="sending" @click="sendEmailHandler">{{$t('sendEmail')}}</bk-button>
                 </bk-form-item>
             </bk-form>
             <div class="ml20 flex-column">
-                <span class="qrcode-label">移动端二维码下载</span>
+                <span class="qrcode-label">{{$t('mobileQcCodeDownload')}}</span>
                 <QRCode class="share-qrcode" :text="shareUrl" :size="150" />
             </div>
         </div>
         <bk-form v-else style="margin-top:-15px" ref="genericShareForm" :label-width="90" form-type="vertical">
-            <bk-form-item label="访问次数">
-                <bk-input v-model="genericShare.permits" placeholder="请输入访问次数，为空则不限制"></bk-input>
+            <bk-form-item :label="$t('visits')">
+                <bk-input v-model="genericShare.permits" :placeholder="$t('sharePlaceholder2')"></bk-input>
             </bk-form-item>
-            <bk-form-item :label="`${$t('validity')}(${$t('day')})`">
+            <bk-form-item :label="$t('validity')">
                 <bk-select
                     v-model="genericShare.time"
                     :clearable="false"
-                    placeholder="请选择过期时间">
+                    :placeholder="$t('sharePlaceholder3')">
                     <bk-option :id="1" name="1"></bk-option>
                     <bk-option :id="7" name="7"></bk-option>
                     <bk-option :id="30" name="30"></bk-option>
-                    <bk-option :id="0" name="永久"></bk-option>
+                    <bk-option :id="0" :name="$t('permanent')"></bk-option>
                 </bk-select>
             </bk-form-item>
         </bk-form>
@@ -128,12 +128,12 @@
                 copyToClipboard(text).then(() => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: this.$t('copy') + this.$t('success')
+                        message: this.$t('copy') + this.$t('space') + this.$t('success')
                     })
                 }).catch(() => {
                     this.$bkMessage({
                         theme: 'error',
-                        message: this.$t('copy') + this.$t('fail')
+                        message: this.$t('copy') + this.$t('space') + this.$t('fail')
                     })
                 })
             },
@@ -147,7 +147,7 @@
                 }).then(() => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: '发送邮件成功'
+                        message: this.$t('sendEmail') + this.$t('space') + this.$t('success')
                     })
                 }).finally(() => {
                     this.sending = false

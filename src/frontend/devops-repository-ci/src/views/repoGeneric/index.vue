@@ -28,9 +28,9 @@
                         <operation-list
                             v-if="item.roadMap === selectedTreeNode.roadMap"
                             :list="[
-                                permission.write && repoName !== 'pipeline' && { clickEvent: () => handlerUpload(item), label: '上传文件' },
-                                permission.write && repoName !== 'pipeline' && { clickEvent: () => handlerUpload(item, true), label: '上传文件夹' },
-                                permission.write && repoName !== 'pipeline' && { clickEvent: () => addFolder(item), label: '新建文件夹' }
+                                permission.write && repoName !== 'pipeline' && { clickEvent: () => handlerUpload(item), label: $t('uploadFile') },
+                                permission.write && repoName !== 'pipeline' && { clickEvent: () => handlerUpload(item, true), label: $t('uploadFolder') },
+                                permission.write && repoName !== 'pipeline' && { clickEvent: () => addFolder(item), label: $t('createFolder') }
                             ].filter(Boolean)">
                         </operation-list>
                     </template>
@@ -49,12 +49,12 @@
                         <bk-button
                             v-if="multiSelect.length"
                             @click="handlerMultiDownload()">
-                            批量下载
+                            {{$t('batchDownload')}}
                         </bk-button>
                         <bk-button class="ml10"
                             v-if="multiSelect.length"
                             @click="handlerMultiDelete()">
-                            批量删除
+                            {{$t('batchDeletion')}}
                         </bk-button>
                         <bk-input
                             class="w250 ml10"
@@ -346,9 +346,9 @@
                 const forbidDescription = row.nodeMetadata.find(m => m.key === 'forbidType')?.description
                 switch (forbidType) {
                     case 'SCANNING':
-                        return '制品正在扫描中'
+                        return this.$t('forbidTip1')
                     case 'QUALITY_UNPASS':
-                        return '制品扫描质量规则未通过'
+                        return this.$t('forbidTip2')
                     case 'MANUAL':
                         return `${this.userList[forbidUser]?.name || forbidUser} ${this.$t('manualBan')} ${forbidDescription ? this.$t('limitTagReason') + forbidDescription : ''}`
                     default:
@@ -598,7 +598,7 @@
                     loading: false,
                     type: 'add',
                     path: fullPath + '/',
-                    title: `${this.$t('create') + this.$t('folder')}`
+                    title: `${this.$t('create') + this.$t('space') + this.$t('folder')}`
                 })
             },
             handlerScan ({ name, fullPath }) {
@@ -646,8 +646,8 @@
                 }
                 this.$confirm({
                     theme: 'danger',
-                    message: `${this.$t('confirm') + this.$t('delete')}${folder ? this.$t('folder') : this.$t('file')} ${name} ？`,
-                    subMessage: `${folder && totalRecords ? `当前文件夹下存在${totalRecords}个文件` : ''}`,
+                    message: `${this.$t('confirm') + this.$t('space') + this.$t('delete') + this.$t('space')}${folder ? this.$t('folder') : this.$t('file')} ${name} ?`,
+                    subMessage: `${folder && totalRecords ? this.$t('totalFilesMsg', [totalRecords]) : ''}`,
                     confirmFn: () => {
                         return this.deleteArtifactory({
                             projectId: this.projectId,
@@ -779,8 +779,8 @@
                 })
                 this.$confirm({
                     theme: 'danger',
-                    message: `确认批量删除已选中的 ${this.multiSelect.length} 项？`,
-                    subMessage: `选中文件夹和文件共计包含 ${totalRecords} 个文件`,
+                    message: this.$t('batchDeleteMsg', [this.multiSelect.length]),
+                    subMessage: this.$t('batchDeleteSubMsg', [totalRecords]),
                     confirmFn: () => {
                         return this.deleteMultiArtifactory({
                             projectId: this.projectId,

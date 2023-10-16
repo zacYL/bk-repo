@@ -410,7 +410,7 @@
             }
             > label {
                 line-height: 40px;
-                flex-basis: 80px;
+                flex-basis: 120px;
                 flex-shrink: 0;
                 background-color: var(--bgColor);
             }

@@ -118,10 +118,10 @@ class PackageMetadataServiceImpl(
         request.apply {
             val tPackage = getPackage(projectId, repoName, packageKey)
             val query = PackageQueryHelper.versionQuery(tPackage.id!!, version)
-            val tPackageVersion = getPackageVersion(tPackage.id!!, version)
-            tPackageVersion.metadata.forEach {
-                if (it.key in keyList) {
-                    MetadataUtils.checkPermission(it, operator)
+            getPackageVersion(tPackage.id!!, version).metadata.forEach {
+                when {
+                    it.key == LOCK_STATUS && it.value == true -> throw ErrorCodeException(ArtifactMessageCode.PACKAGE_LOCK, packageKey)
+                    it.key in keyList -> MetadataUtils.checkPermission(it, operator)
                 }
             }
             val update = Update().pull(

@@ -128,8 +128,9 @@ class MetadataServiceImpl(
 
             // 检查是否有更新权限
             nodeDao.findOne(query)?.metadata?.forEach {
-                if (it.key in keyList) {
-                    MetadataUtils.checkPermission(it, operator)
+                when {
+                    it.key == LOCK_STATUS && it.value == true -> throw ErrorCodeException(ArtifactMessageCode.NODE_LOCK, fullPath)
+                    it.key in keyList -> MetadataUtils.checkPermission(it, operator)
                 }
             }
 

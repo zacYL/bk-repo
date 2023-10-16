@@ -925,5 +925,13 @@
     "pipelineUsers":"Pipeline users",
     "testReport":"Test report",
     "deploy":"Deploy",
-    "serverIP":"Server IP"
+    "serverIP":"Server IP",
+    "fileNamePlaceholder":"Please enter file name",
+    "repositoryTypePlaceholder":"Please select repository type",
+    "backToDirectoryTree":"Return to directory tree",
+    "directoryList":"directory listing",
+    "folderOrFileName":"Folder/file name",
+    "fileContent":"File content",
+    "previewErrorMsg":"The file is too large and cannot be previewed. Please download it and view it locally.",
+    "loadFileContentErrorTip":"Failed to obtain the file content, please download and view it"
 }

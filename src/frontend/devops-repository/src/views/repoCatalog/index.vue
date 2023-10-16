@@ -4,7 +4,7 @@
             <bk-input
                 class="search-common"
                 v-model.trim="fileNameSearch"
-                placeholder="请输入文件名称"
+                :placeholder="$t('fileNamePlaceholder')"
                 clearable
                 right-icon="bk-icon icon-search"
                 @enter="onSearchFile"
@@ -12,7 +12,7 @@
                     searchFlag = !searchFlag
                 }">
             </bk-input>
-            <bk-select v-model="checkRepoType" placeholder="请选择仓库类型" class="search-common" @change="onChangeRepoType">
+            <bk-select v-model="checkRepoType" :placeholder="$t('repositoryTypePlaceholder')" class="search-common" @change="onChangeRepoType">
                 <bk-option
                     v-for="option in depotList"
                     :key="option.id"
@@ -24,13 +24,13 @@
                     </div>
                 </bk-option>
             </bk-select>
-            <bk-button v-if="searchFlag" @click="searchFlag = !searchFlag">返回目录树</bk-button>
+            <bk-button v-if="searchFlag" @click="searchFlag = !searchFlag">{{$t('backToDirectoryTree')}}</bk-button>
         </header>
         <div class="repo-rely-main flex-align-center" v-if="!searchFlag">
             <div class="repo-rely-side"
                 :style="{ 'flex-basis': `${sideBarWidth}px` }">
                 <div class="repo-rely-side-info">
-                    <span>目录列表</span>
+                    <span>{{$t('directoryList')}}</span>
                 </div>
                 <div class="repo-rely-side-tree">
                     <relyTree @clickNode="onClickNode" :check-type="checkRepoType" :search-node="searchNode" :key="checkRepoType" @searchFinish="onSearchFinish"></relyTree>
@@ -51,7 +51,7 @@
                 <div class="repo-rely-content-show">
                     <bk-tab :active.sync="active" type="unborder-card">
                         <bk-tab-panel
-                            name="basic" label="基础信息" v-bkloading="{ isLoading: basicTabLoading }">
+                            name="basic" :label="$t('baseInfo')" v-bkloading="{ isLoading: basicTabLoading }">
                             <basic-info v-if="baseDetailInfo && baseDetailInfo.name" :node-type="currentNodeType" :detail-info="baseDetailInfo"></basic-info>
                         </bk-tab-panel>
                     </bk-tab>
@@ -59,19 +59,19 @@
                         <bk-button
                             v-if="baseDetailInfo && currentNodeType === 'file'"
                             theme="default"
-                            title="下载"
+                            :title="$t('download')"
                             size="small"
                             class="mr10 "
                             @click="onDownloadFile">
-                            下载
+                            {{$t('download')}}
                         </bk-button>
                         <bk-button
                             v-if="currentNodeType === 'file' && (applyFileTypes[fileObj.type] || fileObj.type.includes('sha') ) && baseDetailInfo.repoName"
                             theme="default"
-                            title="预览"
+                            :title="$t('preview')"
                             size="small"
                             @click="onPreviewFile">
-                            预览
+                            {{$t('preview')}}
                         </bk-button>
                     </div>
                 </div>
@@ -88,13 +88,13 @@
                 <template #empty>
                     <empty-data :is-loading="isLoading" :search="Boolean(fileNameSearch)"></empty-data>
                 </template>
-                <bk-table-column label="文件夹/文件名称" prop="name" show-overflow-tooltip>
+                <bk-table-column :label="$t('folderOrFileName')" prop="name" show-overflow-tooltip>
                     <template #default="{ row }">
                         <div class="hover-btn" @click="onClickTableItem(row)">{{row.name}}</div>
                     </template>
                 </bk-table-column>
-                <bk-table-column label="路径" prop="fullPath" width="350" show-overflow-tooltip></bk-table-column>
-                <bk-table-column label="仓库" width="200">
+                <bk-table-column :label="$t('path')" prop="fullPath" width="350" show-overflow-tooltip></bk-table-column>
+                <bk-table-column :label="$t('repository')" width="200">
                     <template #default="{ row }">{{ row.repoName }}</template>
                 </bk-table-column>
                 <bk-table-column :label="$t('lastModifiedDate')" prop="lastModifiedDate">
@@ -119,7 +119,7 @@
             :value="previewDialogShow"
             width="800"
             height-num="600"
-            :title="baseDetailInfo.name + ' 文件内容'"
+            :title="baseDetailInfo.name + $t('space') + ' ' + $t('fileContent')"
             @cancel="cancel">
             <template #default>
                 <!-- 因为dialog关闭之后没有销毁，所以当同一个文件多次预览时会有上次的文件内容，为了解决此问题，使用了 Math.random() -->
@@ -394,7 +394,7 @@
                     this.$bkMessage({
                         theme: 'warning',
                         limit: 3,
-                        message: '文件过大，无法预览，请下载后在本地查看'
+                        message: this.$t('previewErrorMsg')
                     })
                 }
             },
@@ -430,7 +430,7 @@
                                             }
                                         }
                                     })
-                                    this.fileContent = reader.result || e.target.result || '文件内容获取失败，请下载后查看'
+                                    this.fileContent = reader.result || e.target.result || this.$t('loadFileContentErrorTip')
                                     // markdown 或者是 sha*的文件统一直接用 markdown 展示
                                     // json文件存在部分没有格式化的，此时需要格式化一下
                                     if (this.applyFileTypes[this.fileObj.type] === 'json') {

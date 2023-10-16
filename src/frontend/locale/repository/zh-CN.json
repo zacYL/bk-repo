@@ -925,5 +925,13 @@
     "pipelineUsers":"流水线用户",
     "testReport":"测试报告",
     "deploy":"部署",
-    "serverIP":"机器IP"
+    "serverIP":"机器IP",
+    "fileNamePlaceholder":"请输入文件名称",
+    "repositoryTypePlaceholder":"请选择仓库类型",
+    "backToDirectoryTree":"返回目录树",
+    "directoryList":"目录列表",
+    "folderOrFileName":"文件夹/文件名称",
+    "fileContent":"文件内容",
+    "previewErrorMsg":"文件过大，无法预览，请下载后在本地查看",
+    "loadFileContentErrorTip":"文件内容获取失败，请下载后查看"
 }

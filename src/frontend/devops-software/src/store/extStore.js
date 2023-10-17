@@ -98,8 +98,8 @@ export default {
                             ...(version
                                 ? [{
                                     field: 'version',
-                                    value: `*${version}*`,
-                                    operation: 'MATCH_I'
+                                    value: `${version}`,
+                                    operation: 'EQ'
                                 }]
                                 : []),
                             ...(metadataList
@@ -148,11 +148,13 @@ export default {
         getRepoListAll ({ commit }, { type }) {
             return Vue.prototype.$ajax.get(
                 'repository/api/software/repo/list',
-                {
-                    params: {
-                        ...(type || '')
+                type
+                    ? {
+                        params: {
+                            type: type || ''
+                        }
                     }
-                }
+                    : undefined
             )
         }
     }

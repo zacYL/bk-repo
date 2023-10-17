@@ -164,7 +164,7 @@ export default {
                         ...(version
                             ? [{
                                 field: 'version',
-                                value: `*${version}*`,
+                                value: `${version}`,
                                 operation: 'EQ'
                             }]
                             : []),

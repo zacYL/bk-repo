@@ -87,11 +87,13 @@
                         <bk-input
                             class="w125 input-common "
                             v-model="item.key"
+                            :maxlength="30"
                             :placeholder="$t('key')">
                         </bk-input>
                         <bk-input
                             class="w125 input-common"
                             v-model="item.value"
+                            :maxlength="500"
                             :placeholder="$t('value')"
                             @enter="onSearchArtifact">
                         </bk-input>

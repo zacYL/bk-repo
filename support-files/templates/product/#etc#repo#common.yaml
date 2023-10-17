@@ -186,3 +186,6 @@ bk:
 # 独立部署模式固定该配置
 auth:
   realm: cpack
+
+view:
+  domain: __BK_HTTP_SCHEMA__://__BK_REPO_FQDN__

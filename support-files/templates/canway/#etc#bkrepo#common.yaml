@@ -205,4 +205,5 @@ management:
     readinessstate:
       enabled: true
 
-  
+view:
+  domain: __BK_HTTP_SCHEMA__://__BK_REPO_FQDN__

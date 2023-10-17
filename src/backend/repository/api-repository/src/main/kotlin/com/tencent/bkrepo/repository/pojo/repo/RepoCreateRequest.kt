@@ -53,7 +53,7 @@ data class RepoCreateRequest(
     @ApiModelProperty("仓库类别", required = true)
     val category: RepositoryCategory,
     @ApiModelProperty("是否公开", required = true)
-    val public: Boolean,
+    var public: Boolean,
     @ApiModelProperty("简要描述", required = false)
     val description: String? = null,
     @ApiModelProperty("仓库配置", required = true)

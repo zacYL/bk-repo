@@ -45,6 +45,7 @@ enum class CommonMessageCode(private val key: String) : MessageCode {
     RESOURCE_EXPIRED("system.resource.expired"),
     METHOD_NOT_ALLOWED("system.method.not-allowed"),
     REQUEST_DENIED("system.request.denied"),
+    METADATA_REQUEST_DENIED("system.metadata.request.denied"),
     REQUEST_UNAUTHENTICATED("system.request.unauthenticated"),
     SERVICE_CIRCUIT_BREAKER("system.service.circuit-breaker"),
     SERVICE_CALL_ERROR("system.service.call-error"),

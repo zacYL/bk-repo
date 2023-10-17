@@ -37,6 +37,7 @@ import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.artifact.constant.*
 import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.security.util.SecurityUtils
+import com.tencent.bkrepo.common.service.util.LocaleMessageUtils
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.message.RepositoryMessageCode
 import com.tencent.bkrepo.repository.model.TMetadata
@@ -162,7 +163,7 @@ object MetadataUtils {
 
     fun checkPermission(metadata: TMetadata?, operator: String) {
         if (metadata?.system == true && (operator != SYSTEM_USER && !SecurityUtils.isServiceRequest())) {
-            throw PermissionException("No permission to update system metadata[${metadata.key}]")
+            throw PermissionException(LocaleMessageUtils.getLocalizedMessage(CommonMessageCode.METADATA_REQUEST_DENIED))
         }
     }
 

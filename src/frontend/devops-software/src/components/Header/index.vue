@@ -13,7 +13,7 @@
             </router-link>
             <a class="ml20 link" target="_self" href="/ui">
                 <i class="devops-icon icon-sort"></i>
-                <span class="ml5">制品管理</span>
+                <span class="ml5">{{$t('CPackWebTitle')}}</span>
             </a>
         </div>
         <User />
@@ -31,7 +31,7 @@
                 return this.$route.params.projectId
             },
             title () {
-                return document.title
+                return this.$t('softwareTitle') || document.title
             }
         },
         methods: {

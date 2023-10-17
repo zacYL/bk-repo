@@ -8,14 +8,14 @@
                     <bk-input
                         style="width: 320px"
                         v-model.trim="loginForm.username"
-                        placeholder="请输入用户名">
+                        :placeholder="$t('userNamePlaceholder')">
                     </bk-input>
                 </bk-form-item>
                 <bk-form-item>
                     <bk-input
                         style="width: 320px"
                         v-model.trim="loginForm.password"
-                        placeholder="请输入密码"
+                        :placeholder="$t('passwordPlaceholder')"
                         type="password"
                         :native-attributes="{
                             autocomplete: 'on'
@@ -25,7 +25,7 @@
                 <bk-form-item>
                     <div v-show="loginFailed" class="flex-align-center login-error-tip">
                         <i class="mr5 bk-icon icon-exclamation-circle"></i>
-                        {{ disableLogin ? `登录失败次数过多，请${wait}s后重试` : loginFailedTip }}
+                        {{ disableLogin ? $t('loginErrorMsg', { wait }) : loginFailedTip }}
                     </div>
                     <bk-button
                         class="login-button"

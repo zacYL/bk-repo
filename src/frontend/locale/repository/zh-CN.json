@@ -933,5 +933,10 @@
     "folderOrFileName":"文件夹/文件名称",
     "fileContent":"文件内容",
     "previewErrorMsg":"文件过大，无法预览，请下载后在本地查看",
-    "loadFileContentErrorTip":"文件内容获取失败，请下载后查看"
+    "loadFileContentErrorTip":"文件内容获取失败，请下载后查看",
+    "userNamePlaceholder":"请输入用户名",
+    "passwordPlaceholder":"请输入密码",
+    "loginErrorMsg":"登录失败次数过多，请 {wait} s 后重试",
+    "softwareTitle":"软件源",
+    "CPackWebTitle":"制品管理 CPack"
 }

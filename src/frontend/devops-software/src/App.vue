@@ -23,6 +23,8 @@
             }
         },
         created () {
+            // 浏览器标签头展示文案
+            document.title = this.$t('softwareTitle')
             const username = cookies.get('bk_uid')
             username && this.SET_USER_INFO({ username })
 

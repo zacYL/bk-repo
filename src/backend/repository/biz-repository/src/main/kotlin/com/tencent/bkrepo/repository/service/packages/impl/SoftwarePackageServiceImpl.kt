@@ -123,14 +123,14 @@ class SoftwarePackageServiceImpl(
     @Suppress("UNCHECKED_CAST")
     override fun searchPackage(queryModel: QueryModel): Page<MutableMap<*, *>> {
         val rules = (queryModel.rule as Rule.NestedRule).rules
-        var repoName: String? = null
+        var repoNameRuleExist = false
         var projectId: String? = null
         var repoType: String? = null
         val projectSubRule = mutableListOf<Rule>()
         for (rule in rules) {
             val queryRule = rule as Rule.QueryRule
             when (queryRule.field) {
-                "repoName" -> repoName = queryRule.value as String
+                "repoName" -> repoNameRuleExist = true
                 "projectId" -> projectId = queryRule.value as String
                 "repoType" -> repoType = queryRule.value as String
                 else -> projectSubRule.add(queryRule)
@@ -160,7 +160,7 @@ class SoftwarePackageServiceImpl(
                 this.addAll(projectsRule)
             }
             queryModel.rule = Rule.NestedRule(rules, Rule.NestedRule.RelationType.OR)
-        } else if (repoName == null) {
+        } else if (!repoNameRuleExist) {
             val genericRepos =
                 softwareRepositoryService.listRepo(projectId, option = option, includeGeneric = false).map { it.name }
             rules.add(Rule.QueryRule(field = "repoName", value = genericRepos, operation = OperationType.IN))

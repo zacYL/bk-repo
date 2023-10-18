@@ -2,6 +2,7 @@
     {
         "id": 15,
         "name": "制品(artifactory)",
+        "englishName": "repo",
         "menuLevel": "project",
         "showRoute": true,
         "weight": 5,
@@ -19,7 +20,7 @@
     {
         "id": 401,
         "name": "制品仓库",
-        "englishName": "repoList",
+        "englishName": "Repositories",
         "parentMenu": 15,
         "menuLevel": "project",
         "injectType": "iframe",
@@ -51,7 +52,7 @@
     {
         "id": 403,
         "name": "制品搜索",
-        "englishName": "repoSearch",
+        "englishName": "Search",
         "parentMenu": 15,
         "menuLevel": "project",
         "injectType": "iframe",
@@ -83,7 +84,7 @@
     {
         "id": 404,
         "name": "制品分发",
-        "englishName": "planManage",
+        "englishName": "Distribute",
         "parentMenu": 15,
         "menuLevel": "project",
         "injectType": "iframe",
@@ -115,7 +116,7 @@
     {
         "id": 436,
         "name": "制品分析",
-        "englishName": "repoScan",
+        "englishName": "Analysis",
         "parentMenu": 15,
         "menuLevel": "project",
         "injectType": "iframe",
@@ -147,7 +148,7 @@
     {
         "id": 7493,
         "name": "依赖目录",
-        "englishName": "repoCatalog",
+        "englishName": "Directory",
         "parentMenu": 15,
         "menuLevel": "project",
         "injectType": "iframe",

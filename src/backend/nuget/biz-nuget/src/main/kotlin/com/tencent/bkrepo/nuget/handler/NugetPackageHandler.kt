@@ -41,6 +41,7 @@ class NugetPackageHandler {
             metadata[ID] = id
             metadata[VERSION] = version
             metadata[AUTHORS] = authors
+            metadata[DESCRIPTION] = description
             owners?.let { metadata[OWNERS] = it }
             dependencies?.let { metadata[DEPENDENCY] = NugetV3RegistrationUtils.metadataToDependencyGroups(it) }
 //            metadata[REFERENCE] = references?.let { buildReferences(it) } ?: SLASH

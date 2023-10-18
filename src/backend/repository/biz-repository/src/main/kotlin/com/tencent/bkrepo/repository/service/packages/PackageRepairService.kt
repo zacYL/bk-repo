@@ -11,4 +11,9 @@ interface PackageRepairService {
      * 修正包的版本数
      */
     fun repairVersionCount()
+
+    /**
+     * 补充分发来源的docker版本信息manifestPath字段
+     */
+    fun repairDockerManifestPath()
 }

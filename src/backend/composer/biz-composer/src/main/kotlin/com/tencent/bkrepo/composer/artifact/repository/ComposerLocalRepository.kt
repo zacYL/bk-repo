@@ -249,11 +249,14 @@ class ComposerLocalRepository(private val stageClient: StageClient) : LocalRepos
         // 保存节点
         val metadata = mutableMapOf<String, String>()
         val composerMetadata = JsonUtil.mapper.readValue(composerArtifact.json, ComposerMetadata::class.java)
+        metadata["name"] = composerMetadata.name
         metadata["packageKey"] = PackageKeys.ofComposer(composerArtifact.name)
         metadata["version"] = composerArtifact.version
         metadata["type"] = composerMetadata.type
         composerMetadata.description?.let { metadata["description"] = it }
-        composerMetadata.keywords?.let { metadata["keywords"] = it.toString() }
+        composerMetadata.keywords?.let {
+            if (it.toString() != "null") metadata["keywords"] = it.toString()
+        }
         val nodeCreateRequest = getCompressNodeCreateRequest(context, metadata)
         store(nodeCreateRequest, context.getArtifactFile(), context.storageCredentials)
         // 更新索引

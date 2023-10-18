@@ -30,16 +30,7 @@ body {
                 min-width: 30px;
             }
         }
-    }
-    /* 表格 */
-    .bk-table {
-        .bk-table-body,
-        .bk-table-footer,
-        .bk-table-header,
-        .bk-table-empty-block {
-            width: auto !important;
-        }
-    }
+    }  
     /* 按钮 */
     .bk-button,
     .bk-button.no-slot {

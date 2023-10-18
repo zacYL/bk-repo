@@ -1,23 +1,23 @@
 <template>
     <bk-form style="max-width: 1080px;" :label-width="120" :model="rule" :rules="rules" ref="ruleForm" v-bkloading="{ isLoading }">
-        <bk-form-item label="质量规则">
+        <bk-form-item :label="$t('qualityRules')">
             <bk-switcher v-model="editable" size="small" theme="primary" @change="$refs.ruleForm.clearError()"></bk-switcher>
         </bk-form-item>
         <template>
-            <bk-form-item v-if="ruleTypes.includes(SCAN_TYPE_LICENSE)" label="许可证规则" property="recommend" error-display-type="normal">
-                <div style="color:var(--fontSubsidiaryColor);">当许可证中出现不符合以下规则的许可证时，则不通过质量规则</div>
-                <div class="mt10"><bk-checkbox :disabled="!editable" v-model="rule.recommend">无废弃许可证</bk-checkbox></div>
-                <div class="mt10"><bk-checkbox :disabled="!editable" v-model="rule.compliance">无不合规许可证</bk-checkbox></div>
-                <div class="mt10"><bk-checkbox :disabled="!editable" v-model="rule.unknown">无未知许可证</bk-checkbox></div>
+            <bk-form-item v-if="ruleTypes.includes(SCAN_TYPE_LICENSE)" :label="$t('licenseRules')" property="recommend" error-display-type="normal">
+                <div style="color:var(--fontSubsidiaryColor);">{{$t('scanQualityLicenseRule')}}</div>
+                <div class="mt10"><bk-checkbox :disabled="!editable" v-model="rule.recommend">{{$t('recommendLicenseRule')}}</bk-checkbox></div>
+                <div class="mt10"><bk-checkbox :disabled="!editable" v-model="rule.compliance">{{$t('compliantLicenseRule')}}</bk-checkbox></div>
+                <div class="mt10"><bk-checkbox :disabled="!editable" v-model="rule.unknown">{{$t('unknownLicenseRule')}}</bk-checkbox></div>
             </bk-form-item>
-            <bk-form-item v-if="ruleTypes.includes(SCAN_TYPE_SECURITY)" label="安全规则">
-                <div style="color:var(--fontSubsidiaryColor);">当扫描的制品漏洞超过下方任意一条规则中设定的数量，则制品未通过质量规则</div>
+            <bk-form-item v-if="ruleTypes.includes(SCAN_TYPE_SECURITY)" :label="$t('safetyRules')">
+                <div style="color:var(--fontSubsidiaryColor);">{{$t('scanQualitySafetyRule')}}</div>
             </bk-form-item>
             <template v-if="ruleTypes.includes(SCAN_TYPE_SECURITY)">
-                <bk-form-item label="" v-for="[id, name] in Object.entries(leakLevelEnum)" :key="id"
+                <bk-form-item label="" v-for="[id] in Object.entries(leakLevelEnum)" :key="id"
                     :property="id.toLowerCase()" error-display-type="normal">
                     <div class="flex-align-center">
-                        <div :class="`status-sign ${id}`" :data-name="`${name}漏洞≦`"></div>
+                        <div :class="`status-sign ${id}`" :data-name="$t(`leakLevelEnum.${id}`) + $t('space') + $t('vulnerability') + `≦`"></div>
                         <bk-input class="ml10 mr10" style="width: 80px;"
                             :disabled="!editable" v-model.trim="rule[id.toLowerCase()]"
                             @focus="$refs.ruleForm.clearError()"
@@ -28,10 +28,10 @@
                 </bk-form-item>
             </template>
         </template>
-        <bk-form-item label="触发事件">
-            <div style="color:var(--fontSubsidiaryColor);">可勾选下方按钮，在扫描或扫描结束后触发勾选项</div>
+        <bk-form-item :label="$t('triggerEvent')">
+            <div style="color:var(--fontSubsidiaryColor);">{{$t('scanQualityCheckBtnPre')}}</div>
             <!-- <div class="mt10"><bk-checkbox v-model="rule.forbidScanUnFinished">自动禁用制品：制品扫描未结束的制品</bk-checkbox></div> -->
-            <div class="mt10"><bk-checkbox :disabled="!editable" v-model="rule.forbidQualityUnPass">自动禁用制品：质量规则未通过的制品</bk-checkbox></div>
+            <div class="mt10"><bk-checkbox :disabled="!editable" v-model="rule.forbidQualityUnPass">{{$t('scanQualityCheckBtn')}}</bk-checkbox></div>
         </bk-form-item>
         <bk-form-item>
             <bk-button :loading="isLoading" theme="primary" @click="save()">{{$t('save')}}</bk-button>
@@ -51,7 +51,7 @@
         data () {
             const validate = {
                 validator: this.securityNumberValidate,
-                message: '请填写 0 - 10000 之间的非负整数',
+                message: this.$t('scanQualityNonNegativeIntegerTip'),
                 trigger: 'blur'
             }
             return {
@@ -79,14 +79,14 @@
                         validate,
                         {
                             validator: () => this.editable ? this.computedEditable() : true,
-                            message: '请填写至少一条质量规则',
+                            message: this.$t('scanQualityErrorTips'),
                             trigger: 'blur'
                         }
                     ],
                     recommend: [
                         {
                             validator: () => this.editable ? this.computedEditable() : true,
-                            message: '请填写至少一条质量规则',
+                            message: this.$t('scanQualityErrorTips'),
                             trigger: 'blur'
                         }
                     ]
@@ -149,7 +149,7 @@
                 }).then(() => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: this.$t('save') + this.$t('success')
+                        message: this.$t('save') + this.$t('space') + this.$t('success')
                     })
                     this.initData()
                     this.getRules()

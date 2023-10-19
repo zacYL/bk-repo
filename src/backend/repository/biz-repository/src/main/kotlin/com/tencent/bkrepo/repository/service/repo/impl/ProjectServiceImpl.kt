@@ -204,7 +204,7 @@ class ProjectServiceImpl(
     }
 
     override fun getProjectMetricsInfo(name: String): ProjectMetricsInfo? {
-        return convert(projectMetricsRepository.findByProjectId(name))
+        return convert(projectMetricsRepository.findFirstByProjectIdOrderByCreatedDateDesc(name))
     }
 
     @Transactional(rollbackFor = [Throwable::class])

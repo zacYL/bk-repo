@@ -128,7 +128,7 @@
                 }).then(() => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: '执行扫描成功'
+                        message: this.$t('executeScanSuccessMsg')
                     })
                     this.$router.push({
                         name: 'scanReport',

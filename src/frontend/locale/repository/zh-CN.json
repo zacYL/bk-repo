@@ -667,7 +667,18 @@
         "SUCCESS": "已完成",
         "FAILED": "同步异常"
     },
+    "planLogDetailStatusEnum": {
+        "SUCCESS": "同步成功",
+        "FAILED": "同步失败",
+        "RUNNING": "运行中"
+    },
     "conflictStrategy":"冲突策略",
+    "conflictStrategyEnum": {
+        "SKIP": "跳过冲突",
+        "OVERWRITE": "替换制品",
+        "FAST_FAIL": "终止同步",
+        "null":"/"
+    },
     "syncObject":"同步对象",
     "skipConflictLabel":"跳过冲突",
     "skipConflictTip":"当目标节点存在相同制品时，跳过该制品同步，同步剩余制品",
@@ -690,6 +701,8 @@
     "addFilePath":"添加文件路径",
     "addFilePathPlaceholder":"请输入文件路径，以换行分隔",
     "copyPlan":"复制计划",
+    "copyUrl":"复制URL",
+    "copyUrlSuccessTip":"成功复制URL到剪贴板",
     "syncStatus":"同步状态",
     "syncNode": "同步节点",
     "notExecuted":"未执行",
@@ -702,7 +715,7 @@
     "runningStatus":"运行状态",
     "startExecutionTime":"开始执行时间",
     "endExecutionTime":"结束执行时间",
-    "planLogTitle":"{name} 执行日志",
+    "planLogTitle":"{name} 执行任务记录",
     "nodeTypeEnum": {
         "CENTER": "中心节点",
         "EDGE": "边缘节点",

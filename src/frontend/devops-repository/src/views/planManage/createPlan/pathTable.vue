@@ -5,7 +5,7 @@
             v-model="selectedRepoName"
             searchable
             :disabled="disabled"
-            placeholder="请选择源仓库"
+            :placeholder="$t('selectRepoPlaceholder')"
             @change="pathConstraints = []">
             <bk-option-group
                 v-for="(list, type) in repoGroupList"

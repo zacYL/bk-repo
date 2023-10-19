@@ -1,6 +1,6 @@
 <template>
     <div>
-        <bk-sideslider :is-show.sync="showSideslider" :quick-close="true" :width="600" :title="`${planData.name} 执行任务记录`">
+        <bk-sideslider :is-show.sync="showSideslider" :quick-close="true" :width="600" :title="$t('planLogTitle', { name: planData.name })">
             <template #content>
                 <div class="plan-detail-container" v-bkloading="{ isLoading }">
                     <bk-radio-group
@@ -9,9 +9,9 @@
                         style="text-align: right;"
                         v-model="status"
                         @change="handlerPaginationChange()">
-                        <bk-radio class="ml50" value="">全部</bk-radio>
-                        <bk-radio class="ml50" value="SUCCESS">成功</bk-radio>
-                        <bk-radio class="ml50" value="FAILED">失败</bk-radio>
+                        <bk-radio class="ml50" value="">{{$t('total')}}</bk-radio>
+                        <bk-radio class="ml50" value="SUCCESS">{{$t('success')}}</bk-radio>
+                        <bk-radio class="ml50" value="FAILED">{{$t('fail')}}</bk-radio>
                     </bk-radio-group>
                     <bk-table
                         class="mt10"
@@ -22,21 +22,21 @@
                         :row-style="{ cursor: 'pointer' }"
                         size="small"
                         @row-click="showLogDetailHandler">
-                        <bk-table-column type="index" label="编号" width="70"></bk-table-column>
-                        <bk-table-column label="运行状态">
+                        <bk-table-column type="index" :label="$t('NO')" width="60"></bk-table-column>
+                        <bk-table-column :label="$t('runningStatus')">
                             <template #default="{ row }">
-                                <span class="repo-tag" :class="row.status">{{asyncPlanStatusEnum[row.status] || '未执行'}}</span>
+                                <span class="repo-tag" :class="row.status">{{$t(`asyncPlanStatusEnum.${row.status}`) || $t('notExecuted')}}</span>
                             </template>
                         </bk-table-column>
-                        <bk-table-column label="开始时间" width="150" show-overflow-tooltip>
+                        <bk-table-column :label="$t('startTime')" width="150" show-overflow-tooltip>
                             <template #default="{ row }">{{formatDate(row.startTime)}}</template>
                         </bk-table-column>
-                        <bk-table-column v-if="planData.replicaType !== 'REAL_TIME'" label="结束时间" width="150" show-overflow-tooltip>
+                        <bk-table-column v-if="planData.replicaType !== 'REAL_TIME'" :label="$t('endTime')" width="150" show-overflow-tooltip>
                             <template #default="{ row }">{{formatDate(row.endTime)}}</template>
                         </bk-table-column>
                         <bk-table-column :label="$t('planLogErrorReason')" width="120">
                             <template #default="{ row }">
-                                <bk-button v-if="row.errorReason" style="width:80%;" text theme="primary" @click.stop="openErrorDetail(row)">查看</bk-button>
+                                <bk-button v-if="row.errorReason" style="width:80%;" text theme="primary" @click.stop="openErrorDetail(row)">{{$t('view')}}</bk-button>
                                 <span v-else>/</span>
                             </template>
                         </bk-table-column>

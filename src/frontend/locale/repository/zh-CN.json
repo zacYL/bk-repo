@@ -676,8 +676,7 @@
     "conflictStrategyEnum": {
         "SKIP": "跳过冲突",
         "OVERWRITE": "替换制品",
-        "FAST_FAIL": "终止同步",
-        "null":"/"
+        "FAST_FAIL": "终止同步"
     },
     "syncObject":"同步对象",
     "skipConflictLabel":"跳过冲突",

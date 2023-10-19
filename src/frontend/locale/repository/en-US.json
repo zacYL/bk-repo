@@ -680,8 +680,7 @@
     "conflictStrategyEnum": {
         "SKIP": "Skip conflicts",
         "OVERWRITE": "Replacement artifacts",
-        "FAST_FAIL": "Terminate synchronization",
-        "null":"/"
+        "FAST_FAIL": "Terminate synchronization"
     },
     "syncObject":"Object",
     "skipConflictLabel":"Skip",

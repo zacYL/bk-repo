@@ -71,7 +71,7 @@
             </bk-table-column>
             <bk-table-column :label="$t('conflictStrategy')" width="150">
                 <template #default="{ row }">
-                    <span>{{ $t(`conflictStrategyEnum.${row.conflictStrategy}`) || '/'}}</span>
+                    <span>{{row.conflictStrategy ? $t(`conflictStrategyEnum.${row.conflictStrategy}`) : '/'}}</span>
                 </template>
             </bk-table-column>
             <bk-table-column :label="$t('startTime')" width="150">

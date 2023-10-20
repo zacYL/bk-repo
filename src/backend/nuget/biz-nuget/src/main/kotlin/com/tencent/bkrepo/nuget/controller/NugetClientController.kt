@@ -56,6 +56,7 @@ class NugetClientController(
     private val nugetClientService: NugetClientService
 ) {
     @GetMapping(produces = [MediaTypes.APPLICATION_JSON])
+    @Permission(ResourceType.REPO, PermissionAction.READ)
     fun getServiceDocument(
         @ArtifactPathVariable artifactInfo: NugetArtifactInfo
     ) {

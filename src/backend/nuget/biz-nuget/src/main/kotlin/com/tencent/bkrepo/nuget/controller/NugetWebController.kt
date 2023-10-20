@@ -4,6 +4,8 @@ import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.security.permission.Permission
+import com.tencent.bkrepo.common.security.permission.Principal
+import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.nuget.artifact.NugetArtifactInfo
 import com.tencent.bkrepo.nuget.pojo.artifact.NugetDeleteArtifactInfo
@@ -70,6 +72,7 @@ class NugetWebController(
     }
 
     @ApiOperation("获取nuget域名地址")
+    @Principal(PrincipalType.GENERAL)
     @GetMapping("/address")
     fun getRegistryDomain(): Response<NugetDomainInfo> {
         return ResponseBuilder.success(nugetWebService.getRegistryDomain())

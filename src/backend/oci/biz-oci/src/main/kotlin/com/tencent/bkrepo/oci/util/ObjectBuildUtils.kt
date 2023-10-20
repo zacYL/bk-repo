@@ -116,7 +116,7 @@ object ObjectBuildUtils {
         fullPath: String,
         userId: String,
         metadata: Map<String, Any>? = null
-        ): MetadataSaveRequest {
+    ): MetadataSaveRequest {
         val metadataModels = metadata?.map { MetadataModel(key = it.key, value = it.value, system = true) }
         return MetadataSaveRequest(
             projectId = projectId,
@@ -212,7 +212,7 @@ object ObjectBuildUtils {
         )
     }
 
-    fun buildBasicInfo(nodeDetail: NodeDetail, packageVersion: PackageVersion): BasicInfo {
+    fun buildBasicInfo(nodeDetail: NodeDetail, packageVersion: PackageVersion, os: List<String>): BasicInfo {
         with(nodeDetail) {
             return BasicInfo(
                 version = packageVersion.name,
@@ -227,7 +227,8 @@ object ObjectBuildUtils {
                 createdBy = createdBy,
                 createdDate = createdDate,
                 lastModifiedBy = lastModifiedBy,
-                lastModifiedDate = lastModifiedDate
+                lastModifiedDate = lastModifiedDate,
+                os = os
             )
         }
     }

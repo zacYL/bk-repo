@@ -20,25 +20,25 @@
             <div class="package-card-data" :style="dynamicStyle">
                 <!-- 依赖源仓库 -->
                 <template v-if="cardData.type">
-                    <div class="card-metadata" :title="$t('latestVersion') + `:${cardData.latest}`">
+                    <div class="card-metadata" :title="$t('latestVersion') + ` : ${cardData.latest}`">
                         <scan-tag class="ml5"
                             v-if="isEnterprise && showRepoScan"
                             :status="cardData.scanStatus"
                             readonly>
                         </scan-tag>
                     </div>
-                    <div class="card-metadata" :title="$t('lastModifiedDate') + `: ${formatDate(cardData.lastModifiedDate)}`"></div>
-                    <div v-if="whetherRepoSearch" class="card-metadata" :title="$t('repo') + `: ${cardData.repoName}`"></div>
-                    <div class="card-metadata" :title="$t('versions') + `: ${cardData.versions}`"></div>
-                    <div class="card-metadata" :title="$t('downloadStats') + `: ${cardData.downloads}`"></div>
-                    <div v-if="whetherRepoVirtual" class="card-metadata" :title="$t('repositorySource') + `: ${cardData.repoName}`"></div>
-                    <div v-if="showRepoSearchVersion" class="card-metadata" :title="$t('searchVersionResultInfo') + `: ${cardData.matchedVersions.length}`"></div>
+                    <div class="card-metadata" :title="$t('lastModifiedDate') + ` : ${formatDate(cardData.lastModifiedDate)}`"></div>
+                    <div v-if="whetherRepoSearch" class="card-metadata" :title="$t('repo') + ` : ${cardData.repoName}`"></div>
+                    <div class="card-metadata" :title="$t('versions') + ` : ${cardData.versions}`"></div>
+                    <div class="card-metadata" :title="$t('downloadStats') + ` : ${cardData.downloads}`"></div>
+                    <div v-if="whetherRepoVirtual" class="card-metadata" :title="$t('repositorySource') + ` : ${cardData.repoName}`"></div>
+                    <div v-if="showRepoSearchVersion" class="card-metadata" :title="$t('searchVersionResultInfo') + ` : ${cardData.matchedVersions.length}`"></div>
                 </template>
                 <!-- generic 仓库 -->
                 <template v-else>
-                    <div class="card-metadata" :title="$t('repo') + `: ${cardData.repoName}`"></div>
-                    <div class="card-metadata" :title="$t('fileSize') + `: ${convertFileSize(cardData.size)}`"></div>
-                    <div class="card-metadata" :title="$t('lastModifiedDate') + `: ${formatDate(cardData.lastModifiedDate)}`"></div>
+                    <div class="card-metadata" :title="$t('repo') + ` : ${cardData.repoName}`"></div>
+                    <div class="card-metadata" :title="$t('fileSize') + ` : ${convertFileSize(cardData.size)}`"></div>
+                    <div class="card-metadata" :title="$t('lastModifiedDate') + ` : ${formatDate(cardData.lastModifiedDate)}`"></div>
                 </template>
             </div>
         </div>

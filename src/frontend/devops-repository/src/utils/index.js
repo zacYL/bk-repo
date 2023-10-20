@@ -103,7 +103,7 @@ export function formatDuration (duration, unit = 's', target = []) {
     if (!duration) return duration || '/'
     duration = Math.floor(Number(duration))
     const { label, deno, next } = durationMap[unit]
-    const current = duration % deno ? `${duration % deno}${label}` : ''
+    const current = duration % deno ? `${duration % deno} ${label}` : ''
     duration = Math.floor(duration / deno)
     if (!duration) {
         return [current, ...target].slice(0, 2).join('') || i18n.t('lessOneSecondTip')

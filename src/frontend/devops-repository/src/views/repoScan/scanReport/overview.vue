@@ -30,7 +30,7 @@
             :title="$t('ExportRecordFilter')"
             :height-num="311"
             @cancel="showExportDialog = false">
-            <bk-form :label-width="80">
+            <bk-form :label-width="90">
                 <bk-form-item :label="$t('scanTime')">
                     <bk-date-picker
                         v-model="exportTime"

@@ -2,11 +2,11 @@
     <div class="scan-config-container" v-bkloading="{ isLoading }">
         <bk-tab class="scan-config-tab page-tab" type="unborder-card" :active.sync="tabName">
             <bk-tab-panel name="baseInfo" :label="$t('baseSetting')">
-                <bk-form :label-width="120">
+                <bk-form :label-width="140">
                     <bk-form-item :label="$t('schemeName')">
                         <bk-input class="w250" v-model.trim="scanBaseInfo.name" maxlength="32" show-word-limit></bk-input>
                     </bk-form-item>
-                    <bk-form-item :label="$t('schemeType')">{{ scanTypeEnum[scanBaseInfo.type] }}</bk-form-item>
+                    <bk-form-item :label="$t('schemeType')">{{ $t(`scanTypeEnum.${scanBaseInfo.type}`) }}</bk-form-item>
                     <bk-form-item :label="$t('scanner')">{{ scanBaseInfo.scanner }}</bk-form-item>
                     <bk-form-item :label="$t('description')">
                         <bk-input type="textarea"

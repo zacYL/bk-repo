@@ -43,7 +43,7 @@
                                 :list="[
                                     ...(!$version.metadata.forbidStatus ? [
                                         (showPromotion && !$version.metadata.lockStatus) && {
-                                            label: $t('promotion'), clickEvent: () => changeStageTagHandler($version),
+                                            label: $t('upgrade'), clickEvent: () => changeStageTagHandler($version),
                                             disabled: ($version.stageTag || '').includes('@release')
                                         },
                                         repoType !== 'docker' && { label: $t('download'), clickEvent: () => downloadPackageHandler($version) },

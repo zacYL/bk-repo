@@ -11,17 +11,17 @@
                     <div class="grid-item"
                         v-for="{ name, label, value } in detailInfoMap"
                         :key="name">
-                        <label>{{ label }}: </label>
+                        <label class="base-detail">{{ label }} : </label>
                         <span class="flex-1 text-overflow" :title="value">{{ value }}</span>
                     </div>
                 </div>
                 <div v-if="!detailSlider.folder" class="version-base-info base-info-checksums display-block" data-title="Checksums" v-bkloading="{ isLoading: detailSlider.loading }">
                     <div v-if="detailSlider.data.sha256" class="grid-item">
-                        <label>SHA256: </label>
+                        <label>SHA256 : </label>
                         <span class="flex-1 text-overflow" :title="detailSlider.data.sha256">{{ detailSlider.data.sha256 }}</span>
                     </div>
                     <div v-if="detailSlider.data.md5" class="grid-item">
-                        <label>MD5: </label>
+                        <label>MD5 : </label>
                         <span class="flex-1 text-overflow" :title="detailSlider.data.md5">{{ detailSlider.data.md5 }}</span>
                     </div>
                 </div>
@@ -236,6 +236,11 @@
             label {
                 flex-basis: 80px;
                 text-align: right;
+                margin-right:5px;
+            }
+            .base-detail{
+                flex-basis: 105px;
+                text-align: left;
             }
         }
     }

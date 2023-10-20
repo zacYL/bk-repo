@@ -17,13 +17,13 @@
                 <bk-form-item label="" v-for="[id] in Object.entries(leakLevelEnum)" :key="id"
                     :property="id.toLowerCase()" error-display-type="normal">
                     <div class="flex-align-center">
-                        <div :class="`status-sign ${id}`" :data-name="$t(`leakLevelEnum.${id}`) + $t('space') + $t('vulnerability') + `≦`"></div>
-                        <bk-input class="ml10 mr10" style="width: 80px;"
+                        <div :class="`status-sign ${id}`" :data-name="$t(`leakLevelEnum.${id}`) + $t('space') + $t('vulnerability') + ` ≦`"></div>
+                        <bk-input class="ml10 mr10" style="width: 100px;"
                             :disabled="!editable" v-model.trim="rule[id.toLowerCase()]"
                             @focus="$refs.ruleForm.clearError()"
                             @blur="$refs.ruleForm.validate()">
                         </bk-input>
-                        <span>个</span>
+                        <span>{{$t('per')}}</span>
                     </div>
                 </bk-form-item>
             </template>

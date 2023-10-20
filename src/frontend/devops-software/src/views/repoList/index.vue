@@ -71,7 +71,7 @@
                     <span v-if="row.public" class="mr5 repo-tag WARNING" :data-name="$t('public')"></span>
                 </template>
             </bk-table-column>
-            <bk-table-column :label="$t('storeTypes')" width="120">
+            <bk-table-column :label="$t('storeTypes')" width="140">
                 <template #default="{ row }">
                     <span>{{$t((row.category.toLowerCase() || 'local') + 'Store')}}</span>
                 </template>
@@ -79,7 +79,7 @@
             <bk-table-column :label="$t('createdDate')" width="250">
                 <template #default="{ row }">{{ formatDate(row.createdDate) }}</template>
             </bk-table-column>
-            <bk-table-column :label="$t('createdBy')" width="150">
+            <bk-table-column :label="$t('createdBy')" width="150" show-overflow-tooltip>
                 <template #default="{ row }">
                     {{ userList[row.createdBy] ? userList[row.createdBy].name : row.createdBy }}
                 </template>

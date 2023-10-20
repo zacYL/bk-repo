@@ -11,7 +11,7 @@
                     <div class="grid-item"
                         v-for="{ name, label, value } in detailInfoMap"
                         :key="name">
-                        <label class="base-detail">{{ label }} : </label>
+                        <label>{{ label }} : </label>
                         <span class="flex-1 text-overflow" :title="value">{{ value }}</span>
                     </div>
                 </div>
@@ -234,13 +234,9 @@
             display: flex;
             overflow: hidden;
             label {
-                flex-basis: 80px;
+                flex-basis: 110px;
                 text-align: right;
-                margin-right:5px;
-            }
-            .base-detail{
-                flex-basis: 105px;
-                text-align: left;
+                margin-right: 5px;
             }
         }
     }

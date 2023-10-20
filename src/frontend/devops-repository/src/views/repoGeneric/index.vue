@@ -117,18 +117,18 @@
                         <template #default="{ row }">{{ formatDate(row.lastModifiedDate) }}</template>
                     </bk-table-column>
 
-                    <bk-table-column :label="$t('lastModifiedBy')" width="90" show-overflow-tooltip>
+                    <bk-table-column :label="$t('lastModifiedBy')" width="130" show-overflow-tooltip>
                         <template #default="{ row }">
                             {{ userList[row.lastModifiedBy] ? userList[row.lastModifiedBy].name : row.lastModifiedBy }}
                         </template>
                     </bk-table-column>
-                    <bk-table-column :label="$t('createdBy')" width="90" show-overflow-tooltip>
+                    <bk-table-column :label="$t('createdBy')" width="110" show-overflow-tooltip>
                         <template #default="{ row }">
                             {{ userList[row.createdBy] ? userList[row.createdBy].name : row.createdBy }}
                         </template>
                     </bk-table-column>
 
-                    <bk-table-column :label="$t('size')" width="90" show-overflow-tooltip>
+                    <bk-table-column :label="$t('size')" width="100" show-overflow-tooltip>
                         <template #default="{ row }">
                             <bk-button text
                                 v-if="row.folder && !('folderSize' in row)"
@@ -140,7 +140,7 @@
                         </template>
                     </bk-table-column>
 
-                    <bk-table-column :label="$t('operation')" width="70">
+                    <bk-table-column :label="$t('operation')" width="100">
                         <template #default="{ row }">
                             <operation-list
                                 :list="[

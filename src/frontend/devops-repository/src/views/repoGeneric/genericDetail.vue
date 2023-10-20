@@ -228,8 +228,9 @@
             display: flex;
             overflow: hidden;
             label {
-                flex-basis: 80px;
+                flex-basis: 110px;
                 text-align: right;
+                margin-right: 5px;
             }
         }
     }

@@ -1,17 +1,17 @@
 <template>
-    <bk-form class="clean-config-container" :label-width="120" :model="config" :rules="rules" ref="cleanForm">
-        <bk-form-item :label="$t('autoCleanup')">
+    <bk-form class="clean-config-container" :label-width="150" :model="config" :rules="rules" ref="cleanForm">
+        <bk-form-item :label-width="repoType === 'generic' ? 150 : 166" :label="$t('autoCleanup')">
             <bk-switcher v-model="config.autoClean" size="small" theme="primary" @change="clearError"></bk-switcher>
             <span class="auto-clean-info">{{$t('autoCleanInfo')}}</span>
         </bk-form-item>
-        <bk-form-item v-if="repoType !== 'generic'" :label="$t('minimumVersion')" required property="reserveVersions" error-display-type="normal">
+        <bk-form-item v-if="repoType !== 'generic'" :label-width="166" :label="$t('minimumVersion')" required property="reserveVersions" error-display-type="normal">
             <bk-input class="w250" v-model="config.reserveVersions" :disabled="!config.autoClean"></bk-input>
             <div class="form-tip">{{$t('dependencyCleanTip')}}</div>
         </bk-form-item>
-        <bk-form-item v-if="repoType !== 'generic'" :label="$t('minRetentionTime')" required property="reserveDays" error-display-type="normal">
+        <bk-form-item v-if="repoType !== 'generic'" :label-width="166" :label="$t('minRetentionTime')" required property="reserveDays" error-display-type="normal">
             <bk-input class="w250" v-model="config.reserveDays" :disabled="!config.autoClean"></bk-input>
         </bk-form-item>
-        <bk-form-item :label="repoType === 'generic' ? $t('genericRetention') : $t('retentionRules')">
+        <bk-form-item :label-width="repoType === 'generic' ? 150 : 166" :label="repoType === 'generic' ? $t('genericRetention') : $t('retentionRules')">
             <template v-if="repoType !== 'generic'">
                 <bk-button :disabled="!config.autoClean" icon="plus" @click="addRule()">{{$t('addRules')}}</bk-button>
                 <div class="form-tip">

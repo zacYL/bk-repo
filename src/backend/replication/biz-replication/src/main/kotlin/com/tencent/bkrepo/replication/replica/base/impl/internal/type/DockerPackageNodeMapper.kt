@@ -3,10 +3,10 @@ package com.tencent.bkrepo.replication.replica.base.impl.internal.type
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.storage.core.StorageService
-import com.tencent.bkrepo.replication.constant.DOCKER_LAYER_FULL_PATH
-import com.tencent.bkrepo.replication.constant.DOCKER_MANIFEST_JSON_FULL_PATH
 import com.tencent.bkrepo.replication.constant.OCI_LAYER_FULL_PATH
+import com.tencent.bkrepo.replication.constant.OCI_LIST_MANIFEST_JSON_FULL_PATH
 import com.tencent.bkrepo.replication.constant.OCI_MANIFEST_JSON_FULL_PATH
+import com.tencent.bkrepo.replication.constant.OCI_MANIFEST_LIST
 import com.tencent.bkrepo.replication.util.ManifestParser
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
@@ -38,13 +38,12 @@ class DockerPackageNodeMapper(
             val result = mutableListOf<String>()
             val name = packageSummary.name
             val version = packageVersion.name
-            var isOci = false
             val repository = repositoryClient.getRepoDetail(projectId, repoName, type.name).data!!
-            var manifestFullPath = DOCKER_MANIFEST_JSON_FULL_PATH.format(name, version)
+            // 旧的docker数据需要迁移，迁移后不需要兼容
+            var manifestFullPath = OCI_MANIFEST_JSON_FULL_PATH.format(name, version)
             val nodeDetail = nodeClient.getNodeDetail(projectId, repoName, manifestFullPath).data ?: run {
-                // 针对使用oci替换了docker仓库，需要进行数据兼容
-                isOci = true
-                manifestFullPath = OCI_MANIFEST_JSON_FULL_PATH.format(name, version)
+                // 兼容 list.manifest.json
+                manifestFullPath = OCI_LIST_MANIFEST_JSON_FULL_PATH.format(name, version)
                 nodeClient.getNodeDetail(projectId, repoName, manifestFullPath).data!!
             }
             val inputStream = storageService.load(
@@ -52,13 +51,12 @@ class DockerPackageNodeMapper(
                 Range.full(nodeDetail.size),
                 repository.storageCredentials
             )!!
-            val manifestInfo = ManifestParser.parseManifest(inputStream) ?: return result
-            manifestInfo.descriptors?.forEach {
-                val replace = it.replace(":", "__")
-                if (isOci) {
-                    result.add(OCI_LAYER_FULL_PATH.format(name, replace))
-                } else {
-                    result.add(DOCKER_LAYER_FULL_PATH.format(name, version, replace))
+            // list.manifest.json 只需要分发本身
+            if (nodeDetail.name != OCI_MANIFEST_LIST) {
+                val manifestInfo = ManifestParser.parseManifest(inputStream) ?: return result
+                manifestInfo.descriptors?.forEach {
+                    val replace = it.replace(":", "__")
+                    result.add(OCI_LAYER_FULL_PATH.format(name, version, replace))
                 }
             }
             result.add(manifestFullPath)

@@ -31,8 +31,6 @@
 
 package com.tencent.bkrepo.npm.service.impl
 
-import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
-import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
 import com.tencent.bkrepo.common.api.util.JsonUtils.objectMapper
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
@@ -40,7 +38,6 @@ import com.tencent.bkrepo.common.artifact.pojo.configuration.virtual.VirtualConf
 import com.tencent.bkrepo.common.artifact.repository.context.*
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
-import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
 import com.tencent.bkrepo.npm.constants.*
@@ -85,7 +82,6 @@ class NpmClientServiceImpl(
     private val npmPackageHandler: NpmPackageHandler
 ) : NpmClientService, AbstractNpmService() {
 
-    @Permission(ResourceType.REPO, PermissionAction.WRITE)
     @Transactional(rollbackFor = [Throwable::class])
     override fun publishOrUpdatePackage(
         userId: String,
@@ -132,7 +128,6 @@ class NpmClientServiceImpl(
         }
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.READ)
     @Transactional(rollbackFor = [Throwable::class])
     override fun packageInfo(artifactInfo: NpmArtifactInfo, name: String): NpmPackageMetaData {
         with(artifactInfo) {
@@ -141,7 +136,6 @@ class NpmClientServiceImpl(
         }
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.READ)
     @Transactional(rollbackFor = [Throwable::class])
     override fun packageVersionInfo(artifactInfo: NpmArtifactInfo, name: String, version: String): NpmVersionMetadata {
         with(artifactInfo) {
@@ -156,7 +150,6 @@ class NpmClientServiceImpl(
         }
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.READ)
     @Transactional(rollbackFor = [Throwable::class])
     override fun download(artifactInfo: NpmArtifactInfo) {
         val context = ArtifactDownloadContext()
@@ -165,7 +158,6 @@ class NpmClientServiceImpl(
     }
 
     @Suppress("UNCHECKED_CAST")
-    @Permission(ResourceType.REPO, PermissionAction.READ)
     @Transactional(rollbackFor = [Throwable::class])
     override fun search(artifactInfo: NpmArtifactInfo, searchRequest: MetadataSearchRequest): NpmSearchResponse {
         val context = ArtifactSearchContext()
@@ -174,7 +166,6 @@ class NpmClientServiceImpl(
         return NpmSearchResponse(npmSearchInfoMapList)
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.READ)
     override fun getDistTags(artifactInfo: NpmArtifactInfo, name: String): DistTags {
         with(artifactInfo) {
             logger.info("handling get distTags request for package [$name] in repo [$projectId/$repoName]")
@@ -183,7 +174,6 @@ class NpmClientServiceImpl(
         }
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.WRITE)
     override fun addDistTags(userId: String, artifactInfo: NpmArtifactInfo, name: String, tag: String) {
         // 对虚拟仓库添加dist tag时,转换为添加到默认部署仓库
         val realArtifactInfo = queryVirtualDeployment(artifactInfo)?.let {
@@ -201,7 +191,6 @@ class NpmClientServiceImpl(
         }
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.WRITE)
     override fun deleteDistTags(userId: String, artifactInfo: NpmArtifactInfo, name: String, tag: String) {
         // 对虚拟仓库删除dist tag时,转换为在默认部署仓库删除
         val realArtifactInfo = queryVirtualDeployment(artifactInfo)?.let {
@@ -223,7 +212,6 @@ class NpmClientServiceImpl(
         doPackageFileUpload(userId, realArtifactInfo, packageMetaData)
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.WRITE)
     override fun updatePackage(userId: String, artifactInfo: NpmArtifactInfo, name: String) {
         val realArtifactInfo = queryVirtualDeployment(artifactInfo)?.let {
             artifactInfo.copy(repoName = it) as NpmArtifactInfo
@@ -236,7 +224,6 @@ class NpmClientServiceImpl(
         doPackageFileUpload(userId, realArtifactInfo, packageMetadata)
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.DELETE)
     override fun deleteVersion(
         artifactInfo: NpmArtifactInfo,
         name: String,
@@ -264,7 +251,6 @@ class NpmClientServiceImpl(
         }
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.DELETE)
     override fun deletePackage(userId: String, artifactInfo: NpmArtifactInfo, name: String) {
         val repoDetail = repositoryClient.getRepoDetail(artifactInfo.projectId, artifactInfo.repoName).data!!
         if (repoDetail.category == RepositoryCategory.VIRTUAL) throw MethodNotAllowedException()

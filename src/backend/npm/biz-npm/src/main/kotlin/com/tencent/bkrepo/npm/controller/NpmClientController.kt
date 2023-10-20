@@ -31,8 +31,11 @@
 
 package com.tencent.bkrepo.npm.controller
 
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
+import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.constant.MediaTypes
 import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
+import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.HeaderUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
@@ -67,6 +70,7 @@ class NpmClientController(
      * npm service info
      */
     @GetMapping("/{projectId}/{repoName}")
+    @Permission(ResourceType.REPO, PermissionAction.READ)
     fun repoInfo(): ResponseEntity<Void> {
         return ResponseEntity.ok().build<Void>()
     }
@@ -75,6 +79,7 @@ class NpmClientController(
      * npm publish or update package
      */
     @PutMapping("/{projectId}/{repoName}/{name}")
+    @Permission(ResourceType.REPO, PermissionAction.WRITE)
     fun publishOrUpdatePackage(
         @RequestAttribute userId: String,
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
@@ -84,6 +89,7 @@ class NpmClientController(
     }
 
     @PutMapping("/{projectId}/{repoName}/@{scope}/{name}")
+    @Permission(ResourceType.REPO, PermissionAction.WRITE)
     fun publishOrUpdatePackage(
         @RequestAttribute userId: String,
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
@@ -98,6 +104,7 @@ class NpmClientController(
      * query package.json info
      */
     @GetMapping("/{projectId}/{repoName}/{name}", produces = [MediaTypes.APPLICATION_JSON])
+    @Permission(ResourceType.REPO, PermissionAction.READ)
     fun packageInfo(
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
         @PathVariable name: String
@@ -106,6 +113,7 @@ class NpmClientController(
     }
 
     @GetMapping("/{projectId}/{repoName}/@{scope}/{name}", produces = [MediaTypes.APPLICATION_JSON])
+    @Permission(ResourceType.REPO, PermissionAction.READ)
     fun packageInfo(
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
         @PathVariable scope: String,
@@ -119,6 +127,7 @@ class NpmClientController(
      * query package-version.json info
      */
     @GetMapping("/{projectId}/{repoName}/{name}/{version}", produces = [MediaTypes.APPLICATION_JSON])
+    @Permission(ResourceType.REPO, PermissionAction.READ)
     fun packageVersion(
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
         @PathVariable name: String,
@@ -130,6 +139,7 @@ class NpmClientController(
     @GetMapping(
         "/{projectId}/{repoName}/@{scope}/{name}/{version}", produces = [MediaTypes.APPLICATION_JSON]
     )
+    @Permission(ResourceType.REPO, PermissionAction.READ)
     fun packageVersion(
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
         @PathVariable scope: String,
@@ -141,6 +151,7 @@ class NpmClientController(
     }
 
     @RequestMapping(value = ["/{projectId}/{repoName}/**/*.tgz"], method = [RequestMethod.HEAD])
+    @Permission(ResourceType.REPO, PermissionAction.READ)
     fun downloadHead(
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo
     ) {
@@ -151,6 +162,7 @@ class NpmClientController(
      * download tgz file
      */
     @GetMapping("/{projectId}/{repoName}/**/*.tgz")
+    @Permission(ResourceType.REPO, PermissionAction.READ)
     fun download(
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo
     ) {
@@ -161,6 +173,7 @@ class NpmClientController(
      * npm search
      */
     @GetMapping("/{projectId}/{repoName}/-/v1/search")
+    @Permission(ResourceType.REPO, PermissionAction.READ)
     fun search(
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
         searchRequest: MetadataSearchRequest
@@ -175,6 +188,7 @@ class NpmClientController(
         "/{projectId}/{repoName}/-/package/{name}/dist-tags",
         "/{projectId}/{repoName}/-/package/@{scope}/{name}/dist-tags"
     )
+    @Permission(ResourceType.REPO, PermissionAction.READ)
     fun getDistTags(
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
         @PathVariable scope: String?,
@@ -191,6 +205,7 @@ class NpmClientController(
         "/{projectId}/{repoName}/-/package/{name}/dist-tags/{tag}",
         "/{projectId}/{repoName}/-/package/@{scope}/{name}/dist-tags/{tag}"
     )
+    @Permission(ResourceType.REPO, PermissionAction.WRITE)
     fun addDistTags(
         @RequestAttribute userId: String,
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
@@ -210,6 +225,7 @@ class NpmClientController(
         "/{projectId}/{repoName}/-/package/{name}/dist-tags/{tag}",
         "/{projectId}/{repoName}/-/package/@{scope}/{name}/dist-tags/{tag}"
     )
+    @Permission(ResourceType.REPO, PermissionAction.WRITE)
     fun deleteDistTags(
         @RequestAttribute userId: String,
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
@@ -225,6 +241,7 @@ class NpmClientController(
      * delete the version triggers the request
      */
     @PutMapping("/{projectId}/{repoName}/{name}/-rev/{rev}", "/{projectId}/{repoName}/@{scope}/{name}/-rev/{rev}")
+    @Permission(ResourceType.REPO, PermissionAction.WRITE)
     fun updatePackage(
         @RequestAttribute userId: String,
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
@@ -244,6 +261,7 @@ class NpmClientController(
         "/**/{projectId}/{repoName}/{name}/{separator:-|download}/{filename}/-rev/{rev}",
         "/**/{projectId}/{repoName}/@{scope}/{name}/{separator:-|download}/@{scope}/{filename}/-rev/{rev}"
     )
+    @Permission(ResourceType.REPO, PermissionAction.DELETE)
     fun deleteVersion(
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
         @PathVariable scope: String?,
@@ -264,6 +282,7 @@ class NpmClientController(
      * npm unpublish package
      */
     @DeleteMapping("/{projectId}/{repoName}/{name}/-rev/{rev}", "/{projectId}/{repoName}/@{scope}/{name}/-rev/{rev}")
+    @Permission(ResourceType.REPO, PermissionAction.DELETE)
     fun deletePackage(
         @RequestAttribute userId: String,
         @ArtifactPathVariable artifactInfo: NpmArtifactInfo,

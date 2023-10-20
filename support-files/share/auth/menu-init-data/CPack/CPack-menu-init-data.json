@@ -20,7 +20,7 @@
     {
         "id": 401,
         "name": "制品仓库",
-        "englishName": "Repositories",
+        "englishName": "Repository",
         "parentMenu": 15,
         "menuLevel": "project",
         "injectType": "iframe",

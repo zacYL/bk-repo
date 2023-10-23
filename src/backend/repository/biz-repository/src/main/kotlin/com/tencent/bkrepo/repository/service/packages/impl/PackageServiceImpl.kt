@@ -66,6 +66,7 @@ import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateR
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionUpdateRequest
 import com.tencent.bkrepo.repository.search.packages.PackageQueryContext
 import com.tencent.bkrepo.repository.search.packages.PackageSearchInterpreter
+import com.tencent.bkrepo.repository.search.versions.PackageVersionSearchInterpreter
 import com.tencent.bkrepo.repository.service.packages.PackageService
 import com.tencent.bkrepo.repository.service.repo.RepositoryService
 import com.tencent.bkrepo.repository.util.MetadataUtils
@@ -76,7 +77,12 @@ import com.tencent.bkrepo.repository.util.PackageQueryHelper
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.domain.Sort
-import org.springframework.data.mongodb.core.query.*
+import org.springframework.data.mongodb.core.query.Criteria
+import org.springframework.data.mongodb.core.query.Query
+import org.springframework.data.mongodb.core.query.Update
+import org.springframework.data.mongodb.core.query.and
+import org.springframework.data.mongodb.core.query.isEqualTo
+import org.springframework.data.mongodb.core.query.where
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 
@@ -85,6 +91,7 @@ class PackageServiceImpl(
     private val packageDao: PackageDao,
     private val packageVersionDao: PackageVersionDao,
     private val packageSearchInterpreter: PackageSearchInterpreter,
+    private val packageVersionSearchInterpreter: PackageVersionSearchInterpreter,
     private val repositoryService: RepositoryService
 ) : PackageService {
 
@@ -204,7 +211,7 @@ class PackageServiceImpl(
     }
 
     override fun searchVersion(queryModel: QueryModel): Page<PackageVersion> {
-        val context = packageSearchInterpreter.interpret(queryModel)
+        val context = packageVersionSearchInterpreter.interpret(queryModel)
         val query = context.mongoQuery
         val countQuery = Query.of(query).limit(0).skip(0)
         val totalRecords = packageVersionDao.count(countQuery)

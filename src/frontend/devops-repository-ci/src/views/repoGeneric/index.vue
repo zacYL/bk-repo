@@ -657,7 +657,7 @@
                             this.refreshNodeChange()
                             this.$bkMessage({
                                 theme: 'success',
-                                message: this.$t('delete') + this.$t('success')
+                                message: this.$t('delete') + this.$t('space') + this.$t('success')
                             })
                         })
                     }
@@ -747,7 +747,7 @@
                 }).then(() => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: (data.limitStatus ? this.$t('relieve') + this.$t('space') + this.$t(limitType) : this.$t(limitType)) + this.$t('success')
+                        message: (data.limitStatus ? this.$t('relieve') + this.$t('space') + this.$t(limitType) : this.$t(limitType)) + this.$t('space') + this.$t('success')
                     })
                     this.$refs.operationLimitConfirmDialog.dialogData.show = false
                     this.getArtifactories()
@@ -790,7 +790,7 @@
                             this.refreshNodeChange()
                             this.$bkMessage({
                                 theme: 'success',
-                                message: this.$t('delete') + this.$t('success')
+                                message: this.$t('delete') + this.$t('space') + this.$t('success')
                             })
                         })
                     }

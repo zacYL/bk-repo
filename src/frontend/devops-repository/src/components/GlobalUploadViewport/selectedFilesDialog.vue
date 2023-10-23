@@ -33,7 +33,7 @@
             <bk-table-column :label="$t('size')" width="90" show-overflow-tooltip>
                 <template #default="{ row }">{{ convertFileSize(row.size) }}</template>
             </bk-table-column>
-            <bk-table-column :label="$t('operation')" width="90">
+            <bk-table-column :label="$t('operation')" width="100">
                 <template #default="{ $index }">
                     <bk-button text theme="primary" @click="selectedFiles.splice($index, 1)">{{$t('remove')}}</bk-button>
                 </template>

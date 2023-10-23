@@ -23,10 +23,10 @@
                 :row-border="false"
                 :virtual-render="fileList.length > 3000"
                 size="small">
-                <bk-table-column :label="$t('fileName')" min-width="300" show-overflow-tooltip>
+                <bk-table-column :label="$t('fileName')" min-width="300">
                     <template #default="{ row }">
                         <bk-popover placement="top">
-                            {{row.file.name}}
+                            <div class="file-name-info">{{row.file.name}}</div>
                             <template #content>
                                 <div>{{$t('project') + ': ' + (projectList.find(p => p.id === row.projectId)).name }}</div>
                                 <div>{{$t('repository') + ': ' + replaceRepoName(row.repoName) }}</div>
@@ -51,7 +51,7 @@
                         </span>
                     </template>
                 </bk-table-column>
-                <bk-table-column :label="$t('operation')" width="90">
+                <bk-table-column :label="$t('operation')" width="100">
                     <template #default="{ row }">
                         <bk-button v-if="row.status === 'INIT' || row.status === 'UPLOADING'"
                             text theme="primary" @click="cancelUpload(row)">{{$t('cancel')}}</bk-button>
@@ -251,6 +251,12 @@
         height: 325px;
         border-top: 1px solid var(--borderColor);
         background-color: white;
+        .file-name-info {
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
     }
     &.file-visible {
         .viewport-header {

@@ -33,11 +33,12 @@ package com.tencent.bkrepo.pypi.artifact.repository
 
 import com.tencent.bkrepo.common.api.constant.HttpHeaders.USER_AGENT
 import com.tencent.bkrepo.common.api.constant.ensurePrefix
+import com.tencent.bkrepo.common.api.exception.BadRequestException
 import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
+import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
@@ -63,6 +64,8 @@ import com.tencent.bkrepo.pypi.constants.FIELD_NAME
 import com.tencent.bkrepo.pypi.constants.FIELD_VERSION
 import com.tencent.bkrepo.pypi.constants.METADATA
 import com.tencent.bkrepo.pypi.constants.NAME
+import com.tencent.bkrepo.pypi.constants.PypiQueryType
+import com.tencent.bkrepo.pypi.constants.QUERY_TYPE
 import com.tencent.bkrepo.pypi.constants.VERSION
 import com.tencent.bkrepo.pypi.exception.PypiRemoteSearchException
 import com.tencent.bkrepo.pypi.pojo.Basic
@@ -116,13 +119,11 @@ class PypiRemoteRepository(
     }
 
     override fun query(context: ArtifactQueryContext): Any? {
-        val path = ArtifactContextHolder.getUrlPath(this.javaClass.name)!!
-        return if (path.startsWith("/ext/version/detail")) {
-            getVersionDetail(context)
-        } else if (context.artifactInfo.getArtifactFullPath() == "/") {
-            getCacheHtml(context) ?: remoteQuery(context)
-        } else {
-            remoteQuery(context)
+        return when (context.getAttribute<PypiQueryType>(QUERY_TYPE)) {
+            PypiQueryType.PACKAGE_INDEX -> getCacheHtml(context) ?: remoteQuery(context)
+            PypiQueryType.VERSION_INDEX -> remoteQuery(context)
+            PypiQueryType.VERSION_DETAIL -> getVersionDetail(context)
+            null -> throw BadRequestException(CommonMessageCode.REQUEST_CONTENT_INVALID)
         }
     }
 
@@ -141,7 +142,7 @@ class PypiRemoteRepository(
     override fun onQueryResponse(context: ArtifactQueryContext, response: Response): Any? {
         val body = response.body()!!
         return body.string().also {
-            if (context.artifactInfo.getArtifactFullPath() == "/") {
+            if (context.getAttribute<PypiQueryType>(QUERY_TYPE) == PypiQueryType.PACKAGE_INDEX) {
                 storeCacheHtml(context, it)
             }
             body.close()

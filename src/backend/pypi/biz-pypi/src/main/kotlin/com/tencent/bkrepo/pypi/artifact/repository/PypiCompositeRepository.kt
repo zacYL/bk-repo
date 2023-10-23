@@ -1,15 +1,15 @@
 package com.tencent.bkrepo.pypi.artifact.repository
 
-import com.tencent.bkrepo.common.api.constant.StringPool.SLASH
+import com.tencent.bkrepo.common.api.exception.BadRequestException
 import com.tencent.bkrepo.common.api.exception.NotFoundException
+import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.artifact.repository.composite.CompositeRepository
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
-import com.tencent.bkrepo.common.service.util.HttpContextHolder
-import com.tencent.bkrepo.pypi.artifact.PypiProperties
-import com.tencent.bkrepo.pypi.util.HttpUtil.getRedirectUrl
+import com.tencent.bkrepo.pypi.constants.PypiQueryType
+import com.tencent.bkrepo.pypi.constants.QUERY_TYPE
 import com.tencent.bkrepo.repository.api.ProxyChannelClient
 import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Primary
@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service
 class PypiCompositeRepository(
     private val pypiLocalRepository: PypiLocalRepository,
     private val pypiRemoteRepository: PypiRemoteRepository,
-    private val pypiProperties: PypiProperties,
     proxyChannelClient: ProxyChannelClient
 ) : CompositeRepository(pypiLocalRepository, pypiRemoteRepository, proxyChannelClient) {
 
@@ -35,19 +34,18 @@ class PypiCompositeRepository(
     }
 
     override fun query(context: ArtifactQueryContext): Any? {
-        val request = context.request
-        if (!request.servletPath.startsWith("/ext/version/detail") && !request.requestURI.endsWith(SLASH)) {
-            val response = HttpContextHolder.getResponse()
-            response.sendRedirect(getRedirectUrl(pypiProperties.domain, request.servletPath))
-            return null
-        }
-        return try {
-            if (context.artifactInfo.getArtifactFullPath() == "/") {
-                queryFromProxyRepo(context) ?: pypiLocalRepository.query(context)
-            } else pypiLocalRepository.query(context) ?: queryFromProxyRepo(context)
-        } catch (notFoundException: NotFoundException) {
-            // 这里是为了保留各依赖源实现的异常
-            queryFromProxyRepo(context) ?: throw notFoundException
+        return when (context.getAttribute<PypiQueryType>(QUERY_TYPE)) {
+            PypiQueryType.PACKAGE_INDEX -> queryFromProxyRepo(context) ?: pypiLocalRepository.query(context)
+            PypiQueryType.VERSION_INDEX -> {
+                try {
+                    pypiLocalRepository.query(context)
+                } catch (notFoundException: NotFoundException) {
+                    // 这里是为了保留各依赖源实现的异常
+                    queryFromProxyRepo(context) ?: throw notFoundException
+                }
+            }
+            PypiQueryType.VERSION_DETAIL -> pypiLocalRepository.query(context)
+            null -> throw BadRequestException(CommonMessageCode.REQUEST_CONTENT_INVALID)
         }
     }
 

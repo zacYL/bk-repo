@@ -27,13 +27,14 @@
 
 package com.tencent.bkrepo.pypi.artifact.repository
 
+import com.tencent.bkrepo.common.api.exception.BadRequestException
 import com.tencent.bkrepo.common.api.exception.NotFoundException
+import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.path.PathUtils.ROOT
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
@@ -50,14 +51,14 @@ import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.query.model.Sort
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
-import com.tencent.bkrepo.pypi.artifact.PypiProperties
 import com.tencent.bkrepo.pypi.artifact.url.UrlPatternUtil.parameterMaps
 import com.tencent.bkrepo.pypi.artifact.xml.Value
 import com.tencent.bkrepo.pypi.artifact.xml.XmlUtil
+import com.tencent.bkrepo.pypi.constants.PypiQueryType
+import com.tencent.bkrepo.pypi.constants.QUERY_TYPE
 import com.tencent.bkrepo.pypi.pojo.Basic
 import com.tencent.bkrepo.pypi.pojo.PypiArtifactVersionData
 import com.tencent.bkrepo.pypi.pojo.PypiPackagePojo
-import com.tencent.bkrepo.pypi.util.HttpUtil.getRedirectUrl
 import com.tencent.bkrepo.pypi.util.PypiVersionUtils.toPypiPackagePojo
 import com.tencent.bkrepo.pypi.util.XmlUtils
 import com.tencent.bkrepo.pypi.util.XmlUtils.readXml
@@ -77,8 +78,7 @@ import java.time.format.DateTimeFormatter
 
 @Component
 class PypiLocalRepository(
-    private val stageClient: StageClient,
-    private val pypiProperties: PypiProperties
+    private val stageClient: StageClient
 ) : LocalRepository() {
 
     /**
@@ -268,12 +268,11 @@ class PypiLocalRepository(
      * 2，pypi simple html页面
      */
     override fun query(context: ArtifactQueryContext): Any? {
-        val servletPath = ArtifactContextHolder.getUrlPath(this.javaClass.name)!!
-        return if (servletPath.startsWith("/ext/version/detail")) {
-            // 请求版本详情
-            getVersionDetail(context)
-        } else {
-            getSimpleHtml(context.artifactInfo)
+        return when (val queryType = context.getAttribute<PypiQueryType>(QUERY_TYPE)) {
+            PypiQueryType.PACKAGE_INDEX,
+            PypiQueryType.VERSION_INDEX -> getSimpleHtml(context.artifactInfo, queryType)
+            PypiQueryType.VERSION_DETAIL -> getVersionDetail(context)
+            null -> throw BadRequestException(CommonMessageCode.REQUEST_CONTENT_INVALID)
         }
     }
 
@@ -317,20 +316,14 @@ class PypiLocalRepository(
         }
     }
 
-    fun getSimpleHtml(artifactInfo: ArtifactInfo): Any? {
+    fun getSimpleHtml(artifactInfo: ArtifactInfo, type: PypiQueryType): Any? {
         logger.info("Get simple html, artifactInfo: ${artifactInfo.getArtifactFullPath()}")
-        val path = ArtifactContextHolder.getUrlPath(this.javaClass.name)!!
-        if (!path.endsWith("/")) {
-            val response = HttpContextHolder.getResponse()
-            response.sendRedirect(getRedirectUrl(pypiProperties.domain, path))
-            return null
-        }
         with(artifactInfo) {
             val node = nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data
                 ?: throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, getArtifactFullPath())
             if (!node.folder) return null
             // 请求不带包名，返回包名列表.
-            if (getArtifactFullPath() == "/") {
+            if (type == PypiQueryType.PACKAGE_INDEX) {
                 val nodeList = nodeClient.listNode(projectId, repoName, ROOT, includeFolder = true).data
                     ?.filter { it.folder }?.takeIf { it.isNotEmpty() }
                     ?: throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, getArtifactFullPath())

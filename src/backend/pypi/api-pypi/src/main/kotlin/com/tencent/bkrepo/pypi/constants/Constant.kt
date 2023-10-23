@@ -36,3 +36,4 @@ const val NAME = "name"
 const val VERSION = "version"
 
 const val ARTIFACT_LIST = "artifactList"
+const val QUERY_TYPE = "queryType"

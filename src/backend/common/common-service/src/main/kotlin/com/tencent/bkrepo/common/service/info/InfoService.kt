@@ -1,16 +1,12 @@
-package com.tencent.bkrepo.common.service.controller
+package com.tencent.bkrepo.common.service.info
 
 import com.tencent.bkrepo.common.service.pojo.Release
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 
-@RestController
-@RequestMapping("/info")
-class InfoController {
-
+@Service
+class InfoService {
     @Value("\${release.version}")
     private var version: String = "undefined"
 
@@ -35,8 +31,7 @@ class InfoController {
     @Value("\${release.commitId}")
     private var latestCommitId: String = ""
 
-    @GetMapping("/release", produces = ["application/json;charset=utf-8"])
-    fun version() = Release(
+    fun releaseInfo() = Release(
         version = version,
         majorVersion = majorVersion,
         minorVersion = minorVersion,
@@ -46,4 +41,16 @@ class InfoController {
         cicd = cicd,
         latestCommitId = latestCommitId
     )
+
+    fun version(): String? {
+        return if (majorVersion.isBlank()) {
+            null
+        } else if (minorVersion.isBlank()) {
+            majorVersion
+        } else if (fixVersion.isBlank()) {
+            "$majorVersion.$minorVersion"
+        } else {
+            "$majorVersion.$minorVersion.$fixVersion"
+        }
+    }
 }

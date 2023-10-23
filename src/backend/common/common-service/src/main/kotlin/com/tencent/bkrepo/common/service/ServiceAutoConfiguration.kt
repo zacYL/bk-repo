@@ -34,13 +34,14 @@ package com.tencent.bkrepo.common.service
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.service.actuator.ActuatorConfiguration
 import com.tencent.bkrepo.common.service.async.AsyncConfiguration
-import com.tencent.bkrepo.common.service.controller.InfoController
+import com.tencent.bkrepo.common.service.info.InfoController
 import com.tencent.bkrepo.common.service.exception.GlobalExceptionHandler
 import com.tencent.bkrepo.common.service.exception.ServiceExceptionHandler
 import com.tencent.bkrepo.common.service.feign.ClientConfiguration
 import com.tencent.bkrepo.common.service.log.AccessLogWebServerCustomizer
 import com.tencent.bkrepo.common.service.message.MessageSourceConfiguration
 import com.tencent.bkrepo.common.service.metrics.UndertowMetrics
+import com.tencent.bkrepo.common.service.info.InfoService
 import com.tencent.bkrepo.common.service.shutdown.ServiceShutdownConfiguration
 import org.springframework.boot.autoconfigure.AutoConfigureOrder
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
@@ -66,7 +67,8 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
     AccessLogWebServerCustomizer::class,
     UndertowMetrics::class,
     ServiceShutdownConfiguration::class,
-    InfoController::class
+    InfoController::class,
+    InfoService::class
 )
 class ServiceAutoConfiguration {
 

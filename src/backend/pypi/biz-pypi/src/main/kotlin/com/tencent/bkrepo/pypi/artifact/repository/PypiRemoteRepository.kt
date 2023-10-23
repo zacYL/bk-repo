@@ -31,7 +31,8 @@
 
 package com.tencent.bkrepo.pypi.artifact.repository
 
-import com.tencent.bkrepo.common.api.constant.HttpHeaders
+import com.tencent.bkrepo.common.api.constant.HttpHeaders.USER_AGENT
+import com.tencent.bkrepo.common.api.constant.ensurePrefix
 import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
@@ -48,6 +49,8 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.artifact.stream.artifactStream
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.service.info.InfoService
+import com.tencent.bkrepo.common.service.util.HeaderUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.common.storage.monitor.Throughput
@@ -91,7 +94,9 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 
 @Component
-class PypiRemoteRepository : RemoteRepository() {
+class PypiRemoteRepository(
+    private val infoService: InfoService
+) : RemoteRepository() {
 
     override fun createRemoteDownloadUrl(context: ArtifactContext): String {
         return when (context) {
@@ -122,18 +127,8 @@ class PypiRemoteRepository : RemoteRepository() {
     }
 
     private fun remoteQuery(context: ArtifactQueryContext): Any? {
-        val remoteConfiguration = context.getRemoteConfiguration()
-        val httpClient = createHttpClient(remoteConfiguration)
-        val downloadUri = createRemoteDownloadUrl(context)
-        logger.info("Remote query url: $downloadUri, network config: ${remoteConfiguration.network}")
-        val request = Request.Builder().url(downloadUri).apply {
-            if (downloadUri.contains(TSINGHUA_MIRROR_KEY)) {
-                removeHeader(HttpHeaders.USER_AGENT)
-                addHeader(HttpHeaders.USER_AGENT, "${UUID.randomUUID()}")
-            }
-        }.build()
         return try {
-            val response = httpClient.newCall(request).execute()
+            val response = doRequest(context)
             if (checkQueryResponse(response)) {
                 onQueryResponse(context, response)
             } else null
@@ -155,18 +150,7 @@ class PypiRemoteRepository : RemoteRepository() {
 
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         return getCacheArtifactResource(context) ?: run {
-            val remoteConfiguration = context.getRemoteConfiguration()
-            val httpClient = createHttpClient(remoteConfiguration)
-            val downloadUrl = createRemoteDownloadUrl(context)
-            val request = Request.Builder().url(downloadUrl).apply {
-                // PyPI清华源会根据User-Agent阻断频繁请求, 因此随机化这个请求头
-                if (downloadUrl.contains(TSINGHUA_MIRROR_KEY)) {
-                    removeHeader(HttpHeaders.USER_AGENT)
-                    addHeader(HttpHeaders.USER_AGENT, "${UUID.randomUUID()}")
-                }
-            }.build()
-            logger.info("Remote download url: $downloadUrl, network config: ${remoteConfiguration.network}")
-            val response = httpClient.newCall(request).execute()
+            val response = doRequest(context)
             return if (checkResponse(response)) {
                 onDownloadResponse(context, response)
             } else null
@@ -372,6 +356,17 @@ class PypiRemoteRepository : RemoteRepository() {
         }
     }
 
+    private fun doRequest(context: ArtifactContext): Response {
+        val remoteConfiguration = context.getRemoteConfiguration()
+        val httpClient = createHttpClient(remoteConfiguration)
+        val downloadUrl = createRemoteDownloadUrl(context)
+        val userAgent = HeaderUtils.getHeader(USER_AGENT)
+            ?: "CPack${infoService.version()?.ensurePrefix("/") ?: ""}"
+        val request = Request.Builder().url(downloadUrl).addHeader(USER_AGENT, userAgent).build()
+        logger.info("request url: $downloadUrl, network config: ${remoteConfiguration.network}")
+        return httpClient.newCall(request).execute()
+    }
+
     @Suppress("UNCHECKED_CAST")
     private fun deletePypiVersion(
         context: ArtifactRemoveContext,
@@ -439,7 +434,6 @@ class PypiRemoteRepository : RemoteRepository() {
     }
 
     companion object {
-        private const val TSINGHUA_MIRROR_KEY = "tsinghua"
         val logger: Logger = LoggerFactory.getLogger(PypiRemoteRepository::class.java)
     }
 }

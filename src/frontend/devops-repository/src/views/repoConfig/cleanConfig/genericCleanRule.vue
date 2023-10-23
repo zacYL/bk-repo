@@ -113,7 +113,7 @@
             trimSpecial (string) {
                 let str = ''
                 if (string !== '') {
-                    const pattern = /[`~!@#$%^\-&*()_+=|{}':;',\\\[\]\<>\/?~！@#￥……&*（）——|{}【】'；：""'‘’。，、？\s]/g
+                    const pattern = /[`~!@#$%^&*()+=|{}':;',\\\[\]\<>\/?~！@#￥……&*（）——|{}【】'；：""'‘’。，、？\s]/g
                     str = string.replace(pattern, '')
                 }
                 return str

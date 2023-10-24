@@ -367,6 +367,7 @@ class OciRegistryLocalRepository(
             node.metadata[OLD_DOCKER_MEDIA_TYPE] ?: MediaTypes.APPLICATION_OCTET_STREAM
         }
         val contentType = if (context.artifactInfo is OciManifestArtifactInfo) {
+            // TODO 增加下载记录？
             node.metadata[MEDIA_TYPE] ?: run {
                 node.metadata[OLD_DOCKER_MEDIA_TYPE] ?: OCI_IMAGE_MANIFEST_MEDIA_TYPE
             }

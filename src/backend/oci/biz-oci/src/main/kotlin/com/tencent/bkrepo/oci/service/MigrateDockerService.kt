@@ -149,8 +149,12 @@ class MigrateDockerService(
                 }
                 // manifest.json 迁移完成后，删除旧blob和manifest.json
                 if (migrateStatus) {
-                    // 写入元数据标记
-                    updatePackageVersionMetadata(projectId, repoName, pkgKey, packageVersion.name)
+                    // 写入元数据标记 REFRESHED
+                    val metadata = listOf(
+                        MetadataModel(key = "manifestPath", value = manifestNode.fullPath),
+                        MetadataModel(key = REFRESHED, value = true)
+                    )
+                    updatePackageVersionMetadata(projectId, repoName, pkgKey, packageVersion.name, metadata)
                     // check oci artifact
                     migrateStatus = checkOciArtifact(
                         projectId,
@@ -172,7 +176,8 @@ class MigrateDockerService(
         projectId: String,
         repoName: String,
         packageKey: String,
-        version: String
+        version: String,
+        metadata: List<MetadataModel>
     ) {
         packageMetadataClient.saveMetadata(
             PackageMetadataSaveRequest(
@@ -180,7 +185,7 @@ class MigrateDockerService(
                 repoName = repoName,
                 packageKey = packageKey,
                 version = version,
-                versionMetadata = listOf(MetadataModel(key = REFRESHED, value = true))
+                versionMetadata = metadata
             )
         )
         logger.info("add package version[$projectId/$repoName/$packageKey/$version] metadata success...")

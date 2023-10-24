@@ -1,5 +1,5 @@
 <template>
-    <bk-tab class="common-version-container" type="unborder-card" :active.sync="tabName" v-bkloading="{ isLoading }">
+    <bk-tab class="common-version-container" type="unborder-card" :active.sync="tabName" @tab-change="tabChange" v-bkloading="{ isLoading }">
         <template #setting>
             <bk-button v-if="!metadataMap.forbidStatus && repoType !== 'docker'"
                 outline class="mr10" @click="$emit('download')">{{$t('download')}}</bk-button>
@@ -77,6 +77,7 @@
                 <!-- 虚拟仓库及软件源模式下不支持更新元数据 -->
                 <metadataDialog v-if="storeType !== 'virtual' && !whetherSoftware && !hasLockMetadata" ref="metadataDialogRef" @add-metadata="addMetadataHandler"></metadataDialog>
                 <bk-table
+                    v-if="showMetadataTable"
                     :data="metadataDataList"
                     :outer-border="false"
                     :row-border="false"
@@ -235,7 +236,8 @@
                         }
                     ]
                 },
-                detailType: '' // maven仓库显示依赖tab项的repoType，但不能直接用repoType，直接用会导致依赖这个tab项出现在其余的tab项之前
+                detailType: '', // maven仓库显示依赖tab项的repoType，但不能直接用repoType，直接用会导致依赖这个tab项出现在其余的tab项之前
+                showMetadataTable: true // 用于控制元数据列表table是否显示
             }
         },
         computed: {
@@ -388,6 +390,15 @@
                     })
                     this.getDetail()
                 })
+            },
+            tabChange () {
+                // 用于解决metadata在某些情况下列表错位，无法完整显示元数据列表内容
+                if (this.tabName === 'metadata') {
+                    this.showMetadataTable = false
+                    this.$nextTick(() => {
+                        this.showMetadataTable = true
+                    })
+                }
             }
         }
     }

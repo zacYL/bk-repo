@@ -23,7 +23,7 @@
                         'INIT': status === 'UN_QUALITY',
                         'WARNING': status === 'QUALITY_UNPASS'
                     }">
-                    {{scanStatusEnum[status] || $t('unScanned')}}
+                    {{ scanStatusEnum[status] ? $t(`scanStatusEnum.${status}`) : $t('unScanned')}}
                 </span>
             </div>
             <div class="scan-item flex-between-center"

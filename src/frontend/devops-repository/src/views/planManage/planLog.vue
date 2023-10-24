@@ -10,7 +10,7 @@
                         v-model="status"
                         @change="handlerPaginationChange()">
                         <bk-radio class="ml50" value="">{{$t('total')}}</bk-radio>
-                        <bk-radio class="ml50" value="SUCCESS">{{$t('success')}}</bk-radio>
+                        <bk-radio class="ml50" value="SUCCESS">{{$t('planLogDetailStatusEnum.SUCCESS')}}</bk-radio>
                         <bk-radio class="ml50" value="FAILED">{{$t('fail')}}</bk-radio>
                     </bk-radio-group>
                     <bk-table

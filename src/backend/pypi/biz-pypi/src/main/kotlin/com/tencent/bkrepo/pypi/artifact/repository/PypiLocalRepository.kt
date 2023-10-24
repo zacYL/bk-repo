@@ -54,8 +54,11 @@ import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.pypi.artifact.url.UrlPatternUtil.parameterMaps
 import com.tencent.bkrepo.pypi.artifact.xml.Value
 import com.tencent.bkrepo.pypi.artifact.xml.XmlUtil
+import com.tencent.bkrepo.pypi.constants.PACKAGE_INDEX_TITLE
 import com.tencent.bkrepo.pypi.constants.PypiQueryType
 import com.tencent.bkrepo.pypi.constants.QUERY_TYPE
+import com.tencent.bkrepo.pypi.constants.SIMPLE_PAGE_CONTENT
+import com.tencent.bkrepo.pypi.constants.VERSION_INDEX_TITLE
 import com.tencent.bkrepo.pypi.pojo.Basic
 import com.tencent.bkrepo.pypi.pojo.PypiArtifactVersionData
 import com.tencent.bkrepo.pypi.pojo.PypiPackagePojo
@@ -276,7 +279,7 @@ class PypiLocalRepository(
         }
     }
 
-    fun getVersionDetail(context: ArtifactQueryContext): Any? {
+    fun getVersionDetail(context: ArtifactQueryContext): PypiArtifactVersionData? {
         val packageKey = context.request.getParameter("packageKey")
         val version = context.request.getParameter("version")
         logger.info("Get version detail, packageKey: $packageKey, version: $version")
@@ -316,7 +319,7 @@ class PypiLocalRepository(
         }
     }
 
-    fun getSimpleHtml(artifactInfo: ArtifactInfo, type: PypiQueryType): Any? {
+    fun getSimpleHtml(artifactInfo: ArtifactInfo, type: PypiQueryType): String? {
         logger.info("Get simple html, artifactInfo: ${artifactInfo.getArtifactFullPath()}")
         with(artifactInfo) {
             val node = nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data
@@ -328,7 +331,7 @@ class PypiLocalRepository(
                     ?.filter { it.folder }?.takeIf { it.isNotEmpty() }
                     ?: throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, getArtifactFullPath())
                 // 过滤掉'根节点',
-                return buildPackageListContent(nodeList)
+                return buildPypiPageContent(PACKAGE_INDEX_TITLE, buildPackageListContent(nodeList))
             }
             // 请求中带包名，返回对应包的文件列表。
             else {
@@ -344,6 +347,7 @@ class PypiLocalRepository(
                     throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, getArtifactFullPath())
                 }
                 return buildPypiPageContent(
+                    String.format(VERSION_INDEX_TITLE, getArtifactName().removePrefix("/")),
                     buildPackageFileNodeListContent(packageNode)
                 )
             }
@@ -354,16 +358,8 @@ class PypiLocalRepository(
      * html 页面公用的元素
      * @param listContent 显示的内容
      */
-    private fun buildPypiPageContent(listContent: String): String {
-        return """
-            <html>
-                <head><title>Simple Index</title><meta name="api-version" value="2" /></head>
-                <body>
-                    $listContent
-                </body>
-            </html>
-        """.trimIndent()
-    }
+    private fun buildPypiPageContent(title: String, listContent: String) =
+        String.format(SIMPLE_PAGE_CONTENT.trimIndent(), title, listContent)
 
     /**
      * 对应包中的文件列表
@@ -371,14 +367,15 @@ class PypiLocalRepository(
      */
     private fun buildPackageFileNodeListContent(nodeList: List<NodeInfo>): String {
         val builder = StringBuilder()
-        for (node in nodeList) {
+        nodeList.forEachIndexed { i, node ->
             val md5 = node.md5
             builder.append("<a")
             val requiresPython = node.metadata?.get("requires_python")?.toString()
             if (!requiresPython.isNullOrBlank()) {
                 builder.append(" data-requires-python=\"$requiresPython\"")
             }
-            builder.append(" href=\"../../packages${node.fullPath}#md5=$md5\" rel=\"internal\" >${node.name}</a><br/>")
+            builder.append(" href=\"../../packages${node.fullPath}#md5=$md5\" rel=\"internal\">${node.name}</a><br />")
+            if (i != nodeList.size - 1) builder.append("\n")
         }
         return builder.toString()
     }
@@ -392,11 +389,9 @@ class PypiLocalRepository(
         if (nodeList.isEmpty()) {
             builder.append("The directory is empty.")
         }
-        for (node in nodeList) {
-            builder.append(
-                "<a data-requires-python=\">=\" href=\"${node.name}\"" +
-                        " rel=\"internal\" >${node.name}</a><br/>"
-            )
+        nodeList.forEachIndexed { i, node ->
+            builder.append("<a href=\"${node.name}\" rel=\"internal\">${node.name}</a><br />")
+            if (i != nodeList.size - 1) builder.append("\n")
         }
         return builder.toString()
     }

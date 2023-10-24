@@ -31,36 +31,54 @@
 
 package com.tencent.bkrepo.pypi.artifact.repository
 
-import com.tencent.bkrepo.common.api.constant.StringPool.SLASH
+import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
+import com.tencent.bkrepo.common.api.exception.NotFoundException
+import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchContext
 import com.tencent.bkrepo.common.artifact.repository.virtual.VirtualRepository
-import com.tencent.bkrepo.common.service.util.HttpContextHolder
-import com.tencent.bkrepo.pypi.artifact.PypiProperties
 import com.tencent.bkrepo.pypi.artifact.xml.Value
-import com.tencent.bkrepo.pypi.util.HttpUtil.getRedirectUrl
+import com.tencent.bkrepo.pypi.constants.ELEMENT_SUFFIX
+import com.tencent.bkrepo.pypi.constants.PACKAGE_INDEX_TITLE
+import com.tencent.bkrepo.pypi.constants.PSEUDO_CONTAIN_TEXT
+import com.tencent.bkrepo.pypi.constants.PypiQueryType
+import com.tencent.bkrepo.pypi.constants.QUERY_TYPE
+import com.tencent.bkrepo.pypi.constants.SELECTOR_A
+import com.tencent.bkrepo.pypi.constants.SIMPLE_PAGE_CONTENT
+import com.tencent.bkrepo.pypi.constants.VERSION_INDEX_TITLE
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Element
+import org.jsoup.select.Elements
 import org.springframework.stereotype.Component
+import java.util.TreeSet
 
 @Component
-class PypiVirtualRepository(
-    private val pypiProperties: PypiProperties
-) : VirtualRepository() {
+class PypiVirtualRepository : VirtualRepository() {
 
     /**
      * 整合多个仓库的内容。
      */
-    override fun query(context: ArtifactQueryContext): Any? {
-        val path = ArtifactContextHolder.getUrlPath(this.javaClass.name)!!
-        if (!path.startsWith("/ext/version/detail") && !path.endsWith(SLASH)) {
-            val response = HttpContextHolder.getResponse()
-            response.sendRedirect(getRedirectUrl(pypiProperties.domain, path))
-            return null
+    @Suppress("UNCHECKED_CAST")
+    override fun query(context: ArtifactQueryContext): String? {
+        if (context.getAttribute<PypiQueryType>(QUERY_TYPE) == PypiQueryType.VERSION_DETAIL) {
+            throw MethodNotAllowedException()
         }
-        return mapFirstRepo(context) { sub, repository ->
-            require(sub is ArtifactQueryContext)
-            repository.query(sub)
+        val artifactName = context.artifactInfo.getArtifactName().removePrefix("/")
+        val pseudoSelector = if (artifactName.isBlank()) "" else String.format(PSEUDO_CONTAIN_TEXT, artifactName)
+        val elementPages = (super.query(context) as List<String>)
+            .map { Jsoup.parse(it).body().select(SELECTOR_A + pseudoSelector) }
+            .takeIf { it.isNotEmpty() }
+            ?: throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, artifactName)
+        val compositePage = if (elementPages.size == 1) elementPages.first() else {
+            val anchorSet = TreeSet<Element>(compareBy { it.text() })
+            elementPages.forEach { anchorSet.addAll(it) }
+            Elements(anchorSet)
         }
+        val title =
+            if (artifactName.isBlank()) PACKAGE_INDEX_TITLE else String.format(VERSION_INDEX_TITLE, artifactName)
+        val content = compositePage.joinToString(ELEMENT_SUFFIX, postfix = "<br />")
+        return String.format(SIMPLE_PAGE_CONTENT.trimIndent(), title, content)
     }
 
     override fun search(context: ArtifactSearchContext): List<Any> {

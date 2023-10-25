@@ -2,7 +2,7 @@
     {
         "id": 15,
         "name": "制品(artifactory)",
-        "englishName": "repo",
+        "englishName": "CPack",
         "menuLevel": "project",
         "showRoute": true,
         "weight": 5,

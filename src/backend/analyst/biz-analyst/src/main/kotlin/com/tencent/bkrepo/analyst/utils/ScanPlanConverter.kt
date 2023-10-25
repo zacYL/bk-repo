@@ -29,11 +29,11 @@
 
 package com.tencent.bkrepo.analyst.utils
 
-import com.tencent.bkrepo.analyst.message.ScannerMessageCode
+import com.tencent.bkrepo.analyst.model.ExportContent
+import com.tencent.bkrepo.analyst.model.ScanPlanExport
 import com.tencent.bkrepo.analyst.model.SubScanTaskDefinition
 import com.tencent.bkrepo.analyst.model.TPlanArtifactLatestSubScanTask
 import com.tencent.bkrepo.analyst.model.TScanPlan
-import com.tencent.bkrepo.analyst.model.ScanPlanExport
 import com.tencent.bkrepo.analyst.model.TScanTask
 import com.tencent.bkrepo.analyst.pojo.LeakType
 import com.tencent.bkrepo.analyst.pojo.ScanPlan
@@ -59,7 +59,6 @@ import java.time.Duration
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.memberProperties
@@ -224,6 +223,7 @@ object ScanPlanConverter {
                         unQuality = true
                         null
                     }
+
                     else -> null
                 }
             }
@@ -398,16 +398,16 @@ object ScanPlanConverter {
     }
 
     private fun convertToScanStatusExport(status: String?, qualityRedLine: Boolean? = null): String {
-        val messageCode = when (convertToScanStatus(status, qualityRedLine)) {
-            ScanStatus.RUNNING -> ScannerMessageCode.EXPORT_REPORT_STATUS_RUNNING
-            ScanStatus.STOP -> ScannerMessageCode.EXPORT_REPORT_STATUS_STOP
-            ScanStatus.SUCCESS -> ScannerMessageCode.EXPORT_REPORT_STATUS_SUCCESS
-            ScanStatus.UN_QUALITY -> ScannerMessageCode.EXPORT_REPORT_STATUS_UN_QUALITY
-            ScanStatus.QUALITY_PASS -> ScannerMessageCode.EXPORT_REPORT_STATUS_QUALITY_PASS
-            ScanStatus.FAILED -> ScannerMessageCode.EXPORT_REPORT_STATUS_FAILED
-            ScanStatus.QUALITY_UNPASS -> ScannerMessageCode.EXPORT_REPORT_STATUS_QUALITY_UN_PASS
-            ScanStatus.INIT -> ScannerMessageCode.EXPORT_REPORT_STATUS_INIT
+        val msgKey = when (convertToScanStatus(status, qualityRedLine)) {
+            ScanStatus.RUNNING -> ExportContent.SCAN_PLAN_STATUS_RUNNING.msgKey
+            ScanStatus.STOP -> ExportContent.SCAN_PLAN_STATUS_STOP.msgKey
+            ScanStatus.SUCCESS -> ExportContent.SCAN_PLAN_STATUS_SUCCESS.msgKey
+            ScanStatus.UN_QUALITY -> ExportContent.SCAN_PLAN_STATUS_UN_QUALITY.msgKey
+            ScanStatus.QUALITY_PASS -> ExportContent.SCAN_PLAN_STATUS_QUALITY_PASS.msgKey
+            ScanStatus.FAILED -> ExportContent.SCAN_PLAN_STATUS_FAILED.msgKey
+            ScanStatus.QUALITY_UNPASS -> ExportContent.SCAN_PLAN_STATUS_QUALITY_UN_PASS.msgKey
+            ScanStatus.INIT -> ExportContent.SCAN_PLAN_STATUS_INIT.msgKey
         }
-        return LocaleMessageUtils.getLocalizedMessage(messageCode, null, Locale.SIMPLIFIED_CHINESE)
+        return LocaleMessageUtils.getLocalizedMessage(msgKey)
     }
 }

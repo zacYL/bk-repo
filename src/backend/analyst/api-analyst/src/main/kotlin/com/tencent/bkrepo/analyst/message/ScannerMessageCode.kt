@@ -47,18 +47,10 @@ enum class ScannerMessageCode(
     SCAN_REPORT_NOTIFY_MESSAGE_TITLE("scanner.report.notify.message.title", 11),
     SCAN_REPORT_NOTIFY_MESSAGE_TRIGGER_TIME("scanner.report.notify.message.trigger.time", 12),
     SCAN_REPORT_NOTIFY_MESSAGE_TRIGGER_USER("scanner.report.notify.message.trigger.user", 13),
-    LICENSE_NOT_FOUND("license.not-found",14),
-    SCAN_REPORT_NOTIFY_MESSAGE_LICENSE("scanner.report.notify.message.license",15),
-    SCAN_REPORT_NOTIFY_MESSAGE_SENSITIVE("scanner.report.notify.message.sensitive",16),
-    EXPORT_REPORT_FAIL("export.report.fail", 17),
-    EXPORT_REPORT_STATUS_INIT("export.report.status.init", 18),
-    EXPORT_REPORT_STATUS_RUNNING("export.report.status.running", 19),
-    EXPORT_REPORT_STATUS_STOP("export.report.status.stop", 20),
-    EXPORT_REPORT_STATUS_SUCCESS("export.report.status.success", 21),
-    EXPORT_REPORT_STATUS_UN_QUALITY("export.report.status.un.quality", 22),
-    EXPORT_REPORT_STATUS_QUALITY_PASS("export.report.status.quality.pass", 23),
-    EXPORT_REPORT_STATUS_QUALITY_UN_PASS("export.report.status.quality.un.pass", 24),
-    EXPORT_REPORT_STATUS_FAILED("export.report.status.failed", 25);
+    SCAN_REPORT_NOTIFY_MESSAGE_LICENSE("scanner.report.notify.message.license",14),
+    SCAN_REPORT_NOTIFY_MESSAGE_SENSITIVE("scanner.report.notify.message.sensitive",15),
+    LICENSE_NOT_FOUND("scanner.license.not-found",16),
+    EXPORT_REPORT_FAIL("scanner.export-report.failed", 17);
 
     override fun getBusinessCode() = businessCode
     override fun getKey() = key

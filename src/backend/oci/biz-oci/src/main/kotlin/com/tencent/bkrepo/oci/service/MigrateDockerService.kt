@@ -26,6 +26,7 @@ import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeMoveCopyRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageListOption
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
+import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionUpdateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -101,19 +102,19 @@ class MigrateDockerService(
     private fun migrateVersion(
         projectId: String,
         repoName: String,
-        pkgKey: String,
+        packageKey: String,
         packageVersion: PackageVersion,
         storageCredentials: StorageCredentials?,
     ) {
-        logger.info("migrate $projectId/$repoName/$pkgKey/${packageVersion.name} Docker pkg version start")
+        logger.info("migrate $projectId/$repoName/$packageKey/${packageVersion.name} Docker pkg version start")
         // 迁移完成的版本，写入元数据标记，并在重复执行时根据元数据标记判断是否跳过
         val refreshedMetadata = packageVersion.packageMetadata.firstOrNull { it.key == REFRESHED }
         if (refreshedMetadata != null) {
-            logger.info("skip $projectId/$repoName/$pkgKey/${packageVersion.name} migrate")
+            logger.info("skip $projectId/$repoName/$packageKey/${packageVersion.name} migrate")
             return
         }
 
-        val pkgName = PackageKeys.resolveDocker(pkgKey)
+        val pkgName = PackageKeys.resolveDocker(packageKey)
         val path = "/$pkgName"
         val manifestPath = "$path/${packageVersion.name}/manifest.json"
         val manifestListPath = "$path/${packageVersion.name}/list.manifest.json"
@@ -122,6 +123,7 @@ class MigrateDockerService(
         }
 
         if (manifestNode != null) {
+            val manifestNodeFullPath = manifestNode.fullPath
             // 分别处理 manifest.json 和 list.manifest.json
             val type = manifestNode.nodeMetadata.firstOrNull { it.key == OLD_DOCKER_MEDIA_TYPE }
             var migrateStatus = true
@@ -137,7 +139,7 @@ class MigrateDockerService(
                 // 其他情况按照 manifest.json 处理
                 // manifest.json 需要迁移blobs和manifest
                 val manifest = loadManifest(manifestNode, storageCredentials) ?: run {
-                    logger.error("load manifest[${manifestNode.fullPath}] is null")
+                    logger.error("load manifest[$manifestNodeFullPath] is null")
                     return
                 }
                 OciUtils.manifestIterator(manifest).forEach {
@@ -149,46 +151,32 @@ class MigrateDockerService(
                 }
                 // manifest.json 迁移完成后，删除旧blob和manifest.json
                 if (migrateStatus) {
-                    // 写入元数据标记 REFRESHED
-                    val metadata = listOf(
-                        MetadataModel(key = "manifestPath", value = manifestNode.fullPath),
-                        MetadataModel(key = REFRESHED, value = true)
-                    )
-                    updatePackageVersionMetadata(projectId, repoName, pkgKey, packageVersion.name, metadata)
                     // check oci artifact
                     migrateStatus = checkOciArtifact(
                         projectId,
                         repoName,
-                        pkgKey,
+                        packageKey,
                         packageVersion.name,
                         storageCredentials
                     )
                     deleteOldDockerArtifact(projectId, repoName, pkgName, packageVersion.name)
-                    logger.info("migrate $projectId/$repoName/$pkgKey/${packageVersion.name} success...")
+                    logger.info("migrate $projectId/$repoName/$packageKey/${packageVersion.name} success...")
                 }
             }
-        } else {
-            logger.info("$path manifestPath,manifestListPath node not find")
-        }
-    }
-
-    private fun updatePackageVersionMetadata(
-        projectId: String,
-        repoName: String,
-        packageKey: String,
-        version: String,
-        metadata: List<MetadataModel>
-    ) {
-        packageMetadataClient.saveMetadata(
-            PackageMetadataSaveRequest(
+            val metadata = listOf(MetadataModel(key = REFRESHED, value = true))
+            // 更新包版本信息 metadat, artifactPath, manifestPath
+            packageClient.updateVersion(PackageVersionUpdateRequest(
                 projectId = projectId,
                 repoName = repoName,
                 packageKey = packageKey,
-                version = version,
-                versionMetadata = metadata
-            )
-        )
-        logger.info("add package version[$projectId/$repoName/$packageKey/$version] metadata success...")
+                versionName = packageVersion.name,
+                manifestPath = manifestNodeFullPath,
+                artifactPath = manifestNodeFullPath,
+                packageMetadata = metadata,
+            ))
+        } else {
+            logger.info("$path manifestPath,manifestListPath node not find")
+        }
     }
 
     private fun deleteOldDockerArtifact(

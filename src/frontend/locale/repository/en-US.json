@@ -668,7 +668,7 @@
     "asyncPlanStatusEnum": {
         "RUNNING": "Running",
         "SUCCESS": "Success",
-        "FAILED": "Failed"
+        "FAILED": "Fail"
     },
     "planLogDetailStatusEnum": {
         "SUCCESS": "Success",

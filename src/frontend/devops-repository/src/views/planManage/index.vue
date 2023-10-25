@@ -46,21 +46,21 @@
                     <span class="hover-btn" @click="showPlanDetailHandler(row)">{{row.name}}</span>
                 </template>
             </bk-table-column>
-            <bk-table-column :label="$t('syncType')" width="120">
+            <bk-table-column :label="$t('targetNode')" show-overflow-tooltip>
+                <template #default="{ row }">{{ row.remoteClusters.map(v => v.name).join('、') }}</template>
+            </bk-table-column>
+            <bk-table-column :label="$t('syncType')" width="120" show-overflow-tooltip>
                 <template #default="{ row }">
                     {{ { 'REPOSITORY': $t('synchronizeRepository'), 'PACKAGE': $t('synchronizePackage'), 'PATH': $t('synchronizePath') }[row.replicaObjectType] }}
                 </template>
             </bk-table-column>
-            <bk-table-column :label="$t('targetNode')" show-overflow-tooltip>
-                <template #default="{ row }">{{ row.remoteClusters.map(v => v.name).join('、') }}</template>
-            </bk-table-column>
-            <bk-table-column :label="$t('synchronizationPolicy')" width="110">
+            <bk-table-column :label="$t('synchronizationPolicy')" width="120" show-overflow-tooltip>
                 <template #default="{ row }">{{ getExecutionStrategy(row) }}</template>
             </bk-table-column>
             <bk-table-column :label="$t('lastExecutionTime')" prop="LAST_EXECUTION_TIME" width="170" sortable="custom">
                 <template #default="{ row }">{{formatDate(row.lastExecutionTime)}}</template>
             </bk-table-column>
-            <bk-table-column :label="$t('lastExecutionStatus')" width="100">
+            <bk-table-column :label="$t('lastExecutionStatus')" width="110">
                 <template #default="{ row }">
                     <span v-if="row.lastExecutionStatus === 'RUNNING' && row.artifactCount">
                         {{row.currentProgress}}/{{row.artifactCount}}

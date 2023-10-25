@@ -35,7 +35,7 @@
                     :placeholder="$t('syncStatus')"
                     @change="handlerSearchSelectChange()">
                     <bk-option id="SUCCESS" :name="$t('planLogDetailStatusEnum.SUCCESS')"></bk-option>
-                    <bk-option id="FAILED" :name="$t('fail')"></bk-option>
+                    <bk-option id="FAILED" :name="$t('planLogDetailStatusEnum.FAILED')"></bk-option>
                 </bk-select>
             </div>
         </div>

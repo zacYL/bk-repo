@@ -663,13 +663,13 @@
     "stopPlanSuccess": "停用计划成功",
     "asyncPlanStatusEnum": {
         "RUNNING": "进行中",
-        "SUCCESS": "已完成",
+        "SUCCESS": "同步成功",
         "FAILED": "同步异常"
     },
     "planLogDetailStatusEnum": {
         "SUCCESS": "同步成功",
         "FAILED": "同步失败",
-        "RUNNING": "运行中"
+        "RUNNING": "进行中"
     },
     "conflictStrategy":"冲突策略",
     "conflictStrategyEnum": {

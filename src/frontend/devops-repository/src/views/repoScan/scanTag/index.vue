@@ -1,7 +1,7 @@
 <template>
     <span class="scan-tag-container"
         :class="{ 'spin-icon': status === 'RUNNING', readonly }"
-        v-bk-tooltips="{ content: scanStatusEnum[status] || $t('unScanned'), placements: ['right'] }"
+        v-bk-tooltips="{ content: scanStatusEnum[status] ? $t(`scanStatusEnum.${status}`) : $t('unScanned'), placements: ['right'] }"
         @click.stop="showScanList"
         v-bk-clickoutside="handleClickOutSide">
         <Icon size="16" :name="`scan-${(status || 'INIT').toLowerCase()}`" />

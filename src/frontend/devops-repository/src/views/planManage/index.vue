@@ -136,7 +136,6 @@
     import { formatDate, copyToClipboard } from '@repository/utils'
     import { asyncPlanStatusEnum } from '@repository/store/publicEnum'
     import createPlan from '@repository/views/planManage/createPlan'
-    import cookies from 'js-cookie'
     export default {
         name: 'plan',
         components: { planLog, planCopyDialog, OperationList, createPlan },
@@ -184,9 +183,6 @@
             // 是否有创建权限
             createPlanPermission () {
                 return !this.ciMode ? true : this.currentPermissionList?.includes('create')
-            },
-            currentLanguage () {
-                return cookies.get('blueking_language') || 'zh-cn'
             }
         },
         created () {

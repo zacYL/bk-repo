@@ -191,7 +191,6 @@
     import { repoEnum, repoSupportEnum } from '@repository/store/publicEnum'
     import { mapActions } from 'vuex'
     import { isEmpty } from 'lodash'
-    import cookies from 'js-cookie'
     import { checkValueIsNullOrEmpty } from '@repository/utils'
     const getRepoBaseInfo = () => {
         return {
@@ -412,9 +411,6 @@
             // 弹窗标题
             title () {
                 return this.$t('create') + this.$t('space') + this.$t('space') + this.$t('space') + this.$t(this.storeType + 'Store')
-            },
-            currentLanguage () {
-                return cookies.get('blueking_language') || 'zh-cn'
             }
             // 虚拟仓库中选择上传的目标仓库的下拉列表数据
             // deploymentRepoCheckList () {

@@ -118,7 +118,6 @@
     </div>
 </template>
 <script>
-    import cookies from 'js-cookie'
     export default {
         name: 'cron',
         model: {
@@ -217,9 +216,6 @@
                     const obj = this.cron[item]
                     return Array.from(obj[obj.type]).join(joinAt[obj.type])
                 }).join(' ')
-            },
-            currentLanguage () {
-                return cookies.get('blueking_language') || 'zh-cn'
             }
         },
         watch: {

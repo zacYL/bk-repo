@@ -81,6 +81,7 @@
 <script>
     import { mapActions } from 'vuex'
     import { leakLevelEnum } from '@repository/store/publicEnum'
+    import { customizeExportScanFile } from '@repository/utils/exportScanFile'
     export default {
         name: 'leak',
         props: {
@@ -143,13 +144,8 @@
                 })
             },
             exportReport () {
-                this.$bkNotify({
-                    title: this.$t('exportLeakReportInfo'),
-                    position: 'bottom-right',
-                    theme: 'success'
-                })
                 const url = `/web/analyst/api/scan/export/artifact/leak/${this.projectId}/${this.subtaskOverview.recordId}`
-                window.open(url, '_self')
+                customizeExportScanFile(url, 'GET', this.currentLanguage, this.$t('exportLeakReportInfo'))
             }
         }
     }

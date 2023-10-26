@@ -820,6 +820,8 @@
     "exportReportInfo":"制品扫描记录正在生成报告中，请稍等...",
     "exportLeakReportInfo":"安全漏洞信息正在生成报告中，请稍等...",
     "exportLicenseReportInfo":"许可证信息正在生成报告中，请稍等...",
+    "exportFileLoadingInfo":"文件正在导出中，请稍后",
+    "exportFileErrorInfo":"服务器异常，获取文件失败，请稍后重试",
     "inFolderSearchPlaceholder":"请输入文件/文件夹名称搜索",
     "folderDirectory":"文件夹目录",
     "noDistributionRecord":"日志不记载制品/文件的分发记录",

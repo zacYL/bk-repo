@@ -842,6 +842,8 @@
     "exportReportInfo":"Artifact scan record is generating report, please wait ...",
     "exportLeakReportInfo":"Security vulnerability information is generating report, please wait...",
     "exportLicenseReportInfo":"License information is generating report, please wait...",
+    "exportFileLoadingInfo":"The file is being exported, please wait...",
+    "exportFileErrorInfo":"Server exception, failed to obtain the file, please try again later...",
     "errorPlanNameTips":"Please enter a plan name of 2-32 characters",
     "tokenScope":"Token scope",
     "CPack":"CPack artifact repositories",

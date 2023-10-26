@@ -76,6 +76,7 @@
 </template>
 <script>
     import { mapActions } from 'vuex'
+    import { customizeExportScanFile } from '@repository/utils/exportScanFile'
     export default {
         name: 'license',
         props: {
@@ -135,13 +136,8 @@
                 })
             },
             exportReport () {
-                this.$bkNotify({
-                    title: this.$t('exportLicenseReportInfo'),
-                    position: 'bottom-right',
-                    theme: 'success'
-                })
                 const url = `/web/analyst/api/scan/export/artifact/license/leak/${this.projectId}/${this.subtaskOverview.recordId}`
-                window.open(url, '_self')
+                customizeExportScanFile(url, 'GET', this.currentLanguage, this.$t('exportLicenseReportInfo'))
             }
         }
     }

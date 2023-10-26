@@ -60,6 +60,7 @@
 </template>
 <script>
     import { segmentNumberThree } from '@repository/utils'
+    import { customizeExportScanFile } from '@repository/utils/exportScanFile'
     import { mapActions } from 'vuex'
     import { SCAN_TYPE_LICENSE, SCAN_TYPE_SECURITY } from '@repository/store/publicEnum'
     const nowTime = new Date(
@@ -232,13 +233,8 @@
                     ...(endTime instanceof Date ? { endTime: endTime.toISOString() } : {})
                 })
                 this.showExportDialog = false
-                this.$bkNotify({
-                    title: this.$t('exportReportInfo'),
-                    position: 'bottom-right',
-                    theme: 'success'
-                })
                 const url = `/web/analyst/api/scan/plan/export?${params.toString()}`
-                window.open(url, '_self')
+                customizeExportScanFile(url, 'GET', this.currentLanguage, this.$t('exportReportInfo'))
             }
         }
     }

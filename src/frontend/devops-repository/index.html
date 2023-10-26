@@ -91,6 +91,11 @@
             }
             
             const xhr = new XMLHttpRequest()
+            const cookies = document.cookie.split('; ').reduce((target, str) => {
+                const [key, value] = str.split('=')
+                target[key] = value
+                return target
+            }, {})
             xhr.onreadystatechange = function (e) {
                 const { readyState, status } = e.currentTarget
                 // 已登录
@@ -110,27 +115,22 @@
                         let message
                         switch (status) {
                             case 403:
-                                message = '未获得文件访问权限或链接已失效'
+                                message = cookies['blueking_language'] === 'en' ? 'File access not granted or link expired': '未获得文件访问权限或链接已失效'
                                 break
                             case 404:
-                                message = '文件不存在'
+                                message = cookies['blueking_language'] === 'en' ? 'File does not exist': '文件不存在'
                                 break
                             case 423:
-                                message = '制品不符合下载规则, 禁止下载'
+                                message = cookies['blueking_language'] === 'en' ? 'The artifact does not comply with the download rules and is prohibited from downloading.': '制品不符合下载规则, 禁止下载'
                                 break
                             default:
-                                message = '服务异常，请稍后重试'
+                                message = cookies['blueking_language'] === 'en' ? 'Service exception, please try again later': '服务异常，请稍后重试'
                         }
                         printError(status, message)
                     }
                 }
             }
             xhr.withCredentials = true
-            const cookies = document.cookie.split('; ').reduce((target, str) => {
-                const [key, value] = str.split('=')
-                target[key] = value
-                return target
-            }, {})
             xhr.open('HEAD', redirectUrl.href)
             xhr.setRequestHeader('X-CSRFToken', cookies[(MODE_CONFIG === 'ci' || MODE_CONFIG === 'saas') ? 'bk_token' : 'bkrepo_ticket'])
             xhr.send()

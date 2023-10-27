@@ -9,6 +9,7 @@
         :default-expanded-keys="defaultExpandKeys"
         :props="defaultProps"
         :expand-on-click-node="false"
+        :empty-text="$t('noData')"
         @node-click="handleNodeClick"
         @node-expand="handleNodeExpand"
         v-bkloading="{ isLoading: treeLoading }"

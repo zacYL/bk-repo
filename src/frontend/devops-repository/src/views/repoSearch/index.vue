@@ -20,7 +20,7 @@
                         <bk-option id="name" :name="$t('nameSorting')"></bk-option>
                         <bk-option id="lastModifiedDate" :name="$t('lastModifiedTimeSorting')"></bk-option>
                         <bk-option id="createdDate" :name="$t('createTimeSorting')"></bk-option>
-                        <bk-option id="downloads" :name="$t('downloadSorting')"></bk-option>
+                        <bk-option v-if="repoType !== 'generic'" id="downloads" :name="$t('downloadSorting')"></bk-option>
                     </bk-select>
                     <bk-popover :content="$t('toggle') + $t('space') + `${direction === 'ASC' ? $t('desc') : $t('asc')}`" placement="top">
                         <div class="ml10 sort-order flex-center" @click="changeDirection">
@@ -98,7 +98,7 @@
             return {
                 repoEnum,
                 isLoading: false,
-                property: this.$route.query.property || 'lastModifiedDate',
+                property: '',
                 direction: this.$route.query.direction || 'DESC',
                 packageName: this.$route.query.packageName || '',
                 repoType: this.$route.query.repoType || 'generic',
@@ -125,6 +125,10 @@
         created () {
             // 默认请求获取当前类型的仓库数据，否则会导致刷新时不会请求，进而导致下拉仓库数据无法回显
             this.getRepoSearchArtifactList()
+            // 因为支持复制浏览器URL重新打开时保留筛选条件，所以需要考虑generic仓库中url中带了下载量排序参数的情况，如果带了下载量，直接修改为按照最后修改时间排序
+            this.property = this.$route.query.repoType === 'generic'
+                ? (this.$route.query.property === 'downloads' ? 'lastModifiedDate' : this.$route.query.property || 'lastModifiedDate')
+                : (this.$route.query.property || 'lastModifiedDate')
         },
         methods: {
             formatDate,

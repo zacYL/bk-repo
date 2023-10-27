@@ -31,6 +31,7 @@
 
 package com.tencent.bkrepo.common.artifact.repository.local
 
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.core.AbstractArtifactRepository
@@ -53,6 +54,32 @@ abstract class LocalRepository : AbstractArtifactRepository() {
         }
     }
 
+    /**
+     * 拦截node上传
+     */
+    fun uploadIntercept(context: ArtifactUploadContext, nodeDetail: NodeDetail) {
+        with(context) {
+            getInterceptors().forEach { it.intercept(projectId, nodeDetail) }
+            // 拦截package下载
+            val packageKey = nodeDetail.packageName()?.let { PackageKeys.ofName(repositoryDetail.type, it) }
+            val version = nodeDetail.packageVersion()
+            if (packageKey != null && version != null) {
+                packageClient.findVersionByName(projectId, repoName, packageKey, version).data?.let { packageVersion ->
+                    uploadIntercept(context, packageVersion)
+                }
+            }
+        }
+    }
+
+    /**
+     * 拦截package上传
+     * TODO NODE中统一存储packageKey与version元数据后可设置为private方法
+     */
+    fun uploadIntercept(context: ArtifactUploadContext, packageVersion: PackageVersion) {
+        context.getPackageInterceptors().forEach { it.intercept(context.projectId, packageVersion) }
+    }
+
+
     override fun onDownloadBefore(context: ArtifactDownloadContext) {
         super.onDownloadBefore(context)
     }
@@ -60,9 +87,11 @@ abstract class LocalRepository : AbstractArtifactRepository() {
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         with(context) {
             val node = nodeClient.getNodeDetail(projectId, repoName, artifactInfo.getArtifactFullPath()).data
+            node?.let { downloadIntercept(context, it) }
             val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials) ?: return null
             val responseName = artifactInfo.getResponseName()
-            return ArtifactResource(inputStream, responseName, node, ArtifactChannel.LOCAL, useDisposition)
+            val srcRepo = RepositoryIdentify(projectId, repoName)
+            return ArtifactResource(inputStream, responseName, srcRepo, node, ArtifactChannel.LOCAL, useDisposition)
         }
     }
 

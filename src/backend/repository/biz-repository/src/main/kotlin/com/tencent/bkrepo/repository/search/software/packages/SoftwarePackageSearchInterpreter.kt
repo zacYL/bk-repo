@@ -38,6 +38,7 @@ import com.tencent.bkrepo.repository.search.common.SelectFieldInterceptor
 import com.tencent.bkrepo.repository.search.packages.PackageQueryContext
 import com.tencent.bkrepo.repository.search.packages.VersionChecksumRuleInterceptor
 import com.tencent.bkrepo.repository.search.packages.VersionMetadataRuleInterceptor
+import com.tencent.bkrepo.repository.search.packages.VersionNameRuleInterceptor
 import com.tencent.bkrepo.repository.search.software.interceptor.SoftwareModelValidateInterceptor
 import com.tencent.bkrepo.repository.search.software.interceptor.SoftwareRepoNameRuleInterceptor
 import com.tencent.bkrepo.repository.search.software.interceptor.SoftwareRepoTypeRuleInterceptor
@@ -49,7 +50,7 @@ import javax.annotation.PostConstruct
 class SoftwarePackageSearchInterpreter(
     private val softwareRepoNameRuleInterceptor: SoftwareRepoNameRuleInterceptor,
     private val softwareRepoTypeRuleInterceptor: SoftwareRepoTypeRuleInterceptor,
-    private val versionNameRuleInterceptor: SoftwareRepoNameRuleInterceptor,
+    private val versionNameRuleInterceptor: VersionNameRuleInterceptor,
     private val versionMetadataRuleInterceptor: VersionMetadataRuleInterceptor,
     private val versionChecksumRuleInterceptor: VersionChecksumRuleInterceptor
 ) : MongoQueryInterpreter() {

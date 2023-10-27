@@ -47,7 +47,7 @@
                     <a class="hover-btn" :href="row.url" target="_blank">{{ row.url }}</a>
                 </template>
             </bk-table-column>
-            <bk-table-column :label="$t('account')" prop="username" width="120" show-overflow-tooltip></bk-table-column>
+            <bk-table-column :label="$t('nodeAccount')" prop="username" width="120" show-overflow-tooltip></bk-table-column>
             <bk-table-column :label="$t('createdDate')" width="150" show-overflow-tooltip>
                 <template #default="{ row }">{{formatDate(row.createdDate)}}</template>
             </bk-table-column>

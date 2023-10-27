@@ -3,6 +3,7 @@ package com.tencent.bkrepo.repository.service.packages.impl
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_PROXY_PROJECT
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.mongo.dao.AbstractMongoDao.Companion.ID
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.query.model.Rule
@@ -13,6 +14,7 @@ import com.tencent.bkrepo.repository.pojo.repo.RepoListOption
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
 import com.tencent.bkrepo.repository.pojo.software.ProjectPackageOverview
 import com.tencent.bkrepo.repository.pojo.software.SoftwarePackageSearchPojo
+import com.tencent.bkrepo.repository.search.packages.PackageQueryContext
 import com.tencent.bkrepo.repository.search.software.packages.SoftwarePackageSearchInterpreter
 import com.tencent.bkrepo.repository.service.packages.SoftwarePackageService
 import com.tencent.bkrepo.repository.service.repo.RepositoryService
@@ -118,16 +120,17 @@ class SoftwarePackageServiceImpl(
         return projectSet.toList()
     }
 
+    @Suppress("UNCHECKED_CAST")
     override fun searchPackage(queryModel: QueryModel): Page<MutableMap<*, *>> {
         val rules = (queryModel.rule as Rule.NestedRule).rules
-        var repoName: String? = null
+        var repoNameRuleExist = false
         var projectId: String? = null
         var repoType: String? = null
         val projectSubRule = mutableListOf<Rule>()
         for (rule in rules) {
             val queryRule = rule as Rule.QueryRule
             when (queryRule.field) {
-                "repoName" -> repoName = queryRule.value as String
+                "repoName" -> repoNameRuleExist = true
                 "projectId" -> projectId = queryRule.value as String
                 "repoType" -> repoType = queryRule.value as String
                 else -> projectSubRule.add(queryRule)
@@ -157,18 +160,24 @@ class SoftwarePackageServiceImpl(
                 this.addAll(projectsRule)
             }
             queryModel.rule = Rule.NestedRule(rules, Rule.NestedRule.RelationType.OR)
-        }
-        if (projectId != null && repoName == null) {
+        } else if (!repoNameRuleExist) {
             val genericRepos =
                 softwareRepositoryService.listRepo(projectId, option = option, includeGeneric = false).map { it.name }
             rules.add(Rule.QueryRule(field = "repoName", value = genericRepos, operation = OperationType.IN))
         }
-        val context = softwarePackageSearchInterpreter.interpret(queryModel)
+        val context = softwarePackageSearchInterpreter.interpret(queryModel) as PackageQueryContext
         val query = context.mongoQuery
         val countQuery = Query.of(query).limit(0).skip(0)
         val totalRecords = packageDao.count(countQuery)
-        val packageList = packageDao.find(query, MutableMap::class.java)
+        val packageList = packageDao.find(query, MutableMap::class.java) as List<MutableMap<String, Any?>>
+        packageList.forEach {
+            context.matchedVersions[it[ID].toString()]?.apply { it[MATCHED_VERSIONS] = this }
+        }
         val pageNumber = if (query.limit == 0) 0 else (query.skip / query.limit).toInt()
         return Page(pageNumber + 1, query.limit, totalRecords, packageList)
+    }
+
+    companion object {
+        private const val MATCHED_VERSIONS = "matchedVersions"
     }
 }

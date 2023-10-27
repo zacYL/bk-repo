@@ -27,12 +27,19 @@
 
 package com.tencent.bkrepo.pypi.artifact.repository
 
+import com.tencent.bkrepo.common.api.exception.BadRequestException
 import com.tencent.bkrepo.common.api.exception.NotFoundException
+import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.path.PathUtils.ROOT
-import com.tencent.bkrepo.common.artifact.repository.context.*
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.file.multipart.MultipartArtifactFile
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
@@ -44,13 +51,17 @@ import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.query.model.Sort
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
-import com.tencent.bkrepo.pypi.artifact.PypiProperties
 import com.tencent.bkrepo.pypi.artifact.url.UrlPatternUtil.parameterMaps
 import com.tencent.bkrepo.pypi.artifact.xml.Value
 import com.tencent.bkrepo.pypi.artifact.xml.XmlUtil
+import com.tencent.bkrepo.pypi.constants.PACKAGE_INDEX_TITLE
+import com.tencent.bkrepo.pypi.constants.PypiQueryType
+import com.tencent.bkrepo.pypi.constants.QUERY_TYPE
+import com.tencent.bkrepo.pypi.constants.SIMPLE_PAGE_CONTENT
+import com.tencent.bkrepo.pypi.constants.VERSION_INDEX_TITLE
 import com.tencent.bkrepo.pypi.pojo.Basic
 import com.tencent.bkrepo.pypi.pojo.PypiArtifactVersionData
-import com.tencent.bkrepo.pypi.util.HttpUtil.getRedirectUrl
+import com.tencent.bkrepo.pypi.pojo.PypiPackagePojo
 import com.tencent.bkrepo.pypi.util.PypiVersionUtils.toPypiPackagePojo
 import com.tencent.bkrepo.pypi.util.XmlUtils
 import com.tencent.bkrepo.pypi.util.XmlUtils.readXml
@@ -61,6 +72,7 @@ import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
+import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -69,8 +81,7 @@ import java.time.format.DateTimeFormatter
 
 @Component
 class PypiLocalRepository(
-    private val stageClient: StageClient,
-    private val pypiProperties: PypiProperties
+    private val stageClient: StageClient
 ) : LocalRepository() {
 
     /**
@@ -101,12 +112,18 @@ class PypiLocalRepository(
         )
     }
 
+    override fun onUploadBefore(context: ArtifactUploadContext) {
+        super.onUploadBefore(context)
+        // 不为空说明上传的是tgz文件
+        packageVersion(context)?.let { uploadIntercept(context, it) }
+    }
+
     override fun onUpload(context: ArtifactUploadContext) {
         val nodeCreateRequest = buildNodeCreateRequest(context)
         val artifactFile = context.getArtifactFile("content")
         val name = context.request.getParameter("name")
         val version = context.request.getParameter("version")
-        val author= context.request.getParameter("author")
+        val author = context.request.getParameter("author")
         val metadata = mutableListOf(
             MetadataModel(key = "name", value = name, system = true, display = true),
             MetadataModel(key = "version", value = version, system = true, display = true)
@@ -129,6 +146,11 @@ class PypiLocalRepository(
             HttpContextHolder.getClientAddress()
         )
         store(nodeCreateRequest, artifactFile, context.storageCredentials)
+    }
+
+    override fun onDownloadBefore(context: ArtifactDownloadContext) {
+        super.onDownloadBefore(context)
+        packageVersion(context)?.let { downloadIntercept(context, it) }
     }
 
     private fun combineSameParamQuery(entry: Map.Entry<String, List<String>>): Rule.NestedRule {
@@ -249,16 +271,15 @@ class PypiLocalRepository(
      * 2，pypi simple html页面
      */
     override fun query(context: ArtifactQueryContext): Any? {
-        val servletPath = context.request.servletPath
-        return if (servletPath.startsWith("/ext/version/detail")) {
-            // 请求版本详情
-            getVersionDetail(context)
-        } else {
-            getSimpleHtml(context.artifactInfo)
+        return when (val queryType = context.getAttribute<PypiQueryType>(QUERY_TYPE)) {
+            PypiQueryType.PACKAGE_INDEX,
+            PypiQueryType.VERSION_INDEX -> getSimpleHtml(context.artifactInfo, queryType)
+            PypiQueryType.VERSION_DETAIL -> getVersionDetail(context)
+            null -> throw BadRequestException(CommonMessageCode.REQUEST_CONTENT_INVALID)
         }
     }
 
-    fun getVersionDetail(context: ArtifactQueryContext): Any? {
+    fun getVersionDetail(context: ArtifactQueryContext): PypiArtifactVersionData? {
         val packageKey = context.request.getParameter("packageKey")
         val version = context.request.getParameter("version")
         logger.info("Get version detail, packageKey: $packageKey, version: $version")
@@ -298,25 +319,19 @@ class PypiLocalRepository(
         }
     }
 
-    fun getSimpleHtml(artifactInfo: ArtifactInfo): Any? {
+    fun getSimpleHtml(artifactInfo: ArtifactInfo, type: PypiQueryType): String? {
         logger.info("Get simple html, artifactInfo: ${artifactInfo.getArtifactFullPath()}")
-        val request = HttpContextHolder.getRequest()
-        if (!request.requestURI.endsWith("/")) {
-            val response = HttpContextHolder.getResponse()
-            response.sendRedirect(getRedirectUrl(pypiProperties.domain, request.servletPath))
-            return null
-        }
         with(artifactInfo) {
             val node = nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data
                 ?: throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, getArtifactFullPath())
             if (!node.folder) return null
             // 请求不带包名，返回包名列表.
-            if (getArtifactFullPath() == "/") {
+            if (type == PypiQueryType.PACKAGE_INDEX) {
                 val nodeList = nodeClient.listNode(projectId, repoName, ROOT, includeFolder = true).data
                     ?.filter { it.folder }?.takeIf { it.isNotEmpty() }
                     ?: throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, getArtifactFullPath())
                 // 过滤掉'根节点',
-                return buildPackageListContent(nodeList)
+                return buildPypiPageContent(PACKAGE_INDEX_TITLE, buildPackageListContent(nodeList))
             }
             // 请求中带包名，返回对应包的文件列表。
             else {
@@ -332,6 +347,7 @@ class PypiLocalRepository(
                     throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, getArtifactFullPath())
                 }
                 return buildPypiPageContent(
+                    String.format(VERSION_INDEX_TITLE, getArtifactName().removePrefix("/")),
                     buildPackageFileNodeListContent(packageNode)
                 )
             }
@@ -342,16 +358,8 @@ class PypiLocalRepository(
      * html 页面公用的元素
      * @param listContent 显示的内容
      */
-    private fun buildPypiPageContent(listContent: String): String {
-        return """
-            <html>
-                <head><title>Simple Index</title><meta name="api-version" value="2" /></head>
-                <body>
-                    $listContent
-                </body>
-            </html>
-        """.trimIndent()
-    }
+    private fun buildPypiPageContent(title: String, listContent: String) =
+        String.format(SIMPLE_PAGE_CONTENT.trimIndent(), title, listContent)
 
     /**
      * 对应包中的文件列表
@@ -359,14 +367,15 @@ class PypiLocalRepository(
      */
     private fun buildPackageFileNodeListContent(nodeList: List<NodeInfo>): String {
         val builder = StringBuilder()
-        for (node in nodeList) {
+        nodeList.forEachIndexed { i, node ->
             val md5 = node.md5
             builder.append("<a")
             val requiresPython = node.metadata?.get("requires_python")?.toString()
             if (!requiresPython.isNullOrBlank()) {
                 builder.append(" data-requires-python=\"$requiresPython\"")
             }
-            builder.append(" href=\"../../packages${node.fullPath}#md5=$md5\" rel=\"internal\" >${node.name}</a><br/>")
+            builder.append(" href=\"../../packages${node.fullPath}#md5=$md5\" rel=\"internal\">${node.name}</a><br />")
+            if (i != nodeList.size - 1) builder.append("\n")
         }
         return builder.toString()
     }
@@ -380,11 +389,9 @@ class PypiLocalRepository(
         if (nodeList.isEmpty()) {
             builder.append("The directory is empty.")
         }
-        for (node in nodeList) {
-            builder.append(
-                "<a data-requires-python=\">=\" href=\"${node.name}\"" +
-                        " rel=\"internal\" >${node.name}</a><br/>"
-            )
+        nodeList.forEachIndexed { i, node ->
+            builder.append("<a href=\"${node.name}\" rel=\"internal\">${node.name}</a><br />")
+            if (i != nodeList.size - 1) builder.append("\n")
         }
         return builder.toString()
     }
@@ -406,6 +413,23 @@ class PypiLocalRepository(
             val pypiPackagePojo = fullPath.toPypiPackagePojo()
             val packageKey = PackageKeys.ofPypi(pypiPackagePojo.name)
             return PackageDownloadRecord(projectId, repoName, packageKey, pypiPackagePojo.version, userId)
+        }
+    }
+
+    private fun packageVersion(context: ArtifactContext): PackageVersion? {
+        with(context) {
+            val pypiPackagePojo = if (context is ArtifactUploadContext) {
+                PypiPackagePojo(request.getParameter("name"), request.getParameter("version"))
+            } else {
+                try {
+                    artifactInfo.getArtifactFullPath().toPypiPackagePojo()
+                } catch (e: Exception) {
+                    logger.error("parse pypi package failed", e)
+                    null
+                } ?: return null
+            }
+            val packageKey = PackageKeys.ofPypi(pypiPackagePojo.name)
+            return packageClient.findVersionByName(projectId, repoName, packageKey, pypiPackagePojo.version).data
         }
     }
 

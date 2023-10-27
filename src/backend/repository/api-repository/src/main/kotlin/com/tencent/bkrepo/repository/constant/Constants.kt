@@ -31,6 +31,7 @@
 
 package com.tencent.bkrepo.repository.constant
 
+const val SYSTEM_REPO = "system"
 const val SYSTEM_USER = "system"
 const val SHARDING_COUNT = 256
 const val METADATA_PREFIX = "metadata."

@@ -46,7 +46,6 @@ import com.tencent.bkrepo.repository.search.node.NodeQueryContext
 import com.tencent.bkrepo.repository.search.software.node.SoftwareNodeQueryInterpreter
 import com.tencent.bkrepo.repository.service.node.SoftwareNodeSearchService
 import com.tencent.bkrepo.repository.service.repo.SoftwareRepositoryService
-import org.springframework.data.mongodb.core.query.Query
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -130,11 +129,8 @@ class SoftwareNodeSearchServiceImpl(
                 it[NodeInfo::metadata.name] = convert(metadata as List<Map<String, Any>>)
             }
         }
-        val countQuery = Query.of(query).limit(0).skip(0)
-        val totalRecords = nodeDao.count(countQuery)
         val pageNumber = if (query.limit == 0) 0 else (query.skip / query.limit).toInt()
-
-        return Page(pageNumber + 1, query.limit, totalRecords, nodeList)
+        return Page(pageNumber + 1, query.limit, -1, nodeList)
     }
 
     private fun transRepoTree(repos: List<RepositoryInfo>): Map<String, List<String>> {

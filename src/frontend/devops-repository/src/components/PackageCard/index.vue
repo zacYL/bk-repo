@@ -10,13 +10,16 @@
                     :status="(cardData.metadata || {}).scanStatus"
                     readonly>
                 </scan-tag>
+                <!-- generic 仓库才需要显示禁用的相关具体信息(禁用人、禁用原因等) -->
                 <forbid-tag class="ml10"
                     v-if="((cardData.metadata || {}).forbidStatus || cardData.forbidStatus)"
-                    v-bind="cardData.metadata">
+                    :forbid-user="(cardData.metadata || {}).forbidUser"
+                    :forbid-type="(cardData.metadata || {}).forbidType"
+                    :forbid-description="cardData.type ? '' : forbidDescription">
                 </forbid-tag>
             </div>
             <span class="package-card-description text-overflow" :title="cardData.description">{{ cardData.description }}</span>
-            <div class="package-card-data">
+            <div class="package-card-data" :style="dynamicStyle">
                 <!-- 依赖源仓库 -->
                 <template v-if="cardData.type">
                     <div class="card-metadata" :title="`最新版本：${cardData.latest}`">
@@ -27,52 +30,22 @@
                         </scan-tag>
                     </div>
                     <div class="card-metadata" :title="$t('lastModifiedDate') + `：${formatDate(cardData.lastModifiedDate)}`"></div>
+                    <div v-if="whetherRepoSearch" class="card-metadata" :title="$t('repo') + `：${cardData.repoName}`"></div>
                     <div class="card-metadata" :title="`版本数：${cardData.versions}`"></div>
                     <div class="card-metadata" :title="`下载统计：${cardData.downloads}`"></div>
-                    <div v-if="storeType === 'virtual'" class="card-metadata" :title="`仓库来源：${cardData.repoName}`"></div>
+                    <div v-if="whetherRepoVirtual" class="card-metadata" :title="`仓库来源：${cardData.repoName}`"></div>
                     <div v-if="showRepoSearchVersion" class="card-metadata" :title="$t('searchVersionResultInfo') + `： ${cardData.matchedVersions.length}`"></div>
                 </template>
                 <!-- generic 仓库 -->
                 <template v-else>
-                    <div class="card-metadata" :title="`所属仓库：${cardData.repoName}`"></div>
+                    <div class="card-metadata" :title="$t('repo') + `：${cardData.repoName}`"></div>
                     <div class="card-metadata" :title="`文件大小：${convertFileSize(cardData.size)}`"></div>
                     <div class="card-metadata" :title="$t('lastModifiedDate') + `：${formatDate(cardData.lastModifiedDate)}`"></div>
                 </template>
             </div>
         </div>
         <div class="card-operation flex-center">
-            <Icon class="hover-btn" v-if="!readonly && !(storeType === 'virtual') " size="24" name="icon-delete" @click.native.stop="deleteCard" />
-            <bk-popover
-                v-if="showRepoSearchVersion"
-                ref="popoverVersionsRef"
-                placement="left-start"
-                theme="light"
-                :max-width="210"
-                :width="210"
-                :arrow="false"
-                :distance="0"
-                trigger="click"
-                :on-show="() => {
-                    showSearchVersionListPopover = true
-                } "
-                :on-hide="() => {
-                    showSearchVersionListPopover = false
-                } ">
-                <Icon class="hover-btn" size="24" name="portrait-more" @click.native.stop="onClickSearchMoreIcon" />
-                <template #content>
-                    <div class="search-version-container">
-                        <span>{{$t('searchCheckVersionToDetail')}}</span>
-                        <div v-for="version in cardData.matchedVersions" :key="version">
-                            <span
-                                class="search-version-item text-overflow pl10"
-                                :title="(version || '').length > 13 ? version : ''"
-                                @click.stop="onJumpToSpecificVersion(version)">
-                                {{version}}
-                            </span>
-                        </div>
-                    </div>
-                </template>
-            </bk-popover>
+            <Icon class="hover-btn" v-if="!readonly && !whetherRepoVirtual" size="24" name="icon-delete" @click.native.stop="deleteCard" />
             <operation-list
                 v-if="!cardData.type && !readonly"
                 :list="[
@@ -102,7 +75,7 @@
                 type: Boolean,
                 default: false
             },
-            // 是否需要展示版本相关信息，展示搜索结果及更多按钮，点击显示版本列表
+            // 是否需要展示版本相关信息，展示搜索结果
             showSearchVersionList: {
                 type: Boolean,
                 default: false
@@ -110,8 +83,7 @@
         },
         data () {
             return {
-                genericScanFileTypes,
-                showSearchVersionListPopover: false
+                genericScanFileTypes
             }
         },
         computed: {
@@ -123,8 +95,41 @@
             storeType () {
                 return this.$route.query.storeType || ''
             },
+            // 是否是搜索状态，即是否需要显示搜索结果等字段
             showRepoSearchVersion () {
                 return this.showSearchVersionList && (this.cardData.matchedVersions || []).length > 0
+            },
+            // 是否是制品搜索页面
+            whetherRepoSearch () {
+                return this.$route.path.endsWith('repoSearch')
+            },
+            // 是否是虚拟仓库
+            whetherRepoVirtual () {
+                return this.storeType === 'virtual'
+            },
+            // grid 布局根据依赖源、搜索、虚拟仓库等 需要拆分为 几部分
+            dynamicStyle () {
+                let style = 4
+                if (this.whetherRepoSearch) {
+                    // 在制品搜索页面时
+                    if (this.cardData.type) {
+                        // 依赖源仓库，添加了所属仓库，所以默认值为 4 + 1 = 5
+                        // 搜索条件有值的状态下，因为添加了搜索结果字段，需要加 1
+                        style = this.showRepoSearchVersion ? 6 : 5
+                    } else {
+                        // generic 仓库
+                        style = 3
+                    }
+                } else {
+                    // 非搜索页面，因为generic仓库没有使用到此组件，只有依赖源仓库在用，所以最小为 4
+                    // 虚拟仓库，因为添加了仓库来源，需要加 1
+                    style = this.whetherRepoVirtual ? 5 : 4
+                }
+                return { 'grid-template': `auto / repeat( ${style}, 1fr)` }
+            },
+            // 获取元数据中的禁用原因
+            forbidDescription () {
+                return this.cardData?.nodeMetadata?.find((m) => m.key === 'forbidStatus')?.description
             }
         },
         methods: {
@@ -154,16 +159,6 @@
             },
             share () {
                 this.$emit('share', this.cardData)
-            },
-            // 点击展开更多按钮可以打开弹窗，再次点击关闭弹窗
-            onClickSearchMoreIcon () {
-                this.$nextTick(() => {
-                    this.$refs.popoverVersionsRef[this.showSearchVersionListPopover ? 'hideHandler' : 'showHandler']()
-                })
-            },
-            // 跳转到具体的版本
-            onJumpToSpecificVersion (version) {
-                this.$emit('jump-to-specific-version', version)
             }
         }
     }
@@ -201,7 +196,7 @@
         }
         .package-card-data {
             display: grid;
-            grid-template: auto / repeat(5, 1fr);
+            // grid-template: auto / repeat(6, 1fr);
             .card-metadata {
                 display: flex;
                 align-items: center;
@@ -229,29 +224,6 @@
         .card-operation {
             visibility: visible;
         }
-    }
-}
-.search-version-container {
-    max-height: 200px;
-    min-height: 60px;
-    overflow-y: auto;
-}
-.search-version-item {
-    display: block;
-    height: 30px;
-    line-height: 30px;
-    border-radius: 2px;
-    background-color: var(--bgLightColor);
-    cursor: pointer;
-    min-width: 120px;
-    max-width: 180px;
-    margin-bottom:10px;
-    &:first-child {
-        margin-top: 10px;
-    }
-    &:hover{
-        background-color: var(--primaryColor);;
-        color: #fff;
     }
 }
 </style>

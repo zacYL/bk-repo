@@ -31,18 +31,13 @@
 
 package com.tencent.bkrepo.npm.service.impl
 
-import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
-import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
 import com.tencent.bkrepo.common.api.util.JsonUtils.objectMapper
-import com.tencent.bkrepo.common.artifact.constant.REPO_KEY
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.configuration.virtual.VirtualConfiguration
 import com.tencent.bkrepo.common.artifact.repository.context.*
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
-import com.tencent.bkrepo.common.security.manager.PermissionManager
-import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
 import com.tencent.bkrepo.npm.constants.*
@@ -84,8 +79,7 @@ import kotlin.system.measureTimeMillis
 class NpmClientServiceImpl(
     private val npmDependentHandler: NpmDependentHandler,
     private val metadataClient: MetadataClient,
-    private val npmPackageHandler: NpmPackageHandler,
-    private val permissionManager: PermissionManager
+    private val npmPackageHandler: NpmPackageHandler
 ) : NpmClientService, AbstractNpmService() {
 
     @Transactional(rollbackFor = [Throwable::class])
@@ -94,25 +88,27 @@ class NpmClientServiceImpl(
         artifactInfo: NpmArtifactInfo,
         name: String
     ): NpmSuccessResponse {
-        checkVirtualDeployment(artifactInfo)
-        permissionManager.checkRepoPermission(PermissionAction.WRITE, artifactInfo.projectId, artifactInfo.repoName)
+        // 对虚拟仓库进行上传操作,需要将artifactInfo的仓库信息更改为默认部署仓库
+        val realArtifactInfo = queryVirtualDeployment(artifactInfo)?.let {
+            artifactInfo.copy(repoName = it) as NpmArtifactInfo
+        } ?: artifactInfo
         try {
             val npmPackageMetaData =
                 objectMapper.readValue(HttpContextHolder.getRequest().inputStream, NpmPackageMetaData::class.java)
             when {
                 isUploadRequest(npmPackageMetaData) -> {
                     measureTimeMillis {
-                        handlerPackagePublish(userId, artifactInfo, npmPackageMetaData)
+                        handlerPackagePublish(userId, realArtifactInfo, npmPackageMetaData)
                     }.apply {
                         logger.info(
                             "user [$userId] public npm package [$name] " +
-                                "to repo [${artifactInfo.getRepoIdentify()}] success, elapse $this ms"
+                                "to repo [${realArtifactInfo.getRepoIdentify()}] success, elapse $this ms"
                         )
                     }
                     return NpmSuccessResponse.createEntitySuccess()
                 }
                 isDeprecateRequest(npmPackageMetaData) -> {
-                    handlerPackageDeprecated(userId, artifactInfo, npmPackageMetaData)
+                    handlerPackageDeprecated(userId, realArtifactInfo, npmPackageMetaData)
                     return NpmSuccessResponse.updatePkgSuccess()
                 }
                 else -> {
@@ -132,7 +128,6 @@ class NpmClientServiceImpl(
         }
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.READ)
     @Transactional(rollbackFor = [Throwable::class])
     override fun packageInfo(artifactInfo: NpmArtifactInfo, name: String): NpmPackageMetaData {
         with(artifactInfo) {
@@ -141,7 +136,6 @@ class NpmClientServiceImpl(
         }
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.READ)
     @Transactional(rollbackFor = [Throwable::class])
     override fun packageVersionInfo(artifactInfo: NpmArtifactInfo, name: String, version: String): NpmVersionMetadata {
         with(artifactInfo) {
@@ -156,7 +150,6 @@ class NpmClientServiceImpl(
         }
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.READ)
     @Transactional(rollbackFor = [Throwable::class])
     override fun download(artifactInfo: NpmArtifactInfo) {
         val context = ArtifactDownloadContext()
@@ -165,7 +158,6 @@ class NpmClientServiceImpl(
     }
 
     @Suppress("UNCHECKED_CAST")
-    @Permission(ResourceType.REPO, PermissionAction.READ)
     @Transactional(rollbackFor = [Throwable::class])
     override fun search(artifactInfo: NpmArtifactInfo, searchRequest: MetadataSearchRequest): NpmSearchResponse {
         val context = ArtifactSearchContext()
@@ -174,7 +166,6 @@ class NpmClientServiceImpl(
         return NpmSearchResponse(npmSearchInfoMapList)
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.READ)
     override fun getDistTags(artifactInfo: NpmArtifactInfo, name: String): DistTags {
         with(artifactInfo) {
             logger.info("handling get distTags request for package [$name] in repo [$projectId/$repoName]")
@@ -184,46 +175,53 @@ class NpmClientServiceImpl(
     }
 
     override fun addDistTags(userId: String, artifactInfo: NpmArtifactInfo, name: String, tag: String) {
-        checkVirtualDeployment(artifactInfo)
-        permissionManager.checkRepoPermission(PermissionAction.WRITE, artifactInfo.projectId, artifactInfo.repoName)
+        // 对虚拟仓库添加dist tag时,转换为添加到默认部署仓库
+        val realArtifactInfo = queryVirtualDeployment(artifactInfo)?.let {
+            artifactInfo.copy(repoName = it) as NpmArtifactInfo
+        } ?: artifactInfo
         logger.info(
             "handling add distTags [$tag] request for package [$name] " +
-                "in repo [${artifactInfo.getRepoIdentify()}]"
+                "in repo [${realArtifactInfo.getRepoIdentify()}]"
         )
-        val packageMetaData = queryPackageInfo(artifactInfo, name, false)
+        val packageMetaData = queryPackageInfo(realArtifactInfo, name, false)
         val version = objectMapper.readValue(HttpContextHolder.getRequest().inputStream, String::class.java)
         if (packageMetaData.versions.map.containsKey(version)) {
             packageMetaData.distTags.set(tag, version)
-            doPackageFileUpload(userId, artifactInfo, packageMetaData)
+            doPackageFileUpload(userId, realArtifactInfo, packageMetaData)
         }
     }
 
     override fun deleteDistTags(userId: String, artifactInfo: NpmArtifactInfo, name: String, tag: String) {
-        checkVirtualDeployment(artifactInfo)
-        permissionManager.checkRepoPermission(PermissionAction.WRITE, artifactInfo.projectId, artifactInfo.repoName)
+        // 对虚拟仓库删除dist tag时,转换为在默认部署仓库删除
+        val realArtifactInfo = queryVirtualDeployment(artifactInfo)?.let {
+            artifactInfo.copy(repoName = it) as NpmArtifactInfo
+        } ?: artifactInfo
         logger.info(
             "handling delete distTags [$tag] request for package [$name] " +
-                "in repo [${artifactInfo.getRepoIdentify()}]"
+                "in repo [${realArtifactInfo.getRepoIdentify()}]"
         )
         if (LATEST == tag) {
             logger.warn(
                 "dist tag for [latest] with package [$name] " +
-                    "in repo [${artifactInfo.getRepoIdentify()}] cannot be deleted."
+                    "in repo [${realArtifactInfo.getRepoIdentify()}] cannot be deleted."
             )
             return
         }
-        val packageMetaData = queryPackageInfo(artifactInfo, name, false)
+        val packageMetaData = queryPackageInfo(realArtifactInfo, name, false)
         packageMetaData.distTags.getMap().remove(tag)
-        doPackageFileUpload(userId, artifactInfo, packageMetaData)
+        doPackageFileUpload(userId, realArtifactInfo, packageMetaData)
     }
 
     override fun updatePackage(userId: String, artifactInfo: NpmArtifactInfo, name: String) {
-        checkVirtualDeployment(artifactInfo)
-        permissionManager.checkRepoPermission(PermissionAction.WRITE, artifactInfo.projectId, artifactInfo.repoName)
-        logger.info("handling update package request for package [$name] in repo [${artifactInfo.getRepoIdentify()}]")
+        val realArtifactInfo = queryVirtualDeployment(artifactInfo)?.let {
+            artifactInfo.copy(repoName = it) as NpmArtifactInfo
+        } ?: artifactInfo
+        logger.info(
+            "handling update package request for package [$name] in repo [${realArtifactInfo.getRepoIdentify()}]"
+        )
         val packageMetadata =
             objectMapper.readValue(HttpContextHolder.getRequest().inputStream, NpmPackageMetaData::class.java)
-        doPackageFileUpload(userId, artifactInfo, packageMetadata)
+        doPackageFileUpload(userId, realArtifactInfo, packageMetadata)
     }
 
     override fun deleteVersion(
@@ -232,8 +230,8 @@ class NpmClientServiceImpl(
         version: String,
         tgzPath: String
     ) {
-        checkVirtualDeployment(artifactInfo)
-        permissionManager.checkRepoPermission(PermissionAction.DELETE, artifactInfo.projectId, artifactInfo.repoName)
+        val repoDetail = repositoryClient.getRepoDetail(artifactInfo.projectId, artifactInfo.repoName).data!!
+        if (repoDetail.category == RepositoryCategory.VIRTUAL) throw MethodNotAllowedException()
         logger.info("handling delete version [$version] request for package [$name].")
         val fullPathList = mutableListOf<String>()
         val packageKey = PackageKeys.ofNpm(name)
@@ -254,8 +252,8 @@ class NpmClientServiceImpl(
     }
 
     override fun deletePackage(userId: String, artifactInfo: NpmArtifactInfo, name: String) {
-        checkVirtualDeployment(artifactInfo)
-        permissionManager.checkRepoPermission(PermissionAction.DELETE, artifactInfo.projectId, artifactInfo.repoName)
+        val repoDetail = repositoryClient.getRepoDetail(artifactInfo.projectId, artifactInfo.repoName).data!!
+        if (repoDetail.category == RepositoryCategory.VIRTUAL) throw MethodNotAllowedException()
         logger.info("handling delete package request for package [$name]")
         val fullPathList = mutableListOf<String>()
         val packageMetaData = queryPackageInfo(artifactInfo, name, false)
@@ -277,7 +275,7 @@ class NpmClientServiceImpl(
             val context = ArtifactQueryContext()
             val packageFullPath = NpmUtils.getPackageMetadataPath(name)
             context.putAttribute(NPM_FILE_FULL_PATH, packageFullPath)
-            context.putAttribute("requestURI", name)
+            context.putAttribute(REQUEST_URI, name)
             val inputStream =
                 ArtifactContextHolder.getRepository().query(context) as? InputStream
                     ?: throw NpmArtifactNotFoundException("document not found")
@@ -307,7 +305,7 @@ class NpmClientServiceImpl(
             val context = ArtifactQueryContext()
             val packageFullPath = NpmUtils.getVersionPackageMetadataPath(name, version)
             context.putAttribute(NPM_FILE_FULL_PATH, packageFullPath)
-            context.putAttribute("requestURI", "$name/$version")
+            context.putAttribute(REQUEST_URI, "$name/$version")
             val inputStream =
                 ArtifactContextHolder.getRepository().query(context) as? InputStream
                     ?: throw NpmArtifactNotFoundException("document not found")
@@ -444,7 +442,7 @@ class NpmClientServiceImpl(
         val version = versionMetadata.version.orEmpty()
         with(artifactInfo) {
             // 判断包版本是否存在 如果该版本先前发布过，也不让再次发布该版本
-            val coverStrategy = ArtifactQueryContext().repositoryDetail.coverStrategy
+            val coverStrategy = ArtifactContextHolder.getRepoDetailOrNull()?.coverStrategy ?: CoverStrategy.DISABLE
             logger.info("projectId[$projectId] npm repo[$repoName] coverStrategy[$coverStrategy]")
             if ((packageVersionExist(projectId, repoName, packageKey, version) ||
                 packageHistoryVersionExist(projectId, repoName, packageKey, version)) &&
@@ -526,17 +524,14 @@ class NpmClientServiceImpl(
     }
 
     /**
-     *  查询虚拟仓库是否设置了默认部署仓库，如有则变换仓库信息
+     *  从[artifactInfo]查询是否为虚拟仓库且是否设置了默认部署仓库
      */
-    private fun checkVirtualDeployment(artifactInfo: NpmArtifactInfo) {
-        val repoDetail = ArtifactContextHolder.getRepoDetail()!!
-        if (repoDetail.category == RepositoryCategory.VIRTUAL) {
-            (repoDetail.configuration as VirtualConfiguration).deploymentRepo.takeUnless { it.isNullOrBlank() }?.let {
-                artifactInfo.repoName = it
-                val deploymentRepoDetail = checkRepositoryExist(artifactInfo.projectId, it)
-                HttpContextHolder.getRequest().setAttribute(REPO_KEY, deploymentRepoDetail)
-            } ?: throw MethodNotAllowedException()
-        }
+    private fun queryVirtualDeployment(artifactInfo: NpmArtifactInfo): String? {
+        val repoDetail = repositoryClient.getRepoDetail(artifactInfo.projectId, artifactInfo.repoName).data!!
+        return if (repoDetail.category == RepositoryCategory.VIRTUAL) {
+            (repoDetail.configuration as VirtualConfiguration).deploymentRepo.takeUnless { it.isNullOrBlank() }
+                ?: throw MethodNotAllowedException()
+        } else null
     }
 
     companion object {

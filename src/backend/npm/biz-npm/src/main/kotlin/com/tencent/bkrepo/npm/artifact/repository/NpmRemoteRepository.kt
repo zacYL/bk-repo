@@ -52,6 +52,7 @@ import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
 import com.tencent.bkrepo.common.storage.monitor.Throughput
 import com.tencent.bkrepo.npm.constants.NPM_FILE_FULL_PATH
+import com.tencent.bkrepo.npm.constants.PACKAGE_JSON
 import com.tencent.bkrepo.npm.constants.REQUEST_URI
 import com.tencent.bkrepo.npm.exception.NpmBadRequestException
 import com.tencent.bkrepo.npm.handler.NpmPackageHandler
@@ -61,9 +62,9 @@ import com.tencent.bkrepo.npm.pojo.NpmSearchResponse
 import com.tencent.bkrepo.npm.utils.NpmUtils
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
-import okhttp3.Request
 import okhttp3.Response
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -92,46 +93,27 @@ class NpmRemoteRepository(
         artifactResource: ArtifactResource,
         throughput: Throughput
     ) {
-        // 存储package-version.json文件
-        executor.execute {
-            getPackageVersionMetadata(context)?.run {
-                npmPackageHandler.createVersion(
-                    context.userId, context.artifactInfo, this, artifactResource.getTotalSize()
-                )
-            }
-            super.onDownloadSuccess(context, artifactResource, throughput)
-        }
-    }
-
-    private fun getPackageVersionMetadata(context: ArtifactDownloadContext): NpmVersionMetadata? {
         with(context) {
             val packageInfo = NpmUtils.parseNameAndVersionFromFullPath(artifactInfo.getArtifactFullPath())
             val versionMetadataFullPath = NpmUtils.getVersionPackageMetadataPath(packageInfo.first, packageInfo.second)
-            val cacheNode = nodeClient.getNodeDetail(projectId, repoName, versionMetadataFullPath).data
-            if (cacheNode != null) {
-                logger.info(
-                    "version metadata [$versionMetadataFullPath] is already exist in repo [$projectId/$repoName]"
-                )
-                storageManager.loadArtifactInputStream(cacheNode, context.storageCredentials)?.use {
-                    return JsonUtils.objectMapper.readValue(it, NpmVersionMetadata::class.java)
+            val packageKey = PackageKeys.ofNpm(packageInfo.first)
+            val pkgVersion = packageClient.findVersionByName(projectId, repoName, packageKey, packageInfo.second).data
+            if (pkgVersion == null) {
+                // 存储package-version.json文件并创建版本信息
+                val queryContext = ArtifactQueryContext(repo, artifactInfo)
+                queryContext.putAttribute(NPM_FILE_FULL_PATH, versionMetadataFullPath)
+                queryContext.putAttribute(REQUEST_URI, "/${packageInfo.first}/${packageInfo.second}")
+                executor.execute {
+                    query(queryContext)?.use {
+                        val versionMetadata = JsonUtils.objectMapper.readValue(it, NpmVersionMetadata::class.java)
+                        val size = artifactResource.getTotalSize()
+                        npmPackageHandler.createVersion(userId, artifactInfo, versionMetadata, size)
+                    }
+                    super.onDownloadSuccess(this, artifactResource, throughput)
                 }
+            } else {
+                super.onDownloadSuccess(this, artifactResource, throughput)
             }
-            val remoteConfiguration = context.getRemoteConfiguration()
-            val httpClient = createHttpClient(remoteConfiguration)
-            context.putAttribute(REQUEST_URI, "/${packageInfo.first}/${packageInfo.second}")
-            val downloadUri = createRemoteDownloadUrl(context)
-            val request = Request.Builder().url(downloadUri).build()
-            val response = httpClient.newCall(request).execute()
-            logger.info("$response")
-            return if (checkResponse(response)) {
-                val artifactFile = createTempFile(response.body()!!)
-                context.putAttribute(NPM_FILE_FULL_PATH, versionMetadataFullPath)
-                cacheArtifactFile(context, artifactFile)
-                logger.info("cache version metadata [$versionMetadataFullPath] success.")
-                artifactFile.getInputStream().use {
-                    JsonUtils.objectMapper.readValue(it, NpmVersionMetadata::class.java)
-                }
-            } else null
         }
     }
 
@@ -144,21 +126,38 @@ class NpmRemoteRepository(
     }
 
     override fun query(context: ArtifactQueryContext): InputStream? {
-        return (super.query(context) as InputStream?) ?: with(context) {
-            val cacheNode = nodeClient.getNodeDetail(projectId, repoName, getStringAttribute(NPM_FILE_FULL_PATH)!!).data
-            storageManager.loadArtifactInputStream(cacheNode, storageCredentials)
-        }
+        return getCacheArtifactResource(context)?.getSingleStream() ?: super.query(context) as InputStream?
     }
 
     override fun checkQueryResponse(response: Response): Boolean {
         return super.checkQueryResponse(response) && run {
             val contentType = response.body()!!.contentType()
-            if (!contentType.toString().contains(APPLICATION_JSON_WITHOUT_CHARSET)) {
-                logger.warn(
-                    "Response from [${response.request().url()}] is not JSON format. Content-Type: $contentType"
-                )
+            contentType.toString().contains(APPLICATION_JSON_WITHOUT_CHARSET) || run {
+                logger.warn("Content-Type($contentType) of response from [${response.request().url()}] is unsupported")
                 false
-            } else true
+            }
+        }
+    }
+
+    // 仅package.json文件有必要在缓存过期后更新
+    override fun getCacheArtifactResource(context: ArtifactContext): ArtifactResource? {
+        return when (context) {
+            is ArtifactDownloadContext -> findCacheNodeDetail(context)?.let { loadArtifactResource(it, context) }
+            is ArtifactQueryContext -> {
+                if (context.getStringAttribute(NPM_FILE_FULL_PATH)?.endsWith("/$PACKAGE_JSON") == false) {
+                    findCacheNodeDetail(context)?.let { loadArtifactResource(it, context) }
+                } else if (context.getRemoteConfiguration().cache.expiration > 0) {
+                    super.getCacheArtifactResource(context)
+                } else null
+            }
+            else -> null
+        }
+    }
+
+    override fun findCacheNodeDetail(context: ArtifactContext): NodeDetail? {
+        val fullPath = context.getStringAttribute(NPM_FILE_FULL_PATH)!!
+        with(context) {
+            return nodeClient.getNodeDetail(projectId, repoName, fullPath).data
         }
     }
 
@@ -171,22 +170,9 @@ class NpmRemoteRepository(
     }
 
     override fun onQueryResponse(context: ArtifactQueryContext, response: Response): InputStream? {
-        val fullPath = context.getStringAttribute(NPM_FILE_FULL_PATH)!!
         val body = response.body()!!
         val artifactFile = createTempFile(body)
-        val sha256 = artifactFile.getFileSha256()
-        with(context) {
-            nodeClient.getNodeDetail(projectId, repoName, fullPath).data?.let {
-                if (it.sha256.equals(sha256)) {
-                    logger.info("artifact [$fullPath] is hit the cache.")
-                    return artifactFile.getInputStream()
-                }
-                cacheArtifactFile(context, artifactFile)
-            } ?: run {
-                // 存储构件
-                cacheArtifactFile(context, artifactFile)
-            }
-        }
+        cacheArtifactFile(context, artifactFile)
         return artifactFile.getInputStream()
     }
 

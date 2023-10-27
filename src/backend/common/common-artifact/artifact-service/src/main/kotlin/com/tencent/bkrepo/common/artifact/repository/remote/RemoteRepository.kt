@@ -35,6 +35,7 @@ import com.tencent.bkrepo.common.api.constant.HttpHeaders
 import com.tencent.bkrepo.common.api.constant.HttpStatus
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.NetworkProxyConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteCredentialsConfiguration
@@ -82,24 +83,14 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
         whitelistInterceptor(context)
         return getCacheArtifactResource(context) ?: run {
             val remoteConfiguration = context.getRemoteConfiguration()
-            logger.info(
-                "Remote download: not found artifact in cache, " +
-                    "download from remote repository: $remoteConfiguration"
-            )
             val httpClient = createHttpClient(remoteConfiguration)
             val downloadUrl = createRemoteDownloadUrl(context)
-            val request = Request.Builder()
-                .removeHeader("User-Agent")
-                .addHeader("User-Agent", "${UUID.randomUUID()}")
-                .url(downloadUrl)
-                .build()
-            logger.info("Remote download: download url: $downloadUrl")
-            val response = downloadRetry(request, httpClient)
-            return if (response != null && checkResponse(response)) {
+            val request = Request.Builder().url(downloadUrl).build()
+            logger.info("Remote download url: $downloadUrl, network config: ${remoteConfiguration.network}")
+            val response = httpClient.newCall(request).execute()
+            return if (checkResponse(response)) {
                 onDownloadResponse(context, response)
-            } else {
-                null
-            }
+            } else null
         }
     }
 
@@ -164,19 +155,15 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
         val remoteConfiguration = context.getRemoteConfiguration()
         val httpClient = createHttpClient(remoteConfiguration)
         val downloadUri = createRemoteDownloadUrl(context)
-        logger.info("Remote query url: $downloadUri")
-        val request = Request.Builder()
-            .removeHeader(HttpHeaders.USER_AGENT)
-            .addHeader(HttpHeaders.USER_AGENT, "${UUID.randomUUID()}")
-            .url(downloadUri)
-            .build()
+        logger.info("Remote query url: $downloadUri, network config: ${remoteConfiguration.network}")
+        val request = Request.Builder().url(downloadUri).build()
         return try {
             val response = httpClient.newCall(request).execute()
             if (checkQueryResponse(response)) {
                 onQueryResponse(context, response)
             } else null
-        } catch (e: Exception) {
-            logger.warn("Failed to request or resolve response: ${e.stackTraceToString()}")
+        } catch (ignore: Exception) {
+            logger.warn("Failed to request or resolve response", ignore)
             null
         }
     }
@@ -198,34 +185,25 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
     /**
      * 尝试读取缓存的远程构件
      */
-    fun getCacheArtifactResource(context: ArtifactDownloadContext): ArtifactResource? {
+    open fun getCacheArtifactResource(context: ArtifactContext): ArtifactResource? {
         val configuration = context.getRemoteConfiguration()
         if (!configuration.cache.enabled) return null
 
         val cacheNode = findCacheNodeDetail(context)
-        if (cacheNode == null || cacheNode.folder) return null
-        return if (!isExpired(cacheNode, configuration.cache.expiration)) {
-            loadArtifactResource(cacheNode, context)
-        } else {
-            null
-        }
+        return if (cacheNode == null || cacheNode.folder || isExpired(cacheNode, configuration.cache.expiration)) null
+        else loadArtifactResource(cacheNode, context)
     }
 
     /**
      * 加载要返回的资源
      */
-    open fun loadArtifactResource(cacheNode: NodeDetail, context: ArtifactDownloadContext): ArtifactResource? {
+    open fun loadArtifactResource(cacheNode: NodeDetail, context: ArtifactContext): ArtifactResource? {
         return storageService.load(cacheNode.sha256!!, Range.full(cacheNode.size), context.storageCredentials)?.run {
             if (logger.isDebugEnabled) {
-                logger.debug("Cached remote artifact[${context.repositoryDetail}] is hit.")
+                logger.debug("Cached remote artifact[${context.artifactInfo}] is hit.")
             }
-            ArtifactResource(
-                this,
-                context.artifactInfo.getResponseName(),
-                cacheNode,
-                ArtifactChannel.PROXY,
-                context.useDisposition
-            )
+            val srcRepo = RepositoryIdentify(context.projectId, context.repoName)
+            ArtifactResource(this, context.artifactInfo.getResponseName(), srcRepo, cacheNode, ArtifactChannel.PROXY)
         }
     }
 
@@ -243,9 +221,9 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
     /**
      * 尝试获取缓存的远程构件节点
      */
-    open fun findCacheNodeDetail(context: ArtifactDownloadContext): NodeDetail? {
-        with(context.repositoryDetail) {
-            return nodeClient.getNodeDetail(projectId, name, context.artifactInfo.getArtifactFullPath()).data
+    open fun findCacheNodeDetail(context: ArtifactContext): NodeDetail? {
+        with(context) {
+            return nodeClient.getNodeDetail(projectId, repoName, artifactInfo.getArtifactFullPath()).data
         }
     }
 
@@ -270,13 +248,9 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
         val size = artifactFile.getSize()
         val artifactStream = artifactFile.getInputStream().artifactStream(Range.full(size))
         val node = cacheArtifactFile(context, artifactFile)
-        return ArtifactResource(
-            artifactStream,
-            context.artifactInfo.getResponseName(),
-            node,
-            ArtifactChannel.PROXY,
-            context.useDisposition
-        )
+        val responseName = context.artifactInfo.getResponseName()
+        val srcRepo = RepositoryIdentify(context.projectId, context.repoName)
+        return ArtifactResource(artifactStream, responseName, srcRepo, node, ArtifactChannel.PROXY)
     }
 
     /**

@@ -31,8 +31,13 @@
 
 package com.tencent.bkrepo.pypi.artifact.repository
 
+import com.tencent.bkrepo.common.api.constant.HttpHeaders.USER_AGENT
+import com.tencent.bkrepo.common.api.constant.ensurePrefix
+import com.tencent.bkrepo.common.api.exception.BadRequestException
 import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
+import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
@@ -45,6 +50,8 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.artifact.stream.artifactStream
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.service.info.InfoService
+import com.tencent.bkrepo.common.service.util.HeaderUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.common.storage.monitor.Throughput
@@ -57,6 +64,8 @@ import com.tencent.bkrepo.pypi.constants.FIELD_NAME
 import com.tencent.bkrepo.pypi.constants.FIELD_VERSION
 import com.tencent.bkrepo.pypi.constants.METADATA
 import com.tencent.bkrepo.pypi.constants.NAME
+import com.tencent.bkrepo.pypi.constants.PypiQueryType
+import com.tencent.bkrepo.pypi.constants.QUERY_TYPE
 import com.tencent.bkrepo.pypi.constants.VERSION
 import com.tencent.bkrepo.pypi.exception.PypiRemoteSearchException
 import com.tencent.bkrepo.pypi.pojo.Basic
@@ -88,7 +97,9 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 
 @Component
-class PypiRemoteRepository : RemoteRepository() {
+class PypiRemoteRepository(
+    private val infoService: InfoService
+) : RemoteRepository() {
 
     override fun createRemoteDownloadUrl(context: ArtifactContext): String {
         return when (context) {
@@ -108,22 +119,42 @@ class PypiRemoteRepository : RemoteRepository() {
     }
 
     override fun query(context: ArtifactQueryContext): Any? {
-        return if (context.request.servletPath.startsWith("/ext/version/detail")) {
-            getVersionDetail(context)
-        } else if (context.artifactInfo.getArtifactFullPath() == "/") {
-            getCacheHtml(context) ?: super.query(context)
-        } else {
-            super.query(context)
+        return when (context.getAttribute<PypiQueryType>(QUERY_TYPE)) {
+            PypiQueryType.PACKAGE_INDEX -> getCacheHtml(context) ?: remoteQuery(context)
+            PypiQueryType.VERSION_INDEX -> remoteQuery(context)
+            PypiQueryType.VERSION_DETAIL -> getVersionDetail(context)
+            null -> throw BadRequestException(CommonMessageCode.REQUEST_CONTENT_INVALID)
+        }
+    }
+
+    private fun remoteQuery(context: ArtifactQueryContext): Any? {
+        return try {
+            val response = doRequest(context)
+            if (checkQueryResponse(response)) {
+                onQueryResponse(context, response)
+            } else null
+        } catch (ignore: Exception) {
+            logger.warn("Failed to request or resolve response", ignore)
+            null
         }
     }
 
     override fun onQueryResponse(context: ArtifactQueryContext, response: Response): Any? {
         val body = response.body()!!
         return body.string().also {
-            if (context.artifactInfo.getArtifactFullPath() == "/") {
+            if (context.getAttribute<PypiQueryType>(QUERY_TYPE) == PypiQueryType.PACKAGE_INDEX) {
                 storeCacheHtml(context, it)
             }
             body.close()
+        }
+    }
+
+    override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
+        return getCacheArtifactResource(context) ?: run {
+            val response = doRequest(context)
+            return if (checkResponse(response)) {
+                onDownloadResponse(context, response)
+            } else null
         }
     }
 
@@ -198,8 +229,8 @@ class PypiRemoteRepository : RemoteRepository() {
         try {
             val metadataString = artifactFile.getInputStream().getPypiMetadata(fileName)
             resolveMetadata(metadataString)?.let { context.putAttribute(METADATA, it) }
-        } catch (e: Exception) {
-            logger.warn("Cannot Resolve Pypi Package Metadata of [$fileName]. ${e.stackTraceToString()}")
+        } catch (ignore: Exception) {
+            logger.warn("Cannot resolve pypi package metadata of [$fileName]", ignore)
         }
         val size = artifactFile.getSize()
         val artifactStream = artifactFile.getInputStream().artifactStream(Range.full(size))
@@ -207,6 +238,7 @@ class PypiRemoteRepository : RemoteRepository() {
         return ArtifactResource(
             artifactStream,
             context.artifactInfo.getResponseName(),
+            RepositoryIdentify(context.projectId, context.repoName),
             node,
             ArtifactChannel.PROXY,
             context.useDisposition
@@ -323,6 +355,17 @@ class PypiRemoteRepository : RemoteRepository() {
             }
             deletePypiVersion(context, packageVersion, packageKey)
         }
+    }
+
+    private fun doRequest(context: ArtifactContext): Response {
+        val remoteConfiguration = context.getRemoteConfiguration()
+        val httpClient = createHttpClient(remoteConfiguration)
+        val downloadUrl = createRemoteDownloadUrl(context)
+        val userAgent = HeaderUtils.getHeader(USER_AGENT)
+            ?: "CPack${infoService.version()?.ensurePrefix("/") ?: ""}"
+        val request = Request.Builder().url(downloadUrl).addHeader(USER_AGENT, userAgent).build()
+        logger.info("request url: $downloadUrl, network config: ${remoteConfiguration.network}")
+        return httpClient.newCall(request).execute()
     }
 
     @Suppress("UNCHECKED_CAST")

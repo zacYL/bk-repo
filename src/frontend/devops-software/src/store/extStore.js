@@ -98,11 +98,24 @@ export default {
                             ...(version
                                 ? [{
                                     field: 'version',
-                                    value: `*${version}*`,
-                                    operation: 'MATCH_I'
+                                    value: `${version}`,
+                                    operation: 'EQ'
                                 }]
                                 : []),
-                            ...(metadataList || []),
+                            ...(metadataList
+                                ? metadataList?.map((item) => {
+                                    // 不做下面的判断会导致接口传参添加了field: 'metadata.' 的对象，会导致搜索结果为空
+                                    if (item.key && item.value) {
+                                        return {
+                                            field: `metadata.${item.key}`,
+                                            value: item.value,
+                                            operation: 'EQ'
+                                        }
+                                    } else {
+                                        return ''
+                                    }
+                                }).filter(Boolean)
+                                : []),
                             ...(md5
                                 ? [{
                                     field: 'md5',
@@ -135,11 +148,13 @@ export default {
         getRepoListAll ({ commit }, { type }) {
             return Vue.prototype.$ajax.get(
                 'repository/api/software/repo/list',
-                {
-                    params: {
-                        type: type || ''
+                type
+                    ? {
+                        params: {
+                            type: type || ''
+                        }
                     }
-                }
+                    : undefined
             )
         }
     }

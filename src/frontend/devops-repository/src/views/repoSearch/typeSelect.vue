@@ -51,15 +51,19 @@
             <bk-form-item :label="$t('searchName')">
                 <bk-input
                     class="w250 input-common"
+                    clearable
                     v-model="repoSearchConditionInfo.name"
-                    :placeholder="$t('searchNamePlaceholder')">
+                    :placeholder="$t('searchNamePlaceholder')"
+                    @clear="onSearchArtifact"
+                    @enter="onSearchArtifact">
                 </bk-input>
             </bk-form-item>
             <bk-form-item v-if="repoSearchConditionInfo.hasOwnProperty('version')" :label="$t('searchConditionVersion')">
                 <bk-input
                     class="w250 input-common condition-item-common"
                     v-model="repoSearchConditionInfo.version"
-                    :placeholder="$t('pleaseInput') + $t('space') + $t('searchConditionVersion')">
+                    :placeholder="$t('pleaseInput') + $t('space') + $t('searchConditionVersion')"
+                    @enter="onSearchArtifact">
                 </bk-input>
                 <span class="search-close-icon" @click="onClearCondition('version')">
                     <Icon size="8" name="close" />
@@ -70,7 +74,8 @@
                     class="w250 input-common condition-item-common"
                     v-model="repoSearchConditionInfo.checkSum"
                     :placeholder="$t('searchConditionChecksumPlaceholder')"
-                    @blur="onVerifyCheckSum">
+                    @blur="onVerifyCheckSum"
+                    @enter="onSearchArtifact">
                 </bk-input>
                 <span class="search-close-icon" @click="onClearCondition('checkSum')">
                     <Icon size="8" name="close" />
@@ -82,12 +87,15 @@
                         <bk-input
                             class="w125 input-common "
                             v-model="item.key"
+                            :maxlength="30"
                             :placeholder="$t('key')">
                         </bk-input>
                         <bk-input
                             class="w125 input-common"
                             v-model="item.value"
-                            :placeholder="$t('value')">
+                            :maxlength="500"
+                            :placeholder="$t('value')"
+                            @enter="onSearchArtifact">
                         </bk-input>
                     </div>
                     <span class="search-close-icon" @click="onClearCondition('metadata',index)">
@@ -119,7 +127,6 @@
     </div>
 </template>
 <script>
-    import { mapActions } from 'vuex'
     import { repoSearchConditionMap, repoEnum } from '@repository/store/publicEnum'
     // 自定义Error，防止直接使用 new Error 导致把文件源码暴露
     function CustomError (message) {
@@ -127,7 +134,6 @@
         this.message = message || 'Default error message'
         this.stack = (new Error()).stack
     }
-
     CustomError.prototype = Object.create(Error.prototype)
     CustomError.prototype.constructor = CustomError
     export default {
@@ -146,16 +152,22 @@
             artifactOriginalList: {
                 type: Array,
                 default: () => []
+            },
+            // 搜索方式下拉框中可选择项
+            conditionList: {
+                type: Array,
+                default () {
+                    return repoSearchConditionMap || []
+                }
             }
         },
         data () {
             return {
                 showDropdown: false,
                 repoEnum,
-                repoSearchConditionMap,
                 // 搜索条件所在表单
                 repoSearchConditionInfo: {
-                    name: ''
+                    name: this.$route.query.name || ''
                 },
                 // 当前类型的仓库列表，不分页
                 artifactList: [
@@ -189,8 +201,8 @@
             // generic仓库不能使用包版本搜素
             conditionMap () {
                 return this.repoType === 'generic'
-                    ? this.repoSearchConditionMap.filter(item => item.id !== 'version')
-                    : this.repoSearchConditionMap
+                    ? this.conditionList.filter(item => item.id !== 'version')
+                    : this.conditionList
             },
             // 添加搜索条件按钮是否整体被禁用
             allConditionWhetherDisabled () {
@@ -198,6 +210,10 @@
                 const checkSumFlag = conditionIdMap.includes('checkSum') ? 'checkSum' in this.repoSearchConditionInfo : true
                 const versionFlag = conditionIdMap.includes('version') ? 'version' in this.repoSearchConditionInfo : true
                 return checkSumFlag && versionFlag && this.repoSearchConditionInfo?.metadata?.length === 4
+            },
+            // 是否是 软件源模式
+            whetherSoftware () {
+                return this.$route.path.startsWith('/software')
             }
         },
         watch: {
@@ -208,8 +224,40 @@
                 }
             }
         },
+        created () {
+            // 回显checkSum，因为可能之前没有添加这个搜索条件，所以需要先判断在route.query中是否存在checkSum相关的
+            if (!this.whetherSoftware && (this.$route.query.sha256 || this.$route.query.md5)) {
+                this.repoSearchConditionInfo.checkSum = this.$route.query.sha256 || this.$route.query.md5
+            }
+            // 回显 版本号
+            if (this.$route.query.version) {
+                this.repoSearchConditionInfo.version = this.$route.query.version
+            }
+            // 回显当前选择的仓库
+            this.checkedArtifactList = Object.keys(this.$route.query)
+                .filter(key => key.startsWith('artifactProperties'))
+                .map(key => this.$route.query[key])
+            
+            // 回显元数据
+            const metadataKeys = Object.keys(this.$route.query)
+                .filter(key => key.startsWith('metadataProperties['))
+            if (metadataKeys?.length) {
+                const metadataList = metadataKeys
+                    .map(key => {
+                        const matchKey = key.match(/metadataProperties\[(.+?)\]/)
+                        return {
+                            key: matchKey ? matchKey[1] : '',
+                            value: this.$route.query[key]
+                        }
+                    })
+                this.$set(this.repoSearchConditionInfo, 'metadata', [...metadataList])
+            }
+            this.$nextTick(() => {
+                // 此时需要再次触发一下搜索，初始化时子组件直接触发父组件的搜索
+                this.onSearchArtifact()
+            })
+        },
         methods: {
-            ...mapActions(['getRepoListAll']),
             onClickSearchOperation (type) {
                 if (type === 'metadata' && !('metadata' in this.repoSearchConditionInfo)) {
                     // 第一次点击添加元数据
@@ -320,7 +368,7 @@
             },
             // checksum 输入框的校验事件
             onVerifyCheckSum () {
-                if (this.repoSearchConditionInfo.checkSum && this.repoSearchConditionInfo.checkSum?.length !== 64 && this.repoSearchConditionInfo.checkSum?.length !== 32) {
+                if (!this.whetherSoftware && this.repoSearchConditionInfo.checkSum && this.repoSearchConditionInfo.checkSum?.length !== 64 && this.repoSearchConditionInfo.checkSum?.length !== 32) {
                     this.$bkMessage({
                         theme: 'warning',
                         limit: 3,
@@ -332,28 +380,18 @@
             },
             // 组装数据
             constructionSearchData () {
-                const backData = {
-                    name: this.repoSearchConditionInfo.name
+                const { name, checkSum, version, metadata } = this.repoSearchConditionInfo
+                const backData = { name }
+                // 如果不存在 checkSum 相关的参数时子组件传参中不能携带 checkSum 这个参数
+                if (!this.whetherSoftware && checkSum) {
+                    backData[checkSum.length === 32 ? 'md5' : 'sha256'] = checkSum
                 }
-                if ('checkSum' in this.repoSearchConditionInfo) {
-                    backData[this.repoSearchConditionInfo.checkSum.length === 32 ? 'md5' : 'sha256'] = this.repoSearchConditionInfo.checkSum
+                // 如果不存在version的参数时子组件传参中不能携带version这个参数
+                if (version) {
+                    backData.version = version
                 }
-                if ('version' in this.repoSearchConditionInfo) {
-                    backData.version = this.repoSearchConditionInfo.version
-                }
-                if ('metadata' in this.repoSearchConditionInfo) {
-                    backData.metadataList = this.repoSearchConditionInfo.metadata.map(item => {
-                        // 不做下面的判断会导致接口传参添加了field: 'metadata.' 的对象，会导致搜索结果为空
-                        if (item.key && item.value) {
-                            return {
-                                field: `metadata.${item.key}`,
-                                value: item.value,
-                                operation: 'EQ'
-                            }
-                        } else {
-                            return ''
-                        }
-                    }).filter(Boolean)
+                if (metadata) {
+                    backData.metadataList = metadata
                 }
                 return backData
             },

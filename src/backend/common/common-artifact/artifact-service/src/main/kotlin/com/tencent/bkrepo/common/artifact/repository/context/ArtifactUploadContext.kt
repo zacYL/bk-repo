@@ -32,12 +32,18 @@ import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactFileMap
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.constant.DownloadInterceptorType
 import com.tencent.bkrepo.common.artifact.constant.OCTET_STREAM
 import com.tencent.bkrepo.common.artifact.hash.HashAlgorithm
+import com.tencent.bkrepo.common.artifact.interceptor.DownloadInterceptor
+import com.tencent.bkrepo.common.artifact.interceptor.DownloadInterceptorFactory
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.resolve.file.multipart.MultipartArtifactFile
 import com.tencent.bkrepo.common.artifact.resolve.file.stream.StreamArtifactFile
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
+import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
+import org.slf4j.LoggerFactory
 
 /**
  * 构件上传context，依赖源可根据需求继承
@@ -66,6 +72,35 @@ open class ArtifactUploadContext : ArtifactContext {
 
     constructor(artifactFileMap: ArtifactFileMap) {
         this.artifactFileMap = artifactFileMap
+    }
+
+    constructor(
+        repo: RepositoryDetail,
+        artifactFileMap: ArtifactFileMap,
+        artifactInfo: ArtifactInfo? = null
+    ) : super(repo, artifactInfo) {
+        this.artifactFileMap = artifactFileMap
+    }
+
+    override fun copyBy(
+        repositoryDetail: RepositoryDetail,
+        instantiation: ((ArtifactInfo) -> ArtifactContext)?
+    ): ArtifactContext {
+        return super.copyBy(repositoryDetail) { artifactInfo ->
+            if (artifactFile != null) {
+                javaClass.getConstructor(
+                    RepositoryDetail::class.java,
+                    ArtifactFile::class.java,
+                    ArtifactInfo::class.java
+                ).newInstance(repositoryDetail, artifactFile, artifactInfo)
+            } else {
+                javaClass.getConstructor(
+                    RepositoryDetail::class.java,
+                    ArtifactFileMap::class.java,
+                    ArtifactInfo::class.java
+                ).newInstance(repositoryDetail, artifactFileMap, artifactInfo)
+            }
+        }
     }
 
     /**
@@ -176,5 +211,35 @@ open class ArtifactUploadContext : ArtifactContext {
         if (uploadDigest != calculatedDigest) {
             throw ErrorCodeException(ArtifactMessageCode.DIGEST_CHECK_FAILED, "digest")
         }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    fun getInterceptors(): List<DownloadInterceptor<*, NodeDetail>> {
+        val interceptorList = mutableListOf<DownloadInterceptor<*, NodeDetail>>()
+        try {
+            val settings = repositoryDetail.configuration.settings
+            val interceptors = settings[INTERCEPTORS] as? List<Map<String, Any>>
+            interceptors?.forEach {
+                val type: DownloadInterceptorType = DownloadInterceptorType.valueOf(it[TYPE].toString())
+                val rules: Map<String, Any> by it
+                val interceptor = DownloadInterceptorFactory.buildInterceptor(type, rules)
+                interceptor?.let { interceptorList.add(interceptor) }
+            }
+            interceptorList.add(DownloadInterceptorFactory.buildInterceptor(DownloadInterceptorType.NODE_LOCK)!!)
+            logger.debug("get repo[${repositoryDetail.projectId}/${repositoryDetail.name}] upload interceptor: $interceptorList")
+        } catch (e: Exception) {
+            logger.warn("fail to get repo[${repositoryDetail.projectId}/${repositoryDetail.name}] upload interceptor: $e")
+        }
+        return interceptorList
+    }
+
+    fun getPackageInterceptors(): List<DownloadInterceptor<*, PackageVersion>> {
+        return listOf(DownloadInterceptorFactory.buildPackageInterceptor(DownloadInterceptorType.PACKAGE_LOCK)!!)
+    }
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(ArtifactUploadContext::class.java)
+        private const val INTERCEPTORS = "interceptors"
+        private const val TYPE = "type"
     }
 }

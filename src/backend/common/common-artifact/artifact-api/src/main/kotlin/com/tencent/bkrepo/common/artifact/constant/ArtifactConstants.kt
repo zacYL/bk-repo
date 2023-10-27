@@ -141,6 +141,11 @@ const val FORBID_STATUS = "forbidStatus"
 const val FORBID_USER = "forbidUser"
 const val FORBID_TYPE = "forbidType"
 
+// 制品锁定信息
+const val LOCK_STATUS = "lockStatus"
+const val LOCK_USER = "lockUser"
+const val LOCK_TYPE = "lockType"
+
 // 质量状态
 const val QUALITY_STATUS = "qualityRedLine"
 
@@ -150,7 +155,8 @@ const val SCAN_STATUS = "scanStatus"
 /**
  * 元数据KEY保留字，仅允许系统使用
  */
-val RESERVED_KEY = setOf(SCAN_STATUS, FORBID_STATUS, FORBID_USER, FORBID_TYPE, QUALITY_STATUS)
+val RESERVED_KEY =
+    setOf(SCAN_STATUS, FORBID_STATUS, FORBID_USER, FORBID_TYPE, QUALITY_STATUS, LOCK_STATUS, LOCK_USER, LOCK_TYPE)
 
 const val METADATA_KEY_PACKAGE_NAME = "packageName"
 const val METADATA_KEY_PACKAGE_VERSION = "packageVersion"

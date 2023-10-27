@@ -80,6 +80,7 @@
         display: flex;
         font-size: 14px;
         font-weight: bold;
+        word-break: break-all;
     }
     .bk-icon {
         font-size: 26px;

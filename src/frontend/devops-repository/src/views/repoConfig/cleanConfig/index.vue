@@ -2,7 +2,7 @@
     <bk-form class="clean-config-container" :label-width="120" :model="config" :rules="rules" ref="cleanForm">
         <bk-form-item label="自动清理">
             <bk-switcher v-model="config.autoClean" size="small" theme="primary" @change="clearError"></bk-switcher>
-            <span class="auto-clean-info">开启自动清理后，每日定时将仓库内不符合下方保留规则的制品/文件删除。</span>
+            <span class="auto-clean-info">开启自动清理后，除符合下方保留规则与被锁定的制品/文件，将被定时删除。</span>
         </bk-form-item>
         <bk-form-item v-if="repoType !== 'generic'" label="最少保留版本" required property="reserveVersions" error-display-type="normal">
             <bk-input class="w250" v-model="config.reserveVersions" :disabled="!config.autoClean"></bk-input>
@@ -585,6 +585,10 @@
 .auto-clean-info{
     vertical-align: middle;
     margin-left: 70px;
+}
+.lock-clean-info{
+    vertical-align: middle;
+    margin-left: 100px;
 }
 .reserve-time-input{
     width: 80px;

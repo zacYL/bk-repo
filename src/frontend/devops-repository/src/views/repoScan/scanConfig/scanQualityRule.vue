@@ -30,8 +30,8 @@
         </template>
         <bk-form-item label="触发事件">
             <div style="color:var(--fontSubsidiaryColor);">可勾选下方按钮，在扫描或扫描结束后触发勾选项</div>
-            <!-- <div class="mt10"><bk-checkbox v-model="rule.forbidScanUnFinished">自动禁止使用制品：制品扫描未结束的制品</bk-checkbox></div> -->
-            <div class="mt10"><bk-checkbox :disabled="!editable" v-model="rule.forbidQualityUnPass">自动禁止使用制品：质量规则未通过的制品</bk-checkbox></div>
+            <!-- <div class="mt10"><bk-checkbox v-model="rule.forbidScanUnFinished">自动禁用制品：制品扫描未结束的制品</bk-checkbox></div> -->
+            <div class="mt10"><bk-checkbox :disabled="!editable" v-model="rule.forbidQualityUnPass">自动禁用制品：质量规则未通过的制品</bk-checkbox></div>
         </bk-form-item>
         <bk-form-item>
             <bk-button :loading="isLoading" theme="primary" @click="save()">{{$t('save')}}</bk-button>
@@ -108,16 +108,7 @@
                 return (/^[0-9]*$/).test(value) && value <= 10000
             },
             initData () {
-                this.rule = this.scanTypes.includes('LICENSE')
-                    && {
-                        ...this.rule,
-                        recommend: false,
-                        compliance: false,
-                        unknown: false,
-                        forbidScanUnFinished: false,
-                        forbidQualityUnPass: false
-                    }
-                this.rule = this.scanTypes.includes('SECURITY')
+                this.rule = (this.scanTypes.includes('SECURITY')
                     && {
                         ...this.rule,
                         critical: '',
@@ -126,7 +117,16 @@
                         low: '',
                         forbidScanUnFinished: false,
                         forbidQualityUnPass: false
-                    }
+                    }) || this.rule
+                this.rule = (this.scanTypes.includes('LICENSE')
+                    && {
+                        ...this.rule,
+                        recommend: false,
+                        compliance: false,
+                        unknown: false,
+                        forbidScanUnFinished: false,
+                        forbidQualityUnPass: false
+                    }) || this.rule
             },
             async save () {
                 await this.$refs.ruleForm.validate()

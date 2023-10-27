@@ -47,15 +47,21 @@
                         :show-search-version-list="((pkg.matchedVersions || []).length > 0 && repoType !== 'generic') ? true : false"
                         @show-detail="showDetail"
                         @share="handlerShare"
-                        @jump-to-specific-version="(version) => {
-                            showCommonPackageDetail(pkg,version)
-                        }"
-                        @click.native="showCommonPackageDetail(pkg)">
+                        @click.native="showDependDetail(pkg)">
                     </package-card>
                 </infinite-scroll>
             </template>
             <empty-data v-else :is-loading="isLoading" class="flex-1" ex-style="align-self:start;margin-top:130px;"></empty-data>
         </main>
+        <!-- 依赖源仓库通过 projectId  repoName key 来唯一确定一个包-->
+        <!--  :key="commonPackageInfo.projectId + commonPackageInfo.repoName + commonPackageInfo.key" -->
+        <searchDependDetail
+            v-if="(commonPackageInfo.matchedVersions || []).length"
+            ref="searchDependDetailRef"
+            :info="commonPackageInfo"
+            :version-list="commonPackageInfo.matchedVersions"
+            @detail="(version) => showCommonPackageDetail(commonPackageInfo,version)">
+        </searchDependDetail>
         <generic-detail ref="genericDetail"></generic-detail>
         <generic-share-dialog ref="genericShareDialog"></generic-share-dialog>
     </div>
@@ -66,12 +72,21 @@
     import genericDetail from '@repository/views/repoGeneric/genericDetail'
     import genericShareDialog from '@repository/views/repoGeneric/genericShareDialog'
     import typeSelect from '@repository/views/repoSearch/typeSelect'
+    import searchDependDetail from '@repository/components/searchDependDetail'
     import { mapState, mapActions } from 'vuex'
     import { formatDate } from '@repository/utils'
     import { repoEnum } from '@repository/store/publicEnum'
+    import { cloneDeep, isEmpty } from 'lodash'
     export default {
         name: 'repoSearch',
-        components: { packageCard, InfiniteScroll, typeSelect, genericDetail, genericShareDialog },
+        components: {
+            packageCard,
+            InfiniteScroll,
+            typeSelect,
+            genericDetail,
+            genericShareDialog,
+            searchDependDetail
+        },
         directives: {
             focus: {
                 inserted (el) {
@@ -97,7 +112,8 @@
                 // 根据制品类型获取到的仓库列表集合
                 artifactOriginalList: [],
                 // 是否滚动加载下一页
-                hasNextData: false
+                hasNextData: false,
+                commonPackageInfo: {}
             }
         },
         computed: {
@@ -107,8 +123,8 @@
             }
         },
         created () {
-            // 更新程度：类型 》 包名 》 树/排序 》 滚动加载
-            this.changeRepoType(this.repoType)
+            // 默认请求获取当前类型的仓库数据，否则会导致刷新时不会请求，进而导致下拉仓库数据无法回显
+            this.getRepoSearchArtifactList()
         },
         methods: {
             formatDate,
@@ -143,6 +159,31 @@
                 this.pagination.limit = limit
                 this.searckPackageHandler(scrollLoad)
                 !scrollLoad && this.$refs.infiniteScroll && this.$refs.infiniteScroll.scrollToTop()
+                if (!isEmpty(this.searchArtifactParams)) {
+                    const urlParams = cloneDeep(this.searchArtifactParams)
+                    // 元数据需要转化后才能显示到url中，例如 metadataProperties[key] = value & metadataProperties[111] = 222
+                    if (urlParams.metadataList?.length > 0) {
+                        urlParams.metadataList.forEach((metadata) => {
+                            urlParams[`metadataProperties[${metadata.key}]`] = metadata.value
+                        })
+                        delete urlParams.metadataList
+                    }
+                    // 选择的仓库列表处理，例如artifactProperties[0] = test & artifactProperties[1] = test2
+                    if (urlParams.artifactList?.length > 0) {
+                        urlParams.artifactList.forEach((artifact, index) => {
+                            urlParams[`artifactProperties[${index}]`] = artifact
+                        })
+                        delete urlParams.artifactList
+                    }
+                    this.$router.replace({
+                        query: {
+                            repoType: this.repoType,
+                            property: this.property,
+                            direction: this.direction,
+                            ...urlParams
+                        }
+                    })
+                }
             },
             // 搜索制品
             onSearchArtifact (params) {
@@ -173,40 +214,69 @@
                     this.artifactOriginalList = res
                 })
             },
-            showCommonPackageDetail (pkg, version) {
+            // 点击版本详情页，generic仓库直接进入详情页，依赖源仓库在搜索结果和当前包总版本数不一致时需要特殊处理
+            showDependDetail (pkg) {
                 if (pkg.fullPath) {
                     // generic
-                    this.$router.push({
-                        name: 'repoGeneric',
-                        params: {
-                            projectId: pkg.projectId
-                        },
-                        query: {
-                            repoName: pkg.repoName,
-                            path: pkg.fullPath
-                        }
-                    })
+                    this.showGenericDetail(pkg)
                 } else {
-                    // 依赖源仓库进入制品详情需要知道仓库类型(远程、本地、组合)，根据仓库类型限制操作
-                        this.artifactOriginalList?.forEach((item) => {
-                            if (item.name === pkg.repoName) {
-                                pkg.repoCategory = item.category || ''
-                            }
-                        })
-                    this.$router.push({
-                        name: 'commonPackage',
-                        params: {
-                            projectId: pkg.projectId,
-                            repoType: pkg.type.toLowerCase()
-                        },
-                        query: {
-                            repoName: pkg.repoName,
-                            packageKey: pkg.key,
-                            storeType: pkg.repoCategory?.toLowerCase() || '',
-                            version
+                    // 依赖源仓库
+                    if ((isEmpty(this.searchArtifactParams?.name)
+                        && isEmpty(this.searchArtifactParams?.version)
+                        && isEmpty(this.searchArtifactParams?.md5)
+                        && isEmpty(this.searchArtifactParams?.sha256)
+                        && !this.searchArtifactParams?.metadataList?.length)
+                        || (pkg.versions === pkg.matchedVersions?.length)
+                        || !pkg.matchedVersions?.length) {
+                        // 此时表明不是搜索状态下或当前包下的所有版本都符合搜索条件或者后端没有返回匹配到的版本列表这个字段
+                        this.showCommonPackageDetail(pkg)
+                    } else {
+                        this.commonPackageInfo = pkg
+                        if (pkg.matchedVersions?.length === 1) {
+                            // 此时表明搜索结果只有一个，此时也不需要在打开版本详情快照,直接进入版本详情即可，携带当前搜索的版本号
+                            this.showCommonPackageDetail(this.commonPackageInfo, pkg.matchedVersions[0])
+                        } else {
+                            this.$nextTick(() => {
+                                this.$refs.searchDependDetailRef && (this.$refs.searchDependDetailRef.show = true)
+                            })
                         }
-                    })
+                    }
                 }
+            },
+            showGenericDetail (pkg) {
+                // generic
+                this.$router.push({
+                    name: 'repoGeneric',
+                    params: {
+                        projectId: pkg.projectId
+                    },
+                    query: {
+                        repoName: pkg.repoName,
+                        path: pkg.fullPath
+                    }
+                })
+            },
+            showCommonPackageDetail (pkg, version) {
+                // 依赖源仓库进入制品详情需要知道仓库类型(远程、本地、组合)，根据仓库类型限制操作
+                this.artifactOriginalList?.forEach((item) => {
+                    if (item.name === pkg.repoName) {
+                        pkg.repoCategory = item.category || ''
+                    }
+                })
+                this.$router.push({
+                    name: 'commonPackage',
+                    params: {
+                        projectId: pkg.projectId,
+                        repoType: pkg.type.toLowerCase()
+                    },
+                    query: {
+                        repoName: pkg.repoName,
+                        packageKey: pkg.key,
+                        storeType: pkg.repoCategory?.toLowerCase() || '',
+                        // 只有搜索后选择的版本号存在时才需要在版本详情页回显相关参数
+                        ...(version ? { version, searchFlag: true } : '')
+                    }
+                })
             },
             showDetail (pkg) {
                 this.$refs.genericDetail.setData({

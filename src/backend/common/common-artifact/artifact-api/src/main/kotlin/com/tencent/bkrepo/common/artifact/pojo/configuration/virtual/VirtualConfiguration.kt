@@ -43,7 +43,7 @@ data class VirtualConfiguration(
      */
     var repositoryList: List<RepositoryIdentify> = emptyList(),
     /**
-     * 对虚拟仓库内容进行修改（上传、删除等）时，将操作映射到的本地仓库名称
+     * 对虚拟仓库进行上传或修改操作时，将操作映射到的本地仓库名称
      */
     var deploymentRepo: String? = null
 ) : RepositoryConfiguration() {

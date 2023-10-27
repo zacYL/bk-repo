@@ -311,11 +311,20 @@ class RepositoryCleanServiceImpl(
                     val repoName = it[TNode::repoName.name] as String
                     val fullPath = it[TNode::fullPath.name] as String
                     val folder = it[TNode::folder.name] as Boolean
+                    val lastModifiedDate = LocalDateTime.parse(it[TNode::lastModifiedDate.name].toString())
                     val createdDate = LocalDateTime.parse(it[TNode::createdDate.name].toString())
                     val recentlyUseDate = it[TNode::recentlyUseDate.name]?.let { date ->
                         LocalDateTime.parse(date.toString())
                     }
-                    val node = NodeDelete(projectId, repoName, folder, fullPath, createdDate, recentlyUseDate)
+                    val node = NodeDelete(
+                        projectId,
+                        repoName,
+                        folder,
+                        fullPath,
+                        createdDate,
+                        lastModifiedDate,
+                        recentlyUseDate
+                    )
                     result.add(node)
                 }
                 pageNumber += 1
@@ -332,14 +341,12 @@ class RepositoryCleanServiceImpl(
      */
     private fun nodeReserveDaysFilter(nodeList: List<NodeDelete>, reserveDays: Long): MutableList<NodeDelete> {
         val deleteNodeList: MutableList<NodeDelete> = mutableListOf()
-        val nowDate = LocalDateTime.now()
         nodeList.forEach {
-            var useDays = Long.MAX_VALUE
-            if (it.recentlyUseDate != null) {
-                useDays = Duration.between(it.recentlyUseDate, nowDate).toDays()
-            }
-            val createdDays = Duration.between(it.createdDate, nowDate).toDays()
-            if (createdDays >= reserveDays && useDays >= reserveDays) {
+            val lastModifiedTimeDate = mutableListOf(it.lastModifiedDate, it.createdDate)
+                .apply { it.recentlyUseDate?.let { this.add(it) } }
+                .maxOf { it }
+            val useDays = Duration.between(lastModifiedTimeDate, LocalDateTime.now()).toDays()
+            if (useDays >= reserveDays) {
                 deleteNodeList.add(it)
             }
         }
@@ -363,14 +370,12 @@ class RepositoryCleanServiceImpl(
         if (logger.isDebugEnabled) {
             logger.debug("reverse version number filter result:[$reserveDaysFilter]")
         }
-        val nowDate = LocalDateTime.now()
         reserveDaysFilter.forEach {
-            var useDays = Long.MAX_VALUE
-            if (it.recentlyUseDate != null) {
-                useDays = Duration.between(it.recentlyUseDate, nowDate).toDays()
-            }
-            val createdDays = Duration.between(it.createdDate, nowDate).toDays()
-            if (createdDays >= reserveDays && useDays >= reserveDays) {
+            val lastModifiedTimeDate = mutableListOf(it.lastModifiedDate, it.createdDate)
+                .apply { it.recentlyUseDate?.let { this.add(it) } }
+                .maxOf { it }
+            val useDays = Duration.between(lastModifiedTimeDate, LocalDateTime.now()).toDays()
+            if (useDays >= reserveDays) {
                 filterVersions.add(it)
             }
         }

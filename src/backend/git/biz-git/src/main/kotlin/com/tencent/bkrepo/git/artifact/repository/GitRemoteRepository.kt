@@ -33,6 +33,7 @@ package com.tencent.bkrepo.git.artifact.repository
 
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.util.HumanReadable.time
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
@@ -90,7 +91,8 @@ class GitRemoteRepository : RemoteRepository() {
                 }
                 val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials) ?: return null
                 val responseName = artifactInfo.getResponseName()
-                return ArtifactResource(inputStream, responseName, node, ArtifactChannel.PROXY, useDisposition)
+                val srcRepo = RepositoryIdentify(projectId, repoName)
+                return ArtifactResource(inputStream, responseName, srcRepo, node, ArtifactChannel.PROXY, useDisposition)
             }
         }
     }

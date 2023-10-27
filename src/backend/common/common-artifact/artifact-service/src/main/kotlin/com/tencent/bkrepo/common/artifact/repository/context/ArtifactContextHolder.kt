@@ -100,6 +100,7 @@ class ArtifactContextHolder(
             .expireAfterWrite(30, TimeUnit.SECONDS)
             .build<RepositoryId, RepositoryDetail>()
         private val regex = Regex("""com\.tencent\.bkrepo\.(\w+)\..*""")
+
         /**
          * 获取当前服务对应的[ArtifactConfigurer]
          */

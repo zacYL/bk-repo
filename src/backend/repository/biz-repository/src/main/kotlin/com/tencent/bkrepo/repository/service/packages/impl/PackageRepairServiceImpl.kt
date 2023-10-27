@@ -2,10 +2,16 @@ package com.tencent.bkrepo.repository.service.packages.impl
 
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.HumanReadable
+import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
+import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.repository.dao.PackageDao
 import com.tencent.bkrepo.repository.dao.PackageVersionDao
+import com.tencent.bkrepo.repository.model.TMetadata
 import com.tencent.bkrepo.repository.model.TPackage
+import com.tencent.bkrepo.repository.model.TPackageVersion
+import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.VersionListOption
 import com.tencent.bkrepo.repository.service.packages.PackageRepairService
 import com.tencent.bkrepo.repository.service.packages.PackageService
@@ -15,6 +21,9 @@ import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Update
+import org.springframework.data.mongodb.core.query.and
+import org.springframework.data.mongodb.core.query.isEqualTo
+import org.springframework.data.mongodb.core.query.where
 import org.springframework.stereotype.Service
 import java.time.Duration
 import java.time.LocalDateTime
@@ -114,6 +123,63 @@ class PackageRepairServiceImpl(
                 "Recounted version of all packages. Total recounted[$total], " +
                         "including updated[$updated], failed[$failed]. Elapse[$elapsedTime]"
             )
+        }
+    }
+
+    override fun repairDockerManifestPath() {
+        var updated = 0L
+        var failed = 0L
+        var total = 0L
+        var pageNumber = 1
+        val pageSize = 1000
+        measureNanoTime {
+            do {
+                val pageRequest = Pages.ofRequest(pageNumber, pageSize)
+                val dockerPackages =
+                    packageDao.find(Query(where(TPackage::type).isEqualTo(PackageType.DOCKER)).with(pageRequest))
+                dockerPackages.forEach { tPackage ->
+                    val criteria = where(TPackageVersion::packageId).isEqualTo(tPackage.id)
+                        .and(TPackageVersion::manifestPath).isEqualTo(null)
+                    packageVersionDao.find(Query(criteria)).forEach { tVersion ->
+                        logger.info(
+                            "Repairing manifestPath: [${tPackage.projectId}/${tPackage.repoName}] " +
+                                    "[${tPackage.key}:${tVersion.name}]"
+                        )
+                        if (updateVersionManifestPath(tPackage.key, tVersion)) updated++ else failed++
+                        total++
+                    }
+                }
+                pageNumber++
+            } while (dockerPackages.size == pageSize)
+        }.apply {
+            val elapsedTime = HumanReadable.time(this)
+            logger.info(
+                "update docker manifestPath finished. Total to update[$total], success[$updated], " +
+                        "fail[$failed], elapsed[$elapsedTime]"
+            )
+        }
+    }
+
+    private fun updateVersionManifestPath(
+        packageKey: String,
+        version: TPackageVersion
+    ): Boolean {
+        version.manifestPath = "/${PackageKeys.resolveDocker(packageKey)}/${version.name}/manifest.json"
+        if (version.metadata.none { it.key == SOURCE_TYPE }) {
+            logger.info("metadata sourceType miss")
+            val tMetadata = TMetadata(
+                key = SOURCE_TYPE,
+                value = ArtifactChannel.REPLICATION,
+                system = true
+            )
+            version.metadata = version.metadata.plusElement(tMetadata)
+        }
+        return try {
+            packageVersionDao.save(version)
+            true
+        } catch (e: Exception) {
+            logger.warn("Failed to save TPackageVersion [$packageKey / ${version.name}]", e)
+            false
         }
     }
 

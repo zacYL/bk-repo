@@ -36,6 +36,7 @@ import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
+import com.tencent.bkrepo.repository.pojo.metadata.LimitType
 import com.tencent.bkrepo.repository.pojo.metadata.packages.PackageMetadataDeleteRequest
 import com.tencent.bkrepo.repository.pojo.metadata.packages.PackageMetadataSaveRequest
 import com.tencent.bkrepo.repository.pojo.metadata.packages.UserPackageMetadataDeleteRequest
@@ -92,7 +93,7 @@ class UserPackageMetadataController(
         return ResponseBuilder.success()
     }
 
-    @ApiOperation("创建/更新禁用元数据列表")
+    @ApiOperation("创建/更新禁止元数据")
     @Permission(type = ResourceType.REPO, action = PermissionAction.UPDATE)
     @PostMapping("/forbid/{projectId}/{repoName}")
     fun forbidMetadata(
@@ -110,7 +111,29 @@ class UserPackageMetadataController(
                 versionMetadata = metadataSaveRequest.versionMetadata
             )
         }
-        packageMetadataService.addForbidMetadata(request)
+        packageMetadataService.addLimitMetadata(request, LimitType.FORBID)
+        return ResponseBuilder.success()
+    }
+
+    @ApiOperation("创建/更新锁定元数据")
+    @Permission(type = ResourceType.REPO, action = PermissionAction.UPDATE)
+    @PostMapping("/lock/{projectId}/{repoName}")
+    fun lockMetadata(
+        @RequestAttribute userId: String,
+        @PathVariable projectId: String,
+        @PathVariable repoName: String,
+        @RequestBody metadataSaveRequest: UserPackageMetadataSaveRequest
+    ): Response<Void> {
+        val request = with(metadataSaveRequest) {
+            PackageMetadataSaveRequest(
+                projectId = projectId,
+                repoName = repoName,
+                packageKey = packageKey,
+                version = version,
+                versionMetadata = metadataSaveRequest.versionMetadata
+            )
+        }
+        packageMetadataService.addLimitMetadata(request, LimitType.LOCK)
         return ResponseBuilder.success()
     }
 

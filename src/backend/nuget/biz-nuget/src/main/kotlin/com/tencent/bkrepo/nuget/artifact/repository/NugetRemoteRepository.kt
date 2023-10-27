@@ -37,6 +37,7 @@ import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.exception.PackageNotFoundException
 import com.tencent.bkrepo.common.artifact.exception.VersionNotFoundException
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
@@ -126,6 +127,7 @@ class NugetRemoteRepository(
         return ArtifactResource(
             artifactStream,
             context.artifactInfo.getResponseName(),
+            RepositoryIdentify(context.projectId, context.repoName),
             node,
             ArtifactChannel.PROXY,
             context.useDisposition
@@ -208,8 +210,8 @@ class NugetRemoteRepository(
         // 3、缓存索引文件，然后将文件中的URL改成对应的仓库URL进行返回
         val nugetArtifactInfo = context.artifactInfo as NugetRegistrationArtifactInfo
         val registrationPath = context.getStringAttribute("registrationPath")!!
-        val v2BaseUrl = NugetUtils.getV2Url(nugetArtifactInfo)
-        val v3BaseUrl = NugetUtils.getV3Url(nugetArtifactInfo)
+        val v2BaseUrl = NugetUtils.getV2Url()
+        val v3BaseUrl = NugetUtils.getV3Url()
         val registrationIndex = downloadRemoteRegistrationIndex(
             context, nugetArtifactInfo, registrationPath, v2BaseUrl, v3BaseUrl
         ) ?: return null
@@ -221,8 +223,8 @@ class NugetRemoteRepository(
     override fun registrationPage(context: ArtifactQueryContext): RegistrationPage? {
         val nugetArtifactInfo = context.artifactInfo as NugetRegistrationArtifactInfo
         val registrationPath = context.getStringAttribute("registrationPath")!!
-        val v2BaseUrl = NugetUtils.getV2Url(nugetArtifactInfo)
-        val v3BaseUrl = NugetUtils.getV3Url(nugetArtifactInfo)
+        val v2BaseUrl = NugetUtils.getV2Url()
+        val v3BaseUrl = NugetUtils.getV3Url()
         val registrationPage = downloadRemoteRegistrationPage(
             context, nugetArtifactInfo, registrationPath, v2BaseUrl, v3BaseUrl
         ) ?: return null
@@ -245,8 +247,8 @@ class NugetRemoteRepository(
     override fun registrationLeaf(context: ArtifactQueryContext): RegistrationLeaf? {
         val nugetArtifactInfo = context.artifactInfo as NugetRegistrationArtifactInfo
         val registrationPath = context.getStringAttribute("registrationPath")!!
-        val v2BaseUrl = NugetUtils.getV2Url(nugetArtifactInfo)
-        val v3BaseUrl = NugetUtils.getV3Url(nugetArtifactInfo)
+        val v2BaseUrl = NugetUtils.getV2Url()
+        val v3BaseUrl = NugetUtils.getV3Url()
         val registrationLeaf = downloadRemoteRegistrationLeaf(
             context, nugetArtifactInfo, registrationPath, v2BaseUrl, v3BaseUrl
         ) ?: return null

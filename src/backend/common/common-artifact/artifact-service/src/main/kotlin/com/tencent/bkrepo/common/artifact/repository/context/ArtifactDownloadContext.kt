@@ -41,6 +41,8 @@ import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
+import org.slf4j.LoggerFactory
+import kotlin.reflect.full.primaryConstructor
 
 /**
  * 构件下载context
@@ -58,6 +60,17 @@ open class ArtifactDownloadContext(
     val repo = repo ?: request.getAttribute(REPO_KEY) as RepositoryDetail
     val artifacts = artifacts
     var shareUserId: String = StringPool.EMPTY
+
+    override fun copyBy(
+        repositoryDetail: RepositoryDetail,
+        instantiation: ((ArtifactInfo) -> ArtifactContext)?
+    ): ArtifactContext {
+        return super.copyBy(repositoryDetail) { artifactInfo ->
+            this::class.primaryConstructor!!.call(
+                repositoryDetail, artifactInfo, artifacts, this.userId, useDisposition, false, true
+            )
+        }
+    }
 
     @Suppress("UNCHECKED_CAST")
     fun getInterceptors(): List<DownloadInterceptor<*, NodeDetail>> {

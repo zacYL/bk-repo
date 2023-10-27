@@ -30,6 +30,7 @@ package com.tencent.bkrepo.composer.artifact.repository
 import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.*
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
@@ -40,9 +41,7 @@ import com.tencent.bkrepo.common.artifact.stream.closeQuietly
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
-import com.tencent.bkrepo.composer.COMPOSER_VERSION_INIT
-import com.tencent.bkrepo.composer.DIRECT_DISTS
-import com.tencent.bkrepo.composer.INIT_PACKAGES
+import com.tencent.bkrepo.composer.*
 import com.tencent.bkrepo.composer.exception.ComposerArtifactMetadataException
 import com.tencent.bkrepo.composer.pojo.*
 import com.tencent.bkrepo.composer.util.DecompressUtil.wrapperJson
@@ -57,6 +56,7 @@ import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
+import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.VersionListOption
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
 import org.slf4j.LoggerFactory
@@ -213,9 +213,26 @@ class ComposerLocalRepository(private val stageClient: StageClient) : LocalRepos
         with(context) {
             val artifactPath = artifactInfo.getArtifactFullPath().removePrefix("/$DIRECT_DISTS")
             val node = nodeClient.getNodeDetail(projectId, repoName, artifactPath).data
+            node?.let {
+                downloadIntercept(context, it)
+                packageVersion(it)?.let { packageVersion -> downloadIntercept(context, packageVersion) }
+            }
             val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials) ?: return null
             val responseName = artifactInfo.getResponseName()
-            return ArtifactResource(inputStream, responseName, node, ArtifactChannel.LOCAL, useDisposition)
+            val srcRepo = RepositoryIdentify(projectId, repoName)
+            return ArtifactResource(inputStream, responseName, srcRepo, node, ArtifactChannel.LOCAL, useDisposition)
+        }
+    }
+
+    override fun onUploadBefore(context: ArtifactUploadContext) {
+        super.onUploadBefore(context)
+        with(context){
+            val artifactPath = artifactInfo.getArtifactFullPath().removePrefix("/$DIRECT_DISTS")
+            val node = nodeClient.getNodeDetail(projectId, repoName, artifactPath).data
+            node?.let {
+                uploadIntercept(context, it)
+                packageVersion(it)?.let { packageVersion -> uploadIntercept(context, packageVersion) }
+            }
         }
     }
 
@@ -232,11 +249,14 @@ class ComposerLocalRepository(private val stageClient: StageClient) : LocalRepos
         // 保存节点
         val metadata = mutableMapOf<String, String>()
         val composerMetadata = JsonUtil.mapper.readValue(composerArtifact.json, ComposerMetadata::class.java)
+        metadata["name"] = composerMetadata.name
         metadata["packageKey"] = PackageKeys.ofComposer(composerArtifact.name)
         metadata["version"] = composerArtifact.version
         metadata["type"] = composerMetadata.type
         composerMetadata.description?.let { metadata["description"] = it }
-        composerMetadata.keywords?.let { metadata["keywords"] = it.toString() }
+        composerMetadata.keywords?.let {
+            if (it.toString() != "null") metadata["keywords"] = it.toString()
+        }
         val nodeCreateRequest = getCompressNodeCreateRequest(context, metadata)
         store(nodeCreateRequest, context.getArtifactFile(), context.storageCredentials)
         // 更新索引
@@ -468,7 +488,7 @@ class ComposerLocalRepository(private val stageClient: StageClient) : LocalRepos
         artifactResource: ArtifactResource
     ): PackageDownloadRecord? {
         with(context) {
-            val fullPath = context.artifactInfo.getArtifactFullPath().removePrefix("/$DIRECT_DISTS")
+            val fullPath = artifactInfo.getArtifactFullPath().removePrefix("/$DIRECT_DISTS")
             val node = nodeClient.getNodeDetail(projectId, repoName, fullPath).data ?: return null
             val packageKey = node.metadata["packageKey"] ?: throw ComposerArtifactMetadataException(
                 "${artifactInfo.getArtifactFullPath()} : not found metadata.packageKay value"
@@ -550,6 +570,14 @@ class ComposerLocalRepository(private val stageClient: StageClient) : LocalRepos
             logger.error(exception.message)
         }
         return true
+    }
+
+    fun packageVersion(node: NodeDetail): PackageVersion? {
+        with(node) {
+            val packageKey = metadata[METADATA_KEY_PACKAGE_KEY]?.toString() ?: return null
+            val packageVersion = metadata[METADATA_KEY_VERSION]?.toString() ?: return null
+            return packageClient.findVersionByName(projectId, repoName, packageKey, packageVersion).data
+        }
     }
 
     companion object {

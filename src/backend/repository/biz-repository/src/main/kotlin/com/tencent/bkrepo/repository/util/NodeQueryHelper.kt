@@ -56,6 +56,18 @@ object NodeQueryHelper {
         return Query(criteria)
     }
 
+    //查找一个目录下所有的节点
+    fun nodeFoldQuery(projectId: String, repoName: String, escapedPath: String, normalizedFullPath: String): Query {
+        val criteria = where(TNode::projectId).isEqualTo(projectId)
+            .and(TNode::repoName).isEqualTo(repoName)
+            .and(TNode::deleted).isEqualTo(null)
+            .orOperator(
+                where(TNode::fullPath).regex("^$escapedPath"),
+                where(TNode::fullPath).isEqualTo(normalizedFullPath)
+            )
+        return Query(criteria)
+    }
+
     fun nodeQuery(projectId: String, repoName: String, fullPath: List<String>): Query {
         val criteria = where(TNode::projectId).isEqualTo(projectId)
             .and(TNode::repoName).isEqualTo(repoName)

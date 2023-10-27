@@ -46,6 +46,7 @@ import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
@@ -437,6 +438,7 @@ class OciRegistryRemoteRepository(
         val artifactResource = ArtifactResource(
             inputStream = artifactStream,
             artifactName = context.artifactInfo.getResponseName(),
+            srcRepo = RepositoryIdentify(context.projectId, context.repoName),
             node = node,
             channel = ArtifactChannel.PROXY
         )
@@ -452,7 +454,7 @@ class OciRegistryRemoteRepository(
     /**
      * 尝试获取缓存的远程构件节点
      */
-    override fun findCacheNodeDetail(context: ArtifactDownloadContext): NodeDetail? {
+    override fun findCacheNodeDetail(context: ArtifactContext): NodeDetail? {
         with(context) {
             val fullPath = ociOperationService.getNodeFullPath(context.artifactInfo as OciArtifactInfo) ?: return null
             return nodeClient.getNodeDetail(projectId, repoName, fullPath).data
@@ -462,7 +464,7 @@ class OciRegistryRemoteRepository(
     /**
      * 加载要返回的资源: oci协议需要返回特定的请求头和资源类型
      */
-    override fun loadArtifactResource(cacheNode: NodeDetail, context: ArtifactDownloadContext): ArtifactResource? {
+    override fun loadArtifactResource(cacheNode: NodeDetail, context: ArtifactContext): ArtifactResource? {
         return storageService.load(cacheNode.sha256!!, Range.full(cacheNode.size), context.storageCredentials)?.run {
             if (logger.isDebugEnabled) {
                 logger.debug("Cached remote artifact[${context.artifactInfo}] is hit.")
@@ -470,6 +472,7 @@ class OciRegistryRemoteRepository(
             val artifactResource = ArtifactResource(
                 inputStream = this,
                 artifactName = context.artifactInfo.getResponseName(),
+                srcRepo = RepositoryIdentify(context.projectId, context.repoName),
                 node = cacheNode,
                 channel = ArtifactChannel.PROXY
             )
@@ -483,7 +486,7 @@ class OciRegistryRemoteRepository(
 
     private fun buildResponse(
         cacheNode: NodeDetail?,
-        context: ArtifactDownloadContext,
+        context: ArtifactContext,
         artifactResource: ArtifactResource,
         sha256: String? = null,
         size: Long? = null

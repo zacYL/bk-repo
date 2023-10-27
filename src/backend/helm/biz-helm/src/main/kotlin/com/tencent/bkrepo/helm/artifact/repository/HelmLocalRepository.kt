@@ -31,10 +31,8 @@
 
 package com.tencent.bkrepo.helm.artifact.repository
 
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
+import com.tencent.bkrepo.common.artifact.repository.context.*
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
@@ -43,16 +41,7 @@ import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.artifact.util.FileNameParser
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
-import com.tencent.bkrepo.helm.constants.CHART
-import com.tencent.bkrepo.helm.constants.FILE_TYPE
-import com.tencent.bkrepo.helm.constants.FORCE
-import com.tencent.bkrepo.helm.constants.FULL_PATH
-import com.tencent.bkrepo.helm.constants.META_DETAIL
-import com.tencent.bkrepo.helm.constants.NAME
-import com.tencent.bkrepo.helm.constants.OVERWRITE
-import com.tencent.bkrepo.helm.constants.PROV
-import com.tencent.bkrepo.helm.constants.SIZE
-import com.tencent.bkrepo.helm.constants.VERSION
+import com.tencent.bkrepo.helm.constants.*
 import com.tencent.bkrepo.helm.exception.HelmBadRequestException
 import com.tencent.bkrepo.helm.exception.HelmFileAlreadyExistsException
 import com.tencent.bkrepo.helm.exception.HelmFileNotFoundException
@@ -69,7 +58,9 @@ import com.tencent.bkrepo.helm.utils.HelmUtils
 import com.tencent.bkrepo.helm.utils.ObjectBuilderUtil
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
+import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -107,15 +98,16 @@ class HelmLocalRepository(
             // 判断是否是强制上传
             val isForce = request.getParameter(FORCE)?.let { true } ?: false
             putAttribute(FORCE, isForce)
-            val repositoryDetail = repositoryDetail
-            val projectId = repositoryDetail.projectId
-            val repoName = repositoryDetail.name
             val fullPath = getStringAttribute(FULL_PATH).orEmpty()
-            val isExist = nodeClient.checkExist(projectId, repoName, fullPath).data!!
+            val node = nodeClient.getNodeDetail(repositoryDetail.projectId, repositoryDetail.name, fullPath).data
             val isOverwrite = isOverwrite(fullPath, isForce)
             putAttribute(OVERWRITE, isOverwrite)
-            if (isExist && !isOverwrite) {
+            if (node!=null && !isOverwrite) {
                 throw HelmFileAlreadyExistsException("${fullPath.trimStart('/')} already exists")
+            }
+            node?.let {
+                uploadIntercept(context, node)
+                packageVersion(context, node)?.let { packageVersion -> uploadIntercept(context, packageVersion) }
             }
         }
     }
@@ -169,12 +161,15 @@ class HelmLocalRepository(
         node?.let {
             node.metadata[NAME]?.let { context.putAttribute(NAME, it) }
             node.metadata[VERSION]?.let { context.putAttribute(VERSION, it) }
+            downloadIntercept(context, node)
+            packageVersion(context, node)?.let { packageVersion -> downloadIntercept(context, packageVersion) }
         }
         val inputStream = storageManager.loadArtifactInputStream(node, context.storageCredentials)
         inputStream?.let {
             return ArtifactResource(
                 inputStream,
                 context.artifactInfo.getResponseName(),
+                RepositoryIdentify(context.projectId, context.repoName),
                 node,
                 ArtifactChannel.LOCAL,
                 context.useDisposition
@@ -235,6 +230,14 @@ class HelmLocalRepository(
                 )
             }
             publishEvent(event)
+        }
+    }
+    private fun packageVersion(context: ArtifactContext, node: NodeDetail): PackageVersion? {
+        with(context) {
+            val packageName = node.metadata[NAME] ?: return null
+            val packageVersion = node.metadata[VERSION] ?: return null
+            val packageKey = PackageKeys.ofHelm(packageName.toString())
+            return packageClient.findVersionByName(projectId, repoName, packageKey, packageVersion.toString()).data
         }
     }
 

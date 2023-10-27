@@ -68,6 +68,7 @@ import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.common.stream.event.supplier.EventSupplier
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.config.RepositoryProperties
+import com.tencent.bkrepo.repository.constant.SYSTEM_REPO
 import com.tencent.bkrepo.repository.dao.PackageDao
 import com.tencent.bkrepo.repository.dao.RepositoryDao
 import com.tencent.bkrepo.repository.model.TNode
@@ -261,6 +262,11 @@ class RepositoryServiceImpl(
             // 确保同名仓库不存在
             if (checkExist(projectId, name)) {
                 throw ErrorCodeException(ArtifactMessageCode.REPOSITORY_EXISTED, name)
+            }
+            //若同时是匿名公开与系统内公开仓库，则调整为系统内公开仓库
+            val settingSystem = (configuration?.settings?.get(SYSTEM_REPO) ?: false) as Boolean
+            if (public and settingSystem){
+                this.public = false
             }
             // 解析存储凭证
             val credentialsKey = determineStorageKey(this)

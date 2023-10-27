@@ -31,6 +31,7 @@
 
 package com.tencent.bkrepo.rds.artifact.repository
 
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
@@ -41,29 +42,20 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.stream.ArtifactInputStream
 import com.tencent.bkrepo.common.artifact.stream.Range
+import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
-import com.tencent.bkrepo.rds.constants.CHART
-import com.tencent.bkrepo.rds.constants.FILE_TYPE
-import com.tencent.bkrepo.rds.constants.FORCE
-import com.tencent.bkrepo.rds.constants.FULL_PATH
-import com.tencent.bkrepo.rds.constants.META_DETAIL
-import com.tencent.bkrepo.rds.constants.NAME
-import com.tencent.bkrepo.rds.constants.OVERWRITE
-import com.tencent.bkrepo.rds.constants.SIZE
-import com.tencent.bkrepo.rds.constants.VERSION
+import com.tencent.bkrepo.rds.constants.*
 import com.tencent.bkrepo.rds.exception.RdsBadRequestException
 import com.tencent.bkrepo.rds.exception.RdsFileAlreadyExistsException
 import com.tencent.bkrepo.rds.exception.RdsFileNotFoundException
 import com.tencent.bkrepo.rds.listener.event.ChartUploadEvent
 import com.tencent.bkrepo.rds.service.impl.RdsOperationService
-import com.tencent.bkrepo.rds.utils.ChartParserUtil
-import com.tencent.bkrepo.rds.utils.DecompressUtil
-import com.tencent.bkrepo.rds.utils.ObjectBuilderUtil
-import com.tencent.bkrepo.rds.utils.RdsMetadataUtils
-import com.tencent.bkrepo.rds.utils.RdsUtils
+import com.tencent.bkrepo.rds.utils.*
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
+import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -151,12 +143,15 @@ class RdsLocalRepository(
         node?.let {
             node.metadata[NAME]?.let { context.putAttribute(NAME, it) }
             node.metadata[VERSION]?.let { context.putAttribute(VERSION, it) }
+            downloadIntercept(context, node)
+            packageVersion(context, node)?.let { packageVersion -> downloadIntercept(context, packageVersion) }
         }
         val inputStream = storageManager.loadArtifactInputStream(node, context.storageCredentials)
         inputStream?.let {
             return ArtifactResource(
                 inputStream,
                 context.artifactInfo.getResponseName(),
+                RepositoryIdentify(context.projectId, context.repoName),
                 node,
                 ArtifactChannel.LOCAL,
                 context.useDisposition
@@ -217,6 +212,15 @@ class RdsLocalRepository(
                     fullPath.trim().endsWith(".tar", true) ||
                     fullPath.trim().endsWith(".tar.gz", true)
                 )
+    }
+
+    private fun packageVersion(context: ArtifactDownloadContext, node: NodeDetail): PackageVersion? {
+        with(context) {
+            val packageName = node.metadata[NAME] ?: return null
+            val packageVersion = node.metadata[VERSION] ?: return null
+            val packageKey = PackageKeys.resolveHelm(packageName.toString())
+            return packageClient.findVersionByName(projectId, repoName, packageKey, packageVersion.toString()).data
+        }
     }
 
     companion object {

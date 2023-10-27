@@ -38,7 +38,9 @@
                             <scan-tag v-if="isEnterprise && showRepoScan" class="ml10" :status="metadataMap.scanStatus"></scan-tag>
                             <forbid-tag class="ml10"
                                 v-if="metadataMap.forbidStatus"
-                                v-bind="metadataMap">
+                                :forbid-user="metadataMap.forbidUser"
+                                :forbid-type="metadataMap.forbidType"
+                                :forbid-description="forbidDescription">
                             </forbid-tag>
                         </template>
                     </span>
@@ -249,6 +251,10 @@
                     return target
                 }, {})
             },
+            // 获取元数据中的禁用原因
+            forbidDescription () {
+                return this.detail.metadata?.find((m) => m.key === 'forbidStatus')?.description
+            },
             // 是否是 软件源模式
             whetherSoftware () {
                 return this.$route.path.startsWith('/software')
@@ -263,10 +269,10 @@
                     ...(!metadataMap.forbidStatus
                         ? [
                             (this.permission.edit && !(this.storeType === 'remote') && !(this.storeType === 'virtual')) && { clickEvent: () => this.$emit('tag'), label: '晋级', disabled: (basic.stageTag || '').includes('@release') },
-                            this.isEnterprise && this.showRepoScan && { clickEvent: () => this.$emit('scan'), label: '扫描制品' }
+                            this.isEnterprise && this.showRepoScan && { clickEvent: () => this.$emit('scan'), label: this.$t('scan') }
                         ]
                         : []),
-                    !this.whetherSoftware && !(this.storeType === 'virtual') && { clickEvent: () => this.$emit('forbid'), label: metadataMap.forbidStatus ? '解除禁止' : '禁止使用' },
+                    !this.whetherSoftware && !(this.storeType === 'virtual') && { clickEvent: () => this.$emit('forbid'), label: metadataMap.forbidStatus ? this.$t('remove') + this.$t('space') + this.$t('forbid') : this.$t('forbid') },
                     (this.permission.delete && !this.whetherSoftware && !(this.storeType === 'virtual')) && { clickEvent: () => this.$emit('delete'), label: this.$t('delete') }
                 ]
             }

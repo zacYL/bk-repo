@@ -32,4 +32,12 @@ class UserPackageRepairController(
         packageRepairService.repairVersionCount()
         return ResponseBuilder.success()
     }
+
+    @ApiOperation("分发来源的docker版本信息补充manifestPath")
+    @Principal(PrincipalType.ADMIN)
+    @PutMapping("/version/docker/manifest-path")
+    fun repairDockerManifestPath(): Response<Void> {
+        packageRepairService.repairDockerManifestPath()
+        return ResponseBuilder.success()
+    }
 }

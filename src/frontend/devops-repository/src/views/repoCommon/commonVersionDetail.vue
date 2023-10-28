@@ -29,7 +29,10 @@
                         :key="name">
                         <label>{{ label }}</label>
                         <span class="flex-1 flex-align-center text-overflow">
-                            <span class="text-overflow" :title="value">{{ value }}</span>
+                            <template v-if="name === 'os'">
+                                <span>{{ value.join() }}</span>
+                            </template>
+                            <span v-else class="text-overflow" :title="value">{{ value }}</span>
                             <template v-if="name === 'version'">
                                 <span class="ml5 repo-tag"
                                     v-for="tag in detail.basic.stageTag"
@@ -109,7 +112,7 @@
                 </bk-table>
             </div>
         </bk-tab-panel>
-        <bk-tab-panel v-if="detail.manifest" name="manifest" label="Manifest">
+        <bk-tab-panel v-if="detail.manifest && !isEmpty(detail.manifest)" name="manifest" label="Manifest">
             <div class="display-block" data-title="Manifest">
                 <bk-table
                     :data="Object.entries(detail.manifest)"
@@ -124,7 +127,7 @@
                 </bk-table>
             </div>
         </bk-tab-panel>
-        <bk-tab-panel v-if="detail.layers" name="layers" label="Layers">
+        <bk-tab-panel v-if="detail.layers && !isEmpty(detail.layers)" name="layers" label="Layers">
             <div class="version-layers display-block" data-title="Layers">
                 <div class="block-header grid-item">
                     <label>ID</label>
@@ -136,7 +139,7 @@
                 </div>
             </div>
         </bk-tab-panel>
-        <bk-tab-panel v-if="detail.history" name="history" label="IMAGE HISTORY">
+        <bk-tab-panel v-if="detail.history && !isEmpty(detail.history)" name="history" label="IMAGE HISTORY">
             <div class="version-history">
                 <div class="version-history-left">
                     <div class="version-history-code hover-btn"
@@ -190,6 +193,7 @@
     import { mapState, mapActions } from 'vuex'
     import { convertFileSize, formatDate } from '@repository/utils'
     import repoGuideMixin from '@repository/views/repoCommon/repoGuideMixin'
+    import { isEmpty } from 'lodash'
     export default {
         name: 'commonVersionDetail',
         components: {
@@ -236,7 +240,8 @@
                         }
                     ]
                 },
-                detailType: '' // maven仓库显示依赖tab项的repoType，但不能直接用repoType，直接用会导致依赖这个tab项出现在其余的tab项之前
+                detailType: '', // maven仓库显示依赖tab项的repoType，但不能直接用repoType，直接用会导致依赖这个tab项出现在其余的tab项之前
+                isEmpty
             }
         },
         computed: {

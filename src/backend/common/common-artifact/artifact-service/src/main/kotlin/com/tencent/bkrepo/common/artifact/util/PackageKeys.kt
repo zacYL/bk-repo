@@ -224,6 +224,7 @@ object PackageKeys {
     fun resolveComposer(composerKey: String): String {
         return resolveName(COMPOSER, composerKey)
     }
+
     /**
      * 生成name格式key
      *
@@ -235,7 +236,7 @@ object PackageKeys {
      * @return package key
      */
     fun ofName(repositoryType: RepositoryType, name: String): String {
-        val schema = when(repositoryType) {
+        val schema = when (repositoryType) {
             RepositoryType.MAVEN -> MAVEN
             else -> repositoryType.name.toLowerCase()
         }
@@ -249,24 +250,6 @@ object PackageKeys {
      */
     fun ofName(schema: String, name: String): String {
         return StringBuilder(schema).append(SEPARATOR).append(name).toString()
-    }
-
-    /**
-     * 生成name格式key
-     *
-     * 例子: {schema}://test
-     *
-     * @param repositoryType repository type
-     * @param name package name
-     *
-     * @return package key
-     */
-    fun ofName(repositoryType: RepositoryType, name: String): String {
-        val schema = when(repositoryType) {
-            RepositoryType.MAVEN -> MAVEN
-            else -> repositoryType.name.toLowerCase()
-        }
-        return ofName(schema, name)
     }
 
     /**

@@ -184,8 +184,10 @@ open class NodeDeleteSupport(
         } catch (exception: DuplicateKeyException) {
             logger.warn("Delete node[/$projectId/$repoName] created before $date error: [${exception.message}]")
         }
-        logger.info("Delete node [/$projectId/$repoName] created before $date by [$operator] success. " +
-            "$deletedNum nodes have been deleted. The size is ${HumanReadable.size(deletedSize)}")
+        logger.info(
+            "Delete node [/$projectId/$repoName] created before $date by [$operator] success. " +
+            "$deletedNum nodes have been deleted. The size is ${HumanReadable.size(deletedSize)}"
+        )
         return NodeDeleteResult(deletedNum, deletedSize)
     }
 
@@ -213,7 +215,7 @@ open class NodeDeleteSupport(
             val updateResult = nodeDao.updateMulti(query, NodeQueryHelper.nodeDeleteUpdate(operator, deleteTime))
             deletedNum = updateResult.modifiedCount
             if (deletedNum == 0L) {
-                return NodeDeleteResult(deletedNum, deletedSize, deleteTime)
+                return NodeDeleteResult(deletedNum, deletedSize)
             }
             // 获取被删除节点的父目录并更新修改信息
             val parentFullPaths = if (fullPaths?.size == 1) {
@@ -237,7 +239,7 @@ open class NodeDeleteSupport(
             "Delete node[$resourceKey] by [$operator] success." +
                 "$deletedNum nodes have been deleted. The size is ${HumanReadable.size(deletedSize)}"
         )
-        return NodeDeleteResult(deletedNum, deletedSize, deleteTime)
+        return NodeDeleteResult(deletedNum, deletedSize)
     }
 
     companion object {

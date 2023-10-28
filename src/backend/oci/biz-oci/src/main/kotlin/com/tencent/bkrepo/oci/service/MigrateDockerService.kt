@@ -14,13 +14,11 @@ import com.tencent.bkrepo.oci.util.OciLocationUtils
 import com.tencent.bkrepo.oci.util.OciUtils
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.PackageClient
-import com.tencent.bkrepo.repository.api.PackageMetadataClient
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.api.StorageCredentialsClient
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
-import com.tencent.bkrepo.repository.pojo.metadata.packages.PackageMetadataSaveRequest
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeMoveCopyRequest
@@ -38,8 +36,7 @@ class MigrateDockerService(
     private val repositoryClient: RepositoryClient,
     private val nodeClient: NodeClient,
     private val storageManager: StorageManager,
-    private val storageCredentialsClient: StorageCredentialsClient,
-    private val packageMetadataClient: PackageMetadataClient
+    private val storageCredentialsClient: StorageCredentialsClient
 ) {
     private val logger = LoggerFactory.getLogger(MigrateDockerService::class.java)
 
@@ -164,14 +161,15 @@ class MigrateDockerService(
                 }
             }
             val metadata = listOf(MetadataModel(key = REFRESHED, value = true))
+            val newManifestFullPath = "$path/manifest/${packageVersion.name}/${manifestNode.name}"
             // 更新包版本信息 metadat, artifactPath, manifestPath
             packageClient.updateVersion(PackageVersionUpdateRequest(
                 projectId = projectId,
                 repoName = repoName,
                 packageKey = packageKey,
                 versionName = packageVersion.name,
-                manifestPath = manifestNodeFullPath,
-                artifactPath = manifestNodeFullPath,
+                manifestPath = newManifestFullPath,
+                artifactPath = newManifestFullPath,
                 packageMetadata = metadata,
             ))
         } else {

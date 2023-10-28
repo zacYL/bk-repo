@@ -51,15 +51,17 @@ export default {
                     },
                     {
                         title: this.$t('code'),
-                        children: [
-                            {
-                                title: this.$t('commitMessage'),
-                                metadata: [
-                                    `lastCommit: ${metadata.lastCommit || metadata.lastcommit || '/'}`,
-                                    `newCommit: ${metadata.newCommit || metadata.newcommit || '/'}`
-                                ]
-                            }
-                        ]
+                        children: (metadata.lastCommit || metadata.lastcommit || metadata.newCommit || metadata.newcommit)
+                            ? [
+                                {
+                                    title: this.$t('commitMessage'),
+                                    metadata: [
+                                        `lastCommit: ${metadata.lastCommit || metadata.lastcommit || '/'}`,
+                                        `newCommit: ${metadata.newCommit || metadata.newcommit || '/'}`
+                                    ]
+                                }
+                            ]
+                            : []
                     }
                 ]
             }

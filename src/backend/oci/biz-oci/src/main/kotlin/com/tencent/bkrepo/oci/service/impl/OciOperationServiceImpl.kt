@@ -203,14 +203,10 @@ class OciOperationServiceImpl(
                 // 当没有版本时删除删除package目录
                 deleteNode(projectId, repoName, "${StringPool.SLASH}$packageName", userId)
             } else {
+                //删除package下所有版本
+                packageClient.deletePackage(projectId, repoName, packageKey)
                 // 删除package目录
                 deleteNode(projectId, repoName, "${StringPool.SLASH}$packageName", userId)
-                //删除package下所有版本
-                packageClient.deletePackage(
-                    projectId,
-                    repoName,
-                    packageKey
-                )
             }
         }
     }
@@ -225,13 +221,13 @@ class OciOperationServiceImpl(
         packageKey: String
     ) {
         with(artifactInfo) {
+            packageClient.deleteVersion(projectId, repoName, packageKey, version)
             // 删除对应版本下所有关联的节点，包含manifest以及blobs
             deleteVersionRelatedNodes(
                 artifactInfo = artifactInfo,
                 version = version,
                 userId = userId
             )
-            packageClient.deleteVersion(projectId, repoName, packageKey, version)
         }
     }
 

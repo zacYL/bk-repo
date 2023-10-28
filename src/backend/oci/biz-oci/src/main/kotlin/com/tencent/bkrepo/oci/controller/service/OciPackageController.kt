@@ -28,6 +28,7 @@
 package com.tencent.bkrepo.oci.controller.service
 
 import com.tencent.bkrepo.common.api.pojo.Response
+import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.event.repo.RepoCreatedEvent
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.security.util.SecurityUtils
@@ -39,6 +40,7 @@ import com.tencent.bkrepo.oci.model.TOciReplicationRecord
 import com.tencent.bkrepo.oci.pojo.artifact.OciManifestArtifactInfo
 import com.tencent.bkrepo.oci.pojo.third.OciReplicationRecordInfo
 import com.tencent.bkrepo.oci.service.OciOperationService
+import org.slf4j.LoggerFactory
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.web.bind.annotation.RestController
@@ -49,7 +51,9 @@ class OciPackageController(
     private val ociReplicationRecordDao: OciReplicationRecordDao,
     private val eventExecutor: EventExecutor
 ) : OciClient {
+    private val logger = LoggerFactory.getLogger(OciPackageController::class.java)
     override fun packageCreate(record: OciReplicationRecordInfo): Response<Void> {
+        logger.info("Start create package for third party image by ociReplicationRecordInfo:[${record.toJsonString()}]")
         with(record) {
             val ociArtifactInfo = OciManifestArtifactInfo(
                 projectId, repoName, packageName, "", packageVersion, false

@@ -546,7 +546,7 @@ class OciOperationServiceImpl(
 
             OciUtils.stringToManifestV2(manifestBytes)
         } catch (e: Exception) {
-            logger.error("load manifest error, sha256:$sha256")
+            logger.error("load manifest error, sha256:$sha256, exception:$e")
             null
         }
     }

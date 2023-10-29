@@ -31,11 +31,13 @@
 
 package com.tencent.bkrepo.oci.artifact.resolver
 
+import com.tencent.bkrepo.common.api.constant.HttpHeaders.CONTENT_TYPE
 import com.tencent.bkrepo.common.api.util.Preconditions
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.resolve.path.ArtifactInfoResolver
 import com.tencent.bkrepo.common.artifact.resolve.path.Resolver
+import com.tencent.bkrepo.oci.constant.DOCKER_DISTRIBUTION_MANIFEST_LIST_V2
 import com.tencent.bkrepo.oci.constant.USER_API_PREFIX
 import com.tencent.bkrepo.oci.pojo.artifact.OciManifestArtifactInfo
 import com.tencent.bkrepo.oci.pojo.digest.OciDigest
@@ -60,7 +62,7 @@ class OciManifestArtifactInfoResolver : ArtifactInfoResolver {
                 val attributes = request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE) as Map<*, *>
                 val reference = attributes["tag"].toString().trim()
                 val packageName = artifactUrl.removeSuffix("/$reference")
-                OciManifestArtifactInfo(projectId, repoName, packageName, "", reference, false)
+                OciManifestArtifactInfo(projectId, repoName, packageName, "", reference, false, false)
             }
             else -> {
                 val packageName = requestUrl.substringBeforeLast("/manifests").removePrefix("/v2/$projectId/$repoName/")
@@ -69,7 +71,8 @@ class OciManifestArtifactInfoResolver : ArtifactInfoResolver {
                 val reference = attributes["reference"].toString().trim()
                 validate(packageName)
                 val isValidDigest = OciDigest.isValid(reference)
-                OciManifestArtifactInfo(projectId, repoName, packageName, "", reference, isValidDigest)
+                val isFat = request.getHeader(CONTENT_TYPE) == DOCKER_DISTRIBUTION_MANIFEST_LIST_V2
+                OciManifestArtifactInfo(projectId, repoName, packageName, "", reference, isValidDigest, isFat)
             }
         }
     }

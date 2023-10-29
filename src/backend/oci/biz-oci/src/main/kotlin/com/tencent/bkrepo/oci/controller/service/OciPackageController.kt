@@ -56,7 +56,7 @@ class OciPackageController(
         logger.info("Start create package for third party image by ociReplicationRecordInfo:[${record.toJsonString()}]")
         with(record) {
             val ociArtifactInfo = OciManifestArtifactInfo(
-                projectId, repoName, packageName, "", packageVersion, false
+                projectId, repoName, packageName, "", packageVersion, false, false
             )
             val result = operationService.createPackageForThirdPartyImage(
                 manifestPath = manifestPath,

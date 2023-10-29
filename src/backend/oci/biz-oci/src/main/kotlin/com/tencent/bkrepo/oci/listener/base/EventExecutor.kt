@@ -85,7 +85,7 @@ class EventExecutor(
             val version = event.data["version"].toString()
             val sha256 = event.data["sha256"].toString()
             val ociArtifactInfo = OciManifestArtifactInfo(
-                projectId, repoName, packageName, "", version, false
+                projectId, repoName, packageName, "", version, false, false
             )
             val nodeInfo = nodeClient.getNodeDetail(projectId, repoName, ociArtifactInfo.getArtifactFullPath()).data
                 ?: throw NodeNotFoundException(

@@ -27,10 +27,7 @@
 
 package com.tencent.bkrepo.oci.pojo.artifact
 
-import com.tencent.bkrepo.common.api.constant.HttpHeaders
-import com.tencent.bkrepo.common.service.util.HeaderUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
-import com.tencent.bkrepo.oci.constant.DOCKER_DISTRIBUTION_MANIFEST_LIST_V2
 import com.tencent.bkrepo.oci.util.OciLocationUtils
 
 class OciManifestArtifactInfo(
@@ -39,7 +36,9 @@ class OciManifestArtifactInfo(
     packageName: String,
     version: String,
     val reference: String,
-    val isValidDigest: Boolean
+    val isValidDigest: Boolean,
+    // is manifest list
+    var isFat: Boolean
 ) : OciArtifactInfo(projectId, repoName, packageName, version) {
     override fun getArtifactFullPath(): String {
         return if (isValidDigest) {
@@ -50,9 +49,7 @@ class OciManifestArtifactInfo(
                 OciLocationUtils.buildDigestManifestPathWithReference(packageName, reference)
             }
         } else {
-            // 根据 Content-type 区分 manifest.json / list.manifest.json
-            val mediaType = HeaderUtils.getHeader(HttpHeaders.CONTENT_TYPE)
-            if (mediaType == DOCKER_DISTRIBUTION_MANIFEST_LIST_V2) {
+            if (isFat) {
                 OciLocationUtils.buildManifestListPath(packageName, reference)
             } else {
                 OciLocationUtils.buildManifestPath(packageName, reference)

@@ -368,7 +368,8 @@ class OciOperationServiceImpl(
                 packageName = name,
                 reference = version,
                 isValidDigest = false,
-                version = version
+                version = version,
+                isFat = false
             )
         } else {
             // 返回blob文件的节点信息
@@ -1122,7 +1123,8 @@ class OciOperationServiceImpl(
             packageName = packageName,
             version = pVersion,
             reference = pVersion,
-            isValidDigest = false
+            isValidDigest = false,
+            isFat = false
         )
         val manifestNode = nodeClient.getNodeDetail(
             repoInfo.projectId, repoInfo.name, manifestPath

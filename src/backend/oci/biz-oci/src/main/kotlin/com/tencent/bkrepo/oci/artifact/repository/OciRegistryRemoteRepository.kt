@@ -35,6 +35,8 @@ import com.google.common.cache.CacheBuilder
 import com.tencent.bkrepo.common.api.constant.BEARER_AUTH_PREFIX
 import com.tencent.bkrepo.common.api.constant.CharPool
 import com.tencent.bkrepo.common.api.constant.HttpHeaders
+import com.tencent.bkrepo.common.api.constant.HttpHeaders.ACCEPT
+import com.tencent.bkrepo.common.api.constant.HttpHeaders.CONTENT_TYPE
 import com.tencent.bkrepo.common.api.constant.HttpHeaders.WWW_AUTHENTICATE
 import com.tencent.bkrepo.common.api.constant.HttpStatus
 import com.tencent.bkrepo.common.api.constant.MediaTypes
@@ -58,7 +60,9 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.artifact.stream.artifactStream
 import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.oci.constant.CATALOG_REQUEST
+import com.tencent.bkrepo.oci.constant.DOCKER_DISTRIBUTION_MANIFEST_LIST_V2
 import com.tencent.bkrepo.oci.constant.DOCKER_DISTRIBUTION_MANIFEST_V2
 import com.tencent.bkrepo.oci.constant.DOCKER_LINK
 import com.tencent.bkrepo.oci.constant.LAST_TAG
@@ -235,7 +239,11 @@ class OciRegistryRemoteRepository(
         }
         // 拉取第三方仓库时，默认会返回v1版本的镜像格式
         if (url.contains("/manifests/")) {
-            requestBuilder.header(HttpHeaders.ACCEPT, DOCKER_DISTRIBUTION_MANIFEST_V2)
+            val acceptList = HttpContextHolder.getRequest().getHeaders(ACCEPT).toList()
+            if (acceptList.contains(DOCKER_DISTRIBUTION_MANIFEST_V2))
+                requestBuilder.addHeader(ACCEPT, DOCKER_DISTRIBUTION_MANIFEST_V2)
+            if (acceptList.contains(DOCKER_DISTRIBUTION_MANIFEST_LIST_V2))
+                requestBuilder.addHeader(ACCEPT, DOCKER_DISTRIBUTION_MANIFEST_LIST_V2)
         }
         return requestBuilder.build()
     }
@@ -431,6 +439,7 @@ class OciRegistryRemoteRepository(
      */
     override fun onDownloadResponse(context: ArtifactDownloadContext, response: Response): ArtifactResource {
         logger.info("Remote download response will be processed")
+        response.header(CONTENT_TYPE)?.let { context.putAttribute(CONTENT_TYPE, it) }
         val artifactFile = createTempFile(response.body()!!)
         val size = artifactFile.getSize()
         val artifactStream = artifactFile.getInputStream().artifactStream(Range.full(size))
@@ -518,6 +527,12 @@ class OciRegistryRemoteRepository(
         val configuration = context.getRemoteConfiguration()
         if (!configuration.cache.enabled) return null
         val ociArtifactInfo = context.artifactInfo as OciArtifactInfo
+        if (
+            ociArtifactInfo is OciManifestArtifactInfo &&
+            context.getStringAttribute(CONTENT_TYPE) == DOCKER_DISTRIBUTION_MANIFEST_LIST_V2
+        ) {
+            ociArtifactInfo.isFat = true
+        }
         val fullPath = ociOperationService.getNodeFullPath(ociArtifactInfo)
         // 针对manifest文件获取会通过tag或manifest获取，避免重复创建
         fullPath?.let {

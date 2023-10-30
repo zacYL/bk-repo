@@ -31,7 +31,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 
 @ConfigurationProperties("job.artifact-push")
 class ArtifactPushJobProperties(
-    override var enabled: Boolean = true,
+    override var enabled: Boolean = false,
     /**
      * 需要进行远端分发集群推送的仓库类型
      * */

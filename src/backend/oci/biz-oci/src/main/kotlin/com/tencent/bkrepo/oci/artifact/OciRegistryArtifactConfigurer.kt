@@ -62,7 +62,7 @@ class OciRegistryArtifactConfigurer : ArtifactConfigurerSupport() {
 
     override fun getVirtualRepository(): VirtualRepository = SpringContextUtils.getBean<OciRegistryVirtualRepository>()
 
-    override fun getAuthSecurityCustomizer(): HttpAuthSecurityCustomizer = object : HttpAuthSecurityCustomizer {
+    override fun getAuthSecurityCustomizer() = object : HttpAuthSecurityCustomizer {
         override fun customize(httpAuthSecurity: HttpAuthSecurity) {
             val authenticationManager = httpAuthSecurity.authenticationManager!!
             val jwtAuthProperties = httpAuthSecurity.jwtAuthProperties!!

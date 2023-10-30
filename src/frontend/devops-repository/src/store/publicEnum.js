@@ -16,7 +16,8 @@ export const repoSupportEnum = [
     'maven',
     'npm',
     'pypi',
-    'nuget'
+    'nuget',
+    'docker'
 ]
 
 // 文件类型

@@ -39,12 +39,14 @@ import com.tencent.bkrepo.repository.dao.RepositoryDao
 import com.tencent.bkrepo.repository.model.TNode
 import com.tencent.bkrepo.repository.pojo.node.NodeDeleteResult
 import com.tencent.bkrepo.repository.pojo.node.NodeDeletedPoint
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeRestoreOption
 import com.tencent.bkrepo.repository.pojo.node.NodeRestoreResult
 import com.tencent.bkrepo.repository.pojo.node.NodeSizeInfo
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeMoveCopyRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeRenameRequest
+import com.tencent.bkrepo.repository.pojo.node.service.NodesDeleteRequest
 import com.tencent.bkrepo.repository.service.file.FileReferenceService
 import com.tencent.bkrepo.repository.service.repo.QuotaService
 import com.tencent.bkrepo.repository.service.repo.StorageCredentialService
@@ -113,6 +115,10 @@ class NodeServiceImpl(
         return NodeDeleteSupport(this).deleteNode(deleteRequest)
     }
 
+    override fun deleteNodes(nodesDeleteRequest: NodesDeleteRequest): NodeDeleteResult {
+        TODO("Not yet implemented")
+    }
+
     @Transactional(rollbackFor = [Throwable::class])
     override fun deleteByPath(
         projectId: String,
@@ -121,6 +127,15 @@ class NodeServiceImpl(
         operator: String
     ): NodeDeleteResult {
         return NodeDeleteSupport(this).deleteByPath(projectId, repoName, fullPath, operator)
+    }
+
+    override fun deleteByPaths(
+        projectId: String,
+        repoName: String,
+        fullPaths: List<String>,
+        operator: String
+    ): NodeDeleteResult {
+        return NodeDeleteSupport(this).deleteByPaths(projectId, repoName, fullPaths, operator)
     }
 
     override fun deleteBeforeDate(
@@ -145,6 +160,16 @@ class NodeServiceImpl(
     @Transactional(rollbackFor = [Throwable::class])
     override fun renameNode(renameRequest: NodeRenameRequest) {
         NodeRenameSupport(this).renameNode(renameRequest)
+    }
+
+    override fun getDeletedNodeDetail(artifact: ArtifactInfo): List<NodeDetail> {
+        return NodeRestoreSupport(this).getDeletedNodeDetail(artifact)
+    }
+
+    override fun getDeletedNodeDetailBySha256(projectId: String, repoName: String, sha256: String): NodeDetail? {
+        return NodeRestoreSupport(this).getDeletedNodeDetailBySha256(
+            projectId, repoName, sha256
+        )
     }
 
     @Transactional(rollbackFor = [Throwable::class])

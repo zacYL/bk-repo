@@ -31,6 +31,10 @@ export default {
         userName () {
             return this.userInfo.username || '<USERNAME>'
         },
+        // docker manifest 需要修改版本之前的分隔符，带有sha256:的使用@符号，其他的使用:
+        dockerSeparator () {
+            return this.versionLabel.includes('sha256:') ? '@' : ':'
+        },
         storeType () {
             return this.$route.query.storeType || ''
         },
@@ -90,7 +94,7 @@ export default {
                         {
                             subTitle: '使用如下命令去拉取制品',
                             codeList: [
-                                `docker pull ${this.domain.docker}/${this.projectId}/${this.repoName}/${this.packageName}:${this.versionLabel}`
+                                `docker pull ${this.domain.docker}/${this.projectId}/${this.repoName}/${this.packageName}${this.dockerSeparator}${this.versionLabel}`
                             ]
                         }
                     ]

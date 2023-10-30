@@ -27,13 +27,22 @@
 
 package com.tencent.bkrepo.common.artifact.interceptor
 
+import com.tencent.bkrepo.common.api.constant.DOWNLOAD_SOURCE
 import com.tencent.bkrepo.common.api.constant.HttpHeaders
 import com.tencent.bkrepo.common.artifact.constant.DownloadInterceptorType
 import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
 import com.tencent.bkrepo.common.artifact.constant.LOCK_STATUS
 import com.tencent.bkrepo.common.artifact.interceptor.config.DownloadInterceptorProperties
-import com.tencent.bkrepo.common.artifact.interceptor.impl.*
+import com.tencent.bkrepo.common.artifact.interceptor.impl.FilenameInterceptor
+import com.tencent.bkrepo.common.artifact.interceptor.impl.IpSegmentInterceptor
+import com.tencent.bkrepo.common.artifact.interceptor.impl.MetadataInterceptor
+import com.tencent.bkrepo.common.artifact.interceptor.impl.MobileInterceptor
+import com.tencent.bkrepo.common.artifact.interceptor.impl.NodeMetadataInterceptor
+import com.tencent.bkrepo.common.artifact.interceptor.impl.OfficeNetworkInterceptor
+import com.tencent.bkrepo.common.artifact.interceptor.impl.PackageMetadataInterceptor
+import com.tencent.bkrepo.common.artifact.interceptor.impl.WebInterceptor
 import com.tencent.bkrepo.common.service.util.HeaderUtils
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import org.slf4j.LoggerFactory
@@ -51,14 +60,36 @@ class DownloadInterceptorFactory(
         private lateinit var properties: DownloadInterceptorProperties
         private const val ANDROID_APP_USER_AGENT = "BKCI_APP"
         private const val IOS_APP_USER_AGENT = "com.apple.appstored"
+        private const val INTERCEPTORS = "interceptors"
+        private const val TYPE = "type"
         private val forbidRule = mapOf(
             MetadataInterceptor.METADATA to "$FORBID_STATUS:true",
             DownloadInterceptor.ALLOWED to false
         )
+
         private val lockRule = mapOf(
             MetadataInterceptor.METADATA to "$LOCK_STATUS:true",
             DownloadInterceptor.ALLOWED to false
         )
+
+        fun buildInterceptors(
+            settings: MutableMap<String, Any>
+        ): List<DownloadInterceptor<*, NodeDetail>> {
+            val interceptorList = mutableListOf<DownloadInterceptor<*, NodeDetail>>()
+            try {
+                val interceptors = settings[INTERCEPTORS] as? List<Map<String, Any>>
+                interceptors?.forEach {
+                    val type: DownloadInterceptorType = DownloadInterceptorType.valueOf(it[TYPE].toString())
+                    val rules: Map<String, Any> by it
+                    val interceptor = buildInterceptor(type, rules)
+                    interceptor?.let { interceptorList.add(interceptor) }
+                }
+                interceptorList.add(buildInterceptor(DownloadInterceptorType.NODE_FORBID)!!)
+            } catch (e: Exception) {
+                logger.warn("fail to get download interceptor by settings[$settings]: $e")
+            }
+            return interceptorList
+        }
 
         fun buildInterceptor(
             type: DownloadInterceptorType,
@@ -71,12 +102,16 @@ class DownloadInterceptorFactory(
                 type == DownloadInterceptorType.WEB && type == downloadSource -> WebInterceptor(rules)
                 type == DownloadInterceptorType.MOBILE && type == downloadSource -> MobileInterceptor(rules)
                 type == DownloadInterceptorType.OFFICE_NETWORK -> OfficeNetworkInterceptor(rules, properties)
-                type == DownloadInterceptorType.NODE_FORBID -> NodeMetadataInterceptor(forbidRule)
+                type == DownloadInterceptorType.NODE_FORBID -> buildNodeForbidInterceptor()
+                type == DownloadInterceptorType.IP_SEGMENT -> IpSegmentInterceptor(rules, properties)
                 type == DownloadInterceptorType.NODE_LOCK -> NodeMetadataInterceptor(lockRule)
                 else -> null
             }
         }
 
+        fun buildNodeForbidInterceptor(): DownloadInterceptor<*, NodeDetail> {
+            return NodeMetadataInterceptor(forbidRule)
+        }
 
         fun buildPackageInterceptor(type: DownloadInterceptorType): DownloadInterceptor<*, PackageVersion>? {
             return when(type) {
@@ -87,6 +122,10 @@ class DownloadInterceptorFactory(
         }
 
         private fun getDownloadSource(): DownloadInterceptorType {
+            val downloadSource = HttpContextHolder.getRequestOrNull()?.getAttribute(DOWNLOAD_SOURCE)?.toString()
+            if (!downloadSource.isNullOrBlank()) {
+                return DownloadInterceptorType.valueOf(downloadSource)
+            }
             val userAgent = HeaderUtils.getHeader(HttpHeaders.USER_AGENT) ?: return DownloadInterceptorType.WEB
             logger.debug("download user agent: $userAgent")
             return when {

@@ -31,45 +31,48 @@
 
 package com.tencent.bkrepo.oci.artifact.resolver
 
+import com.tencent.bkrepo.common.api.constant.HttpHeaders.CONTENT_TYPE
 import com.tencent.bkrepo.common.api.util.Preconditions
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.resolve.path.ArtifactInfoResolver
 import com.tencent.bkrepo.common.artifact.resolve.path.Resolver
+import com.tencent.bkrepo.oci.constant.DOCKER_DISTRIBUTION_MANIFEST_LIST_V2
 import com.tencent.bkrepo.oci.constant.USER_API_PREFIX
 import com.tencent.bkrepo.oci.pojo.artifact.OciManifestArtifactInfo
 import com.tencent.bkrepo.oci.pojo.digest.OciDigest
-import javax.servlet.http.HttpServletRequest
 import org.springframework.stereotype.Component
 import org.springframework.web.servlet.HandlerMapping
+import javax.servlet.http.HttpServletRequest
 
 @Component
 @Resolver(OciManifestArtifactInfo::class)
 class OciManifestArtifactInfoResolver : ArtifactInfoResolver {
+
     override fun resolve(
         projectId: String,
         repoName: String,
         artifactUri: String,
         request: HttpServletRequest
     ): ArtifactInfo {
-        val requestURL = request.requestURL
+        val requestUrl = ArtifactContextHolder.getUrlPath(this.javaClass.name)!!
         return when {
-            requestURL.contains(MANIFEST_CONTENT_PREFIX) -> {
-                val requestUrl = request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE).toString()
+            requestUrl.contains(MANIFEST_CONTENT_PREFIX) -> {
                 val artifactUrl = requestUrl.removePrefix("$USER_API_PREFIX/manifest/$projectId/$repoName/")
                 val attributes = request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE) as Map<*, *>
                 val reference = attributes["tag"].toString().trim()
                 val packageName = artifactUrl.removeSuffix("/$reference")
-                OciManifestArtifactInfo(projectId, repoName, packageName, "", reference, false)
+                OciManifestArtifactInfo(projectId, repoName, packageName, "", reference, false, false)
             }
             else -> {
-                val requestUrl = request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE).toString()
                 val packageName = requestUrl.substringBeforeLast("/manifests").removePrefix("/v2/$projectId/$repoName/")
                 val attributes = request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE) as Map<*, *>
                 // 解析tag
                 val reference = attributes["reference"].toString().trim()
                 validate(packageName)
                 val isValidDigest = OciDigest.isValid(reference)
-                OciManifestArtifactInfo(projectId, repoName, packageName, "", reference, isValidDigest)
+                val isFat = request.getHeader(CONTENT_TYPE) == DOCKER_DISTRIBUTION_MANIFEST_LIST_V2
+                OciManifestArtifactInfo(projectId, repoName, packageName, "", reference, isValidDigest, isFat)
             }
         }
     }

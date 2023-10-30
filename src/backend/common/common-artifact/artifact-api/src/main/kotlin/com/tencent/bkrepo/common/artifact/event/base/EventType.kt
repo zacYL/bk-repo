@@ -79,5 +79,8 @@ enum class EventType(val nick: String) {
 
     CVE_WHITE_ADD("添加Cve白名单"),
     CVE_WHITE_ADD_BATCH("批量添加Cve白名单"),
-    CVE_WHITE_DELETE("删除Cve白名单")
+    CVE_WHITE_DELETE("删除Cve白名单"),
+
+    // 第三方同步
+    REPLICATION_THIRD_PARTY("外部制品同步");
 }

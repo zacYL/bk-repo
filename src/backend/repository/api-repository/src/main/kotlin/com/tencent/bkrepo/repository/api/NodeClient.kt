@@ -35,6 +35,7 @@ import com.tencent.bkrepo.common.api.constant.REPOSITORY_SERVICE_NAME
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.query.model.QueryModel
+import com.tencent.bkrepo.repository.pojo.node.NodeDeleteResult
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.node.NodeListOption
@@ -131,6 +132,10 @@ interface NodeClient {
     @DeleteMapping("/delete")
     fun deleteNode(@RequestBody nodeDeleteRequest: NodeDeleteRequest): Response<Void>
 
+    @ApiOperation("删除节点")
+    @DeleteMapping("/batch/delete")
+    fun deleteNodes(@RequestBody nodesDeleteRequest: NodesDeleteRequest): Response<NodeDeleteResult>
+
     @ApiOperation("查询节点大小信息")
     @GetMapping("/size/{projectId}/{repoName}")
     fun computeSize(
@@ -184,4 +189,20 @@ interface NodeClient {
         @ApiParam(value = "是否包含元数据", required = false, defaultValue = "false")
         @RequestParam includeMetadata: Boolean = false
     ): Response<List<NodeInfo>>
+
+    @ApiOperation("查询已删除节点")
+    @GetMapping("/deleted/detail/{projectId}/{repoName}")
+    fun getDeletedNodeDetail(
+        @PathVariable projectId: String,
+        @PathVariable repoName: String,
+        @RequestParam fullPath: String
+    ): Response<List<NodeDetail>>
+
+    @ApiOperation("通过sha256查询已删除节点")
+    @GetMapping("/deletedBySha256/detail/{projectId}/{repoName}")
+    fun getDeletedNodeDetailBySha256(
+        @PathVariable projectId: String,
+        @PathVariable repoName: String,
+        @RequestParam sha256: String
+    ): Response<NodeDetail?>
 }

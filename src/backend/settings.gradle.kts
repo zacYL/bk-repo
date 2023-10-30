@@ -37,6 +37,7 @@ pluginManagement {
         maven(url = "https://mirrors.tencent.com/nexus/repository/gradle-plugins/")
         maven(url = "https://mirrors.tencent.com/nexus/repository/maven-public")
         maven(url = "https://maven.aliyun.com/repository/public")
+        maven(url = "https://repo.spring.io/milestone")
 
         maven {
             name = "canway"

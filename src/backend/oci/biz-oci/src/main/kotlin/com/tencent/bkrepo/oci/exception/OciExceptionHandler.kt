@@ -41,14 +41,16 @@ import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
 import com.tencent.bkrepo.common.security.exception.AuthenticationException
 import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
+import com.tencent.bkrepo.common.service.util.LocaleMessageUtils
 import com.tencent.bkrepo.oci.artifact.auth.OciLoginAuthHandler
 import com.tencent.bkrepo.oci.config.OciProperties
+import com.tencent.bkrepo.oci.constant.DOCKER_API_VERSION
+import com.tencent.bkrepo.oci.constant.DOCKER_HEADER_API_VERSION
 import com.tencent.bkrepo.oci.constant.UNAUTHORIZED_CODE
 import com.tencent.bkrepo.oci.constant.UNAUTHORIZED_DESCRIPTION
 import com.tencent.bkrepo.oci.constant.UNAUTHORIZED_MESSAGE
 import com.tencent.bkrepo.oci.pojo.response.OciErrorResponse
 import com.tencent.bkrepo.oci.pojo.response.OciResponse
-import javax.servlet.http.HttpServletResponse
 import org.slf4j.LoggerFactory
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
@@ -56,9 +58,10 @@ import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import javax.servlet.http.HttpServletResponse
 
 @Order(Ordered.HIGHEST_PRECEDENCE + 1)
-@RestControllerAdvice
+@RestControllerAdvice("com.tencent.bkrepo.oci")
 class OciExceptionHandler(
     private val ociProperties: OciProperties
 ) {
@@ -71,6 +74,7 @@ class OciExceptionHandler(
     fun handleException(exception: AuthenticationException) {
         val response = HttpContextHolder.getResponse()
         response.contentType = MediaTypes.APPLICATION_JSON
+        response.setHeader(DOCKER_HEADER_API_VERSION, DOCKER_API_VERSION)
         response.addHeader(
             HttpHeaders.WWW_AUTHENTICATE,
             OciLoginAuthHandler.AUTH_CHALLENGE_SERVICE_SCOPE.format(
@@ -86,56 +90,56 @@ class OciExceptionHandler(
     @ExceptionHandler(OciRepoNotFoundException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     fun handlerRepoNotFoundException(exception: OciRepoNotFoundException) {
-        val responseObject = OciErrorResponse(exception.message, exception.code, exception.detail)
-        ociResponse(responseObject, exception)
+        ociResponse(exception)
     }
 
     @ExceptionHandler(OciFileNotFoundException::class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     fun handlerOciFileNotFoundException(exception: OciFileNotFoundException) {
-        val responseObject = OciErrorResponse(exception.message, exception.code, exception.detail)
-        ociResponse(responseObject, exception)
+        ociResponse(exception)
     }
 
     @ExceptionHandler(OciBadRequestException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     fun handleException(exception: OciBadRequestException) {
-        val responseObject = OciErrorResponse(exception.message, exception.code, exception.detail)
-        ociResponse(responseObject, exception)
+        ociResponse(exception)
     }
 
     @ExceptionHandler(OciForbiddenRequestException::class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     fun handleForbiddenException(exception: OciForbiddenRequestException) {
-        val responseObject = OciErrorResponse(exception.message, exception.code, exception.detail)
-        ociResponse(responseObject, exception)
+        ociResponse(exception)
     }
 
     @ExceptionHandler(OciFileAlreadyExistsException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     fun handleException(exception: OciFileAlreadyExistsException) {
-        val responseObject = OciErrorResponse(exception.message, exception.code, exception.detail)
-        ociResponse(responseObject, exception)
+        ociResponse(exception)
     }
 
     @ExceptionHandler(ArtifactNotFoundException::class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     fun handleException(exception: ArtifactNotFoundException) {
-        val responseObject = OciErrorResponse(exception.message, exception.messageCode, null)
+        val message = LocaleMessageUtils.getLocalizedMessage(exception.messageCode, exception.params)
+        val responseObject = OciErrorResponse(message, exception.messageCode.getCode(), null)
         ociResponse(responseObject, exception)
     }
 
     @ExceptionHandler(ErrorCodeException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     fun handleException(exception: ErrorCodeException) {
-        val responseObject = OciErrorResponse(exception.message, exception.messageCode, null)
-        ociResponse(responseObject, exception)
+        ociResponse(exception)
     }
 
     @ExceptionHandler(PermissionException::class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     fun handleException(exception: PermissionException) {
-        val responseObject = OciErrorResponse(exception.message, exception.messageCode, null)
+        ociResponse(exception)
+    }
+
+    private fun ociResponse(exception: ErrorCodeException) {
+        val errorMessage = LocaleMessageUtils.getLocalizedMessage(exception.messageCode, exception.params)
+        val responseObject = OciErrorResponse(errorMessage, exception.messageCode.getCode(), null)
         ociResponse(responseObject, exception)
     }
 
@@ -144,7 +148,7 @@ class OciExceptionHandler(
         exception: Exception,
         response: HttpServletResponse? = null
     ) {
-        logOciException(exception)
+        logOciException(exception, responseObject)
         val responseString = JsonUtils.objectMapper.writeValueAsString(OciResponse.errorResponse(responseObject))
         val httpResponse = if (response == null) {
             val temp = HttpContextHolder.getResponse()
@@ -156,11 +160,12 @@ class OciExceptionHandler(
         httpResponse.writer.println(responseString)
     }
 
-    private fun logOciException(exception: Exception) {
+    private fun logOciException(exception: Exception, responseObject: OciErrorResponse) {
         val userId = HttpContextHolder.getRequest().getAttribute(USER_KEY) ?: ANONYMOUS_USER
         val uri = HttpContextHolder.getRequest().requestURI
         logger.warn(
-            "User[$userId] access oci resource[$uri] failed[${exception.javaClass.simpleName}]: ${exception.message}"
+            "User[$userId] access oci resource[$uri] failed[${exception.javaClass.simpleName}]:" +
+                " ${responseObject.message}"
         )
     }
 

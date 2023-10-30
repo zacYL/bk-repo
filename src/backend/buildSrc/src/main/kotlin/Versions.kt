@@ -60,5 +60,7 @@ object Versions {
     const val H2 = "2.1.210"
     const val Mockk = "1.12.2"
     const val Swagger = "1.6.2"
+    const val SleuthOtel = "1.0.0-M13"
     const val KubernetesClient = "11.0.2"
+    const val Jasypt = "3.0.5"
 }

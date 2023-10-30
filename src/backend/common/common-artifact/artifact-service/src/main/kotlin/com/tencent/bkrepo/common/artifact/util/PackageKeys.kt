@@ -224,6 +224,7 @@ object PackageKeys {
     fun resolveComposer(composerKey: String): String {
         return resolveName(COMPOSER, composerKey)
     }
+
     /**
      * 生成name格式key
      *
@@ -235,7 +236,7 @@ object PackageKeys {
      * @return package key
      */
     fun ofName(repositoryType: RepositoryType, name: String): String {
-        val schema = when(repositoryType) {
+        val schema = when (repositoryType) {
             RepositoryType.MAVEN -> MAVEN
             else -> repositoryType.name.toLowerCase()
         }

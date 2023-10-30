@@ -34,39 +34,37 @@ package com.tencent.bkrepo.oci.artifact.resolver
 import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.util.Preconditions
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.resolve.path.ArtifactInfoResolver
 import com.tencent.bkrepo.common.artifact.resolve.path.Resolver
 import com.tencent.bkrepo.oci.constant.OCI_TAG
-import com.tencent.bkrepo.oci.constant.USER_API_PREFIX
 import com.tencent.bkrepo.oci.pojo.artifact.OciArtifactInfo.Companion.DOCKER_CATALOG_SUFFIX
+import com.tencent.bkrepo.oci.pojo.artifact.OciArtifactInfo.Companion.TAGS_LIST_SUFFIX
 import com.tencent.bkrepo.oci.pojo.artifact.OciTagArtifactInfo
-import io.undertow.servlet.spec.HttpServletRequestImpl
-import javax.servlet.http.HttpServletRequest
 import org.springframework.stereotype.Component
 import org.springframework.web.servlet.HandlerMapping
+import javax.servlet.http.HttpServletRequest
 
 @Component
 @Resolver(OciTagArtifactInfo::class)
 class OciTagArtifactInfoResolver : ArtifactInfoResolver {
+
     override fun resolve(
         projectId: String,
         repoName: String,
         artifactUri: String,
         request: HttpServletRequest
     ): ArtifactInfo {
-        val requestURL = request.requestURL
+        val requestURL = ArtifactContextHolder.getUrlPath(this.javaClass.name)!!
         return when {
-            requestURL.contains(TAG_PREFIX) -> {
+            requestURL.contains(TAGS_LIST_SUFFIX) -> {
                 val requestUrl = request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE).toString()
-                val packageName = requestUrl.removePrefix("$USER_API_PREFIX/tag/$projectId/$repoName/")
+                val packageName = requestUrl.removePrefix("/$projectId/$repoName/v2/").removeSuffix(TAGS_LIST_SUFFIX)
                 validate(packageName)
                 val tag = request.getParameter(OCI_TAG) ?: StringPool.EMPTY
                 OciTagArtifactInfo(projectId, repoName, packageName, tag)
             }
             requestURL.contains(DOCKER_CATALOG_SUFFIX) -> {
-                val params = (request as HttpServletRequestImpl).queryParameters
-                val projectId = params?.get("projectId")?.first ?: StringPool.EMPTY
-                val repoName = params?.get("repoName")?.first ?: StringPool.EMPTY
                 OciTagArtifactInfo(projectId, repoName, StringPool.EMPTY, StringPool.EMPTY)
             }
             else -> {
@@ -87,6 +85,5 @@ class OciTagArtifactInfoResolver : ArtifactInfoResolver {
 
     companion object {
         const val PACKAGE_NAME_PATTERN = "[a-z0-9]+([._-][a-z0-9]+)*(/[a-z0-9]+([._-][a-z0-9]+)*)*"
-        const val TAG_PREFIX = "/ext/tag/"
     }
 }

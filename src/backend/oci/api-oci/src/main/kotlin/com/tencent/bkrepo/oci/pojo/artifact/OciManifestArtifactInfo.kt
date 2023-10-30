@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.oci.pojo.artifact
 
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.oci.util.OciLocationUtils
 
 class OciManifestArtifactInfo(
@@ -35,13 +36,24 @@ class OciManifestArtifactInfo(
     packageName: String,
     version: String,
     val reference: String,
-    val isValidDigest: Boolean
+    val isValidDigest: Boolean,
+    // is manifest list
+    var isFat: Boolean
 ) : OciArtifactInfo(projectId, repoName, packageName, version) {
     override fun getArtifactFullPath(): String {
         return if (isValidDigest) {
-            OciLocationUtils.buildDigestManifestPathWithReference(packageName, reference)
+            // PUT 请求时取 digest 做为tag名
+            if (HttpContextHolder.getRequest().method.equals("PUT", ignoreCase = true)) {
+                OciLocationUtils.buildManifestPath(packageName, reference)
+            } else {
+                OciLocationUtils.buildDigestManifestPathWithReference(packageName, reference)
+            }
         } else {
-            OciLocationUtils.buildManifestPath(packageName, reference)
+            if (isFat) {
+                OciLocationUtils.buildManifestListPath(packageName, reference)
+            } else {
+                OciLocationUtils.buildManifestPath(packageName, reference)
+            }
         }
     }
 }

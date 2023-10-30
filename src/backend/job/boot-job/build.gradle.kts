@@ -25,14 +25,18 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 dependencies {
+    implementation(project(":job:api-job"))
     implementation(project(":common:common-service"))
     implementation(project(":common:common-job"))
     implementation(project(":common:common-security"))
     implementation(project(":common:common-storage:storage-service"))
+    implementation(project(":common:common-stream"))
+    implementation(project(":common:common-redis"))
     implementation(project(":repository:api-repository"))
     implementation(project(":helm:api-helm"))
+    implementation(project(":oci:api-oci"))
     implementation(project(":replication:api-replication"))
-    implementation(project(":job:api-job"))
+    implementation(project(":common:common-operate:operate-service"))
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
     implementation("io.micrometer:micrometer-registry-prometheus")
     testImplementation("org.springframework.boot:spring-boot-starter-test")

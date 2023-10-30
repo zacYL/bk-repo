@@ -33,9 +33,10 @@ package com.tencent.bkrepo.oci.artifact.resolver
 
 import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
-import com.tencent.bkrepo.common.artifact.config.ArtifactConfigurerSupport
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.resolve.path.ArtifactInfoResolver
 import com.tencent.bkrepo.common.artifact.resolve.path.Resolver
+import com.tencent.bkrepo.oci.artifact.OciRegistryArtifactConfigurer
 import com.tencent.bkrepo.oci.constant.NAME
 import com.tencent.bkrepo.oci.constant.PACKAGE_KEY
 import com.tencent.bkrepo.oci.constant.VERSION
@@ -48,8 +49,9 @@ import javax.servlet.http.HttpServletRequest
 @Component
 @Resolver(OciDeleteArtifactInfo::class)
 class OciDeleteArtifactInfoResolver(
-    private val artifactConfigurerSupport: ArtifactConfigurerSupport
+    private val artifactConfigurerSupport: OciRegistryArtifactConfigurer
 ) : ArtifactInfoResolver {
+
     override fun resolve(
         projectId: String,
         repoName: String,
@@ -57,7 +59,7 @@ class OciDeleteArtifactInfoResolver(
         request: HttpServletRequest
     ): ArtifactInfo {
         // 判断是客户端的请求还是页面发送的请求分别进行处理
-        val requestURL = request.requestURL
+        val requestURL = ArtifactContextHolder.getUrlPath(this.javaClass.name)!!
         return when {
             // 页面删除包请求
             requestURL.contains(PACKAGE_DELETE_PREFIX) -> {

@@ -51,10 +51,12 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Scheduled
+import org.springframework.stereotype.Component
 
 /**
  * 构件传输事件监听器
  */
+@Component // 使用kotlin时，spring aop对@Import导入的bean不生效
 class ArtifactTransferListener(
     private val influxMetricsExporter: ObjectProvider<InfluxMetricsExporter>
 ) {

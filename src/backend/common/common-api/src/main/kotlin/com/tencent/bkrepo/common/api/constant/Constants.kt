@@ -96,4 +96,22 @@ const val RPM_SERVICE_NAME = "\${service.prefix:repo-}rpm\${service.suffix:}"
 const val SCANNER_SERVICE_NAME = "\${service.prefix:repo-}analyst\${service.suffix:}"
 const val ANALYSIS_EXECUTOR_SERVICE_NAME = "\${service.prefix:repo-}analysis-executor\${service.suffix:}"
 const val LICENSE_SERVICE_NAME = "\${service-prefix:}license\${service-suffix:}"
-const val JOB_SERVICE_NAME = "\${service.prefix:}job\${service.suffix:}"
+const val JOB_SERVICE_NAME = "\${service.prefix:repo-}job\${service.suffix:}"
+const val OCI_SERVICE_NAME = "\${service.prefix:repo-}docker\${service.suffix:}"
+
+/**
+ * 认证相关
+ */
+const val BASIC_AUTH_PREFIX = "Basic "
+const val BASIC_AUTH_PROMPT = "Basic realm=\"Authentication Required\""
+const val PLATFORM_AUTH_PREFIX = "Platform "
+const val BEARER_AUTH_PREFIX = "Bearer "
+const val AUTH_HEADER_UID = "X-BKREPO-UID"
+const val OAUTH_AUTH_PREFIX = "Oauth "
+const val TEMPORARY_TOKEN_AUTH_PREFIX = "Temporary "
+
+/**
+ * 验证是否允许下载时，写入request attributes的key
+ */
+const val CLIENT_ADDRESS = "clientAddress"
+const val DOWNLOAD_SOURCE = "downloadSource"

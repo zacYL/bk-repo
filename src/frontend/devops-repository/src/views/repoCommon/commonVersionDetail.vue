@@ -23,16 +23,17 @@
                         </span>
                     </template>
                 </div>
+                <div v-if="detail.basic.os" class="package-name grid-item">
+                    <label>OS/ARCH</label>
+                    <span class="flex-1 text-overflow" :title="detail.basic.os.join()">{{ detail.basic.os.join() }}</span>
+                </div>
                 <template v-if="detail.basic.version">
                     <div class="grid-item"
                         v-for="{ name, label, value } in detailInfoMap"
                         :key="name">
                         <label>{{ label }}</label>
                         <span class="flex-1 flex-align-center text-overflow">
-                            <template v-if="name === 'os'">
-                                <span>{{ value.join() }}</span>
-                            </template>
-                            <span v-else class="text-overflow" :title="value">{{ value }}</span>
+                            <span class="text-overflow" :title="value">{{ value }}</span>
                             <template v-if="name === 'version'">
                                 <span class="ml5 repo-tag"
                                     v-for="tag in detail.basic.stageTag"
@@ -248,8 +249,8 @@
             ...mapState(['userList', 'permission', 'scannerSupportPackageType']),
             detailInfoMap () {
                 return [
+                    // { name: 'os', label: 'OS/ARCH' },
                     { name: 'version', label: this.$t('version') },
-                    { name: 'os', label: 'OS/ARCH' },
                     { name: 'fullPath', label: this.$t('path') },
                     { name: 'size', label: this.$t('size') },
                     { name: 'downloadCount', label: this.$t('downloads') },

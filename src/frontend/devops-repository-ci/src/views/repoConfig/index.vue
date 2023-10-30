@@ -2,7 +2,7 @@
     <div class="repo-config-container" v-bkloading="{ isLoading }">
         <bk-tab v-if="showTabPanel" class="repo-config-tab page-tab" type="unborder-card" :active.sync="tabName">
             <bk-tab-panel name="baseInfo" :label="$t('repoBaseInfo')">
-                <bk-form ref="repoBaseInfo" class="repo-base-info" :label-width="120" :model="repoBaseInfo" :rules="rules">
+                <bk-form ref="repoBaseInfo" class="repo-base-info" :label-width="150" :model="repoBaseInfo" :rules="rules">
                     <bk-form-item :label="$t('repoName')">
                         <div class="flex-align-center">
                             <icon size="20" :name="repoBaseInfo.repoType || repoType" />
@@ -19,14 +19,14 @@
                         <span>{{repoAddress}}</span>
                     </bk-form-item>
                     <template v-if="repoBaseInfo.category === 'REMOTE'">
-                        <bk-form-item :label="$t('address')" :required="true" property="url" error-display-type="normal">
+                        <bk-form-item :label="$t('remoteProxyAddress')" :required="true" property="url" error-display-type="normal">
                             <bk-input style="width:400px" v-model.trim="repoBaseInfo.url"></bk-input>
                             <bk-button theme="primary" :disabled="disableTestUrl" @click="onClickTestRemoteUrl">{{ $t('testRemoteUrl') }}</bk-button>
                         </bk-form-item>
-                        <bk-form-item :label="$t('account')" property="credentials.username" error-display-type="normal">
+                        <bk-form-item :label="$t('remoteProxyAccount')" property="credentials.username" error-display-type="normal">
                             <bk-input style="width:400px" v-model.trim="repoBaseInfo.credentials.username"></bk-input>
                         </bk-form-item>
-                        <bk-form-item :label="$t('password')" property="credentials.password" error-display-type="normal">
+                        <bk-form-item :label="$t('remoteProxyPassword')" property="credentials.password" error-display-type="normal">
                             <bk-input style="width:400px" type="password" v-model.trim="repoBaseInfo.credentials.password"></bk-input>
                         </bk-form-item>
                         <bk-form-item :label="$t('networkProxy')" property="switcher">
@@ -52,10 +52,10 @@
                                 </bk-input>
                                 <p class="form-error-tip" v-if="errorProxyPortInfo">{{$t('repositoryProxyPortInfo')}}</p>
                             </bk-form-item>
-                            <bk-form-item :label="$t('account')" property="network.proxy.username">
+                            <bk-form-item :label="$t('networkAccount')" property="network.proxy.username">
                                 <bk-input style="width:400px" v-model.trim="repoBaseInfo.network.proxy.username"></bk-input>
                             </bk-form-item>
-                            <bk-form-item :label="$t('password')" property="network.proxy.password">
+                            <bk-form-item :label="$t('networkPassword')" property="network.proxy.password">
                                 <bk-input style="width:400px" type="password" v-model.trim="repoBaseInfo.network.proxy.password"></bk-input>
                             </bk-form-item>
                         </template>

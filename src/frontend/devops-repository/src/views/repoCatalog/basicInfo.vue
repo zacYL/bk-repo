@@ -1,6 +1,6 @@
 <template>
     <div class="repo-config-container">
-        <bk-form ref="repoBaseInfo" class="repo-base-info" :label-width="120" v-if="nodeType === 'depot'">
+        <bk-form ref="repoBaseInfo" class="repo-base-info" :label-width="150" v-if="nodeType === 'depot'">
             <bk-form-item :label="$t('repoName')">
                 <div class="flex-align-center">
                     <icon size="20" :name="detailInfo.repoType || repoType" />
@@ -17,13 +17,13 @@
                 <span>{{repoAddress}}</span>
             </bk-form-item>
             <template v-if="detailInfo.category === 'REMOTE'">
-                <bk-form-item :label="$t('address')">
+                <bk-form-item :label="$t('remoteProxyAddress')">
                     <bk-input :disabled="true" style="width:400px" v-model.trim="detailInfo.url"></bk-input>
                 </bk-form-item>
-                <bk-form-item :label="$t('account')">
+                <bk-form-item :label="$t('remoteProxyAccount')">
                     <bk-input :disabled="true" style="width:400px" v-model.trim="detailInfo.credentials.username"></bk-input>
                 </bk-form-item>
-                <bk-form-item :label="$t('password')">
+                <bk-form-item :label="$t('remoteProxyPassword')">
                     <bk-input :disabled="true" style="width:400px" type="password" v-model.trim="detailInfo.credentials.password"></bk-input>
                 </bk-form-item>
                 <bk-form-item :label="$t('networkProxy')">
@@ -39,10 +39,10 @@
                     <bk-form-item :label="$t('port')">
                         <bk-input :disabled="true" style="width:400px" type="number" :max="65535" :min="1" v-model.trim="detailInfo.network.proxy.port"></bk-input>
                     </bk-form-item>
-                    <bk-form-item :label="$t('account')">
+                    <bk-form-item :label="$t('networkAccount')">
                         <bk-input :disabled="true" style="width:400px" v-model.trim="detailInfo.network.proxy.username"></bk-input>
                     </bk-form-item>
-                    <bk-form-item :label="$t('password')">
+                    <bk-form-item :label="$t('networkPassword')">
                         <bk-input :disabled="true" style="width:400px" type="password" v-model.trim="detailInfo.network.proxy.password"></bk-input>
                     </bk-form-item>
                 </template>

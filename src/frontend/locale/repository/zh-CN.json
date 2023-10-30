@@ -298,5 +298,10 @@
     "scan": "扫描",
     "artifact":"制品",
     "scanArtifactNum":"扫描制品数",
-    "remoteArtifactUrlInfo":"不允许填写当前远程仓库地址"
+    "remoteArtifactUrlInfo":"不允许填写当前远程仓库地址",
+    "remoteProxyAddress":"远程代理地址",
+    "remoteProxyAccount":"代理地址账号",
+    "remoteProxyPassword":"代理地址密码",
+    "networkAccount":"网络代理账号",
+    "networkPassword":"网络代理密码"
 }

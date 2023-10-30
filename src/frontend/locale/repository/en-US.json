@@ -290,5 +290,10 @@
     "scan": "Scan",
     "artifact":"Artifact",
     "scanArtifactNum":"Artifacts scanned quantity",
-    "remoteArtifactUrlInfo":"Not allowed to fill in the current remote artifact address"
+    "remoteArtifactUrlInfo":"Not allowed to fill in the current remote artifact address",
+    "remoteProxyAddress":"Remote proxy address",
+    "remoteProxyAccount":"Proxy account",
+    "remoteProxyPassword":"Proxy password",
+    "networkAccount":"Network account",
+    "networkPassword":"Network password"
 }

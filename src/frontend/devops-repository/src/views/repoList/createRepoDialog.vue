@@ -5,7 +5,7 @@
         height-num="700"
         :title="title"
         @cancel="cancel">
-        <bk-form class="mr10 repo-base-info" :label-width="140" :model="repoBaseInfo" :rules="rules" ref="repoBaseInfo">
+        <bk-form class="mr10 repo-base-info" :label-width="150" :model="repoBaseInfo" :rules="rules" ref="repoBaseInfo">
             <bk-form-item :label="$t('repoType')" :required="true" property="type" error-display-type="normal">
                 <bk-radio-group v-model="repoBaseInfo.type" class="repo-type-radio-group" @change="changeRepoType">
                     <bk-radio-button v-for="repo in filterRepoEnum" :key="repo" :value="repo">
@@ -26,14 +26,14 @@
                 <div v-if="repoBaseInfo.type === 'docker'" class="form-tip">docker仓库名称不支持大写英文字母</div>
             </bk-form-item>
             <template v-if="storeType === 'remote'">
-                <bk-form-item :label="$t('address')" :required="true" property="url" error-display-type="normal">
+                <bk-form-item :label="$t('remoteProxyAddress')" :required="true" property="url" error-display-type="normal">
                     <bk-input style="width:400px" v-model.trim="repoBaseInfo.url"></bk-input>
                     <bk-button theme="primary" :disabled="disableTestUrl" @click="onClickTestRemoteUrl">{{ $t('testRemoteUrl') }}</bk-button>
                 </bk-form-item>
-                <bk-form-item :label="$t('account')" property="credentials.username" error-display-type="normal">
+                <bk-form-item :label="$t('remoteProxyAccount')" property="credentials.username" error-display-type="normal">
                     <bk-input style="width:400px" v-model.trim="repoBaseInfo.credentials.username"></bk-input>
                 </bk-form-item>
-                <bk-form-item :label="$t('password')" property="credentials.password" error-display-type="normal">
+                <bk-form-item :label="$t('remoteProxyPassword')" property="credentials.password" error-display-type="normal">
                     <bk-input style="width:400px" type="password" v-model.trim="repoBaseInfo.credentials.password"></bk-input>
                 </bk-form-item>
                 <bk-form-item :label="$t('networkProxy')" property="switcher">
@@ -59,10 +59,10 @@
                         ></bk-input>
                         <p class="form-error-tip" v-if="errorProxyPortInfo">{{$t('repositoryProxyPortInfo')}}</p>
                     </bk-form-item>
-                    <bk-form-item :label="$t('account')" property="network.proxy.username">
+                    <bk-form-item :label="$t('networkAccount')" property="network.proxy.username">
                         <bk-input style="width:400px" v-model.trim="repoBaseInfo.network.proxy.username"></bk-input>
                     </bk-form-item>
-                    <bk-form-item :label="$t('password')" property="network.proxy.password">
+                    <bk-form-item :label="$t('networkPassword')" property="network.proxy.password">
                         <bk-input style="width:400px" type="password" v-model.trim="repoBaseInfo.network.proxy.password"></bk-input>
                     </bk-form-item>
                 </template>

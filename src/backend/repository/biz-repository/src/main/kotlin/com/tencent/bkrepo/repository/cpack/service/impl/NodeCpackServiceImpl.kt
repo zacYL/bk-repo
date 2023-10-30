@@ -3,6 +3,8 @@ package com.tencent.bkrepo.repository.cpack.service.impl
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.toJsonString
+import com.tencent.bkrepo.common.artifact.constant.LOCK_STATUS
+import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
 import com.tencent.bkrepo.repository.cpack.pojo.node.service.NodeBatchDeleteRequest
@@ -85,7 +87,12 @@ class NodeCpackServiceImpl(
                 .and(TNode::deleted).isEqualTo(null)
                 .and(TNode::fullPath).inValues(fullPaths)
             val checkQuery = Query(checkCriteria)
-            return nodeDao.find(checkQuery).map { it.fullPath }
+            val node=nodeDao.find(checkQuery)
+            if (node.any { it.metadata?.any { it.key == LOCK_STATUS && it.value == true } == true }) {
+                val errorCode = if (node.size == 1) ArtifactMessageCode.NODE_LOCK else ArtifactMessageCode.NODE_CHILD_LOCK
+                throw ErrorCodeException(errorCode,fullPaths)
+            }
+            return node.map { it.fullPath }
         }
     }
 

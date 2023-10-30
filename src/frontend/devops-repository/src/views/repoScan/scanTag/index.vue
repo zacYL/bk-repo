@@ -30,7 +30,7 @@
                 v-for="scan in scanList"
                 :key="scan.id">
                 <div class="flex-align-center">
-                    <Icon v-bk-tooltips="{ content: scanStatusEnum[scan.status] || $t('unScanned'), placements: ['bottom-start'] }" size="16" :name="`scan-${(scan.status || 'INIT').toLowerCase()}`" />
+                    <Icon v-bk-tooltips="{ content: scanStatusEnum[scan.status] ? $t(`scanStatusEnum.${scan.status}`) : $t('unScanned'), placements: ['bottom-start'] }" size="16" :name="`scan-${(scan.status || 'INIT').toLowerCase()}`" />
                     <span class="ml5 text-overflow" style="max-width:150px;" :title="scan.name">{{ scan.name }}</span>
                 </div>
                 <bk-button text theme="primary" :disabled="!['UN_QUALITY', 'QUALITY_PASS', 'QUALITY_UNPASS'].includes(scan.status)" @click="toReport(scan)">{{$t('viewDetails')}}</bk-button>
@@ -115,6 +115,7 @@
 <style lang="scss" scoped>
 .scan-tag-container {
     font-size: 0;
+    vertical-align: middle;
     &:not(.readonly) {
         cursor: pointer;
     }

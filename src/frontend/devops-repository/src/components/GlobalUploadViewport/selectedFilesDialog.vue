@@ -1,19 +1,19 @@
 <template>
     <canway-dialog
         v-model="show"
-        width="520"
+        width="600"
         height-num="450"
         @cancel="cancel">
         <template #header>
             <div class="flex-align-center">
-                <span class="mr10 canway-dialog-title">上传文件</span>
+                <span class="mr10 canway-dialog-title">{{$t('uploadFile')}}</span>
                 <span class="repo-tag" v-bk-tooltips=" { content: rootData.fullPath || '/', placements: ['bottom'] ,disabled: !rootData.fullPath }">{{ rootData.fullPath || '/' }}</span>
             </div>
         </template>
         <div class="flex-between-center">
-            <bk-button @click="selectFiles">继续上传</bk-button>
+            <bk-button @click="selectFiles">{{$t('continueUploading')}}</bk-button>
             <div class="flex-align-center">
-                <label style="white-space:nowrap;">对当前路径内的同名文件覆盖：</label>
+                <label style="white-space:nowrap;">{{$t('fileSameNameOverwrites')}}: </label>
                 <bk-radio-group v-model="overwrite">
                     <bk-radio class="ml20" :value="true">{{ $t('allow') }}</bk-radio>
                     <bk-radio class="ml20" :value="false">{{ $t('notAllow') }}</bk-radio>
@@ -33,9 +33,9 @@
             <bk-table-column :label="$t('size')" width="90" show-overflow-tooltip>
                 <template #default="{ row }">{{ convertFileSize(row.size) }}</template>
             </bk-table-column>
-            <bk-table-column :label="$t('operation')" width="70">
+            <bk-table-column :label="$t('operation')" width="100">
                 <template #default="{ $index }">
-                    <bk-button text theme="primary" @click="selectedFiles.splice($index, 1)">移除</bk-button>
+                    <bk-button text theme="primary" @click="selectedFiles.splice($index, 1)">{{$t('remove')}}</bk-button>
                 </template>
             </bk-table-column>
         </bk-table>

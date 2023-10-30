@@ -25,7 +25,7 @@
             </bk-table-column>
             <bk-table-column :label="$t('operation')" width="100">
                 <template #default="{ row }">
-                    <bk-button v-if="row.folder" text @click="openFolder(row)">打开</bk-button>
+                    <bk-button v-if="row.folder" text @click="openFolder(row)">{{$t('openBtn')}}</bk-button>
                     <div v-else v-bk-tooltips="{ disabled: handlerPreview(row), content: $t('supportPreview') }">
                         <bk-button text :disabled="!handlerPreview(row)" @click="handlerPreview(row, true)">
                             {{ $t('preview') }}

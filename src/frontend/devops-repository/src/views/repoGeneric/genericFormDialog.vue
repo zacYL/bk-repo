@@ -10,21 +10,21 @@
                 <bk-form-item :label="$t('createFolderLabel')" :required="true" property="path" error-display-type="normal">
                     <bk-input v-model.trim="genericForm.path"
                         type="textarea" :rows="6"
-                        :placeholder="$t('folderPathPlacehodler')">
+                        :placeholder="$t('folderPathPlaceholder')">
                     </bk-input>
-                    <div class="form-tip">支持 / 分隔符级联创建文件夹</div>
+                    <div class="form-tip">{{$t('genericFormTip')}}</div>
                 </bk-form-item>
             </template>
             <template v-else-if="genericForm.type === 'rename'">
-                <bk-form-item :label="$t('file') + $t('name')" :required="true" property="name" error-display-type="normal">
-                    <bk-input v-model.trim="genericForm.name" :placeholder="$t('folderNamePlacehodler')" maxlength="255" show-word-limit></bk-input>
+                <bk-form-item :label="$t('file') + $t('space') + $t('name')" :required="true" property="name" error-display-type="normal">
+                    <bk-input v-model.trim="genericForm.name" :placeholder="$t('folderNamePlaceholder')" maxlength="255" show-word-limit></bk-input>
                 </bk-form-item>
             </template>
             <template v-else-if="genericForm.type === 'scan'">
-                <bk-form-item label="扫描方案" :required="true" property="id" error-display-type="normal">
+                <bk-form-item :label="$t('scanScheme')" :required="true" property="id" error-display-type="normal">
                     <bk-select
                         v-model="genericForm.id"
-                        placeholder="请选择扫描方案">
+                        :placeholder="$t('scanningSchemeTip')">
                         <bk-option v-for="scan in scanList" :key="scan.id" :id="scan.id" :name="scan.name"></bk-option>
                     </bk-select>
                 </bk-form-item>
@@ -56,31 +56,31 @@
                     path: [
                         {
                             required: true,
-                            message: this.$t('pleaseInput') + this.$t('folder') + this.$t('path'),
+                            message: this.$t('pleaseInput') + this.$t('space') + this.$t('folder') + this.$t('space') + this.$t('path'),
                             trigger: 'blur'
                         },
                         {
                             regex: /^(\/[^\\:*?"<>|]{1,255})+$/,
-                            message: this.$t('folderPathPlacehodler'),
+                            message: this.$t('folderPathPlaceholder'),
                             trigger: 'blur'
                         }
                     ],
                     name: [
                         {
                             required: true,
-                            message: this.$t('pleaseInput') + this.$t('fileName'),
+                            message: this.$t('pleaseInput') + this.$t('space') + this.$t('fileName'),
                             trigger: 'blur'
                         },
                         {
                             regex: /^([^\\/:*?"<>|]){1,255}$/,
-                            message: this.$t('folderNamePlacehodler'),
+                            message: this.$t('folderNamePlaceholder'),
                             trigger: 'blur'
                         }
                     ],
                     id: [
                         {
                             required: true,
-                            message: this.$t('pleaseSelect') + '扫描方案',
+                            message: this.$t('pleaseSelect') + this.$t('space') + this.$t('scanScheme'),
                             trigger: 'change'
                         }
                     ]
@@ -163,7 +163,7 @@
                 switch (this.genericForm.type) {
                     case 'add':
                         fn = this.submitAddFolder()
-                        message = this.$t('create') + this.$t('folder')
+                        message = this.$t('create') + this.$t('space') + this.$t('folder')
                         break
                     case 'rename':
                         fn = this.submitRenameNode()
@@ -171,14 +171,14 @@
                         break
                     case 'scan':
                         fn = this.submitScanFile()
-                        message = '加入扫描队列'
+                        message = this.$t('joinScanMsg')
                         break
                 }
                 fn.then(() => {
                     this.$emit('refresh')
                     this.$bkMessage({
                         theme: 'success',
-                        message: message + this.$t('success')
+                        message: message + this.$t('space') + this.$t('success')
                     })
                     this.genericForm.show = false
                 }).finally(() => {

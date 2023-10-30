@@ -1,7 +1,7 @@
 <template>
     <div class="repo-search-container">
         <bk-form :label-width="100" form-type="inline" :model="repoSearchConditionInfo" ref="repoSearchConditionInfo">
-            <bk-form-item :label="$t('searchRepoType')">
+            <bk-form-item :label="$t('repoType')">
                 <!-- 制品类型下拉筛选项 -->
                 <div class="type-select-container flex-align-center"
                     :class="{ 'active': showDropdown }"

@@ -1,8 +1,8 @@
 <template>
-    <bk-tab class="common-version-container" type="unborder-card" :active.sync="tabName" v-bkloading="{ isLoading }">
+    <bk-tab class="common-version-container" type="unborder-card" :active.sync="tabName" @tab-change="tabChange" v-bkloading="{ isLoading }">
         <template #setting>
             <bk-button v-if="!metadataMap.forbidStatus && repoType !== 'docker'"
-                outline class="mr10" @click="$emit('download')">下载</bk-button>
+                outline class="mr10" @click="$emit('download')">{{$t('download')}}</bk-button>
             <operation-list class="mr20"
                 :list="operationBtns">
                 <bk-button icon="ellipsis"></bk-button>
@@ -11,13 +11,13 @@
         <bk-tab-panel v-if="detail.basic" name="basic" :label="$t('baseInfo')">
             <div class="version-base-info base-info display-block" :data-title="$t('baseInfo')">
                 <div class="package-name grid-item">
-                    <label>制品名称</label>
+                    <label>{{$t('artifactName')}}</label>
                     <span class="flex-1 flex-align-center text-overflow">
                         <span class="text-overflow" :title="packageName">{{ packageName }}</span>
                         <span v-if="detail.basic.groupId" class="ml5 repo-tag"> {{ detail.basic.groupId }} </span>
                     </span>
                     <template v-if="storeType === 'virtual'">
-                        <label class="grid-store-source">仓库来源</label>
+                        <label class="grid-store-source">{{$t('repositorySource')}}</label>
                         <span class="flex-1 flex-align-center text-overflow">
                             <span class="text-overflow" :title="sourceRepoName || repoName">{{ sourceRepoName || repoName }}</span>
                         </span>
@@ -53,7 +53,7 @@
                     </div>
                 </template>
                 <div class="package-description grid-item">
-                    <label>描述</label>
+                    <label>{{$t('description')}}</label>
                     <span class="flex-1 text-overflow" :title="detail.basic.description">{{ detail.basic.description || '' }}</span>
                 </div>
             </div>
@@ -74,7 +74,7 @@
                 </div>
             </div>
         </bk-tab-panel>
-        <bk-tab-panel v-if="detail.basic.readme" name="readme" label="详细描述">
+        <bk-tab-panel v-if="detail.basic.readme" name="readme" :label="$t('readMe')">
             <div class="version-detail-readme" v-html="readmeContent"></div>
         </bk-tab-panel>
         <bk-tab-panel v-if="detail.metadata" name="metadata" :label="$t('metaData')">
@@ -82,6 +82,7 @@
                 <!-- 虚拟仓库及软件源模式下不支持更新元数据 -->
                 <metadataDialog v-if="storeType !== 'virtual' && !whetherSoftware && !hasLockMetadata" ref="metadataDialogRef" @add-metadata="addMetadataHandler"></metadataDialog>
                 <bk-table
+                    v-if="showMetadataTable"
                     :data="metadataDataList"
                     :outer-border="false"
                     :row-border="false"
@@ -229,20 +230,21 @@
                     key: [
                         {
                             required: true,
-                            message: this.$t('pleaseInput') + this.$t('key'),
+                            message: this.$t('pleaseInput') + this.$t('space') + this.$t('key'),
                             trigger: 'blur'
                         }
                     ],
                     value: [
                         {
                             required: true,
-                            message: this.$t('pleaseInput') + this.$t('value'),
+                            message: this.$t('pleaseInput') + this.$t('space') + this.$t('value'),
                             trigger: 'blur'
                         }
                     ]
                 },
                 detailType: '', // maven仓库显示依赖tab项的repoType，但不能直接用repoType，直接用会导致依赖这个tab项出现在其余的tab项之前
-                isEmpty
+                isEmpty,
+                showMetadataTable: true // 用于控制元数据列表table是否显示
             }
         },
         computed: {
@@ -281,12 +283,12 @@
                 return [
                     ...(!metadataMap.forbidStatus
                         ? [
-                            (this.permission.edit && !(this.storeType === 'remote') && !(this.storeType === 'virtual') && !metadataMap.lockStatus) && { clickEvent: () => this.$emit('tag'), label: '晋级', disabled: (basic.stageTag || '').includes('@release') },
+                            (this.permission.edit && !(this.storeType === 'remote') && !(this.storeType === 'virtual') && !metadataMap.lockStatus) && { clickEvent: () => this.$emit('tag'), label: this.$t('upgrade'), disabled: (basic.stageTag || '').includes('@release') },
                             this.showRepoScan && { clickEvent: () => this.$emit('scan'), label: this.$t('scan') }
                         ]
                         : []),
-                    !this.whetherSoftware && !(this.storeType === 'virtual') && { clickEvent: () => this.$emit('forbid'), label: metadataMap.forbidStatus ? this.$t('remove') + this.$t('space') + this.$t('forbid') : this.$t('forbid') },
-                    !this.whetherSoftware && !(this.storeType === 'virtual') && { clickEvent: () => this.$emit('lock'), label: metadataMap.lockStatus ? this.$t('remove') + this.$t('space') + this.$t('lock') : this.$t('lock') },
+                    !this.whetherSoftware && !(this.storeType === 'virtual') && { clickEvent: () => this.$emit('forbid'), label: metadataMap.forbidStatus ? this.$t('relieve') + this.$t('space') + this.$t('forbid') : this.$t('forbid') },
+                    !this.whetherSoftware && !(this.storeType === 'virtual') && { clickEvent: () => this.$emit('lock'), label: metadataMap.lockStatus ? this.$t('relieve') + this.$t('space') + this.$t('lock') : this.$t('lock') },
                     (this.permission.delete && !this.whetherSoftware && !(this.storeType === 'virtual') && !metadataMap.lockStatus) && { clickEvent: () => this.$emit('delete'), label: this.$t('delete') }
                 ]
             },
@@ -399,6 +401,15 @@
                     })
                     this.getDetail()
                 })
+            },
+            tabChange () {
+                // 用于解决metadata在某些情况下列表错位，无法完整显示元数据列表内容
+                if (this.tabName === 'metadata') {
+                    this.showMetadataTable = false
+                    this.$nextTick(() => {
+                        this.showMetadataTable = true
+                    })
+                }
             }
         }
     }
@@ -421,7 +432,7 @@
             }
             > label {
                 line-height: 40px;
-                flex-basis: 80px;
+                flex-basis: 126px;
                 flex-shrink: 0;
                 background-color: var(--bgColor);
             }

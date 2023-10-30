@@ -57,7 +57,7 @@
                         :native-attributes="{
                             autocomplete: 'new-password'
                         }"
-                        :placeholder="$t('pwdPlacehodler')"
+                        :placeholder="$t('pwdPlaceholder')"
                         left-icon="bk-icon icon-lock">
                     </bk-input>
                 </bk-form-item>
@@ -126,14 +126,14 @@
                         },
                         {
                             min: 8,
-                            message: this.$t('pwdPlacehodler'),
+                            message: this.$t('pwdPlaceholder'),
                             trigger: 'blur'
                         },
                         {
                             validator: str => {
                                 return str.search(/ /) === -1 && [/[0-9]/, /[a-z]/, /[A-Z]/, /[\W_]/].map(reg => str.search(reg)).every(v => v !== -1)
                             },
-                            message: this.$t('pwdPlacehodler'),
+                            message: this.$t('pwdPlaceholder'),
                             trigger: 'blur'
                         }
                     ],

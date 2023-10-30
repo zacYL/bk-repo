@@ -3,12 +3,12 @@
         :value="show"
         width="800"
         height-num="561"
-        title="添加制品"
+        :title="$t('addArtifact')"
         @cancel="$emit('cancel')"
         @confirm="confirmPackageData">
         <div class="search-package" v-bkloading="{ isLoading }">
             <bk-transfer
-                :title="['制品列表', '已选制品']"
+                :title="[$t('artifactList'), $t('selectedArtifact')]"
                 :source-list="packageList"
                 :target-list="targetList"
                 display-key="key"
@@ -140,7 +140,7 @@
                 } else {
                     this.$bkMessage({
                         theme: 'error',
-                        message: '请选择制品版本'
+                        message: this.$t('pleaseSelect') + this.$t('space') + this.$t('artifactVersion')
                     })
                 }
             }

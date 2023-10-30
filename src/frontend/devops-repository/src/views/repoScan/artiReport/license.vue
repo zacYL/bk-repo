@@ -5,14 +5,14 @@
                 class="w250"
                 v-model.trim="filter.licenseId"
                 clearable
-                placeholder="请输入许可证名称, 按Enter键搜索"
+                :placeholder="$t('licensePlaceholder')"
                 right-icon="bk-icon icon-search"
                 @enter="handlerPaginationChange()"
                 @clear="handlerPaginationChange()">
             </bk-input>
             <div class="flex-1 flex-end-center">
-                <bk-button class="mr10" theme="default" @click="exportReport">导出报告</bk-button>
-                <bk-button theme="default" @click="$emit('rescan')">重新扫描</bk-button>
+                <bk-button class="mr10" theme="default" @click="exportReport">{{$t('exportReport')}}</bk-button>
+                <bk-button theme="default" @click="$emit('rescan')">{{$t('rescan')}}</bk-button>
             </div>
         </div>
         <bk-table
@@ -27,35 +27,35 @@
                 <empty-data
                     :is-loading="isLoading"
                     :search="Boolean(filter.licenseId)"
-                    title="未扫描到证书信息">
+                    :title="$t('noCrtTitle')">
                 </empty-data>
             </template>
             <bk-table-column type="expand" width="30">
                 <template #default="{ row }">
-                    <div class="leak-title">证书信息</div>
+                    <div class="leak-title">{{$t('licenseInfo')}}</div>
                     <div class="leak-tip">
                         <a :href="row.description" target="_blank">{{ row.description || '/' }}</a>
                     </div>
                 </template>
             </bk-table-column>
-            <bk-table-column label="名称">
+            <bk-table-column :label="$t('name')" width="200">
                 <template #default="{ row }">
                     <span v-bk-tooltips="{ content: row.fullName, placements: ['top'] }">{{ row.licenseId }}</span>
                 </template>
             </bk-table-column>
-            <bk-table-column label="依赖路径" prop="dependentPath"></bk-table-column>
-            <bk-table-column label="OSI认证" width="120">
-                <template #default="{ row }">{{ row.description ? `${row.isOsiApproved ? '已' : '未'}认证` : '/' }}</template>
+            <bk-table-column :label="$t('dependPath')" prop="dependentPath"></bk-table-column>
+            <bk-table-column :label="`OSI` + $t('space') + $t('authenticated')" width="160">
+                <template #default="{ row }">{{ row.description ? `${row.isOsiApproved ? $t('already') : $t('not')}` + $t('space') + $t('authenticated') : '/' }}</template>
             </bk-table-column>
-            <bk-table-column label="FSF开源" width="120">
-                <template #default="{ row }">{{ row.description ? `${row.isFsfLibre ? '已' : '未'}开源` : '/' }}</template>
+            <bk-table-column :label="`FSF` + $t('space') + $t('openSource')" width="150">
+                <template #default="{ row }">{{ row.description ? `${row.isFsfLibre ? $t('already') : $t('not')}` + $t('space') + $t('openSource') : '/' }}</template>
             </bk-table-column>
-            <bk-table-column label="使用状态" width="120">
-                <template #default="{ row }">{{ row.description ? `${row.recommended ? '可用' : '废弃'}` : '/' }}</template>
+            <bk-table-column :label="$t('useStatus')" width="120">
+                <template #default="{ row }">{{ row.description ? `${row.recommended ? $t('usable') : $t('abandoned')}` : '/' }}</template>
             </bk-table-column>
-            <bk-table-column label="合规性" width="120">
+            <bk-table-column :label="$t('complianceQuality')" width="120">
                 <template #default="{ row }">
-                    <span v-if="row.description" class="repo-tag" :class="row.compliance ? 'SUCCESS' : 'FAILED'">{{ `${row.compliance ? '' : '不'}合规` }}</span>
+                    <span v-if="row.description" class="repo-tag" :class="row.compliance ? 'SUCCESS' : 'FAILED'">{{ `${row.compliance ? $t('compliance') : $t('notCompliance')}` }}</span>
                     <span v-else>/</span>
                 </template>
             </bk-table-column>
@@ -76,6 +76,7 @@
 </template>
 <script>
     import { mapActions } from 'vuex'
+    import { customizeExportScanFile } from '@repository/utils/exportScanFile'
     export default {
         name: 'license',
         props: {
@@ -135,13 +136,8 @@
                 })
             },
             exportReport () {
-                this.$bkNotify({
-                    title: '许可证信息正在生成报告中，请稍等...',
-                    position: 'bottom-right',
-                    theme: 'success'
-                })
                 const url = `/web/analyst/api/scan/export/artifact/license/leak/${this.projectId}/${this.subtaskOverview.recordId}`
-                window.open(url, '_self')
+                customizeExportScanFile(url, 'GET', this.currentLanguage, this.$t('exportLicenseReportInfo'))
             }
         }
     }

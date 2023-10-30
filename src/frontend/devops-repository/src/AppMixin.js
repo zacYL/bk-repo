@@ -63,7 +63,7 @@ export default {
                 window.globalVue.$on('change::$routePath', data => { // 蓝鲸Devops切换路径
                     // 制品库内部此时的这个iframe_url为以/ui/结尾的，如修改则需要修改此处判断
                     if (/\/ui\/$/.test(data.routePath.iframe_url) || data.routePath.isFromGuide) {
-                        this.$router.push({ name: data.routePath.englishName, path: data.routePath.path.replace(/^\/[a-zA-Z]+/, '/ui') })
+                        this.$router.push({ name: data.routePath.routeEnglishName, path: data.routePath.path.replace(/^\/[a-zA-Z]+/, '/ui') })
                     }
                 })
 

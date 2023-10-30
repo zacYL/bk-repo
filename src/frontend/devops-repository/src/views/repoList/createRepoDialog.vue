@@ -1,8 +1,8 @@
 <template>
     <canway-dialog
         v-model="show"
-        width="810"
-        height-num="700"
+        :width="currentLanguage === 'zh-cn' ? 810 : 996"
+        height-num="770"
         :title="title"
         @cancel="cancel">
         <bk-form class="mr10 repo-base-info" :label-width="150" :model="repoBaseInfo" :rules="rules" ref="repoBaseInfo">
@@ -20,21 +20,21 @@
                 </bk-radio-group>
             </bk-form-item>
             <bk-form-item :label="$t('repoName')" :required="true" property="name" error-display-type="normal">
-                <bk-input style="width:400px" v-model.trim="repoBaseInfo.name" maxlength="32" show-word-limit
-                    :placeholder="$t(repoBaseInfo.type === 'docker' ? 'repoDockerNamePlacehodler' : 'repoNamePlacehodler')">
+                <bk-input class="w480" v-model.trim="repoBaseInfo.name" maxlength="32" show-word-limit
+                    :placeholder="$t(repoBaseInfo.type === 'docker' ? 'repoDockerNamePlaceholder' : 'repoNamePlaceholder')">
                 </bk-input>
-                <div v-if="repoBaseInfo.type === 'docker'" class="form-tip">docker仓库名称不支持大写英文字母</div>
+                <div v-if="repoBaseInfo.type === 'docker'" class="form-tip">{{ $t('dockerRepoTip')}}</div>
             </bk-form-item>
             <template v-if="storeType === 'remote'">
                 <bk-form-item :label="$t('remoteProxyAddress')" :required="true" property="url" error-display-type="normal">
-                    <bk-input style="width:400px" v-model.trim="repoBaseInfo.url"></bk-input>
+                    <bk-input class="w480" v-model.trim="repoBaseInfo.url"></bk-input>
                     <bk-button theme="primary" :disabled="disableTestUrl" @click="onClickTestRemoteUrl">{{ $t('testRemoteUrl') }}</bk-button>
                 </bk-form-item>
                 <bk-form-item :label="$t('remoteProxyAccount')" property="credentials.username" error-display-type="normal">
-                    <bk-input style="width:400px" v-model.trim="repoBaseInfo.credentials.username"></bk-input>
+                    <bk-input class="w480" v-model.trim="repoBaseInfo.credentials.username"></bk-input>
                 </bk-form-item>
                 <bk-form-item :label="$t('remoteProxyPassword')" property="credentials.password" error-display-type="normal">
-                    <bk-input style="width:400px" type="password" v-model.trim="repoBaseInfo.credentials.password"></bk-input>
+                    <bk-input class="w480" type="password" v-model.trim="repoBaseInfo.credentials.password"></bk-input>
                 </bk-form-item>
                 <bk-form-item :label="$t('networkProxy')" property="switcher">
                     <template>
@@ -44,11 +44,11 @@
                 </bk-form-item>
                 <template v-if="repoBaseInfo.network.switcher">
                     <bk-form-item label="IP" property="network.proxy.host" :required="true" error-display-type="normal">
-                        <bk-input style="width:400px" v-model.trim="repoBaseInfo.network.proxy.host"></bk-input>
+                        <bk-input class="w480" v-model.trim="repoBaseInfo.network.proxy.host"></bk-input>
                     </bk-form-item>
                     <bk-form-item :label="$t('port')" property="network.proxy.port" :required="true" error-display-type="normal">
                         <bk-input
-                            style="width:400px"
+                            class="w480"
                             type="number"
                             :max="65535"
                             :min="1"
@@ -60,16 +60,16 @@
                         <p class="form-error-tip" v-if="errorProxyPortInfo">{{$t('repositoryProxyPortInfo')}}</p>
                     </bk-form-item>
                     <bk-form-item :label="$t('networkAccount')" property="network.proxy.username">
-                        <bk-input style="width:400px" v-model.trim="repoBaseInfo.network.proxy.username"></bk-input>
+                        <bk-input class="w480" v-model.trim="repoBaseInfo.network.proxy.username"></bk-input>
                     </bk-form-item>
                     <bk-form-item :label="$t('networkPassword')" property="network.proxy.password">
-                        <bk-input style="width:400px" type="password" v-model.trim="repoBaseInfo.network.proxy.password"></bk-input>
+                        <bk-input class="w480" type="password" v-model.trim="repoBaseInfo.network.proxy.password"></bk-input>
                     </bk-form-item>
                 </template>
             </template>
 
             <template v-if="storeType === 'virtual'">
-                <bk-form-item :label="$t('select') + $t('storageStore')" property="virtualStoreList" :required="true" error-display-type="normal">
+                <bk-form-item :label="$t('select') + $t('space') + $t('storageStore')" property="virtualStoreList" :required="true" error-display-type="normal">
                     <bk-button class="mb10" hover-theme="primary" @click="toCheckedStore">{{ $t('pleaseSelect') }}</bk-button>
                     <div class="virtual-check-container">
                         <store-sort
@@ -85,7 +85,7 @@
                         v-model="repoBaseInfo.deploymentRepo"
                         style="width:300px;"
                         :show-empty="false"
-                        :placeholder="$t('pleaseSelect') + $t('uploadTargetStore')">
+                        :placeholder="$t('pleaseSelect') + $t('space') + $t('uploadTargetStore')">
                         <bk-option v-for="item in deploymentRepoCheckList" :key="item.name" :id="item.name" :name="item.name">
                         </bk-option>
                         <div v-if="!deploymentRepoCheckList.length" class="form-tip mt10 ml10 mr10 mb10">
@@ -95,7 +95,7 @@
                     <div class="form-tip">{{$t('addPackagePrompt')}}</div>
                 </bk-form-item> -->
             </template>
-            <bk-form-item label="访问权限">
+            <bk-form-item :label="$t('accessPermission')">
                 <card-radio-group
                     v-model="available"
                     :list="availableList">
@@ -110,11 +110,11 @@
                         <bk-radio :value="false">{{ $t('close') }}</bk-radio>
                     </bk-radio-group>
                     <template v-if="repoBaseInfo[type].enable">
-                        <bk-form-item :label="$t('fileName')" :label-width="60" class="mt10"
+                        <bk-form-item :label="$t('fileName')" :label-width="80" class="mt10"
                             :property="`${type}.filename`" required error-display-type="normal">
                             <bk-input class="w250" v-model.trim="repoBaseInfo[type].filename" :placeholder="$t('fileNameRule')"></bk-input>
                         </bk-form-item>
-                        <bk-form-item :label="$t('metadata')" :label-width="60"
+                        <bk-form-item :label="$t('metadata')" :label-width="80"
                             :property="`${type}.metadata`" required error-display-type="normal">
                             <bk-input class="w250" v-model.trim="repoBaseInfo[type].metadata" :placeholder="$t('metadataRule')"></bk-input>
                         </bk-form-item>
@@ -125,7 +125,7 @@
                 <bk-form-item :label="$t('enabledFileLists')">
                     <bk-checkbox v-model="repoBaseInfo.enabledFileLists"></bk-checkbox>
                 </bk-form-item>
-                <bk-form-item :label="$t('repodataDepth')" property="repodataDepth" error-display-type="normal">
+                <bk-form-item :label="$t('repoDataDepth')" property="repodataDepth" error-display-type="normal">
                     <bk-input class="w480" v-model.trim="repoBaseInfo.repodataDepth"></bk-input>
                 </bk-form-item>
                 <bk-form-item :label="$t('groupXmlSet')" property="groupXmlSet" error-display-type="normal">
@@ -146,7 +146,7 @@
                 </bk-form-item>
             </template>
 
-            <bk-form-item label="版本策略" v-if="!(storeType === 'remote') && !(storeType === 'virtual') && (repoBaseInfo.type === 'maven' || repoBaseInfo.type === 'npm')">
+            <bk-form-item :label="$t('versionStrategy')" v-if="!(storeType === 'remote') && !(storeType === 'virtual') && (repoBaseInfo.type === 'maven' || repoBaseInfo.type === 'npm')">
                 <div class="flex-align-center">
                     <bk-switcher
                         v-model="repoBaseInfo.override.switcher"
@@ -154,11 +154,11 @@
                         theme="primary"
                         @change="handleOverrideChange"
                     ></bk-switcher>
-                    <span class="ml10">开启后上传同名称版本制品将会根据版本策略决定是否覆盖</span>
+                    <span class="ml10" style="width:95%">{{$t('coverStrategyInfo')}}</span>
                 </div>
                 <bk-radio-group v-model="repoBaseInfo.override.isFlag" v-if="repoBaseInfo.override.switcher">
-                    <bk-radio class="mr20" :value="false">不允许覆盖</bk-radio>
-                    <bk-radio :value="true">允许覆盖</bk-radio>
+                    <bk-radio class="mr20" :value="false">{{$t('notAllowCover')}}</bk-radio>
+                    <bk-radio :value="true">{{$t('allowCover')}}</bk-radio>
                 </bk-radio-group>
             </bk-form-item>
 
@@ -168,7 +168,7 @@
                     maxlength="200"
                     :rows="6"
                     v-model.trim="repoBaseInfo.description"
-                    :placeholder="$t('repoDescriptionPlacehodler')">
+                    :placeholder="$t('repoDescriptionPlaceholder')">
                 </bk-input>
             </bk-form-item>
         </bk-form>
@@ -289,12 +289,12 @@
                 const urlRule = [
                     {
                         required: true,
-                        message: this.$t('pleaseInput') + this.$t('address'),
+                        message: this.$t('pleaseInput') + this.$t('space') + this.$t('address'),
                         trigger: 'blur'
                     },
                     {
                         validator: this.checkRemoteUrl,
-                        message: this.$t('pleaseInput') + this.$t('legit') + this.$t('address'),
+                        message: this.$t('pleaseInput') + this.$t('space') + this.$t('legit') + this.$t('space') + this.$t('address'),
                         trigger: 'blur'
                     },
                     {
@@ -307,14 +307,14 @@
                 const proxyHostRule = [
                     {
                         required: true,
-                        message: this.$t('pleaseInput') + this.$t('networkProxy') + 'IP',
+                        message: this.$t('pleaseInput') + this.$t('space') + this.$t('networkProxy') + this.$t('space') + 'IP',
                         trigger: 'blur'
                     }
                 ]
                 const proxyPortRule = [
                     {
                         required: true,
-                        message: this.$t('pleaseInput') + this.$t('networkProxy') + this.$t('port'),
+                        message: this.$t('pleaseInput') + this.$t('space') + this.$t('networkProxy') + this.$t('space') + this.$t('port'),
                         trigger: 'blur'
                     }
                 ]
@@ -322,7 +322,7 @@
                 const checkStorageRule = [
                     {
                         required: true,
-                        message: this.$t('noSelectStorageStore') + this.$t('create') + this.$t('virtualStore'),
+                        message: this.$t('noSelectStorageStore') + this.$t('space') + this.$t('create') + this.$t('space') + this.$t('virtualStore'),
                         trigger: 'blur'
                     }
                 ]
@@ -330,19 +330,19 @@
                     type: [
                         {
                             required: true,
-                            message: this.$t('pleaseSelect') + this.$t('repoType'),
+                            message: this.$t('pleaseSelect') + this.$t('space') + this.$t('repoType'),
                             trigger: 'blur'
                         }
                     ],
                     name: [
                         {
                             required: true,
-                            message: this.$t('pleaseInput') + this.$t('repoName'),
+                            message: this.$t('pleaseInput') + this.$t('space') + this.$t('repoName'),
                             trigger: 'blur'
                         },
                         {
                             regex: this.repoBaseInfo.type === 'docker' ? /^[a-z][a-z0-9\-_]{1,31}$/ : /^[a-zA-Z][a-zA-Z0-9\-_]{1,31}$/,
-                            message: this.$t(this.repoBaseInfo.type === 'docker' ? 'repoDockerNamePlacehodler' : 'repoNamePlacehodler'),
+                            message: this.$t(this.repoBaseInfo.type === 'docker' ? 'repoDockerNamePlaceholder' : 'repoNamePlaceholder'),
                             trigger: 'blur'
                         },
                         {
@@ -355,14 +355,14 @@
                         },
                         {
                             validator: this.asynCheckRepoName,
-                            message: this.$t('repoName') + '已存在',
+                            message: this.$t('repoName') + this.$t('space') + this.$t('exist'),
                             trigger: 'blur'
                         }
                     ],
                     repodataDepth: [
                         {
                             regex: /^(0|[1-9][0-9]*)$/,
-                            message: this.$t('pleaseInput') + this.$t('legit') + this.$t('repodataDepth'),
+                            message: this.$t('pleaseInput') + this.$t('space') + this.$t('legit') + this.$t('space') + this.$t('repoDataDepth'),
                             trigger: 'blur'
                         }
                     ],
@@ -373,7 +373,7 @@
                                     return /\.xml$/.test(v)
                                 })
                             },
-                            message: this.$t('pleaseInput') + this.$t('legit') + this.$t('groupXmlSet') + `(.xml${this.$t('type')})`,
+                            message: this.$t('pleaseInput') + this.$t('space') + this.$t('legit') + this.$t('space') + this.$t('groupXmlSet') + this.$t('space') + `(.xml${this.$t('type')})`,
                             trigger: 'change'
                         }
                     ],
@@ -403,14 +403,14 @@
             },
             availableList () {
                 return [
-                    { label: '项目内公开', value: 'project', tip: '项目内成员可以使用' },
-                    { label: '系统内公开', value: 'system', tip: '系统内成员可以使用' },
-                    { label: '可匿名下载', value: 'public', tip: '不鉴权，任意终端都可下载' }
+                    { label: this.$t('openProjectLabel'), value: 'project', tip: this.$t('openProjectTip') },
+                    { label: this.$t('systemPublic'), value: 'system', tip: this.$t('systemPublicTip') },
+                    { label: this.$t('openPublicLabel'), value: 'public', tip: this.$t('openPublicTip') }
                 ]
             },
             // 弹窗标题
             title () {
-                return this.$t('create') + this.$t('space') + this.$t(this.storeType + 'Store')
+                return this.$t('create') + this.$t('space') + this.$t('space') + this.$t('space') + this.$t(this.storeType + 'Store')
             }
             // 虚拟仓库中选择上传的目标仓库的下拉列表数据
             // deploymentRepoCheckList () {
@@ -490,7 +490,7 @@
                     this.$bkMessage({
                         theme: 'warning',
                         limit: 3,
-                        message: this.$t('pleaseInput') + this.$t('legit') + this.$t('networkProxy')
+                        message: this.$t('pleaseInput') + this.$t('space') + this.$t('legit') + this.$t('space') + this.$t('networkProxy')
                     })
                     return
                 }
@@ -499,7 +499,7 @@
                     this.$bkMessage({
                         theme: 'warning',
                         limit: 3,
-                        message: this.$t('pleaseInput') + this.$t('legit') + this.$t('address')
+                        message: this.$t('pleaseInput') + this.$t('space') + this.$t('legit') + this.$t('space') + this.$t('address')
                     })
                 } else {
                     const body = {
@@ -536,7 +536,7 @@
                         } else {
                             this.$bkMessage({
                                 theme: 'error',
-                                message: this.$t('connectFailed') + `: ${res.message}`
+                                message: this.$t('connectFailed') + this.$t('space') + `: ${res.message}`
                             })
                         }
                     }).finally(() => {
@@ -632,7 +632,7 @@
                 this.createRepo({ body }).then(() => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: this.$t('create') + this.$t('repository') + this.$t('success')
+                        message: this.$t('create') + this.$t('space') + this.$t('repository') + this.$t('space') + this.$t('success')
                     })
                     this.cancel()
                     this.$emit('refresh')

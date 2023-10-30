@@ -1,24 +1,24 @@
 <template>
     <canway-dialog
         v-model="show"
-        width="540"
-        height-num="250"
+        width="560"
+        height-num="270"
         :title="$t('generateCiToken')"
         @cancel="cancel">
         <div v-if="token" class="flex-align-center">
             <i class="flex-center devops-icon icon-check-1"></i>
-            <div>
-                <span class="token-title">{{ $t('generateCiToken') + $t('success') }}</span>
+            <div style="max-width: 450px;">
+                <span class="token-title">{{ $t('generateCiToken') + $t('space') + $t('success') }}</span>
                 <div @click="copyToken(token)" class="mt10 mb10 hover-btn flex-align-center">
                     <span class="token-value">
-                        {{ $t('tokenIs') + token }}
+                        {{ $t('tokenIs') + $t('space') + token }}
                     </span>
                     <i class="ml10 devops-icon icon-clipboard"></i>
                 </div>
                 <span class="token-tip">{{ $t('tokenCopyTip') }}</span>
             </div>
         </div>
-        <bk-form v-else :label-width="80" :model="tokenFormData" :rules="rules" ref="tokenForm">
+        <bk-form v-else :label-width="92" :model="tokenFormData" :rules="rules" ref="tokenForm">
             <bk-form-item :label="$t('name')" required property="name" error-display-type="normal">
                 <bk-input v-model.trim="tokenFormData.name" maxlength="32" show-word-limit></bk-input>
             </bk-form-item>
@@ -58,7 +58,7 @@
                     name: [
                         {
                             required: true,
-                            message: this.$t('pleaseInput') + 'Token' + this.$t('name'),
+                            message: this.$t('pleaseInput') + this.$t('space') + 'Token' + this.$t('name'),
                             trigger: 'blur'
                         }
                     ]
@@ -99,12 +99,12 @@
                 copyToClipboard(text).then(() => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: this.$t('copy') + this.$t('success')
+                        message: this.$t('copy') + this.$t('space') + this.$t('success')
                     })
                 }).catch(() => {
                     this.$bkMessage({
                         theme: 'error',
-                        message: this.$t('copy') + this.$t('fail')
+                        message: this.$t('copy') + this.$t('space') + this.$t('fail')
                     })
                 })
             }

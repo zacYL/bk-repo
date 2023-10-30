@@ -9,7 +9,7 @@
             <div class="proxy-origin">{{$t('name')}}</div>
             <div class="proxy-type">{{$t('type')}}</div>
             <div class="proxy-address">{{$t('address')}}</div>
-            <div class="proxy-switcher">网络代理</div>
+            <div class="proxy-switcher">{{$t('networkProxy')}}</div>
             <div class="proxy-operation">{{$t('operation')}}</div>
         </div>
         <draggable v-if="proxyList.length" v-model="proxyList" :options="{ animation: 200 }" @update="debounceSaveProxy">
@@ -18,14 +18,14 @@
                 <div class="proxy-origin">{{proxy.name}}</div>
                 <div class="proxy-type">{{proxy.public ? $t('publicProxy') : $t('privateProxy')}}</div>
                 <div class="proxy-address">{{proxy.url}}</div>
-                <div class="proxy-switcher">{{ isEmpty(proxy.networkProxy) ? '已关闭' : '已开启'}}</div>
+                <div class="proxy-switcher">{{ isEmpty(proxy.networkProxy) ? $t('closed') : $t('opened')}}</div>
                 <div class="flex-align-center proxy-operation">
                     <Icon class="mr10 hover-btn" size="24" name="icon-edit" @click.native.stop="editProxy(proxy)" />
                     <Icon class="hover-btn" size="24" name="icon-delete" @click.native.stop="deleteProxy(proxy)" />
                 </div>
             </div>
         </draggable>
-        <empty-data v-else ex-style="margin-top:130px;" title="暂无代理源配置" sub-title="请尝试添加公有代理源或配置私有代理源"></empty-data>
+        <empty-data v-else ex-style="margin-top:130px;" :title="$t('noProxySourceConfigTitle')" :sub-title="$t('noProxySourceConfigSubTitle')"></empty-data>
         <proxy-origin-dialog :show="showProxyDialog" :proxy-data="proxyData" @confirm="confirmProxyData" @cancel="cancelProxy"></proxy-origin-dialog>
     </div>
 </template>
@@ -147,7 +147,7 @@
                 }).then(() => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: this.$t('save') + this.$t('success')
+                        message: this.$t('save') + this.$t('space') + this.$t('success')
                     })
                 }).finally(() => {
                     this.saveLoading = false

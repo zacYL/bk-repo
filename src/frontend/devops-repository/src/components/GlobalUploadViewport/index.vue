@@ -2,7 +2,7 @@
     <div class="upload-viewport-container" :class="{ 'visible': show, 'file-visible': showFileList }">
         <div class="viewport-header flex-between-center">
             <div class="header-title flex-align-center">
-                <span class="mr10">制品库上传任务</span>
+                <span class="mr10">{{$t('artifactUploadTask')}}</span>
                 <span v-if="!showFileList && upLoadTaskQueue.length"
                     class="spin-icon"
                     style="font-size:0;">
@@ -23,19 +23,19 @@
                 :row-border="false"
                 :virtual-render="fileList.length > 3000"
                 size="small">
-                <bk-table-column :label="$t('fileName')" min-width="300" show-overflow-tooltip>
+                <bk-table-column :label="$t('fileName')" min-width="300">
                     <template #default="{ row }">
                         <bk-popover placement="top">
-                            {{row.file.name}}
+                            <div class="file-name-info">{{row.file.name}}</div>
                             <template #content>
-                                <div>项目：{{ (projectList.find(p => p.id === row.projectId)).name }}</div>
-                                <div>仓库：{{ replaceRepoName(row.repoName) }}</div>
-                                <div>文件存储路径：{{ row.fullPath }}</div>
+                                <div>{{$t('project') + ': ' + (projectList.find(p => p.id === row.projectId)).name }}</div>
+                                <div>{{$t('repository') + ': ' + replaceRepoName(row.repoName) }}</div>
+                                <div>{{$t('fileStoragePath') + ': ' + row.fullPath }}</div>
                             </template>
                         </bk-popover>
                     </template>
                 </bk-table-column>
-                <bk-table-column label="状态" width="100">
+                <bk-table-column :label="$t('status')" width="100">
                     <template #default="{ row }">
                         <span v-if="row.status === 'UPLOADING'"
                             v-bk-tooltips="{ content: row.progressDetail, placements: ['bottom'] }">
@@ -51,18 +51,18 @@
                         </span>
                     </template>
                 </bk-table-column>
-                <bk-table-column :label="$t('operation')" width="70">
+                <bk-table-column :label="$t('operation')" width="100">
                     <template #default="{ row }">
                         <bk-button v-if="row.status === 'INIT' || row.status === 'UPLOADING'"
-                            text theme="primary" @click="cancelUpload(row)">取消</bk-button>
+                            text theme="primary" @click="cancelUpload(row)">{{$t('cancel')}}</bk-button>
                         <bk-button v-else-if="row.status === 'SUCCESS'"
                             text theme="primary" @click="$router.push({
                                 name: 'repoGeneric',
                                 params: { projectId: row.projectId },
                                 query: { repoName: row.repoName, path: row.fullPath }
-                            })">查看</bk-button>
+                            })">{{$t('view')}}</bk-button>
                         <bk-button v-else-if="row.status === 'CANCEL' || row.status === 'FAILED'"
-                            text theme="primary" @click="reUpload(row)">上传</bk-button>
+                            text theme="primary" @click="reUpload(row)">{{$t('upload')}}</bk-button>
                     </template>
                 </bk-table-column>
             </bk-table>
@@ -79,19 +79,11 @@
     import selectedFilesDialog from './selectedFilesDialog'
     import { mapState, mapActions } from 'vuex'
     import { convertFileSize } from '@repository/utils'
-    const uploadStatus = {
-        UPLOADING: { label: '正在上传', power: 1 },
-        INIT: { label: '等待上传', power: 2 },
-        FAILED: { label: '上传失败', power: 3 },
-        CANCEL: { label: '已取消', power: 4 },
-        SUCCESS: { label: '上传完成', power: 5 }
-    }
     export default {
         name: 'globalUploadViewport',
         components: { selectedFilesDialog },
         data () {
             return {
-                uploadStatus,
                 show: false,
                 showFileList: true,
                 rootData: {
@@ -105,7 +97,16 @@
             }
         },
         computed: {
-            ...mapState(['projectList'])
+            ...mapState(['projectList']),
+            uploadStatus () {
+                return {
+                    UPLOADING: { label: this.$t('uploading'), power: 1 },
+                    INIT: { label: this.$t('waitingUpload'), power: 2 },
+                    FAILED: { label: this.$t('uploadFailed'), power: 3 },
+                    CANCEL: { label: this.$t('cancelled'), power: 4 },
+                    SUCCESS: { label: this.$t('uploadCompleted'), power: 5 }
+                }
+            }
         },
         mounted () {
             Vue.prototype.$globalUploadFiles = this.selectFiles
@@ -143,7 +144,7 @@
             },
             sortFileList (extFiles = []) {
                 this.fileList = [...this.fileList, ...extFiles].sort((a, b) => {
-                    return uploadStatus[a.status].power - uploadStatus[b.status].power
+                    return this.uploadStatus[a.status].power - this.uploadStatus[b.status].power
                 })
             },
             closeViewport () {
@@ -155,7 +156,7 @@
                 }
                 this.$confirm({
                     theme: 'danger',
-                    message: '确认 取消所有上传任务并清空任务列表 ？',
+                    message: this.$t('confirmCancelsTasks'),
                     confirmFn: () => {
                         this.show = false
                         this.showFileList = true
@@ -250,6 +251,12 @@
         height: 325px;
         border-top: 1px solid var(--borderColor);
         background-color: white;
+        .file-name-info {
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
     }
     &.file-visible {
         .viewport-header {

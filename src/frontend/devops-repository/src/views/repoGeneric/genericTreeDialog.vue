@@ -8,7 +8,7 @@
         <bk-input
             class="w250"
             v-model.trim="importantSearch"
-            placeholder="请输入关键字"
+            :placeholder="$t('keyWordEnter')"
             clearable
             right-icon="bk-icon icon-search">
         </bk-input>
@@ -126,7 +126,7 @@
                     this.$emit('refresh', destTreeData)
                     this.$bkMessage({
                         theme: 'success',
-                        message: this.$t(type) + this.$t('success')
+                        message: this.$t(type) + this.$t('space') + this.$t('success')
                     })
                 }).finally(() => {
                     this.genericTreeData.loading = false

@@ -93,7 +93,7 @@
                     <bk-input v-model.trim="editUserDialog.userId"
                         :disabled="!editUserDialog.add"
                         maxlength="32" show-word-limit
-                        :placeholder="$t('userIdPlacehodler')">
+                        :placeholder="$t('userIdPlaceholder')">
                     </bk-input>
                 </bk-form-item>
                 <bk-form-item :label="$t('chineseName')" :required="true" property="name" error-display-type="normal">
@@ -150,7 +150,7 @@
                         },
                         {
                             regex: /^[a-zA-Z][a-zA-Z0-9_-]{1,31}$/,
-                            message: this.$t('account') + this.$t('include') + this.$t('userIdPlacehodler'),
+                            message: this.$t('account') + this.$t('include') + this.$t('userIdPlaceholder'),
                             trigger: 'blur'
                         },
                         {

@@ -1,27 +1,29 @@
 import { formatDate } from '@repository/utils'
-const CTeamTypeMap = {
-    demand: {
-        content: '需求',
-        type: 'WARNING'
-    },
-    task: {
-        content: '任务'
-    },
-    bug: {
-        content: '缺陷',
-        type: 'FAILED'
-    }
-}
 export default {
     computed: {
+        CTeamTypeMap () {
+            return {
+                demand: {
+                    content: this.$t('demand'),
+                    type: 'WARNING'
+                },
+                task: {
+                    content: this.$t('task')
+                },
+                bug: {
+                    content: this.$t('bug'),
+                    type: 'FAILED'
+                }
+            }
+        },
         rootNode () {
             const { groupId, version, lastModifiedDate } = this.detail.basic
             return {
                 title: this.packageName,
                 metadata: [
                     groupId && `GroupId: ${groupId}`,
-                    version && `版本: ${version}`,
-                    lastModifiedDate && `更新时间: ${formatDate(lastModifiedDate)}`
+                    version && (this.$t('version') + `: ${version}`),
+                    lastModifiedDate && (this.$t('updateTime') + `: ${formatDate(lastModifiedDate)}`)
                 ]
             }
         },
@@ -30,17 +32,17 @@ export default {
             return {
                 children: [
                     {
-                        title: '工作项',
+                        title: this.$t('workItem'),
                         children: Object.keys(metadata)
                             .map(key => {
                                 const [type, CTeamId] = key.split('-')
-                                const typeLabel = CTeamTypeMap[type.toLowerCase()]
+                                const typeLabel = this.CTeamTypeMap[type.toLowerCase()]
                                 if (typeLabel) {
                                     return {
                                         title: metadata[key],
                                         leftTag: typeLabel,
                                         metadata: [
-                                            `编号: ${CTeamId}`
+                                            this.$t('serialNumber') + `: ${CTeamId}`
                                         ]
                                     }
                                 } else return false
@@ -49,16 +51,18 @@ export default {
                             .sort((a, b) => b.leftTag.content.charCodeAt() - a.leftTag.content.charCodeAt())
                     },
                     {
-                        title: '代码',
-                        children: [
-                            {
-                                title: '提交信息',
-                                metadata: [
-                                    `lastCommit: ${metadata.lastCommit || metadata.lastcommit || '/'}`,
-                                    `newCommit: ${metadata.newCommit || metadata.newcommit || '/'}`
-                                ]
-                            }
-                        ]
+                        title: this.$t('code'),
+                        children: (metadata.lastCommit || metadata.lastcommit || metadata.newCommit || metadata.newcommit)
+                            ? [
+                                {
+                                    title: this.$t('commitMessage'),
+                                    metadata: [
+                                        `lastCommit: ${metadata.lastCommit || metadata.lastcommit || '/'}`,
+                                        `newCommit: ${metadata.newCommit || metadata.newcommit || '/'}`
+                                    ]
+                                }
+                            ]
+                            : []
                     }
                 ]
             }
@@ -77,39 +81,39 @@ export default {
             return {
                 children: [
                     {
-                        title: '构建',
+                        title: this.$t('build'),
                         children: pipelineName
                             ? [
                                 {
                                     title: pipelineName,
                                     metadata: [
-                                        `流水线编号: ${buildNo}`,
-                                        `流水线用户: ${this.userList[userId]?.name || userId}`
+                                        this.$t('pipelineNumber') + `: ${buildNo}`,
+                                        this.$t('pipelineUsers') + `: ${this.userList[userId]?.name || userId}`
                                     ]
                                 }
                             ]
                             : []
                     },
                     {
-                        title: '测试',
+                        title: this.$t('test'),
                         children: reportUrl
                             ? [
                                 {
-                                    title: '测试报告',
+                                    title: this.$t('testReport'),
                                     url: reportUrl
                                 }
                             ]
                             : []
                     },
                     {
-                        title: '部署',
+                        title: this.$t('deploy'),
                         children: metadata['env.info']
                             ? [
                                 {
                                     title: metadata['env.info'],
                                     metadata: [
-                                        `机器IP: ${ips}`,
-                                        `时间: ${formatDate(metadata['update.time'])}`
+                                        this.$t('serverIP') + `: ${ips}`,
+                                        this.$t('time') + `: ${formatDate(metadata['update.time'])}`
                                     ]
                                 }
                             ]

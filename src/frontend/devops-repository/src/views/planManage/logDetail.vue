@@ -6,10 +6,10 @@
                     <span>
                         {{$t(`planLogEnum.${key}`)}}
                     </span>
-                    <span>：</span>
+                    <span>: </span>
                     <span class="log-count"
                         v-bk-tooltips="{
-                            content: $t(`planLogEnum.${key}`) + '：' + value,
+                            content: $t(`planLogEnum.${key}`) + ': ' + value,
                             placements: ['top'],
                             disabled: ((value + '').length || 0) < 6
                         }">
@@ -22,7 +22,7 @@
                     class="search-group"
                     clearable
                     v-model="searchGroup"
-                    placeholder="按下Enter键搜索"
+                    :placeholder="$t('enterSearch')"
                     :show-condition="false"
                     :data="searchGroupList"
                     @change="handlerSearchSelectChange"
@@ -32,10 +32,10 @@
                 <bk-select
                     class="ml10 w250"
                     v-model="status"
-                    placeholder="同步状态"
+                    :placeholder="$t('syncStatus')"
                     @change="handlerSearchSelectChange()">
-                    <bk-option id="SUCCESS" name="成功"></bk-option>
-                    <bk-option id="FAILED" name="失败"></bk-option>
+                    <bk-option id="SUCCESS" :name="$t('planLogDetailStatusEnum.SUCCESS')"></bk-option>
+                    <bk-option id="FAILED" :name="$t('planLogDetailStatusEnum.FAILED')"></bk-option>
                 </bk-select>
             </div>
         </div>
@@ -49,38 +49,38 @@
             <template #empty>
                 <empty-data :is-loading="isLoading" :search="Boolean(searchGroup.length || status)"></empty-data>
             </template>
-            <bk-table-column label="目标节点" show-overflow-tooltip>
+            <bk-table-column :label="$t('targetNode')" show-overflow-tooltip>
                 <template #default="{ row }">{{ row.remoteCluster}}</template>
             </bk-table-column>
-            <bk-table-column label="同步仓库" show-overflow-tooltip>
+            <bk-table-column :label="$t('synchronizeRepository')" show-overflow-tooltip>
                 <template #default="{ row }">
                     <Icon class="table-svg" size="16" :name="row.repoType.toLowerCase()" />
                     <span class="ml5">{{ row.localRepoName }}</span>
                 </template>
             </bk-table-column>
-            <bk-table-column label="制品名称" show-overflow-tooltip>
+            <bk-table-column :label="$t('artifactName')" show-overflow-tooltip>
                 <template #default="{ row }">{{ row.artifactName || row.packageKey || row.path || '/' }}</template>
             </bk-table-column>
-            <bk-table-column label="版本" show-overflow-tooltip>
+            <bk-table-column :label="$t('version')" show-overflow-tooltip>
                 <template #default="{ row }">{{ row.version || (row.versions || ['/']).join('、') }}</template>
             </bk-table-column>
-            <bk-table-column label="同步状态" width="100">
+            <bk-table-column :label="$t('syncStatus')" width="100">
                 <template #default="{ row }">
-                    <div class="status-sign" :class="row.status" :data-name="planLogDetailStatusEnum[row.status] || '未执行'"></div>
+                    <div class="status-sign" :class="row.status" :data-name="$t(`planLogDetailStatusEnum.${row.status}`) || $t('notExecuted')"></div>
                 </template>
             </bk-table-column>
-            <bk-table-column label="冲突策略" width="100">
+            <bk-table-column :label="$t('conflictStrategy')" width="150">
                 <template #default="{ row }">
-                    <span>{{ conflictStrategyEnum[row.conflictStrategy] || '/'}}</span>
+                    <span>{{row.conflictStrategy ? $t(`conflictStrategyEnum.${row.conflictStrategy}`) : '/'}}</span>
                 </template>
             </bk-table-column>
-            <bk-table-column label="开始时间" width="150">
+            <bk-table-column :label="$t('startTime')" width="150">
                 <template #default="{ row }">{{formatDate(row.startTime)}}</template>
             </bk-table-column>
-            <bk-table-column label="结束时间" width="150">
+            <bk-table-column :label="$t('endTime')" width="150">
                 <template #default="{ row }">{{formatDate(row.endTime)}}</template>
             </bk-table-column>
-            <bk-table-column label="备注" show-overflow-tooltip>
+            <bk-table-column :label="$t('note')" show-overflow-tooltip>
                 <template #default="{ row }">{{row.errorReason || '/'}}</template>
             </bk-table-column>
         </bk-table>
@@ -139,9 +139,9 @@
             },
             searchGroupList () {
                 return [
-                    { name: '节点名称', id: 'clusterName' },
-                    { name: '仓库名称', id: 'repoName' },
-                    { name: '制品名称', id: 'artifactName' }
+                    { name: this.$t('nodeName'), id: 'clusterName' },
+                    { name: this.$t('repoName'), id: 'repoName' },
+                    { name: this.$t('artifactName'), id: 'artifactName' }
                 ]
             }
         },

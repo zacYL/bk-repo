@@ -18,13 +18,13 @@
             </bk-form-item>
             <template v-if="detailInfo.category === 'REMOTE'">
                 <bk-form-item :label="$t('remoteProxyAddress')">
-                    <bk-input :disabled="true" style="width:400px" v-model.trim="detailInfo.url"></bk-input>
+                    <bk-input :disabled="true" class="w480" v-model.trim="detailInfo.url"></bk-input>
                 </bk-form-item>
                 <bk-form-item :label="$t('remoteProxyAccount')">
-                    <bk-input :disabled="true" style="width:400px" v-model.trim="detailInfo.credentials.username"></bk-input>
+                    <bk-input :disabled="true" class="w480" v-model.trim="detailInfo.credentials.username"></bk-input>
                 </bk-form-item>
                 <bk-form-item :label="$t('remoteProxyPassword')">
-                    <bk-input :disabled="true" style="width:400px" type="password" v-model.trim="detailInfo.credentials.password"></bk-input>
+                    <bk-input :disabled="true" class="w480" type="password" v-model.trim="detailInfo.credentials.password"></bk-input>
                 </bk-form-item>
                 <bk-form-item :label="$t('networkProxy')">
                     <template>
@@ -34,21 +34,21 @@
                 </bk-form-item>
                 <template v-if="detailInfo.network.switcher">
                     <bk-form-item label="IP">
-                        <bk-input :disabled="true" style="width:400px" v-model.trim="detailInfo.network.proxy.host"></bk-input>
+                        <bk-input :disabled="true" class="w480" v-model.trim="detailInfo.network.proxy.host"></bk-input>
                     </bk-form-item>
                     <bk-form-item :label="$t('port')">
-                        <bk-input :disabled="true" style="width:400px" type="number" :max="65535" :min="1" v-model.trim="detailInfo.network.proxy.port"></bk-input>
+                        <bk-input :disabled="true" class="w480" type="number" :max="65535" :min="1" v-model.trim="detailInfo.network.proxy.port"></bk-input>
                     </bk-form-item>
                     <bk-form-item :label="$t('networkAccount')">
-                        <bk-input :disabled="true" style="width:400px" v-model.trim="detailInfo.network.proxy.username"></bk-input>
+                        <bk-input :disabled="true" class="w480" v-model.trim="detailInfo.network.proxy.username"></bk-input>
                     </bk-form-item>
                     <bk-form-item :label="$t('networkPassword')">
-                        <bk-input :disabled="true" style="width:400px" type="password" v-model.trim="detailInfo.network.proxy.password"></bk-input>
+                        <bk-input :disabled="true" class="w480" type="password" v-model.trim="detailInfo.network.proxy.password"></bk-input>
                     </bk-form-item>
                 </template>
             </template>
             <template v-if="detailInfo.category === 'VIRTUAL'">
-                <bk-form-item :label=" $t('select') + $t('storageStore')">
+                <bk-form-item :label=" $t('select') + $t('space') + $t('storageStore')">
                     <div class="virtual-check-container">
                         <store-sort
                             v-if="detailInfo.virtualStoreList.length"
@@ -72,7 +72,7 @@
                     <div class="form-tip">{{$t('addPackagePrompt')}}</div>
                 </bk-form-item> -->
             </template>
-            <bk-form-item label="访问权限">
+            <bk-form-item :label="$t('accessPermission')">
                 <card-radio-group
                     v-model="available"
                     :list="availableList"
@@ -80,7 +80,7 @@
                 </card-radio-group>
             </bk-form-item>
 
-            <bk-form-item label="版本策略" v-if="!(detailInfo.category === 'REMOTE') && !(detailInfo.category === 'VIRTUAL') && (repoType === 'maven' || repoType === 'npm')">
+            <bk-form-item :label="$t('versionStrategy')" v-if="!(detailInfo.category === 'REMOTE') && !(detailInfo.category === 'VIRTUAL') && (repoType === 'maven' || repoType === 'npm')">
                 <div class="flex-align-center">
                     <bk-switcher
                         v-model="detailInfo.override.switcher"
@@ -89,18 +89,18 @@
                         @change="handleOverrideChange"
                         disabled
                     ></bk-switcher>
-                    <span class="ml10">开启后上传同名称版本制品将会根据版本策略决定是否覆盖</span>
+                    <span class="ml10">{{$t('coverStrategyInfo')}}</span>
                 </div>
                 <bk-radio-group v-model="detailInfo.override.isFlag" v-if="detailInfo.override.switcher">
-                    <bk-radio class="mr20" :value="false" disabled>不允许覆盖</bk-radio>
-                    <bk-radio :value="true" disabled>允许覆盖</bk-radio>
+                    <bk-radio class="mr20" :value="false" disabled>{{$t('notAllowCover')}}</bk-radio>
+                    <bk-radio :value="true" disabled>{{$t('allowCover')}}</bk-radio>
                 </bk-radio-group>
             </bk-form-item>
             <template v-if="!(detailInfo.category === 'REMOTE') && !(detailInfo.category === 'VIRTUAL') && repoType === 'rpm'">
                 <bk-form-item :label="$t('enabledFileLists')">
                     <bk-checkbox v-model="detailInfo.enabledFileLists" disabled></bk-checkbox>
                 </bk-form-item>
-                <bk-form-item :label="$t('repodataDepth')" property="repodataDepth" error-display-type="normal">
+                <bk-form-item :label="$t('repoDataDepth')" property="repodataDepth" error-display-type="normal">
                     <bk-input class="w480" v-model.trim="detailInfo.repodataDepth" disabled></bk-input>
                 </bk-form-item>
                 <bk-form-item :label="$t('groupXmlSet')" property="groupXmlSet" error-display-type="normal">
@@ -127,7 +127,7 @@
                     maxlength="200"
                     :rows="6"
                     v-model.trim="detailInfo.description"
-                    :placeholder="$t('repoDescriptionPlacehodler')"
+                    :placeholder="$t('repoDescriptionPlaceholder')"
                     disabled>
                 </bk-input>
             </bk-form-item>
@@ -138,17 +138,17 @@
             <div class="grid-item"
                 v-for="{ name, label, value } in detailInfoMap"
                 :key="name">
-                <label>{{ label }}：</label>
-                <span style="cursor: pointer;" class="flex-1 text-overflow" :title="value">{{value }}</span>
+                <label>{{ label }} : </label>
+                <span style="cursor: pointer;" class="flex-1 text-overflow" :title="value">{{ value }}</span>
             </div>
         </div>
         <div v-if="nodeType === 'file' && !detailInfo.folder" class="version-base-info base-info-checksums display-block" data-title="Checksums">
             <div v-if="detailInfo.sha256" class="grid-item">
-                <label>SHA256：</label>
+                <label>SHA256: </label>
                 <span class="flex-1 text-overflow" :title="detailInfo.sha256">{{ detailInfo.sha256 }}</span>
             </div>
             <div v-if="detailInfo.md5" class="grid-item">
-                <label>MD5：</label>
+                <label>MD5: </label>
                 <span class="flex-1 text-overflow" :title="detailInfo.md5">{{ detailInfo.md5 }}</span>
             </div>
         </div>
@@ -227,9 +227,9 @@
             },
             availableList () {
                 return [
-                    { label: '项目内公开', value: 'project', tip: '项目内成员可以使用' },
-                    { label: '系统内公开', value: 'system', tip: '系统内成员可以使用' },
-                    { label: '可匿名下载', value: 'public', tip: '不鉴权，任意终端都可下载' }
+                    { label: this.$t('openProjectLabel'), value: 'project', tip: this.$t('openProjectTip') },
+                    { label: this.$t('systemPublic'), value: 'system', tip: this.$t('systemPublicTip') },
+                    { label: this.$t('openPublicLabel'), value: 'public', tip: this.$t('openPublicTip') }
                 ]
             }
             // 虚拟仓库中选择上传的目标仓库的下拉列表数据
@@ -268,7 +268,7 @@
             overflow-y: auto;
         }
         .repo-base-info {
-            max-width: 800px;
+            max-width: 966px;
         }
     }
 }
@@ -289,8 +289,8 @@
             display: flex;
             overflow: hidden;
             label {
-                flex-basis: 80px;
-                text-align: right;
+                flex-basis: 120px;
+                text-align: left;
             }
         }
     }

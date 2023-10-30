@@ -7,7 +7,7 @@
                     class="w250"
                     v-model.trim="planInput"
                     clearable
-                    placeholder="请输入计划名称, 按Enter键搜索"
+                    :placeholder="$t('planPlaceholder')"
                     right-icon="bk-icon icon-search"
                     @enter="handlerPaginationChange()"
                     @clear="handlerPaginationChange()">
@@ -15,17 +15,17 @@
                 <bk-select
                     class="ml10 w250"
                     v-model="lastExecutionStatus"
-                    placeholder="上次执行状态"
+                    :placeholder="$t('lastExecutionStatus')"
                     @change="handlerPaginationChange()">
-                    <bk-option v-for="(label, key) in asyncPlanStatusEnum" :key="key" :id="key" :name="label"></bk-option>
+                    <bk-option v-for="(label, key) in asyncPlanStatusEnum" :key="key" :id="key" :name="$t(`asyncPlanStatusEnum.${key}`)"></bk-option>
                 </bk-select>
                 <bk-select
                     class="ml10 w250"
                     v-model="showEnabled"
-                    placeholder="计划状态"
+                    :placeholder="$t('planStatus')"
                     @change="handlerPaginationChange()">
-                    <bk-option id="true" name="启用的计划"></bk-option>
-                    <bk-option id="false" name="停用的计划"></bk-option>
+                    <bk-option id="true" :name="$t('activePlan')"></bk-option>
+                    <bk-option id="false" :name="$t('discontinuedPlan')"></bk-option>
                 </bk-select>
             </div>
         </div>
@@ -41,50 +41,50 @@
             <template #empty>
                 <empty-data :is-loading="isLoading" :search="Boolean(planInput || lastExecutionStatus || showEnabled)"></empty-data>
             </template>
-            <bk-table-column label="计划名称" show-overflow-tooltip>
+            <bk-table-column :label="$t('planName')" show-overflow-tooltip>
                 <template #default="{ row }">
                     <span class="hover-btn" @click="showPlanDetailHandler(row)">{{row.name}}</span>
                 </template>
             </bk-table-column>
-            <bk-table-column label="同步类型" width="80">
-                <template #default="{ row }">
-                    {{ { 'REPOSITORY': '同步仓库', 'PACKAGE': '同步制品', 'PATH': '同步文件' }[row.replicaObjectType] }}
-                </template>
-            </bk-table-column>
-            <bk-table-column label="目标节点" show-overflow-tooltip>
+            <bk-table-column :label="$t('targetNode')" show-overflow-tooltip>
                 <template #default="{ row }">{{ row.remoteClusters.map(v => v.name).join('、') }}</template>
             </bk-table-column>
-            <bk-table-column label="同步策略" width="80">
+            <bk-table-column :label="$t('syncType')" width="120" show-overflow-tooltip>
+                <template #default="{ row }">
+                    {{ { 'REPOSITORY': $t('synchronizeRepository'), 'PACKAGE': $t('synchronizePackage'), 'PATH': $t('synchronizePath') }[row.replicaObjectType] }}
+                </template>
+            </bk-table-column>
+            <bk-table-column :label="$t('synchronizationPolicy')" width="120" show-overflow-tooltip>
                 <template #default="{ row }">{{ getExecutionStrategy(row) }}</template>
             </bk-table-column>
-            <bk-table-column label="上次执行时间" prop="LAST_EXECUTION_TIME" width="150" sortable="custom">
+            <bk-table-column :label="$t('lastExecutionTime')" prop="LAST_EXECUTION_TIME" width="170" sortable="custom">
                 <template #default="{ row }">{{formatDate(row.lastExecutionTime)}}</template>
             </bk-table-column>
-            <bk-table-column label="上次执行状态" width="100">
+            <bk-table-column :label="$t('lastExecutionStatus')" width="110">
                 <template #default="{ row }">
                     <span v-if="row.lastExecutionStatus === 'RUNNING' && row.artifactCount">
                         {{row.currentProgress}}/{{row.artifactCount}}
                     </span>
                     <span v-else class="repo-tag" :class="row.lastExecutionStatus">
-                        {{asyncPlanStatusEnum[row.lastExecutionStatus] || '未执行'}}
+                        {{row.lastExecutionStatus ? $t(`asyncPlanStatusEnum.${row.lastExecutionStatus}`) : $t('notExecuted')}}
                     </span>
                 </template>
             </bk-table-column>
             <!-- <bk-table-column label="下次执行时间" prop="NEXT_EXECUTION_TIME" width="150" :render-header="renderHeader">
                 <template #default="{ row }">{{formatDate(row.nextExecutionTime)}}</template>
             </bk-table-column>
-            <bk-table-column label="创建者" width="90" show-overflow-tooltip>
+            <bk-table-column :label="$t('creator')" width="90" show-overflow-tooltip>
                 <template #default="{ row }">{{userList[row.createdBy] ? userList[row.createdBy].name : row.createdBy}}</template>
             </bk-table-column>
             <bk-table-column :label="$t('createdDate')" prop="CREATED_TIME" width="150" :render-header="renderHeader">
                 <template #default="{ row }">{{formatDate(row.createdDate)}}</template>
             </bk-table-column> -->
-            <bk-table-column label="启用计划" width="70">
+            <bk-table-column :label="$t('enablePlan')" width="100">
                 <template #default="{ row }">
                     <bk-switcher class="m5" v-model="row.enabled" size="small" theme="primary" @change="changeEnabledHandler(row)"></bk-switcher>
                 </template>
             </bk-table-column>
-            <bk-table-column label="执行" width="60">
+            <bk-table-column :label="$t('execute')" width="80">
                 <template #default="{ row }">
                     <i class="devops-icon icon-play3 hover-btn inline-block"
                         :class="{ 'disabled': row.lastExecutionStatus === 'RUNNING' }"
@@ -92,15 +92,15 @@
                     </i>
                 </template>
             </bk-table-column>
-            <bk-table-column :label="$t('operation')" width="70">
+            <bk-table-column :label="$t('operation')" width="100">
                 <template #default="{ row }">
                     <operation-list
                         :list="[
-                            { label: '编辑', clickEvent: () => editPlanHandler(row), disabled: Boolean(row.lastExecutionStatus) },
-                            { label: '复制计划', clickEvent: () => copyPlanHandler(row) },
-                            { label: '复制URL', clickEvent: () => copyUrlHandler(row) },
-                            { label: '删除', clickEvent: () => deletePlanHandler(row) },
-                            { label: '日志', clickEvent: () => showPlanLogHandler(row) }
+                            { label: $t('edit'), clickEvent: () => editPlanHandler(row), disabled: Boolean(row.lastExecutionStatus) },
+                            { label: $t('copyPlan'), clickEvent: () => copyPlanHandler(row) },
+                            { label: $t('copyUrl'), clickEvent: () => copyUrlHandler(row) },
+                            { label: $t('delete'), clickEvent: () => deletePlanHandler(row) },
+                            { label: $t('log'), clickEvent: () => showPlanLogHandler(row) }
                         ]"></operation-list>
                 </template>
             </bk-table-column>
@@ -120,7 +120,7 @@
         </bk-pagination>
         <plan-log v-model="planLog.show" :plan-data="planLog.planData"></plan-log>
         <plan-copy-dialog v-bind="planCopy" @cancel="planCopy.show = false" @refresh="handlerPaginationChange()"></plan-copy-dialog>
-        <bk-sideslider :is-show.sync="drawerSlider.isShow" :quick-close="true" :width="698">
+        <bk-sideslider :is-show.sync="drawerSlider.isShow" :quick-close="true" :width="currentLanguage === 'zh-cn' ? 704 : 972">
             <div slot="header">{{ drawerSlider.title }}</div>
             <div slot="content" class="plan-side-content">
                 <create-plan :rows-data="drawerSlider.rowsData" @close="handleClickCloseDrawer" @confirm="handlerPaginationChange" />
@@ -212,11 +212,11 @@
             },
             getExecutionStrategy ({ replicaType, setting: { executionStrategy } }) {
                 return replicaType === 'REAL_TIME'
-                    ? '实时同步'
+                    ? this.$t('realTimeSync')
                     : {
-                        IMMEDIATELY: '立即执行',
-                        SPECIFIED_TIME: '指定时间',
-                        CRON_EXPRESSION: '定时执行'
+                        IMMEDIATELY: this.$t('executeImmediately'),
+                        SPECIFIED_TIME: this.$t('designatedTime'),
+                        CRON_EXPRESSION: this.$t('timedExecution')
                     }[executionStrategy]
             },
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
@@ -246,7 +246,7 @@
                 if (lastExecutionStatus === 'RUNNING') return
                 this.$confirm({
                     theme: 'warning',
-                    message: `确认执行计划 ${name} ?`,
+                    message: this.$t('planConfirmExecuteMsg', [name]),
                     confirmFn: () => {
                         return this.executePlan({
                             projectId: this.projectId,
@@ -255,7 +255,7 @@
                             this.getPlanListHandler()
                             this.$bkMessage({
                                 theme: 'success',
-                                message: '执行计划' + this.$t('success')
+                                message: this.$t('executePlan') + this.$t('space') + this.$t('success')
                             })
                         })
                     }
@@ -267,7 +267,7 @@
             handleClickCreatePlan () {
                 this.drawerSlider = {
                     isShow: true,
-                    title: '创建计划',
+                    title: this.$t('createPlan'),
                     rowsData: {
                         ...this.$route.params,
                         routeName: 'createPlan'
@@ -287,7 +287,7 @@
                 if (lastExecutionStatus) return
                 this.drawerSlider = {
                     isShow: true,
-                    title: '编辑计划',
+                    title: this.$t('editPlan'),
                     rowsData: {
                         ...this.$route.params,
                         planId: key,
@@ -325,7 +325,7 @@
                 }
                 this.$confirm({
                     theme: 'danger',
-                    message: `确认删除计划 ${name} ?`,
+                    message: this.$t('planConfirmDeleteMsg', [name]),
                     confirmFn: () => {
                         return this.deletePlan({
                             projectId: this.projectId,
@@ -334,7 +334,7 @@
                             this.handlerPaginationChange()
                             this.$bkMessage({
                                 theme: 'success',
-                                message: '删除计划' + this.$t('success')
+                                message: this.$t('deletePlan') + this.$t('space') + this.$t('success')
                             })
                         })
                     }
@@ -345,12 +345,12 @@
                 copyToClipboard(url).then(() => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: '成功复制URL到剪贴板'
+                        message: this.$t('copyUrlSuccessTip')
                     })
                 }).catch(() => {
                     this.$bkMessage({
                         theme: 'error',
-                        message: this.$t('copy') + this.$t('fail')
+                        message: this.$t('copy') + this.$t('space') + this.$t('fail')
                     })
                 })
             },
@@ -361,7 +361,7 @@
                 }).then(res => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: `${enabled ? '启用' : '停用'}计划成功`
+                        message: `${enabled ? this.$t('enablePlanSuccess') : this.$t('stopPlanSuccess')}`
                     })
                 }).finally(() => {
                     this.getPlanListHandler()
@@ -370,7 +370,7 @@
             showPlanDetailHandler ({ name, key }) {
                 this.drawerSlider = {
                     isShow: true,
-                    title: `${name}详情`,
+                    title: `${name}` + this.$t('space') + this.$t('detail'),
                     rowsData: {
                         ...this.$route.params,
                         planId: key,

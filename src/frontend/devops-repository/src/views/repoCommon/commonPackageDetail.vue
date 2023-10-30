@@ -13,11 +13,11 @@
         </header>
         <div class="common-version-main flex-align-center">
             <aside class="common-version" v-bkloading="{ isLoading }">
-                <header class="pl30 version-header flex-align-center">制品版本</header>
+                <header class="pl30 version-header flex-align-center">{{$t('artifactVersion')}}</header>
                 <div class="version-search">
                     <bk-input
                         v-model.trim="versionInput"
-                        placeholder="请输入版本, 按Enter键搜索"
+                        :placeholder="$t('versionPlaceholder')"
                         clearable
                         @enter="handlerPaginationChange()"
                         @clear="handlerPaginationChange()"
@@ -30,7 +30,7 @@
                         :is-loading="isLoading"
                         :has-next="versionList.length < pagination.count"
                         @load="handlerPaginationChange({ current: pagination.current + 1 }, true)">
-                        <div class="mb10 list-count">共计{{ pagination.count }}个版本</div>
+                        <div class="mb10 list-count">{{$t('totalVersionCount', [pagination.count])}} </div>
                         <div
                             class="mb10 version-item flex-center"
                             :class="{ 'selected': $version.name === version }"
@@ -43,15 +43,15 @@
                                 :list="[
                                     ...(!$version.metadata.forbidStatus ? [
                                         (showPromotion && !$version.metadata.lockStatus) && {
-                                            label: '晋级', clickEvent: () => changeStageTagHandler($version),
+                                            label: $t('upgrade'), clickEvent: () => changeStageTagHandler($version),
                                             disabled: ($version.stageTag || '').includes('@release')
                                         },
-                                        repoType !== 'docker' && { label: '下载', clickEvent: () => downloadPackageHandler($version) },
+                                        repoType !== 'docker' && { label: $t('download'), clickEvent: () => downloadPackageHandler($version) },
                                         showRepoScan && { label: $t('scan'), clickEvent: () => scanPackageHandler($version) }
                                     ] : []),
-                                    !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('forbid',$version), label: $version.metadata.forbidStatus ? $t('remove') + $t('space') + $t('forbid') : $t('forbid') },
-                                    !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('lock',$version), label: $version.metadata.lockStatus ? $t('remove') + $t('space') + $t('lock') : $t('lock') },
-                                    (permission.delete && !whetherSoftware && !(storeType === 'virtual') && !$version.metadata.lockStatus) && { label: '删除', clickEvent: () => deleteVersionHandler($version) }
+                                    !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('forbid',$version), label: $version.metadata.forbidStatus ? $t('relieve') + $t('space') + $t('forbid') : $t('forbid') },
+                                    !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('lock',$version), label: $version.metadata.lockStatus ? $t('relieve') + $t('space') + $t('lock') : $t('lock') },
+                                    (permission.delete && !whetherSoftware && !(storeType === 'virtual') && !$version.metadata.lockStatus) && { label: $t('delete'), clickEvent: () => deleteVersionHandler($version) }
                                 ]"></operation-list>
                         </div>
                     </infinite-scroll>
@@ -99,7 +99,7 @@
                     tag: [
                         {
                             required: true,
-                            message: this.$t('pleaseSelect') + this.$t('tag'),
+                            message: this.$t('pleaseSelect') + this.$t('space') + this.$t('tag'),
                             trigger: 'blur'
                         }
                     ]
@@ -303,7 +303,7 @@
                 }).then(() => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: (row.limitStatus ? this.$t('remove') + this.$t('space') + this.$t(row.limitType) : this.$t(row.limitType)) + this.$t('success')
+                        message: (row.limitStatus ? this.$t('relieve') + this.$t('space') + this.$t(row.limitType) : this.$t(row.limitType)) + this.$t('space') + this.$t('success')
                     })
                     this.$refs.operationLimitConfirmDialog.dialogData.show = false
                     this.refresh(row.name)
@@ -344,7 +344,7 @@
                             this.getVersionListHandler()
                             this.$bkMessage({
                                 theme: 'success',
-                                message: this.$t('delete') + this.$t('success')
+                                message: this.$t('delete') + this.$t('space') + this.$t('success')
                             })
                         })
                     }

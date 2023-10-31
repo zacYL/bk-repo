@@ -1,7 +1,7 @@
 <template>
     <canway-dialog
         v-model="show"
-        :width="currentLanguage === 'zh-cn' ? 810 : 996"
+        :width="currentLanguage === 'zh-cn' ? 810 : 1006"
         height-num="770"
         :title="title"
         @cancel="cancel">

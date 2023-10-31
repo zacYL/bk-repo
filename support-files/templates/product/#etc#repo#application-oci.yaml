@@ -1,25 +1,25 @@
 spring:
   application:
     name: ${service.name}
-    desc: Docker Service
+    desc: Oci Service
   cloud:
     stream:
       function:
         definition: artifactEvent
       bindings:
         artifactEvent-in-0:
-          group: docker
+          group: oci
           destination: artifactEvent
           binder: pulsar
 server:
   port: __BK_REPO_DOCKER_PORT__
 logging:
   level:
-    com.tencent.bkrepo.docker: DEBUG
+    #com.tencent.bkrepo.docker: DEBUG
   path: ${logging.path-common}/${service.name}
 oci:
-  domain: __BK_REPO_DOCKER_DOMAIN__
+  domain: __BK_REPO_DOCKER_HOST__
   authUrl: http://${oci.domain}/v2/auth
   http: true
 service:
-  name: docker
+  name: oci

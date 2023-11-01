@@ -33,6 +33,7 @@ package com.tencent.bkrepo.repository.service.metadata.impl
 
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
+import com.tencent.bkrepo.common.artifact.api.DefaultArtifactInfo
 import com.tencent.bkrepo.common.artifact.constant.LOCK_STATUS
 import com.tencent.bkrepo.common.artifact.constant.RESERVED_KEY
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
@@ -43,8 +44,10 @@ import com.tencent.bkrepo.repository.model.TMetadata
 import com.tencent.bkrepo.repository.model.TPackage
 import com.tencent.bkrepo.repository.model.TPackageVersion
 import com.tencent.bkrepo.repository.pojo.metadata.LimitType
+import com.tencent.bkrepo.repository.pojo.metadata.MetadataSaveRequest
 import com.tencent.bkrepo.repository.pojo.metadata.packages.PackageMetadataDeleteRequest
 import com.tencent.bkrepo.repository.pojo.metadata.packages.PackageMetadataSaveRequest
+import com.tencent.bkrepo.repository.service.metadata.MetadataService
 import com.tencent.bkrepo.repository.service.metadata.PackageMetadataService
 import com.tencent.bkrepo.repository.util.MetadataUtils
 import com.tencent.bkrepo.repository.util.PackageQueryHelper
@@ -61,7 +64,8 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class PackageMetadataServiceImpl(
     private val packageDao: PackageDao,
-    private val packageVersionDao: PackageVersionDao
+    private val packageVersionDao: PackageVersionDao,
+    private val metadataService: MetadataService
 ) : PackageMetadataService {
 
     override fun listMetadata(
@@ -99,12 +103,25 @@ class PackageMetadataServiceImpl(
     @Transactional(rollbackFor = [Throwable::class])
     override fun addLimitMetadata(request: PackageMetadataSaveRequest, limitType: LimitType) {
         with(request) {
-            val limitMetadata = MetadataUtils.extractLimitMetadata(metadata = versionMetadata!!,limitType =limitType)
+            val limitMetadata = MetadataUtils.extractLimitMetadata(metadata = versionMetadata!!, limitType = limitType)
             if (limitMetadata.isNullOrEmpty()) {
-                logger.info("[${limitType}]limitMetadata is empty, skip saving[$this]")
+                logger.info("[$limitType]limitMetadata is empty, skip saving[$this]")
                 return
             }
             saveMetadata(request.copy(versionMetadata = limitMetadata, operator = SYSTEM_USER))
+            val tPackage = getPackage(projectId, repoName, packageKey)
+            val tPackageVersion = getPackageVersion(tPackage.id!!, version)
+            val artifactInfo = DefaultArtifactInfo(projectId, repoName, tPackageVersion.artifactPath!!)
+            metadataService.addLimitMetadata(
+                MetadataSaveRequest(
+                    projectId = projectId,
+                    repoName = repoName,
+                    fullPath = artifactInfo.getArtifactFullPath(),
+                    metadata = metadata,
+                    nodeMetadata = versionMetadata
+                ),
+                limitType
+            )
         }
     }
 

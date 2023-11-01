@@ -1,7 +1,7 @@
 <template>
     <canway-dialog
         :value="show"
-        title="白名单启用状态"
+        :title="$t('proxyWhiteOpenStatus')"
         :height-num="400"
         :width="520"
         @cancel="$emit('close')"
@@ -11,8 +11,8 @@
             :data="tableData"
             :outer-border="false"
             :row-border="false">
-            <bk-table-column label="制品类型" prop="repositoryType"></bk-table-column>
-            <bk-table-column label="白名单启用状态" prop="status">
+            <bk-table-column :label="$t('repoType')" prop="repositoryType"></bk-table-column>
+            <bk-table-column :label="$t('proxyWhiteOpenStatus')" prop="status">
                 <template slot-scope="props">
                     <div>
                         <bk-switcher
@@ -72,7 +72,7 @@
                 const originStatus = value.split(',')[1] === 'false'
                 return new Promise((resolve, reject) => {
                     this.updateWhiteListSwitchList({ RepositoryType }).then(res => {
-                        res === !originStatus ? resolve() : reject(new Error('状态切换失败'))
+                        res === !originStatus ? resolve() : reject(new Error(this.$t('switchWhiteStatusFail')))
                     })
                 })
             }

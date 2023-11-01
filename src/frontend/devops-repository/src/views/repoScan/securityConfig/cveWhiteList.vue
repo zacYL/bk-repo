@@ -5,7 +5,7 @@
             <bk-input
                 v-model.trim="cveId"
                 class="mr20 w250"
-                placeholder="请输入漏洞编号, 按Enter键搜索"
+                :placeholder="$t('vulIdSearchPlaceholder')"
                 clearable
                 @enter="handlerPaginationChange()"
                 @clear="handlerPaginationChange()"
@@ -22,11 +22,11 @@
             <template #empty>
                 <empty-data :is-loading="isLoading" :search="Boolean(name)"></empty-data>
             </template>
-            <bk-table-column label="CVE编号" prop="cveId"></bk-table-column>
+            <bk-table-column :label="'CVE' + $t('space') + $t('serialNumber')" prop="cveId"></bk-table-column>
             <bk-table-column :label="$t('createdDate')">
                 <template #default="{ row }">{{formatDate(row.createdDate)}}</template>
             </bk-table-column>
-            <bk-table-column label="操作" width="100">
+            <bk-table-column :label="$t('operation')" width="100">
                 <template #default="{ row }">
                     <Icon class="hover-btn" size="24" name="icon-delete"
                         @click.native.stop="deleteCve(row)" />
@@ -49,14 +49,14 @@
             v-model="addCveDialog.show"
             width="528"
             height-num="281"
-            title="添加CVE白名单"
+            :title="$t('addCVEWhiteList')"
             @cancel="addCveDialog.show = false"
             @confirm="confirmAddCve">
             <bk-input
                 class="w480"
                 v-model="addCveDialog.cveStr"
                 type="textarea"
-                placeholder="请输入CVE漏洞编号，以换行分隔"
+                :placeholder="$t('cveVulNumberPlaceholder')"
                 :rows="6">
             </bk-input>
         </canway-dialog>
@@ -125,7 +125,7 @@
                 }).then(() => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: '添加成功'
+                        message: this.$t('add') + this.$t('space') + this.$t('success')
                     })
                     this.addCveDialog.show = false
                     this.getCveWhiteListHandler()
@@ -137,7 +137,7 @@
                 }).then(() => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: '移除成功'
+                        message: this.$t('remove') + this.$t('space') + this.$t('success')
                     })
                     this.getCveWhiteListHandler()
                 })

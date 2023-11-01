@@ -3,33 +3,33 @@
         :value="show"
         :title="titleMap[type]"
         :height-num="400"
-        :width="520"
+        :width="560"
         @cancel="handleClickCancel"
         v-loading="isLoading"
     >
-        <bk-form ref="formRef" :model="form" class="mr10" :label-width="75" :rules="rules">
-            <bk-form-item label="制品类型" property="type" required>
+        <bk-form ref="formRef" :model="form" class="mr10" :label-width="111" :rules="rules">
+            <bk-form-item :label="$t('repoType')" property="type" required>
                 <bk-select
                     v-model="form.type"
-                    placeholder="请选择制品类型"
+                    :placeholder="$t('artifactTypePlaceholder')"
                     :clearable="false">
                     <bk-option v-for="item in artifactTypeList" :key="item" :id="item" :name="item"></bk-option>
                 </bk-select>
             </bk-form-item>
-            <bk-form-item label="制品名称" property="packageKey" required>
+            <bk-form-item :label="$t('artifactName')" property="packageKey" required>
                 <bk-input
                     v-model="form.packageKey"
-                    placeholder="请填写制品名称"
+                    :placeholder="$t('artifactNamePlaceholder')"
                     :clearable="false"
                 />
             </bk-form-item>
-            <bk-form-item label="版本号" property="versions">
+            <bk-form-item :label="$t('searchConditionVersion')" property="versions">
                 <bk-input
                     type="textarea"
                     v-model="form.versions"
                 />
                 <template #tip>
-                    <span class="tip">每一行对应一个版本号，请注意书写格式。</span>
+                    <span class="tip">{{$t('proxyWhiteArtifactVersionTips')}}</span>
                 </template>
             </bk-form-item>
         </bk-form>
@@ -62,8 +62,8 @@
         data () {
             return {
                 titleMap: {
-                    add: '添加制品到白名单',
-                    edit: '编辑制品信息'
+                    add: this.$t('addArtifactToProxyWhite'),
+                    edit: this.$t('editArtifactInfo')
                 },
                 form: this.getNewForm(),
                 isLoading: false
@@ -75,19 +75,19 @@
                 return {
                     type: [{
                         required: true,
-                        message: '请选择制品类型',
+                        message: this.$t('artifactTypePlaceholder'),
                         trigger: 'blur'
                     }],
                     packageKey: [
                         {
                             required: true,
-                            message: '请填写制品名称',
+                            message: this.$t('artifactNamePlaceholder'),
                             trigger: 'blur'
                         },
                         ...this.form.type === 'MAVEN'
                             ? [{
                                 regex: /[a-zA-Z0-9_\-.]+:[a-zA-Z0-9_\-.]+/,
-                                message: '格式无效, 期望格式为: groupId:artifactId',
+                                message: this.$t('formatInvalidTip') + 'groupId:artifactId',
                                 trigger: 'change'
                             }]
                             : []
@@ -130,7 +130,7 @@
                             .then(() => {
                                 this.$bkMessage({
                                     theme: 'success',
-                                    message: `${this.type === 'add' ? '添加' : '编辑'}成功`
+                                    message: `${this.type === 'add' ? this.$t('add') : this.$t('edit')}` + this.$t('space') + this.$t('success')
                                 })
                                 this.$emit('close')
                                 this.$emit('update')
@@ -138,7 +138,7 @@
                             .catch(err => {
                                 this.$bkMessage({
                                     theme: 'error',
-                                    message: err.message || '未知错误'
+                                    message: err.message || this.$t('unknownError')
                                 })
                             })
                     })

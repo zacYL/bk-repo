@@ -1,7 +1,7 @@
 <template>
     <canway-dialog
         :value="show"
-        title="API使用方法"
+        :title="$t('apiUseMethod')"
         :width="720"
         :height="400"
         @cancel="$emit('close')"
@@ -10,12 +10,12 @@
             <!-- <bk-select
                 class="w250"
                 v-model="form.type"
-                placeholder="请选择制品类型"
+                :placeholder="$t('artifactTypePlaceholder')"
                 :clearable="false">
                 <bk-option v-for="item in artifactTypeList" :key="item" :id="item" :name="item" />
             </bk-select> -->
             <div class="artifact-copy">
-                <p class="tips">请在合适的位置创建工作目录，并在该目录下执行命令：</p>
+                <p class="tips">{{$t('apiUseCommandTip')}}</p>
                 <div id="markdown-tip" />
             </div>
         </bk-form>
@@ -29,6 +29,7 @@
     import repoGuideMixin from '@repository/views/repoCommon/repoGuideMixin'
     import { mapState } from 'vuex'
     import getMarkdownTip from './getMarkdownTip'
+    import getMarkdownTipEn from './getMarkdownTipEn'
 
     export default {
         mixins: [repoGuideMixin],
@@ -42,12 +43,14 @@
             return {
                 form: {
                     type: ''
-                },
-                markdownTip: getMarkdownTip()
+                }
             }
         },
         computed: {
-            ...mapState(['artifactTypeList'])
+            ...mapState(['artifactTypeList']),
+            markdownTip () {
+                return this.currentLanguage === 'zh-cn' ? getMarkdownTip() : getMarkdownTipEn()
+            }
         },
         watch: {
             show (val) {

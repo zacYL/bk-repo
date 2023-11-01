@@ -2,16 +2,16 @@
     <div class="proxy-manage-container" v-bkloading="{ isLoading }">
         <div class="mt10 flex-between-center">
             <div class="btn-group">
-                <bk-button class="ml10" theme="primary" icon="plus" @click="handleClickShowDialog('add')">添加</bk-button>
-                <bk-button class="ml10" @click="handleClickShowDialog('api')">API调用</bk-button>
-                <bk-button class="ml10" @click="handleClickShowDialog('status')">启用状态</bk-button>
+                <bk-button class="ml10" theme="primary" icon="plus" @click="handleClickShowDialog('add')">{{$t('add')}}</bk-button>
+                <bk-button class="ml10" @click="handleClickShowDialog('api')">{{$t('apiUse')}}</bk-button>
+                <bk-button class="ml10" @click="handleClickShowDialog('status')">{{$t('enabledStatus')}}</bk-button>
             </div>
             <!-- 筛选框 -->
             <div class="mr20 flex-align-center">
                 <bk-select
                     @change="handlerPaginationChange"
                     v-model.trim="params.type"
-                    placeholder="全部仓库类型"
+                    :placeholder="$t('allStoreTypes')"
                     style="width: 160px;">
                     <bk-option v-for="item in artifactTypeList" :key="item" :id="item" :name="item"></bk-option>
                 </bk-select>
@@ -19,7 +19,7 @@
                     v-model.trim="params.packageKey"
                     class="ml10"
                     style="width: 230px;"
-                    placeholder="请输入制品名称, 按Enter键搜索"
+                    :placeholder="$t('artifactPlaceholder')"
                     clearable
                     @enter="handlerPaginationChange"
                     @clear="handlerPaginationChange"
@@ -41,14 +41,14 @@
             <template #empty>
                 <empty-data :is-loading="isLoading"></empty-data>
             </template>
-            <bk-table-column label="制品名称" prop="packageKey" min-width="300px" show-overflow-tooltip />
-            <bk-table-column label="版本" v-slot="{ row }" show-overflow-tooltip>
+            <bk-table-column :label="$t('artifactName')" prop="packageKey" min-width="300px" show-overflow-tooltip />
+            <bk-table-column :label="$t('version')" v-slot="{ row }" show-overflow-tooltip>
                 <div>{{ row.versions.join(', ') }}</div>
             </bk-table-column>
-            <bk-table-column label="制品类型" prop="type" width="120px" />
-            <bk-table-column label="操作" v-slot="{ row }" width="150px">
-                <bk-button class="mr10" theme="primary" text @click="handleClickShowDialog('edit', row)">编辑</bk-button>
-                <bk-button theme="primary" text @click="handleClickDelArtifact(row)">删除</bk-button>
+            <bk-table-column :label="$t('repoType')" prop="type" width="120px" />
+            <bk-table-column :label="$t('operation')" v-slot="{ row }" width="150px">
+                <bk-button class="mr10" theme="primary" text @click="handleClickShowDialog('edit', row)">{{$t('edit')}}</bk-button>
+                <bk-button theme="primary" text @click="handleClickDelArtifact(row)">{{$t('delete')}}</bk-button>
             </bk-table-column>
         </bk-table>
         <!-- 表格 /-->
@@ -172,8 +172,8 @@
             },
             handleClickDelArtifact (artifact) {
                 this.$bkInfoDevopsConfirm({
-                    title: '操作确认',
-                    subTitle: `是否确认删除${artifact.packageKey}？`,
+                    title: this.$t('operationConfirmation'),
+                    subTitle: this.$t('confirmDeleteProxyWhite', [artifact.packageKey]),
                     theme: 'danger',
                     confirmFn: () => {
                         this.isLoading = true
@@ -181,7 +181,7 @@
                             .then(() => {
                                 this.$bkMessage({
                                     theme: 'success',
-                                    message: '删除成功'
+                                    message: this.$t('delete') + this.$t('space') + this.$t('success')
                                 })
                                 this.fetchWhitelist()
                             })

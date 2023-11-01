@@ -960,5 +960,20 @@
     "remoteProxyAccount":"代理地址账号",
     "remoteProxyPassword":"代理地址密码",
     "networkAccount":"网络代理账号",
-    "networkPassword":"网络代理密码"
+    "networkPassword":"网络代理密码",
+    "proxyWhiteArtifactVersionTips":"每一行对应一个版本号，请注意书写格式。",
+    "addArtifactToProxyWhite":"添加制品到白名单",
+    "editArtifactInfo":"编辑制品信息",
+    "formatInvalidTip":"格式无效, 期望格式为：",
+    "unknownError":"未知错误",
+    "apiUseMethod":"API使用方法",
+    "apiUseCommandTip":"请在合适的位置创建工作目录，并在该目录下执行命令：",
+    "proxyWhiteOpenStatus":"白名单启用状态",
+    "switchWhiteStatusFail":"状态切换失败",
+    "vulIdSearchPlaceholder":"请输入漏洞编号, 按Enter键搜索",
+    "addCVEWhiteList":"添加CVE白名单",
+    "cveVulNumberPlaceholder":"请输入CVE漏洞编号，以换行分隔",
+    "proxyWhiteList":"代理白名单",
+    "apiUse":"API调用",
+    "enabledStatus":"启用状态"
 }

@@ -19,8 +19,8 @@
             <template #empty>
                 <empty-data :is-loading="isLoading"></empty-data>
             </template>
-            <bk-table-column label="漏洞包名称" prop="name" show-overflow-tooltip></bk-table-column>
-            <bk-table-column label="关联扫描器" show-overflow-tooltip>
+            <bk-table-column :label="$t('bugPackageName')" prop="name" show-overflow-tooltip></bk-table-column>
+            <bk-table-column :label="$t('associatedScanner')" show-overflow-tooltip>
                 <template #default="{ row }">{{ getScannerName(row) }}</template>
             </bk-table-column>
             <bk-table-column :label="$t('lastModifiedDate')" prop="lastModifiedDate" width="150">
@@ -40,12 +40,12 @@
             :limit-list="pagination.limitList">
         </bk-pagination>
         <upload-dialog ref="uploadDialog" height-num="375" @update="getDataListHandler">
-            <bk-form class="mb20" :label-width="90">
-                <bk-form-item label="关联扫描器">
+            <bk-form class="mb20" :label-width="140">
+                <bk-form-item :label="$t('associatedScanner')">
                     <bk-select
                         class="w250"
                         v-model="scannerName"
-                        placeholder="请选择扫描器"
+                        :placeholder="$t('selectScannerPlaceholder')"
                         :clearable="false">
                         <bk-option v-for="scanner in scannerList" :key="scanner.name" :id="scanner.name" :name="scanner.name"></bk-option>
                     </bk-select>
@@ -138,7 +138,7 @@
                     projectId: 'public-global',
                     repoName: 'vuldb-repo',
                     show: true,
-                    title: '上传',
+                    title: this.$t('upload'),
                     fullPath: `${this.scannerName}`
                 })
             },

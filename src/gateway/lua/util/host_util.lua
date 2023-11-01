@@ -21,10 +21,6 @@ local _M = {}
 
 --[[获取微服务真实地址]]
 function _M:get_addr(service_name)
-    -- oci service replace docker service compatible
-    if service_name == "docker" then
-        service_name = "oci"
-    end
 
     local service_prefix = config.service_prefix
 

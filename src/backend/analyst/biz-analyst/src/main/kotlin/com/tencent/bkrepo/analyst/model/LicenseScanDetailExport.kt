@@ -5,24 +5,24 @@ import com.alibaba.excel.annotation.write.style.ColumnWidth
 
 data class LicenseScanDetailExport(
     @ColumnWidth(45)
-    @ExcelProperty("许可证名称全称")
+    @ExcelProperty("{excel.license-scan-detail.full-name}", order = 0)
     val fullName: String,
     @ColumnWidth(45)
-    @ExcelProperty("依赖路径")
+    @ExcelProperty("{excel.license-scan-detail.dependent-path}", order = 1)
     val dependentPath: String,
-    @ColumnWidth(15)
-    @ExcelProperty("OSI认证")
+    @ColumnWidth(30)
+    @ExcelProperty("{excel.license-scan-detail.osi}", order = 2)
     val osi: String,
-    @ColumnWidth(15)
-    @ExcelProperty("FSF开源")
+    @ColumnWidth(30)
+    @ExcelProperty("{excel.license-scan-detail.fsf}", order = 3)
     val fsf: String,
-    @ColumnWidth(15)
-    @ExcelProperty("使用状态")
+    @ColumnWidth(30)
+    @ExcelProperty("{excel.license-scan-detail.deprecated}", order = 4)
     val deprecated: String,
-    @ColumnWidth(15)
-    @ExcelProperty("合规性")
+    @ColumnWidth(30)
+    @ExcelProperty("{excel.license-scan-detail.compliance}", order = 5)
     val compliance: String?,
     @ColumnWidth(60)
-    @ExcelProperty("证书信息")
+    @ExcelProperty("{excel.license-scan-detail.description}", order = 6)
     val description: String
 )

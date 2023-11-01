@@ -23,6 +23,11 @@ if config.service_name ~= nil and config.service_name ~= "" then
     service_name = config.service_name
 end
 
+-- oci service replace docker service compatible
+if service_name == "docker" then
+    service_name = "oci"
+end
+
 if not service_name then
     ngx.log(ngx.ERR, "failed with no service name")
     ngx.exit(503)

@@ -25,16 +25,14 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-@file:Suppress("DEPRECATION")
-
 package com.tencent.bkrepo.analyst.utils
 
+import com.tencent.bkrepo.analyst.model.ExportContent
 import com.tencent.bkrepo.analyst.model.LeakDetailExport
 import com.tencent.bkrepo.analyst.model.SubScanTaskDefinition
 import com.tencent.bkrepo.analyst.model.TProjectScanConfiguration
 import com.tencent.bkrepo.analyst.model.TScanPlan
 import com.tencent.bkrepo.analyst.model.TScanTask
-import com.tencent.bkrepo.analyst.pojo.LeakType
 import com.tencent.bkrepo.analyst.pojo.ProjectScanConfiguration
 import com.tencent.bkrepo.analyst.pojo.ScanTask
 import com.tencent.bkrepo.analyst.pojo.response.ArtifactVulnerabilityInfo
@@ -44,13 +42,14 @@ import com.tencent.bkrepo.common.analysis.pojo.scanner.CveOverviewKey
 import com.tencent.bkrepo.common.analysis.pojo.scanner.Level
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.api.util.toJsonString
+import com.tencent.bkrepo.common.service.util.LocaleMessageUtils
 import java.time.format.DateTimeFormatter
 
 object Converter {
     fun convert(
         scanTask: TScanTask,
         scanPlan: TScanPlan? = null,
-        force: Boolean = false
+        force: Boolean = false,
     ): ScanTask = with(scanTask) {
         ScanTask(
             name = scanTask.name,
@@ -124,12 +123,15 @@ object Converter {
         }
     }
 
-    private fun convertToLeakLevel(level: String): String = when (level) {
-        Level.CRITICAL.name -> LeakType.CRITICAL.value
-        Level.HIGH.name -> LeakType.HIGH.value
-        Level.MEDIUM.name -> LeakType.MEDIUM.value
-        Level.LOW.name -> LeakType.LOW.value
-        else -> "/"
+    private fun convertToLeakLevel(level: String): String {
+        val msgKey = when (level) {
+            Level.CRITICAL.name -> ExportContent.LEAK_DETAIL_SEVERITY_CRITICAL.msgKey
+            Level.HIGH.name -> ExportContent.LEAK_DETAIL_SEVERITY_HIGH.msgKey
+            Level.MEDIUM.name -> ExportContent.LEAK_DETAIL_SEVERITY_MEDIUM.msgKey
+            Level.LOW.name -> ExportContent.LEAK_DETAIL_SEVERITY_LOW.msgKey
+            else -> "/"
+        }
+        return LocaleMessageUtils.getLocalizedMessage(msgKey)
     }
 
     fun convertToDetailExport(artifactVulnerabilityInfo: ArtifactVulnerabilityInfo): LeakDetailExport {

@@ -4,28 +4,28 @@ import com.alibaba.excel.annotation.ExcelProperty
 import com.alibaba.excel.annotation.write.style.ColumnWidth
 
 data class LeakDetailExport(
-    @ColumnWidth(16)
-    @ExcelProperty("漏洞ID")
+    @ColumnWidth(30)
+    @ExcelProperty("{excel.leak-detail.vul-id}", order = 0)
     val vulId: String,
-    @ColumnWidth(15)
-    @ExcelProperty("漏洞等级")
+    @ColumnWidth(30)
+    @ExcelProperty("{excel.leak-detail.severity}", order = 1)
     val severity: String,
     @ColumnWidth(30)
-    @ExcelProperty("所属依赖")
+    @ExcelProperty("{excel.leak-detail.pkg-name}", order = 2)
     val pkgName: String,
     @ColumnWidth(30)
-    @ExcelProperty("引入版本")
+    @ExcelProperty("{excel.leak-detail.installed-version}", order = 3)
     val installedVersion: String,
     @ColumnWidth(45)
-    @ExcelProperty("漏洞名")
+    @ExcelProperty("{excel.leak-detail.vulnerability-name}", order = 4)
     val vulnerabilityName: String,
     @ColumnWidth(90)
-    @ExcelProperty("漏洞描述")
+    @ExcelProperty("{excel.leak-detail.description}", order = 5)
     val description: String? = null,
     @ColumnWidth(120)
-    @ExcelProperty("相关信息")
+    @ExcelProperty("{excel.leak-detail.reference}", order = 6)
     val reference: String? = null,
     @ColumnWidth(45)
-    @ExcelProperty("修复建议")
+    @ExcelProperty("{excel.leak-detail.official-solution}", order = 7)
     val officialSolution: String? = null
 )

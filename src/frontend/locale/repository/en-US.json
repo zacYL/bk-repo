@@ -975,5 +975,6 @@
     "cveVulNumberPlaceholder":"Please enter CVE vulnerability numbers, separated by newlines",
     "proxyWhiteList":"Proxy whitelist",
     "apiUse":"API call",
-    "enabledStatus":"Enabled status"
+    "enabledStatus":"Enabled status",
+    "selectOperationEvent":"Please select an action event"
 }

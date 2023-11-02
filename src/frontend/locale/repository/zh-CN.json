@@ -975,5 +975,6 @@
     "cveVulNumberPlaceholder":"请输入CVE漏洞编号，以换行分隔",
     "proxyWhiteList":"代理白名单",
     "apiUse":"API调用",
-    "enabledStatus":"启用状态"
+    "enabledStatus":"启用状态",
+    "selectOperationEvent":"选择操作事件"
 }

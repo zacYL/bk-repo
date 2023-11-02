@@ -5,7 +5,7 @@
                 v-model="query.projectId"
                 class="mr10 w250"
                 searchable
-                placeholder="查看单个项目日志"
+                :placeholder="$t('viewProjectLogPlaceholder')"
                 @change="handlerPaginationChange()"
                 :enable-virtual-scroll="projectList && projectList.length > 3000"
                 :list="projectList">
@@ -20,7 +20,7 @@
                 class="mr10 w250"
                 :shortcuts="shortcuts"
                 type="daterange"
-                placeholder="请选择日期范围"
+                :placeholder="$t('selectDatePlaceholder')"
                 @change="handlerPaginationChange()">
             </bk-date-picker>
             <bk-select
@@ -28,7 +28,7 @@
                 v-model="query.user"
                 clearable
                 searchable
-                placeholder="请选择用户"
+                :placeholder="$t('selectUserMsg')"
                 @change="handlerPaginationChange()"
                 :enable-virtual-scroll="Object.values(userList).length > 3000"
                 :list="Object.values(userList).filter(user => user.id !== 'anonymous')">
@@ -45,7 +45,7 @@
                 searchable
                 multiple
                 show-select-all
-                placeholder="选择操作事件"
+                :placeholder="$t('selectOperationEvent')"
                 @change="handlerPaginationChange()"
                 :list="logEventTypeList">
                 <bk-option
@@ -67,19 +67,19 @@
             <template #empty>
                 <empty-data :is-loading="isLoading" :search="Boolean(isSearching)"></empty-data>
             </template>
-            <bk-table-column label="项目" show-overflow-tooltip>
+            <bk-table-column :label="$t('project')" show-overflow-tooltip>
                 <template #default="{ row }">{{ getProjectName(row.content.projectId) }}</template>
             </bk-table-column>
-            <bk-table-column label="操作时间" width="150">
+            <bk-table-column :label="$t('operatingTime')" width="150">
                 <template #default="{ row }">{{ formatDate(row.createdDate) }}</template>
             </bk-table-column>
-            <bk-table-column label="操作用户" show-overflow-tooltip>
+            <bk-table-column :label="$t('operator')" show-overflow-tooltip>
                 <template #default="{ row }"> {{ userList[row.userId] ? userList[row.userId].name : row.userId }}</template>
             </bk-table-column>
-            <bk-table-column label="操作事件" show-overflow-tooltip>
+            <bk-table-column :label="$t('event')" show-overflow-tooltip>
                 <template #default="{ row }">{{ row.operate }}</template>
             </bk-table-column>
-            <bk-table-column label="操作对象" show-overflow-tooltip>
+            <bk-table-column :label="$t('operationObject')" show-overflow-tooltip>
                 <template #default="{ row }">
                     <Icon class="mr5 table-svg" v-if="row.content.repoType"
                         :name="row.content.repoType.toLowerCase()" size="16">
@@ -90,10 +90,10 @@
                     <span>{{ row.content.des }}</span>
                 </template>
             </bk-table-column>
-            <bk-table-column label="客户端IP" prop="clientAddress" show-overflow-tooltip></bk-table-column>
-            <bk-table-column label="结果" width="80">
+            <bk-table-column :label="$t('client') + $t('space') + 'IP'" prop="clientAddress" show-overflow-tooltip></bk-table-column>
+            <bk-table-column :label="$t('result')" width="110">
                 <template #default="{ row }">
-                    <span class="repo-tag" :class="[row.result ? 'SUCCESS' : 'FAILED']">{{ row.result ? '成功' : '失败' }}</span>
+                    <span class="repo-tag" :class="[row.result ? 'SUCCESS' : 'FAILED']">{{ row.result ? $t('success') : $t('fail') }}</span>
                 </template>
             </bk-table-column>
         </bk-table>
@@ -139,19 +139,19 @@
                 },
                 shortcuts: [
                     {
-                        text: '近7天',
+                        text: this.$t('lastSevenDays'),
                         value () {
                             return [new Date(nowTime - 3600 * 1000 * 24 * 7), new Date(nowTime)]
                         }
                     },
                     {
-                        text: '近15天',
+                        text: this.$t('lastFifteenDays'),
                         value () {
                             return [new Date(nowTime - 3600 * 1000 * 24 * 15), new Date(nowTime)]
                         }
                     },
                     {
-                        text: '近30天',
+                        text: this.$t('lastThirtyDays'),
                         value () {
                             return [new Date(nowTime - 3600 * 1000 * 24 * 30), new Date(nowTime)]
                         }

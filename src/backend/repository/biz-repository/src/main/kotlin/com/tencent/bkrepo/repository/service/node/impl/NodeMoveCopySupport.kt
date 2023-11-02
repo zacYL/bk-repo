@@ -294,7 +294,7 @@ open class NodeMoveCopySupport(
      */
     private fun moveCopyFolder(context: MoveCopyContext) {
         with(context) {
-            //判断是否存在锁定文件
+            // 判断是否存在锁定文件
             val normalizedFullPath = PathUtils.normalizeFullPath(srcNode.fullPath)
             val normalizedPath = toPath(normalizedFullPath)
             val escapedPath = PathUtils.escapeRegex(normalizedPath)
@@ -306,7 +306,11 @@ open class NodeMoveCopySupport(
             )
             val node = nodeDao.find(folderNodeQuery)
             if (node.any { it.metadata?.any { it.key == LOCK_STATUS && it.value == true } == true }) {
-                val errorCode = if (node.size == 1) ArtifactMessageCode.NODE_LOCK else ArtifactMessageCode.NODE_CHILD_LOCK
+                val errorCode = if (node.size == 1) {
+                    ArtifactMessageCode.NODE_LOCK
+                } else {
+                    ArtifactMessageCode.NODE_CHILD_LOCK
+                }
                 throw ErrorCodeException(errorCode, normalizedPath)
             }
             // 目录 -> 文件: error

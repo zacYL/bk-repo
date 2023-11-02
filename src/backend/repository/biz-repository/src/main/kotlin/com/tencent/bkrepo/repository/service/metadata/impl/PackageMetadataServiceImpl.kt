@@ -137,7 +137,9 @@ class PackageMetadataServiceImpl(
             val query = PackageQueryHelper.versionQuery(tPackage.id!!, version)
             getPackageVersion(tPackage.id!!, version).metadata.forEach {
                 when {
-                    it.key == LOCK_STATUS && it.value == true -> throw ErrorCodeException(ArtifactMessageCode.PACKAGE_LOCK, packageKey)
+                    it.key == LOCK_STATUS && it.value == true -> {
+                        throw ErrorCodeException(ArtifactMessageCode.PACKAGE_LOCK, packageKey)
+                    }
                     it.key in keyList -> MetadataUtils.checkPermission(it, operator)
                 }
             }

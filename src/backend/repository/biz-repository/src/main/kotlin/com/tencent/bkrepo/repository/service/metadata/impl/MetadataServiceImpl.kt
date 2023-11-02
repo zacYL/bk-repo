@@ -83,7 +83,7 @@ class MetadataServiceImpl(
             val fullPath = normalizeFullPath(fullPath)
             val node = nodeDao.findNode(projectId, repoName, fullPath)
                 ?: throw ErrorCodeException(ArtifactMessageCode.NODE_NOT_FOUND, fullPath)
-            val systemMetadata=nodeMetadata?.filter { it.key in RESERVED_KEY }
+            val systemMetadata = nodeMetadata?.filter { it.key in RESERVED_KEY }
             if (systemMetadata.isNullOrEmpty() && (node.metadata?.any { it.key == LOCK_STATUS && it.value == true } == true)) {
                 throw ErrorCodeException(ArtifactMessageCode.NODE_LOCK, node.fullPath)
             }
@@ -129,7 +129,9 @@ class MetadataServiceImpl(
             // 检查是否有更新权限
             nodeDao.findOne(query)?.metadata?.forEach {
                 when {
-                    it.key == LOCK_STATUS && it.value == true -> throw ErrorCodeException(ArtifactMessageCode.NODE_LOCK, fullPath)
+                    it.key == LOCK_STATUS && it.value == true -> {
+                        throw ErrorCodeException(ArtifactMessageCode.NODE_LOCK, fullPath)
+                    }
                     it.key in keyList -> MetadataUtils.checkPermission(it, operator)
                 }
             }

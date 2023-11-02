@@ -50,6 +50,9 @@ const val SIZE = "size"
 const val REPOSITORY_INFO = "repo"
 const val SHA256 = "sha256"
 
+const val RETRY_COUNT = 2
+const val DELAY_IN_SECONDS: Long = 1
+
 /**
  * metrics
  */

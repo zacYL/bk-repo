@@ -34,8 +34,11 @@ import com.tencent.bkrepo.common.artifact.pojo.configuration.composite.Composite
 import com.tencent.bkrepo.common.artifact.pojo.configuration.local.LocalConfiguration
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.stream.rateLimit
+import com.tencent.bkrepo.common.storage.innercos.retry
 import com.tencent.bkrepo.replication.config.ReplicationProperties
 import com.tencent.bkrepo.replication.constant.DEFAULT_VERSION
+import com.tencent.bkrepo.replication.constant.DELAY_IN_SECONDS
+import com.tencent.bkrepo.replication.constant.RETRY_COUNT
 import com.tencent.bkrepo.replication.manager.LocalDataManager
 import com.tencent.bkrepo.replication.replica.base.context.ReplicaContext
 import com.tencent.bkrepo.replication.replica.base.impl.internal.PackageNodeMappings
@@ -105,7 +108,7 @@ class ClusterReplicator(
                 LocalConfiguration(compositeConfiguration.webHook, compositeConfiguration.cleanStrategy).apply {
                     this.settings = compositeConfiguration.settings
                 }
-            }else{
+            } else {
                 localRepo.configuration
             }
             val request = RepoCreateRequest(
@@ -178,20 +181,24 @@ class ClusterReplicator(
 
     override fun replicaFile(context: ReplicaContext, node: NodeInfo): Boolean {
         with(context) {
-            return buildNodeCreateRequest(this, node)?.let {
-                val artifactInputStream = localDataManager.getBlobData(it.sha256!!, it.size!!, localRepo)
-                val rateLimitInputStream = artifactInputStream.rateLimit(localDataManager.getRateLimit().toBytes())
-                // 1. 同步文件数据
-                pushBlob(
-                    inputStream = rateLimitInputStream,
-                    size = it.size!!,
-                    sha256 = it.sha256.orEmpty(),
-                    storageKey = remoteRepo?.storageCredentials?.key
-                )
-                // 2. 同步节点信息
-                artifactReplicaClient!!.replicaNodeCreateRequest(it)
-                true
-            } ?: false
+            retry(times = RETRY_COUNT, delayInSeconds = DELAY_IN_SECONDS) { retry ->
+                return buildNodeCreateRequest(this, node)?.let {
+                    val artifactInputStream = localDataManager.getBlobData(it.sha256!!, it.size!!, localRepo)
+                    val rateLimitInputStream = artifactInputStream.rateLimit(localDataManager.getRateLimit().toBytes())
+                    // 1. 同步文件数据
+                    logger.info("The file [${node.fullPath}] with sha256 [${node.sha256}] " +
+                        "will be pushed to the remote server ${cluster.name},try the $retry time!")
+                    pushBlob(
+                        inputStream = rateLimitInputStream,
+                        size = it.size!!,
+                        sha256 = it.sha256.orEmpty(),
+                        storageKey = remoteRepo?.storageCredentials?.key
+                    )
+                    // 2. 同步节点信息
+                    artifactReplicaClient!!.replicaNodeCreateRequest(it)
+                    true
+                } ?: false
+            }
         }
     }
 

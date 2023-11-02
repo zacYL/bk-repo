@@ -67,6 +67,16 @@ class PackageController(
         return ResponseBuilder.success(packageVersion)
     }
 
+    override fun findVersionByTag(
+        projectId: String,
+        repoName: String,
+        packageKey: String,
+        tag: String
+    ): Response<PackageVersion?> {
+        val packageVersion = packageService.findVersionByTag(projectId, repoName, packageKey, tag)
+        return ResponseBuilder.success(packageVersion)
+    }
+
     override fun findVersionNameByTag(
         projectId: String,
         repoName: String,

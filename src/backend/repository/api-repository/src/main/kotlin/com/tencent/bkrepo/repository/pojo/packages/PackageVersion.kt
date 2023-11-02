@@ -68,6 +68,8 @@ data class PackageVersion(
     val tags: List<String>,
     @ApiModelProperty("扩展字段")
     val extension: Map<String, Any>,
+    @ApiModelProperty("package内唯一标签")
+    var uniqueTags: List<String>? = null,
     @ApiModelProperty("包内容文件路径")
     val contentPath: String? = null,
     @ApiModelProperty("清单文件路径")

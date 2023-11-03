@@ -57,7 +57,7 @@
                     </bk-tab>
                     <div class="repo-rely-content-option">
                         <bk-button
-                            v-if="baseDetailInfo && currentNodeType === 'file'"
+                            v-if="baseDetailInfo && currentNodeType === 'file' && !baseDetailInfo.forbidStatus"
                             theme="default"
                             :title="$t('download')"
                             size="small"
@@ -370,7 +370,8 @@
                         createdBy: this.userList[res.createdBy] ? this.userList[res.createdBy]?.name : res.createdBy,
                         createdDate: res.createdDate && formatDate(res.createdDate),
                         lastModifiedBy: this.userList[res.lastModifiedBy] ? this.userList[res.lastModifiedBy]?.name : res.lastModifiedBy,
-                        lastModifiedDate: res.lastModifiedDate && formatDate(res.lastModifiedDate)
+                        lastModifiedDate: res.lastModifiedDate && formatDate(res.lastModifiedDate),
+                        forbidStatus: res.metadata.forbidStatus
                     }
                     this.getRepoInfoDetail({
                         projectId: projectId,

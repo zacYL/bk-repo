@@ -986,5 +986,8 @@
     "addUserSuccess":"Added user successfully",
     "removeUserSuccess":"Removed user successfully",
     "introduction":"Introduction",
-    "batchImport":"Batch Import"
+    "batchImport":"Batch Import",
+    "networkSpeedLimitPolicy":"Network speed limit policy",
+    "networkSpeedLimitInfo":"The rate limiting policy will limit the maximum network rate of each distribution plan to ensure reasonable utilization of network bandwidth resources.",
+    "distributionRate":"Distribution rate"
 }

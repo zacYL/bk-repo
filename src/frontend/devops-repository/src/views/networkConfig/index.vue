@@ -2,17 +2,17 @@
     <div class="repo-network-config">
         <div class="network-config-header">
             <div class="blue-tag"></div>
-            <span>限速策略</span>
+            <span>{{$t('networkSpeedLimitPolicy')}}</span>
         </div>
         <div class="network-config-main" v-bkloading="{ isLoading: initLoading }">
-            <span class="tip-span">限速策略将会限制每个分发计划的最大网络速率，从而保证网络带宽资源的合理利用。</span>
+            <span class="tip-span">{{$t('networkSpeedLimitInfo')}}</span>
             <div class="config-main-input">
-                <span style="margin-right: 20px;">分发速率</span>
+                <span style="margin-right: 20px;">{{$t('distributionRate')}}</span>
                 <bk-input v-model="speedData" :min="0" :max="99999999" type="number" style="width: 180px;"></bk-input>
                 <span class="ml10">MB/s</span>
             </div>
             <div class="config-main-bottom">
-                <bk-button :disabled="!(Number(speedData) >= 0)" :loading="saveLoading" @click="clickSave" theme="primary">保存</bk-button>
+                <bk-button :disabled="!(Number(speedData) >= 0)" :loading="saveLoading" @click="clickSave" theme="primary">{{$t('save')}}</bk-button>
             </div>
         </div>
     </div>
@@ -53,7 +53,7 @@
                     if (res) {
                         this.$bkMessage({
                             theme: 'success',
-                            message: '保存成功'
+                            message: this.$t('save') + this.$t('space') + this.$t('success')
                         })
                     }
                 }).finally(() => {

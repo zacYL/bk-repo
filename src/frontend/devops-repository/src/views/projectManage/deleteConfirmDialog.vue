@@ -3,20 +3,21 @@
         v-model="config.isShow"
         header-position="left"
         theme="danger"
-        title="项目删除"
+        :title="$t('deleteProject')"
         width="540"
-        ok-text="确认"
+        :cancel-text="$t('cancel')"
+        :ok-text="$t('confirm')"
         :auto-close="false"
         @value-change="handleClickClearError"
         @confirm="handleClickConfirm"
     >
         <bk-alert type="error">
-            <div slot="title">项目一旦被永久删除，就无法恢复，删除项目将立即删除其存储库和所有相关资源。</div>
+            <div slot="title">{{$t('deleteProjectInfo')}}</div>
         </bk-alert>
-        <p>请输入以下内容进行确认：<bk-tag theme="warning">{{ config.confirmName }}</bk-tag></p>
+        <p>{{$t('deleteProjectConfirmContentInfo')}}<bk-tag theme="warning">{{ config.confirmName }}</bk-tag></p>
         <bk-form :model="form" :rules="rules" ref="validateForm" :label-width="0">
             <bk-form-item :property="'confirmName'" :error-display-type="'normal'">
-                <bk-input :clearable="true" v-model="form.confirmName" placeholder="请输入要删除的项目名称" />
+                <bk-input :clearable="true" v-model="form.confirmName" :placeholder="$t('deleteProjectPlaceholder')" />
             </bk-form-item>
         </bk-form>
     </bk-dialog>
@@ -39,7 +40,7 @@
                     confirmName: [
                         {
                             required: true,
-                            message: '请输入要删除的项目名称',
+                            message: this.$t('deleteProjectPlaceholder'),
                             trigger: 'blur'
                         },
                         {
@@ -50,7 +51,7 @@
                                 }
                                 return false
                             },
-                            message: '项目名称不匹配',
+                            message: this.$t('deleteProjectErrorInfo'),
                             trigger: 'blur'
                         }
                     ]
@@ -76,4 +77,10 @@
     }
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+::v-deep .bk-alert{
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+}
+</style>

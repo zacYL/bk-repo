@@ -1,8 +1,8 @@
 <template>
     <canway-dialog
         v-model="show"
-        width="380"
-        height-num="221"
+        width="420"
+        height-num="240"
         :title="$t('operationConfirmation')"
         @cancel="cancel">
         <div class="confirm-body">

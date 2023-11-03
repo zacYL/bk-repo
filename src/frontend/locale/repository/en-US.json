@@ -989,5 +989,10 @@
     "batchImport":"Batch Import",
     "networkSpeedLimitPolicy":"Network speed limit policy",
     "networkSpeedLimitInfo":"The rate limiting policy will limit the maximum network rate of each distribution plan to ensure reasonable utilization of network bandwidth resources.",
-    "distributionRate":"Distribution rate"
+    "distributionRate":"Distribution rate",
+    "deleteProject":"Delete project",
+    "deleteProjectInfo":"Once a project is permanently deleted, it cannot be recovered, and deleting a project will immediately delete its repository and all associated resources.",
+    "deleteProjectConfirmContentInfo":"Please enter the following to confirm: ",
+    "deleteProjectPlaceholder":"Please enter the name of the project you want to delete",
+    "deleteProjectErrorInfo":"Project name does not match"
 }

@@ -5,7 +5,7 @@
             <bk-input
                 v-model.trim="projectInput"
                 class="w250"
-                placeholder="请输入项目名称/项目标识"
+                :placeholder="$t('projectNameOrIdPlaceholder')"
                 clearable
                 right-icon="bk-icon icon-search"
                 @change="handlerPaginationChange()">
@@ -21,13 +21,13 @@
             <template #empty>
                 <empty-data :search="Boolean(projectInput)"></empty-data>
             </template>
-            <bk-table-column label="项目名称" show-overflow-tooltip>
+            <bk-table-column :label="$t('projectName')" show-overflow-tooltip>
                 <template #default="{ row }">
                     <span class="hover-btn" @click="showProjectDetailHandler(row)">{{row.name}}</span>
                 </template>
             </bk-table-column>
-            <bk-table-column label="项目标识" prop="id" show-overflow-tooltip></bk-table-column>
-            <bk-table-column label="项目描述" show-overflow-tooltip>
+            <bk-table-column :label="$t('projectId')" prop="id" show-overflow-tooltip></bk-table-column>
+            <bk-table-column :label="$t('projectDescription')" show-overflow-tooltip>
                 <template #default="{ row }">{{row.description || '/'}}</template>
             </bk-table-column>
             <bk-table-column :label="$t('createdDate')" show-overflow-tooltip>
@@ -38,9 +38,9 @@
                     {{ userList[row.createdBy] ? userList[row.createdBy].name : row.createdBy }}
                 </template>
             </bk-table-column>
-            <bk-table-column label="操作" width="100">
+            <bk-table-column :label="$t('operation')" width="100">
                 <template #default="{ row }">
-                    <bk-button theme="primary" text @click="handleClickDelete(row.id)">删除</bk-button>
+                    <bk-button theme="primary" text @click="handleClickDelete(row.id)">{{$t('delete')}}</bk-button>
                 </template>
             </bk-table-column>
         </bk-table>
@@ -131,6 +131,10 @@
                 this.delProjectByName({ name }).then(() => {
                     this.deleteConfirmDialogConfig.isShow = false
                     this.getProjectList()
+                    this.$bkMessage({
+                        theme: 'success',
+                        message: this.$t('delete') + this.$t('space') + this.$t('success')
+                    })
                 })
             }
         }

@@ -989,5 +989,10 @@
     "batchImport":"批量导入",
     "networkSpeedLimitPolicy":"限速策略",
     "networkSpeedLimitInfo":"限速策略将会限制每个分发计划的最大网络速率，从而保证网络带宽资源的合理利用。",
-    "distributionRate":"分发速率"
+    "distributionRate":"分发速率",
+    "deleteProject":"项目删除",
+    "deleteProjectInfo":"项目一旦被永久删除，就无法恢复，删除项目将立即删除其存储库和所有相关资源。",
+    "deleteProjectConfirmContentInfo":"请输入以下内容进行确认： ",
+    "deleteProjectPlaceholder":"请输入要删除的项目名称",
+    "deleteProjectErrorInfo":"项目名称不匹配"
 }

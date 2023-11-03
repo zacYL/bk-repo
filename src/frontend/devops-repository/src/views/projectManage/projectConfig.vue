@@ -1,24 +1,24 @@
 <template>
     <div class="project-detail-container">
         <bk-tab class="project-detail-tab page-tab" type="unborder-card" :active.sync="tabName">
-            <bk-tab-panel name="basic" label="基础信息">
+            <bk-tab-panel name="basic" :label="$t('baseInfo')">
             </bk-tab-panel>
             <bk-tab-panel v-for="tab in [manage, user, role]" :key="tab.name" :name="tab.name" :label="tab.name" style="display:none;">
             </bk-tab-panel>
         </bk-tab>
         <!-- 基础信息 -->
         <bk-form class="ml10 mr10 tab-common" :label-width="75" v-if="tabName === 'basic'">
-            <bk-form-item label="项目标识">
+            <bk-form-item :label="$t('projectId')">
                 <span>{{ currentProject.id }}</span>
             </bk-form-item>
-            <bk-form-item label="项目名称">
+            <bk-form-item :label="$t('projectName')">
                 <span class="break-all">{{ currentProject.name }}</span>
             </bk-form-item>
-            <bk-form-item label="项目描述">
+            <bk-form-item :label="$t('projectDescription')">
                 <span class="break-all">{{ currentProject.description }}</span>
             </bk-form-item>
             <bk-form-item>
-                <bk-button theme="primary" @click="showProjectDialog">修改</bk-button>
+                <bk-button theme="primary" @click="showProjectDialog">{{$t('modify')}}</bk-button>
             </bk-form-item>
         </bk-form>
         <!-- 其他 -->
@@ -28,8 +28,8 @@
                     v-model="activeTabObj.add"
                     multiple
                     searchable
-                    placeholder="请选择用户"
-                    :show-select-all="tabName === '项目管理员' ? false : true"
+                    :placeholder="$t('selectUserMsg')"
+                    :show-select-all="tabName === $t('projectManager') ? false : true"
                     :enable-virtual-scroll="selectList(activeTabObj).length > 3000"
                     :list="selectList(activeTabObj)">
                     <bk-option v-for="option in selectList(activeTabObj)"
@@ -39,7 +39,7 @@
                     </bk-option>
                 </bk-select>
                 <bk-button :disabled="!activeTabObj.add.length" icon="plus" theme="primary" class="ml10" @click="confirmHandler(activeTabObj, 'add')">{{ $t('add') }}</bk-button>
-                <bk-button :disabled="!activeTabObj.delete.length" theme="default" class="ml10" @click="confirmHandler(activeTabObj, 'delete')">批量移除</bk-button>
+                <bk-button :disabled="!activeTabObj.delete.length" theme="default" class="ml10" @click="confirmHandler(activeTabObj, 'delete')">{{$t('batchRemove')}}</bk-button>
             </div>
             <bk-table
                 class="mt10"
@@ -79,7 +79,7 @@
                 manage: {
                     id: 'manage',
                     loading: false,
-                    name: '项目管理员',
+                    name: this.$t('projectManager'),
                     type: 'user',
                     items: [],
                     add: [],
@@ -88,7 +88,7 @@
                 user: {
                     id: 'user',
                     loading: false,
-                    name: '项目用户',
+                    name: this.$t('projectUser'),
                     type: 'user',
                     items: [],
                     add: [],
@@ -97,7 +97,7 @@
                 role: {
                     id: 'role',
                     loading: false,
-                    name: '项目用户组',
+                    name: this.$t('projectUserGroup'),
                     type: 'role',
                     items: [],
                     add: [],
@@ -126,9 +126,9 @@
         beforeRouteEnter (to, from, next) {
             const breadcrumb = to.meta.breadcrumb
             if (to.query.projectId) {
-                breadcrumb.splice(0, breadcrumb.length, { name: 'projectManage', label: to.query.projectId }, { name: 'projectConfig', label: '项目设置' })
+                breadcrumb.splice(0, breadcrumb.length, { name: 'projectManage', label: to.query.projectId }, { name: 'projectConfig', label: 'projectConfig' })
             } else {
-                breadcrumb.splice(0, breadcrumb.length, { name: 'projectConfig', label: '项目设置' })
+                breadcrumb.splice(0, breadcrumb.length, { name: 'projectConfig', label: 'projectConfig' })
             }
             next()
         },
@@ -193,7 +193,7 @@
                     }).then(() => {
                         this.$bkMessage({
                             theme: 'success',
-                            message: (type === 'add' ? this.$t('add') : this.$t('delete')) + this.$t('success')
+                            message: (type === 'add' ? this.$t('add') : this.$t('delete')) + this.$t('space') + this.$t('success')
                         })
                         this.initProjectConfig()
                         tab[type] = []
@@ -206,7 +206,7 @@
                     ? confirmFn()
                     : this.$confirm({
                         theme: 'danger',
-                        message: `确认移除 ${deleteName} ?`,
+                        message: this.$t('removeConfirm') + ` ${deleteName} ?`,
                         confirmFn
                     })
             },

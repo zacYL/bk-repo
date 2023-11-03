@@ -5,7 +5,7 @@
             <div v-if="!ciMode && !projectList.length && !userInfo.admin" v-bkloading="{ isLoading }" class="empty-project-container">
                 <img src="/ui/no-data.png" width="400" />
                 <span class="empty-project-title">
-                    您没有参与任何项目，请联系管理员为您关联项目
+                    {{$t('noProjectInfo')}}
                 </span>
             </div>
             <router-view v-else class="bkrepo-main-container"></router-view>
@@ -49,7 +49,7 @@
                         if (userInfo.admin) {
                             // TODO: 管理员创建项目引导页
                             this.$bkMessage({
-                                message: '无项目数据',
+                                message: this.$t('noProjectData'),
                                 theme: 'error'
                             })
                             this.$router.replace({
@@ -61,7 +61,7 @@
                         } else {
                             // TODO: 普通用户无项目提示页
                             this.$bkMessage({
-                                message: '您没有参与任何项目，请联系管理员为您关联项目',
+                                message: this.$t('noProjectInfo'),
                                 theme: 'warning'
                             })
                         }

@@ -994,5 +994,6 @@
     "deleteProjectInfo":"项目一旦被永久删除，就无法恢复，删除项目将立即删除其存储库和所有相关资源。",
     "deleteProjectConfirmContentInfo":"请输入以下内容进行确认： ",
     "deleteProjectPlaceholder":"请输入要删除的项目名称",
-    "deleteProjectErrorInfo":"项目名称不匹配"
+    "deleteProjectErrorInfo":"项目名称不匹配",
+    "noProjectInfo":"您没有参与任何项目，请联系管理员为您关联项目"
 }

@@ -994,5 +994,6 @@
     "deleteProjectInfo":"Once a project is permanently deleted, it cannot be recovered, and deleting a project will immediately delete its repository and all associated resources.",
     "deleteProjectConfirmContentInfo":"Please enter the following to confirm: ",
     "deleteProjectPlaceholder":"Please enter the name of the project you want to delete",
-    "deleteProjectErrorInfo":"Project name does not match"
+    "deleteProjectErrorInfo":"Project name does not match",
+    "noProjectInfo":"You are not involved in any projects, please contact the administrator to associate projects for you"
 }

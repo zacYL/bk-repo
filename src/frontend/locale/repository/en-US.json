@@ -309,6 +309,7 @@
     "set": "Set to",
     "formatWrongTip": "The account number in line {0} already exists or the format is wrong",
     "chineseNameWrongTip": "The format of the Chinese name on line {0} is incorrect",
+    "emailWrongTip":"Email format error on line {0}",
     "lastExecutionStatus": "Last status",
     "entityUser":"Entity",
     "virtualUser": "Virtual",
@@ -976,5 +977,14 @@
     "proxyWhiteList":"Proxy whitelist",
     "apiUse":"API call",
     "enabledStatus":"Enabled status",
-    "selectOperationEvent":"Please select an action event"
+    "selectOperationEvent":"Please select an action event",
+    "userGroupCount":"There are {length}  user groups in total",
+    "userGroupName":"User group name",
+    "relationUserCount":"Number of associated users",
+    "editUserGroup":"Edit user group",
+    "createUserGroup":"Create user group",
+    "addUserSuccess":"Added user successfully",
+    "removeUserSuccess":"Removed user successfully",
+    "introduction":"Introduction",
+    "batchImport":"Batch Import"
 }

@@ -305,6 +305,7 @@
     "set": "设置为",
     "formatWrongTip": "第{0}行账号已存在或格式错误",
     "chineseNameWrongTip": "第{0}行中文名格式错误",
+    "emailWrongTip ":"第{0}行邮箱格式错误",
     "lastExecutionStatus": "上次执行状态",
     "entityUser":"实体用户",
     "virtualUser": "虚拟用户",
@@ -976,5 +977,14 @@
     "proxyWhiteList":"代理白名单",
     "apiUse":"API调用",
     "enabledStatus":"启用状态",
-    "selectOperationEvent":"选择操作事件"
+    "selectOperationEvent":"选择操作事件",
+    "userGroupCount":"共有 {length} 个用户组",
+    "userGroupName":"用户组名称",
+    "relationUserCount":"关联用户数",
+    "editUserGroup":"编辑用户组",
+    "createUserGroup":"创建用户组",
+    "addUserSuccess":"新增用户成功",
+    "removeUserSuccess":"移除用户成功",
+    "introduction":"简介",
+    "batchImport":"批量导入"
 }

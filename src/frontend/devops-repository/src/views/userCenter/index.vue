@@ -17,7 +17,7 @@
                     <bk-button class="ml10" theme="primary" @click="confirmEdit">{{$t('confirm')}}</bk-button>
                 </div>
             </bk-form-item>
-            <bk-form-item label="密码：">
+            <bk-form-item :label="$t('password') + ': '">
                 <div class="flex-align-center">
                     <span>********</span>
                     <bk-button class="ml20 flex-align-center"
@@ -31,12 +31,12 @@
         </bk-form>
         <canway-dialog
             v-model="pwdDialog.show"
-            title="修改密码"
-            width="550"
+            :title="$t('modifyPassword')"
+            width="600"
             height-num="297"
             @cancel="pwdDialog.show = false">
-            <bk-form class="mr20" :label-width="90" :model="pwdDialog" :rules="rules" ref="modifyPwdForm">
-                <bk-form-item label="原密码" :required="true" property="oldPwd">
+            <bk-form class="mr20" :label-width="140" :model="pwdDialog" :rules="rules" ref="modifyPwdForm">
+                <bk-form-item :label="$t('currentPassword')" :required="true" property="oldPwd">
                     <bk-input
                         class="login-input"
                         v-model.trim="pwdDialog.oldPwd"
@@ -48,7 +48,7 @@
                         left-icon="bk-icon icon-lock">
                     </bk-input>
                 </bk-form-item>
-                <bk-form-item label="新密码" :required="true" property="newPwd">
+                <bk-form-item :label="$t('newPassword')" :required="true" property="newPwd">
                     <bk-input
                         class="login-input"
                         v-model.trim="pwdDialog.newPwd"
@@ -61,7 +61,7 @@
                         left-icon="bk-icon icon-lock">
                     </bk-input>
                 </bk-form-item>
-                <bk-form-item label="确认密码" :required="true" property="check">
+                <bk-form-item :label="$t('confirmPassword')" :required="true" property="check">
                     <bk-input
                         class="login-input"
                         v-model.trim="pwdDialog.check"
@@ -96,7 +96,7 @@
             return {
                 formItem: [
                     { label: this.$t('chineseName'), key: 'name' },
-                    { label: '联系电话', key: 'phone' },
+                    { label: this.$t('telephone'), key: 'phone' },
                     { label: this.$t('email'), key: 'email' }
                 ],
                 editItem: {
@@ -114,14 +114,14 @@
                     oldPwd: [
                         {
                             required: true,
-                            message: this.$t('pleaseInput') + this.$t('password'),
+                            message: this.$t('pleaseInput') + this.$t('space') + this.$t('password'),
                             trigger: 'blur'
                         }
                     ],
                     newPwd: [
                         {
                             required: true,
-                            message: this.$t('pleaseInput') + this.$t('password'),
+                            message: this.$t('pleaseInput') + this.$t('space') + this.$t('password'),
                             trigger: 'blur'
                         },
                         {
@@ -140,12 +140,12 @@
                     check: [
                         {
                             required: true,
-                            message: this.$t('pleaseInput') + this.$t('password'),
+                            message: this.$t('pleaseInput') + this.$t('space') + this.$t('password'),
                             trigger: 'blur'
                         },
                         {
                             validator: () => this.pwdDialog.newPwd === this.pwdDialog.check,
-                            message: '密码不一致',
+                            message: this.$t('passwordWrongMsg'),
                             trigger: 'blur'
                         }
                     ]
@@ -178,7 +178,7 @@
                 }).then(res => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: this.$t('edit') + this.$t('success')
+                        message: this.$t('edit') + this.$t('space') + this.$t('success')
                     })
                     this.cancelEdit()
                     this.getUserInfo({
@@ -217,7 +217,7 @@
                 }).then(() => {
                     this.$bkMessage({
                         theme: 'success',
-                        message: '修改密码' + this.$t('success') + '，请重新登录'
+                        message: this.$t('modifyPassword') + this.$t('space') + this.$t('success') + this.$t('space') + ', ' + this.$t('loginAgainMsg')
                     })
                     this.pwdDialog.show = false
                     setTimeout(this.logout, 3000)

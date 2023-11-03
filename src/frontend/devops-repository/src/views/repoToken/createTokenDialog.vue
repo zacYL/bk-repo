@@ -7,7 +7,7 @@
         @cancel="cancel">
         <div v-if="token" class="flex-align-center">
             <i class="flex-center devops-icon icon-check-1"></i>
-            <div>
+            <div style="max-width: 400px;">
                 <span class="token-title">{{ $t('create') + $t('space') + $t('success') }}</span>
                 <div @click="copyToken(token)" class="mt10 mb10 hover-btn flex-align-center">
                     {{ $t('tokenIs') + $t('space') + token }}

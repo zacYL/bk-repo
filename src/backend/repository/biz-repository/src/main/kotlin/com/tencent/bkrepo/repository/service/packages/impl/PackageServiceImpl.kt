@@ -117,9 +117,8 @@ class PackageServiceImpl(
         packageKey: String,
         tag: String
     ): PackageVersion? {
-        val tPackage = packageDao.findByKey(projectId, repoName, packageKey) ?: return null
-        val versionName = tPackage.versionTag?.get(tag) ?: return null
-        return convert(packageVersionDao.findByName(tPackage.id!!, versionName))
+        val packageId = packageDao.findByKey(projectId, repoName, packageKey)?.id ?: return null
+        return convert(packageVersionDao.findByTag(packageId, tag))
     }
 
     override fun findVersionNameByTag(
@@ -203,11 +202,9 @@ class PackageServiceImpl(
         return if (tPackage == null) {
             Pages.ofResponse(pageRequest, 0, emptyList())
         } else {
-            val versionTag = tPackage.versionTag?.entries?.groupBy({ it.value }, { it.key })
             val query = PackageQueryHelper.versionListQuery(tPackage.id!!, option.version, stageTag)
             val totalRecords = packageVersionDao.count(query)
-            val records = packageVersionDao.find(query.with(pageRequest))
-                .map { convert(it)!!.apply { uniqueTags = versionTag?.get(it.name) } }
+            val records = packageVersionDao.find(query.with(pageRequest)).map { convert(it)!! }
             Pages.ofResponse(pageRequest, totalRecords, records)
         }
     }
@@ -274,6 +271,7 @@ class PackageServiceImpl(
                     extension = request.extension.orEmpty()
                 }
                 packageVersionDao.save(oldVersion)
+                removeConflictVersionTags(tPackage.id!!, versionName, tPackage.versionTag, versionTag)
                 packageDao.upsert(query, update)
                 logger.info("Update package version[$oldVersion] success")
                 publishEvent(buildUpdatedEvent(request, realIpAddress ?: HttpContextHolder.getClientAddress()))
@@ -297,6 +295,7 @@ class PackageServiceImpl(
                     extension = request.extension.orEmpty()
                 )
                 packageVersionDao.save(newVersion)
+                removeConflictVersionTags(tPackage.id!!, versionName, tPackage.versionTag, versionTag)
                 update.inc(TPackage::versions.name)
                 packageDao.upsert(query, update)
                 logger.info("Create package version[$newVersion] success")
@@ -676,6 +675,28 @@ class PackageServiceImpl(
     ): Map<String, String> {
         return original.orEmpty().toMutableMap().apply {
             extra?.forEach { (tag, version) -> if (tag.isNotBlank()) this[tag] = version }
+        }
+    }
+
+    private fun removeConflictVersionTags(
+        packageId: String,
+        reserveVersion: String,
+        original: Map<String, String>?,
+        extra: Map<String, String>?
+    ) {
+        if (original != null && extra != null) {
+            val newTags = extra.keys.filter { it.isNotBlank() }
+            val conflictMap = original.filterKeys { it in newTags }.entries
+                .groupBy({ it.value }, { it.key })
+                .filterKeys { it != reserveVersion }
+            conflictMap.forEach { (versionName, tags) ->
+                val versionQuery = Query(
+                    where(TPackageVersion::packageId).isEqualTo(packageId)
+                        .and(TPackageVersion::name).isEqualTo(versionName)
+                ).withHint(TPackageVersion.VERSION_NAME_IDX)
+                val versionUpdate = Update().pullAll(TPackageVersion::tags.name, tags.toTypedArray())
+                packageVersionDao.updateFirst(versionQuery, versionUpdate)
+            }
         }
     }
 

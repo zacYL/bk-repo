@@ -113,10 +113,7 @@ abstract class VirtualRepository : AbstractArtifactRepository() {
     }
 
     override fun upload(context: ArtifactUploadContext) {
-        mapDeploymentRepo(context) { sub, repository ->
-            require(sub is ArtifactUploadContext)
-            repository.upload(sub)
-        }
+        throw MethodNotAllowedException()
     }
 
     protected fun getTraversedList(context: ArtifactContext): MutableList<RepositoryIdentify> {

@@ -367,7 +367,7 @@ class OciOperationServiceImpl(
                 repoName = repoName,
                 packageName = name,
                 reference = version,
-                isValidDigest = false,
+                isValidDigest = OciDigest.isValid(version),
                 version = version,
                 isFat = false
             )

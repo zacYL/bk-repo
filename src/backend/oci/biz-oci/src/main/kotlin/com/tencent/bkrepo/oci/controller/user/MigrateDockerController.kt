@@ -49,8 +49,10 @@ class MigrateDockerController(
     @ApiOperation("迁移所有旧docker仓库的包")
     @GetMapping("/migrate")
     @Principal(PrincipalType.ADMIN)
-    fun migrate(): Response<Void> {
-        migrateDockerService.migrate()
+    fun migrate(
+        @RequestParam("overwrite", required = false) overwrite: Boolean = false
+    ): Response<Void> {
+        migrateDockerService.migrate(overwrite)
         return ResponseBuilder.success()
     }
 
@@ -61,9 +63,11 @@ class MigrateDockerController(
         @RequestParam("projectId")
         projectId: String,
         @RequestParam("repoName")
-        repoName: String
+        repoName: String,
+        @RequestParam("overwrite", required = false)
+        overwrite: Boolean = false
     ): Response<Void> {
-        migrateDockerService.migrateRepository(projectId, repoName)
+        migrateDockerService.migrateRepository(projectId, repoName, overwrite)
         return ResponseBuilder.success()
     }
 
@@ -78,9 +82,11 @@ class MigrateDockerController(
         @RequestParam("packageKey")
         packageKey: String,
         @RequestParam("version")
-        version: String
+        version: String,
+        @RequestParam("overwrite", required = false)
+        overwrite: Boolean = false
     ): Response<Void> {
-        migrateDockerService.migratePackageVersion(projectId, repoName, packageKey, version)
+        migrateDockerService.migratePackageVersion(projectId, repoName, packageKey, version, overwrite)
         return ResponseBuilder.success()
     }
 }

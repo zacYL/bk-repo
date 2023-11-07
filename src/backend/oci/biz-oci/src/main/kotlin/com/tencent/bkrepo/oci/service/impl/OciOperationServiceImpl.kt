@@ -585,7 +585,7 @@ class OciOperationServiceImpl(
                 ociArtifactInfo = ociArtifactInfo,
                 manifest = manifest,
                 nodeDetail = nodeDetail,
-                sourceType = ArtifactChannel.REPLICATION,
+                sourceType = ArtifactChannel.PROXY,
                 userId = SYSTEM_USER
             )
         }

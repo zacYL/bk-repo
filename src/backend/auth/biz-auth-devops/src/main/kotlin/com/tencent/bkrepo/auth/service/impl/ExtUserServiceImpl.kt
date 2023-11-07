@@ -7,8 +7,9 @@ import com.tencent.bkrepo.auth.pojo.user.UserPasswordUpdateVO
 import com.tencent.bkrepo.auth.pojo.user.UserRequest
 import com.tencent.bkrepo.auth.service.UserService
 import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
 
-@Suppress("TYPE_INFERENCE_ONLY_INPUT_TYPES_WARNING")
+@Service
 class ExtUserServiceImpl(
     private val userService: UserService,
     private val canwayUsermangerClient: CanwayUsermangerClient
@@ -23,23 +24,35 @@ class ExtUserServiceImpl(
         // 查询集成环境所有用户信息
         val canwayUserList = canwayUsermangerClient.getAllUser(false, null).data
         val canwayUserIdList = canwayUserList?.map { it.id }
+        // 创建手机号码（防止手机为空情况）
+        var telephone = generateRandomPhoneNumber()
+        // 创建邮箱（防止邮箱为空情况）
+        var emailNumber = 0
         userList.forEach { user ->
             with(user) {
                 if (canwayUserIdList != null) {
-                    if (user !in canwayUserIdList) {
+                    if (userId !in canwayUserIdList) {
+                        val cwTelephone: String = phone.takeIf { !it.isNullOrBlank() } ?: run {
+                            telephone = (telephone.toLong() + 1).toString()
+                            telephone
+                        }
                         // 创建用户
                         canwayUsermangerClient.addUsers(
                             loginUserId = AUTH_ADMIN,
                             UserRequest(
-                                UserInsertVO(
+                                userInsertVO = UserInsertVO(
                                     userId = userId,
                                     displayName = name,
                                     headPortrait = "",
-                                    email = email ?: "",
-                                    telephone = phone ?: ""
-                                )
+                                    email = if (email.isNullOrBlank())generateRandomEmail(emailNumber++) else email!!,
+                                    telephone = cwTelephone
+                                ),
+                                orgIds = listOf("1")
                             )
                         )
+                        if (phone.isNullOrBlank()) {
+                            telephone = (telephone.toLong() + 1).toString()
+                        }
                         // 修改密码
                         canwayUsermangerClient.passwordUpdate(
                             loginUserId = AUTH_ADMIN,
@@ -57,4 +70,27 @@ class ExtUserServiceImpl(
     }
 
     private val logger = LoggerFactory.getLogger(ExtUserServiceImpl::class.java)
+
+    fun generateRandomPhoneNumber(): String {
+        val sb = StringBuilder()
+        val random = java.util.Random()
+        sb.append("13") // 手机号码以1开头
+        repeat(9) {
+            sb.append(random.nextInt(9)) // 生成随机数字
+        }
+        return sb.toString()
+    }
+
+    fun generateRandomEmail(number: Int): String {
+        val chars = ('a'..'z') + ('0'..'9') // 定义字符集
+        val sb = StringBuilder()
+        val random = java.util.Random()
+        repeat(10) {
+            val index = random.nextInt(chars.size)
+            sb.append(chars[index])
+        }
+        sb.append(number.toString())
+        sb.append("@example.com")
+        return sb.toString()
+    }
 }

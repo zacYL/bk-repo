@@ -4,7 +4,6 @@ import com.tencent.bkrepo.auth.constant.AuthConstant
 import com.tencent.bkrepo.auth.pojo.permission.AnyResourcePermissionSaveDTO
 import com.tencent.bkrepo.auth.pojo.permission.PermissionVO
 import com.tencent.bkrepo.auth.pojo.permission.RemoveInstancePermissionsRequest
-import com.tencent.bkrepo.auth.pojo.role.*
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.v3.oas.annotations.Parameter
@@ -13,9 +12,11 @@ import net.canway.devops.api.pojo.Response
 import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.context.annotation.Primary
 import org.springframework.http.MediaType
-import org.springframework.web.bind.annotation.*
-
-
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestHeader
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestBody
 @Api("平台权限自定义角色接口")
 @Primary
 @FeignClient(AuthConstant.DEVOPS_AUTH_NAME, contextId = "CanwayCustomPermissionClient")
@@ -49,7 +50,7 @@ interface CanwayCustomPermissionClient {
             resourceLevel: String,
             @RequestBody
             permissions: List<AnyResourcePermissionSaveDTO>,
-    ): Response<List<PermissionVO>>
+            ): Response<List<PermissionVO>>
 
         @ApiOperation("根据资源实例ID和资源类型删除授权记录表的所有数据（仅用于调用方删除资源实例后，权限中心删除对应的所有授权记录）")
         @PostMapping(

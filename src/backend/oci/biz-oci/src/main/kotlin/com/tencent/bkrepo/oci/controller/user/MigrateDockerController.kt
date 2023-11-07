@@ -27,11 +27,14 @@
 
 package com.tencent.bkrepo.oci.controller.user
 
+import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.security.permission.Principal
 import com.tencent.bkrepo.common.security.permission.PrincipalType
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.oci.service.MigrateDockerService
+import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import org.springframework.web.bind.annotation.GetMapping
@@ -52,6 +55,7 @@ class MigrateDockerController(
     fun migrate(
         @RequestParam("overwrite", required = false) overwrite: Boolean = false
     ): Response<Void> {
+        HttpContextHolder.getRequest().setAttribute(USER_KEY, SYSTEM_USER)
         migrateDockerService.migrate(overwrite)
         return ResponseBuilder.success()
     }
@@ -67,6 +71,7 @@ class MigrateDockerController(
         @RequestParam("overwrite", required = false)
         overwrite: Boolean = false
     ): Response<Void> {
+        HttpContextHolder.getRequest().setAttribute(USER_KEY, SYSTEM_USER)
         migrateDockerService.migrateRepository(projectId, repoName, overwrite)
         return ResponseBuilder.success()
     }
@@ -86,6 +91,7 @@ class MigrateDockerController(
         @RequestParam("overwrite", required = false)
         overwrite: Boolean = false
     ): Response<Void> {
+        HttpContextHolder.getRequest().setAttribute(USER_KEY, SYSTEM_USER)
         migrateDockerService.migratePackageVersion(projectId, repoName, packageKey, version, overwrite)
         return ResponseBuilder.success()
     }

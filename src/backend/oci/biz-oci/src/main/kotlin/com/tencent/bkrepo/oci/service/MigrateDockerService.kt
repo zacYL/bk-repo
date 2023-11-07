@@ -1,8 +1,10 @@
 package com.tencent.bkrepo.oci.service
 
 import com.tencent.bkrepo.common.api.util.StreamUtils.readText
+import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.oci.constant.DOCKER_DISTRIBUTION_MANIFEST_LIST_V2
@@ -160,7 +162,11 @@ class MigrateDockerService(
                     logger.info("migrate $projectId/$repoName/$packageKey/${packageVersion.name} success...")
                 }
             }
-            val metadata = listOf(MetadataModel(key = REFRESHED, value = true))
+            val metadata = packageVersion.packageMetadata.toMutableList()
+            metadata.add(MetadataModel(key = REFRESHED, value = true))
+            if (packageVersion.manifestPath == null && metadata.none { it.key == SOURCE_TYPE }) {
+                metadata.add(MetadataModel(key = SOURCE_TYPE, value = ArtifactChannel.REPLICATION))
+            }
             val newManifestFullPath = "$path/manifest/${packageVersion.name}/${manifestNode.name}"
             // 更新包版本信息 metadat, artifactPath, manifestPath
             packageClient.updateVersion(PackageVersionUpdateRequest(

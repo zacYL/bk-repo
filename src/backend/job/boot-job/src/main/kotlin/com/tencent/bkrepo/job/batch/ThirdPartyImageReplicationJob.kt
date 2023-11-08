@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.job.batch
 
+import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.service.log.LoggerHolder
 import com.tencent.bkrepo.job.batch.base.DefaultContextMongoDbJob
 import com.tencent.bkrepo.job.batch.base.JobContext
@@ -34,6 +35,9 @@ import com.tencent.bkrepo.job.config.properties.ThirdPartyImageReplicationJobPro
 import com.tencent.bkrepo.job.exception.JobExecuteException
 import com.tencent.bkrepo.oci.api.OciClient
 import com.tencent.bkrepo.oci.pojo.third.OciReplicationRecordInfo
+import com.tencent.bkrepo.repository.api.PackageDownloadsClient
+import com.tencent.bkrepo.repository.api.RepositoryClient
+import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.stereotype.Component
@@ -45,7 +49,9 @@ import org.springframework.stereotype.Component
 @EnableConfigurationProperties(ThirdPartyImageReplicationJobProperties::class)
 class ThirdPartyImageReplicationJob(
     private val properties: ThirdPartyImageReplicationJobProperties,
-    private val ociClient: OciClient
+    private val ociClient: OciClient,
+    private val packageDownloadsClient: PackageDownloadsClient,
+    private val repositoryClient: RepositoryClient
 ) : DefaultContextMongoDbJob<ThirdPartyImageReplicationJob.OciReplicationRecordInfoData>(properties) {
 
     override fun start(): Boolean {
@@ -64,7 +70,6 @@ class ThirdPartyImageReplicationJob(
         return Query()
     }
 
-
     override fun run(row: OciReplicationRecordInfoData, collectionName: String, context: JobContext) {
         with(row) {
             try {
@@ -78,7 +83,19 @@ class ThirdPartyImageReplicationJob(
                     packageName = packageName,
                     packageVersion = packageVersion,
                     manifestPath = manifestPath,
+                    userId = userId
                 ))
+                logger.info("Create package version successfully")
+                val repoDetail = repositoryClient.getRepoDetail(projectId, repoName).data ?: return
+                val packageKey = PackageKeys.ofName(repoDetail.type.name.toLowerCase(), packageName)
+                val downloadRecord = PackageDownloadRecord(
+                    projectId = projectId,
+                    repoName = repoName,
+                    packageKey = packageKey,
+                    packageVersion = packageVersion,
+                    userId = userId
+                )
+                packageDownloadsClient.record(downloadRecord)
             } catch (e: Exception) {
                 throw JobExecuteException(
                     "Failed to send request for image version image $packageName with version $packageVersion " +
@@ -94,6 +111,7 @@ class ThirdPartyImageReplicationJob(
         val packageName: String by map
         val packageVersion: String by map
         val manifestPath: String by map
+        val userId: String by map
     }
 
     override fun mapToEntity(row: Map<String, Any?>): OciReplicationRecordInfoData {

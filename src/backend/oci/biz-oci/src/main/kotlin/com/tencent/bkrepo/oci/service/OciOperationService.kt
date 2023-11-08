@@ -86,6 +86,7 @@ interface OciOperationService {
     fun createPackageForThirdPartyImage(
         ociArtifactInfo: OciManifestArtifactInfo,
         manifestPath: String,
+        userId: String
     ): Boolean
 
     /**

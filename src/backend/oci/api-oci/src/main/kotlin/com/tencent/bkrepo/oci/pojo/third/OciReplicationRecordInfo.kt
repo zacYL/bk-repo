@@ -32,5 +32,6 @@ data class OciReplicationRecordInfo(
     val repoName: String,
     val packageName: String,
     val packageVersion: String,
-    val manifestPath: String
+    val manifestPath: String,
+    val userId: String
 )

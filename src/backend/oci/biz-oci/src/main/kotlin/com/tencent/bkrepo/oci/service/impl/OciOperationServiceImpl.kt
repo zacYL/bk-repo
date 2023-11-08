@@ -114,7 +114,6 @@ import com.tencent.bkrepo.repository.api.PackageClient
 import com.tencent.bkrepo.repository.api.PackageMetadataClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.api.StorageCredentialsClient
-import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
@@ -578,6 +577,7 @@ class OciOperationServiceImpl(
     override fun createPackageForThirdPartyImage(
         ociArtifactInfo: OciManifestArtifactInfo,
         manifestPath: String,
+        userId: String
     ): Boolean {
         with(ociArtifactInfo) {
             val repositoryDetail = repositoryClient.getRepoDetail(projectId, repoName).data ?: return false
@@ -590,7 +590,7 @@ class OciOperationServiceImpl(
                 manifest = manifest,
                 nodeDetail = nodeDetail,
                 sourceType = ArtifactChannel.PROXY,
-                userId = SYSTEM_USER
+                userId = userId
             )
         }
     }
@@ -695,11 +695,11 @@ class OciOperationServiceImpl(
                     .and(TOciReplicationRecord::packageVersion).isEqualTo(ociArtifactInfo.reference)
             )
             val update = Update().setOnInsert(TOciReplicationRecord::manifestPath.name, nodeDetail.fullPath)
+                .setOnInsert(TOciReplicationRecord::userId.name, userId)
             ociReplicationRecordDao.upsert(query, update)
             return false
         }
     }
-
 
     /**
      * 针对v2版本manifest文件做特殊处理

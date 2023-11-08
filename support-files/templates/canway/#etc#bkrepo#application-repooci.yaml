@@ -14,7 +14,7 @@ spring:
 server:
   port: __BK_REPO_DOCKER_PORT__
 logging:
-  level:
+  #level:
     #com.tencent.bkrepo.docker: DEBUG
   path: ${logging.path-common}/${service.name}
 oci:

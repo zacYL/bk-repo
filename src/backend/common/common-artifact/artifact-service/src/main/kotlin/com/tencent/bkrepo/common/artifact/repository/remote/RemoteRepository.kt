@@ -203,7 +203,9 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
                 logger.debug("Cached remote artifact[${context.artifactInfo}] is hit.")
             }
             val srcRepo = RepositoryIdentify(context.projectId, context.repoName)
-            ArtifactResource(this, context.artifactInfo.getResponseName(), srcRepo, cacheNode, ArtifactChannel.PROXY)
+            val responseName = context.artifactInfo.getResponseName()
+            val useDisposition = if (context is ArtifactDownloadContext) context.useDisposition else false
+            ArtifactResource(this, responseName, srcRepo, cacheNode, ArtifactChannel.PROXY, useDisposition)
         }
     }
 

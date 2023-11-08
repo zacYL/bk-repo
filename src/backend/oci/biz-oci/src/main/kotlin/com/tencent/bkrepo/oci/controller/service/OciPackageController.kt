@@ -61,6 +61,7 @@ class OciPackageController(
             val result = operationService.createPackageForThirdPartyImage(
                 manifestPath = manifestPath,
                 ociArtifactInfo = ociArtifactInfo,
+                userId = userId
             )
             if (result) {
                 val criteria = Criteria.where(TOciReplicationRecord::projectId.name).`is`(projectId)

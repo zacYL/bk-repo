@@ -67,7 +67,7 @@ enum class EventType(val nick: String) {
     ADMIN_ADD("添加管理员"),
     ADMIN_DELETE("移除管理员"),
 
-    //USER
+    // USER
     USER_ADD("新增用户"),
     USER_DELETE("删除用户"),
     USER_UPDATE("更新用户"),

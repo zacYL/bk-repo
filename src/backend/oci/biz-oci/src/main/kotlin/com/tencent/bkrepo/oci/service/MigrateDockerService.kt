@@ -1,8 +1,10 @@
 package com.tencent.bkrepo.oci.service
 
 import com.tencent.bkrepo.common.api.util.StreamUtils.readText
+import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.oci.constant.DOCKER_DISTRIBUTION_MANIFEST_LIST_V2
@@ -50,18 +52,18 @@ class MigrateDockerService(
      *  {projectId}/{repoName}/{packageName}/blobs/{version}
      *  {projectId}/{repoName}/{packageName}/manifest/{version}
      */
-    fun migrate() {
+    fun migrate(overwrite: Boolean) {
         logger.info("migrate Docker pkg start")
         val projects = projectClient.listProject().data
         projects?.forEach { projectInfo ->
             val repos = repositoryClient.listRepo(projectInfo.name, type = RepositoryType.DOCKER.name).data
             repos?.forEach { repo ->
-                migrateRepo(repo)
+                migrateRepo(repo, overwrite)
             }
         }
     }
 
-    private fun migrateRepo(repo: RepositoryInfo) {
+    private fun migrateRepo(repo: RepositoryInfo, overwrite: Boolean) {
         logger.info("migrate ${repo.projectId}/${repo.name} Docker pkg start")
         val storageCredentials = storageCredentialsClient.findByKey(repo.storageCredentialsKey).data
         var pageNumber = 1
@@ -83,7 +85,8 @@ class MigrateDockerService(
                         pkg.repoName,
                         pkg.key,
                         version,
-                        storageCredentials
+                        storageCredentials,
+                        overwrite
                     )
                 }
             }
@@ -102,6 +105,7 @@ class MigrateDockerService(
         packageKey: String,
         packageVersion: PackageVersion,
         storageCredentials: StorageCredentials?,
+        overwrite: Boolean
     ) {
         logger.info("migrate $projectId/$repoName/$packageKey/${packageVersion.name} Docker pkg version start")
         // 迁移完成的版本，写入元数据标记，并在重复执行时根据元数据标记判断是否跳过
@@ -128,7 +132,7 @@ class MigrateDockerService(
             if (type != null && type.value == DOCKER_DISTRIBUTION_MANIFEST_LIST_V2) {
                 // list.manifest.json 只需要迁移本身
                 // {projectId}/{repoName}/{packageName}/{version}/list.manifest.json
-                migrateStatus = doMigrateManifest(manifestNode, path, packageVersion.name)
+                migrateStatus = doMigrateManifest(manifestNode, path, packageVersion.name, overwrite)
                 if (migrateStatus) {
                     deleteOldDockerArtifact(projectId, repoName, pkgName, packageVersion.name)
                 }
@@ -140,11 +144,12 @@ class MigrateDockerService(
                     return
                 }
                 OciUtils.manifestIterator(manifest).forEach {
-                    migrateStatus = migrateStatus && doMigrateBlob(manifestNode, it, path, packageVersion.name)
+                    migrateStatus = migrateStatus
+                            && doMigrateBlob(manifestNode, it, path, packageVersion.name, overwrite)
                 }
                 // blob迁移完成后，迁移 manifest.json
                 if (migrateStatus) {
-                    migrateStatus = doMigrateManifest(manifestNode, path, packageVersion.name)
+                    migrateStatus = doMigrateManifest(manifestNode, path, packageVersion.name, overwrite)
                 }
                 // manifest.json 迁移完成后，删除旧blob和manifest.json
                 if (migrateStatus) {
@@ -160,7 +165,11 @@ class MigrateDockerService(
                     logger.info("migrate $projectId/$repoName/$packageKey/${packageVersion.name} success...")
                 }
             }
-            val metadata = listOf(MetadataModel(key = REFRESHED, value = true))
+            val metadata = packageVersion.packageMetadata.toMutableList()
+            metadata.add(MetadataModel(key = REFRESHED, value = true))
+            if (packageVersion.manifestPath == null && metadata.none { it.key == SOURCE_TYPE }) {
+                metadata.add(MetadataModel(key = SOURCE_TYPE, value = ArtifactChannel.REPLICATION))
+            }
             val newManifestFullPath = "$path/manifest/${packageVersion.name}/${manifestNode.name}"
             // 更新包版本信息 metadat, artifactPath, manifestPath
             packageClient.updateVersion(PackageVersionUpdateRequest(
@@ -229,11 +238,17 @@ class MigrateDockerService(
         return checkStatus
     }
 
-    private fun doMigrateManifest(manifestNode: NodeDetail, path: String, version: String): Boolean {
+    private fun doMigrateManifest(
+        manifestNode: NodeDetail,
+        path: String,
+        version: String,
+        overwrite: Boolean
+    ): Boolean {
         logger.info(
             "migrating manifest[${manifestNode.fullPath}] in repo ${manifestNode.projectId}/${manifestNode.repoName}"
         )
-        val newManifestFullPath = "$path/manifest/$version/${manifestNode.name}"
+        val newManifestFullPath =
+            "$path/manifest/$version" + if (OciDigest.isValid(version)) "" else "/${manifestNode.name}"
         nodeClient.copyNode(
             NodeMoveCopyRequest(
                 srcProjectId = manifestNode.projectId,
@@ -242,7 +257,8 @@ class MigrateDockerService(
                 destProjectId = manifestNode.projectId,
                 destRepoName = manifestNode.repoName,
                 destFullPath = newManifestFullPath,
-                operator = SYSTEM_USER
+                operator = SYSTEM_USER,
+                overwrite = overwrite
             )
         )
         return true
@@ -252,7 +268,8 @@ class MigrateDockerService(
         manifestNode: NodeDetail,
         descriptor: Descriptor,
         path: String,
-        version: String
+        version: String,
+        overwrite: Boolean
     ): Boolean {
         logger.info(
             "migrating blob digest [${descriptor.digest}] in repo ${manifestNode.projectId}/${manifestNode.repoName}"
@@ -271,7 +288,8 @@ class MigrateDockerService(
                 destProjectId = manifestNode.projectId,
                 destRepoName = manifestNode.repoName,
                 destFullPath = newBlobFullPath,
-                operator = SYSTEM_USER
+                operator = SYSTEM_USER,
+                overwrite = overwrite
             )
         )
         return true
@@ -290,20 +308,21 @@ class MigrateDockerService(
         }
     }
 
-    fun migrateRepository(projectId: String, repoName: String) {
+    fun migrateRepository(projectId: String, repoName: String, overwrite: Boolean) {
         val repoInfo = repositoryClient.getRepoInfo(projectId, repoName).data ?: run {
             logger.error("repo[$projectId/$repoName] find fail")
             return
         }
         require(repoInfo.type == RepositoryType.DOCKER)
-        migrateRepo(repoInfo)
+        migrateRepo(repoInfo, overwrite)
     }
 
     fun migratePackageVersion(
         projectId: String,
         repoName: String,
         packageKey: String,
-        version: String
+        version: String,
+        overwrite: Boolean
     ) {
         val repoDetail = repositoryClient.getRepoDetail(
             projectId,
@@ -317,7 +336,7 @@ class MigrateDockerService(
             logger.error("repo[$projectId/$repoName/$packageKey/$version] find fail")
             return
         }
-        migrateVersion(projectId, repoName, packageKey, packageVersion, repoDetail.storageCredentials)
+        migrateVersion(projectId, repoName, packageKey, packageVersion, repoDetail.storageCredentials, overwrite)
     }
 
     companion object {

@@ -1,5 +1,4 @@
-package com.tencent.devops.usermanager.pojo
-
+package com.tencent.bkrepo.auth.pojo.user
 
 data class UserInfo(
     val userId: String?,

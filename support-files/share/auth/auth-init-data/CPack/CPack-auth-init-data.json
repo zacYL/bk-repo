@@ -3,11 +3,13 @@
         "id": "15",
         "parentResourceCode": "project",
         "name": "制品(artifactory)",
+        "englishName": "artifactory",
         "weight": 3,
         "resourceTypes": [
             {
                 "id": "0622848f290b4401a2e1087635b176da",
                 "resourceName": "制品仓库",
+                "resourceEnglishName": "Repository",
                 "resourceCode": "bkrepo",
                 "parentResourceCode": "project",
                 "groupId": "15",
@@ -22,6 +24,7 @@
                     {
                         "id": "736679bf6c384d01a6fd2ec3b5a566de",
                         "name": "查看",
+                        "englishName": "view",
                         "actionCode": "access",
                         "resourceCode": "bkrepo",
                         "parentResourceCode": "project",
@@ -39,6 +42,7 @@
                     {
                         "id": "2093e9c815b54e9db06e9ea60227a1be",
                         "name": "创建",
+                        "englishName": "create repository",
                         "actionCode": "create",
                         "resourceCode": "bkrepo",
                         "parentResourceCode": "project",
@@ -56,6 +60,7 @@
                     {
                         "id": "7b7b859b797f45609c98da0b98b30f8f",
                         "name": "访问",
+                        "englishName": "visit",
                         "actionCode": "read",
                         "resourceCode": "bkrepo",
                         "parentResourceCode": "project",
@@ -73,6 +78,7 @@
                     {
                         "id": "5edf5a9f2f434eacb6b6aca9ebc2648b",
                         "name": "上传",
+                        "englishName": "upload artifact",
                         "actionCode": "write",
                         "resourceCode": "bkrepo",
                         "parentResourceCode": "project",
@@ -90,6 +96,7 @@
                     {
                         "id": "9e2ee6b416bb4e53bc2ccc26536d11f9",
                         "name": "编辑",
+                        "englishName": "edit artifact",
                         "actionCode": "update",
                         "resourceCode": "bkrepo",
                         "parentResourceCode": "project",
@@ -107,6 +114,7 @@
                     {
                         "id": "3881f1fb36fc4ac98dda4fbd16e07f64",
                         "name": "删除",
+                        "englishName": "delete artifact",
                         "actionCode": "delete",
                         "resourceCode": "bkrepo",
                         "parentResourceCode": "project",
@@ -124,6 +132,7 @@
                     {
                         "id": "01d09e5923bb4d95989e84d4e3b492fd",
                         "name": "设置",
+                        "englishName": "manage repository",
                         "actionCode": "manage",
                         "resourceCode": "bkrepo",
                         "parentResourceCode": "project",
@@ -149,6 +158,7 @@
             {
                 "id": "9a217fa49a5a4b0f9dd490d03879cf9f",
                 "resourceName": "依赖目录",
+                "resourceEnglishName": "Directory",
                 "resourceCode": "repoCatalog",
                 "parentResourceCode": "project",
                 "groupId": "15",
@@ -163,6 +173,7 @@
                     {
                         "id": "8d642409434a4c55b53168f9896065a9",
                         "name": "查看",
+                        "englishName": "view",
                         "actionCode": "view",
                         "resourceCode": "repoCatalog",
                         "parentResourceCode": "project",
@@ -188,6 +199,7 @@
             {
                 "id": "d40c0bd6c9794297b336a16fe7f8ab29",
                 "resourceName": "制品搜索",
+                "resourceEnglishName": "Search",
                 "resourceCode": "v_pack_search",
                 "parentResourceCode": "project",
                 "groupId": "15",
@@ -202,6 +214,7 @@
                     {
                         "id": "d40c0bd6c9794297b336a16fe7f8ab29",
                         "name": "查看",
+                        "englishName": "view",
                         "actionCode": "view",
                         "resourceCode": "v_pack_search",
                         "parentResourceCode": "project",
@@ -227,6 +240,7 @@
             {
                 "id": "491430c311d14c03b47aadd331edcbc1",
                 "resourceName": "制品分发",
+                "resourceEnglishName": "Distribute",
                 "resourceCode": "v_pack_replica",
                 "parentResourceCode": "project",
                 "groupId": "15",
@@ -242,6 +256,7 @@
                         "id": "491430c311d14c03b47aadd331edcbc1",
                         "name": "查看",
                         "actionCode": "view",
+                        "englishName": "view",
                         "resourceCode": "v_pack_replica",
                         "parentResourceCode": "project",
                         "associateInstance": false,
@@ -258,6 +273,7 @@
                     {
                         "id": "067d3174500b41ad9f050ce2e9bfa433",
                         "name": "创建",
+                        "englishName":"create",
                         "actionCode": "create",
                         "resourceCode": "v_pack_replica",
                         "parentResourceCode": "project",
@@ -275,6 +291,7 @@
                     {
                         "id": "b6bbad113d1d496b9e0bd6298a5131d8",
                         "name": "编辑",
+                        "englishName": "edit",
                         "actionCode": "update",
                         "resourceCode": "v_pack_replica",
                         "parentResourceCode": "project",
@@ -292,6 +309,7 @@
                     {
                         "id": "edbd20919d274a34b8731b58e7569b9b",
                         "name": "启用",
+                        "englishName": "enable",
                         "actionCode": "enable",
                         "resourceCode": "v_pack_replica",
                         "parentResourceCode": "project",
@@ -309,6 +327,7 @@
                     {
                         "id": "2e0b47fa098a462fa27cf84047ac49b6",
                         "name": "执行",
+                        "englishName": "execute",
                         "actionCode": "execute",
                         "resourceCode": "v_pack_replica",
                         "parentResourceCode": "project",
@@ -326,6 +345,7 @@
                     {
                         "id": "26f4470a77754b73af4159c8431fff2c",
                         "name": "复制",
+                        "englishName": "copy",
                         "actionCode": "copy",
                         "resourceCode": "v_pack_replica",
                         "parentResourceCode": "project",
@@ -343,6 +363,7 @@
                     {
                         "id": "9e1049d3a05d4fd0b48268875aff7195",
                         "name": "删除",
+                        "englishName": "delete",
                         "actionCode": "delete",
                         "resourceCode": "v_pack_replica",
                         "parentResourceCode": "project",
@@ -368,6 +389,7 @@
             {
                 "id": "bada9ac029e849429f21282954e2d825",
                 "resourceName": "制品分析",
+                "resourceEnglishName": "Analysis",
                 "resourceCode": "repoScan",
                 "parentResourceCode": "project",
                 "groupId": "15",
@@ -382,6 +404,7 @@
                     {
                         "id": "bada9ac029e849429f21282954e2d825",
                         "name": "查看",
+                        "englishName": "view",
                         "actionCode": "view",
                         "resourceCode": "repoScan",
                         "parentResourceCode": "project",

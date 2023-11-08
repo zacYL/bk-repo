@@ -130,7 +130,7 @@ class CanwayUserServiceImpl(
     }
 
     override fun listUser(rids: List<String>): List<User> {
-        logger.debug("list user rids : [$rids]")
+        logger.debug("list user rids : [{}]", rids)
         return if (rids.isEmpty()) {
             userRepository.findAll().map { transferUser(it) }
         } else {
@@ -313,8 +313,8 @@ class CanwayUserServiceImpl(
     override fun findUserByUserToken(userId: String, pwd: String): User? {
         logger.debug("find user userId : [$userId]")
         val isLogin = canwayUsermangerClient.login(UserLoginVo(userId, pwd)).data
-        if (isLogin == true) {
-            return transferUser(
+        return if (isLogin == true) {
+            transferUser(
                 TUser(
                     userId = AUTH_ADMIN,
                     name = EMPTY,
@@ -322,7 +322,7 @@ class CanwayUserServiceImpl(
                 )
             )
         } else {
-            return null
+            null
         }
 //        val hashPwd = DataDigestUtils.md5FromStr(pwd)
 //        val criteria = Criteria()

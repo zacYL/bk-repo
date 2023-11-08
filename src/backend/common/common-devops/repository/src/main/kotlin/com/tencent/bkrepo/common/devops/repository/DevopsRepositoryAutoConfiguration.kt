@@ -2,7 +2,9 @@ package com.tencent.bkrepo.common.devops.repository
 
 import com.tencent.bkrepo.common.devops.DEPLOY_CANWAY
 import com.tencent.bkrepo.common.devops.repository.api.CanwayPermissionController
+import com.tencent.bkrepo.common.devops.repository.api.CanwayProjectController
 import com.tencent.bkrepo.common.devops.repository.service.CanwayPermissionService
+import com.tencent.bkrepo.common.devops.repository.service.CanwayProjectService
 import com.tencent.bkrepo.common.devops.service.BkUserService
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Configuration
@@ -12,7 +14,9 @@ import org.springframework.context.annotation.Import
 @ConditionalOnProperty(prefix = "auth", name = ["realm"], havingValue = DEPLOY_CANWAY, matchIfMissing = true)
 @Import(
     CanwayPermissionService::class,
+    CanwayProjectService::class,
     BkUserService::class,
-    CanwayPermissionController::class
+    CanwayPermissionController::class,
+    CanwayProjectController::class,
 )
 class DevopsRepositoryAutoConfiguration

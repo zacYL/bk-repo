@@ -29,6 +29,7 @@ package com.tencent.bkrepo.oci.service.impl
 
 import com.tencent.bkrepo.common.api.constant.HttpHeaders
 import com.tencent.bkrepo.common.api.constant.StringPool
+import com.tencent.bkrepo.common.api.constant.ensurePrefix
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.api.util.StreamUtils.readText
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
@@ -77,6 +78,7 @@ import com.tencent.bkrepo.oci.constant.OS
 import com.tencent.bkrepo.oci.constant.OciMessageCode
 import com.tencent.bkrepo.oci.constant.PROXY_URL
 import com.tencent.bkrepo.oci.constant.REPO_TYPE
+import com.tencent.bkrepo.oci.constant.VARIANT
 import com.tencent.bkrepo.oci.dao.OciReplicationRecordDao
 import com.tencent.bkrepo.oci.exception.OciBadRequestException
 import com.tencent.bkrepo.oci.exception.OciFileNotFoundException
@@ -112,7 +114,6 @@ import com.tencent.bkrepo.repository.api.PackageClient
 import com.tencent.bkrepo.repository.api.PackageMetadataClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.api.StorageCredentialsClient
-import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
@@ -327,7 +328,9 @@ class OciOperationServiceImpl(
             )?.let { manifestList ->
                 manifestList.manifests.forEach { manifest ->
                     val map = manifest.platform
-                    os.add("${map[OS]}/${map[ARCHITECTURE]}")
+                    os.add(
+                        "${map[OS]}/${map[ARCHITECTURE]}" + (map[VARIANT]?.toString()?.ensurePrefix("/") ?: "")
+                    )
                 }
             }
         } else {
@@ -342,7 +345,7 @@ class OciOperationServiceImpl(
                 )
                 val inputStream = storageManager.loadArtifactInputStream(configNode, repoDetail.storageCredentials)
                 val config = JsonUtils.objectMapper.readValue(inputStream, ConfigSchema2::class.java)
-                os.add("${config.os}/${config.architecture}")
+                os.add("${config.os}/${config.architecture}" + (config.variant?.ensurePrefix("/") ?: ""))
                 history = config.history
             }
         }
@@ -367,7 +370,7 @@ class OciOperationServiceImpl(
                 repoName = repoName,
                 packageName = name,
                 reference = version,
-                isValidDigest = false,
+                isValidDigest = OciDigest.isValid(version),
                 version = version,
                 isFat = false
             )
@@ -574,6 +577,7 @@ class OciOperationServiceImpl(
     override fun createPackageForThirdPartyImage(
         ociArtifactInfo: OciManifestArtifactInfo,
         manifestPath: String,
+        userId: String
     ): Boolean {
         with(ociArtifactInfo) {
             val repositoryDetail = repositoryClient.getRepoDetail(projectId, repoName).data ?: return false
@@ -585,8 +589,8 @@ class OciOperationServiceImpl(
                 ociArtifactInfo = ociArtifactInfo,
                 manifest = manifest,
                 nodeDetail = nodeDetail,
-                sourceType = ArtifactChannel.REPLICATION,
-                userId = SYSTEM_USER
+                sourceType = ArtifactChannel.PROXY,
+                userId = userId
             )
         }
     }
@@ -691,11 +695,11 @@ class OciOperationServiceImpl(
                     .and(TOciReplicationRecord::packageVersion).isEqualTo(ociArtifactInfo.reference)
             )
             val update = Update().setOnInsert(TOciReplicationRecord::manifestPath.name, nodeDetail.fullPath)
+                .setOnInsert(TOciReplicationRecord::userId.name, userId)
             ociReplicationRecordDao.upsert(query, update)
             return false
         }
     }
-
 
     /**
      * 针对v2版本manifest文件做特殊处理

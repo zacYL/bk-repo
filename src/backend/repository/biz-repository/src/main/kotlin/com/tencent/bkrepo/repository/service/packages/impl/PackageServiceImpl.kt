@@ -111,17 +111,6 @@ class PackageServiceImpl(
         return convert(packageVersionDao.findByName(packageId, versionName))
     }
 
-    override fun findVersionByTag(
-        projectId: String,
-        repoName: String,
-        packageKey: String,
-        tag: String
-    ): PackageVersion? {
-        val tPackage = packageDao.findByKey(projectId, repoName, packageKey) ?: return null
-        val versionName = tPackage.versionTag?.get(tag) ?: return null
-        return convert(packageVersionDao.findByName(tPackage.id!!, versionName))
-    }
-
     override fun findVersionNameByTag(
         projectId: String,
         repoName: String,
@@ -203,11 +192,9 @@ class PackageServiceImpl(
         return if (tPackage == null) {
             Pages.ofResponse(pageRequest, 0, emptyList())
         } else {
-            val versionTag = tPackage.versionTag?.entries?.groupBy({ it.value }, { it.key })
             val query = PackageQueryHelper.versionListQuery(tPackage.id!!, option.version, stageTag)
             val totalRecords = packageVersionDao.count(query)
-            val records = packageVersionDao.find(query.with(pageRequest))
-                .map { convert(it)!!.apply { uniqueTags = versionTag?.get(it.name) } }
+            val records = packageVersionDao.find(query.with(pageRequest)).map { convert(it)!! }
             Pages.ofResponse(pageRequest, totalRecords, records)
         }
     }
@@ -350,7 +337,6 @@ class PackageServiceImpl(
                 val latestVersion = packageVersionDao.findLatest(tPackage.id.orEmpty())
                 tPackage.latest = latestVersion?.name.orEmpty()
             }
-            tPackage.versionTag = tPackage.versionTag?.filterValues { it != versionName }
             packageDao.save(tPackage)
         }
         publishEvent(
@@ -674,9 +660,9 @@ class PackageServiceImpl(
         original: Map<String, String>?,
         extra: Map<String, String>?
     ): Map<String, String> {
-        return original.orEmpty().toMutableMap().apply {
-            extra?.forEach { (tag, version) -> if (tag.isNotBlank()) this[tag] = version }
-        }
+        return original?.toMutableMap()?.apply {
+            extra?.forEach { (tag, version) -> this[tag] = version }
+        }.orEmpty()
     }
 
     companion object {

@@ -1,6 +1,5 @@
 package com.tencent.bkrepo.auth.service.impl
 
-
 import com.tencent.bkrepo.auth.api.CanwayUsermangerClient
 import com.tencent.bkrepo.auth.pojo.MigrateTokenVO
 import com.tencent.bkrepo.auth.service.UserService
@@ -15,10 +14,10 @@ class ExtTokenServiceImpl(
 ) {
     @Suppress("TooGenericExceptionCaught")
     fun migHistoryTokenData() {
-        //查询所有用户信息
+        // 查询所有用户信息
         val userList = userService.userAll(null, null, null)
         val migrateTokenList = mutableListOf<MigrateTokenVO>()
-        logger.info("Migrate User ${userList} token")
+        logger.info("Migrate User $userList token")
         userList.forEach { user ->
             if (user.tokens.isNotEmpty()) {
                 migrateTokenList.addAll(
@@ -28,10 +27,11 @@ class ExtTokenServiceImpl(
                             tokenName = token.name ?: StringPool.EMPTY,
                             token = token.id
                         )
-                    })
+                    }
+                )
             }
         }
-        logger.info("Migrate User token list: ${migrateTokenList}")
+        logger.info("Migrate User token list: $migrateTokenList")
         canwayUsermangerClient.migrateToken(migrateTokenList)
     }
 

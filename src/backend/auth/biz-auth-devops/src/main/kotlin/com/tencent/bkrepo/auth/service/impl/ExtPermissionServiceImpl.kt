@@ -73,9 +73,9 @@ class ExtPermissionServiceImpl(
 
     @Suppress("TooGenericExceptionCaught")
     fun migrateToDevOps() {
-        //获取所有项目
+        // 获取所有项目
         val projectList = projectClient.listProject().data ?: listOf()
-        //每个项目创建角色（查看者、使用者与仓库管理者）
+        // 每个项目创建角色（查看者、使用者与仓库管理者）
         projectList.forEach { project ->
             try {
                 logger.info("${project.name} project start creating role")
@@ -83,40 +83,48 @@ class ExtPermissionServiceImpl(
                 val cpackUser = roleCreate(project.name, CPACK_USER)
                 val cpackManager = roleCreate(project.name, CPACK_MANAGER)
 
-                //查询项目所有成员
+                // 查询项目所有成员
                 val projectMember =
                     canwayProjectClient.listMember(projectId = project.name).data?.map { it.userId } ?: listOf()
 
                 logger.info("${project.name} project starting to obtain product library permissions user")
-                //创建角色用户与用户组
+                // 创建角色用户与用户组
                 val projectRepoUserIdList = mutableListOf<SubjectDTO>()
                 val projectRepoUserRoleList = mutableListOf<SubjectDTO>()
 
                 val projectRepoManagerIdList = mutableListOf<SubjectDTO>()
                 val projectRepoManagerRoleList = mutableListOf<SubjectDTO>()
 
-                //查询项目下所有仓库的内置权限
+                // 查询项目下所有仓库的内置权限
                 val allRepo = repositoryClient.listRepo(projectId = project.name).data?.map { it.name } ?: listOf()
                 allRepo.forEach { repoName ->
                     val repoPermission = servicePermissionResource.listRepoBuiltinPermission(
                         projectId = project.name,
                         repoName = repoName
                     ).data ?: listOf()
-                    //仓库管理员加入用户与用户组
-                    projectRepoManagerIdList.addAll(repoPermission.filter { it.permName == AUTH_BUILTIN_ADMIN }
-                        .flatMap { it.users }.map { SubjectDTO(subjectCode = USER, subjectId = it) })
-                    projectRepoManagerRoleList.addAll(repoPermission.filter { it.permName == AUTH_BUILTIN_ADMIN }
-                        .flatMap { it.roles }.map { SubjectDTO(subjectCode = GROUP, subjectId = it) })
+                    // 仓库管理员加入用户与用户组
+                    projectRepoManagerIdList.addAll(
+                        repoPermission.filter { it.permName == AUTH_BUILTIN_ADMIN }
+                        .flatMap { it.users }.map { SubjectDTO(subjectCode = USER, subjectId = it) }
+                    )
+                    projectRepoManagerRoleList.addAll(
+                        repoPermission.filter { it.permName == AUTH_BUILTIN_ADMIN }
+                        .flatMap { it.roles }.map { SubjectDTO(subjectCode = GROUP, subjectId = it) }
+                    )
 
-                    //仓库使用者加入用户与用户组
-                    projectRepoUserIdList.addAll(repoPermission.filter { it.permName == AUTH_BUILTIN_USER }
-                        .flatMap { it.users }.map { SubjectDTO(subjectCode = USER, subjectId = it) })
-                    projectRepoUserRoleList.addAll(repoPermission.filter { it.permName == AUTH_BUILTIN_USER }
-                        .flatMap { it.roles }.map { SubjectDTO(subjectCode = GROUP, subjectId = it) })
+                    // 仓库使用者加入用户与用户组
+                    projectRepoUserIdList.addAll(
+                        repoPermission.filter { it.permName == AUTH_BUILTIN_USER }
+                        .flatMap { it.users }.map { SubjectDTO(subjectCode = USER, subjectId = it) }
+                    )
+                    projectRepoUserRoleList.addAll(
+                        repoPermission.filter { it.permName == AUTH_BUILTIN_USER }
+                        .flatMap { it.roles }.map { SubjectDTO(subjectCode = GROUP, subjectId = it) }
+                    )
                 }
 
                 logger.info("${project.name} project start migrating users")
-                //查看者加入用户与用户组
+                // 查看者加入用户与用户组
                 canwayCustomRoleClient.batchAddRoleMember(
                     userId = AUTH_ADMIN,
                     scopeCode = SCOPECODE,
@@ -125,7 +133,7 @@ class ExtPermissionServiceImpl(
                     subjects = projectMember.map { SubjectDTO(subjectCode = USER, subjectId = it) }.distinct()
                 )
 
-                //使用者加入用户与用户组
+                // 使用者加入用户与用户组
                 canwayCustomRoleClient.batchAddRoleMember(
                     userId = AUTH_ADMIN,
                     scopeCode = SCOPECODE,
@@ -141,7 +149,7 @@ class ExtPermissionServiceImpl(
                     subjects = projectRepoUserRoleList.distinct()
                 )
 
-                //管理者加入用户与用户组
+                // 管理者加入用户与用户组
                 canwayCustomRoleClient.batchAddRoleMember(
                     userId = AUTH_ADMIN,
                     scopeCode = SCOPECODE,
@@ -297,7 +305,7 @@ class ExtPermissionServiceImpl(
     }
 
     private fun roleCreate(projectId: String, roleType: String): RoleVO {
-        //创建权限中心角色
+        // 创建权限中心角色
         val cpackRole = canwayCustomRoleClient.createRole(
             userId = AUTH_ADMIN,
             scopeCode = SCOPECODE,
@@ -308,7 +316,7 @@ class ExtPermissionServiceImpl(
                 type = PROJECT_ROLE
             )
         ).data ?: throw ErrorCodeException(AuthMessageCode.AUTH_DUP_APPID)
-        //权限列表
+        // 权限列表
         val permissionList = mutableListOf<AnyResourcePermissionSaveDTO>()
         permissionList.addAll(
             listOf(
@@ -373,7 +381,7 @@ class ExtPermissionServiceImpl(
                 )
             }
         }
-        //查看者授权
+        // 查看者授权
         canwayCustomPermissionClient.saveAnyPermissions(
             userId = AUTH_ADMIN,
             scopeCode = SCOPECODE,

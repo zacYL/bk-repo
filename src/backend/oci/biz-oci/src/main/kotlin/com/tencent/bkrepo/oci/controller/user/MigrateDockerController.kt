@@ -27,11 +27,14 @@
 
 package com.tencent.bkrepo.oci.controller.user
 
+import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.security.permission.Principal
 import com.tencent.bkrepo.common.security.permission.PrincipalType
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.oci.service.MigrateDockerService
+import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import org.springframework.web.bind.annotation.GetMapping
@@ -49,8 +52,11 @@ class MigrateDockerController(
     @ApiOperation("迁移所有旧docker仓库的包")
     @GetMapping("/migrate")
     @Principal(PrincipalType.ADMIN)
-    fun migrate(): Response<Void> {
-        migrateDockerService.migrate()
+    fun migrate(
+        @RequestParam("overwrite", required = false) overwrite: Boolean = false
+    ): Response<Void> {
+        HttpContextHolder.getRequest().setAttribute(USER_KEY, SYSTEM_USER)
+        migrateDockerService.migrate(overwrite)
         return ResponseBuilder.success()
     }
 
@@ -61,9 +67,12 @@ class MigrateDockerController(
         @RequestParam("projectId")
         projectId: String,
         @RequestParam("repoName")
-        repoName: String
+        repoName: String,
+        @RequestParam("overwrite", required = false)
+        overwrite: Boolean = false
     ): Response<Void> {
-        migrateDockerService.migrateRepository(projectId, repoName)
+        HttpContextHolder.getRequest().setAttribute(USER_KEY, SYSTEM_USER)
+        migrateDockerService.migrateRepository(projectId, repoName, overwrite)
         return ResponseBuilder.success()
     }
 
@@ -78,9 +87,12 @@ class MigrateDockerController(
         @RequestParam("packageKey")
         packageKey: String,
         @RequestParam("version")
-        version: String
+        version: String,
+        @RequestParam("overwrite", required = false)
+        overwrite: Boolean = false
     ): Response<Void> {
-        migrateDockerService.migratePackageVersion(projectId, repoName, packageKey, version)
+        HttpContextHolder.getRequest().setAttribute(USER_KEY, SYSTEM_USER)
+        migrateDockerService.migratePackageVersion(projectId, repoName, packageKey, version, overwrite)
         return ResponseBuilder.success()
     }
 }

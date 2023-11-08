@@ -189,7 +189,7 @@
     import StoreSort from '@repository/components/StoreSort'
     import CheckTargetStore from '@repository/components/CheckTargetStore'
     import { repoEnum, repoSupportEnum } from '@repository/store/publicEnum'
-    import { mapActions } from 'vuex'
+    import { mapActions, mapState } from 'vuex'
     import { isEmpty } from 'lodash'
     import { checkValueIsNullOrEmpty } from '@repository/utils'
     const getRepoBaseInfo = () => {
@@ -262,6 +262,7 @@
             }
         },
         computed: {
+            ...mapState(['domain']),
             projectId () {
                 return this.$route.params.projectId
             },
@@ -445,8 +446,12 @@
                 !val && (this.errorProxyPortInfo = false)
             }
         },
+        created () {
+            // 此时需要获取docker的域名，因为创建docker的远程仓库时需要用到，用户不能手动输入当前仓库地址
+            this.getDomain('docker')
+        },
         methods: {
-            ...mapActions(['createRepo', 'checkRepoName', 'testRemoteUrl']),
+            ...mapActions(['createRepo', 'checkRepoName', 'testRemoteUrl', 'getDomain']),
             // 打开选择存储库弹窗
             toCheckedStore () {
                 this.$refs.checkTargetStoreRef && (this.$refs.checkTargetStoreRef.show = true)
@@ -479,8 +484,14 @@
             },
             // 校验当前输入的远程代理源地址是否是当前仓库
             checkRemoteRepeatUrl (val) {
-                const originHref = window.location.origin
-                const urlSplicing = originHref + '/' + this.repoBaseInfo.type + '/' + this.projectId + '/' + this.repoBaseInfo.name
+                let urlSplicing = ''
+                if (this.repoBaseInfo.type === 'docker') {
+                    urlSplicing = `${location.protocol}//${this.domain.docker}/${this.projectId}/${this.repoBaseInfo.name}`
+                } else {
+                    const originHref = window.location.origin
+                    urlSplicing = originHref + '/' + this.repoBaseInfo.type + '/' + this.projectId + '/' + this.repoBaseInfo.name
+                }
+                // 特殊的，地址后面需要再添加一个 / 的
                 const urlSplicingSpecial = urlSplicing + '/'
                 return !(urlSplicing === val || urlSplicingSpecial === val)
             },

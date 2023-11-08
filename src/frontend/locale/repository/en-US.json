@@ -882,7 +882,7 @@
     "limitTagReason":", reason : ",
     "scan": "Scan",
     "artifact":"Artifact",
-    "remoteArtifactUrlInfo":"Not allowed to fill in the current remote artifact address",
+    "remoteArtifactUrlInfo":"Not allowed to fill in the current remote repository address",
     "noBusinessTip": "No business authorization",
     "noBusinessSubTip": "No access to this app",
     "fileNum": "File number",

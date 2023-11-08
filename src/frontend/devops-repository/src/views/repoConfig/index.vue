@@ -461,8 +461,14 @@
             },
             // 校验当前输入的远程代理源地址是否是当前仓库
             checkRemoteRepeatUrl (val) {
-                const originHref = window.location.origin
-                const urlSplicing = originHref + '/' + this.repoBaseInfo.type?.toLowerCase() + '/' + this.projectId + '/' + this.repoBaseInfo.name
+                let urlSplicing
+                if (this.repoBaseInfo.type?.toLowerCase() === 'docker') {
+                    urlSplicing = `${location.protocol}//${this.domain.docker}/${this.projectId}/${this.repoBaseInfo.name}`
+                } else {
+                    const originHref = window.location.origin
+                    urlSplicing = originHref + '/' + this.repoBaseInfo.type?.toLowerCase() + '/' + this.projectId + '/' + this.repoBaseInfo.name
+                }
+                // 特殊的，地址后面需要再添加一个 / 的
                 const urlSplicingSpecial = urlSplicing + '/'
                 return !(urlSplicing === val || urlSplicingSpecial === val)
             },

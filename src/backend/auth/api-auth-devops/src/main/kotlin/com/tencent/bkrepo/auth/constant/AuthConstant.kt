@@ -15,11 +15,11 @@ object AuthConstant {
 
     const val CANWAY_AUTH_SERVICE = "/api/extAuth"
 
-    const val CPACK_VIEWERS = "制品库查看者"
+    const val CPACK_VIEWERS = "Repository Visitor"
 
-    const val CPACK_USER = "制品库使用者"
+    const val CPACK_USER = "Repository User"
 
-    const val CPACK_MANAGER = "制品库管理者"
+    const val CPACK_MANAGER = "Repository Manager"
 
     const val SCOPECODE = "project"
 

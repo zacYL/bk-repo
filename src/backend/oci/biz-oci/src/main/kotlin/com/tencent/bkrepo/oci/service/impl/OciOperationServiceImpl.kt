@@ -63,6 +63,7 @@ import com.tencent.bkrepo.oci.constant.DOCKER_DISTRIBUTION_MANIFEST_LIST_V2
 import com.tencent.bkrepo.oci.constant.DOCKER_MANIFEST_DIGEST
 import com.tencent.bkrepo.oci.constant.DOCKER_REPO_NAME
 import com.tencent.bkrepo.oci.constant.DOWNLOADS
+import com.tencent.bkrepo.oci.constant.IMAGE_INDEX_MEDIA_TYPE
 import com.tencent.bkrepo.oci.constant.LAST_MODIFIED_BY
 import com.tencent.bkrepo.oci.constant.LAST_MODIFIED_DATE
 import com.tencent.bkrepo.oci.constant.MANIFEST_DIGEST
@@ -321,9 +322,9 @@ class OciOperationServiceImpl(
     ): Pair<List<String>, List<History>> {
         val os = mutableListOf<String>()
         var history = listOf<History>()
-        val isFatManifest = nodeDetail.name == OCI_MANIFEST_LIST ||
-                nodeDetail.nodeMetadata.find { it.key == MEDIA_TYPE }
-                    ?.value.toString() == DOCKER_DISTRIBUTION_MANIFEST_LIST_V2
+        val mediaType = nodeDetail.nodeMetadata.find { it.key == MEDIA_TYPE }?.value.toString()
+        val isFatManifest = nodeDetail.name == OCI_MANIFEST_LIST || mediaType == DOCKER_DISTRIBUTION_MANIFEST_LIST_V2 ||
+                mediaType == IMAGE_INDEX_MEDIA_TYPE
         if (isFatManifest) {
             // manifestList
             loadManifestList(

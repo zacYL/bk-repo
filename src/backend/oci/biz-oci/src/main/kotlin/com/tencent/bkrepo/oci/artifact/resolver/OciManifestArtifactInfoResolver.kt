@@ -38,6 +38,7 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHold
 import com.tencent.bkrepo.common.artifact.resolve.path.ArtifactInfoResolver
 import com.tencent.bkrepo.common.artifact.resolve.path.Resolver
 import com.tencent.bkrepo.oci.constant.DOCKER_DISTRIBUTION_MANIFEST_LIST_V2
+import com.tencent.bkrepo.oci.constant.IMAGE_INDEX_MEDIA_TYPE
 import com.tencent.bkrepo.oci.constant.USER_API_PREFIX
 import com.tencent.bkrepo.oci.pojo.artifact.OciManifestArtifactInfo
 import com.tencent.bkrepo.oci.pojo.digest.OciDigest
@@ -71,7 +72,8 @@ class OciManifestArtifactInfoResolver : ArtifactInfoResolver {
                 val reference = attributes["reference"].toString().trim()
                 validate(packageName)
                 val isValidDigest = OciDigest.isValid(reference)
-                val isFat = request.getHeader(CONTENT_TYPE) == DOCKER_DISTRIBUTION_MANIFEST_LIST_V2
+                val contentType = request.getHeader(CONTENT_TYPE)
+                val isFat = contentType == DOCKER_DISTRIBUTION_MANIFEST_LIST_V2 || contentType == IMAGE_INDEX_MEDIA_TYPE
                 OciManifestArtifactInfo(projectId, repoName, packageName, "", reference, isValidDigest, isFat)
             }
         }

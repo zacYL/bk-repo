@@ -67,6 +67,7 @@ import com.tencent.bkrepo.oci.constant.CATALOG_REQUEST
 import com.tencent.bkrepo.oci.constant.DOCKER_DISTRIBUTION_MANIFEST_LIST_V2
 import com.tencent.bkrepo.oci.constant.DOCKER_DISTRIBUTION_MANIFEST_V2
 import com.tencent.bkrepo.oci.constant.DOCKER_LINK
+import com.tencent.bkrepo.oci.constant.IMAGE_INDEX_MEDIA_TYPE
 import com.tencent.bkrepo.oci.constant.IMAGE_VERSION
 import com.tencent.bkrepo.oci.constant.LAST_TAG
 import com.tencent.bkrepo.oci.constant.MEDIA_TYPE
@@ -77,6 +78,7 @@ import com.tencent.bkrepo.oci.constant.OLD_DOCKER_VERSION
 import com.tencent.bkrepo.oci.constant.OciMessageCode
 import com.tencent.bkrepo.oci.constant.PROXY_URL
 import com.tencent.bkrepo.oci.constant.TAG_LIST_REQUEST
+import com.tencent.bkrepo.oci.exception.OciBadRequestException
 import com.tencent.bkrepo.oci.exception.OciForbiddenRequestException
 import com.tencent.bkrepo.oci.pojo.artifact.OciArtifactInfo
 import com.tencent.bkrepo.oci.pojo.artifact.OciArtifactInfo.Companion.DOCKER_CATALOG_SUFFIX
@@ -181,6 +183,8 @@ class OciRegistryRemoteRepository(
                     downloadUrl = downloadUrl
                 )
             }
+        } catch (e: OciBadRequestException) {
+            throw e
         } catch (e: Exception) {
             logger.error("Error occurred while sending request $downloadUrl", e)
             throw NodeNotFoundException(downloadUrl)
@@ -248,6 +252,10 @@ class OciRegistryRemoteRepository(
                 requestBuilder.addHeader(ACCEPT, DOCKER_DISTRIBUTION_MANIFEST_V2)
             if (acceptList.contains(DOCKER_DISTRIBUTION_MANIFEST_LIST_V2))
                 requestBuilder.addHeader(ACCEPT, DOCKER_DISTRIBUTION_MANIFEST_LIST_V2)
+            if (acceptList.contains(OCI_IMAGE_MANIFEST_MEDIA_TYPE))
+                requestBuilder.addHeader(ACCEPT, OCI_IMAGE_MANIFEST_MEDIA_TYPE)
+            if (acceptList.contains(IMAGE_INDEX_MEDIA_TYPE))
+                requestBuilder.addHeader(ACCEPT, IMAGE_INDEX_MEDIA_TYPE)
         }
         return requestBuilder.build()
     }
@@ -532,9 +540,10 @@ class OciRegistryRemoteRepository(
         val configuration = context.getRemoteConfiguration()
         if (!configuration.cache.enabled) return null
         val ociArtifactInfo = context.artifactInfo as OciArtifactInfo
+        val contentType = context.getStringAttribute(CONTENT_TYPE)
         if (
             ociArtifactInfo is OciManifestArtifactInfo &&
-            context.getStringAttribute(CONTENT_TYPE) == DOCKER_DISTRIBUTION_MANIFEST_LIST_V2
+            (contentType == DOCKER_DISTRIBUTION_MANIFEST_LIST_V2 || contentType == IMAGE_INDEX_MEDIA_TYPE)
         ) {
             ociArtifactInfo.isFat = true
         }

@@ -8,6 +8,7 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.oci.constant.DOCKER_DISTRIBUTION_MANIFEST_LIST_V2
+import com.tencent.bkrepo.oci.constant.IMAGE_INDEX_MEDIA_TYPE
 import com.tencent.bkrepo.oci.constant.OLD_DOCKER_MEDIA_TYPE
 import com.tencent.bkrepo.oci.model.Descriptor
 import com.tencent.bkrepo.oci.model.ManifestSchema2
@@ -129,7 +130,10 @@ class MigrateDockerService(
             val type = manifestNode.nodeMetadata.firstOrNull { it.key == OLD_DOCKER_MEDIA_TYPE }
             var migrateStatus = true
             // harbor 迁移到cpack的docker制品不存在 type
-            if (type != null && type.value == DOCKER_DISTRIBUTION_MANIFEST_LIST_V2) {
+            if (
+                type != null &&
+                (type.value == DOCKER_DISTRIBUTION_MANIFEST_LIST_V2 || type.value == IMAGE_INDEX_MEDIA_TYPE)
+            ) {
                 // list.manifest.json 只需要迁移本身
                 // {projectId}/{repoName}/{packageName}/{version}/list.manifest.json
                 migrateStatus = doMigrateManifest(manifestNode, path, packageVersion.name, overwrite)

@@ -31,8 +31,56 @@
 
 package com.tencent.bkrepo.oci.artifact.repository
 
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.virtual.VirtualRepository
+import com.tencent.bkrepo.oci.constant.LAST_TAG
+import com.tencent.bkrepo.oci.constant.N
+import com.tencent.bkrepo.oci.pojo.artifact.OciTagArtifactInfo
+import com.tencent.bkrepo.oci.pojo.response.CatalogResponse
+import com.tencent.bkrepo.oci.pojo.tags.TagsInfo
+import com.tencent.bkrepo.oci.util.OciUtils
 import org.springframework.stereotype.Component
 
 @Component
-class OciRegistryVirtualRepository : VirtualRepository()
+class OciRegistryVirtualRepository : VirtualRepository() {
+
+    override fun query(context: ArtifactQueryContext): Any? {
+        val artifactInfo = context.artifactInfo
+        return if (artifactInfo is OciTagArtifactInfo) {
+            val n = context.getAttribute<Int>(N)
+            val last = context.getAttribute<String>(LAST_TAG)
+            if (artifactInfo.packageName.isBlank()) {
+                val packageList = mapEachLocal(context) { sub, repository ->
+                    require(sub is ArtifactQueryContext)
+                    sub.getAndRemoveAttribute<Int>(N)
+                    sub.getAndRemoveAttribute<String>(LAST_TAG)
+                    repository.query(sub) as CatalogResponse
+                }.flatMap { it.repositories }.toSortedSet().toMutableList()
+                val (imageList, left) = OciUtils.filterHandler(
+                    tags = packageList,
+                    n = n,
+                    last = last
+                )
+                CatalogResponse(imageList, left)
+            } else {
+                val tagList = mapEachLocalAndFirstRemote(context) { sub, repository ->
+                    require(sub is ArtifactQueryContext)
+                    sub.getAndRemoveAttribute<Int>(N)
+                    sub.getAndRemoveAttribute<String>(LAST_TAG)
+                    repository.query(sub) as TagsInfo
+                }.flatMap { it.tags }.toSortedSet().toMutableList()
+                val pair = OciUtils.filterHandler(
+                    tags = tagList,
+                    n = n,
+                    last = last
+                )
+                TagsInfo(artifactInfo.packageName, pair.first as List<String>, pair.second)
+            }
+        } else {
+            mapFirstRepo(context) { sub, repository ->
+                require(sub is ArtifactQueryContext)
+                repository.query(sub)
+            }
+        }
+    }
+}

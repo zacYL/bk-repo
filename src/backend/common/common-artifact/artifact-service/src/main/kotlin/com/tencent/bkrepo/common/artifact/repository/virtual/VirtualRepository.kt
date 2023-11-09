@@ -132,7 +132,16 @@ abstract class VirtualRepository : AbstractArtifactRepository() {
     protected fun <R> mapFirstRepo(
         context: ArtifactContext,
         action: (ArtifactContext, ArtifactRepository) -> R?
-    ): R? = doMap(context, null, action)
+    ): R? = doMap(context, null, null, action)
+
+    protected fun <R> mapEachLocal(
+        context: ArtifactContext,
+        action: (ArtifactContext, ArtifactRepository) -> R?
+    ): MutableList<R> {
+        val resultList = mutableListOf<R>()
+        doMap(context, RepositoryCategory.LOCAL, resultList, action)
+        return resultList
+    }
 
     /**
      * 遍历虚拟仓库包含的本地仓库（所有）、远程仓库（直到第一个远程仓库返回数据），执行[action]操作，并将结果按仓库顺序聚合成[List]返回
@@ -142,7 +151,7 @@ abstract class VirtualRepository : AbstractArtifactRepository() {
         action: (ArtifactContext, ArtifactRepository) -> R?
     ): MutableList<R> {
         val resultList = mutableListOf<R>()
-        doMap(context, resultList, action)
+        doMap(context, null, resultList, action)
         return resultList
     }
 
@@ -161,10 +170,12 @@ abstract class VirtualRepository : AbstractArtifactRepository() {
     @Suppress("NestedBlockDepth")
     private fun <R> doMap(
         context: ArtifactContext,
+        repositoryCategory: RepositoryCategory?,
         resultList: MutableList<R>?,
         action: (ArtifactContext, ArtifactRepository) -> R?
     ): R? {
         val repoList = context.getVirtualConfiguration().repositoryList
+            .filter { repositoryCategory?.run { this == it.category } ?: true }
         val traversedList = getTraversedList(context)
         var remoteSuccess = false
         for (member in repoList) {

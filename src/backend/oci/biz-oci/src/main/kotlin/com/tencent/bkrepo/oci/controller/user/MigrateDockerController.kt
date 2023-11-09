@@ -37,7 +37,7 @@ import com.tencent.bkrepo.oci.service.MigrateDockerService
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
-import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -50,7 +50,7 @@ class MigrateDockerController(
 ) {
 
     @ApiOperation("迁移所有旧docker仓库的包")
-    @GetMapping("/migrate")
+    @PostMapping("/migrate")
     @Principal(PrincipalType.ADMIN)
     fun migrate(
         @RequestParam("overwrite", required = false) overwrite: Boolean = false
@@ -61,7 +61,7 @@ class MigrateDockerController(
     }
 
     @ApiOperation("迁移指定旧docker仓库下的包")
-    @GetMapping("/migrate/repo")
+    @PostMapping("/migrate/repo")
     @Principal(PrincipalType.ADMIN)
     fun migrate(
         @RequestParam("projectId")
@@ -77,7 +77,7 @@ class MigrateDockerController(
     }
 
     @ApiOperation("迁移指定旧docker仓库的包版本")
-    @GetMapping("/migrate/version")
+    @PostMapping("/migrate/version")
     @Principal(PrincipalType.ADMIN)
     fun migrate(
         @RequestParam("projectId")

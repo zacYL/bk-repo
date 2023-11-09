@@ -71,7 +71,6 @@ import com.tencent.bkrepo.oci.constant.IMAGE_VERSION
 import com.tencent.bkrepo.oci.constant.LAST_TAG
 import com.tencent.bkrepo.oci.constant.MEDIA_TYPE
 import com.tencent.bkrepo.oci.constant.N
-import com.tencent.bkrepo.oci.constant.OCI_API_PREFIX
 import com.tencent.bkrepo.oci.constant.OCI_FILTER_ENDPOINT
 import com.tencent.bkrepo.oci.constant.OCI_IMAGE_MANIFEST_MEDIA_TYPE
 import com.tencent.bkrepo.oci.constant.OLD_DOCKER_VERSION
@@ -353,8 +352,9 @@ class OciRegistryRemoteRepository(
      */
     private fun createTagListUrl(property: RemoteRequestProperty): String {
         with(property) {
-            val url = UriBuilder.fromUri(url)
-                .path(OCI_API_PREFIX)
+            val baseUrl = URL(url)
+            val v2Url = URL(baseUrl, OCI_FILTER_ENDPOINT + baseUrl.path)
+            val url = UriBuilder.fromUri(v2Url.toString())
                 .path(imageName)
                 .path(TAGS_LIST_SUFFIX)
                 .build().toString()

@@ -112,6 +112,8 @@ class TaskStateMachineConfiguration(
             transition(NEVER_SCANNED, SUCCESS, SubtaskEvent.SUCCESS, subtaskActions)
             val from = arrayOf(BLOCKED, CREATED, PULLED, EXECUTING)
             transitions(from, SubScanTaskStatus.STOPPED, STOP, subtaskActions)
+            // 暂时跳过 oci多架构镜像 的扫描
+            transition(PULLED, SUCCESS, SubtaskEvent.SUCCESS, subtaskActions)
         }
     }
 

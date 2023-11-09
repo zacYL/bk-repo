@@ -39,7 +39,7 @@ open class SubScanTaskDefinition(
     /**
      * 开始扫描时间
      */
-    val startDateTime: LocalDateTime? = null,
+    var startDateTime: LocalDateTime? = null,
     /**
      * 结束扫描时间
      */

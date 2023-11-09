@@ -28,16 +28,22 @@
 package com.tencent.bkrepo.analyst.dispatcher
 
 import com.tencent.bkrepo.analysis.executor.api.ExecutorClient
+import com.tencent.bkrepo.analyst.dao.SubScanTaskDao
 import com.tencent.bkrepo.analyst.event.SubtaskStatusChangedEvent
 import com.tencent.bkrepo.analyst.pojo.SubScanTask
 import com.tencent.bkrepo.analyst.service.ScanService
 import com.tencent.bkrepo.analyst.service.ScannerService
 import com.tencent.bkrepo.analyst.service.TemporaryScanTokenService
 import com.tencent.bkrepo.analyst.statemachine.subtask.SubtaskEvent.DISPATCH_FAILED
+import com.tencent.bkrepo.analyst.statemachine.subtask.SubtaskEvent.SUCCESS
 import com.tencent.bkrepo.analyst.statemachine.subtask.context.DispatchFailedContext
+import com.tencent.bkrepo.analyst.statemachine.subtask.context.FinishSubtaskContext
 import com.tencent.bkrepo.analyst.utils.SubtaskConverter
 import com.tencent.bkrepo.common.analysis.pojo.scanner.SubScanTaskStatus
 import com.tencent.bkrepo.common.analysis.pojo.scanner.SubScanTaskStatus.PULLED
+import com.tencent.bkrepo.common.analysis.pojo.scanner.standard.StandardScanExecutorResult
+import com.tencent.bkrepo.common.api.exception.NotFoundException
+import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.statemachine.Event
 import com.tencent.bkrepo.statemachine.StateMachine
@@ -45,9 +51,11 @@ import org.slf4j.LoggerFactory
 import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Async
 import org.springframework.scheduling.annotation.Scheduled
+import java.time.LocalDateTime
 
 open class SubtaskPoller(
     private val dispatcher: SubtaskDispatcher,
+    private val subScanTaskDao: SubScanTaskDao,
     private val scanService: ScanService,
     private val scannerService: ScannerService,
     private val temporaryScanTokenService: TemporaryScanTokenService,
@@ -61,6 +69,22 @@ open class SubtaskPoller(
         for (i in 0 until dispatcher.availableCount()) {
             subtask = scanService.pull(dispatcher.name()) ?: break
             logger.info("pulled subtask:${subtask.toJsonString()}")
+
+            if (subtask.repoType == "DOCKER" && subtask.fullPath.endsWith("list.manifest.json")) {
+                val tSubtask = subScanTaskDao.findById(subtask.taskId)?.let {
+                    it.startDateTime = LocalDateTime.now()
+                    it
+                } ?: throw NotFoundException(CommonMessageCode.RESOURCE_NOT_FOUND, subtask.taskId)
+                val scanExecutorResult = StandardScanExecutorResult(scanStatus = SubScanTaskStatus.SUCCESS.name)
+                val finishSubtaskCtx = FinishSubtaskContext(
+                    subtask = tSubtask,
+                    targetState = SubScanTaskStatus.SUCCESS.name,
+                    scanExecutorResult = scanExecutorResult
+                )
+                subtaskStateMachine.sendEvent(PULLED.name, Event(SUCCESS.name, finishSubtaskCtx))
+                continue
+            }
+
             subtask.token = temporaryScanTokenService.createToken(subtask.taskId)
             if (!dispatcher.dispatch(subtask)) {
                 // 分发失败，放回队列中
@@ -77,6 +101,9 @@ open class SubtaskPoller(
     @EventListener(SubtaskStatusChangedEvent::class)
     open fun clean(event: SubtaskStatusChangedEvent) {
         if (SubScanTaskStatus.finishedStatus(event.subtask.status) && event.dispatcher == dispatcher.name()) {
+            if (event.subtask.repoType == "DOCKER" && event.subtask.fullPath.endsWith("list.manifest.json")) {
+                return
+            }
             val scanner = scannerService.get(event.subtask.scanner)
             val result = dispatcher.clean(SubtaskConverter.convert(event.subtask, scanner), event.subtask.status)
             val subtaskId = event.subtask.latestSubScanTaskId

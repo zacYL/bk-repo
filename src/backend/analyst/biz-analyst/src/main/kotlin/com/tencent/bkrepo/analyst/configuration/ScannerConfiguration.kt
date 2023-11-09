@@ -82,6 +82,7 @@ class ScannerConfiguration {
     @Bean
     fun poller(
         dispatcher: SubtaskDispatcher,
+        subScanTaskDao: SubScanTaskDao,
         scanService: ScanService,
         scannerService: ScannerService,
         temporaryScanTokenService: TemporaryScanTokenService,
@@ -90,7 +91,13 @@ class ScannerConfiguration {
         executorClient: ExecutorClient
     ): SubtaskPoller {
         return SubtaskPoller(
-            dispatcher, scanService, scannerService, temporaryScanTokenService, subtaskStateMachine, executorClient
+            dispatcher,
+            subScanTaskDao,
+            scanService,
+            scannerService,
+            temporaryScanTokenService,
+            subtaskStateMachine,
+            executorClient
         )
     }
 

@@ -57,9 +57,9 @@ object DockerUtils {
      */
     fun DockerClient.pullImage(tag: String) {
         val images = listImagesCmd().exec()
-        val exists = images.any { image ->
-            image.repoTags.any { it == tag }
-        }
+        val exists = images?.any { image ->
+            image?.repoTags?.any { it == tag } ?: false
+        } ?: false
         if (exists) {
             return
         }

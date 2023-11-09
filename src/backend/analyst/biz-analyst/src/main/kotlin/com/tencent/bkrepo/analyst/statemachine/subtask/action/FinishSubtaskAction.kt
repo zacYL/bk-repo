@@ -136,7 +136,7 @@ class FinishSubtaskAction(
                 subtask.parentScanTaskId,
                 scanner,
                 overview,
-                subtask.startDateTime,
+                subtask.startDateTime!!,
                 now
             )
 

@@ -59,6 +59,7 @@ import com.tencent.bkrepo.oci.constant.BLOB_PATH_REFRESHED_KEY
 import com.tencent.bkrepo.oci.constant.BLOB_PATH_VERSION_KEY
 import com.tencent.bkrepo.oci.constant.BLOB_PATH_VERSION_VALUE
 import com.tencent.bkrepo.oci.constant.DESCRIPTION
+import com.tencent.bkrepo.oci.constant.DOCKER_DISTRIBUTION_MANIFEST_LIST_V2
 import com.tencent.bkrepo.oci.constant.DOCKER_MANIFEST_DIGEST
 import com.tencent.bkrepo.oci.constant.DOCKER_REPO_NAME
 import com.tencent.bkrepo.oci.constant.DOWNLOADS
@@ -66,6 +67,7 @@ import com.tencent.bkrepo.oci.constant.LAST_MODIFIED_BY
 import com.tencent.bkrepo.oci.constant.LAST_MODIFIED_DATE
 import com.tencent.bkrepo.oci.constant.MANIFEST_DIGEST
 import com.tencent.bkrepo.oci.constant.MD5
+import com.tencent.bkrepo.oci.constant.MEDIA_TYPE
 import com.tencent.bkrepo.oci.constant.NODE_FULL_PATH
 import com.tencent.bkrepo.oci.constant.OCI_IMAGE_MANIFEST_MEDIA_TYPE
 import com.tencent.bkrepo.oci.constant.OCI_MANIFEST_LIST
@@ -319,7 +321,10 @@ class OciOperationServiceImpl(
     ): Pair<List<String>, List<History>> {
         val os = mutableListOf<String>()
         var history = listOf<History>()
-        if (nodeDetail.name == OCI_MANIFEST_LIST) {
+        val isFatManifest = nodeDetail.name == OCI_MANIFEST_LIST ||
+                nodeDetail.nodeMetadata.find { it.key == MEDIA_TYPE }
+                    ?.value.toString() == DOCKER_DISTRIBUTION_MANIFEST_LIST_V2
+        if (isFatManifest) {
             // manifestList
             loadManifestList(
                 nodeDetail.sha256!!,
@@ -484,7 +489,7 @@ class OciOperationServiceImpl(
         val mediaType: String
         var digestList = listOf<String>()
         // 需要区分 manifest.json 和 list.manifest.json
-        if (nodeDetail.name == OCI_MANIFEST_LIST) {
+        if (ociArtifactInfo.isFat) {
             val manifestList = loadManifestList(nodeDetail.sha256!!, nodeDetail.size, storageCredentials)
             mediaType = manifestList!!.mediaType
             val metadata = mutableMapOf<String, Any>(

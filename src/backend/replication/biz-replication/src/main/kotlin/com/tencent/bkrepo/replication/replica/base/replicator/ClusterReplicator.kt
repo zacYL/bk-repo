@@ -42,6 +42,7 @@ import com.tencent.bkrepo.replication.constant.RETRY_COUNT
 import com.tencent.bkrepo.replication.manager.LocalDataManager
 import com.tencent.bkrepo.replication.replica.base.context.ReplicaContext
 import com.tencent.bkrepo.replication.replica.base.impl.internal.PackageNodeMappings
+import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
@@ -172,7 +173,8 @@ class ClusterReplicator(
                 packageMetadata = packageMetadata,
                 extension = packageVersion.extension,
                 overwrite = true,
-                createdBy = packageVersion.createdBy
+                createdBy = packageVersion.createdBy,
+                operator = SYSTEM_USER
             )
             artifactReplicaClient!!.replicaPackageVersionCreatedRequest(request)
         }
@@ -183,17 +185,23 @@ class ClusterReplicator(
         with(context) {
             retry(times = RETRY_COUNT, delayInSeconds = DELAY_IN_SECONDS) { retry ->
                 return buildNodeCreateRequest(this, node)?.let {
-                    val artifactInputStream = localDataManager.getBlobData(it.sha256!!, it.size!!, localRepo)
-                    val rateLimitInputStream = artifactInputStream.rateLimit(localDataManager.getRateLimit().toBytes())
-                    // 1. 同步文件数据
-                    logger.info("The file [${node.fullPath}] with sha256 [${node.sha256}] " +
-                        "will be pushed to the remote server ${cluster.name},try the $retry time!")
-                    pushBlob(
-                        inputStream = rateLimitInputStream,
-                        size = it.size!!,
-                        sha256 = it.sha256.orEmpty(),
-                        storageKey = remoteRepo?.storageCredentials?.key
-                    )
+                    if (blobReplicaClient!!.check(it.sha256!!, remoteRepo?.storageCredentials?.key).data != true) {
+                        logger.info("blob not exist in remote server, sha256:${it.sha256}")
+                        val artifactInputStream = localDataManager.getBlobData(it.sha256!!, it.size!!, localRepo)
+                        val rateLimitInputStream = artifactInputStream.rateLimit(
+                            localDataManager.getRateLimit().toBytes()
+                        )
+                        // 1. 同步文件数据
+                        logger.info("The file [${node.fullPath}] with sha256 [${node.sha256}] " +
+                            "will be pushed to the remote server ${cluster.name},try the $retry time!")
+                        pushBlob(
+                            inputStream = rateLimitInputStream,
+                            size = it.size!!,
+                            sha256 = it.sha256.orEmpty(),
+                            storageKey = remoteRepo?.storageCredentials?.key
+                        )
+                    }
+                    logger.info("The node [${node.fullPath}] will be pushed to the remote server!")
                     // 2. 同步节点信息
                     artifactReplicaClient!!.replicaNodeCreateRequest(it)
                     true
@@ -233,7 +241,7 @@ class ClusterReplicator(
                 sha256 = node.sha256!!,
                 md5 = node.md5!!,
                 nodeMetadata = metadata,
-                operator = node.createdBy,
+                operator = SYSTEM_USER,
                 createdBy = node.createdBy,
                 createdDate = LocalDateTime.parse(node.createdDate, DateTimeFormatter.ISO_DATE_TIME),
                 lastModifiedBy = node.lastModifiedBy,

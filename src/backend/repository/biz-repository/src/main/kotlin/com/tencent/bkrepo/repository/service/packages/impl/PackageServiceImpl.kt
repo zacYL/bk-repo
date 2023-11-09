@@ -255,7 +255,7 @@ class PackageServiceImpl(
                     manifestPath = request.manifestPath
                     artifactPath = request.artifactPath
                     stageTag = request.stageTag.orEmpty()
-                    metadata = MetadataUtils.compatibleFromAndCheck(request.metadata, packageMetadata, createdBy)
+                    metadata = MetadataUtils.compatibleFromAndCheck(request.metadata, packageMetadata, operator)
                         .map { TMetadata(key = it.key, value = it.value, system = true, display = it.display) }
                     tags = request.tags?.filter { it.isNotBlank() }.orEmpty()
                     extension = request.extension.orEmpty()
@@ -278,7 +278,7 @@ class PackageServiceImpl(
                     manifestPath = manifestPath,
                     artifactPath = artifactPath,
                     stageTag = stageTag.orEmpty(),
-                    metadata = MetadataUtils.compatibleFromAndCheck(metadata, packageMetadata, createdBy)
+                    metadata = MetadataUtils.compatibleFromAndCheck(metadata, packageMetadata, operator)
                         .map { TMetadata(key = it.key, value = it.value, system = true, display = it.display) },
                     tags = request.tags?.filter { it.isNotBlank() }.orEmpty(),
                     extension = request.extension.orEmpty()

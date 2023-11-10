@@ -12,7 +12,7 @@ spring:
           destination: artifactEvent
           binder: pulsar
 server:
-  port: __BK_REPO_DOCKER_PORT__
+  port: __BK_REPO_OCI_PORT__
 logging:
   #level:
     #com.tencent.bkrepo.docker: DEBUG

@@ -4,7 +4,7 @@ import com.tencent.bkrepo.auth.constant.AuthConstant
 import com.tencent.bkrepo.auth.pojo.MigrateTokenVO
 import com.tencent.bkrepo.auth.pojo.UserLoginVo
 import com.tencent.bkrepo.auth.pojo.user.UserData
-import com.tencent.bkrepo.auth.pojo.user.UserInfo
+import com.tencent.bkrepo.auth.pojo.user.CanwayUserInfo
 import com.tencent.bkrepo.auth.pojo.user.UserPasswordUpdateVO
 import com.tencent.bkrepo.auth.pojo.user.UserRequest
 import io.swagger.annotations.Api
@@ -42,7 +42,7 @@ interface CanwayUsermangerClient {
         @Parameter(name = "用户ID", required = true)
         @RequestParam(value = "userIds")
         userIds: List<String>
-    ): Response<List<UserInfo>>
+    ): Response<List<CanwayUserInfo>>
 
     @Operation(summary = "迁移token")
     @PostMapping("/token/migrateToken")

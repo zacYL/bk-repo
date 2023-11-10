@@ -1,6 +1,6 @@
 package com.tencent.bkrepo.auth.pojo.user
 
-data class UserInfo(
+data class CanwayUserInfo(
     val userId: String?,
     var displayName: String?,
     val email: String?,

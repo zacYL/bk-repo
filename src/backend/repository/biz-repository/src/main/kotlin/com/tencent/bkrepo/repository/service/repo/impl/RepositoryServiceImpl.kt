@@ -682,6 +682,7 @@ class RepositoryServiceImpl(
         return repositoryDao.find(query, TRepository::class.java)
     }
 
+    @Deprecated("plan to be reconstructed")
     override fun testRemoteUrl(remoteUrlRequest: RemoteUrlRequest): ConnectionStatusInfo {
         val remoteRepository = ArtifactContextHolder.getRepository(RepositoryCategory.REMOTE) as RemoteRepository
         val remoteConfiguration = RemoteConfiguration(
@@ -714,6 +715,11 @@ class RepositoryServiceImpl(
                 }
             }
             val response = remoteRepository.getResponse(remoteConfiguration)
+            val isMavenDirectory = repoType == RepositoryType.MAVEN.name &&
+                    remoteUrlRequest.url.contains("maven.aliyun.com") &&
+                    response.code() == HttpStatus.NOT_FOUND.value &&
+                    response.body()?.string()?.contains("暂不支持通过仓库URL浏览仓库内容") ?: false
+            if (isMavenDirectory) return ConnectionStatusInfo(true, HttpStatus.OK.reasonPhrase)
             val reason = HttpStatus.valueOf(response.code()).reasonPhrase
             ConnectionStatusInfo(response.code() < 400, "${response.code()} $reason")
         } catch (exception: SocketTimeoutException) {

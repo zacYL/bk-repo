@@ -1,7 +1,7 @@
 import { mapState, mapActions } from 'vuex'
 export default {
     computed: {
-        ...mapState(['userInfo', 'domain']),
+        ...mapState(['userInfo', 'domain', 'dependAccessTokenValue']),
         projectId () {
             return this.$route.params.projectId || ''
         },
@@ -50,14 +50,18 @@ export default {
         noShowOption () {
             return this.storeType === 'remote' || this.storeType === 'virtual' || this.whetherSoftware
         },
+        accessToken () {
+            return this.dependAccessTokenValue || '<PERSONAL_ACCESS_TOKEN>'
+        },
         dockerGuide () {
             return [
                 {
                     title: this.$t('setCredentials'),
+                    optionType: 'setCredentials',
                     main: [
                         {
                             subTitle: this.$t('dockerGuideSubTitle'),
-                            codeList: [`docker login -u ${this.userName} -p <PERSONAL_ACCESS_TOKEN> ${this.domain.docker}`]
+                            codeList: [`docker login -u ${this.userName} -p ${this.accessToken} ${this.domain.docker}`]
                         }
                     ]
                 },
@@ -65,6 +69,7 @@ export default {
                     ? undefined
                     : {
                         title: this.$t('push'),
+                        optionType: 'push',
                         main: [
                             {
                                 subTitle: this.$t('dockerPushGuideSubTitle1'),
@@ -78,6 +83,7 @@ export default {
                     },
                 {
                     title: this.$t('pull'),
+                    optionType: 'pull',
                     main: [
                         {
                             subTitle: this.$t('dockerDownloadGuideSubTitle'),
@@ -105,6 +111,7 @@ export default {
             return [
                 {
                     title: this.$t('setCredentials'),
+                    optionType: 'setCredentials',
                     main: [
                         {
                             subTitle: this.$t('npmCreditGuideSubTitle6')
@@ -155,6 +162,7 @@ export default {
                     ? undefined
                     : {
                         title: this.$t('push'),
+                        optionType: 'push',
                         main: [
                             {
                                 subTitle: this.$t('pushGuideSubTitle'),
@@ -164,6 +172,7 @@ export default {
                     },
                 {
                     title: this.$t('pull'),
+                    optionType: 'pull',
                     main: [
                         {
                             subTitle: this.$t('npmDownloadGuideSubTitle1'),
@@ -201,25 +210,37 @@ export default {
             return [
                 {
                     title: this.$t('setCredentials'),
+                    optionType: 'setCredentials',
                     main: [
                         {
                             subTitle: this.$t('mavenCreditGuideSubTitle1'),
+                            constructType: 'Apache Maven',
                             codeList: [
                                 '<servers>',
                                 '       <server>',
                                 `               <id>${this.projectId}-${this.repoName}</id>`,
                                 `               <username>${this.userName}</username>`,
-                                '               <password><PERSONAL_ACCESS_TOKEN></password>',
+                                `               <password>${this.accessToken}</password>`,
                                 '       </server>',
                                 '</servers>'
                             ]
                         },
                         {
                             subTitle: this.$t('mavenCreditGuideSubTitle2'),
+                            constructType: 'Gradle Groovy DSL',
                             codeList: [
                                 `cpackUrl=${this.repoUrl}`,
                                 `cpackUsername=${this.userName}`,
-                                'cpackPassword=<PERSONAL_ACCESS_TOKEN>'
+                                `cpackPassword=${this.accessToken}`
+                            ]
+                        },
+                        {
+                            subTitle: this.$t('mavenCreditGuideSubTitle2'),
+                            constructType: 'Gradle Kotlin DSL',
+                            codeList: [
+                                `cpackUrl=${this.repoUrl}`,
+                                `cpackUsername=${this.userName}`,
+                                `cpackPassword=${this.accessToken}`
                             ]
                         }
                     ]
@@ -253,9 +274,11 @@ export default {
                     ? undefined
                     : {
                         title: this.$t('push'),
+                        optionType: 'push',
                         main: [
                             {
                                 subTitle: this.$t('mavenPushGuideSubTitle1'),
+                                constructType: 'Apache Maven',
                                 codeList: [
                                     '<distributionManagement>',
                                     '       <repository>',
@@ -269,12 +292,14 @@ export default {
                             },
                             {
                                 subTitle: this.$t('mavenPushGuideSubTitle2'),
+                                constructType: 'Apache Maven',
                                 codeList: [
                                     'mvn clean deploy'
                                 ]
                             },
                             {
                                 subTitle: this.$t('mavenPushGuideSubTitle3'),
+                                constructType: 'Gradle Groovy DSL',
                                 codeList: [
                                     'plugins {',
                                     '    id "maven-publish"',
@@ -283,6 +308,7 @@ export default {
                                     '    publications {',
                                     '        maven(MavenPublication) {',
                                     '            groupId = "com.company.group"',
+                                    '            artifactId = "your artifact name"',
                                     '            version = "1.0"',
                                     '            from components.java',
                                     '        }',
@@ -301,12 +327,14 @@ export default {
                             },
                             {
                                 subTitle: this.$t('mavenPushGuideSubTitle4'),
+                                constructType: 'Gradle Groovy DSL',
                                 codeList: [
                                     'gradle publish'
                                 ]
                             },
                             {
                                 subTitle: this.$t('mavenPushGuideSubTitle5'),
+                                constructType: 'Gradle Kotlin DSL',
                                 codeList: [
                                     'plugins {',
                                     '    `maven-publish`',
@@ -315,6 +343,7 @@ export default {
                                     '    publications {',
                                     '        create<MavenPublication>("maven") {',
                                     '            groupId = "com.company.group"',
+                                    '            artifactId = "your artifact name"',
                                     '            version = "1.0"',
                                     '            from(components["java"])',
                                     '        }',
@@ -336,6 +365,7 @@ export default {
                             },
                             {
                                 subTitle: this.$t('mavenPushGuideSubTitle6'),
+                                constructType: 'Gradle Kotlin DSL',
                                 codeList: [
                                     'gradle publish'
                                 ]
@@ -344,9 +374,11 @@ export default {
                     },
                 {
                     title: this.$t('pull'),
+                    optionType: 'pull',
                     main: [
                         {
                             subTitle: this.$t('mavenPullGuideSubTitle1'),
+                            constructType: 'Apache Maven',
                             codeList: [
                                 '<profiles>',
                                 '       <profile>',
@@ -373,12 +405,14 @@ export default {
                         },
                         {
                             subTitle: this.$t('mavenPullGuideSubTitle2'),
+                            constructType: 'Apache Maven',
                             codeList: [
                                 'mvn clean package'
                             ]
                         },
                         {
                             subTitle: this.$t('mavenPullGuideSubTitle3'),
+                            constructType: 'Gradle Groovy DSL',
                             codeList: [
                                 'repositories {',
                                 '    maven {',
@@ -393,12 +427,14 @@ export default {
                         },
                         {
                             subTitle: this.$t('mavenPullGuideSubTitle4'),
+                            constructType: 'Gradle Groovy DSL',
                             codeList: [
                                 'gradle dependencies'
                             ]
                         },
                         {
                             subTitle: this.$t('mavenPullGuideSubTitle5'),
+                            constructType: 'Gradle Kotlin DSL',
                             codeList: [
                                 'repositories {',
                                 '    maven {',
@@ -416,6 +452,7 @@ export default {
                         },
                         {
                             subTitle: this.$t('mavenPullGuideSubTitle6'),
+                            constructType: 'Gradle Kotlin DSL',
                             codeList: [
                                 'gradle dependencies'
                             ]
@@ -460,11 +497,12 @@ export default {
             return [
                 {
                     title: this.$t('setCredentials'),
+                    optionType: 'setCredentials',
                     main: [
                         {
                             subTitle: this.$t('helmCreditGuideSubTitle1'),
                             codeList: [
-                                `helm repo add --username ${this.userName} --password <PERSONAL_ACCESS_TOKEN> ${this.repoName} "${this.repoUrl}"`
+                                `helm repo add --username ${this.userName} --password ${this.accessToken} ${this.repoName} "${this.repoUrl}"`
                             ]
                         },
                         {
@@ -479,23 +517,25 @@ export default {
                     ? undefined
                     : {
                         title: this.$t('push'),
+                        optionType: 'push',
                         main: [
                             {
                                 subTitle: this.$t('helmPushGuideSubTitle1'),
                                 codeList: [
-                                    `curl -F "chart=@<FILE_NAME>" -u ${this.userName}:<PERSONAL_ACCESS_TOKEN> ${location.origin}/${this.repoType}/api/${this.projectId}/${this.repoName}/charts`
+                                    `curl -F "chart=@<FILE_NAME>" -u ${this.userName}:${this.accessToken} ${location.origin}/${this.repoType}/api/${this.projectId}/${this.repoName}/charts`
                                 ]
                             },
                             {
                                 subTitle: this.$t('helmPushGuideSubTitle2'),
                                 codeList: [
-                                    `curl -F "prov=@<PROV_FILE_NAME>" -u ${this.userName}:<PERSONAL_ACCESS_TOKEN> ${location.origin}/${this.repoType}/api/${this.projectId}/${this.repoName}/charts`
+                                    `curl -F "prov=@<PROV_FILE_NAME>" -u ${this.userName}:${this.accessToken} ${location.origin}/${this.repoType}/api/${this.projectId}/${this.repoName}/charts`
                                 ]
                             }
                         ]
                     },
                 {
                     title: this.$t('pull'),
+                    optionType: 'pull',
                     main: [
                         {
                             subTitle: this.$t('helmPullGuideSubTitle'),
@@ -537,6 +577,7 @@ export default {
             return [
                 {
                     title: this.$t('setCredentials'),
+                    optionType: 'setCredentials',
                     main: [
                         {
                             subTitle: this.$t('rpmCreditGuideSubTitle', [this.repoName]),
@@ -545,7 +586,7 @@ export default {
                                 `name=${this.repoName}`,
                                 `baseurl=${this.repoUrl}`,
                                 `username=${this.userName}`,
-                                'password=<PERSONAL_ACCESS_TOKEN>',
+                                `password=${this.accessToken}`,
                                 'enabled=1',
                                 'gpgcheck=0'
                             ]
@@ -556,22 +597,24 @@ export default {
                     ? undefined
                     : {
                         title: this.$t('push'),
+                        optionType: 'push',
                         main: [
                             {
                                 subTitle: this.$t('pushGuideSubTitle'),
                                 codeList: [
-                                    `curl -u ${this.userName}:<PERSONAL_ACCESS_TOKEN> -X PUT ${this.repoUrl}/ -T <RPM_FILE_NAME>`
+                                    `curl -u ${this.userName}:${this.accessToken} -X PUT ${this.repoUrl}/ -T <RPM_FILE_NAME>`
                                 ]
                             }
                         ]
                     },
                 {
                     title: this.$t('pull'),
+                    optionType: 'pull',
                     main: [
                         {
                             subTitle: this.$t('rpmPullGuideSunTitle1'),
                             codeList: [
-                                `rpm -i ${location.protocol}//${this.userName}:<PERSONAL_ACCESS_TOKEN>@${location.host}/${this.repoType}/${this.projectId}/${this.repoName}/<RPM_FILE_NAME>`
+                                `rpm -i ${location.protocol}//${this.userName}:${this.accessToken}@${location.host}/${this.repoType}/${this.projectId}/${this.repoName}/<RPM_FILE_NAME>`
                             ]
                         },
                         {
@@ -611,6 +654,7 @@ export default {
             return [
                 {
                     title: this.$t('setCredentials'),
+                    optionType: 'setCredentials',
                     main: [
                         {
                             subTitle: this.$t('pypiCreditGuideSubTitle1')
@@ -623,7 +667,7 @@ export default {
                                 `[${this.repoName}]`,
                                 `repository: ${this.repoUrl}`,
                                 `username: ${this.userName}`,
-                                'password: <PERSONAL_ACCESS_TOKEN>'
+                                `password: ${this.accessToken}`
                             ]
                         },
                         {
@@ -632,7 +676,7 @@ export default {
                         {
                             subTitle: this.$t('pypiCreditGuideSubTitle6'),
                             codeList: [
-                                `pip config set global.index-url ${location.protocol}//${this.userName}:<PERSONAL_ACCESS_TOKEN>@${location.host}/${this.repoType}/${this.projectId}/${this.repoName}/simple`
+                                `pip config set global.index-url ${location.protocol}//${this.userName}:${this.accessToken}@${location.host}/${this.repoType}/${this.projectId}/${this.repoName}/simple`
                             ]
                         },
                         {
@@ -647,6 +691,7 @@ export default {
                     ? undefined
                     : {
                         title: this.$t('push'),
+                        optionType: 'push',
                         main: [
                             {
                                 subTitle: this.$t('pypiPushGuideSubTitle'),
@@ -658,6 +703,7 @@ export default {
                     },
                 {
                     title: this.$t('pull'),
+                    optionType: 'pull',
                     main: [
                         {
                             subTitle: this.$t('cmdPullGuideSubTitle'),
@@ -687,6 +733,7 @@ export default {
             return [
                 {
                     title: this.$t('setCredentials'),
+                    optionType: 'setCredentials',
                     main: [
                         {
                             subTitle: this.$t('composerCreditGuideSubTitle1'),
@@ -701,7 +748,7 @@ export default {
                                 '       "http-basic": {',
                                 `               "${location.host}": {`,
                                 `                       "username": "${this.userName}",`,
-                                '                       "password": "<PERSONAL_ACCESS_TOKEN>"',
+                                `                       "password": "${this.accessToken}"`,
                                 '               }',
                                 '       }',
                                 '}'
@@ -713,17 +760,19 @@ export default {
                     ? undefined
                     : {
                         title: this.$t('push'),
+                        optionType: 'push',
                         main: [
                             {
                                 subTitle: this.$t('composerPushGuideSubTitle'),
                                 codeList: [
-                                    `curl -X PUT -u ${this.userName}:<PERSONAL_ACCESS_TOKEN> "${this.repoUrl}/" -T <PACKAGE_FILE>`
+                                    `curl -X PUT -u ${this.userName}:${this.accessToken} "${this.repoUrl}/" -T <PACKAGE_FILE>`
                                 ]
                             }
                         ]
                     },
                 {
                     title: this.$t('pull'),
+                    optionType: 'pull',
                     main: [
                         {
                             subTitle: this.$t('cmdPullGuideSubTitle'),
@@ -759,10 +808,11 @@ export default {
             return [
                 {
                     title: this.$t('setCredentials'),
+                    optionType: 'setCredentials',
                     main: [
                         {
                             subTitle: this.$t('nugetCreditGuideSubTitle'),
-                            codeList: [`nuget sources Add -Username "${this.userName}" -Password "<PERSONAL_ACCESS_TOKEN>" -Name "${this.repoName}" -Source "${location.origin}/${this.repoType}/${this.projectId}/${this.repoName}/v3/index.json"`]
+                            codeList: [`nuget sources Add -Username "${this.userName}" -Password "${this.accessToken}" -Name "${this.repoName}" -Source "${location.origin}/${this.repoType}/${this.projectId}/${this.repoName}/v3/index.json"`]
                         }
                     ]
                 },
@@ -770,6 +820,7 @@ export default {
                     ? undefined
                     : {
                         title: this.$t('push'),
+                        optionType: 'push',
                         main: [
                             {
                                 subTitle: this.$t('nugetPushGuideSubTitle'),
@@ -781,6 +832,7 @@ export default {
                     },
                 {
                     title: this.$t('pull'),
+                    optionType: 'pull',
                     main: [
                         {
                             subTitle: this.$t('nugetPullGuideSubTitle'),
@@ -794,6 +846,7 @@ export default {
                     ? undefined
                     : {
                         title: this.$t('delete'),
+                        optionType: 'delete',
                         main: [
                             {
                                 subTitle: this.$t('nugetDeleteGuideSubTitle'),

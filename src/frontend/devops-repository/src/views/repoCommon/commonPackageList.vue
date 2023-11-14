@@ -8,11 +8,11 @@
                 </div>
             </div>
             <div class="flex-end-center flex-1">
-                <bk-button v-if="showUploadRepo" theme="primary" @click="handleClickUpload">{{$t('uploadArtifact')}}</bk-button>
-                <bk-button class="ml10" @click="handlerPaginationChange">
+                <bk-button @click="handlerPaginationChange">
                     {{ $t('refresh') }}
                 </bk-button>
-                <bk-button class="ml20 flex-align-center" text theme="primary" @click="showGuide = true">
+                <bk-button v-if="showUploadRepo" class="ml10" @click="handleClickUpload">{{$t('uploadArtifact')}}</bk-button>
+                <bk-button class="ml20 flex-align-center" @click="showGuide = true">
                     <span class="flex-align-center">
                         <Icon class="mr5" name="hand-guide" size="16" />
                         {{$t('guide')}}

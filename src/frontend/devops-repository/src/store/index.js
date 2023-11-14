@@ -55,7 +55,8 @@ const storeObject = {
             npm: ''
         },
         clusterList: [],
-        artifactTypeList: []
+        artifactTypeList: [],
+        dependAccessTokenValue: '' // 依赖源仓库的使用指引中用户输入的访问令牌的值
     },
     getters: {
         masterNode (state) {
@@ -162,6 +163,9 @@ const storeObject = {
         },
         SET_SCANNER_SUPPORT_PACKAGE_TYPE_LIST (state, data) {
             state.scannerSupportPackageType = data
+        },
+        SET_DEPEND_ACCESS_TOKEN_VALUE (state, data) {
+            state.dependAccessTokenValue = data
         }
     },
     actions

@@ -128,6 +128,7 @@
     "token": "Access Token",
     "createToken": "New Access Token",
     "tokenSubTitle": "Replace the value of <PERSONAL_ACCESS_TOKEN>, please jump to manage access",
+    "tokenDependSubTitle": "Generate your personal access token. To manage access tokens, please go to ",
     "tokenExpireTip": "Please select a date. The default is never to expire",
     "tokenIs": "Token is: ",
     "tokenCopyTip": "Please ensure that you have copied the token above as we do not store it and it will not be retrievable later.",
@@ -346,7 +347,7 @@
     "readMe": "ReadMe",
     "or": "Or",
     "emptyGuideTip": "Please refer to the following usage guidelines to use the repository",
-    "emptyGuide": "No artifact",
+    "emptyGuide": "There are currently no artifacts in this repository. Please follow the guidelines to push artifacts.",
     "quickSet": "Quick setup",
     "configureProxy": "Configure proxy",
     "shortOr": "or",
@@ -595,7 +596,7 @@
     "helmCreditGuideSubTitle2":"2. Update local repository information",
     "helmPushGuideSubTitle1":"Push Chart using curl command",
     "helmPushGuideSubTitle2":"Push Chart Provenance using curl command",
-    "helmPullGuideSubTitle":"3. Pull",
+    "helmPullGuideSubTitle":"Please execute the following command on the command line to pull:",
     "helmInstallGuideSubTitle1":"1. Manual configuration",
     "helmInstallGuideSubTitle2":"2. Update the local repository information",
     "rpmCreditGuideSubTitle":"Add the following configuration to the /etc/yum.repos.d/{0}.repo file",
@@ -997,5 +998,7 @@
     "deleteProjectErrorInfo":"Project name does not match",
     "noProjectInfo":"You are not involved in any projects, please contact the administrator to associate projects for you",
     "noGenericDataUploadInfo":"You do not have file upload permissions to any repository and cannot {option} files.",
-    "moveOrCopy":"move or copy"
+    "moveOrCopy":"move or copy",
+    "clickInfo":"Click",
+    "accessTokenPlaceholder":"Please enter access token to generate guides"
 }

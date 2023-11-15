@@ -13,7 +13,6 @@ interface NugetClientService {
      */
     fun getServiceDocument(artifactInfo: NugetArtifactInfo)
 
-
     /**
      * push nuget package
      */

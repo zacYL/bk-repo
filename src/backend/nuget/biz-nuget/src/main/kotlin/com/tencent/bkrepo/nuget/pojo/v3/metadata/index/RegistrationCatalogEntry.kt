@@ -3,6 +3,7 @@ package com.tencent.bkrepo.nuget.pojo.v3.metadata.index
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.tencent.bkrepo.nuget.constant.ID
 import com.tencent.bkrepo.nuget.constant.PACKAGE_DETAILS
 import java.net.URI
 
@@ -20,7 +21,7 @@ data class RegistrationCatalogEntry(
     val deprecation: Deprecation? = null,
     val description: String? = null,
     val iconUrl: String? = null,
-    @JsonProperty("id")
+    @JsonProperty(ID)
     val packageId: String,
     val licenseUrl: String? = null,
     val licenseExpression: String? = null,

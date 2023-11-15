@@ -33,10 +33,16 @@ package com.tencent.bkrepo.nuget.controller
 
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
-import com.tencent.bkrepo.common.api.constant.MediaTypes
+import com.tencent.bkrepo.common.api.constant.MediaTypes.APPLICATION_JSON
+import com.tencent.bkrepo.common.api.constant.MediaTypes.APPLICATION_XML
 import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.nuget.artifact.NugetArtifactInfo
+import com.tencent.bkrepo.nuget.artifact.NugetArtifactInfo.Companion.DELETE_V2
+import com.tencent.bkrepo.nuget.artifact.NugetArtifactInfo.Companion.DOWNLOAD_V2
+import com.tencent.bkrepo.nuget.artifact.NugetArtifactInfo.Companion.NUGET_ROOT_URI
+import com.tencent.bkrepo.nuget.artifact.NugetArtifactInfo.Companion.PUBLISH_V2
+import com.tencent.bkrepo.nuget.artifact.NugetArtifactInfo.Companion.SEARCH_V2
 import com.tencent.bkrepo.nuget.model.v2.search.NuGetSearchRequest
 import com.tencent.bkrepo.nuget.pojo.artifact.NugetDeleteArtifactInfo
 import com.tencent.bkrepo.nuget.pojo.artifact.NugetDownloadArtifactInfo
@@ -50,13 +56,12 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @Suppress("MVCPathVariableInspection")
-@RequestMapping("/{projectId}/{repoName}")
+@RequestMapping(NUGET_ROOT_URI)
 @RestController
 class NugetClientController(
     private val nugetClientService: NugetClientService
 ) {
-    @GetMapping(produces = [MediaTypes.APPLICATION_JSON])
-    @Permission(ResourceType.REPO, PermissionAction.READ)
+    @GetMapping(produces = [APPLICATION_JSON])
     fun getServiceDocument(
         @ArtifactPathVariable artifactInfo: NugetArtifactInfo
     ) {
@@ -68,7 +73,7 @@ class NugetClientController(
      * Content-Type multipart/form-data
      * A package with the provided ID and version already exists, status code 409
      */
-    @PutMapping("/v2/package")
+    @PutMapping(PUBLISH_V2)
     @Permission(ResourceType.REPO, PermissionAction.WRITE)
     fun publish(
         @RequestAttribute userId: String,
@@ -77,7 +82,7 @@ class NugetClientController(
         nugetClientService.publish(userId, publishInfo)
     }
 
-    @GetMapping("/Download/{id}/{version}")
+    @GetMapping(DOWNLOAD_V2)
     @Permission(ResourceType.REPO, PermissionAction.READ)
     fun download(
         @RequestAttribute userId: String,
@@ -86,7 +91,7 @@ class NugetClientController(
         nugetClientService.download(userId, artifactInfo)
     }
 
-    @GetMapping("/FindPackagesById()", produces = ["application/xml"])
+    @GetMapping(SEARCH_V2, produces = [APPLICATION_XML])
     fun findPackagesById(
         @ArtifactPathVariable artifactInfo: NugetArtifactInfo,
         searchRequest: NuGetSearchRequest
@@ -97,7 +102,7 @@ class NugetClientController(
     /**
      * nuget delete <packageID> <packageVersion> [ options ]
      */
-    @DeleteMapping("/v2/package/{id}/{version}")
+    @DeleteMapping(DELETE_V2)
     @Permission(ResourceType.REPO, PermissionAction.DELETE)
     fun delete(
         @RequestAttribute userId: String,

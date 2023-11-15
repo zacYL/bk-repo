@@ -206,6 +206,11 @@ class NugetLocalRepository(
         val request = buildNodeCreateRequest(context).copy(overwrite = true)
         storageManager.storeArtifactFile(request, context.getArtifactFile(), context.storageCredentials)
     }
+    override fun onDownloadBefore(context: ArtifactDownloadContext) {
+        super.onDownloadBefore(context)
+        val nugetArtifactInfo = context.artifactInfo as NugetDownloadArtifactInfo
+        packageVersion(nugetArtifactInfo)?.let { downloadIntercept(context, it) }
+    }
 
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         // download package manifest
@@ -224,7 +229,9 @@ class NugetLocalRepository(
         with(context.artifactInfo as NugetDownloadArtifactInfo) {
             return if (type != MANIFEST) {
                 PackageDownloadRecord(projectId, repoName, PackageKeys.ofNuget(packageName), version, context.userId)
-            } else null
+            } else {
+                null
+            }
         }
     }
 
@@ -292,6 +299,13 @@ class NugetLocalRepository(
             artifactFile.delete()
             artifactResource.contentType = MediaTypes.APPLICATION_XML
             return artifactResource
+        }
+    }
+
+    private fun packageVersion(nugetArtifactInfo: NugetDownloadArtifactInfo): PackageVersion? {
+        with(nugetArtifactInfo) {
+            val packageKey = PackageKeys.ofNuget(packageName)
+            return packageClient.findVersionByName(projectId, repoName, packageKey, version).data
         }
     }
 

@@ -1127,7 +1127,8 @@ class RepositoryServiceImpl(
             repositoryList = repositoryList.distinctBy { it.name }
             // 校验虚拟仓库配置中的仓库列表
             repositoryList.forEach {
-                val repoCategory = checkRepository(it.projectId, it.name, type).category
+                Preconditions.checkArgument(projectId == it.projectId, "projectId")
+                val repoCategory = checkRepository(projectId, it.name, type).category
                 if (it.category == null) {
                     it.category = repoCategory
                 }

@@ -34,13 +34,13 @@ package com.tencent.bkrepo.repository.search.software.packages
 import com.tencent.bkrepo.common.query.builder.MongoQueryInterpreter
 import com.tencent.bkrepo.common.query.interceptor.QueryContext
 import com.tencent.bkrepo.common.query.model.QueryModel
+import com.tencent.bkrepo.repository.search.common.RepoNameRuleInterceptor
 import com.tencent.bkrepo.repository.search.common.SelectFieldInterceptor
 import com.tencent.bkrepo.repository.search.packages.PackageQueryContext
 import com.tencent.bkrepo.repository.search.packages.VersionChecksumRuleInterceptor
 import com.tencent.bkrepo.repository.search.packages.VersionMetadataRuleInterceptor
 import com.tencent.bkrepo.repository.search.packages.VersionNameRuleInterceptor
 import com.tencent.bkrepo.repository.search.software.interceptor.SoftwareModelValidateInterceptor
-import com.tencent.bkrepo.repository.search.software.interceptor.SoftwareRepoNameRuleInterceptor
 import com.tencent.bkrepo.repository.search.software.interceptor.SoftwareRepoTypeRuleInterceptor
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.stereotype.Component
@@ -48,7 +48,7 @@ import javax.annotation.PostConstruct
 
 @Component
 class SoftwarePackageSearchInterpreter(
-    private val softwareRepoNameRuleInterceptor: SoftwareRepoNameRuleInterceptor,
+    private val repoNameRuleInterceptor: RepoNameRuleInterceptor,
     private val softwareRepoTypeRuleInterceptor: SoftwareRepoTypeRuleInterceptor,
     private val versionNameRuleInterceptor: VersionNameRuleInterceptor,
     private val versionMetadataRuleInterceptor: VersionMetadataRuleInterceptor,
@@ -60,7 +60,7 @@ class SoftwarePackageSearchInterpreter(
         addModelInterceptor(SoftwareModelValidateInterceptor())
         addModelInterceptor(SelectFieldInterceptor())
         addRuleInterceptor(softwareRepoTypeRuleInterceptor)
-        addRuleInterceptor(softwareRepoNameRuleInterceptor)
+        addRuleInterceptor(repoNameRuleInterceptor)
         addRuleInterceptor(versionNameRuleInterceptor)
         addRuleInterceptor(versionMetadataRuleInterceptor)
         addRuleInterceptor(versionChecksumRuleInterceptor)

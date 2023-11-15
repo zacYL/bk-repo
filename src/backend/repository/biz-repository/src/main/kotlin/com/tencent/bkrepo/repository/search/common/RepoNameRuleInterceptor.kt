@@ -41,6 +41,7 @@ import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.interceptor.QueryContext
 import com.tencent.bkrepo.common.query.interceptor.QueryRuleInterceptor
 import com.tencent.bkrepo.common.query.model.Rule
+import com.tencent.bkrepo.common.security.exception.AuthenticationException
 import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.common.security.util.SecurityUtils
@@ -95,15 +96,16 @@ class RepoNameRuleInterceptor(
         projectId: String,
         value: String
     ): Rule.QueryRule {
-        val repoInfo = repositoryService.getRepoInfo(projectId, value)
-        if (repoInfo?.category == RepositoryCategory.VIRTUAL) {
-            val memberList = (repoInfo.configuration as VirtualConfiguration).repositoryList.map { it.name }
+        if (!hasRepoPermission(projectId, value)) {
+            throw PermissionException()
+        }
+        val repoInfo = repositoryService.getRepoInfo(projectId, value)!!
+        if (repoInfo.category == RepositoryCategory.VIRTUAL) {
+            val memberList = (repoInfo.configuration as VirtualConfiguration).repositoryList
+                .filter { it.projectId == projectId }.map { it.name }
             if (memberList.isNotEmpty()) {
                 return handleRepoNameIn(projectId, memberList)
             }
-        }
-        if (!hasRepoPermission(projectId, value)) {
-            throw PermissionException()
         }
         return Rule.QueryRule(NodeInfo::repoName.name, value, OperationType.EQ)
     }
@@ -170,6 +172,8 @@ class RepoNameRuleInterceptor(
         } catch (ignored: PermissionException) {
             false
         } catch (ignored: RepoNotFoundException) {
+            false
+        } catch (ignored: AuthenticationException) {
             false
         }
     }

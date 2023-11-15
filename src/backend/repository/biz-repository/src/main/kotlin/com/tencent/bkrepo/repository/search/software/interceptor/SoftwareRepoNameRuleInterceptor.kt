@@ -32,8 +32,6 @@
 package com.tencent.bkrepo.repository.search.software.interceptor
 
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
-import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
-import com.tencent.bkrepo.common.artifact.pojo.configuration.virtual.VirtualConfiguration
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.interceptor.QueryContext
 import com.tencent.bkrepo.common.query.interceptor.QueryRuleInterceptor
@@ -43,7 +41,6 @@ import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.search.common.CommonQueryContext
-import com.tencent.bkrepo.repository.service.repo.RepositoryService
 import com.tencent.bkrepo.repository.util.PipelineRepoUtils
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.stereotype.Component
@@ -55,8 +52,7 @@ import org.springframework.stereotype.Component
  */
 @Component
 class SoftwareRepoNameRuleInterceptor(
-    private val permissionManager: PermissionManager,
-    private val repositoryService: RepositoryService
+    private val permissionManager: PermissionManager
 ) : QueryRuleInterceptor {
 
     override fun match(rule: Rule): Boolean {
@@ -68,7 +64,7 @@ class SoftwareRepoNameRuleInterceptor(
             require(context is CommonQueryContext)
             val queryRule = when (operation) {
                 OperationType.EQ -> {
-                    handleRepoNameEq(context.findProjectId(), value.toString())
+                    Rule.QueryRule(NodeInfo::repoName.name, value, OperationType.EQ)
                 }
                 OperationType.IN -> {
                     val listValue = value
@@ -89,12 +85,8 @@ class SoftwareRepoNameRuleInterceptor(
         projectId: String,
         value: String
     ): Rule.QueryRule {
-        val repoInfo = repositoryService.getRepoInfo(projectId, value)
-        if (repoInfo?.category == RepositoryCategory.VIRTUAL) {
-            val memberList = (repoInfo.configuration as VirtualConfiguration).repositoryList.map { it.name }
-            if (memberList.isNotEmpty()) {
-                return handleRepoNameIn(projectId, memberList)
-            }
+        if (!hasRepoPermission(projectId, value)) {
+            throw PermissionException()
         }
         return Rule.QueryRule(NodeInfo::repoName.name, value, OperationType.EQ)
     }

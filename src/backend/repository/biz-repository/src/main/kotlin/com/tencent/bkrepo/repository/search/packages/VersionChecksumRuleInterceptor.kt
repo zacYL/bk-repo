@@ -37,8 +37,8 @@ class VersionChecksumRuleInterceptor(
             if (operation != OperationType.EQ) {
                 throw ErrorCodeException(CommonMessageCode.METHOD_NOT_ALLOWED, "$field only support EQ operation type.")
             }
-            val projectId = context.findProjectId()
-            val repoType = context.findRepoType().toUpperCase()
+            val projectId = context.findProjectId(rule)
+            val repoType = context.findRepoType(rule).toUpperCase()
             val userId = SecurityUtils.getUserId()
             val repoList = if (repoType in listOf(RepositoryType.DOCKER.name, RepositoryType.OCI.name)) {
                 val dockerRepoList = repositoryService.listPermissionRepo(

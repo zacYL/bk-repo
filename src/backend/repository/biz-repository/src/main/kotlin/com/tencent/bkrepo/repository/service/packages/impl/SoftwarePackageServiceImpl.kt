@@ -150,7 +150,7 @@ class SoftwarePackageServiceImpl(
                         projectRule,
                         reposRule,
                         rules.first { (it as Rule.QueryRule).field == "repoType" }
-                    ).apply { this.addAll(projectSubRule) },
+                    ).apply { this.addAll(projectSubRule.map { (it as Rule.QueryRule).copy() }) },
                     Rule.NestedRule.RelationType.AND
                 )
                 projectsRule.add(rule)

@@ -71,7 +71,7 @@ class RepoNameRuleInterceptor(
     override fun intercept(rule: Rule, context: QueryContext): Criteria {
         with(rule as Rule.QueryRule) {
             require(context is CommonQueryContext)
-            val projectId = context.findProjectId()
+            val projectId = context.findProjectId(rule)
             val queryRule = when (operation) {
                 OperationType.EQ -> {
                     handleRepoNameEq(projectId, value.toString())

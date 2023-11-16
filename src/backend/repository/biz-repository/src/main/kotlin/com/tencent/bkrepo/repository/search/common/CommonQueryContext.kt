@@ -37,7 +37,6 @@ import com.tencent.bkrepo.common.query.builder.MongoQueryInterpreter
 import com.tencent.bkrepo.common.query.interceptor.QueryContext
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.query.model.Rule
-import com.tencent.bkrepo.repository.model.TNode
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
 import org.springframework.data.mongodb.core.query.Query
 
@@ -50,17 +49,25 @@ open class CommonQueryContext(
     private var projectId: String? = null
     var repoList: List<RepositoryInfo>? = null
 
-    fun findProjectId(): String =
-        if (projectId != null) projectId!! else find(TNode::projectId.name).apply { projectId = this }
-
-    protected fun find(field: String): String {
+    fun findProjectId(siblingRule: Rule.QueryRule? = null): String {
         val rule = queryModel.rule
-        if (rule is Rule.NestedRule && rule.relation == Rule.NestedRule.RelationType.AND) {
-            findRule(rule.rules, field)?.let {
-                return it.value.toString()
+        return if (projectId != null) projectId!! else find("projectId", siblingRule)?.also {
+            if (rule is Rule.NestedRule && rule.relation == Rule.NestedRule.RelationType.AND) projectId = it
+        } ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "projectId")
+    }
+
+    protected fun find(field: String, siblingRule: Rule.QueryRule? = null, from: Rule.NestedRule? = null): String? {
+        val rule = from ?: queryModel.rule
+        val isTargetNestedRule = rule is Rule.NestedRule && rule.relation == Rule.NestedRule.RelationType.AND &&
+                (siblingRule == null || rule.rules.any { it === siblingRule })
+        return if (isTargetNestedRule) {
+            findRule((rule as Rule.NestedRule).rules, field)?.value?.toString()
+        } else if (rule is Rule.NestedRule && rule.relation == Rule.NestedRule.RelationType.OR && siblingRule != null) {
+            rule.rules.filterIsInstance<Rule.NestedRule>().forEach {
+                find(field, siblingRule, it)?.run { return this }
             }
-        }
-        throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, field)
+            null
+        } else null
     }
 
     private fun findRule(rules: List<Rule>, field: String): Rule.QueryRule? {

@@ -1,7 +1,7 @@
 import { mapState, mapActions } from 'vuex'
 export default {
     computed: {
-        ...mapState(['userInfo', 'domain', 'dependAccessTokenValue']),
+        ...mapState(['userInfo', 'domain', 'dependAccessTokenValue', 'dependInputValue1', 'dependInputValue2']),
         projectId () {
             return this.$route.params.projectId || ''
         },
@@ -518,17 +518,31 @@ export default {
                     : {
                         title: this.$t('push'),
                         optionType: 'push',
+                        inputBoxList: [
+                            {
+                                key: 'dependInputValue1', // vux中存储的变量名
+                                label: this.$t('fileName'), // 输入框左侧label文案
+                                placeholder: this.$t('fileNamePlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                            }
+                        ],
                         main: [
+                            {
+                                subTitle: this.$t('helmPushGuideSubTitle3'),
+                                codeList: [
+                                    'helm package ./'
+                                ]
+                            },
                             {
                                 subTitle: this.$t('helmPushGuideSubTitle1'),
                                 codeList: [
-                                    `curl -F "chart=@<FILE_NAME>" -u ${this.userName}:${this.accessToken} ${location.origin}/${this.repoType}/api/${this.projectId}/${this.repoName}/charts`
+                                    `curl -F "chart=@${this.dependInputValue1 ? this.dependInputValue1 + '.tgz' : '<FILE_NAME>'}" -u ${this.userName}:${this.accessToken} ${location.origin}/${this.repoType}/api/${this.projectId}/${this.repoName}/charts`
                                 ]
                             },
                             {
                                 subTitle: this.$t('helmPushGuideSubTitle2'),
                                 codeList: [
-                                    `curl -F "prov=@<PROV_FILE_NAME>" -u ${this.userName}:${this.accessToken} ${location.origin}/${this.repoType}/api/${this.projectId}/${this.repoName}/charts`
+                                    `curl -F "prov=@${this.dependInputValue1 ? this.dependInputValue1 + '.tgz.prov' : '<PROV_FILE_NAME>'}" -u ${this.userName}:${this.accessToken} ${location.origin}/${this.repoType}/api/${this.projectId}/${this.repoName}/charts`
                                 ]
                             }
                         ]
@@ -536,11 +550,25 @@ export default {
                 {
                     title: this.$t('pull'),
                     optionType: 'pull',
+                    inputBoxList: [
+                        {
+                            key: 'dependInputValue1', // vux中存储的变量名
+                            label: this.$t('artifactName'), // 输入框左侧label文案
+                            placeholder: this.$t('artifactNamePlaceholder'), // 输入框提示文案
+                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                        },
+                        {
+                            key: 'dependInputValue2', // vux中存储的变量名
+                            label: this.$t('artifactVersion'), // 输入框左侧label文案
+                            placeholder: this.$t('packageVersionPlaceholder'), // 输入框提示文案
+                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
+                        }
+                    ],
                     main: [
                         {
                             subTitle: this.$t('helmPullGuideSubTitle'),
                             codeList: [
-                                `helm install ${this.repoName}/${this.packageName}`
+                                `helm fetch ${this.repoName}/${this.dependInputValue1 || this.packageName} --version ${this.dependInputValue2 || this.versionLabel}`
                             ]
                         }
                     ]
@@ -566,7 +594,7 @@ export default {
                         {
                             subTitle: this.$t('helmPullGuideSubTitle'),
                             codeList: [
-                                `helm fetch ${this.repoName}/${this.packageName}`
+                                `helm fetch ${this.repoName}/${this.packageName} --version ${this.versionLabel}`
                             ]
                         }
                     ]
@@ -598,11 +626,19 @@ export default {
                     : {
                         title: this.$t('push'),
                         optionType: 'push',
+                        inputBoxList: [
+                            {
+                                key: 'dependInputValue1', // vux中存储的变量名
+                                label: this.$t('fileName'), // 输入框左侧label文案
+                                placeholder: this.$t('fileNamePlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                            }
+                        ],
                         main: [
                             {
                                 subTitle: this.$t('pushGuideSubTitle'),
                                 codeList: [
-                                    `curl -u ${this.userName}:${this.accessToken} -X PUT ${this.repoUrl}/ -T <RPM_FILE_NAME>`
+                                    `curl -u ${this.userName}:${this.accessToken} -X PUT ${this.repoUrl}/ -T ${this.dependInputValue1 ? this.dependInputValue1 + '.rpm' : '<RPM_FILE_NAME>'}`
                                 ]
                             }
                         ]
@@ -610,17 +646,31 @@ export default {
                 {
                     title: this.$t('pull'),
                     optionType: 'pull',
+                    inputBoxList: [
+                        {
+                            key: 'dependInputValue1', // vux中存储的变量名
+                            label: this.$t('artifactName'), // 输入框左侧label文案
+                            placeholder: this.$t('artifactNamePlaceholder'), // 输入框提示文案
+                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                        },
+                        {
+                            key: 'dependInputValue2', // vux中存储的变量名
+                            label: this.$t('artifactVersion'), // 输入框左侧label文案
+                            placeholder: this.$t('packageVersionPlaceholder'), // 输入框提示文案
+                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
+                        }
+                    ],
                     main: [
                         {
                             subTitle: this.$t('rpmPullGuideSunTitle1'),
                             codeList: [
-                                `rpm -i ${location.protocol}//${this.userName}:${this.accessToken}@${location.host}/${this.repoType}/${this.projectId}/${this.repoName}/<RPM_FILE_NAME>`
+                                `rpm -i ${location.protocol}//${this.userName}:${this.accessToken}@${location.host}/${this.repoType}/${this.projectId}/${this.repoName}/${this.dependInputValue1 || this.packageName}-${this.dependInputValue2 || this.versionLabel}`
                             ]
                         },
                         {
                             subTitle: this.$t('rpmPullGuideSunTitle2'),
                             codeList: [
-                                `yum install ${this.packageName}`
+                                `yum install ${this.dependInputValue1 || this.packageName}-${this.dependInputValue2 || this.versionLabel}`
                             ]
                         }
                     ]
@@ -653,12 +703,9 @@ export default {
         pypiGuide () {
             return [
                 {
-                    title: this.$t('setCredentials'),
+                    title: this.$t('pypiCreditGuideSubTitle1'),
                     optionType: 'setCredentials',
                     main: [
-                        {
-                            subTitle: this.$t('pypiCreditGuideSubTitle1')
-                        },
                         {
                             subTitle: this.$t('pypiCreditGuideSubTitle2'),
                             codeList: [
@@ -669,20 +716,23 @@ export default {
                                 `username: ${this.userName}`,
                                 `password: ${this.accessToken}`
                             ]
-                        },
-                        {
-                            subTitle: this.$t('pypiCreditGuideSubTitle3')
-                        },
+                        }
+                    ]
+                },
+                {
+                    title: this.$t('pypiCreditGuideSubTitle3'),
+                    optionType: 'setCredentials',
+                    main: [
                         {
                             subTitle: this.$t('pypiCreditGuideSubTitle6'),
                             codeList: [
-                                `pip config set global.index-url ${location.protocol}//${this.userName}:${this.accessToken}@${location.host}/${this.repoType}/${this.projectId}/${this.repoName}/simple`
+                                `pip3 config set global.index-url ${location.protocol}//${this.userName}:${this.accessToken}@${location.host}/${this.repoType}/${this.projectId}/${this.repoName}/simple`
                             ]
                         },
                         {
                             subTitle: this.$t('pypiCreditGuideSubTitle7'),
                             codeList: [
-                                `pip config set install.trusted-host ${location.host}`
+                                `pip3 config set install.trusted-host ${location.host}`
                             ]
                         }
                     ]
@@ -704,11 +754,25 @@ export default {
                 {
                     title: this.$t('pull'),
                     optionType: 'pull',
+                    inputBoxList: [
+                        {
+                            key: 'dependInputValue1', // vux中存储的变量名
+                            label: this.$t('artifactName'), // 输入框左侧label文案
+                            placeholder: this.$t('artifactNamePlaceholder'), // 输入框提示文案
+                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                        },
+                        {
+                            key: 'dependInputValue2', // vux中存储的变量名
+                            label: this.$t('artifactVersion'), // 输入框左侧label文案
+                            placeholder: this.$t('packageVersionPlaceholder'), // 输入框提示文案
+                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
+                        }
+                    ],
                     main: [
                         {
                             subTitle: this.$t('cmdPullGuideSubTitle'),
                             codeList: [
-                                `pip3 install ${this.packageName}==${this.versionLabel}`
+                                `pip3 install ${this.dependInputValue1 || this.packageName}==${this.dependInputValue2 || this.versionLabel}`
                             ]
                         }
                     ]
@@ -761,11 +825,22 @@ export default {
                     : {
                         title: this.$t('push'),
                         optionType: 'push',
+                        inputBoxList: [
+                            {
+                                key: 'dependInputValue1', // vux中存储的变量名
+                                label: this.$t('artifactName'), // 输入框左侧label文案
+                                placeholder: this.$t('artifactNamePlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                            }
+                        ],
                         main: [
                             {
-                                subTitle: this.$t('composerPushGuideSubTitle'),
+                                subTitle: this.$t('composerPullGuideSubTitle')
+                            },
+                            {
+                                subTitle: '2. ' + this.$t('composerPushGuideSubTitle'),
                                 codeList: [
-                                    `curl -X PUT -u ${this.userName}:${this.accessToken} "${this.repoUrl}/" -T <PACKAGE_FILE>`
+                                    `curl -X PUT -u ${this.userName}:${this.accessToken} "${this.repoUrl}/" -T ${this.dependInputValue1 || '<PACKAGE_FILE>'}`
                                 ]
                             }
                         ]
@@ -773,11 +848,31 @@ export default {
                 {
                     title: this.$t('pull'),
                     optionType: 'pull',
+                    inputBoxList: [
+                        {
+                            key: 'dependInputValue1', // vux中存储的变量名
+                            label: this.$t('artifactName'), // 输入框左侧label文案
+                            placeholder: this.$t('artifactNamePlaceholder'), // 输入框提示文案
+                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                        },
+                        {
+                            key: 'dependInputValue2', // vux中存储的变量名
+                            label: this.$t('artifactVersion'), // 输入框左侧label文案
+                            placeholder: this.$t('packageVersionPlaceholder'), // 输入框提示文案
+                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
+                        }
+                    ],
                     main: [
                         {
                             subTitle: this.$t('cmdPullGuideSubTitle'),
                             codeList: [
-                                `composer require ${this.packageName} ${this.versionLabel}`
+                                `composer require ${this.dependInputValue1 || this.packageName} ${this.dependInputValue2 || this.versionLabel}`
+                            ]
+                        },
+                        {
+                            subTitle: '如果需要拉取http协议下的镜像源制品，请在命令行执行如下命令全局设置Composer的secure-http选项为false，从而允许连接到不安全的HTTP源',
+                            codeList: [
+                                'composer config --global secure-http false'
                             ]
                         }
                     ]
@@ -821,11 +916,19 @@ export default {
                     : {
                         title: this.$t('push'),
                         optionType: 'push',
+                        inputBoxList: [
+                            {
+                                key: 'dependInputValue1', // vux中存储的变量名
+                                label: this.$t('artifactName'), // 输入框左侧label文案
+                                placeholder: this.$t('artifactNamePlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                            }
+                        ],
                         main: [
                             {
                                 subTitle: this.$t('nugetPushGuideSubTitle'),
                                 codeList: [
-                                    `nuget push -Source "${this.repoName}" <LOCAL_PACKAGE_NAME>.nupkg`
+                                    `nuget push -Source "${this.repoName}" ${this.dependInputValue1 || '<LOCAL_PACKAGE_NAME>'}.nupkg`
                                 ]
                             }
                         ]
@@ -833,11 +936,25 @@ export default {
                 {
                     title: this.$t('pull'),
                     optionType: 'pull',
+                    inputBoxList: [
+                        {
+                            key: 'dependInputValue1', // vux中存储的变量名
+                            label: this.$t('artifactName'), // 输入框左侧label文案
+                            placeholder: this.$t('artifactNamePlaceholder'), // 输入框提示文案
+                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                        },
+                        {
+                            key: 'dependInputValue2', // vux中存储的变量名
+                            label: this.$t('artifactVersion'), // 输入框左侧label文案
+                            placeholder: this.$t('packageVersionPlaceholder'), // 输入框提示文案
+                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
+                        }
+                    ],
                     main: [
                         {
                             subTitle: this.$t('nugetPullGuideSubTitle'),
                             codeList: [
-                                `nuget install -Source "${this.repoName}" -Version ${this.versionLabel} ${this.packageName}`
+                                `nuget install -Source "${this.repoName}" -Version ${this.dependInputValue2 || this.versionLabel} ${this.dependInputValue1 || this.packageName}`
                             ]
                         }
                     ]
@@ -845,13 +962,27 @@ export default {
                 (this.storeType === 'virtual' || this.whetherSoftware)
                     ? undefined
                     : {
-                        title: this.$t('delete'),
+                        title: this.$t('deleteArtifact'),
                         optionType: 'delete',
+                        inputBoxList: [
+                            {
+                                key: 'dependInputValue1', // vux中存储的变量名
+                                label: this.$t('artifactName'), // 输入框左侧label文案
+                                placeholder: this.$t('artifactNamePlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                            },
+                            {
+                                key: 'dependInputValue2', // vux中存储的变量名
+                                label: this.$t('artifactVersion'), // 输入框左侧label文案
+                                placeholder: this.$t('packageVersionPlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
+                            }
+                        ],
                         main: [
                             {
                                 subTitle: this.$t('nugetDeleteGuideSubTitle'),
                                 codeList: [
-                                    `nuget delete -Source "${this.repoName}" ${this.packageName} ${this.versionLabel}`
+                                    `nuget delete -Source "${this.repoName}" ${this.dependInputValue1 || this.packageName} ${this.dependInputValue2 || this.versionLabel}`
                                 ]
                             }
                         ]

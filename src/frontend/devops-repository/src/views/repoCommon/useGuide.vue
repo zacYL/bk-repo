@@ -33,7 +33,7 @@
             </div>
             <!-- 右侧具体使用指引 -->
             <div class="guide-main ml10">
-                <repo-guide class="pl20 pr20 pb20" :article="articleGuide" :option-type="activeTab" :construct-type="activeDependType"></repo-guide>
+                <repo-guide ref="repoGuideRefs" v-if="activeTab.length > 0" class="pl20 pr20 pb20" :article="articleGuide" :option-type="activeTab" :construct-type="activeDependType"></repo-guide>
             </div>
         </div>
     </canway-dialog>
@@ -76,7 +76,7 @@
                     basicOption.push({ name: 'push', label: this.$t('push') })
                 }
                 if (this.repoType === 'nuget' && this.storeType !== 'virtual' && !this.whetherSoftware) {
-                    basicOption.push({ name: 'delete', label: this.$t('delete') })
+                    basicOption.push({ name: 'delete', label: this.$t('deleteArtifact') })
                 }
                 return basicOption
             },
@@ -102,7 +102,10 @@
             },
             cancel () {
                 this.useGuideData.show = false
+                // 关闭弹窗时将操作重新切换为设置凭证
+                this.activeTab = 'setCredentials'
                 this.SET_DEPEND_ACCESS_TOKEN_VALUE('')
+                this.$refs.repoGuideRefs.resetInputValue()
             },
             onChangeOption (name) {
                 this.activeTab = name

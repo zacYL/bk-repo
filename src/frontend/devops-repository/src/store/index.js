@@ -56,7 +56,9 @@ const storeObject = {
         },
         clusterList: [],
         artifactTypeList: [],
-        dependAccessTokenValue: '' // 依赖源仓库的使用指引中用户输入的访问令牌的值
+        dependAccessTokenValue: '', // 依赖源仓库的使用指引中用户输入的访问令牌的值
+        dependInputValue1: '', // 依赖源仓库的使用指引中用户的第一个输入框的值
+        dependInputValue2: '' // 依赖源仓库的使用指引中用户的第二个输入框的值
     },
     getters: {
         masterNode (state) {
@@ -166,6 +168,12 @@ const storeObject = {
         },
         SET_DEPEND_ACCESS_TOKEN_VALUE (state, data) {
             state.dependAccessTokenValue = data
+        },
+        SET_DEPEND_INPUT_VALUE1 (state, data) {
+            state.dependInputValue1 = data
+        },
+        SET_DEPEND_INPUT_VALUE2 (state, data) {
+            state.dependInputValue2 = data
         }
     },
     actions

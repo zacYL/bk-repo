@@ -35,7 +35,7 @@
                     <div class="mt10"> {{$t('guideInputInfo', { option: currentArticle.title })}}</div>
                     <div v-for="(box,index) in currentArticle.inputBoxList" :key="box.key || box">
                         <div class="flex-align-center mt20 mb10">
-                            <span style="width:120px;">{{box.label}}</span>
+                            <span style="width:120px;">{{box.label}}: </span>
                             <bk-input
                                 class="w480"
                                 v-model.trim="boxValues[index]"
@@ -113,7 +113,7 @@
         },
         methods: {
             // ...mapMutations(['SET_DEPEND_ACCESS_TOKEN_VALUE', ...this.currentArticle.inputBoxList.map(item => item.methodFunctionName)]),
-            ...mapMutations(['SET_DEPEND_ACCESS_TOKEN_VALUE', 'SET_DEPEND_INPUT_VALUE1', 'SET_DEPEND_INPUT_VALUE2']),
+            ...mapMutations(['SET_DEPEND_ACCESS_TOKEN_VALUE', 'SET_DEPEND_INPUT_VALUE1', 'SET_DEPEND_INPUT_VALUE2', 'SET_DEPEND_INPUT_VALUE3']),
             createToken () {
                 this.ciMode ? this.$refs.ciCreateToken.showDialogHandler() : this.$refs.createToken.showDialogHandler()
             },
@@ -131,6 +131,7 @@
             resetInputValue () {
                 this.SET_DEPEND_INPUT_VALUE1('')
                 this.SET_DEPEND_INPUT_VALUE2('')
+                this.SET_DEPEND_INPUT_VALUE3('')
             }
         }
     }

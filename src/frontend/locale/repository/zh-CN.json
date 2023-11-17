@@ -533,6 +533,7 @@
     "setCredentials":"设置凭证",
     "dockerGuideSubTitle":"在命令行执行以下命令登陆仓库",
     "push":"推送制品",
+    "dockerImageTag":"本地镜像 Tag",
     "dockerPushGuideSubTitle1":"1、在命令行执行以下命令给本地镜像打标签",
     "dockerPushGuideSubTitle2":"2、在命令行执行以下命令进行推送",
     "dockerDownloadGuideSubTitle":"在命令行执行以下命令进行拉取",

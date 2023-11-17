@@ -1,7 +1,7 @@
 import { mapState, mapActions } from 'vuex'
 export default {
     computed: {
-        ...mapState(['userInfo', 'domain', 'dependAccessTokenValue', 'dependInputValue1', 'dependInputValue2']),
+        ...mapState(['userInfo', 'domain', 'dependAccessTokenValue', 'dependInputValue1', 'dependInputValue2', 'dependInputValue3']),
         projectId () {
             return this.$route.params.projectId || ''
         },
@@ -70,24 +70,58 @@ export default {
                     : {
                         title: this.$t('push'),
                         optionType: 'push',
+                        inputBoxList: [
+                            {
+                                key: 'dependInputValue3', // vux中存储的变量名
+                                label: this.$t('dockerImageTag'), // 输入框左侧label文案
+                                placeholder: this.$t('pleaseInput') + this.$t('space') + this.$t('dockerImageTag'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE3' // vuex中mutations中的方法名
+                            },
+                            {
+                                key: 'dependInputValue1', // vux中存储的变量名
+                                label: this.$t('artifactName'), // 输入框左侧label文案
+                                placeholder: this.$t('artifactNamePlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                            },
+                            {
+                                key: 'dependInputValue2', // vux中存储的变量名
+                                label: this.$t('artifactVersion'), // 输入框左侧label文案
+                                placeholder: this.$t('packageVersionPlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
+                            }
+                        ],
                         main: [
                             {
                                 subTitle: this.$t('dockerPushGuideSubTitle1'),
-                                codeList: [`docker tag <LOCAL_IMAGE_TAG> ${this.domain.docker}/${this.projectId}/${this.repoName}/${this.packageName}`]
+                                codeList: [`docker tag ${this.dependInputValue3 || '<LOCAL_IMAGE_TAG>'} ${this.domain.docker}/${this.projectId}/${this.repoName}/${this.dependInputValue1 || this.packageName}:${this.dependInputValue2 || this.versionLabel}`]
                             },
                             {
                                 subTitle: this.$t('dockerPushGuideSubTitle2'),
-                                codeList: [`docker push ${this.domain.docker}/${this.projectId}/${this.repoName}/${this.packageName}`]
+                                codeList: [`docker push ${this.domain.docker}/${this.projectId}/${this.repoName}/${this.dependInputValue1 || this.packageName}:${this.dependInputValue2 || this.versionLabel}`]
                             }
                         ]
                     },
                 {
                     title: this.$t('pull'),
                     optionType: 'pull',
+                    inputBoxList: [
+                        {
+                            key: 'dependInputValue1', // vux中存储的变量名
+                            label: this.$t('artifactName'), // 输入框左侧label文案
+                            placeholder: this.$t('artifactNamePlaceholder'), // 输入框提示文案
+                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                        },
+                        {
+                            key: 'dependInputValue2', // vux中存储的变量名
+                            label: this.$t('artifactVersion'), // 输入框左侧label文案
+                            placeholder: this.$t('packageVersionPlaceholder'), // 输入框提示文案
+                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
+                        }
+                    ],
                     main: [
                         {
                             subTitle: this.$t('dockerDownloadGuideSubTitle'),
-                            codeList: [`docker pull ${this.domain.docker}/${this.projectId}/${this.repoName}/${this.packageName}`]
+                            codeList: [`docker pull ${this.domain.docker}/${this.projectId}/${this.repoName}/${this.dependInputValue1 || this.packageName}:${this.dependInputValue2 || this.versionLabel}`]
                         }
                     ]
                 }

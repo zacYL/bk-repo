@@ -12,7 +12,7 @@
                     {{ $t('refresh') }}
                 </bk-button>
                 <bk-button v-if="showUploadRepo" class="ml10" @click="handleClickUpload">{{$t('uploadArtifact')}}</bk-button>
-                <bk-button class="ml20 flex-align-center" @click="showGuide = true">
+                <bk-button class="ml20 flex-align-center" @click="onClickShowGuide">
                     <span class="flex-align-center">
                         <Icon class="mr5" name="hand-guide" size="16" />
                         {{$t('guide')}}
@@ -93,6 +93,9 @@
         <!-- maven包制上传侧边栏 -->
         <repo-maven-uploader v-if="currentType === 'MAVEN' && mavenUploader.isVisible" v-model="mavenUploader.isVisible" :project-id="projectId" :repo-name="repoName" @update="onUpdateUploader" @cancel="onCancelUploader" />
         <!-- maven包制上传侧边栏 /-->
+        
+        <!-- 使用指引 -->
+        <useGuide ref="useGuideRef"></useGuide>
     </div>
 </template>
 <script>
@@ -101,11 +104,12 @@
     import repoGuide from '@repository/views/repoCommon/repoGuide'
     import emptyGuide from '@repository/views/repoCommon/emptyGuide'
     import repoMavenUploader from '@repository/views/repoCommon/repoMavenUploader'
+    import useGuide from '@repository/views/repoCommon/useGuide'
     import repoGuideMixin from '@repository/views/repoCommon/repoGuideMixin'
     import { mapState, mapActions } from 'vuex'
     export default {
         name: 'commonPackageList',
-        components: { InfiniteScroll, packageCard, repoGuide, emptyGuide, repoMavenUploader },
+        components: { InfiniteScroll, packageCard, repoGuide, emptyGuide, repoMavenUploader, useGuide },
         mixins: [repoGuideMixin],
         data () {
             return {
@@ -265,6 +269,12 @@
                         // 虚拟仓库中需要添加仓库来源，供制品详情页获取制品版本列表数据使用
                         sourceName: this.storeType === 'virtual' ? pkg.repoName || '' : undefined
                     }
+                })
+            },
+            onClickShowGuide () {
+                this.$refs.useGuideRef.setData({
+                    show: true,
+                    loading: false
                 })
             }
         }

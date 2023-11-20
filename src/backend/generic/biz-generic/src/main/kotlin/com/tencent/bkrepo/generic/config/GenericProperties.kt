@@ -41,5 +41,9 @@ data class GenericProperties(
      */
     var domain: String = "localhost",
     @NestedConfigurationProperty
-    var delta: DeltaProperties = DeltaProperties()
+    var delta: DeltaProperties = DeltaProperties(),
+    /**
+     * 平台账号，在Generic仓库代理远程BkRepo的Generic仓库时使用
+     */
+    var platformAccounts: List<PlatformAuthProperties> = emptyList(),
 )

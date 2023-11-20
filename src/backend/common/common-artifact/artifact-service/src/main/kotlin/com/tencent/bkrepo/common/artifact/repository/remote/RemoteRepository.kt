@@ -38,7 +38,6 @@ import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.NetworkProxyConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
-import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteCredentialsConfiguration
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
@@ -310,7 +309,7 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
         builder.proxy(createProxy(configuration.network.proxy))
         builder.proxyAuthenticator(createProxyAuthenticator(configuration.network.proxy))
         if (addInterceptor) {
-            createAuthenticateInterceptor(configuration.credentials)?.let { builder.addInterceptor(it) }
+            createAuthenticateInterceptor(configuration)?.let { builder.addInterceptor(it) }
         }
         return builder.build()
     }
@@ -343,9 +342,9 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
     /**
      * 创建身份认证拦截器
      */
-    private fun createAuthenticateInterceptor(configuration: RemoteCredentialsConfiguration): Interceptor? {
-        val username = configuration.username
-        val password = configuration.password
+    protected open fun createAuthenticateInterceptor(configuration: RemoteConfiguration): Interceptor? {
+        val username = configuration.credentials.username
+        val password = configuration.credentials.password
         return if (username != null && password != null) {
             BasicAuthInterceptor(username, password)
         } else {

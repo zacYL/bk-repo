@@ -49,10 +49,13 @@ class PackageQueryContext(
 
     val matchedVersions: MutableMap<String, MutableSet<String>> = mutableMapOf()
 
-    fun findRepoType(siblingRule: Rule.QueryRule? = null): String = if (repoType != null) repoType!! else {
+    fun findRepoType(siblingRule: Rule.QueryRule? = null): String {
         val rule = queryModel.rule
-        find("repoType", siblingRule)?.also {
-            if (rule is Rule.NestedRule && rule.relation == Rule.NestedRule.RelationType.AND) repoType = it
-        } ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "repoType")
+        if (repoType != null) return repoType!!
+        if (rule is Rule.NestedRule && rule.relation == Rule.NestedRule.RelationType.AND) {
+            findRule(rule.rules, "repoType")?.let { return it.value.toString().apply { repoType = this } }
+        }
+        if (siblingRule != null) (find("repoType", siblingRule) as? String)?.let { return it }
+        throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "repoType")
     }
 }

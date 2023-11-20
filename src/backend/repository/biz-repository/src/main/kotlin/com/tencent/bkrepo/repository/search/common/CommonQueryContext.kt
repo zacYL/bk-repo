@@ -51,26 +51,41 @@ open class CommonQueryContext(
 
     fun findProjectId(siblingRule: Rule.QueryRule? = null): String {
         val rule = queryModel.rule
-        return if (projectId != null) projectId!! else find("projectId", siblingRule)?.also {
-            if (rule is Rule.NestedRule && rule.relation == Rule.NestedRule.RelationType.AND) projectId = it
-        } ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "projectId")
+        if (projectId != null) return projectId!!
+        if (rule is Rule.NestedRule && rule.relation == Rule.NestedRule.RelationType.AND) {
+            findRule(rule.rules, "projectId")?.let { return it.value.toString().apply { projectId = this } }
+        }
+        if (siblingRule != null) (find("projectId", siblingRule) as? String)?.let { return it }
+        throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "projectId")
     }
 
-    protected fun find(field: String, siblingRule: Rule.QueryRule? = null, from: Rule.NestedRule? = null): String? {
+    /**
+     * 寻找目标规则的值, 相邻规则不存在时将寻找最近的所在嵌入规则relation为AND的相同field规则
+     *
+     * @param siblingRule: 寻找目标规则时依赖的相邻规则
+     * @param from: 寻找目标规则时所在的嵌入规则
+     */
+    @Suppress("NestedBlockDepth")
+    protected fun find(field: String, siblingRule: Rule.QueryRule, from: Rule.NestedRule? = null): Any? {
         val rule = from ?: queryModel.rule
-        val isTargetNestedRule = rule is Rule.NestedRule && rule.relation == Rule.NestedRule.RelationType.AND &&
-                (siblingRule == null || rule.rules.any { it === siblingRule })
-        return if (isTargetNestedRule) {
-            findRule((rule as Rule.NestedRule).rules, field)?.value?.toString()
-        } else if (rule is Rule.NestedRule && rule.relation == Rule.NestedRule.RelationType.OR && siblingRule != null) {
-            rule.rules.filterIsInstance<Rule.NestedRule>().forEach {
-                find(field, siblingRule, it)?.run { return this }
+        if (rule !is Rule.NestedRule) return null
+
+        return if (rule.rules.any { it === siblingRule })
+            if (rule.relation == Rule.NestedRule.RelationType.AND)
+                findRule(rule.rules, field)?.value?.toString()
+            else null
+        else {
+            rule.rules.filterIsInstance<Rule.NestedRule>().forEach { subNestedRule ->
+                val result = find(field, siblingRule, subNestedRule)
+                if (result is String || result == null) return result
+                    ?: if (rule.relation == Rule.NestedRule.RelationType.AND)
+                        findRule(rule.rules, field)?.value?.toString()
+                    else null
             }
-            null
-        } else null
+        }
     }
 
-    private fun findRule(rules: List<Rule>, field: String): Rule.QueryRule? {
+    protected fun findRule(rules: List<Rule>, field: String): Rule.QueryRule? {
         for (rule in rules) {
             if (rule is Rule.QueryRule && rule.field == field) {
                 return rule

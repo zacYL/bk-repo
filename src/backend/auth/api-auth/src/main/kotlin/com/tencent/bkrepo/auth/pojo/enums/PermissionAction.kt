@@ -54,8 +54,9 @@ enum class PermissionAction {
      */
     REPO_DELETE,
     /**
-     * 新增禁用、锁定权限
+     * 新增动作权限
      */
+    SHARE,
     FORBID,
     LOCK,
 

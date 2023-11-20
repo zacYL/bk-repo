@@ -4,7 +4,11 @@ import com.tencent.bkrepo.auth.api.CanwayCustomPermissionClient
 import com.tencent.bkrepo.auth.api.CanwayCustomRoleClient
 import com.tencent.bkrepo.auth.api.CanwayProjectClient
 import com.tencent.bkrepo.auth.api.ServicePermissionResource
-import com.tencent.bkrepo.auth.constant.*
+import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_VIEWER
+import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_ADMIN
+import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_USER
+import com.tencent.bkrepo.auth.constant.AUTH_ADMIN
+import com.tencent.bkrepo.auth.constant.PROJECT_VIEW_PERMISSION
 import com.tencent.bkrepo.auth.constant.AuthConstant.CPACK_MANAGER
 import com.tencent.bkrepo.auth.constant.AuthConstant.CPACK_USER
 import com.tencent.bkrepo.auth.constant.AuthConstant.CPACK_VIEWERS
@@ -349,6 +353,14 @@ class ExtPermissionServiceImpl(
                         AnyResourcePermissionSaveDTO(
                             resourceCode = RESOURCECODE,
                             actionCode = PermissionAction.UPDATE.name.toLowerCase()
+                        ),
+                        AnyResourcePermissionSaveDTO(
+                            resourceCode = RESOURCECODE,
+                            actionCode = PermissionAction.FORBID.name.toLowerCase()
+                        ),
+                        AnyResourcePermissionSaveDTO(
+                            resourceCode = RESOURCECODE,
+                            actionCode = PermissionAction.LOCK.name.toLowerCase()
                         )
                     )
                 )
@@ -377,6 +389,18 @@ class ExtPermissionServiceImpl(
                             resourceCode = RESOURCECODE,
                             actionCode = PermissionAction.MANAGE.name.toLowerCase()
                         ),
+                        AnyResourcePermissionSaveDTO(
+                            resourceCode = RESOURCECODE,
+                            actionCode = PermissionAction.REPO_DELETE.name.toLowerCase()
+                        ),
+                        AnyResourcePermissionSaveDTO(
+                            resourceCode = RESOURCECODE,
+                            actionCode = PermissionAction.FORBID.name.toLowerCase()
+                        ),
+                        AnyResourcePermissionSaveDTO(
+                            resourceCode = RESOURCECODE,
+                            actionCode = PermissionAction.LOCK.name.toLowerCase()
+                        )
                     )
                 )
             }

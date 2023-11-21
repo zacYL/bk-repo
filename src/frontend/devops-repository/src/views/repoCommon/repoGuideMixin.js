@@ -1039,12 +1039,6 @@ export default {
                             codeList: [
                                 `composer require ${this.dependInputValue1 || this.packageName} ${this.dependInputValue2 || this.versionLabel}`
                             ]
-                        },
-                        {
-                            subTitle: '如果需要拉取http协议下的镜像源制品，请在命令行执行如下命令全局设置Composer的secure-http选项为false，从而允许连接到不安全的HTTP源',
-                            codeList: [
-                                'composer config --global secure-http false'
-                            ]
                         }
                     ]
                 }

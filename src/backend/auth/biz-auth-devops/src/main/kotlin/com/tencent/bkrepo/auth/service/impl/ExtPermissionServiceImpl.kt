@@ -20,8 +20,8 @@ import com.tencent.bkrepo.auth.constant.AuthSubjectCode.GROUP
 import com.tencent.bkrepo.auth.constant.AuthSubjectCode.USER
 import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.model.TPermission
+import com.tencent.bkrepo.auth.pojo.CanwayBkrepoPermission
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
-import com.tencent.bkrepo.auth.pojo.enums.convertEnumListToStringList
 import com.tencent.bkrepo.auth.pojo.permission.AnyResourcePermissionSaveDTO
 import com.tencent.bkrepo.auth.pojo.permission.Permission
 import com.tencent.bkrepo.auth.pojo.permission.ProjectPermissionAndAdminVO
@@ -32,6 +32,7 @@ import com.tencent.bkrepo.auth.pojo.role.SubjectDTO
 import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.devops.CATELOG_RESOURCECODE
+import com.tencent.bkrepo.common.devops.REPLICA_RESOURCECODE
 import com.tencent.bkrepo.common.devops.RESOURCECODE
 import com.tencent.bkrepo.common.devops.SEARCH_RESOURCECODE
 import com.tencent.bkrepo.repository.api.ProjectClient
@@ -179,40 +180,40 @@ class ExtPermissionServiceImpl(
         }
     }
 
-    fun listDevOpsPermission(userId: String, projectId: String, repoName: String?): List<String> {
-        val projectActions = convertEnumListToStringList(
-            listOf(
-                PermissionAction.CREATE,
-                PermissionAction.REPO_DELETE,
-                PermissionAction.MANAGE
-            )
-        )
-        val repoActions = convertEnumListToStringList(
-            listOf(
-                PermissionAction.READ,
-                PermissionAction.WRITE,
-                PermissionAction.UPDATE,
-                PermissionAction.SHARE,
-                PermissionAction.FORBID,
-                PermissionAction.LOCK,
-                PermissionAction.DELETE
-            )
-        )
+    fun listDevOpsPermission(userId: String, projectId: String, repoName: String?): List<CanwayBkrepoPermission> {
+        val canwayBkrepoPermission = mutableListOf<CanwayBkrepoPermission>()
+        // 制品仓库实例数据权限动作
         repoName?.let {
-            val instanceAction = getCanwayPermission(userId, projectId, it, repoActions).permissions
-            return if (instanceAction.isEmpty()) {
-                listOf()
-            } else {
-                instanceAction.flatMap { it.actionCodes }.distinct()
-            }
+            val repoInstanceAction = getCanwayPermission(userId, projectId, it, RESOURCECODE).permissions
+            canwayBkrepoPermission.add(
+                CanwayBkrepoPermission(
+                resourceCode = RESOURCECODE,
+                actionCodes = if (repoInstanceAction.isEmpty()) {
+                    emptyList()
+                } else {
+                    repoInstanceAction.flatMap { it.actionCodes }.distinct()
+                }
+                )
+            )
+            return canwayBkrepoPermission
         }
-
-        val noInstanceAction = getCanwayPermission(userId, projectId, repoName, projectActions).permissions
-        return if (noInstanceAction.isEmpty()) {
-            listOf()
-        } else {
-            noInstanceAction.filter { it.instanceId == ANY_RESOURCE_CODE }[0].actionCodes
+        // 所有动作权限（非实例）
+        listOf(RESOURCECODE, CATELOG_RESOURCECODE, SEARCH_RESOURCECODE, REPLICA_RESOURCECODE).forEach { resourceCode ->
+            val repoActionList = getCanwayPermission(userId, projectId, repoName, resourceCode).permissions
+            canwayBkrepoPermission.add(
+                CanwayBkrepoPermission(
+                    resourceCode = resourceCode,
+                    actionCodes = if (repoActionList.isEmpty()) {
+                        emptyList()
+                    } else {
+                        repoActionList.filter {
+                            it.instanceId == ANY_RESOURCE_CODE
+                        }[0].actionCodes
+                    }
+                )
+            )
         }
+        return canwayBkrepoPermission
     }
 
     /**
@@ -470,13 +471,14 @@ class ExtPermissionServiceImpl(
         userId: String,
         projectId: String,
         repoName: String?,
-        actions: List<String>
+        resourceCode: String,
+        actions: List<String> = emptyList()
     ): ProjectPermissionAndAdminVO {
         return canwayProjectClient.getUserPermission(
             projectId = projectId,
             UserPermissionQueryDTO(
                 userId = userId,
-                resourceCode = RESOURCECODE,
+                resourceCode = resourceCode,
                 actionCodes = actions,
                 instanceIds = if (repoName.isNullOrBlank()) listOf(ANY_RESOURCE_CODE) else listOf(repoName),
                 paddingInstancePermission = false

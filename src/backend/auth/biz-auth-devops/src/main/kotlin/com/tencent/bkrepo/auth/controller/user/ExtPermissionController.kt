@@ -1,5 +1,6 @@
 package com.tencent.bkrepo.auth.controller.user
 
+import com.tencent.bkrepo.auth.pojo.CanwayBkrepoPermission
 import com.tencent.bkrepo.auth.service.impl.ExtPermissionServiceImpl
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.security.permission.Principal
@@ -39,7 +40,7 @@ class ExtPermissionController(
         @RequestParam projectId: String,
         @ApiParam(value = "仓库名称")
         @RequestParam repoName: String?
-    ): Response<List<String>> {
+    ): Response<List<CanwayBkrepoPermission>> {
         return ResponseBuilder.success(extPermissionServiceImpl.listDevOpsPermission(userId, projectId, repoName))
     }
 }

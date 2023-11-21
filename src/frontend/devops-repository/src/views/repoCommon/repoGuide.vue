@@ -12,10 +12,10 @@
                 <bk-button v-if="ciMode" text theme="primary" @click="jumpCCommonUserToken">{{ $t('token') }}</bk-button>
                 <router-link v-else :to="{ name: 'repoToken' }">{{ $t('token') }}</router-link>
             </div>
-            <div>
+            <div v-if="repoType !== 'npm'">
                 <div>{{$t('accessTokenPlaceholder')}}</div>
                 <bk-input
-                    class="mt10 mb10"
+                    class="mt10"
                     v-model.trim="tokenInput"
                     type="password"
                     :placeholder="$t('accessTokenPlaceholder')"
@@ -28,7 +28,7 @@
         </template>
         <template v-if="currentArticleList.length > 0">
             <div v-for="(currentArticle,cIndex) in currentArticleList" :key="cIndex">
-                <div v-if="currentArticle.title" class="section-header">
+                <div v-if="currentArticle.title" class="section-header pt10">
                     {{ currentArticle.title }}
                 </div>
                 <template v-if="(currentArticle.inputBoxList || []).length > 0">
@@ -98,6 +98,9 @@
                 return this.article.map(item => {
                     return (item.optionType === this.optionType) ? item : ''
                 }).filter(Boolean) || []
+            },
+            repoType () {
+                return this.$route.params.repoType || ''
             }
         },
         watch: {

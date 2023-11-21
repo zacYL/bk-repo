@@ -144,40 +144,43 @@ export default {
         npmGuide () {
             return [
                 {
-                    title: this.$t('setCredentials'),
+                    title: this.$t('npmCreditGuideSubTitle6'),
                     optionType: 'setCredentials',
                     main: [
                         {
-                            subTitle: this.$t('npmCreditGuideSubTitle6')
-                        },
-                        {
                             subTitle: this.$t('npmCreditGuideSubTitle7'),
+                            constructType: 'npm',
                             codeList: [
                                 `npm config set registry ${this.domain.npm}/${this.projectId}/${this.repoName}/`
                             ]
                         },
                         {
+                            subTitle: this.$t('npmCreditGuideSubTitle7'),
+                            constructType: 'yarn',
+                            codeList: [
+                                `yarn config set registry=${this.domain.npm}/${this.projectId}/${this.repoName}/`
+                            ]
+                        },
+                        {
                             subTitle: this.$t('npmCreditGuideSubTitle8'),
+                            constructType: 'npm',
                             codeList: [
                                 'npm login'
                             ]
                         },
                         {
-                            subTitle: this.$t('npmCreditGuideSubTitle1')
-                        },
-                        {
-                            subTitle: this.$t('npmCreditGuideSubTitle2'),
+                            subTitle: this.$t('npmCreditGuideSubTitle8'),
+                            constructType: 'yarn',
                             codeList: [
-                                `registry=${this.domain.npm}/${this.projectId}/${this.repoName}/`,
-                                'always-auth=true',
-                                `//${this.domain.npm.split('//')[1]}/${this.projectId}/${this.repoName}/:username=${this.userName}`,
-                                `//${this.domain.npm.split('//')[1]}/${this.projectId}/${this.repoName}/:_password=<BASE64_ENCODE_PERSONAL_ACCESS_TOKEN>`,
-                                `//${this.domain.npm.split('//')[1]}/${this.projectId}/${this.repoName}/:email=<EMAIL>`
+                                'yarn login'
                             ]
-                        },
-                        {
-                            subTitle: this.$t('generate') + this.$t('space') + '<BASE64_ENCODE_PERSONAL_ACCESS_TOKEN>'
-                        },
+                        }
+                    ]
+                },
+                {
+                    title: this.$t('npmCreditGuideSubTitle1'),
+                    optionType: 'setCredentials',
+                    main: [
                         {
                             subTitle: this.$t('npmCreditGuideSubTitle3'),
                             codeList: [
@@ -188,7 +191,14 @@ export default {
                             subTitle: this.$t('npmCreditGuideSubTitle4')
                         },
                         {
-                            subTitle: this.$t('npmCreditGuideSubTitle5') + this.$t('space') + '<BASE64_ENCODE_PERSONAL_ACCESS_TOKEN>'
+                            subTitle: this.$t('npmCreditGuideSubTitle2'),
+                            codeList: [
+                                `registry=${this.domain.npm}/${this.projectId}/${this.repoName}/`,
+                                'always-auth=true',
+                                `//${this.domain.npm.split('//')[1]}/${this.projectId}/${this.repoName}/:username=${this.userName}`,
+                                `//${this.domain.npm.split('//')[1]}/${this.projectId}/${this.repoName}/:_password=<BASE64_ENCODE_PERSONAL_ACCESS_TOKEN>`,
+                                `//${this.domain.npm.split('//')[1]}/${this.projectId}/${this.repoName}/:email=${this.userInfo.email || '<EMAIL>'}`
+                            ]
                         }
                     ]
                 },
@@ -197,24 +207,83 @@ export default {
                     : {
                         title: this.$t('push'),
                         optionType: 'push',
+                        inputBoxList: [
+                            {
+                                key: 'dependInputValue1', // vux中存储的变量名
+                                label: this.$t('artifactName'), // 输入框左侧label文案
+                                placeholder: this.$t('artifactNamePlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                            },
+                            {
+                                key: 'dependInputValue2', // vux中存储的变量名
+                                label: this.$t('artifactVersion'), // 输入框左侧label文案
+                                placeholder: this.$t('packageVersionPlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
+                            }
+                        ],
                         main: [
                             {
-                                subTitle: this.$t('pushGuideSubTitle'),
+                                subTitle: this.$t('npmPushGuideSubTitle1'),
+                                codeList: [
+                                    ' {',
+                                    `    "name": "${this.dependInputValue1 || '<PACKAGE_NAME>'}"`,
+                                    `    "version": "${this.dependInputValue2 || '<PACKAGE_VERSION>'}"`,
+                                    '    "description": ""',
+                                    '    "main": "index.js"',
+                                    '    "author": ""',
+                                    '    "license": "MIT"',
+                                    ' }'
+                                ]
+                            },
+                            {
+                                subTitle: this.$t('npmPushGuideSubTitle2'),
+                                constructType: 'npm',
                                 codeList: ['npm publish']
+                            },
+                            {
+                                subTitle: this.$t('npmPushGuideSubTitle2'),
+                                constructType: 'yarn',
+                                codeList: ['yarn publish']
                             }
                         ]
                     },
                 {
                     title: this.$t('pull'),
                     optionType: 'pull',
+                    inputBoxList: [
+                        {
+                            key: 'dependInputValue1', // vux中存储的变量名
+                            label: this.$t('artifactName'), // 输入框左侧label文案
+                            placeholder: this.$t('artifactNamePlaceholder'), // 输入框提示文案
+                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                        },
+                        {
+                            key: 'dependInputValue2', // vux中存储的变量名
+                            label: this.$t('artifactVersion'), // 输入框左侧label文案
+                            placeholder: this.$t('packageVersionPlaceholder'), // 输入框提示文案
+                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
+                        }
+                    ],
                     main: [
                         {
                             subTitle: this.$t('npmDownloadGuideSubTitle1'),
-                            codeList: [`npm install ${this.packageName}`]
+                            constructType: 'npm',
+                            codeList: [`npm install ${this.dependInputValue1 || this.packageName}${this.dependInputValue2 ? '@' + this.dependInputValue2 : ''}`]
+                        },
+                        {
+                            subTitle: this.$t('npmDownloadGuideSubTitle1'),
+                            constructType: 'yarn',
+                            codeList: [`yarn add ${this.dependInputValue1 || this.packageName}${this.dependInputValue2 ? '@' + this.dependInputValue2 : ''}`]
                         },
                         {
                             subTitle: this.$t('npmDownloadGuideSubTitle2'),
-                            codeList: [`npm install ${this.packageName} --registry ${this.domain.npm}/${this.projectId}/${this.repoName}/`]
+                            constructType: 'npm',
+                            codeList: [`npm install ${this.dependInputValue1 || this.packageName}${this.dependInputValue2 ? '@' + this.dependInputValue2 : ''} --registry ${this.domain.npm}/${this.projectId}/${this.repoName}/`]
+                        },
+                        {
+                            subTitle: this.$t('npmDownloadGuideSubTitle2'),
+                            constructType: 'yarn',
+                            codeList: [`yarn add ${this.dependInputValue1 || this.packageName}${this.dependInputValue2 ? '@' + this.dependInputValue2 : ''} --registry ${this.domain.npm}/${this.projectId}/${this.repoName}/`]
                         }
                     ]
                 }

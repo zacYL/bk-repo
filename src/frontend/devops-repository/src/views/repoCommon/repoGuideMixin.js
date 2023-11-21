@@ -348,36 +348,34 @@ export default {
                         }
                     ]
                 },
-                {
-                    title: this.$t('mavenGuideTitle'),
-                    main: [
-                        {
-                            subTitle: this.noShowOption ? this.$t('mavenGuideSubTitle1') : this.$t('mavenGuideSubTitle1Special'),
-                            codeList: [
-                                '<mirror>',
-                                `       <id>${this.projectId}-${this.repoName}</id>`,
-                                `       <name>${this.repoName}</name>`,
-                                `       <url>${this.repoUrl}/</url>`,
-                                '       <mirrorOf>central</mirrorOf>',
-                                '</mirror>'
-                            ]
-                        },
-                        {
-                            subTitle: this.$t('mavenGuideSubTitle2'),
-                            codeList: [
-                                '<repository>',
-                                `       <id>${this.projectId}-${this.repoName}</id>`,
-                                `       <url>${this.repoUrl}/</url>`,
-                                '</repository>'
-                            ]
-                        }
-                    ]
-                },
                 this.noShowOption
                     ? undefined
                     : {
                         title: this.$t('push'),
                         optionType: 'push',
+                        inputBoxList: [
+                            // groupId
+                            {
+                                key: 'dependInputValue1', // vux中存储的变量名
+                                label: this.$t('mavenGroupIdLabel'), // 输入框左侧label文案
+                                placeholder: this.$t('mavenGroupIdPlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                            },
+                            // artifactId
+                            {
+                                key: 'dependInputValue2', // vux中存储的变量名
+                                label: this.$t('mavenArtifactIdLabel'), // 输入框左侧label文案
+                                placeholder: this.$t('mavenArtifactIdPlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
+                            },
+                            // 制品版本
+                            {
+                                key: 'dependInputValue3', // vux中存储的变量名
+                                label: this.$t('artifactVersion'), // 输入框左侧label文案
+                                placeholder: this.$t('packageVersionPlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE3' // vuex中mutations中的方法名
+                            }
+                        ],
                         main: [
                             {
                                 subTitle: this.$t('mavenPushGuideSubTitle1'),
@@ -410,9 +408,9 @@ export default {
                                     'publishing {',
                                     '    publications {',
                                     '        maven(MavenPublication) {',
-                                    '            groupId = "com.company.group"',
-                                    '            artifactId = "your artifact name"',
-                                    '            version = "1.0"',
+                                    `            groupId = "${this.dependInputValue1 || '<GROUP_ID>'}"`,
+                                    `            artifactId = "${this.dependInputValue2 || '<ARTIFACT_ID>'}"`,
+                                    `            version = "${this.dependInputValue3 || '<PACKAGE_VERSION>'}"`,
                                     '            from components.java',
                                     '        }',
                                     '    }',
@@ -445,9 +443,9 @@ export default {
                                     'publishing {',
                                     '    publications {',
                                     '        create<MavenPublication>("maven") {',
-                                    '            groupId = "com.company.group"',
-                                    '            artifactId = "your artifact name"',
-                                    '            version = "1.0"',
+                                    `            groupId = "${this.dependInputValue1 || '<GROUP_ID>'}"`,
+                                    `            artifactId = "${this.dependInputValue2 || '<ARTIFACT_ID>'}"`,
+                                    `            version = "${this.dependInputValue3 || '<PACKAGE_VERSION>'}"`,
                                     '            from(components["java"])',
                                     '        }',
                                     '    }',
@@ -478,7 +476,43 @@ export default {
                 {
                     title: this.$t('pull'),
                     optionType: 'pull',
+                    inputBoxList: [
+                        // groupId
+                        {
+                            key: 'dependInputValue1', // vux中存储的变量名
+                            label: this.$t('mavenGroupIdLabel'), // 输入框左侧label文案
+                            placeholder: this.$t('mavenGroupIdPlaceholder'), // 输入框提示文案
+                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                        },
+                        // artifactId
+                        {
+                            key: 'dependInputValue2', // vux中存储的变量名
+                            label: this.$t('mavenArtifactIdLabel'), // 输入框左侧label文案
+                            placeholder: this.$t('mavenArtifactIdPlaceholder'), // 输入框提示文案
+                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
+                        },
+                        // 制品版本
+                        {
+                            key: 'dependInputValue3', // vux中存储的变量名
+                            label: this.$t('artifactVersion'), // 输入框左侧label文案
+                            placeholder: this.$t('packageVersionPlaceholder'), // 输入框提示文案
+                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE3' // vuex中mutations中的方法名
+                        }
+                    ],
                     main: [
+                        {
+                            title: this.$t('mavenGuideTitle'),
+                            subTitle: this.$t('mavenGuideSubTitle1'),
+                            constructType: 'Apache Maven',
+                            codeList: [
+                                '<mirror>',
+                                `       <id>${this.projectId}-${this.repoName}</id>`,
+                                `       <name>${this.repoName}</name>`,
+                                `       <url>${this.repoUrl}/</url>`,
+                                '       <mirrorOf>central</mirrorOf>',
+                                '</mirror>'
+                            ]
+                        },
                         {
                             subTitle: this.$t('mavenPullGuideSubTitle1'),
                             constructType: 'Apache Maven',
@@ -507,6 +541,32 @@ export default {
                             ]
                         },
                         {
+                            title: this.$t('mavenGuideTitle2'),
+                            subTitle: this.$t('mavenGuideSubTitle2'),
+                            constructType: 'Apache Maven',
+                            codeList: [
+                                '<repository>',
+                                `       <id>${this.projectId}-${this.repoName}</id>`,
+                                `       <name>${this.repoName}</name>`,
+                                `       <url>${this.repoUrl}/</url>`,
+                                '</repository>'
+                            ]
+                        },
+                        {
+                            title: this.$t('mavenGuideTitle3'),
+                            subTitle: this.$t('mavenPullGuideSubTitle7'),
+                            constructType: 'Apache Maven',
+                            codeList: [
+                                '<dependencies>',
+                                '    <dependency>',
+                                `        <groupId>${this.dependInputValue1 || '[GROUP_ID]'}</groupId>`,
+                                `        <artifactId>${this.dependInputValue2 || '[ARTIFACT_ID]'}</artifactId>`,
+                                `        <version>${this.dependInputValue3 || '[VERSION]'}</version>`,
+                                '    </dependency>',
+                                '</dependencies>'
+                            ]
+                        },
+                        {
                             subTitle: this.$t('mavenPullGuideSubTitle2'),
                             constructType: 'Apache Maven',
                             codeList: [
@@ -525,6 +585,10 @@ export default {
                                 '            password = "${cpackPassword}"',
                                 '        }',
                                 '    }',
+                                '}',
+                                '   ',
+                                'dependencies { ',
+                                `     api '${this.dependInputValue1 || '[GROUP_ID]'}:${this.dependInputValue2 || '[ARTIFACT_ID]'}:${this.dependInputValue3 || '[VERSION]'}'`,
                                 '}'
                             ]
                         },
@@ -550,6 +614,10 @@ export default {
                                 '            password = cpackPassword',
                                 '        }',
                                 '    }',
+                                '}',
+                                '   ',
+                                'dependencies { ',
+                                `     api ("${this.dependInputValue1 || '[GROUP_ID]'}:${this.dependInputValue2 || '[ARTIFACT_ID]'}:${this.dependInputValue3 || '[VERSION]'}")`,
                                 '}'
                             ]
                         },

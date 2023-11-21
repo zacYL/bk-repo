@@ -53,6 +53,7 @@
                             这三种情况下需要显示下面具体指引
                     -->
                     <template v-if="(constructType === block.constructType) || !block.constructType || (block.constructType === 'common') ">
+                        <span v-if="block.title" class="section-header pt10">{{ block.title }}</span>
                         <span v-if="block.subTitle" class="sub-title pt10" :style="block.subTitleStyle">{{ block.subTitle }}</span>
                         <code-area class="mt15" v-if="block.codeList && block.codeList.length" :code-list="block.codeList"></code-area>
                     </template>

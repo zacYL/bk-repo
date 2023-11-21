@@ -72,6 +72,7 @@ import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.config.RepositoryProperties
 import com.tencent.bkrepo.repository.constant.SYSTEM_REPO
 import com.tencent.bkrepo.repository.dao.PackageDao
+import com.tencent.bkrepo.repository.dao.PackageVersionDao
 import com.tencent.bkrepo.repository.dao.RepositoryDao
 import com.tencent.bkrepo.repository.model.TNode
 import com.tencent.bkrepo.repository.model.TPackage
@@ -132,6 +133,7 @@ class RepositoryServiceImpl(
     private val repositoryProperties: RepositoryProperties,
     private val servicePermissionResource: ServicePermissionResource,
     private val packageDao: PackageDao,
+    private val packageVersionDao: PackageVersionDao,
     private val nodeClient: NodeClient,
     private val eventSupplier: EventSupplier
 ) : RepositoryService {
@@ -372,22 +374,22 @@ class RepositoryServiceImpl(
     override fun deleteRepo(repoDeleteRequest: RepoDeleteRequest) {
         val repository = checkRepository(repoDeleteRequest.projectId, repoDeleteRequest.name)
         repoDeleteRequest.apply {
-            // 当仓库为依赖源仓库时，如果仓库下没有包则删除仓库下所有节点
-            if (repoDeleteRequest.forced ||
-                (repository.type != RepositoryType.GENERIC
-                        && packageDao.count(
-                    Query(
-                        Criteria.where(TPackage::projectId.name).`is`(projectId)
-                            .and(TPackage::repoName.name).`is`(name)
-                    )
-                ) == 0L)
-            ) {
+            if (forced) {
+                if (repository.type != RepositoryType.GENERIC) {
+                    deleteAllPackages(projectId, name)
+                }
                 nodeService.deleteByPath(projectId, name, ROOT, operator)
             } else {
-                val artifactInfo = DefaultArtifactInfo(projectId, name, ROOT)
-                nodeService.countFileNode(artifactInfo).takeIf { it == 0L } ?: throw ErrorCodeException(
-                    ArtifactMessageCode.REPOSITORY_CONTAINS_FILE
-                )
+                // 当仓库为依赖源仓库时，如果仓库下没有包则删除仓库下所有节点
+                val isEmpty = if (repository.type == RepositoryType.GENERIC) {
+                    val artifactInfo = DefaultArtifactInfo(projectId, name, ROOT)
+                    nodeService.countFileNode(artifactInfo) == 0L
+                } else {
+                    packageDao.count(
+                        Query(where(TPackage::projectId).isEqualTo(projectId).and(TPackage::repoName).isEqualTo(name))
+                    ) == 0L
+                }
+                if (!isEmpty) throw ErrorCodeException(ArtifactMessageCode.REPOSITORY_CONTAINS_ARTIFACT)
                 nodeService.deleteByPath(projectId, name, ROOT, operator)
             }
 
@@ -1173,6 +1175,15 @@ class RepositoryServiceImpl(
                 lastModifiedDate = LocalDateTime.now()
             }
             repositoryDao.save(tRepository)
+        }
+    }
+
+    private fun deleteAllPackages(projectId: String, repoName: String) {
+        packageDao.find(
+            Query(where(TPackage::projectId).isEqualTo(projectId).and(TPackage::repoName).isEqualTo(repoName))
+        ).forEach {
+            packageVersionDao.deleteByPackageId(it.id!!)
+            packageDao.removeById(it.id!!)
         }
     }
 

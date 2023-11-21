@@ -31,16 +31,19 @@
 
 package com.tencent.bkrepo.repository.service.packages.impl
 
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.Preconditions
+import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.artifact.api.DefaultArtifactInfo
 import com.tencent.bkrepo.common.artifact.constant.ARTIFACT_INFO_KEY
 import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
 import com.tencent.bkrepo.common.artifact.constant.LOCK_STATUS
 import com.tencent.bkrepo.common.artifact.constant.SCAN_STATUS
+import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.configuration.virtual.VirtualConfiguration
@@ -49,11 +52,13 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadCon
 import com.tencent.bkrepo.common.artifact.util.version.SemVersion
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.query.model.QueryModel
+import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
 import com.tencent.bkrepo.repository.dao.PackageDao
 import com.tencent.bkrepo.repository.dao.PackageVersionDao
+import com.tencent.bkrepo.repository.dao.RepositoryDao
 import com.tencent.bkrepo.repository.model.TMetadata
 import com.tencent.bkrepo.repository.model.TPackage
 import com.tencent.bkrepo.repository.model.TPackageVersion
@@ -69,7 +74,6 @@ import com.tencent.bkrepo.repository.search.packages.PackageQueryContext
 import com.tencent.bkrepo.repository.search.packages.PackageSearchInterpreter
 import com.tencent.bkrepo.repository.search.versions.PackageVersionSearchInterpreter
 import com.tencent.bkrepo.repository.service.packages.PackageService
-import com.tencent.bkrepo.repository.service.repo.RepositoryService
 import com.tencent.bkrepo.repository.util.MetadataUtils
 import com.tencent.bkrepo.repository.util.PackageEventFactory
 import com.tencent.bkrepo.repository.util.PackageEventFactory.buildCreatedEvent
@@ -89,11 +93,12 @@ import java.time.LocalDateTime
 
 @Service
 class PackageServiceImpl(
+    private val repositoryDao: RepositoryDao,
     private val packageDao: PackageDao,
     private val packageVersionDao: PackageVersionDao,
     private val packageSearchInterpreter: PackageSearchInterpreter,
     private val packageVersionSearchInterpreter: PackageVersionSearchInterpreter,
-    private val repositoryService: RepositoryService
+    private val permissionManager: PermissionManager
 ) : PackageService {
 
     override fun findPackageByKey(projectId: String, repoName: String, packageKey: String): PackageSummary? {
@@ -179,16 +184,19 @@ class PackageServiceImpl(
         Preconditions.checkArgument(pageSize >= 0, "pageSize")
         val stageTag = option.stageTag?.split(StringPool.COMMA)
         val pageRequest = Pages.ofRequest(pageNumber, pageSize)
-        var realRepoName = repoName
-        option.srcRepo?.run {
-            val repoInfo = repositoryService.getRepoInfo(projectId, repoName)
-            if (repoInfo?.category == RepositoryCategory.VIRTUAL
-                && (repoInfo.configuration as VirtualConfiguration).repositoryList.map { it.name }.contains(this)
+        val sourceRepoName = HttpContextHolder.getRequest().getParameter("srcRepo")
+        if (sourceRepoName != null) {
+            val tRepository = repositoryDao.findByNameAndType(projectId, repoName)
+                ?: throw RepoNotFoundException("$projectId|$repoName")
+            if (
+                tRepository.category == RepositoryCategory.VIRTUAL &&
+                tRepository.configuration.readJsonString<VirtualConfiguration>().repositoryList
+                    .any { it.projectId == projectId && it.name == sourceRepoName }
             ) {
-                realRepoName = this
-            }
+                permissionManager.checkRepoPermission(PermissionAction.READ, projectId, sourceRepoName)
+            } else throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "srcRepo")
         }
-        val tPackage = packageDao.findByKey(projectId, realRepoName, packageKey)
+        val tPackage = packageDao.findByKey(projectId, sourceRepoName ?: repoName, packageKey)
         return if (tPackage == null) {
             Pages.ofResponse(pageRequest, 0, emptyList())
         } else {

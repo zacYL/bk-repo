@@ -199,19 +199,19 @@ class ExtPermissionServiceImpl(
             )
         )
         repoName?.let {
-            val noInstanceAction = getCanwayPermission(userId, projectId, it, projectActions).permissions
-            return if (noInstanceAction.isEmpty()) {
+            val instanceAction = getCanwayPermission(userId, projectId, it, repoActions).permissions
+            return if (instanceAction.isEmpty()) {
                 listOf()
             } else {
-                noInstanceAction.filter { it.instanceId == ANY_RESOURCE_CODE }[0].actionCodes
+                instanceAction.flatMap { it.actionCodes }.distinct()
             }
         }
 
-        val instanceAction = getCanwayPermission(userId, projectId, repoName, repoActions).permissions
-        return if (instanceAction.isEmpty()) {
+        val noInstanceAction = getCanwayPermission(userId, projectId, repoName, projectActions).permissions
+        return if (noInstanceAction.isEmpty()) {
             listOf()
         } else {
-            instanceAction.flatMap { it.actionCodes }.distinct()
+            noInstanceAction.filter { it.instanceId == ANY_RESOURCE_CODE }[0].actionCodes
         }
     }
 

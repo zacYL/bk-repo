@@ -1,6 +1,7 @@
 package com.tencent.bkrepo.common.cpack.service.impl
 
 import com.tencent.bkrepo.auth.api.ServiceUserResource
+import com.tencent.bkrepo.common.api.constant.HttpHeaders.ACCEPT_LANGUAGE
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
@@ -10,6 +11,7 @@ import com.tencent.bkrepo.common.cpack.conf.CpackConf
 import com.tencent.bkrepo.common.cpack.conf.CpackMailConf
 import com.tencent.bkrepo.common.cpack.enums.MailNotifyType
 import com.tencent.bkrepo.common.cpack.mail.MailTemplate
+import com.tencent.bkrepo.common.cpack.mail.MailTemplateEN
 import com.tencent.bkrepo.common.cpack.mail.QRUtils
 import com.tencent.bkrepo.common.cpack.pojo.FileShareInfo
 import com.tencent.bkrepo.common.cpack.service.NotifyService
@@ -17,6 +19,7 @@ import com.tencent.bkrepo.common.devops.conf.DevopsConf
 import com.tencent.bkrepo.common.devops.pojo.BkMailMessage
 import com.tencent.bkrepo.common.devops.pojo.DevopsMailMessage
 import com.tencent.bkrepo.common.devops.util.http.SimpleHttpUtils
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.TemporaryTokenClient
@@ -57,7 +60,9 @@ class MailServiceImpl(
             downloadUrl = content,
             qrCodeBase64 = if (nodeDetail.name.endsWith("apk") || nodeDetail.name.endsWith("ipa")) {
                 QRUtils.getQRCodeBase64(content)
-            } else null
+            } else {
+                null
+            }
         )
 
         val token = content.substringAfterLast("&token=").removeSuffix("&download=true")
@@ -98,7 +103,9 @@ class MailServiceImpl(
             downloadUrl = content,
             qrCodeBase64 = if (nodeDetail.name.endsWith("apk") || nodeDetail.name.endsWith("ipa")) {
                 QRUtils.getQRCodeBase64(content)
-            } else null
+            } else {
+                null
+            }
         )
 
         val token = content.substringAfterLast("&token=").removeSuffix("&download=true")
@@ -158,26 +165,46 @@ class MailServiceImpl(
     }
 
     private fun sendMimeMail(sender: String, file: FileShareInfo, receivers: List<String>, expireDays: String?) {
+        val request = HttpContextHolder.getRequest()
+        val languageHeader = request.getHeader(ACCEPT_LANGUAGE)
         require(receivers.isNotEmpty())
         val mailMessage = mailSender.createMimeMessage()
         val mimeMailMessage = MimeMessageHelper(mailMessage, true)
         mimeMailMessage.setFrom(mailConf.username)
         mimeMailMessage.setTo(receivers.toTypedArray())
-        val title = "【CPACK】${sender}与你共享${file.fileName}文件"
-        mimeMailMessage.setSubject(title)
-        val body = MailTemplate.mailCommonHtml(
-            cnName = sender,
-            projectId = file.projectId,
-            nest = MailTemplate.mainBodyHtml(
-                MailTemplate.fileTableHtml(
-                    cnName = sender,
-                    projectId = file.projectId,
-                    expireDays = expireDays,
-                    shareFileList = listOf(file)
+        if (languageHeader in listOf("en-US", "en")) {
+            val title = "【CPACK】$sender is sharing the file ${file.fileName} with you"
+            mimeMailMessage.setSubject(title)
+            val body = MailTemplateEN.mailCommonHtml(
+                cnName = sender,
+                projectId = file.projectId,
+                nest = MailTemplateEN.mainBodyHtml(
+                    MailTemplateEN.fileTableHtml(
+                        cnName = sender,
+                        projectId = file.projectId,
+                        expireDays = expireDays,
+                        shareFileList = listOf(file)
+                    )
                 )
             )
-        )
-        mimeMailMessage.setText(body, true)
+            mimeMailMessage.setText(body, true)
+        } else {
+            val title = "【CPACK】${sender}与你共享${file.fileName}文件"
+            mimeMailMessage.setSubject(title)
+            val body = MailTemplate.mailCommonHtml(
+                cnName = sender,
+                projectId = file.projectId,
+                nest = MailTemplate.mainBodyHtml(
+                    MailTemplate.fileTableHtml(
+                        cnName = sender,
+                        projectId = file.projectId,
+                        expireDays = expireDays,
+                        shareFileList = listOf(file)
+                    )
+                )
+            )
+            mimeMailMessage.setText(body, true)
+        }
         mailSender.send(mailMessage)
     }
 
@@ -207,26 +234,50 @@ class MailServiceImpl(
     }
 
     private fun devopsMailMessage(sender: String, file: FileShareInfo, receivers: List<String>, expireDays: String?) {
-        val title = "【CPACK】${sender}与你共享${file.fileName}文件"
-        val devopsMailMessage = DevopsMailMessage(
-            receivers = receivers.toSet(),
-            title = title,
-            sender = sender,
-            body = MailTemplate.mailCommonHtml(
-                cnName = sender,
-                projectId = file.projectId,
-                nest = MailTemplate.mainBodyHtml(
-                    MailTemplate.fileTableHtml(
-                        cnName = sender,
-                        projectId = file.projectId,
-                        expireDays = expireDays,
-                        shareFileList = listOf(file)
+        val request = HttpContextHolder.getRequest()
+        val languageHeader = request.getHeader(ACCEPT_LANGUAGE)
+        val requestUrl = "${devopsConf.devopsHost.removeSuffix("/")}$devopsMailApi"
+        if (languageHeader in listOf("en-US", "en")) {
+            val title = "【CPACK】$sender is sharing the file ${file.fileName} with you"
+            val devopsMailMessage = DevopsMailMessage(
+                receivers = receivers.toSet(),
+                title = title,
+                sender = sender,
+                body = MailTemplateEN.mailCommonHtml(
+                    cnName = sender,
+                    projectId = file.projectId,
+                    nest = MailTemplateEN.mainBodyHtml(
+                        MailTemplateEN.fileTableHtml(
+                            cnName = sender,
+                            projectId = file.projectId,
+                            expireDays = expireDays,
+                            shareFileList = listOf(file)
+                        )
                     )
                 )
             )
-        )
-        val requestUrl = "${devopsConf.devopsHost.removeSuffix("/")}$devopsMailApi"
-        SimpleHttpUtils.doPost(requestUrl, devopsMailMessage.toJsonString()).content
+            SimpleHttpUtils.doPost(requestUrl, devopsMailMessage.toJsonString()).content
+        } else {
+            val title = "【CPACK】${sender}与你共享${file.fileName}文件"
+            val devopsMailMessage = DevopsMailMessage(
+                receivers = receivers.toSet(),
+                title = title,
+                sender = sender,
+                body = MailTemplate.mailCommonHtml(
+                    cnName = sender,
+                    projectId = file.projectId,
+                    nest = MailTemplate.mainBodyHtml(
+                        MailTemplate.fileTableHtml(
+                            cnName = sender,
+                            projectId = file.projectId,
+                            expireDays = expireDays,
+                            shareFileList = listOf(file)
+                        )
+                    )
+                )
+            )
+            SimpleHttpUtils.doPost(requestUrl, devopsMailMessage.toJsonString()).content
+        }
     }
 
     private fun resolveArtifactInfo(content: String): ArtifactInfo {

@@ -6,7 +6,8 @@ export default {
             // STANDARD: 标准版
             // ENTERPRISE: 企业版
             versionType: 'STANDARD'
-        }
+        },
+        operationPermission: [] // 当前用户在当前项目中的操作权限
     },
     getters: {
         isEnterprise (state) {
@@ -16,15 +17,26 @@ export default {
     mutations: {
         UPDATE_LICENSE (state, data) {
             state.license = data
+        },
+        GET_OPERATION_PERMISSION (state, data) {
+            state.operationPermission = data
         }
     },
     actions: {
         // 查询仓库级别权限
-        getRepoPermission (_, { projectId, action, repoName }) {
-            return Vue.prototype.$ajax.get(
-                `/repository/api/permission/${projectId}/${action}`,
-                { params: { repoName } }
-            )
+        /**
+         * 查询当前登录用户在当前项目下的操作权限(目前仅限于制品仓库菜单中的 创建仓库、设置仓库、删除仓库权限)
+         * @param {*} param0
+         * @param {*} param1
+         * @returns
+         */
+        getOperationPermission ({ commit }, { projectId }) {
+            Vue.prototype.$ajax.get(
+                '/auth/api/permission/list/indevops',
+                { params: { projectId } }
+            ).then((res) => {
+                commit('GET_OPERATION_PERMISSION', res)
+            })
         },
         // 请求文件夹下的子文件夹
         // override

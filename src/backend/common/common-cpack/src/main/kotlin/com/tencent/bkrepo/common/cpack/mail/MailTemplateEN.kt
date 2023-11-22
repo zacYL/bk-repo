@@ -36,7 +36,7 @@ object MailTemplateEN {
                 td {
                     "class"("email-source")
                     "style"("padding: 14px 0; color: #bebebe;")
-                    +"Notifications from the CPACK Artifact Library"
+                    +"Notifications from the CPack Artifact Library"
                 }
             }
             // 表格内容
@@ -84,7 +84,7 @@ object MailTemplateEN {
                 }
                 div {
                     "style"("line-height: 0px")
-                    +" CPACK product library team"
+                    +" CPack product library team"
                 }
                 div {
                     "style"("line-height: 40px;float: right")
@@ -126,7 +126,7 @@ object MailTemplateEN {
                             )
                             +buildString {
         append(cnName)
-        append("shares the following files with you, please download them in time within the validity period (")
+        append(" shares the following files with you, please download them in time within the validity period (")
         append(expireDays)
         append("): ")
     }
@@ -285,7 +285,7 @@ object MailTemplateEN {
                                                 "width"("60")
                                                 div {
                                                     "style"("font-size:35px;color: hsl(240, 9%, 98%);")
-                                                    +"CPACK Artifact library"
+                                                    +"CPack Artifact Library"
                                                 }
                                             }
                                         }
@@ -314,7 +314,7 @@ object MailTemplateEN {
                                                                         "background: #fff; " +
                                                                         "font-size: 22px;"
                                                             )
-                                                            +"【CPACK】$cnName shares the following files with you"
+                                                            +"【CPack】$cnName shares the following files with you"
                                                         }
                                                     }
                                                     tr {
@@ -397,7 +397,7 @@ object MailTemplateEN {
                                                 "width"("60")
                                                 div {
                                                     "style"("font-size:35px;color: hsl(240, 9%, 98%);")
-                                                    +"CPACK Artifact Library"
+                                                    +"CPack Artifact Library"
                                                 }
                                             }
                                         }
@@ -426,7 +426,7 @@ object MailTemplateEN {
                                                     //                    "background: #fff; " +
                                                     //                    "font-size: 22px;"
                                                     //        )
-                                                    //        +"【CPACK】${cnName}与你共享以下文件"
+                                                    //        +"【CPack】${cnName}与你共享以下文件"
                                                     //    }
                                                     // }
                                                     tr {

@@ -156,11 +156,11 @@ enum class EventType(val msgKey: String) {
     CONFIG_UPDATE("artifact.event.config-update"),
 
     // repository clean
-    REPOSITORY_CLEAN("仓库清理"),
+    REPOSITORY_CLEAN("artifact.event.repo-cleanup"),
 
-    CVE_WHITE_ADD("添加Cve白名单"),
-    CVE_WHITE_ADD_BATCH("批量添加Cve白名单"),
-    CVE_WHITE_DELETE("删除Cve白名单"),
+    CVE_WHITE_ADD("artifact.event.cve-whitelist-item-add"),
+    CVE_WHITE_ADD_BATCH("artifact.event.cve-whitelist-items-add"),
+    CVE_WHITE_DELETE("artifact.event.cve-whitelist-item-remove"),
 
     // 第三方同步
     REPLICATION_THIRD_PARTY("artifact.event.replication-third-party");

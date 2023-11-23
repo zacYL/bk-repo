@@ -70,6 +70,8 @@ interface OperateLogService {
 
     fun eventTypes(): List<EventType>
 
+    fun eventName(type: EventType): String
+
     fun saveEventRequest(request: EventCreateRequest)
 
     /**

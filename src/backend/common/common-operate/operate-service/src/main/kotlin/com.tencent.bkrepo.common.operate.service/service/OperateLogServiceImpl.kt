@@ -417,6 +417,14 @@ open class OperateLogServiceImpl(
         }
     }
 
+    override fun eventName(type: EventType): String {
+        return try {
+            LocaleMessageUtils.getLocalizedMessage(type.msgKey)
+        } catch (_: IllegalArgumentException) {
+            type.name
+        }
+    }
+
     companion object {
         private val repositoryEvent = listOf(EventType.REPO_CREATED, EventType.REPO_UPDATED, EventType.REPO_DELETED)
         private val packageEvent = listOf(

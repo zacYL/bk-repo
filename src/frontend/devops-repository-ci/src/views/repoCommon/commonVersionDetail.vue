@@ -80,7 +80,7 @@
         <bk-tab-panel v-if="detail.metadata" name="metadata" :label="$t('metaData')">
             <div class="display-block" :data-title="$t('metaData')">
                 <!-- 虚拟仓库及软件源模式下不支持更新元数据 -->
-                <metadataDialog v-if="storeType !== 'virtual' && !whetherSoftware && !hasLockMetadata" ref="metadataDialogRef" @add-metadata="addMetadataHandler"></metadataDialog>
+                <metadataDialog v-if="storeType !== 'virtual' && !whetherSoftware && !hasLockMetadata && showUpdateOperation" ref="metadataDialogRef" @add-metadata="addMetadataHandler"></metadataDialog>
                 <bk-table
                     v-if="showMetadataTable"
                     :data="metadataDataList"
@@ -100,7 +100,7 @@
                     <bk-table-column :label="$t('description')" prop="description" show-overflow-tooltip></bk-table-column>
                     <bk-table-column v-if="storeType !== 'virtual' && !whetherSoftware && !hasLockMetadata" width="70">
                         <template #default="{ row }">
-                            <bk-popconfirm v-if="!row.system" trigger="click" width="230" @confirm="deleteMetadataHandler(row)">
+                            <bk-popconfirm v-if="!row.system && showUpdateOperation" trigger="click" width="230" @confirm="deleteMetadataHandler(row)">
                                 <div slot="content">
                                     <div class="flex-align-center pb10">
                                         <i class="bk-icon icon-info-circle-shape pr5 content-icon"></i>
@@ -209,6 +209,28 @@
             LockTag
         },
         mixins: [repoGuideMixin],
+        props: {
+            showUpdateOperation: {
+                type: Boolean,
+                default: true,
+                describe: '是否显示编辑制品相关操作'
+            },
+            showDeleteOperation: {
+                type: Boolean,
+                default: true,
+                describe: '是否显示删除制品相关操作'
+            },
+            showLockOperation: {
+                type: Boolean,
+                default: true,
+                describe: '是否显示锁定制品相关操作'
+            },
+            showForbidOperation: {
+                type: Boolean,
+                default: true,
+                describe: '是否显示禁用制品相关操作'
+            }
+        },
         data () {
             return {
                 tabName: 'basic',
@@ -283,13 +305,13 @@
                 return [
                     ...(!metadataMap.forbidStatus
                         ? [
-                            (this.permission.edit && !(this.storeType === 'remote') && !(this.storeType === 'virtual') && !metadataMap.lockStatus) && { clickEvent: () => this.$emit('tag'), label: this.$t('upgrade'), disabled: (basic.stageTag || '').includes('@release') },
-                            this.showRepoScan && { clickEvent: () => this.$emit('scan'), label: this.$t('scan') }
+                            (this.showUpdateOperation && !(this.storeType === 'remote') && !(this.storeType === 'virtual') && !metadataMap.lockStatus) && { clickEvent: () => this.$emit('tag'), label: this.$t('upgrade'), disabled: (basic.stageTag || '').includes('@release') }
+                            // this.showRepoScan && { clickEvent: () => this.$emit('scan'), label: this.$t('scan') }
                         ]
                         : []),
-                    !this.whetherSoftware && !(this.storeType === 'virtual') && { clickEvent: () => this.$emit('forbid'), label: metadataMap.forbidStatus ? this.$t('relieve') + this.$t('space') + this.$t('forbid') : this.$t('forbid') },
-                    !this.whetherSoftware && !(this.storeType === 'virtual') && { clickEvent: () => this.$emit('lock'), label: metadataMap.lockStatus ? this.$t('relieve') + this.$t('space') + this.$t('lock') : this.$t('lock') },
-                    (this.permission.delete && !this.whetherSoftware && !(this.storeType === 'virtual') && !metadataMap.lockStatus) && { clickEvent: () => this.$emit('delete'), label: this.$t('delete') }
+                    this.showForbidOperation && !this.whetherSoftware && !(this.storeType === 'virtual') && { clickEvent: () => this.$emit('forbid'), label: metadataMap.forbidStatus ? this.$t('relieve') + this.$t('space') + this.$t('forbid') : this.$t('forbid') },
+                    this.showLockOperation && !this.whetherSoftware && !(this.storeType === 'virtual') && { clickEvent: () => this.$emit('lock'), label: metadataMap.lockStatus ? this.$t('relieve') + this.$t('space') + this.$t('lock') : this.$t('lock') },
+                    (this.showDeleteOperation && !this.whetherSoftware && !(this.storeType === 'virtual') && !metadataMap.lockStatus) && { clickEvent: () => this.$emit('delete'), label: this.$t('delete') }
                 ]
             },
             metadataDataList () {

@@ -1,5 +1,5 @@
 <template>
-    <bk-tab class="common-version-container" type="unborder-card" :active.sync="tabName" v-bkloading="{ isLoading }">
+    <bk-tab class="common-version-container" type="unborder-card" :active.sync="tabName" @tab-change="tabChange" v-bkloading="{ isLoading }">
         <template #setting>
             <bk-button v-if="!metadataMap.forbidStatus && repoType !== 'docker'"
                 outline class="mr10" @click="$emit('download')">{{$t('download')}}</bk-button>
@@ -23,28 +23,35 @@
                         </span>
                     </template>
                 </div>
-                <div class="grid-item"
-                    v-for="{ name, label, value } in detailInfoMap"
-                    :key="name">
-                    <label>{{ label }}</label>
-                    <span class="flex-1 flex-align-center text-overflow">
-                        <span class="text-overflow" :title="value">{{ value }}</span>
-                        <template v-if="name === 'version'">
-                            <span class="ml5 repo-tag"
-                                v-for="tag in detail.basic.stageTag"
-                                :key="tag">
-                                {{ tag }}
-                            </span>
-                            <scan-tag v-if="isEnterprise && showRepoScan" class="ml10" :status="metadataMap.scanStatus"></scan-tag>
-                            <forbid-tag class="ml10"
-                                v-if="metadataMap.forbidStatus"
-                                :forbid-user="metadataMap.forbidUser"
-                                :forbid-type="metadataMap.forbidType"
-                                :forbid-description="forbidDescription">
-                            </forbid-tag>
-                        </template>
-                    </span>
+                <div v-if="detail.basic.os" class="package-name grid-item">
+                    <label>OS/ARCH</label>
+                    <span class="flex-1 text-overflow" :title="detail.basic.os.join()">{{ detail.basic.os.join() }}</span>
                 </div>
+                <template v-if="detail.basic.version">
+                    <div class="grid-item"
+                        v-for="{ name, label, value } in detailInfoMap"
+                        :key="name">
+                        <label>{{ label }}</label>
+                        <span class="flex-1 flex-align-center text-overflow">
+                            <span class="text-overflow" :title="value">{{ value }}</span>
+                            <template v-if="name === 'version'">
+                                <span class="ml5 repo-tag"
+                                    v-for="tag in detail.basic.stageTag"
+                                    :key="tag">
+                                    {{ tag }}
+                                </span>
+                                <scan-tag v-if="showRepoScan" class="ml5" :status="metadataMap.scanStatus"></scan-tag>
+                                <lock-tag v-if="metadataMap.lockStatus" :lock-user="metadataMap.lockUser" :lock-description="(detail.metadata.find(m => m.key === 'lockType') || {}).description"></lock-tag>
+                                <forbid-tag class="ml10"
+                                    v-if="metadataMap.forbidStatus"
+                                    :forbid-user="metadataMap.forbidUser"
+                                    :forbid-type="metadataMap.forbidType"
+                                    :forbid-description="forbidDescription">
+                                </forbid-tag>
+                            </template>
+                        </span>
+                    </div>
+                </template>
                 <div class="package-description grid-item">
                     <label>{{$t('description')}}</label>
                     <span class="flex-1 text-overflow" :title="detail.basic.description">{{ detail.basic.description || '' }}</span>
@@ -71,9 +78,12 @@
             <div class="version-detail-readme" v-html="readmeContent"></div>
         </bk-tab-panel>
         <bk-tab-panel v-if="detail.metadata" name="metadata" :label="$t('metaData')">
-            <div class="version-metadata display-block" :data-title="$t('metaData')">
+            <div class="display-block" :data-title="$t('metaData')">
+                <!-- 虚拟仓库及软件源模式下不支持更新元数据 -->
+                <metadataDialog v-if="storeType !== 'virtual' && !whetherSoftware && !hasLockMetadata" ref="metadataDialogRef" @add-metadata="addMetadataHandler"></metadataDialog>
                 <bk-table
-                    :data="detail.metadata.filter(m => !m.system)"
+                    v-if="showMetadataTable"
+                    :data="metadataDataList"
                     :outer-border="false"
                     :row-border="false"
                     size="small">
@@ -87,13 +97,25 @@
                             <metadata-tag :metadata="row" />
                         </template>
                     </bk-table-column>
-
                     <bk-table-column :label="$t('description')" prop="description" show-overflow-tooltip></bk-table-column>
+                    <bk-table-column v-if="storeType !== 'virtual' && !whetherSoftware && !hasLockMetadata" width="70">
+                        <template #default="{ row }">
+                            <bk-popconfirm v-if="!row.system" trigger="click" width="230" @confirm="deleteMetadataHandler(row)">
+                                <div slot="content">
+                                    <div class="flex-align-center pb10">
+                                        <i class="bk-icon icon-info-circle-shape pr5 content-icon"></i>
+                                        <div class="content-text">{{$t('deleteMetadataConfirm')}}</div>
+                                    </div>
+                                </div>
+                                <Icon class="hover-btn" size="24" name="icon-delete" />
+                            </bk-popconfirm>
+                        </template>
+                    </bk-table-column>
                 </bk-table>
             </div>
         </bk-tab-panel>
-        <bk-tab-panel v-if="detail.manifest" name="manifest" label="Manifest">
-            <div class="version-metadata display-block" data-title="Manifest">
+        <bk-tab-panel v-if="detail.manifest && !isEmpty(detail.manifest)" name="manifest" label="Manifest">
+            <div class="display-block" data-title="Manifest">
                 <bk-table
                     :data="Object.entries(detail.manifest)"
                     :outer-border="false"
@@ -107,7 +129,7 @@
                 </bk-table>
             </div>
         </bk-tab-panel>
-        <bk-tab-panel v-if="detail.layers" name="layers" label="Layers">
+        <bk-tab-panel v-if="detail.layers && !isEmpty(detail.layers)" name="layers" label="Layers">
             <div class="version-layers display-block" data-title="Layers">
                 <div class="block-header grid-item">
                     <label>ID</label>
@@ -119,7 +141,7 @@
                 </div>
             </div>
         </bk-tab-panel>
-        <bk-tab-panel v-if="detail.history" name="history" label="IMAGE HISTORY">
+        <bk-tab-panel v-if="detail.history && !isEmpty(detail.history)" name="history" label="IMAGE HISTORY">
             <div class="version-history">
                 <div class="version-history-left">
                     <div class="version-history-code hover-btn"
@@ -156,13 +178,6 @@
                 </section>
             </article>
         </bk-tab-panel>
-        <bk-tab-panel v-if="detail.metadata"
-            render-directive="if"
-            name="topo"
-            :label="$t('CICDRelatedInformation')"
-            style="height:100%;">
-            <topo :root-node="rootNode" :left-tree="leftTree" :right-tree="rightTree" />
-        </bk-tab-panel>
         <bk-tab-panel v-if="detailType === 'maven'" name="rely" :label="$t('dependencies')">
             <mavenDependencies></mavenDependencies>
         </bk-tab-panel>
@@ -174,12 +189,13 @@
     import OperationList from '@repository/components/OperationList'
     import ScanTag from '@repository/views/repoScan/scanTag'
     import forbidTag from '@repository/components/ForbidTag'
+    import LockTag from '@repository/components/LockTag'
     import mavenDependencies from '@repository/views/repoCommon/mavenDependencies'
-    import { mapState, mapGetters, mapActions } from 'vuex'
+    import metadataDialog from '@repository/components/metadataDialog'
+    import { mapState, mapActions } from 'vuex'
     import { convertFileSize, formatDate } from '@repository/utils'
     import repoGuideMixin from '@repository/views/repoCommon/repoGuideMixin'
-    import topo from '@/components/topo'
-    import topoDataMixin from './artiTopoMixin'
+    import { isEmpty } from 'lodash'
     export default {
         name: 'commonVersionDetail',
         components: {
@@ -187,11 +203,12 @@
             OperationList,
             ScanTag,
             forbidTag,
-            topo,
             metadataTag,
-            mavenDependencies
+            mavenDependencies,
+            metadataDialog,
+            LockTag
         },
-        mixins: [repoGuideMixin, topoDataMixin],
+        mixins: [repoGuideMixin],
         data () {
             return {
                 tabName: 'basic',
@@ -225,16 +242,17 @@
                         }
                     ]
                 },
-                detailType: '' // maven仓库显示依赖tab项的repoType，但不能直接用repoType，直接用会导致依赖这个tab项出现在其余的tab项之前
+                detailType: '', // maven仓库显示依赖tab项的repoType，但不能直接用repoType，直接用会导致依赖这个tab项出现在其余的tab项之前
+                isEmpty,
+                showMetadataTable: true // 用于控制元数据列表table是否显示
             }
         },
         computed: {
             ...mapState(['userList', 'permission', 'scannerSupportPackageType']),
-            ...mapGetters(['isEnterprise']),
             detailInfoMap () {
                 return [
+                    // { name: 'os', label: 'OS/ARCH' },
                     { name: 'version', label: this.$t('version') },
-                    { name: 'os', label: 'OS/ARCH' },
                     { name: 'fullPath', label: this.$t('path') },
                     { name: 'size', label: this.$t('size') },
                     { name: 'downloadCount', label: this.$t('downloads') },
@@ -252,10 +270,6 @@
                     return target
                 }, {})
             },
-            // 获取元数据中的禁用原因
-            forbidDescription () {
-                return this.detail.metadata?.find((m) => m.key === 'forbidStatus')?.description
-            },
             // 是否是 软件源模式
             whetherSoftware () {
                 return this.$route.path.startsWith('/software')
@@ -269,13 +283,28 @@
                 return [
                     ...(!metadataMap.forbidStatus
                         ? [
-                            (this.permission.edit && !(this.storeType === 'remote') && !(this.storeType === 'virtual')) && { clickEvent: () => this.$emit('tag'), label: this.$t('upgrade'), disabled: (basic.stageTag || '').includes('@release') },
-                            this.isEnterprise && this.showRepoScan && { clickEvent: () => this.$emit('scan'), label: this.$t('scan') }
+                            (this.permission.edit && !(this.storeType === 'remote') && !(this.storeType === 'virtual') && !metadataMap.lockStatus) && { clickEvent: () => this.$emit('tag'), label: this.$t('upgrade'), disabled: (basic.stageTag || '').includes('@release') },
+                            this.showRepoScan && { clickEvent: () => this.$emit('scan'), label: this.$t('scan') }
                         ]
                         : []),
                     !this.whetherSoftware && !(this.storeType === 'virtual') && { clickEvent: () => this.$emit('forbid'), label: metadataMap.forbidStatus ? this.$t('relieve') + this.$t('space') + this.$t('forbid') : this.$t('forbid') },
-                    (this.permission.delete && !this.whetherSoftware && !(this.storeType === 'virtual')) && { clickEvent: () => this.$emit('delete'), label: this.$t('delete') }
+                    !this.whetherSoftware && !(this.storeType === 'virtual') && { clickEvent: () => this.$emit('lock'), label: metadataMap.lockStatus ? this.$t('relieve') + this.$t('space') + this.$t('lock') : this.$t('lock') },
+                    (this.permission.delete && !this.whetherSoftware && !(this.storeType === 'virtual') && !metadataMap.lockStatus) && { clickEvent: () => this.$emit('delete'), label: this.$t('delete') }
                 ]
+            },
+            metadataDataList () {
+                // JavaScript中，true 被视为 1，false 被视为 0
+                return this.detail.metadata
+                    .filter(item => item.display) // 先过滤出 display 为 true 的对象
+                    .sort((a, b) => b.system - a.system) // 然后根据 system 排序， system 为 true 的对象排在前面
+            },
+            // 用户是否设置了锁定，当前制品版本处于锁定状态下时不允许添加及删除任何元数据
+            hasLockMetadata () {
+                return this.detail.metadata?.find((m) => m.key === 'lockStatus')?.value
+            },
+            // 获取元数据中的禁用原因
+            forbidDescription () {
+                return this.detail.metadata?.find((m) => m.key === 'forbidStatus')?.description
             }
         },
         watch: {
@@ -297,14 +326,18 @@
         methods: {
             convertFileSize,
             ...mapActions([
-                'getVersionDetail'
+                'getVersionDetail',
+                'addPackageMetadata',
+                'deletePackageMetadata'
             ]),
             getDetail () {
                 this.isLoading = true
+                // 在每次重新获取接口详情时都需要先将此tab页的类型置为空，否则不会重新加载依赖tab页组件，也就不会重新获取数据
+                this.detailType = ''
                 this.getVersionDetail({
                     projectId: this.projectId,
                     repoType: this.repoType,
-                    repoName: this.repoName,
+                    repoName: this.storeType === 'virtual' ? this.sourceRepoName : this.repoName,
                     packageKey: this.packageKey,
                     version: this.version
                 }).then(res => {
@@ -329,6 +362,54 @@
                 }).finally(() => {
                     this.isLoading = false
                 })
+            },
+            // 添加元数据
+            addMetadataHandler (item) {
+                const { key, value, description } = item
+                this.addPackageMetadata({
+                    projectId: this.projectId,
+                    repoName: this.storeType === 'virtual' ? this.sourceRepoName : this.repoName,
+                    body: {
+                        packageKey: this.packageKey,
+                        version: this.version,
+                        versionMetadata: [{ key, value, description, system: false }]
+                    }
+                }).then(() => {
+                    this.$bkMessage({
+                        theme: 'success',
+                        message: this.$t('add') + this.$t('space') + this.$t('success')
+                    })
+                    // 此时添加成功，需要通过ref调用组件的关闭弹窗方法
+                    this.$refs.metadataDialogRef?.hiddenAddMetadata()
+                    this.getDetail()
+                })
+            },
+            // 删除元数据
+            deleteMetadataHandler (row) {
+                this.deletePackageMetadata({
+                    projectId: this.projectId,
+                    repoName: this.storeType === 'virtual' ? this.sourceRepoName : this.repoName,
+                    body: {
+                        packageKey: this.packageKey,
+                        version: this.version,
+                        keyList: [row.key]
+                    }
+                }).then(() => {
+                    this.$bkMessage({
+                        theme: 'success',
+                        message: this.$t('delete') + this.$t('space') + this.$t('metadata') + this.$t('space') + this.$t('success')
+                    })
+                    this.getDetail()
+                })
+            },
+            tabChange () {
+                // 用于解决metadata在某些情况下列表错位，无法完整显示元数据列表内容
+                if (this.tabName === 'metadata') {
+                    this.showMetadataTable = false
+                    this.$nextTick(() => {
+                        this.showMetadataTable = true
+                    })
+                }
             }
         }
     }
@@ -351,7 +432,7 @@
             }
             > label {
                 line-height: 40px;
-                flex-basis: 120px;
+                flex-basis: 126px;
                 flex-shrink: 0;
                 background-color: var(--bgColor);
             }
@@ -383,31 +464,6 @@
             padding: 20px 10px;
             display: grid;
             background-color: var(--bgLighterColor);
-        }
-    }
-    .version-metadata {
-        .version-metadata-add {
-            position: absolute;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            top: 0;
-            right: 25px;
-            width: 35px;
-            height: 40px;
-            z-index: 1;
-            .version-metadata-add-board {
-                position: absolute;
-                top: 42px;
-                right: -25px;
-                width: 300px;
-                overflow: hidden;
-                background: white;
-                border-radius: 2px;
-                box-shadow: 0 3px 6px rgba(51, 60, 72, 0.4);
-                will-change: height;
-                transition: all .3s;
-            }
         }
     }
     .version-layers {
@@ -506,6 +562,9 @@
         }
     }
 }
+.content-icon {
+    color: var(--dangerColor);
+}
 </style>
 <style lang="scss">
 .version-detail-readme {
@@ -543,10 +602,6 @@
         margin-top: 0;
         margin-bottom: 16px;
     }
-    h1, h2 {
-        border-bottom: 1px solid var(--borderColor);
-        padding-bottom: .3em;
-    }
     h1 {
         font-size: 2rem;
     }
@@ -557,19 +612,7 @@
         font-size: 1.25rem;
     }
 
-    li + li {
-        margin-top: .25em;
-    }
-
-    img {
-        max-width: 90%;
-        display: block;
-        margin: 40px auto;
-        border-radius: 5px;
-    }
-
     table {
-        width: 100%;
         overflow: auto;
         word-break: normal;
         word-break: keep-all;

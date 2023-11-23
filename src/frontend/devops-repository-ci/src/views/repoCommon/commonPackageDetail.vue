@@ -77,7 +77,7 @@
     import OperationList from '@repository/components/OperationList'
     import InfiniteScroll from '@repository/components/InfiniteScroll'
     import operationLimitConfirmDialog from '@repository/components/operationLimitConfirmDialog'
-    import VersionDetail from '@repository/views/repoCommon/commonVersionDetail'
+    import VersionDetail from './commonVersionDetail'
     import commonFormDialog from '@repository/views/repoCommon/commonFormDialog'
     import { mapState, mapGetters, mapActions } from 'vuex'
     export default {

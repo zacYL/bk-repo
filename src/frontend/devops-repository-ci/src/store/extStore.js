@@ -7,7 +7,8 @@ export default {
             // ENTERPRISE: 企业版
             versionType: 'STANDARD'
         },
-        operationPermission: [] // 当前用户在当前项目中的操作权限
+        operationPermission: [], // 当前用户在当前项目中的操作权限
+        currentRepositoryDataPermission: [] // 当前用户在当前项目下的当前仓库的数据权限
     },
     getters: {
         isEnterprise (state) {
@@ -20,6 +21,9 @@ export default {
         },
         GET_OPERATION_PERMISSION (state, data) {
             state.operationPermission = data
+        },
+        GET_CURRENT_REPOSITORY_DATA_PERMISSION (state, data) {
+            state.currentRepositoryDataPermission = data
         }
     },
     actions: {
@@ -36,6 +40,20 @@ export default {
                 { params: { projectId } }
             ).then((res) => {
                 commit('GET_OPERATION_PERMISSION', res)
+            })
+        },
+        /**
+         * 查询当前登录用户在当前项目下当前仓库的数据权限(上传制品、编辑制品、共享制品、禁用制品、锁定制品、删除制品)
+         * @param {*} param0
+         * @param {*} param1
+         * @returns
+         */
+        getCurrentRepositoryDataPermission ({ commit }, { projectId, repoName }) {
+            Vue.prototype.$ajax.get(
+                '/auth/api/permission/list/indevops',
+                { params: { projectId, repoName } }
+            ).then((res) => {
+                commit('GET_CURRENT_REPOSITORY_DATA_PERMISSION', res)
             })
         },
         // 请求文件夹下的子文件夹

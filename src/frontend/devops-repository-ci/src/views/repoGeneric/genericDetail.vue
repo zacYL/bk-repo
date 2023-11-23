@@ -37,7 +37,7 @@
             </bk-tab-panel>
             <bk-tab-panel v-if="!detailSlider.folder" name="metaDate" :label="$t('metaData')">
                 <div class="display-block" :data-title="$t('metadata')">
-                    <metadataDialog v-if="!hasLockMetadata" ref="metadataDialogRef" @add-metadata="addMetadataHandler"></metadataDialog>
+                    <metadataDialog v-if="!hasLockMetadata && showUpdateMetadataBtn" ref="metadataDialogRef" @add-metadata="addMetadataHandler"></metadataDialog>
                     <bk-table
                         :data="(detailSlider.data.nodeMetadata || []).filter(m => m.display)"
                         :outer-border="false"
@@ -58,7 +58,7 @@
 
                         <bk-table-column width="70">
                             <template #default="{ row }">
-                                <bk-popconfirm v-if="!row.system && !hasLockMetadata" trigger="click" width="230" @confirm="deleteMetadataHandler(row)">
+                                <bk-popconfirm v-if="!row.system && !hasLockMetadata && showUpdateMetadataBtn" trigger="click" width="230" @confirm="deleteMetadataHandler(row)">
                                     <div slot="content">
                                         <div class="flex-align-center pb10">
                                             <i class="bk-icon icon-info-circle-shape pr5 content-icon"></i>
@@ -95,6 +95,13 @@
         name: 'genericDetail',
         components: { CodeArea, ciCreateTokenDialog, topo, metadataTag, metadataDialog },
         mixins: [topoDataMixin],
+        props: {
+            // 是否显示元数据的添加及删除按钮，在控制权限时使用
+            showUpdateMetadataBtn: {
+                type: Boolean,
+                default: true
+            }
+        },
         data () {
             return {
                 tabName: 'detailInfo',

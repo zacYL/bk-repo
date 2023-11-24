@@ -578,12 +578,12 @@
     "nugetDeleteGuideSubTitle":"Note: Artifacts deleted by this operation cannot be restored",
     "npmDownloadGuideSubTitle1":"1. After setting the repository address, you can use the following command to pull the artifact",
     "npmDownloadGuideSubTitle2":"2. You can also pull the artifact by specifying the registry, as follows",
-    "mavenCreditGuideSubTitle1":"Please add the following configuration to your settings.xml (global configuration file conf/settings.xml; settings.xml files within the project have higher priority) file:",
+    "mavenCreditGuideSubTitle1":"Please add the following configuration to your settings.xml file: ",
     "mavenCreditGuideSubTitle2":"Add the following configuration to the gradle.properties file in the same directory as the project file build.gradle",
     "mavenGuideTitle":"Configure dependency source address",
     "mavenGuideTitle2":"Configure dependency source addresses within the project",
     "mavenGuideTitle3":"Use specified dependencies within the project",
-    "mavenGuideSubTitle1":"Method 1 : add the following configuration to the conf/setting.xml file",
+    "mavenGuideSubTitle1":"Method 1 (Mirror proxy configuration) : add the following configuration to the conf/setting.xml file",
     "mavenGuideSubTitle2":"Settings within the project, add the following configuration to the pom.xml file of the project",
     "mavenPushGuideSubTitle1":"Add the following configuration to the pom.xml file",
     "mavenPushGuideCodeListAnnotate":"The id value is consistent with the configured server id",
@@ -592,7 +592,7 @@
     "mavenPushGuideSubTitle4":"Execute the following command on the command line to push artifacts",
     "mavenPushGuideSubTitle5":"Add the following configuration to your project's build.gradle file",
     "mavenPushGuideSubTitle6":"Execute the following command on the command line to push artifacts",
-    "mavenPullGuideSubTitle1":"Method 2: Add the following configuration to the conf/settings.xml file",
+    "mavenPullGuideSubTitle1":"Method 2 (Remote repository proxy source configuration) : Add the following configuration to the conf/settings.xml file",
     "mavenPullGuideSubTitle2":"Execute the following command on the command line to pull the artifact",
     "mavenPullGuideSubTitle3":"Add the following configuration to your project's build.gradle file",
     "mavenPullGuideSubTitle4":"Execute the following command on the command line to pull artifacts",
@@ -1014,5 +1014,8 @@
     "mavenGroupIdLabel":"GroupId",
     "mavenArtifactIdLabel":"ArtifactId",
     "mavenGroupIdPlaceholder":"Please fill in the groupId",
-    "mavenArtifactIdPlaceholder":"Please fill in the artifactId"
+    "mavenArtifactIdPlaceholder":"Please fill in the artifactId",
+    "composerInputLabel":"Package Name",
+    "composerInputPlaceholder":"Please fill in the artifact package Name",
+    "npmVersionInputPlaceholder":"Please fill in the artifact version. It can be empty. If it is empty, the latest version will be pulled by default."
 }

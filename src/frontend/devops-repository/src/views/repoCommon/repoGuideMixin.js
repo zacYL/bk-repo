@@ -260,7 +260,7 @@ export default {
                         {
                             key: 'dependInputValue2', // vux中存储的变量名
                             label: this.$t('artifactVersion'), // 输入框左侧label文案
-                            placeholder: this.$t('packageVersionPlaceholder'), // 输入框提示文案
+                            placeholder: this.$t('npmVersionInputPlaceholder'), // 输入框提示文案
                             methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
                         }
                     ],
@@ -268,22 +268,22 @@ export default {
                         {
                             subTitle: this.$t('npmDownloadGuideSubTitle1'),
                             constructType: 'npm',
-                            codeList: [`npm install ${this.dependInputValue1 || this.packageName}${this.dependInputValue2 ? '@' + this.dependInputValue2 : ''}`]
+                            codeList: [`npm install ${this.dependInputValue1 || this.packageName + '@' + this.versionLabel}${this.dependInputValue1 && this.dependInputValue2 ? '@' + this.dependInputValue2 : ''}`]
                         },
                         {
                             subTitle: this.$t('npmDownloadGuideSubTitle1'),
                             constructType: 'yarn',
-                            codeList: [`yarn add ${this.dependInputValue1 || this.packageName}${this.dependInputValue2 ? '@' + this.dependInputValue2 : ''}`]
+                            codeList: [`yarn add ${this.dependInputValue1 || this.packageName + '@' + this.versionLabel}${this.dependInputValue1 && this.dependInputValue2 ? '@' + this.dependInputValue2 : ''}`]
                         },
                         {
                             subTitle: this.$t('npmDownloadGuideSubTitle2'),
                             constructType: 'npm',
-                            codeList: [`npm install ${this.dependInputValue1 || this.packageName}${this.dependInputValue2 ? '@' + this.dependInputValue2 : ''} --registry ${this.domain.npm}/${this.projectId}/${this.repoName}/`]
+                            codeList: [`npm install ${this.dependInputValue1 || this.packageName + '@' + this.versionLabel}${this.dependInputValue1 && this.dependInputValue2 ? '@' + this.dependInputValue2 : ''} --registry ${this.domain.npm}/${this.projectId}/${this.repoName}/`]
                         },
                         {
                             subTitle: this.$t('npmDownloadGuideSubTitle2'),
                             constructType: 'yarn',
-                            codeList: [`yarn add ${this.dependInputValue1 || this.packageName}${this.dependInputValue2 ? '@' + this.dependInputValue2 : ''} --registry ${this.domain.npm}/${this.projectId}/${this.repoName}/`]
+                            codeList: [`yarn add ${this.dependInputValue1 || this.packageName + '@' + this.versionLabel}${this.dependInputValue1 && this.dependInputValue2 ? '@' + this.dependInputValue2 : ''} --registry ${this.domain.npm}/${this.projectId}/${this.repoName}/`]
                         }
                     ]
                 }
@@ -545,11 +545,14 @@ export default {
                             subTitle: this.$t('mavenGuideSubTitle2'),
                             constructType: 'Apache Maven',
                             codeList: [
-                                '<repository>',
+                                '<repositories>',
+                                '    <repository>',
+                                `       <!--${this.$t('mavenPushGuideCodeListAnnotate')}-->`,
                                 `       <id>${this.projectId}-${this.repoName}</id>`,
                                 `       <name>${this.repoName}</name>`,
                                 `       <url>${this.repoUrl}/</url>`,
-                                '</repository>'
+                                '    </repository>',
+                                '</repositories>'
                             ]
                         },
                         {
@@ -999,8 +1002,8 @@ export default {
                         inputBoxList: [
                             {
                                 key: 'dependInputValue1', // vux中存储的变量名
-                                label: this.$t('artifactName'), // 输入框左侧label文案
-                                placeholder: this.$t('artifactNamePlaceholder'), // 输入框提示文案
+                                label: this.$t('composerInputLabel'), // 输入框左侧label文案
+                                placeholder: this.$t('composerInputPlaceholder'), // 输入框提示文案
                                 methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
                             }
                         ],

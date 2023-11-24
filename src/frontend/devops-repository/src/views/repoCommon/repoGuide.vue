@@ -17,7 +17,6 @@
                 <bk-input
                     class="mt10"
                     v-model.trim="tokenInput"
-                    type="password"
                     :placeholder="$t('accessTokenPlaceholder')"
                     clearable
                     @change="onChangeAccessToken">

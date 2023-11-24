@@ -333,7 +333,7 @@
             } else next()
         },
         created () {
-            this.getCurrentRepositoryDataPermission({ projectId: this.projectId, repoName: name })
+            this.getCurrentRepositoryDataPermission({ projectId: this.projectId, repoName: this.repoName })
             this.getRepoListAll({ projectId: this.projectId })
             this.initTree()
             this.pathChange()

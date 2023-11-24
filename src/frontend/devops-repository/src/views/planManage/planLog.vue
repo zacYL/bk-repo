@@ -170,9 +170,12 @@
                 }
             },
             openErrorDetail (row) {
+                // 因为后端接口涉及改动较大，且不好实现，后端在分发异常的时候错误信息会始终携带指定字符串 “部分数据同步失败”，所以产品同学说前端针对这几个指定字符串的国际化做特殊处理
+                const errorReason = (this.currentLanguage === 'zh-cn' ? '部分数据同步失败' : 'Partial data synchronization failed') + row.errorReason.split('部分数据同步失败')?.[1] || ''
+                
                 this.errorDialog = {
                     show: true,
-                    reason: row.errorReason
+                    reason: errorReason
                 }
             },
             closeErrorDialog () {
@@ -191,5 +194,6 @@
 .error-dialog-info{
     max-height: 250px;
     overflow-y: auto;
+    word-break: break-all;
 }
 </style>

@@ -98,6 +98,7 @@ const val ANALYSIS_EXECUTOR_SERVICE_NAME = "\${service.prefix:repo-}analysis-exe
 const val LICENSE_SERVICE_NAME = "\${service-prefix:}license\${service-suffix:}"
 const val JOB_SERVICE_NAME = "\${service.prefix:repo-}job\${service.suffix:}"
 const val OCI_SERVICE_NAME = "\${service.prefix:repo-}oci\${service.suffix:}"
+const val GENERIC_SERVICE_NAME = "\${service.prefix:repo-}generic\${service.suffix:}"
 
 /**
  *  Devops Service Name
@@ -114,6 +115,13 @@ const val BEARER_AUTH_PREFIX = "Bearer "
 const val AUTH_HEADER_UID = "X-BKREPO-UID"
 const val OAUTH_AUTH_PREFIX = "Oauth "
 const val TEMPORARY_TOKEN_AUTH_PREFIX = "Temporary "
+
+/**
+ * micro service header user id key
+ */
+const val MS_AUTH_HEADER_UID = "X-BKREPO-MS-UID"
+
+const val MS_REQUEST_SRC_CLUSTER = "X-BKREPO-MS-CLUSTER"
 
 /**
  * 验证是否允许下载时，写入request attributes的key

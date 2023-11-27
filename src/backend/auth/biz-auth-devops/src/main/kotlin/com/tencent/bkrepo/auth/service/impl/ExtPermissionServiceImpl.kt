@@ -4,7 +4,12 @@ import com.tencent.bkrepo.auth.api.CanwayCustomPermissionClient
 import com.tencent.bkrepo.auth.api.CanwayCustomRoleClient
 import com.tencent.bkrepo.auth.api.CanwayProjectClient
 import com.tencent.bkrepo.auth.api.ServicePermissionResource
-import com.tencent.bkrepo.auth.constant.*
+import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_VIEWER
+import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_ADMIN
+import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_USER
+import com.tencent.bkrepo.auth.constant.AUTH_ADMIN
+import com.tencent.bkrepo.auth.constant.AuthConstant.ANY_RESOURCE_CODE
+import com.tencent.bkrepo.auth.constant.PROJECT_VIEW_PERMISSION
 import com.tencent.bkrepo.auth.constant.AuthConstant.CPACK_MANAGER
 import com.tencent.bkrepo.auth.constant.AuthConstant.CPACK_USER
 import com.tencent.bkrepo.auth.constant.AuthConstant.CPACK_VIEWERS
@@ -15,15 +20,19 @@ import com.tencent.bkrepo.auth.constant.AuthSubjectCode.GROUP
 import com.tencent.bkrepo.auth.constant.AuthSubjectCode.USER
 import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.model.TPermission
+import com.tencent.bkrepo.auth.pojo.CanwayBkrepoPermission
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.permission.AnyResourcePermissionSaveDTO
 import com.tencent.bkrepo.auth.pojo.permission.Permission
+import com.tencent.bkrepo.auth.pojo.permission.ProjectPermissionAndAdminVO
+import com.tencent.bkrepo.auth.pojo.permission.UserPermissionQueryDTO
 import com.tencent.bkrepo.auth.pojo.role.RoleCreateDTO
 import com.tencent.bkrepo.auth.pojo.role.RoleVO
 import com.tencent.bkrepo.auth.pojo.role.SubjectDTO
 import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.devops.CATELOG_RESOURCECODE
+import com.tencent.bkrepo.common.devops.REPLICA_RESOURCECODE
 import com.tencent.bkrepo.common.devops.RESOURCECODE
 import com.tencent.bkrepo.common.devops.SEARCH_RESOURCECODE
 import com.tencent.bkrepo.repository.api.ProjectClient
@@ -169,6 +178,42 @@ class ExtPermissionServiceImpl(
                 logger.error("${project.name} project permission merge fail:${exception.message}")
             }
         }
+    }
+
+    fun listDevOpsPermission(userId: String, projectId: String, repoName: String?): List<CanwayBkrepoPermission> {
+        val canwayBkrepoPermission = mutableListOf<CanwayBkrepoPermission>()
+        // 制品仓库实例数据权限动作
+        repoName?.let {
+            val repoInstanceAction = getCanwayPermission(userId, projectId, it, RESOURCECODE).permissions
+            canwayBkrepoPermission.add(
+                CanwayBkrepoPermission(
+                resourceCode = RESOURCECODE,
+                actionCodes = if (repoInstanceAction.isEmpty()) {
+                    emptyList()
+                } else {
+                    repoInstanceAction.flatMap { it.actionCodes }.distinct()
+                }
+                )
+            )
+            return canwayBkrepoPermission
+        }
+        // 所有动作权限（非实例）
+        listOf(RESOURCECODE, CATELOG_RESOURCECODE, SEARCH_RESOURCECODE, REPLICA_RESOURCECODE).forEach { resourceCode ->
+            val repoActionList = getCanwayPermission(userId, projectId, repoName, resourceCode).permissions
+            canwayBkrepoPermission.add(
+                CanwayBkrepoPermission(
+                    resourceCode = resourceCode,
+                    actionCodes = if (repoActionList.isEmpty()) {
+                        emptyList()
+                    } else {
+                        repoActionList.filter {
+                            it.instanceId == ANY_RESOURCE_CODE
+                        }[0].actionCodes
+                    }
+                )
+            )
+        }
+        return canwayBkrepoPermission
     }
 
     /**
@@ -349,6 +394,18 @@ class ExtPermissionServiceImpl(
                         AnyResourcePermissionSaveDTO(
                             resourceCode = RESOURCECODE,
                             actionCode = PermissionAction.UPDATE.name.toLowerCase()
+                        ),
+                        AnyResourcePermissionSaveDTO(
+                            resourceCode = RESOURCECODE,
+                            actionCode = PermissionAction.SHARE.name.toLowerCase()
+                        ),
+                        AnyResourcePermissionSaveDTO(
+                            resourceCode = RESOURCECODE,
+                            actionCode = PermissionAction.FORBID.name.toLowerCase()
+                        ),
+                        AnyResourcePermissionSaveDTO(
+                            resourceCode = RESOURCECODE,
+                            actionCode = PermissionAction.LOCK.name.toLowerCase()
                         )
                     )
                 )
@@ -377,6 +434,22 @@ class ExtPermissionServiceImpl(
                             resourceCode = RESOURCECODE,
                             actionCode = PermissionAction.MANAGE.name.toLowerCase()
                         ),
+                        AnyResourcePermissionSaveDTO(
+                            resourceCode = RESOURCECODE,
+                            actionCode = PermissionAction.REPO_DELETE.name.toLowerCase()
+                        ),
+                        AnyResourcePermissionSaveDTO(
+                            resourceCode = RESOURCECODE,
+                            actionCode = PermissionAction.SHARE.name.toLowerCase()
+                        ),
+                        AnyResourcePermissionSaveDTO(
+                            resourceCode = RESOURCECODE,
+                            actionCode = PermissionAction.FORBID.name.toLowerCase()
+                        ),
+                        AnyResourcePermissionSaveDTO(
+                            resourceCode = RESOURCECODE,
+                            actionCode = PermissionAction.LOCK.name.toLowerCase()
+                        )
                     )
                 )
             }
@@ -392,6 +465,25 @@ class ExtPermissionServiceImpl(
             permissions = permissionList
         )
         return cpackRole
+    }
+
+    private fun getCanwayPermission(
+        userId: String,
+        projectId: String,
+        repoName: String?,
+        resourceCode: String,
+        actions: List<String> = emptyList()
+    ): ProjectPermissionAndAdminVO {
+        return canwayProjectClient.getUserPermission(
+            projectId = projectId,
+            UserPermissionQueryDTO(
+                userId = userId,
+                resourceCode = resourceCode,
+                actionCodes = actions,
+                instanceIds = if (repoName.isNullOrBlank()) listOf(ANY_RESOURCE_CODE) else listOf(repoName),
+                paddingInstancePermission = false
+            )
+        ).data!!
     }
 
     companion object {

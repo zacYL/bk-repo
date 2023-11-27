@@ -1,7 +1,11 @@
 package com.tencent.bkrepo.auth.api
 
 import com.tencent.bkrepo.auth.constant.AuthConstant
-import com.tencent.bkrepo.auth.pojo.role.*
+import com.tencent.bkrepo.auth.pojo.role.RoleCreateDTO
+import com.tencent.bkrepo.auth.pojo.role.RoleVO
+import com.tencent.bkrepo.auth.pojo.role.NameAndDescDTO
+import com.tencent.bkrepo.auth.pojo.role.SubjectDTO
+import com.tencent.bkrepo.auth.pojo.role.RoleMemberVO
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.v3.oas.annotations.Operation
@@ -11,7 +15,11 @@ import net.canway.devops.api.pojo.Response
 import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.context.annotation.Primary
 import org.springframework.http.MediaType
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestHeader
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.RequestBody
 
 @Api("平台权限自定义角色接口")
 @Primary

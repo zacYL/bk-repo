@@ -79,12 +79,12 @@
             <bk-table-column :label="$t('createdDate')" prop="CREATED_TIME" width="150" :render-header="renderHeader">
                 <template #default="{ row }">{{formatDate(row.createdDate)}}</template>
             </bk-table-column> -->
-            <bk-table-column :label="$t('enablePlan')" width="100">
+            <bk-table-column v-if="enablePlanPermission" :label="$t('enablePlan')" width="100">
                 <template #default="{ row }">
                     <bk-switcher class="m5" v-model="row.enabled" size="small" theme="primary" @change="changeEnabledHandler(row)"></bk-switcher>
                 </template>
             </bk-table-column>
-            <bk-table-column :label="$t('execute')" width="80">
+            <bk-table-column v-if="executePlanPermission" :label="$t('execute')" width="80">
                 <template #default="{ row }">
                     <i class="devops-icon icon-play3 hover-btn inline-block"
                         :class="{ 'disabled': row.lastExecutionStatus === 'RUNNING' }"
@@ -96,10 +96,10 @@
                 <template #default="{ row }">
                     <operation-list
                         :list="[
-                            { label: $t('edit'), clickEvent: () => editPlanHandler(row), disabled: Boolean(row.lastExecutionStatus) },
-                            { label: $t('copyPlan'), clickEvent: () => copyPlanHandler(row) },
-                            { label: $t('copyUrl'), clickEvent: () => copyUrlHandler(row) },
-                            { label: $t('delete'), clickEvent: () => deletePlanHandler(row) },
+                            updatePlanPermission && { label: $t('edit'), clickEvent: () => editPlanHandler(row), disabled: Boolean(row.lastExecutionStatus) },
+                            copyPlanPermission && { label: $t('copyPlan'), clickEvent: () => copyPlanHandler(row) },
+                            copyPlanPermission && { label: $t('copyUrl'), clickEvent: () => copyUrlHandler(row) },
+                            deletePlanPermission && { label: $t('delete'), clickEvent: () => deletePlanHandler(row) },
                             { label: $t('log'), clickEvent: () => showPlanLogHandler(row) }
                         ]"></operation-list>
                 </template>
@@ -176,22 +176,41 @@
             }
         },
         computed: {
-            ...mapState(['userList']),
+            ...mapState(['userList', 'operationPermission']),
             projectId () {
                 return this.$route.params.projectId
             },
+            // 获取制品分发的全部操作权限
+            planOperationPermission () {
+                return this.operationPermission?.find((item) => item.resourceCode === 'v_pack_replica')?.actionCodes || []
+            },
             // 是否有创建权限
             createPlanPermission () {
-                return !this.ciMode ? true : this.currentPermissionList?.includes('create')
+                return !this.ciMode ? true : this.planOperationPermission?.includes('create')
+            },
+            // 是否有编辑权限
+            updatePlanPermission () {
+                return !this.ciMode ? true : this.planOperationPermission?.includes('create')
+            },
+            // 是否有启用分发计划的权限
+            enablePlanPermission () {
+                return !this.ciMode ? true : this.planOperationPermission?.includes('create')
+            },
+            // 是否有执行分发计划权限
+            executePlanPermission () {
+                return !this.ciMode ? true : this.planOperationPermission?.includes('create')
+            },
+            // 是否有复制计划及复制URL权限
+            copyPlanPermission () {
+                return !this.ciMode ? true : this.planOperationPermission?.includes('create')
+            },
+            // 是否有删除计划权限
+            deletePlanPermission () {
+                return !this.ciMode ? true : this.planOperationPermission?.includes('delete')
             }
         },
         created () {
             this.handlerPaginationChange()
-            if (this.ciMode) {
-                this.getPlanOperationPermission({ projectId: this.projectId }).then((res) => {
-                    this.currentPermissionList = res
-                })
-            }
         },
         methods: {
             formatDate,

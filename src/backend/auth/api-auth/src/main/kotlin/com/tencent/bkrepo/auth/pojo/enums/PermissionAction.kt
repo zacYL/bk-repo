@@ -49,6 +49,16 @@ enum class PermissionAction {
     ENABLE,
     EXECUTE,
     COPY,
+    /**
+     * 新增仓库控制权限
+     */
+    REPO_DELETE,
+    /**
+     * 新增动作权限
+     */
+    SHARE,
+    FORBID,
+    LOCK,
 
     /*canway extend
       从4.3.1 开始不再使用

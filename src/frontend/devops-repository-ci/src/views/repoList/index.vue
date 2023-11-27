@@ -89,25 +89,25 @@
                     <span v-if="row.public" class="mr5 repo-tag WARNING" :data-name="$t('public')"></span>
                 </template>
             </bk-table-column>
-            <bk-table-column :label="$t('storeTypes')" width="160">
+            <bk-table-column :label="$t('storeTypes')" width="180">
                 <template #default="{ row }">
                     <span>{{$t((row.category.toLowerCase() || 'local') + 'Store')}}</span>
                 </template>
             </bk-table-column>
-            <bk-table-column :label="$t('createdDate')" width="150">
+            <bk-table-column :label="$t('createdDate')" width="180">
                 <template #default="{ row }">{{ formatDate(row.createdDate) }}</template>
             </bk-table-column>
-            <bk-table-column :label="$t('createdBy')" width="100" show-overflow-tooltip>
+            <bk-table-column :label="$t('createdBy')" width="180" show-overflow-tooltip>
                 <template #default="{ row }">
                     {{ userList[row.createdBy] ? userList[row.createdBy].name : row.createdBy }}
                 </template>
             </bk-table-column>
-            <bk-table-column :label="$t('operation')" width="100">
+            <bk-table-column v-if="canSetting || canDelete" :label="$t('operation')" width="100">
                 <template #default="{ row }">
                     <operation-list
                         :list="[
-                            { label: $t('setting'), clickEvent: () => toRepoConfig(row) },
-                            !['custom', 'pipeline', 'docker-local','report','log'].includes(row.name) && { label: $t('delete'), clickEvent: () => deleteRepo(row) }
+                            canSetting && { label: $t('setting'), clickEvent: () => toRepoConfig(row) },
+                            (!['custom', 'pipeline', 'docker-local','report','log'].includes(row.name) && canDelete) && { label: $t('delete'), clickEvent: () => deleteRepo(row) }
                         ].filter(Boolean)">
                     </operation-list>
                 </template>
@@ -149,7 +149,6 @@
                 repoEnum,
                 storeTypeEnum, // 仓库类型（本地/远程/虚拟）
                 isLoading: false,
-                canCreate: false,
                 repoList: [],
                 query: {
                     name: this.$route.query.name,
@@ -165,9 +164,25 @@
             }
         },
         computed: {
-            ...mapState(['userList']),
+            ...mapState(['userList', 'operationPermission']),
             projectId () {
                 return this.$route.params.projectId
+            },
+            // 获取制品仓库菜单中的相关权限
+            repoListOperationPermission () {
+                return this.operationPermission?.find((res) => res.resourceCode === 'bkrepo')?.actionCodes || []
+            },
+            // 是否有创建仓库的权限
+            canCreate () {
+                return this.repoListOperationPermission.includes('create')
+            },
+            // 是否有设置仓库的权限
+            canSetting () {
+                return this.repoListOperationPermission.includes('manage')
+            },
+            // 是否有删除仓库的权限
+            canDelete () {
+                return this.repoListOperationPermission.includes('repo_delete')
             }
         },
         watch: {
@@ -188,19 +203,12 @@
             const dependentCurrent = parseInt(this.$route.query.c || 1)
             const dependentLimit = parseInt(this.$route.query.l || 20)
             this.handlerPaginationChange({ current: dependentCurrent, limit: dependentLimit })
-            this.getRepoPermission({
-                projectId: this.projectId,
-                action: 'create'
-            }).then(res => {
-                this.canCreate = res
-            })
         },
         methods: {
             formatDate,
             ...mapActions([
                 'getRepoList',
-                'deleteRepoList',
-                'getRepoPermission'
+                'deleteRepoList'
             ]),
             // 关闭弹窗后需要将当前选中的仓库类型置为初始值，否则会导致再次打开同一种类型的弹窗时逻辑错误，(远程仓库和虚拟仓库也会默认选中generic仓库)
             onCloseDialog () {

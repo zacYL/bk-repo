@@ -104,7 +104,7 @@ class UserRepositoryController(
         @RequestBody userRepoCreateRequest: UserRepoCreateRequest
     ): Response<Void> {
         val createRequest = with(userRepoCreateRequest) {
-            permissionManager.checkProjectPermission(PermissionAction.MANAGE, projectId)
+            permissionManager.checkProjectPermission(PermissionAction.CREATE, projectId)
             RepoCreateRequest(
                 projectId = projectId,
                 name = name,
@@ -207,7 +207,6 @@ class UserRepositoryController(
     }
 
     @ApiOperation("删除仓库")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.DELETE)
     @DeleteMapping("/delete/{projectId}/{repoName}")
     fun deleteRepo(
         @RequestAttribute userId: String,
@@ -218,7 +217,7 @@ class UserRepositoryController(
         @ApiParam(value = "是否强制删除", required = false)
         @RequestParam forced: Boolean = false
     ): Response<Void> {
-        permissionManager.checkPermission(ResourceType.REPO, PermissionAction.MANAGE, projectId, repoName)
+        permissionManager.checkProjectPermission(PermissionAction.REPO_DELETE, projectId)
         repositoryService.deleteRepo(RepoDeleteRequest(projectId, repoName, forced, userId))
         return ResponseBuilder.success()
     }

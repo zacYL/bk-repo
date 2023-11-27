@@ -80,9 +80,7 @@ class TemporaryAccessController(
     @PostMapping("/url/create")
     fun createUrl(@RequestBody request: TemporaryUrlCreateRequest): Response<List<TemporaryAccessUrl>> {
         with(request) {
-            fullPathSet.forEach {
-                permissionManager.checkNodePermission(PermissionAction.READ, projectId, repoName, it)
-            }
+            permissionManager.checkRepoPermission(PermissionAction.SHARE, projectId, repoName)
             return ResponseBuilder.success(temporaryAccessService.createUrl(request))
         }
     }

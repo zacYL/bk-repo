@@ -75,7 +75,7 @@ class DevOpsAuthGeneral(
                 paddingInstancePermission = true
             )
         ).data?.let { repoList.addAll(it.permissions.map { it.instanceId }) }
-        logger.info("Read Permission repoNameList:${repoList}")
+        logger.info("Read Permission repoNameList:$repoList")
 
         if (repoList.contains(ANY_RESOURCE_CODE)) {
             repoList.remove(ANY_RESOURCE_CODE)
@@ -98,11 +98,13 @@ class DevOpsAuthGeneral(
                 paddingInstancePermission = true
             )
         ).data?.let {
-            repoList.addAll(it.permissions
+            repoList.addAll(
+                it.permissions
                 .filter { it.actionCodes.toSet() == convertEnumListToStringList(actions).toSet() }
-                .map { it.instanceId })
+                .map { it.instanceId }
+            )
         }
-        logger.info("${actions} Permission repoNameList:${repoList}")
+        logger.info("$actions Permission repoNameList:$repoList")
 
         if (repoList.contains(ANY_RESOURCE_CODE)) {
             repoList.remove(ANY_RESOURCE_CODE)
@@ -114,20 +116,18 @@ class DevOpsAuthGeneral(
     /**
      * 删除实例权限数据
      */
-    fun removeResourcePermissions(projectId: String, repoName: String):Boolean {
+    fun removeResourcePermissions(projectId: String, repoName: String): Boolean {
         return canwayCustomPermissionClient.removeResourcePermissions(
             userId = AUTH_ADMIN,
-            request =  RemoveInstancePermissionsRequest(
+            request = RemoveInstancePermissionsRequest(
                 instanceIds = listOf(repoName),
                 resourceCode = RESOURCECODE,
                 scope = Pair(SCOPECODE, projectId)
             )
         ).data ?: false
-
     }
 
     companion object {
         val logger: Logger = LoggerFactory.getLogger(CanwayPermissionServiceImpl::class.java)
     }
-
 }

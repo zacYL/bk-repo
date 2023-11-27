@@ -18,4 +18,9 @@ interface SoftwareRepositoryService {
         option: RepoListOption,
         includeGeneric: Boolean
     ): List<RepositoryInfo>
+
+    fun listRepoByProjects(
+        projectIdList: List<String>? = null,
+        option: RepoListOption
+    ): List<RepositoryInfo>
 }

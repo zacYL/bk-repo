@@ -32,7 +32,9 @@ class SoftwareRepositoryServiceImpl(
         pageSize: Int,
         option: RepoListOption
     ): Page<RepositoryInfo> {
-        val query = buildListQuery(projectId, option, includeGeneric = true, ciProjects = null)
+        val query = buildListQuery(
+            projectId?.let { listOf(projectId) }, option, includeGeneric = true, ciProjects = null
+        )
         val pageRequest = Pages.ofRequest(pageNumber, pageSize)
         val totalRecords = repositoryDao.count(query)
         val records = repositoryDao.find(query.with(pageRequest)).map { convertToInfo(it)!! }
@@ -44,7 +46,15 @@ class SoftwareRepositoryServiceImpl(
         option: RepoListOption,
         includeGeneric: Boolean
     ): List<RepositoryInfo> {
-        val query = buildListQuery(projectId, option, includeGeneric, ciProjects = null)
+        val query = buildListQuery(projectId?.let { listOf(projectId) }, option, includeGeneric, ciProjects = null)
+        return repositoryDao.find(query).map { convertToInfo(it)!! }
+    }
+
+    override fun listRepoByProjects(
+        projectIdList: List<String>?,
+        option: RepoListOption
+    ): List<RepositoryInfo> {
+        val query = buildListQuery(projectIdList, option, false, ciProjects = null)
         return repositoryDao.find(query).map { convertToInfo(it)!! }
     }
 
@@ -52,7 +62,7 @@ class SoftwareRepositoryServiceImpl(
      * 构造list查询条件
      */
     private fun buildListQuery(
-        projectId: String?,
+        projectIdList: List<String>?,
         option: RepoListOption,
         includeGeneric: Boolean,
         ciProjects: List<String>? = null
@@ -61,8 +71,8 @@ class SoftwareRepositoryServiceImpl(
         val publicCriteria = where(TRepository::public).`is`(true)
         val systemCriteria = where(TRepository::configuration).regex("\\\"system\\\"( )?:( )?true")
         val criteria = where(TRepository::deleted).isEqualTo(null)
-        if (projectId != null && projectId.isNotBlank()) {
-            criteria.and(TRepository::projectId).`is`(projectId)
+        if (!projectIdList.isNullOrEmpty()) {
+            criteria.and(TRepository::projectId).`in`(projectIdList)
         } else if (ciProjects != null && ciProjects.isNotEmpty()) {
             criteria.and(TRepository::projectId).inValues(ciProjects)
         } else {

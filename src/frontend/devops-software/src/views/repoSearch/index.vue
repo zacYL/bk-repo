@@ -4,6 +4,7 @@
             <div class="flex-align-center">
                 <type-select
                     :repo-list="repoEnum.filter(r => r !== 'generic')"
+                    :project-list="projectList"
                     :repo-type="repoType"
                     :artifact-original-list="artifactOriginalList"
                     :condition-list="repoSearchConditionMap.filter((item) => item.id !== 'checkSum')"
@@ -143,7 +144,7 @@
                     md5: this.searchArtifactParams.md5,
                     sha256: this.searchArtifactParams.sha256,
                     metadataList: this.searchArtifactParams.metadataList,
-                    artifactList: this.searchArtifactParams.artifactList
+                    projectList: this.searchArtifactParams.projectList
                 }).then(({ records }) => {
                     scrollLoad ? this.resultList.push(...records) : (this.resultList = records)
                     // 后端接口返回的数组数量是否大于等于当前页码，如果大于等于，表示可能还有下一页，需要支持加载下一页
@@ -166,12 +167,12 @@
                         })
                         delete urlParams.metadataList
                     }
-                    // 选择的仓库列表处理，例如artifactProperties[0] = test & artifactProperties[1] = test2
-                    if (urlParams.artifactList?.length > 0) {
-                        urlParams.artifactList.forEach((artifact, index) => {
-                            urlParams[`artifactProperties[${index}]`] = artifact
+                    // 选择的项目列表处理，例如 projectProperties[0] = test & projectProperties[1] = test2
+                    if (urlParams.projectList?.length > 0) {
+                        urlParams.projectList.forEach((project, index) => {
+                            urlParams[`projectProperties[${index}]`] = project
                         })
-                        delete urlParams.artifactList
+                        delete urlParams.projectList
                     }
                     this.$router.replace({
                         query: {

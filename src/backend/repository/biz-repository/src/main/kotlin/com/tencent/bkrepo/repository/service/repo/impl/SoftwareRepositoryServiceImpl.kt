@@ -71,7 +71,7 @@ class SoftwareRepositoryServiceImpl(
         val publicCriteria = where(TRepository::public).`is`(true)
         val systemCriteria = where(TRepository::configuration).regex("\\\"system\\\"( )?:( )?true")
         val criteria = where(TRepository::deleted).isEqualTo(null)
-        if (!projectIdList.isNullOrEmpty()) {
+        if (projectIdList != null) {
             criteria.and(TRepository::projectId).`in`(projectIdList)
         } else if (ciProjects != null && ciProjects.isNotEmpty()) {
             criteria.and(TRepository::projectId).inValues(ciProjects)

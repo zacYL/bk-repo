@@ -190,7 +190,8 @@
             }
         },
         created () {
-            this.getCurrentRepositoryDataPermission({ projectId: this.projectId, repoName: this.repoName })
+            // 注意：软件源模式下不需要判断权限，软件源的vuex中也没有该接口定义，因为软件源模式下所有用户都是只读权限
+            !this.whetherSoftware && this.getCurrentRepositoryDataPermission({ projectId: this.projectId, repoName: this.repoName })
             // 制品搜索且选择了指定的版本详情时需要默认触发版本的搜索
             this.versionInput = this.$route.query.searchFlag ? this.version : ''
             this.getPackageInfoHandler()

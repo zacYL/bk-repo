@@ -365,13 +365,19 @@ class UserNodeController(
 
         with(request) {
             permissionManager.checkNodePermission(
-                PermissionAction.WRITE,
+                PermissionAction.READ,
                 srcProjectId,
                 srcRepoName,
                 PathUtils.normalizeFullPath(srcFullPath)
             )
             val toProjectId = request.destProjectId ?: srcProjectId
             val toRepoName = request.destRepoName ?: srcRepoName
+            permissionManager.checkNodePermission(
+                PermissionAction.READ,
+                toProjectId,
+                toRepoName,
+                PathUtils.normalizeFullPath(destFullPath)
+            )
             permissionManager.checkNodePermission(
                 PermissionAction.WRITE,
                 toProjectId,

@@ -42,7 +42,7 @@
                                 class="version-operation"
                                 :list="[
                                     ...(!$version.metadata.forbidStatus ? [
-                                        (showPromotion && !$version.metadata.lockStatus && updateOperationPermission) && {
+                                        (showPromotion && !$version.metadata.lockStatus) && {
                                             label: $t('upgrade'), clickEvent: () => changeStageTagHandler($version),
                                             disabled: ($version.stageTag || '').includes('@release')
                                         },
@@ -127,7 +127,7 @@
             }
         },
         computed: {
-            ...mapState(['permission', 'scannerSupportPackageType', 'currentRepositoryDataPermission']),
+            ...mapState(['scannerSupportPackageType', 'currentRepositoryDataPermission']),
             ...mapGetters(['isEnterprise']),
             projectId () {
                 return this.$route.params.projectId || ''
@@ -163,7 +163,7 @@
             // 是否显示晋级操作
             showPromotion () {
                 // 远程或虚拟仓库不显示晋级操作
-                return this.permission.edit && !(this.storeType === 'remote') && !(this.storeType === 'virtual') && !this.whetherSoftware
+                return this.updateOperationPermission && !(this.storeType === 'remote') && !(this.storeType === 'virtual') && !this.whetherSoftware
             },
             // 虚拟仓库的仓库来源，虚拟仓库时需要更换repoName为此值
             sourceRepoName () {

@@ -144,8 +144,8 @@
                                         { clickEvent: () => handlerDownload(row), label: $t('download') },
                                         ...((repoName !== 'pipeline' && !row.metadata.lockStatus) ? [
                                             updateOperationPermission && { clickEvent: () => renameRes(row), label: $t('rename') },
-                                            { clickEvent: () => moveRes(row), label: $t('move') },
-                                            { clickEvent: () => copyRes(row), label: $t('copy') }
+                                            !whetherSoftware && { clickEvent: () => moveRes(row), label: $t('move') },
+                                            !whetherSoftware && { clickEvent: () => copyRes(row), label: $t('copy') }
                                         ] : []),
                                         shareOperationPermission && { clickEvent: () => handlerShare(row), label: $t('share') }
                                     ] : []),
@@ -246,7 +246,7 @@
             }
         },
         computed: {
-            ...mapState(['repoListAll', 'userList', 'permission', 'genericTree', 'currentRepositoryDataPermission']),
+            ...mapState(['repoListAll', 'userList', 'genericTree', 'currentRepositoryDataPermission']),
             ...mapGetters(['isEnterprise']),
             projectId () {
                 return this.$route.params.projectId
@@ -277,6 +277,10 @@
             },
             searchFileName () {
                 return this.$route.query.fileName
+            },
+            // 是否是 软件源模式
+            whetherSoftware () {
+                return this.$route.path.startsWith('/software')
             },
             currentRepoDataPermission () {
                 return this.currentRepositoryDataPermission?.find((item) => item.resourceCode === 'bkrepo')?.actionCodes || []

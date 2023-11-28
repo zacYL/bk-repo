@@ -270,7 +270,7 @@
             }
         },
         computed: {
-            ...mapState(['userList', 'permission', 'scannerSupportPackageType']),
+            ...mapState(['userList', 'scannerSupportPackageType']),
             detailInfoMap () {
                 return [
                     // { name: 'os', label: 'OS/ARCH' },

@@ -86,7 +86,7 @@
     import CodeArea from '@repository/components/CodeArea'
     import ciCreateTokenDialog from '@repository/views/repoToken/ciCreateTokenDialog'
     import metadataTag from '@repository/views/repoCommon/metadataTag'
-    import topo from '@/components/topo'
+    import topo from '@repositoryci/components/topo'
     import metadataDialog from '@repository/components/metadataDialog'
     import topoDataMixin from './artiTopoMixin'
     import { mapState, mapActions } from 'vuex'

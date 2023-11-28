@@ -2,15 +2,12 @@ const repoHome = () => import('@/views')
 
 const repoList = () => import('@/views/repoList')
 
-const repoGeneric = () => import('@repository/views/repoGeneric')
+const repoGeneric = () => import('@repositoryci/views/repoGeneric')
 
 const commonPackageList = () => import('@repository/views/repoCommon/commonPackageList')
-const commonPackageDetail = () => import('@repository/views/repoCommon/commonPackageDetail')
+const commonPackageDetail = () => import('@repositoryci/views/repoCommon/commonPackageDetail')
 
 const repoSearch = () => import('@/views/repoSearch')
-
-const userCenter = () => import('@repository/views/userCenter')
-const repoToken = () => import('@repository/views/repoToken')
 
 const routes = [
     {
@@ -69,26 +66,6 @@ const routes = [
                         { name: 'repoList', label: 'repoList' },
                         { name: 'commonList', label: '{repoName}', template: 'commonList' },
                         { name: 'commonPackage', label: '{packageKey}', template: 'commonPackage' }
-                    ]
-                }
-            },
-            {
-                path: 'repoToken',
-                name: 'repoToken',
-                component: repoToken,
-                meta: {
-                    breadcrumb: [
-                        { name: 'repoToken', label: 'repoToken' }
-                    ]
-                }
-            },
-            {
-                path: 'userCenter',
-                name: 'userCenter',
-                component: userCenter,
-                meta: {
-                    breadcrumb: [
-                        { name: 'userCenter', label: 'userCenter' }
                     ]
                 }
             }

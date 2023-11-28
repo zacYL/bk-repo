@@ -27,12 +27,12 @@ module.exports = ({ entry, publicPath, dist, port = 8080, argv, env }) => {
             rules: [
                 {
                     test: /\.vue$/,
-                    include: [path.resolve(__dirname, 'devops-repository/src'), path.resolve('src')],
+                    include: [path.resolve(__dirname, 'devops-repository/src'), path.resolve(__dirname, 'devops-repository-ci/src'), path.resolve('src')],
                     loader: 'vue-loader'
                 },
                 {
                     test: /\.js$/,
-                    include: [path.resolve(__dirname, 'devops-repository/src'), path.resolve('src')],
+                    include: [path.resolve(__dirname, 'devops-repository/src'), path.resolve(__dirname, 'devops-repository-ci/src'), path.resolve('src')],
                     use: [
                         {
                             loader: 'babel-loader'
@@ -58,7 +58,7 @@ module.exports = ({ entry, publicPath, dist, port = 8080, argv, env }) => {
                     test: /\.(js|vue)$/,
                     loader: 'eslint-loader',
                     enforce: 'pre',
-                    include: [path.resolve(__dirname, 'devops-repository/src'), path.resolve('src')],
+                    include: [path.resolve(__dirname, 'devops-repository/src'), path.resolve(__dirname, 'devops-repository-ci/src'), path.resolve('src')],
                     exclude: [/node_modules/],
                     options: {
                         fix: true,
@@ -95,6 +95,7 @@ module.exports = ({ entry, publicPath, dist, port = 8080, argv, env }) => {
             alias: {
                 '@': path.resolve('src'),
                 '@repository': path.resolve(__dirname, 'devops-repository/src'),
+                '@repositoryci': path.resolve(__dirname, 'devops-repository-ci/src'),
                 '@locale': path.resolve(__dirname, 'locale')
             }
         },

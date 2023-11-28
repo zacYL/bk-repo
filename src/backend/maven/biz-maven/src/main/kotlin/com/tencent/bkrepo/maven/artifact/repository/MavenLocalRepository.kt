@@ -35,7 +35,6 @@ import com.tencent.bkrepo.common.api.constant.StringPool.SLASH
 import com.tencent.bkrepo.common.api.exception.NotFoundException
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
-import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
 import com.tencent.bkrepo.common.artifact.exception.VersionNotFoundException
 import com.tencent.bkrepo.common.artifact.hash.sha1
 import com.tencent.bkrepo.common.artifact.hash.sha512
@@ -269,10 +268,9 @@ class MavenLocalRepository(
                     repoName = it.repoName,
                     fullPath = fullPath
                 ).data?.let { _ ->
-                    val message = "The File $fullPath already existed in the ${it.getRepoIdentify()}, " +
-                        "repo[${it.repoName}] cover strategy uncover."
-                    logger.error(message)
-                    throw MavenRequestForbiddenException(message)
+                    throw MavenRequestForbiddenException(
+                        MavenMessageCode.MAVEN_ARTIFACT_COVER_FORBIDDEN, fullPath, it.getRepoIdentify()
+                    )
                 }
             }
         }
@@ -1116,7 +1114,7 @@ class MavenLocalRepository(
             logger.info("Will prepare to delete file $fullPath in repo ${artifactInfo.getRepoIdentify()} ")
             // 如果删除单个文件不能删除metadata.xml文件, 如果文件删除了对应的校验文件也要删除
             if (fullPath.endsWith(MAVEN_METADATA_FILE_NAME) && !forceDeleted) {
-                throw MavenRequestForbiddenException("$MAVEN_METADATA_FILE_NAME can not be deleted.")
+                throw MavenRequestForbiddenException(MavenMessageCode.MAVEN_ARTIFACT_DELETE_FORBIDDEN, fullPath)
             }
             val node = nodeClient.getNodeDetail(projectId, repoName, fullPath).data
             if (node != null) {
@@ -1228,7 +1226,9 @@ class MavenLocalRepository(
             context.repoName,
             packageKey,
             version
-        ).data ?: throw MavenArtifactNotFoundException("Can not find version $version of package $packageKey")
+        ).data ?: throw MavenArtifactNotFoundException(
+            MavenMessageCode.MAVEN_VERSION_NOT_FOUND, packageKey, version, "${context.projectId}/${context.repoName}"
+        )
         with(context.artifactInfo) {
             val jarNode = nodeClient.getNodeDetail(
                 projectId,

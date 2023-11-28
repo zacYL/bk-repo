@@ -5,24 +5,27 @@
         width="600"
         height-num="563"
         @cancel="genericTreeData.show = false">
-        <bk-input
-            class="w250"
-            v-model.trim="importantSearch"
-            :placeholder="$t('keyWordEnter')"
-            clearable
-            right-icon="bk-icon icon-search">
-        </bk-input>
-        <div class="mt10 dialog-tree-container">
-            <repo-tree
-                ref="dialogTree"
-                :tree="genericTree"
-                :important-search="importantSearch"
-                :open-list="genericTreeData.openList"
-                :selected-node="genericTreeData.selectedNode"
-                @icon-click="iconClickHandler"
-                @item-click="itemClickHandler">
-            </repo-tree>
-        </div>
+        <template v-if="showNoDataInfo">
+            <bk-input
+                class="w250"
+                v-model.trim="importantSearch"
+                :placeholder="$t('keyWordEnter')"
+                clearable
+                right-icon="bk-icon icon-search">
+            </bk-input>
+            <div class="mt10 dialog-tree-container">
+                <repo-tree
+                    ref="dialogTree"
+                    :tree="genericTree"
+                    :important-search="importantSearch"
+                    :open-list="genericTreeData.openList"
+                    :selected-node="genericTreeData.selectedNode"
+                    @icon-click="iconClickHandler"
+                    @item-click="itemClickHandler">
+                </repo-tree>
+            </div>
+        </template>
+        <span v-else class="flex-center mt50"> {{$t('noGenericDataUploadInfo', { option: $t( ['move', 'copy'].includes(genericTreeData.type) ? genericTreeData.type : 'moveOrCopy') })}}</span>
         <template #footer>
             <bk-button @click="genericTreeData.show = false">{{ $t('cancel') }}</bk-button>
             <bk-button class="ml10" :loading="genericTreeData.loading" theme="primary" :disabled="!genericTree.length" @click="submit">{{ $t('confirm') }}</bk-button>
@@ -59,6 +62,10 @@
             },
             repoName () {
                 return this.$route.query.repoName
+            },
+            // 当仓库树没有任何数据时需要显示无数据提示语
+            showNoDataInfo () {
+                return this.genericTree?.length > 0
             }
         },
         methods: {
@@ -96,7 +103,7 @@
                     selectedNode: this.genericTree[0],
                     ...data
                 }
-                setTimeout(this.$refs.dialogTree.computedSize, 0)
+                this.$refs.dialogTree && setTimeout(this.$refs.dialogTree.computedSize, 0)
             },
             submit () {
                 this.genericTreeData.loading = true

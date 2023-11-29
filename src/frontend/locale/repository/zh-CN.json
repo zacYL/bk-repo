@@ -995,5 +995,7 @@
     "deleteProjectConfirmContentInfo":"请输入以下内容进行确认： ",
     "deleteProjectPlaceholder":"请输入要删除的项目名称",
     "deleteProjectErrorInfo":"项目名称不匹配",
-    "noProjectInfo":"您没有参与任何项目，请联系管理员为您关联项目"
+    "noProjectInfo":"您没有参与任何项目，请联系管理员为您关联项目",
+    "noGenericDataUploadInfo":"你没有任何仓库的文件上传权限，无法{option}文件。",
+    "moveOrCopy":"移动或复制"
 }

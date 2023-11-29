@@ -8,7 +8,11 @@ import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.pojo.RegisterResourceRequest
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
-import com.tencent.bkrepo.auth.pojo.permission.*
+import com.tencent.bkrepo.auth.pojo.permission.Permission
+import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
+import com.tencent.bkrepo.auth.pojo.permission.CreatePermissionRequest
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionPathRequest
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRepoRequest
 import com.tencent.bkrepo.auth.repository.PermissionRepository
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
@@ -21,7 +25,6 @@ import com.tencent.bkrepo.auth.pojo.permission.UserPermissionValidateDTO
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.data.mongodb.core.MongoTemplate
-
 
 class CanwayPermissionServiceImpl(
     private val userRepository: UserRepository,
@@ -73,27 +76,45 @@ class CanwayPermissionServiceImpl(
             if (devOpsAuthGeneral.isSystemAdmin(request.uid)) {
                 return true
             }
-            return when (request.resourceType) {
-                ResourceType.SYSTEM -> {
-                    true
-                }
-
-                ResourceType.PROJECT -> {
-                    if (request.action == PermissionAction.MANAGE) {
-                        devOpsAuthGeneral.isProjectOrSuperiorAdmin(request.uid, request.projectId!!)
-                    } else {
-                        devOpsAuthGeneral.isProjectMemberOrAdmin(request.uid, request.projectId!!)
+            return with(request) {
+                when (resourceType) {
+                    ResourceType.SYSTEM -> {
+                        true
                     }
-                }
 
-                else -> {
-                    with(request) {
+                    ResourceType.PROJECT -> {
+                        when (action) {
+                            PermissionAction.MANAGE -> {
+                                devOpsAuthGeneral.isProjectOrSuperiorAdmin(uid, projectId!!)
+                            }
+                            PermissionAction.READ -> {
+                                devOpsAuthGeneral.isProjectMemberOrAdmin(uid, projectId!!)
+                            }
+                            else -> {
+                                devOpsAuthGeneral.validateUserPermission(
+                                    projectId = projectId!!,
+                                    option = UserPermissionValidateDTO(
+                                        userId = uid,
+                                        instanceId = ANY_RESOURCE_CODE,
+                                        resourceCode = RESOURCECODE,
+                                        actionCodes = listOf(action.toString().toLowerCase())
+                                    )
+                                )
+                            }
+                        }
+                    }
+
+                    else -> {
                         devOpsAuthGeneral.validateUserPermission(
                             projectId = projectId!!,
                             option = UserPermissionValidateDTO(
                                 userId = uid,
                                 instanceId = repoName ?: ANY_RESOURCE_CODE,
-                                resourceCode = if (request.resourceType == ResourceType.REPLICATION) REPLICA_RESOURCECODE else RESOURCECODE,
+                                resourceCode = if (request.resourceType == ResourceType.REPLICATION) {
+                                    REPLICA_RESOURCECODE
+                                } else {
+                                    RESOURCECODE
+                                },
                                 actionCodes = listOf(action.toString().toLowerCase())
                             )
                         )
@@ -105,7 +126,6 @@ class CanwayPermissionServiceImpl(
             throw ErrorCodeException(AuthMessageCode.AUTH_PERMISSION_FAILED)
         }
     }
-
 
     /**
      * 增加权限方法（无法增加，因集成环境下不再保存制品库权限）
@@ -160,15 +180,14 @@ class CanwayPermissionServiceImpl(
      * 判断是否为DevOps管理员
      */
     override fun isAdmin(userId: String, projectId: String?, tenantId: String?): Boolean {
-        if (isCIAdmin(userId = userId, projectId = projectId, tenantId = tenantId)) return true
-        return false
+        return isCIAdmin(userId = userId, projectId = projectId, tenantId = tenantId)
     }
 
     /**
      * 删除权限中心数据
      */
     override fun deletePermissionData(projectId: String, repoName: String): Boolean {
-        return devOpsAuthGeneral.removeResourcePermissions(projectId,repoName)
+        return devOpsAuthGeneral.removeResourcePermissions(projectId, repoName)
     }
 
     /**
@@ -238,16 +257,14 @@ class CanwayPermissionServiceImpl(
             repoList.addAll(listPublicRepo(projectId))
             // 获取该用户可查看的所有制品库仓库名称
             repoList.addAll(devOpsAuthGeneral.getUserPermission(projectId, userId))
-            logger.info("repoList:${repoList}")
+            logger.info("repoList:$repoList")
         } else {
             repoList.addAll(devOpsAuthGeneral.getUserActionPermission(projectId, userId, actions))
-            logger.info("repoList:${repoList}")
+            logger.info("repoList:$repoList")
         }
-
 
         return repoList.distinct()
     }
-
 
     /**
      * 用户是否为CI 管理员

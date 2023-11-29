@@ -1,5 +1,5 @@
 import Vue from 'vue'
-import { mapState, mapMutations } from 'vuex'
+import { mapState, mapMutations, mapActions } from 'vuex'
 import ConfirmDialog from '@repository/components/ConfirmDialog'
 import GlobalUploadViewport from '@repository/components/GlobalUploadViewport'
 export default {
@@ -37,12 +37,19 @@ export default {
     },
     methods: {
         ...mapMutations(['SET_USER_INFO', 'SET_USER_LIST', 'SET_PROJECT_LIST']),
+        ...mapActions([
+            'getOperationPermission'
+        ]),
         goHome (projectId) {
             const params = projectId ? { projectId } : {}
             this.$router.replace({
                 name: 'repoList',
                 params
             })
+        },
+        // 切换或者选择项目之后，需要加载后端权限的接口，用户控制相关操作权限
+        getPermission (projectId) {
+            this.getOperationPermission({ projectId })
         },
         loadDevopsUtils (src) {
             window.Vue = Vue
@@ -55,6 +62,7 @@ export default {
                 this.$changeActiveRoutes?.(this.$route?.meta?.breadcrumb?.map(v => v.name) || [])
                 window.globalVue.$on('change::$currentProjectId', data => { // 蓝鲸Devops选择项目时切换
                     localStorage.setItem('projectId', data.currentProjectId)
+                    this.getPermission(data.currentProjectId)
                     if (this.projectId !== data.currentProjectId) {
                         this.goHome(data.currentProjectId)
                     }

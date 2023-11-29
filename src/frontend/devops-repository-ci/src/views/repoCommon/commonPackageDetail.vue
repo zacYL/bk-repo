@@ -46,12 +46,11 @@
                                             label: $t('upgrade'), clickEvent: () => changeStageTagHandler($version),
                                             disabled: ($version.stageTag || '').includes('@release')
                                         },
-                                        repoType !== 'docker' && { label: $t('download'), clickEvent: () => downloadPackageHandler($version) },
-                                        isEnterprise && showRepoScan && { label: $t('scan'), clickEvent: () => scanPackageHandler($version) }
+                                        repoType !== 'docker' && { label: $t('download'), clickEvent: () => downloadPackageHandler($version) }
                                     ] : []),
-                                    !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('forbid',$version), label: $version.metadata.forbidStatus ? $t('relieve') + $t('space') + $t('forbid') : $t('forbid') },
-                                    !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('lock',$version), label: $version.metadata.lockStatus ? $t('relieve') + $t('space') + $t('lock') : $t('lock') },
-                                    (permission.delete && !(storeType === 'virtual') && !$version.metadata.lockStatus) && { label: $t('delete'), clickEvent: () => deleteVersionHandler($version) }
+                                    forbidOperationPermission && !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('forbid',$version), label: $version.metadata.forbidStatus ? $t('relieve') + $t('space') + $t('forbid') : $t('forbid') },
+                                    lockOperationPermission && !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('lock',$version), label: $version.metadata.lockStatus ? $t('relieve') + $t('space') + $t('lock') : $t('lock') },
+                                    (deleteOperationPermission && !(storeType === 'virtual') && !$version.metadata.lockStatus) && { label: $t('delete'), clickEvent: () => deleteVersionHandler($version) }
                                 ]"></operation-list>
                         </div>
                     </infinite-scroll>
@@ -60,6 +59,10 @@
             <div class="common-version-detail flex-1">
                 <version-detail
                     ref="versionDetail"
+                    :show-update-operation="updateOperationPermission"
+                    :show-delete-operation="deleteOperationPermission"
+                    :show-lock-operation="lockOperationPermission"
+                    :show-forbid-operation="forbidOperationPermission"
                     @tag="changeStageTagHandler()"
                     @scan="scanPackageHandler()"
                     @forbid="showLimitDialog('forbid')"
@@ -77,7 +80,7 @@
     import OperationList from '@repository/components/OperationList'
     import InfiniteScroll from '@repository/components/InfiniteScroll'
     import operationLimitConfirmDialog from '@repository/components/operationLimitConfirmDialog'
-    import VersionDetail from '@repository/views/repoCommon/commonVersionDetail'
+    import VersionDetail from './commonVersionDetail'
     import commonFormDialog from '@repository/views/repoCommon/commonFormDialog'
     import { mapState, mapGetters, mapActions } from 'vuex'
     export default {
@@ -124,7 +127,7 @@
             }
         },
         computed: {
-            ...mapState(['permission', 'scannerSupportPackageType']),
+            ...mapState(['scannerSupportPackageType', 'currentRepositoryDataPermission']),
             ...mapGetters(['isEnterprise']),
             projectId () {
                 return this.$route.params.projectId || ''
@@ -160,14 +163,35 @@
             // 是否显示晋级操作
             showPromotion () {
                 // 远程或虚拟仓库不显示晋级操作
-                return this.permission.edit && !(this.storeType === 'remote') && !(this.storeType === 'virtual') && !this.whetherSoftware
+                return this.updateOperationPermission && !(this.storeType === 'remote') && !(this.storeType === 'virtual') && !this.whetherSoftware
             },
             // 虚拟仓库的仓库来源，虚拟仓库时需要更换repoName为此值
             sourceRepoName () {
                 return this.$route.query.sourceName || ''
+            },
+            currentRepoDataPermission () {
+                return this.currentRepositoryDataPermission?.find((item) => item.resourceCode === 'bkrepo')?.actionCodes || []
+            },
+            // 制品晋级、添加元数据、删除元数据操作权限，实际上是编辑制品
+            updateOperationPermission () {
+                return this.currentRepoDataPermission.includes('update')
+            },
+            // 删除制品操作权限
+            deleteOperationPermission () {
+                return this.currentRepoDataPermission.includes('delete')
+            },
+            // 锁定制品操作权限
+            lockOperationPermission () {
+                return this.currentRepoDataPermission.includes('lock')
+            },
+            // 禁用制品操作权限
+            forbidOperationPermission () {
+                return this.currentRepoDataPermission.includes('forbid')
             }
         },
         created () {
+            // 注意：软件源模式下不需要判断权限，软件源的vuex中也没有该接口定义，因为软件源模式下所有用户都是只读权限
+            !this.whetherSoftware && this.getCurrentRepositoryDataPermission({ projectId: this.projectId, repoName: this.repoName })
             // 制品搜索且选择了指定的版本详情时需要默认触发版本的搜索
             this.versionInput = this.$route.query.searchFlag ? this.version : ''
             this.getPackageInfoHandler()
@@ -182,7 +206,8 @@
                 'deleteVersion',
                 'forbidPackageMetadata',
                 'lockPackageMetadata',
-                'refreshSupportPackageTypeList'
+                'refreshSupportPackageTypeList',
+                'getCurrentRepositoryDataPermission'
             ]),
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}, load) {
                 this.pagination.current = current

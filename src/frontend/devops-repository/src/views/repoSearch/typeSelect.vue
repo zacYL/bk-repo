@@ -24,7 +24,7 @@
                     </div>
                 </div>
             </bk-form-item>
-            <bk-form-item :label="$t('searchRepoArtifact')">
+            <bk-form-item v-if="!whetherSoftware" :label="$t('searchRepoArtifact')">
                 <!-- 仓库名称选择框，多选 -->
                 <bk-select
                     class="w250 search-artifact-select"
@@ -46,6 +46,25 @@
                             :name="option.name">
                         </bk-option>
                     </bk-option-group>
+                </bk-select>
+            </bk-form-item>
+            <!-- 软件源模式下因为后端接口效率及结果不准确等问题，需要更换为项目筛选 projectId -->
+            <bk-form-item v-if="whetherSoftware" :label="$t('project')">
+                <!-- 项目选择框，多选 -->
+                <bk-select
+                    class="w250 search-artifact-select"
+                    searchable
+                    multiple
+                    display-tag
+                    :show-select-all="false"
+                    v-model="checkedProjectList"
+                    :placeholder="$t('total') + $t('space') + $t('project')">
+                    <bk-option
+                        v-for="project in projectList"
+                        :name="project.name"
+                        :id="project.id"
+                        :key="project.id">
+                    </bk-option>
                 </bk-select>
             </bk-form-item>
             <bk-form-item :label="$t('searchName')">
@@ -159,6 +178,10 @@
                 default () {
                     return repoSearchConditionMap || []
                 }
+            },
+            projectList: {
+                type: Array,
+                default: () => []
             }
         },
         data () {
@@ -191,7 +214,8 @@
                         children: []
                     }
                 ],
-                checkedArtifactList: []
+                checkedArtifactList: [],
+                checkedProjectList: []
             }
         },
         computed: {
@@ -237,6 +261,13 @@
             this.checkedArtifactList = Object.keys(this.$route.query)
                 .filter(key => key.startsWith('artifactProperties'))
                 .map(key => this.$route.query[key])
+            
+            // 软件源模式下回显当前选择的项目
+            if (this.whetherSoftware) {
+                this.checkedProjectList = Object.keys(this.$route.query)
+                    .filter(key => key.startsWith('projectProperties'))
+                    .map(key => this.$route.query[key])
+            }
             
             // 回显元数据
             const metadataKeys = Object.keys(this.$route.query)
@@ -408,8 +439,13 @@
                 // 此时需要校验下用户
                 Promise.all([this.onVerifyCheckSum(), this.onCheckMetadataKeyInput()]).then(() => {
                     const params = this.constructionSearchData()
-                    if (this.checkedArtifactList?.length) {
+                    // 非软件源才能出现仓库下拉选择框
+                    if (!this.whetherSoftware && this.checkedArtifactList?.length) {
                         params.artifactList = this.checkedArtifactList
+                    }
+                    // 软件源模式下才存在项目下拉选择框
+                    if (this.whetherSoftware && this.checkedProjectList?.length) {
+                        params.projectList = this.checkedProjectList
                     }
                     this.$emit('search-artifact', params)
                 })
@@ -420,6 +456,7 @@
                     name: ''
                 }
                 this.checkedArtifactList = []
+                this.checkedProjectList = []
                 this.onSearchArtifact()
             }
         }

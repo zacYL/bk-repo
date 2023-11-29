@@ -26,11 +26,11 @@
                     @item-click="itemClickHandler">
                     <template #operation="{ item }">
                         <operation-list
-                            v-if="item.roadMap === selectedTreeNode.roadMap"
+                            v-if="item.roadMap === selectedTreeNode.roadMap && showUploadOperation"
                             :list="[
-                                permission.write && repoName !== 'pipeline' && { clickEvent: () => handlerUpload(item), label: $t('uploadFile') },
-                                permission.write && repoName !== 'pipeline' && { clickEvent: () => handlerUpload(item, true), label: $t('uploadFolder') },
-                                permission.write && repoName !== 'pipeline' && { clickEvent: () => addFolder(item), label: $t('createFolder') }
+                                { clickEvent: () => handlerUpload(item), label: $t('uploadFile') },
+                                { clickEvent: () => handlerUpload(item, true), label: $t('uploadFolder') },
+                                { clickEvent: () => addFolder(item), label: $t('createFolder') }
                             ].filter(Boolean)">
                         </operation-list>
                     </template>
@@ -52,7 +52,7 @@
                             {{$t('batchDownload')}}
                         </bk-button>
                         <bk-button class="ml10"
-                            v-if="multiSelect.length"
+                            v-if="multiSelect.length && deleteOperationPermission"
                             @click="handlerMultiDelete()">
                             {{$t('batchDeletion')}}
                         </bk-button>
@@ -143,23 +143,15 @@
                                         !row.folder && handlerPreview(row) && { clickEvent: () => handlerPreview(row, true), label: $t('preview') },
                                         { clickEvent: () => handlerDownload(row), label: $t('download') },
                                         ...((repoName !== 'pipeline' && !row.metadata.lockStatus) ? [
-                                            permission.edit && { clickEvent: () => renameRes(row), label: $t('rename') },
-                                            permission.write && { clickEvent: () => moveRes(row), label: $t('move') },
-                                            permission.write && { clickEvent: () => copyRes(row), label: $t('copy') }
+                                            updateOperationPermission && { clickEvent: () => renameRes(row), label: $t('rename') },
+                                            !whetherSoftware && { clickEvent: () => moveRes(row), label: $t('move') },
+                                            !whetherSoftware && { clickEvent: () => copyRes(row), label: $t('copy') }
                                         ] : []),
-                                        ...(!row.folder ? [
-                                            { clickEvent: () => handlerShare(row), label: $t('share') },
-                                            isEnterprise
-                                                && genericScanFileTypes.includes(row.name.replace(/^.+\.([^.]+)$/, '$1'))
-                                                && { clickEvent: () => handlerScan(row), label: $t('scan') }
-                                        ] : []),
-                                        ...(row.folder ? [
-                                            { clickEvent: () => handlerShare(row), label: $t('share') }
-                                        ] : [])
+                                        shareOperationPermission && { clickEvent: () => handlerShare(row), label: $t('share') }
                                     ] : []),
-                                    !row.folder && { clickEvent: () => showLimitDialog('forbid',row), label: row.metadata.forbidStatus ? $t('relieve') + $t('space') + $t('forbid') : $t('forbid') },
-                                    !row.folder && { clickEvent: () => showLimitDialog('lock',row), label: row.metadata.lockStatus ? $t('relieve') + $t('space') + $t('lock') : $t('lock') },
-                                    (permission.delete && !row.metadata.lockStatus) && { clickEvent: () => deleteRes(row), label: $t('delete') }
+                                    (!row.folder && forbidOperationPermission) && { clickEvent: () => showLimitDialog('forbid',row), label: row.metadata.forbidStatus ? $t('relieve') + $t('space') + $t('forbid') : $t('forbid') },
+                                    (!row.folder && lockOperationPermission) && { clickEvent: () => showLimitDialog('lock',row), label: row.metadata.lockStatus ? $t('relieve') + $t('space') + $t('lock') : $t('lock') },
+                                    (deleteOperationPermission && !row.metadata.lockStatus) && { clickEvent: () => deleteRes(row), label: $t('delete') }
                                 ].filter(Boolean)">
                             </operation-list>
                         </template>
@@ -180,7 +172,7 @@
             </div>
         </div>
 
-        <generic-detail ref="genericDetail"></generic-detail>
+        <generic-detail ref="genericDetail" :show-update-metadata-btn="updateOperationPermission"></generic-detail>
         <generic-form-dialog ref="genericFormDialog" @refresh="refreshNodeChange"></generic-form-dialog>
         <generic-share-dialog ref="genericShareDialog"></generic-share-dialog>
         <generic-tree-dialog ref="genericTreeDialog" @update="updateOperateTreeNode" @refresh="refreshNodeChange"></generic-tree-dialog>
@@ -254,7 +246,7 @@
             }
         },
         computed: {
-            ...mapState(['repoListAll', 'userList', 'permission', 'genericTree']),
+            ...mapState(['repoListAll', 'userList', 'genericTree', 'currentRepositoryDataPermission']),
             ...mapGetters(['isEnterprise']),
             projectId () {
                 return this.$route.params.projectId
@@ -285,6 +277,41 @@
             },
             searchFileName () {
                 return this.$route.query.fileName
+            },
+            // 是否是 软件源模式
+            whetherSoftware () {
+                return this.$route.path.startsWith('/software')
+            },
+            currentRepoDataPermission () {
+                return this.currentRepositoryDataPermission?.find((item) => item.resourceCode === 'bkrepo')?.actionCodes || []
+            },
+            // 是否拥有上传制品权限
+            canUploadArtifact () {
+                return this.currentRepoDataPermission.includes('write')
+            },
+            // 上传文件，上传文件夹，新建文件夹三个操作是否显示
+            showUploadOperation () {
+                return this.canUploadArtifact && this.repoName !== 'pipeline'
+            },
+            // 删除制品操作权限
+            deleteOperationPermission () {
+                return this.currentRepoDataPermission.includes('delete')
+            },
+            // 锁定制品操作权限
+            lockOperationPermission () {
+                return this.currentRepoDataPermission.includes('lock')
+            },
+            // 禁用制品操作权限
+            forbidOperationPermission () {
+                return this.currentRepoDataPermission.includes('forbid')
+            },
+            // 共享制品操作权限
+            shareOperationPermission () {
+                return this.currentRepoDataPermission.includes('share')
+            },
+            // 重命名制品、添加元数据、删除元数据操作权限，实际上是编辑制品
+            updateOperationPermission () {
+                return this.currentRepoDataPermission.includes('update')
             }
         },
         watch: {
@@ -310,6 +337,8 @@
             } else next()
         },
         created () {
+            // 注意：软件源模式下不需要判断权限，软件源的vuex中也没有该接口定义，因为软件源模式下所有用户都是只读权限
+            !this.whetherSoftware && this.getCurrentRepositoryDataPermission({ projectId: this.projectId, repoName: this.repoName })
             this.getRepoListAll({ projectId: this.projectId })
             this.initTree()
             this.pathChange()
@@ -339,7 +368,8 @@
                 'getMultiFileNumOfFolder',
                 'forbidMetadata',
                 'lockMetadata',
-                'getGenericList'
+                'getGenericList',
+                'getCurrentRepositoryDataPermission'
             ]),
             tooltipContent (row) {
                 const { forbidType, forbidUser } = row.metadata

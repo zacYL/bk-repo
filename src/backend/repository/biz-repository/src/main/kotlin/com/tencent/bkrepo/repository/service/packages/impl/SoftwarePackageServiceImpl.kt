@@ -125,13 +125,18 @@ class SoftwarePackageServiceImpl(
         val rules = (queryModel.rule as Rule.NestedRule).rules
         var repoNameRuleExist = false
         var projectId: String? = null
+        var projectIdList: List<String>? = null
         var repoType: String? = null
         val projectSubRule = mutableListOf<Rule>()
         for (rule in rules) {
             val queryRule = rule as Rule.QueryRule
             when (queryRule.field) {
                 "repoName" -> repoNameRuleExist = true
-                "projectId" -> projectId = queryRule.value as String
+                "projectId" -> when (queryRule.operation) {
+                    OperationType.EQ -> projectId = queryRule.value as String
+                    OperationType.IN -> projectIdList = queryRule.value as List<String>
+                    else -> {}
+                }
                 "repoType" -> repoType = queryRule.value as String
                 else -> projectSubRule.add(queryRule)
             }
@@ -139,7 +144,7 @@ class SoftwarePackageServiceImpl(
         val option = RepoListOption(type = repoType)
         if (projectId == null) {
             val projectsRule = mutableListOf<Rule>()
-            val allSoftRepo = softwareRepositoryService.listRepo(option = option, includeGeneric = false)
+            val allSoftRepo = softwareRepositoryService.listRepoByProjects(projectIdList, option = option)
             if(allSoftRepo.isEmpty()) return Page(1, queryModel.page.pageSize, 0, listOf())
             val projectMap = transRepoTree(allSoftRepo)
             projectMap.map { project ->

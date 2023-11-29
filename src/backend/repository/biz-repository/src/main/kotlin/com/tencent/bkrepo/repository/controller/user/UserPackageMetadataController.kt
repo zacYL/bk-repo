@@ -44,7 +44,15 @@ import com.tencent.bkrepo.repository.pojo.metadata.packages.UserPackageMetadataS
 import com.tencent.bkrepo.repository.service.metadata.PackageMetadataService
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RequestAttribute
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.DeleteMapping
 
 /**
  * 元数据接口实现类
@@ -94,7 +102,7 @@ class UserPackageMetadataController(
     }
 
     @ApiOperation("创建/更新禁止元数据")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.UPDATE)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.FORBID)
     @PostMapping("/forbid/{projectId}/{repoName}")
     fun forbidMetadata(
         @RequestAttribute userId: String,
@@ -116,7 +124,7 @@ class UserPackageMetadataController(
     }
 
     @ApiOperation("创建/更新锁定元数据")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.UPDATE)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.LOCK)
     @PostMapping("/lock/{projectId}/{repoName}")
     fun lockMetadata(
         @RequestAttribute userId: String,

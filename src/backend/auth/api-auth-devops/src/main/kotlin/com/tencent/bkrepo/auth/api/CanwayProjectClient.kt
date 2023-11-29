@@ -14,8 +14,13 @@ import io.swagger.v3.oas.annotations.Parameter
 import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.context.annotation.Primary
 import org.springframework.http.MediaType
-import org.springframework.web.bind.annotation.*
-
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestHeader
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RequestParam
 /**
  * 平台权限服务项目接口
  */
@@ -76,7 +81,6 @@ interface CanwayProjectClient {
         @ApiParam(value = "用户权限校验请求", required = true)
         option: UserPermissionValidateDTO,
     ): Response<Boolean>
-
 
     @ApiOperation("获取项目成员，支持携带管理员信息")
     @GetMapping("/{projectId}/member/list")

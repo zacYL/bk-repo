@@ -64,7 +64,7 @@
                             v-for="pkg in packageList"
                             :key="pkg.repoName + pkg.key"
                             :card-data="pkg"
-                            :readonly="!permission.delete"
+                            :readonly="!deleteOperationPermission"
                             @click.native="showCommonPackageDetail(pkg)"
                             @delete-card="deletePackageHandler(pkg)">
                         </package-card>
@@ -127,7 +127,7 @@
             }
         },
         computed: {
-            ...mapState(['repoListAll', 'permission']),
+            ...mapState(['repoListAll', 'permission', 'currentRepositoryDataPermission']),
             currentRepo () {
                 return this.repoListAll.find(repo => repo.name === this.repoName) || {}
             },
@@ -140,10 +140,22 @@
             },
             // 是否显示上传制品按钮
             showUploadRepo () {
-                return this.currentType === 'MAVEN' && !(this.storeType === 'remote') && !(this.storeType === 'virtual') && !this.whetherSoftware
+                return this.currentType === 'MAVEN' && !(this.storeType === 'remote') && !(this.storeType === 'virtual') && !this.whetherSoftware && this.canUploadArtifact
+            },
+            currentRepoDataPermission () {
+                return this.currentRepositoryDataPermission?.find((item) => item.resourceCode === 'bkrepo')?.actionCodes || []
+            },
+            // 删除制品操作权限
+            deleteOperationPermission () {
+                return this.currentRepoDataPermission.includes('delete')
+            },
+            // 是否拥有上传制品权限
+            canUploadArtifact () {
+                return this.currentRepoDataPermission.includes('write')
             }
         },
         created () {
+            this.getCurrentRepositoryDataPermission({ projectId: this.projectId, repoName: this.repoName })
             this.getRepoListAll({ projectId: this.projectId })
             this.handlerPaginationChange()
         },
@@ -151,7 +163,8 @@
             ...mapActions([
                 'getRepoListAll',
                 'searchPackageList',
-                'deletePackage'
+                'deletePackage',
+                'getCurrentRepositoryDataPermission'
             ]),
             changeDirection () {
                 this.direction = this.direction === 'ASC' ? 'DESC' : 'ASC'

@@ -101,6 +101,7 @@ class StorageManageServiceImpl(
                     projectId = repo.projectId,
                     repoName = name,
                     type = type,
+                    category = category,
                     size = (repoNodeList.sumOf { it.size }).toString(),
                     count = repoNodeList.count().toLong()
                 )

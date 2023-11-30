@@ -56,7 +56,7 @@ object NodeQueryHelper {
         return Query(criteria)
     }
 
-    //查找一个目录下所有的节点
+    // 查找一个目录下所有的节点
     fun nodeFoldQuery(projectId: String, repoName: String, escapedPath: String, normalizedFullPath: String): Query {
         val criteria = where(TNode::projectId).isEqualTo(projectId)
             .and(TNode::repoName).isEqualTo(repoName)

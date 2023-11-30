@@ -16,8 +16,7 @@ import java.util.Date
 @EnableConfigurationProperties(NodeStatCompositeMongoDbBatchJobProperties::class)
 class NodeStatCompositeMongoDbBatchJob(
     val properties: NodeStatCompositeMongoDbBatchJobProperties,
-    private val mongoTemplate: MongoTemplate,
-    private val redisTemplate: RedisTemplate<String, String>
+    private val redisTemplate: RedisTemplate<String, String>,
 ) : CompositeMongoDbBatchJob<NodeStatCompositeMongoDbBatchJob.Node>(properties) {
 
     override fun collectionNames(): List<String> {

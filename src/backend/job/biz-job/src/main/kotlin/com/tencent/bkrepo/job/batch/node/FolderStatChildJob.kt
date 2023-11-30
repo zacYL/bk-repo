@@ -67,8 +67,8 @@ import kotlin.text.toLongOrNull as toLongOrNull1
 class FolderStatChildJob(
     val properties: CompositeJobProperties,
     private val mongoTemplate: MongoTemplate,
-    private val redisTemplate: RedisTemplate<String, String>
-) : ChildMongoDbBatchJob<NodeStatCompositeMongoDbBatchJob.Node>(properties) {
+    private val redisTemplate: RedisTemplate<String, String>,
+    ) : ChildMongoDbBatchJob<NodeStatCompositeMongoDbBatchJob.Node>() {
 
     override fun onParentJobStart(context: ChildJobContext) {
         require(context is FolderChildContext)

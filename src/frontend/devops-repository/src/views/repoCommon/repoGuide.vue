@@ -30,7 +30,8 @@
                 <div v-if="currentArticle.title" class="section-header pt10">
                     {{ currentArticle.title }}
                 </div>
-                <template v-if="(currentArticle.inputBoxList || []).length > 0">
+                <!-- 当构建类型constructType和当前对象的constructType一致，且当前对象的notShowArtifactInput为true时不需要显示制品名称等的输入框，暂时只有 Apache Maven不显示 -->
+                <template v-if="(currentArticle.inputBoxList || []).length > 0 && !currentArticle.main.find(item => item.constructType === constructType && item.notShowArtifactInput)">
                     <div class="mt10"> {{$t('guideInputInfo', { option: currentArticle.title })}}</div>
                     <div v-for="(box,index) in currentArticle.inputBoxList" :key="box.key || box">
                         <div class="flex-align-center mt20 mb10">

@@ -53,6 +53,9 @@ export default {
         accessToken () {
             return this.dependAccessTokenValue || '<PERSONAL_ACCESS_TOKEN>'
         },
+        packageFullPath () {
+            return this.$route.query.packageFullPath || '/<RPM_FILE_NAME>'
+        },
         dockerGuide () {
             return [
                 {
@@ -380,6 +383,7 @@ export default {
                             {
                                 subTitle: this.$t('mavenPushGuideSubTitle1'),
                                 constructType: 'Apache Maven',
+                                notShowArtifactInput: true, // Apache Maven不需要显示制品名称等输入框
                                 codeList: [
                                     '<distributionManagement>',
                                     '       <repository>',
@@ -394,6 +398,7 @@ export default {
                             {
                                 subTitle: this.$t('mavenPushGuideSubTitle2'),
                                 constructType: 'Apache Maven',
+                                notShowArtifactInput: true, // Apache Maven不需要显示制品名称等输入框
                                 codeList: [
                                     'mvn clean deploy'
                                 ]
@@ -710,13 +715,13 @@ export default {
                             {
                                 subTitle: this.$t('helmPushGuideSubTitle1'),
                                 codeList: [
-                                    `curl -F "chart=@${this.dependInputValue1 ? this.dependInputValue1 + '.tgz' : '<FILE_NAME>'}" -u ${this.userName}:${this.accessToken} ${location.origin}/${this.repoType}/api/${this.projectId}/${this.repoName}/charts`
+                                    `curl -F "chart=@${this.dependInputValue1 || '<FILE_NAME>'}" -u ${this.userName}:${this.accessToken} ${location.origin}/${this.repoType}/api/${this.projectId}/${this.repoName}/charts`
                                 ]
                             },
                             {
                                 subTitle: this.$t('helmPushGuideSubTitle2'),
                                 codeList: [
-                                    `curl -F "prov=@${this.dependInputValue1 ? this.dependInputValue1 + '.tgz.prov' : '<PROV_FILE_NAME>'}" -u ${this.userName}:${this.accessToken} ${location.origin}/${this.repoType}/api/${this.projectId}/${this.repoName}/charts`
+                                    `curl -F "prov=@${this.dependInputValue1 || '<PROV_FILE_NAME>'}" -u ${this.userName}:${this.accessToken} ${location.origin}/${this.repoType}/api/${this.projectId}/${this.repoName}/charts`
                                 ]
                             }
                         ]
@@ -812,7 +817,7 @@ export default {
                             {
                                 subTitle: this.$t('pushGuideSubTitle'),
                                 codeList: [
-                                    `curl -u ${this.userName}:${this.accessToken} -X PUT ${this.repoUrl}/ -T ${this.dependInputValue1 ? this.dependInputValue1 + '.rpm' : '<RPM_FILE_NAME>'}`
+                                    `curl -u ${this.userName}:${this.accessToken} -X PUT ${this.repoUrl}/ -T ${this.dependInputValue1 || '<RPM_FILE_NAME>'}`
                                 ]
                             }
                         ]
@@ -838,7 +843,7 @@ export default {
                         {
                             subTitle: this.$t('rpmPullGuideSunTitle1'),
                             codeList: [
-                                `rpm -i ${location.protocol}//${this.userName}:${this.accessToken}@${location.host}/${this.repoType}/${this.projectId}/${this.repoName}/${this.dependInputValue1 || this.packageName}-${this.dependInputValue2 || this.versionLabel}`
+                                `rpm -i ${location.protocol}//${this.userName}:${this.accessToken}@${location.host}/${this.repoType}/${this.projectId}/${this.repoName}/${this.dependInputValue1 || this.packageName}-${this.dependInputValue2 || this.versionLabel}.rpm`
                             ]
                         },
                         {
@@ -861,13 +866,13 @@ export default {
                         {
                             subTitle: 'RPM',
                             codeList: [
-                                `rpm -i ${location.protocol}//${this.userName}:<PERSONAL_ACCESS_TOKEN>@${location.host}/${this.repoType}/${this.projectId}/${this.repoName}/<RPM_FILE_NAME>`
+                                `rpm -i ${location.protocol}//${this.userName}:<PERSONAL_ACCESS_TOKEN>@${location.host}/${this.repoType}/${this.projectId}/${this.repoName}${this.packageFullPath}`
                             ]
                         },
                         {
                             subTitle: 'yum',
                             codeList: [
-                                `yum install ${this.packageName}`
+                                `yum install ${this.packageName}-${this.versionLabel}`
                             ]
                         }
                     ]

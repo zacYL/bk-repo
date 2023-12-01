@@ -381,6 +381,15 @@
                     }
                     // 此时不能在HTML中直接使用repoType，如果直接使用会导致该tab页提前被渲染，出现在其他tab页之前，不符合产品要求
                     this.detailType = this.repoType
+                    // rpm仓库因为版本详情页的使用指引，需要获取当前版本详情的fullPath，用于替换使用指引的变量值
+                    if (this.repoType === 'rpm') {
+                        this.$router.replace({
+                            query: {
+                                ...this.$route.query,
+                                packageFullPath: this.detail?.basic?.fullPath
+                            }
+                        })
+                    }
                 }).finally(() => {
                     this.isLoading = false
                 })

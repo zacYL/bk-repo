@@ -16,6 +16,7 @@ import com.tencent.bkrepo.repository.service.repo.StorageManageService
 import com.tencent.bkrepo.repository.util.FileSizeUtils
 import org.springframework.stereotype.Service
 import java.io.File
+import java.util.*
 
 /**
  * 存储管理实现类
@@ -36,10 +37,12 @@ class StorageManageServiceImpl(
         val total = file.totalSpace
         val available = file.freeSpace
         val used = total - available
+        val usage = used.toDouble() / total.toDouble()
         return StoragePojo(
             path = path,
             total = FileSizeUtils.formatFileSize(total),
             used = FileSizeUtils.formatFileSize(used),
+            usage = String.format(Locale.US, "%.2f %%", usage * 100),
             available = FileSizeUtils.formatFileSize(available),
             message = StorageType.FILESYSTEM.name
         )

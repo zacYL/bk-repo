@@ -192,6 +192,16 @@ object NodeQueryHelper {
         return Query(criteria)
     }
 
+    /**
+     * 查询项目所有文件节点
+     */
+    fun nodeDeleteQuery(projectId: String): Query {
+        val criteria = where(TNode::projectId).isEqualTo(projectId)
+            .and(TNode::folder).isEqualTo(false)
+            .and(TNode::deleted).ne(null)
+        return Query(criteria)
+    }
+
     fun nodeRestoreUpdate(): Update {
         return Update().unset(TNode::deleted.name)
     }

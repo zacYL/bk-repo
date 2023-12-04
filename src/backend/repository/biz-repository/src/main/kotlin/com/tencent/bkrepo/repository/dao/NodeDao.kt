@@ -103,6 +103,13 @@ class NodeDao : HashShardingMongoDao<TNode>() {
         return this.find(NodeQueryHelper.nodeFileQuery(projectId))
     }
 
+    /**
+     * 查询项目下所有本删除的文件节点
+     */
+    fun findDeleteNode(projectId: String): List<TNode> {
+        return this.find(NodeQueryHelper.nodeDeleteQuery(projectId))
+    }
+
     companion object {
         fun buildRootNode(projectId: String, repoName: String): TNode {
             return TNode(

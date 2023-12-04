@@ -36,6 +36,7 @@ import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.EscapeUtils
+import com.tencent.bkrepo.common.artifact.constant.PAAS_PROJECT
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_GLOBAL_PROJECT
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_PROXY_PROJECT
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
@@ -286,6 +287,6 @@ class ProjectServiceImpl(
                 )
             }
         }
-        private val excludeCri = TProject::name.nin(listOf(PUBLIC_GLOBAL_PROJECT, PUBLIC_PROXY_PROJECT))
+        private val excludeCri = TProject::name.nin(listOf(PUBLIC_GLOBAL_PROJECT, PAAS_PROJECT, PUBLIC_PROXY_PROJECT))
     }
 }

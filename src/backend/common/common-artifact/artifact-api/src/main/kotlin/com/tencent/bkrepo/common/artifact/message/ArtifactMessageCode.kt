@@ -71,6 +71,7 @@ enum class ArtifactMessageCode(private val key: String) : MessageCode {
     ARTIFACT_FORBIDDEN("artifact.forbidden"),
     FILE_LIST_EMPTY("artifact.file.list.empty"),
     ARTIFACT_FORBIDDEN_WHITELIST("artifact.forbidden.whitelist"),
+    ARTIFACT_TASK_LOCK("artifact.task.lock"),
     ;
 
     override fun getBusinessCode() = ordinal + 1

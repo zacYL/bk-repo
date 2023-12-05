@@ -31,6 +31,7 @@
 
 dependencies {
     api(project(":repository:api-repository"))
+    api(project(":job:api-job"))
     api(project(":common:common-job"))
     api(project(":common:common-mongo"))
     api(project(":common:common-query:query-mongo"))

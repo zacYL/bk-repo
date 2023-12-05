@@ -30,13 +30,22 @@ package com.tencent.bkrepo.job.controller.service
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.job.api.JobClient
+import com.tencent.bkrepo.job.batch.FileReferenceCleanupJob
 import com.tencent.bkrepo.job.pojo.JobDetail
 import com.tencent.bkrepo.job.service.JobService
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-class JobController(val jobService: JobService) : JobClient {
+class JobController(
+    val jobService: JobService,
+    private val fileReferenceCleanupJob: FileReferenceCleanupJob
+) : JobClient {
     override fun detail(): Response<List<JobDetail>> {
         return ResponseBuilder.success(jobService.detail())
+    }
+
+    override fun fileReferenceClean(): Response<Boolean> {
+        fileReferenceCleanupJob.start()
+        return ResponseBuilder.success(true)
     }
 }

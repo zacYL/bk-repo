@@ -5,12 +5,12 @@ import com.tencent.bkrepo.job.api.JobClient
 import com.tencent.bkrepo.repository.config.RepositoryProperties
 import com.tencent.bkrepo.repository.dao.FileReferenceDao
 import com.tencent.bkrepo.repository.dao.NodeDao
-import com.tencent.bkrepo.repository.dao.RepositoryDao
 import com.tencent.bkrepo.repository.job.DeletedNodeCleanupJob
 import com.tencent.bkrepo.repository.model.TFileReference
-import com.tencent.bkrepo.repository.model.TRepository
 import com.tencent.bkrepo.repository.pojo.node.NodeSizeInfo
+import com.tencent.bkrepo.repository.pojo.project.ProjectInfo
 import com.tencent.bkrepo.repository.pojo.storage.DiskCleanInfo
+import com.tencent.bkrepo.repository.service.repo.ProjectService
 import com.tencent.bkrepo.repository.service.repo.StorageCleanService
 import com.tencent.bkrepo.repository.util.FileSizeUtils
 import org.slf4j.LoggerFactory
@@ -20,17 +20,17 @@ import org.springframework.stereotype.Service
 
 @Service
 class StorageCleanServiceImpl(
-    private val repositoryDao: RepositoryDao,
     private val nodeDao: NodeDao,
     private val fileReferenceDao: FileReferenceDao,
+    private val projectService: ProjectService,
     private val repositoryProperties: RepositoryProperties,
     private val deletedNodeCleanupJob: DeletedNodeCleanupJob,
     private val jobClient: JobClient
 ) : StorageCleanService {
     override fun computeCleanDisk(): DiskCleanInfo {
         var total = 0L
-        val repoList = repositoryDao.findAll()
-        val resultMap = deleteNodeCompute(repoList)
+        val projectList = projectService.listProject()
+        val resultMap = deleteNodeCompute(projectList)
         if (resultMap.isEmpty()) {
             return DiskCleanInfo(freeSpaceSize = FileSizeUtils.formatFileSize(total))
         }
@@ -53,10 +53,10 @@ class StorageCleanServiceImpl(
         logger.info("clean disk execute success, ${System.currentTimeMillis() - start}ms")
     }
 
-    private fun deleteNodeCompute(repoList: List<TRepository>): Map<String, NodeSizeInfo> {
+    private fun deleteNodeCompute(projectList: List<ProjectInfo>): Map<String, NodeSizeInfo> {
         val resultMap = mutableMapOf<String, NodeSizeInfo>()
-        repoList.forEach { repo ->
-            val deletedNodeList = nodeDao.findDeleteNode(repo.name)
+        projectList.forEach { project ->
+            val deletedNodeList = nodeDao.findDeleteNode(project.name)
             if (deletedNodeList.isEmpty()) {
                 return@forEach
             }

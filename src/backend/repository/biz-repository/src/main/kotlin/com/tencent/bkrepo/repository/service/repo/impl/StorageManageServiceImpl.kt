@@ -1,9 +1,12 @@
 package com.tencent.bkrepo.repository.service.repo.impl
 
 import com.tencent.bkrepo.common.api.pojo.Page
+import com.tencent.bkrepo.common.api.util.readJsonString
+import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.storage.core.StorageProperties
 import com.tencent.bkrepo.common.storage.credentials.StorageType
+import com.tencent.bkrepo.repository.constant.ALL_REPO_STORAGE_CACHE
 import com.tencent.bkrepo.repository.dao.NodeDao
 import com.tencent.bkrepo.repository.dao.RepositoryDao
 import com.tencent.bkrepo.repository.model.TRepository
@@ -14,6 +17,7 @@ import com.tencent.bkrepo.repository.pojo.storage.StoragePojo
 import com.tencent.bkrepo.repository.service.repo.ProjectService
 import com.tencent.bkrepo.repository.service.repo.StorageManageService
 import com.tencent.bkrepo.repository.util.FileSizeUtils
+import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.stereotype.Service
 import java.io.File
 import java.util.*
@@ -23,6 +27,7 @@ import java.util.*
  */
 @Service
 class StorageManageServiceImpl(
+    private val redisTemplate: RedisTemplate<String, String>,
     private val storageProperties: StorageProperties,
     private val projectService: ProjectService,
     private val nodeDao: NodeDao,
@@ -52,25 +57,10 @@ class StorageManageServiceImpl(
         repoStorageInfoParam: RepoStorageInfoParam
     ): Page<RepoLogicStoragePojo> {
         with(repoStorageInfoParam) {
-            val repoList = repositoryDao.findAll()
-            val repoLogicStorageList = mutableListOf<RepoLogicStoragePojo>()
-            if (projectId.isNullOrEmpty()) {
-                val projectList = projectService.listProject()
-                projectList.forEach { project ->
-                    repoLogicStorageList.addAll(
-                        repoStatistics(
-                            projectId = project.name,
-                            repoList = repoList
-                        )
-                    )
-                }
+            val repoLogicStorageList = if (projectId.isNullOrEmpty()) {
+                getRepoStorageList()
             } else {
-                repoLogicStorageList.addAll(
-                    repoStatistics(
-                        projectId = projectId!!,
-                        repoList = repoList
-                    )
-                )
+                getRepoStorageList().filter { it.projectId == projectId }
             }
             val records = when (direction) {
                 DirectionType.REPO_SIZE_DESC -> repoLogicStorageList.sortedByDescending { it.size.toLong() }
@@ -90,7 +80,23 @@ class StorageManageServiceImpl(
         }
     }
 
-    private fun repoStatistics(projectId: String, repoList: List<TRepository>): List<RepoLogicStoragePojo> {
+    override fun updateRepoStorageCache(): List<RepoLogicStoragePojo> {
+        val repoList = repositoryDao.findAll()
+        val repoLogicStorageList = mutableListOf<RepoLogicStoragePojo>()
+        val projectList = projectService.listProject()
+        projectList.forEach { project ->
+            repoLogicStorageList.addAll(
+                repoStatistics(
+                    projectId = project.name,
+                    repoList = repoList
+                )
+            )
+        }
+        redisTemplate.opsForValue().set(ALL_REPO_STORAGE_CACHE, repoLogicStorageList.toJsonString())
+        return repoLogicStorageList
+    }
+
+    fun repoStatistics(projectId: String, repoList: List<TRepository>): List<RepoLogicStoragePojo> {
         val nodeList = nodeDao.findFileNode(projectId)
         val projectRepoList = repoList.filter {
             it.projectId == projectId && it.deleted == null
@@ -110,5 +116,13 @@ class StorageManageServiceImpl(
                 )
             }
         }
+    }
+
+    fun getRepoStorageList(): List<RepoLogicStoragePojo> {
+        val repoStorageCache = redisTemplate.opsForValue().get(ALL_REPO_STORAGE_CACHE)
+        if (repoStorageCache != null) {
+            return repoStorageCache.readJsonString<List<RepoLogicStoragePojo>>()
+        }
+        return updateRepoStorageCache()
     }
 }

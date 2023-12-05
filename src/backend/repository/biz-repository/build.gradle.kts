@@ -38,6 +38,7 @@ dependencies {
     api(project(":common:common-artifact:artifact-service"))
     testImplementation("de.flapdoodle.embed:de.flapdoodle.embed.mongo")
     api(project(":common:common-devops:repository"))
+    implementation(project(":common:common-redis"))
     implementation("org.quartz-scheduler:quartz")
     testImplementation("org.mockito.kotlin:mockito-kotlin")
 }

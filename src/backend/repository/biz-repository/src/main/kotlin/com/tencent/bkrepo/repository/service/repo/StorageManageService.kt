@@ -11,7 +11,15 @@ interface StorageManageService {
      */
     fun info(): StoragePojo
 
+    /**
+     * 查看项目仓库存储信息
+     */
     fun infoRepos(
         repoStorageInfoParam: RepoStorageInfoParam
     ): Page<RepoLogicStoragePojo>
+
+    /**
+     * 更新项目仓库存储信息redis缓存
+     */
+    fun updateRepoStorageCache(): List<RepoLogicStoragePojo>
 }

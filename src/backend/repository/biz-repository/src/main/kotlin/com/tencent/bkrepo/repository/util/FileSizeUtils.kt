@@ -1,6 +1,6 @@
 package com.tencent.bkrepo.repository.util
 
-import java.util.*
+import java.util.Locale
 
 object FileSizeUtils {
     private const val UNIT = 1024

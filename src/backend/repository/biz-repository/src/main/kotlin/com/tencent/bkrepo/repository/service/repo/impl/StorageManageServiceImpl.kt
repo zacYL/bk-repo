@@ -20,7 +20,7 @@ import com.tencent.bkrepo.repository.util.FileSizeUtils
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.stereotype.Service
 import java.io.File
-import java.util.*
+import java.util.Locale
 
 /**
  * 存储管理实现类

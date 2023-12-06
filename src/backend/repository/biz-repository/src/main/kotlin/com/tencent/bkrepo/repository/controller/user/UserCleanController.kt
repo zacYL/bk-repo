@@ -18,18 +18,18 @@ import org.springframework.web.bind.annotation.RestController
 @Principal(PrincipalType.ADMIN)
 @RequestMapping("/api/clean")
 class UserCleanController(
-    private val StorageCleanService: StorageCleanService
+    private val storageCleanService: StorageCleanService
 ) {
     @ApiOperation("磁盘清理预估")
     @GetMapping("/disk/compute")
     fun computeCleanDisk(): Response<DiskCleanInfo> {
-        return ResponseBuilder.success(StorageCleanService.computeCleanDisk())
+        return ResponseBuilder.success(storageCleanService.computeCleanDisk())
     }
 
     @ApiOperation("执行磁盘清理")
     @PostMapping("/disk/execute")
     fun executeDiskClean(): Response<Void> {
-        StorageCleanService.executeDiskClean()
+        storageCleanService.executeDiskClean()
         return ResponseBuilder.success()
     }
 }

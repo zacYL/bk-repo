@@ -1017,5 +1017,6 @@
     "mavenArtifactIdPlaceholder":"请输入制品 ArtifactId",
     "composerInputLabel":"制品包名称",
     "composerInputPlaceholder":"请输入制品包名称",
-    "npmVersionInputPlaceholder":"请输入制品版本，可为空，为空时默认拉取最新版本"
+    "npmVersionInputPlaceholder":"请输入制品版本，可为空，为空时默认拉取最新版本",
+    "genericSharePermitsError":"访问次数只能输入0 - 100000 之间的数字"
 }

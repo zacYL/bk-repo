@@ -1017,5 +1017,6 @@
     "mavenArtifactIdPlaceholder":"Please fill in the artifactId",
     "composerInputLabel":"Package Name",
     "composerInputPlaceholder":"Please fill in the artifact package Name",
-    "npmVersionInputPlaceholder":"Please fill in the artifact version. It can be empty. If it is empty, the latest version will be pulled by default."
+    "npmVersionInputPlaceholder":"Please fill in the artifact version. It can be empty. If it is empty, the latest version will be pulled by default.",
+    "genericSharePermitsError":"The number of visits can only be entered as a number between 0 and 100000"
 }

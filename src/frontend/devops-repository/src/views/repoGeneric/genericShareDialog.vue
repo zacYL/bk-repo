@@ -35,8 +35,8 @@
                 <QRCode class="share-qrcode" :text="shareUrl" :size="150" />
             </div>
         </div>
-        <bk-form v-else style="margin-top:-15px" ref="genericShareForm" :label-width="90" form-type="vertical">
-            <bk-form-item :label="$t('visits')">
+        <bk-form v-else style="margin-top:-15px" ref="genericShareForm" :rules="rules" :model="genericShare" :label-width="120" form-type="vertical">
+            <bk-form-item :label="$t('visits')" error-display-type="normal" property="permits">
                 <bk-input v-model="genericShare.permits" :placeholder="$t('sharePlaceholder2')"></bk-input>
             </bk-form-item>
             <bk-form-item :label="$t('validity')">
@@ -79,6 +79,15 @@
                     ip: [],
                     permits: '',
                     time: 0
+                },
+                rules: {
+                    permits: [
+                        {
+                            validator: this.onCheckPermits,
+                            message: this.$t('genericSharePermitsError'),
+                            trigger: 'blur'
+                        }
+                    ]
                 }
             }
         },
@@ -152,6 +161,9 @@
                 }).finally(() => {
                     this.sending = false
                 })
+            },
+            onCheckPermits (value) {
+                return (/^[0-9]*$/).test(value) && value <= 100000
             }
         }
     }

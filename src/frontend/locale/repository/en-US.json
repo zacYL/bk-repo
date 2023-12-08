@@ -841,7 +841,6 @@
     "localStoreInfo":"Upload and resolve your own packages",
     "remoteStoreInfo":"Proxy and cache packages hosted remotely",
     "virtualStoreInfo":"Combine local and remote packages in one place",
-    "noPlanPermissionInfo":"You do not have permission to {permission}, please contact the administrator to authorize",
     "recentlyUseDate":"Download time",
     "planLogErrorReason":"Error reason",
     "planLogReserve":"Log reserve days(within 60 days):",

@@ -170,9 +170,7 @@
                     name: '',
                     planKey: '',
                     description: ''
-                },
-                // 当前用户所拥有的权限集合
-                currentPermissionList: []
+                }
             }
         },
         computed: {
@@ -221,14 +219,6 @@
                 'deletePlan',
                 'getPlanOperationPermission'
             ]),
-            noPermissionHandler (key) {
-                if (!key) return
-                this.$bkMessage({
-                    message: this.$t('noPlanPermissionInfo', { permission: this.$t(key) }),
-                    theme: 'warning',
-                    limit: 3
-                })
-            },
             getExecutionStrategy ({ replicaType, setting: { executionStrategy } }) {
                 return replicaType === 'REAL_TIME'
                     ? this.$t('realTimeSync')
@@ -299,10 +289,6 @@
                 this.getPlanListHandler()
             },
             editPlanHandler ({ name, key, lastExecutionStatus }) {
-                if (this.ciMode && !this.currentPermissionList?.includes('update')) {
-                    this.noPermissionHandler('edit')
-                    return
-                }
                 if (lastExecutionStatus) return
                 this.drawerSlider = {
                     isShow: true,
@@ -326,10 +312,6 @@
                 // })
             },
             copyPlanHandler ({ name, key, description }) {
-                if (this.ciMode && !this.currentPermissionList?.includes('copy')) {
-                    this.noPermissionHandler('copy')
-                    return
-                }
                 this.planCopy = {
                     show: true,
                     name,
@@ -338,10 +320,6 @@
                 }
             },
             deletePlanHandler ({ key, name }) {
-                if (this.ciMode && !this.currentPermissionList?.includes('delete')) {
-                    this.noPermissionHandler('delete')
-                    return
-                }
                 this.$confirm({
                     theme: 'danger',
                     message: this.$t('planConfirmDeleteMsg', [name]),

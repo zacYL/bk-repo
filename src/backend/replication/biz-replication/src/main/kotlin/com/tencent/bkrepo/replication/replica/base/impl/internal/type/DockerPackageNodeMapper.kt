@@ -1,8 +1,10 @@
 package com.tencent.bkrepo.replication.replica.base.impl.internal.type
 
+import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.storage.core.StorageService
+import com.tencent.bkrepo.replication.constant.OCI_DIGEST_MANIFEST_JSON_FULL_PATH
 import com.tencent.bkrepo.replication.constant.OCI_LAYER_FULL_PATH
 import com.tencent.bkrepo.replication.constant.OCI_LIST_MANIFEST_JSON_FULL_PATH
 import com.tencent.bkrepo.replication.constant.OCI_MANIFEST_JSON_FULL_PATH
@@ -40,11 +42,20 @@ class DockerPackageNodeMapper(
             val version = packageVersion.name
             val repository = repositoryClient.getRepoDetail(projectId, repoName, type.name).data!!
             // 旧的docker数据需要迁移，迁移后不需要兼容
-            var manifestFullPath = OCI_MANIFEST_JSON_FULL_PATH.format(name, version)
-            val nodeDetail = nodeClient.getNodeDetail(projectId, repoName, manifestFullPath).data ?: run {
-                // 兼容 list.manifest.json
-                manifestFullPath = OCI_LIST_MANIFEST_JSON_FULL_PATH.format(name, version)
-                nodeClient.getNodeDetail(projectId, repoName, manifestFullPath).data!!
+            val (manifestFullPath, nodeDetail) = run loop@{
+                listOf(
+                    OCI_MANIFEST_JSON_FULL_PATH,
+                    OCI_LIST_MANIFEST_JSON_FULL_PATH,
+                    OCI_DIGEST_MANIFEST_JSON_FULL_PATH
+                ).forEach {
+                    val formattedVersion = if (version.startsWith("sha256:"))
+                        version.replace(":", "__") else version
+                    val manifestFullPath = it.format(name, formattedVersion)
+                    nodeClient.getNodeDetail(projectId, repoName, manifestFullPath).data?.run {
+                        return@loop Pair(manifestFullPath, this)
+                    }
+                }
+                throw ArtifactNotFoundException("Can not find manifest of [$name/$version] in [$projectId/$repoName])")
             }
             val inputStream = storageService.load(
                 nodeDetail.sha256.orEmpty(),

@@ -26,8 +26,10 @@
  */
 
 dependencies {
+    api(fileTree(mapOf("dir" to "lib", "include" to listOf("*.jar"))))
     api(project(":common:common-artifact:artifact-api"))
     api(project(":repository:api-repository"))
     api("com.tencent.devops:devops-pulsar")
     api("commons-io:commons-io")
+    api("net.jodah:typetools:0.6.2")
 }

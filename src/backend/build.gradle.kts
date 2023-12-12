@@ -91,6 +91,8 @@ allprojects {
         exclude(group = "org.slf4j", module = "slf4j-log4j12")
         exclude(group = "commons-logging", module = "commons-logging")
         exclude(group = "org.springframework.data", module = "spring-data-mongodb")
+        exclude(group = "org.springframework.cloud", module = "spring-cloud-function-context")
+        exclude(group = "org.springframework.cloud", module = "spring-cloud-function-core")
     }
 
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {

@@ -147,10 +147,9 @@ class RemotePackageWhitelistServiceImpl(
         }
         if (!version.isNullOrBlank()) {
             criteria.orOperator(
-                    listOf(Criteria.where(TRemotePackageWhitelist::versions.name).`in`(version),
-                            Criteria.where(TRemotePackageWhitelist::versions.name).`is`(null),
-                            Criteria.where(TRemotePackageWhitelist::versions.name).size(0)
-                    )
+                Criteria.where(TRemotePackageWhitelist::versions.name).`in`(version),
+                Criteria.where(TRemotePackageWhitelist::versions.name).`is`(null),
+                Criteria.where(TRemotePackageWhitelist::versions.name).size(0)
             )
         }
         val query = Query(criteria)

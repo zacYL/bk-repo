@@ -24,7 +24,7 @@ object PermissionQueryHelper {
             if (roles.isNotEmpty()) add(Criteria.where(TPermission::roles.name).`in`(roles))
             if (!departments.isNullOrEmpty()) add(Criteria.where(TPermission::departments.name).`in`(departments))
         }
-        var celeriac = criteria.orOperator(orUserQuery)
+        var celeriac = criteria.orOperator(*orUserQuery.toTypedArray())
             .and(TPermission::resourceType.name).`is`(resourceType)
             .and(TPermission::actions.name).`in`(action)
         if (resourceType != ResourceType.SYSTEM) {

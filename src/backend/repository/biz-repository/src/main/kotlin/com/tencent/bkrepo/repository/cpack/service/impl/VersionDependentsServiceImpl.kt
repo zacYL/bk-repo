@@ -74,13 +74,12 @@ class VersionDependentsServiceImpl(
         repoName?.let { query.addCriteria(where(TPackageVersionDependents::repoName).isEqualTo(it)) }
         val totalRecords = packageVersionDependentsDao.count(query)
         query.with(Pages.ofRequest(pageNumber, pageSize))
-            .fields().include(
-                TPackageVersionDependents::projectId.name,
-                TPackageVersionDependents::repoName.name,
-                TPackageVersionDependents::packageKey.name,
-                TPackageVersionDependents::version.name,
-                TPackageVersionDependents::ext.name
-            )
+            .fields()
+            .include(TPackageVersionDependents::projectId.name)
+            .include(TPackageVersionDependents::repoName.name)
+            .include(TPackageVersionDependents::packageKey.name)
+            .include(TPackageVersionDependents::version.name)
+            .include(TPackageVersionDependents::ext.name)
         val packageVersionDependents = packageVersionDependentsDao.find(query)
         return Pages.ofResponse(
             pageRequest = Pages.ofRequest(pageNumber, pageSize),

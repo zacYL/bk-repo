@@ -171,6 +171,10 @@ allprojects {
             dependsOn(tasks.named("bootJar"))
         }
     }
+
+    tasks.withType<Jar> {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
 }
 
 fun isBootProject(project: Project): Boolean {

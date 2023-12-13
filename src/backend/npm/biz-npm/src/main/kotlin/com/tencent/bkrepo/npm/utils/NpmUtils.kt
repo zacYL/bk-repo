@@ -68,7 +68,8 @@ object NpmUtils {
     }
 
     fun analyseVersionFromPackageName(filename: String, name: String): String {
-        return filename.substringBeforeLast(".tgz").substringAfter("$name-")
+        val shortName = name.substringAfterLast("/")
+        return filename.substringBeforeLast(".tgz").substringAfter("$shortName-")
     }
 
     fun analyseVersionFromVersionMetadataName(filename: String, name: String): String {

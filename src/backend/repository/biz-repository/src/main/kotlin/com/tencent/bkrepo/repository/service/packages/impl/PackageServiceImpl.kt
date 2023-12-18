@@ -444,7 +444,6 @@ class PackageServiceImpl(
         ArtifactContextHolder.getRepository().download(context)
         val userId = SecurityUtils.getUserId()
         if (HttpContextHolder.getRequest().method.equals("get", ignoreCase = true)) {
-            updateRecentlyUseDate(projectId, repoName, packageKey, versionName)
             publishEvent(
                 PackageEventFactory.buildDownloadEvent(
                     projectId = projectId,

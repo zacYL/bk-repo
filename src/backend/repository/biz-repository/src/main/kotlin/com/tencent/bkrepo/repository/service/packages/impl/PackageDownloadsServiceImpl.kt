@@ -60,6 +60,7 @@ import org.springframework.data.mongodb.core.query.Update
 import org.springframework.stereotype.Service
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
 @Service
@@ -93,6 +94,7 @@ class PackageDownloadsServiceImpl(
             // update package version
             val versionQuery = PackageQueryHelper.versionQuery(tPackage.id.orEmpty(), name = packageVersion)
             val versionUpdate = Update().inc(TPackageVersion::downloads.name, 1)
+            versionUpdate.set(TPackageVersion::recentlyUseDate.name, LocalDateTime.now())
             packageVersionDao.updateFirst(versionQuery, versionUpdate)
 
             // update package

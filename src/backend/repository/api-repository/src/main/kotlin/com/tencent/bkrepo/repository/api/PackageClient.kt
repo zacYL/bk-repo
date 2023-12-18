@@ -126,6 +126,7 @@ interface PackageClient {
         @RequestParam realIpAddress: String? = null
     ): Response<Void>
 
+    @Deprecated("生成下载记录时,更新该时间")
     @ApiOperation("更新包版本最近使用时间")
     @PostMapping("/version/update/recentlyUserDate")
     fun updateRecentlyUseDate(

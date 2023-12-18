@@ -112,6 +112,7 @@ class PackageController(
         return ResponseBuilder.success()
     }
 
+    @Deprecated("生成下载记录时,更新该时间")
     override fun updateRecentlyUseDate(
         projectId: String,
         repoName: String,

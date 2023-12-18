@@ -274,7 +274,6 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
                     it.projectId, it.repoName, it.packageKey, it.packageVersion
                 ).data
                 if (packageVersion != null) {
-                    packageClient.updateRecentlyUseDate(it.projectId, it.repoName, it.packageKey, it.packageVersion)
                     taskAsyncExecutor.execute { packageDownloadsClient.record(it) }
                     publishPackageDownloadEvent(context, it)
                 }

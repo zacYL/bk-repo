@@ -205,7 +205,7 @@ abstract class AbstractReplicaService(
     ) {
         with(replicaContext) {
             replicator.replicaPackage(this, packageSummary)
-            val versions = versionNames?.map {
+            var versions = versionNames?.map {
                 localDataManager.findPackageVersion(
                     projectId = localProjectId,
                     repoName = localRepoName,
@@ -218,7 +218,8 @@ abstract class AbstractReplicaService(
                 packageKey = packageSummary.key,
                 option = VersionListOption()
             )
-
+            // version 排序，保证分发后的顺序一致
+            versions = versions.sortedBy { it.createdDate }
             versions.forEach {
                 // 外部集群仓库没有project/repoName
                 if (remoteProjectId.isNullOrBlank() || remoteRepoName.isNullOrBlank()) {

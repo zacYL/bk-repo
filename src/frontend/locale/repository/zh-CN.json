@@ -1017,5 +1017,11 @@
     "composerInputLabel":"制品包名称",
     "composerInputPlaceholder":"请输入制品包名称",
     "npmVersionInputPlaceholder":"请输入制品版本，可为空，为空时默认拉取最新版本",
-    "genericSharePermitsError":"访问次数只能输入0 - 100000 之间的数字"
+    "genericSharePermitsError":"访问次数只能输入0 - 100000 之间的数字",
+    "dependencyVulScanner":"依赖漏洞扫描器",
+    "dependencyVulScannerDescription":"依赖漏洞扫描器可以检查制品中各依赖中存在的开源漏洞",
+    "trivyScanner":"镜像漏洞扫描器",
+    "trivyScannerDescription":"镜像扫描器可以检查镜像中存在的开源漏洞以及使用的开源许可证",
+    "scanCodeScanner":"依赖许可扫描器",
+    "scanCodeScannerDescription":"依赖许可扫描器可以检查制品中各依赖中使用的开源许可证"
 }

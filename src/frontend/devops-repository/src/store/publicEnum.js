@@ -191,3 +191,21 @@ export const repoSearchConditionMap = [
         name: 'searchConditionMetadata'
     }
 ]
+
+export const scannerTypes = [
+    {
+        name: 'dependency-check',
+        label: 'dependencyVulScanner',
+        description: 'dependencyVulScannerDescription'
+    },
+    {
+        name: 'trivy-scanner',
+        label: 'trivyScanner',
+        description: 'trivyScannerDescription'
+    },
+    {
+        name: 'scancode-toolkit',
+        label: 'scanCodeScanner',
+        description: 'scanCodeScannerDescription'
+    }
+]

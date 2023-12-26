@@ -7,7 +7,7 @@
                         <bk-input class="w250" v-model.trim="scanBaseInfo.name" maxlength="32" show-word-limit></bk-input>
                     </bk-form-item>
                     <bk-form-item :label="$t('schemeType')">{{ $t(`scanTypeEnum.${scanBaseInfo.type}`) }}</bk-form-item>
-                    <bk-form-item :label="$t('scanner')">{{ scanBaseInfo.scanner }}</bk-form-item>
+                    <bk-form-item :label="$t('scanner')">{{ $t(scannerLabel) }}</bk-form-item>
                     <bk-form-item :label="$t('description')">
                         <bk-input type="textarea"
                             class="w480"
@@ -35,7 +35,7 @@
     import autoScanConfig from './autoScanConfig'
     import scanQualityRule from './scanQualityRule'
     import { mapActions } from 'vuex'
-    import { scanTypeEnum } from '@repository/store/publicEnum'
+    import { scanTypeEnum, scannerTypes } from '@repository/store/publicEnum'
     export default {
         name: 'scanConfig',
         components: { autoScanConfig, scanQualityRule },
@@ -55,7 +55,8 @@
                         rules: []
                     }
                 },
-                showMonitor: false
+                showMonitor: false,
+                scannerTypes
             }
         },
         computed: {
@@ -64,6 +65,10 @@
             },
             planId () {
                 return this.$route.params.planId
+            },
+            // 扫描器显示需要修改文案，不需要用户知道具体的扫描器是什么
+            scannerLabel () {
+                return (this.scannerTypes?.find(item => item.name === this.scanBaseInfo.scanner)?.label) || this.scanBaseInfo.scanner
             }
         },
         watch: {

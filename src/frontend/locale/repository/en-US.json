@@ -1017,5 +1017,11 @@
     "composerInputLabel":"Package Name",
     "composerInputPlaceholder":"Please fill in the artifact package Name",
     "npmVersionInputPlaceholder":"Please fill in the artifact version. It can be empty. If it is empty, the latest version will be pulled by default.",
-    "genericSharePermitsError":"The number of visits can only be entered as a number between 0 and 100000"
+    "genericSharePermitsError":"The number of visits can only be entered as a number between 0 and 100000",
+    "dependencyVulScanner":"dependency-check",
+    "dependencyVulScannerDescription":"dependency-check scanner can check open source vulnerabilities in each dependency in the artifact",
+    "trivyScanner":"trivy-scanner",
+    "trivyScannerDescription":"trivy-scanner can check the open source vulnerabilities present in the image and the open source license used",
+    "scanCodeScanner":"scancode-toolkit",
+    "scanCodeScannerDescription":"scancode-toolkit scanner can check the open source license used in each dependency in the artifact"
 }

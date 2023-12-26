@@ -22,12 +22,16 @@
             <div class="package-card-data" :style="dynamicStyle">
                 <!-- 依赖源仓库 -->
                 <template v-if="cardData.type">
-                    <div class="card-metadata" :title="$t('latestVersion') + ` : ${cardData.latest}`">
-                        <scan-tag class="ml5"
-                            v-if="isEnterprise && showRepoScan"
-                            :status="cardData.scanStatus"
-                            readonly>
-                        </scan-tag>
+                    <div class="card-metadata">
+                        <div class="flex-align-center">
+                            <span class="card-metadata-special" :title="$t('latestVersion') + ` : ${cardData.latest}`"></span>
+                            <scan-tag
+                                class="ml5"
+                                v-if="isEnterprise && showRepoScan"
+                                :status="cardData.scanStatus"
+                                readonly>
+                            </scan-tag>
+                        </div>
                     </div>
                     <div class="card-metadata" :title="$t('lastModifiedDate') + ` : ${formatDate(cardData.lastModifiedDate)}`"></div>
                     <div class="card-metadata" :title="$t('createdDate') + ` : ${formatDate(cardData.createdDate)}`"></div>
@@ -111,7 +115,7 @@
             },
             // grid 布局根据依赖源、搜索、虚拟仓库等 需要拆分为 几部分
             dynamicStyle () {
-                let style = 4
+                let style = '1fr 1fr 1fr 1fr'
                 if (this.whetherRepoSearch) {
                     // 在制品搜索页面时
                     if (this.cardData.type) {
@@ -208,6 +212,17 @@
                 &:before {
                     content: attr(title);
                     color: var(--fontSubsidiaryColor);
+                }
+                 &-special {
+                    max-width: calc(100% - 20px);
+                    display: block;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                    &:before {
+                        content: attr(title);
+                        color: var(--fontSubsidiaryColor);
+                    }
                 }
             }
         }

@@ -33,6 +33,8 @@ package com.tencent.bkrepo.npm.service.impl
 
 import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
 import com.tencent.bkrepo.common.api.util.JsonUtils
+import com.tencent.bkrepo.common.artifact.exception.PackageNotFoundException
+import com.tencent.bkrepo.common.artifact.exception.VersionNotFoundException
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
@@ -42,7 +44,6 @@ import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
 import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
 import com.tencent.bkrepo.npm.constants.LATEST
 import com.tencent.bkrepo.npm.constants.NPM_FILE_FULL_PATH
-import com.tencent.bkrepo.npm.constants.TGZ_FULL_PATH_WITH_DASH_SEPARATOR
 import com.tencent.bkrepo.npm.exception.NpmArtifactNotFoundException
 import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
 import com.tencent.bkrepo.npm.model.metadata.NpmVersionMetadata
@@ -139,22 +140,21 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
             if (repoCategory == RepositoryCategory.VIRTUAL) {
                 throw MethodNotAllowedException()
             }
-            val packageMetadata = queryPackageInfo(artifactInfo, name, false)
-            val versionEntries = packageMetadata.versions.map.entries
-            val iterator = versionEntries.iterator()
+            val packageKey = PackageKeys.ofNpm(name)
+            val versionInfo = packageClient.findVersionByName(projectId, repoName, packageKey, version).data
+                ?: throw VersionNotFoundException("$packageKey/$version")
+            val packageInfo = packageClient.findPackageByKey(projectId, repoName, packageKey).data
+                ?: throw PackageNotFoundException(packageKey)
             // 如果删除最后一个版本直接删除整个包
-            if (versionEntries.size == 1 && iterator.hasNext() && iterator.next().key == version) {
+            if (packageInfo.versions == 1L) {
                 val deletePackageRequest = PackageDeleteRequest(projectId, repoName, name, operator)
                 deletePackage(artifactInfo, deletePackageRequest)
                 return
             }
-            val tgzPath =
-                packageMetadata.versions.map[version]?.dist?.tarball?.substringAfterLast(
-                    artifactInfo.getRepoIdentify(), ""
-                ).takeUnless { it.isNullOrBlank() } ?: NpmUtils.getTgzPath(name, version)
-            npmClientService.deleteVersion(artifactInfo, name, version, tgzPath)
+            npmClientService.deleteVersion(artifactInfo, name, version, versionInfo.contentPath!!)
             // 修改package.json文件的内容
             if (repoCategory != RepositoryCategory.REMOTE) {
+                val packageMetadata = queryPackageInfo(artifactInfo, name, false)
                 updatePackageWithDeleteVersion(artifactInfo, this, packageMetadata)
             }
         }

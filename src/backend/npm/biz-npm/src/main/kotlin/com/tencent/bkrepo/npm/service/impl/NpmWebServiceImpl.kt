@@ -90,18 +90,16 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
         val versionMetaData = packageMetadata.versions.map[version]
         val readmeFileName = versionMetaData?.readmeFilename
         val readme = readmeFileName?.let { versionMetaData.readme.orEmpty() }
-        val pathWithDash = packageMetadata.versions.map[version]?.dist?.tarball?.substringAfter(name)
-            ?.contains(TGZ_FULL_PATH_WITH_DASH_SEPARATOR) ?: true
-        val fullPath = NpmUtils.getTgzPath(name, version, pathWithDash)
         with(artifactInfo) {
             checkRepositoryExist(projectId, repoName)
-            val nodeDetail = nodeClient.getNodeDetail(projectId, repoName, fullPath).data ?: run {
-                logger.warn("node [$fullPath] don't found.")
-                throw NpmArtifactNotFoundException("node [$fullPath] don't found.")
-            }
             val packageVersion = packageClient.findVersionByName(projectId, repoName, packageKey, version).data ?: run {
                 logger.warn("packageKey [$packageKey] don't found.")
                 throw NpmArtifactNotFoundException("packageKey [$packageKey] don't found.")
+            }
+            val fullPath = packageVersion.contentPath!!
+            val nodeDetail = nodeClient.getNodeDetail(projectId, repoName, fullPath).data ?: run {
+                logger.warn("node [$fullPath] don't found.")
+                throw NpmArtifactNotFoundException("node [$fullPath] don't found.")
             }
             val basicInfo = buildBasicInfo(nodeDetail, packageVersion, readme)
             val versionDependenciesInfo =

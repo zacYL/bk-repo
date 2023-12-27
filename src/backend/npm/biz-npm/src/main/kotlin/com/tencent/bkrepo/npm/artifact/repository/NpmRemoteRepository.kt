@@ -107,7 +107,7 @@ class NpmRemoteRepository(
                     query(queryContext)?.use {
                         val versionMetadata = JsonUtils.objectMapper.readValue(it, NpmVersionMetadata::class.java)
                         val size = artifactResource.getTotalSize()
-                        npmPackageHandler.createVersion(userId, artifactInfo, versionMetadata, size)
+                        npmPackageHandler.createVersion(userId, artifactInfo, versionMetadata, size, false)
                     }
                     super.onDownloadSuccess(this, artifactResource, throughput)
                 }

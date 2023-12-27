@@ -36,8 +36,8 @@ import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
-import com.tencent.bkrepo.npm.constants.NPM_PKG_TGZ_FULL_PATH
 import com.tencent.bkrepo.npm.constants.SIZE
+import com.tencent.bkrepo.npm.constants.TGZ_FULL_PATH_WITH_DASH_SEPARATOR
 import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
 import com.tencent.bkrepo.npm.model.metadata.NpmVersionMetadata
 import com.tencent.bkrepo.npm.model.properties.PackageProperties
@@ -141,14 +141,17 @@ class NpmPackageHandler {
         userId: String,
         artifactInfo: ArtifactInfo,
         versionMetaData: NpmVersionMetadata,
-        size: Long
+        size: Long,
+        containScopePathAfterHyphen: Boolean = true
     ) {
         versionMetaData.apply {
             val name = this.name!!
             val description = this.description
             val version = this.version!!
             val manifestPath = getManifestPath(name, version)
-            val contentPath = getContentPath(name, version)
+            val containHyphenPath = versionMetaData.dist?.tarball?.substringAfter(name)
+                ?.contains(TGZ_FULL_PATH_WITH_DASH_SEPARATOR) ?: true
+            val contentPath = NpmUtils.getTgzPath(name, version, containHyphenPath, containScopePathAfterHyphen)
             val metadata = buildProperties(this)
             with(artifactInfo) {
                 val packageVersionCreateRequest = PackageVersionCreateRequest(
@@ -214,10 +217,6 @@ class NpmPackageHandler {
 
     fun getManifestPath(name: String, version: String): String {
         return NpmUtils.getVersionPackageMetadataPath(name, version)
-    }
-
-    fun getContentPath(name: String, version: String): String {
-        return String.format(NPM_PKG_TGZ_FULL_PATH, name, name, version)
     }
 
     companion object {

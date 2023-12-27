@@ -59,9 +59,16 @@ object NpmUtils {
         return NPM_PKG_VERSION_METADATA_FULL_PATH.format(name, name, version)
     }
 
-    fun getTgzPath(name: String, version: String, pathWithDash: Boolean = true): String {
-        return if (pathWithDash) {
-            NPM_PKG_TGZ_FULL_PATH.format(name, name, version)
+    fun getTgzPath(
+        name: String,
+        version: String,
+        containHyphenPath: Boolean = true,
+        containScopePathAfterHyphen: Boolean = true
+    ): String {
+        return if (containHyphenPath) {
+            val nameAfterDash =
+                if (!isScopeName(name) || containScopePathAfterHyphen) name else name.substringAfterLast("/")
+            NPM_PKG_TGZ_FULL_PATH.format(name, nameAfterDash, version)
         } else {
             NPM_PKG_TGZ_WITH_DOWNLOAD_FULL_PATH.format(name, name, version)
         }

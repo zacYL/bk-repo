@@ -25,11 +25,12 @@ class ServiceNpmClientImpl : ServiceNpmClientService, AbstractNpmService() {
     ) {
         logger.info("NPM delete package begin, projectId:[$projectId] " +
                 "repoName:[$repoName] packageKey:[$packageKey] version:[$version]")
+        val tgzPath = packageClient.findVersionByName(projectId, repoName, packageKey, version).data?.contentPath
+            ?: return
         // 删除包管理中对应的version
         packageClient.deleteVersion(projectId, repoName, packageKey, version, null)
         // 删除文件节点
         val name = PackageKeys.resolveNpm(packageKey)
-        val tgzPath = NpmUtils.getTgzPath(name, version)
         val metadataPath = NpmUtils.getVersionPackageMetadataPath(name, version)
         nodeClient.deleteNode(NodeDeleteRequest(projectId, repoName, tgzPath, operator))
         nodeClient.deleteNode(NodeDeleteRequest(projectId, repoName, metadataPath, operator))

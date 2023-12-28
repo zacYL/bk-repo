@@ -40,8 +40,9 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchConte
 import com.tencent.bkrepo.common.artifact.repository.virtual.VirtualRepository
 import com.tencent.bkrepo.pypi.artifact.xml.Value
 import com.tencent.bkrepo.pypi.constants.ELEMENT_SUFFIX
+import com.tencent.bkrepo.pypi.constants.FILE_NAME_REGEX
 import com.tencent.bkrepo.pypi.constants.PACKAGE_INDEX_TITLE
-import com.tencent.bkrepo.pypi.constants.PSEUDO_CONTAIN_TEXT
+import com.tencent.bkrepo.pypi.constants.PSEUDO_MATCH_REGEX
 import com.tencent.bkrepo.pypi.constants.PypiQueryType
 import com.tencent.bkrepo.pypi.constants.QUERY_TYPE
 import com.tencent.bkrepo.pypi.constants.SELECTOR_A
@@ -65,7 +66,7 @@ class PypiVirtualRepository : VirtualRepository() {
             throw MethodNotAllowedException()
         }
         val artifactName = context.artifactInfo.getArtifactName().removePrefix("/")
-        val pseudoSelector = if (artifactName.isBlank()) "" else String.format(PSEUDO_CONTAIN_TEXT, artifactName)
+        val pseudoSelector = if (artifactName.isBlank()) "" else String.format(PSEUDO_MATCH_REGEX, FILE_NAME_REGEX)
         val elementPages = (super.query(context) as List<String>)
             .map { Jsoup.parse(it).body().select(SELECTOR_A + pseudoSelector) }
             .takeIf { it.isNotEmpty() }

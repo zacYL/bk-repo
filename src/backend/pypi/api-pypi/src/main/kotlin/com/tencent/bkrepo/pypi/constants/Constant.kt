@@ -39,8 +39,10 @@ const val ARTIFACT_LIST = "artifactList"
 const val QUERY_TYPE = "queryType"
 
 const val ELEMENT_SUFFIX = "<br />\n"
-const val PSEUDO_CONTAIN_TEXT = ":contains(%s)"
+const val PSEUDO_MATCH_REGEX = ":matchesOwn(%s)"
 const val SELECTOR_A = "a"
+
+const val FILE_NAME_REGEX = ".+\\.(tar|tar\\.gz|tgz|zip|whl)$"
 
 const val PACKAGE_INDEX_TITLE = "Simple Index"
 const val VERSION_INDEX_TITLE = "Links for %s"

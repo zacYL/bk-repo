@@ -10,8 +10,9 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadCon
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.pypi.constants.ELEMENT_SUFFIX
+import com.tencent.bkrepo.pypi.constants.FILE_NAME_REGEX
 import com.tencent.bkrepo.pypi.constants.PACKAGE_INDEX_TITLE
-import com.tencent.bkrepo.pypi.constants.PSEUDO_CONTAIN_TEXT
+import com.tencent.bkrepo.pypi.constants.PSEUDO_MATCH_REGEX
 import com.tencent.bkrepo.pypi.constants.PypiQueryType
 import com.tencent.bkrepo.pypi.constants.QUERY_TYPE
 import com.tencent.bkrepo.pypi.constants.SELECTOR_A
@@ -24,7 +25,7 @@ import org.jsoup.select.Elements
 import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Service
-import java.util.*
+import java.util.TreeSet
 
 @Service
 @Primary
@@ -60,14 +61,14 @@ class PypiCompositeRepository(
                     return localPage ?: remotePage
                 } else {
                     val pseudoSelector =
-                        if (artifactName.isBlank()) "" else String.format(PSEUDO_CONTAIN_TEXT, artifactName)
+                        if (artifactName.isBlank()) "" else String.format(PSEUDO_MATCH_REGEX, FILE_NAME_REGEX)
                     val elementPages = listOf(localPage, remotePage)
                         .map { Jsoup.parse(it).body().select(SELECTOR_A + pseudoSelector) }
                         .takeIf { it.isNotEmpty() }
                         ?: throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, artifactName)
                     val anchorSet = TreeSet<Element>(compareBy { it.text() })
                     elementPages.forEach { anchorSet.addAll(it) }
-                    val title = if (artifactName.isBlank()){
+                    val title = if (artifactName.isBlank()) {
                         PACKAGE_INDEX_TITLE
                     } else {
                         String.format(VERSION_INDEX_TITLE, artifactName)

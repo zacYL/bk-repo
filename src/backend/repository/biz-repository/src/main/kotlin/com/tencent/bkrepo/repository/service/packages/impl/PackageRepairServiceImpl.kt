@@ -5,13 +5,20 @@ import com.tencent.bkrepo.common.api.util.HumanReadable
 import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.mongo.dao.AbstractMongoDao.Companion.ID
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
+import com.tencent.bkrepo.repository.dao.NodeDao
 import com.tencent.bkrepo.repository.dao.PackageDao
 import com.tencent.bkrepo.repository.dao.PackageVersionDao
 import com.tencent.bkrepo.repository.model.TMetadata
+import com.tencent.bkrepo.repository.dao.RepositoryDao
 import com.tencent.bkrepo.repository.model.TPackage
 import com.tencent.bkrepo.repository.model.TPackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
+import com.tencent.bkrepo.repository.model.TRepository
+import com.tencent.bkrepo.repository.pojo.packages.PackageListOption
 import com.tencent.bkrepo.repository.pojo.packages.VersionListOption
 import com.tencent.bkrepo.repository.service.packages.PackageRepairService
 import com.tencent.bkrepo.repository.service.packages.PackageService
@@ -19,6 +26,7 @@ import com.tencent.bkrepo.repository.util.PackageQueryHelper
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Sort
+import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Update
 import org.springframework.data.mongodb.core.query.and
@@ -33,7 +41,9 @@ import kotlin.system.measureNanoTime
 class PackageRepairServiceImpl(
     private val packageService: PackageService,
     private val packageDao: PackageDao,
-    private val packageVersionDao: PackageVersionDao
+    private val packageVersionDao: PackageVersionDao,
+    private val repositoryDao: RepositoryDao,
+    private val nodeDao: NodeDao
 ) : PackageRepairService {
     override fun repairHistoryVersion() {
         // 查询仓库下面的所有package的包
@@ -183,6 +193,77 @@ class PackageRepairServiceImpl(
         }
     }
 
+    /**
+     * artifactPath to be modified like this format: /@types/node/-/@types/node-17.0.13.tgz
+     */
+    override fun repairNpmArtifactPath(): Map<String, Long> {
+        var success = 0L
+        var fail = 0L
+        val criteria = where(TRepository::type).isEqualTo(RepositoryType.NPM)
+            .and(TRepository::category).isEqualTo(RepositoryCategory.REMOTE)
+        repositoryDao.find(Query(criteria)).forEach { repo ->
+            var pageNumber = 1
+            do {
+                val packages = packageService.listPackagePage(
+                    repo.projectId, repo.name, PackageListOption(pageNumber, PAGE_SIZE, "@")
+                ).records
+                packages.filter { it.name.startsWith("@") && it.name.contains("/") }.forEach {
+                    val modifiedResult = repairNpmArtifactPathWithinPackage(it.projectId, it.repoName, it.id!!)
+                    success += modifiedResult.first
+                    fail += modifiedResult.second
+                }
+                pageNumber++
+            } while (packages.size == PAGE_SIZE)
+        }
+        val total = success + fail
+        logger.info("repair npm artifactPath complete. total[$total], success[$success], fail[$fail]")
+        return mapOf(
+            "success" to success,
+            "fail" to fail,
+            "total" to total
+        )
+    }
+
+    private fun repairNpmArtifactPathWithinPackage(
+        projectId: String,
+        repoName: String,
+        packageId: String
+    ): Pair<Long, Long> {
+        var success = 0L
+        var fail = 0L
+        val versions = packageVersionDao.find(PackageQueryHelper.versionListQuery(packageId))
+        versions.forEach {
+            if (it.artifactPath?.matches(npmArtifactPathRegex) == true) {
+                val pathWithHyphen = it.artifactPath!!.replace(replaceRegex, "/-")
+                val pathWithoutHyphen = it.artifactPath!!.replace("/-/", "/download/")
+                val newPath = if (nodeDao.exists(projectId, repoName, pathWithHyphen)) {
+                    pathWithHyphen
+                } else if (nodeDao.exists(projectId, repoName, pathWithoutHyphen)) {
+                    pathWithoutHyphen
+                } else {
+                    fail++
+                    logger.warn("tgz node [$pathWithHyphen], [$pathWithoutHyphen] not found in [$projectId/$repoName]")
+                    return@forEach
+                }
+                val query = Query(Criteria.where(ID).isEqualTo(it.id))
+                val update = Update().set(TPackageVersion::artifactPath.name, newPath)
+                val result = packageVersionDao.updateFirst(query, update)
+                if (result.modifiedCount == 1L) {
+                    success++
+                    logger.info(
+                        "successfully modify artifactPath[${it.artifactPath}] to [$newPath] in [$projectId/$repoName]"
+                    )
+                } else {
+                    fail++
+                    logger.warn(
+                        "fail to modify artifactPath[${it.artifactPath}] to [$newPath] in [$projectId/$repoName]"
+                    )
+                }
+            }
+        }
+        return Pair(success, fail)
+    }
+
     private fun updateVersionCount(tPackage: TPackage): Boolean? {
         val actualCount = packageVersionDao.countVersion(tPackage.id!!)
         return if (actualCount == tPackage.versions) {
@@ -218,6 +299,9 @@ class PackageRepairServiceImpl(
     }
 
     companion object {
+        private val npmArtifactPathRegex = Regex("/@[\\w.-]+/[\\w.-]+/-/@[\\w.-]+/[\\w.-]+-.+\\.tgz")
+        private val replaceRegex = Regex("/-/@[\\w.-]+")
+        private const val PAGE_SIZE = 1000
         private val logger: Logger = LoggerFactory.getLogger(PackageRepairServiceImpl::class.java)
     }
 }

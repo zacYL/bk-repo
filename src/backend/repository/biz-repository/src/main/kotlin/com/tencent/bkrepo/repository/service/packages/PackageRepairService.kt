@@ -16,4 +16,9 @@ interface PackageRepairService {
      * 补充分发来源的docker版本信息manifestPath字段
      */
     fun repairDockerManifestPath()
+
+    /**
+     * 修正npm artifactPath
+     */
+    fun repairNpmArtifactPath(): Map<String, Long>
 }

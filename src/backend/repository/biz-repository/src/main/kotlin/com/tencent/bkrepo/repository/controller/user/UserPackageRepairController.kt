@@ -12,13 +12,13 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
+@Principal(PrincipalType.ADMIN)
 @RequestMapping("/api/repair")
 class UserPackageRepairController(
     private val packageRepairService: PackageRepairService
 ) {
 
     @ApiOperation("修改历史版本")
-    @Principal(PrincipalType.ADMIN)
     @GetMapping("/package/history-version")
     fun repairHistoryVersion(): Response<Void> {
         packageRepairService.repairHistoryVersion()
@@ -26,7 +26,6 @@ class UserPackageRepairController(
     }
 
     @ApiOperation("修正包的版本数")
-    @Principal(PrincipalType.ADMIN)
     @PutMapping("/package/version-count")
     fun repairVersionCount(): Response<Void> {
         packageRepairService.repairVersionCount()
@@ -39,5 +38,12 @@ class UserPackageRepairController(
     fun repairDockerManifestPath(): Response<Void> {
         packageRepairService.repairDockerManifestPath()
         return ResponseBuilder.success()
+    }
+
+    @ApiOperation("修正npm版本artifactPath")
+    @PutMapping("/version/npm-artifact-path")
+    fun repairNpmArtifactPath(): Response<Map<String, Long>> {
+        val resultMap = packageRepairService.repairNpmArtifactPath()
+        return ResponseBuilder.success(resultMap)
     }
 }

@@ -1,9 +1,8 @@
 node_modules/
 frontend/*
-package-lock.json
-yarn.lock
 yarn-error.log
 .vscode
+.idea
 .history
 */webpack_cache
 sprite_chunk.js

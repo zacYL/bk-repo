@@ -28,10 +28,12 @@
 package com.tencent.bkrepo.replication.replica.base.handler
 
 import com.tencent.bkrepo.common.artifact.stream.rateLimit
+import com.tencent.bkrepo.common.storage.pojo.FileInfo
 import com.tencent.bkrepo.replication.config.ReplicationProperties
 import com.tencent.bkrepo.replication.constant.BLOB_PUSH_URI
 import com.tencent.bkrepo.replication.constant.BOLBS_UPLOAD_FIRST_STEP_URL_STRING
 import com.tencent.bkrepo.replication.constant.FILE
+import com.tencent.bkrepo.replication.constant.MD5
 import com.tencent.bkrepo.replication.constant.PUSH_WITH_CHUNKED
 import com.tencent.bkrepo.replication.constant.SHA256
 import com.tencent.bkrepo.replication.constant.SIZE
@@ -75,10 +77,10 @@ class ClusterArtifactReplicationHandler(
         }
     }
 
-    override fun getBlobSha256AndSize(
+    override fun getBlobFileInfo(
         filePushContext: FilePushContext
-    ): Pair<String, Long> {
-        return Pair(filePushContext.sha256!!, filePushContext.size!!)
+    ): FileInfo {
+        return FileInfo(filePushContext.sha256!!, filePushContext.md5!!, filePushContext.size!!)
     }
 
     override fun buildSessionRequestInfo(filePushContext: FilePushContext) : Pair<String, String?> {
@@ -97,10 +99,15 @@ class ClusterArtifactReplicationHandler(
     }
 
     override fun buildSessionCloseRequestParam(
-        sha256: String,
+        fileInfo: FileInfo,
         filePushContext: FilePushContext
     ) : String {
-        return buildParams(sha256, filePushContext)
+        return buildParams(
+            sha256 = fileInfo.sha256,
+            filePushContext = filePushContext,
+            md5 = fileInfo.md5,
+            size = fileInfo.size
+        )
     }
 
 
@@ -145,14 +152,30 @@ class ClusterArtifactReplicationHandler(
 
     private fun buildParams(
         sha256: String,
-        filePushContext: FilePushContext
+        filePushContext: FilePushContext,
+        md5: String? = null,
+        size: Long? = null
     ): String {
-        val params = "$SHA256=$sha256"
+        val builder = StringBuilder("$SHA256=$sha256")
         filePushContext.context.remoteRepo?.storageCredentials?.key?.let {
-            "$params&$STORAGE_KEY=$it"
+            builder.append("&$STORAGE_KEY=$it")
         }
-        return params
+        md5?.let {
+            builder.append("&$MD5=$it")
+        }
+        size?.let {
+            builder.append("&$SIZE=$it")
+        }
+        return builder.toString()
     }
+
+    /**
+     * 针对client_max_body_size有最大值限制，文件分发时，超过该值的请求使用分块分发
+     */
+    private fun filterFileSize(size: Long?): Boolean {
+        return size != null && replicationProperties.clientMaxBodySize <= size
+    }
+
 
     companion object {
         private val logger = LoggerFactory.getLogger(ClusterArtifactReplicationHandler::class.java)

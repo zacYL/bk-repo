@@ -71,7 +71,7 @@ object ArtifactPushMappings {
                 version = packageVersion.name,
                 projectId = packageSummary.projectId,
                 repoName = packageSummary.repoName,
-                clusterInfo = cluster
+                context = context
             )
         }
     }

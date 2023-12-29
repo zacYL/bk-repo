@@ -31,6 +31,7 @@ import com.tencent.bkrepo.common.api.constant.HttpStatus
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
+import com.tencent.bkrepo.common.artifact.cluster.ClusterInfo
 import com.tencent.bkrepo.common.artifact.cluster.ClusterProperties
 import com.tencent.bkrepo.common.artifact.cluster.FeignClientFactory
 import com.tencent.bkrepo.common.artifact.cluster.RoleType
@@ -46,7 +47,6 @@ import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.common.storage.innercos.http.HttpMethod
 import com.tencent.bkrepo.replication.api.BlobReplicaClient
 import com.tencent.bkrepo.replication.pojo.blob.BlobPullRequest
-import com.tencent.bkrepo.replication.pojo.cluster.RemoteClusterInfo
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.StorageCredentialsClient
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
@@ -80,7 +80,7 @@ class StorageManager(
     /**
      * 中心节点集群信息
      */
-    private val centerClusterInfo = RemoteClusterInfo(
+    private val centerClusterInfo = ClusterInfo(
         url = clusterProperties.center.url.orEmpty(),
         username = clusterProperties.center.username.orEmpty(),
         password = clusterProperties.center.password.orEmpty(),

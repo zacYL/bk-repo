@@ -1,23 +1,24 @@
 // 仓库类型
 export const repoEnum = [
-    'generic',
-    'docker',
-    'maven',
-    'pypi',
-    'npm',
-    'helm',
-    'composer',
-    'rpm',
-    // 'git',
-    'nuget'
+    { label: 'Generic', value: 'generic' },
+    { label: 'Docker', value: 'docker' },
+    { label: 'Maven', value: 'maven' },
+    { label: 'Pypi', value: 'pypi' },
+    { label: 'Npm', value: 'npm' },
+    { label: 'Helm', value: 'helm' },
+    { label: 'Composer', value: 'composer' },
+    { label: 'Rpm', value: 'rpm' },
+    // { label: 'Git', value: 'git' },
+    { label: 'Nuget', value: 'nuget' }
+    // { label: 'Conan', value: 'conan' }
 ]
 // 远程及虚拟仓库支持创建的仓库
 export const repoSupportEnum = [
-    'maven',
-    'npm',
-    'pypi',
-    'nuget',
-    'docker'
+    { label: 'Maven', value: 'maven' },
+    { label: 'Npm', value: 'npm' },
+    { label: 'Pypi', value: 'pypi' },
+    { label: 'Nuget', value: 'nuget' },
+    { label: 'Docker', value: 'docker' }
 ]
 
 // 文件类型
@@ -192,6 +193,7 @@ export const repoSearchConditionMap = [
     }
 ]
 
+// 扫描器相关的名称及描述文案
 export const scannerTypes = [
     {
         name: 'dependency-check',
@@ -209,3 +211,20 @@ export const scannerTypes = [
         description: 'scanCodeScannerDescription'
     }
 ]
+
+// 依赖目录中支持的预览文件类型
+export const fileTypeList = {
+    // .md、.json、.txt、.LICENSE、.xml、POM、dependency
+    // 匹配所有的文件名后缀为 .sha*的文件,不再是匹配单独的 sha,sha1
+    md: 'md',
+    json: 'json',
+    txt: 'js',
+    license: 'js',
+    xml: 'xml',
+    pom: 'xml'
+    // sha: 'md',
+    // sha1: 'md',
+    // sha256: 'md'
+    // '.pom',
+    // '.dependency'
+}

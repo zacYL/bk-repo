@@ -15,12 +15,12 @@
             <bk-select v-model="checkRepoType" :placeholder="$t('repositoryTypePlaceholder')" class="search-common" @change="onChangeRepoType">
                 <bk-option
                     v-for="option in depotList"
-                    :key="option.id"
-                    :id="option.id"
-                    :name="option.name.toLowerCase()">
+                    :key="option.value"
+                    :id="option.value"
+                    :name="option.label">
                     <div class="flex-align-center">
-                        <Icon size="20" :name="option.name.toLowerCase()" />
-                        <span class="ml10 flex-1 text-overflow">{{option.name.toLowerCase()}}</span>
+                        <Icon size="20" :name="option.value" />
+                        <span class="ml10 flex-1 text-overflow">{{option.label}}</span>
                     </div>
                 </bk-option>
             </bk-select>
@@ -139,7 +139,7 @@
     import relyTree from '@repository/views/repoCatalog/relyTree'
     import { convertFileSize, formatDate, convertFileByteSize } from '@repository/utils'
     import { mapState, mapActions } from 'vuex'
-    import { depotTypeList, fileTypeList } from '@repository/views/repoCatalog/depotType.js'
+    import { repoEnum, fileTypeList } from '@repository/store/publicEnum'
     export default {
         name: 'repoGeneric',
         components: {
@@ -149,13 +149,14 @@
         },
         data () {
             return {
+                repoEnum,
                 sideBarWidth: 400, // 当前页面左侧的宽度
                 moveBarWidth: 10, // 每次移动的距离
                 treeLoading: false,
                 fileNameSearch: '', // 搜索的文件名称
                 searchFlag: false, // 是否是搜索事件
                 searchNode: '', // 搜索后点击的节点
-                depotList: depotTypeList,
+                depotList: repoEnum.filter(item => item.value !== 'generic'),
                 checkRepoType: '',
                 active: 'basic', // 当前选中的标签页
                 currentNodeType: 'depot', // 当前选中的节点类型
@@ -269,7 +270,7 @@
                     type: '',
                     size: 0
                 }
-                if (node.repoName === node.name && this.depotList.map(item => item.name).includes(node.type)) {
+                if (node.repoName === node.name && this.depotList.map(item => item.value.toUpperCase()).includes(node.type)) {
                     this.currentNodeType = 'depot'
                     this.currentRepoType = node.type
                     this.getRepoDetail(node.projectId, node.repoName, node.type)

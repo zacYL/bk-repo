@@ -297,7 +297,8 @@
                         }
                     }
                 }
-                return 'Generic'
+                // 软件源模式下目前屏蔽了 generic 仓库
+                return this.whetherSoftware ? 'Docker' : 'Generic'
             },
             onClickSearchOperation (type) {
                 if (type === 'metadata' && !('metadata' in this.repoSearchConditionInfo)) {

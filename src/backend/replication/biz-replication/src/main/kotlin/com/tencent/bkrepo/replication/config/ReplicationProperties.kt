@@ -42,7 +42,7 @@ data class ReplicationProperties(
     /**
      * oci blob文件上传分块大小
      */
-    var chunkedSize: Long = 1024 * 1024 * 5,
+    var chunkedSize: Long = 1024 * 1024 * 50,
     /**
      * oci blob文件上传并发数
      */

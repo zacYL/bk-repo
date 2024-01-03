@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.replication.replica.base.handler
 
+import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.artifact.stream.rateLimit
 import com.tencent.bkrepo.common.storage.pojo.FileInfo
 import com.tencent.bkrepo.replication.config.ReplicationProperties
@@ -35,6 +36,7 @@ import com.tencent.bkrepo.replication.constant.BOLBS_UPLOAD_FIRST_STEP_URL_STRIN
 import com.tencent.bkrepo.replication.constant.FILE
 import com.tencent.bkrepo.replication.constant.MD5
 import com.tencent.bkrepo.replication.constant.PUSH_WITH_CHUNKED
+import com.tencent.bkrepo.replication.constant.PUSH_WITH_DEFAULT
 import com.tencent.bkrepo.replication.constant.SHA256
 import com.tencent.bkrepo.replication.constant.SIZE
 import com.tencent.bkrepo.replication.constant.STORAGE_KEY
@@ -55,7 +57,7 @@ class ClusterArtifactReplicationHandler(
     replicationProperties: ReplicationProperties
 ) : ArtifactReplicationHandler(localDataManager, replicationProperties) {
 
-    //不支持yaml list配置 https://github.com/spring-projects/spring-framework/issues/16381
+    // 不支持yaml list配置 https://github.com/spring-projects/spring-framework/issues/16381
     @Value("\${replication.chunkedRepos:}")
     private var chunkedRepos: List<String> = emptyList()
 
@@ -64,12 +66,21 @@ class ClusterArtifactReplicationHandler(
 
     override fun blobPush(
         filePushContext: FilePushContext,
-        pushType: String
-    ) : Boolean {
-        return when (pushType) {
+        pushType: String,
+        downGrade: Boolean
+    ): Boolean {
+        val newType = filterRepoWithPushType(
+            pushType = pushType,
+            projectId = filePushContext.context.localProjectId,
+            repoName = filePushContext.context.localRepoName,
+            downGrade = downGrade,
+            size = filePushContext.size
+        )
+        return when (newType) {
             PUSH_WITH_CHUNKED -> {
-                super.blobPush(filePushContext, pushType)
+                super.blobPush(filePushContext, newType, downGrade)
             }
+
             else -> {
                 pushBlob(filePushContext)
                 true
@@ -83,7 +94,7 @@ class ClusterArtifactReplicationHandler(
         return FileInfo(filePushContext.sha256!!, filePushContext.md5!!, filePushContext.size!!)
     }
 
-    override fun buildSessionRequestInfo(filePushContext: FilePushContext) : Pair<String, String?> {
+    override fun buildSessionRequestInfo(filePushContext: FilePushContext): Pair<String, String?> {
         with(filePushContext) {
             val url = BOLBS_UPLOAD_FIRST_STEP_URL_STRING.format(context.remoteProjectId, context.remoteRepoName)
             val postUrl = buildUrl(context.cluster.url, url, context)
@@ -94,14 +105,14 @@ class ClusterArtifactReplicationHandler(
     override fun buildChunkUploadRequestInfo(
         sha256: String,
         filePushContext: FilePushContext
-    ) : Pair<String?, List<Int>>{
+    ): Pair<String?, List<Int>> {
         return Pair(buildParams(sha256, filePushContext), emptyList())
     }
 
     override fun buildSessionCloseRequestParam(
         fileInfo: FileInfo,
         filePushContext: FilePushContext
-    ) : String {
+    ): String {
         return buildParams(
             sha256 = fileInfo.sha256,
             filePushContext = filePushContext,
@@ -110,12 +121,56 @@ class ClusterArtifactReplicationHandler(
         )
     }
 
-
     override fun buildBlobUploadWithSingleChunkRequestParam(
         sha256: String,
         filePushContext: FilePushContext
-    ) : String? {
+    ): String? {
         return buildParams(sha256, filePushContext)
+    }
+
+    private fun filterRepoWithPushType(
+        pushType: String,
+        projectId: String,
+        repoName: String,
+        downGrade: Boolean,
+        size: Long?
+    ): String {
+        if (downGrade && !filterFileSize(size)) {
+            return pushType
+        }
+        return if (filterProjectRepo(projectId, repoName, chunkedRepos)) {
+            PUSH_WITH_CHUNKED
+        } else if (filterProjectRepo(projectId, repoName, httpRepos)) {
+            PUSH_WITH_DEFAULT
+        } else if (filterFileSize(size)) {
+            PUSH_WITH_CHUNKED
+        } else {
+            pushType
+        }
+    }
+
+    /**
+     * 针对仓库特殊配置进行过滤
+     */
+    private fun filterProjectRepo(projectId: String, repoName: String, includeRepositories: List<String>): Boolean {
+        if (contains(StringPool.POUND, StringPool.POUND, includeRepositories)) {
+            return true
+        }
+        if (contains(projectId, repoName, includeRepositories)) {
+            return true
+        }
+        if (contains(projectId, StringPool.POUND, includeRepositories)) {
+            return true
+        }
+        if (contains(StringPool.POUND, repoName, includeRepositories)) {
+            return true
+        }
+        return false
+    }
+
+    private fun contains(projectId: String, repoName: String, includeRepositories: List<String>): Boolean {
+        val key = "$projectId/$repoName"
+        return includeRepositories.contains(key)
     }
 
     /**
@@ -131,7 +186,7 @@ class ClusterArtifactReplicationHandler(
                 replicationProperties.rateLimit.toBytes()
             )
             val storageKey = context.remoteRepo?.storageCredentials?.key
-            val pushUrl =  buildUrl(context.cluster.url, BLOB_PUSH_URI, context)
+            val pushUrl = buildUrl(context.cluster.url, BLOB_PUSH_URI, context)
             val requestBody = MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
                 .addFormDataPart(FILE, sha256, StreamRequestBody(rateLimitInputStream, size))
@@ -175,7 +230,6 @@ class ClusterArtifactReplicationHandler(
     private fun filterFileSize(size: Long?): Boolean {
         return size != null && replicationProperties.clientMaxBodySize <= size
     }
-
 
     companion object {
         private val logger = LoggerFactory.getLogger(ClusterArtifactReplicationHandler::class.java)

@@ -49,16 +49,19 @@ import org.springframework.stereotype.Service
 @Service
 class BlobChunkedServiceImpl(
     private val storageService: StorageService,
-): BlobChunkedService {
-
+) : BlobChunkedService {
 
     @Value("\${spring.application.name}")
     private var serviceName: String = "replication"
+
     /**
      * 获取上传文件uuid
      */
     override fun obtainSessionIdForUpload(
-        projectId: String, repoName: String, credentials: StorageCredentials, sha256: String
+        projectId: String,
+        repoName: String,
+        credentials: StorageCredentials,
+        sha256: String
     ) {
         val uuidCreated = storageService.createAppendId(credentials)
         logger.info("Uuid $uuidCreated has been created for file $sha256 in repo $projectId|$repoName.")
@@ -70,23 +73,30 @@ class BlobChunkedServiceImpl(
     }
 
     override fun uploadChunkedFile(
-        projectId: String, repoName: String,
-        credentials: StorageCredentials, sha256: String, artifactFile: ArtifactFile, uuid: String
+        projectId: String,
+        repoName: String,
+        credentials: StorageCredentials,
+        sha256: String,
+        artifactFile: ArtifactFile,
+        uuid: String
     ) {
         val range = HttpContextHolder.getRequest().getHeader("Content-Range")
         val length = HttpContextHolder.getRequest().contentLength
 
         val lengthOfAppendFile = storageService.findLengthOfAppendFile(uuid, credentials)
         logger.info("current length of append file is $lengthOfAppendFile")
-        val (patchLen, status) = when (chunkedRequestCheck(
-                    uuid = uuid,
-                    lengthOfAppendFile = lengthOfAppendFile,
-                    range = range,
-                    contentLength = length
-                )) {
+        val (patchLen, status) = when (
+            chunkedRequestCheck(
+                uuid = uuid,
+                lengthOfAppendFile = lengthOfAppendFile,
+                range = range,
+                contentLength = length
+            )
+        ) {
             RangeStatus.ILLEGAL_RANGE -> {
                 Pair(length.toLong(), HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE)
             }
+
             RangeStatus.READY_TO_APPEND -> {
                 val patchLen = storageService.append(
                     appendId = uuid,
@@ -99,10 +109,12 @@ class BlobChunkedServiceImpl(
                 )
                 Pair(patchLen, HttpStatus.ACCEPTED)
             }
+
             else -> {
                 logger.info(
                     "Part of file with sha256 $sha256 in repo $projectId|$repoName " +
-                        "already appended, size pf append file is $lengthOfAppendFile and uuid: $uuid")
+                        "already appended, size pf append file is $lengthOfAppendFile and uuid: $uuid"
+                )
                 Pair(lengthOfAppendFile, HttpStatus.ACCEPTED)
             }
         }
@@ -113,14 +125,17 @@ class BlobChunkedServiceImpl(
             range = patchLen,
             status = status
         )
-
     }
 
     override fun finishChunkedUpload(
-        projectId: String, repoName: String,
-        credentials: StorageCredentials, sha256: String,
-        artifactFile: ArtifactFile, uuid: String,
-        size: Long?, md5: String?
+        projectId: String,
+        repoName: String,
+        credentials: StorageCredentials,
+        sha256: String,
+        artifactFile: ArtifactFile,
+        uuid: String,
+        size: Long?,
+        md5: String?
     ) {
         storageService.append(
             appendId = uuid,
@@ -140,7 +155,8 @@ class BlobChunkedServiceImpl(
         }
         logger.info(
             "The file with sha256 $sha256 in repo $projectId|$repoName has been uploaded with uuid: $uuid," +
-                        " received sha256 of file is ${fileInfo.sha256}")
+                " received sha256 of file is ${fileInfo.sha256}"
+        )
         // 没传递 size， 校验合并的文件生成的 sha256 与传递的 sha256 是否一致
         if (size == null && fileInfo.sha256 != sha256) {
             throw BadRequestException(ReplicationMessageCode.REPLICA_ARTIFACT_BROKEN, sha256)
@@ -194,19 +210,18 @@ class BlobChunkedServiceImpl(
         return !(range.isNullOrEmpty() || contentLength < 0)
     }
 
-    private fun buildLocationUrl(uuid: String, projectId: String, repoName: String) : String {
+    private fun buildLocationUrl(uuid: String, projectId: String, repoName: String): String {
         val path = BOLBS_UPLOAD_FIRST_STEP_URL_STRING.format(projectId, repoName)
-        return serviceName+path+uuid
+        return serviceName + path + uuid
     }
 
     enum class RangeStatus {
         ILLEGAL_RANGE,
         ALREADY_APPENDED,
-        READY_TO_APPEND;
+        READY_TO_APPEND
     }
 
     companion object {
         private val logger = LoggerFactory.getLogger(BlobChunkedServiceImpl::class.java)
     }
-
 }

@@ -60,11 +60,11 @@ abstract class ArtifactReplicationHandler(
     val replicationProperties: ReplicationProperties
 ) {
 
-
     open fun blobPush(
         filePushContext: FilePushContext,
-        pushType: String = PUSH_WITH_CHUNKED
-    ) : Boolean {
+        pushType: String = PUSH_WITH_CHUNKED,
+        downGrade: Boolean = false
+    ): Boolean {
         return pushFileInChunks(filePushContext)
     }
 
@@ -136,7 +136,7 @@ abstract class ArtifactReplicationHandler(
      */
     private fun processSessionIdHandler(
         filePushContext: FilePushContext
-        ): DefaultHandlerResult {
+    ): DefaultHandlerResult {
         with(filePushContext) {
             val (postUrl, params) = buildSessionRequestInfo(filePushContext)
             val postBody: RequestBody = RequestBody.create(
@@ -161,7 +161,7 @@ abstract class ArtifactReplicationHandler(
         }
     }
 
-    open fun buildSessionRequestInfo(filePushContext: FilePushContext) : Pair<String, String?> {
+    open fun buildSessionRequestInfo(filePushContext: FilePushContext): Pair<String, String?> {
         return Pair(StringPool.EMPTY, null)
     }
 
@@ -232,14 +232,12 @@ abstract class ArtifactReplicationHandler(
         return chunkedHandlerResult
     }
 
-
     open fun buildChunkUploadRequestInfo(
         sha256: String,
         filePushContext: FilePushContext
-    ) : Pair<String?, List<Int>>{
+    ): Pair<String?, List<Int>> {
         return Pair(null, emptyList())
     }
-
 
     /**
      * 构件file上传处理器
@@ -277,7 +275,7 @@ abstract class ArtifactReplicationHandler(
     open fun buildSessionCloseRequestParam(
         fileInfo: FileInfo,
         filePushContext: FilePushContext
-    ) : String {
+    ): String {
         return StringPool.EMPTY
     }
 
@@ -331,11 +329,9 @@ abstract class ArtifactReplicationHandler(
     open fun buildBlobUploadWithSingleChunkRequestParam(
         sha256: String,
         filePushContext: FilePushContext
-    ) : String? {
+    ): String? {
         return null
     }
-
-
 
     abstract fun getBlobFileInfo(filePushContext: FilePushContext): FileInfo
 

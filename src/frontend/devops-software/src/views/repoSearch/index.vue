@@ -3,7 +3,7 @@
         <div class="repo-search-tools flex-column">
             <div class="flex-align-center">
                 <type-select
-                    :repo-list="repoEnum.filter(r => r !== 'generic')"
+                    :repo-list="repoEnum.filter(r => r.value !== 'generic')"
                     :project-list="projectList"
                     :repo-type="repoType"
                     :artifact-original-list="artifactOriginalList"

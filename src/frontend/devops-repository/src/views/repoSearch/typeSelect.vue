@@ -9,15 +9,15 @@
                     v-bk-clickoutside="hiddenDropdown">
                     <div class="flex-align-center type-select-checked">
                         <Icon size="22" :name="repoType" />
-                        <span class="ml5">{{repoType}}</span>
+                        <span class="ml5">{{ changeRepoType(repoType) }}</span>
                     </div>
                     <i class="ml5 devops-icon" :class="showDropdown ? 'icon-angle-up' : 'icon-angle-down'"></i>
                     <div v-show="showDropdown" class="dropdown-list" @click.stop="() => {}">
                         <bk-radio-group :value="repoType" class="repo-type-radio-group" @change="changeType">
-                            <bk-radio-button v-for="repo in repoList" :key="repo" :value="repo">
-                                <div class="flex-align-center repo-type-radio" :class="{ 'checked': repo === repoType }">
-                                    <Icon size="22" :name="repo" />
-                                    <span class="ml10">{{repo}}</span>
+                            <bk-radio-button v-for="repo in repoList" :key="repo.value" :value="repo.value">
+                                <div class="flex-align-center repo-type-radio" :class="{ 'checked': repo.value === repoType }">
+                                    <Icon size="22" :name="repo.value" />
+                                    <span class="ml10">{{repo.label}}</span>
                                 </div>
                             </bk-radio-button>
                         </bk-radio-group>
@@ -289,6 +289,17 @@
             })
         },
         methods: {
+            changeRepoType (type) {
+                if (this.repoList.length > 0) {
+                    for (let i = 0; i < this.repoList.length; i++) {
+                        if (this.repoList[i].value === type) {
+                            return this.repoList[i]?.label || this.repoList[i]?.value || type
+                        }
+                    }
+                }
+                // 软件源模式下目前屏蔽了 generic 仓库
+                return this.whetherSoftware ? 'Docker' : 'Generic'
+            },
             onClickSearchOperation (type) {
                 if (type === 'metadata' && !('metadata' in this.repoSearchConditionInfo)) {
                     // 第一次点击添加元数据

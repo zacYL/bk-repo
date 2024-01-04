@@ -58,10 +58,10 @@
                     class="ml10 w250"
                     @change="handlerPaginationChange"
                     :placeholder="$t('allTypes')">
-                    <bk-option v-for="type in repoEnum" :key="type" :id="type" :name="type">
+                    <bk-option v-for="type in repoEnum" :key="type.value" :id="type.value" :name="type.label">
                         <div class="flex-align-center">
-                            <Icon size="20" :name="type" />
-                            <span class="ml10 flex-1 text-overflow">{{type}}</span>
+                            <Icon size="20" :name="type.value" />
+                            <span class="ml10 flex-1 text-overflow">{{type.label}}</span>
                         </div>
                     </bk-option>
                 </bk-select>

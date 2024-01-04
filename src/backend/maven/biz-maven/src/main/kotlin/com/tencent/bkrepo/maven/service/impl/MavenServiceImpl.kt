@@ -250,6 +250,23 @@ class MavenServiceImpl(
             }
         }
     }
+    @Permission(type = ResourceType.REPO, action = PermissionAction.DELETE)
+    override fun fileDeployCancel(mavenArtifactInfo: MavenArtifactInfo): Boolean {
+        with(mavenArtifactInfo) {
+            val node = nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data
+            node?.let {
+                nodeClient.deleteNode(
+                    NodeDeleteRequest(
+                        projectId = projectId,
+                        repoName = repoName,
+                        fullPath = getArtifactFullPath(),
+                        operator = SecurityUtils.getUserId()
+                    )
+                )
+            }
+            return true
+        }
+    }
 
     private fun buildMavenWebDeployNode(mavenArtifactInfo: MavenArtifactInfo, file: ArtifactFile): NodeCreateRequest {
         return NodeCreateRequest(

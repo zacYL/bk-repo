@@ -51,7 +51,11 @@ class MavenArtifactInfoResolver : ArtifactInfoResolver {
         request: HttpServletRequest
     ): MavenArtifactInfo {
         val mavenArtifactInfo = MavenArtifactInfo(projectId, repoName, artifactUri)
-        if (HttpContextHolder.getRequest().requestURI.startsWith("/deploy")) return mavenArtifactInfo
+        if (HttpContextHolder.getRequest().requestURI.startsWith("/deploy") ||
+            HttpContextHolder.getRequest().requestURI.startsWith("/cancel")
+        ) {
+                return mavenArtifactInfo
+            }
         val fileName = artifactUri.substringAfterLast("/")
         if (fileName.matches(Regex(PACKAGE_SUFFIX_REGEX))) {
             val paths = artifactUri.trim('/').split("/")

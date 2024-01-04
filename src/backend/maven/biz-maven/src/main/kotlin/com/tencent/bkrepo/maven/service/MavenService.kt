@@ -63,5 +63,6 @@ interface MavenService {
      */
     fun artifactDetail(mavenArtifactInfo: MavenArtifactInfo, packageKey: String, version: String?): Any?
     fun fileDeploy(mavenArtifactInfo: MavenArtifactInfo, file: ArtifactFile): MavenWebDeployResponse
+    fun fileDeployCancel(mavenArtifactInfo: MavenArtifactInfo): Boolean
     fun verifyDeploy(mavenArtifactInfo: MavenArtifactInfo, request: MavenWebDeployRequest)
 }

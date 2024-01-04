@@ -64,6 +64,13 @@ class MavenResourceController(
         return ResponseBuilder.success(mavenService.fileDeploy(mavenArtifactInfo, file))
     }
 
+    @PostMapping("/cancel/{projectId}/{repoName}/*")
+    fun fileDeployCancel(
+        mavenArtifactInfo: MavenArtifactInfo,
+    ): Response<Boolean> {
+        return ResponseBuilder.success(mavenService.fileDeployCancel(mavenArtifactInfo))
+    }
+
     @PostMapping("/deploy/{projectId}/{repoName}")
     fun verifyDeploy(
         mavenArtifactInfo: MavenArtifactInfo,

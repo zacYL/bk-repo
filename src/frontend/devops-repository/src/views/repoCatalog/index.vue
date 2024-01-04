@@ -9,7 +9,7 @@
                 right-icon="bk-icon icon-search"
                 @enter="onSearchFile"
                 @clear="() => {
-                    searchFlag = !searchFlag
+                    searchFlag = false
                 }">
             </bk-input>
             <bk-select v-model="checkRepoType" :placeholder="$t('repositoryTypePlaceholder')" class="search-common" @change="onChangeRepoType">
@@ -119,6 +119,7 @@
             :value="previewDialogShow"
             width="800"
             height-num="600"
+            render-directive="if"
             :title="baseDetailInfo.name + $t('space') + ' ' + $t('fileContent')"
             @cancel="cancel">
             <template #default>

@@ -239,13 +239,31 @@
                     this.pagination.count = totalRecords
                     if (!this.versionInput) {
                         if (!this.versionList.length) {
-                            this.$router.back()
+                            // 当前包没有任何版本时需要返回到包列表页面，使用 route.back() 直接返回上一层可能存在问题
+                            this.$router.push({
+                                name: 'commonList',
+                                params: {
+                                    projectId: this.projectId,
+                                    repoType: this.repoType
+                                },
+                                query: {
+                                    repoName: this.repoName,
+                                    storeType: this.storeType,
+                                    type: this.repoType,
+                                    category: this.storeType,
+                                    c: this.pagination.current,
+                                    l: this.pagination.limit,
+                                    property: this.$route.query?.property,
+                                    direction: this.$route.query?.direction
+                                }
+                            })
                         }
-                        if (!this.version || !this.versionList.find(v => v.name === this.version)) {
+                        // records 这个数组可能因为当前包最后一个版本被删除导致数组为空
+                        if (records?.length && (!this.version || !this.versionList.find(v => v.name === this.version))) {
                             this.$router.replace({
                                 query: {
                                     ...this.$route.query,
-                                    version: records[0].name
+                                    version: records?.[0]?.name
                                 }
                             })
                         }

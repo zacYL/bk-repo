@@ -437,6 +437,17 @@
     }
 </script>
 <style lang="scss" scoped>
+// 滚动条 宽度和高度
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+// 滚动条的滑块
+::-webkit-scrollbar-thumb {
+    height: 8px;
+    border-radius: 20px;
+    background-color: #a5a5a5;
+}
 .create-node-container {
     height: 100%;
     background-color: white;

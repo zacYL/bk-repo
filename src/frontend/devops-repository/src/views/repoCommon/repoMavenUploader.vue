@@ -115,8 +115,8 @@
                 errorMsg: '', // 上传接口后台返回的错误信息
                 uploadPercent: 0,
                 uploadXhr: null, // 上传请求的xhr对象，用于上传和取消上传时所用
-                isLoading: false // 上传选择框是否在加载中状态，因为不能禁用，所以选择使用loading代替
-
+                isLoading: false, // 上传选择框是否在加载中状态，因为不能禁用，所以选择使用loading代替
+                uploadFullPath: '' // 上传jar包等的文件名，如果用户点击取消按钮需要用到
             }
         },
         computed: {
@@ -128,7 +128,7 @@
             ...mapActions([
                 'uploadArtifactory',
                 'submitMavenArtifactory',
-                'deleteErrorPackage'
+                'deleteUselessPackage'
             ]),
             handleClickClose () {
                 this.customSettings = {
@@ -145,6 +145,7 @@
                 this.isLoading = true
                 this.errorMsg = ''
                 this.uploadXhr = new XMLHttpRequest()
+                this.uploadFullPath = uploadFile.fileList[0].origin.name
                 this.uploadArtifactory({
                     xhr: this.uploadXhr,
                     projectId: this.projectId,
@@ -168,6 +169,7 @@
                     this.formData = res.data
                 }).catch(error => {
                     this.isLoading = false
+                    this.uploadFullPath = ''
                     // error &&  this.errorMsg = error.message || error.error || '无法识别包信息，请确认是否由Maven客户端打包，并重新上传'
                     error && (this.errorMsg = error.message || error.error || error)
                 })
@@ -183,20 +185,19 @@
             },
             // 文件解析成功后点击取消按钮
             cancelUploadArtifact () {
+                // 只有上传了jar包或pom文件之后点击取消按钮才需要调用删除无用jar包的接口，
+                // 通过 artifactId、groupId、version三者可以唯一确定一个jar包，所以必须这三者都存在才需要调用删除无用jar包接口
                 if (this.projectId
                     && this.repoName
-                    && this.formData.groupId
+                    && this.uploadFullPath
                     && this.formData.artifactId
+                    && this.formData.groupId
                     && this.formData.version
-                    && this.currentFileName
                 ) {
-                    this.deleteErrorPackage({
+                    this.deleteUselessPackage({
                         projectId: this.projectId,
                         repoName: this.repoName,
-                        groupId: this.formData.groupId,
-                        artifactId: this.formData.artifactId,
-                        version: this.formData.version,
-                        artifactName: this.currentFileName
+                        fullPath: this.uploadFullPath
                     })
                 }
                 this.$emit('cancel', false)

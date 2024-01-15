@@ -1,14 +1,16 @@
 package com.tencent.bkrepo.repository.service.packages.impl
 
 import com.tencent.bkrepo.common.api.pojo.Page
+import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_PROXY_PROJECT
+import com.tencent.bkrepo.common.artifact.constant.SCAN_STATUS
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
-import com.tencent.bkrepo.common.mongo.dao.AbstractMongoDao.Companion.ID
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.query.util.MongoEscapeUtils
 import com.tencent.bkrepo.repository.dao.PackageDao
+import com.tencent.bkrepo.repository.dao.PackageVersionDao
 import com.tencent.bkrepo.repository.model.TPackage
 import com.tencent.bkrepo.repository.pojo.repo.RepoListOption
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
@@ -29,7 +31,8 @@ class SoftwarePackageServiceImpl(
     private val packageDao: PackageDao,
     private val softwareRepositoryService: SoftwareRepositoryService,
     private val softwarePackageSearchInterpreter: SoftwarePackageSearchInterpreter,
-    private val repositoryService: RepositoryService
+    private val repositoryService: RepositoryService,
+    private val packageVersionDao: PackageVersionDao
 ) : SoftwarePackageService {
 
     override fun packageOverview(
@@ -52,7 +55,7 @@ class SoftwarePackageServiceImpl(
         } else {
             val option = RepoListOption(type = repoType.name)
             val allSoftRepo = softwareRepositoryService.listRepo(option = option, includeGeneric = false)
-            if(allSoftRepo.isEmpty()) return listOf()
+            if (allSoftRepo.isEmpty()) return listOf()
             transCri(criteria, allSoftRepo)
         }
         packageName?.let {
@@ -63,8 +66,10 @@ class SoftwarePackageServiceImpl(
         val aggregation = Aggregation.newAggregation(
             TPackage::class.java,
             Aggregation.match(criteria),
-            Aggregation.group("\$${TPackage::projectId.name}",
-                "\$${TPackage::repoName.name}").count().`as`("count")
+            Aggregation.group(
+                "\$${TPackage::projectId.name}",
+                "\$${TPackage::repoName.name}"
+            ).count().`as`("count")
         )
         val result = packageDao.aggregate(aggregation, SoftwarePackageSearchPojo::class.java).mappedResults
 
@@ -145,7 +150,7 @@ class SoftwarePackageServiceImpl(
         if (projectId == null) {
             val projectsRule = mutableListOf<Rule>()
             val allSoftRepo = softwareRepositoryService.listRepoByProjects(projectIdList, option = option)
-            if(allSoftRepo.isEmpty()) return Page(1, queryModel.page.pageSize, 0, listOf())
+            if (allSoftRepo.isEmpty()) return Page(1, queryModel.page.pageSize, 0, listOf())
             val projectMap = transRepoTree(allSoftRepo)
             projectMap.map { project ->
                 val projectRule = Rule.QueryRule(field = "projectId", value = project.key)
@@ -176,6 +181,16 @@ class SoftwarePackageServiceImpl(
         val totalRecords = packageDao.count(countQuery)
         val packageList = packageDao.find(query, MutableMap::class.java) as List<MutableMap<String, Any?>>
         packageList.forEach {
+            val packageId = it[ID].toString()
+            val name = it[LATEST].toString()
+            packageVersionDao.findByName(packageId, name)?.metadata?.forEach { tMetadata ->
+                if (tMetadata.key == SCAN_STATUS) {
+                    it[SCAN_STATUS] = tMetadata.value
+                }
+                if (tMetadata.key == FORBID_STATUS) {
+                    it[FORBID_STATUS] = tMetadata.value
+                }
+            }
             context.matchedVersions[it[ID].toString()]?.apply { it[MATCHED_VERSIONS] = this }
         }
         val pageNumber = if (query.limit == 0) 0 else (query.skip / query.limit).toInt()
@@ -183,6 +198,8 @@ class SoftwarePackageServiceImpl(
     }
 
     companion object {
+        private const val ID = "_id"
+        private const val LATEST = "latest"
         private const val MATCHED_VERSIONS = "matchedVersions"
     }
 }

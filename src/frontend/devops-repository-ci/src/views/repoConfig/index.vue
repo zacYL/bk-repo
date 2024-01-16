@@ -124,6 +124,7 @@
                                 <bk-form-item :label="$t('fileName')" :label-width="80" class="mt10"
                                     :property="`${type}.filename`" required error-display-type="normal">
                                     <bk-input class="w250" v-model.trim="repoBaseInfo[type].filename"></bk-input>
+                                    <i class="bk-icon icon-info f14 ml5" v-bk-tooltips="$t('fileNameRule')"></i>
                                 </bk-form-item>
                                 <bk-form-item :label="$t('metadata')" :label-width="80"
                                     :property="`${type}.metadata`" required error-display-type="normal">

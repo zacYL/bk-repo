@@ -40,13 +40,25 @@ import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.node.NodeListOption
 import com.tencent.bkrepo.repository.pojo.node.NodeSizeInfo
-import com.tencent.bkrepo.repository.pojo.node.service.*
+import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
+import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
+import com.tencent.bkrepo.repository.pojo.node.service.NodeMoveCopyRequest
+import com.tencent.bkrepo.repository.pojo.node.service.NodeRenameRequest
+import com.tencent.bkrepo.repository.pojo.node.service.NodeUpdateAccessDateRequest
+import com.tencent.bkrepo.repository.pojo.node.service.NodeUpdateRequest
+import com.tencent.bkrepo.repository.pojo.node.service.NodesDeleteRequest
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
 import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.context.annotation.Primary
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 
 /**
  * 资源节点服务接口
@@ -168,9 +180,13 @@ interface NodeClient {
         @RequestBody fullPathList: List<String>
     ): Response<Long>
 
-    @ApiOperation("自定义查询节点")
+    @ApiOperation("自定义查询节点，如不关注总记录数请使用queryWithoutCount")
     @PostMapping("/search")
     fun search(@RequestBody queryModel: QueryModel): Response<Page<Map<String, Any?>>>
+
+    @ApiOperation("自定义查询节点，不计算总记录数")
+    @PostMapping("/queryWithoutCount")
+    fun queryWithoutCount(@RequestBody queryModel: QueryModel): Response<Page<Map<String, Any?>>>
 
     @Deprecated("replace with listNodePage")
     @ApiOperation("列表查询指定目录下所有节点")

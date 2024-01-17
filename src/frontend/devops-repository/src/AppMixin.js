@@ -9,11 +9,22 @@ export default {
         ...mapState(['userInfo', 'projectList']),
         projectId () {
             return this.$route.params.projectId
+        },
+        // 获取localStorage中存储的当前项目ID
+        currentStorageProjectId () {
+            return localStorage.getItem('projectId') || undefined
         }
     },
     watch: {
         '$route.fullPath' (val) { // 同步地址到蓝鲸Devops
             this.$syncUrl?.(val.replace(/^\/[a-zA-Z0-9]+\//, '/'))
+        },
+        // 当选择的项目ID改变时需要重新调用后端接口获取当前用户在当前项目的操作权限
+        currentStorageProjectId: {
+            handler (value) {
+                value && this.getPermission(value)
+            },
+            immediate: true
         }
     },
     created () {

@@ -63,6 +63,7 @@ const val REPLICA_TYPE = "replicaType"
 const val REPLICA_OBJECT_TYPE = "replicaObjectType"
 const val FULLPATH = "fullPath"
 const val PATH = "path"
+const val LAST_MODIFIED_BY = "lastModifiedBy"
 
 /**
  * 缓存类型

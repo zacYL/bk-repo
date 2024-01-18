@@ -297,7 +297,7 @@
                 return this.$route.path.startsWith('/software')
             },
             showRepoScan () {
-                return this.scannerSupportPackageType.join(',').toLowerCase().includes(this.repoType) && !this.whetherSoftware && !(this.storeType === 'virtual')
+                return this.scannerSupportPackageType.join(',').toLowerCase().includes(this.repoType) && !(this.storeType === 'virtual')
             },
             operationBtns () {
                 const basic = this.detail.basic

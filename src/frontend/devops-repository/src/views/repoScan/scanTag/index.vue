@@ -61,10 +61,17 @@
                 scanList: []
             }
         },
+        computed: {
+            // 是否是 软件源模式
+            whetherSoftware () {
+                return this.$route.path.startsWith('/software')
+            }
+        },
         methods: {
             ...mapActions(['getArtiScanList']),
             showScanList (e) {
-                if (this.readonly || !this.status) return
+                // 软件源模式不允许显示点击扫描状态图标显示扫描结果弹窗，因为扫描弹窗中点击扫描结果不允许跳转
+                if (this.readonly || !this.status || this.whetherSoftware) return
                 this.openScanList(e)
                 this.isLoading = true
                 const { projectId, repoType = this.repoType } = this.$route.params

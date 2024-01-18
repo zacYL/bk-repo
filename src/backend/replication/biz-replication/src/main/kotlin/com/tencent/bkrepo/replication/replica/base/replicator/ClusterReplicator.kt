@@ -56,7 +56,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 /**
  * 集群间数据同步类
@@ -243,9 +242,9 @@ class ClusterReplicator(
                 nodeMetadata = metadata,
                 operator = SYSTEM_USER,
                 createdBy = node.createdBy,
-                createdDate = LocalDateTime.parse(node.createdDate, DateTimeFormatter.ISO_DATE_TIME),
+                createdDate = LocalDateTime.now(),
                 lastModifiedBy = node.lastModifiedBy,
-                lastModifiedDate = LocalDateTime.parse(node.lastModifiedDate, DateTimeFormatter.ISO_DATE_TIME)
+                lastModifiedDate = LocalDateTime.now()
             )
         }
     }

@@ -675,8 +675,9 @@
         .repo-type-radio {
             position: relative;
             padding: 5px;
-            width: 80px;
-            height: 60px;
+            // 宽高需要加 2px ,因为上下各有 1px的 border
+            width: 82px;
+            height: 62px;
              &.checked {
                 background-color: var(--bgHoverLighterColor);
                 color: var(--primaryColor) ;

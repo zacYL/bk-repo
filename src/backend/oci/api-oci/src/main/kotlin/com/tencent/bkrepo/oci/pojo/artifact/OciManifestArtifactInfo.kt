@@ -41,7 +41,7 @@ class OciManifestArtifactInfo(
 ) : OciArtifactInfo(projectId, repoName, packageName, version) {
     override fun getArtifactFullPath(): String {
         return if (isValidDigest) {
-            OciLocationUtils.buildDigestManifestPathWithReference(packageName, reference)
+            OciLocationUtils.buildDigestManifestPathWithReference(packageName, reference, isFat)
         } else {
             if (isFat) {
                 OciLocationUtils.buildManifestListPath(packageName, reference)

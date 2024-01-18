@@ -251,8 +251,7 @@ class MigrateDockerService(
         logger.info(
             "migrating manifest[${manifestNode.fullPath}] in repo ${manifestNode.projectId}/${manifestNode.repoName}"
         )
-        val newManifestFullPath =
-            "$path/manifest/$version" + if (OciDigest.isValid(version)) "" else "/${manifestNode.name}"
+        val newManifestFullPath = "$path/manifest/$version/${manifestNode.name}"
         nodeClient.copyNode(
             NodeMoveCopyRequest(
                 srcProjectId = manifestNode.projectId,

@@ -4,7 +4,6 @@ import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.storage.core.StorageService
-import com.tencent.bkrepo.replication.constant.OCI_DIGEST_MANIFEST_JSON_FULL_PATH
 import com.tencent.bkrepo.replication.constant.OCI_LAYER_FULL_PATH
 import com.tencent.bkrepo.replication.constant.OCI_LIST_MANIFEST_JSON_FULL_PATH
 import com.tencent.bkrepo.replication.constant.OCI_MANIFEST_JSON_FULL_PATH
@@ -45,8 +44,7 @@ class DockerPackageNodeMapper(
             val (manifestFullPath, nodeDetail) = run loop@{
                 listOf(
                     OCI_MANIFEST_JSON_FULL_PATH,
-                    OCI_LIST_MANIFEST_JSON_FULL_PATH,
-                    OCI_DIGEST_MANIFEST_JSON_FULL_PATH
+                    OCI_LIST_MANIFEST_JSON_FULL_PATH
                 ).forEach {
                     val formattedVersion = if (version.startsWith("sha256:"))
                         version.replace(":", "__") else version

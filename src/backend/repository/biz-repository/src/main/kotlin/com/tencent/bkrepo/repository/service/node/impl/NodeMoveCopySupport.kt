@@ -90,7 +90,7 @@ open class NodeMoveCopySupport(
      */
     private fun moveCopy(request: NodeMoveCopyRequest, move: Boolean) {
         with(resolveContext(request, move)) {
-            preCheck(this)
+//            preCheck(this)
             if (canIgnore(this)) {
                 return
             }

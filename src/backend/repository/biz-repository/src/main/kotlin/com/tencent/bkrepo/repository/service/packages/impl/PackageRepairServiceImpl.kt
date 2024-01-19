@@ -9,6 +9,7 @@ import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.mongo.dao.AbstractMongoDao.Companion.ID
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
+import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.dao.NodeDao
 import com.tencent.bkrepo.repository.dao.PackageDao
 import com.tencent.bkrepo.repository.dao.PackageVersionDao
@@ -18,10 +19,13 @@ import com.tencent.bkrepo.repository.model.TPackage
 import com.tencent.bkrepo.repository.model.TPackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.model.TRepository
+import com.tencent.bkrepo.repository.pojo.node.service.NodeMoveCopyRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageListOption
 import com.tencent.bkrepo.repository.pojo.packages.VersionListOption
+import com.tencent.bkrepo.repository.service.node.NodeService
 import com.tencent.bkrepo.repository.service.packages.PackageRepairService
 import com.tencent.bkrepo.repository.service.packages.PackageService
+import com.tencent.bkrepo.repository.service.repo.RepositoryService
 import com.tencent.bkrepo.repository.util.PackageQueryHelper
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -40,6 +44,8 @@ import kotlin.system.measureNanoTime
 @Service
 class PackageRepairServiceImpl(
     private val packageService: PackageService,
+    private val repositoryService: RepositoryService,
+    private val nodeService: NodeService,
     private val packageDao: PackageDao,
     private val packageVersionDao: PackageVersionDao,
     private val repositoryDao: RepositoryDao,
@@ -222,6 +228,134 @@ class PackageRepairServiceImpl(
             "fail" to fail,
             "total" to total
         )
+    }
+
+    override fun repairOciManifestPath(): Map<String, Long> {
+        var success = 0L
+        var fail = 0L
+        var skip = 0L
+        val repos = repositoryService.allRepos(null, null, repoType = RepositoryType.DOCKER).filterNotNull()
+        repos.forEach { repo ->
+            var pageNumber = 1
+            do {
+                val packages = packageService.listPackagePage(
+                    repo.projectId, repo.name, PackageListOption(pageNumber, PAGE_SIZE)
+                ).records
+                packages.filter { it.historyVersion.any { v -> v.contains("sha256") } }.forEach {
+                    val modifiedResult =
+                        repairOciManifestPathWithinPackage(it.projectId, it.repoName, it.id!!)
+                    success += modifiedResult.first
+                    fail += modifiedResult.second
+                    skip += modifiedResult.third
+                }
+                pageNumber++
+            } while (packages.size == PAGE_SIZE)
+        }
+        val total = success + fail + skip
+        logger.info("repair oci manifestPath complete. total[$total], success[$success], fail[$fail], skip[$skip]")
+        return mapOf(
+            "success" to success,
+            "fail" to fail,
+            "skip" to skip,
+            "total" to total
+        )
+    }
+
+    private fun repairOciManifestPathWithinPackage(
+        projectId: String,
+        repoName: String,
+        packageId: String
+    ): Triple<Long, Long, Long> {
+        var success = 0L
+        var fail = 0L
+        var skip = 0L
+        val versions = packageVersionDao.find(PackageQueryHelper.versionListQuery(packageId, "sha256"))
+        versions.forEach {
+            // 本地仓库迁移修复, 仅多架构包的摘要版本需要修复
+            // /image/manifest/sha256:xxx 移动到 /image/manifest/sha256:xxx/manifest.json
+            if (
+                it.metadata.any { m -> m.key == "refreshed" } &&
+                it.manifestPath?.endsWith("/manifest.json") == true &&
+                nodeDao.exists(projectId, repoName, it.manifestPath!!.removeSuffix("/manifest.json"))
+            ) {
+                if (nodeDao.exists(projectId, repoName, it.manifestPath!!)) {
+                    logger.warn(
+                        "==== skip move node [${it.manifestPath!!.removeSuffix("/manifest.json")}]" +
+                                " in [$projectId/$repoName]"
+                    )
+                    skip++
+                    return@forEach
+                }
+                // dir conflict
+                val tempPath = it.manifestPath!!.removeSuffix("/manifest.json").replace(":", "__")
+                nodeService.moveNode(
+                    NodeMoveCopyRequest(
+                        srcProjectId = projectId,
+                        srcRepoName = repoName,
+                        srcFullPath = it.manifestPath!!.removeSuffix("/manifest.json"),
+                        destFullPath = tempPath,
+                        operator = SYSTEM_USER
+                    )
+                )
+                nodeService.moveNode(
+                    NodeMoveCopyRequest(
+                        srcProjectId = projectId,
+                        srcRepoName = repoName,
+                        srcFullPath = tempPath,
+                        destFullPath = it.manifestPath!!,
+                        operator = SYSTEM_USER
+                    )
+                )
+                logger.info(
+                    "==== move node [${it.manifestPath!!.removeSuffix("/manifest.json")}] to " +
+                        "[${it.manifestPath!!}] in [$projectId/$repoName]"
+                )
+                success++
+                return@forEach
+            }
+            // 其它修复
+            // /image/manifest/sha256__xxx -> /image/manifest/sha256:xxx/<list.>manifest.json
+            if (
+                it.manifestPath?.substringAfterLast("/")?.startsWith("sha256__") == true &&
+                it.manifestPath == it.artifactPath
+            ) {
+                var fat = false
+                val manifestNode = nodeDao.findNode(projectId, repoName, it.manifestPath!!)!!
+                val mediaType = manifestNode.metadata?.find { m -> m.key == "mediaType" }?.value
+                if (
+                    mediaType == "application/vnd.docker.distribution.manifest.list.v2+json" ||
+                    mediaType == "application/vnd.oci.image.index.v1+json"
+                ) fat = true
+                val newPath = it.manifestPath!!.replace("__", ":") +
+                        if (fat) "/list.manifest.json" else "/manifest.json"
+                nodeService.moveNode(
+                    NodeMoveCopyRequest(
+                        srcProjectId = projectId,
+                        srcRepoName = repoName,
+                        srcFullPath = it.manifestPath!!,
+                        destFullPath = newPath,
+                        operator = SYSTEM_USER
+                    )
+                )
+                val query = Query(Criteria.where(ID).isEqualTo(it.id))
+                val update = Update()
+                    .set(TPackageVersion::artifactPath.name, newPath)
+                    .set(TPackageVersion::manifestPath.name, newPath)
+                val result = packageVersionDao.updateFirst(query, update)
+                if (result.modifiedCount == 1L) {
+                    success++
+                    logger.info(
+                        "==== successfully modify m&aPath[${it.artifactPath}] to [$newPath] in [$projectId/$repoName]"
+                    )
+                } else {
+                    fail++
+                    logger.warn(
+                        "==== fail to modify m&aPath[${it.artifactPath}] to [$newPath] in [$projectId/$repoName]"
+                    )
+                }
+            }
+        }
+        return Triple(success, fail, skip)
     }
 
     private fun repairNpmArtifactPathWithinPackage(

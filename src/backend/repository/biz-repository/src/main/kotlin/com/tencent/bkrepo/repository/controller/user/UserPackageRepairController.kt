@@ -46,4 +46,11 @@ class UserPackageRepairController(
         val resultMap = packageRepairService.repairNpmArtifactPath()
         return ResponseBuilder.success(resultMap)
     }
+
+    @ApiOperation("修正oci摘要版本manifest路径")
+    @PutMapping("/oci/manifest-path")
+    fun repairOciManifestPath(): Response<Map<String, Long>> {
+        val resultMap = packageRepairService.repairOciManifestPath()
+        return ResponseBuilder.success(resultMap)
+    }
 }

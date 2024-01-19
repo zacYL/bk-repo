@@ -21,4 +21,9 @@ interface PackageRepairService {
      * 修正npm artifactPath
      */
     fun repairNpmArtifactPath(): Map<String, Long>
+
+    /**
+     * 修正oci manifestPath
+     */
+    fun repairOciManifestPath(): Map<String, Long>
 }

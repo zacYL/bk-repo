@@ -33,7 +33,8 @@ export default {
         },
         // docker manifest 需要修改版本之前的分隔符，带有sha256:的使用@符号，其他的使用:
         dockerSeparator () {
-            return this.versionLabel.includes('sha256:') ? '@' : ':'
+            // 注意，若用户手动在输入框的版本号输入框中输入了 版本号为sha256:xxxx，也需要修改版本之前的分隔符
+            return ((this.repoType === 'docker' && this.dependInputValue2) || this.versionLabel).includes('sha256:') ? '@' : ':'
         },
         storeType () {
             return this.$route.query.storeType || ''
@@ -124,7 +125,7 @@ export default {
                     main: [
                         {
                             subTitle: this.$t('dockerDownloadGuideSubTitle'),
-                            codeList: [`docker pull ${this.domain.docker}/${this.projectId}/${this.repoName}/${this.dependInputValue1 || this.packageName}:${this.dependInputValue2 || this.versionLabel}`]
+                            codeList: [`docker pull ${this.domain.docker}/${this.projectId}/${this.repoName}/${this.dependInputValue1 || this.packageName}${this.dockerSeparator}${this.dependInputValue2 || this.versionLabel}`]
                         }
                     ]
                 }

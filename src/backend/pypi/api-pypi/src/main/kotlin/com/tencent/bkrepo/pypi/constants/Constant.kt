@@ -37,6 +37,7 @@ const val VERSION = "version"
 
 const val ARTIFACT_LIST = "artifactList"
 const val QUERY_TYPE = "queryType"
+const val REQUIRES_PYTHON = "requires_python"
 
 const val ELEMENT_SUFFIX = "<br />\n"
 const val PSEUDO_MATCH_REGEX = ":matchesOwn(%s)"

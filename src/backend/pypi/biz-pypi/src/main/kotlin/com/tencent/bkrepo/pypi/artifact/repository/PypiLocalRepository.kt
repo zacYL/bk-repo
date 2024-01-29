@@ -57,6 +57,7 @@ import com.tencent.bkrepo.pypi.artifact.xml.XmlUtil
 import com.tencent.bkrepo.pypi.constants.PACKAGE_INDEX_TITLE
 import com.tencent.bkrepo.pypi.constants.PypiQueryType
 import com.tencent.bkrepo.pypi.constants.QUERY_TYPE
+import com.tencent.bkrepo.pypi.constants.REQUIRES_PYTHON
 import com.tencent.bkrepo.pypi.constants.SIMPLE_PAGE_CONTENT
 import com.tencent.bkrepo.pypi.constants.VERSION_INDEX_TITLE
 import com.tencent.bkrepo.pypi.pojo.Basic
@@ -66,6 +67,11 @@ import com.tencent.bkrepo.pypi.util.PypiVersionUtils.toPypiPackagePojo
 import com.tencent.bkrepo.pypi.util.XmlUtils
 import com.tencent.bkrepo.pypi.util.XmlUtils.readXml
 import com.tencent.bkrepo.repository.api.StageClient
+import com.tencent.bkrepo.repository.constant.FULL_PATH
+import com.tencent.bkrepo.repository.constant.MD5
+import com.tencent.bkrepo.repository.constant.METADATA
+import com.tencent.bkrepo.repository.constant.NAME
+import com.tencent.bkrepo.repository.constant.NODE_METADATA
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
@@ -74,6 +80,7 @@ import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
+import com.tencent.bkrepo.repository.pojo.search.NodeQueryBuilder
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -320,32 +327,28 @@ class PypiLocalRepository(
     }
 
     fun getSimpleHtml(artifactInfo: ArtifactInfo, type: PypiQueryType): String? {
-        logger.info("Get simple html, artifactInfo: ${artifactInfo.getArtifactFullPath()}")
         with(artifactInfo) {
-            val node = nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data
-                ?: throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, getArtifactFullPath())
-            if (!node.folder) return null
+            val packagePath = getArtifactFullPath()
+            logger.info("Get simple html, artifactInfo: $packagePath")
             // 请求不带包名，返回包名列表.
             if (type == PypiQueryType.PACKAGE_INDEX) {
                 val nodeList = nodeClient.listNode(projectId, repoName, ROOT, includeFolder = true).data
                     ?.filter { it.folder }?.takeIf { it.isNotEmpty() }
-                    ?: throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, getArtifactFullPath())
+                    ?: throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, packagePath)
                 // 过滤掉'根节点',
                 return buildPypiPageContent(PACKAGE_INDEX_TITLE, buildPackageListContent(nodeList))
             }
             // 请求中带包名，返回对应包的文件列表。
             else {
-                val packageNode = nodeClient.listNode(
-                    projectId,
-                    repoName,
-                    getArtifactFullPath(),
-                    includeFolder = false,
-                    deep = true,
-                    includeMetadata = true
-                ).data
-                if (packageNode.isNullOrEmpty()) {
-                    throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, getArtifactFullPath())
-                }
+                val queryModel = NodeQueryBuilder()
+                    .select(NAME, FULL_PATH, METADATA, MD5)
+                    .projectId(projectId)
+                    .repoName(repoName)
+                    .path("^${packagePath.replace("-", "[-_.]+")}/", OperationType.REGEX_I)
+                    .excludeFolder()
+                    .build()
+                val packageNode = nodeClient.queryWithoutCount(queryModel).data!!.records
+                    .ifEmpty { throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, packagePath) }
                 return buildPypiPageContent(
                     String.format(VERSION_INDEX_TITLE, getArtifactName().removePrefix("/")),
                     buildPackageFileNodeListContent(packageNode)
@@ -365,16 +368,20 @@ class PypiLocalRepository(
      * 对应包中的文件列表
      * [nodeList]
      */
-    private fun buildPackageFileNodeListContent(nodeList: List<NodeInfo>): String {
+    @Suppress("UNCHECKED_CAST")
+    private fun buildPackageFileNodeListContent(nodeList: List<Map<String, Any?>>): String {
         val builder = StringBuilder()
         nodeList.forEachIndexed { i, node ->
-            val md5 = node.md5
+            val md5 = node[MD5]
             builder.append("<a")
-            val requiresPython = node.metadata?.get("requires_python")?.toString()
+            val requiresPython = (node[NODE_METADATA] as List<Map<String, Any?>>)
+                .find { it["key"] == REQUIRES_PYTHON }?.get("value")?.toString()
             if (!requiresPython.isNullOrBlank()) {
                 builder.append(" data-requires-python=\"$requiresPython\"")
             }
-            builder.append(" href=\"../../packages${node.fullPath}#md5=$md5\" rel=\"internal\">${node.name}</a><br />")
+            builder.append(
+                " href=\"../../packages${node[FULL_PATH]}#md5=$md5\" rel=\"internal\">${node[NAME]}</a><br />"
+            )
             if (i != nodeList.size - 1) builder.append("\n")
         }
         return builder.toString()

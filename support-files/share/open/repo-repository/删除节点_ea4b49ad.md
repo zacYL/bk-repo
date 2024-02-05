@@ -5,7 +5,7 @@
 ### 请求地址
 
 ```
-/repo-repository/api/node/delete/{projectId}/{repoName}/**
+/repo-repository/api/node/delete/{projectId}/{repoName}/{fullPath}
 ```
 
 ### 请求方法
@@ -14,13 +14,20 @@
 
 ### 请求参数
 
+#### 请求头参数
+
+| 字段                  | 类型   | 必填 | 描述                  |
+| --------------------- | ------ | ---- | --------------------- |
+| X-DEVOPS-ACCESS-TOKEN | String | 是   | OpenAPI认证token      |
+| Authorization         | String | 是   | 制品库basic认证请求头 |
+
 #### 路径参数
 
 | 字段        | 类型     | 必填  | 描述            |
 |-----------|--------|-----|---------------|
 | projectId | String | 是   | 项目id          |
 | repoName  | String | 是   | 仓库名称          |
-| fullPath  | String | 否   | 完整路径, 为空则是根路径 |
+| fullPath  | String | 否   | 完整路径, 可能为多层路径 |
 
 ### 返回结果
 

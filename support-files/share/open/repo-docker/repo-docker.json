@@ -3,28 +3,14 @@
   "systemName": " 制品库",
   "openApiList": [
     {
-      "code": "GET__ext_addr_repo-docker",
-      "name": "GET__ext_addr",
-      "desc": "获取docker仓库地址",
-      "path": "/repo-docker/ext/addr",
-      "method": "GET",
-      "headers": [],
-      "targetService": "repo-docker",
-      "targetPath": "/ext/addr",
-      "targetMethod": "GET",
-      "timeout": 30,
-      "retryTimes": 10,
-      "docName": "获取docker仓库地址_753d1c88.md"
-    },
-    {
-      "code": "GET__ext_manifest_{projectId}_{repoName}_**_{tag}_repo-docker",
-      "name": "GET__ext_manifest_{projectId}_{repoName}_**_{tag}",
+      "code": "GET__ext_manifest_{projectId}_{repoName}_{imageName}_{tag}_repo-docker",
+      "name": "GET__ext_manifest_{projectId}_{repoName}_{imageName}_{tag}",
       "desc": "获取manifest文件",
-      "path": "/repo-docker/ext/manifest/{projectId}/{repoName}/**/{tag}",
+      "path": "/repo-docker/ext/manifest/{projectId}/{repoName}/{imageName}/{tag}",
       "method": "GET",
       "headers": [],
       "targetService": "repo-docker",
-      "targetPath": "/ext/manifest/{projectId}/{repoName}/**/{tag}",
+      "targetPath": "/ext/manifest/{projectId}/{repoName}/{imageName}/{tag}",
       "targetMethod": "GET",
       "timeout": 30,
       "retryTimes": 10,
@@ -33,7 +19,7 @@
     {
       "code": "DELETE__ext_package_delete_{projectId}_{repoName}_repo-docker",
       "name": "DELETE__ext_package_delete_{projectId}_{repoName}",
-      "desc": "删除repo下的指定镜像",
+      "desc": "删除指定image的所有tag",
       "path": "/repo-docker/ext/package/delete/{projectId}/{repoName}",
       "method": "DELETE",
       "headers": [],
@@ -42,7 +28,7 @@
       "targetMethod": "DELETE",
       "timeout": 30,
       "retryTimes": 10,
-      "docName": "删除repo下的指定镜像_e7751bc2.md"
+      "docName": "删除指定image的所有tag_e7751bc2.md"
     },
     {
       "code": "GET__ext_repo_{projectId}_{repoName}_repo-docker",
@@ -59,23 +45,23 @@
       "docName": "获取所有image_bdc00a4a.md"
     },
     {
-      "code": "GET__ext_tag_{projectId}_{repoName}_**_repo-docker",
-      "name": "GET__ext_tag_{projectId}_{repoName}_**",
-      "desc": "获取repo所有的tag",
-      "path": "/repo-docker/ext/tag/{projectId}/{repoName}/**",
+      "code": "GET__ext_tag_{projectId}_{repoName}_{name}_repo-docker",
+      "name": "GET__ext_tag_{projectId}_{repoName}_{name}",
+      "desc": "获取指定image的所有tag",
+      "path": "/repo-docker/ext/tag/{projectId}/{repoName}/{name}",
       "method": "GET",
       "headers": [],
       "targetService": "repo-docker",
-      "targetPath": "/ext/tag/{projectId}/{repoName}/**",
+      "targetPath": "/ext/tag/{projectId}/{repoName}/{name}",
       "targetMethod": "GET",
       "timeout": 30,
       "retryTimes": 10,
-      "docName": "获取repo所有的tag_020409f8.md"
+      "docName": "获取指定image的所有tag_020409f8.md"
     },
     {
       "code": "DELETE__ext_version_delete_{projectId}_{repoName}_repo-docker",
       "name": "DELETE__ext_version_delete_{projectId}_{repoName}",
-      "desc": "删除repo下的指定镜像",
+      "desc": "删除指定镜像tag",
       "path": "/repo-docker/ext/version/delete/{projectId}/{repoName}",
       "method": "DELETE",
       "headers": [],
@@ -84,7 +70,7 @@
       "targetMethod": "DELETE",
       "timeout": 30,
       "retryTimes": 10,
-      "docName": "删除repo下的指定镜像_8e1ef71c.md"
+      "docName": "删除指定镜像tag_8e1ef71c.md"
     },
     {
       "code": "GET__ext_version_detail_{projectId}_{repoName}_repo-docker",

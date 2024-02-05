@@ -3,20 +3,6 @@
   "systemName": " 制品库",
   "openApiList": [
     {
-      "code": "GET__ext_address_repo-helm",
-      "name": "GET__ext_address",
-      "desc": "获取helm域名地址",
-      "path": "/repo-helm/ext/address",
-      "method": "GET",
-      "headers": [],
-      "targetService": "repo-helm",
-      "targetPath": "/ext/address",
-      "targetMethod": "GET",
-      "timeout": 30,
-      "retryTimes": 10,
-      "docName": "获取helm域名地址_6fdaa543.md"
-    },
-    {
       "code": "DELETE__ext_package_delete_{projectId}_{repoName}_repo-helm",
       "name": "DELETE__ext_package_delete_{projectId}_{repoName}",
       "desc": "删除仓库下的包",

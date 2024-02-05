@@ -3,20 +3,28 @@
 
 ### 请求地址
 ```
-/repo-docker/ext/manifest/{projectId}/{repoName}/**/{tag}
+/repo-docker/ext/manifest/{projectId}/{repoName}/{imageName}/{tag}
 ```
 
 ### 请求方法
 `GET`
 ### 请求参数
+
+#### 请求头参数
+
+| 字段                  | 类型   | 必填 | 描述                  |
+| --------------------- | ------ | ---- | --------------------- |
+| X-DEVOPS-ACCESS-TOKEN | String | 是   | OpenAPI认证token      |
+| Authorization         | String | 是   | 制品库basic认证请求头 |
+
 #### 路径参数
 
 | 字段           | 类型     | 必填  | 描述    |
 |--------------|--------|-----|-------|
 | projectId    | String | 是   | 项目id  |
 | repoName     | String | 是   | 仓库名称  |
-| artifactName | String | 是   | 构件名称  |
-| tag          | String | 是   | 构件tag |
+| imageName    | String | 是   | 镜像名称(可能为多级路径)  |
+| tag          | String | 是   | 镜像tag |
 
 ### 返回结果
 

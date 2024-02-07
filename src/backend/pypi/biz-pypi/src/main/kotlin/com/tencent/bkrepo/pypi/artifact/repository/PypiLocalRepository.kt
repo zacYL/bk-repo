@@ -342,6 +342,7 @@ class PypiLocalRepository(
             else {
                 val queryModel = NodeQueryBuilder()
                     .select(NAME, FULL_PATH, METADATA, MD5)
+                    .sortByAsc(NAME)
                     .projectId(projectId)
                     .repoName(repoName)
                     .path("^${packagePath.replace("-", "[-_.]+")}/", OperationType.REGEX_I)

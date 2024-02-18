@@ -39,24 +39,24 @@ const val ARTIFACT_LIST = "artifactList"
 const val QUERY_TYPE = "queryType"
 const val REQUIRES_PYTHON = "requires_python"
 
-const val ELEMENT_SUFFIX = "<br />\n"
+const val LINE_BREAK = "<br />"
 const val PSEUDO_MATCH_REGEX = ":matchesOwn(%s)"
 const val SELECTOR_A = "a"
+const val INDENT = "    "
 
 const val FILE_NAME_REGEX = ".+\\.(tar|tar\\.gz|tgz|zip|whl)$"
 
 const val PACKAGE_INDEX_TITLE = "Simple Index"
 const val VERSION_INDEX_TITLE = "Links for %s"
 const val SIMPLE_PAGE_CONTENT =
-    """
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>%s</title>
-            <meta name="api-version" value="2" />
-        </head>
-        <body>
-            %s
-        </body>
-        </html>
-    """
+"""<!DOCTYPE html>
+<html>
+<head>
+    <title>%s</title>
+    <meta name="api-version" value="2" />
+</head>
+<body>
+    <h1>%s</h1>
+%s
+</body>
+</html>"""

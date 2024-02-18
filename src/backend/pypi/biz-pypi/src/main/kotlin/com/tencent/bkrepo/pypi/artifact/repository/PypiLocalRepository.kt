@@ -54,6 +54,8 @@ import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.pypi.artifact.url.UrlPatternUtil.parameterMaps
 import com.tencent.bkrepo.pypi.artifact.xml.Value
 import com.tencent.bkrepo.pypi.artifact.xml.XmlUtil
+import com.tencent.bkrepo.pypi.constants.INDENT
+import com.tencent.bkrepo.pypi.constants.LINE_BREAK
 import com.tencent.bkrepo.pypi.constants.PACKAGE_INDEX_TITLE
 import com.tencent.bkrepo.pypi.constants.PypiQueryType
 import com.tencent.bkrepo.pypi.constants.QUERY_TYPE
@@ -363,7 +365,7 @@ class PypiLocalRepository(
      * @param listContent 显示的内容
      */
     private fun buildPypiPageContent(title: String, listContent: String) =
-        String.format(SIMPLE_PAGE_CONTENT.trimIndent(), title, listContent)
+        String.format(SIMPLE_PAGE_CONTENT, title, title, listContent)
 
     /**
      * 对应包中的文件列表
@@ -374,14 +376,14 @@ class PypiLocalRepository(
         val builder = StringBuilder()
         nodeList.forEachIndexed { i, node ->
             val md5 = node[MD5]
-            builder.append("<a")
+            builder.append("$INDENT<a")
             val requiresPython = (node[NODE_METADATA] as List<Map<String, Any?>>)
                 .find { it["key"] == REQUIRES_PYTHON }?.get("value")?.toString()
             if (!requiresPython.isNullOrBlank()) {
                 builder.append(" data-requires-python=\"$requiresPython\"")
             }
             builder.append(
-                " href=\"../../packages${node[FULL_PATH]}#md5=$md5\" rel=\"internal\">${node[NAME]}</a><br />"
+                " href=\"../../packages${node[FULL_PATH]}#md5=$md5\" rel=\"internal\">${node[NAME]}</a>$LINE_BREAK"
             )
             if (i != nodeList.size - 1) builder.append("\n")
         }
@@ -398,7 +400,7 @@ class PypiLocalRepository(
             builder.append("The directory is empty.")
         }
         nodeList.forEachIndexed { i, node ->
-            builder.append("<a href=\"${node.name}\" rel=\"internal\">${node.name}</a><br />")
+            builder.append("$INDENT<a href=\"${node.name}\" rel=\"internal\">${node.name}</a>$LINE_BREAK")
             if (i != nodeList.size - 1) builder.append("\n")
         }
         return builder.toString()

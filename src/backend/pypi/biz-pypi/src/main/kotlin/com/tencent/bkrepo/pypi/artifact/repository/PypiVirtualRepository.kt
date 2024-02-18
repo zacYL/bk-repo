@@ -39,8 +39,9 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContex
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchContext
 import com.tencent.bkrepo.common.artifact.repository.virtual.VirtualRepository
 import com.tencent.bkrepo.pypi.artifact.xml.Value
-import com.tencent.bkrepo.pypi.constants.ELEMENT_SUFFIX
 import com.tencent.bkrepo.pypi.constants.FILE_NAME_REGEX
+import com.tencent.bkrepo.pypi.constants.INDENT
+import com.tencent.bkrepo.pypi.constants.LINE_BREAK
 import com.tencent.bkrepo.pypi.constants.PACKAGE_INDEX_TITLE
 import com.tencent.bkrepo.pypi.constants.PSEUDO_MATCH_REGEX
 import com.tencent.bkrepo.pypi.constants.PypiQueryType
@@ -78,8 +79,8 @@ class PypiVirtualRepository : VirtualRepository() {
         }
         val title =
             if (artifactName.isBlank()) PACKAGE_INDEX_TITLE else String.format(VERSION_INDEX_TITLE, artifactName)
-        val content = compositePage.joinToString(ELEMENT_SUFFIX, postfix = "<br />")
-        return String.format(SIMPLE_PAGE_CONTENT.trimIndent(), title, content)
+        val content = compositePage.joinToString("$LINE_BREAK\n$INDENT", INDENT, LINE_BREAK)
+        return String.format(SIMPLE_PAGE_CONTENT, title, title, content)
     }
 
     override fun search(context: ArtifactSearchContext): List<Any> {

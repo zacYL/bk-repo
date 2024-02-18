@@ -184,19 +184,7 @@ class PackageServiceImpl(
         Preconditions.checkArgument(pageSize >= 0, "pageSize")
         val stageTag = option.stageTag?.split(StringPool.COMMA)
         val pageRequest = Pages.ofRequest(pageNumber, pageSize)
-        val sourceRepoName = HttpContextHolder.getRequest().getParameter("srcRepo")
-        if (sourceRepoName != null) {
-            val tRepository = repositoryDao.findByNameAndType(projectId, repoName)
-                ?: throw RepoNotFoundException("$projectId|$repoName")
-            if (
-                tRepository.category == RepositoryCategory.VIRTUAL &&
-                tRepository.configuration.readJsonString<VirtualConfiguration>().repositoryList
-                    .any { it.projectId == projectId && it.name == sourceRepoName }
-            ) {
-                permissionManager.checkRepoPermission(PermissionAction.READ, projectId, sourceRepoName)
-            } else throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "srcRepo")
-        }
-        val tPackage = packageDao.findByKey(projectId, sourceRepoName ?: repoName, packageKey)
+        val tPackage = packageDao.findByKey(projectId, repoName, packageKey)
         return if (tPackage == null) {
             Pages.ofResponse(pageRequest, 0, emptyList())
         } else {

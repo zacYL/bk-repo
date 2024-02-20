@@ -56,6 +56,7 @@ import com.tencent.bkrepo.pypi.artifact.xml.Value
 import com.tencent.bkrepo.pypi.artifact.xml.XmlUtil
 import com.tencent.bkrepo.pypi.constants.INDENT
 import com.tencent.bkrepo.pypi.constants.LINE_BREAK
+import com.tencent.bkrepo.pypi.constants.NON_ALPHANUMERIC_SEQ_REGEX
 import com.tencent.bkrepo.pypi.constants.PACKAGE_INDEX_TITLE
 import com.tencent.bkrepo.pypi.constants.PypiQueryType
 import com.tencent.bkrepo.pypi.constants.QUERY_TYPE
@@ -347,7 +348,7 @@ class PypiLocalRepository(
                     .sortByAsc(NAME)
                     .projectId(projectId)
                     .repoName(repoName)
-                    .path("^${packagePath.replace("-", "[-_.]+")}/", OperationType.REGEX_I)
+                    .path("^${packagePath.replace("-", NON_ALPHANUMERIC_SEQ_REGEX)}/", OperationType.REGEX_I)
                     .excludeFolder()
                     .build()
                 val packageNode = nodeClient.queryWithoutCount(queryModel).data!!.records
@@ -400,7 +401,8 @@ class PypiLocalRepository(
             builder.append("The directory is empty.")
         }
         nodeList.forEachIndexed { i, node ->
-            builder.append("$INDENT<a href=\"${node.name}\" rel=\"internal\">${node.name}</a>$LINE_BREAK")
+            val href = "\"${node.name.replace(nonAlphanumericSeqRegex, "-").toLowerCase()}/\""
+            builder.append("$INDENT<a href=$href rel=\"internal\">${node.name}</a>$LINE_BREAK")
             if (i != nodeList.size - 1) builder.append("\n")
         }
         return builder.toString()
@@ -444,6 +446,7 @@ class PypiLocalRepository(
     }
 
     companion object {
+        private val nonAlphanumericSeqRegex = Regex(NON_ALPHANUMERIC_SEQ_REGEX)
         val logger: Logger = LoggerFactory.getLogger(PypiLocalRepository::class.java)
         const val pageLimitCurrent = 0
         const val pageLimitSize = 10

@@ -45,18 +45,19 @@ const val SELECTOR_A = "a"
 const val INDENT = "    "
 
 const val FILE_NAME_REGEX = ".+\\.(tar|tar\\.gz|tgz|zip|whl)$"
+const val NON_ALPHANUMERIC_SEQ_REGEX = "[-_.]+"
 
 const val PACKAGE_INDEX_TITLE = "Simple Index"
 const val VERSION_INDEX_TITLE = "Links for %s"
 const val SIMPLE_PAGE_CONTENT =
 """<!DOCTYPE html>
 <html>
-<head>
+  <head>
+    <meta name="pypi:repository-version" content="1.0">
     <title>%s</title>
-    <meta name="api-version" value="2" />
-</head>
-<body>
+  </head>
+  <body>
     <h1>%s</h1>
 %s
-</body>
+  </body>
 </html>"""

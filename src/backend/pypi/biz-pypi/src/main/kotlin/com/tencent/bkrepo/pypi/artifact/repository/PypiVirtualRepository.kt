@@ -68,13 +68,13 @@ class PypiVirtualRepository : VirtualRepository() {
         }
         val artifactName = context.artifactInfo.getArtifactName().removePrefix("/")
         val pseudoSelector = if (artifactName.isBlank()) "" else String.format(PSEUDO_MATCH_REGEX, FILE_NAME_REGEX)
-        val elementPages = (super.query(context) as List<String>)
+        val indexPages = (super.query(context) as List<String>)
             .map { Jsoup.parse(it).body().select(SELECTOR_A + pseudoSelector) }
             .takeIf { it.isNotEmpty() }
             ?: throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, artifactName)
-        val compositePage = if (elementPages.size == 1) elementPages.first() else {
+        val compositePage = if (indexPages.size == 1) indexPages.first() else {
             val anchorSet = TreeSet<Element>(compareBy { it.text() })
-            elementPages.forEach { anchorSet.addAll(it) }
+            indexPages.forEach { anchorSet.addAll(it) }
             Elements(anchorSet)
         }
         val title =

@@ -1,5 +1,6 @@
 package com.tencent.bkrepo.maven.service
 
+import com.tencent.bkrepo.common.api.exception.ParameterInvalidException
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
@@ -9,8 +10,8 @@ import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.query.model.Sort
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.maven.constants.PACKAGE_SUFFIX_REGEX
+import com.tencent.bkrepo.maven.enum.MavenMessageCode
 import com.tencent.bkrepo.maven.exception.MavenArtifactNotFoundException
-import com.tencent.bkrepo.maven.exception.MavenBadRequestException
 import com.tencent.bkrepo.maven.pojo.MavenDependency
 import com.tencent.bkrepo.maven.pojo.MavenGAVC
 import com.tencent.bkrepo.maven.pojo.MavenPlugin
@@ -72,7 +73,7 @@ class MavenExtService(
         listOf(a, v, c).map {
             result = it.isNullOrBlank() && result
         }
-        if (result) throw MavenBadRequestException()
+        if (result) throw ParameterInvalidException("$g|$a|$v|$c")
     }
 
     private fun buildGavcQuery(
@@ -139,7 +140,7 @@ class MavenExtService(
     ): Response<Page<MavenVersionDependentsRelation>> {
         // 先找到制品包信息
         val packageVersion = packageClient.findVersionByName(projectId, repoName, packageKey, version).data
-            ?: throw MavenArtifactNotFoundException("")
+            ?: throw MavenArtifactNotFoundException(MavenMessageCode.MAVEN_ARTIFACT_NOT_FOUND)
         val type = packageVersion.metadata["packaging"] as String? ?: run {
             val matcher = Pattern.compile(PACKAGE_SUFFIX_REGEX).matcher(packageVersion.contentPath!!)
             require(matcher.matches()) {

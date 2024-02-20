@@ -1,7 +1,7 @@
 package com.tencent.bkrepo.maven.util
 
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
-import com.tencent.bkrepo.maven.message.MavenMessageCode
+import com.tencent.bkrepo.maven.enum.MavenMessageCode
 import com.tencent.bkrepo.maven.pojo.request.MavenWebDeployRequest
 
 /**

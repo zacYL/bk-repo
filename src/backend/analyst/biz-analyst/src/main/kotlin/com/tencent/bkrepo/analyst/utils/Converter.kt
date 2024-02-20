@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.analyst.utils
 
+import com.tencent.bkrepo.analyst.message.ScannerMessageCode
 import com.tencent.bkrepo.analyst.model.ExportContent
 import com.tencent.bkrepo.analyst.model.LeakDetailExport
 import com.tencent.bkrepo.analyst.model.SubScanTaskDefinition
@@ -35,6 +36,7 @@ import com.tencent.bkrepo.analyst.model.TScanPlan
 import com.tencent.bkrepo.analyst.model.TScanTask
 import com.tencent.bkrepo.analyst.pojo.ProjectScanConfiguration
 import com.tencent.bkrepo.analyst.pojo.ScanTask
+import com.tencent.bkrepo.analyst.pojo.ScanTriggerType
 import com.tencent.bkrepo.analyst.pojo.response.ArtifactVulnerabilityInfo
 import com.tencent.bkrepo.analyst.pojo.response.SubtaskInfo
 import com.tencent.bkrepo.analyst.pojo.response.SubtaskResultOverview
@@ -49,7 +51,7 @@ object Converter {
     fun convert(
         scanTask: TScanTask,
         scanPlan: TScanPlan? = null,
-        force: Boolean = false,
+        force: Boolean = false
     ): ScanTask = with(scanTask) {
         ScanTask(
             name = scanTask.name,
@@ -208,5 +210,13 @@ object Converter {
             }
         }
         return null
+    }
+
+    private fun scanTaskName(triggerType: String, name: String?): String {
+        val defaultName = LocaleMessageUtils.getLocalizedMessage(ScannerMessageCode.SCAN_TASK_NAME_BATCH_SCAN)
+        return when (triggerType) {
+            ScanTriggerType.PIPELINE.name -> name ?: defaultName
+            else -> defaultName
+        }
     }
 }

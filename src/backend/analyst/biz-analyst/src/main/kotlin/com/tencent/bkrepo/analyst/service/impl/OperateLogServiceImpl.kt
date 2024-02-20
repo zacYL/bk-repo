@@ -87,6 +87,10 @@ open class OperateLogServiceImpl(private val operateLogClient: OperateLogClient)
         throw UnsupportedOperationException()
     }
 
+    override fun eventName(type: EventType): String {
+        throw UnsupportedOperationException()
+    }
+
     override fun saveEventRequest(request: EventCreateRequest) {
         throw UnsupportedOperationException()
     }

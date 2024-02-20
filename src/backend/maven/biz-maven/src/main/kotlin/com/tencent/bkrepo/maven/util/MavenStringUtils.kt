@@ -37,6 +37,7 @@ import com.tencent.bkrepo.maven.constants.PACKAGE_SUFFIX_REGEX
 import com.tencent.bkrepo.maven.constants.SNAPSHOT_SUFFIX
 import com.tencent.bkrepo.maven.constants.TIMESTAMP_FORMAT
 import com.tencent.bkrepo.maven.enum.HashType
+import com.tencent.bkrepo.maven.enum.MavenMessageCode
 import com.tencent.bkrepo.maven.enum.SnapshotBehaviorType
 import com.tencent.bkrepo.maven.exception.MavenArtifactFormatException
 import com.tencent.bkrepo.maven.pojo.MavenRepoConf
@@ -139,7 +140,7 @@ object MavenStringUtils {
             mavenVersion.setVersion(this)
             return mavenVersion
         }
-        throw MavenArtifactFormatException(this)
+        throw MavenArtifactFormatException(MavenMessageCode.MAVEN_ARTIFACT_FORMAT_ERROR, this)
     }
 
     fun MavenVersion.setVersion(artifactName: String) {

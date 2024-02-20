@@ -65,9 +65,9 @@ class UserOperateLogController(
     @ApiOperation("审计日志事件类型")
     @GetMapping("/event/type")
     fun type(): Response<Map<EventType, String>> {
-        return ResponseBuilder.success(operateLogService.eventTypes().associateWith { it.nick })
+        val map = operateLogService.eventTypes().associateWith { operateLogService.eventName(it) }
+        return ResponseBuilder.success(map)
     }
-
 
     @ApiOperation("审计日志查询接口")
     @GetMapping("/page")

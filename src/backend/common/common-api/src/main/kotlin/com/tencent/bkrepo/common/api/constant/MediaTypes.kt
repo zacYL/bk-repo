@@ -37,6 +37,7 @@ object MediaTypes {
     const val APPLICATION_XML = "application/xml;charset=utf-8"
     const val APPLICATION_JSON_WITHOUT_CHARSET = "application/json"
     const val TEXT_HTML = "text/html; charset=utf-8"
+    const val TEXT_PLAIN = "text/plain"
     const val APPLICATION_YAML = "application/x-yaml"
     const val APPLICATION_TGZ = "application/x-tar"
     const val APPLICATION_ICO = "image/x-icon"

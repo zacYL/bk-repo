@@ -64,21 +64,21 @@ import com.tencent.bkrepo.helm.constants.CHART
 import com.tencent.bkrepo.helm.constants.CHART_PACKAGE_FILE_EXTENSION
 import com.tencent.bkrepo.helm.constants.FILE_TYPE
 import com.tencent.bkrepo.helm.constants.FULL_PATH
+import com.tencent.bkrepo.helm.constants.HelmMessageCode
 import com.tencent.bkrepo.helm.constants.META_DETAIL
 import com.tencent.bkrepo.helm.constants.NODE_CREATE_DATE
 import com.tencent.bkrepo.helm.constants.NODE_FULL_PATH
 import com.tencent.bkrepo.helm.constants.NODE_METADATA
 import com.tencent.bkrepo.helm.constants.NODE_NAME
 import com.tencent.bkrepo.helm.constants.NODE_SHA256
-import com.tencent.bkrepo.helm.constants.OVERWRITE
 import com.tencent.bkrepo.helm.constants.PROJECT_ID
 import com.tencent.bkrepo.helm.constants.REDIS_LOCK_KEY_PREFIX
 import com.tencent.bkrepo.helm.constants.REPO_NAME
 import com.tencent.bkrepo.helm.constants.REPO_TYPE
 import com.tencent.bkrepo.helm.constants.SIZE
 import com.tencent.bkrepo.helm.constants.TGZ_SUFFIX
-import com.tencent.bkrepo.helm.exception.HelmBadRequestException
 import com.tencent.bkrepo.helm.exception.HelmFileNotFoundException
+import com.tencent.bkrepo.helm.exception.HelmForbiddenRequestException
 import com.tencent.bkrepo.helm.exception.HelmRepoNotFoundException
 import com.tencent.bkrepo.helm.pojo.artifact.HelmArtifactInfo
 import com.tencent.bkrepo.helm.pojo.metadata.HelmChartMetadata
@@ -146,13 +146,16 @@ open class AbstractChartService : ArtifactService() {
         val context = ArtifactQueryContext()
         context.putAttribute(FULL_PATH, HelmUtils.getIndexCacheYamlFullPath())
         try {
-            val inputStream = ArtifactContextHolder.getRepository().query(context) ?: throw HelmFileNotFoundException(
-                "Error occurred when querying the index.yaml file.. "
-            )
+            val inputStream = ArtifactContextHolder.getRepository().query(context)
+                ?: throw HelmFileNotFoundException(
+                    HelmMessageCode.HELM_FILE_NOT_FOUND, "index.yaml", "${context.projectId}|${context.repoName}"
+                )
             return (inputStream as ArtifactInputStream).use { it.readYamlString() }
         } catch (e: Exception) {
             logger.warn("Error occurred while querying index.yaml, error: ${e.message}")
-            throw HelmFileNotFoundException(e.message.toString())
+            throw HelmFileNotFoundException(
+                HelmMessageCode.HELM_FILE_NOT_FOUND, "index.yaml", "${context.projectId}|${context.repoName}"
+            )
         }
     }
 
@@ -164,11 +167,13 @@ open class AbstractChartService : ArtifactService() {
         val repository = repositoryClient.getRepoDetail(projectId, repoName, RepositoryType.HELM.name).data
             ?: throw RepoNotFoundException("Repository[$repoName] does not exist")
         val inputStream = storageManager.loadArtifactInputStream(nodeDetail, repository.storageCredentials)
-            ?: throw HelmFileNotFoundException("Artifact index.yaml does not exist")
+            ?: throw HelmFileNotFoundException(
+                HelmMessageCode.HELM_FILE_NOT_FOUND, "index.yaml", "$projectId|$repoName"
+            )
         return inputStream.use { it.readYamlString() }
     }
 
-    fun getOriginalIndexNode(projectId: String, repoName: String): NodeDetail? {
+    private fun getOriginalIndexNode(projectId: String, repoName: String): NodeDetail? {
         val fullPath = HelmUtils.getIndexCacheYamlFullPath()
         return nodeClient.getNodeDetail(projectId, repoName, fullPath).data
     }
@@ -203,7 +208,7 @@ open class AbstractChartService : ArtifactService() {
         with(artifactInfo) {
             val result = repositoryClient.getRepoDetail(projectId, repoName, REPO_TYPE).data ?: run {
                 logger.warn("check repository [$repoName] in projectId [$projectId] failed!")
-                throw HelmRepoNotFoundException("repository [$repoName] in projectId [$projectId] not existed.")
+                throw HelmRepoNotFoundException(HelmMessageCode.HELM_REPO_NOT_FOUND, "$projectId|$repoName")
             }
             return result
         }
@@ -230,12 +235,13 @@ open class AbstractChartService : ArtifactService() {
         with(artifactInfo) {
             val repo = repositoryClient.getRepoDetail(projectId, repoName, REPO_TYPE).data ?: run {
                 logger.warn("check repository [$repoName] in projectId [$projectId] failed!")
-                throw HelmRepoNotFoundException("repository [$repoName] in projectId [$projectId] not existed.")
+                throw HelmRepoNotFoundException(HelmMessageCode.HELM_REPO_NOT_FOUND, "$projectId|$repoName")
             }
             when (repo.category) {
-                RepositoryCategory.REMOTE -> throw HelmBadRequestException(
-                    "Unable to upload chart into a remote repository [$projectId/$repoName]"
-                )
+                RepositoryCategory.REMOTE ->
+                    throw HelmForbiddenRequestException(
+                        HelmMessageCode.HELM_FILE_UPLOAD_FORBIDDEN, "$projectId/$repoName"
+                    )
                 else -> return
             }
         }
@@ -244,7 +250,7 @@ open class AbstractChartService : ArtifactService() {
     /**
      * 当helm 本地文件上传后/或从远程代理下载后，创建或更新包/包版本信息
      */
-    fun initPackageInfo(context: ArtifactContext) {
+    fun initPackageInfo(context: ArtifactContext, isOverwrite: Boolean = false) {
         with(context) {
             if (CHART != getStringAttribute(FILE_TYPE)) return
             logger.info("start to update package meta info..")
@@ -252,7 +258,6 @@ open class AbstractChartService : ArtifactService() {
             val helmChartMetadataMap = getAttribute<Map<String, Any>?>(META_DETAIL)
             helmChartMetadataMap?.let {
                 val helmChartMetadata = HelmMetadataUtils.convertToObject(helmChartMetadataMap)
-                val overWrite = getBooleanAttribute(OVERWRITE) ?: false
                 val sourceType = getAttribute<ArtifactChannel>(SOURCE_TYPE)
                 createVersion(
                     userId = userId,
@@ -260,7 +265,7 @@ open class AbstractChartService : ArtifactService() {
                     repoName = artifactInfo.repoName,
                     chartInfo = helmChartMetadata,
                     size = size!!,
-                    isOverwrite = overWrite,
+                    isOverwrite = isOverwrite,
                     sourceType = sourceType
                 )
             }
@@ -363,7 +368,7 @@ open class AbstractChartService : ArtifactService() {
                 packageKey = PackageKeys.ofHelm(chartInfo.name),
                 version = chartInfo.version
             ).data
-            if (packageVersion == null) {
+            if (packageVersion == null || isOverwrite) {
                 val packageVersionCreateRequest = ObjectBuilderUtil.buildPackageVersionCreateRequest(
                     userId = userId,
                     projectId = projectId,
@@ -373,15 +378,9 @@ open class AbstractChartService : ArtifactService() {
                     isOverwrite = isOverwrite,
                     sourceType = sourceType
                 )
-                val packageUpdateRequest = ObjectBuilderUtil.buildPackageUpdateRequest(
-                    projectId = projectId,
-                    repoName = repoName,
-                    chartInfo = chartInfo
-                )
                 packageClient.createVersion(packageVersionCreateRequest).apply {
                     logger.info("user: [$userId] create package version [$packageVersionCreateRequest] success!")
                 }
-                packageClient.updatePackage(packageUpdateRequest)
             } else {
                 val packageVersionUpdateRequest = ObjectBuilderUtil.buildPackageVersionUpdateRequest(
                     projectId = projectId,
@@ -539,7 +538,7 @@ open class AbstractChartService : ArtifactService() {
      */
     fun checkRepo(projectId: String, repoName: String): RepositoryDetail? {
         val repoDetail = repositoryClient.getRepoDetail(projectId, repoName, REPO_TYPE).data ?: run {
-            throw HelmRepoNotFoundException("Could not find helm repository named [$repoName] in project [$projectId].")
+            throw HelmRepoNotFoundException(HelmMessageCode.HELM_REPO_NOT_FOUND, "$projectId|$repoName")
         }
         if (RepositoryCategory.LOCAL == repoDetail.category) {
             logger.warn(

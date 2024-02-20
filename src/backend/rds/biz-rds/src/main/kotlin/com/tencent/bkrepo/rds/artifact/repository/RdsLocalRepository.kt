@@ -44,13 +44,26 @@ import com.tencent.bkrepo.common.artifact.stream.ArtifactInputStream
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
-import com.tencent.bkrepo.rds.constants.*
+import com.tencent.bkrepo.rds.constants.CHART
+import com.tencent.bkrepo.rds.constants.FILE_TYPE
+import com.tencent.bkrepo.rds.constants.FORCE
+import com.tencent.bkrepo.rds.constants.FULL_PATH
+import com.tencent.bkrepo.rds.constants.META_DETAIL
+import com.tencent.bkrepo.rds.constants.NAME
+import com.tencent.bkrepo.rds.constants.OVERWRITE
+import com.tencent.bkrepo.rds.constants.RdsMessageCode
+import com.tencent.bkrepo.rds.constants.SIZE
+import com.tencent.bkrepo.rds.constants.VERSION
 import com.tencent.bkrepo.rds.exception.RdsBadRequestException
 import com.tencent.bkrepo.rds.exception.RdsFileAlreadyExistsException
 import com.tencent.bkrepo.rds.exception.RdsFileNotFoundException
 import com.tencent.bkrepo.rds.listener.event.ChartUploadEvent
 import com.tencent.bkrepo.rds.service.impl.RdsOperationService
-import com.tencent.bkrepo.rds.utils.*
+import com.tencent.bkrepo.rds.utils.ChartParserUtil
+import com.tencent.bkrepo.rds.utils.DecompressUtil
+import com.tencent.bkrepo.rds.utils.ObjectBuilderUtil
+import com.tencent.bkrepo.rds.utils.RdsMetadataUtils
+import com.tencent.bkrepo.rds.utils.RdsUtils
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
@@ -83,7 +96,10 @@ class RdsLocalRepository(
                     putAttribute(NAME, chartMetadata.code)
                     putAttribute(VERSION, chartMetadata.version)
                 } catch (e: Exception) {
-                    throw RdsBadRequestException("The chart is broken.....")
+                    throw RdsBadRequestException(
+                        RdsMessageCode.RDS_CHART_BROKEN,
+                        emptyList<String>()
+                    )
                 }
             }
             // 判断是否是强制上传
@@ -97,7 +113,7 @@ class RdsLocalRepository(
             val isOverwrite = isOverwrite(fullPath, isForce)
             putAttribute(OVERWRITE, isOverwrite)
             if (isExist && !isOverwrite) {
-                throw RdsFileAlreadyExistsException("${fullPath.trimStart('/')} already exists")
+                throw RdsFileAlreadyExistsException(RdsMessageCode.RDS_FILE_ALREADY_EXISTS, fullPath.trimStart('/'))
             }
         }
     }
@@ -169,7 +185,10 @@ class RdsLocalRepository(
 
     override fun query(context: ArtifactQueryContext): ArtifactInputStream? {
         val fullPath = context.getStringAttribute(FULL_PATH)!!
-        return this.onQuery(context) ?: throw RdsFileNotFoundException("Artifact[$fullPath] does not exist")
+        return this.onQuery(context) ?:
+        throw RdsFileNotFoundException(
+            RdsMessageCode.RDS_FILE_NOT_FOUND, fullPath, "${context.projectId}|${context.repoName}"
+        )
     }
 
     private fun onQuery(context: ArtifactQueryContext): ArtifactInputStream? {

@@ -49,8 +49,13 @@ import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.storage.monitor.Throughput
 import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
 import com.tencent.bkrepo.maven.artifact.MavenDeleteArtifactInfo
-import com.tencent.bkrepo.maven.constants.*
+import com.tencent.bkrepo.maven.constants.MAVEN_METADATA_FILE_NAME
+import com.tencent.bkrepo.maven.constants.PACKAGE_SUFFIX_REGEX
+import com.tencent.bkrepo.maven.constants.SNAPSHOT_BUILD_NUMBER
+import com.tencent.bkrepo.maven.constants.SNAPSHOT_TIMESTAMP
+import com.tencent.bkrepo.maven.constants.X_CHECKSUM_SHA1
 import com.tencent.bkrepo.maven.enum.HashType
+import com.tencent.bkrepo.maven.enum.MavenMessageCode
 import com.tencent.bkrepo.maven.exception.JarFormatException
 import com.tencent.bkrepo.maven.exception.MavenArtifactNotFoundException
 import com.tencent.bkrepo.maven.exception.MavenRequestForbiddenException
@@ -139,7 +144,9 @@ class MavenRemoteRepository(
             context.repoName,
             packageKey,
             version
-        ).data ?: throw MavenArtifactNotFoundException("Can not find version $version of package $packageKey")
+        ).data ?: throw MavenArtifactNotFoundException(
+            MavenMessageCode.MAVEN_VERSION_NOT_FOUND, "Can not find version $version of package $packageKey"
+        )
         with(context.artifactInfo) {
             val jarNode = nodeClient.getNodeDetail(
                 projectId,
@@ -391,7 +398,9 @@ class MavenRemoteRepository(
             logger.info("Will prepare to delete file $fullPath in repo ${artifactInfo.getRepoIdentify()} ")
             // 如果删除单个文件不能删除metadata.xml文件, 如果文件删除了对应的校验文件也要删除
             if (fullPath.endsWith(MAVEN_METADATA_FILE_NAME) && !forceDeleted) {
-                throw MavenRequestForbiddenException("$MAVEN_METADATA_FILE_NAME can not be deleted.")
+                throw MavenRequestForbiddenException(
+                    MavenMessageCode.MAVEN_REQUEST_FORBIDDEN, "$MAVEN_METADATA_FILE_NAME can not be deleted."
+                )
             }
             val node = nodeClient.getNodeDetail(projectId, repoName, fullPath).data
             if (node != null) {

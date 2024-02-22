@@ -43,6 +43,8 @@ const val LINE_BREAK = "<br />"
 const val PSEUDO_MATCH_REGEX = ":matchesOwn(%s)"
 const val SELECTOR_A = "a"
 const val INDENT = "    "
+const val HTML_ENCODED_LESS_THAN = "&lt;"
+const val HTML_ENCODED_GREATER_THAN = "&gt;"
 
 const val FILE_NAME_REGEX = ".+\\.(tar|tar\\.gz|tgz|zip|whl)$"
 const val NON_ALPHANUMERIC_SEQ_REGEX = "[-_.]+"

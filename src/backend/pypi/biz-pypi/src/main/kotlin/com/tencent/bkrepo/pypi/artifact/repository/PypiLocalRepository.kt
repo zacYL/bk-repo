@@ -54,6 +54,8 @@ import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.pypi.artifact.url.UrlPatternUtil.parameterMaps
 import com.tencent.bkrepo.pypi.artifact.xml.Value
 import com.tencent.bkrepo.pypi.artifact.xml.XmlUtil
+import com.tencent.bkrepo.pypi.constants.HTML_ENCODED_GREATER_THAN
+import com.tencent.bkrepo.pypi.constants.HTML_ENCODED_LESS_THAN
 import com.tencent.bkrepo.pypi.constants.INDENT
 import com.tencent.bkrepo.pypi.constants.LINE_BREAK
 import com.tencent.bkrepo.pypi.constants.NON_ALPHANUMERIC_SEQ_REGEX
@@ -376,16 +378,11 @@ class PypiLocalRepository(
     private fun buildPackageFileNodeListContent(nodeList: List<Map<String, Any?>>): String {
         val builder = StringBuilder()
         nodeList.forEachIndexed { i, node ->
-            val md5 = node[MD5]
-            builder.append("$INDENT<a")
+            val href = "../../packages${node[FULL_PATH]}#md5=${node[MD5]}"
             val requiresPython = (node[NODE_METADATA] as List<Map<String, Any?>>)
-                .find { it["key"] == REQUIRES_PYTHON }?.get("value")?.toString()
-            if (!requiresPython.isNullOrBlank()) {
-                builder.append(" data-requires-python=\"$requiresPython\"")
-            }
-            builder.append(
-                " href=\"../../packages${node[FULL_PATH]}#md5=$md5\" rel=\"internal\">${node[NAME]}</a>$LINE_BREAK"
-            )
+                .find { it["key"] == REQUIRES_PYTHON }?.get("value")?.toString()?.ifBlank { null }
+                ?.let { " data-requires-python=\"${htmlEncode(it)}\"" } ?: ""
+            builder.append("$INDENT<a href=\"$href\"$requiresPython rel=\"internal\">${node[NAME]}</a>$LINE_BREAK")
             if (i != nodeList.size - 1) builder.append("\n")
         }
         return builder.toString()
@@ -444,6 +441,8 @@ class PypiLocalRepository(
             return packageClient.findVersionByName(projectId, repoName, packageKey, pypiPackagePojo.version).data
         }
     }
+
+    private fun htmlEncode(s: String) = s.replace("<", HTML_ENCODED_LESS_THAN).replace(">", HTML_ENCODED_GREATER_THAN)
 
     companion object {
         private val nonAlphanumericSeqRegex = Regex(NON_ALPHANUMERIC_SEQ_REGEX)

@@ -83,10 +83,6 @@ ribbon:
   ReadTimeout: 120000
   ConnectTimeout: 30000
 
-springfox:
-  documentation:
-    enabled: true
-
 logging:
   config: classpath:logback-config.xml
   path-common: __BK_HOME__/logs/bkrepo

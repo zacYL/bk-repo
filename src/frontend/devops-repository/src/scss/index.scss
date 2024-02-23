@@ -140,20 +140,23 @@ body {
     &:before {
         content: attr(data-name);
     }
+    &.QUALITY_PASS,
     &.SUCCESS {
         color: var(--successColor);
         background-color: var(--successBgColor);
     }
+    &.STOP,
     &.WARNING {
         color: var(--warningColor);
         background-color: var(--warningBgColor);
     }
-    &.FAILED,
-    &.STOP {
+    &.QUALITY_UNPASS,
+    &.FAILED {
         color: var(--dangerColor);
         background-color: #FFDDDD;
     }
-    &.INIT,
+    &.UN_QUALITY,
+    &.INIT
     &.CANCEL {
         color: var(--fontSubsidiaryColor);
         background-color: #EFF2F6; // 30% CBD5E0

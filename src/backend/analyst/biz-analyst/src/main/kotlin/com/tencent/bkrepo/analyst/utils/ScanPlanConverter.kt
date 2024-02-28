@@ -386,10 +386,11 @@ object ScanPlanConverter {
 
     private fun convertToSubScanTaskStatus(status: ScanStatus): List<SubScanTaskStatus> {
         return when (status) {
-            ScanStatus.INIT -> listOf(SubScanTaskStatus.CREATED, SubScanTaskStatus.PULLED)
+            ScanStatus.INIT -> listOf(SubScanTaskStatus.BLOCKED, SubScanTaskStatus.CREATED, SubScanTaskStatus.PULLED)
             ScanStatus.RUNNING -> listOf(SubScanTaskStatus.EXECUTING)
             ScanStatus.STOP -> listOf(SubScanTaskStatus.STOPPED)
-            ScanStatus.FAILED -> listOf(SubScanTaskStatus.FAILED)
+            ScanStatus.FAILED ->
+                listOf(SubScanTaskStatus.BLOCK_TIMEOUT, SubScanTaskStatus.TIMEOUT, SubScanTaskStatus.FAILED)
             ScanStatus.SUCCESS,
             ScanStatus.UN_QUALITY,
             ScanStatus.QUALITY_PASS,

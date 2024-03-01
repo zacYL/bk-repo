@@ -54,8 +54,6 @@ import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.pypi.artifact.url.UrlPatternUtil.parameterMaps
 import com.tencent.bkrepo.pypi.artifact.xml.Value
 import com.tencent.bkrepo.pypi.artifact.xml.XmlUtil
-import com.tencent.bkrepo.pypi.constants.HTML_ENCODED_GREATER_THAN
-import com.tencent.bkrepo.pypi.constants.HTML_ENCODED_LESS_THAN
 import com.tencent.bkrepo.pypi.constants.INDENT
 import com.tencent.bkrepo.pypi.constants.LINE_BREAK
 import com.tencent.bkrepo.pypi.constants.NON_ALPHANUMERIC_SEQ_REGEX
@@ -63,11 +61,13 @@ import com.tencent.bkrepo.pypi.constants.PACKAGE_INDEX_TITLE
 import com.tencent.bkrepo.pypi.constants.PypiQueryType
 import com.tencent.bkrepo.pypi.constants.QUERY_TYPE
 import com.tencent.bkrepo.pypi.constants.REQUIRES_PYTHON
+import com.tencent.bkrepo.pypi.constants.REQUIRES_PYTHON_ATTR
 import com.tencent.bkrepo.pypi.constants.SIMPLE_PAGE_CONTENT
 import com.tencent.bkrepo.pypi.constants.VERSION_INDEX_TITLE
 import com.tencent.bkrepo.pypi.pojo.Basic
 import com.tencent.bkrepo.pypi.pojo.PypiArtifactVersionData
 import com.tencent.bkrepo.pypi.pojo.PypiPackagePojo
+import com.tencent.bkrepo.pypi.util.HtmlUtils
 import com.tencent.bkrepo.pypi.util.PypiVersionUtils.toPypiPackagePojo
 import com.tencent.bkrepo.pypi.util.XmlUtils
 import com.tencent.bkrepo.pypi.util.XmlUtils.readXml
@@ -381,7 +381,7 @@ class PypiLocalRepository(
             val href = "../../packages${node[FULL_PATH]}#md5=${node[MD5]}"
             val requiresPython = (node[NODE_METADATA] as List<Map<String, Any?>>)
                 .find { it["key"] == REQUIRES_PYTHON }?.get("value")?.toString()?.ifBlank { null }
-                ?.let { " data-requires-python=\"${htmlEncode(it)}\"" } ?: ""
+                ?.let { " $REQUIRES_PYTHON_ATTR=\"${HtmlUtils.partialEncode(it)}\"" } ?: ""
             builder.append("$INDENT<a href=\"$href\"$requiresPython rel=\"internal\">${node[NAME]}</a>$LINE_BREAK")
             if (i != nodeList.size - 1) builder.append("\n")
         }
@@ -441,8 +441,6 @@ class PypiLocalRepository(
             return packageClient.findVersionByName(projectId, repoName, packageKey, pypiPackagePojo.version).data
         }
     }
-
-    private fun htmlEncode(s: String) = s.replace("<", HTML_ENCODED_LESS_THAN).replace(">", HTML_ENCODED_GREATER_THAN)
 
     companion object {
         private val nonAlphanumericSeqRegex = Regex(NON_ALPHANUMERIC_SEQ_REGEX)

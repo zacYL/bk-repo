@@ -153,6 +153,7 @@ class PypiLocalRepository(
                 artifactPath = nodeCreateRequest.fullPath,
                 overwrite = true,
                 createdBy = context.userId,
+                packageDescription = context.request.getParameter("summary").ifBlank { null },
                 packageMetadata = metadata
             ),
             HttpContextHolder.getClientAddress()

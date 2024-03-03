@@ -19,7 +19,7 @@ logging:
   path: ${logging.path-common}/${service.name}
 oci:
   domain: __BK_REPO_DOCKER_HOST__
-  authUrl: http://${oci.domain}/v2/auth
+  authUrl: __BK_HTTP_SCHEMA__://${oci.domain}/v2/auth
   http: true
 service:
   name: oci

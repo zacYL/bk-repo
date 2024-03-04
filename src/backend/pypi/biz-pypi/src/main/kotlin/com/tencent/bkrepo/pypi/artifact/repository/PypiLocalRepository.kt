@@ -346,19 +346,26 @@ class PypiLocalRepository(
             }
             // 请求中带包名，返回对应包的文件列表。
             else {
-                val queryModel = NodeQueryBuilder()
-                    .select(NAME, FULL_PATH, METADATA, MD5)
-                    .sortByAsc(NAME)
-                    .projectId(projectId)
-                    .repoName(repoName)
-                    .path("^${packagePath.replace("-", NON_ALPHANUMERIC_SEQ_REGEX)}/", OperationType.REGEX_I)
-                    .excludeFolder()
-                    .build()
-                val packageNode = nodeClient.queryWithoutCount(queryModel).data!!.records
-                    .ifEmpty { throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, packagePath) }
+                var pageNumber = 1
+                val nodeList = mutableListOf<Map<String, Any?>>()
+                do {
+                    val queryModel = NodeQueryBuilder()
+                        .select(NAME, FULL_PATH, METADATA, MD5)
+                        .sortByAsc(NAME)
+                        .page(pageNumber, PAGE_SIZE)
+                        .projectId(projectId)
+                        .repoName(repoName)
+                        .path("^${packagePath.replace("-", NON_ALPHANUMERIC_SEQ_REGEX)}/", OperationType.REGEX_I)
+                        .excludeFolder()
+                        .build()
+                    val records = nodeClient.queryWithoutCount(queryModel).data!!.records
+                    nodeList.addAll(records)
+                    pageNumber++
+                } while (records.size == PAGE_SIZE)
+                nodeList.ifEmpty { throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, packagePath) }
                 return buildPypiPageContent(
                     String.format(VERSION_INDEX_TITLE, getArtifactName().removePrefix("/")),
-                    buildPackageFileNodeListContent(packageNode)
+                    buildPackageFileNodeListContent(nodeList)
                 )
             }
         }
@@ -444,6 +451,7 @@ class PypiLocalRepository(
     }
 
     companion object {
+        private const val PAGE_SIZE = 1000
         private val nonAlphanumericSeqRegex = Regex(NON_ALPHANUMERIC_SEQ_REGEX)
         val logger: Logger = LoggerFactory.getLogger(PypiLocalRepository::class.java)
         const val pageLimitCurrent = 0

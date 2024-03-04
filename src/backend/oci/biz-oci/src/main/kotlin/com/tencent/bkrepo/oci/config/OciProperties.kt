@@ -38,5 +38,5 @@ data class OciProperties(
 
     var domain: String = "localhost",
 
-    var http: Boolean = false
+    var https: Boolean = false
 )

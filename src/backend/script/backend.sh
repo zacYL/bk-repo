@@ -1,6 +1,6 @@
 #!/bin/bash
 
-MEM_OPTS="-XX:+UseContainerSupport -XX:InitialRAMPercentage=75.0 -XX:MaxRAMPercentage=75.0 -XX:MaxRAMPercentage=75.0 -XX:-UseAdaptiveSizePolicy"
+MEM_OPTS="-XX:+UseContainerSupport -XX:InitialRAMPercentage=75.0 -XX:MaxRAMPercentage=75.0 -XX:-UseAdaptiveSizePolicy"
 API_PORT=80
 
 echo "create log dir"

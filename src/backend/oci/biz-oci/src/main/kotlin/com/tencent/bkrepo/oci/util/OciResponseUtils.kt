@@ -90,13 +90,8 @@ object OciResponseUtils {
      * prefix or https prefix
      */
     private fun getProtocol(request: HttpServletRequest, enableHttps: Boolean): String {
-        if (enableHttps) return HTTP_PROTOCOL_HTTPS
-        val protocolHeaders = request.getHeaders(HTTP_FORWARDED_PROTO) ?: return HTTP_PROTOCOL_HTTP
-        return if (protocolHeaders.hasMoreElements()) {
-            protocolHeaders.iterator().next() as String
-        } else {
-            HTTP_PROTOCOL_HTTPS
-        }
+        return if (enableHttps) HTTP_PROTOCOL_HTTPS else
+            request.getHeader(HTTP_FORWARDED_PROTO).takeIf { !it.isNullOrBlank() } ?: HTTP_PROTOCOL_HTTP
     }
 
     private fun getResponseLocationURI(path: String, domain: String): String {

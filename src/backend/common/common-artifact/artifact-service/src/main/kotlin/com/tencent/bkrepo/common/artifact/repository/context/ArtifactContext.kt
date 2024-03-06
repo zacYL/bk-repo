@@ -70,6 +70,7 @@ open class ArtifactContext(
     /**
      * 使用当前实例的属性，拷贝出一个新的[ArtifactContext]实例
      * 传入的[repositoryDetail]会替换当前实例的仓库信息
+     * 适用于CompositeRepository
      */
     fun copy(repositoryDetail: RepositoryDetail): ArtifactContext {
         val context = this.javaClass.newInstance()
@@ -80,11 +81,12 @@ open class ArtifactContext(
 
     /**
      * 使用传入的[repositoryDetail]构造新的[ArtifactContext]实例
-     * [instantiation]: 实例化过程
+     * [instantiation]: 实例化方法, 为null时使用主构造函数
+     * 适用于VirtualRepository: projectId, repoName, storageCredentials均会复制到新的实例, 并构造新的artifactInfo
      */
-    open fun copyBy(
+    open fun copy(
         repositoryDetail: RepositoryDetail,
-        instantiation: ((ArtifactInfo) -> ArtifactContext)? = null
+        instantiation: ((ArtifactInfo) -> ArtifactContext)?
     ): ArtifactContext {
         val artifactInfo = this.artifactInfo.copy(repositoryDetail.projectId, repositoryDetail.name)
         val context = instantiation?.invoke(artifactInfo)

@@ -41,7 +41,6 @@ import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
-import org.slf4j.LoggerFactory
 import kotlin.reflect.full.primaryConstructor
 
 /**
@@ -61,11 +60,11 @@ open class ArtifactDownloadContext(
     val artifacts = artifacts
     var shareUserId: String = StringPool.EMPTY
 
-    override fun copyBy(
+    override fun copy(
         repositoryDetail: RepositoryDetail,
         instantiation: ((ArtifactInfo) -> ArtifactContext)?
     ): ArtifactContext {
-        return super.copyBy(repositoryDetail) { artifactInfo ->
+        return super.copy(repositoryDetail) { artifactInfo ->
             this::class.primaryConstructor!!.call(
                 repositoryDetail, artifactInfo, artifacts, this.userId, useDisposition, false, true
             )

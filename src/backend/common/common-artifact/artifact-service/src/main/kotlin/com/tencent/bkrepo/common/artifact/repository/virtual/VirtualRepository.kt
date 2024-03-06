@@ -90,7 +90,7 @@ abstract class VirtualRepository : AbstractArtifactRepository() {
             val repoDetail = with(artifactResource.srcRepo) {
                 repositoryClient.getRepoDetail(projectId, name).data!!
             }
-            context.copyBy(repoDetail) as ArtifactDownloadContext
+            context.copy(repoDetail, null) as ArtifactDownloadContext
         }
         val category = subContext.repositoryDetail.category
         if (category != RepositoryCategory.VIRTUAL) {
@@ -208,7 +208,7 @@ abstract class VirtualRepository : AbstractArtifactRepository() {
         )
         val subRepoDetail = repositoryClient.getRepoDetail(repo.projectId, repo.name).data!!
         val repository = ArtifactContextHolder.getRepository(subRepoDetail.category)
-        val subContext = context.copyBy(subRepoDetail)
+        val subContext = context.copy(subRepoDetail, null)
         return action(subContext, repository)
     }
 

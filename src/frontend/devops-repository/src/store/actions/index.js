@@ -60,12 +60,7 @@ export default {
                     category: category || undefined
                 }
             }
-        ).then(res => ({
-            ...res,
-            records: MODE_CONFIG === 'ci'
-                ? res.records.filter(v => v.name !== 'log')
-                : res.records
-        })) // 前端隐藏report仓库/log仓库
+        )
     },
     // 获取有复制移动权限的generic仓库列表
     getGenericList (_, { projectId }) {
@@ -81,13 +76,7 @@ export default {
                 }
             }
         ).then(res => {
-            // 前端隐藏 log仓库
-            const backData = res.filter(v => v.name !== 'log')
-            if (searchFlag) {
-                return backData
-            } else {
-                commit('SET_REPO_LIST_ALL', backData)
-            }
+            return searchFlag ? res : commit('SET_REPO_LIST_ALL', res)
         })
     },
     // 查询仓库信息

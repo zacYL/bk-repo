@@ -870,7 +870,6 @@
     "searchMetadataValueEmptyTips":"The attribute value is required, please fill in",
     "searchVersionResultInfo":"Search results",
     "allStore" :"All repository",
-    "createLogStoreErrorTips":"The log repository is a built-in repository in the system and cannot be created.",
     "searchRepoArtifact":"Repository",
     "searchCondition":"Condition",
     "searchName":"Name",

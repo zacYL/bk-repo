@@ -870,7 +870,6 @@
     "searchMetadataValueEmptyTips":"属性值为必填项，请填写",
     "searchVersionResultInfo":"搜索结果",
     "allStore" :"全部仓库",
-    "createLogStoreErrorTips":"log仓库为系统内置仓库，不可以创建",
     "searchRepoArtifact":"制品仓库",
     "searchCondition":"搜索条件",
     "searchName":"名称搜索",

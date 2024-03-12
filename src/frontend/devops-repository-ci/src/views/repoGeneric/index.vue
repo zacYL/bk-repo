@@ -325,17 +325,6 @@
                 this.pathChange()
             }
         },
-        beforeRouteEnter (to, from, next) {
-            // 前端隐藏report仓库/log仓库
-            if (to.query.repoName === 'log') {
-                next({
-                    name: 'repoList',
-                    params: {
-                        projectId: to.params.projectId
-                    }
-                })
-            } else next()
-        },
         created () {
             // 注意：软件源模式下不需要判断权限，软件源的vuex中也没有该接口定义，因为软件源模式下所有用户都是只读权限
             !this.whetherSoftware && this.getCurrentRepositoryDataPermission({ projectId: this.projectId, repoName: this.repoName })

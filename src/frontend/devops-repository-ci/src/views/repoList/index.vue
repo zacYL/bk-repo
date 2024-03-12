@@ -107,7 +107,7 @@
                     <operation-list
                         :list="[
                             canSetting && { label: $t('setting'), clickEvent: () => toRepoConfig(row) },
-                            (!['custom', 'pipeline', 'docker-local','report','log'].includes(row.name) && canDelete) && { label: $t('delete'), clickEvent: () => deleteRepo(row) }
+                            (!['custom', 'pipeline', 'docker-local','report'].includes(row.name) && canDelete) && { label: $t('delete'), clickEvent: () => deleteRepo(row) }
                         ].filter(Boolean)">
                     </operation-list>
                 </template>

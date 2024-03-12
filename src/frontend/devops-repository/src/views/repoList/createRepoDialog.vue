@@ -347,14 +347,6 @@
                             trigger: 'blur'
                         },
                         {
-                            validator: str => {
-                                // 集成CI模式下不允许创建名称为 log 的 generic 仓库
-                                return (MODE_CONFIG === 'ci' && this.repoBaseInfo.type === 'generic') ? !/^log$/.test(str) : true
-                            },
-                            message: this.$t('createLogStoreErrorTips'),
-                            trigger: 'blur'
-                        },
-                        {
                             validator: this.asynCheckRepoName,
                             message: this.$t('repoName') + this.$t('space') + this.$t('exist'),
                             trigger: 'blur'

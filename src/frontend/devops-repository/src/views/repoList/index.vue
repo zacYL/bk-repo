@@ -110,7 +110,6 @@
                                 (row.repoType === 'generic'
                                     && row.name !== 'custom'
                                     && row.name !== 'report'
-                                    && row.name !== 'log'
                                     && row.name !== 'pipeline'
                                 )) && { label: $t('delete'), clickEvent: () => deleteRepo(row) }
                         ]">

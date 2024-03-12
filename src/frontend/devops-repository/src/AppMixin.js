@@ -12,7 +12,7 @@ export default {
         },
         // 获取localStorage中存储的当前项目ID
         currentStorageProjectId () {
-            return localStorage.getItem('projectId') || undefined
+            return this.projectId || localStorage.getItem('projectId') || undefined
         }
     },
     watch: {

@@ -395,9 +395,9 @@ class CanwayUserServiceImpl(
     }
 
     override fun listUserByProjectId(projectId: String, includeAdmin: Boolean): List<UserResult> {
-        val localUsers = listUserResult(emptyList())
-        val projectUsers = devopsClient.usersByProjectId(projectId)?.map { it.userId } ?: listOf()
-        return localUsers.filter { projectUsers.contains(it.userId) }
+//        val localUsers = listUserResult(emptyList())
+//        val projectUsers = devopsClient.usersByProjectId(projectId)?.map { it.userId } ?: listOf()
+        return devopsClient.usersByProjectId(projectId)?.map { UserResult(it.userId, it.username) } ?: listOf()
     }
 
     companion object {

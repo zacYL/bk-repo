@@ -115,8 +115,9 @@ class NodeServiceImpl(
         return NodeDeleteSupport(this).deleteNode(deleteRequest)
     }
 
+    @Transactional(rollbackFor = [Throwable::class])
     override fun deleteNodes(nodesDeleteRequest: NodesDeleteRequest): NodeDeleteResult {
-        TODO("Not yet implemented")
+        return NodeDeleteSupport(this).deleteNodes(nodesDeleteRequest)
     }
 
     @Transactional(rollbackFor = [Throwable::class])

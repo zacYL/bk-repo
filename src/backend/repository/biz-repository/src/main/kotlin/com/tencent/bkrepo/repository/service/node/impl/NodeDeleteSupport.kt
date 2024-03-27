@@ -154,7 +154,7 @@ open class NodeDeleteSupport(
             .and(TNode::deleted).isEqualTo(null)
             .orOperator(*orOperation.toTypedArray())
         val query = Query(criteria)
-        return query.delete(operator, criteria, projectId, repoName, fullPaths)
+        return delete(query, operator, criteria, projectId, repoName, fullPaths)
     }
 
     override fun deleteBeforeDate(
@@ -193,7 +193,8 @@ open class NodeDeleteSupport(
         return NodeDeleteResult(deletedNum, deletedSize)
     }
 
-    private fun Query.delete(
+    private fun delete(
+        query: Query,
         operator: String,
         criteria: Criteria,
         projectId: String,
@@ -213,7 +214,7 @@ open class NodeDeleteSupport(
             "/$projectId/$repoName$existFullPaths"
         }
         try {
-            val updateResult = nodeDao.updateMulti(this, NodeQueryHelper.nodeDeleteUpdate(operator, deleteTime))
+            val updateResult = nodeDao.updateMulti(query, NodeQueryHelper.nodeDeleteUpdate(operator, deleteTime))
             deletedNum = updateResult.modifiedCount
             if (deletedNum == 0L) {
                 return NodeDeleteResult(deletedNum, deletedSize)

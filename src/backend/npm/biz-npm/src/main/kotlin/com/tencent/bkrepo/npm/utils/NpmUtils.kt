@@ -40,6 +40,8 @@ import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.util.PackageKeys.resolveNpm
 import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
 import com.tencent.bkrepo.common.service.util.HeaderUtils
+import com.tencent.bkrepo.npm.constants.DELIMITER_DOWNLOAD
+import com.tencent.bkrepo.npm.constants.DELIMITER_HYPHEN
 import com.tencent.bkrepo.npm.constants.LATEST
 import com.tencent.bkrepo.npm.constants.NPM_PKG_METADATA_FULL_PATH
 import com.tencent.bkrepo.npm.constants.NPM_PKG_TGZ_FULL_PATH
@@ -147,12 +149,8 @@ object NpmUtils {
      * name without scope tarball like this: http://domain/demo/-/demo-1.0.0.tgz
      */
     private fun getTgzSuffix(oldTarball: String, name: String): String{
-        return if (isScopeName(name)) {
-            name + oldTarball.substringAfter(name)
-        } else {
-            val list = oldTarball.split(name).map { it.trim() }
-            name + list[list.lastIndex - 1] + name + list.last()
-        }
+        val firstNameIndex = oldTarball.indexOfAny(listOf("/$name/$DELIMITER_HYPHEN/", "/$name/$DELIMITER_DOWNLOAD/"))
+        return oldTarball.substring(firstNameIndex + 1)
     }
 
     /**

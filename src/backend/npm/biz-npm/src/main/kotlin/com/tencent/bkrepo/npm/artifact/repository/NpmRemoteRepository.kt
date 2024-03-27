@@ -126,7 +126,11 @@ class NpmRemoteRepository(
     }
 
     override fun query(context: ArtifactQueryContext): InputStream? {
-        return getCacheArtifactResource(context)?.getSingleStream() ?: super.query(context) as InputStream?
+        return getCacheArtifactResource(context)?.getSingleStream()
+            ?: super.query(context) as InputStream?
+            ?: if (context.getStringAttribute(NPM_FILE_FULL_PATH)?.endsWith("/$PACKAGE_JSON") == true) {
+                findCacheNodeDetail(context)?.let { loadArtifactResource(it, context) }?.getSingleStream()
+            } else null
     }
 
     override fun checkQueryResponse(response: Response): Boolean {

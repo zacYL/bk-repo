@@ -10,8 +10,6 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadCon
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.pypi.constants.FILE_NAME_REGEX
-import com.tencent.bkrepo.pypi.constants.HTML_ENCODED_GREATER_THAN
-import com.tencent.bkrepo.pypi.constants.HTML_ENCODED_LESS_THAN
 import com.tencent.bkrepo.pypi.constants.INDENT
 import com.tencent.bkrepo.pypi.constants.LINE_BREAK
 import com.tencent.bkrepo.pypi.constants.PACKAGE_INDEX_TITLE

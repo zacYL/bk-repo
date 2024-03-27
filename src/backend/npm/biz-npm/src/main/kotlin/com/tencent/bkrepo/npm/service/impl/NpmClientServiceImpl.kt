@@ -33,14 +33,29 @@ package com.tencent.bkrepo.npm.service.impl
 
 import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
 import com.tencent.bkrepo.common.api.util.JsonUtils.objectMapper
+import com.tencent.bkrepo.common.artifact.exception.VersionNotFoundException
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.configuration.virtual.VirtualConfiguration
-import com.tencent.bkrepo.common.artifact.repository.context.*
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
-import com.tencent.bkrepo.npm.constants.*
+import com.tencent.bkrepo.npm.constants.ATTRIBUTE_OCTET_STREAM_SHA1
+import com.tencent.bkrepo.npm.constants.CREATED
+import com.tencent.bkrepo.npm.constants.LATEST
+import com.tencent.bkrepo.npm.constants.MODIFIED
+import com.tencent.bkrepo.npm.constants.NPM_FILE_FULL_PATH
+import com.tencent.bkrepo.npm.constants.NPM_PACKAGE_TGZ_FILE
+import com.tencent.bkrepo.npm.constants.REQUEST_URI
+import com.tencent.bkrepo.npm.constants.SEARCH_REQUEST
+import com.tencent.bkrepo.npm.constants.SIZE
+import com.tencent.bkrepo.npm.constants.TARBALL_FULL_PATH
 import com.tencent.bkrepo.npm.exception.NpmArtifactExistException
 import com.tencent.bkrepo.npm.exception.NpmArtifactNotFoundException
 import com.tencent.bkrepo.npm.exception.NpmBadRequestException
@@ -153,8 +168,8 @@ class NpmClientServiceImpl(
     @Transactional(rollbackFor = [Throwable::class])
     override fun download(artifactInfo: NpmArtifactInfo) {
         val context = ArtifactDownloadContext()
-        context.putAttribute(NPM_FILE_FULL_PATH, context.artifactInfo.getArtifactFullPath())
-        ArtifactContextHolder.getRepository().download(context)
+        context.putAttribute(NPM_FILE_FULL_PATH, artifactInfo.getArtifactFullPath())
+        repository.download(context)
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -162,7 +177,7 @@ class NpmClientServiceImpl(
     override fun search(artifactInfo: NpmArtifactInfo, searchRequest: MetadataSearchRequest): NpmSearchResponse {
         val context = ArtifactSearchContext()
         context.putAttribute(SEARCH_REQUEST, searchRequest)
-        val npmSearchInfoMapList = ArtifactContextHolder.getRepository().search(context) as List<NpmSearchInfoMap>
+        val npmSearchInfoMapList = repository.search(context) as List<NpmSearchInfoMap>
         return NpmSearchResponse(npmSearchInfoMapList)
     }
 
@@ -224,49 +239,37 @@ class NpmClientServiceImpl(
         doPackageFileUpload(userId, realArtifactInfo, packageMetadata)
     }
 
-    override fun deleteVersion(
-        artifactInfo: NpmArtifactInfo,
-        name: String,
-        version: String,
-        tgzPath: String
-    ) {
-        val repoDetail = repositoryClient.getRepoDetail(artifactInfo.projectId, artifactInfo.repoName).data!!
-        if (repoDetail.category == RepositoryCategory.VIRTUAL) throw MethodNotAllowedException()
-        logger.info("handling delete version [$version] request for package [$name].")
-        val fullPathList = mutableListOf<String>()
-        val packageKey = PackageKeys.ofNpm(name)
+    override fun deleteVersion(artifactInfo: NpmArtifactInfo) {
         with(artifactInfo) {
-            // 判断package_version是否存在
-            if (!packageVersionExist(projectId, repoName, packageKey, version)) {
-                throw NpmArtifactNotFoundException("package [$name] with version [$version] not exists.")
-            }
-            fullPathList.add(tgzPath)
-            fullPathList.add(NpmUtils.getVersionPackageMetadataPath(name, version))
+            logger.info("npm delete package version request: [$this]")
+            val packageKey = PackageKeys.ofNpm(packageName)
+            val versionInfo = packageClient.findVersionByName(projectId, repoName, packageKey, version!!).data
+                ?: throw VersionNotFoundException("$packageKey/$version")
             val context = ArtifactRemoveContext()
+            context.putAttribute(TARBALL_FULL_PATH, versionInfo.contentPath!!)
             // 删除包管理中对应的version
-            npmPackageHandler.deleteVersion(context.userId, name, version, artifactInfo)
-            context.putAttribute(NPM_FILE_FULL_PATH, fullPathList)
-            ArtifactContextHolder.getRepository().remove(context)
-            logger.info("userId [${context.userId}] delete version [$version] for package [$name] success.")
+            npmPackageHandler.deleteVersion(context.userId, packageName, version!!, artifactInfo)
+            repository.remove(context)
+            logger.info("userId [${context.userId}] delete version [$version] for package [$packageName] success.")
         }
     }
 
-    override fun deletePackage(userId: String, artifactInfo: NpmArtifactInfo, name: String) {
-        val repoDetail = repositoryClient.getRepoDetail(artifactInfo.projectId, artifactInfo.repoName).data!!
-        if (repoDetail.category == RepositoryCategory.VIRTUAL) throw MethodNotAllowedException()
-        logger.info("handling delete package request for package [$name]")
-        val fullPathList = mutableListOf<String>()
-        val packageMetaData = queryPackageInfo(artifactInfo, name, false)
-        fullPathList.add(".npm/$name")
-        fullPathList.add(name)
-        val context = ArtifactRemoveContext()
-        context.putAttribute(NPM_FILE_FULL_PATH, fullPathList)
-        // 删除包
-        npmPackageHandler.deletePackage(userId, name, artifactInfo)
-        ArtifactContextHolder.getRepository().remove(context).also {
-            logger.info("userId [$userId] delete package [$name] success.")
+    override fun deletePackage(artifactInfo: NpmArtifactInfo) {
+        with(artifactInfo) {
+            logger.info("npm delete package request: [$this]")
+            val context = ArtifactRemoveContext(artifact = artifactInfo)
+            npmPackageHandler.deletePackage(context.userId, packageName, this)
+            repository.remove(context)
+            val pkgMetadata = loadPackageMetadata(context)
+            if (pkgMetadata != null) {
+                npmDependentHandler.updatePackageDependents(
+                    context.userId, this, pkgMetadata, NpmOperationAction.UNPUBLISH
+                )
+            } else {
+                logger.warn("fail to load package metadata while delete package[$this]")
+            }
+            logger.info("userId [${context.userId}] delete package [$packageName] success.")
         }
-        npmDependentHandler.updatePackageDependents(userId, artifactInfo, packageMetaData, NpmOperationAction.UNPUBLISH)
     }
 
     private fun searchLatestVersionMetadata(artifactInfo: NpmArtifactInfo, name: String): NpmVersionMetadata {
@@ -277,7 +280,7 @@ class NpmClientServiceImpl(
             context.putAttribute(NPM_FILE_FULL_PATH, packageFullPath)
             context.putAttribute(REQUEST_URI, name)
             val inputStream =
-                ArtifactContextHolder.getRepository().query(context) as? InputStream
+                repository.query(context) as? InputStream
                     ?: throw NpmArtifactNotFoundException("document not found")
             val npmPackageMetaData = inputStream.use { objectMapper.readValue(it, NpmPackageMetaData::class.java) }
             val distTags = npmPackageMetaData.distTags
@@ -307,7 +310,7 @@ class NpmClientServiceImpl(
             context.putAttribute(NPM_FILE_FULL_PATH, packageFullPath)
             context.putAttribute(REQUEST_URI, "$name/$version")
             val inputStream =
-                ArtifactContextHolder.getRepository().query(context) as? InputStream
+                repository.query(context) as? InputStream
                     ?: throw NpmArtifactNotFoundException("document not found")
             val versionMetadata = inputStream.use { objectMapper.readValue(it, NpmVersionMetadata::class.java) }
             modifyVersionMetadataTarball(artifactInfo, name, versionMetadata)
@@ -393,7 +396,7 @@ class NpmClientServiceImpl(
             val artifactFile = inputStream.use { ArtifactFileFactory.build(it) }
             val context = ArtifactUploadContext(artifactFile)
             context.putAttribute(NPM_FILE_FULL_PATH, fullPath)
-            ArtifactContextHolder.getRepository().upload(context).also {
+            repository.upload(context).also {
                 logger.info(
                     "user [$userId] upload npm package metadata file [$fullPath] " +
                         "into repo [$projectId/$repoName] success."
@@ -420,7 +423,7 @@ class NpmClientServiceImpl(
             val context = ArtifactUploadContext(artifactFile)
             context.putAttribute(NPM_FILE_FULL_PATH, fullPath)
             context.putAttribute(ATTRIBUTE_OCTET_STREAM_SHA1, npmMetadata.dist?.shasum!!)
-            ArtifactContextHolder.getRepository().upload(context).also {
+            repository.upload(context).also {
                 logger.info(
                     "user [$userId] upload npm package version metadata file [$fullPath] " +
                         "into repo [$projectId/$repoName] success."
@@ -464,7 +467,7 @@ class NpmClientServiceImpl(
                 // context.putAttribute(NPM_METADATA, buildProperties(versionMetadata))
                 // 将attachments移除
                 npmPackageMetaData.attachments = null
-                ArtifactContextHolder.getRepository().upload(context)
+                repository.upload(context)
                 artifactFile.delete()
             } catch (exception: IOException) {
                 logger.error(
@@ -508,7 +511,7 @@ class NpmClientServiceImpl(
         val iterator = npmPackageMetaData.versions.map.entries.iterator()
         while (iterator.hasNext()) {
             val entry = iterator.next()
-            val tgzFullPath = NpmUtils.getTgzPath(npmPackageMetaData.name!!, entry.key)
+            val tgzFullPath = NpmUtils.getTarballFullPath(npmPackageMetaData.name!!, entry.key)
             if (entry.value.any().containsKey("deprecated")) {
                 metadataClient.saveMetadata(
                     MetadataSaveRequest(

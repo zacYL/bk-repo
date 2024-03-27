@@ -51,9 +51,12 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
 import com.tencent.bkrepo.common.storage.monitor.Throughput
+import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
 import com.tencent.bkrepo.npm.constants.NPM_FILE_FULL_PATH
+import com.tencent.bkrepo.npm.constants.NPM_METADATA_ROOT
 import com.tencent.bkrepo.npm.constants.PACKAGE_JSON
 import com.tencent.bkrepo.npm.constants.REQUEST_URI
+import com.tencent.bkrepo.npm.constants.TARBALL_FULL_PATH
 import com.tencent.bkrepo.npm.exception.NpmBadRequestException
 import com.tencent.bkrepo.npm.handler.NpmPackageHandler
 import com.tencent.bkrepo.npm.model.metadata.NpmVersionMetadata
@@ -64,7 +67,7 @@ import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
-import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
+import com.tencent.bkrepo.repository.pojo.node.service.NodesDeleteRequest
 import okhttp3.Response
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -107,7 +110,7 @@ class NpmRemoteRepository(
                     query(queryContext)?.use {
                         val versionMetadata = JsonUtils.objectMapper.readValue(it, NpmVersionMetadata::class.java)
                         val size = artifactResource.getTotalSize()
-                        npmPackageHandler.createVersion(userId, artifactInfo, versionMetadata, size, false)
+                        npmPackageHandler.createVersion(userId, artifactInfo, versionMetadata, size)
                     }
                     super.onDownloadSuccess(this, artifactResource, throughput)
                 }
@@ -168,7 +171,7 @@ class NpmRemoteRepository(
     override fun createRemoteDownloadUrl(context: ArtifactContext): String {
         val configuration = context.getRemoteConfiguration()
         val requestURI = context.getStringAttribute(REQUEST_URI)
-        val artifactUri = requestURI ?: context.artifactInfo.getArtifactName()
+        val artifactUri = requestURI ?: context.artifactInfo.getArtifactFullPath()
         val queryString = context.request.queryString
         return UrlFormatter.format(configuration.url, artifactUri, queryString)
     }
@@ -222,14 +225,16 @@ class NpmRemoteRepository(
     }
 
     override fun remove(context: ArtifactRemoveContext) {
-        val repositoryDetail = context.repositoryDetail
-        val projectId = repositoryDetail.projectId
-        val repoName = repositoryDetail.name
-        val fullPath = context.getAttribute<List<*>>(NPM_FILE_FULL_PATH)
-        val userId = context.userId
-        fullPath?.forEach {
-            nodeClient.deleteNode(NodeDeleteRequest(projectId, repoName, it.toString(), userId))
-            logger.info("delete artifact $it success in repo [${context.artifactInfo.getRepoIdentify()}].")
+        with(context) {
+            val npmArtifactInfo = artifactInfo as NpmArtifactInfo
+            val fullPaths = if (npmArtifactInfo.version == null) {
+                listOf("$NPM_METADATA_ROOT/${npmArtifactInfo.packageName}", "/${npmArtifactInfo.packageName}")
+            } else listOf(
+                getStringAttribute(TARBALL_FULL_PATH)!!,
+                NpmUtils.getVersionPackageMetadataPath(npmArtifactInfo.packageName, npmArtifactInfo.version!!)
+            )
+            nodeClient.deleteNodes(NodesDeleteRequest(projectId, repoName, fullPaths, userId))
+            logger.info("delete artifact $fullPaths success in repo [$projectId/$repoName].")
         }
     }
 

@@ -32,11 +32,14 @@
 package com.tencent.bkrepo.npm.service.impl
 
 import com.tencent.bkrepo.common.api.util.JsonUtils
+import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
+import com.tencent.bkrepo.common.artifact.repository.core.ArtifactService
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.service.util.HeaderUtils
 import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
@@ -44,6 +47,7 @@ import com.tencent.bkrepo.npm.constants.MODIFIED
 import com.tencent.bkrepo.npm.constants.NPM_FILE_FULL_PATH
 import com.tencent.bkrepo.npm.constants.NPM_PKG_METADATA_FULL_PATH
 import com.tencent.bkrepo.npm.constants.NPM_TGZ_TARBALL_PREFIX
+import com.tencent.bkrepo.npm.constants.PACKAGE_METADATA
 import com.tencent.bkrepo.npm.constants.REQUEST_URI
 import com.tencent.bkrepo.npm.exception.NpmArtifactNotFoundException
 import com.tencent.bkrepo.npm.exception.NpmRepoNotFoundException
@@ -65,7 +69,7 @@ import java.io.InputStream
 
 // LateinitUsage: 抽象类中使用构造器注入会造成不便
 @Suppress("LateinitUsage")
-open class AbstractNpmService {
+open class AbstractNpmService : ArtifactService() {
 
 	@Autowired
 	lateinit var nodeClient: NodeClient
@@ -127,8 +131,7 @@ open class AbstractNpmService {
 		val context = ArtifactQueryContext(repoDetail, artifactInfo)
 		context.putAttribute(NPM_FILE_FULL_PATH, packageFullPath)
 		context.putAttribute(REQUEST_URI, name)
-		val inputStream =
-			ArtifactContextHolder.getRepository(repoDetail.category).query(context) as? InputStream
+		val inputStream = repository.query(context) as? InputStream
 				?: throw NpmArtifactNotFoundException("document not found")
 		val packageMetaData = inputStream.use { JsonUtils.objectMapper.readValue(it, NpmPackageMetaData::class.java) }
 		if (showCustomTarball && !showDefaultTarball()) {
@@ -209,8 +212,20 @@ open class AbstractNpmService {
 		val context = ArtifactUploadContext(artifactFile)
 		val fullPath = String.format(NPM_PKG_METADATA_FULL_PATH, name)
 		context.putAttribute(NPM_FILE_FULL_PATH, fullPath)
-		val repository = ArtifactContextHolder.getRepository(context.repositoryDetail.category)
 		repository.upload(context)
+	}
+
+	protected fun loadPackageMetadata(context: ArtifactContext): NpmPackageMetaData? {
+		with(context) {
+			return getAttribute<NpmPackageMetaData>(PACKAGE_METADATA) ?: run {
+				val npmArtifactInfo = artifactInfo as NpmArtifactInfo
+				val fullPath = NpmUtils.getPackageMetadataPath(npmArtifactInfo.packageName)
+				val pkgMetadataNode = nodeClient.getNodeDetail(projectId, repoName, fullPath).data
+				storageManager.loadArtifactInputStream(pkgMetadataNode, storageCredentials)?.use {
+					it.readJsonString<NpmPackageMetaData>()
+				}?.also { putAttribute(PACKAGE_METADATA, it) }
+			}
+		}
 	}
 
 	protected fun queryVersionMetadata(

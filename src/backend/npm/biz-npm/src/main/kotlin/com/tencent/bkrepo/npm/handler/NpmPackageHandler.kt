@@ -36,6 +36,8 @@ import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
+import com.tencent.bkrepo.npm.constants.DELIMITER_DOWNLOAD
+import com.tencent.bkrepo.npm.constants.DELIMITER_HYPHEN
 import com.tencent.bkrepo.npm.constants.SIZE
 import com.tencent.bkrepo.npm.constants.TGZ_FULL_PATH_WITH_DASH_SEPARATOR
 import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
@@ -141,17 +143,19 @@ class NpmPackageHandler {
         userId: String,
         artifactInfo: ArtifactInfo,
         versionMetaData: NpmVersionMetadata,
-        size: Long,
-        containScopePathAfterHyphen: Boolean = true
+        size: Long
     ) {
         versionMetaData.apply {
             val name = this.name!!
             val description = this.description
             val version = this.version!!
             val manifestPath = getManifestPath(name, version)
-            val containHyphenPath = versionMetaData.dist?.tarball?.substringAfter(name)
-                ?.contains(TGZ_FULL_PATH_WITH_DASH_SEPARATOR) ?: true
-            val contentPath = NpmUtils.getTgzPath(name, version, containHyphenPath, containScopePathAfterHyphen)
+            val tarball = versionMetaData.dist?.tarball
+            val hyphenDelimiter = tarball?.substringAfter(name)?.contains(TGZ_FULL_PATH_WITH_DASH_SEPARATOR) ?: true
+            val delimiter = if (hyphenDelimiter) DELIMITER_HYPHEN else DELIMITER_DOWNLOAD
+            val repeatedScope =
+                NpmUtils.isScopeName(name) && tarball?.substringAfter("/$delimiter/")?.contains(name) == true
+            val contentPath = NpmUtils.getTarballFullPath(name, version, delimiter, repeatedScope)
             val metadata = buildProperties(this)
             with(artifactInfo) {
                 val packageVersionCreateRequest = PackageVersionCreateRequest(

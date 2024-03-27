@@ -31,9 +31,17 @@
 
 package com.tencent.bkrepo.npm.constants
 
+import com.tencent.bkrepo.common.api.constant.StringPool
+
 const val REPO_TYPE = "NPM"
 
 const val APPLICATION_OCTET_STEAM = "mime_type"
+
+const val SCOPE = "scope"
+const val REPEATED_SCOPE = "repeatedScope"
+const val FILENAME = "fileName"
+const val PACKAGE_KEY = "packageKey"
+const val USER_API_PREFIX = "/ext"
 
 /**
  * 文件分隔符
@@ -41,6 +49,9 @@ const val APPLICATION_OCTET_STEAM = "mime_type"
 const val FILE_SEPARATOR = "/"
 const val FILE_DASH = "-"
 const val FILE_SUFFIX = ".tgz"
+const val DELIMITER = "delimiter"
+const val DELIMITER_HYPHEN = StringPool.DASH
+const val DELIMITER_DOWNLOAD = "download"
 
 const val TGZ_FULL_PATH_WITH_DASH_SEPARATOR = "/-/"
 
@@ -56,16 +67,20 @@ const val NPM_PKG_TGZ_FILE_FULL_PATH = NPM_PACKAGE_TGZ_FILE + "_full_path"
 const val NPM_PKG_VERSION_JSON_FILE_FULL_PATH = NPM_PACKAGE_VERSION_JSON_FILE + "_full_path"
 const val NPM_PKG_JSON_FILE_FULL_PATH = NPM_PACKAGE_JSON_FILE + "_full_path"
 // full path value
-const val NPM_PKG_TGZ_FULL_PATH = "/%s/-/%s-%s.tgz"
-const val NPM_PKG_TGZ_WITH_DOWNLOAD_FULL_PATH = "/%s/download/%s-%s.tgz"
-const val NPM_PKG_VERSION_METADATA_FULL_PATH = "/.npm/%s/%s-%s.json"
-const val NPM_PKG_METADATA_FULL_PATH = "/.npm/%s/package.json"
+const val NPM_METADATA_ROOT = "/.npm"
+const val TARBALL_FULL_PATH_FORMAT = "/%s/%s/%s-%s.tgz"
+const val NPM_PKG_VERSION_METADATA_FULL_PATH = "$NPM_METADATA_ROOT/%s/%s-%s.json"
+const val NPM_PKG_METADATA_FULL_PATH = "$NPM_METADATA_ROOT/%s/package.json"
 
 const val NPM_FILE_FULL_PATH = "npm_file_full_path"
 const val SEARCH_REQUEST = "search_request"
 const val PKG_NAME = "pkg_name"
 const val REQUEST_URI = "requestURI"
 const val PACKAGE_JSON = "package.json"
+
+const val TARBALL_FULL_PATH = "tarballFullPath"
+const val PACKAGE_METADATA = "packageMetadata"
+const val VERSION_METADATA = "versionMetadata"
 
 // constants map
 val ERROR_MAP = mapOf("error" to "not_found", "reason" to "document not found")

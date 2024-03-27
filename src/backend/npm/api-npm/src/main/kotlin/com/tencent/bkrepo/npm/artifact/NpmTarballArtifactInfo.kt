@@ -1,7 +1,7 @@
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
- * Copyright (C) 2020 THL A29 Limited, a Tencent company.  All rights reserved.
+ * Copyright (C) 2024 THL A29 Limited, a Tencent company.  All rights reserved.
  *
  * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
  *
@@ -29,19 +29,27 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.npm.pojo.user.request
+package com.tencent.bkrepo.npm.artifact
 
-import io.swagger.annotations.ApiModelProperty
-import io.swagger.annotations.ApiOperation
+import com.tencent.bkrepo.npm.constants.DELIMITER_HYPHEN
+import com.tencent.bkrepo.npm.constants.TARBALL_FULL_PATH_FORMAT
 
-@ApiOperation("删除包请求")
-data class PackageDeleteRequest(
-    @ApiModelProperty("所属项目", required = true)
-    val projectId: String,
-    @ApiModelProperty("仓库名称", required = true)
-    val repoName: String,
-    @ApiModelProperty("包名称", required = true)
-    val name: String,
-    @ApiModelProperty("操作用户", required = true)
-    val operator: String
-)
+class NpmTarballArtifactInfo(
+    projectId: String,
+    repoName: String,
+    packageName: String,
+    version: String? = null,
+    private val delimiter: String = DELIMITER_HYPHEN,
+    private val repeatedScope: Boolean = true
+) : NpmArtifactInfo(projectId, repoName, packageName, version) {
+
+    override fun getArtifactFullPath(): String {
+        require(version != null)
+        return getTarballFullPath(packageName, version, delimiter, repeatedScope)
+    }
+
+    private fun getTarballFullPath(name: String, version: String, delimiter: String, repeatedScope: Boolean) =
+        TARBALL_FULL_PATH_FORMAT.format(
+            name, delimiter, if (repeatedScope) name else name.substringAfterLast("/"), version
+        )
+}

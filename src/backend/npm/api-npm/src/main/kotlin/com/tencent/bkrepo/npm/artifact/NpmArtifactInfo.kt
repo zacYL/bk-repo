@@ -31,13 +31,19 @@
 
 package com.tencent.bkrepo.npm.artifact
 
+import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 
-class NpmArtifactInfo(
+open class NpmArtifactInfo(
     projectId: String,
     repoName: String,
-    artifactUri: String
-) : ArtifactInfo(projectId, repoName, artifactUri) {
+    val packageName: String,
+    val version: String? = null
+) : ArtifactInfo(projectId, repoName, StringPool.EMPTY) {
+
+    override fun getArtifactName() = packageName
+
+    override fun getArtifactVersion() = version
 
     companion object {
         // publish package

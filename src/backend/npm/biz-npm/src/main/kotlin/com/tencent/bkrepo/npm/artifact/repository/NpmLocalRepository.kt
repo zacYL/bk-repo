@@ -32,7 +32,13 @@ import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.hash.sha1
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
-import com.tencent.bkrepo.common.artifact.repository.context.*
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactMigrateContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.repository.migration.MigrateDetail
 import com.tencent.bkrepo.common.artifact.repository.migration.PackageMigrateDetail
@@ -42,7 +48,14 @@ import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
 import com.tencent.bkrepo.common.query.enums.OperationType
-import com.tencent.bkrepo.npm.constants.*
+import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
+import com.tencent.bkrepo.npm.constants.ATTRIBUTE_OCTET_STREAM_SHA1
+import com.tencent.bkrepo.npm.constants.METADATA
+import com.tencent.bkrepo.npm.constants.NPM_FILE_FULL_PATH
+import com.tencent.bkrepo.npm.constants.NPM_METADATA_ROOT
+import com.tencent.bkrepo.npm.constants.SEARCH_REQUEST
+import com.tencent.bkrepo.npm.constants.SIZE
+import com.tencent.bkrepo.npm.constants.TARBALL_FULL_PATH
 import com.tencent.bkrepo.npm.handler.NpmDependentHandler
 import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
 import com.tencent.bkrepo.npm.model.metadata.NpmVersionMetadata
@@ -57,6 +70,7 @@ import com.tencent.bkrepo.npm.utils.TimeUtil
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
+import com.tencent.bkrepo.repository.pojo.node.service.NodesDeleteRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.search.NodeQueryBuilder
 import okhttp3.Response
@@ -68,7 +82,7 @@ import java.io.InputStream
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
+import java.util.Collections
 import kotlin.system.measureTimeMillis
 
 @Component
@@ -191,14 +205,16 @@ class NpmLocalRepository(
     }
 
     override fun remove(context: ArtifactRemoveContext) {
-        val repositoryDetail = context.repositoryDetail
-        val projectId = repositoryDetail.projectId
-        val repoName = repositoryDetail.name
-        val fullPath = context.getAttribute<List<*>>(NPM_FILE_FULL_PATH)
-        val userId = context.userId
-        fullPath?.forEach {
-            nodeClient.deleteNode(NodeDeleteRequest(projectId, repoName, it.toString(), userId))
-            logger.info("delete artifact $it success in repo [${context.artifactInfo.getRepoIdentify()}].")
+        with(context) {
+            val npmArtifactInfo = artifactInfo as NpmArtifactInfo
+            val fullPaths = if (npmArtifactInfo.version == null) {
+                listOf("$NPM_METADATA_ROOT/${npmArtifactInfo.packageName}", "/${npmArtifactInfo.packageName}")
+            } else listOf(
+                getStringAttribute(TARBALL_FULL_PATH)!!,
+                NpmUtils.getVersionPackageMetadataPath(npmArtifactInfo.packageName, npmArtifactInfo.version!!)
+            )
+            nodeClient.deleteNodes(NodesDeleteRequest(projectId, repoName, fullPaths, userId))
+            logger.info("delete artifact $fullPaths success in repo [$projectId/$repoName].")
         }
     }
 
@@ -530,7 +546,7 @@ class NpmLocalRepository(
         with(context) {
             var size = 0L
             var response: Response? = null
-            val fullPath = NpmUtils.getTgzPath(name, version)
+            val fullPath = NpmUtils.getTarballFullPath(name, version)
             context.putAttribute(NPM_FILE_FULL_PATH, fullPath)
             // hit cache continue
             if (nodeClient.checkExist(projectId, repoName, fullPath).data!!) {

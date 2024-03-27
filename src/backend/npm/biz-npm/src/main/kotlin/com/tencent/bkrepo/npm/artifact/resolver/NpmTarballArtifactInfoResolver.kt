@@ -1,7 +1,7 @@
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
- * Copyright (C) 2020 THL A29 Limited, a Tencent company.  All rights reserved.
+ * Copyright (C) 2024 THL A29 Limited, a Tencent company.  All rights reserved.
  *
  * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
  *
@@ -29,28 +29,40 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.npm.artifact
+package com.tencent.bkrepo.npm.artifact.resolver
 
 import com.tencent.bkrepo.common.artifact.resolve.path.ArtifactInfoResolver
 import com.tencent.bkrepo.common.artifact.resolve.path.Resolver
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
+import com.tencent.bkrepo.npm.artifact.NpmTarballArtifactInfo
+import com.tencent.bkrepo.npm.constants.DELIMITER
+import com.tencent.bkrepo.npm.constants.FILENAME
+import com.tencent.bkrepo.npm.constants.NAME
+import com.tencent.bkrepo.npm.constants.REPEATED_SCOPE
+import com.tencent.bkrepo.npm.constants.SCOPE
+import com.tencent.bkrepo.npm.utils.NpmUtils
 import org.springframework.stereotype.Component
+import org.springframework.web.servlet.HandlerMapping
 import javax.servlet.http.HttpServletRequest
 
 @Component
-@Resolver(NpmArtifactInfo::class)
-class NpmArtifactInfoResolver : ArtifactInfoResolver {
+@Resolver(NpmTarballArtifactInfo::class)
+class NpmTarballArtifactInfoResolver : ArtifactInfoResolver {
     override fun resolve(
         projectId: String,
         repoName: String,
         artifactUri: String,
         request: HttpServletRequest
     ): NpmArtifactInfo {
-        return NpmArtifactInfo(projectId, repoName, artifactUri)
-    }
-
-    companion object {
-        val logger: Logger = LoggerFactory.getLogger(NpmArtifactInfo::class.java)
+        with(request) {
+            val attributes = getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE) as Map<*, *>
+            val scope = attributes[SCOPE]?.toString()?.trim()
+            val name = attributes[NAME].toString().trim()
+            val packageName = NpmUtils.formatPackageName(name, scope)
+            val version = NpmUtils.analyseVersionFromPackageName(attributes[FILENAME].toString(), name)
+            val delimiter = attributes[DELIMITER].toString().trim()
+            val repeatedScope = attributes[REPEATED_SCOPE] != null
+            return NpmTarballArtifactInfo(projectId, repoName, packageName, version, delimiter, repeatedScope)
+        }
     }
 }

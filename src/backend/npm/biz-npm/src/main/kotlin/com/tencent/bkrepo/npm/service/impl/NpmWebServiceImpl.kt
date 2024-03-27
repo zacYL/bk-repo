@@ -31,11 +31,11 @@
 
 package com.tencent.bkrepo.npm.service.impl
 
-import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.artifact.exception.PackageNotFoundException
 import com.tencent.bkrepo.common.artifact.exception.VersionNotFoundException
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
@@ -52,8 +52,6 @@ import com.tencent.bkrepo.npm.pojo.user.BasicInfo
 import com.tencent.bkrepo.npm.pojo.user.DependenciesInfo
 import com.tencent.bkrepo.npm.pojo.user.PackageVersionInfo
 import com.tencent.bkrepo.npm.pojo.user.VersionDependenciesInfo
-import com.tencent.bkrepo.npm.pojo.user.request.PackageDeleteRequest
-import com.tencent.bkrepo.npm.pojo.user.request.PackageVersionDeleteRequest
 import com.tencent.bkrepo.npm.service.NpmClientService
 import com.tencent.bkrepo.npm.service.NpmWebService
 import com.tencent.bkrepo.npm.utils.NpmUtils
@@ -78,34 +76,28 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
 
     @Transactional(rollbackFor = [Throwable::class])
     override fun detailVersion(artifactInfo: NpmArtifactInfo, packageKey: String, version: String): PackageVersionInfo {
-        val name = PackageKeys.resolveNpm(packageKey)
-        val packageMetadata = queryPackageInfo(artifactInfo, name, false)
-        if (!packageMetadata.versions.map.keys.contains(version)) {
-            val versionMetadata = queryVersionMetadata(artifactInfo, name, version)
-                ?: throw NpmArtifactNotFoundException("version [$version] don't found in package [$name].")
-            modifyPackageMetadata(packageMetadata, versionMetadata, version)
-            uploadPackageMetadata(packageMetadata)
-            logger.info("complete package.json of [$name]: add metadata of version [$version] when query version info")
-        }
-        //获取readme文档
-        val versionMetaData = packageMetadata.versions.map[version]
-        val readmeFileName = versionMetaData?.readmeFilename
-        val readme = readmeFileName?.let { versionMetaData.readme.orEmpty() }
         with(artifactInfo) {
-            checkRepositoryExist(projectId, repoName)
+            val name = PackageKeys.resolveNpm(packageKey)
             val packageVersion = packageClient.findVersionByName(projectId, repoName, packageKey, version).data ?: run {
                 logger.warn("packageKey [$packageKey] don't found.")
-                throw NpmArtifactNotFoundException("packageKey [$packageKey] don't found.")
+                throw VersionNotFoundException(name)
             }
             val fullPath = packageVersion.contentPath!!
             val nodeDetail = nodeClient.getNodeDetail(projectId, repoName, fullPath).data ?: run {
                 logger.warn("node [$fullPath] don't found.")
                 throw NpmArtifactNotFoundException("node [$fullPath] don't found.")
             }
-            val basicInfo = buildBasicInfo(nodeDetail, packageVersion, readme)
-            val versionDependenciesInfo =
-                queryVersionDependenciesInfo(artifactInfo, packageKey, packageMetadata.versions.map[version]!!)
-            return PackageVersionInfo(basicInfo, packageVersion.packageMetadata, versionDependenciesInfo)
+            val versionMetadata = try {
+                npmClientService.packageVersionInfo(artifactInfo, name, version)
+            } catch (e: NpmArtifactNotFoundException) {
+                loadPackageMetadata(ArtifactContext())?.versions?.map?.get(version)
+                    ?: throw NpmArtifactNotFoundException("version metadata of [$name/$version] not found")
+            }
+            return PackageVersionInfo(
+                basic = buildBasicInfo(nodeDetail, packageVersion, versionMetadata.readme.orEmpty()),
+                metadata = packageVersion.packageMetadata,
+                dependencyInfo = queryVersionDependenciesInfo(artifactInfo, packageKey, versionMetadata)
+            )
         }
     }
 
@@ -124,38 +116,27 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
     }
 
     @Transactional(rollbackFor = [Throwable::class])
-    override fun deletePackage(artifactInfo: NpmArtifactInfo, deleteRequest: PackageDeleteRequest) {
-        logger.info("npm delete package request: [$deleteRequest]")
-        with(deleteRequest) {
-            checkRepositoryExist(projectId, repoName)
-            npmClientService.deletePackage(operator, artifactInfo, name)
-        }
-    }
+    override fun deletePackage(artifactInfo: NpmArtifactInfo) = npmClientService.deletePackage(artifactInfo)
 
     @Transactional(rollbackFor = [Throwable::class])
-    override fun deleteVersion(artifactInfo: NpmArtifactInfo, deleteRequest: PackageVersionDeleteRequest) {
-        logger.info("npm delete package version request: [$deleteRequest]")
-        with(deleteRequest) {
-            val repoCategory = checkRepositoryExist(projectId, repoName).category
-            if (repoCategory == RepositoryCategory.VIRTUAL) {
-                throw MethodNotAllowedException()
-            }
-            val packageKey = PackageKeys.ofNpm(name)
-            val versionInfo = packageClient.findVersionByName(projectId, repoName, packageKey, version).data
-                ?: throw VersionNotFoundException("$packageKey/$version")
+    override fun deleteVersion(artifactInfo: NpmArtifactInfo) {
+        with(artifactInfo) {
+            val packageKey = PackageKeys.ofNpm(packageName)
             val packageInfo = packageClient.findPackageByKey(projectId, repoName, packageKey).data
                 ?: throw PackageNotFoundException(packageKey)
             // 如果删除最后一个版本直接删除整个包
             if (packageInfo.versions == 1L) {
-                val deletePackageRequest = PackageDeleteRequest(projectId, repoName, name, operator)
-                deletePackage(artifactInfo, deletePackageRequest)
-                return
-            }
-            npmClientService.deleteVersion(artifactInfo, name, version, versionInfo.contentPath!!)
-            // 修改package.json文件的内容
-            if (repoCategory != RepositoryCategory.REMOTE) {
-                val packageMetadata = queryPackageInfo(artifactInfo, name, false)
-                updatePackageWithDeleteVersion(artifactInfo, this, packageMetadata)
+                deletePackage(NpmArtifactInfo(projectId, repoName, packageName, null))
+            } else {
+                npmClientService.deleteVersion(artifactInfo)
+                val repoCategory = ArtifactContextHolder.getRepoDetail()?.category
+                if (repoCategory == RepositoryCategory.COMPOSITE || repoCategory == RepositoryCategory.LOCAL) {
+                    val packageMetadata = loadPackageMetadata(ArtifactContext())
+                        ?: throw NpmArtifactNotFoundException(
+                            "failed to load metadata of [$this] after deleting version"
+                        )
+                    updatePackageWithDeleteVersion(this, packageMetadata)
+                }
             }
         }
     }
@@ -166,41 +147,34 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
 
     fun updatePackageWithDeleteVersion(
         artifactInfo: NpmArtifactInfo,
-        deleteRequest: PackageVersionDeleteRequest,
         packageMetaData: NpmPackageMetaData
     ) {
-        with(deleteRequest) {
+        with(artifactInfo) {
+            require(version != null)
             val latest = NpmUtils.getLatestVersionFormDistTags(packageMetaData.distTags)
-            if (version != latest) {
-                // 删除versions里面对应的版本
-                deleteVersion(packageMetaData)
-            } else {
+            // 删除versions里面对应的版本
+            packageMetaData.versions.map.remove(version)
+            packageMetaData.time.getMap().remove(version)
+            val iterator = packageMetaData.distTags.getMap().entries.iterator()
+            while (iterator.hasNext()) {
+                if (version == iterator.next().value) {
+                    iterator.remove()
+                }
+            }
+            if (version == latest) {
                 val newLatest = findNewLatest(this)
-                packageMetaData.versions.map.remove(version)
-                packageMetaData.time.getMap().remove(version)
                 packageMetaData.distTags.set(LATEST, newLatest)
             }
             reUploadPackageJsonFile(artifactInfo, packageMetaData)
         }
     }
 
-    private fun PackageVersionDeleteRequest.deleteVersion(packageMetaData: NpmPackageMetaData) {
-        packageMetaData.versions.map.remove(version)
-        packageMetaData.time.getMap().remove(version)
-        val iterator = packageMetaData.distTags.getMap().entries.iterator()
-        while (iterator.hasNext()) {
-            if (version == iterator.next().value) {
-                iterator.remove()
-            }
-        }
-    }
-
-    private fun findNewLatest(request: PackageVersionDeleteRequest): String {
-        return with(request) {
-            packageClient.findPackageByKey(projectId, repoName, PackageKeys.ofNpm(name)).data?.latest
+    private fun findNewLatest(artifactInfo: NpmArtifactInfo): String {
+        return with(artifactInfo) {
+            packageClient.findPackageByKey(projectId, repoName, PackageKeys.ofNpm(packageName)).data?.latest
                 ?: run {
                     val message =
-                        "delete version by web operator to find new latest version failed with package [$name]"
+                        "delete version by web operator to find new latest version failed with package [$packageName]"
                     logger.error(message)
                     throw NpmArtifactNotFoundException(message)
                 }
@@ -215,7 +189,7 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
             val context = ArtifactUploadContext(artifactFile)
             context.putAttribute(NPM_FILE_FULL_PATH, fullPath)
 
-            ArtifactContextHolder.getRepository().upload(context).also {
+            repository.upload(context).also {
                 logger.info(
                     "user [${context.userId}] upload npm package metadata file [$fullPath] " +
                             "to repo [$projectId/$repoName] success."

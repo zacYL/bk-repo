@@ -44,14 +44,19 @@ import com.tencent.bkrepo.npm.constants.DELIMITER_DOWNLOAD
 import com.tencent.bkrepo.npm.constants.DELIMITER_HYPHEN
 import com.tencent.bkrepo.npm.constants.LATEST
 import com.tencent.bkrepo.npm.constants.NPM_PKG_METADATA_FULL_PATH
-import com.tencent.bkrepo.npm.constants.NPM_PKG_TGZ_FULL_PATH
-import com.tencent.bkrepo.npm.constants.NPM_PKG_TGZ_WITH_DOWNLOAD_FULL_PATH
 import com.tencent.bkrepo.npm.constants.NPM_PKG_VERSION_METADATA_FULL_PATH
 import com.tencent.bkrepo.npm.constants.NPM_TGZ_TARBALL_PREFIX
+import com.tencent.bkrepo.npm.constants.TARBALL_FULL_PATH_FORMAT
 import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
 import java.net.URLDecoder
 
 object NpmUtils {
+
+    fun formatPackageName(name: String, scope: String? = null): String {
+        val builder = StringBuilder()
+        scope?.let { builder.append(StringPool.AT).append(it).append(StringPool.SLASH) }
+        return builder.append(name).toString()
+    }
 
     fun getPackageMetadataPath(packageName: String): String {
         return NPM_PKG_METADATA_FULL_PATH.format(packageName)
@@ -61,24 +66,18 @@ object NpmUtils {
         return NPM_PKG_VERSION_METADATA_FULL_PATH.format(name, name, version)
     }
 
-    fun getTgzPath(
+    fun getTarballFullPath(
         name: String,
         version: String,
-        containHyphenPath: Boolean = true,
-        containScopePathAfterHyphen: Boolean = true
-    ): String {
-        return if (containHyphenPath) {
-            val nameAfterDash =
-                if (!isScopeName(name) || containScopePathAfterHyphen) name else name.substringAfterLast("/")
-            NPM_PKG_TGZ_FULL_PATH.format(name, nameAfterDash, version)
-        } else {
-            NPM_PKG_TGZ_WITH_DOWNLOAD_FULL_PATH.format(name, name, version)
-        }
-    }
+        delimiter: String = DELIMITER_HYPHEN,
+        repeatedScope: Boolean = true
+    ) = TARBALL_FULL_PATH_FORMAT.format(
+            name, delimiter, if (repeatedScope) name else name.substringAfterLast("/"), version
+        )
 
     fun analyseVersionFromPackageName(filename: String, name: String): String {
-        val shortName = name.substringAfterLast("/")
-        return filename.substringBeforeLast(".tgz").substringAfter("$shortName-")
+        val unscopedName = name.substringAfterLast("/")
+        return filename.substringBeforeLast(".tgz").substringAfter("$unscopedName-")
     }
 
     fun analyseVersionFromVersionMetadataName(filename: String, name: String): String {
@@ -105,10 +104,6 @@ object NpmUtils {
     }
 
     fun getLatestVersionFormDistTags(distTags: NpmPackageMetaData.DistTags): String {
-        val iterator = distTags.getMap().iterator()
-        if (iterator.hasNext()) {
-            return iterator.next().value
-        }
         return distTags.getMap()[LATEST]!!
     }
 
@@ -140,7 +135,7 @@ object NpmUtils {
         return Pair(name, version)
     }
 
-    private fun isScopeName(name: String): Boolean {
+    fun isScopeName(name: String): Boolean {
         return name.startsWith('@') && name.indexOf('/') != -1
     }
 

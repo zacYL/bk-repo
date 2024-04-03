@@ -42,7 +42,7 @@ import java.io.Serializable
  * npm version metadata
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonIgnoreProperties(ignoreUnknown = true, value = ["contributors"])
 class NpmVersionMetadata : Serializable {
     var name: String? = null
     var description: String? = null

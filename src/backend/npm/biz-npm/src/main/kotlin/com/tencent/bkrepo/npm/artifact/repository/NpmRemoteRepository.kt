@@ -33,6 +33,8 @@ package com.tencent.bkrepo.npm.artifact.repository
 
 import com.tencent.bkrepo.common.api.constant.MediaTypes.APPLICATION_JSON_WITHOUT_CHARSET
 import com.tencent.bkrepo.common.api.util.JsonUtils
+import com.tencent.bkrepo.common.api.util.readJsonString
+import com.tencent.bkrepo.common.api.util.toCompactJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
 import com.tencent.bkrepo.common.artifact.exception.ArtifactNotInWhitelistException
@@ -46,8 +48,12 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchConte
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.migration.MigrateDetail
 import com.tencent.bkrepo.common.artifact.repository.remote.RemoteRepository
+import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
+import com.tencent.bkrepo.common.artifact.stream.ArtifactInputStream
+import com.tencent.bkrepo.common.artifact.stream.Range
+import com.tencent.bkrepo.common.artifact.stream.artifactStream
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
 import com.tencent.bkrepo.common.storage.monitor.Throughput
@@ -59,6 +65,7 @@ import com.tencent.bkrepo.npm.constants.REQUEST_URI
 import com.tencent.bkrepo.npm.constants.TARBALL_FULL_PATH
 import com.tencent.bkrepo.npm.exception.NpmBadRequestException
 import com.tencent.bkrepo.npm.handler.NpmPackageHandler
+import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
 import com.tencent.bkrepo.npm.model.metadata.NpmVersionMetadata
 import com.tencent.bkrepo.npm.pojo.NpmSearchInfoMap
 import com.tencent.bkrepo.npm.pojo.NpmSearchResponse
@@ -73,7 +80,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 import org.springframework.stereotype.Component
-import java.io.InputStream
 
 @Component
 class NpmRemoteRepository(
@@ -108,7 +114,7 @@ class NpmRemoteRepository(
                 queryContext.putAttribute(REQUEST_URI, "/${packageInfo.first}/${packageInfo.second}")
                 executor.execute {
                     query(queryContext)?.use {
-                        val versionMetadata = JsonUtils.objectMapper.readValue(it, NpmVersionMetadata::class.java)
+                        val versionMetadata = it.readJsonString<NpmVersionMetadata>()
                         val size = artifactResource.getTotalSize()
                         npmPackageHandler.createVersion(userId, artifactInfo, versionMetadata, size)
                     }
@@ -128,9 +134,9 @@ class NpmRemoteRepository(
         }
     }
 
-    override fun query(context: ArtifactQueryContext): InputStream? {
+    override fun query(context: ArtifactQueryContext): ArtifactInputStream? {
         return getCacheArtifactResource(context)?.getSingleStream()
-            ?: super.query(context) as InputStream?
+            ?: super.query(context) as ArtifactInputStream?
             ?: if (context.getStringAttribute(NPM_FILE_FULL_PATH)?.endsWith("/$PACKAGE_JSON") == true) {
                 findCacheNodeDetail(context)?.let { loadArtifactResource(it, context) }?.getSingleStream()
             } else null
@@ -176,11 +182,13 @@ class NpmRemoteRepository(
         return UrlFormatter.format(configuration.url, artifactUri, queryString)
     }
 
-    override fun onQueryResponse(context: ArtifactQueryContext, response: Response): InputStream? {
-        val body = response.body()!!
-        val artifactFile = createTempFile(body)
+    override fun onQueryResponse(context: ArtifactQueryContext, response: Response): ArtifactInputStream? {
+        val tempFile = createTempFile(response.body()!!)
+        val packageMetaData = tempFile.getInputStream().readJsonString<NpmPackageMetaData>()
+        val artifactFile = ArtifactFileFactory.build(packageMetaData.toCompactJsonString().byteInputStream())
+        val size = artifactFile.getSize()
         cacheArtifactFile(context, artifactFile)
-        return artifactFile.getInputStream()
+        return artifactFile.getInputStream().artifactStream(Range.full(size))
     }
 
     override fun buildCacheNodeCreateRequest(context: ArtifactContext, artifactFile: ArtifactFile): NodeCreateRequest {

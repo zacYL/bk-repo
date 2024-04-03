@@ -44,6 +44,7 @@ import com.tencent.bkrepo.common.artifact.repository.migration.MigrateDetail
 import com.tencent.bkrepo.common.artifact.repository.migration.PackageMigrateDetail
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
+import com.tencent.bkrepo.common.artifact.stream.ArtifactInputStream
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
@@ -78,7 +79,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.io.IOException
-import java.io.InputStream
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -125,7 +125,7 @@ class NpmLocalRepository(
         )
     }
 
-    override fun query(context: ArtifactQueryContext): InputStream? {
+    override fun query(context: ArtifactQueryContext): ArtifactInputStream? {
         val fullPath = context.getStringAttribute(NPM_FILE_FULL_PATH)
         return this.onQuery(context) ?: run {
             logger.warn("Artifact [$fullPath] not found in repo [${context.projectId}/${context.repoName}]")
@@ -133,7 +133,7 @@ class NpmLocalRepository(
         }
     }
 
-    private fun onQuery(context: ArtifactQueryContext): InputStream? {
+    private fun onQuery(context: ArtifactQueryContext): ArtifactInputStream? {
         val repositoryDetail = context.repositoryDetail
         val projectId = repositoryDetail.projectId
         val repoName = repositoryDetail.name

@@ -31,21 +31,22 @@
 
 package com.tencent.bkrepo.npm.artifact.repository
 
-import com.tencent.bkrepo.common.api.util.JsonUtils
+import com.tencent.bkrepo.common.api.util.readJsonString
+import com.tencent.bkrepo.common.api.util.toCompactJsonString
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchContext
 import com.tencent.bkrepo.common.artifact.repository.core.AbstractArtifactRepository
 import com.tencent.bkrepo.common.artifact.repository.virtual.VirtualRepository
-import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
+import com.tencent.bkrepo.common.artifact.stream.ArtifactInputStream
 import com.tencent.bkrepo.common.artifact.util.version.SemVersion
 import com.tencent.bkrepo.npm.constants.SEARCH_REQUEST
 import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
 import com.tencent.bkrepo.npm.pojo.NpmSearchInfoMap
 import com.tencent.bkrepo.npm.pojo.metadata.MetadataSearchRequest
+import com.tencent.bkrepo.npm.utils.NpmStreamUtils.toArtifactStream
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
-import java.io.InputStream
 
 @Component
 class NpmVirtualRepository : VirtualRepository() {
@@ -80,17 +81,15 @@ class NpmVirtualRepository : VirtualRepository() {
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun query(context: ArtifactQueryContext): InputStream? {
-        val result = super.query(context) as List<InputStream>
-        val metadataList = result.map {
-            it.use { inputStream ->
-                JsonUtils.objectMapper.readValue(inputStream, NpmPackageMetaData::class.java)
-            }
-        }.takeIf { it.isNotEmpty() } ?: return null
-        // 聚合多个仓库的包级别元数据
-        val packageMetadata = metadataList.reduce { acc, element -> aggregateMetadata(acc, element) }
-        val metadataString = JsonUtils.objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(packageMetadata)
-        return ArtifactFileFactory.build(metadataString.byteInputStream()).getInputStream()
+    override fun query(context: ArtifactQueryContext): ArtifactInputStream? {
+        val result = (super.query(context) as List<ArtifactInputStream>).ifEmpty { return null }
+        return if (result.size == 1) result.first() else {
+            // 聚合多个仓库的包级别元数据
+            result.foldIndexed(result.first().readJsonString<NpmPackageMetaData>()) { index, acc, element ->
+                if (index == 0) return@foldIndexed acc
+                aggregateMetadata(acc, element.readJsonString<NpmPackageMetaData>())
+            }.toCompactJsonString().toArtifactStream()
+        }
     }
 
     private fun aggregateMetadata(

@@ -32,21 +32,25 @@
 package com.tencent.bkrepo.npm.service.impl
 
 import com.tencent.bkrepo.common.api.util.JsonUtils
+import com.tencent.bkrepo.common.api.util.StreamUtils.readText
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
-import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.core.ArtifactService
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResourceWriter
+import com.tencent.bkrepo.common.artifact.stream.ArtifactInputStream
 import com.tencent.bkrepo.common.service.util.HeaderUtils
 import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
 import com.tencent.bkrepo.npm.constants.MODIFIED
 import com.tencent.bkrepo.npm.constants.NPM_FILE_FULL_PATH
 import com.tencent.bkrepo.npm.constants.NPM_PKG_METADATA_FULL_PATH
 import com.tencent.bkrepo.npm.constants.NPM_TGZ_TARBALL_PREFIX
+import com.tencent.bkrepo.npm.constants.PACKAGE_JSON
 import com.tencent.bkrepo.npm.constants.PACKAGE_METADATA
 import com.tencent.bkrepo.npm.constants.REQUEST_URI
 import com.tencent.bkrepo.npm.exception.NpmArtifactNotFoundException
@@ -54,6 +58,7 @@ import com.tencent.bkrepo.npm.exception.NpmRepoNotFoundException
 import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
 import com.tencent.bkrepo.npm.model.metadata.NpmVersionMetadata
 import com.tencent.bkrepo.npm.properties.NpmProperties
+import com.tencent.bkrepo.npm.utils.NpmStreamUtils.toArtifactStream
 import com.tencent.bkrepo.npm.utils.NpmUtils
 import com.tencent.bkrepo.npm.utils.TimeUtil
 import com.tencent.bkrepo.repository.api.NodeClient
@@ -85,6 +90,9 @@ open class AbstractNpmService : ArtifactService() {
 
 	@Autowired
 	lateinit var storageManager: StorageManager
+
+	@Autowired
+	lateinit var artifactResourceWriter: ArtifactResourceWriter
 
 	/**
 	 * 查询仓库是否存在
@@ -118,17 +126,40 @@ open class AbstractNpmService : ArtifactService() {
 		return packageSummary.historyVersion.contains(version)
 	}
 
+	fun queryPackageInfo(artifactInfo: NpmArtifactInfo) {
+		val context = ArtifactQueryContext()
+		context.putAttribute(NPM_FILE_FULL_PATH, NpmUtils.getPackageMetadataPath(artifactInfo.packageName))
+		context.putAttribute(REQUEST_URI, artifactInfo.packageName)
+		val artifactStream = (repository.query(context) as ArtifactInputStream?)?.let {
+			if (!showDefaultTarball()) {
+				it.readText().replace(tarballRegex) { matchRes ->
+					val originTarball = matchRes.groupValues[1]
+					val newTarball = NpmUtils.buildPackageTgzTarball(
+						originTarball, npmProperties.domain, npmProperties.tarball.prefix,
+						artifactInfo.packageName, artifactInfo
+					)
+					matchRes.value.replace(originTarball, newTarball)
+				}.toArtifactStream()
+			} else it
+		} ?: throw NpmArtifactNotFoundException("document not found")
+		val artifactResource = ArtifactResource(
+			inputStream = artifactStream,
+			artifactName = PACKAGE_JSON,
+			srcRepo = RepositoryIdentify(context.projectId, context.repoName)
+		)
+		artifactResourceWriter.write(artifactResource)
+	}
+
 	/**
 	 * query package metadata
 	 */
 	fun queryPackageInfo(
 		artifactInfo: NpmArtifactInfo,
 		name: String,
-		showCustomTarball: Boolean = true
+		showCustomTarball: Boolean
 	): NpmPackageMetaData {
 		val packageFullPath = NpmUtils.getPackageMetadataPath(name)
-		val repoDetail = repositoryClient.getRepoDetail(artifactInfo.projectId, artifactInfo.repoName).data!!
-		val context = ArtifactQueryContext(repoDetail, artifactInfo)
+		val context = ArtifactQueryContext()
 		context.putAttribute(NPM_FILE_FULL_PATH, packageFullPath)
 		context.putAttribute(REQUEST_URI, name)
 		val inputStream = repository.query(context) as? InputStream
@@ -136,16 +167,6 @@ open class AbstractNpmService : ArtifactService() {
 		val packageMetaData = inputStream.use { JsonUtils.objectMapper.readValue(it, NpmPackageMetaData::class.java) }
 		if (showCustomTarball && !showDefaultTarball()) {
 			val versionsMap = packageMetaData.versions.map
-
-			// 对于下载前的查询包信息请求，检查包数据是否完整，避免package.json缺失内容导致无法下载的问题
-			val versions = versionsMap.keys
-			val repoCategory = ArtifactContextHolder.getRepoDetail()?.category
-			if (repoCategory != RepositoryCategory.VIRTUAL) {
-				checkAndCompletePackageMetadata(
-					artifactInfo, packageMetaData, versions, repoCategory != RepositoryCategory.REMOTE
-				)
-			}
-
 			val iterator = versionsMap.entries.iterator()
 			while (iterator.hasNext()) {
 				val entry = iterator.next()
@@ -268,5 +289,6 @@ open class AbstractNpmService : ArtifactService() {
 
 	companion object {
 		val logger: Logger = LoggerFactory.getLogger(AbstractNpmService::class.java)
+		private val tarballRegex = Regex("\"tarball\"\\s?:\\s?\"(.+?)\"")
 	}
 }

@@ -1,6 +1,7 @@
 package com.tencent.bkrepo.npm.artifact.repository
 
-import com.tencent.bkrepo.common.api.util.JsonUtils
+import com.tencent.bkrepo.common.api.util.readJsonString
+import com.tencent.bkrepo.common.api.util.toCompactJsonString
 import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
 import com.tencent.bkrepo.common.artifact.exception.ArtifactNotInWhitelistException
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
@@ -9,16 +10,18 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadCon
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.repository.remote.RemoteRepository
-import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
+import com.tencent.bkrepo.common.artifact.stream.ArtifactInputStream
+import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
 import com.tencent.bkrepo.npm.constants.NPM_FILE_FULL_PATH
 import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
+import com.tencent.bkrepo.npm.utils.NpmStreamUtils.toArtifactStream
 import com.tencent.bkrepo.npm.utils.NpmUtils
 import com.tencent.bkrepo.repository.api.ProxyChannelClient
 import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Component
-import java.io.InputStream
 
 /**
  * 使用自定义的bean对象替换到composite上层实现
@@ -58,26 +61,22 @@ class NpmCompositeRepository(
         }
     }
 
-    override fun query(context: ArtifactQueryContext): InputStream? {
-        val localQueryResult = localRepository.query(context) as? InputStream
+    override fun query(context: ArtifactQueryContext): ArtifactInputStream? {
+        val name = (context.artifactInfo as NpmArtifactInfo).packageName
         val remoteQueryResult = mapFirstProxyRepo(context) {
             require(it is ArtifactQueryContext)
-            remoteRepository.query(it) as? InputStream
-        } ?: return localQueryResult
-
-        localQueryResult?.use { it ->
-            // 将远程结果与本地结果合并进行返回
-            val localPackageMetaData = JsonUtils.objectMapper.readValue(it, NpmPackageMetaData::class.java)
-            val remotePackageMetaData = remoteQueryResult.use {
-                JsonUtils.objectMapper.readValue(it, NpmPackageMetaData::class.java)
-            }
-            remotePackageMetaData.versions.map.putAll(localPackageMetaData.versions.map)
-            val packageMetadata =
-                JsonUtils.objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(remotePackageMetaData)
-            val artifactFile = ArtifactFileFactory.build(packageMetadata.byteInputStream())
-            return artifactFile.getInputStream()
+            remoteRepository.query(it) as ArtifactInputStream?
         }
-        return remoteQueryResult
+        val packageSummary =
+            packageClient.findPackageByKey(context.projectId, context.repoName, PackageKeys.ofNpm(name)).data
+        val localQueryResult = if (packageSummary != null || remoteQueryResult == null)
+            localRepository.query(context) as ArtifactInputStream? else null
+        return if (localQueryResult != null && remoteQueryResult != null) {
+            val localVersionMap = localQueryResult.readJsonString<NpmPackageMetaData>().versions.map
+            val remotePackageMetaData = remoteQueryResult.readJsonString<NpmPackageMetaData>()
+            remotePackageMetaData.versions.map.putAll(localVersionMap)
+            remotePackageMetaData.toCompactJsonString().toArtifactStream()
+        } else localQueryResult ?: remoteQueryResult
     }
 
     companion object {

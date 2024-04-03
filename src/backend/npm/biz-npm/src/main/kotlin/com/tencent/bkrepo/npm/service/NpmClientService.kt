@@ -33,7 +33,6 @@ package com.tencent.bkrepo.npm.service
 
 import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
 import com.tencent.bkrepo.npm.model.metadata.NpmVersionMetadata
-import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
 import com.tencent.bkrepo.npm.pojo.NpmSearchResponse
 import com.tencent.bkrepo.npm.pojo.NpmSuccessResponse
 import com.tencent.bkrepo.npm.pojo.metadata.MetadataSearchRequest
@@ -48,7 +47,7 @@ interface NpmClientService {
     /**
      * 查询npm包的package.json元数据信息
      */
-    fun packageInfo(artifactInfo: NpmArtifactInfo, name: String): NpmPackageMetaData
+    fun packageInfo(artifactInfo: NpmArtifactInfo)
 
     /**
      * 查询npm包的版本对应元数据信息

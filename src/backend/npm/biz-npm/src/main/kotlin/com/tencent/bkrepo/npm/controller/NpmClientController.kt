@@ -39,7 +39,6 @@ import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.HeaderUtils
 import com.tencent.bkrepo.npm.artifact.NpmArtifactInfo
 import com.tencent.bkrepo.npm.artifact.NpmTarballArtifactInfo
-import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
 import com.tencent.bkrepo.npm.model.metadata.NpmVersionMetadata
 import com.tencent.bkrepo.npm.pojo.NpmDeleteResponse
 import com.tencent.bkrepo.npm.pojo.NpmSearchResponse
@@ -103,24 +102,12 @@ class NpmClientController(
     /**
      * query package.json info
      */
-    @GetMapping("/{name}", produces = [MediaTypes.APPLICATION_JSON])
+    @GetMapping("/{name}", "/@{scope}/{name}")
     @Permission(ResourceType.REPO, PermissionAction.READ)
     fun packageInfo(
-        @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
-        @PathVariable name: String
-    ): NpmPackageMetaData {
-        return npmClientService.packageInfo(artifactInfo, name)
-    }
-
-    @GetMapping("/@{scope}/{name}", produces = [MediaTypes.APPLICATION_JSON])
-    @Permission(ResourceType.REPO, PermissionAction.READ)
-    fun packageInfo(
-        @ArtifactPathVariable artifactInfo: NpmArtifactInfo,
-        @PathVariable scope: String,
-        @PathVariable name: String
-    ): NpmPackageMetaData {
-        val pkgName = String.format("@%s/%s", scope, name)
-        return npmClientService.packageInfo(artifactInfo, pkgName)
+        @ArtifactPathVariable artifactInfo: NpmArtifactInfo
+    ) {
+        npmClientService.packageInfo(artifactInfo)
     }
 
     /**

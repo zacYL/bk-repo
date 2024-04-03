@@ -144,10 +144,12 @@ class NpmClientServiceImpl(
     }
 
     @Transactional(rollbackFor = [Throwable::class])
-    override fun packageInfo(artifactInfo: NpmArtifactInfo, name: String): NpmPackageMetaData {
+    override fun packageInfo(artifactInfo: NpmArtifactInfo) {
         with(artifactInfo) {
-            logger.info("handling query package metadata request for package [$name] in repo [$projectId/$repoName]")
-            return queryPackageInfo(artifactInfo, name)
+            logger.info(
+                "handling query package metadata request for package [$packageName] in repo [$projectId/$repoName]"
+            )
+            return queryPackageInfo(artifactInfo)
         }
     }
 

@@ -31,23 +31,20 @@
 
 package com.tencent.bkrepo.pypi.artifact.repository
 
-import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
+import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.exception.NotFoundException
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchContext
 import com.tencent.bkrepo.common.artifact.repository.virtual.VirtualRepository
+import com.tencent.bkrepo.pypi.artifact.PypiSimpleArtifactInfo
 import com.tencent.bkrepo.pypi.artifact.xml.Value
 import com.tencent.bkrepo.pypi.constants.FILE_NAME_REGEX
-import com.tencent.bkrepo.pypi.constants.HTML_ENCODED_GREATER_THAN
-import com.tencent.bkrepo.pypi.constants.HTML_ENCODED_LESS_THAN
 import com.tencent.bkrepo.pypi.constants.INDENT
 import com.tencent.bkrepo.pypi.constants.LINE_BREAK
 import com.tencent.bkrepo.pypi.constants.PACKAGE_INDEX_TITLE
 import com.tencent.bkrepo.pypi.constants.PSEUDO_MATCH_REGEX
-import com.tencent.bkrepo.pypi.constants.PypiQueryType
-import com.tencent.bkrepo.pypi.constants.QUERY_TYPE
 import com.tencent.bkrepo.pypi.constants.REQUIRES_PYTHON_ATTR
 import com.tencent.bkrepo.pypi.constants.SELECTOR_ANCHOR
 import com.tencent.bkrepo.pypi.constants.SIMPLE_PAGE_CONTENT
@@ -67,29 +64,24 @@ class PypiVirtualRepository : VirtualRepository() {
      */
     @Suppress("UNCHECKED_CAST")
     override fun query(context: ArtifactQueryContext): String? {
-        val type = context.getAttribute<PypiQueryType>(QUERY_TYPE)
-        if (type == PypiQueryType.VERSION_DETAIL) {
-            throw MethodNotAllowedException()
-        }
-        val artifactName = context.artifactInfo.getArtifactName().removePrefix("/")
-        val pseudoSelector = if (artifactName.isBlank()) "" else String.format(PSEUDO_MATCH_REGEX, FILE_NAME_REGEX)
+        val packageName = (context.artifactInfo as PypiSimpleArtifactInfo).packageName
+        val pseudoSelector = if (packageName == null) "" else String.format(PSEUDO_MATCH_REGEX, FILE_NAME_REGEX)
         val indexPages = (super.query(context) as List<String>)
             .map { Jsoup.parse(it).body().select(SELECTOR_ANCHOR + pseudoSelector) }
             .filter { !it.isNullOrEmpty() }
-            .ifEmpty { throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, artifactName) }
+            .ifEmpty { throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, packageName ?: StringPool.SLASH) }
         val compositePage = if (indexPages.size == 1) indexPages.first() else {
             val anchorSet = TreeSet<Element>(compareBy { it.text() })
             indexPages.forEach { anchorSet.addAll(it) }
             Elements(anchorSet)
         }
         val content = compositePage.joinToString("$LINE_BREAK\n$INDENT", INDENT, LINE_BREAK)
-        val encodedContent = if (type == PypiQueryType.VERSION_INDEX) {
+        val encodedContent = if (packageName != null) {
             content.replace(Regex("$REQUIRES_PYTHON_ATTR=\"[^\"]*")) {
                 HtmlUtils.partialEncode(it.value)
             }
         } else content
-        val title =
-            if (artifactName.isBlank()) PACKAGE_INDEX_TITLE else String.format(VERSION_INDEX_TITLE, artifactName)
+        val title = if (packageName == null) PACKAGE_INDEX_TITLE else String.format(VERSION_INDEX_TITLE, packageName)
         return String.format(SIMPLE_PAGE_CONTENT, title, title, encodedContent)
     }
 

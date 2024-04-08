@@ -1,21 +1,19 @@
 package com.tencent.bkrepo.pypi.artifact.repository
 
-import com.tencent.bkrepo.common.api.exception.BadRequestException
+import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.exception.NotFoundException
-import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.repository.composite.CompositeRepository
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
+import com.tencent.bkrepo.pypi.artifact.PypiSimpleArtifactInfo
 import com.tencent.bkrepo.pypi.constants.FILE_NAME_REGEX
 import com.tencent.bkrepo.pypi.constants.INDENT
 import com.tencent.bkrepo.pypi.constants.LINE_BREAK
 import com.tencent.bkrepo.pypi.constants.PACKAGE_INDEX_TITLE
 import com.tencent.bkrepo.pypi.constants.PSEUDO_MATCH_REGEX
-import com.tencent.bkrepo.pypi.constants.PypiQueryType
-import com.tencent.bkrepo.pypi.constants.QUERY_TYPE
 import com.tencent.bkrepo.pypi.constants.REQUIRES_PYTHON_ATTR
 import com.tencent.bkrepo.pypi.constants.SELECTOR_ANCHOR
 import com.tencent.bkrepo.pypi.constants.SIMPLE_PAGE_CONTENT
@@ -49,24 +47,23 @@ class PypiCompositeRepository(
     }
 
     override fun query(context: ArtifactQueryContext): Any? {
-        return when (val type = context.getAttribute<PypiQueryType>(QUERY_TYPE)) {
-            PypiQueryType.PACKAGE_INDEX,
-            PypiQueryType.VERSION_INDEX -> {
-                val artifactName = context.artifactInfo.getArtifactName().removePrefix("/")
+        return when (val artifactInfo = context.artifactInfo) {
+            is PypiSimpleArtifactInfo -> {
                 val localPage = try {
                     pypiLocalRepository.query(context) as? String
                 } catch (e: NotFoundException) { null }
                 val remotePage = queryFromProxyRepo(context) as? String
                 if (localPage == null && remotePage == null) {
-                    throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, artifactName)
+                    throw NotFoundException(
+                        ArtifactMessageCode.NODE_NOT_FOUND, artifactInfo.packageName ?: StringPool.SLASH
+                    )
                 } else if (localPage == null || remotePage == null) {
                     return localPage ?: remotePage
                 } else {
-                    combineIndex(type, artifactName, localPage, remotePage)
+                    combineIndex(artifactInfo.packageName, localPage, remotePage)
                 }
             }
-            PypiQueryType.VERSION_DETAIL -> pypiLocalRepository.query(context)
-            null -> throw BadRequestException(CommonMessageCode.REQUEST_CONTENT_INVALID)
+            else -> pypiLocalRepository.query(context)
         }
     }
 
@@ -103,30 +100,28 @@ class PypiCompositeRepository(
     }
 
     private fun combineIndex(
-        type: PypiQueryType,
-        artifactName: String,
+        packageName: String?,
         localIndex: String,
         remoteIndex: String
     ): String {
-        val pseudoSelector = if (artifactName.isBlank()) "" else String.format(PSEUDO_MATCH_REGEX, FILE_NAME_REGEX)
+        val pseudoSelector = if (packageName == null) "" else String.format(PSEUDO_MATCH_REGEX, FILE_NAME_REGEX)
         val localElements = Jsoup.parse(localIndex).body().select(SELECTOR_ANCHOR + pseudoSelector)
         val remoteElements = Jsoup.parse(remoteIndex).body().select(SELECTOR_ANCHOR + pseudoSelector)
         val indexes = listOf(localElements, remoteElements)
             .filter { !it.isNullOrEmpty() }
-            .ifEmpty { throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, artifactName) }
+            .ifEmpty { throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, packageName ?: StringPool.SLASH) }
         val compositeElements = if (indexes.size == 1) indexes.first() else {
             val anchorSet = TreeSet<Element>(compareBy { it.text() })
             indexes.forEach { anchorSet.addAll(it) }
             Elements(anchorSet)
         }
         val content = compositeElements.joinToString("$LINE_BREAK\n$INDENT", INDENT, LINE_BREAK)
-        val encodedContent = if (type == PypiQueryType.VERSION_INDEX) {
+        val encodedContent = if (packageName != null) {
             content.replace(Regex("$REQUIRES_PYTHON_ATTR=\"[^\"]*")) {
                 HtmlUtils.partialEncode(it.value)
             }
         } else content
-        val title =
-            if (artifactName.isBlank()) PACKAGE_INDEX_TITLE else String.format(VERSION_INDEX_TITLE, artifactName)
+        val title = if (packageName == null) PACKAGE_INDEX_TITLE else String.format(VERSION_INDEX_TITLE, packageName)
         return String.format(SIMPLE_PAGE_CONTENT, title, title, encodedContent)
     }
 

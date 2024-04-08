@@ -36,7 +36,6 @@ const val NAME = "name"
 const val VERSION = "version"
 
 const val ARTIFACT_LIST = "artifactList"
-const val QUERY_TYPE = "queryType"
 const val REQUIRES_PYTHON = "requires_python"
 
 const val LINE_BREAK = "<br />"
@@ -64,3 +63,8 @@ const val SIMPLE_PAGE_CONTENT =
 %s
   </body>
 </html>"""
+
+const val REMOTE_HTML_CACHE_FULL_PATH = "remoteHtml.html"
+const val FLUSH_CACHE_EXPIRE = 60 * 24
+const val XML_RPC_URI = "RPC2"
+const val XML_RPC_OPERATION_OR = "or"

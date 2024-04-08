@@ -33,9 +33,7 @@ package com.tencent.bkrepo.pypi.artifact.repository
 
 import com.tencent.bkrepo.common.api.constant.HttpHeaders.USER_AGENT
 import com.tencent.bkrepo.common.api.constant.ensurePrefix
-import com.tencent.bkrepo.common.api.exception.BadRequestException
 import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
-import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
@@ -55,18 +53,17 @@ import com.tencent.bkrepo.common.service.util.HeaderUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.common.storage.monitor.Throughput
-import com.tencent.bkrepo.pypi.FLUSH_CACHE_EXPIRE
-import com.tencent.bkrepo.pypi.REMOTE_HTML_CACHE_FULL_PATH
-import com.tencent.bkrepo.pypi.XML_RPC_URI
+import com.tencent.bkrepo.pypi.artifact.PypiSimpleArtifactInfo
 import com.tencent.bkrepo.pypi.artifact.xml.XmlConvertUtil
 import com.tencent.bkrepo.pypi.constants.ARTIFACT_LIST
 import com.tencent.bkrepo.pypi.constants.FIELD_NAME
 import com.tencent.bkrepo.pypi.constants.FIELD_VERSION
+import com.tencent.bkrepo.pypi.constants.FLUSH_CACHE_EXPIRE
 import com.tencent.bkrepo.pypi.constants.METADATA
 import com.tencent.bkrepo.pypi.constants.NAME
-import com.tencent.bkrepo.pypi.constants.PypiQueryType
-import com.tencent.bkrepo.pypi.constants.QUERY_TYPE
+import com.tencent.bkrepo.pypi.constants.REMOTE_HTML_CACHE_FULL_PATH
 import com.tencent.bkrepo.pypi.constants.VERSION
+import com.tencent.bkrepo.pypi.constants.XML_RPC_URI
 import com.tencent.bkrepo.pypi.exception.PypiRemoteSearchException
 import com.tencent.bkrepo.pypi.pojo.Basic
 import com.tencent.bkrepo.pypi.pojo.PypiArtifactVersionData
@@ -94,7 +91,6 @@ import java.io.InputStreamReader
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
 
 @Component
 class PypiRemoteRepository(
@@ -110,20 +106,21 @@ class PypiRemoteRepository(
             }
             is ArtifactQueryContext -> {
                 val remoteConfiguration = context.getRemoteConfiguration()
-                val artifactUri = context.artifactInfo.getArtifactFullPath()
+                val urlSuffix = context.artifactInfo.getArtifactName()
                 remoteConfiguration.url.removeSuffix("/").removeSuffix("simple").removeSuffix("/") +
-                        "/simple$artifactUri"
+                        "/simple$urlSuffix"
             }
             else -> throw MethodNotAllowedException()
         }
     }
 
     override fun query(context: ArtifactQueryContext): Any? {
-        return when (context.getAttribute<PypiQueryType>(QUERY_TYPE)) {
-            PypiQueryType.PACKAGE_INDEX -> getCacheHtml(context) ?: remoteQuery(context)
-            PypiQueryType.VERSION_INDEX -> remoteQuery(context)
-            PypiQueryType.VERSION_DETAIL -> getVersionDetail(context)
-            null -> throw BadRequestException(CommonMessageCode.REQUEST_CONTENT_INVALID)
+        return when (val artifactInfo = context.artifactInfo) {
+            is PypiSimpleArtifactInfo -> {
+                if (artifactInfo.packageName == null) getCacheHtml(context) ?: remoteQuery(context)
+                else remoteQuery(context)
+            }
+            else -> getVersionDetail(context)
         }
     }
 
@@ -142,7 +139,7 @@ class PypiRemoteRepository(
     override fun onQueryResponse(context: ArtifactQueryContext, response: Response): Any? {
         val body = response.body()!!
         return body.string().also {
-            if (context.getAttribute<PypiQueryType>(QUERY_TYPE) == PypiQueryType.PACKAGE_INDEX) {
+            if ((context.artifactInfo as? PypiSimpleArtifactInfo)?.packageName == null) {
                 storeCacheHtml(context, it)
             }
             body.close()
@@ -194,9 +191,7 @@ class PypiRemoteRepository(
      * 需要单独给fullpath赋值。
      */
     fun getNodeCreateRequest(context: ArtifactQueryContext, artifactFile: ArtifactFile): NodeCreateRequest {
-        return super.buildCacheNodeCreateRequest(context, artifactFile).copy(
-            fullPath = "/$REMOTE_HTML_CACHE_FULL_PATH"
-        )
+        return super.buildCacheNodeCreateRequest(context, artifactFile)
     }
 
     /**

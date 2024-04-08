@@ -38,8 +38,6 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveConte
 import com.tencent.bkrepo.common.artifact.repository.core.ArtifactService
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.pypi.artifact.PypiArtifactInfo
-import com.tencent.bkrepo.pypi.constants.PypiQueryType
-import com.tencent.bkrepo.pypi.constants.QUERY_TYPE
 import org.springframework.stereotype.Service
 
 @Service
@@ -60,7 +58,6 @@ class PypiWebService : ArtifactService() {
     @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
     fun artifactDetail(pypiArtifactInfo: PypiArtifactInfo, packageKey: String, version: String?): Any? {
         val context = ArtifactQueryContext()
-        context.putAttribute(QUERY_TYPE, PypiQueryType.VERSION_DETAIL)
         return repository.query(context)
     }
 }

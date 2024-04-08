@@ -27,11 +27,9 @@
 
 package com.tencent.bkrepo.pypi.artifact.repository
 
-import com.tencent.bkrepo.common.api.exception.BadRequestException
+import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.exception.NotFoundException
-import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
-import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.path.PathUtils.ROOT
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
@@ -51,6 +49,7 @@ import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.query.model.Sort
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
+import com.tencent.bkrepo.pypi.artifact.PypiSimpleArtifactInfo
 import com.tencent.bkrepo.pypi.artifact.url.UrlPatternUtil.parameterMaps
 import com.tencent.bkrepo.pypi.artifact.xml.Value
 import com.tencent.bkrepo.pypi.artifact.xml.XmlUtil
@@ -58,8 +57,6 @@ import com.tencent.bkrepo.pypi.constants.INDENT
 import com.tencent.bkrepo.pypi.constants.LINE_BREAK
 import com.tencent.bkrepo.pypi.constants.NON_ALPHANUMERIC_SEQ_REGEX
 import com.tencent.bkrepo.pypi.constants.PACKAGE_INDEX_TITLE
-import com.tencent.bkrepo.pypi.constants.PypiQueryType
-import com.tencent.bkrepo.pypi.constants.QUERY_TYPE
 import com.tencent.bkrepo.pypi.constants.REQUIRES_PYTHON
 import com.tencent.bkrepo.pypi.constants.REQUIRES_PYTHON_ATTR
 import com.tencent.bkrepo.pypi.constants.SIMPLE_PAGE_CONTENT
@@ -284,11 +281,9 @@ class PypiLocalRepository(
      * 2，pypi simple html页面
      */
     override fun query(context: ArtifactQueryContext): Any? {
-        return when (val queryType = context.getAttribute<PypiQueryType>(QUERY_TYPE)) {
-            PypiQueryType.PACKAGE_INDEX,
-            PypiQueryType.VERSION_INDEX -> getSimpleHtml(context.artifactInfo, queryType)
-            PypiQueryType.VERSION_DETAIL -> getVersionDetail(context)
-            null -> throw BadRequestException(CommonMessageCode.REQUEST_CONTENT_INVALID)
+        return when (val artifactInfo = context.artifactInfo) {
+            is PypiSimpleArtifactInfo -> getSimpleHtml(artifactInfo)
+            else -> getVersionDetail(context)
         }
     }
 
@@ -332,15 +327,14 @@ class PypiLocalRepository(
         }
     }
 
-    fun getSimpleHtml(artifactInfo: ArtifactInfo, type: PypiQueryType): String? {
+    fun getSimpleHtml(artifactInfo: PypiSimpleArtifactInfo): String? {
         with(artifactInfo) {
-            val packagePath = getArtifactFullPath()
-            logger.info("Get simple html, artifactInfo: $packagePath")
+            logger.info("Get simple html, artifactInfo: $this")
             // 请求不带包名，返回包名列表.
-            if (type == PypiQueryType.PACKAGE_INDEX) {
+            if (packageName == null) {
                 val nodeList = nodeClient.listNode(projectId, repoName, ROOT, includeFolder = true).data
                     ?.filter { it.folder }?.takeIf { it.isNotEmpty() }
-                    ?: throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, packagePath)
+                    ?: throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, StringPool.SLASH)
                 // 过滤掉'根节点',
                 return buildPypiPageContent(PACKAGE_INDEX_TITLE, buildPackageListContent(nodeList))
             }
@@ -355,16 +349,16 @@ class PypiLocalRepository(
                         .page(pageNumber, PAGE_SIZE)
                         .projectId(projectId)
                         .repoName(repoName)
-                        .path("^${packagePath.replace("-", NON_ALPHANUMERIC_SEQ_REGEX)}/", OperationType.REGEX_I)
+                        .path("^/${packageName!!.replace("-", NON_ALPHANUMERIC_SEQ_REGEX)}/", OperationType.REGEX_I)
                         .excludeFolder()
                         .build()
                     val records = nodeClient.queryWithoutCount(queryModel).data!!.records
                     nodeList.addAll(records)
                     pageNumber++
                 } while (records.size == PAGE_SIZE)
-                nodeList.ifEmpty { throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, packagePath) }
+                nodeList.ifEmpty { throw NotFoundException(ArtifactMessageCode.NODE_NOT_FOUND, packageName!!) }
                 return buildPypiPageContent(
-                    String.format(VERSION_INDEX_TITLE, getArtifactName().removePrefix("/")),
+                    String.format(VERSION_INDEX_TITLE, packageName),
                     buildPackageFileNodeListContent(nodeList)
                 )
             }

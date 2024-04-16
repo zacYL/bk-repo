@@ -35,6 +35,7 @@ import com.tencent.bkrepo.common.security.actuator.ActuatorAuthConfiguration
 import com.tencent.bkrepo.common.security.crypto.CryptoConfiguration
 import com.tencent.bkrepo.common.security.exception.SecurityExceptionHandler
 import com.tencent.bkrepo.common.security.http.HttpAuthConfiguration
+import com.tencent.bkrepo.common.security.http.interceptor.anonymous.AnonymousInterceptorConfiguration
 import com.tencent.bkrepo.common.security.manager.AuthenticationManager
 import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.common.security.permission.PermissionConfiguration
@@ -53,6 +54,7 @@ import org.springframework.context.annotation.Import
     HttpAuthConfiguration::class,
     ServiceAuthConfiguration::class,
     ActuatorAuthConfiguration::class,
-    CryptoConfiguration::class
+    CryptoConfiguration::class,
+    AnonymousInterceptorConfiguration::class
 )
 class SecurityAutoConfiguration

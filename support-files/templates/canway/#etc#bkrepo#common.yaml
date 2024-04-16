@@ -129,7 +129,11 @@ security:
     enabled: false
     # 默认值
     secretKey: secret@key
-
+  anonymous:
+    interceptor:
+      enabled: __BK_REPO_ANONYMOUS_ACCESS_INTERCEPTOR_ENABLED__
+      cidr:
+        whiteList: __BK_REPO_ANONYMOUS_ACCESS_CIDR_WHITELIST__
 service:
   suffix: "__BK_REPO_SERVICE_SUFFIX__"
   prefix: "__BK_REPO_SERVICE_PREFIX__"

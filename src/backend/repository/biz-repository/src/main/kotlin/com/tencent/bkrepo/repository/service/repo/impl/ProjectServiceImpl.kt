@@ -41,7 +41,6 @@ import com.tencent.bkrepo.common.artifact.constant.PUBLIC_GLOBAL_PROJECT
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_PROXY_PROJECT
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
-import com.tencent.bkrepo.common.devops.DEPLOY_CPACK
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
 import com.tencent.bkrepo.repository.dao.ProjectDao
@@ -273,6 +272,7 @@ class ProjectServiceImpl(
         private const val PROJECT_NAME_PATTERN = "[a-zA-Z_][a-zA-Z0-9\\-_]{1,99}"
         private const val DISPLAY_NAME_LENGTH_MIN = 2
         private const val DISPLAY_NAME_LENGTH_MAX = 100
+        private const val DEPLOY_CPACK = "cpack"
 
         private fun convert(tProject: TProject?): ProjectInfo? {
             return tProject?.let {

@@ -74,7 +74,7 @@ class ConanDeleteServiceImpl : ConanDeleteService {
                 val request = NodeDeleteRequest(projectId, repoName, rootPath, SecurityUtils.getUserId())
                 nodeClient.deleteNode(request)
             } else {
-                val conanFileReference = convertToConanFileReference(conanArtifactInfo)
+                val conanFileReference = convertToConanFileReference(conanArtifactInfo, revision)
                 val revisions = commonService.getRecipeRevisions(projectId, repoName, conanFileReference).revisions
                 if (revisions.none { it.revision != revision }) {
                     //version下revision只有一个时删除version

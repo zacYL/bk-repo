@@ -510,6 +510,7 @@ class CommonService {
         repoName: String,
         packageReference: PackageReference
     ): IndexInfo {
+        //todo 此处返回的package的revisions信息不对？应该返回package下一级的revisions信息
         val revPath = getPackageRevisionsFile(packageReference)
         val refStr = buildPackageReference(packageReference)
         return getRevisionsList(

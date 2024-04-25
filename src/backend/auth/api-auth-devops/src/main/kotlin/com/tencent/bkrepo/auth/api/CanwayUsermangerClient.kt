@@ -1,12 +1,12 @@
 package com.tencent.bkrepo.auth.api
 
-import com.tencent.bkrepo.auth.constant.AuthConstant
 import com.tencent.bkrepo.auth.pojo.MigrateTokenVO
 import com.tencent.bkrepo.auth.pojo.UserLoginVo
 import com.tencent.bkrepo.auth.pojo.user.UserData
 import com.tencent.bkrepo.auth.pojo.user.CanwayUserInfo
 import com.tencent.bkrepo.auth.pojo.user.UserPasswordUpdateVO
 import com.tencent.bkrepo.auth.pojo.user.UserRequest
+import com.tencent.bkrepo.common.api.constant.DEVOPS_USER_MANAGER_SERVICE_NAME
 import io.swagger.annotations.Api
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RequestHeader
  */
 @Api("平台用户服务项目接口")
 @Primary
-@FeignClient(AuthConstant.DEVOPS_USER_NAME, contextId = "CanwayUsermangerClient")
+@FeignClient(DEVOPS_USER_MANAGER_SERVICE_NAME, contextId = "CanwayUsermangerClient")
 @RequestMapping("/api/service")
 interface CanwayUsermangerClient {
 

@@ -107,6 +107,9 @@ security:
       secretKey: secret@key
       # spring Duration配置格式，可以带时间单位，为0表示永不过期，默认为0
       expiration: 0
+    # 平台个人令牌认证
+    devopsToken:
+      enabled: true
   crypto:
     rsaAlgorithm: RSA/ECB/PKCS1Padding
     privateKeyStr: "MIICdwIBADANBgkqhkiG9w0BAQEFAASCAmEwggJdAgEAAoGBAMaoDhrj

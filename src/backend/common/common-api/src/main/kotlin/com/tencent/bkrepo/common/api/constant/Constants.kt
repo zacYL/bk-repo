@@ -88,7 +88,7 @@ const val AUTH_SERVICE_NAME = "\${service.prefix:repo-}auth\${service.suffix:}"
 const val REPLICATION_SERVICE_NAME = "\${service.prefix:repo-}replication\${service.suffix:}"
 const val DOCKER_SERVICE_NAME = "\${service.prefix:repo-}docker\${service.suffix:}"
 const val MAVEN_SERVICE_NAME = "\${service.prefix:repo-}maven\${service.suffix:}"
-const val PYPI_SERVICE_NAME = "\${service.prefix:repo-}pipy\${service.suffix:}"
+const val PYPI_SERVICE_NAME = "\${service.prefix:repo-}pypi\${service.suffix:}"
 const val NPM_SERVICE_NAME = "\${service.prefix:repo-}npm\${service.suffix:}"
 const val HELM_SERVICE_NAME = "\${service.prefix:repo-}helm\${service.suffix:}"
 const val COMPOSER_SERVICE_NAME = "\${service.prefix:repo-}composer\${service.suffix:}"
@@ -98,6 +98,11 @@ const val ANALYSIS_EXECUTOR_SERVICE_NAME = "\${service.prefix:repo-}analysis-exe
 const val LICENSE_SERVICE_NAME = "\${service-prefix:}license\${service-suffix:}"
 const val JOB_SERVICE_NAME = "\${service.prefix:repo-}job\${service.suffix:}"
 const val OCI_SERVICE_NAME = "\${service.prefix:repo-}oci\${service.suffix:}"
+
+/**
+ *  Devops Service Name
+ */
+const val DEVOPS_USER_MANAGER_SERVICE_NAME = "\${service.devops-prefix:}usermanager\${service.suffix:}"
 
 /**
  * 认证相关
@@ -115,3 +120,5 @@ const val TEMPORARY_TOKEN_AUTH_PREFIX = "Temporary "
  */
 const val CLIENT_ADDRESS = "clientAddress"
 const val DOWNLOAD_SOURCE = "downloadSource"
+
+const val CPACK_PRODUCT_CODE = "CPack"

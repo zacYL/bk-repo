@@ -33,6 +33,8 @@ import com.tencent.bkrepo.auth.api.ServiceUserResource
 import com.tencent.bkrepo.auth.pojo.oauth.OauthToken
 import com.tencent.bkrepo.auth.pojo.user.CreateUserRequest
 import com.tencent.bkrepo.auth.pojo.user.User
+import com.tencent.bkrepo.common.devops.client.ServiceAccessTokenClient
+import com.tencent.bkrepo.common.devops.pojo.accesstoken.DevopsAccessToken
 import com.tencent.bkrepo.common.security.exception.AuthenticationException
 import com.tencent.bkrepo.common.security.http.core.HttpAuthProperties
 import org.slf4j.LoggerFactory
@@ -46,6 +48,7 @@ class AuthenticationManager(
     private val serviceUserResource: ServiceUserResource,
     private val serviceAccountResource: ServiceAccountResource,
     private val serviceOauthAuthorizationResource: ServiceOauthAuthorizationResource,
+    private val serviceAccessTokenClient: ServiceAccessTokenClient,
     private val httpAuthProperties: HttpAuthProperties
 ) {
 
@@ -94,6 +97,10 @@ class AuthenticationManager(
 
     fun findOauthToken(accessToken: String): OauthToken? {
         return serviceOauthAuthorizationResource.getToken(accessToken).data
+    }
+
+    fun getDevopsAccessTokenDetail(token: String): DevopsAccessToken? {
+        return serviceAccessTokenClient.getTokenDetail(token).data
     }
 
     private fun preCheck(): Boolean {

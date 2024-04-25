@@ -26,6 +26,7 @@
 
 package net.canway.devops.common.lse
 
+import com.tencent.bkrepo.common.api.constant.CPACK_PRODUCT_CODE
 import com.tencent.bkrepo.common.api.constant.CharPool
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
@@ -92,7 +93,6 @@ class LseChecker {
 	companion object {
 		val logger: Logger = LoggerFactory.getLogger(LseChecker::class.java)
 		const val LICENSE_UPDATE_INTERVAL = 180 * 1000L
-		const val CPACK_PRODUCT_CODE = "CPack"
 		private const val REPLICATION_LICENSE_CODE = "replication"
 		private const val ANALYSE_LICENSE_CODE = "analyst"
 		private const val ENTERPRISE_VERSION = "ENTERPRISE"

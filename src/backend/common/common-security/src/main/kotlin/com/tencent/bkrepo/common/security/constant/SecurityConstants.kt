@@ -40,6 +40,9 @@ const val PLATFORM_AUTH_PREFIX = "Platform "
 const val BEARER_AUTH_PREFIX = "Bearer "
 const val AUTH_HEADER_UID = "X-BKREPO-UID"
 const val OAUTH_AUTH_PREFIX = "Oauth"
+const val AUTH_HEADER_DEVOPS_UID = "X-DEVOPS-UID"
+const val AUTH_HEADER_DEVOPS_ACCESS_TOKEN = "X-DEVOPS-ACCESS-TOKEN"
+const val HEADER_API_TYPE = "X-BKREPO-API-TYPE"
 
 /**
  * micro service header user id key
@@ -52,3 +55,5 @@ const val MS_AUTH_HEADER_UID = "X-BKREPO-MS-UID"
 const val MS_AUTH_HEADER_SECURITY_TOKEN = "X-BKREPO-SECURITY-TOKEN"
 
 const val ANY_URI_PATTERN = "/**"
+
+const val ACCESS_FROM_WEB = "web"

@@ -1,4 +1,4 @@
-package com.tencent.bkrepo.common.security.http.interceptor.anonymous
+package com.tencent.bkrepo.common.security.interceptor.anonymous
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.NestedConfigurationProperty

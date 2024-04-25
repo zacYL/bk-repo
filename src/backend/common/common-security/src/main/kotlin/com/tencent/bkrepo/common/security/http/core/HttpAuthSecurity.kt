@@ -50,6 +50,7 @@ open class HttpAuthSecurity {
     var platformAuthEnabled: Boolean = true
     var jwtAuthEnabled: Boolean = true
     var oauthEnabled: Boolean = true
+    var devopsAccessTokenAuthEnabled: Boolean = false
     var authenticationManager: AuthenticationManager? = null
     var jwtAuthProperties: JwtAuthProperties? = null
     val customizers: MutableList<HttpAuthSecurityCustomizer> = mutableListOf()
@@ -112,6 +113,14 @@ open class HttpAuthSecurity {
      */
     fun disableAnonymous(): HttpAuthSecurity {
         anonymousEnabled = false
+        return this
+    }
+
+    /**
+     * 启用平台个人令牌认证，默认关闭
+     */
+    fun enableDevopsAccessTokenAuth(): HttpAuthSecurity {
+        devopsAccessTokenAuthEnabled = true
         return this
     }
 

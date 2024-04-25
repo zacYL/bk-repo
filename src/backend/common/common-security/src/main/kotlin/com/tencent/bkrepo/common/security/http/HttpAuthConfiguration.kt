@@ -32,6 +32,7 @@
 package com.tencent.bkrepo.common.security.http
 
 import com.tencent.bkrepo.common.security.http.core.HttpAuthProperties
+import com.tencent.bkrepo.common.security.http.devops.AccessTokenAuthConfiguration
 import com.tencent.bkrepo.common.security.http.jwt.JwtAuthProperties
 import com.tencent.bkrepo.common.security.http.login.LoginConfiguration
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -48,6 +49,7 @@ import org.springframework.context.annotation.Import
 )
 @Import(
     LoginConfiguration::class,
-    HttpAuthSecurityConfiguration::class
+    HttpAuthSecurityConfiguration::class,
+    AccessTokenAuthConfiguration::class
 )
 class HttpAuthConfiguration

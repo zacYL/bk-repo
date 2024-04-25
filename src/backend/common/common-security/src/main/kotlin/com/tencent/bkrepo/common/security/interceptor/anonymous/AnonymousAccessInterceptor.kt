@@ -1,4 +1,4 @@
-package com.tencent.bkrepo.common.security.http.interceptor.anonymous
+package com.tencent.bkrepo.common.security.interceptor.anonymous
 
 import com.tencent.bkrepo.common.api.constant.ANONYMOUS_USER
 import com.tencent.bkrepo.common.api.constant.HttpHeaders.X_FORWARDED_FOR

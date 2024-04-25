@@ -5,8 +5,6 @@ object AuthConstant {
 
     const val DEVOPS_AUTH_NAME = "\${service.devops-prefix:}auth\${service.suffix:}"
 
-    const val DEVOPS_USER_NAME = "\${service.devops-prefix:}usermanager\${service.suffix:}"
-
     const val DEVOPS_PROJECT_NAME = "\${service.devops-prefix:}projectmanager\${service.suffix:}"
 
     const val AUTH_HEADER_USER_ID = "X-DEVOPS-UID"

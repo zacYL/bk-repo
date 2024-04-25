@@ -100,9 +100,9 @@ object PathUtils {
         with(fileReference) {
             return StringBuilder(userName)
                 .append(CharPool.SLASH)
-                .append(version)
-                .append(CharPool.AT)
                 .append(name)
+                .append(CharPool.SLASH)
+                .append(version)
                 .append(CharPool.SLASH)
                 .append(channel)
                 .toString()

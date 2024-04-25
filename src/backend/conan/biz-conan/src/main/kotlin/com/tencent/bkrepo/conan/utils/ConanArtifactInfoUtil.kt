@@ -30,13 +30,7 @@ object ConanArtifactInfoUtil {
 //                packageId = list.first()
 //                revision = list.lastOrNull()
 //            }
-            val conanFileReference = ConanFileReference(
-                name = name,
-                version = version,
-                channel = channel,
-                userName = userName,
-                revision = if (revision.isNullOrEmpty()) DEFAULT_REVISION_V1 else revision
-            )
+            val conanFileReference = buildConanFileReference()
             return PackageReference(
                 conRef = conanFileReference,
                 packageId = packageId!!,
@@ -44,4 +38,13 @@ object ConanArtifactInfoUtil {
             )
         }
     }
+
+    fun ConanArtifactInfo.buildConanFileReference() = ConanFileReference(
+        name = name,
+        version = version,
+        channel = channel,
+        userName = userName,
+        revision = if (revision.isNullOrEmpty()) DEFAULT_REVISION_V1 else revision
+    )
+
 }

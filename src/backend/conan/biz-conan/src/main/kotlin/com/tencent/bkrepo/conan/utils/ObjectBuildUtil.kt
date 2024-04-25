@@ -42,6 +42,7 @@ import com.tencent.bkrepo.conan.pojo.ConanPackageUploadRequest
 import com.tencent.bkrepo.conan.pojo.ConanRecipeDeleteRequest
 import com.tencent.bkrepo.conan.pojo.ConanRecipeUploadRequest
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
+import com.tencent.bkrepo.conan.utils.ConanArtifactInfoUtil.buildConanFileReference
 import com.tencent.bkrepo.conan.utils.ConanArtifactInfoUtil.convertToConanFileReference
 import com.tencent.bkrepo.conan.utils.ConanArtifactInfoUtil.convertToPackageReference
 import com.tencent.bkrepo.conan.utils.PathUtils.buildPackageReference
@@ -193,9 +194,9 @@ object ObjectBuildUtil {
         userId: String
     ): ConanRecipeDeleteRequest {
         with(artifactInfo) {
-            val packageReference = convertToPackageReference(this)
-            val revPath = getRecipeRevisionsFile(packageReference.conRef)
-            val refStr = buildReference(packageReference.conRef)
+            val conRef = this.buildConanFileReference()
+            val revPath = getRecipeRevisionsFile(conRef)
+            val refStr = buildReference(conRef)
             return ConanRecipeDeleteRequest(
                 projectId = projectId,
                 repoName = repoName,

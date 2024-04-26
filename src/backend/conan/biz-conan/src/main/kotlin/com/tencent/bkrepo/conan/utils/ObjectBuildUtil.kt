@@ -42,6 +42,7 @@ import com.tencent.bkrepo.conan.pojo.ConanPackageUploadRequest
 import com.tencent.bkrepo.conan.pojo.ConanRecipeDeleteRequest
 import com.tencent.bkrepo.conan.pojo.ConanRecipeUploadRequest
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
+import com.tencent.bkrepo.conan.pojo.user.BasicInfo
 import com.tencent.bkrepo.conan.utils.ConanArtifactInfoUtil.buildConanFileReference
 import com.tencent.bkrepo.conan.utils.ConanArtifactInfoUtil.convertToConanFileReference
 import com.tencent.bkrepo.conan.utils.ConanArtifactInfoUtil.convertToPackageReference
@@ -51,11 +52,14 @@ import com.tencent.bkrepo.conan.utils.PathUtils.getPackageRevisionsFile
 import com.tencent.bkrepo.conan.utils.PathUtils.getRecipeRevisionsFile
 import com.tencent.bkrepo.conan.utils.TimeFormatUtil.convertToUtcTime
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
+import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageUpdateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionUpdateRequest
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import javax.servlet.http.HttpServletResponse
 
 object ObjectBuildUtil {
@@ -227,6 +231,26 @@ object ObjectBuildUtil {
                 revision = revision ?: DEFAULT_REVISION_V1,
                 pRefStr = pRefStr,
                 pRevPath = pRevPath
+            )
+        }
+    }
+
+    fun buildBasicInfo(nodeDetail: NodeDetail, packageVersion: PackageVersion): BasicInfo {
+        with(nodeDetail) {
+            return BasicInfo(
+                version = packageVersion.name,
+                fullPath = fullPath,
+                size = size,
+                sha256 = sha256.orEmpty(),
+                md5 = md5.orEmpty(),
+                stageTag = packageVersion.stageTag,
+                projectId = projectId,
+                repoName = repoName,
+                downloadCount = packageVersion.downloads,
+                createdBy = createdBy,
+                createdDate = packageVersion.createdDate.format(DateTimeFormatter.ISO_DATE_TIME),
+                lastModifiedBy = lastModifiedBy,
+                lastModifiedDate = packageVersion.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME)
             )
         }
     }

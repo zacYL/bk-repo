@@ -1,0 +1,71 @@
+# 重命名文件或目录
+
+功能描述：重命名文件或目录
+
+
+
+## 请求
+
+#### 接口方法
+
+`POST`
+
+#### 接口地址
+
+`/api/open/CPack/repo-repository/api/node/rename/{projectId}/{repoName}/{fullPath}`
+
+#### 请求头
+
+| 字段                  | 类型   | 必填 | 描述               |
+| --------------------- | ------ | ---- | ------------------ |
+| X-DEVOPS-ACCESS-TOKEN | String | 是   | Devops用户访问令牌 |
+
+#### 路径参数
+
+| 字段      | 类型   | 必填 | 描述                                     |
+| --------- | ------ | ---- | ---------------------------------------- |
+| projectId | String | 是   | 项目ID                                   |
+| repoName  | String | 是   | 仓库名称                                 |
+| fullPath  | String | 是   | 原文件或目录的完整路径（可能为多层路径） |
+
+#### 查询参数
+
+| 字段          | 类型     | 必填  | 描述     |
+|-------------|--------|-----|--------|
+| newFullPath | String | 是   | 新的完整路径 |
+
+#### 请求体
+
+无
+
+#### 请求示例
+
+```bash
+curl -X 'POST' \
+    -H 'X-DEVOPS-ACCESS-TOKEN: <your_access_token>' \
+    'https://devops.example.com/api/open/CPack/repo-repository/api/node/rename/{projectId}/{repoName}/{fullPath}?newFullPath={newFullPath}'
+```
+
+
+
+## 响应
+
+#### 响应示例
+
+```json
+{
+  "code": 0,
+  "message": null,
+  "data": null,
+  "traceId": null
+}
+```
+
+#### 响应体
+
+| 字段      | 说明        |
+|---------|-----------|
+| code    | 返回码       |
+| message | 错误信息      |
+| data    | 数据, 为null |
+| traceId | 链路追踪id    |

@@ -1,0 +1,151 @@
+# 查询npm包版本详情
+功能描述：查询npm包版本详情
+
+
+
+## 请求
+
+#### 接口方法
+
+`GET`
+
+#### 接口地址
+
+`/api/open/CPack/repo-npm/ext/version/detail/{projectId}/{repoName}`
+
+#### 请求头
+
+| 字段                  | 类型   | 必填 | 描述               |
+| --------------------- | ------ | ---- | ------------------ |
+| X-DEVOPS-ACCESS-TOKEN | String | 是   | Devops用户访问令牌 |
+
+#### 路径参数
+
+| 字段      | 类型   | 必填 | 描述     |
+| --------- | ------ | ---- | -------- |
+| projectId | String | 是   | 项目ID   |
+| repoName  | String | 是   | 仓库名称 |
+
+#### 查询参数
+
+| 字段       | 类型   | 必填 | 描述      |
+| ---------- | ------ | ---- | --------- |
+| packageKey | String | 是   | 包唯一key |
+| version    | String | 是   | 包版本    |
+
+#### 请求体
+
+无
+
+#### 请求示例
+
+```bash
+curl -H 'X-DEVOPS-ACCESS-TOKEN: <your_access_token>' \
+    'https://devops.example.com/api/open/CPack/repo-npm/ext/version/detail/{projectId}/{repoName}?packageKey=npm://express&version=3.0.1'
+```
+
+
+
+## 响应
+
+#### 响应示例
+
+```json
+{
+  "code": 0,
+  "message": null,
+  "data": {
+    "basic": {
+      "version": "1.12.4",
+      "fullPath": "/jquery/-/jquery-1.12.4.tgz",
+      "size": 300456,
+      "sha256": "8548fa1ebdd8f1e0d8c13d2bf8edacb38b4cad9133d9149e22386c5be0ad8e73",
+      "md5": "8940851609aad3f9c543bf4002d8edec",
+      "stageTag": [],
+      "projectId": "devops",
+      "repoName": "codecc-npm",
+      "downloadCount": 1,
+      "createdBy": "admin",
+      "createdDate": "2022-09-15T10:08:02.807",
+      "lastModifiedBy": "admin",
+      "lastModifiedDate": "2022-09-15T10:08:02.807",
+      "readme": "# jQuery\n\n> jQuery is a fast, small, and feature-rich JavaScript library.\n\nFor information on how to get started and how to use jQuery, please see [jQuery's documentation](http://api.jquery.com/).\nFor source files and issues, please visit the [jQuery repo](https://github.com/jquery/jquery).\n\n## Including jQuery\n\nBelow are some of the most common ways to include jQuery.\n\n### Browser\n\n#### Script tag\n\n```html\n<script src=\"https://code.jquery.com/jquery-2.2.0.min.js\"></script>\n```\n\n#### Babel\n\n[Babel](http://babeljs.io/) is a next generation JavaScript compiler. One of the features is the ability to use ES6/ES2015 modules now, even though browsers do not yet support this feature natively.\n\n```js\nimport $ from \"jquery\";\n```\n\n#### Browserify/Webpack\n\nThere are several ways to use [Browserify](http://browserify.org/) and [Webpack](https://webpack.github.io/). For more information on using these tools, please refer to the corresponding project's documention. In the script, including jQuery will usually look like this...\n\n```js\nvar $ = require(\"jquery\");\n```\n\n#### AMD (Asynchronous Module Definition)\n\nAMD is a module format built for the browser. For more information, we recommend [require.js' documentation](http://requirejs.org/docs/whyamd.html).\n\n```js\ndefine([\"jquery\"], function($) {\n\n});\n```\n\n### Node\n\nTo include jQuery in [Node](nodejs.org), first install with npm.\n\n```sh\nnpm install jquery\n```\n\nFor jQuery to work in Node, a window with a document is required. Since no such window exists natively in Node, one can be mocked by tools such as [jsdom](https://github.com/tmpvar/jsdom). This can be useful for testing purposes.\n\n```js\nrequire(\"jsdom\").env(\"\", function(err, window) {\n\tif (err) {\n\t\tconsole.error(err);\n\t\treturn;\n\t}\n\n\tvar $ = require(\"jquery\")(window);\n});\n```\n"
+    },
+    "metadata": [
+      {
+        "key": "name",
+        "value": "jquery",
+        "system": false,
+        "description": null
+      },
+      {
+        "key": "version",
+        "value": "1.12.4",
+        "system": false,
+        "description": null
+      }
+    ],
+    "dependencyInfo": {
+      "dependencies": [],
+      "devDependencies": [
+        {
+          "name": "core-js",
+          "version": "0.9.17"
+        },
+        {
+          "name": "grunt",
+          "version": "0.4.5"
+        }
+      ],
+      "dependents": []
+    }
+  },
+  "traceId": ""
+}
+```
+
+#### 响应体
+
+| 字段      | 说明     |
+|---------|--------|
+| code    | 返回码    |
+| message | 错误信息   |
+| data    | 数据     |
+| traceId | 链路追踪id |
+
+##### data 字段说明
+
+basic: 基础信息
+
+| 字段               | 说明           |
+|------------------|--------------|
+| version          | 版本字段         |
+| fullPath         | 完整路径         |
+| size             | 文件大小, 单位byte |
+| sha256           | 文件sha256     |
+| md5              | 文件md5        |
+| stageTag         | 晋级状态标签       |
+| projectId        | 所属项目id       |
+| repoName         | 所属仓库名称       |
+| downloadCount    | 下载次数         |
+| createdBy        | 创建者          |
+| createdDate      | 创建时间         |
+| lastModifiedBy   | 修改者          |
+| lastModifiedDate | 修改时间         |
+
+metadata: 元数据信息
+
+| 字段          | 描述       |
+|-------------|----------|
+| key         | 元数据键     |
+| value       | 元数据值     |
+| system      | 是否为系统元数据 |
+| description | 元数据描述信息  |
+
+dependencyInfo: 版本的依赖信息
+
+| 字段              | 描述       |
+|-----------------|----------|
+| dependencies    | 包的依赖信息   |
+| devDependencies | 包的开发依赖信息 |
+| dependents      | 包的被依赖信息  |

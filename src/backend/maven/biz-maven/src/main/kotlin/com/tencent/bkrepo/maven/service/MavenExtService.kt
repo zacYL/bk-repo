@@ -1,15 +1,20 @@
 package com.tencent.bkrepo.maven.service
 
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.common.api.exception.ParameterInvalidException
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.query.model.PageLimit
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.query.model.Sort
+import com.tencent.bkrepo.common.security.exception.PermissionException
+import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.maven.constants.PACKAGE_SUFFIX_REGEX
+import com.tencent.bkrepo.maven.constants.REPO_TYPE
 import com.tencent.bkrepo.maven.enum.MavenMessageCode
 import com.tencent.bkrepo.maven.exception.MavenArtifactNotFoundException
 import com.tencent.bkrepo.maven.pojo.MavenDependency
@@ -22,10 +27,12 @@ import com.tencent.bkrepo.maven.util.DependencyUtils.toReverseSearchString
 import com.tencent.bkrepo.maven.util.DependencyUtils.toSearchString
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.PackageClient
+import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.api.VersionDependentsClient
 import com.tencent.bkrepo.repository.pojo.dependent.VersionDependentsRelation
 import com.tencent.bkrepo.repository.pojo.dependent.VersionDependentsRequest
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
+import com.tencent.bkrepo.repository.pojo.repo.RepoListOption
 import org.apache.maven.model.Model
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -37,6 +44,7 @@ import java.util.regex.Pattern
 class MavenExtService(
     private val nodeClient: NodeClient,
     private val packageClient: PackageClient,
+    private val repositoryClient: RepositoryClient,
     private val versionDependentsClient: VersionDependentsClient
 ) {
 
@@ -54,7 +62,22 @@ class MavenExtService(
         repos: String?
     ): Response<Page<MavenGAVCResponse.UriResult>> {
         gavcCheck(g, a, v, c)
-        val result = buildGavcQuery(projectId, pageNumber, pageSize, g, a, v, c, repos)
+        val userId = SecurityUtils.getUserId()
+        val repoListOption = RepoListOption(
+            type = REPO_TYPE,
+            category = listOf(
+                RepositoryCategory.LOCAL.name,
+                RepositoryCategory.REMOTE.name,
+                RepositoryCategory.COMPOSITE.name
+            ),
+            actions = listOf(PermissionAction.READ)
+        )
+        val accessibleRepos = repositoryClient.listPermissionRepo(userId, projectId, repoListOption).data!!
+            .map { it.name }.toSet()
+        val inputRepos = repos?.split(",")?.map { it.trim() }
+        val queryRepos = (inputRepos?.intersect(accessibleRepos) ?: accessibleRepos)
+            .ifEmpty { throw PermissionException() }
+        val result = buildGavcQuery(projectId, pageNumber, pageSize, g, a, v, c, queryRepos)
         val list = result.data?.records?.map {
             MavenGAVCResponse.UriResult("$mavenDomain/${it["projectId"]}/${it["repoName"]}${it["fullPath"]}")
         }
@@ -84,7 +107,7 @@ class MavenExtService(
         a: String?,
         v: String?,
         c: String?,
-        repos: String?
+        repoList: Set<String>
     ): Response<Page<Map<String, Any?>>> {
         val rules = mutableListOf<Rule>()
         val repoRules = mutableListOf<Rule>()
@@ -94,11 +117,8 @@ class MavenExtService(
         a?.let { metadataRules.add(Rule.QueryRule("metadata.artifactId", a)) }
         v?.let { metadataRules.add(Rule.QueryRule("metadata.version", v)) }
         c?.let { metadataRules.add(Rule.QueryRule("metadata.classifier", c)) }
-        repos?.let {
-            val repoList = repos.trim(',').split(",")
-            for (repo in repoList) {
-                if (repo.isNotBlank()) repoRules.add(Rule.QueryRule("repoName", repo))
-            }
+        for (repo in repoList) {
+            repoRules.add(Rule.QueryRule("repoName", repo))
         }
         rules.add(projectRule)
         rules.add(Rule.QueryRule("folder", false))

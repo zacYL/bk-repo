@@ -105,7 +105,6 @@ class MavenWebController(
 
     @ApiOperation("maven gavc 搜索接口")
     @GetMapping("/search/gavc/{projectId}/{pageNumber}/{pageSize}")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
     fun gavc(
         @PathVariable projectId: String,
         @PathVariable pageNumber: Int,

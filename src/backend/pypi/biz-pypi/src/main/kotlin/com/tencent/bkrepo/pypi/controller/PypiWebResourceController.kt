@@ -37,6 +37,7 @@ import com.tencent.bkrepo.pypi.artifact.PypiArtifactInfo
 import com.tencent.bkrepo.pypi.service.PypiWebService
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
+import io.swagger.annotations.ApiParam
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -50,7 +51,11 @@ class PypiWebResourceController(
 ) {
     @ApiOperation("pypi 包删除接口")
     @DeleteMapping(PypiArtifactInfo.PYPI_EXT_PACKAGE_DELETE)
-    fun deletePackage(pypiArtifactInfo: PypiArtifactInfo, packageKey: String): Response<Void> {
+    fun deletePackage(
+        pypiArtifactInfo: PypiArtifactInfo,
+        @ApiParam(value = "包唯一Key", required = true)
+        packageKey: String
+    ): Response<Void> {
         pypiWebService.deletePackage(pypiArtifactInfo, packageKey)
         return ResponseBuilder.success()
     }
@@ -59,8 +64,10 @@ class PypiWebResourceController(
     @DeleteMapping(PypiArtifactInfo.PYPI_EXT_VERSION_DELETE)
     fun deleteVersion(
         pypiArtifactInfo: PypiArtifactInfo,
+        @ApiParam(value = "包唯一Key", required = true)
         packageKey: String,
-        version: String?
+        @ApiParam(value = "版本号", required = true)
+        version: String
     ): Response<Void> {
         pypiWebService.delete(pypiArtifactInfo, packageKey, version)
         return ResponseBuilder.success()
@@ -70,8 +77,10 @@ class PypiWebResourceController(
     @GetMapping(PypiArtifactInfo.PYPI_EXT_DETAIL)
     fun artifactDetail(
         pypiArtifactInfo: PypiArtifactInfo,
+        @ApiParam(value = "包唯一Key", required = true)
         packageKey: String,
-        version: String?
+        @ApiParam(value = "版本号", required = true)
+        version: String
     ): Response<Any?> {
         return ResponseBuilder.success(pypiWebService.artifactDetail(pypiArtifactInfo, packageKey, version))
     }

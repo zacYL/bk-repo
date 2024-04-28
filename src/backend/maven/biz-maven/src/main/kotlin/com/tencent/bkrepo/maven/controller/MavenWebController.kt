@@ -46,9 +46,9 @@ import com.tencent.bkrepo.maven.pojo.MavenVersionDependentsRelation
 import com.tencent.bkrepo.maven.pojo.response.MavenGAVCResponse
 import com.tencent.bkrepo.maven.service.MavenExtService
 import com.tencent.bkrepo.maven.service.MavenService
-import com.tencent.bkrepo.repository.pojo.dependent.VersionDependentsRelation
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
+import io.swagger.annotations.ApiParam
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -69,6 +69,7 @@ class MavenWebController(
     @DeleteMapping(MavenArtifactInfo.MAVEN_EXT_PACKAGE_DELETE)
     fun deletePackage(
         @ArtifactPathVariable mavenArtifactInfo: MavenDeleteArtifactInfo,
+        @ApiParam(value = "包唯一Key", required = true)
         @RequestParam packageKey: String
     ): Response<Void> {
         mavenService.delete(mavenArtifactInfo, packageKey, null)
@@ -80,8 +81,10 @@ class MavenWebController(
     @Permission(type = ResourceType.REPO, action = PermissionAction.DELETE)
     fun deleteVersion(
         @ArtifactPathVariable mavenArtifactInfo: MavenDeleteArtifactInfo,
+        @ApiParam(value = "包唯一Key", required = true)
         @RequestParam packageKey: String,
-        @RequestParam version: String?
+        @ApiParam(value = "版本号", required = true)
+        @RequestParam version: String
     ): Response<Void> {
         mavenService.delete(mavenArtifactInfo, packageKey, version)
         return ResponseBuilder.success()
@@ -92,8 +95,10 @@ class MavenWebController(
     @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
     fun artifactDetail(
         @ArtifactPathVariable mavenArtifactInfo: MavenArtifactInfo,
+        @ApiParam(value = "包唯一Key", required = true)
         @RequestParam packageKey: String,
-        @RequestParam version: String?
+        @ApiParam(value = "版本号", required = true)
+        @RequestParam version: String
     ): Response<Any?> {
         return ResponseBuilder.success(mavenService.artifactDetail(mavenArtifactInfo, packageKey, version))
     }

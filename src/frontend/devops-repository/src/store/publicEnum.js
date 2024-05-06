@@ -9,8 +9,8 @@ export const repoEnum = [
     { label: 'Composer', value: 'composer' },
     { label: 'Rpm', value: 'rpm' },
     // { label: 'Git', value: 'git' },
-    { label: 'Nuget', value: 'nuget' }
-    // { label: 'Conan', value: 'conan' }
+    { label: 'Nuget', value: 'nuget' },
+    { label: 'Conan', value: 'conan' }
 ]
 // 远程及虚拟仓库支持创建的仓库
 export const repoSupportEnum = [

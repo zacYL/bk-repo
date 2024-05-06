@@ -48,8 +48,8 @@
         }
     </script>
     <script>
-        var PAAS_SERVICE_URL = '__BK_HTTP_SCHEMA__://__BK_REPO_PAAS_FQDN__'
-        var DEVOPS_SITE_URL = '__BK_HTTP_SCHEMA__://__BK_CI_FQDN__'
+        var PAAS_SERVICE_URL = 'http://paas.bklatest.com'
+        var DEVOPS_SITE_URL = 'http://devops.bklatest.com'
         var LOGIN_SERVICE_URL = /^https?/.test(PAAS_SERVICE_URL)
             ? PAAS_SERVICE_URL + '/login/'
             : '__BK_REPO_PAAS_LOGIN_URL__'
@@ -89,7 +89,7 @@
                     redirectUrl.searchParams.set(key, val)
                 })
             }
-            
+
             const xhr = new XMLHttpRequest()
             const cookies = document.cookie.split('; ').reduce((target, str) => {
                 const [key, value] = str.split('=')

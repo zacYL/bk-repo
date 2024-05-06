@@ -122,6 +122,7 @@ class ConanDeleteServiceImpl : ConanDeleteService {
                 val rootPath = buildPackageIdFolderPath(conanFileReference, packageId!!)
                 val request = NodeDeleteRequest(projectId, repoName, rootPath, SecurityUtils.getUserId())
                 nodeClient.deleteNode(request)
+                //todo 删除事件
             } else {
                 val packageReference = convertToPackageReference(conanArtifactInfo)
                 val rootPath = buildPackageRevisionFolderPath(packageReference)

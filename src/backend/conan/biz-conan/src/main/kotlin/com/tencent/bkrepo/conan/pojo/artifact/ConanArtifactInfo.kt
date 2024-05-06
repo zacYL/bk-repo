@@ -28,6 +28,7 @@
 package com.tencent.bkrepo.conan.pojo.artifact
 
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.conan.utils.PathUtils
 
 class ConanArtifactInfo(
     projectId: String,
@@ -42,6 +43,11 @@ class ConanArtifactInfo(
     var pRevision: String? = null,
     var fileName: String? = null
 ) : ArtifactInfo(projectId, repoName, artifactUri) {
+
+    override fun getArtifactFullPath(): String {
+        return PathUtils.generateFullPath(this)
+    }
+
     companion object {
 
         // TODO 路径优化

@@ -52,6 +52,7 @@ import com.tencent.bkrepo.conan.pojo.ConanFileReference
 import com.tencent.bkrepo.conan.pojo.ConanInfo
 import com.tencent.bkrepo.conan.pojo.IndexInfo
 import com.tencent.bkrepo.conan.pojo.PackageReference
+import com.tencent.bkrepo.conan.pojo.PackageRevisionInfo
 import com.tencent.bkrepo.conan.pojo.RevisionInfo
 import com.tencent.bkrepo.conan.utils.ConanInfoLoadUtil
 import com.tencent.bkrepo.conan.utils.PathUtils.buildExportFolderPath
@@ -509,7 +510,7 @@ class CommonService {
         projectId: String,
         repoName: String,
         packageReference: PackageReference
-    ): IndexInfo {
+    ): PackageRevisionInfo {
         //todo 此处返回的package的revisions信息不对？应该返回package下一级的revisions信息
         val revPath = getPackageRevisionsFile(packageReference)
         val refStr = buildPackageReference(packageReference)
@@ -518,7 +519,7 @@ class CommonService {
             repoName = repoName,
             revPath = revPath,
             refStr = refStr
-        )
+        ).let { PackageRevisionInfo(it.reference, it.revisions) }
     }
 
     /**

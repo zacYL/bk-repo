@@ -34,6 +34,7 @@ import com.tencent.bkrepo.conan.exception.ConanFileNotFoundException
 import com.tencent.bkrepo.conan.exception.ConanRecipeNotFoundException
 import com.tencent.bkrepo.conan.pojo.IndexInfo
 import com.tencent.bkrepo.conan.pojo.PackageReference
+import com.tencent.bkrepo.conan.pojo.PackageRevisionInfo
 import com.tencent.bkrepo.conan.pojo.RevisionInfo
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
 import com.tencent.bkrepo.conan.service.ConanService
@@ -157,7 +158,7 @@ class ConanServiceImpl : ConanService {
         }
     }
 
-    override fun getPackageRevisions(conanArtifactInfo: ConanArtifactInfo): IndexInfo {
+    override fun getPackageRevisions(conanArtifactInfo: ConanArtifactInfo): PackageRevisionInfo {
         with(conanArtifactInfo) {
             val conanFileReference = convertToConanFileReference(conanArtifactInfo, revision)
             val packageReference = PackageReference(conanFileReference, packageId!!, pRevision)

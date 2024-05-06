@@ -28,6 +28,7 @@
 package com.tencent.bkrepo.conan.service
 
 import com.tencent.bkrepo.conan.pojo.IndexInfo
+import com.tencent.bkrepo.conan.pojo.PackageRevisionInfo
 import com.tencent.bkrepo.conan.pojo.RevisionInfo
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
 
@@ -110,7 +111,7 @@ interface ConanService {
      * V2
      * 获取package下的revisions信息
      */
-    fun getPackageRevisions(conanArtifactInfo: ConanArtifactInfo): IndexInfo
+    fun getPackageRevisions(conanArtifactInfo: ConanArtifactInfo): PackageRevisionInfo
 
     /**
      * V2

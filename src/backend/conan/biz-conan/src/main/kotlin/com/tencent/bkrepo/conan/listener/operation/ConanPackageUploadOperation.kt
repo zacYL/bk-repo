@@ -44,7 +44,7 @@ class ConanPackageUploadOperation(
             logger.info("${indexInfo.reference} Package's revision $revision info will be added into index.json")
             val newRevisions = mutableListOf<RevisionInfo>()
             newRevisions.addAll(indexInfo.revisions)
-            newRevisions.add(RevisionInfo(revision, dateStr))
+            newRevisions.add(RevisionInfo(pRevision, dateStr))
             indexInfo.revisions = newRevisions
         }
     }

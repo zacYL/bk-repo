@@ -18,7 +18,8 @@ export const repoSupportEnum = [
     { label: 'Npm', value: 'npm' },
     { label: 'Pypi', value: 'pypi' },
     { label: 'Nuget', value: 'nuget' },
-    { label: 'Docker', value: 'docker' }
+    { label: 'Docker', value: 'docker' },
+    { label: 'Conan', value: 'conan' }
 ]
 
 // 文件类型

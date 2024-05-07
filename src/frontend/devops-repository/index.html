@@ -48,8 +48,9 @@
         }
     </script>
     <script>
-        var PAAS_SERVICE_URL = 'http://paas.bklatest.com'
-        var DEVOPS_SITE_URL = 'http://devops.bklatest.com'
+        var PAAS_SERVICE_URL = '__BK_HTTP_SCHEMA__://__BK_REPO_PAAS_FQDN__'
+        var DEVOPS_SITE_URL = '__BK_HTTP_SCHEMA__://__BK_CI_FQDN__'
+
         var LOGIN_SERVICE_URL = /^https?/.test(PAAS_SERVICE_URL)
             ? PAAS_SERVICE_URL + '/login/'
             : '__BK_REPO_PAAS_LOGIN_URL__'

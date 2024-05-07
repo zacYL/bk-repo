@@ -14,7 +14,7 @@
                         theme="primary"
                         :icon-right="isDropdownShow ? 'icon-angle-up' : 'icon-angle-down'"
                         ext-cls="create-btn"
-                    >{{ $t('create') }}111111</bk-button>
+                    >{{ $t('create') }}</bk-button>
                 </div>
                 <ul class="bk-dropdown-list" slot="dropdown-content">
                     <li v-for="item in storeTypeEnum" :key="item.name">

@@ -59,7 +59,7 @@ class ConanWebController(
         @ArtifactPathVariable conanArtifactInfo: ConanArtifactInfo,
         @RequestParam packageKey: String
     ): Response<Void> {
-        conanWebService.deletePackage(conanArtifactInfo)
+        conanWebService.deletePackage(conanArtifactInfo, packageKey)
         return ResponseBuilder.success()
     }
 
@@ -69,9 +69,9 @@ class ConanWebController(
     fun deleteVersion(
         @ArtifactPathVariable conanArtifactInfo: ConanArtifactInfo,
         @RequestParam packageKey: String,
-        @RequestParam version: String?
+        @RequestParam version: String
     ): Response<Void> {
-        conanWebService.deleteVersion(conanArtifactInfo)
+        conanWebService.deleteVersion(conanArtifactInfo, packageKey, version)
         return ResponseBuilder.success()
     }
 

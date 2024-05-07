@@ -31,6 +31,7 @@
 
 package com.tencent.bkrepo.common.artifact.util
 
+import com.tencent.bkrepo.common.api.constant.CharPool
 import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 
@@ -205,11 +206,10 @@ object PackageKeys {
 
     /**
      * 解析conan格式的key
-     *
-     * 例子: conan://test  ->  test
+     * 例子: conan://user:test  ->  user:test
      */
-    fun resolveConan(conanKey: String): String {
-        return resolveName(CONAN, conanKey)
+    fun resolveConan(conanKey: String): Pair<String, String> {
+        return resolveName(CONAN, conanKey).split(CharPool.COLON).let { it.first() to it.last() }
     }
 
     /**

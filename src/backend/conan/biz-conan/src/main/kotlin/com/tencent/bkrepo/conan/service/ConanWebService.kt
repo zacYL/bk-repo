@@ -39,10 +39,10 @@ interface ConanWebService {
     /**
      * 删除包
      */
-    fun deletePackage(artifactInfo: ConanArtifactInfo)
+    fun deletePackage(artifactInfo: ConanArtifactInfo, packageKey: String)
 
     /**
      * 删除包版本
      */
-    fun deleteVersion(artifactInfo: ConanArtifactInfo)
+    fun deleteVersion(artifactInfo: ConanArtifactInfo, packageKey: String, version: String)
 }

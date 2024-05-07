@@ -27,11 +27,14 @@
 
 package com.tencent.bkrepo.conan.service.impl
 
+import com.tencent.bkrepo.common.api.constant.CharPool.COLON
 import com.tencent.bkrepo.common.artifact.exception.PackageNotFoundException
+import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.conan.constant.ConanMessageCode
 import com.tencent.bkrepo.conan.exception.ConanFileNotFoundException
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
 import com.tencent.bkrepo.conan.pojo.user.PackageVersionInfo
+import com.tencent.bkrepo.conan.service.ConanDeleteService
 import com.tencent.bkrepo.conan.service.ConanWebService
 import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.buildBasicInfo
 import com.tencent.bkrepo.repository.api.NodeClient
@@ -42,7 +45,8 @@ import org.springframework.stereotype.Service
 @Service
 class ConanWebServiceImpl(
     private val nodeClient: NodeClient,
-    private val packageClient: PackageClient
+    private val packageClient: PackageClient,
+    private val conanDeleteService: ConanDeleteService
 ) : ConanWebService {
 
     override fun artifactDetail(conanArtifactInfo: ConanArtifactInfo, packageKey: String, version: String): PackageVersionInfo? {
@@ -59,12 +63,30 @@ class ConanWebServiceImpl(
         }
     }
 
-    override fun deletePackage(artifactInfo: ConanArtifactInfo) {
-        TODO("Not yet implemented")
+    override fun deletePackage(artifactInfo: ConanArtifactInfo, packageKey: String) {
+        val (user, name) = PackageKeys.resolveConan(packageKey)
+        with(artifactInfo) {
+            packageClient.listAllVersion(projectId, repoName, packageKey).data?.forEach {
+                packageClient.deleteVersion(projectId, repoName, packageKey, it.name)
+                val copyArtifactInfo = artifactInfo.copy() as ConanArtifactInfo
+                copyArtifactInfo.apply {
+                    this.name = name
+                    this.userName = user
+                    version = it.name
+                }
+                conanDeleteService.removeConanFile(copyArtifactInfo)
+            } ?: logger.warn("[$projectId/$repoName/$packageKey] version not found")
+        }
     }
 
-    override fun deleteVersion(artifactInfo: ConanArtifactInfo) {
-        TODO("Not yet implemented")
+    override fun deleteVersion(artifactInfo: ConanArtifactInfo, packageKey: String, version: String) {
+        val (user, name) = PackageKeys.resolveConan(packageKey)
+        artifactInfo.apply {
+            this.name = name
+            this.userName = user
+            this.version = version
+        }
+        conanDeleteService.removeConanFile(artifactInfo)
     }
 
     companion object {

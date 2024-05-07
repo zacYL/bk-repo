@@ -74,7 +74,7 @@ object ObjectBuildUtil {
                 projectId = projectId,
                 repoName = repoName,
                 packageName = name,
-                packageKey = PackageKeys.ofConan(name, userName),
+                packageKey = PackageKeys.ofConan(name, userName), //todo 是否要加channel
                 packageType = PackageType.CONAN,
                 versionName = version,
                 size = size,

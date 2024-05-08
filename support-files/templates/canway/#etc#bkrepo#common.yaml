@@ -26,7 +26,8 @@ spring:
           environment:
             spring:
               pulsar:
-                serviceUrl: __PULSAR_SERVICE_URL__:__PULSAR_SERVICE_PORT__
+                # Comma delimited list of ip:port pairs
+                serviceUrl: __BK_REPO_PULSAR_SERVICE_URL__
                 tokenAuthValue: __PULSAR_AUTH_JWT_TOKEN__
                 tenant: __PULSAR_TENANT__
                 namespace: __PULSAR_NAMESPACE__
@@ -48,6 +49,13 @@ spring:
     port: __BK_CI_REDIS_PORT__
     password: __BK_CI_REDIS_PASSWORD__
     timeout: 900
+    # Redis sentinel 集群方式配置
+    sentinel:
+      # name of the master node
+      master: __BK_CI_REDIS_SENTINEL_MASTER_NAME__
+      # Comma delimited list of master_ip:port pairs
+      nodes: __BK_CI_REDIS_SENTINEL_ADDR__
+      password: __BK_CI_REDIS_SENTINEL_PASSWORD__
 
 feign:
   okhttp:

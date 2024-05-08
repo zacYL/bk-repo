@@ -142,26 +142,6 @@
     "unShelve" : false,
     "type" : "API"
   }, {
-    "id" : "f385131f49954e368e3b81c0acad7fa1",
-    "code" : "POST__api_node_search_repo-repository",
-    "name" : "Generic仓库高级搜索",
-    "desc" : "Generic仓库高级搜索",
-    "systemCode" : "CPack",
-    "method" : "POST",
-    "path" : "/repo-repository/api/node/search",
-    "headers" : [ ],
-    "targetService" : "repo-repository",
-    "targetPath" : "/api/node/search",
-    "targetMethod" : "POST",
-    "timeout" : 30,
-    "retryTimes" : 10,
-    "docName" : "Generic仓库高级搜索_cf1b29e9.md",
-    "dirPath" : "-1/CPack/Generic仓库文件管理",
-    "docModifiedTime" : "2024-04-26 11:39:39",
-    "lock" : false,
-    "unShelve" : false,
-    "type" : "API"
-  }, {
     "id" : "455cd79cea9f4421ae8855bbd1a6a984",
     "code" : "DELETE__api_node_batch_{projectId}_{repoName}_repo-repository",
     "name" : "批量删除文件",

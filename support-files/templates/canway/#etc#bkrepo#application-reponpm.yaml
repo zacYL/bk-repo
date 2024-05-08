@@ -19,7 +19,7 @@ npm:
   domain: ${cluster.self.url}/npm
   tarball:
     # 自定义配置返回的tarball地址前缀
-    prefix: http://__BK_REPO_FQDN__/npm/
+    prefix: __BK_HTTP_SCHEMA__://__BK_REPO_FQDN__/npm/
   migration:
     remote_registry: __BK_REPO_NPM_MIGRATION_REMOTE_URL__
     # 获取包的数据的URL地址

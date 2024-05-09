@@ -30,3 +30,4 @@ service:
   name: repository
 repository:
   cleanStrategyTime: __BK_REPO_REPOSITORY_CLEAN_STRATEGY_TIME__
+  deletedNodeReserveDays: 14

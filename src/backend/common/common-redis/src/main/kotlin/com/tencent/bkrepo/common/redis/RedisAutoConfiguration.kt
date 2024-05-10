@@ -72,4 +72,9 @@ class RedisAutoConfiguration {
     fun lettuceConfigurationCustomizer() = LettuceClientConfigurationBuilderCustomizer {
         it.clientOptions(ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).build())
     }
+
+    @Bean
+    fun redisPropertiesPostProcessor(): RedisPropertiesPostProcessor {
+        return RedisPropertiesPostProcessor()
+    }
 }

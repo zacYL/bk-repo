@@ -43,10 +43,12 @@ import com.tencent.bkrepo.common.query.interceptor.QueryRuleInterceptor
 import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.security.exception.AuthenticationException
 import com.tencent.bkrepo.common.security.exception.PermissionException
+import com.tencent.bkrepo.common.security.http.core.HttpAuthProperties
 import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.repo.RepoListOption
+import com.tencent.bkrepo.repository.search.packages.PackageQueryContext
 import com.tencent.bkrepo.repository.service.repo.ProjectService
 import com.tencent.bkrepo.repository.service.repo.RepositoryService
 import org.springframework.data.mongodb.core.query.Criteria
@@ -61,7 +63,8 @@ import org.springframework.stereotype.Component
 class RepoNameRuleInterceptor(
     private val permissionManager: PermissionManager,
     private val repositoryService: RepositoryService,
-    private val projectService: ProjectService
+    private val projectService: ProjectService,
+    private val httpAuthProperties: HttpAuthProperties
 ) : QueryRuleInterceptor {
 
     override fun match(rule: Rule): Boolean {
@@ -115,10 +118,18 @@ class RepoNameRuleInterceptor(
         value: List<*>,
         context: CommonQueryContext? = null
     ): Rule.QueryRule {
-        val repoNameList = if (context?.repoList != null) {
-            context.repoList!!.filter { hasRepoPermission(projectId, it.name, it.public) }.map { it.name }
+        val contextRepoList = context?.repoList
+        val repoType = if (context is PackageQueryContext) {
+            try { context.findRepoType() } catch (ignore: ErrorCodeException) { null }
+        } else null
+        val repoNameList = if (contextRepoList != null) {
+            if (contextRepoList.size > 3) {
+                filterAccessibleRepo(projectId, repoType, contextRepoList.map { it.name })
+            } else contextRepoList.filter { hasRepoPermission(projectId, it.name, it.public) }.map { it.name }
         } else {
-            value.filter { hasRepoPermission(projectId, it.toString()) }.map { it.toString() }
+            if (value.size > 3) {
+                filterAccessibleRepo(projectId, repoType, value.map { it.toString() })
+            } else value.filter { hasRepoPermission(projectId, it.toString()) }.map { it.toString() }
         }
         return if (repoNameList.size == 1) {
             Rule.QueryRule(NodeInfo::repoName.name, repoNameList.first(), OperationType.EQ)
@@ -176,5 +187,22 @@ class RepoNameRuleInterceptor(
         } catch (ignored: AuthenticationException) {
             false
         }
+    }
+
+    private fun filterAccessibleRepo(
+        projectId: String,
+        repoType: String?,
+        inputList: List<String>
+    ): List<String> {
+        if (SecurityUtils.isServiceRequest() || !httpAuthProperties.enabled) {
+            return inputList
+        }
+        val option = RepoListOption(
+            type = repoType,
+            actions = listOf(PermissionAction.READ)
+        )
+        val userId = SecurityUtils.getUserId()
+        return repositoryService.listPermissionRepo(userId, projectId, option)
+            .filter { it.name in inputList }.map { it.name }
     }
 }

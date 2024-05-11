@@ -9,6 +9,7 @@
             <template v-if="genericForm.type === 'add'">
                 <bk-form-item :label="$t('createFolderLabel')" :required="true" property="path" error-display-type="normal">
                     <bk-input v-model.trim="genericForm.path"
+                        @keydown="keydown"
                         type="textarea" :rows="6"
                         :placeholder="$t('folderPathPlaceholder')">
                     </bk-input>
@@ -103,6 +104,11 @@
                 'startScanSingle',
                 'getScanAll'
             ]),
+            keydown (v, e) {
+                if (e.keyCode === 13) {
+                    e.preventDefault()
+                }
+            },
             setData (data) {
                 this.genericForm = {
                     ...this.genericForm,

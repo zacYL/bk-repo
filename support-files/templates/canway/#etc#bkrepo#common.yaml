@@ -28,9 +28,9 @@ spring:
               pulsar:
                 # Comma delimited list of ip:port pairs
                 serviceUrl: __BK_REPO_PULSAR_SERVICE_URL__
-                tokenAuthValue: __PULSAR_AUTH_JWT_TOKEN__
-                tenant: __PULSAR_TENANT__
-                namespace: __PULSAR_NAMESPACE__
+                tokenAuthValue: __BK_REPO_PULSAR_AUTH_JWT_TOKEN__
+                tenant: __BK_REPO_PULSAR_TENANT__
+                namespace: __BK_REPO_PULSAR_NAMESPACE__
       function:
         autodetect: false
       default-binder: noop

@@ -27,7 +27,6 @@
 
 package com.tencent.bkrepo.conan.service.impl
 
-import com.tencent.bkrepo.common.api.constant.CharPool.COLON
 import com.tencent.bkrepo.common.artifact.exception.PackageNotFoundException
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.conan.constant.ConanMessageCode

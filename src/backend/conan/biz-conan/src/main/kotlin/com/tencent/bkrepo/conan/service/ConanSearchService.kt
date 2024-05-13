@@ -49,4 +49,9 @@ interface ConanSearchService {
      *  settings: {os: Windows}}}
      */
     fun searchPackages(pattern: String?, conanArtifactInfo: ConanArtifactInfo): Map<String, ConanInfo>
+
+    /**
+     * @return {pkg_id1:{},pkg_id2:{}}
+     */
+    fun searchRevision(conanArtifactInfo: ConanArtifactInfo): Map<String,ConanInfo>
 }

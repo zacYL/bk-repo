@@ -528,7 +528,7 @@ class CommonService {
     fun getPackageConanInfo(
         projectId: String,
         repoName: String,
-        conanFileReference: ConanFileReference
+        conanFileReference: ConanFileReference,
     ): Map<String, ConanInfo> {
         val result = mutableMapOf<String, ConanInfo>()
         val revPath = getRecipeRevisionsFile(conanFileReference)
@@ -547,23 +547,34 @@ class CommonService {
         }
 
         revisions.forEach {
-            val conf = conanFileReference.copy(revision = it.revision)
-            val tempRevPath = getPackageRevisionsFile(conf)
-            val packageIds = getPackageIdList(projectId, repoName, tempRevPath)
-            packageIds.forEach { packageId ->
-                val packageReference = PackageReference(conf, packageId)
-                val prevPath = getPackageRevisionsFile(packageReference)
-                val prefStr = buildPackageReference(packageReference)
-                val packageIndexJson = getRevisionsList(
-                    projectId = projectId,
-                    repoName = repoName,
-                    revPath = prevPath,
-                    refStr = prefStr
-                )
-                val lastRevision = packageIndexJson.revisions.first()
-                val path = getPackageConanInfoFile(packageReference.copy(revision = lastRevision.revision))
-                result[packageId] = getContentOfConanInfoFile(projectId, repoName, path)
-            }
+            result.putAll(getPackageConanInfoByRevision(projectId, repoName, it.revision, conanFileReference))
+        }
+        return result
+    }
+
+    fun getPackageConanInfoByRevision(
+        projectId: String,
+        repoName: String,
+        revision: String,
+        conanFileReference: ConanFileReference,
+    ): MutableMap<String, ConanInfo> {
+        val result = mutableMapOf<String, ConanInfo>()
+        val conf = conanFileReference.copy(revision = revision)
+        val tempRevPath = getPackageRevisionsFile(conf)
+        val packageIds = getPackageIdList(projectId, repoName, tempRevPath)
+        packageIds.forEach { packageId ->
+            val packageReference = PackageReference(conf, packageId)
+            val prevPath = getPackageRevisionsFile(packageReference)
+            val prefStr = buildPackageReference(packageReference)
+            val packageIndexJson = getRevisionsList(
+                projectId = projectId,
+                repoName = repoName,
+                revPath = prevPath,
+                refStr = prefStr
+            )
+            val lastRevision = packageIndexJson.revisions.first()
+            val path = getPackageConanInfoFile(packageReference.copy(revision = lastRevision.revision))
+            result[packageId] = getContentOfConanInfoFile(projectId, repoName, path)
         }
         return result
     }

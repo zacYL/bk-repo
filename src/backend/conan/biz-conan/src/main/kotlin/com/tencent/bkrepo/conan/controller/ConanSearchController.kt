@@ -34,6 +34,8 @@ import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo.Companion.PACKAGE_SEARCH_V1
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo.Companion.PACKAGE_SEARCH_V2
+import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo.Companion.REVISION_SEARCH_V1
+import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo.Companion.REVISION_SEARCH_V2
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo.Companion.SEARCH_V1
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo.Companion.SEARCH_V2
 import com.tencent.bkrepo.conan.service.ConanSearchService
@@ -60,6 +62,14 @@ class ConanSearchController(
     ): ResponseEntity<Any> {
         val ignoreCase = ignorecase ?: true
         return ConanCommonController.buildResponse(conanSearchService.search(projectId, repoName, q, ignoreCase))
+    }
+
+    @GetMapping(REVISION_SEARCH_V1, REVISION_SEARCH_V2)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
+    fun searchRevision(
+        @ArtifactPathVariable conanArtifactInfo: ConanArtifactInfo
+    ): ResponseEntity<Any> {
+        return ConanCommonController.buildResponse(conanSearchService.searchRevision( conanArtifactInfo))
     }
 
     @GetMapping(PACKAGE_SEARCH_V1, PACKAGE_SEARCH_V2)

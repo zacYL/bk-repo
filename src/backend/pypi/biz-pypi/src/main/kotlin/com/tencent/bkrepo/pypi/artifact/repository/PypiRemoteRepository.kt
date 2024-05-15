@@ -108,7 +108,7 @@ class PypiRemoteRepository(
                 val remoteConfiguration = context.getRemoteConfiguration()
                 val urlSuffix = context.artifactInfo.getArtifactName()
                 remoteConfiguration.url.removeSuffix("/").removeSuffix("simple").removeSuffix("/") +
-                        "/simple$urlSuffix"
+                        "/simple/$urlSuffix"
             }
             else -> throw MethodNotAllowedException()
         }

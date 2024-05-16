@@ -25,22 +25,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.conan.service
+package com.tencent.bkrepo.conan.listener.event
 
-import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
 
-interface ConanUploadDownloadService {
-
-    /**
-     * 上传[artifactFile]文件
-     */
-    fun uploadFile(conanArtifactInfo: ConanArtifactInfo, artifactFile: ArtifactFile)
-
-    /**
-     * 下载文件
-     */
-    fun downloadFile(conanArtifactInfo: ConanArtifactInfo)
-
-    fun handleConanArtifactUpload(userId: String, artifactInfo: ConanArtifactInfo)
-}
+data class ConanArtifactUploadEvent(val userId: String,val artifactInfo: ConanArtifactInfo)

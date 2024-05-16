@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.conan.listener
 
+import com.tencent.bkrepo.conan.listener.event.ConanArtifactUploadEvent
 import com.tencent.bkrepo.conan.listener.event.ConanPackageDeleteEvent
 import com.tencent.bkrepo.conan.listener.event.ConanPackageUploadEvent
 import com.tencent.bkrepo.conan.listener.event.ConanRecipeDeleteEvent
@@ -36,6 +37,7 @@ import com.tencent.bkrepo.conan.listener.operation.ConanPackageUploadOperation
 import com.tencent.bkrepo.conan.listener.operation.ConanRecipeDeleteOperation
 import com.tencent.bkrepo.conan.listener.operation.ConanRecipeUploadOperation
 import com.tencent.bkrepo.conan.pool.ConanThreadPoolExecutor
+import com.tencent.bkrepo.conan.service.ConanUploadDownloadService
 import com.tencent.bkrepo.conan.service.impl.CommonService
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
@@ -43,7 +45,8 @@ import java.util.concurrent.ThreadPoolExecutor
 
 @Component
 class ConanEventListener(
-    val commonService: CommonService
+    val commonService: CommonService,
+    val conanUploadDownloadService: ConanUploadDownloadService,
 ) {
 
     val threadPoolExecutor: ThreadPoolExecutor = ConanThreadPoolExecutor.instance
@@ -82,5 +85,14 @@ class ConanEventListener(
     fun handle(event: ConanPackageUploadEvent) {
         val task = ConanPackageUploadOperation(event.request, commonService)
         threadPoolExecutor.submit(task)
+    }
+
+    /**
+     * conan artifact 上传，创建版本、更新index.json文件
+     */
+    @EventListener(ConanArtifactUploadEvent::class)
+    fun onConanArtifactUploadEvent(event: ConanArtifactUploadEvent) {
+        val artifactInfo = event.artifactInfo
+        conanUploadDownloadService.handleConanArtifactUpload(event.userId, artifactInfo)
     }
 }

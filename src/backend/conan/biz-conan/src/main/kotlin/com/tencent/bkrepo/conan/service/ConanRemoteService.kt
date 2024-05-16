@@ -27,20 +27,12 @@
 
 package com.tencent.bkrepo.conan.service
 
-import com.tencent.bkrepo.common.artifact.api.ArtifactFile
-import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
+import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
+import javax.servlet.http.HttpServletResponse
 
-interface ConanUploadDownloadService {
-
-    /**
-     * 上传[artifactFile]文件
-     */
-    fun uploadFile(conanArtifactInfo: ConanArtifactInfo, artifactFile: ArtifactFile)
-
-    /**
-     * 下载文件
-     */
-    fun downloadFile(conanArtifactInfo: ConanArtifactInfo)
-
-    fun handleConanArtifactUpload(userId: String, artifactInfo: ConanArtifactInfo)
+/**
+ * conan 远程代理接口
+ */
+interface ConanRemoteService {
+    fun proxyRequestToRemoteUrl(repositoryDetail: RepositoryDetail, response: HttpServletResponse)
 }

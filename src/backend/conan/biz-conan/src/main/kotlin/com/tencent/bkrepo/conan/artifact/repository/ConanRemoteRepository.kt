@@ -27,8 +27,43 @@
 
 package com.tencent.bkrepo.conan.artifact.repository
 
+import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.remote.RemoteRepository
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
+import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
+import com.tencent.bkrepo.common.service.util.SpringContextUtils
+import com.tencent.bkrepo.conan.listener.event.ConanArtifactUploadEvent
+import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
+import okhttp3.OkHttpClient
 import org.springframework.stereotype.Component
 
 @Component
-class ConanRemoteRepository : RemoteRepository()
+class ConanRemoteRepository: RemoteRepository(){
+
+    override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
+        val conanArtifactInfo = context.artifactInfo as ConanArtifactInfo
+        val exist = with(conanArtifactInfo) {
+            nodeClient.checkExist(projectId, repoName, getArtifactFullPath()).data
+        }
+        val artifactResource = super.onDownload(context)
+        if (true != exist) {
+            SpringContextUtils.publishEvent(ConanArtifactUploadEvent(context.userId, conanArtifactInfo))
+        }
+        return artifactResource
+    }
+
+    override fun createRemoteDownloadUrl(context: ArtifactContext): String {
+        val configuration = context.getRemoteConfiguration()
+        val requestPath = context.request.requestURL.toString()
+        val startIndex = requestPath.indexOf("/v2/conans")
+        val trimmedPath = requestPath.substring(startIndex)
+        val queryString = context.request.queryString
+        return UrlFormatter.format(configuration.url, trimmedPath, queryString)
+    }
+
+    fun getHttpClient(configuration: RemoteConfiguration, addInterceptor: Boolean = true): OkHttpClient{
+        return super.createHttpClient(configuration, addInterceptor)
+    }
+}

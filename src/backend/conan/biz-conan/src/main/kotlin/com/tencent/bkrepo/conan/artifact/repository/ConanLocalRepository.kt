@@ -33,18 +33,12 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadConte
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
-import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
-import com.tencent.bkrepo.conan.constant.EXPORT_SOURCES_TGZ_NAME
+import com.tencent.bkrepo.common.service.util.SpringContextUtils
 import com.tencent.bkrepo.conan.constant.NAME
-import com.tencent.bkrepo.conan.constant.PACKAGE_TGZ_NAME
 import com.tencent.bkrepo.conan.constant.VERSION
-import com.tencent.bkrepo.conan.listener.event.ConanPackageUploadEvent
-import com.tencent.bkrepo.conan.listener.event.ConanRecipeUploadEvent
+import com.tencent.bkrepo.conan.listener.event.ConanArtifactUploadEvent
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
-import com.tencent.bkrepo.conan.utils.ObjectBuildUtil
 import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.buildDownloadResponse
-import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.buildPackageUpdateRequest
-import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.buildPackageVersionCreateRequest
 import com.tencent.bkrepo.conan.utils.PathUtils.generateFullPath
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
@@ -52,7 +46,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
 @Component
-class ConanLocalRepository : LocalRepository() {
+class ConanLocalRepository: LocalRepository() {
 
     override fun buildNodeCreateRequest(context: ArtifactUploadContext): NodeCreateRequest {
         with(context) {
@@ -76,51 +70,7 @@ class ConanLocalRepository : LocalRepository() {
      */
     override fun onUploadSuccess(context: ArtifactUploadContext) {
         super.onUploadSuccess(context)
-        val fullPath = generateFullPath(context.artifactInfo as ConanArtifactInfo)
-        if (fullPath.endsWith(EXPORT_SOURCES_TGZ_NAME)) {
-            // TODO package version size 如何计算
-            createVersion(
-                artifactInfo = context.artifactInfo as ConanArtifactInfo,
-                userId = context.userId,
-                size = 0
-            )
-            publishEvent(
-                ConanRecipeUploadEvent(
-                    ObjectBuildUtil.buildConanRecipeUpload(context.artifactInfo as ConanArtifactInfo, context.userId)
-                )
-            )
-        }
-        if (fullPath.endsWith(PACKAGE_TGZ_NAME)) {
-            publishEvent(
-                ConanPackageUploadEvent(
-                    ObjectBuildUtil.buildConanPackageUpload(context.artifactInfo as ConanArtifactInfo, context.userId)
-                )
-            )
-        }
-    }
-
-    /**
-     * 创建包版本
-     */
-    fun createVersion(
-        userId: String,
-        artifactInfo: ConanArtifactInfo,
-        size: Long,
-        sourceType: ArtifactChannel? = null
-    ) {
-        with(artifactInfo) {
-            val packageVersionCreateRequest = buildPackageVersionCreateRequest(
-                userId = userId,
-                artifactInfo = artifactInfo,
-                size = size,
-                sourceType = sourceType
-            )
-            // TODO 元数据中要加入对应username与channel，可能存在同一制品版本存在不同username与channel
-            val packageUpdateRequest = buildPackageUpdateRequest(artifactInfo)
-            packageClient.createVersion(packageVersionCreateRequest).apply {
-                logger.info("user: [$userId] create package version [$packageVersionCreateRequest] success!")
-            }
-        }
+        SpringContextUtils.publishEvent(ConanArtifactUploadEvent(context.userId,context.artifactInfo as ConanArtifactInfo))
     }
 
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {

@@ -31,6 +31,7 @@ import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
 import com.tencent.bkrepo.common.security.permission.Permission
+import com.tencent.bkrepo.conan.exception.ConanException
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo.Companion.PACKAGE_SEARCH_V1
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo.Companion.PACKAGE_SEARCH_V2
@@ -38,6 +39,7 @@ import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo.Companion.REVISI
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo.Companion.REVISION_SEARCH_V2
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo.Companion.SEARCH_V1
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo.Companion.SEARCH_V2
+import com.tencent.bkrepo.conan.service.ConanRemoteService
 import com.tencent.bkrepo.conan.service.ConanSearchService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping

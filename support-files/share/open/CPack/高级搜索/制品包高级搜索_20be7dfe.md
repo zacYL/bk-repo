@@ -329,15 +329,15 @@ curl -X 'POST' \
 
 分页信息
 
-| 字段         | 说明                                                     |
-| ------------ | -------------------------------------------------------- |
-| pageNumber   | 当前页码                                                 |
-| pageSize     | 每页大小                                                 |
-| totalRecords | 总记录条数                                               |
-| totalPages   | 总页数                                                   |
-| records      | **数据列表**                                             |
-| count        | 总记录条数（该字段可能在未来移除，请使用`totalRecords`） |
-| page         | 总页数（该字段可能在未来移除，请使用`totalPages`）       |
+| 字段         | 说明                                                       |
+| ------------ | ---------------------------------------------------------- |
+| pageNumber   | 当前页码                                                   |
+| pageSize     | 每页大小                                                   |
+| totalRecords | 总记录条数                                                 |
+| totalPages   | 总页数                                                     |
+| records      | **数据列表**                                               |
+| count        | 总记录条数（该字段将会在未来被移除，请使用`totalRecords`） |
+| page         | 总页数（该字段将会在未来被移除，请使用`totalPages`）       |
 
 ##### records 部分字段说明
 

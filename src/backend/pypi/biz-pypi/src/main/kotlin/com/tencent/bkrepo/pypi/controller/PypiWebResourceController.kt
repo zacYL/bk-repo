@@ -41,6 +41,7 @@ import io.swagger.annotations.ApiParam
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @Api("pypi 产品-web接口")
@@ -54,7 +55,7 @@ class PypiWebResourceController(
     fun deletePackage(
         pypiArtifactInfo: PypiArtifactInfo,
         @ApiParam(value = "包唯一Key", required = true)
-        packageKey: String
+        @RequestParam packageKey: String
     ): Response<Void> {
         pypiWebService.deletePackage(pypiArtifactInfo, packageKey)
         return ResponseBuilder.success()
@@ -65,9 +66,9 @@ class PypiWebResourceController(
     fun deleteVersion(
         pypiArtifactInfo: PypiArtifactInfo,
         @ApiParam(value = "包唯一Key", required = true)
-        packageKey: String,
+        @RequestParam packageKey: String,
         @ApiParam(value = "版本号", required = true)
-        version: String
+        @RequestParam version: String
     ): Response<Void> {
         pypiWebService.delete(pypiArtifactInfo, packageKey, version)
         return ResponseBuilder.success()
@@ -78,9 +79,9 @@ class PypiWebResourceController(
     fun artifactDetail(
         pypiArtifactInfo: PypiArtifactInfo,
         @ApiParam(value = "包唯一Key", required = true)
-        packageKey: String,
+        @RequestParam packageKey: String,
         @ApiParam(value = "版本号", required = true)
-        version: String
+        @RequestParam version: String
     ): Response<Any?> {
         return ResponseBuilder.success(pypiWebService.artifactDetail(pypiArtifactInfo, packageKey, version))
     }

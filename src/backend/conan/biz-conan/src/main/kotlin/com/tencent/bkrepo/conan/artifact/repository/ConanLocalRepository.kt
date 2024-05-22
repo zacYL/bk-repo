@@ -33,7 +33,9 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadConte
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
+import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.SpringContextUtils
+import com.tencent.bkrepo.conan.constant.EXPORT_SOURCES_TGZ_NAME
 import com.tencent.bkrepo.conan.constant.NAME
 import com.tencent.bkrepo.conan.constant.VERSION
 import com.tencent.bkrepo.conan.listener.event.ConanArtifactUploadEvent
@@ -46,7 +48,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
 @Component
-class ConanLocalRepository: LocalRepository() {
+class ConanLocalRepository : LocalRepository() {
 
     override fun buildNodeCreateRequest(context: ArtifactUploadContext): NodeCreateRequest {
         with(context) {
@@ -70,7 +72,7 @@ class ConanLocalRepository: LocalRepository() {
      */
     override fun onUploadSuccess(context: ArtifactUploadContext) {
         super.onUploadSuccess(context)
-        SpringContextUtils.publishEvent(ConanArtifactUploadEvent(context.userId,context.artifactInfo as ConanArtifactInfo))
+        SpringContextUtils.publishEvent(ConanArtifactUploadEvent(context.userId, context.artifactInfo as ConanArtifactInfo))
     }
 
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
@@ -100,10 +102,21 @@ class ConanLocalRepository: LocalRepository() {
 
     override fun buildDownloadRecord(
         context: ArtifactDownloadContext,
-        artifactResource: ArtifactResource
+        artifactResource: ArtifactResource,
     ): PackageDownloadRecord? {
-        // TODO 需要判断只有下载包时才统计次数
-        return null
+        with(context) {
+            val conanArtifactInfo = artifactInfo as ConanArtifactInfo
+            val fullPath = generateFullPath(conanArtifactInfo)
+            return if (fullPath.endsWith(EXPORT_SOURCES_TGZ_NAME)) {
+                PackageDownloadRecord(
+                    projectId = projectId,
+                    repoName = repoName,
+                    packageKey = PackageKeys.ofConan(conanArtifactInfo.name, userId, conanArtifactInfo.channel),
+                    packageVersion = conanArtifactInfo.version,
+                    userId = userId
+                )
+            } else null
+        }
     }
 
     companion object {

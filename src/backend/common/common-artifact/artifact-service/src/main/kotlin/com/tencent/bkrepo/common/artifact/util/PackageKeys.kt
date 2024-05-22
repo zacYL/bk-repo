@@ -65,11 +65,12 @@ object PackageKeys {
 
     /**
      * 生成conan格式key
-     *
-     * 例子: conan://username:name
+     * 例子: conan://username/channel:name
      */
-    fun ofConan(name: String, userName: String): String {
+    fun ofConan(name: String, userName: String,channel:String): String {
         return StringBuilder(CONAN).append(SEPARATOR).append(userName)
+            .append(CharPool.SLASH)
+            .append(channel)
             .append(StringPool.COLON)
             .append(name)
             .toString()
@@ -206,10 +207,13 @@ object PackageKeys {
 
     /**
      * 解析conan格式的key
-     * 例子: conan://user:test  ->  user:test
+     * 例子: conan://user/channel:test  ->  user:channel:test
      */
-    fun resolveConan(conanKey: String): Pair<String, String> {
-        return resolveName(CONAN, conanKey).split(CharPool.COLON).let { it.first() to it.last() }
+    fun resolveConan(conanKey: String): Triple<String,String, String> {
+        return resolveName(CONAN, conanKey).split(CharPool.COLON).let {
+            val userChannel=it.first().split(CharPool.SLASH)
+            Triple(userChannel[1], userChannel[2], it.last())
+        }
     }
 
     /**

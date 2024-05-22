@@ -74,7 +74,7 @@ object ObjectBuildUtil {
                 projectId = projectId,
                 repoName = repoName,
                 packageName = name,
-                packageKey = PackageKeys.ofConan(name, userName), //todo 是否要加channel
+                packageKey = PackageKeys.ofConan(name, userName, channel),
                 packageType = PackageType.CONAN,
                 versionName = version,
                 size = size,
@@ -91,21 +91,14 @@ object ObjectBuildUtil {
     fun buildPackageVersionUpdateRequest(
         artifactInfo: ConanArtifactInfo,
         size: Long,
-        sourceType: ArtifactChannel? = null,
-        packageMetadata: List<MetadataModel>? = null
     ): PackageVersionUpdateRequest {
         with(artifactInfo) {
             return PackageVersionUpdateRequest(
                 projectId = projectId,
                 repoName = repoName,
-                packageKey = PackageKeys.ofConan(name, userName),
+                packageKey = PackageKeys.ofConan(name, userName, channel),
                 versionName = version,
-                size = size,
-                manifestPath = null,
-                artifactPath = getArtifactFullPath(),
-                stageTag = null,
-                tags = null,
-                packageMetadata = addPackageMetadata(artifactInfo, sourceType, packageMetadata)
+                size = size
             )
         }
     }
@@ -134,7 +127,7 @@ object ObjectBuildUtil {
                 projectId = projectId,
                 repoName = repoName,
                 name = name,
-                packageKey = PackageKeys.ofConan(name, userName),
+                packageKey = PackageKeys.ofConan(name, userName, channel),
                 versionTag = null,
                 extension = mapOf("appVersion" to version)
             )

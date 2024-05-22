@@ -66,7 +66,7 @@ class ConanDeleteServiceImpl : ConanDeleteService {
     override fun removeConanFile(conanArtifactInfo: ConanArtifactInfo) {
         with(conanArtifactInfo) {
             if (revision.isNullOrEmpty()) {
-                val packageKey = PackageKeys.ofConan(name, userName)
+                val packageKey = PackageKeys.ofConan(name, userName, channel)
                 packageClient.deleteVersion(projectId, repoName, packageKey, version)
                 val conanFileReference = convertToConanFileReference(conanArtifactInfo)
                 // TODO 路径需要优化
@@ -78,7 +78,7 @@ class ConanDeleteServiceImpl : ConanDeleteService {
                 val revisions = commonService.getRecipeRevisions(projectId, repoName, conanFileReference).revisions
                 if (revisions.none { it.revision != revision }) {
                     //version下revision只有一个时删除version
-                    val packageKey = PackageKeys.ofConan(name, userName)
+                    val packageKey = PackageKeys.ofConan(name, userName, channel)
                     packageClient.deleteVersion(projectId, repoName, packageKey, version)
                 }
                 val rootPath = "/${buildRevisionPath(conanFileReference)}"

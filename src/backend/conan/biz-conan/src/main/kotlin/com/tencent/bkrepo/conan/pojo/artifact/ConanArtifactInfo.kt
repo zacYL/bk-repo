@@ -37,7 +37,7 @@ class ConanArtifactInfo(
     var name: String,
     var version: String,
     var userName: String,
-    val channel: String,
+    var channel: String,
     var packageId: String?,
     var revision: String? = null,
     var pRevision: String? = null,

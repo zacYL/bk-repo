@@ -33,7 +33,9 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadCon
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.service.util.SpringContextUtils
+import com.tencent.bkrepo.conan.constant.CONAN_MANIFEST
 import com.tencent.bkrepo.conan.constant.EXPORT_SOURCES_TGZ_NAME
+import com.tencent.bkrepo.conan.constant.PACKAGES_FOLDER
 import com.tencent.bkrepo.conan.constant.PACKAGE_TGZ_NAME
 import com.tencent.bkrepo.conan.listener.event.ConanPackageUploadEvent
 import com.tencent.bkrepo.conan.listener.event.ConanRecipeUploadEvent
@@ -41,6 +43,7 @@ import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
 import com.tencent.bkrepo.conan.service.ConanUploadDownloadService
 import com.tencent.bkrepo.conan.utils.ObjectBuildUtil
 import com.tencent.bkrepo.conan.utils.PathUtils.generateFullPath
+import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.PackageClient
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -52,6 +55,7 @@ import org.springframework.stereotype.Service
 @Service
 class ConanUploadDownloadServiceImpl(
     private val packageClient: PackageClient,
+    private val nodeClient: NodeClient
 ) : ConanUploadDownloadService {
 
     @Autowired
@@ -73,10 +77,14 @@ class ConanUploadDownloadServiceImpl(
         ArtifactContextHolder.getRepository().download(context)
     }
 
+    /**
+     * client上传文件的顺序为：
+     * export目录下    conan_sources.tgz->conanfile.py->conanmanifest.txt
+     * package目录下   ->conan_package.tgz->conaninfo.txt->conanmanifest.txt
+     */
     override fun handleConanArtifactUpload(userId: String, artifactInfo: ConanArtifactInfo) {
         val fullPath = generateFullPath(artifactInfo)
         if (fullPath.endsWith(EXPORT_SOURCES_TGZ_NAME)) {
-            // TODO package version size 如何计算
             createVersion(
                 artifactInfo = artifactInfo,
                 userId = userId,
@@ -95,6 +103,28 @@ class ConanUploadDownloadServiceImpl(
                 )
             )
         }
+        if (fullPath.contains(PACKAGES_FOLDER) && fullPath.endsWith(CONAN_MANIFEST)) {
+            // 最后一个文件上传成功，更新package version size
+            updateVersionSize(artifactInfo, userId,fullPath)
+        }
+    }
+
+    /**
+     * 更新包版本大小
+     */
+    private fun updateVersionSize(artifactInfo: ConanArtifactInfo, userId: String, fullPath: String) {
+        //size为二进制包大小，即package目录下文件大小的和
+        val pkgRevisionPath = fullPath.substringBeforeLast("/")
+        with(artifactInfo) {
+            nodeClient.computeSize(projectId,repoName, pkgRevisionPath).data?.let { size ->
+                packageClient.updateVersion(
+                    ObjectBuildUtil.buildPackageVersionUpdateRequest(
+                        artifactInfo = artifactInfo,
+                        size = size.size
+                    )
+                )
+            }
+        }
     }
 
     /**
@@ -112,8 +142,6 @@ class ConanUploadDownloadServiceImpl(
             size = size,
             sourceType = sourceType
         )
-        // TODO 元数据中要加入对应username与channel，可能存在同一制品版本存在不同username与channel
-        val packageUpdateRequest = ObjectBuildUtil.buildPackageUpdateRequest(artifactInfo)
         packageClient.createVersion(packageVersionCreateRequest).apply {
             logger.info("user: [$userId] create package version [$packageVersionCreateRequest] success!")
         }

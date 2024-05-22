@@ -63,7 +63,7 @@ class ConanWebServiceImpl(
     }
 
     override fun deletePackage(artifactInfo: ConanArtifactInfo, packageKey: String) {
-        val (user, name) = PackageKeys.resolveConan(packageKey)
+        val (user, channel, name) = PackageKeys.resolveConan(packageKey)
         with(artifactInfo) {
             packageClient.listAllVersion(projectId, repoName, packageKey).data?.forEach {
                 packageClient.deleteVersion(projectId, repoName, packageKey, it.name)
@@ -71,6 +71,7 @@ class ConanWebServiceImpl(
                 copyArtifactInfo.apply {
                     this.name = name
                     this.userName = user
+                    this.channel = channel
                     version = it.name
                 }
                 conanDeleteService.removeConanFile(copyArtifactInfo)
@@ -79,11 +80,12 @@ class ConanWebServiceImpl(
     }
 
     override fun deleteVersion(artifactInfo: ConanArtifactInfo, packageKey: String, version: String) {
-        val (user, name) = PackageKeys.resolveConan(packageKey)
+        val (user, channel, name) = PackageKeys.resolveConan(packageKey)
         artifactInfo.apply {
             this.name = name
             this.userName = user
             this.version = version
+            this.channel = channel
         }
         conanDeleteService.removeConanFile(artifactInfo)
     }

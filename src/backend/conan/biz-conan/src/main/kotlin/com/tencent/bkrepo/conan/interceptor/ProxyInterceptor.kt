@@ -11,7 +11,7 @@ class ProxyInterceptor(private val conanRemoteService: ConanRemoteService) : Han
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
         with(ArtifactContextHolder.getRepoDetail()!!) {
             if (category == RepositoryCategory.REMOTE && request.method == "GET") {
-                val regex = "/\\w+/files/[^/]+".toRegex()
+                val regex = "/\\w+/files/[^/]+".toRegex() //路径中包含 /files/ 并紧跟一个非空文件名
                 return if (regex.containsMatchIn(request.requestURI)) {
                     //下载请求不拦截
                     true

@@ -27,9 +27,13 @@
 
 package com.tencent.bkrepo.conan.service.impl
 
+import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.artifact.exception.PackageNotFoundException
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.conan.constant.CHANNEL
+import com.tencent.bkrepo.conan.constant.CONAN_INFOS
 import com.tencent.bkrepo.conan.constant.ConanMessageCode
+import com.tencent.bkrepo.conan.constant.USERNAME
 import com.tencent.bkrepo.conan.exception.ConanFileNotFoundException
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
 import com.tencent.bkrepo.conan.pojo.user.PackageVersionInfo
@@ -38,6 +42,7 @@ import com.tencent.bkrepo.conan.service.ConanWebService
 import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.buildBasicInfo
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.PackageClient
+import com.tencent.bkrepo.repository.api.PackageMetadataClient
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
@@ -45,7 +50,8 @@ import org.springframework.stereotype.Service
 class ConanWebServiceImpl(
     private val nodeClient: NodeClient,
     private val packageClient: PackageClient,
-    private val conanDeleteService: ConanDeleteService
+    private val packageMetadataClient: PackageMetadataClient,
+    private val conanDeleteService: ConanDeleteService,
 ) : ConanWebService {
 
     override fun artifactDetail(conanArtifactInfo: ConanArtifactInfo, packageKey: String, version: String): PackageVersionInfo? {
@@ -63,15 +69,17 @@ class ConanWebServiceImpl(
     }
 
     override fun deletePackage(artifactInfo: ConanArtifactInfo, packageKey: String) {
-        val (user, channel, name) = PackageKeys.resolveConan(packageKey)
+        val name = PackageKeys.resolveConan(packageKey)
         with(artifactInfo) {
-            packageClient.listAllVersion(projectId, repoName, packageKey).data?.forEach {
+            packageClient.listAllVersion(projectId, repoName, packageKey).data?.forEach { it ->
+                val info = (it.metadata.filter { m-> m.key == CONAN_INFOS }
+                    .values.first() as List<*>).first() as Map<*, *>
                 packageClient.deleteVersion(projectId, repoName, packageKey, it.name)
                 val copyArtifactInfo = artifactInfo.copy() as ConanArtifactInfo
                 copyArtifactInfo.apply {
                     this.name = name
-                    this.userName = user
-                    this.channel = channel
+                    this.userName = info[USERNAME]?.toString() ?: StringPool.UNDERSCORE
+                    this.channel = info[CHANNEL]?.toString() ?: StringPool.UNDERSCORE
                     version = it.name
                 }
                 conanDeleteService.removeConanFile(copyArtifactInfo)
@@ -80,14 +88,20 @@ class ConanWebServiceImpl(
     }
 
     override fun deleteVersion(artifactInfo: ConanArtifactInfo, packageKey: String, version: String) {
-        val (user, channel, name) = PackageKeys.resolveConan(packageKey)
-        artifactInfo.apply {
-            this.name = name
-            this.userName = user
-            this.version = version
-            this.channel = channel
+        val name = PackageKeys.resolveConan(packageKey)
+        with(artifactInfo) {
+            packageMetadataClient.listMetadata(projectId,repoName,packageKey,version).data?.let {
+                val info = (it.filter { m -> m.key == CONAN_INFOS }
+                    .values.first() as List<*>).first() as Map<*, *>
+                apply {
+                    this.name = name
+                    this.userName = info[USERNAME]?.toString() ?: StringPool.UNDERSCORE
+                    this.channel = info[CHANNEL]?.toString() ?: StringPool.UNDERSCORE
+                    this.version = version
+                }
+                conanDeleteService.removeConanFile(artifactInfo)
+            }
         }
-        conanDeleteService.removeConanFile(artifactInfo)
     }
 
     companion object {

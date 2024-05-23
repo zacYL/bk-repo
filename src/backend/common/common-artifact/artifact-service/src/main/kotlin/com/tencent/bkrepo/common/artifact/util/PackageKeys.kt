@@ -31,7 +31,6 @@
 
 package com.tencent.bkrepo.common.artifact.util
 
-import com.tencent.bkrepo.common.api.constant.CharPool
 import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 
@@ -65,15 +64,10 @@ object PackageKeys {
 
     /**
      * 生成conan格式key
-     * 例子: conan://username/channel:name
+     * 例子: conan://name
      */
-    fun ofConan(name: String, userName: String,channel:String): String {
-        return StringBuilder(CONAN).append(SEPARATOR).append(userName)
-            .append(CharPool.SLASH)
-            .append(channel)
-            .append(StringPool.COLON)
-            .append(name)
-            .toString()
+    fun ofConan(name: String): String {
+        return ofName(CONAN, name)
     }
 
     /**
@@ -207,13 +201,10 @@ object PackageKeys {
 
     /**
      * 解析conan格式的key
-     * 例子: conan://user/channel:test  ->  user:channel:test
+     * 例子: conan://test->test
      */
-    fun resolveConan(conanKey: String): Triple<String,String, String> {
-        return resolveName(CONAN, conanKey).split(CharPool.COLON).let {
-            val userChannel=it.first().split(CharPool.SLASH)
-            Triple(userChannel[1], userChannel[2], it.last())
-        }
+    fun resolveConan(conanKey: String): String {
+        return resolveName(CONAN, conanKey)
     }
 
     /**

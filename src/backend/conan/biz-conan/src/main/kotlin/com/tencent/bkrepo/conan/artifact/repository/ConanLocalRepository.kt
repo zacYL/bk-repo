@@ -111,7 +111,7 @@ class ConanLocalRepository : LocalRepository() {
                 PackageDownloadRecord(
                     projectId = projectId,
                     repoName = repoName,
-                    packageKey = PackageKeys.ofConan(conanArtifactInfo.name, userId, conanArtifactInfo.channel),
+                    packageKey = PackageKeys.ofConan(conanArtifactInfo.name),
                     packageVersion = conanArtifactInfo.version,
                     userId = userId
                 )

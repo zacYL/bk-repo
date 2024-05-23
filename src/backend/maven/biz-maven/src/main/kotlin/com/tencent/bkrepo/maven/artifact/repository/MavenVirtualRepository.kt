@@ -51,7 +51,6 @@ class MavenVirtualRepository : VirtualRepository() {
         throw MethodNotAllowedException()
     }
 
-
     @Suppress("UNCHECKED_CAST", "ReturnCount")
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         val fullPath = context.artifactInfo.getArtifactFullPath()

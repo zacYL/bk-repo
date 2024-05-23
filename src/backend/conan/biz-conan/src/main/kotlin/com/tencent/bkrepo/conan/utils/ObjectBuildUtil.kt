@@ -74,7 +74,7 @@ object ObjectBuildUtil {
                 projectId = projectId,
                 repoName = repoName,
                 packageName = name,
-                packageKey = PackageKeys.ofConan(name, userName, channel),
+                packageKey = PackageKeys.ofConan(name),
                 packageType = PackageType.CONAN,
                 versionName = version,
                 size = size,
@@ -96,7 +96,7 @@ object ObjectBuildUtil {
             return PackageVersionUpdateRequest(
                 projectId = projectId,
                 repoName = repoName,
-                packageKey = PackageKeys.ofConan(name, userName, channel),
+                packageKey = PackageKeys.ofConan(name),
                 versionName = version,
                 size = size
             )
@@ -127,7 +127,7 @@ object ObjectBuildUtil {
                 projectId = projectId,
                 repoName = repoName,
                 name = name,
-                packageKey = PackageKeys.ofConan(name, userName, channel),
+                packageKey = PackageKeys.ofConan(name),
                 versionTag = null,
                 extension = mapOf("appVersion" to version)
             )

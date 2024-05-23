@@ -58,9 +58,9 @@ export default {
         },
         // 请求文件夹下的子文件夹
         // override
-        getFolderList ({ commit }, { projectId, repoName, roadMap, fullPath = '', isPipeline = false }) {
+        getFolderList ({ commit }, { projectId, repoName, roadMap, fullPath = '', isPipeline = false, localRepo = true }) {
             return Vue.prototype.$ajax.post(
-                'repository/api/node/search',
+                localRepo ? 'repository/api/node/search' : `generic/${projectId}/${repoName}/search`,
                 {
                     page: {
                         pageNumber: 1,
@@ -100,9 +100,9 @@ export default {
         },
         // 仓库内自定义查询
         // override
-        getArtifactoryList (_, { projectId, repoName, name, fullPath, current, limit, sortType = 'lastModifiedDate', sortDirection = 'DESC', searchFlag }) {
+        getArtifactoryList (_, { projectId, repoName, name, fullPath, current, limit, sortType = 'lastModifiedDate', sortDirection = 'DESC', searchFlag, localRepo = true }) {
             return Vue.prototype.$ajax.post(
-                'repository/api/node/search',
+                localRepo ? 'repository/api/node/search' : `generic/${projectId}/${repoName}/search`,
                 {
                     page: {
                         pageNumber: current,

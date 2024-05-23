@@ -35,7 +35,7 @@
                     <ci-create-token-dialog ref="ciCreateToken"></ci-create-token-dialog>
                 </div>
             </bk-tab-panel>
-            <bk-tab-panel v-if="!detailSlider.folder" name="metaDate" :label="$t('metaData')">
+            <bk-tab-panel v-if="!detailSlider.folder && detailSlider.localNode" name="metaDate" :label="$t('metaData')">
                 <div class="display-block" :data-title="$t('metadata')">
                     <metadataDialog v-if="!hasLockMetadata && showUpdateMetadataBtn" ref="metadataDialogRef" @add-metadata="addMetadataHandler"></metadataDialog>
                     <bk-table
@@ -72,7 +72,7 @@
                     </bk-table>
                 </div>
             </bk-tab-panel>
-            <bk-tab-panel v-if="!detailSlider.folder && detailSlider.data.metadata"
+            <bk-tab-panel v-if="!detailSlider.folder && detailSlider.data.metadata && detailSlider.localNode"
                 render-directive="if"
                 name="topo"
                 :label="$t('CICDRelatedInformation')"
@@ -112,7 +112,8 @@
                     repoName: '',
                     folder: false,
                     path: '',
-                    data: {}
+                    data: {},
+                    localNode: true
                 }
             }
         },
@@ -155,7 +156,8 @@
                 this.getNodeDetail({
                     projectId: this.detailSlider.projectId,
                     repoName: this.detailSlider.repoName,
-                    fullPath: this.detailSlider.path
+                    fullPath: this.detailSlider.path,
+                    localNode: this.detailSlider.localNode
                 }).then(data => {
                     this.detailSlider.data = {
                         ...data,

@@ -109,7 +109,7 @@ export default {
                         pageSize: limit
                     },
                     sort: {
-                        properties: ['folder', sortType],
+                        properties: sortType ? ['folder', sortType] : ['folder', 'lastModifiedDate'],
                         direction: sortDirection
                     },
                     rule: {

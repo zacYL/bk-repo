@@ -83,7 +83,8 @@ class ConanLocalRepository : LocalRepository() {
                 size = getArtifactFile().getSize(),
                 sha256 = getArtifactSha256(),
                 md5 = getArtifactMd5(),
-                operator = userId
+                operator = userId,
+                overwrite = true
             )
         }
     }

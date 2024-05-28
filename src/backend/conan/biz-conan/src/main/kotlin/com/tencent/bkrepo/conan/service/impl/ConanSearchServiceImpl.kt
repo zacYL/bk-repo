@@ -81,17 +81,11 @@ class ConanSearchServiceImpl : ConanSearchService {
     override fun searchRevision(conanArtifactInfo: ConanArtifactInfo): Map<String,ConanInfo> {
         with(conanArtifactInfo) {
             val conanFileReference = convertToConanFileReference(conanArtifactInfo)
-            val result = try {
+            return try {
                 commonService.getPackageConanInfoByRevision(projectId, repoName,conanArtifactInfo.revision!!, conanFileReference)
             } catch (ignore: NodeNotFoundException) {
                 emptyMap()
             }
-            if (result.isEmpty()) {
-                throw ConanSearchNotFoundException(
-                    ConanMessageCode.CONAN_SEARCH_NOT_FOUND, buildReference(conanFileReference), getRepoIdentify()
-                )
-            }
-            return result
         }
     }
 }

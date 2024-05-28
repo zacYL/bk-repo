@@ -36,5 +36,6 @@ data class ConanFileReference(
     val version: String,
     val userName: String,
     val channel: String,
-    val revision: String? = null
+    val revision: String? = null,
+    val pRevision: String? = null
 )

@@ -105,14 +105,14 @@ class ConanUploadDownloadServiceImpl(
         }
         if (fullPath.contains(PACKAGES_FOLDER) && fullPath.endsWith(CONAN_MANIFEST)) {
             // 最后一个文件上传成功，更新package version size
-            updateVersionSize(artifactInfo, userId,fullPath)
+            updateVersionSize(artifactInfo, fullPath)
         }
     }
 
     /**
      * 更新包版本大小
      */
-    private fun updateVersionSize(artifactInfo: ConanArtifactInfo, userId: String, fullPath: String) {
+    private fun updateVersionSize(artifactInfo: ConanArtifactInfo, fullPath: String) {
         //size为二进制包大小，即package目录下文件大小的和
         val pkgRevisionPath = fullPath.substringBeforeLast("/")
         with(artifactInfo) {
@@ -130,7 +130,7 @@ class ConanUploadDownloadServiceImpl(
     /**
      * 创建包版本
      */
-    fun createVersion(
+    private fun createVersion(
         userId: String,
         artifactInfo: ConanArtifactInfo,
         size: Long,

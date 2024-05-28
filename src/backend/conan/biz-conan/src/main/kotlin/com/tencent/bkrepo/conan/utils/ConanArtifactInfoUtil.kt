@@ -8,7 +8,8 @@ import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
 object ConanArtifactInfoUtil {
     fun convertToConanFileReference(
         conanArtifactInfo: ConanArtifactInfo,
-        revision: String? = null
+        revision: String? = null,
+        pRevision: String? = null
     ): ConanFileReference {
         with(conanArtifactInfo) {
             return ConanFileReference(
@@ -16,7 +17,8 @@ object ConanArtifactInfoUtil {
                 version = version,
                 channel = channel,
                 userName = userName,
-                revision = revision
+                revision = revision,
+                pRevision = pRevision
             )
         }
     }

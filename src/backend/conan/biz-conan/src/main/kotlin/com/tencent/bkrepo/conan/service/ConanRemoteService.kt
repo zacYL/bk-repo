@@ -34,5 +34,5 @@ import javax.servlet.http.HttpServletResponse
  * conan 远程代理接口
  */
 interface ConanRemoteService {
-    fun proxyRequestToRemoteUrl(repositoryDetail: RepositoryDetail, response: HttpServletResponse)
+    fun proxyRequestToRemote(repositoryDetail: RepositoryDetail, response: HttpServletResponse)
 }

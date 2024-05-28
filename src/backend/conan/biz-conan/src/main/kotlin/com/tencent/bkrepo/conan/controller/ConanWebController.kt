@@ -35,7 +35,6 @@ import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.conan.constant.USER_API_PREFIX
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
-import com.tencent.bkrepo.conan.service.ConanDeleteService
 import com.tencent.bkrepo.conan.service.ConanWebService
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
@@ -49,12 +48,12 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping(USER_API_PREFIX)
 @RestController
 class ConanWebController(
-    private val conanWebService: ConanWebService,
-    private val conanDeleteService: ConanDeleteService
+    private val conanWebService: ConanWebService
 ) {
 
     @ApiOperation("包删除接口")
     @DeleteMapping("/package/delete/{projectId}/{repoName}")
+    @Permission(type = ResourceType.REPO, action = PermissionAction.DELETE)
     fun deletePackage(
         @ArtifactPathVariable conanArtifactInfo: ConanArtifactInfo,
         @RequestParam packageKey: String

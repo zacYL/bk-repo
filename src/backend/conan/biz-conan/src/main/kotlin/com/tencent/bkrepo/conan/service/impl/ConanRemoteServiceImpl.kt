@@ -32,6 +32,7 @@ import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.SpringContextUtils
 import com.tencent.bkrepo.conan.artifact.repository.ConanRemoteRepository
+import com.tencent.bkrepo.conan.constant.CONAN_URL_V2
 import com.tencent.bkrepo.conan.service.ConanRemoteService
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
 import okhttp3.Request
@@ -43,9 +44,10 @@ import javax.servlet.http.HttpServletResponse
 
 @Service
 class ConanRemoteServiceImpl : ConanRemoteService {
-    override fun proxyRequestToRemoteUrl(repositoryDetail: RepositoryDetail, response: HttpServletResponse) {
+    override fun proxyRequestToRemote(repositoryDetail: RepositoryDetail, response: HttpServletResponse) {
         val remoteConfiguration = repositoryDetail.configuration as RemoteConfiguration
-        val httpClient = SpringContextUtils.getBean<ConanRemoteRepository>().getHttpClient(remoteConfiguration)
+        val repository = SpringContextUtils.getBean<ConanRemoteRepository>()
+        val httpClient = repository.getHttpClient(remoteConfiguration)
         val url = getUrl(remoteConfiguration)
         val request = Request.Builder().url(url).build()
         logger.info("Remote download url: $url, network config: ${remoteConfiguration.network}")
@@ -75,7 +77,7 @@ class ConanRemoteServiceImpl : ConanRemoteService {
     private fun getUrl(remoteConfiguration: RemoteConfiguration): String {
         val request: HttpServletRequest = HttpContextHolder.getRequest()
         val requestPath = request.requestURL.toString()
-        val startIndex = requestPath.indexOf("/v2/conans")
+        val startIndex = requestPath.indexOf(CONAN_URL_V2)
         val trimmedPath = requestPath.substring(startIndex)
         val queryString = request.queryString
         return UrlFormatter.format(remoteConfiguration.url, trimmedPath, queryString)

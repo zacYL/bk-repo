@@ -27,20 +27,42 @@
 
 package com.tencent.bkrepo.conan.artifact.repository
 
+import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.remote.RemoteRepository
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
 import com.tencent.bkrepo.common.service.util.SpringContextUtils
+import com.tencent.bkrepo.conan.constant.CONAN_URL_V2
 import com.tencent.bkrepo.conan.listener.event.ConanArtifactUploadEvent
+import com.tencent.bkrepo.conan.pojo.ConanSearchResult
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
 import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
 @Component
 class ConanRemoteRepository: RemoteRepository(){
+
+    override fun query(context: ArtifactQueryContext): ConanSearchResult {
+        val response = getHttpClient(context.repositoryDetail.configuration as RemoteConfiguration)
+            .newCall(Request.Builder().url(createRemoteDownloadUrl(context)).build())
+            .execute()
+        return try {
+            response.body()?.use {
+                JsonUtils.objectMapper.readValue(
+                    response.body()!!.byteStream(), ConanSearchResult::class.java
+                )
+            } ?: ConanSearchResult()
+        } catch (e: Exception) {
+            logger.error("Conan remote repository query failed, ${response.body()?.string()}", e)
+            ConanSearchResult()
+        }
+    }
 
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         val conanArtifactInfo = context.artifactInfo as ConanArtifactInfo
@@ -57,7 +79,7 @@ class ConanRemoteRepository: RemoteRepository(){
     override fun createRemoteDownloadUrl(context: ArtifactContext): String {
         val configuration = context.getRemoteConfiguration()
         val requestPath = context.request.requestURL.toString()
-        val startIndex = requestPath.indexOf("/v2/conans")
+        val startIndex = requestPath.indexOf(CONAN_URL_V2)
         val trimmedPath = requestPath.substring(startIndex)
         val queryString = context.request.queryString
         return UrlFormatter.format(configuration.url, trimmedPath, queryString)
@@ -65,5 +87,9 @@ class ConanRemoteRepository: RemoteRepository(){
 
     fun getHttpClient(configuration: RemoteConfiguration, addInterceptor: Boolean = true): OkHttpClient{
         return super.createHttpClient(configuration, addInterceptor)
+    }
+
+    companion object{
+        private val logger = LoggerFactory.getLogger(this::class.java)
     }
 }

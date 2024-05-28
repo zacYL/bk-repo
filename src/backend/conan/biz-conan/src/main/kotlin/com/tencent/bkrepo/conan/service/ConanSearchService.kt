@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.conan.service
 
+import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.conan.pojo.ConanInfo
 import com.tencent.bkrepo.conan.pojo.ConanSearchResult
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
@@ -39,7 +40,7 @@ interface ConanSearchService {
      * Get all the info about any recipe
      * [pattern] like hello/\*
      */
-    fun search(projectId: String, repoName: String, pattern: String?, ignoreCase: Boolean): ConanSearchResult
+    fun search(artifactInfo: ArtifactInfo, pattern: String?, ignoreCase: Boolean): ConanSearchResult
 
     /**
      * Get all the info about any package

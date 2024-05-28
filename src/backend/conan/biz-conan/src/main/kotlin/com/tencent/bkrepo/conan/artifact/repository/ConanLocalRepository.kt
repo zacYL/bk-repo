@@ -27,20 +27,30 @@
 
 package com.tencent.bkrepo.conan.artifact.repository
 
+import com.tencent.bkrepo.common.api.util.readJsonString
+import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.SpringContextUtils
+import com.tencent.bkrepo.conan.constant.CONAN_INFOS
 import com.tencent.bkrepo.conan.constant.EXPORT_SOURCES_TGZ_NAME
+import com.tencent.bkrepo.conan.constant.IGNORECASE
 import com.tencent.bkrepo.conan.constant.NAME
+import com.tencent.bkrepo.conan.constant.PATTERN
 import com.tencent.bkrepo.conan.constant.VERSION
+import com.tencent.bkrepo.conan.exception.ConanParameterInvalidException
 import com.tencent.bkrepo.conan.listener.event.ConanArtifactUploadEvent
+import com.tencent.bkrepo.conan.pojo.ConanFileReference
+import com.tencent.bkrepo.conan.pojo.ConanSearchResult
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
 import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.buildDownloadResponse
+import com.tencent.bkrepo.conan.utils.PathUtils
 import com.tencent.bkrepo.conan.utils.PathUtils.generateFullPath
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
@@ -49,6 +59,17 @@ import org.springframework.stereotype.Component
 
 @Component
 class ConanLocalRepository : LocalRepository() {
+    override fun query(context: ArtifactQueryContext): ConanSearchResult {
+        val pattern = context.getAttribute<String>(PATTERN)
+        val ignoreCase = context.getAttribute<Boolean>(IGNORECASE) ?: false
+        val recipes = searchRecipes(context.projectId, context.repoName)
+        val list = if (pattern.isNullOrEmpty()) {
+            recipes
+        } else {
+            matchPattern(pattern, recipes, ignoreCase)
+        }
+        return ConanSearchResult(list)
+    }
 
     override fun buildNodeCreateRequest(context: ArtifactUploadContext): NodeCreateRequest {
         with(context) {
@@ -116,6 +137,48 @@ class ConanLocalRepository : LocalRepository() {
                     userId = userId
                 )
             } else null
+        }
+    }
+
+    private fun searchRecipes(projectId: String, repoName: String): List<String> {
+        val result = mutableListOf<String>()
+        packageClient.listAllPackageNames(projectId, repoName).data.orEmpty().forEach {
+            packageClient.listAllVersion(projectId, repoName, it).data.orEmpty().forEach { pv ->
+                val conanInfo = pv.packageMetadata.first { m ->
+                    m.key == CONAN_INFOS
+                }.value.toJsonString().readJsonString<List<ConanFileReference>>()
+                result.add(PathUtils.buildConanFileName(conanInfo.first()))
+            }
+        }
+        return result.sorted()
+    }
+
+    // 检查模式是否有效
+    fun isValidPattern(pattern: String): Boolean {
+        // 定义匹配包名称和版本号的正则表达式模式
+        val nameVersionPattern = "[a-zA-Z0-9_*]+(/[a-zA-Z0-9.*_]+)?"
+        // 定义匹配用户和通道的正则表达式模式
+        val userChannelPattern = "[a-zA-Z0-9_*]+"
+
+        val fullPattern = "^$nameVersionPattern(@$userChannelPattern/$userChannelPattern)?$".toRegex()
+        return pattern.matches(fullPattern)
+    }
+
+    fun matchPattern(pattern: String, pList: List<String>, ignoreCase: Boolean): List<String> {
+        if (isValidPattern(pattern).not()) throw ConanParameterInvalidException("PATTERN")
+
+        // 将通配符模式转换为正则表达式
+        val regexPattern = pattern.replace("*", ".*")
+        val regex = if (ignoreCase) {
+            regexPattern.toRegex(RegexOption.IGNORE_CASE)
+        } else {
+            regexPattern.toRegex()
+        }
+
+        return if (pattern.contains("*")) {
+            pList.filter { it.matches(regex) }
+        } else {
+            pList.filter { regex.containsMatchIn(it) }
         }
     }
 

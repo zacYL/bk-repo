@@ -72,6 +72,11 @@ class ConanExceptionHandler {
         conanResponse(exception.message!!, exception)
     }
 
+    @ExceptionHandler(ConanParameterInvalidException::class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    fun handleConanParameterInvalidException(exception: ConanParameterInvalidException) {
+        conanResponse(exception.message!!, exception)
+    }
 
     private fun conanResponse(exception: ErrorCodeException) {
         val errorMessage = LocaleMessageUtils.getLocalizedMessage(exception.messageCode, exception.params)

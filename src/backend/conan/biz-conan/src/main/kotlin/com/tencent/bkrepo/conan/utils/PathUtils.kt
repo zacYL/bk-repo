@@ -39,14 +39,19 @@ import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
 object PathUtils {
 
     fun String.extractConanFileReference(): ConanFileReference {
-        val pathList = this.trim('/').split("/")
-        if (pathList.size < 7) throw IllegalArgumentException("invalid path $this")
-        val userName = pathList[0]
-        val name = pathList[1]
-        val version = pathList[2]
-        val channel = pathList[3]
-        val revision = pathList[4]
-        return ConanFileReference(name, version, userName, channel, revision)
+        val trimStr = this.trim()
+        val cleanedUrl = if (trimStr.startsWith("/")) trimStr.substring(1) else trimStr
+
+        val segments = cleanedUrl.split("/")
+        if (segments.size < 7 || segments[2] != "v2" || segments[3] != "conans") {
+            throw IllegalArgumentException("Invalid URL format")
+        }
+
+        val name = segments[4]
+        val version = segments[5]
+        val userName = segments[6]
+        val channel = segments[7]
+        return ConanFileReference(name, version, userName, channel)
     }
 
     fun joinString(first: String, second: String, third: String? = null): String {

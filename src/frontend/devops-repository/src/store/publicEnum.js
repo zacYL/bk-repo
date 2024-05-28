@@ -14,6 +14,7 @@ export const repoEnum = [
 ]
 // 远程及虚拟仓库支持创建的仓库
 export const repoSupportEnum = [
+    { label: 'Generic', value: 'generic' },
     { label: 'Maven', value: 'maven' },
     { label: 'Npm', value: 'npm' },
     { label: 'Pypi', value: 'pypi' },

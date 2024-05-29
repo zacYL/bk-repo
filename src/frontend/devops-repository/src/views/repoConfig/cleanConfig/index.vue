@@ -68,8 +68,9 @@
                                         @mouseout.native="rule.clearable = false"
                                         :clearable="rule.clearable ? true : false"
                                         @clear="onClearCatalog(index)"></bk-input>
-                                    <div v-if="index !== 0" slot="content" class="generic-rule-tree">
+                                    <div v-if="index !== 0" slot="content">
                                         <vue-tree
+                                            class="generic-rule-tree"
                                             :key="index"
                                             ref="genericTreeRefs"
                                             :data="rule.treeData"
@@ -580,7 +581,7 @@
 }
 .generic-rule-tree-btn{
     float: right;
-    margin:0 10px 0 0;
+    margin: 10px 10px 0 0;
 }
 .auto-clean-info{
     vertical-align: middle;

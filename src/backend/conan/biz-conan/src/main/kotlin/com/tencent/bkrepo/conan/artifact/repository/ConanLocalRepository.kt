@@ -89,12 +89,30 @@ class ConanLocalRepository : LocalRepository() {
         }
     }
 
+    override fun onUploadBefore(context: ArtifactUploadContext) {
+        super.onUploadBefore(context)
+        with(context.artifactInfo as ConanArtifactInfo) {
+            packageClient
+                .findVersionByName(projectId, repoName, PackageKeys.ofConan(name), version).data
+                ?.apply { uploadIntercept(context, this) }
+        }
+    }
+
     /**
      * 上传成功回调
      */
     override fun onUploadSuccess(context: ArtifactUploadContext) {
         super.onUploadSuccess(context)
         SpringContextUtils.publishEvent(ConanArtifactUploadEvent(context.userId, context.artifactInfo as ConanArtifactInfo))
+    }
+
+    override fun onDownloadBefore(context: ArtifactDownloadContext) {
+        super.onDownloadBefore(context)
+        with(context.artifactInfo as ConanArtifactInfo) {
+            packageClient
+                .findVersionByName(projectId, repoName, PackageKeys.ofConan(name), version).data
+                ?.apply { downloadIntercept(context, this) }
+        }
     }
 
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {

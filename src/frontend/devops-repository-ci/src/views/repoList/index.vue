@@ -267,7 +267,7 @@
                         repoName: name,
                         storeType: category?.toLowerCase() || '',
                         ...this.$route.query,
-                        type,
+                        ropeTypeValue: type,
                         c: this.pagination.current,
                         l: this.pagination.limit
                     }

@@ -268,7 +268,7 @@
                 return this.$route.params.projectId
             },
             type () {
-                return this.$route.query.type
+                return this.$route.query.ropeTypeValue
             },
             repoName () {
                 return this.$route.query.repoName

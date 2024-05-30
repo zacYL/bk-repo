@@ -29,7 +29,7 @@
                 <bk-form-item :label="$t('remoteProxyAddress')" :required="true" property="url" error-display-type="normal">
                     <bk-input class="w480" v-model.trim="repoBaseInfo.url"></bk-input>
                     <!-- todo 测试链接暂未支持 -->
-                    <!-- <bk-button theme="primary" :disabled="disableTestUrl" @click="onClickTestRemoteUrl">{{ $t('testRemoteUrl') }}</bk-button> -->
+                    <bk-button v-if="repoBaseInfo.type !== 'generic'" theme="primary" :disabled="disableTestUrl" @click="onClickTestRemoteUrl">{{ $t('testRemoteUrl') }}</bk-button>
                 </bk-form-item>
                 <bk-form-item :label="$t('remoteProxyAccount')" property="credentials.username" error-display-type="normal">
                     <bk-input class="w480" v-model.trim="repoBaseInfo.credentials.username"></bk-input>
@@ -189,7 +189,7 @@
     import CardRadioGroup from '@repository/components/CardRadioGroup'
     import StoreSort from '@repository/components/StoreSort'
     import CheckTargetStore from '@repository/components/CheckTargetStore'
-    import { repoEnum, repoSupportEnum } from '@repository/store/publicEnum'
+    import { repoEnum, repoSupportEnum, remoteRepoSupportEnum } from '@repository/store/publicEnum'
     import { mapActions, mapState } from 'vuex'
     import { isEmpty } from 'lodash'
     import { checkValueIsNullOrEmpty } from '@repository/utils'
@@ -417,7 +417,7 @@
                     // 因为可能支持创建的远程及虚拟仓库，在本地仓库支持创建的仓库中不存在，所以需要两者匹配才能在创建远程及虚拟仓库时显示
                     this.filterRepoEnum = val === 'local'
                         ? repoEnum
-                        : repoSupportEnum.map((item) => repoEnum.find((st) => item.value === st.value))
+                        : (val === 'remote' ? remoteRepoSupportEnum : repoSupportEnum).map((item) => repoEnum.find((st) => item.value === st.value))
                     // 因为远程仓库和虚拟仓库没有generic类型且远程仓库支持的制品类型有限，所以需要将其重新赋默认值
                     this.repoBaseInfo.type = this.filterRepoEnum[0]?.value || ''
                 }

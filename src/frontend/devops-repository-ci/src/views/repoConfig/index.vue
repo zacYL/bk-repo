@@ -22,7 +22,7 @@
                         <bk-form-item :label="$t('remoteProxyAddress')" :required="true" property="url" error-display-type="normal">
                             <bk-input class="w480" v-model.trim="repoBaseInfo.url"></bk-input>
                             <!-- todo 测试链接暂未支持 -->
-                            <!-- <bk-button theme="primary" :disabled="disableTestUrl" @click="onClickTestRemoteUrl">{{ $t('testRemoteUrl') }}</bk-button> -->
+                            <bk-button v-if="repoBaseInfo.type !== 'generic'" theme="primary" :disabled="disableTestUrl" @click="onClickTestRemoteUrl">{{ $t('testRemoteUrl') }}</bk-button>
                         </bk-form-item>
                         <bk-form-item :label="$t('remoteProxyAccount')" property="credentials.username" error-display-type="normal">
                             <bk-input class="w480" v-model.trim="repoBaseInfo.credentials.username"></bk-input>

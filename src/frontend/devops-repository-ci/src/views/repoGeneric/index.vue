@@ -125,8 +125,9 @@
                     </bk-table-column>
                     <bk-table-column :label="$t('size')" width="100">
                         <template #default="{ row }">
+                            <span v-if="isGenericRemote && row.folder">0B</span>
                             <bk-button text
-                                v-if="row.folder && !('folderSize' in row)"
+                                v-else-if="row.folder && !('folderSize' in row)"
                                 :disabled="row.sizeLoading"
                                 @click="calculateFolderSize(row)">{{ $t('calculate') }}</bk-button>
                             <span v-else>

@@ -39,27 +39,50 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.SpringContextUtils
 import com.tencent.bkrepo.conan.constant.CONAN_INFOS
+import com.tencent.bkrepo.conan.constant.ConanMessageCode
 import com.tencent.bkrepo.conan.constant.EXPORT_SOURCES_TGZ_NAME
 import com.tencent.bkrepo.conan.constant.IGNORECASE
 import com.tencent.bkrepo.conan.constant.NAME
 import com.tencent.bkrepo.conan.constant.PATTERN
+import com.tencent.bkrepo.conan.constant.REQUEST_TYPE
 import com.tencent.bkrepo.conan.constant.VERSION
+import com.tencent.bkrepo.conan.exception.ConanException
+import com.tencent.bkrepo.conan.exception.ConanFileNotFoundException
 import com.tencent.bkrepo.conan.exception.ConanParameterInvalidException
 import com.tencent.bkrepo.conan.listener.event.ConanArtifactUploadEvent
 import com.tencent.bkrepo.conan.pojo.ConanFileReference
 import com.tencent.bkrepo.conan.pojo.ConanSearchResult
+import com.tencent.bkrepo.conan.pojo.RevisionInfo
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
+import com.tencent.bkrepo.conan.pojo.enums.ConanRequestType
+import com.tencent.bkrepo.conan.service.impl.CommonService
+import com.tencent.bkrepo.conan.utils.ConanArtifactInfoUtil
 import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.buildDownloadResponse
 import com.tencent.bkrepo.conan.utils.PathUtils
 import com.tencent.bkrepo.conan.utils.PathUtils.generateFullPath
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
 @Component
 class ConanLocalRepository : LocalRepository() {
-    override fun query(context: ArtifactQueryContext): ConanSearchResult {
+
+    @Autowired
+    lateinit var commonService: CommonService
+
+    override fun query(context: ArtifactQueryContext): Any {
+        context.getAttribute<ConanRequestType>(REQUEST_TYPE)?.let { requestType ->
+            return when (requestType) {
+                ConanRequestType.SEARCH -> searchResult(context)
+                ConanRequestType.RECIPE_LATEST -> getRecipeLatestRevision(context.artifactInfo as ConanArtifactInfo)
+                else -> throw ConanException("request path is not valid")
+            }
+        } ?: throw ConanException("request path is not valid")
+    }
+
+    private fun searchResult(context: ArtifactQueryContext): ConanSearchResult {
         val pattern = context.getAttribute<String>(PATTERN)
         val ignoreCase = context.getAttribute<Boolean>(IGNORECASE) ?: false
         val recipes = searchRecipes(context.projectId, context.repoName)
@@ -69,6 +92,17 @@ class ConanLocalRepository : LocalRepository() {
             matchPattern(pattern, recipes, ignoreCase)
         }
         return ConanSearchResult(list)
+    }
+
+    fun getRecipeLatestRevision(conanArtifactInfo: ConanArtifactInfo): RevisionInfo {
+        with(conanArtifactInfo) {
+            val conanFileReference = ConanArtifactInfoUtil.convertToConanFileReference(conanArtifactInfo)
+            commonService.checkNodeExist(projectId, repoName, PathUtils.buildReference(conanFileReference))
+            return commonService.getLastRevision(projectId, repoName, conanFileReference)
+                ?: throw ConanFileNotFoundException(
+                    ConanMessageCode.CONAN_FILE_NOT_FOUND, PathUtils.buildReference(conanFileReference), getRepoIdentify()
+                )
+        }
     }
 
     override fun buildNodeCreateRequest(context: ArtifactUploadContext): NodeCreateRequest {

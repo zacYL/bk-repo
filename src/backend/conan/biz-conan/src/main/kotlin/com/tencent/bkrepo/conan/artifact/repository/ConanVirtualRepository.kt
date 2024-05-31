@@ -33,15 +33,15 @@ import com.tencent.bkrepo.common.artifact.repository.virtual.VirtualRepository
 import com.tencent.bkrepo.common.redis.RedisOperation
 import com.tencent.bkrepo.conan.constant.IGNORECASE
 import com.tencent.bkrepo.conan.constant.PATTERN
+import com.tencent.bkrepo.conan.constant.REQUEST_TYPE
 import com.tencent.bkrepo.conan.pojo.ConanSearchResult
+import com.tencent.bkrepo.conan.pojo.enums.ConanRequestType
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
 @Component
-class ConanVirtualRepository(
-
-) : VirtualRepository() {
+class ConanVirtualRepository : VirtualRepository() {
 
     @Autowired
     lateinit var redisOperation: RedisOperation
@@ -52,7 +52,11 @@ class ConanVirtualRepository(
     @Autowired
     lateinit var conanLocalRepository: ConanLocalRepository
 
-    override fun query(context: ArtifactQueryContext): ConanSearchResult {
+    override fun query(context: ArtifactQueryContext): Any {
+        return searchResult(context)
+    }
+
+    private fun searchResult(context: ArtifactQueryContext): ConanSearchResult {
         val virtualConfiguration = context.getVirtualConfiguration()
         val repoList = virtualConfiguration.repositoryList
         // 分隔出本地仓库和远程仓库
@@ -68,6 +72,7 @@ class ConanVirtualRepository(
                 ArtifactQueryContext(repoDetail).let { queryContext ->
                     context.getAttribute<String>(PATTERN)?.let { queryContext.putAttribute(PATTERN, it) }
                     context.getAttribute<Boolean>(IGNORECASE)?.let { queryContext.putAttribute(IGNORECASE, it) }
+                    queryContext.putAttribute(REQUEST_TYPE, ConanRequestType.SEARCH)
                     queryFunction(queryContext).results.forEach { recipe ->
                         recipeRepoMap[recipe] = repoDetail.name
                         aggregateResult.add(recipe)
@@ -77,11 +82,11 @@ class ConanVirtualRepository(
         }
 
         repoCategoryMap[RepositoryCategory.REMOTE]?.let { remoteRepos ->
-            getRecipes(remoteRepos) { conanRemoteRepository.query(it) }
+            getRecipes(remoteRepos) { conanRemoteRepository.query(it) as ConanSearchResult }
         }
 
         repoCategoryMap[RepositoryCategory.LOCAL]?.let { localRepos ->
-            getRecipes(localRepos) { conanLocalRepository.query(it) }
+            getRecipes(localRepos) { conanLocalRepository.query(it) as ConanSearchResult }
         }
         cacheRecipes(context.projectId, context.repoName, recipeRepoMap)
         return ConanSearchResult(aggregateResult.sorted())
@@ -103,5 +108,6 @@ class ConanVirtualRepository(
             return "$CONAN_VIR_PREFIX$projectId/$repoName/$recipeName"
         }
     }
+
 }
 

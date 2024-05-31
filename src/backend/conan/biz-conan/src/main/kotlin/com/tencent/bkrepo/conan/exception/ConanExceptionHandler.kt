@@ -51,8 +51,9 @@ class ConanExceptionHandler {
     @ExceptionHandler(ConanFileNotFoundException::class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     fun handlerConanFileNotFoundException(exception: ConanFileNotFoundException) {
+        val errorMessage = LocaleMessageUtils.getLocalizedMessage(exception.messageCode, exception.params)
         val responseObject = ConanResponse.errorResponse(
-            ConanErrorResponse(exception.message, HttpStatus.NOT_FOUND.value())
+            ConanErrorResponse(errorMessage, HttpStatus.NOT_FOUND.value())
         )
         conanResponse(responseObject, exception)
     }
@@ -60,8 +61,9 @@ class ConanExceptionHandler {
     @ExceptionHandler(ConanRecipeNotFoundException::class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     fun handlerConanRecipeNotFoundException(exception: ConanRecipeNotFoundException) {
+        val errorMessage = LocaleMessageUtils.getLocalizedMessage(exception.messageCode, exception.params)
         val responseObject = ConanResponse.errorResponse(
-            ConanErrorResponse(exception.message, HttpStatus.NOT_FOUND.value())
+            ConanErrorResponse(errorMessage, HttpStatus.NOT_FOUND.value())
         )
         conanResponse(responseObject, exception)
     }
@@ -69,7 +71,7 @@ class ConanExceptionHandler {
     @ExceptionHandler(ConanSearchNotFoundException::class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     fun handlerConanRecipeNotFoundException(exception: ConanSearchNotFoundException) {
-        conanResponse(exception.message!!, exception)
+        conanResponse(exception)
     }
 
     @ExceptionHandler(ConanParameterInvalidException::class)
@@ -88,7 +90,7 @@ class ConanExceptionHandler {
 
     private fun conanResponse(
         responseObject: Any,
-        exception: Exception
+        exception: Exception,
     ) {
         logConanException(exception)
         val responseString = JsonUtils.objectMapper.writeValueAsString(responseObject)

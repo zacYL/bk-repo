@@ -25,19 +25,24 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.conan.interceptor
+package com.tencent.bkrepo.conan.servelet
 
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletRequestWrapper
+import com.tencent.bkrepo.conan.constant.CONAN_URL_PATTERN
+import com.tencent.bkrepo.conan.service.ConanRemoteService
+import com.tencent.bkrepo.conan.service.ConanVirtualService
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Configuration
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
-class MutableHttpServletRequest(request: HttpServletRequest) : HttpServletRequestWrapper(request) {
-    private var mutableRequestUri: String? = null
-
-    fun setRequestUri(uri: String) {
-        this.mutableRequestUri = uri
-    }
-
-    override fun getRequestURI(): String {
-        return mutableRequestUri ?: super.getRequestURI()
+@Configuration
+class WebMvcConfig(
+    @Autowired(required = false) private val conanRemoteService: ConanRemoteService,
+    @Autowired(required = false) private val conanVirtualService: ConanVirtualService,
+) : WebMvcConfigurer {
+    override fun addInterceptors(registry: InterceptorRegistry) {
+        val interceptPaths = listOf(CONAN_URL_PATTERN)
+        registry.addInterceptor(ProxyInterceptor(conanRemoteService, conanVirtualService))
+            .addPathPatterns(interceptPaths)
     }
 }

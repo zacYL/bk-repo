@@ -28,29 +28,61 @@
 package com.tencent.bkrepo.conan.service.impl
 
 import com.tencent.bkrepo.common.redis.RedisOperation
+import com.tencent.bkrepo.common.service.util.SpringContextUtils
 import com.tencent.bkrepo.conan.artifact.repository.ConanVirtualRepository
 import com.tencent.bkrepo.conan.exception.ConanException
+import com.tencent.bkrepo.conan.pojo.ConanFileReference
+import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
+import com.tencent.bkrepo.conan.service.ConanSearchService
 import com.tencent.bkrepo.conan.service.ConanVirtualService
-import com.tencent.bkrepo.conan.utils.PathUtils.buildConanFileName
 import com.tencent.bkrepo.conan.utils.PathUtils.extractConanFileReference
+import com.tencent.bkrepo.conan.utils.PathUtils.getConanRecipePattern
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import javax.servlet.http.HttpServletRequest
 
 @Service
-class ConanVirtualServiceImpl: ConanVirtualService {
+class ConanVirtualServiceImpl : ConanVirtualService {
 
     @Autowired
     lateinit var redisOperation: RedisOperation
 
-    override fun getCacheRepo(repositoryDetail: RepositoryDetail,request: HttpServletRequest): String {
+    override fun getOrSetCacheRepo(repositoryDetail: RepositoryDetail, requestURI: String, artifactInfo: ConanArtifactInfo): String {
         with(repositoryDetail) {
-            val conanFileReference = request.requestURI.extractConanFileReference()
-            return redisOperation.get(ConanVirtualRepository.getRecipeCacheKey(projectId, name, buildConanFileName(conanFileReference)))
-                ?: throw ConanException("repo not find")
+            val conanFileReference = requestURI.extractConanFileReference()
+            val cacheKey = ConanVirtualRepository.getRecipeCacheKey(projectId, name, getConanRecipePattern(conanFileReference))
+
+            var cacheRepo: String? = null
+            var retryCount = 0
+            while (retryCount < 3) {
+                redisOperation.keys(cacheKey).firstOrNull()?.let {
+                    cacheRepo = redisOperation.get(it)
+                }
+                if (cacheRepo != null) {
+                    return cacheRepo as String
+                }
+                selectRepo(conanFileReference, artifactInfo)
+                retryCount++
+            }
+
+            // 如果重试3次后仍然无法获取缓存，则抛出异常
+            throw ConanException("Cannot find cache repo after 3 retries")
         }
     }
 
+    override fun getCacheRepo(repositoryDetail: RepositoryDetail, requestURI: String): String? {
+        with(repositoryDetail) {
+            val conanFileReference = requestURI.extractConanFileReference()
+            val cacheKey = ConanVirtualRepository.getRecipeCacheKey(projectId, name, getConanRecipePattern(conanFileReference))
+            return redisOperation.keys(cacheKey).firstOrNull()?.let {
+                redisOperation.get(it)
+            }
+        }
+    }
+
+    private fun selectRepo(conanFileReference: ConanFileReference, artifactInfo: ConanArtifactInfo): String {
+        return SpringContextUtils.getBean(ConanSearchService::class.java).search(artifactInfo, conanFileReference.name, true).results.firstOrNull()
+            ?: throw ConanException("can not find cache repo")
+    }
 
 }

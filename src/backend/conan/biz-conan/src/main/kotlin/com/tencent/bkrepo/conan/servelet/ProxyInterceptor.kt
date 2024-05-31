@@ -25,13 +25,17 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.conan.interceptor
+package com.tencent.bkrepo.conan.servelet
 
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
+import com.tencent.bkrepo.common.service.util.SpringContextUtils
 import com.tencent.bkrepo.common.storage.innercos.http.HttpMethod
 import com.tencent.bkrepo.conan.service.ConanRemoteService
 import com.tencent.bkrepo.conan.service.ConanVirtualService
+import com.tencent.bkrepo.conan.utils.PathUtils.isFirstQueryPath
+import com.tencent.bkrepo.repository.api.RepositoryClient
+import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
 import org.springframework.web.servlet.HandlerInterceptor
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -43,38 +47,33 @@ class ProxyInterceptor(
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
         with(ArtifactContextHolder.getRepoDetail()!!) {
             if (category == RepositoryCategory.REMOTE && request.method == HttpMethod.GET.name) {
-                return if (isDownFilePath(request)) {
-                    //下载请求不拦截
-                    true
-                } else {
-                    conanRemoteService.proxyRequestToRemote(this, response)
-                    false
-                }
+                return handleRemoteRepo(this, request, response)
             }
             if (category == RepositoryCategory.VIRTUAL) {
-                return if (isSearchPath(request)) {
-                    //搜索请求不拦截
+                return if (isFirstQueryPath(request.requestURI)) {
                     true
                 } else {
-                    val repoName = conanVirtualService.getCacheRepo(this, request)
-                    val mutableRequest = MutableHttpServletRequest(request)
-                    val originalUri = request.requestURI
-                    val modifiedUri = originalUri.replace(name, repoName)
-
-                    mutableRequest.setRequestUri(modifiedUri)
-                    request.getRequestDispatcher(modifiedUri).forward(mutableRequest, response)
-                    false
+                    val actualRepoName = conanVirtualService.getCacheRepo(this, request.requestURI) ?: return true
+                    val actualRepoDetail = SpringContextUtils.getBean(RepositoryClient::class.java).getRepoDetail(projectId, actualRepoName).data!!
+                    if (actualRepoDetail.category == RepositoryCategory.REMOTE) {
+                        handleRemoteRepo(actualRepoDetail, request, response)
+                    } else true
                 }
             }
         }
         return true
     }
 
-    private fun isSearchPath(request: HttpServletRequest): Boolean {
-        return request.requestURI.endsWith("/search")
-    }
+    private fun handleRemoteRepo(repositoryDetail: RepositoryDetail, request: HttpServletRequest, response: HttpServletResponse) =
+        if (isDownFilePath(request)) {
+            //下载请求不拦截
+            true
+        } else {
+            conanRemoteService.proxyRequestToRemote(repositoryDetail, response)
+            false
+        }
 
-    private fun isDownFilePath(request: HttpServletRequest):Boolean {
+    private fun isDownFilePath(request: HttpServletRequest): Boolean {
         val regex = "/\\w+/files/[^/]+".toRegex() //路径中包含 /files/ 并紧跟一个非空文件名
         return regex.containsMatchIn(request.requestURI)
     }

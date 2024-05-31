@@ -27,13 +27,14 @@
 
 package com.tencent.bkrepo.conan.service
 
+import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
 
 /**
  * conan 虚拟仓库接口
  */
 interface ConanVirtualService {
-    fun getCacheRepo(repositoryDetail: RepositoryDetail,request: HttpServletRequest): String
+    fun getOrSetCacheRepo(repositoryDetail: RepositoryDetail, requestURI: String, artifactInfo: ConanArtifactInfo): String
+
+    fun getCacheRepo(repositoryDetail: RepositoryDetail, requestURI: String): String?
 }

@@ -27,23 +27,33 @@
 
 package com.tencent.bkrepo.conan.utils
 
-import com.tencent.bkrepo.common.api.constant.CharPool
+import com.tencent.bkrepo.common.api.constant.CharPool.AT
+import com.tencent.bkrepo.common.api.constant.CharPool.COLON
+import com.tencent.bkrepo.common.api.constant.CharPool.HASH_TAG
+import com.tencent.bkrepo.common.api.constant.CharPool.SLASH
+import com.tencent.bkrepo.common.api.constant.StringPool.UNDERSCORE
 import com.tencent.bkrepo.conan.constant.CONANINFO
+import com.tencent.bkrepo.conan.constant.CONANS_URL_TAG
+import com.tencent.bkrepo.conan.constant.CONAN_V2
 import com.tencent.bkrepo.conan.constant.EXPORT_FOLDER
 import com.tencent.bkrepo.conan.constant.INDEX_JSON
 import com.tencent.bkrepo.conan.constant.PACKAGES_FOLDER
 import com.tencent.bkrepo.conan.pojo.ConanFileReference
 import com.tencent.bkrepo.conan.pojo.PackageReference
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
+import javax.servlet.http.HttpServletRequest
 
 object PathUtils {
 
+    /**
+     * url解析为conanFileReference
+     * url例子：/{projectId}/{repoName}/v2/conans/{name}/{version}/{username}/{channel}
+     */
     fun String.extractConanFileReference(): ConanFileReference {
         val trimStr = this.trim()
-        val cleanedUrl = if (trimStr.startsWith("/")) trimStr.substring(1) else trimStr
-
-        val segments = cleanedUrl.split("/")
-        if (segments.size < 7 || segments[2] != "v2" || segments[3] != "conans") {
+        val cleanedUrl = if (trimStr.startsWith(SLASH)) trimStr.substring(1) else trimStr
+        val segments = cleanedUrl.split(SLASH)
+        if (segments.size < 7 || segments[2] != CONAN_V2 || segments[3] != CONANS_URL_TAG) {
             throw IllegalArgumentException("Invalid URL format")
         }
 
@@ -55,21 +65,21 @@ object PathUtils {
     }
 
     fun joinString(first: String, second: String, third: String? = null): String {
-        val sb = StringBuilder(first.trimEnd(CharPool.SLASH))
-            .append(CharPool.SLASH)
-            .append(second.trimStart(CharPool.SLASH))
-        third?.let { sb.append(CharPool.SLASH).append(third) }
+        val sb = StringBuilder(first.trimEnd(SLASH))
+            .append(SLASH)
+            .append(second.trimStart(SLASH))
+        third?.let { sb.append(SLASH).append(third) }
         return sb.toString()
     }
 
     fun buildOriginalConanFileName(fileReference: ConanFileReference): String {
         with(fileReference) {
             return StringBuilder(name)
-                .append(CharPool.SLASH)
+                .append(SLASH)
                 .append(version)
-                .append(CharPool.SLASH)
+                .append(SLASH)
                 .append(userName)
-                .append(CharPool.SLASH)
+                .append(SLASH)
                 .append(channel)
                 .toString()
         }
@@ -78,11 +88,11 @@ object PathUtils {
     fun buildConanFileName(fileReference: ConanFileReference): String {
         with(fileReference) {
             return StringBuilder(name)
-                .append(CharPool.SLASH)
+                .append(SLASH)
                 .append(version)
-                .append(CharPool.AT)
+                .append(AT)
                 .append(userName)
-                .append(CharPool.SLASH)
+                .append(SLASH)
                 .append(channel)
                 .toString()
         }
@@ -91,11 +101,11 @@ object PathUtils {
     fun buildPackagePath(fileReference: ConanFileReference): String {
         with(fileReference) {
             return StringBuilder(userName)
-                .append(CharPool.SLASH)
+                .append(SLASH)
                 .append(name)
-                .append(CharPool.SLASH)
+                .append(SLASH)
                 .append(version)
-                .append(CharPool.SLASH)
+                .append(SLASH)
                 .append(channel)
                 .toString()
         }
@@ -104,11 +114,11 @@ object PathUtils {
     fun buildReference(fileReference: ConanFileReference): String {
         with(fileReference) {
             return StringBuilder(userName)
-                .append(CharPool.SLASH)
+                .append(SLASH)
                 .append(name)
-                .append(CharPool.SLASH)
+                .append(SLASH)
                 .append(version)
-                .append(CharPool.SLASH)
+                .append(SLASH)
                 .append(channel)
                 .toString()
         }
@@ -117,9 +127,9 @@ object PathUtils {
     fun buildPackageReference(packageReference: PackageReference): String {
         with(packageReference) {
             return StringBuilder(buildReference(conRef))
-                .append(CharPool.HASH_TAG)
+                .append(HASH_TAG)
                 .append(conRef.revision)
-                .append(CharPool.COLON)
+                .append(COLON)
                 .append(packageId)
                 .toString()
         }
@@ -128,7 +138,7 @@ object PathUtils {
     fun buildRevisionPath(fileReference: ConanFileReference): String {
         with(fileReference) {
             return StringBuilder(buildPackagePath(fileReference))
-                .append(CharPool.SLASH)
+                .append(SLASH)
                 .append(revision)
                 .toString()
         }
@@ -136,23 +146,23 @@ object PathUtils {
 
     fun buildExportFolderPath(fileReference: ConanFileReference): String {
         return StringBuilder(buildRevisionPath(fileReference))
-            .append(CharPool.SLASH)
+            .append(SLASH)
             .append(EXPORT_FOLDER)
             .toString()
     }
 
     fun buildPackageFolderPath(fileReference: ConanFileReference): String {
         return StringBuilder(buildRevisionPath(fileReference))
-            .append(CharPool.SLASH)
+            .append(SLASH)
             .append(PACKAGES_FOLDER)
             .toString()
     }
 
     fun buildPackageIdFolderPath(fileReference: ConanFileReference, packageId: String): String {
         return StringBuilder(buildRevisionPath(fileReference))
-            .append(CharPool.SLASH)
+            .append(SLASH)
             .append(PACKAGES_FOLDER)
-            .append(CharPool.SLASH)
+            .append(SLASH)
             .append(packageId)
             .toString()
     }
@@ -160,9 +170,9 @@ object PathUtils {
     fun buildPackageRevisionFolderPath(packageReference: PackageReference): String {
         with(packageReference) {
             return StringBuilder(buildPackageFolderPath(conRef))
-                .append(CharPool.SLASH)
+                .append(SLASH)
                 .append(packageId)
-                .append(CharPool.SLASH)
+                .append(SLASH)
                 .append(revision)
                 .toString()
         }
@@ -200,5 +210,25 @@ object PathUtils {
     fun getPackageConanInfoFile(packageReference: PackageReference): String {
         val temp = buildPackageRevisionFolderPath(packageReference)
         return joinString(temp, CONANINFO)
+    }
+
+    fun getConanRecipePattern(conanFileReference: ConanFileReference): String {
+        with(conanFileReference) {
+            //如果userName和channel为_，则不拼接，而是拼接*
+            return if (userName == UNDERSCORE && channel == UNDERSCORE) {
+                "${name}/${version}*"
+            } else {
+                buildConanFileName(this)
+            }
+        }
+    }
+
+    fun isSearchPath(uri: String): Boolean {
+        return uri.endsWith("/conans/search")
+
+    }
+
+    fun isFirstQueryPath(uri: String): Boolean {
+        return isSearchPath(uri) || (uri.endsWith("/latest") && uri.contains("/packages").not())
     }
 }

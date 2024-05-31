@@ -28,8 +28,12 @@
 package com.tencent.bkrepo.conan.artifact.resolver
 
 import com.tencent.bkrepo.common.api.constant.StringPool
+import com.tencent.bkrepo.common.artifact.constant.ARTIFACT_INFO_KEY
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.resolve.path.ArtifactInfoResolver
 import com.tencent.bkrepo.common.artifact.resolve.path.Resolver
+import com.tencent.bkrepo.common.service.util.SpringContextUtils
 import com.tencent.bkrepo.conan.constant.CHANNEL
 import com.tencent.bkrepo.conan.constant.NAME
 import com.tencent.bkrepo.conan.constant.PACKAGE_ID
@@ -39,6 +43,8 @@ import com.tencent.bkrepo.conan.constant.REVISION
 import com.tencent.bkrepo.conan.constant.USERNAME
 import com.tencent.bkrepo.conan.constant.VERSION
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
+import com.tencent.bkrepo.conan.service.ConanVirtualService
+import com.tencent.bkrepo.conan.utils.PathUtils.isSearchPath
 import org.springframework.stereotype.Component
 import org.springframework.web.servlet.HandlerMapping
 import javax.servlet.http.HttpServletRequest
@@ -46,11 +52,12 @@ import javax.servlet.http.HttpServletRequest
 @Resolver(ConanArtifactInfo::class)
 @Component
 class ConanArtifactInfoResolver : ArtifactInfoResolver {
+
     override fun resolve(
         projectId: String,
         repoName: String,
         artifactUri: String,
-        request: HttpServletRequest
+        request: HttpServletRequest,
     ): ConanArtifactInfo {
         val attributes = request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE) as Map<*, *>
         val name = attributes[NAME]?.toString() ?: StringPool.UNDERSCORE
@@ -62,7 +69,7 @@ class ConanArtifactInfoResolver : ArtifactInfoResolver {
         val pRevision = attributes[PACKAGE_REVISION]?.toString()
         val fileName = attributes[PATH]?.toString()
 
-        return ConanArtifactInfo(
+        val artifactInfo = ConanArtifactInfo(
             projectId = projectId,
             repoName = repoName,
             artifactUri = artifactUri,
@@ -75,5 +82,20 @@ class ConanArtifactInfoResolver : ArtifactInfoResolver {
             pRevision = pRevision,
             fileName = fileName
         )
+
+        val actualRepoName = getActualRepoName(repoName, request, artifactInfo)
+        return artifactInfo.copy(projectId, actualRepoName) as ConanArtifactInfo
+    }
+
+    private fun getActualRepoName(repoName: String, request: HttpServletRequest, artifactInfo: ConanArtifactInfo): String {
+        val conanVirtualService = SpringContextUtils.getBean(ConanVirtualService::class.java)
+        var actualRepoName = repoName
+        with(ArtifactContextHolder.getRepoDetail()!!) {
+            if (category == RepositoryCategory.VIRTUAL && isSearchPath(request.requestURI).not()) {
+                request.setAttribute(ARTIFACT_INFO_KEY, artifactInfo)
+                actualRepoName = conanVirtualService.getOrSetCacheRepo(this, request.requestURI, artifactInfo)
+            }
+        }
+        return actualRepoName
     }
 }

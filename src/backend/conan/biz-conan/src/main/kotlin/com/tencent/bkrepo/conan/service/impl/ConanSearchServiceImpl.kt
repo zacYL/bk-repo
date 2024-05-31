@@ -34,10 +34,12 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContex
 import com.tencent.bkrepo.conan.constant.ConanMessageCode
 import com.tencent.bkrepo.conan.constant.IGNORECASE
 import com.tencent.bkrepo.conan.constant.PATTERN
+import com.tencent.bkrepo.conan.constant.REQUEST_TYPE
 import com.tencent.bkrepo.conan.exception.ConanSearchNotFoundException
 import com.tencent.bkrepo.conan.pojo.ConanInfo
 import com.tencent.bkrepo.conan.pojo.ConanSearchResult
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
+import com.tencent.bkrepo.conan.pojo.enums.ConanRequestType
 import com.tencent.bkrepo.conan.service.ConanSearchService
 import com.tencent.bkrepo.conan.utils.ConanArtifactInfoUtil.convertToConanFileReference
 import com.tencent.bkrepo.conan.utils.PathUtils.buildReference
@@ -58,6 +60,7 @@ class ConanSearchServiceImpl : ConanSearchService {
         val context = ArtifactQueryContext(artifact = artifactInfo)
         pattern?.let { context.putAttribute(PATTERN, it) }
         context.putAttribute(IGNORECASE, ignoreCase)
+        context.putAttribute(REQUEST_TYPE, ConanRequestType.SEARCH)
         return ArtifactContextHolder.getRepository().query(context) as ConanSearchResult
     }
 

@@ -28,8 +28,11 @@
 package com.tencent.bkrepo.conan.service.impl
 
 import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.conan.constant.ConanMessageCode
 import com.tencent.bkrepo.conan.constant.DEFAULT_REVISION_V1
+import com.tencent.bkrepo.conan.constant.REQUEST_TYPE
 import com.tencent.bkrepo.conan.exception.ConanFileNotFoundException
 import com.tencent.bkrepo.conan.exception.ConanRecipeNotFoundException
 import com.tencent.bkrepo.conan.pojo.IndexInfo
@@ -37,23 +40,27 @@ import com.tencent.bkrepo.conan.pojo.PackageReference
 import com.tencent.bkrepo.conan.pojo.PackageRevisionInfo
 import com.tencent.bkrepo.conan.pojo.RevisionInfo
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
+import com.tencent.bkrepo.conan.pojo.enums.ConanRequestType
 import com.tencent.bkrepo.conan.service.ConanService
 import com.tencent.bkrepo.conan.utils.ConanArtifactInfoUtil.convertToConanFileReference
 import com.tencent.bkrepo.conan.utils.ConanArtifactInfoUtil.convertToPackageReference
 import com.tencent.bkrepo.conan.utils.PathUtils.buildPackageReference
 import com.tencent.bkrepo.conan.utils.PathUtils.buildReference
+import com.tencent.bkrepo.repository.api.RepositoryClient
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 @Service
-class ConanServiceImpl : ConanService {
+class ConanServiceImpl(
+    private val repositoryClient: RepositoryClient,
+) : ConanService {
 
     @Autowired
     lateinit var commonService: CommonService
 
     override fun getConanFileDownloadUrls(
         conanArtifactInfo: ConanArtifactInfo,
-        subFileset: List<String>
+        subFileset: List<String>,
     ): Map<String, String> {
         with(conanArtifactInfo) {
             val conanFileReference = convertToConanFileReference(conanArtifactInfo)
@@ -74,7 +81,7 @@ class ConanServiceImpl : ConanService {
 
     override fun getPackageDownloadUrls(
         conanArtifactInfo: ConanArtifactInfo,
-        subFileset: List<String>
+        subFileset: List<String>,
     ): Map<String, String> {
         with(conanArtifactInfo) {
             val packageReference = convertToPackageReference(conanArtifactInfo)
@@ -105,7 +112,7 @@ class ConanServiceImpl : ConanService {
 
     override fun getConanFileUploadUrls(
         conanArtifactInfo: ConanArtifactInfo,
-        fileSizes: Map<String, String>
+        fileSizes: Map<String, String>,
     ): Map<String, String> {
         with(conanArtifactInfo) {
             val conanFileReference = convertToConanFileReference(conanArtifactInfo, DEFAULT_REVISION_V1)
@@ -115,7 +122,7 @@ class ConanServiceImpl : ConanService {
 
     override fun getPackageUploadUrls(
         conanArtifactInfo: ConanArtifactInfo,
-        fileSizes: Map<String, String>
+        fileSizes: Map<String, String>,
     ): Map<String, String> {
         with(conanArtifactInfo) {
             val conanFileReference = convertToConanFileReference(conanArtifactInfo, DEFAULT_REVISION_V1)
@@ -148,14 +155,11 @@ class ConanServiceImpl : ConanService {
     }
 
     override fun getRecipeLatestRevision(conanArtifactInfo: ConanArtifactInfo): RevisionInfo {
-        with(conanArtifactInfo) {
-            val conanFileReference = convertToConanFileReference(conanArtifactInfo)
-            commonService.checkNodeExist(projectId, repoName, buildReference(conanFileReference))
-            return commonService.getLastRevision(projectId, repoName, conanFileReference)
-                ?: throw ConanFileNotFoundException(
-                    ConanMessageCode.CONAN_FILE_NOT_FOUND, buildReference(conanFileReference), getRepoIdentify()
-                )
-        }
+        val repoDetail = repositoryClient.getRepoDetail(conanArtifactInfo.projectId, conanArtifactInfo.repoName).data!!
+        val context = ArtifactQueryContext(artifact = conanArtifactInfo, repo = repoDetail)
+        context.putAttribute(REQUEST_TYPE, ConanRequestType.RECIPE_LATEST)
+        ArtifactContextHolder.setRepoDetail(repoDetail)
+        return ArtifactContextHolder.getRepository(repoDetail.category).query(context) as RevisionInfo
     }
 
     override fun getPackageRevisions(conanArtifactInfo: ConanArtifactInfo): PackageRevisionInfo {
@@ -172,8 +176,8 @@ class ConanServiceImpl : ConanService {
             val packageReference = PackageReference(conanFileReference, packageId!!, pRevision)
             return commonService.getLastPackageRevision(projectId, repoName, packageReference)
                 ?: throw ConanFileNotFoundException(
-                ConanMessageCode.CONAN_FILE_NOT_FOUND, buildPackageReference(packageReference), getRepoIdentify()
-            )
+                    ConanMessageCode.CONAN_FILE_NOT_FOUND, buildPackageReference(packageReference), getRepoIdentify()
+                )
         }
     }
 }

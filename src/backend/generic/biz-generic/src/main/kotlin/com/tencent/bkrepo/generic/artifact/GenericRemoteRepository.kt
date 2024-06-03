@@ -127,6 +127,7 @@ class GenericRemoteRepository(
     }
 
     override fun loadArtifactResource(cacheNode: NodeDetail, context: ArtifactContext): ArtifactResource? {
+        require(context is ArtifactDownloadContext)
         val range = HttpContextHolder.getRequestOrNull()
             ?.let { resolveRange(it, cacheNode.size) }
             ?: Range.full(cacheNode.size)
@@ -142,7 +143,8 @@ class GenericRemoteRepository(
                 logger.debug("Cached remote artifact[${context.artifactInfo}] is hit.")
             }
             val srcRepo = RepositoryIdentify(context.projectId, context.repoName)
-            ArtifactResource(this, context.artifactInfo.getResponseName(), srcRepo, cacheNode, ArtifactChannel.PROXY)
+            val artifactName = context.artifactInfo.getResponseName()
+            ArtifactResource(this, artifactName, srcRepo, cacheNode, ArtifactChannel.PROXY, context.useDisposition)
         }
     }
 

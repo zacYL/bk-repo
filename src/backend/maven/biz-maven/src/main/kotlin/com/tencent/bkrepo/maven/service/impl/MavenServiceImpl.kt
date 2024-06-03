@@ -225,6 +225,7 @@ class MavenServiceImpl(
                         getArtifactFullPath()
                             .substringAfterLast("/").resolverName(model.artifactId, model.version).classifier
                     } catch (e: MavenArtifactFormatException) {
+                        if (e.messageCode == MavenMessageCode.MAVEN_VERSION_RESOLVE_FAILED) { throw e }
                         logger.warn("Failed to parse classifier for [$projectId, $repoName, ${getArtifactFullPath()}]")
                         null
                     }

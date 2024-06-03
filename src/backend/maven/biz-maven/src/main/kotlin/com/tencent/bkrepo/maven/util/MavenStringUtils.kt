@@ -45,6 +45,7 @@ import com.tencent.bkrepo.maven.pojo.MavenVersion
 import org.apache.commons.lang3.StringUtils
 import org.springframework.http.HttpStatus
 import java.util.regex.Pattern
+import java.util.regex.PatternSyntaxException
 
 object MavenStringUtils {
 
@@ -137,7 +138,11 @@ object MavenStringUtils {
                 version = version,
                 packaging = packaging
             )
-            mavenVersion.setVersion(this)
+            try {
+                mavenVersion.setVersion(this)
+            } catch (e: PatternSyntaxException) {
+                throw MavenArtifactFormatException(MavenMessageCode.MAVEN_VERSION_RESOLVE_FAILED, version)
+            }
             return mavenVersion
         }
         throw MavenArtifactFormatException(MavenMessageCode.MAVEN_ARTIFACT_FORMAT_ERROR, this)

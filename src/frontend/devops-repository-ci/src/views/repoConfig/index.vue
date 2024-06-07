@@ -127,7 +127,7 @@
                                     <bk-input class="w250" v-model.trim="repoBaseInfo[type].filename"></bk-input>
                                     <i class="bk-icon icon-info f14 ml5" v-bk-tooltips="$t('fileNameRule')"></i>
                                 </bk-form-item>
-                                <bk-form-item :label="$t('metadata')" :label-width="80"
+                                <bk-form-item v-if="repoBaseInfo.category !== 'REMOTE'" :label="$t('metadata')" :label-width="80"
                                     :property="`${type}.metadata`" required error-display-type="normal">
                                     <bk-input class="w250" v-model.trim="repoBaseInfo[type].metadata" :placeholder="$t('metadataRule')"></bk-input>
                                 </bk-form-item>
@@ -313,18 +313,20 @@
                         trigger: 'blur'
                     }
                 ]
-                const metadataRule = [
-                    {
-                        required: true,
-                        message: this.$t('pleaseMetadata'),
-                        trigger: 'blur'
-                    },
-                    {
-                        regex: /^[^\s]+:[^\s]+/,
-                        message: this.$t('metadataRule'),
-                        trigger: 'blur'
-                    }
-                ]
+                const metadataRule = this.repoBaseInfo.category !== 'REMOTE'
+                    ? [
+                        {
+                            required: true,
+                            message: this.$t('pleaseMetadata'),
+                            trigger: 'blur'
+                        },
+                        {
+                            regex: /^[^\s]+:[^\s]+/,
+                            message: this.$t('metadataRule'),
+                            trigger: 'blur'
+                        }
+                    ]
+                    : []
                 // 远程仓库的 地址校验规则
                 const urlRule = [
                     {

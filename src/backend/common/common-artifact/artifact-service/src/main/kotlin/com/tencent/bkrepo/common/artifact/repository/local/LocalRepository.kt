@@ -96,32 +96,6 @@ abstract class LocalRepository : AbstractArtifactRepository() {
     }
 
     /**
-     * 拦截node下载
-     */
-    fun downloadIntercept(context: ArtifactDownloadContext, nodeDetail: NodeDetail) {
-        with(context) {
-            getInterceptors().forEach { it.intercept(projectId, nodeDetail) }
-
-            // 拦截package下载
-            val packageKey = nodeDetail.packageName()?.let { PackageKeys.ofName(repo.type, it) }
-            val version = nodeDetail.packageVersion()
-            if (packageKey != null && version != null) {
-                packageClient.findVersionByName(projectId, repoName, packageKey, version).data?.let { packageVersion ->
-                    downloadIntercept(context, packageVersion)
-                }
-            }
-        }
-    }
-
-    /**
-     * 拦截package下载
-     * TODO NODE中统一存储packageKey与version元数据后可设置为private方法
-     */
-    fun downloadIntercept(context: ArtifactDownloadContext, packageVersion: PackageVersion) {
-        context.getPackageInterceptors().forEach { it.intercept(context.projectId, packageVersion) }
-    }
-
-    /**
      * 构造节点创建请求
      */
     open fun buildNodeCreateRequest(context: ArtifactUploadContext): NodeCreateRequest {

@@ -34,6 +34,7 @@ package com.tencent.bkrepo.oci.artifact.repository
 import com.tencent.bkrepo.common.api.constant.HttpStatus
 import com.tencent.bkrepo.common.api.constant.MediaTypes
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
@@ -355,11 +356,7 @@ class OciRegistryLocalRepository(
     private fun downloadArtifact(context: ArtifactDownloadContext, fullPath: String?): ArtifactResource? {
         if (fullPath == null) return null
         val node = getNodeDetail(context.artifactInfo as OciArtifactInfo, fullPath)
-        // 拦截制品下载
-        node?.let {
-            downloadIntercept(context, it)
-            packageVersion(context, it)?.let { packageVersion -> downloadIntercept(context, packageVersion) }
-        }
+            ?.also { downloadIntercept(context, it) }
         logger.info(
             "Starting to download $fullPath " +
                 "in repo: ${context.artifactInfo.getRepoIdentify()}"
@@ -453,8 +450,10 @@ class OciRegistryLocalRepository(
         return null
     }
 
-    private fun packageVersion(context: ArtifactDownloadContext, node: NodeDetail): PackageVersion? {
-        with(context) {
+    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
+        requireNotNull(context)
+        requireNotNull(node)
+        with(context as ArtifactDownloadContext) {
             val artifactInfo = context.artifactInfo as OciArtifactInfo
             val packageKey = PackageKeys.ofName(repo.type, artifactInfo.packageName)
             val version = node.metadata[IMAGE_VERSION]?.toString() ?: run {

@@ -63,6 +63,7 @@ import com.tencent.bkrepo.maven.pojo.Basic
 import com.tencent.bkrepo.maven.pojo.MavenArtifactVersionData
 import com.tencent.bkrepo.maven.pojo.MavenGAVC
 import com.tencent.bkrepo.maven.service.MavenExtService
+import com.tencent.bkrepo.maven.service.MavenOperationService
 import com.tencent.bkrepo.maven.util.DigestUtils
 import com.tencent.bkrepo.maven.util.JarUtils
 import com.tencent.bkrepo.maven.util.MavenGAVCUtils.mavenGAVC
@@ -100,8 +101,14 @@ import java.util.regex.Pattern
 class MavenRemoteRepository(
     private val stageClient: StageClient,
     private val versionDependentsClient: VersionDependentsClient,
-    private val mavenExtService: MavenExtService
+    private val mavenExtService: MavenExtService,
+    private val mavenOperationService: MavenOperationService
 ) : RemoteRepository() {
+
+    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
+        requireNotNull(node)
+        return mavenOperationService.packageVersion(node)
+    }
 
     /**
      * 针对索引文件`maven-metadata.xml` 每次都尝试从远程拉取最新的索引文件，
@@ -119,6 +126,14 @@ class MavenRemoteRepository(
                 onDownloadResponse(context, response)
             } else getCacheArtifactResource(context)
         } else super.onDownload(context)
+    }
+
+    override fun findCacheNodeDetail(context: ArtifactContext): NodeDetail? {
+        return super.findCacheNodeDetail(context)?.also {
+            if (!(context.artifactInfo as MavenArtifactInfo).isMetadata() && context is ArtifactDownloadContext) {
+                downloadIntercept(context, it)
+            }
+        }
     }
 
     override fun whitelistInterceptor(context: ArtifactDownloadContext) {

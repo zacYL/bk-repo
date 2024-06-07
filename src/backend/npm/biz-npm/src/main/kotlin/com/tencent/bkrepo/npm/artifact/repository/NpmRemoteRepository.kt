@@ -69,12 +69,14 @@ import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
 import com.tencent.bkrepo.npm.model.metadata.NpmVersionMetadata
 import com.tencent.bkrepo.npm.pojo.NpmSearchInfoMap
 import com.tencent.bkrepo.npm.pojo.NpmSearchResponse
+import com.tencent.bkrepo.npm.service.NpmOperationService
 import com.tencent.bkrepo.npm.utils.NpmUtils
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodesDeleteRequest
+import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import okhttp3.Response
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -84,7 +86,8 @@ import org.springframework.stereotype.Component
 @Component
 class NpmRemoteRepository(
     private val executor: ThreadPoolTaskExecutor,
-    private val npmPackageHandler: NpmPackageHandler
+    private val npmPackageHandler: NpmPackageHandler,
+    private val npmOperationService: NpmOperationService
 ) : RemoteRepository() {
 
     override fun whitelistInterceptor(context: ArtifactDownloadContext) {
@@ -95,6 +98,16 @@ class NpmRemoteRepository(
                 throw ArtifactNotInWhitelistException()
             }
         }
+    }
+
+    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
+        requireNotNull(context)
+        return npmOperationService.packageVersion(context)
+    }
+
+    override fun onDownloadBefore(context: ArtifactDownloadContext) {
+        super.onDownloadBefore(context)
+        downloadIntercept(context, null)
     }
 
     override fun onDownloadSuccess(

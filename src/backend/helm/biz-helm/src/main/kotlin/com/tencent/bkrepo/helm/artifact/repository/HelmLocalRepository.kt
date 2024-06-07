@@ -32,7 +32,11 @@
 package com.tencent.bkrepo.helm.artifact.repository
 
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
-import com.tencent.bkrepo.common.artifact.repository.context.*
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
@@ -118,6 +122,7 @@ class HelmLocalRepository(
             if (node!=null && !isOverwrite) {
                 throw HelmFileAlreadyExistsException(HelmMessageCode.HELM_FILE_ALREADY_EXISTS, fullPath.trimStart('/'))
             }
+            // TODO: 需要抽象处理
             node?.let {
                 uploadIntercept(context, node)
                 packageVersion(context, node)?.let { packageVersion -> uploadIntercept(context, packageVersion) }
@@ -175,7 +180,6 @@ class HelmLocalRepository(
             node.metadata[NAME]?.let { context.putAttribute(NAME, it) }
             node.metadata[VERSION]?.let { context.putAttribute(VERSION, it) }
             downloadIntercept(context, node)
-            packageVersion(context, node)?.let { packageVersion -> downloadIntercept(context, packageVersion) }
         }
         val inputStream = storageManager.loadArtifactInputStream(node, context.storageCredentials)
         inputStream?.let {
@@ -248,13 +252,11 @@ class HelmLocalRepository(
             publishEvent(event)
         }
     }
-    private fun packageVersion(context: ArtifactContext, node: NodeDetail): PackageVersion? {
-        with(context) {
-            val packageName = node.metadata[NAME] ?: return null
-            val packageVersion = node.metadata[VERSION] ?: return null
-            val packageKey = PackageKeys.ofHelm(packageName.toString())
-            return packageClient.findVersionByName(projectId, repoName, packageKey, packageVersion.toString()).data
-        }
+
+    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
+        requireNotNull(context)
+        requireNotNull(node)
+        return helmOperationService.packageVersion(context, node)
     }
 
     private fun parseMetaData(context: ArtifactUploadContext): Map<String, Any>? {

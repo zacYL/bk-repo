@@ -42,7 +42,11 @@ import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.pojo.configuration.virtual.VirtualConfiguration
-import com.tencent.bkrepo.common.artifact.repository.context.*
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
@@ -54,7 +58,20 @@ import com.tencent.bkrepo.common.service.util.HeaderUtils
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
 import com.tencent.bkrepo.maven.artifact.MavenDeleteArtifactInfo
-import com.tencent.bkrepo.maven.constants.*
+import com.tencent.bkrepo.maven.constants.FULL_PATH
+import com.tencent.bkrepo.maven.constants.MAVEN_METADATA_FILE_NAME
+import com.tencent.bkrepo.maven.constants.METADATA_KEY_ARTIFACT_ID
+import com.tencent.bkrepo.maven.constants.METADATA_KEY_CLASSIFIER
+import com.tencent.bkrepo.maven.constants.METADATA_KEY_GROUP_ID
+import com.tencent.bkrepo.maven.constants.METADATA_KEY_MODEL_VERSION
+import com.tencent.bkrepo.maven.constants.METADATA_KEY_NAME
+import com.tencent.bkrepo.maven.constants.METADATA_KEY_PACKAGING
+import com.tencent.bkrepo.maven.constants.METADATA_KEY_VERSION
+import com.tencent.bkrepo.maven.constants.PACKAGE_SUFFIX_REGEX
+import com.tencent.bkrepo.maven.constants.SNAPSHOT_BUILD_NUMBER
+import com.tencent.bkrepo.maven.constants.SNAPSHOT_SUFFIX
+import com.tencent.bkrepo.maven.constants.SNAPSHOT_TIMESTAMP
+import com.tencent.bkrepo.maven.constants.X_CHECKSUM_SHA1
 import com.tencent.bkrepo.maven.enum.HashType
 import com.tencent.bkrepo.maven.enum.MavenMessageCode
 import com.tencent.bkrepo.maven.enum.SnapshotBehaviorType
@@ -63,10 +80,15 @@ import com.tencent.bkrepo.maven.exception.JarFormatException
 import com.tencent.bkrepo.maven.exception.MavenArtifactNotFoundException
 import com.tencent.bkrepo.maven.exception.MavenRequestForbiddenException
 import com.tencent.bkrepo.maven.model.TMavenMetadataRecord
-import com.tencent.bkrepo.maven.pojo.*
+import com.tencent.bkrepo.maven.pojo.Basic
+import com.tencent.bkrepo.maven.pojo.MavenArtifactVersionData
+import com.tencent.bkrepo.maven.pojo.MavenGAVC
+import com.tencent.bkrepo.maven.pojo.MavenMetadataSearchPojo
+import com.tencent.bkrepo.maven.pojo.MavenRepoConf
 import com.tencent.bkrepo.maven.pojo.response.MavenArtifactResponse
 import com.tencent.bkrepo.maven.service.MavenExtService
 import com.tencent.bkrepo.maven.service.MavenMetadataService
+import com.tencent.bkrepo.maven.service.MavenOperationService
 import com.tencent.bkrepo.maven.util.DigestUtils
 import com.tencent.bkrepo.maven.util.JarUtils
 import com.tencent.bkrepo.maven.util.MavenConfiguration.toMavenRepoConf
@@ -124,7 +146,8 @@ class MavenLocalRepository(
     private val mavenMetadataService: MavenMetadataService,
     private val metadataClient: MetadataClient,
     private val versionDependentsClient: VersionDependentsClient,
-    private val mavenExtService: MavenExtService
+    private val mavenExtService: MavenExtService,
+    private val mavenOperationService: MavenOperationService
 ) : LocalRepository() {
 
     @Value("\${maven.domain:http://127.0.0.1:25803}")
@@ -299,9 +322,10 @@ class MavenLocalRepository(
                 }
             }
         }
+        // TODO: 需要抽象处理
         node?.let {
             uploadIntercept(context, it)
-            packageVersion(node)?.let { packageVersion -> uploadIntercept(context, packageVersion) }
+            packageVersion(null, node)?.let { packageVersion -> uploadIntercept(context, packageVersion) }
         }
         for (hashType in HashType.values()) {
             val artifactFullPath = context.artifactInfo.getArtifactFullPath()
@@ -770,11 +794,7 @@ class MavenLocalRepository(
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         with(context) {
             val node = getNodeInfoForDownload(context) ?: return null
-            // 制品下载拦截
-            node.let {
-                downloadIntercept(context, it)
-                packageVersion(node)?.let { packageVersion -> downloadIntercept(context, packageVersion) }
-            }
+            downloadIntercept(context, node)
             node.nodeMetadata.find { it.key == HashType.SHA1.ext }?.let {
                 response.addHeader(X_CHECKSUM_SHA1, it.value.toString())
             }
@@ -797,6 +817,11 @@ class MavenLocalRepository(
             val srcRepo = RepositoryIdentify(projectId, repoName)
             return ArtifactResource(inputStream, responseName, srcRepo, node, ArtifactChannel.LOCAL, useDisposition)
         }
+    }
+
+    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
+        requireNotNull(node)
+        return mavenOperationService.packageVersion(node)
     }
 
     /**
@@ -1286,18 +1311,6 @@ class MavenLocalRepository(
             val groupId = mavenGAVC.groupId.formatSeparator("/", ".")
             val packageKey = PackageKeys.ofGav(groupId, artifactId)
             return PackageDownloadRecord(projectId, repoName, packageKey, version, userId)
-        }
-    }
-
-    private fun packageVersion(node: NodeDetail): PackageVersion? {
-        val groupId = node.metadata[METADATA_KEY_GROUP_ID]?.toString()
-        val artifactId = node.metadata[METADATA_KEY_ARTIFACT_ID]?.toString()
-        val version = node.metadata[METADATA_KEY_VERSION]?.toString()
-        return if (groupId != null && artifactId != null && version != null) {
-            val packageKey = PackageKeys.ofGav(groupId, artifactId)
-            packageClient.findVersionByName(node.projectId, node.repoName, packageKey, version).data
-        } else {
-            null
         }
     }
 

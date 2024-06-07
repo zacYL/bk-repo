@@ -38,6 +38,7 @@ import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.artifact.exception.PackageNotFoundException
 import com.tencent.bkrepo.common.artifact.exception.VersionNotFoundException
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
@@ -66,11 +67,13 @@ import com.tencent.bkrepo.nuget.pojo.v3.metadata.feed.Feed
 import com.tencent.bkrepo.nuget.pojo.v3.metadata.index.RegistrationIndex
 import com.tencent.bkrepo.nuget.pojo.v3.metadata.leaf.RegistrationLeaf
 import com.tencent.bkrepo.nuget.pojo.v3.metadata.page.RegistrationPage
+import com.tencent.bkrepo.nuget.service.NugetOperationService
 import com.tencent.bkrepo.nuget.util.DecompressUtil.resolverNuspecMetadata
 import com.tencent.bkrepo.nuget.util.NugetUtils
 import com.tencent.bkrepo.nuget.util.NugetV3RegistrationUtils
 import com.tencent.bkrepo.nuget.util.NugetVersionUtils
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import org.slf4j.Logger
@@ -81,7 +84,8 @@ import kotlin.streams.toList
 @Suppress("TooManyFunctions")
 @Component
 class NugetLocalRepository(
-    private val nugetPackageHandler: NugetPackageHandler
+    private val nugetPackageHandler: NugetPackageHandler,
+    private val nugetOperationService: NugetOperationService
 ) : LocalRepository() {
 
     override fun query(context: ArtifactQueryContext): Any? {
@@ -206,10 +210,10 @@ class NugetLocalRepository(
         val request = buildNodeCreateRequest(context).copy(overwrite = true)
         storageManager.storeArtifactFile(request, context.getArtifactFile(), context.storageCredentials)
     }
+
     override fun onDownloadBefore(context: ArtifactDownloadContext) {
         super.onDownloadBefore(context)
-        val nugetArtifactInfo = context.artifactInfo as NugetDownloadArtifactInfo
-        packageVersion(nugetArtifactInfo)?.let { downloadIntercept(context, it) }
+        downloadIntercept(context, null)
     }
 
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
@@ -302,11 +306,9 @@ class NugetLocalRepository(
         }
     }
 
-    private fun packageVersion(nugetArtifactInfo: NugetDownloadArtifactInfo): PackageVersion? {
-        with(nugetArtifactInfo) {
-            val packageKey = PackageKeys.ofNuget(packageName)
-            return packageClient.findVersionByName(projectId, repoName, packageKey, version).data
-        }
+    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
+        requireNotNull(context)
+        return nugetOperationService.packageVersion(context)
     }
 
     companion object {

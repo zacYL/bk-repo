@@ -97,6 +97,7 @@ import com.tencent.bkrepo.oci.util.OciLocationUtils
 import com.tencent.bkrepo.oci.util.OciResponseUtils
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
+import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -133,12 +134,23 @@ class OciRegistryRemoteRepository(
      */
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         return if (context.artifactInfo is OciManifestArtifactInfo) {
+            downloadIntercept(context, null)
             // 同一镜像tag可能被覆盖更新，对于manifest.json文件每次都去远端拉取
             doRequest(context) as ArtifactResource?
         } else {
             getCacheArtifactResource(context) ?: run {
                 doRequest(context) as ArtifactResource?
             }
+        }
+    }
+
+    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
+        requireNotNull(context)
+        with(context.artifactInfo as OciManifestArtifactInfo) {
+            val version = if (isValidDigest) OciDigest(reference).fileName() else reference
+            return packageClient.findVersionByName(projectId, repoName, PackageKeys.ofDocker(packageName), version)
+                .data
+                ?: packageClient.findVersionByName(projectId, repoName, PackageKeys.ofOci(packageName), version).data
         }
     }
 

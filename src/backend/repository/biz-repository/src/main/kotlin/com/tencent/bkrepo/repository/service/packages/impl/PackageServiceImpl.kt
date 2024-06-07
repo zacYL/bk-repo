@@ -311,6 +311,7 @@ class PackageServiceImpl(
     ) {
         val tPackage = packageDao.findByKey(projectId, repoName, packageKey) ?: return
         val tPackageVersion = packageVersionDao.findByName(tPackage.id.orEmpty(), versionName) ?: return
+        // TODO: 需要确保依赖源执行删除操作的第一步为调用该接口删除version数据
         if (tPackageVersion.metadata.any { it.key == LOCK_STATUS && it.value == true } == true) {
             throw ErrorCodeException(ArtifactMessageCode.PACKAGE_LOCK, packageKey)
         }

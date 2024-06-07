@@ -42,6 +42,7 @@ import com.tencent.bkrepo.common.artifact.manager.StorageManager
 import com.tencent.bkrepo.common.artifact.metrics.ArtifactMetrics
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactMigrateContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
@@ -67,6 +68,8 @@ import com.tencent.bkrepo.repository.api.RemotePackageWhitelistClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.api.WhitelistSwitchClient
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
+import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationEventPublisher
@@ -345,6 +348,41 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
      */
     open fun onDownloadFinished(context: ArtifactDownloadContext) {
         artifactMetrics.downloadingCount.decrementAndGet()
+    }
+
+    fun downloadIntercept(context: ArtifactDownloadContext, node: NodeDetail?) {
+        node?.let { nodeDownloadIntercept(context, node) }
+        // TODO: node中统一存储packageKey与version元数据后可移除此处的package下载拦截
+        packageVersion(context, node)?.let { packageVersion -> packageDownloadIntercept(context, packageVersion) }
+    }
+
+    open fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
+        return null
+    }
+
+    /**
+     * 拦截node下载
+     */
+    private fun nodeDownloadIntercept(context: ArtifactDownloadContext, nodeDetail: NodeDetail) {
+        with(context) {
+            getInterceptors().forEach { it.intercept(projectId, nodeDetail) }
+            // 拦截package下载
+            val packageKey = nodeDetail.packageName()?.let { PackageKeys.ofName(repo.type, it) }
+            val version = nodeDetail.packageVersion()
+            if (packageKey != null && version != null) {
+                packageClient.findVersionByName(projectId, repoName, packageKey, version).data?.let { packageVersion ->
+                    packageDownloadIntercept(context, packageVersion)
+                }
+            }
+        }
+    }
+
+    /**
+     * 拦截package下载
+     * TODO NODE中统一存储packageKey与version元数据后可设置为private方法
+     */
+    fun packageDownloadIntercept(context: ArtifactDownloadContext, packageVersion: PackageVersion) {
+        context.getPackageInterceptors().forEach { it.intercept(context.projectId, packageVersion) }
     }
 
     private fun publishPackageDownloadEvent(context: ArtifactDownloadContext, record: PackageDownloadRecord) {

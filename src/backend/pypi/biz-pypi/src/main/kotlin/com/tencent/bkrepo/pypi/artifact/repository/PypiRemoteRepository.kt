@@ -72,6 +72,7 @@ import com.tencent.bkrepo.pypi.util.DecompressUtil.getPypiMetadata
 import com.tencent.bkrepo.pypi.util.XmlUtils.readXml
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
@@ -146,12 +147,32 @@ class PypiRemoteRepository(
         }
     }
 
+    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
+        requireNotNull(context)
+        requireNotNull(node)
+        with(context) {
+            val packageName = node.metadata[NAME]?.toString()
+            val packageVersion = node.metadata[VERSION]?.toString()
+            if (packageName == null || packageVersion == null) return null
+            val packageKey = PackageKeys.ofPypi(packageName)
+            return packageClient.findVersionByName(projectId, repoName, packageKey, packageVersion).data
+        }
+    }
+
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         return getCacheArtifactResource(context) ?: run {
             val response = doRequest(context)
             return if (checkResponse(response)) {
                 onDownloadResponse(context, response)
             } else null
+        }
+    }
+
+    override fun findCacheNodeDetail(context: ArtifactContext): NodeDetail? {
+        return super.findCacheNodeDetail(context)?.also {
+            if (context is ArtifactDownloadContext) {
+                downloadIntercept(context, it)
+            }
         }
     }
 
@@ -221,11 +242,20 @@ class PypiRemoteRepository(
     override fun onDownloadResponse(context: ArtifactDownloadContext, response: Response): ArtifactResource {
         val artifactFile = createTempFile(response.body()!!)
         val fileName = context.artifactInfo.getResponseName()
-        try {
+        val pypiMetadata = try {
             val metadataString = artifactFile.getInputStream().getPypiMetadata(fileName)
-            resolveMetadata(metadataString)?.let { context.putAttribute(METADATA, it) }
+            resolveMetadata(metadataString)?.also { context.putAttribute(METADATA, it) }
         } catch (ignore: Exception) {
             logger.warn("Cannot resolve pypi package metadata of [$fileName]", ignore)
+            null
+        }
+        val name = pypiMetadata?.name
+        val version = pypiMetadata?.version
+        if (name != null && version != null) {
+            val packageKey = PackageKeys.ofPypi(name)
+            packageClient.findVersionByName(context.projectId, context.repoName, packageKey, version).data?.let {
+                packageDownloadIntercept(context, it)
+            }
         }
         val size = artifactFile.getSize()
         val artifactStream = artifactFile.getInputStream().artifactStream(Range.full(size))

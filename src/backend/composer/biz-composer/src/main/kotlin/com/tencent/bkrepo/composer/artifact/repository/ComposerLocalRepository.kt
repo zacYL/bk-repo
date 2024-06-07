@@ -31,7 +31,11 @@ import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
-import com.tencent.bkrepo.common.artifact.repository.context.*
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
@@ -41,9 +45,17 @@ import com.tencent.bkrepo.common.artifact.stream.closeQuietly
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
-import com.tencent.bkrepo.composer.*
+import com.tencent.bkrepo.composer.COMPOSER_VERSION_INIT
+import com.tencent.bkrepo.composer.DIRECT_DISTS
+import com.tencent.bkrepo.composer.INIT_PACKAGES
+import com.tencent.bkrepo.composer.METADATA_KEY_PACKAGE_KEY
+import com.tencent.bkrepo.composer.METADATA_KEY_VERSION
 import com.tencent.bkrepo.composer.exception.ComposerArtifactMetadataException
-import com.tencent.bkrepo.composer.pojo.*
+import com.tencent.bkrepo.composer.pojo.ArtifactRepeat
+import com.tencent.bkrepo.composer.pojo.ArtifactUploadResponse
+import com.tencent.bkrepo.composer.pojo.ArtifactVersionDetail
+import com.tencent.bkrepo.composer.pojo.Basic
+import com.tencent.bkrepo.composer.pojo.ComposerMetadata
 import com.tencent.bkrepo.composer.util.DecompressUtil.wrapperJson
 import com.tencent.bkrepo.composer.util.JsonUtil
 import com.tencent.bkrepo.composer.util.JsonUtil.wrapperJson
@@ -213,10 +225,7 @@ class ComposerLocalRepository(private val stageClient: StageClient) : LocalRepos
         with(context) {
             val artifactPath = artifactInfo.getArtifactFullPath().removePrefix("/$DIRECT_DISTS")
             val node = nodeClient.getNodeDetail(projectId, repoName, artifactPath).data
-            node?.let {
-                downloadIntercept(context, it)
-                packageVersion(it)?.let { packageVersion -> downloadIntercept(context, packageVersion) }
-            }
+            downloadIntercept(context, node)
             val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials) ?: return null
             val responseName = artifactInfo.getResponseName()
             val srcRepo = RepositoryIdentify(projectId, repoName)
@@ -229,9 +238,10 @@ class ComposerLocalRepository(private val stageClient: StageClient) : LocalRepos
         with(context){
             val artifactPath = artifactInfo.getArtifactFullPath().removePrefix("/$DIRECT_DISTS")
             val node = nodeClient.getNodeDetail(projectId, repoName, artifactPath).data
+            // TODO: 需要抽象处理
             node?.let {
                 uploadIntercept(context, it)
-                packageVersion(it)?.let { packageVersion -> uploadIntercept(context, packageVersion) }
+                packageVersion(null, it)?.let { packageVersion -> uploadIntercept(context, packageVersion) }
             }
         }
     }
@@ -572,10 +582,12 @@ class ComposerLocalRepository(private val stageClient: StageClient) : LocalRepos
         return true
     }
 
-    fun packageVersion(node: NodeDetail): PackageVersion? {
+    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
+        if (node == null) return null
         with(node) {
-            val packageKey = metadata[METADATA_KEY_PACKAGE_KEY]?.toString() ?: return null
-            val packageVersion = metadata[METADATA_KEY_VERSION]?.toString() ?: return null
+            val packageKey = metadata[METADATA_KEY_PACKAGE_KEY]?.toString()
+            val packageVersion = metadata[METADATA_KEY_VERSION]?.toString()
+            if (packageKey == null || packageVersion == null) return null
             return packageClient.findVersionByName(projectId, repoName, packageKey, packageVersion).data
         }
     }

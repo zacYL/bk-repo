@@ -42,7 +42,12 @@ import com.tencent.bkrepo.common.artifact.hash.md5
 import com.tencent.bkrepo.common.artifact.hash.sha1
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
-import com.tencent.bkrepo.common.artifact.repository.context.*
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
@@ -78,10 +83,19 @@ import com.tencent.bkrepo.rpm.REPODATA
 import com.tencent.bkrepo.rpm.exception.RpmArtifactFormatNotSupportedException
 import com.tencent.bkrepo.rpm.exception.RpmArtifactMetadataResolveException
 import com.tencent.bkrepo.rpm.job.JobService
-import com.tencent.bkrepo.rpm.pojo.*
+import com.tencent.bkrepo.rpm.pojo.ArtifactFormat
 import com.tencent.bkrepo.rpm.pojo.ArtifactFormat.RPM
 import com.tencent.bkrepo.rpm.pojo.ArtifactFormat.XML
-import com.tencent.bkrepo.rpm.pojo.ArtifactRepeat.*
+import com.tencent.bkrepo.rpm.pojo.ArtifactRepeat
+import com.tencent.bkrepo.rpm.pojo.ArtifactRepeat.FULLPATH
+import com.tencent.bkrepo.rpm.pojo.ArtifactRepeat.FULLPATH_SHA256
+import com.tencent.bkrepo.rpm.pojo.ArtifactRepeat.NONE
+import com.tencent.bkrepo.rpm.pojo.Basic
+import com.tencent.bkrepo.rpm.pojo.IndexType
+import com.tencent.bkrepo.rpm.pojo.RepoDataPojo
+import com.tencent.bkrepo.rpm.pojo.RpmArtifactVersionData
+import com.tencent.bkrepo.rpm.pojo.RpmRepoConf
+import com.tencent.bkrepo.rpm.pojo.RpmUploadResponse
 import com.tencent.bkrepo.rpm.pojo.RpmVersion
 import com.tencent.bkrepo.rpm.util.GZipUtils.gZip
 import com.tencent.bkrepo.rpm.util.GZipUtils.unGzipInputStream
@@ -96,12 +110,21 @@ import com.tencent.bkrepo.rpm.util.XmlStrUtils
 import com.tencent.bkrepo.rpm.util.XmlStrUtils.getGroupNodeFullPath
 import com.tencent.bkrepo.rpm.util.rpm.RpmFormatUtils
 import com.tencent.bkrepo.rpm.util.rpm.RpmMetadataUtils
-import com.tencent.bkrepo.rpm.util.xStream.pojo.*
+import com.tencent.bkrepo.rpm.util.xStream.pojo.RpmMetadataChangeLog
+import com.tencent.bkrepo.rpm.util.xStream.pojo.RpmMetadataFileList
+import com.tencent.bkrepo.rpm.util.xStream.pojo.RpmPackageChangeLog
+import com.tencent.bkrepo.rpm.util.xStream.pojo.RpmPackageFileList
+import com.tencent.bkrepo.rpm.util.xStream.pojo.RpmXmlMetadata
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.util.StopWatch
-import java.io.*
+import java.io.BufferedReader
+import java.io.ByteArrayInputStream
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.InputStreamReader
 import java.nio.channels.Channels
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -114,11 +137,7 @@ class RpmLocalRepository(
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         with(context) {
             val node = nodeClient.getNodeDetail(projectId, repoName, artifactInfo.getArtifactFullPath()).data
-            node?.let {
-                downloadIntercept(context, it)
-                // TODO NODE中统一存储packageKey与version元数据后可移除下方的package下载拦截
-                packageVersion(context, it)?.let { packageVersion -> downloadIntercept(context, packageVersion) }
-            }
+            downloadIntercept(context, node)
             val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials) ?: return null
             val responseName = artifactInfo.getResponseName()
             val srcRepo = RepositoryIdentify(projectId, repoName)
@@ -133,6 +152,7 @@ class RpmLocalRepository(
                 if (!overwrite) {
                     throw ErrorCodeException(ArtifactMessageCode.NODE_EXISTED, getArtifactFullPath())
                 }
+                // TODO: 需要抽象处理
                 uploadIntercept(context, it)
                 packageVersion(context, it)?.let { packageVersion -> uploadIntercept(context, packageVersion) }
             }
@@ -507,10 +527,12 @@ class RpmLocalRepository(
             }
         }
     }
-    private fun packageVersion(context: ArtifactContext, node: NodeDetail): PackageVersion? {
+
+    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
+        requireNotNull(context)
         with(context) {
             val fullPath = artifactInfo.getArtifactFullPath()
-            if (!fullPath.endsWith(".rpm")) {
+            if (!fullPath.endsWith(".rpm") || node == null) {
                 return null
             }
 

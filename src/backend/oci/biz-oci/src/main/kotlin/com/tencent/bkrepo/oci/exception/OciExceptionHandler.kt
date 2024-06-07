@@ -37,6 +37,7 @@ import com.tencent.bkrepo.common.api.constant.MediaTypes
 import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.util.JsonUtils
+import com.tencent.bkrepo.common.artifact.exception.ArtifactDownloadForbiddenException
 import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
 import com.tencent.bkrepo.common.security.exception.AuthenticationException
 import com.tencent.bkrepo.common.security.exception.PermissionException
@@ -134,6 +135,12 @@ class OciExceptionHandler(
     @ExceptionHandler(PermissionException::class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     fun handleException(exception: PermissionException) {
+        ociResponse(exception)
+    }
+
+    @ExceptionHandler(ArtifactDownloadForbiddenException::class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    fun handleException(exception: ArtifactDownloadForbiddenException) {
         ociResponse(exception)
     }
 

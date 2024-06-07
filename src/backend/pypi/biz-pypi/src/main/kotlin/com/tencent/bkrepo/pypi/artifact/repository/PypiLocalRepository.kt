@@ -76,6 +76,7 @@ import com.tencent.bkrepo.repository.constant.NAME
 import com.tencent.bkrepo.repository.constant.NODE_METADATA
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
@@ -123,8 +124,9 @@ class PypiLocalRepository(
 
     override fun onUploadBefore(context: ArtifactUploadContext) {
         super.onUploadBefore(context)
+        // TODO: 需要抽象处理
         // 不为空说明上传的是tgz文件
-        packageVersion(context)?.let { uploadIntercept(context, it) }
+        packageVersion(context, null)?.let { uploadIntercept(context, it) }
     }
 
     override fun onUpload(context: ArtifactUploadContext) {
@@ -160,7 +162,7 @@ class PypiLocalRepository(
 
     override fun onDownloadBefore(context: ArtifactDownloadContext) {
         super.onDownloadBefore(context)
-        packageVersion(context)?.let { downloadIntercept(context, it) }
+        downloadIntercept(context, null)
     }
 
     private fun combineSameParamQuery(entry: Map.Entry<String, List<String>>): Rule.NestedRule {
@@ -427,7 +429,8 @@ class PypiLocalRepository(
         }
     }
 
-    private fun packageVersion(context: ArtifactContext): PackageVersion? {
+    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
+        requireNotNull(context)
         with(context) {
             val pypiPackagePojo = if (context is ArtifactUploadContext) {
                 PypiPackagePojo(request.getParameter("name"), request.getParameter("version"))

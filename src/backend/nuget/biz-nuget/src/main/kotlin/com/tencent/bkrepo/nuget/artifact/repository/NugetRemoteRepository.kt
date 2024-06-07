@@ -76,11 +76,13 @@ import com.tencent.bkrepo.nuget.pojo.v3.metadata.feed.Resource
 import com.tencent.bkrepo.nuget.pojo.v3.metadata.index.RegistrationIndex
 import com.tencent.bkrepo.nuget.pojo.v3.metadata.leaf.RegistrationLeaf
 import com.tencent.bkrepo.nuget.pojo.v3.metadata.page.RegistrationPage
+import com.tencent.bkrepo.nuget.service.NugetOperationService
 import com.tencent.bkrepo.nuget.util.DecompressUtil.resolverNuspec
 import com.tencent.bkrepo.nuget.util.NugetUtils
 import com.tencent.bkrepo.nuget.util.NugetUtils.getServiceIndexFullPath
 import com.tencent.bkrepo.nuget.util.RemoteRegistrationUtils
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import okhttp3.Response
@@ -94,7 +96,8 @@ import java.net.URLEncoder
 @Component
 class NugetRemoteRepository(
     private val nugetPackageHandler: NugetPackageHandler,
-    private val commonUtils: NugetRemoteAndVirtualCommon
+    private val commonUtils: NugetRemoteAndVirtualCommon,
+    private val nugetOperationService: NugetOperationService
 ) : RemoteRepository() {
 
     override fun query(context: ArtifactQueryContext): Any? {
@@ -115,6 +118,16 @@ class NugetRemoteRepository(
             JsonUtils.objectMapper.readValue(it as InputStream, VersionListResponse::class.java).versions
                 .takeIf { versionList -> versionList.isNotEmpty() }
         }
+    }
+
+    override fun onDownloadBefore(context: ArtifactDownloadContext) {
+        super.onDownloadBefore(context)
+        downloadIntercept(context, null)
+    }
+
+    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
+        requireNotNull(context)
+        return nugetOperationService.packageVersion(context)
     }
 
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {

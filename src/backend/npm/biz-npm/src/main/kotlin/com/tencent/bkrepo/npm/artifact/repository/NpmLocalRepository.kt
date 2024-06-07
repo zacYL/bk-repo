@@ -65,10 +65,12 @@ import com.tencent.bkrepo.npm.pojo.NpmSearchInfoMap
 import com.tencent.bkrepo.npm.pojo.enums.NpmOperationAction
 import com.tencent.bkrepo.npm.pojo.metadata.MetadataSearchRequest
 import com.tencent.bkrepo.npm.properties.NpmProperties
+import com.tencent.bkrepo.npm.service.NpmOperationService
 import com.tencent.bkrepo.npm.utils.NpmUtils
 import com.tencent.bkrepo.npm.utils.OkHttpUtil
 import com.tencent.bkrepo.npm.utils.TimeUtil
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodesDeleteRequest
@@ -89,15 +91,17 @@ import kotlin.system.measureTimeMillis
 class NpmLocalRepository(
     private val npmProperties: NpmProperties,
     private val okHttpUtil: OkHttpUtil,
-    private val npmDependentHandler: NpmDependentHandler
+    private val npmDependentHandler: NpmDependentHandler,
+    private val npmOperationService: NpmOperationService
 ) : LocalRepository() {
 
     override fun onUploadBefore(context: ArtifactUploadContext) {
         super.onUploadBefore(context)
         // 不为空说明上传的是tgz文件
         context.getStringAttribute("attachments.content_type")?.let {
+            // TODO: 需要抽象处理
+            packageVersion(context, null)?.let { uploadIntercept(context, it) }
             // 计算sha1并校验
-            packageVersion(context)?.let { uploadIntercept(context, it) }
             val calculatedSha1 = context.getArtifactFile().getInputStream().sha1()
             val uploadSha1 = context.getStringAttribute(ATTRIBUTE_OCTET_STREAM_SHA1)
             if (uploadSha1 != null && calculatedSha1 != uploadSha1) {
@@ -107,7 +111,7 @@ class NpmLocalRepository(
     }
     override fun onDownloadBefore(context: ArtifactDownloadContext) {
         super.onDownloadBefore(context)
-        packageVersion(context)?.let { downloadIntercept(context, it) }
+        downloadIntercept(context, null)
     }
 
 
@@ -218,16 +222,9 @@ class NpmLocalRepository(
         }
     }
 
-    private fun packageVersion(context: ArtifactContext): PackageVersion? {
-        with(context) {
-            val (packageName, packageVersion) = if (context is ArtifactUploadContext){
-                NpmUtils.parseNameAndVersionFromFullPath(getAttributes()[NPM_FILE_FULL_PATH] as String)
-            }else{
-                NpmUtils.parseNameAndVersionFromFullPath(artifactInfo.getArtifactFullPath())
-            }
-            val packageKey = PackageKeys.ofNpm(packageName)
-            return packageClient.findVersionByName(projectId, repoName, packageKey, packageVersion).data
-        }
+    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
+        requireNotNull(context)
+        return npmOperationService.packageVersion(context)
     }
 
     /**

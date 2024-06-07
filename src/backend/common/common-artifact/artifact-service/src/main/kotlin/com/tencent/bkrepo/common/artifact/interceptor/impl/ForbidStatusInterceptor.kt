@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.common.artifact.interceptor.impl
 
+import com.tencent.bkrepo.common.api.constant.HttpStatus
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
 import com.tencent.bkrepo.common.artifact.interceptor.DownloadInterceptor
@@ -47,7 +48,9 @@ abstract class ForbidStatusInterceptor<A> : DownloadInterceptor<Any, A>(emptyMap
 
     override fun intercept(projectId: String, artifact: A) {
         if (artifactMetadata(artifact)[FORBID_STATUS] == true) {
-            throw ErrorCodeException(ArtifactMessageCode.ARTIFACT_FORBIDDEN, artifactFullPath(artifact))
+            throw ErrorCodeException(
+                ArtifactMessageCode.ARTIFACT_FORBIDDEN, artifactFullPath(artifact), HttpStatus.FORBIDDEN
+            )
         }
     }
 

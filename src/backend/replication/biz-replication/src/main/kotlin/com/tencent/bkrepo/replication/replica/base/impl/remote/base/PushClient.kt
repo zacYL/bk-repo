@@ -27,14 +27,16 @@
 
 package com.tencent.bkrepo.replication.replica.base.impl.remote.base
 
+import com.tencent.bkrepo.common.artifact.cluster.ClusterInfo
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.util.okhttp.HttpClientBuilderFactory
 import com.tencent.bkrepo.replication.config.ReplicationProperties
 import com.tencent.bkrepo.replication.manager.LocalDataManager
-import com.tencent.bkrepo.replication.pojo.cluster.RemoteClusterInfo
+import com.tencent.bkrepo.replication.replica.base.context.ReplicaContext
 import com.tencent.bkrepo.replication.replica.base.interceptor.RetryInterceptor
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import okhttp3.OkHttpClient
+import okhttp3.Protocol
 import org.slf4j.LoggerFactory
 import java.util.concurrent.TimeUnit
 
@@ -67,13 +69,13 @@ abstract class PushClient(
         version: String,
         projectId: String,
         repoName: String,
-        clusterInfo: RemoteClusterInfo
+        context: ReplicaContext
     ): Boolean {
         logger.info(
             "Package $name|$version in the local repo $projectId|$repoName will be pushed to the third party repository"
         )
         try {
-            val token = getAuthorizationDetails(name, clusterInfo)
+            val token = getAuthorizationDetails(name, context.cluster)
             val nodes = querySyncNodeList(
                 name = name,
                 version = version,
@@ -86,11 +88,11 @@ abstract class PushClient(
                 name = name,
                 version = version,
                 nodes = nodes,
-                clusterInfo = clusterInfo
+                context = context
             )
         } catch (e: Exception) {
             logger.error(
-                "Error occurred while pushing artifact $name|$version to cluster[${clusterInfo.name}] " +
+                "Error occurred while pushing artifact $name|$version to cluster[${context.cluster.name}] " +
                     "in the local repo $projectId|$repoName, failed reason: ${e.message}"
             )
             throw e
@@ -105,7 +107,7 @@ abstract class PushClient(
         name: String,
         version: String,
         token: String?,
-        clusterInfo: RemoteClusterInfo
+        context: ReplicaContext
     ): Boolean {
         return true
     }
@@ -113,7 +115,7 @@ abstract class PushClient(
     /**
      * 获取授权详情-Authorization token
      */
-    open fun getAuthorizationDetails(name: String, clusterInfo: RemoteClusterInfo): String? {
+    open fun getAuthorizationDetails(name: String, clusterInfo: ClusterInfo): String? {
         return null
     }
 
@@ -126,16 +128,17 @@ abstract class PushClient(
 
     private fun buildClient(): OkHttpClient {
         return HttpClientBuilderFactory.create()
+            .protocols(listOf(Protocol.HTTP_1_1))
             .readTimeout(DEFAULT_READ_TIMEOUT_MINUTES, TimeUnit.MINUTES)
             .connectTimeout(DEFAULT_CONNECT_TIMEOUT_MINUTES, TimeUnit.MINUTES)
             .writeTimeout(DEFAULT_WRITE_TIMEOUT_MINUTES, TimeUnit.MINUTES)
-            .addInterceptor(RetryInterceptor(localDataManager))
+            .addInterceptor(RetryInterceptor())
             .build()
     }
 
     companion object {
         private val logger = LoggerFactory.getLogger(PushClient::class.java)
-        private const val DEFAULT_READ_TIMEOUT_MINUTES = 1L
+        private const val DEFAULT_READ_TIMEOUT_MINUTES = 15L
         private const val DEFAULT_CONNECT_TIMEOUT_MINUTES = 1L
         private const val DEFAULT_WRITE_TIMEOUT_MINUTES = 1L
     }

@@ -43,9 +43,10 @@ enum class ReplicationMessageCode(private val businessCode: Int, private val key
     TASK_DISABLE_UPDATE(8, "task.disable.update"),
     CLUSTER_CENTER_NODE_EXISTS(9, "cluster.center.node.existed"),
     REPLICA_TASK_NOT_FOUND(10, "replica.task.notfound"),
-    PIPELINE_REPO_NOT_ALLOWED(11, "pipeline.repo.not-allowed"),
-    REPLICA_RECORD_DETAIL_NOT_FOUND(12, "replica.record.detail.notfound"),
-    REPLICA_RECORD_NOT_FOUND(13, "replica.record.notfound"),
+    REPLICA_ARTIFACT_BROKEN(11, "replica.artifact.broken"),
+    PIPELINE_REPO_NOT_ALLOWED(12, "pipeline.repo.not-allowed"),
+    REPLICA_RECORD_DETAIL_NOT_FOUND(13, "replica.record.detail.notfound"),
+    REPLICA_RECORD_NOT_FOUND(14, "replica.record.notfound"),
     ;
 
     override fun getBusinessCode() = businessCode

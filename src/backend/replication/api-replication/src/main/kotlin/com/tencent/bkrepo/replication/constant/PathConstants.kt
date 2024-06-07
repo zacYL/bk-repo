@@ -1,7 +1,7 @@
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
- * Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
+ * Copyright (C) 2022 THL A29 Limited, a Tencent company.  All rights reserved.
  *
  * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
  *
@@ -25,38 +25,20 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.replication.pojo.task.setting
+package com.tencent.bkrepo.replication.constant
 
-/**
- * 任务设置
- */
-data class ReplicaSetting(
-    /**
-     * 限速（byte per second），<=0代表不限速
-     */
-    val rateLimit: Long = 0,
-    /**
-     * 是否同步元数据
-     */
-    val includeMetadata: Boolean = true,
-    /**
-     * 冲突解决策略
-     */
-    val conflictStrategy: ConflictStrategy = ConflictStrategy.SKIP,
-    /**
-     * 错误处理策略
-     */
-    val errorStrategy: ErrorStrategy = ErrorStrategy.FAST_FAIL,
-    /**
-     * 执行计划策略
-     */
-    val executionStrategy: ExecutionStrategy = ExecutionStrategy.IMMEDIATELY,
-    /**
-     * 执行计划
-     */
-    val executionPlan: ExecutionPlan = ExecutionPlan(),
-    /**
-     * 是否校验文件存储一致性
-     */
-    val storageConsistencyCheck: Boolean = false
-)
+// oci url
+const val OCI_BLOB_URL = "%s/blobs/%s"
+const val OCI_MANIFEST_URL = "%s/manifests/%s"
+const val OCI_BLOBS_UPLOAD_FIRST_STEP_URL = "%s/blobs/uploads/"
+
+
+// blobs upload
+const val BOLBS_UPLOAD_FIRST_STEP_URL = "/replica/{projectId}/{repoName}/blobs/uploads/"
+const val BOLBS_UPLOAD_SECOND_STEP_URL = "/replica/{projectId}/{repoName}/blobs/uploads/{uuid}"
+
+const val BOLBS_UPLOAD_FIRST_STEP_URL_STRING = "/replica/%s/%s/blobs/uploads/"
+
+const val BLOB_PULL_URI = "/replica/blob/pull"
+const val BLOB_PUSH_URI = "/replica/blob/push"
+const val BLOB_CHECK_URI = "/replica/blob/check"

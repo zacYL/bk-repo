@@ -28,6 +28,7 @@
 package com.tencent.bkrepo.common.artifact.resolve.file
 
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
+import com.tencent.bkrepo.common.artifact.api.toArtifactFile
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.resolve.file.bksync.BkSyncArtifactFile
 import com.tencent.bkrepo.common.artifact.resolve.file.chunk.ChunkedArtifactFile
@@ -42,6 +43,7 @@ import org.springframework.stereotype.Component
 import org.springframework.web.context.request.RequestAttributes.SCOPE_REQUEST
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.multipart.MultipartFile
+import java.io.File
 import java.io.InputStream
 
 /**
@@ -130,6 +132,19 @@ class ArtifactFileFactory(
             return MultipartArtifactFile(
                 multipartFile, getMonitor(storageCredentials), properties, storageCredentials
             ).apply {
+                track(this)
+            }
+        }
+
+        /**
+         * 通过表单文件构造artifact file，存放临时目录
+         * @param multipartFile 表单文件
+         * @param filePath 文件临时存储路径
+         */
+        fun build(file: MultipartFile, filePath: String): ArtifactFile {
+            val artifactFile = File(filePath)
+            file.transferTo(artifactFile)
+            return artifactFile.toArtifactFile().apply {
                 track(this)
             }
         }

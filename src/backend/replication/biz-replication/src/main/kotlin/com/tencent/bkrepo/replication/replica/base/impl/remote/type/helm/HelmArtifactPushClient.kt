@@ -30,6 +30,7 @@ package com.tencent.bkrepo.replication.replica.base.impl.remote.type.helm
 import com.tencent.bkrepo.common.api.constant.HttpStatus
 import com.tencent.bkrepo.common.api.constant.MediaTypes
 import com.tencent.bkrepo.common.api.constant.StringPool
+import com.tencent.bkrepo.common.artifact.cluster.ClusterInfo
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.security.util.BasicAuthUtils
 import com.tencent.bkrepo.replication.config.ReplicationProperties
@@ -37,7 +38,8 @@ import com.tencent.bkrepo.replication.manager.LocalDataManager
 import com.tencent.bkrepo.replication.pojo.cluster.RemoteClusterInfo
 import com.tencent.bkrepo.replication.pojo.remote.DefaultHandlerResult
 import com.tencent.bkrepo.replication.pojo.remote.RequestProperty
-import com.tencent.bkrepo.replication.replica.base.impl.remote.base.DefaultHandler
+import com.tencent.bkrepo.replication.replica.base.context.ReplicaContext
+import com.tencent.bkrepo.replication.replica.base.handler.DefaultHandler
 import com.tencent.bkrepo.replication.replica.base.impl.remote.base.PushClient
 import com.tencent.bkrepo.replication.util.HttpUtils
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
@@ -72,7 +74,7 @@ class HelmArtifactPushClient(
         name: String,
         version: String,
         token: String?,
-        clusterInfo: RemoteClusterInfo
+        context: ReplicaContext
     ): Boolean {
         var result = true
         nodes.forEach {
@@ -81,17 +83,17 @@ class HelmArtifactPushClient(
                 name = name,
                 version = version,
                 token = token,
-                clusterInfo = clusterInfo
+                context = context
             )
             logger.info(
                 "The result of uploading chart $name|$version " +
-                    "with path ${it.fullPath} to remote cluster ${clusterInfo.name} is $result"
+                    "with path ${it.fullPath} to remote cluster ${context.cluster.name} is $result"
             )
         }
         return result
     }
 
-    override fun getAuthorizationDetails(name: String, clusterInfo: RemoteClusterInfo): String? {
+    override fun getAuthorizationDetails(name: String, clusterInfo: ClusterInfo): String? {
         return clusterInfo.username?.let {
             authService.obtainAuthorizationCode(buildAuthRequestProperties(clusterInfo), httpClient)
         }
@@ -124,7 +126,7 @@ class HelmArtifactPushClient(
         name: String,
         node: NodeDetail,
         version: String,
-        clusterInfo: RemoteClusterInfo
+        context: ReplicaContext
     ): Boolean {
         // 先按照非chartmuseum协议进行上传
         var chartUpload = processChartUpload(
@@ -133,7 +135,7 @@ class HelmArtifactPushClient(
             version = version,
             node = node,
             chartMuseum = false,
-            clusterInfo = clusterInfo
+            context = context
         )
         // 不成功则按照chartmuseum协议进行上传
         if (!chartUpload.isSuccess) {
@@ -143,7 +145,7 @@ class HelmArtifactPushClient(
                 version = version,
                 node = node,
                 chartMuseum = true,
-                clusterInfo = clusterInfo
+                context = context
             )
         }
         return chartUpload.isSuccess
@@ -159,7 +161,7 @@ class HelmArtifactPushClient(
         version: String,
         chartMuseum: Boolean,
         node: NodeDetail,
-        clusterInfo: RemoteClusterInfo
+        context: ReplicaContext
     ): DefaultHandlerResult {
         val input = localDataManager.loadInputStream(
             sha256 = node.sha256!!,
@@ -170,14 +172,14 @@ class HelmArtifactPushClient(
         val fileName = CHART_FILE_NAME.format(name, version)
         val requestProperty = if (chartMuseum) {
             buildChartMuseumRequest(
-                url = clusterInfo.url,
+                context = context,
                 input = input,
                 fileName = fileName,
                 token = token
             )
         } else {
             buildNonChartMuseumRequest(
-                url = clusterInfo.url,
+                context = context,
                 input = input,
                 fileName = fileName,
                 token = token
@@ -195,12 +197,12 @@ class HelmArtifactPushClient(
      * 生成非chart museum协议的访问请求数据
      */
     private fun buildNonChartMuseumRequest(
-        url: String,
+        context: ReplicaContext,
         fileName: String,
         input: InputStream,
         token: String?,
     ): RequestProperty {
-        val requestUrl = buildUrl(url, fileName)
+        val requestUrl = buildUrl(context.cluster.url, fileName)
         val postBody = RequestBody.create(
             MediaType.parse(MediaTypes.APPLICATION_OCTET_STREAM), input.readBytes()
         )
@@ -216,7 +218,7 @@ class HelmArtifactPushClient(
      * 生成chart museum协议的访问请求数据
      */
     private fun buildChartMuseumRequest(
-        url: String,
+        context: ReplicaContext,
         fileName: String,
         input: InputStream,
         token: String?,
@@ -233,7 +235,7 @@ class HelmArtifactPushClient(
             .build()
         return RequestProperty(
             requestBody = postBody,
-            requestUrl = url,
+            requestUrl = context.cluster.url,
             authorizationCode = token,
             requestMethod = RequestMethod.POST
         )
@@ -252,7 +254,7 @@ class HelmArtifactPushClient(
         return HttpUtils.buildUrl(v2Url.toString(), path, params)
     }
 
-    private fun buildAuthRequestProperties(clusterInfo: RemoteClusterInfo): RequestProperty {
+    private fun buildAuthRequestProperties(clusterInfo: ClusterInfo): RequestProperty {
         return RequestProperty(
             authorizationCode = BasicAuthUtils.encode(clusterInfo.username!!, clusterInfo.password!!)
         )

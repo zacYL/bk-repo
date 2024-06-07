@@ -1,7 +1,7 @@
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
- * Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
+ * Copyright (C) 2023 THL A29 Limited, a Tencent company.  All rights reserved.
  *
  * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
  *
@@ -25,38 +25,24 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.replication.pojo.task.setting
+package com.tencent.bkrepo.common.artifact.cns
 
-/**
- * 任务设置
- */
-data class ReplicaSetting(
+import org.springframework.boot.context.properties.ConfigurationProperties
+
+@ConfigurationProperties("cns")
+data class CnsProperties(
     /**
-     * 限速（byte per second），<=0代表不限速
-     */
-    val rateLimit: Long = 0,
+     * 是否开启cns功能
+     * */
+    var enabled: Boolean = false,
     /**
-     * 是否同步元数据
-     */
-    val includeMetadata: Boolean = true,
+     * 服务列表，单体服务时填写
+     *
+     * 如http{s}://host:port
+     * */
+    var services: Set<String> = setOf(),
     /**
-     * 冲突解决策略
-     */
-    val conflictStrategy: ConflictStrategy = ConflictStrategy.SKIP,
-    /**
-     * 错误处理策略
-     */
-    val errorStrategy: ErrorStrategy = ErrorStrategy.FAST_FAIL,
-    /**
-     * 执行计划策略
-     */
-    val executionStrategy: ExecutionStrategy = ExecutionStrategy.IMMEDIATELY,
-    /**
-     * 执行计划
-     */
-    val executionPlan: ExecutionPlan = ExecutionPlan(),
-    /**
-     * 是否校验文件存储一致性
-     */
-    val storageConsistencyCheck: Boolean = false
+     * 服务列表更新时间
+     * */
+    var servicesUpdatePeriod: Long = 3000L
 )

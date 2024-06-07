@@ -27,14 +27,23 @@
 
 package com.tencent.bkrepo.replication.replica.base.replicator
 
-import com.tencent.bkrepo.common.artifact.stream.rateLimit
+import com.google.common.base.Throwables
+import com.tencent.bkrepo.common.api.constant.HttpStatus
+import com.tencent.bkrepo.common.storage.innercos.retry
 import com.tencent.bkrepo.replication.config.ReplicationProperties
+import com.tencent.bkrepo.replication.constant.DELAY_IN_SECONDS
+import com.tencent.bkrepo.replication.constant.PUSH_WITH_DEFAULT
+import com.tencent.bkrepo.replication.constant.RETRY_COUNT
 import com.tencent.bkrepo.replication.manager.LocalDataManager
+import com.tencent.bkrepo.replication.replica.base.context.FilePushContext
 import com.tencent.bkrepo.replication.replica.base.context.ReplicaContext
+import com.tencent.bkrepo.replication.replica.base.handler.ClusterArtifactReplicationHandler
 import com.tencent.bkrepo.replication.replica.base.impl.internal.PackageNodeMappings
+import com.tencent.bkrepo.replication.replica.base.impl.remote.exception.ArtifactPushException
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
 /**
@@ -44,6 +53,7 @@ import org.springframework.stereotype.Component
 @Component
 class EdgeNodeReplicator(
     private val localDataManager: LocalDataManager,
+    private val artifactReplicationHandler: ClusterArtifactReplicationHandler,
     private val replicationProperties: ReplicationProperties
 ) : Replicator {
 
@@ -97,19 +107,46 @@ class EdgeNodeReplicator(
     override fun replicaFile(context: ReplicaContext, node: NodeInfo): Boolean {
         with(context) {
             val sha256 = node.sha256.orEmpty()
-            val artifactInputStream = localDataManager.getBlobData(sha256, node.size, localRepo)
-            val rateLimitInputStream = artifactInputStream.rateLimit(replicationProperties.rateLimit.toBytes())
-//            val file = InputStreamMultipartFile(rateLimitInputStream, node.size)
-            if (blobReplicaClient?.check(sha256)?.data != true) {
-                pushBlob(
-                    inputStream = rateLimitInputStream,
-                    size = node.size,
-                    sha256 = sha256
-                )
-//                blobReplicaClient.push(file = file, sha256 = sha256)
-                return true
+            var type: String = replicationProperties.pushType
+            val remoteRepositoryType = context.remoteRepoType
+            retry(times = RETRY_COUNT, delayInSeconds = DELAY_IN_SECONDS) { retry ->
+                if (blobReplicaClient?.check(sha256 = sha256, repoType = remoteRepositoryType)?.data != true) {
+                    try {
+                        artifactReplicationHandler.blobPush(
+                            filePushContext = FilePushContext(
+                                context = context,
+                                name = node.fullPath,
+                                size = node.size,
+                                sha256 = node.sha256,
+                                md5 = node.md5
+                            ),
+                            pushType = type
+                        )
+                    } catch (throwable: Throwable) {
+                        logger.warn(
+                            "File replica push from edge error $throwable, trace is " +
+                                "${Throwables.getStackTraceAsString(throwable)}!"
+                        )
+                        // 当不支持分块上传时，降级为普通上传
+                        if (
+                            throwable is ArtifactPushException &&
+                            (
+                                throwable.code == HttpStatus.METHOD_NOT_ALLOWED.value ||
+                                    throwable.code == HttpStatus.UNAUTHORIZED.value
+                                )
+                        ) {
+                            type = PUSH_WITH_DEFAULT
+                        }
+                        throw throwable
+                    }
+                    return true
+                }
+                return false
             }
-            return false
         }
+    }
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(EdgeNodeReplicator::class.java)
     }
 }

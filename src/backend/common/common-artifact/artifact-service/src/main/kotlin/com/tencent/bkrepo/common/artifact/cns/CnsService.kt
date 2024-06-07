@@ -1,7 +1,7 @@
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
- * Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
+ * Copyright (C) 2023 THL A29 Limited, a Tencent company.  All rights reserved.
  *
  * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
  *
@@ -25,38 +25,26 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.replication.pojo.task.setting
+package com.tencent.bkrepo.common.artifact.cns
+
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 
 /**
- * 任务设置
- */
-data class ReplicaSetting(
+ * 一致性服务
+ * */
+interface CnsService {
     /**
-     * 限速（byte per second），<=0代表不限速
-     */
-    val rateLimit: Long = 0,
+     * 查看[sha256]是否在存储实例[key]上
+     *
+     * @return true表示存在，否则为false
+     * */
+    fun exist(key: String?, sha256: String): Boolean
+
     /**
-     * 是否同步元数据
-     */
-    val includeMetadata: Boolean = true,
-    /**
-     * 冲突解决策略
-     */
-    val conflictStrategy: ConflictStrategy = ConflictStrategy.SKIP,
-    /**
-     * 错误处理策略
-     */
-    val errorStrategy: ErrorStrategy = ErrorStrategy.FAST_FAIL,
-    /**
-     * 执行计划策略
-     */
-    val executionStrategy: ExecutionStrategy = ExecutionStrategy.IMMEDIATELY,
-    /**
-     * 执行计划
-     */
-    val executionPlan: ExecutionPlan = ExecutionPlan(),
-    /**
-     * 是否校验文件存储一致性
-     */
-    val storageConsistencyCheck: Boolean = false
-)
+     * 检查[sha256]是否在集群所有节点的存储实例[key]上
+     * 像NFS存储，可能存在同一个存储实例，不同的节点可见性不同。
+     *
+     *  @return true表示存在，否则为false
+     * */
+    fun check(key: String?, sha256: String, repositoryType: RepositoryType?): Boolean
+}

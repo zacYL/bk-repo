@@ -1,7 +1,7 @@
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
- * Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
+ * Copyright (C) 2022 THL A29 Limited, a Tencent company.  All rights reserved.
  *
  * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
  *
@@ -25,38 +25,21 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.replication.pojo.task.setting
+package com.tencent.bkrepo.replication.replica.base.context
 
-/**
- * 任务设置
- */
-data class ReplicaSetting(
-    /**
-     * 限速（byte per second），<=0代表不限速
-     */
-    val rateLimit: Long = 0,
-    /**
-     * 是否同步元数据
-     */
-    val includeMetadata: Boolean = true,
-    /**
-     * 冲突解决策略
-     */
-    val conflictStrategy: ConflictStrategy = ConflictStrategy.SKIP,
-    /**
-     * 错误处理策略
-     */
-    val errorStrategy: ErrorStrategy = ErrorStrategy.FAST_FAIL,
-    /**
-     * 执行计划策略
-     */
-    val executionStrategy: ExecutionStrategy = ExecutionStrategy.IMMEDIATELY,
-    /**
-     * 执行计划
-     */
-    val executionPlan: ExecutionPlan = ExecutionPlan(),
-    /**
-     * 是否校验文件存储一致性
-     */
-    val storageConsistencyCheck: Boolean = false
-)
+import com.tencent.bkrepo.common.api.pojo.Response
+import okhttp3.OkHttpClient
+
+class FilePushContext(
+    val context: ReplicaContext,
+    val sha256: String? = null,
+    val size: Long? = null,
+    val md5: String? = null,
+    val digest: String? = null,
+    val name: String,
+    val token: String? = null,
+    val responseType: Class<*> = Response::class.java,
+    httpClient: OkHttpClient? = null
+) {
+    val httpClient: OkHttpClient = httpClient ?: context.httpClient
+}

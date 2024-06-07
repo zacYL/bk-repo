@@ -39,6 +39,12 @@
     export default {
         name: 'genericTreeDialog',
         components: { RepoTree },
+        props: {
+            isGeneric: {
+                type: Boolean,
+                default: false
+            }
+        },
         data () {
             return {
                 importantSearch: '',
@@ -56,7 +62,7 @@
         computed: {
             ...mapState(['operateTree']),
             genericTree () {
-                return ['move', 'copy'].includes(this.genericTreeData.type) ? this.operateTree.filter(item => !['pipeline', 'report'].includes(item.name)) : this.operateTree
+                return (['move', 'copy'].includes(this.genericTreeData.type) ? this.operateTree.filter(item => !['pipeline', 'report'].includes(item.name)) : this.operateTree).filter(item => this.checkFn(item))
             },
             projectId () {
                 return this.$route.params.projectId
@@ -75,7 +81,10 @@
                 'copyNode'
             ]),
             checkFn (val) {
-                if (val.type && val.type === 'GENERIC') return false
+                if (this.isGeneric) {
+                    if (val.category && val.category === 'LOCAL') return true
+                    return false
+                }
                 return true
             },
             // 树组件选中文件夹

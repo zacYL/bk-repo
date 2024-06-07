@@ -191,7 +191,7 @@
         <generic-detail ref="genericDetail" :show-update-metadata-btn="updateOperationPermission"></generic-detail>
         <generic-form-dialog ref="genericFormDialog" @refresh="refreshNodeChange"></generic-form-dialog>
         <generic-share-dialog ref="genericShareDialog"></generic-share-dialog>
-        <generic-tree-dialog ref="genericTreeDialog" @update="updateOperateTreeNode" @refresh="refreshNodeChange"></generic-tree-dialog>
+        <generic-tree-dialog ref="genericTreeDialog" @update="updateOperateTreeNode" @refresh="refreshNodeChange" :is-generic="type === 'GENERIC'"></generic-tree-dialog>
         <preview-basic-file-dialog ref="previewBasicFileDialog"></preview-basic-file-dialog>
         <compressed-file-table ref="compressedFileTable" @show-preview="handlerPreviewBasicsFile"></compressed-file-table>
         <operationLimitConfirmDialog ref="operationLimitConfirmDialog" @confirm="handlerLimitOperation"></operationLimitConfirmDialog>
@@ -469,7 +469,7 @@
                             fullPath: '',
                             folder: true,
                             children: [],
-                            type: item.type,
+                            category: item.category,
                             roadMap: `${item.name},0`
                         })
                     })

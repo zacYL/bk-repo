@@ -19,6 +19,7 @@
                     :tree="genericTree"
                     :important-search="importantSearch"
                     :open-list="genericTreeData.openList"
+                    :check-fn="checkFn"
                     :selected-node="genericTreeData.selectedNode"
                     @icon-click="iconClickHandler"
                     @item-click="itemClickHandler">
@@ -73,6 +74,10 @@
                 'moveNode',
                 'copyNode'
             ]),
+            checkFn (val) {
+                if (val.type && val.type === 'GENERIC') return false
+                return true
+            },
             // 树组件选中文件夹
             itemClickHandler (node) {
                 this.genericTreeData.selectedNode = node

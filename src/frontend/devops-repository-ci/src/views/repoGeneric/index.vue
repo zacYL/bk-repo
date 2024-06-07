@@ -469,6 +469,7 @@
                             fullPath: '',
                             folder: true,
                             children: [],
+                            type: item.type,
                             roadMap: `${item.name},0`
                         })
                     })

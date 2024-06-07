@@ -1,7 +1,7 @@
 <template>
     <div class="virtual-tree" @scroll="scrollTree($event)">
         <ul class="repo-tree-list">
-            <li class="repo-tree-item" :key="item.roadMap" v-for="item of treeList">
+            <li class="repo-tree-item" :key="item.roadMap" v-for="item of treeList" v-show="checkFn(item)">
                 <div class="repo-tree-title"
                     :class="{ 'selected': selectedNode.roadMap === item.roadMap }"
                     :style="{ 'padding-left': 20 * computedDepth(item) + 'px' }"
@@ -45,6 +45,10 @@
             openList: {
                 type: Array,
                 default: () => []
+            },
+            checkFn: {
+                type: Function,
+                default: () => true
             }
         },
         data () {
@@ -71,7 +75,10 @@
                 return this.flattenTree.slice(this.start, this.start + this.size)
             },
             totalHeight () {
-                return (this.flattenTree.length + 1) * 40
+                return (this.valTree.length + 1) * 40
+            },
+            valTree () {
+                return this.filterFn(this.flattenTree)
             }
         },
         watch: {
@@ -91,6 +98,9 @@
             window.removeEventListener('resize', this.resizeFn)
         },
         methods: {
+            filterFn (val) {
+                return val.some(item => this.checkFn(item))
+            },
             scrollTree () {
                 this.start = Math.floor(this.$el.scrollTop / 40)
             },

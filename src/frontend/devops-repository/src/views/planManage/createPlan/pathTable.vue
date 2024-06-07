@@ -52,7 +52,7 @@
                 return this.$route.params.projectId
             },
             repoGroupList () {
-                return this.repoListAll
+                const groupMap = this.repoListAll
                     .filter(r => {
                         return ['GENERIC'].includes(r.type) && r.name !== 'pipeline' && r.name !== 'report'
                     })
@@ -61,6 +61,12 @@
                         target[repo.type].push(repo)
                         return target
                     }, {})
+                Object.keys(groupMap).forEach(key => {
+                    groupMap[key] = groupMap[key].filter(item => {
+                        return item.category !== 'REMOTE'
+                    })
+                })
+                return groupMap
             },
             selectedRepo () {
                 return this.repoListAll.find(v => v.name === this.selectedRepoName) || {}

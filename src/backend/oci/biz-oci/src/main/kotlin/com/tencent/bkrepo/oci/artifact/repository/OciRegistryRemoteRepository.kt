@@ -555,7 +555,10 @@ class OciRegistryRemoteRepository(
         val contentType = context.getStringAttribute(CONTENT_TYPE)
         if (
             ociArtifactInfo is OciManifestArtifactInfo &&
-            (contentType == DOCKER_DISTRIBUTION_MANIFEST_LIST_V2 || contentType == IMAGE_INDEX_MEDIA_TYPE)
+            (
+                contentType?.startsWith(DOCKER_DISTRIBUTION_MANIFEST_LIST_V2) == true ||
+                contentType?.startsWith(IMAGE_INDEX_MEDIA_TYPE) == true
+            )
         ) {
             ociArtifactInfo.isFat = true
         }

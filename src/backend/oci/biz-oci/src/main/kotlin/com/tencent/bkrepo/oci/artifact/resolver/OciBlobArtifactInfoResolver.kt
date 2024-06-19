@@ -31,12 +31,14 @@
 
 package com.tencent.bkrepo.oci.artifact.resolver
 
+import com.tencent.bkrepo.common.api.constant.CharPool.SLASH
 import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.util.Preconditions
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.resolve.path.ArtifactInfoResolver
 import com.tencent.bkrepo.common.artifact.resolve.path.Resolver
+import com.tencent.bkrepo.oci.constant.OCI_DEFAULT_NAMESPACE
 import com.tencent.bkrepo.oci.pojo.artifact.OciBlobArtifactInfo
 import io.undertow.servlet.spec.HttpServletRequestImpl
 import org.springframework.stereotype.Component
@@ -54,8 +56,13 @@ class OciBlobArtifactInfoResolver : ArtifactInfoResolver {
         request: HttpServletRequest
     ): ArtifactInfo {
         val requestUrl = ArtifactContextHolder.getUrlPath(this.javaClass.name)!!
-        val packageName = requestUrl.replaceAfterLast("/blobs", StringPool.EMPTY).removeSuffix("/blobs")
+        var packageName = requestUrl.replaceAfterLast("/blobs", StringPool.EMPTY).removeSuffix("/blobs")
             .removePrefix("/v2/$projectId/$repoName/")
+        if (packageName.contains(SLASH)) {
+            val defaultNamespace = ArtifactContextHolder.getRepoDetail()?.configuration
+                ?.getStringSetting(OCI_DEFAULT_NAMESPACE)?.trim()?.trim(SLASH)?.ifBlank { null }
+            defaultNamespace?.let { packageName = packageName.removePrefix("$it/") }
+        }
         validate(packageName)
         val attributes = request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE) as Map<*, *>
         // 解析digest

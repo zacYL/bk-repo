@@ -84,6 +84,7 @@ const val OCI_REPO_NAME = "repoName"
 const val OCI_NODE_PATH = "path"
 const val OCI_PACKAGE_VERSION_NAME = "name"
 const val OCI_PACKAGE_NAME = "name"
+const val OCI_DEFAULT_NAMESPACE = "defaultNamespace"
 
 const val OCI_NODE_SIZE = "size"
 const val OCI_NODE_FULL_PATH = "fullPath"

@@ -34,6 +34,7 @@ package com.tencent.bkrepo.oci.artifact.repository
 import com.google.common.cache.CacheBuilder
 import com.tencent.bkrepo.common.api.constant.BEARER_AUTH_PREFIX
 import com.tencent.bkrepo.common.api.constant.CharPool
+import com.tencent.bkrepo.common.api.constant.CharPool.SLASH
 import com.tencent.bkrepo.common.api.constant.HttpHeaders
 import com.tencent.bkrepo.common.api.constant.HttpHeaders.ACCEPT
 import com.tencent.bkrepo.common.api.constant.HttpHeaders.CONTENT_TYPE
@@ -41,6 +42,7 @@ import com.tencent.bkrepo.common.api.constant.HttpHeaders.WWW_AUTHENTICATE
 import com.tencent.bkrepo.common.api.constant.HttpStatus
 import com.tencent.bkrepo.common.api.constant.MediaTypes
 import com.tencent.bkrepo.common.api.constant.StringPool
+import com.tencent.bkrepo.common.api.constant.ensureSuffix
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.util.AuthenticationUtil
 import com.tencent.bkrepo.common.api.util.BasicAuthUtils
@@ -72,6 +74,7 @@ import com.tencent.bkrepo.oci.constant.IMAGE_VERSION
 import com.tencent.bkrepo.oci.constant.LAST_TAG
 import com.tencent.bkrepo.oci.constant.MEDIA_TYPE
 import com.tencent.bkrepo.oci.constant.N
+import com.tencent.bkrepo.oci.constant.OCI_DEFAULT_NAMESPACE
 import com.tencent.bkrepo.oci.constant.OCI_FILTER_ENDPOINT
 import com.tencent.bkrepo.oci.constant.OCI_IMAGE_MANIFEST_MEDIA_TYPE
 import com.tencent.bkrepo.oci.constant.OLD_DOCKER_VERSION
@@ -303,7 +306,13 @@ class OciRegistryRemoteRepository(
      */
     private fun getRemoteRequestProperty(context: ArtifactContext): RemoteRequestProperty {
         val configuration = context.getRemoteConfiguration()
-        val url = UrlFormatter.addProtocol(configuration.url).toString()
+        var url = UrlFormatter.addProtocol(configuration.url).toString()
+        val defaultNamespace = configuration.getStringSetting(OCI_DEFAULT_NAMESPACE)?.trim()?.trim(SLASH)
+            ?.ifBlank { null }
+        val packageName = (context.artifactInfo as OciArtifactInfo).packageName
+        if (defaultNamespace != null && !packageName.contains(SLASH)) {
+            url = url.trimEnd(SLASH).ensureSuffix("/$defaultNamespace")
+        }
         context.putAttribute(PROXY_URL, url)
         return when (context.artifactInfo) {
             is OciBlobArtifactInfo -> {

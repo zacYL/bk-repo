@@ -43,7 +43,9 @@ import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.buildBasicInfo
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.PackageClient
 import com.tencent.bkrepo.repository.api.PackageMetadataClient
+import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import org.slf4j.LoggerFactory
+import org.springframework.data.util.CastUtils
 import org.springframework.stereotype.Service
 
 @Service
@@ -64,7 +66,14 @@ class ConanWebServiceImpl(
                 logger.warn("node [${packageVersion.contentPath}] don't found.")
                 throw ConanFileNotFoundException(ConanMessageCode.CONAN_RECIPE_NOT_FOUND, packageVersion.contentPath!!, "$projectId|$repoName")
             }
-            return PackageVersionInfo(buildBasicInfo(nodeDetail, packageVersion), packageVersion.packageMetadata)
+            val partition = packageVersion.packageMetadata.partition { it.key == CONAN_INFOS }
+            val metadata = partition.first.firstOrNull()?.value
+                ?.let { CastUtils.cast<List<Map<String, String?>>>(it) }
+                ?.firstOrNull()
+                ?.map { MetadataModel(it.key, it.value.orEmpty(), system = true) }
+                .orEmpty()
+                .plus(partition.second)
+            return PackageVersionInfo(buildBasicInfo(nodeDetail, packageVersion), metadata)
         }
     }
 

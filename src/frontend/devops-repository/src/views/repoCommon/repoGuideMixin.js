@@ -313,6 +313,53 @@ export default {
                 }
             ]
         },
+        conanGuide () {
+            return [
+                {
+                    title: this.$t('setCredentials'),
+                    optionType: 'setCredentials',
+                    main: [
+                        {
+                            subTitle: this.$t('conanCreditGuideSubTitle1'),
+                            codeList: [
+                                'conan remote add <REMOTE_NAME> <REMOTE_URL>'
+                            ]
+                        }, {
+                            subTitle: this.$t('conanCreditGuideSubTitle2'),
+                            codeList: [
+                                'conan user -p <PASSWORD> -r <REMOTE_NAME> <USERNAME>'
+                            ]
+                        }
+                    ]
+                },
+                this.noShowOption
+                    ? undefined
+                    : {
+                        title: this.$t('push'),
+                        optionType: 'push',
+                        main: [
+                            {
+                                subTitle: this.$t('conanCreditGuideSubTitle3'),
+                                codeList: [
+                                    'conan install <PACKAGE_REFERENCE> -r <REMOTE_NAME>'
+                                ]
+                            }
+                        ]
+                    },
+                {
+                    title: this.$t('pull'),
+                    optionType: 'pull',
+                    main: [
+                        {
+                            subTitle: this.$t('conanCreditGuideSubTitle3'),
+                            codeList: [
+                                'conan upload <PACKAGE_REFERENCE> --all -r <REMOTE_NAME>'
+                            ]
+                        }
+                    ]
+                }
+            ].filter(Boolean)
+        },
         mavenGuide () {
             return [
                 {

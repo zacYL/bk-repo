@@ -38,8 +38,8 @@ import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.resolve.path.ArtifactInfoResolver
 import com.tencent.bkrepo.common.artifact.resolve.path.Resolver
-import com.tencent.bkrepo.oci.constant.OCI_DEFAULT_NAMESPACE
 import com.tencent.bkrepo.oci.pojo.artifact.OciBlobArtifactInfo
+import com.tencent.bkrepo.oci.util.OciUtils
 import io.undertow.servlet.spec.HttpServletRequestImpl
 import org.springframework.stereotype.Component
 import org.springframework.web.servlet.HandlerMapping
@@ -59,9 +59,8 @@ class OciBlobArtifactInfoResolver : ArtifactInfoResolver {
         var packageName = requestUrl.replaceAfterLast("/blobs", StringPool.EMPTY).removeSuffix("/blobs")
             .removePrefix("/v2/$projectId/$repoName/")
         if (packageName.contains(SLASH)) {
-            val defaultNamespace = ArtifactContextHolder.getRepoDetail()?.configuration
-                ?.getStringSetting(OCI_DEFAULT_NAMESPACE)?.trim()?.trim(SLASH)?.ifBlank { null }
-            defaultNamespace?.let { packageName = packageName.removePrefix("$it/") }
+            OciUtils.getDefaultNamespace(ArtifactContextHolder.getRepoDetail()!!.configuration)
+                ?.let { packageName = packageName.removePrefix("$it/") }
         }
         validate(packageName)
         val attributes = request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE) as Map<*, *>

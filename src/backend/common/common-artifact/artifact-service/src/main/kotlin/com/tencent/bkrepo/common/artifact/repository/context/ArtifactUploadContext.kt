@@ -84,9 +84,10 @@ open class ArtifactUploadContext : ArtifactContext {
 
     override fun copy(
         repositoryDetail: RepositoryDetail,
+        artifactInfoAttrMap: Map<String, Any?>?,
         instantiation: ((ArtifactInfo) -> ArtifactContext)?
     ): ArtifactContext {
-        return super.copy(repositoryDetail) { artifactInfo ->
+        return super.copy(repositoryDetail, artifactInfoAttrMap) { artifactInfo ->
             if (artifactFile != null) {
                 javaClass.getConstructor(
                     RepositoryDetail::class.java,

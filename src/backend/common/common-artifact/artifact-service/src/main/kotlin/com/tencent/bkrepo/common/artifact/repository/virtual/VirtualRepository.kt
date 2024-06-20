@@ -48,6 +48,7 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.common.storage.monitor.Throughput
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
+import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 
@@ -90,7 +91,7 @@ abstract class VirtualRepository : AbstractArtifactRepository() {
             val repoDetail = with(artifactResource.srcRepo) {
                 repositoryClient.getRepoDetail(projectId, name).data!!
             }
-            context.copy(repoDetail, null) as ArtifactDownloadContext
+            context.copy(repoDetail, null, null) as ArtifactDownloadContext
         }
         val category = subContext.repositoryDetail.category
         if (category != RepositoryCategory.VIRTUAL) {
@@ -208,8 +209,12 @@ abstract class VirtualRepository : AbstractArtifactRepository() {
         )
         val subRepoDetail = repositoryClient.getRepoDetail(repo.projectId, repo.name).data!!
         val repository = ArtifactContextHolder.getRepository(subRepoDetail.category)
-        val subContext = context.copy(subRepoDetail, null)
+        val subContext = generateSubContext(context, subRepoDetail)
         return action(subContext, repository)
+    }
+
+    open fun generateSubContext(context: ArtifactContext, subRepoDetail: RepositoryDetail): ArtifactContext {
+        return context.copy(subRepoDetail, null, null)
     }
 
     companion object {

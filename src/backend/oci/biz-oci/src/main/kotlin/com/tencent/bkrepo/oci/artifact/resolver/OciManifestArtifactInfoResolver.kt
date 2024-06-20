@@ -40,10 +40,10 @@ import com.tencent.bkrepo.common.artifact.resolve.path.ArtifactInfoResolver
 import com.tencent.bkrepo.common.artifact.resolve.path.Resolver
 import com.tencent.bkrepo.oci.constant.DOCKER_DISTRIBUTION_MANIFEST_LIST_V2
 import com.tencent.bkrepo.oci.constant.IMAGE_INDEX_MEDIA_TYPE
-import com.tencent.bkrepo.oci.constant.OCI_DEFAULT_NAMESPACE
 import com.tencent.bkrepo.oci.constant.USER_API_PREFIX
 import com.tencent.bkrepo.oci.pojo.artifact.OciManifestArtifactInfo
 import com.tencent.bkrepo.oci.pojo.digest.OciDigest
+import com.tencent.bkrepo.oci.util.OciUtils
 import org.springframework.stereotype.Component
 import org.springframework.web.servlet.HandlerMapping
 import javax.servlet.http.HttpServletRequest
@@ -70,9 +70,8 @@ class OciManifestArtifactInfoResolver : ArtifactInfoResolver {
             else -> {
                 var packageName = requestUrl.substringBeforeLast("/manifests").removePrefix("/v2/$projectId/$repoName/")
                 if (packageName.contains(SLASH)) {
-                    val defaultNamespace = ArtifactContextHolder.getRepoDetail()?.configuration
-                        ?.getStringSetting(OCI_DEFAULT_NAMESPACE)?.trim()?.trim(SLASH)?.ifBlank { null }
-                    defaultNamespace?.let { packageName = packageName.removePrefix("$it/") }
+                    OciUtils.getDefaultNamespace(ArtifactContextHolder.getRepoDetail()!!.configuration)
+                        ?.let { packageName = packageName.removePrefix("$it/") }
                 }
                 val attributes = request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE) as Map<*, *>
                 // 解析tag

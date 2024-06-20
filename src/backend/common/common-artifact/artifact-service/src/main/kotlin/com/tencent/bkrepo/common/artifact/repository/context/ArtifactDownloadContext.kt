@@ -62,9 +62,10 @@ open class ArtifactDownloadContext(
 
     override fun copy(
         repositoryDetail: RepositoryDetail,
+        artifactInfoAttrMap: Map<String, Any?>?,
         instantiation: ((ArtifactInfo) -> ArtifactContext)?
     ): ArtifactContext {
-        return super.copy(repositoryDetail) { artifactInfo ->
+        return super.copy(repositoryDetail, artifactInfoAttrMap) { artifactInfo ->
             this::class.primaryConstructor!!.call(
                 repositoryDetail, artifactInfo, artifacts, this.userId, useDisposition, false, true
             )

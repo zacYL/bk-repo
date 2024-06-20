@@ -136,22 +136,27 @@ open class ArtifactInfo(
     }
 
     /**
-     * 根据当前对象的属性值以及传入的[projectId]和[repoName]构造新的实例
+     * 根据当前对象的属性值以及传入的新属性值构造新的实例
      */
-    fun copy(projectId: String? = null, repoName: String? = null): ArtifactInfo {
+    fun copy(projectId: String? = null, repoName: String? = null, attrMap: Map<String, Any?>? = null): ArtifactInfo {
         val constructor = this::class.primaryConstructor!!
         val paramMap = constructor.parameters.associateWith { param ->
             when (param.name) {
                 ArtifactInfo::projectId.name -> projectId ?: this.projectId
                 ArtifactInfo::repoName.name -> repoName ?: this.repoName
-                else -> FieldUtils.readField(this, param.name, true)
+                else -> {
+                    if (attrMap?.containsKey(param.name) == true) {
+                        attrMap[param.name]
+                    } else FieldUtils.readField(this, param.name, true)
+                }
             }
         }
         val newInstance = constructor.callBy(paramMap)
         val fields = FieldUtils.getAllFieldsList(this::class.java)
         fields.forEach {
             if (it.name != this::projectId.name && it.name != this::repoName.name && !Modifier.isStatic(it.modifiers)) {
-                val value = FieldUtils.readField(it, this, true)
+                val value = if (attrMap?.containsKey(it.name) == true) attrMap[it.name]
+                    else FieldUtils.readField(it, this, true)
                 FieldUtils.writeField(it, newInstance, value, true)
             }
         }

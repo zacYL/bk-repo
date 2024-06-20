@@ -27,12 +27,15 @@
 
 package com.tencent.bkrepo.oci.util
 
+import com.tencent.bkrepo.common.api.constant.CharPool.SLASH
 import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.util.StreamUtils.readText
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.artifact.pojo.configuration.RepositoryConfiguration
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.oci.constant.DOCKER_IMAGE_MANIFEST_MEDIA_TYPE_V1
+import com.tencent.bkrepo.oci.constant.OCI_DEFAULT_NAMESPACE
 import com.tencent.bkrepo.oci.constant.OciMessageCode
 import com.tencent.bkrepo.oci.exception.OciBadRequestException
 import com.tencent.bkrepo.oci.model.Descriptor
@@ -147,6 +150,10 @@ object OciUtils {
             }
         }
         return packageName
+    }
+
+    fun getDefaultNamespace(configuration: RepositoryConfiguration): String? {
+        return configuration.getStringSetting(OCI_DEFAULT_NAMESPACE)?.trim()?.trim(SLASH)?.ifBlank { null }
     }
 
     /**

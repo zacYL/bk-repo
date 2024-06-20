@@ -31,14 +31,20 @@
 
 package com.tencent.bkrepo.oci.artifact.repository
 
+import com.tencent.bkrepo.common.api.constant.CharPool.SLASH
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.virtual.VirtualRepository
 import com.tencent.bkrepo.oci.constant.LAST_TAG
 import com.tencent.bkrepo.oci.constant.N
+import com.tencent.bkrepo.oci.pojo.artifact.OciArtifactInfo
+import com.tencent.bkrepo.oci.pojo.artifact.OciBlobArtifactInfo
+import com.tencent.bkrepo.oci.pojo.artifact.OciManifestArtifactInfo
 import com.tencent.bkrepo.oci.pojo.artifact.OciTagArtifactInfo
 import com.tencent.bkrepo.oci.pojo.response.CatalogResponse
 import com.tencent.bkrepo.oci.pojo.tags.TagsInfo
 import com.tencent.bkrepo.oci.util.OciUtils
+import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
 import org.springframework.stereotype.Component
 
 @Component
@@ -81,6 +87,18 @@ class OciRegistryVirtualRepository : VirtualRepository() {
                 require(sub is ArtifactQueryContext)
                 repository.query(sub)
             }
+        }
+    }
+
+    override fun generateSubContext(context: ArtifactContext, subRepoDetail: RepositoryDetail): ArtifactContext {
+        with(context.artifactInfo as OciArtifactInfo) {
+            val attrMap = if (
+                (this is OciManifestArtifactInfo || this is OciBlobArtifactInfo) && packageName.contains(SLASH)
+            ) {
+                OciUtils.getDefaultNamespace(subRepoDetail.configuration)
+                    ?.let { mapOf(this::packageName.name to packageName.removePrefix("$it/")) }
+            } else null
+            return context.copy(subRepoDetail, attrMap, null)
         }
     }
 }

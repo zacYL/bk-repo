@@ -360,6 +360,13 @@ export default {
                 }
             ].filter(Boolean)
         },
+        conanInstall () {
+            return [
+                {
+                    main: []
+                }
+            ]
+        },
         mavenGuide () {
             return [
                 {

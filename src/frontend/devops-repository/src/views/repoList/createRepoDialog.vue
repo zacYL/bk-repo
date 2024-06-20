@@ -121,6 +121,11 @@
                     </template>
                 </bk-form-item>
             </template>
+            <template v-if="repoBaseInfo.type === 'docker' && (storeType === 'local' || storeType === 'remote')">
+                <bk-form-item :label="$t('enabledLibraryNamespace')">
+                    <bk-checkbox v-model="repoBaseInfo.enabledLibraryNamespace"></bk-checkbox>
+                </bk-form-item>
+            </template>
             <template v-if="!(storeType === 'remote') && !(storeType === 'virtual') && repoBaseInfo.type === 'rpm'">
                 <bk-form-item :label="$t('enabledFileLists')">
                     <bk-checkbox v-model="repoBaseInfo.enabledFileLists"></bk-checkbox>
@@ -199,6 +204,7 @@
             name: '',
             public: false,
             system: false,
+            enabledLibraryNamespace: false,
             enabledFileLists: false,
             repodataDepth: 0,
             interceptors: [],
@@ -633,6 +639,9 @@
                         }
                     })
                     // body.configuration.deploymentRepo = this.repoBaseInfo.deploymentRepo || ''
+                }
+                if (this.repoBaseInfo.enabledLibraryNamespace) {
+                    body.configuration.settings.defaultNamespace = 'library'
                 }
                 this.createRepo({ body }).then(() => {
                     this.$bkMessage({

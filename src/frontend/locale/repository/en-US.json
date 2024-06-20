@@ -135,6 +135,7 @@
     "neverExpires": "Permanent",
     "expired": "Expired",
     "deleteTokenTitle": "Confirm to delete token: {name} ?",
+    "enabledLibraryNamespace": "Use library namespace",
     "enabledFileLists": "Enable fileLists",
     "repoDataDepth": "Index directory depth",
     "groupXmlSet": "Group file Name",

@@ -60,7 +60,7 @@
                             </bk-form-item>
                         </template>
                     </template>
-                        
+
                     <template v-if="repoBaseInfo.category === 'VIRTUAL'">
                         <bk-form-item :label=" $t('select') + $t('space') + $t('storageStore')" property="virtualStoreList" :required="true" error-display-type="normal">
                             <bk-button class="mb10" hover-theme="primary" @click="toCheckedStore">{{ $t('pleaseSelect') }}</bk-button>
@@ -132,6 +132,11 @@
                                     <bk-input class="w250" v-model.trim="repoBaseInfo[type].metadata" :placeholder="$t('metadataRule')"></bk-input>
                                 </bk-form-item>
                             </template>
+                        </bk-form-item>
+                    </template>
+                    <template v-if="repoType === 'docker' && (repoBaseInfo.category === 'LOCAL' || repoBaseInfo.category === 'REMOTE')">
+                        <bk-form-item :label="$t('enabledLibraryNamespace')">
+                            <bk-checkbox v-model="repoBaseInfo.enabledLibraryNamespace"></bk-checkbox>
                         </bk-form-item>
                     </template>
                     <template v-if="!(repoBaseInfo.category === 'REMOTE') && !(repoBaseInfo.category === 'VIRTUAL') && repoType === 'rpm'">
@@ -221,6 +226,7 @@
                     system: false,
                     repoType: '',
                     category: '',
+                    enabledLibraryNamespace: false,
                     enabledFileLists: false,
                     repodataDepth: 0,
                     groupXmlSet: [],
@@ -589,6 +595,9 @@
                             }
                         }
                     }
+                    if (res.type === 'DOCKER' && (res.category === 'LOCAL' || res.category === 'REMOTE') && res.configuration.settings.defaultNamespace === 'library') {
+                        this.repoBaseInfo.enabledLibraryNamespace = true
+                    }
 
                     const { interceptors } = res.configuration.settings
                     if (interceptors instanceof Array) {
@@ -677,6 +686,9 @@
                         }
                     })
                     // body.configuration.deploymentRepo = this.repoBaseInfo.deploymentRepo
+                }
+                if (this.repoBaseInfo.enabledLibraryNamespace) {
+                    body.configuration.settings.defaultNamespace = 'library'
                 }
                 this.repoBaseInfo.loading = true
                 this.updateRepoInfo({

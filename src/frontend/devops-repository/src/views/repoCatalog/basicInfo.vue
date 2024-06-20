@@ -96,6 +96,11 @@
                     <bk-radio :value="true" disabled>{{$t('allowCover')}}</bk-radio>
                 </bk-radio-group>
             </bk-form-item>
+            <template v-if="repoType === 'docker' && (detailInfo.category === 'LOCAL' || detailInfo.category === 'REMOTE')">
+                <bk-form-item :label="$t('enabledLibraryNamespace')">
+                    <bk-checkbox v-model="libraryNamespace" disabled></bk-checkbox>
+                </bk-form-item>
+            </template>
             <template v-if="!(detailInfo.category === 'REMOTE') && !(detailInfo.category === 'VIRTUAL') && repoType === 'rpm'">
                 <bk-form-item :label="$t('enabledFileLists')">
                     <bk-checkbox v-model="detailInfo.enabledFileLists" disabled></bk-checkbox>
@@ -231,6 +236,14 @@
                     { label: this.$t('systemPublic'), value: 'system', tip: this.$t('systemPublicTip') },
                     { label: this.$t('openPublicLabel'), value: 'public', tip: this.$t('openPublicTip') }
                 ]
+            },
+            libraryNamespace: {
+                get() {
+                    return this.detailInfo?.configuration?.settings?.defaultNamespace === 'library'
+                },
+                set(val) {
+                    this.detailInfo.configuration.settings.defaultNamespace = val === 'library'
+                }
             }
             // 虚拟仓库中选择上传的目标仓库的下拉列表数据
             // deploymentRepoCheckList () {

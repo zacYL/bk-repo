@@ -133,6 +133,11 @@
                             </template>
                         </bk-form-item>
                     </template>
+                    <template v-if="repoType === 'docker' && (repoBaseInfo.category === 'LOCAL' || repoBaseInfo.category === 'REMOTE')">
+                        <bk-form-item :label="$t('enabledLibraryNamespace')">
+                            <bk-checkbox v-model="repoBaseInfo.enabledLibraryNamespace"></bk-checkbox>
+                        </bk-form-item>
+                    </template>
                     <template v-if="!(repoBaseInfo.category === 'REMOTE') && !(repoBaseInfo.category === 'VIRTUAL') && repoType === 'rpm'">
                         <bk-form-item :label="$t('enabledFileLists')">
                             <bk-checkbox v-model="repoBaseInfo.enabledFileLists"></bk-checkbox>
@@ -216,6 +221,7 @@
                     system: false,
                     repoType: '',
                     category: '',
+                    enabledLibraryNamespace: false,
                     enabledFileLists: false,
                     repodataDepth: 0,
                     groupXmlSet: [],
@@ -567,7 +573,7 @@
                     if (res.category === 'REMOTE') {
                         this.repoBaseInfo.url = res.configuration.url
                         this.repoBaseInfo.credentials = res.configuration.credentials
-                      
+
                         if (res.configuration.network.proxy === null) {
                             this.repoBaseInfo.network = {
                                 proxy: {
@@ -584,6 +590,9 @@
                                 switcher: true
                             }
                         }
+                    }
+                    if (res.type === 'DOCKER' && (res.category === 'LOCAL' || res.category === 'REMOTE') && res.configuration.settings.defaultNamespace === 'library') {
+                        this.repoBaseInfo.enabledLibraryNamespace = true
                     }
 
                     const { interceptors } = res.configuration.settings
@@ -673,6 +682,9 @@
                         }
                     })
                     // body.configuration.deploymentRepo = this.repoBaseInfo.deploymentRepo
+                }
+                if (this.repoBaseInfo.enabledLibraryNamespace) {
+                    body.configuration.settings.defaultNamespace = 'library'
                 }
 
                 this.repoBaseInfo.loading = true

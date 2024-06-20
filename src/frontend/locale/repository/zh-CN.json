@@ -135,6 +135,7 @@
     "neverExpires": "永久有效",
     "expired": "已过期",
     "deleteTokenTitle": "确认删除Token: {name} ?",
+    "enabledLibraryNamespace": "默认library命名空间",
     "enabledFileLists": "启用FileLists",
     "repoDataDepth": "索引目录深度",
     "groupXmlSet": "分组文件名",

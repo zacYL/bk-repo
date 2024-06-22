@@ -64,6 +64,8 @@ class PypiVirtualRepository : VirtualRepository() {
      */
     @Suppress("UNCHECKED_CAST")
     override fun query(context: ArtifactQueryContext): String? {
+        context.getFullPathInterceptors()
+            .forEach { it.intercept(context.projectId, context.artifactInfo.getArtifactFullPath()) }
         val packageName = (context.artifactInfo as PypiSimpleArtifactInfo).packageName
         val pseudoSelector = if (packageName == null) "" else String.format(PSEUDO_MATCH_REGEX, FILE_NAME_REGEX)
         val indexPages = (super.query(context) as List<String>)

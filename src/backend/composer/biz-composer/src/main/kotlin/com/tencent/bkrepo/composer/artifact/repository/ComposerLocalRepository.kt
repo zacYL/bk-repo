@@ -224,6 +224,7 @@ class ComposerLocalRepository(private val stageClient: StageClient) : LocalRepos
 
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         with(context) {
+            getFullPathInterceptors().forEach { it.intercept(projectId, artifactInfo.getArtifactFullPath()) }
             artifactInfo.setArtifactMappingUri(artifactInfo.getArtifactFullPath().removePrefix("/$DIRECT_DISTS"))
             val node = ArtifactContextHolder.getNodeDetail(artifactInfo)
             downloadIntercept(context, node)

@@ -54,6 +54,7 @@ class MavenVirtualRepository : VirtualRepository() {
     @Suppress("UNCHECKED_CAST", "ReturnCount")
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         val fullPath = context.artifactInfo.getArtifactFullPath()
+        with(context) { getFullPathInterceptors().forEach { it.intercept(projectId, fullPath) } }
         // 从成员仓库中取最新时间戳的snapshot版本元数据文件或元数据摘要文件
         if (fullPath.isSnapshotMetadataUri() || fullPath.isSnapshotMetadataChecksumUri()) {
             val resources = mapEachLocalAndFirstRemote(context) { sub, repository ->

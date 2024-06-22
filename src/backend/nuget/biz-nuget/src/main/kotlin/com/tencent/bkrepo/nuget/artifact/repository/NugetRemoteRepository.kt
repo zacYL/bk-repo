@@ -132,6 +132,9 @@ class NugetRemoteRepository(
 
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         val nugetArtifactInfo = context.artifactInfo as NugetDownloadArtifactInfo
+        with(context) {
+            getFullPathInterceptors().forEach { it.intercept(projectId, nugetArtifactInfo.getArtifactFullPath()) }
+        }
         val feedContext = ArtifactQueryContext(context.repositoryDetail, nugetArtifactInfo)
         val packageBaseAddress = getResourceId(PACKAGE_BASE_ADDRESS, feedContext)
         val packageName = nugetArtifactInfo.getArtifactName()

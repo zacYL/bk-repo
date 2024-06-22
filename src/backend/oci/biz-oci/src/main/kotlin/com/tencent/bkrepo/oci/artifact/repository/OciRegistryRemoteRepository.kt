@@ -137,6 +137,9 @@ class OciRegistryRemoteRepository(
      */
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         return if (context.artifactInfo is OciManifestArtifactInfo) {
+            with(context) {
+                getFullPathInterceptors().forEach { it.intercept(projectId, artifactInfo.getArtifactFullPath()) }
+            }
             downloadIntercept(context, null)
             // 同一镜像tag可能被覆盖更新，对于manifest.json文件每次都去远端拉取
             doRequest(context) as ArtifactResource?

@@ -84,6 +84,9 @@ class HelmRemoteRepository(
 
 
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
+        with(context) {
+            getFullPathInterceptors().forEach { it.intercept(projectId, artifactInfo.getArtifactFullPath()) }
+        }
         return getCacheArtifactResource(context) ?: run {
             val remoteConfiguration = context.getRemoteConfiguration()
             logger.info(

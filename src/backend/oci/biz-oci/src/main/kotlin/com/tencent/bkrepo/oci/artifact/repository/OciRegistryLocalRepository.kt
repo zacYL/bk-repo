@@ -325,7 +325,8 @@ class OciRegistryLocalRepository(
                 " in repo ${context.artifactInfo.getRepoIdentify()}..."
         )
         val artifactInfo = context.artifactInfo as OciArtifactInfo
-        val fullPath = ociOperationService.getNodeFullPath(artifactInfo)
+        val fullPath = ociOperationService.getNodeFullPath(artifactInfo) ?: return null
+        with(context) { getFullPathInterceptors().forEach { it.intercept(projectId, fullPath) } }
         return downloadArtifact(context, fullPath)
     }
 

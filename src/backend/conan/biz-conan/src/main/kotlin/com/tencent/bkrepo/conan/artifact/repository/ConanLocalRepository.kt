@@ -126,6 +126,7 @@ class ConanLocalRepository : LocalRepository() {
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         with(context.artifactInfo as ConanArtifactInfo) {
             val fullPath = generateFullPath(this)
+            context.getFullPathInterceptors().forEach { it.intercept(projectId, fullPath) }
             logger.info("File $fullPath will be downloaded in repo $projectId|$repoName")
             val node = nodeClient.getNodeDetail(context.projectId, context.repoName, fullPath).data
             node?.let {

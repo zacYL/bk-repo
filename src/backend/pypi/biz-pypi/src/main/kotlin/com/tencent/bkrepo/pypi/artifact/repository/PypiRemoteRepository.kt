@@ -118,6 +118,8 @@ class PypiRemoteRepository(
     override fun query(context: ArtifactQueryContext): Any? {
         return when (val artifactInfo = context.artifactInfo) {
             is PypiSimpleArtifactInfo -> {
+                context.getFullPathInterceptors()
+                    .forEach { it.intercept(context.projectId, artifactInfo.getArtifactFullPath()) }
                 if (artifactInfo.packageName == null) getCacheHtml(context) ?: remoteQuery(context)
                 else remoteQuery(context)
             }
@@ -160,6 +162,9 @@ class PypiRemoteRepository(
     }
 
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
+        with(context) {
+            getFullPathInterceptors().forEach { it.intercept(projectId, artifactInfo.getArtifactFullPath()) }
+        }
         return getCacheArtifactResource(context) ?: run {
             val response = doRequest(context)
             return if (checkResponse(response)) {

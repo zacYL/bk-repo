@@ -40,6 +40,7 @@ import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
 import com.tencent.bkrepo.common.artifact.exception.ArtifactNotInWhitelistException
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactMigrateContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
@@ -148,6 +149,10 @@ class NpmRemoteRepository(
     }
 
     override fun query(context: ArtifactQueryContext): ArtifactInputStream? {
+        val fullPath = context.getStringAttribute(NPM_FILE_FULL_PATH)!!
+        if (!ArtifactContextHolder.getUrlPath(this::javaClass.name)!!.startsWith("/ext/")) {
+            context.getFullPathInterceptors().forEach { it.intercept(context.projectId, fullPath) }
+        }
         return getCacheArtifactResource(context)?.getSingleStream()
             ?: super.query(context) as ArtifactInputStream?
             ?: if (context.getStringAttribute(NPM_FILE_FULL_PATH)?.endsWith("/$PACKAGE_JSON") == true) {

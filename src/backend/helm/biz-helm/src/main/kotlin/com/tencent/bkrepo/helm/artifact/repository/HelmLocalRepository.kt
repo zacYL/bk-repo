@@ -176,6 +176,7 @@ class HelmLocalRepository(
 
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         val fullPath = context.getStringAttribute(FULL_PATH)!!
+        context.getFullPathInterceptors().forEach { it.intercept(context.projectId, fullPath) }
         context.artifactInfo.setArtifactMappingUri(fullPath)
         val node = ArtifactContextHolder.getNodeDetail(context.artifactInfo)
         node?.let {

@@ -214,19 +214,12 @@ open class ArtifactUploadContext : ArtifactContext {
         }
     }
 
+    // TODO: 需要与下载拦截器分离，抽象逻辑
     @Suppress("UNCHECKED_CAST")
     fun getInterceptors(): List<DownloadInterceptor<*, NodeDetail>> {
         val interceptorList = mutableListOf<DownloadInterceptor<*, NodeDetail>>()
         try {
-            val settings = repositoryDetail.configuration.settings
-            val interceptors = settings[INTERCEPTORS] as? List<Map<String, Any>>
-            interceptors?.forEach {
-                val type: DownloadInterceptorType = DownloadInterceptorType.valueOf(it[TYPE].toString())
-                val rules: Map<String, Any> by it
-                val interceptor = DownloadInterceptorFactory.buildInterceptor(type, rules)
-                interceptor?.let { interceptorList.add(interceptor) }
-            }
-            interceptorList.add(DownloadInterceptorFactory.buildInterceptor(DownloadInterceptorType.NODE_LOCK)!!)
+            listOf(DownloadInterceptorFactory.buildNodeInterceptor(DownloadInterceptorType.NODE_LOCK)!!)
             logger.debug("get repo[${repositoryDetail.projectId}/${repositoryDetail.name}] upload interceptor: $interceptorList")
         } catch (e: Exception) {
             logger.warn("fail to get repo[${repositoryDetail.projectId}/${repositoryDetail.name}] upload interceptor: $e")
@@ -240,7 +233,5 @@ open class ArtifactUploadContext : ArtifactContext {
 
     companion object {
         private val logger = LoggerFactory.getLogger(ArtifactUploadContext::class.java)
-        private const val INTERCEPTORS = "interceptors"
-        private const val TYPE = "type"
     }
 }

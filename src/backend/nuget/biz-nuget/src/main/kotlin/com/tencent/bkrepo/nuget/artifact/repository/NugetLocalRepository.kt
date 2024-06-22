@@ -218,6 +218,9 @@ class NugetLocalRepository(
 
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         // download package manifest
+        with(context) {
+            getFullPathInterceptors().forEach { it.intercept(projectId, artifactInfo.getArtifactFullPath()) }
+        }
         val nugetArtifactInfo = context.artifactInfo as NugetDownloadArtifactInfo
         return if (nugetArtifactInfo.type == MANIFEST) {
             onDownloadManifest(context)

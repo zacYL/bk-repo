@@ -89,7 +89,7 @@ class ListViewServiceImpl(
             viewModelService.render(currentPath, headerList, rowList)
         } else {
             val context = ArtifactDownloadContext()
-            context.getInterceptors().forEach { it.intercept(context.projectId, node) }
+            context.getNodeInterceptors().forEach { it.intercept(context.projectId, node) }
             ArtifactContextHolder.getRepository().download(context)
         }
     }

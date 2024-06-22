@@ -32,7 +32,7 @@
 package com.tencent.bkrepo.pypi.artifact
 
 import com.tencent.bkrepo.common.api.constant.StringPool
-import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
+import com.tencent.bkrepo.pypi.constants.PYPI_SIMPLE_CACHE_PATH
 import com.tencent.bkrepo.pypi.constants.REMOTE_HTML_CACHE_FULL_PATH
 
 class PypiSimpleArtifactInfo(
@@ -45,6 +45,6 @@ class PypiSimpleArtifactInfo(
         return packageName ?: StringPool.SLASH
     }
 
-    override fun getArtifactFullPath() = if (packageName == null) "/$REMOTE_HTML_CACHE_FULL_PATH" else
-        throw MethodNotAllowedException("Information about version-index cache file is not available")
+    override fun getArtifactFullPath() = if (packageName == null)
+            "$PYPI_SIMPLE_CACHE_PATH/$REMOTE_HTML_CACHE_FULL_PATH" else "$PYPI_SIMPLE_CACHE_PATH/$packageName.html"
 }

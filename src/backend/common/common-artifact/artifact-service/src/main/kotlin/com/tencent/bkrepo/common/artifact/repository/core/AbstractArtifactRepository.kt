@@ -365,7 +365,7 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
      */
     private fun nodeDownloadIntercept(context: ArtifactDownloadContext, nodeDetail: NodeDetail) {
         with(context) {
-            getInterceptors().forEach { it.intercept(projectId, nodeDetail) }
+            getNodeInterceptors().forEach { it.intercept(projectId, nodeDetail) }
             // 拦截package下载
             val packageKey = nodeDetail.packageName()?.let { PackageKeys.ofName(repo.type, it) }
             val version = nodeDetail.packageVersion()

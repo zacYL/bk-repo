@@ -132,7 +132,7 @@ class DownloadService(
             repoName = artifactInfo.repoName,
             fullPath = artifactInfo.getArtifactFullPath()
         ).data ?: throw NodeNotFoundException(artifactInfo.getArtifactFullPath())
-        context.getInterceptors().forEach { it.intercept(nodeDetail.projectId, nodeDetail) }
+        context.getNodeInterceptors().forEach { it.intercept(nodeDetail.projectId, nodeDetail) }
         return true
     }
 

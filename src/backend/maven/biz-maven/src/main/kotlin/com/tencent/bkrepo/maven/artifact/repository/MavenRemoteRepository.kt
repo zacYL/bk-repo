@@ -116,6 +116,9 @@ class MavenRemoteRepository(
      */
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         return if ((context.artifactInfo as MavenArtifactInfo).isMetadata()) {
+            with(context) {
+                getFullPathInterceptors().forEach { it.intercept(projectId, artifactInfo.getArtifactFullPath()) }
+            }
             val remoteConfiguration = context.getRemoteConfiguration()
             val httpClient = createHttpClient(remoteConfiguration)
             val downloadUrl = createRemoteDownloadUrl(context)

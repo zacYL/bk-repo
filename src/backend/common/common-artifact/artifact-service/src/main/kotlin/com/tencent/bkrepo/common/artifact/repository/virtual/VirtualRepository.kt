@@ -75,10 +75,13 @@ abstract class VirtualRepository : AbstractArtifactRepository() {
     }
 
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
-        return mapFirstRepo(context) { sub, repository ->
-            require(sub is ArtifactDownloadContext)
-            require(repository is AbstractArtifactRepository)
-            repository.onDownload(sub)?.also { context.putAttribute(SUB_CONTEXT, sub) }
+        with(context) {
+            getFullPathInterceptors().forEach { it.intercept(projectId, artifactInfo.getArtifactFullPath()) }
+            return mapFirstRepo(this) { sub, repository ->
+                require(sub is ArtifactDownloadContext)
+                require(repository is AbstractArtifactRepository)
+                repository.onDownload(sub)?.also { putAttribute(SUB_CONTEXT, sub) }
+            }
         }
     }
 

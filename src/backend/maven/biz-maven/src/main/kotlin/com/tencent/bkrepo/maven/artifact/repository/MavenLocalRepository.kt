@@ -794,6 +794,7 @@ class MavenLocalRepository(
      */
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         with(context) {
+            getFullPathInterceptors().forEach { it.intercept(projectId, artifactInfo.getArtifactFullPath()) }
             val node = getNodeInfoForDownload(context) ?: return null
             downloadIntercept(context, node)
             node.nodeMetadata.find { it.key == HashType.SHA1.ext }?.let {

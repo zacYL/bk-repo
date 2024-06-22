@@ -137,6 +137,7 @@ class RpmLocalRepository(
 ) : LocalRepository() {
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         with(context) {
+            getFullPathInterceptors().forEach { it.intercept(projectId, artifactInfo.getArtifactFullPath()) }
             val node = ArtifactContextHolder.getNodeDetail(artifactInfo)
             downloadIntercept(context, node)
             val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials) ?: return null

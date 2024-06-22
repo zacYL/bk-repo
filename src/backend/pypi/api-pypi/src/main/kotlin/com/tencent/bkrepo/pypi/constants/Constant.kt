@@ -65,6 +65,7 @@ const val SIMPLE_PAGE_CONTENT =
 </html>"""
 
 const val REMOTE_HTML_CACHE_FULL_PATH = "remoteHtml.html"
+const val PYPI_SIMPLE_CACHE_PATH = "/.pypi"
 const val FLUSH_CACHE_EXPIRE = 60 * 24
 const val XML_RPC_URI = "RPC2"
 const val XML_RPC_OPERATION_OR = "or"

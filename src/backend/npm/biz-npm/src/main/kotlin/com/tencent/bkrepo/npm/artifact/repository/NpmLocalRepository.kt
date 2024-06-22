@@ -33,6 +33,7 @@ import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.hash.sha1
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactMigrateContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
@@ -130,7 +131,10 @@ class NpmLocalRepository(
     }
 
     override fun query(context: ArtifactQueryContext): ArtifactInputStream? {
-        val fullPath = context.getStringAttribute(NPM_FILE_FULL_PATH)
+        val fullPath = context.getStringAttribute(NPM_FILE_FULL_PATH)!!
+        if (!ArtifactContextHolder.getUrlPath(this::javaClass.name)!!.startsWith("/ext/")) {
+            context.getFullPathInterceptors().forEach { it.intercept(context.projectId, fullPath) }
+        }
         return this.onQuery(context) ?: run {
             logger.warn("Artifact [$fullPath] not found in repo [${context.projectId}/${context.repoName}]")
             null

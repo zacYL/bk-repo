@@ -41,6 +41,7 @@ enum class DownloadInterceptorType {
     PACKAGE_FORBID,
     IP_SEGMENT,
     NODE_LOCK,
-    PACKAGE_LOCK
+    PACKAGE_LOCK,
+    PATH_PATTERN
     ;
 }

@@ -72,8 +72,7 @@ open class ArtifactDownloadContext(
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
-    fun getInterceptors(): List<DownloadInterceptor<*, NodeDetail>> {
+    fun getNodeInterceptors(): List<DownloadInterceptor<*, NodeDetail>> {
         return DownloadInterceptorFactory.buildInterceptors(repo.configuration.settings)
     }
 
@@ -81,4 +80,7 @@ open class ArtifactDownloadContext(
         return listOf(DownloadInterceptorFactory.buildPackageInterceptor(DownloadInterceptorType.PACKAGE_FORBID)!!)
     }
 
+    fun getFullPathInterceptors(): List<DownloadInterceptor<*, String>> {
+        return DownloadInterceptorFactory.buildInterceptors(repo.configuration.settings)
+    }
 }

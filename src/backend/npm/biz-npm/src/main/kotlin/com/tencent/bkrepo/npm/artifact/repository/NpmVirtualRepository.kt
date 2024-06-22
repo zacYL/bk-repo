@@ -40,6 +40,7 @@ import com.tencent.bkrepo.common.artifact.repository.core.AbstractArtifactReposi
 import com.tencent.bkrepo.common.artifact.repository.virtual.VirtualRepository
 import com.tencent.bkrepo.common.artifact.stream.ArtifactInputStream
 import com.tencent.bkrepo.common.artifact.util.version.SemVersion
+import com.tencent.bkrepo.npm.constants.NPM_FILE_FULL_PATH
 import com.tencent.bkrepo.npm.constants.SEARCH_REQUEST
 import com.tencent.bkrepo.npm.model.metadata.NpmPackageMetaData
 import com.tencent.bkrepo.npm.pojo.NpmSearchInfoMap
@@ -82,6 +83,8 @@ class NpmVirtualRepository : VirtualRepository() {
 
     @Suppress("UNCHECKED_CAST")
     override fun query(context: ArtifactQueryContext): ArtifactInputStream? {
+        val fullPath = context.getStringAttribute(NPM_FILE_FULL_PATH)!!
+        context.getFullPathInterceptors().forEach { it.intercept(context.projectId, fullPath) }
         val result = (super.query(context) as List<ArtifactInputStream>).ifEmpty { return null }
         return if (result.size == 1) result.first() else {
             // 聚合多个仓库的包级别元数据

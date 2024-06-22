@@ -32,6 +32,8 @@
 package com.tencent.bkrepo.common.artifact.repository.context
 
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.interceptor.DownloadInterceptor
+import com.tencent.bkrepo.common.artifact.interceptor.DownloadInterceptorFactory
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
 
 /**
@@ -40,4 +42,9 @@ import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
 open class ArtifactQueryContext(
     repo: RepositoryDetail? = null,
     artifact: ArtifactInfo? = null
-) : ArtifactContext(repo, artifact)
+) : ArtifactContext(repo, artifact) {
+
+    fun getFullPathInterceptors(): List<DownloadInterceptor<*, String>> {
+        return DownloadInterceptorFactory.buildInterceptors(repositoryDetail.configuration.settings)
+    }
+}

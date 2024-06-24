@@ -322,12 +322,12 @@ export default {
                         {
                             subTitle: this.$t('conanCreditGuideSubTitle1'),
                             codeList: [
-                                'conan remote add <REMOTE_NAME> <REMOTE_URL>'
+                                `conan remote add ${this.repoName} ${location.origin}/${this.repoType}/${this.projectId}/${this.repoName}/`
                             ]
                         }, {
                             subTitle: this.$t('conanCreditGuideSubTitle2'),
                             codeList: [
-                                'conan user -p <PASSWORD> -r <REMOTE_NAME> <USERNAME>'
+                                `conan remote login ${this.repoName} ${this.userName} -p ${this.accessToken}`
                             ]
                         }
                     ]
@@ -337,11 +337,25 @@ export default {
                     : {
                         title: this.$t('push'),
                         optionType: 'push',
+                        inputBoxList: [
+                            {
+                                key: 'dependInputValue1', // vux中存储的变量名
+                                label: this.$t('artifactName'), // 输入框左侧label文案
+                                placeholder: this.$t('artifactNamePlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                            },
+                            {
+                                key: 'dependInputValue2', // vux中存储的变量名
+                                label: this.$t('artifactVersion'), // 输入框左侧label文案
+                                placeholder: this.$t('packageVersionPlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
+                            }
+                        ],
                         main: [
                             {
                                 subTitle: this.$t('conanCreditGuideSubTitle3'),
                                 codeList: [
-                                    'conan install <PACKAGE_REFERENCE> -r <REMOTE_NAME>'
+                                    `conan install ${this.dependInputValue1 || '<PACKAGE>'}/${this.dependInputValue2 || '<REFERENCE>'} -r ${this.repoName}`
                                 ]
                             }
                         ]
@@ -349,11 +363,25 @@ export default {
                 {
                     title: this.$t('pull'),
                     optionType: 'pull',
+                    inputBoxList: [
+                        {
+                            key: 'dependInputValue1', // vux中存储的变量名
+                            label: this.$t('artifactName'), // 输入框左侧label文案
+                            placeholder: this.$t('artifactNamePlaceholder'), // 输入框提示文案
+                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                        },
+                        {
+                            key: 'dependInputValue2', // vux中存储的变量名
+                            label: this.$t('artifactVersion'), // 输入框左侧label文案
+                            placeholder: this.$t('packageVersionPlaceholder'), // 输入框提示文案
+                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
+                        }
+                    ],
                     main: [
                         {
                             subTitle: this.$t('conanCreditGuideSubTitle3'),
                             codeList: [
-                                'conan upload <PACKAGE_REFERENCE> --all -r <REMOTE_NAME>'
+                                `conan upload ${this.dependInputValue1 || '<PACKAGE>'}/${this.dependInputValue2 || '<REFERENCE>'} --all -r ${this.repoName}`
                             ]
                         }
                     ]
@@ -368,7 +396,7 @@ export default {
                             subTitle: 'conanfile.txt',
                             codeList: [
                                 '[requires]',
-                                `${this.packageName}/${this.versionLabel}`,
+                                `${this.repoName}/${this.versionLabel}`,
                                 '[generators]',
                                 'CMakeDeps',
                                 'CMakeToolchain',
@@ -391,7 +419,7 @@ export default {
                                 '       settings = "os", "compiler", "build_type", "arch"',
                                 '       generators = "CMakeDeps", "CMakeToolchain"',
                                 '       def requirements(self):',
-                                `              self.requires("${this.packageName}/${this.versionLabel}")`,
+                                `              self.requires("${this.repoName}/${this.versionLabel}")`,
                                 '       def layout(self):',
                                 '              cmake_layout(self)'
                             ]
@@ -405,13 +433,13 @@ export default {
                         {
                             subTitle: this.$t('pull'),
                             codeList: [
-                                `conan install ${this.packageName}/${this.versionLabel} -r ${this.repoName}`
+                                `conan install ${this.repoName}/${this.versionLabel} -r ${location.origin}/${this.repoType}/${this.projectId}/${this.repoName}/`
                             ]
                         },
                         {
                             subTitle: this.$t('push'),
                             codeList: [
-                                `conan upload ${this.packageName}/${this.versionLabel} --all -r ${this.repoName}`
+                                `conan upload ${this.repoName}/${this.versionLabel} --all -r ${location.origin}/${this.repoType}/${this.projectId}/${this.repoName}/`
                             ]
                         }
                     ]

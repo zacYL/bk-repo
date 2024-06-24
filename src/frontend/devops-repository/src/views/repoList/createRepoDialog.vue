@@ -28,7 +28,8 @@
             <template v-if="storeType === 'remote'">
                 <bk-form-item :label="$t('remoteProxyAddress')" :required="true" property="url" error-display-type="normal">
                     <bk-input class="w480" v-model.trim="repoBaseInfo.url"></bk-input>
-                    <bk-button theme="primary" :disabled="disableTestUrl" @click="onClickTestRemoteUrl">{{ $t('testRemoteUrl') }}</bk-button>
+                    <!-- todo 测试链接暂未支持 -->
+                    <bk-button v-if="repoBaseInfo.type !== 'generic'" theme="primary" :disabled="disableTestUrl" @click="onClickTestRemoteUrl">{{ $t('testRemoteUrl') }}</bk-button>
                 </bk-form-item>
                 <bk-form-item :label="$t('remoteProxyAccount')" property="credentials.username" error-display-type="normal">
                     <bk-input class="w480" v-model.trim="repoBaseInfo.credentials.username"></bk-input>
@@ -101,7 +102,7 @@
                     :list="availableList">
                 </card-radio-group>
             </bk-form-item>
-            <template v-if="repoBaseInfo.type === 'generic'">
+            <template v-if="repoBaseInfo.type === 'generic' && storeType === 'local'">
                 <!-- <bk-form-item v-for="type in ['mobile', 'web']" :key="type" -->
                 <bk-form-item v-for="type in ['web']" :key="type"
                     :label="$t(`${type}Download`)" :property="`${type}.enable`">
@@ -193,7 +194,7 @@
     import CardRadioGroup from '@repository/components/CardRadioGroup'
     import StoreSort from '@repository/components/StoreSort'
     import CheckTargetStore from '@repository/components/CheckTargetStore'
-    import { repoEnum, repoSupportEnum } from '@repository/store/publicEnum'
+    import { repoEnum, repoSupportEnum, remoteRepoSupportEnum } from '@repository/store/publicEnum'
     import { mapActions, mapState } from 'vuex'
     import { isEmpty } from 'lodash'
     import { checkValueIsNullOrEmpty } from '@repository/utils'
@@ -280,18 +281,20 @@
                         trigger: 'blur'
                     }
                 ]
-                const metadataRule = [
-                    {
-                        required: true,
-                        message: this.$t('pleaseMetadata'),
-                        trigger: 'blur'
-                    },
-                    {
-                        regex: /^[^\s]+:[^\s]+/,
-                        message: this.$t('metadataRule'),
-                        trigger: 'blur'
-                    }
-                ]
+                const metadataRule = this.storeType !== 'remote'
+                    ? [
+                        {
+                            required: true,
+                            message: this.$t('pleaseMetadata'),
+                            trigger: 'blur'
+                        },
+                        {
+                            regex: /^[^\s]+:[^\s]+/,
+                            message: this.$t('metadataRule'),
+                            trigger: 'blur'
+                        }
+                    ]
+                    : []
                 // 远程仓库的 地址校验规则
                 const urlRule = [
                     {
@@ -422,7 +425,7 @@
                     // 因为可能支持创建的远程及虚拟仓库，在本地仓库支持创建的仓库中不存在，所以需要两者匹配才能在创建远程及虚拟仓库时显示
                     this.filterRepoEnum = val === 'local'
                         ? repoEnum
-                        : repoSupportEnum.map((item) => repoEnum.find((st) => item.value === st.value))
+                        : (val === 'remote' ? remoteRepoSupportEnum : repoSupportEnum).map((item) => repoEnum.find((st) => item.value === st.value))
                     // 因为远程仓库和虚拟仓库没有generic类型且远程仓库支持的制品类型有限，所以需要将其重新赋默认值
                     this.repoBaseInfo.type = this.filterRepoEnum[0]?.value || ''
                 }

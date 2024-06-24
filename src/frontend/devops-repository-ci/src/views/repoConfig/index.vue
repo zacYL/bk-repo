@@ -21,7 +21,8 @@
                     <template v-if="repoBaseInfo.category === 'REMOTE'">
                         <bk-form-item :label="$t('remoteProxyAddress')" :required="true" property="url" error-display-type="normal">
                             <bk-input class="w480" v-model.trim="repoBaseInfo.url"></bk-input>
-                            <bk-button theme="primary" :disabled="disableTestUrl" @click="onClickTestRemoteUrl">{{ $t('testRemoteUrl') }}</bk-button>
+                            <!-- todo 测试链接暂未支持 -->
+                            <bk-button v-if="repoBaseInfo.type !== 'GENERIC'" theme="primary" :disabled="disableTestUrl" @click="onClickTestRemoteUrl">{{ $t('testRemoteUrl') }}</bk-button>
                         </bk-form-item>
                         <bk-form-item :label="$t('remoteProxyAccount')" property="credentials.username" error-display-type="normal">
                             <bk-input class="w480" v-model.trim="repoBaseInfo.credentials.username"></bk-input>
@@ -111,8 +112,7 @@
                             <bk-radio :value="true">{{$t('allowCover')}}</bk-radio>
                         </bk-radio-group>
                     </bk-form-item>
-
-                    <template v-if="repoType === 'generic'">
+                    <template v-if="repoType === 'generic' && repoBaseInfo.category === 'LOCAL'">
                         <!-- <bk-form-item v-for="type in ['mobile', 'web']" :key="type" -->
                         <bk-form-item v-for="type in ['web']" :key="type"
                             :label="$t(`${type}Download`)" :property="`${type}.enable`">
@@ -318,18 +318,20 @@
                         trigger: 'blur'
                     }
                 ]
-                const metadataRule = [
-                    {
-                        required: true,
-                        message: this.$t('pleaseMetadata'),
-                        trigger: 'blur'
-                    },
-                    {
-                        regex: /^[^\s]+:[^\s]+/,
-                        message: this.$t('metadataRule'),
-                        trigger: 'blur'
-                    }
-                ]
+                const metadataRule = this.repoBaseInfo.category !== 'REMOTE'
+                    ? [
+                        {
+                            required: true,
+                            message: this.$t('pleaseMetadata'),
+                            trigger: 'blur'
+                        },
+                        {
+                            regex: /^[^\s]+:[^\s]+/,
+                            message: this.$t('metadataRule'),
+                            trigger: 'blur'
+                        }
+                    ]
+                    : []
                 // 远程仓库的 地址校验规则
                 const urlRule = [
                     {

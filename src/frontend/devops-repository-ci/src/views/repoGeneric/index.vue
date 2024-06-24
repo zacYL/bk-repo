@@ -26,7 +26,7 @@
                     @item-click="itemClickHandler">
                     <template #operation="{ item }">
                         <operation-list
-                            v-if="item.roadMap === selectedTreeNode.roadMap && showUploadOperation"
+                            v-if="item.roadMap === selectedTreeNode.roadMap && showUploadOperation && !isGenericRemote"
                             :list="[
                                 { clickEvent: () => handlerUpload(item), label: $t('uploadFile') },
                                 { clickEvent: () => handlerUpload(item, true), label: $t('uploadFolder') },
@@ -82,7 +82,7 @@
                     <template #empty>
                         <empty-data :is-loading="isLoading" :search="Boolean(searchFileName)"></empty-data>
                     </template>
-                    <bk-table-column type="selection" width="60"></bk-table-column>
+                    <bk-table-column :selectable="selectable" type="selection" width="60"></bk-table-column>
                     <bk-table-column :label="$t('fileName')" prop="name" show-overflow-tooltip>
                         <template #default="{ row }">
                             <Icon class="table-svg mr5" size="16" :name="row.folder ? 'folder' : getIconName(row.name)" />
@@ -125,8 +125,9 @@
                     </bk-table-column>
                     <bk-table-column :label="$t('size')" width="100">
                         <template #default="{ row }">
+                            <span v-if="isGenericRemote && row.folder">0B</span>
                             <bk-button text
-                                v-if="row.folder && !('folderSize' in row)"
+                                v-else-if="row.folder && !('folderSize' in row)"
                                 :disabled="row.sizeLoading"
                                 @click="calculateFolderSize(row)">{{ $t('calculate') }}</bk-button>
                             <span v-else>
@@ -140,24 +141,39 @@
                                 :list="[
                                     { clickEvent: () => showDetail(row), label: $t('detail') },
                                     ...(!row.metadata.forbidStatus ? [
-                                        !row.folder && handlerPreview(row) && { clickEvent: () => handlerPreview(row, true), label: $t('preview') },
-                                        { clickEvent: () => handlerDownload(row), label: $t('download') },
+                                        !row.folder && handlerPreview(row) && !isRemote && { clickEvent: () => handlerPreview(row, true), label: $t('preview') },
+                                        !row.folder && { clickEvent: () => handlerDownload(row), label: $t('download') },
                                         ...((repoName !== 'pipeline' && !row.metadata.lockStatus) ? [
-                                            updateOperationPermission && { clickEvent: () => renameRes(row), label: $t('rename') },
-                                            !whetherSoftware && { clickEvent: () => moveRes(row), label: $t('move') },
-                                            !whetherSoftware && { clickEvent: () => copyRes(row), label: $t('copy') }
+                                            updateOperationPermission && !isRemote && { clickEvent: () => renameRes(row), label: $t('rename') },
+                                            !whetherSoftware && !isRemote && { clickEvent: () => moveRes(row), label: $t('move') },
+                                            !whetherSoftware && !isRemote && { clickEvent: () => copyRes(row), label: $t('copy') }
                                         ] : []),
-                                        shareOperationPermission && { clickEvent: () => handlerShare(row), label: $t('share') }
+                                        shareOperationPermission && !isRemote && { clickEvent: () => handlerShare(row), label: $t('share') }
                                     ] : []),
-                                    (!row.folder && forbidOperationPermission) && { clickEvent: () => showLimitDialog('forbid',row), label: row.metadata.forbidStatus ? $t('relieve') + $t('space') + $t('forbid') : $t('forbid') },
-                                    (!row.folder && lockOperationPermission) && { clickEvent: () => showLimitDialog('lock',row), label: row.metadata.lockStatus ? $t('relieve') + $t('space') + $t('lock') : $t('lock') },
-                                    (deleteOperationPermission && !row.metadata.lockStatus) && { clickEvent: () => deleteRes(row), label: $t('delete') }
+                                    (!row.folder && forbidOperationPermission) && !isRemote && { clickEvent: () => showLimitDialog('forbid',row), label: row.metadata.forbidStatus ? $t('relieve') + $t('space') + $t('forbid') : $t('forbid') },
+                                    (!row.folder && lockOperationPermission) && !isRemote && { clickEvent: () => showLimitDialog('lock',row), label: row.metadata.lockStatus ? $t('relieve') + $t('space') + $t('lock') : $t('lock') },
+                                    (deleteOperationPermission && !row.metadata.lockStatus) && !isRemote && { clickEvent: () => deleteRes(row), label: $t('delete') }
                                 ].filter(Boolean)">
                             </operation-list>
                         </template>
                     </bk-table-column>
                 </bk-table>
+                <bk-button v-if="isGenericRemote"
+                    :disabled="artifactoryList.length === 0 || artifactoryList.length < pagination.limit"
+                    size="small"
+                    icon="icon-angle-right"
+                    @click="changePage(1)"
+                    class="mt10 mr10 fr">
+                </bk-button>
+                <bk-button v-if="isGenericRemote"
+                    :disabled="pagination.current === 1"
+                    size="small"
+                    icon="icon-angle-left"
+                    @click="changePage(-1)"
+                    class="mt10 mr5 fr">
+                </bk-button>
                 <bk-pagination
+                    v-if="!isGenericRemote"
                     class="p10"
                     size="small"
                     align="right"
@@ -175,7 +191,7 @@
         <generic-detail ref="genericDetail" :show-update-metadata-btn="updateOperationPermission"></generic-detail>
         <generic-form-dialog ref="genericFormDialog" @refresh="refreshNodeChange"></generic-form-dialog>
         <generic-share-dialog ref="genericShareDialog"></generic-share-dialog>
-        <generic-tree-dialog ref="genericTreeDialog" @update="updateOperateTreeNode" @refresh="refreshNodeChange"></generic-tree-dialog>
+        <generic-tree-dialog ref="genericTreeDialog" @update="updateOperateTreeNode" @refresh="refreshNodeChange" :is-generic="type === 'GENERIC'"></generic-tree-dialog>
         <preview-basic-file-dialog ref="previewBasicFileDialog"></preview-basic-file-dialog>
         <compressed-file-table ref="compressedFileTable" @show-preview="handlerPreviewBasicsFile"></compressed-file-table>
         <operationLimitConfirmDialog ref="operationLimitConfirmDialog" @confirm="handlerLimitOperation"></operationLimitConfirmDialog>
@@ -251,8 +267,20 @@
             projectId () {
                 return this.$route.params.projectId
             },
+            type () {
+                return this.$route.query.ropeTypeValue
+            },
             repoName () {
                 return this.$route.query.repoName
+            },
+            storeType () {
+                return this.$route.query.storeType
+            },
+            isRemote () {
+                return this.storeType === 'remote'
+            },
+            isGenericRemote () {
+                return this.isRemote && this.type === 'GENERIC'
             },
             currentRepo () {
                 return this.repoListAll.find(repo => repo.name === this.repoName) || {}
@@ -328,15 +356,17 @@
         created () {
             // 注意：软件源模式下不需要判断权限，软件源的vuex中也没有该接口定义，因为软件源模式下所有用户都是只读权限
             !this.whetherSoftware && this.getCurrentRepositoryDataPermission({ projectId: this.projectId, repoName: this.repoName })
-            this.getRepoListAll({ projectId: this.projectId })
+            this.getRepoListAll({ projectId: this.projectId }).then(_ => {
+                this.pathChange()
+            })
             this.initTree()
-            this.pathChange()
             window.repositoryVue.$on('upload-refresh', debounce((path) => {
                 if (path.replace(/\/[^/]+$/, '').includes(this.selectedTreeNode.fullPath)) {
                     this.itemClickHandler(this.selectedTreeNode)
                 }
             }))
             this.debounceClickTreeNode = debounce(this.clickTreeNodeHandler, 100)
+            this.sortType = !this.isGenericRemote ? 'lastModifiedDate' : ''
         },
         beforeDestroy () {
             window.repositoryVue.$off('upload-refresh')
@@ -380,25 +410,27 @@
                 }
             },
             renderHeader (h, { column }) {
+                const elements = [h('span', column.label)]
+                if (!this.isGenericRemote) {
+                    elements.push(h('i', { class: 'ml5 devops-icon icon-down-shape' }))
+                }
                 return h('div', {
                     class: {
-                        'flex-align-center hover-btn': true,
+                        'flex-align-center': true,
+                        'hover-btn': !this.isGenericRemote,
                         'selected-header': this.sortType === column.property
                     },
                     on: {
                         click: () => {
-                            this.sortType = column.property
-                            // 当点击切换排序时需要将升序修改为降序，降序修改为升序
-                            this.sortDirection = this.sortDirection === 'DESC' ? 'ASC' : 'DESC'
-                            this.handlerPaginationChange()
+                            if (!this.isGenericRemote) {
+                                this.sortType = column.property
+                                // 当点击切换排序时需要将升序修改为降序，降序修改为升序
+                                this.sortDirection = this.sortDirection === 'DESC' ? 'ASC' : 'DESC'
+                                this.handlerPaginationChange()
+                            }
                         }
                     }
-                }, [
-                    h('span', column.label),
-                    h('i', {
-                        class: `ml5 devops-icon ${this.sortDirection === 'DESC' ? 'icon-down-shape' : 'icon-up-shape'}`
-                    })
-                ])
+                }, elements)
             },
             initTree () {
                 this.INIT_TREE([{
@@ -407,8 +439,23 @@
                     fullPath: '',
                     folder: true,
                     children: [],
-                    roadMap: `${this.repoName},0`
+                    roadMap: `${this.repoName},0`,
+                    localRepo: !this.isGenericRemote
                 }])
+            },
+            changePage (inc) {
+                if (this.isLoading) {
+                    return
+                }
+                const oldPage = this.pagination.current
+                if (this.pagination.current + inc <= 0) {
+                    this.pagination.current = 1
+                } else if (this.artifactoryList.length !== 0 || inc < 0) {
+                    this.pagination.current += inc
+                }
+                if (oldPage !== this.pagination.current) {
+                    this.handlerPaginationChange({ current: this.pagination.current })
+                }
             },
             // 初始化操作树(复制、移动)
             initGenericOperateTree () {
@@ -422,6 +469,7 @@
                             fullPath: '',
                             folder: true,
                             children: [],
+                            category: item.category,
                             roadMap: `${item.name},0`
                         })
                     })
@@ -445,6 +493,9 @@
                     this.itemClickHandler(node || this.genericTree[0])
                 })
             },
+            selectable (row, index) {
+                return !this.isRemote
+            },
             // 获取中间列表数据
             getArtifactories () {
                 if (!this.repoName || !this.projectId) {
@@ -466,7 +517,8 @@
                     sortType: this.sortType,
                     isPipeline: this.repoName === 'pipeline',
                     sortDirection: this.sortDirection,
-                    searchFlag: this.searchFileName
+                    searchFlag: this.searchFileName,
+                    localRepo: !this.isGenericRemote
                 }).then(({ records, totalRecords }) => {
                     this.pagination.count = totalRecords
                     this.artifactoryList = records.map(v => {
@@ -540,7 +592,8 @@
                     repoName: name,
                     fullPath: item.fullPath,
                     roadMap: item.roadMap,
-                    isPipeline: this.repoName === 'pipeline'
+                    isPipeline: this.repoName === 'pipeline',
+                    localRepo: !this.isGenericRemote
                 }).then((res) => {
                     const records = res.records
                     const roadMap = item.roadMap
@@ -563,7 +616,8 @@
                     repoName: name,
                     fullPath: item.fullPath,
                     roadMap: item.roadMap,
-                    isPipeline: this.repoName === 'pipeline'
+                    isPipeline: this.repoName === 'pipeline',
+                    localRepo: !this.isGenericRemote
                 }).then((res) => {
                     const records = res.records
                     const roadMap = item.roadMap
@@ -598,7 +652,8 @@
                     repoName: this.repoName,
                     folder,
                     path: fullPath,
-                    data: {}
+                    data: {},
+                    localNode: !this.isRemote
                 })
             },
             renameRes ({ name, fullPath }) {
@@ -838,8 +893,8 @@
                 this.$refs.previewBasicFileDialog.setData({
                     show: true,
                     title: row.name,
-                    projectId: row.projectId,
-                    repoName: row.repoName,
+                    projectId: this.projectId,
+                    repoName: this.repoName,
                     fullPath: row.fullPath,
                     filePath: row.filePath
                 })
@@ -938,7 +993,11 @@
         }
     }
 }
-
+::v-deep .bk-button {
+    .bk-button {
+        top: 0;
+    }
+}
 ::v-deep .bk-table-row.selected-row {
     background-color: var(--bgHoverColor);
 }

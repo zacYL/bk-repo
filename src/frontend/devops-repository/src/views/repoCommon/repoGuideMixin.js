@@ -363,7 +363,58 @@ export default {
         conanInstall () {
             return [
                 {
-                    main: []
+                    main: [
+                        {
+                            subTitle: 'conanfile.txt',
+                            codeList: [
+                                '[requires]',
+                                `${this.packageName}/${this.versionLabel}`,
+                                '[generators]',
+                                'CMakeDeps',
+                                'CMakeToolchain',
+                                '[layout]',
+                                'cmake_layout'
+                            ]
+                        },
+                        {
+                            subTitle: this.$t('conanInfoTips'),
+                            codeList: [
+                                'conan install conanfile.txt --build=missing'
+                            ]
+                        },
+                        {
+                            subTitle: 'conanfile.py',
+                            codeList: [
+                                'from conan import ConanFile',
+                                'from conan.tools.cmake import cmake_layout',
+                                'class ExampleRecipe(ConanFile):',
+                                '       settings = "os", "compiler", "build_type", "arch"',
+                                '       generators = "CMakeDeps", "CMakeToolchain"',
+                                '       def requirements(self):',
+                                `              self.requires("${this.packageName}/${this.versionLabel}")`,
+                                '       def layout(self):',
+                                '              cmake_layout(self)'
+                            ]
+                        },
+                        {
+                            subTitle: this.$t('conanInfoTips'),
+                            codeList: [
+                                '$ conan install conanfile.py --build=missing'
+                            ]
+                        },
+                        {
+                            subTitle: this.$t('pull'),
+                            codeList: [
+                                `conan install ${this.packageName}/${this.versionLabel} -r ${this.repoName}`
+                            ]
+                        },
+                        {
+                            subTitle: this.$t('push'),
+                            codeList: [
+                                `conan upload ${this.packageName}/${this.versionLabel} --all -r ${this.repoName}`
+                            ]
+                        }
+                    ]
                 }
             ]
         },

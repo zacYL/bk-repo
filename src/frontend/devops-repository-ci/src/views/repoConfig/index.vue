@@ -112,8 +112,7 @@
                             <bk-radio :value="true">{{$t('allowCover')}}</bk-radio>
                         </bk-radio-group>
                     </bk-form-item>
-
-                    <template v-if="repoType === 'generic'">
+                    <template v-if="repoType === 'generic' && repoBaseInfo.category === 'LOCAL'">
                         <!-- <bk-form-item v-for="type in ['mobile', 'web']" :key="type" -->
                         <bk-form-item v-for="type in ['web']" :key="type"
                             :label="$t(`${type}Download`)" :property="`${type}.enable`">
@@ -127,7 +126,7 @@
                                     <bk-input class="w250" v-model.trim="repoBaseInfo[type].filename"></bk-input>
                                     <i class="bk-icon icon-info f14 ml5" v-bk-tooltips="$t('fileNameRule')"></i>
                                 </bk-form-item>
-                                <bk-form-item v-if="repoBaseInfo.category !== 'REMOTE'" :label="$t('metadata')" :label-width="80"
+                                <bk-form-item :label="$t('metadata')" :label-width="80"
                                     :property="`${type}.metadata`" required error-display-type="normal">
                                     <bk-input class="w250" v-model.trim="repoBaseInfo[type].metadata" :placeholder="$t('metadataRule')"></bk-input>
                                 </bk-form-item>

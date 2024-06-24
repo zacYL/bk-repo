@@ -102,7 +102,7 @@
                     :list="availableList">
                 </card-radio-group>
             </bk-form-item>
-            <template v-if="repoBaseInfo.type === 'generic'">
+            <template v-if="repoBaseInfo.type === 'generic' && storeType === 'local'">
                 <!-- <bk-form-item v-for="type in ['mobile', 'web']" :key="type" -->
                 <bk-form-item v-for="type in ['web']" :key="type"
                     :label="$t(`${type}Download`)" :property="`${type}.enable`">
@@ -115,7 +115,7 @@
                             :property="`${type}.filename`" required error-display-type="normal">
                             <bk-input class="w250" v-model.trim="repoBaseInfo[type].filename" :placeholder="$t('fileNameRule')"></bk-input>
                         </bk-form-item>
-                        <bk-form-item v-if="storeType !== 'remote'" :label="$t('metadata')" :label-width="80"
+                        <bk-form-item :label="$t('metadata')" :label-width="80"
                             :property="`${type}.metadata`" required error-display-type="normal">
                             <bk-input class="w250" v-model.trim="repoBaseInfo[type].metadata" :placeholder="$t('metadataRule')"></bk-input>
                         </bk-form-item>

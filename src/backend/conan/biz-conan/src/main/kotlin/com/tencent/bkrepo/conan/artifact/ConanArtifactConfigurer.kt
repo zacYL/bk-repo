@@ -45,9 +45,13 @@ class ConanArtifactConfigurer : ArtifactConfigurerSupport() {
     override fun getVirtualRepository() = SpringContextUtils.getBean<ConanVirtualRepository>()
     override fun getAuthSecurityCustomizer() = object : HttpAuthSecurityCustomizer {
         override fun customize(httpAuthSecurity: HttpAuthSecurity) {
-            httpAuthSecurity.withPrefix("/conan")
+            val authenticationManager = httpAuthSecurity.authenticationManager!!
+            val jwtAuthProperties = httpAuthSecurity.jwtAuthProperties!!
+            val authLoginHandler = ConanBasicAuthLoginHandler(authenticationManager, jwtAuthProperties)
+
+            httpAuthSecurity.addHttpAuthHandler(authLoginHandler)
+                .withPrefix("/conan")
                 .excludePattern("/**/v1/ping")
-                .excludePattern("/**/users/authenticate")
         }
     }
 }

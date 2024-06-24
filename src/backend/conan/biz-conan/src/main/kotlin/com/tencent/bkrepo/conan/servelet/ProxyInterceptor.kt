@@ -40,6 +40,18 @@ import org.springframework.web.servlet.HandlerInterceptor
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
+/**
+ * 本地仓库：无拦截
+ * 远程仓库：
+ * 下载请求不拦截，其余拦截全部转发到配置的远程仓库
+ * 下载请求进ConanRemoteRepository正常逻辑，代理配置的远程仓库下载数据，缓存至本地，返回。
+ * 虚拟仓库：
+ * 第一次请求（search、latest）不拦截，在ConanArtifactInfoResolver尝试从redis获取packageKey对应的实际仓库：
+ * a.若存在，则替换请求的repoName。
+ * b.若不存在，则执行search方法（该方法会聚合结果，并缓存结果到redis），然后替换请求的repoName。
+ * 非第一次的请求则拦截，从缓存获取实际仓库，根据仓库类型：a.远程仓库则转发配置的远程仓库 b.本地仓库则放行
+ * @see com.tencent.bkrepo.conan.artifact.resolver.ConanArtifactInfoResolver
+ */
 class ProxyInterceptor(
     private val conanRemoteService: ConanRemoteService,
     private val conanVirtualService: ConanVirtualService

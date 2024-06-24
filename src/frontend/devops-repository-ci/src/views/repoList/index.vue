@@ -256,7 +256,7 @@
                 this.currentStoreType = type
                 this.$refs.createRepo.showDialogHandler()
             },
-            toPackageList ({ projectId, repoType, name, category }) {
+            toPackageList ({ projectId, repoType, name, category, type }) {
                 this.$router.push({
                     name: repoType === 'generic' ? 'repoGeneric' : 'commonList',
                     params: {
@@ -267,6 +267,7 @@
                         repoName: name,
                         storeType: category?.toLowerCase() || '',
                         ...this.$route.query,
+                        ropeTypeValue: type,
                         c: this.pagination.current,
                         l: this.pagination.limit
                     }

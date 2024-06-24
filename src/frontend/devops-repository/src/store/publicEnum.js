@@ -12,13 +12,19 @@ export const repoEnum = [
     { label: 'Nuget', value: 'nuget' }
     // { label: 'Conan', value: 'conan' }
 ]
-// 远程及虚拟仓库支持创建的仓库
+// 虚拟仓库支持创建的仓库
 export const repoSupportEnum = [
     { label: 'Maven', value: 'maven' },
     { label: 'Npm', value: 'npm' },
     { label: 'Pypi', value: 'pypi' },
     { label: 'Nuget', value: 'nuget' },
     { label: 'Docker', value: 'docker' }
+]
+
+// 远程仓库支持创建的仓库
+export const remoteRepoSupportEnum = [
+    { label: 'Generic', value: 'generic' },
+    ...repoSupportEnum
 ]
 
 // 文件类型

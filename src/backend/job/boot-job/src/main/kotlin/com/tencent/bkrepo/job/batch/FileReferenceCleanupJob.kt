@@ -90,11 +90,11 @@ class FileReferenceCleanupJob(
         try {
             if (sha256.isNotBlank() && storageService.exist(sha256, storageCredentials)) {
                 storageService.delete(sha256, storageCredentials)
+                mongoTemplate.remove(Query(Criteria(ID).isEqualTo(id)), collectionName)
             } else {
                 (context as FileJobContext).fileMissing.incrementAndGet()
                 logger.warn("File[$sha256] is missing on [$storageCredentials], skip cleaning up.")
             }
-            mongoTemplate.remove(Query(Criteria(ID).isEqualTo(id)), collectionName)
         } catch (e: Exception) {
             throw JobExecuteException("Failed to delete file[$sha256] on [$storageCredentials].", e)
         }

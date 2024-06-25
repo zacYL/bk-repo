@@ -355,7 +355,7 @@ export default {
                             {
                                 subTitle: this.$t('conanCreditGuideSubTitle3'),
                                 codeList: [
-                                    `conan install ${this.dependInputValue1 || '<PACKAGE>'}/${this.dependInputValue2 || '<REFERENCE>'} -r ${this.repoName}`
+                                    `conan upload ${this.dependInputValue1 || '<PACKAGE>'}/${this.dependInputValue2 || '<REFERENCE>'} -r ${this.repoName}`
                                 ]
                             }
                         ]
@@ -381,7 +381,7 @@ export default {
                         {
                             subTitle: this.$t('conanCreditGuideSubTitle3'),
                             codeList: [
-                                `conan upload ${this.dependInputValue1 || '<PACKAGE>'}/${this.dependInputValue2 || '<REFERENCE>'} --all -r ${this.repoName}`
+                                `conan download ${this.dependInputValue1 || '<PACKAGE>'}/${this.dependInputValue2 || '<REFERENCE>'}  -r ${this.repoName}`
                             ]
                         }
                     ]
@@ -407,7 +407,7 @@ export default {
                         {
                             subTitle: this.$t('conanInfoTips'),
                             codeList: [
-                                'conan install conanfile.txt --build=missing'
+                                `conan install conanfile.txt --build=missing -r ${this.repoName}`
                             ]
                         },
                         {
@@ -427,19 +427,19 @@ export default {
                         {
                             subTitle: this.$t('conanInfoTips'),
                             codeList: [
-                                '$ conan install conanfile.py --build=missing'
+                                `$ conan install conanfile.py --build=missing -r ${this.repoName}`
                             ]
                         },
                         {
                             subTitle: this.$t('pull'),
                             codeList: [
-                                `conan install ${this.repoName}/${this.versionLabel} -r ${location.origin}/${this.repoType}/${this.projectId}/${this.repoName}/`
+                                `conan download ${this.repoName}/${this.versionLabel} -r ${location.origin}/${this.repoType}/${this.projectId}/${this.repoName}/`
                             ]
                         },
                         {
                             subTitle: this.$t('push'),
                             codeList: [
-                                `conan upload ${this.repoName}/${this.versionLabel} --all -r ${location.origin}/${this.repoType}/${this.projectId}/${this.repoName}/`
+                                `conan upload ${this.repoName}/${this.versionLabel} -r ${location.origin}/${this.repoType}/${this.projectId}/${this.repoName}/`
                             ]
                         }
                     ]

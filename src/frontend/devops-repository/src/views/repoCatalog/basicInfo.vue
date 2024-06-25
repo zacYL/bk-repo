@@ -59,18 +59,27 @@
                         ></store-sort>
                     </div>
                 </bk-form-item>
-                <!-- <bk-form-item :label="$t('uploadTargetStore')">
-                    <bk-select
-                        v-model="detailInfo.deploymentRepo"
-                        style="width:300px;"
-                        :show-empty="false"
-                        :disabled="true"
-                        :placeholder="$t('noAddedLocalStore')">
-                        <bk-option v-for="item in deploymentRepoCheckList" :key="item.name" :id="item.name" :name="item.name">
-                        </bk-option>
-                    </bk-select>
-                    <div class="form-tip">{{$t('addPackagePrompt')}}</div>
-                </bk-form-item> -->
+            </template>
+            <template v-if="!['generic', 'composer'].includes(repoType)">
+                <bk-form-item
+                    :desc="includesPathDesc" desc-type="icon"
+                    :label="$t('includePath')"
+                >
+                    <div style="display: flex;flex-direction: column;">
+                        <bk-input v-for="(item, index) in generatePath(detailInfo, 'includePathPatterns')" :key="index" :value="item" readonly style="width: 180px;"
+                            class="mb10">
+                        </bk-input>
+                    </div>
+                </bk-form-item>
+                <bk-form-item
+                    :label="$t('ignorePath')"
+                >
+                    <div style="display: flex;flex-direction: column;">
+                        <bk-input v-for="(item, index) in generatePath(detailInfo, 'excludePathPatterns')" :key="index" :value="item" readonly style="width: 180px;"
+                            class="mb10">
+                        </bk-input>
+                    </div>
+                </bk-form-item>
             </template>
             <bk-form-item :label="$t('accessPermission')">
                 <card-radio-group
@@ -196,6 +205,20 @@
             projectId () {
                 return this.$route.params.projectId
             },
+            includesPathDesc () {
+                return {
+                    allowHtml: true,
+                    content: '1',
+                    html: `<p>${this.$t('includesPathDesc1')}</p>
+                        <p>${this.$t('includesPathDesc2')}</p>
+                        <p>${this.$t('includesPathDesc3')}</p>
+                        <p>${this.$t('includesPathDesc4')}</p>
+                        ${this.repoType === 'maven'
+                        ? `<p>${this.$t('includesPathDesc5')}</p>
+                           <p>${this.$t('includesPathDesc6')}</p>`
+                    : ''}`
+                }
+            },
             repoType () {
                 return this.detailInfo?.type?.toLowerCase() || ''
             },
@@ -238,10 +261,10 @@
                 ]
             },
             libraryNamespace: {
-                get() {
+                get () {
                     return this.detailInfo?.configuration?.settings?.defaultNamespace === 'library'
                 },
-                set(val) {
+                set (val) {
                     this.detailInfo.configuration.settings.defaultNamespace = val === 'library'
                 }
             }
@@ -264,8 +287,15 @@
             ...mapActions(['getDomain']),
             handleOverrideChange (isFlag) {
                 this.detailInfo.override.switcher = isFlag
+            },
+            generatePath (value, key) {
+                const interceptors = value.interceptors
+                if (!Array.isArray(interceptors)) return []
+                const patternInterceptors = value.interceptors.filter(item => {
+                    return item.type === 'PATH_PATTERN'
+                })
+                return patternInterceptors[0].rules[key] || []
             }
-
         }
     }
 </script>

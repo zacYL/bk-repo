@@ -73,20 +73,38 @@
                                     @update="onUpdateList"></store-sort>
                             </div>
                         </bk-form-item>
-                        <!-- <bk-form-item :label="$t('uploadTargetStore')" property="uploadTargetStore">
-                            <bk-select
-                                v-model="repoBaseInfo.deploymentRepo"
-                                style="width:300px;"
-                                :show-empty="false"
-                                :placeholder="$t('pleaseSelect') + $t('space') + $t('uploadTargetStore')">
-                                <bk-option v-for="item in deploymentRepoCheckList" :key="item.name" :id="item.name" :name="item.name">
-                                </bk-option>
-                                <div v-if="!deploymentRepoCheckList.length" class="form-tip mt10 ml10 mr10 mb10">
-                                    {{$t('noAddedLocalStore')}}
-                                </div>
-                            </bk-select>
-                            <div class="form-tip">{{$t('addPackagePrompt')}}</div>
-                        </bk-form-item> -->
+                    </template>
+                    <template v-if="!['generic', 'composer'].includes(repoType)">
+                        <bk-form-item :desc="includesPathDesc" desc-type="icon"
+                            :label="$t('includePath')">
+                            <bk-button @click="addPath('includesPath')">{{ $t("addPath") }}</bk-button>
+                        </bk-form-item>
+                        <bk-form-item
+                            v-for="(item, index) in repoBaseInfo.includesPath"
+                            required
+                            :rules="rules.includesPath"
+                            :property="'includesPath.' + index + '.value'"
+                            :key="index"
+                            style="width: fit-content;"
+                            class="mt10">
+                            <bk-input v-model="item.value" :placeholder="$t('pleaseInput') + $t('space') + $t('verificationRules')" style="width: 180px;">
+                            </bk-input>
+                            <Icon class="hover-btn" size="24" name="icon-delete" @click.native.stop="repoBaseInfo.includesPath.splice(index, 1)" style="position: absolute; right: -30px; top: 4px;" />
+                        </bk-form-item>
+                        <bk-form-item :label="$t('ignorePath')">
+                            <bk-button @click="addPath('ignoresPath')">{{ $t("addPath") }}</bk-button>
+                        </bk-form-item>
+                        <bk-form-item
+                            v-for="(item, index) in repoBaseInfo.ignoresPath"
+                            :rules="rules.ignoresPath"
+                            :property="'ignoresPath.' + index + '.value'"
+                            :key="index"
+                            style="width: fit-content;"
+                            class="mt10">
+                            <bk-input v-model="item.value" :placeholder="$t('pleaseInput') + $t('space') + $t('verificationRules')" style="width: 180px;">
+                            </bk-input>
+                            <Icon class="hover-btn" size="24" name="icon-delete" @click.native.stop="repoBaseInfo.ignoresPath.splice(index, 1)" style="position: absolute; right: -30px; top: 4px;" />
+                        </bk-form-item>
                     </template>
                     <bk-form-item :label="$t('accessPermission')">
                         <card-radio-group
@@ -256,8 +274,10 @@
                         }
                     },
                     // 虚拟仓库的选中的存储库列表
-                    virtualStoreList: []
+                    virtualStoreList: [],
                     // deploymentRepo: '' // 虚拟仓库中选择存储的本地仓库
+                    includesPath: [],
+                    ignoresPath: []
                 },
                 // 是否展示tab标签页，因为代理设置和清理设置需要根据详情页接口返回的数据判断是否显示，解决异步导致的tab顺序错误的问题
                 showTabPanel: false,
@@ -310,7 +330,44 @@
                     { label: this.$t('openPublicLabel'), value: 'public', tip: this.$t('openPublicTip') }
                 ]
             },
+            includesPathDesc () {
+                return {
+                    allowHtml: true,
+                    content: '1',
+                    html: `<p>${this.$t('includesPathDesc1')}</p>
+                        <p>${this.$t('includesPathDesc2')}</p>
+                        <p>${this.$t('includesPathDesc3')}</p>
+                        <p>${this.$t('includesPathDesc4')}</p>
+                        ${this.repoType === 'maven'
+                        ? `<p>${this.$t('includesPathDesc5')}</p>
+                           <p>${this.$t('includesPathDesc6')}</p>`
+                    : ''}`
+                }
+            },
             rules () {
+                const pathRule = [
+                    {
+                        required: true,
+                        message: this.$t('cantSaveEmptyString'),
+                        trigger: 'blur'
+                    }
+                ]
+                const includesPathRule = [
+                    ...pathRule,
+                    {
+                        validator: this.checkSamePath('includesPath'),
+                        message: this.$t('cantPassSamePath'),
+                        trigger: 'blur'
+                    }
+                ]
+                const ignoresPathRule = [
+                    ...pathRule,
+                    {
+                        validator: this.checkSamePath('ignoresPath'),
+                        message: this.$t('cantPassSamePath'),
+                        trigger: 'blur'
+                    }
+                ]
                 const filenameRule = [
                     {
                         required: true,
@@ -392,6 +449,8 @@
                             trigger: 'change'
                         }
                     ],
+                    ignoresPath: ignoresPathRule,
+                    includesPath: includesPathRule,
                     'mobile.filename': filenameRule,
                     'mobile.metadata': metadataRule,
                     'web.filename': filenameRule,
@@ -417,15 +476,6 @@
                 },
                 immediate: true
             },
-            // deploymentRepoCheckList: {
-            //     handler (val) {
-            //         // 当选中的存储库中没有本地仓库或者当前选中的上传目标仓库不在被选中的存储库中时需要将当前选中的上传目标仓库重置为空
-            //         if (!val.length || !(val.map((item) => item.name).includes(this.repoBaseInfo.deploymentRepo))) {
-            //             this.repoBaseInfo.deploymentRepo = ''
-            //         }
-            //     }
-            // }
-            // 当网络代理关闭时需要将判断端口输入框的输入是否符合规范的错误提示是否出现重置为 false，否则会导致再次打开出现错误提示
             'repoBaseInfo.network.switcher' (val) {
                 !val && (this.errorProxyPortInfo = false)
             }
@@ -436,6 +486,9 @@
         },
         methods: {
             ...mapActions(['getRepoInfo', 'updateRepoInfo', 'getDomain', 'testRemoteUrl']),
+            addPath (key) {
+                this.repoBaseInfo[key].push({ value: '' })
+            },
             // 打开选择存储库弹窗
             toCheckedStore () {
                 this.$refs.checkTargetStoreRef && (this.$refs.checkTargetStoreRef.show = true)
@@ -450,6 +503,14 @@
             // 选中的存储库弹窗确认事件
             onCheckedTargetStore (list) {
                 this.repoBaseInfo.virtualStoreList = list
+            },
+            checkSamePath (key) {
+                return (val) => {
+                    const num = this.repoBaseInfo[key].filter(item => {
+                        return item.value === val
+                    }).length
+                    return !(num > 1)
+                }
             },
             checkRemoteUrl (val) {
                 const reg = /^https?:\/\/(([a-zA-Z0-9_-])+(\.)?)*(:\d+)?(\/((\.)?(\?)?=?&?[a-zA-Z0-9_-](\?)?)*)*$/
@@ -599,7 +660,8 @@
 
                     const { interceptors } = res.configuration.settings
                     if (interceptors instanceof Array) {
-                        interceptors.forEach(i => {
+                        const filterInterceptors = this.handleInterceptors(interceptors)
+                        filterInterceptors.forEach(i => {
                             this.repoBaseInfo[i.type.toLowerCase()] = {
                                 enable: true,
                                 ...i.rules
@@ -611,6 +673,37 @@
                     // 不论接口返回数据是否成功，都需要显示tab标签页
                     this.showTabPanel = true
                 })
+            },
+            handleInterceptors (arr) {
+                let filterInterceptors = []
+                const patternInterceptors = arr.filter(item => {
+                    return item.type === 'PATH_PATTERN'
+                })
+                filterInterceptors = arr.filter(item => {
+                    return item.type !== 'PATH_PATTERN'
+                })
+                try {
+                    // 确保patternInterceptors存在且有内容
+                    if (patternInterceptors?.length) {
+                        const { includePathPatterns = [], excludePathPatterns = [] } = patternInterceptors[0].rules
+                        this.repoBaseInfo.includesPath.splice(0, this.repoBaseInfo.includesPath.length)
+                        this.repoBaseInfo.ignoresPath.splice(0, this.repoBaseInfo.ignoresPath.length)
+                        includePathPatterns.forEach(item => {
+                            this.repoBaseInfo.includesPath.push({
+                                value: item
+                            })
+                        })
+                        excludePathPatterns.forEach(item => {
+                            this.repoBaseInfo.ignoresPath.push({
+                                value: item
+                            })
+                        })
+                    }
+                } catch (error) {
+                    console.error(error)
+                }
+               
+                return filterInterceptors
             },
             async saveBaseInfo () {
                 if (this.repoBaseInfo.network.switcher && this.errorProxyPortInfo) return
@@ -624,6 +717,20 @@
                             rules: { filename, metadata }
                         })
                     })
+                }
+                const patternsObj = {
+                    type: 'PATH_PATTERN',
+                    rules: {
+                        includePathPatterns: this.repoBaseInfo.includesPath.map(item => {
+                            return item.value
+                        }),
+                        excludePathPatterns: this.repoBaseInfo.ignoresPath.map(item => {
+                            return item.value
+                        })
+                    }
+                }
+                if (patternsObj.rules.includePathPatterns.length || patternsObj.rules.excludePathPatterns.length) {
+                    interceptors.push(patternsObj)
                 }
                 const body = {
                     public: this.repoBaseInfo.public,

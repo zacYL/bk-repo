@@ -1006,6 +1006,7 @@
     "noProjectInfo":"您没有参与任何项目，请联系管理员为您关联项目",
     "noGenericDataUploadInfo":"你没有任何仓库的文件上传权限，无法{option}文件。",
     "moveOrCopy":"移动或复制",
+<<<<<<< HEAD
     "clickInfo":"点击",
     "accessTokenPlaceholder":"请输入访问令牌，生成指引",
     "guideInputInfo":"请输入以下{option}相关信息，生成对应{option}命令：",
@@ -1024,4 +1025,18 @@
     "trivyScannerDescription":"镜像扫描器可以检查镜像中存在的开源漏洞以及使用的开源许可证",
     "scanCodeScanner":"依赖许可扫描器",
     "scanCodeScannerDescription":"依赖许可扫描器可以检查制品中各依赖中使用的开源许可证"
+=======
+    "verificationRules": "校验规则",
+    "addPath": "添加路径",
+    "includePath": "包含路径",
+    "ignorePath": "忽略路径",
+    "cantPassSamePath": "不允许传入相同的路径",
+    "cantSaveEmptyString": "不允许保存空字符串",
+    "includesPathDesc1": "支持ant路径匹配规则",
+    "includesPathDesc2": "包含路径：仅允许拉取符合路径规则的制品",
+    "includesPathDesc3": "忽略路径：禁止拉取符合路径规则的制品",
+    "includesPathDesc4": "若配置了两个路径，则需要满足包含路径之内，忽略路径之外",
+    "includesPathDesc5": "若要设置只拉取SNAPSHOT包，则可在包含路径设置**/*SNAPSHOT/**",
+    "includesPathDesc6": "若要设置不允许拉取SNAPSHOT包，则也可在忽略路径设置 该路径"
+>>>>>>> 89c889693 (feat: p230_1803 依赖源仓库包含忽略模式路径配置 前端实现)
 }

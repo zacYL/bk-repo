@@ -1,5 +1,6 @@
 package com.tencent.bkrepo.common.artifact.interceptor.impl
 
+import com.tencent.bkrepo.common.artifact.exception.PathPatternNotMatchException
 import com.tencent.bkrepo.common.artifact.interceptor.DownloadInterceptor
 import org.springframework.util.AntPathMatcher
 
@@ -21,6 +22,10 @@ class PathPatternInterceptor(rules: Map<String, Any>)
         val (includes, excludes) = rule
         return (includes.isEmpty() || includes.any { antPathMatcher.match(it.removePrefix("/"), path) }) &&
                 (excludes.isEmpty() || excludes.none { antPathMatcher.match(it.removePrefix("/"), path) })
+    }
+
+    override fun constructException(projectId: String, artifact: String): Exception {
+        return PathPatternNotMatchException(artifact)
     }
 
     companion object {

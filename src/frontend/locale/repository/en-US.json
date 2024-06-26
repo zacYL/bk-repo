@@ -1006,7 +1006,6 @@
     "noProjectInfo":"You are not involved in any projects, please contact the administrator to associate projects for you",
     "noGenericDataUploadInfo":"You do not have file upload permissions to any repository and cannot {option} files.",
     "moveOrCopy":"move or copy",
-<<<<<<< HEAD
     "clickInfo":"Click",
     "accessTokenPlaceholder":"Please enter access token to generate guides",
     "guideInputInfo":"Please enter the following {option} related information to generate the corresponding {option} command: ",
@@ -1024,8 +1023,7 @@
     "trivyScanner":"trivy-scanner",
     "trivyScannerDescription":"trivy-scanner can check the open source vulnerabilities present in the image and the open source license used",
     "scanCodeScanner":"scancode-toolkit",
-    "scanCodeScannerDescription":"scancode-toolkit scanner can check the open source license used in each dependency in the artifact"
-=======
+    "scanCodeScannerDescription":"scancode-toolkit scanner can check the open source license used in each dependency in the artifact",
     "verificationRules": "verification rule",
     "addPath": "Add Path",
     "includePath": "Include Path",
@@ -1038,5 +1036,4 @@
     "IncludesPathDesc4": "If two paths are configured, they need to be within the included path and ignore those outside the path.",
     "IncludesPathDesc5": "To set to only pull SNAPSHOT packets, you can set * */* SNAPSHOT/* * in the included path.",
     "IncludesPathDesc6": "If you want to set that SNAPSHOT packets are not allowed to be pulled, you can also set the path to ignore it."
->>>>>>> 89c889693 (feat: p230_1803 依赖源仓库包含忽略模式路径配置 前端实现)
 }

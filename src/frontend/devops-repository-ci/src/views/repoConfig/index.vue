@@ -75,9 +75,10 @@
                         </bk-form-item>
                     </template>
                     <template v-if="!['generic', 'composer'].includes(repoType)">
-                        <bk-form-item :desc="includesPathDesc" desc-type="icon"
+                        <bk-form-item
                             :label="$t('includePath')">
-                            <bk-button @click="addPath('includesPath')">{{ $t("addPath") }}</bk-button>
+                            <bk-button @click="addPath('includesPath')" class="mr5">{{ $t("addPath") }}</bk-button>
+                            <bk-icon-plus type="plus-hint" v-bk-tooltips="includesPathDesc" />
                         </bk-form-item>
                         <bk-form-item
                             v-for="(item, index) in repoBaseInfo.includesPath"

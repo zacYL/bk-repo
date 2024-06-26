@@ -62,7 +62,6 @@
             </template>
             <template v-if="!['generic', 'composer'].includes(repoType)">
                 <bk-form-item
-                    :desc="includesPathDesc" desc-type="icon"
                     :label="$t('includePath')"
                 >
                     <div style="display: flex;flex-direction: column;">
@@ -204,20 +203,6 @@
             ...mapState(['domain']),
             projectId () {
                 return this.$route.params.projectId
-            },
-            includesPathDesc () {
-                return {
-                    allowHtml: true,
-                    content: '1',
-                    html: `<p>${this.$t('includesPathDesc1')}</p>
-                        <p>${this.$t('includesPathDesc2')}</p>
-                        <p>${this.$t('includesPathDesc3')}</p>
-                        <p>${this.$t('includesPathDesc4')}</p>
-                        ${this.repoType === 'maven'
-                        ? `<p>${this.$t('includesPathDesc5')}</p>
-                           <p>${this.$t('includesPathDesc6')}</p>`
-                    : ''}`
-                }
             },
             repoType () {
                 return this.detailInfo?.type?.toLowerCase() || ''

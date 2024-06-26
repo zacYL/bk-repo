@@ -351,6 +351,11 @@
                         required: true,
                         message: this.$t('cantSaveEmptyString'),
                         trigger: 'blur'
+                    },
+                    {
+                        validator: this.checkEmptyPath,
+                        message: this.$t('cantSaveEmptyString'),
+                        trigger: 'blur'
                     }
                 ]
                 const includesPathRule = [
@@ -504,6 +509,10 @@
             // 选中的存储库弹窗确认事件
             onCheckedTargetStore (list) {
                 this.repoBaseInfo.virtualStoreList = list
+            },
+            checkEmptyPath (val) {
+                const v = val || ''
+                return !!(v.trim())
             },
             checkSamePath (key) {
                 return (val) => {

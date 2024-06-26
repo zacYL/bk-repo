@@ -329,6 +329,11 @@
                         required: true,
                         message: this.$t('cantSaveEmptyString'),
                         trigger: 'blur'
+                    },
+                    {
+                        validator: this.checkEmptyPath,
+                        message: this.$t('cantSaveEmptyString'),
+                        trigger: 'blur'
                     }
                 ]
                 const includesPathRule = [
@@ -562,6 +567,10 @@
             changeRepoType () {
                 if (this.repoBaseInfo.type === 'docker') this.repoBaseInfo.name = ''
                 this.$refs.repoBaseInfo.clearError()
+            },
+            checkEmptyPath (val) {
+                const v = val || ''
+                return !!(v.trim())
             },
             checkSamePath (key) {
                 return (val) => {

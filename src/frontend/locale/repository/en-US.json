@@ -1023,5 +1023,17 @@
     "trivyScanner":"trivy-scanner",
     "trivyScannerDescription":"trivy-scanner can check the open source vulnerabilities present in the image and the open source license used",
     "scanCodeScanner":"scancode-toolkit",
-    "scanCodeScannerDescription":"scancode-toolkit scanner can check the open source license used in each dependency in the artifact"
+    "scanCodeScannerDescription":"scancode-toolkit scanner can check the open source license used in each dependency in the artifact",
+    "verificationRules": "verification rule",
+    "addPath": "Add Path",
+    "includePath": "Include Path",
+    "ignorePath": "Ignore Path",
+    "cantPassSamePath": "Not allowed to pass in the same path",
+    "cantSaveEmptyString": "Not allowed to save empty strings",
+    "IncludesPathDesc1": "Supports ant path matching rules",
+    "IncludesPathDesc2": "Include path: Only allow pulling products that comply with path rules",
+    "IncludesPathDesc3": "Ignoring path: Prohibiting pulling products that comply with path rules",
+    "IncludesPathDesc4": "If two paths are configured, they need to be within the included path and ignore those outside the path.",
+    "IncludesPathDesc5": "To set to only pull SNAPSHOT packets, you can set * */* SNAPSHOT/* * in the included path.",
+    "IncludesPathDesc6": "If you want to set that SNAPSHOT packets are not allowed to be pulled, you can also set the path to ignore it."
 }

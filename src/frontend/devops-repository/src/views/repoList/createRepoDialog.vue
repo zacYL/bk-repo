@@ -96,6 +96,39 @@
                     <div class="form-tip">{{$t('addPackagePrompt')}}</div>
                 </bk-form-item> -->
             </template>
+            <template v-if="!['generic', 'composer'].includes(repoBaseInfo.type)">
+                <bk-form-item
+                    :label="$t('includePath')">
+                    <bk-button @click="addPath('includesPath')" class="mr5">{{ $t("addPath") }}</bk-button>
+                    <bk-icon-plus type="plus-hint" v-if="showIncludesPathDesc" v-bk-tooltips="includesPathDesc" />
+                </bk-form-item>
+                <bk-form-item
+                    v-for="(item, index) in repoBaseInfo.includesPath"
+                    required
+                    :rules="rules.includesPath"
+                    :property="'includesPath.' + index + '.value'"
+                    :key="index"
+                    style="width: fit-content;"
+                    class="mt10">
+                    <bk-input v-model="item.value" :placeholder="$t('pleaseInput') + $t('space') + $t('verificationRules')" style="width: 180px;">
+                    </bk-input>
+                    <Icon class="hover-btn" size="24" name="icon-delete" @click.native.stop="repoBaseInfo.includesPath.splice(index, 1)" style="position: absolute; right: -30px; top: 4px;" />
+                </bk-form-item>
+                <bk-form-item :label="$t('ignorePath')">
+                    <bk-button @click="addPath('ignoresPath')">{{ $t("addPath") }}</bk-button>
+                </bk-form-item>
+                <bk-form-item
+                    v-for="(item, index) in repoBaseInfo.ignoresPath"
+                    :rules="rules.ignoresPath"
+                    :property="'ignoresPath.' + index + '.value'"
+                    :key="index"
+                    style="width: fit-content;"
+                    class="mt10">
+                    <bk-input v-model="item.value" :placeholder="$t('pleaseInput') + $t('space') + $t('verificationRules')" style="width: 180px;">
+                    </bk-input>
+                    <Icon class="hover-btn" size="24" name="icon-delete" @click.native.stop="repoBaseInfo.ignoresPath.splice(index, 1)" style="position: absolute; right: -30px; top: 4px;" />
+                </bk-form-item>
+            </template>
             <bk-form-item :label="$t('accessPermission')">
                 <card-radio-group
                     v-model="available"
@@ -242,8 +275,10 @@
                 }
             },
             // 虚拟仓库的选中的存储库列表
-            virtualStoreList: []
+            virtualStoreList: [],
             // deploymentRepo: '' // 虚拟仓库中选择存储的本地仓库
+            includesPath: [],
+            ignoresPath: []
         }
     }
 
@@ -265,7 +300,8 @@
                 // 因为创建仓库时拆分为本地/远程/虚拟，远程仓库和虚拟仓库没有generic选项，所以需要重新组合
                 filterRepoEnum: repoEnum,
                 disableTestUrl: false, // 远程仓库中测试链接按钮是否被禁用
-                errorProxyPortInfo: false
+                errorProxyPortInfo: false,
+                showIncludesPathDesc: true
             }
         },
         computed: {
@@ -273,7 +309,44 @@
             projectId () {
                 return this.$route.params.projectId
             },
+            includesPathDesc () {
+                return {
+                    allowHtml: true,
+                    content: '1',
+                    html: `<p>${this.$t('includesPathDesc1')}</p>
+                        <p>${this.$t('includesPathDesc2')}</p>
+                        <p>${this.$t('includesPathDesc3')}</p>
+                        <p>${this.$t('includesPathDesc4')}</p>
+                        ${this.repoBaseInfo.type === 'maven'
+                        ? `<p>${this.$t('includesPathDesc5')}</p>
+                           <p>${this.$t('includesPathDesc6')}</p>`
+                    : ''}`
+                }
+            },
             rules () {
+                const pathRule = [
+                    {
+                        required: true,
+                        message: this.$t('cantSaveEmptyString'),
+                        trigger: 'blur'
+                    }
+                ]
+                const includesPathRule = [
+                    ...pathRule,
+                    {
+                        validator: this.checkSamePath('includesPath'),
+                        message: this.$t('cantPassSamePath'),
+                        trigger: 'blur'
+                    }
+                ]
+                const ignoresPathRule = [
+                    ...pathRule,
+                    {
+                        validator: this.checkSamePath('ignoresPath'),
+                        message: this.$t('cantPassSamePath'),
+                        trigger: 'blur'
+                    }
+                ]
                 const filenameRule = [
                     {
                         required: true,
@@ -379,6 +452,8 @@
                             trigger: 'change'
                         }
                     ],
+                    ignoresPath: ignoresPathRule,
+                    includesPath: includesPathRule,
                     'mobile.filename': filenameRule,
                     'mobile.metadata': metadataRule,
                     'web.filename': filenameRule,
@@ -442,6 +517,10 @@
                 // 当选择的仓库类型改变时需要将选择的存储库重置为空
                 handler () {
                     this.repoBaseInfo.virtualStoreList = []
+                    this.showIncludesPathDesc = false
+                    this.$nextTick(() => {
+                        this.showIncludesPathDesc = true
+                    })
                 }
             },
             // 当网络代理关闭时需要将判断端口输入框的输入是否符合规范的错误提示是否出现重置为 false，否则会导致再次打开出现错误提示
@@ -455,6 +534,9 @@
         },
         methods: {
             ...mapActions(['createRepo', 'checkRepoName', 'testRemoteUrl', 'getDomain']),
+            addPath (key) {
+                this.repoBaseInfo[key].push({ value: '' })
+            },
             // 打开选择存储库弹窗
             toCheckedStore () {
                 this.$refs.checkTargetStoreRef && (this.$refs.checkTargetStoreRef.show = true)
@@ -480,6 +562,14 @@
             changeRepoType () {
                 if (this.repoBaseInfo.type === 'docker') this.repoBaseInfo.name = ''
                 this.$refs.repoBaseInfo.clearError()
+            },
+            checkSamePath (key) {
+                return (val) => {
+                    const num = this.repoBaseInfo[key].filter(item => {
+                        return item.value === val
+                    }).length
+                    return !(num > 1)
+                }
             },
             checkRemoteUrl (val) {
                 const reg = /^https?:\/\/(([a-zA-Z0-9_-])+(\.)?)*(:\d+)?(\/((\.)?(\?)?=?&?[a-zA-Z0-9_-](\?)?)*)*$/
@@ -577,6 +667,20 @@
                             rules: { filename, metadata }
                         })
                     })
+                }
+                const patternsObj = {
+                    type: 'PATH_PATTERN',
+                    rules: {
+                        includePathPatterns: this.repoBaseInfo.includesPath.map(item => {
+                            return item.value
+                        }),
+                        excludePathPatterns: this.repoBaseInfo.ignoresPath.map(item => {
+                            return item.value
+                        })
+                    }
+                }
+                if (patternsObj.rules.includePathPatterns.length || patternsObj.rules.excludePathPatterns.length) {
+                    interceptors.push(patternsObj)
                 }
                 this.loading = true
                 const body = {

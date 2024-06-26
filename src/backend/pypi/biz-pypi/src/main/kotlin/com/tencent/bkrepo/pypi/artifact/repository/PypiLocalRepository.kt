@@ -284,11 +284,7 @@ class PypiLocalRepository(
      */
     override fun query(context: ArtifactQueryContext): Any? {
         return when (val artifactInfo = context.artifactInfo) {
-            is PypiSimpleArtifactInfo -> {
-                context.getFullPathInterceptors()
-                    .forEach { it.intercept(context.projectId, artifactInfo.getArtifactFullPath()) }
-                getSimpleHtml(artifactInfo)
-            }
+            is PypiSimpleArtifactInfo -> getSimpleHtml(artifactInfo)
             else -> getVersionDetail(context)
         }
     }

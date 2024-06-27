@@ -37,6 +37,7 @@ const val VERSION = "version"
 
 const val ARTIFACT_LIST = "artifactList"
 const val REQUIRES_PYTHON = "requires_python"
+const val HTML_EXTENSION = ".html"
 
 const val LINE_BREAK = "<br />"
 const val PSEUDO_MATCH_REGEX = ":matchesOwn(%s)"
@@ -64,8 +65,7 @@ const val SIMPLE_PAGE_CONTENT =
   </body>
 </html>"""
 
-const val REMOTE_HTML_CACHE_FULL_PATH = "remoteHtml.html"
+const val PACKAGE_INDEX_CACHE_NAME_HTML = "PACKAGE_INDEX$HTML_EXTENSION"
 const val PYPI_SIMPLE_CACHE_PATH = "/.pypi"
-const val FLUSH_CACHE_EXPIRE = 60 * 24
 const val XML_RPC_URI = "RPC2"
 const val XML_RPC_OPERATION_OR = "or"

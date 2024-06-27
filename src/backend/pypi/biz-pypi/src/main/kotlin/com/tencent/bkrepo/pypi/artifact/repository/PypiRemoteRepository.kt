@@ -33,8 +33,12 @@ package com.tencent.bkrepo.pypi.artifact.repository
 
 import com.tencent.bkrepo.common.api.constant.HttpHeaders.USER_AGENT
 import com.tencent.bkrepo.common.api.constant.ensurePrefix
+import com.tencent.bkrepo.common.api.constant.ensureSuffix
 import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
+import com.tencent.bkrepo.common.api.exception.NotFoundException
+import com.tencent.bkrepo.common.api.util.StreamUtils.readText
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
+import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
@@ -42,7 +46,6 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContex
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactRemoveContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchContext
 import com.tencent.bkrepo.common.artifact.repository.remote.RemoteRepository
-import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.stream.Range
@@ -51,17 +54,14 @@ import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.service.info.InfoService
 import com.tencent.bkrepo.common.service.util.HeaderUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
-import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.common.storage.monitor.Throughput
 import com.tencent.bkrepo.pypi.artifact.PypiSimpleArtifactInfo
 import com.tencent.bkrepo.pypi.artifact.xml.XmlConvertUtil
 import com.tencent.bkrepo.pypi.constants.ARTIFACT_LIST
 import com.tencent.bkrepo.pypi.constants.FIELD_NAME
 import com.tencent.bkrepo.pypi.constants.FIELD_VERSION
-import com.tencent.bkrepo.pypi.constants.FLUSH_CACHE_EXPIRE
 import com.tencent.bkrepo.pypi.constants.METADATA
 import com.tencent.bkrepo.pypi.constants.NAME
-import com.tencent.bkrepo.pypi.constants.REMOTE_HTML_CACHE_FULL_PATH
 import com.tencent.bkrepo.pypi.constants.VERSION
 import com.tencent.bkrepo.pypi.constants.XML_RPC_URI
 import com.tencent.bkrepo.pypi.exception.PypiRemoteSearchException
@@ -86,12 +86,6 @@ import okhttp3.Response
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
-import java.io.BufferedReader
-import java.io.ByteArrayInputStream
-import java.io.InputStreamReader
-import java.time.Duration
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 @Component
 class PypiRemoteRepository(
@@ -99,17 +93,15 @@ class PypiRemoteRepository(
 ) : RemoteRepository() {
 
     override fun createRemoteDownloadUrl(context: ArtifactContext): String {
+        val url = context.getRemoteConfiguration().url
         return when (context) {
             is ArtifactDownloadContext -> {
-                val remoteConfiguration = context.getRemoteConfiguration()
                 val artifactUri = context.artifactInfo.getArtifactFullPath()
-                remoteConfiguration.url.trimEnd('/').removeSuffix("/simple") + "/packages" + artifactUri
+                url.trimEnd('/').removeSuffix("/simple") + "/packages$artifactUri"
             }
             is ArtifactQueryContext -> {
-                val remoteConfiguration = context.getRemoteConfiguration()
-                val urlSuffix = context.artifactInfo.getArtifactName()
-                remoteConfiguration.url.removeSuffix("/").removeSuffix("simple").removeSuffix("/") +
-                        "/simple/$urlSuffix"
+                url.trimEnd('/').ensureSuffix("/simple") +
+                        "/${context.artifactInfo.getArtifactName()}".ensureSuffix("/")
             }
             else -> throw MethodNotAllowedException()
         }
@@ -120,14 +112,15 @@ class PypiRemoteRepository(
             is PypiSimpleArtifactInfo -> {
                 context.getFullPathInterceptors()
                     .forEach { it.intercept(context.projectId, artifactInfo.getArtifactFullPath()) }
-                if (artifactInfo.packageName == null) getCacheHtml(context) ?: remoteQuery(context)
-                else remoteQuery(context)
+                val artifactResponse = getCacheArtifactResource(context) ?: remoteQuery(context)
+                    ?: throw NotFoundException(ArtifactMessageCode.ARTIFACT_DATA_NOT_FOUND)
+                artifactResponse.getSingleStream().readText()
             }
             else -> getVersionDetail(context)
         }
     }
 
-    private fun remoteQuery(context: ArtifactQueryContext): Any? {
+    private fun remoteQuery(context: ArtifactQueryContext): ArtifactResource? {
         return try {
             val response = doRequest(context)
             if (checkQueryResponse(response)) {
@@ -139,14 +132,14 @@ class PypiRemoteRepository(
         }
     }
 
-    override fun onQueryResponse(context: ArtifactQueryContext, response: Response): Any? {
-        val body = response.body()!!
-        return body.string().also {
-            if ((context.artifactInfo as? PypiSimpleArtifactInfo)?.packageName == null) {
-                storeCacheHtml(context, it)
-            }
-            body.close()
-        }
+    override fun onQueryResponse(context: ArtifactQueryContext, response: Response): ArtifactResource? {
+        val artifactFile = createTempFile(response.body()!!)
+        val size = artifactFile.getSize()
+        val artifactStream = artifactFile.getInputStream().artifactStream(Range.full(size))
+        val node = cacheArtifactFile(context, artifactFile)
+        val responseName = context.artifactInfo.getResponseName()
+        val srcRepo = RepositoryIdentify(context.projectId, context.repoName)
+        return ArtifactResource(artifactStream, responseName, srcRepo, node, ArtifactChannel.PROXY)
     }
 
     override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
@@ -182,45 +175,6 @@ class PypiRemoteRepository(
     }
 
     /**
-     * 获取项目-仓库缓存对应的html文件
-     */
-    fun getCacheHtml(context: ArtifactQueryContext): String? {
-        val repositoryDetail = context.repositoryDetail
-        val projectId = repositoryDetail.projectId
-        val repoName = repositoryDetail.name
-        val fullPath = REMOTE_HTML_CACHE_FULL_PATH
-        val node = nodeClient.getNodeDetail(projectId, repoName, fullPath).data?.takeIf { !it.folder } ?: return null
-        val date = LocalDateTime.parse(node.lastModifiedDate, DateTimeFormatter.ISO_DATE_TIME)
-        val duration = Duration.between(date, LocalDateTime.now()).toMinutes()
-        if (duration > FLUSH_CACHE_EXPIRE) {
-            return null
-        }
-        val stringBuilder = StringBuilder()
-        storageService.load(node.sha256!!, Range.full(node.size), context.storageCredentials)?.use {
-                artifactInputStream ->
-            var line: String?
-            val br = BufferedReader(InputStreamReader(artifactInputStream))
-            while (br.readLine().also { line = it } != null) {
-                stringBuilder.append(line)
-            }
-        }
-        return stringBuilder.toString()
-    }
-
-    fun storeCacheHtml(context: ArtifactQueryContext, htmlContent: String) {
-        val artifactFile = ArtifactFileFactory.build(ByteArrayInputStream(htmlContent.toByteArray()))
-        val nodeCreateRequest = getNodeCreateRequest(context, artifactFile)
-        store(nodeCreateRequest, artifactFile, context.storageCredentials)
-    }
-
-    /**
-     * 需要单独给fullpath赋值。
-     */
-    fun getNodeCreateRequest(context: ArtifactQueryContext, artifactFile: ArtifactFile): NodeCreateRequest {
-        return super.buildCacheNodeCreateRequest(context, artifactFile)
-    }
-
-    /**
      */
     override fun search(context: ArtifactSearchContext): List<Any> {
         val xmlString = context.request.reader.readXml()
@@ -235,13 +189,6 @@ class PypiRemoteRepository(
             ?: throw PypiRemoteSearchException("search from ${remoteConfiguration.url} error")
         val methodResponse = XmlConvertUtil.xml2MethodResponse(htmlContent)
         return methodResponse.params.paramList[0].value.array?.data?.valueList ?: mutableListOf()
-    }
-
-    fun store(node: NodeCreateRequest, artifactFile: ArtifactFile, storageCredentials: StorageCredentials?) {
-        storageManager.storeArtifactFile(node, artifactFile, storageCredentials)
-        artifactFile.delete()
-        with(node) { logger.info("Success to store [$projectId/$repoName/$fullPath]") }
-        logger.info("Success to insert $node")
     }
 
     override fun onDownloadResponse(context: ArtifactDownloadContext, response: Response): ArtifactResource {

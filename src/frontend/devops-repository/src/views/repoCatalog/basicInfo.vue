@@ -60,7 +60,7 @@
                     </div>
                 </bk-form-item>
             </template>
-            <template v-if="!['generic', 'composer'].includes(repoType)">
+            <template v-if="!['generic', 'composer', 'conan'].includes(repoType)">
                 <bk-form-item
                     :label="$t('includePath')"
                 >

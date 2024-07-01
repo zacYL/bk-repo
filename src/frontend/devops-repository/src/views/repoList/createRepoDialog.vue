@@ -96,7 +96,7 @@
                     <div class="form-tip">{{$t('addPackagePrompt')}}</div>
                 </bk-form-item> -->
             </template>
-            <template v-if="!['generic', 'composer'].includes(repoBaseInfo.type)">
+            <template v-if="!['generic', 'composer', 'conan'].includes(repoBaseInfo.type)">
                 <bk-form-item
                     :label="$t('includePath')">
                     <bk-button @click="addPath('includesPath')" class="mr5">{{ $t("addPath") }}</bk-button>

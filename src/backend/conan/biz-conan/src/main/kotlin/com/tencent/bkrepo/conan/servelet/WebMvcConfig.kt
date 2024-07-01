@@ -25,34 +25,24 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.conan.service
+package com.tencent.bkrepo.conan.servelet
 
-import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
-import com.tencent.bkrepo.conan.pojo.ConanInfo
-import com.tencent.bkrepo.conan.pojo.ConanSearchResult
-import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
+import com.tencent.bkrepo.conan.constant.CONAN_URL_PATTERN
+import com.tencent.bkrepo.conan.service.ConanRemoteService
+import com.tencent.bkrepo.conan.service.ConanVirtualService
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Configuration
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
-/**
- * conan 搜索功能接口
- */
-interface ConanSearchService {
-    /**
-     * Get all the info about any recipe
-     * [pattern] like hello/\*
-     */
-    fun search(artifactInfo: ArtifactInfo, pattern: String?, ignoreCase: Boolean): ConanSearchResult
-
-    /**
-     * Get all the info about any package
-     * [pattern] like hello/\*
-     * result: {package_ID: {name: "OpenCV",
-     *  version: "2.14",
-     *  settings: {os: Windows}}}
-     */
-    fun searchPackages(pattern: String?, conanArtifactInfo: ConanArtifactInfo): Map<String, ConanInfo>
-
-    /**
-     * @return {pkg_id1:{},pkg_id2:{}}
-     */
-    fun searchRevision(conanArtifactInfo: ConanArtifactInfo): Map<String,ConanInfo>
+@Configuration
+class WebMvcConfig(
+    @Autowired(required = false) private val conanRemoteService: ConanRemoteService,
+    @Autowired(required = false) private val conanVirtualService: ConanVirtualService,
+) : WebMvcConfigurer {
+    override fun addInterceptors(registry: InterceptorRegistry) {
+        val interceptPaths = listOf(CONAN_URL_PATTERN)
+        registry.addInterceptor(ProxyInterceptor(conanRemoteService, conanVirtualService))
+            .addPathPatterns(interceptPaths)
+    }
 }

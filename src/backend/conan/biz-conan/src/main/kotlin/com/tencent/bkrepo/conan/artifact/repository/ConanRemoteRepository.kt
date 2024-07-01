@@ -27,8 +27,112 @@
 
 package com.tencent.bkrepo.conan.artifact.repository
 
+import com.tencent.bkrepo.common.api.util.JsonUtils
+import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.remote.RemoteRepository
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
+import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
+import com.tencent.bkrepo.common.service.util.SpringContextUtils
+import com.tencent.bkrepo.conan.constant.CONAN_URL_V2
+import com.tencent.bkrepo.conan.constant.ConanMessageCode
+import com.tencent.bkrepo.conan.constant.IGNORECASE
+import com.tencent.bkrepo.conan.constant.PATTERN
+import com.tencent.bkrepo.conan.constant.REQUEST_TYPE
+import com.tencent.bkrepo.conan.exception.ConanException
+import com.tencent.bkrepo.conan.exception.ConanFileNotFoundException
+import com.tencent.bkrepo.conan.listener.event.ConanArtifactUploadEvent
+import com.tencent.bkrepo.conan.pojo.ConanSearchResult
+import com.tencent.bkrepo.conan.pojo.RevisionInfo
+import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
+import com.tencent.bkrepo.conan.pojo.enums.ConanRequestType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.apache.commons.lang3.ObjectUtils
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
 @Component
-class ConanRemoteRepository : RemoteRepository()
+class ConanRemoteRepository : RemoteRepository() {
+
+    override fun query(context: ArtifactQueryContext): Any {
+        context.getAttribute<ConanRequestType>(REQUEST_TYPE)?.let { requestType ->
+            return when (requestType) {
+                ConanRequestType.SEARCH -> searchResult(context)
+                ConanRequestType.RECIPE_LATEST -> getRecipeLatestRevision(context)
+                else -> throw ConanException("request path is not valid")
+            }
+        } ?: throw ConanException("request path is not valid")
+    }
+
+    private fun searchResult(context: ArtifactQueryContext): ConanSearchResult {
+        return doRequest(context, ConanSearchResult::class.java, createRemoteSearchUrl(context, "/search"))
+            ?: ConanSearchResult()
+    }
+
+    private fun getRecipeLatestRevision(context: ArtifactQueryContext): RevisionInfo {
+        return doRequest(context, RevisionInfo::class.java, createRemoteDownloadUrl(context))
+            ?: throw ConanFileNotFoundException(ConanMessageCode.CONAN_FILE_NOT_FOUND)
+    }
+
+    private fun <T> doRequest(context: ArtifactContext, clazz: Class<T>, path: String): T? {
+        val response = getHttpClient(context.repositoryDetail.configuration as RemoteConfiguration)
+            .newCall(Request.Builder().url(path).build())
+            .execute()
+        return if (response.isSuccessful) {
+            JsonUtils.objectMapper.readValue(
+                response.body()?.byteStream(), clazz
+            )
+        } else {
+            logger.error("Conan remote repository query failed, $path")
+            null
+        }
+    }
+
+    override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
+        val conanArtifactInfo = context.artifactInfo as ConanArtifactInfo
+        val exist = with(conanArtifactInfo) {
+            nodeClient.checkExist(projectId, repoName, getArtifactFullPath()).data
+        }
+        val artifactResource = super.onDownload(context)
+        if (true != exist) {
+            SpringContextUtils.publishEvent(ConanArtifactUploadEvent(context.userId, conanArtifactInfo))
+        }
+        return artifactResource
+    }
+
+    fun createRemoteSearchUrl(context: ArtifactContext, path: String): String {
+        val configuration = context.getRemoteConfiguration()
+        val queryString = context.request.queryString ?: queryString(context)
+        return UrlFormatter.format(configuration.url, "$CONAN_URL_V2$path", queryString)
+    }
+
+    private fun queryString(context: ArtifactContext): String {
+        val pattern = context.getAttribute<String>(PATTERN)
+        val ignoreCase = context.getAttribute<Boolean>(IGNORECASE) ?: true
+        return if (ObjectUtils.isNotEmpty(pattern)) {
+            "q=$pattern&ignorecase=$ignoreCase"
+        } else {
+            ""
+        }
+    }
+
+    override fun createRemoteDownloadUrl(context: ArtifactContext): String {
+        val configuration = context.getRemoteConfiguration()
+        val requestPath = context.request.requestURL.toString()
+        val startIndex = requestPath.indexOf(CONAN_URL_V2)
+        val trimmedPath = requestPath.substring(startIndex)
+        val queryString = context.request.queryString
+        return UrlFormatter.format(configuration.url, trimmedPath, queryString)
+    }
+
+    fun getHttpClient(configuration: RemoteConfiguration, addInterceptor: Boolean = true): OkHttpClient {
+        return super.createHttpClient(configuration, addInterceptor)
+    }
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(this::class.java)
+    }
+}

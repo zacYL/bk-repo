@@ -27,32 +27,14 @@
 
 package com.tencent.bkrepo.conan.service
 
-import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
-import com.tencent.bkrepo.conan.pojo.ConanInfo
-import com.tencent.bkrepo.conan.pojo.ConanSearchResult
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
+import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
 
 /**
- * conan 搜索功能接口
+ * conan 虚拟仓库接口
  */
-interface ConanSearchService {
-    /**
-     * Get all the info about any recipe
-     * [pattern] like hello/\*
-     */
-    fun search(artifactInfo: ArtifactInfo, pattern: String?, ignoreCase: Boolean): ConanSearchResult
+interface ConanVirtualService {
+    fun getOrSetCacheRepo(repositoryDetail: RepositoryDetail, requestURI: String, artifactInfo: ConanArtifactInfo): String
 
-    /**
-     * Get all the info about any package
-     * [pattern] like hello/\*
-     * result: {package_ID: {name: "OpenCV",
-     *  version: "2.14",
-     *  settings: {os: Windows}}}
-     */
-    fun searchPackages(pattern: String?, conanArtifactInfo: ConanArtifactInfo): Map<String, ConanInfo>
-
-    /**
-     * @return {pkg_id1:{},pkg_id2:{}}
-     */
-    fun searchRevision(conanArtifactInfo: ConanArtifactInfo): Map<String,ConanInfo>
+    fun getCacheRepo(repositoryDetail: RepositoryDetail, requestURI: String): String?
 }

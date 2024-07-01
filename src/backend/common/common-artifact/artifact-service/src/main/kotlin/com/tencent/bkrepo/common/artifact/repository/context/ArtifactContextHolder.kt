@@ -317,6 +317,10 @@ class ArtifactContextHolder(
             }
         }
 
+        fun setRepoDetail(repoDetail:RepositoryDetail) {
+            HttpContextHolder.getRequestOrNull()?.setAttribute(REPO_KEY, repoDetail)
+        }
+
         fun getNodeDetail(artifactInfo: ArtifactInfo): NodeDetail? {
             val request = HttpContextHolder.getRequestOrNull() ?: return null
             val finalProjectId = artifactInfo.projectId

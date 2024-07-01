@@ -27,32 +27,83 @@
 
 package com.tencent.bkrepo.conan.artifact.repository
 
+import com.tencent.bkrepo.common.api.util.readJsonString
+import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
-import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
+import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.service.util.SpringContextUtils
+import com.tencent.bkrepo.conan.constant.CONAN_INFOS
+import com.tencent.bkrepo.conan.constant.ConanMessageCode
 import com.tencent.bkrepo.conan.constant.EXPORT_SOURCES_TGZ_NAME
+import com.tencent.bkrepo.conan.constant.IGNORECASE
 import com.tencent.bkrepo.conan.constant.NAME
-import com.tencent.bkrepo.conan.constant.PACKAGE_TGZ_NAME
+import com.tencent.bkrepo.conan.constant.PATTERN
+import com.tencent.bkrepo.conan.constant.REQUEST_TYPE
 import com.tencent.bkrepo.conan.constant.VERSION
-import com.tencent.bkrepo.conan.listener.event.ConanPackageUploadEvent
-import com.tencent.bkrepo.conan.listener.event.ConanRecipeUploadEvent
+import com.tencent.bkrepo.conan.exception.ConanException
+import com.tencent.bkrepo.conan.exception.ConanFileNotFoundException
+import com.tencent.bkrepo.conan.exception.ConanParameterInvalidException
+import com.tencent.bkrepo.conan.listener.event.ConanArtifactUploadEvent
+import com.tencent.bkrepo.conan.pojo.ConanFileReference
+import com.tencent.bkrepo.conan.pojo.ConanSearchResult
+import com.tencent.bkrepo.conan.pojo.RevisionInfo
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
-import com.tencent.bkrepo.conan.utils.ObjectBuildUtil
+import com.tencent.bkrepo.conan.pojo.enums.ConanRequestType
+import com.tencent.bkrepo.conan.service.impl.CommonService
+import com.tencent.bkrepo.conan.utils.ConanArtifactInfoUtil
 import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.buildDownloadResponse
-import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.buildPackageUpdateRequest
-import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.buildPackageVersionCreateRequest
+import com.tencent.bkrepo.conan.utils.PathUtils
 import com.tencent.bkrepo.conan.utils.PathUtils.generateFullPath
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
 @Component
 class ConanLocalRepository : LocalRepository() {
+
+    @Autowired
+    lateinit var commonService: CommonService
+
+    override fun query(context: ArtifactQueryContext): Any {
+        context.getAttribute<ConanRequestType>(REQUEST_TYPE)?.let { requestType ->
+            return when (requestType) {
+                ConanRequestType.SEARCH -> searchResult(context)
+                ConanRequestType.RECIPE_LATEST -> getRecipeLatestRevision(context.artifactInfo as ConanArtifactInfo)
+                else -> throw ConanException("request path is not valid")
+            }
+        } ?: throw ConanException("request path is not valid")
+    }
+
+    private fun searchResult(context: ArtifactQueryContext): ConanSearchResult {
+        val pattern = context.getAttribute<String>(PATTERN)
+        val ignoreCase = context.getAttribute<Boolean>(IGNORECASE) ?: false
+        val recipes = searchRecipes(context.projectId, context.repoName)
+        val list = if (pattern.isNullOrEmpty()) {
+            recipes
+        } else {
+            matchPattern(pattern, recipes, ignoreCase)
+        }
+        return ConanSearchResult(list)
+    }
+
+    fun getRecipeLatestRevision(conanArtifactInfo: ConanArtifactInfo): RevisionInfo {
+        with(conanArtifactInfo) {
+            val conanFileReference = ConanArtifactInfoUtil.convertToConanFileReference(conanArtifactInfo)
+            commonService.checkNodeExist(projectId, repoName, PathUtils.buildReference(conanFileReference))
+            return commonService.getLastRevision(projectId, repoName, conanFileReference)
+                ?: throw ConanFileNotFoundException(
+                    ConanMessageCode.CONAN_FILE_NOT_FOUND, PathUtils.buildReference(conanFileReference), getRepoIdentify()
+                )
+        }
+    }
 
     override fun buildNodeCreateRequest(context: ArtifactUploadContext): NodeCreateRequest {
         with(context) {
@@ -66,8 +117,18 @@ class ConanLocalRepository : LocalRepository() {
                 size = getArtifactFile().getSize(),
                 sha256 = getArtifactSha256(),
                 md5 = getArtifactMd5(),
-                operator = userId
+                operator = userId,
+                overwrite = true
             )
+        }
+    }
+
+    override fun onUploadBefore(context: ArtifactUploadContext) {
+        super.onUploadBefore(context)
+        with(context.artifactInfo as ConanArtifactInfo) {
+            packageClient
+                .findVersionByName(projectId, repoName, PackageKeys.ofConan(name), version).data
+                ?.apply { uploadIntercept(context, this) }
         }
     }
 
@@ -76,50 +137,15 @@ class ConanLocalRepository : LocalRepository() {
      */
     override fun onUploadSuccess(context: ArtifactUploadContext) {
         super.onUploadSuccess(context)
-        val fullPath = generateFullPath(context.artifactInfo as ConanArtifactInfo)
-        if (fullPath.endsWith(EXPORT_SOURCES_TGZ_NAME)) {
-            // TODO package version size 如何计算
-            createVersion(
-                artifactInfo = context.artifactInfo as ConanArtifactInfo,
-                userId = context.userId,
-                size = 0
-            )
-            publishEvent(
-                ConanRecipeUploadEvent(
-                    ObjectBuildUtil.buildConanRecipeUpload(context.artifactInfo as ConanArtifactInfo, context.userId)
-                )
-            )
-        }
-        if (fullPath.endsWith(PACKAGE_TGZ_NAME)) {
-            publishEvent(
-                ConanPackageUploadEvent(
-                    ObjectBuildUtil.buildConanPackageUpload(context.artifactInfo as ConanArtifactInfo, context.userId)
-                )
-            )
-        }
+        SpringContextUtils.publishEvent(ConanArtifactUploadEvent(context.userId, context.artifactInfo as ConanArtifactInfo))
     }
 
-    /**
-     * 创建包版本
-     */
-    fun createVersion(
-        userId: String,
-        artifactInfo: ConanArtifactInfo,
-        size: Long,
-        sourceType: ArtifactChannel? = null
-    ) {
-        with(artifactInfo) {
-            val packageVersionCreateRequest = buildPackageVersionCreateRequest(
-                userId = userId,
-                artifactInfo = artifactInfo,
-                size = size,
-                sourceType = sourceType
-            )
-            // TODO 元数据中要加入对应username与channel，可能存在同一制品版本存在不同username与channel
-            val packageUpdateRequest = buildPackageUpdateRequest(artifactInfo)
-            packageClient.createVersion(packageVersionCreateRequest).apply {
-                logger.info("user: [$userId] create package version [$packageVersionCreateRequest] success!")
-            }
+    override fun onDownloadBefore(context: ArtifactDownloadContext) {
+        super.onDownloadBefore(context)
+        with(context.artifactInfo as ConanArtifactInfo) {
+            packageClient
+                .findVersionByName(projectId, repoName, PackageKeys.ofConan(name), version).data
+                ?.apply { downloadIntercept(context, this) }
         }
     }
 
@@ -151,10 +177,63 @@ class ConanLocalRepository : LocalRepository() {
 
     override fun buildDownloadRecord(
         context: ArtifactDownloadContext,
-        artifactResource: ArtifactResource
+        artifactResource: ArtifactResource,
     ): PackageDownloadRecord? {
-        // TODO 需要判断只有下载包时才统计次数
-        return null
+        with(context) {
+            val conanArtifactInfo = artifactInfo as ConanArtifactInfo
+            val fullPath = generateFullPath(conanArtifactInfo)
+            return if (fullPath.endsWith(EXPORT_SOURCES_TGZ_NAME)) {
+                PackageDownloadRecord(
+                    projectId = projectId,
+                    repoName = repoName,
+                    packageKey = PackageKeys.ofConan(conanArtifactInfo.name),
+                    packageVersion = conanArtifactInfo.version,
+                    userId = userId
+                )
+            } else null
+        }
+    }
+
+    private fun searchRecipes(projectId: String, repoName: String): List<String> {
+        val result = mutableListOf<String>()
+        packageClient.listAllPackageNames(projectId, repoName).data.orEmpty().forEach {
+            packageClient.listAllVersion(projectId, repoName, it).data.orEmpty().forEach { pv ->
+                val conanInfo = pv.packageMetadata.first { m ->
+                    m.key == CONAN_INFOS
+                }.value.toJsonString().readJsonString<List<ConanFileReference>>()
+                result.add(PathUtils.buildConanFileName(conanInfo.first()))
+            }
+        }
+        return result.sorted()
+    }
+
+    // 检查模式是否有效
+    fun isValidPattern(pattern: String): Boolean {
+        // 定义匹配包名称和版本号的正则表达式模式
+        val nameVersionPattern = "[a-zA-Z0-9_*]+(/[a-zA-Z0-9.*_]+)?"
+        // 定义匹配用户和通道的正则表达式模式
+        val userChannelPattern = "[a-zA-Z0-9_*]+"
+
+        val fullPattern = "^$nameVersionPattern(@$userChannelPattern/$userChannelPattern)?$".toRegex()
+        return pattern.matches(fullPattern)
+    }
+
+    fun matchPattern(pattern: String, pList: List<String>, ignoreCase: Boolean): List<String> {
+        if (isValidPattern(pattern).not()) throw ConanParameterInvalidException("PATTERN")
+
+        // 将通配符模式转换为正则表达式
+        val regexPattern = pattern.replace("*", ".*")
+        val regex = if (ignoreCase) {
+            regexPattern.toRegex(RegexOption.IGNORE_CASE)
+        } else {
+            regexPattern.toRegex()
+        }
+
+        return if (pattern.contains("*")) {
+            pList.filter { it.matches(regex) }
+        } else {
+            pList.filter { regex.containsMatchIn(it) }
+        }
     }
 
     companion object {

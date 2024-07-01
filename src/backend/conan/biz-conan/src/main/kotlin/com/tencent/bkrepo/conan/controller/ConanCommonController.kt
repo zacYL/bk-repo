@@ -75,17 +75,6 @@ class ConanCommonController(
         return buildResponse(jwtToken, TEXT_PLAIN)
     }
 
-    @GetMapping(AUTHENTICATE_V1, AUTHENTICATE_V2)
-    fun authenticate(
-        @PathVariable projectId: String,
-        @PathVariable repoName: String
-    ): ResponseEntity<Any> {
-        val authorizationHeader = HttpContextHolder.getRequest().getHeader(HttpHeaders.AUTHORIZATION)
-            ?: throw AuthenticationException("Wrong user or password")
-        val jwtToken = conanCommonService.authenticate(authorizationHeader)
-        return buildResponse(jwtToken, TEXT_PLAIN)
-    }
-
     companion object {
         val capabilities = listOf("complex_search", "checksum_deploy", "revisions", "matrix_params")
         fun buildResponse(body: Any, contentType: String = APPLICATION_JSON_WITHOUT_CHARSET): ResponseEntity<Any> {

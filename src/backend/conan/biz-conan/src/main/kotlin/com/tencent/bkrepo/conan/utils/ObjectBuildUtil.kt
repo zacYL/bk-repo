@@ -37,11 +37,12 @@ import com.tencent.bkrepo.conan.constant.CONAN_INFOS
 import com.tencent.bkrepo.conan.constant.DEFAULT_REVISION_V1
 import com.tencent.bkrepo.conan.constant.X_CONAN_SERVER_CAPABILITIES
 import com.tencent.bkrepo.conan.controller.ConanCommonController.Companion.capabilities
-import com.tencent.bkrepo.conan.pojo.ConanPackageDeleteRequest
 import com.tencent.bkrepo.conan.pojo.ConanPackageUploadRequest
 import com.tencent.bkrepo.conan.pojo.ConanRecipeDeleteRequest
 import com.tencent.bkrepo.conan.pojo.ConanRecipeUploadRequest
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
+import com.tencent.bkrepo.conan.pojo.user.BasicInfo
+import com.tencent.bkrepo.conan.utils.ConanArtifactInfoUtil.buildConanFileReference
 import com.tencent.bkrepo.conan.utils.ConanArtifactInfoUtil.convertToConanFileReference
 import com.tencent.bkrepo.conan.utils.ConanArtifactInfoUtil.convertToPackageReference
 import com.tencent.bkrepo.conan.utils.PathUtils.buildPackageReference
@@ -50,11 +51,13 @@ import com.tencent.bkrepo.conan.utils.PathUtils.getPackageRevisionsFile
 import com.tencent.bkrepo.conan.utils.PathUtils.getRecipeRevisionsFile
 import com.tencent.bkrepo.conan.utils.TimeFormatUtil.convertToUtcTime
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
-import com.tencent.bkrepo.repository.pojo.packages.request.PackageUpdateRequest
+import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionUpdateRequest
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import javax.servlet.http.HttpServletResponse
 
 object ObjectBuildUtil {
@@ -69,7 +72,7 @@ object ObjectBuildUtil {
                 projectId = projectId,
                 repoName = repoName,
                 packageName = name,
-                packageKey = PackageKeys.ofConan(name, userName),
+                packageKey = PackageKeys.ofConan(name),
                 packageType = PackageType.CONAN,
                 versionName = version,
                 size = size,
@@ -86,21 +89,14 @@ object ObjectBuildUtil {
     fun buildPackageVersionUpdateRequest(
         artifactInfo: ConanArtifactInfo,
         size: Long,
-        sourceType: ArtifactChannel? = null,
-        packageMetadata: List<MetadataModel>? = null
     ): PackageVersionUpdateRequest {
         with(artifactInfo) {
             return PackageVersionUpdateRequest(
                 projectId = projectId,
                 repoName = repoName,
-                packageKey = PackageKeys.ofConan(name, userName),
+                packageKey = PackageKeys.ofConan(name),
                 versionName = version,
-                size = size,
-                manifestPath = null,
-                artifactPath = getArtifactFullPath(),
-                stageTag = null,
-                tags = null,
-                packageMetadata = addPackageMetadata(artifactInfo, sourceType, packageMetadata)
+                size = size
             )
         }
     }
@@ -115,26 +111,26 @@ object ObjectBuildUtil {
             result.add(MetadataModel(SOURCE_TYPE, sourceType))
         }
         val oldConInfo = packageMetadata?.first { it.key == CONAN_INFOS }?.value
-        val conanInfo = oldConInfo?.apply { mutableListOf(this).add(convertToConanFileReference(artifactInfo)) }
-            ?: listOf(convertToConanFileReference(artifactInfo))
+        val conanInfo = oldConInfo?.apply { mutableListOf(this).add(convertToConanFileReference(artifactInfo, artifactInfo.revision, artifactInfo.pRevision)) }
+            ?: listOf(convertToConanFileReference(artifactInfo, artifactInfo.revision, artifactInfo.pRevision))
         result.add(MetadataModel(CONAN_INFOS, conanInfo))
         return result
     }
 
-    fun buildPackageUpdateRequest(
-        artifactInfo: ConanArtifactInfo
-    ): PackageUpdateRequest {
-        with(artifactInfo) {
-            return PackageUpdateRequest(
-                projectId = projectId,
-                repoName = repoName,
-                name = name,
-                packageKey = PackageKeys.ofConan(name, userName),
-                versionTag = null,
-                extension = mapOf("appVersion" to version)
-            )
-        }
-    }
+//    fun buildPackageUpdateRequest(
+//        artifactInfo: ConanArtifactInfo
+//    ): PackageUpdateRequest {
+//        with(artifactInfo) {
+//            return PackageUpdateRequest(
+//                projectId = projectId,
+//                repoName = repoName,
+//                name = name,
+//                packageKey = PackageKeys.ofConan(name),
+//                versionTag = null,
+//                extension = mapOf("appVersion" to version)
+//            )
+//        }
+//    }
 
     fun buildDownloadResponse(
         response: HttpServletResponse = HttpContextHolder.getResponse(),
@@ -183,7 +179,8 @@ object ObjectBuildUtil {
                 revision = revision ?: DEFAULT_REVISION_V1,
                 dateStr = convertToUtcTime(LocalDateTime.now()),
                 pRefStr = pRefStr,
-                pRevPath = pRevPath
+                pRevPath = pRevPath,
+                pRevision = pRevision ?: DEFAULT_REVISION_V1,
             )
         }
     }
@@ -193,9 +190,9 @@ object ObjectBuildUtil {
         userId: String
     ): ConanRecipeDeleteRequest {
         with(artifactInfo) {
-            val packageReference = convertToPackageReference(this)
-            val revPath = getRecipeRevisionsFile(packageReference.conRef)
-            val refStr = buildReference(packageReference.conRef)
+            val conRef = this.buildConanFileReference()
+            val revPath = getRecipeRevisionsFile(conRef)
+            val refStr = buildReference(conRef)
             return ConanRecipeDeleteRequest(
                 projectId = projectId,
                 repoName = repoName,
@@ -207,25 +204,45 @@ object ObjectBuildUtil {
         }
     }
 
-    fun buildConanPackageDeleteRequest(
-        artifactInfo: ConanArtifactInfo,
-        userId: String
-    ): ConanPackageDeleteRequest {
-        with(artifactInfo) {
-            val packageReference = convertToPackageReference(this)
-            val revPath = getRecipeRevisionsFile(packageReference.conRef)
-            val refStr = buildReference(packageReference.conRef)
-            val pRevPath = getPackageRevisionsFile(packageReference)
-            val pRefStr = buildPackageReference(packageReference)
-            return ConanPackageDeleteRequest(
+//    fun buildConanPackageDeleteRequest(
+//        artifactInfo: ConanArtifactInfo,
+//        userId: String
+//    ): ConanPackageDeleteRequest {
+//        with(artifactInfo) {
+//            val packageReference = convertToPackageReference(this)
+//            val revPath = getRecipeRevisionsFile(packageReference.conRef)
+//            val refStr = buildReference(packageReference.conRef)
+//            val pRevPath = getPackageRevisionsFile(packageReference)
+//            val pRefStr = buildPackageReference(packageReference)
+//            return ConanPackageDeleteRequest(
+//                projectId = projectId,
+//                repoName = repoName,
+//                revPath = revPath,
+//                refStr = refStr,
+//                operator = userId,
+//                revision = revision ?: DEFAULT_REVISION_V1,
+//                pRefStr = pRefStr,
+//                pRevPath = pRevPath
+//            )
+//        }
+//    }
+
+    fun buildBasicInfo(nodeDetail: NodeDetail, packageVersion: PackageVersion): BasicInfo {
+        with(nodeDetail) {
+            return BasicInfo(
+                version = packageVersion.name,
+                fullPath = fullPath,
+                size = size,
+                sha256 = sha256.orEmpty(),
+                md5 = md5.orEmpty(),
+                stageTag = packageVersion.stageTag,
                 projectId = projectId,
                 repoName = repoName,
-                revPath = revPath,
-                refStr = refStr,
-                operator = userId,
-                revision = revision ?: DEFAULT_REVISION_V1,
-                pRefStr = pRefStr,
-                pRevPath = pRevPath
+                downloadCount = packageVersion.downloads,
+                createdBy = createdBy,
+                createdDate = packageVersion.createdDate.format(DateTimeFormatter.ISO_DATE_TIME),
+                lastModifiedBy = lastModifiedBy,
+                lastModifiedDate = packageVersion.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME)
             )
         }
     }

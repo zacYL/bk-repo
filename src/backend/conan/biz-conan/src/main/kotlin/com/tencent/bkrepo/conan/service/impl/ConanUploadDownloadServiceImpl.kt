@@ -31,9 +31,21 @@ import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
+import com.tencent.bkrepo.common.service.util.SpringContextUtils
+import com.tencent.bkrepo.conan.constant.CONAN_MANIFEST
+import com.tencent.bkrepo.conan.constant.EXPORT_SOURCES_TGZ_NAME
+import com.tencent.bkrepo.conan.constant.PACKAGES_FOLDER
+import com.tencent.bkrepo.conan.constant.PACKAGE_TGZ_NAME
+import com.tencent.bkrepo.conan.listener.event.ConanPackageUploadEvent
+import com.tencent.bkrepo.conan.listener.event.ConanRecipeUploadEvent
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
 import com.tencent.bkrepo.conan.service.ConanUploadDownloadService
+import com.tencent.bkrepo.conan.utils.ObjectBuildUtil
 import com.tencent.bkrepo.conan.utils.PathUtils.generateFullPath
+import com.tencent.bkrepo.repository.api.NodeClient
+import com.tencent.bkrepo.repository.api.PackageClient
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
@@ -41,7 +53,10 @@ import org.springframework.stereotype.Service
  * conan文件上传 下载
  */
 @Service
-class ConanUploadDownloadServiceImpl : ConanUploadDownloadService {
+class ConanUploadDownloadServiceImpl(
+    private val packageClient: PackageClient,
+    private val nodeClient: NodeClient
+) : ConanUploadDownloadService {
 
     @Autowired
     lateinit var commonService: CommonService
@@ -60,5 +75,79 @@ class ConanUploadDownloadServiceImpl : ConanUploadDownloadService {
     override fun downloadFile(conanArtifactInfo: ConanArtifactInfo) {
         val context = ArtifactDownloadContext()
         ArtifactContextHolder.getRepository().download(context)
+    }
+
+    /**
+     * client上传文件的顺序为：
+     * export目录下    conan_sources.tgz->conanfile.py->conanmanifest.txt
+     * package目录下   ->conan_package.tgz->conaninfo.txt->conanmanifest.txt
+     */
+    override fun handleConanArtifactUpload(userId: String, artifactInfo: ConanArtifactInfo) {
+        val fullPath = generateFullPath(artifactInfo)
+        if (fullPath.endsWith(EXPORT_SOURCES_TGZ_NAME)) {
+            createVersion(
+                artifactInfo = artifactInfo,
+                userId = userId,
+                size = 0
+            )
+            SpringContextUtils.publishEvent(
+                ConanRecipeUploadEvent(
+                    ObjectBuildUtil.buildConanRecipeUpload(artifactInfo, userId)
+                )
+            )
+        }
+        if (fullPath.endsWith(PACKAGE_TGZ_NAME)) {
+            SpringContextUtils.publishEvent(
+                ConanPackageUploadEvent(
+                    ObjectBuildUtil.buildConanPackageUpload(artifactInfo, userId)
+                )
+            )
+        }
+        if (fullPath.contains(PACKAGES_FOLDER) && fullPath.endsWith(CONAN_MANIFEST)) {
+            // 最后一个文件上传成功，更新package version size
+            updateVersionSize(artifactInfo, fullPath)
+        }
+    }
+
+    /**
+     * 更新包版本大小
+     */
+    private fun updateVersionSize(artifactInfo: ConanArtifactInfo, fullPath: String) {
+        //size为二进制包大小，即package目录下文件大小的和
+        val pkgRevisionPath = fullPath.substringBeforeLast("/")
+        with(artifactInfo) {
+            nodeClient.computeSize(projectId,repoName, pkgRevisionPath).data?.let { size ->
+                packageClient.updateVersion(
+                    ObjectBuildUtil.buildPackageVersionUpdateRequest(
+                        artifactInfo = artifactInfo,
+                        size = size.size
+                    )
+                )
+            }
+        }
+    }
+
+    /**
+     * 创建包版本
+     */
+    private fun createVersion(
+        userId: String,
+        artifactInfo: ConanArtifactInfo,
+        size: Long,
+        sourceType: ArtifactChannel? = null,
+    ) {
+        val packageVersionCreateRequest = ObjectBuildUtil.buildPackageVersionCreateRequest(
+            userId = userId,
+            artifactInfo = artifactInfo,
+            size = size,
+            sourceType = sourceType
+        )
+        packageClient.createVersion(packageVersionCreateRequest).apply {
+            logger.info("user: [$userId] create package version [$packageVersionCreateRequest] success!")
+        }
+    }
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(this::class.java)
     }
 }

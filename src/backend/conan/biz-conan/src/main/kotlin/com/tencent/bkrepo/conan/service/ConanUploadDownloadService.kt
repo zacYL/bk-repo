@@ -41,4 +41,6 @@ interface ConanUploadDownloadService {
      * 下载文件
      */
     fun downloadFile(conanArtifactInfo: ConanArtifactInfo)
+
+    fun handleConanArtifactUpload(userId: String, artifactInfo: ConanArtifactInfo)
 }

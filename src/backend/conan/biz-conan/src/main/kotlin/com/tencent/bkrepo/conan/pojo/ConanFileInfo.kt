@@ -25,34 +25,17 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.conan.service
+package com.tencent.bkrepo.conan.pojo
 
-import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
-import com.tencent.bkrepo.conan.pojo.ConanInfo
-import com.tencent.bkrepo.conan.pojo.ConanSearchResult
-import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
+class ConanFileInfo(
+    val packageReference: String,
+    val revisions: List<RevisionInfo>,
+)
+//    {
+//        "packageReference" : "momo/1.0@_/_#8c5f92f5f7ece0897d5ee9970a904d50:39f48664f195e0847f59889d8a4cdfc6bca84bf1",
+//        "revisions" : [ {
+//        "revision" : "8196836dfef44daa011db6cafa5b2825",
+//        "time" : "2024-04-26T09:33:20.178+0000"
+//    } ]
+//    }
 
-/**
- * conan 搜索功能接口
- */
-interface ConanSearchService {
-    /**
-     * Get all the info about any recipe
-     * [pattern] like hello/\*
-     */
-    fun search(artifactInfo: ArtifactInfo, pattern: String?, ignoreCase: Boolean): ConanSearchResult
-
-    /**
-     * Get all the info about any package
-     * [pattern] like hello/\*
-     * result: {package_ID: {name: "OpenCV",
-     *  version: "2.14",
-     *  settings: {os: Windows}}}
-     */
-    fun searchPackages(pattern: String?, conanArtifactInfo: ConanArtifactInfo): Map<String, ConanInfo>
-
-    /**
-     * @return {pkg_id1:{},pkg_id2:{}}
-     */
-    fun searchRevision(conanArtifactInfo: ConanArtifactInfo): Map<String,ConanInfo>
-}

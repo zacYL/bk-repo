@@ -1,7 +1,7 @@
 <template>
     <bk-tab class="common-version-container" type="unborder-card" :active.sync="tabName" @tab-change="tabChange" v-bkloading="{ isLoading }">
         <template #setting>
-            <bk-button v-if="!metadataMap.forbidStatus && repoType !== 'docker'"
+            <bk-button v-if="!metadataMap.forbidStatus && repoType !== 'docker' && repoType !== 'conan'"
                 outline class="mr10" @click="$emit('download')">{{$t('download')}}</bk-button>
             <operation-list class="mr20"
                 :list="operationBtns">

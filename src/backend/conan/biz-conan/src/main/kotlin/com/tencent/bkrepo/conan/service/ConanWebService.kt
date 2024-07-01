@@ -27,32 +27,22 @@
 
 package com.tencent.bkrepo.conan.service
 
-import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
-import com.tencent.bkrepo.conan.pojo.ConanInfo
-import com.tencent.bkrepo.conan.pojo.ConanSearchResult
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
+import com.tencent.bkrepo.conan.pojo.user.PackageVersionInfo
 
-/**
- * conan 搜索功能接口
- */
-interface ConanSearchService {
+interface ConanWebService {
     /**
-     * Get all the info about any recipe
-     * [pattern] like hello/\*
+     * 查询版本信息
      */
-    fun search(artifactInfo: ArtifactInfo, pattern: String?, ignoreCase: Boolean): ConanSearchResult
+    fun artifactDetail(conanArtifactInfo: ConanArtifactInfo, packageKey: String, version: String): PackageVersionInfo?
 
     /**
-     * Get all the info about any package
-     * [pattern] like hello/\*
-     * result: {package_ID: {name: "OpenCV",
-     *  version: "2.14",
-     *  settings: {os: Windows}}}
+     * 删除包
      */
-    fun searchPackages(pattern: String?, conanArtifactInfo: ConanArtifactInfo): Map<String, ConanInfo>
+    fun deletePackage(artifactInfo: ConanArtifactInfo, packageKey: String)
 
     /**
-     * @return {pkg_id1:{},pkg_id2:{}}
+     * 删除包版本
      */
-    fun searchRevision(conanArtifactInfo: ConanArtifactInfo): Map<String,ConanInfo>
+    fun deleteVersion(artifactInfo: ConanArtifactInfo, packageKey: String, version: String)
 }

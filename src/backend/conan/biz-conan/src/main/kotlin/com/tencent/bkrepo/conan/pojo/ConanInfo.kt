@@ -35,4 +35,5 @@ data class ConanInfo(
     val requires: List<String> = emptyList(),
     @JsonAlias("recipe_hash")
     val recipeHash: String? = null,
+    var content: String? = null,
 )

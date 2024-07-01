@@ -27,21 +27,22 @@
 
 package com.tencent.bkrepo.conan.service.impl
 
-import com.tencent.bkrepo.common.api.util.readJsonString
-import com.tencent.bkrepo.common.api.util.toJsonString
+import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
-import com.tencent.bkrepo.conan.constant.CONAN_INFOS
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.conan.constant.ConanMessageCode
+import com.tencent.bkrepo.conan.constant.IGNORECASE
+import com.tencent.bkrepo.conan.constant.PATTERN
+import com.tencent.bkrepo.conan.constant.REQUEST_TYPE
 import com.tencent.bkrepo.conan.exception.ConanSearchNotFoundException
-import com.tencent.bkrepo.conan.pojo.ConanFileReference
 import com.tencent.bkrepo.conan.pojo.ConanInfo
 import com.tencent.bkrepo.conan.pojo.ConanSearchResult
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
+import com.tencent.bkrepo.conan.pojo.enums.ConanRequestType
 import com.tencent.bkrepo.conan.service.ConanSearchService
 import com.tencent.bkrepo.conan.utils.ConanArtifactInfoUtil.convertToConanFileReference
-import com.tencent.bkrepo.conan.utils.PathUtils.buildConanFileName
 import com.tencent.bkrepo.conan.utils.PathUtils.buildReference
-import com.tencent.bkrepo.repository.api.PackageClient
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
@@ -49,29 +50,18 @@ import org.springframework.stereotype.Service
 class ConanSearchServiceImpl : ConanSearchService {
 
     @Autowired
-    lateinit var packageClient: PackageClient
-    @Autowired
     lateinit var commonService: CommonService
 
     override fun search(
-        projectId: String,
-        repoName: String,
+        artifactInfo: ArtifactInfo,
         pattern: String?,
         ignoreCase: Boolean
     ): ConanSearchResult {
-        // TODO 需要对pattern进行校验， -q parameter only allowed with a valid recipe reference, not with a pattern
-        val recipes = searchRecipes(projectId, repoName)
-        val list = if (pattern.isNullOrEmpty()) {
-            recipes
-        } else {
-            val regex = if (ignoreCase) {
-                Regex(pattern, RegexOption.IGNORE_CASE)
-            } else {
-                Regex(pattern)
-            }
-            recipes.filter { regex.containsMatchIn(it) }
-        }
-        return ConanSearchResult(list)
+        val context = ArtifactQueryContext(artifact = artifactInfo)
+        pattern?.let { context.putAttribute(PATTERN, it) }
+        context.putAttribute(IGNORECASE, ignoreCase)
+        context.putAttribute(REQUEST_TYPE, ConanRequestType.SEARCH)
+        return ArtifactContextHolder.getRepository().query(context) as ConanSearchResult
     }
 
     override fun searchPackages(pattern: String?, conanArtifactInfo: ConanArtifactInfo): Map<String, ConanInfo> {
@@ -91,16 +81,14 @@ class ConanSearchServiceImpl : ConanSearchService {
         }
     }
 
-    fun searchRecipes(projectId: String, repoName: String): List<String> {
-        val result = mutableListOf<String>()
-        packageClient.listAllPackageNames(projectId, repoName).data.orEmpty().forEach {
-            packageClient.listAllVersion(projectId, repoName, it).data.orEmpty().forEach { pv ->
-                val conanInfo = pv.packageMetadata.first { m ->
-                    m.key == CONAN_INFOS
-                }.value.toJsonString().readJsonString<List<ConanFileReference>>()
-                result.add(buildConanFileName(conanInfo.first()))
+    override fun searchRevision(conanArtifactInfo: ConanArtifactInfo): Map<String,ConanInfo> {
+        with(conanArtifactInfo) {
+            val conanFileReference = convertToConanFileReference(conanArtifactInfo)
+            return try {
+                commonService.getPackageConanInfoByRevision(projectId, repoName,conanArtifactInfo.revision!!, conanFileReference)
+            } catch (ignore: NodeNotFoundException) {
+                emptyMap()
             }
         }
-        return result.sorted()
     }
 }

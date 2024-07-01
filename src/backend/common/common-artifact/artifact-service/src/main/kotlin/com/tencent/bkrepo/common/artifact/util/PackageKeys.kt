@@ -64,14 +64,10 @@ object PackageKeys {
 
     /**
      * 生成conan格式key
-     *
-     * 例子: conan://username:name
+     * 例子: conan://name
      */
-    fun ofConan(name: String, userName: String): String {
-        return StringBuilder(CONAN).append(SEPARATOR).append(userName)
-            .append(StringPool.COLON)
-            .append(name)
-            .toString()
+    fun ofConan(name: String): String {
+        return ofName(CONAN, name)
     }
 
     /**
@@ -205,8 +201,7 @@ object PackageKeys {
 
     /**
      * 解析conan格式的key
-     *
-     * 例子: conan://test  ->  test
+     * 例子: conan://test->test
      */
     fun resolveConan(conanKey: String): String {
         return resolveName(CONAN, conanKey)

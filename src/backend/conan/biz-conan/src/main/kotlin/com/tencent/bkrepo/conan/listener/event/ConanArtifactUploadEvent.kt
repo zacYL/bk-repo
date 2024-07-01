@@ -25,34 +25,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.conan.service
+package com.tencent.bkrepo.conan.listener.event
 
-import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
-import com.tencent.bkrepo.conan.pojo.ConanInfo
-import com.tencent.bkrepo.conan.pojo.ConanSearchResult
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
 
-/**
- * conan 搜索功能接口
- */
-interface ConanSearchService {
-    /**
-     * Get all the info about any recipe
-     * [pattern] like hello/\*
-     */
-    fun search(artifactInfo: ArtifactInfo, pattern: String?, ignoreCase: Boolean): ConanSearchResult
-
-    /**
-     * Get all the info about any package
-     * [pattern] like hello/\*
-     * result: {package_ID: {name: "OpenCV",
-     *  version: "2.14",
-     *  settings: {os: Windows}}}
-     */
-    fun searchPackages(pattern: String?, conanArtifactInfo: ConanArtifactInfo): Map<String, ConanInfo>
-
-    /**
-     * @return {pkg_id1:{},pkg_id2:{}}
-     */
-    fun searchRevision(conanArtifactInfo: ConanArtifactInfo): Map<String,ConanInfo>
-}
+data class ConanArtifactUploadEvent(val userId: String,val artifactInfo: ConanArtifactInfo)

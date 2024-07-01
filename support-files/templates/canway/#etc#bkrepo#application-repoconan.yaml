@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: ${service.name}
+    desc: Conan Service
+server:
+  port: __BK_REPO_CONAN_PORT__
+logging:
+  path: ${logging.path-common}/${service.name}
+service:
+  name: conan
+conan:
+  domain: ${cluster.self.url}/conan

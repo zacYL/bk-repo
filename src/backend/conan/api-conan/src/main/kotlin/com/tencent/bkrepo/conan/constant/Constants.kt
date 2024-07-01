@@ -47,6 +47,9 @@ const val CONAN_INFOS = "conanInfos"
 const val UPLOAD_URL_PREFIX = "files"
 
 const val CONANS_URL_TAG = "conans"
+const val CONAN_URL_V2 = "/v2/conans"
+const val CONAN_URL_PATTERN = "/**/conans/**"
+const val CONAN_V2 = "v2"
 
 // Files
 const val CONANFILE = "conanfile.py"
@@ -67,3 +70,9 @@ const val PACKAGES_FOLDER = "package"
 // type
 const val MD5 = "md5"
 const val URL = "url"
+
+//search
+const val PATTERN = "pattern"
+const val IGNORECASE = "ignorecase"
+const val USER_API_PREFIX = "/ext"
+const val REQUEST_TYPE = "requestType"

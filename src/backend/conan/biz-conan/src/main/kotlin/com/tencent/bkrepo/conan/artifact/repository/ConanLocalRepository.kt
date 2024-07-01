@@ -145,7 +145,7 @@ class ConanLocalRepository : LocalRepository() {
         with(context.artifactInfo as ConanArtifactInfo) {
             packageClient
                 .findVersionByName(projectId, repoName, PackageKeys.ofConan(name), version).data
-                ?.apply { downloadIntercept(context, this) }
+                ?.apply { downloadIntercept(context, null) }
         }
     }
 

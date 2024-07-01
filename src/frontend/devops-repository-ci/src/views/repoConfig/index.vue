@@ -74,7 +74,7 @@
                             </div>
                         </bk-form-item>
                     </template>
-                    <template v-if="!['generic', 'composer', 'conan'].includes(repoType)">
+                    <template v-if="!['generic', 'composer'].includes(repoType)">
                         <bk-form-item
                             :label="$t('includePath')">
                             <bk-button @click="addPath('includesPath')" class="mr5">{{ $t("addPath") }}</bk-button>

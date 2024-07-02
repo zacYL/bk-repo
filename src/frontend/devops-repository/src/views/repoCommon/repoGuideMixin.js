@@ -393,53 +393,15 @@ export default {
                 {
                     main: [
                         {
-                            subTitle: 'conanfile.txt',
-                            codeList: [
-                                '[requires]',
-                                `${this.repoName}/${this.versionLabel}`,
-                                '[generators]',
-                                'CMakeDeps',
-                                'CMakeToolchain',
-                                '[layout]',
-                                'cmake_layout'
-                            ]
-                        },
-                        {
-                            subTitle: this.$t('conanInfoTips'),
-                            codeList: [
-                                `conan install conanfile.txt --build=missing -r ${this.repoName}`
-                            ]
-                        },
-                        {
-                            subTitle: 'conanfile.py',
-                            codeList: [
-                                'from conan import ConanFile',
-                                'from conan.tools.cmake import cmake_layout',
-                                'class ExampleRecipe(ConanFile):',
-                                '       settings = "os", "compiler", "build_type", "arch"',
-                                '       generators = "CMakeDeps", "CMakeToolchain"',
-                                '       def requirements(self):',
-                                `              self.requires("${this.repoName}/${this.versionLabel}")`,
-                                '       def layout(self):',
-                                '              cmake_layout(self)'
-                            ]
-                        },
-                        {
-                            subTitle: this.$t('conanInfoTips'),
-                            codeList: [
-                                `$ conan install conanfile.py --build=missing -r ${this.repoName}`
-                            ]
-                        },
-                        {
                             subTitle: this.$t('pull'),
                             codeList: [
-                                `conan download ${this.repoName}/${this.versionLabel} -r ${location.origin}/${this.repoType}/${this.projectId}/${this.repoName}/`
+                                `conan download ${this.packageName}/${this.versionLabel} -r ${location.origin}/${this.repoType}/${this.projectId}/${this.repoName}/`
                             ]
                         },
                         {
                             subTitle: this.$t('push'),
                             codeList: [
-                                `conan upload ${this.repoName}/${this.versionLabel} -r ${location.origin}/${this.repoType}/${this.projectId}/${this.repoName}/`
+                                `conan upload ${this.packageName}/${this.versionLabel} -r ${location.origin}/${this.repoType}/${this.projectId}/${this.repoName}/`
                             ]
                         }
                     ]

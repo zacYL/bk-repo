@@ -33,7 +33,7 @@
                         :key="name">
                         <label>{{ label }}</label>
                         <span class="flex-1 flex-align-center text-overflow">
-                            <span class="text-overflow" :title="value">{{ value }}</span>
+                            <span class="text-overflow" v-bk-overflow-tips>{{ value }}</span>
                             <template v-if="name === 'version'">
                                 <span class="ml5 repo-tag"
                                     v-for="tag in detail.basic.stageTag"

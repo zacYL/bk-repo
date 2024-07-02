@@ -46,7 +46,7 @@
                                             label: $t('upgrade'), clickEvent: () => changeStageTagHandler($version),
                                             disabled: ($version.stageTag || '').includes('@release')
                                         },
-                                        repoType !== 'docker' && { label: $t('download'), clickEvent: () => downloadPackageHandler($version) }
+                                        !['conan', 'docker'].includes(repoType) && { label: $t('download'), clickEvent: () => downloadPackageHandler($version) }
                                     ] : []),
                                     forbidOperationPermission && !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('forbid',$version), label: $version.metadata.forbidStatus ? $t('relieve') + $t('space') + $t('forbid') : $t('forbid') },
                                     lockOperationPermission && !whetherSoftware && !(storeType === 'virtual') && { clickEvent: () => showLimitDialog('lock',$version), label: $version.metadata.lockStatus ? $t('relieve') + $t('space') + $t('lock') : $t('lock') },

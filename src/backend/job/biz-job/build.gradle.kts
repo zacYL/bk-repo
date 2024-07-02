@@ -34,6 +34,7 @@ dependencies {
     implementation(project(":common:common-redis"))
     implementation(project(":repository:api-repository"))
     implementation(project(":helm:api-helm"))
+    implementation(project(":oci:api-oci"))
     implementation(project(":job:api-job"))
     implementation(project(":replication:api-replication"))
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb")

@@ -44,9 +44,11 @@ import org.bson.types.ObjectId
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
+import org.springframework.data.mongodb.core.query.Field
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.isEqualTo
 import org.springframework.stereotype.Service
+import org.springframework.util.Assert
 import java.util.concurrent.ConcurrentHashMap
 
 @Service
@@ -137,6 +139,18 @@ class EmptyFolderStatJob(
     }
 
     override fun collectionName(shardingIndex: Int?): String = "${TABLE_PREFIX}$shardingIndex"
+
+    fun Field.include(vararg fields: String): Field {
+        Assert.notNull(fields, "Keys must not be null!")
+        val var2: Array<out String> = fields
+        val var3 = fields.size
+
+        for (var4 in 0 until var3) {
+            val key = var2[var4]
+            this.include(key)
+        }
+        return this
+    }
 
     companion object {
         private val logger = LoggerHolder.jobLogger

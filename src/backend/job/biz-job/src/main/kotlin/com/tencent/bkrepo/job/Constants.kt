@@ -61,9 +61,10 @@ const val KEY = "key"
 const val RECORD_RESERVE_DAYS = "recordReserveDays"
 const val REPLICA_TYPE = "replicaType"
 const val REPLICA_OBJECT_TYPE = "replicaObjectType"
-const val FULLPATH = "fullPath"
+const val FULL_PATH = "fullPath"
 const val PATH = "path"
 const val LAST_MODIFIED_BY = "lastModifiedBy"
+const val NAME = "name"
 
 /**
  * 缓存类型

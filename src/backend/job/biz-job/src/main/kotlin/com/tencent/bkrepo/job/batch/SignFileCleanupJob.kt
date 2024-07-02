@@ -48,7 +48,6 @@ import java.time.LocalDateTime
 @EnableConfigurationProperties(SignFileCleanupJobProperties::class)
 class SignFileCleanupJob(
     private val nodeClient: NodeClient,
-    private val mongoTemplate: MongoTemplate,
     val properties: SignFileCleanupJobProperties
 ) : DefaultContextMongoDbJob<SignFileCleanupJob.SignFileData>(properties) {
 

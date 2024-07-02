@@ -60,7 +60,6 @@ import java.time.LocalDateTime
 @EnableConfigurationProperties(ProjectRepoMetricsStatJobProperties::class)
 class ProjectRepoMetricsStatJob(
     private val properties: ProjectRepoMetricsStatJobProperties,
-    private val mongoTemplate: MongoTemplate
 ) : DefaultContextMongoDbJob<ProjectRepoMetricsStatJob.Repository>(properties) {
     override fun collectionNames(): List<String> {
         return listOf(COLLECTION_REPOSITORY_NAME)

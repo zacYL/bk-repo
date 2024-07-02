@@ -40,7 +40,6 @@ import com.tencent.bkrepo.job.config.properties.FileReferenceCleanupJobPropertie
 import com.tencent.bkrepo.job.exception.JobExecuteException
 import com.tencent.bkrepo.repository.api.StorageCredentialsClient
 import org.springframework.boot.context.properties.EnableConfigurationProperties
-import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.isEqualTo
@@ -56,7 +55,6 @@ import java.util.concurrent.ConcurrentHashMap
 @EnableConfigurationProperties(FileReferenceCleanupJobProperties::class)
 class FileReferenceCleanupJob(
     private val storageService: StorageService,
-    private val mongoTemplate: MongoTemplate,
     private val storageCredentialsClient: StorageCredentialsClient,
     properties: FileReferenceCleanupJobProperties
 ) : MongoDbBatchJob<FileReferenceCleanupJob.FileReferenceData, FileJobContext>(properties) {

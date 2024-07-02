@@ -54,8 +54,7 @@ import java.time.LocalDateTime
 @Component
 @EnableConfigurationProperties(PipelineArtifactCleanupJobProperties::class)
 class PipelineArtifactCleanupJob(
-    private val properties: PipelineArtifactCleanupJobProperties,
-    private val mongoTemplate: MongoTemplate
+    private val properties: PipelineArtifactCleanupJobProperties
 ) : DefaultContextMongoDbJob<PipelineArtifactCleanupJob.Node>(properties) {
     override fun collectionNames(): List<String> {
         return (0 until SHARDING_COUNT)

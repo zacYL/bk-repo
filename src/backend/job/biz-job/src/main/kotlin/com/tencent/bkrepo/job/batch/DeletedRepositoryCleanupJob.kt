@@ -28,7 +28,7 @@
 package com.tencent.bkrepo.job.batch
 
 import com.tencent.bkrepo.common.artifact.path.PathUtils
-import com.tencent.bkrepo.common.mongo.constant.ID
+import com.tencent.bkrepo.common.mongo.dao.AbstractMongoDao.Companion.ID
 import com.tencent.bkrepo.job.DELETED_DATE
 import com.tencent.bkrepo.job.FULL_PATH
 import com.tencent.bkrepo.job.LAST_MODIFIED_BY
@@ -94,8 +94,8 @@ class DeletedRepositoryCleanupJob(
     }
 
 
-    override fun entityClass(): KClass<Repository> {
-        return Repository::class
+    override fun entityClass(): Class<Repository> {
+        return Repository::class.java
     }
 
     override fun mapToEntity(row: Map<String, Any?>): Repository {

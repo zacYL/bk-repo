@@ -68,9 +68,9 @@ class StorageCleanServiceImpl(
             deletedNodeList.forEach { deletedNode ->
                 val info = resultMap[deletedNode.sha256]
                 resultMap[deletedNode.sha256!!] = if (info == null) {
-                    NodeSizeInfo(1, deletedNode.size)
+                    NodeSizeInfo(1, 0, deletedNode.size)
                 } else {
-                    NodeSizeInfo(++info.subNodeCount, info.size)
+                    NodeSizeInfo(++info.subNodeCount, 0, info.size)
                 }
             }
         }

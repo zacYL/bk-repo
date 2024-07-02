@@ -30,7 +30,6 @@ import java.time.LocalDateTime
 @EnableConfigurationProperties(ReplicaRecordCleanupJobProperties::class)
 class ReplicaRecordCleanupJob(
     properties: ReplicaRecordCleanupJobProperties,
-    private val mongoTemplate: MongoTemplate,
 ) : MongoDbBatchJob<ReplicaRecordCleanupJob.ReplicaTask, ReplicaRecordCleanupJobContext>(properties) {
     override fun getLockAtMostFor(): Duration = Duration.ofDays(7)
 

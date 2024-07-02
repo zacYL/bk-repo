@@ -53,7 +53,6 @@ import java.time.LocalDateTime
 @EnableConfigurationProperties(ArtifactPushJobProperties::class)
 class ArtifactPushJob(
     private val properties: ArtifactPushJobProperties,
-    private val mongoTemplate: MongoTemplate,
     private val artifactPushClient: ArtifactPushClient
 ) : DefaultContextMongoDbJob<ArtifactPushJob.PackageVersionData>(properties) {
     private val types: List<String>

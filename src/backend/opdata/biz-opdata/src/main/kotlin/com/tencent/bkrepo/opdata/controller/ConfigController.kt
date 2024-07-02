@@ -29,7 +29,6 @@ package com.tencent.bkrepo.opdata.controller
 
 import com.tencent.bkrepo.common.api.exception.SystemErrorException
 import com.tencent.bkrepo.common.api.pojo.Response
-import com.tencent.bkrepo.common.operate.api.annotation.LogOperate
 import com.tencent.bkrepo.common.security.permission.Principal
 import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
@@ -56,7 +55,6 @@ class ConfigController @Autowired constructor(
      * 更新配置
      */
     @PatchMapping
-    @LogOperate(type = "CONFIG_UPDATE", desensitize = true)
     fun update(@RequestBody updateConfigRequest: UpdateConfigRequest): Response<Void> {
         val configClient = configClientProvider.firstOrNull()
             ?: throw SystemErrorException(OpDataMessageCode.CONFIG_CLIENT_NOT_FOUND)

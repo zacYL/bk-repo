@@ -34,9 +34,6 @@ import com.google.common.util.concurrent.UncheckedExecutionException
 import com.mongodb.client.result.DeleteResult
 import com.tencent.bkrepo.common.api.constant.CharPool
 import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
-import com.tencent.bkrepo.common.mongo.constant.ID
-import com.tencent.bkrepo.common.service.cluster.ClusterProperties
-import com.tencent.bkrepo.fs.server.constant.FAKE_SHA256
 import com.tencent.bkrepo.job.DELETED_DATE
 import com.tencent.bkrepo.job.ID
 import com.tencent.bkrepo.job.NAME
@@ -49,7 +46,6 @@ import com.tencent.bkrepo.job.batch.context.DeletedNodeCleanupJobContext
 import com.tencent.bkrepo.job.batch.utils.MongoShardingUtils
 import com.tencent.bkrepo.job.batch.utils.TimeUtils
 import com.tencent.bkrepo.job.config.properties.DeletedNodeCleanupJobProperties
-import com.tencent.bkrepo.job.migrate.MigrateRepoStorageService
 import com.tencent.bkrepo.repository.api.StorageCredentialsClient
 import org.slf4j.LoggerFactory
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -63,7 +59,6 @@ import java.time.Duration
 import java.time.LocalDateTime
 import java.util.Optional
 import java.util.concurrent.TimeUnit
-import kotlin.reflect.KClass
 
 /**
  * 清理被标记为删除的node，同时减少文件引用
@@ -72,8 +67,6 @@ import kotlin.reflect.KClass
 @EnableConfigurationProperties(DeletedNodeCleanupJobProperties::class)
 class DeletedNodeCleanupJob(
     private val properties: DeletedNodeCleanupJobProperties,
-    private val clusterProperties: ClusterProperties,
-    private val migrateRepoStorageService: MigrateRepoStorageService,
     private val storageCredentialsClient: StorageCredentialsClient
 ) : DefaultContextMongoDbJob<DeletedNodeCleanupJob.Node>(properties) {
 
@@ -121,13 +114,12 @@ class DeletedNodeCleanupJob(
             repoName = row[REPO].toString(),
             folder = row[Node::folder.name] as Boolean,
             sha256 = row[Node::sha256.name] as String?,
-            deleted = TimeUtils.parseMongoDateTimeStr(row[DELETED_DATE].toString()),
-            clusterNames = row[Node::clusterNames.name] as List<String>?
+            deleted = TimeUtils.parseMongoDateTimeStr(row[DELETED_DATE].toString())
         )
     }
 
-    override fun entityClass(): KClass<Node> {
-        return Node::class
+    override fun entityClass(): Class<Node> {
+        return Node::class.java
     }
 
 
@@ -155,11 +147,10 @@ class DeletedNodeCleanupJob(
         node: Node,
         collectionName: String
     ) {
-        if (!node.clusterNames.isNullOrEmpty() && !node.clusterNames.contains(clusterProperties.self.name)) return
         val query = Query.query(Criteria.where(ID).isEqualTo(node.id))
         var result: DeleteResult? = null
         try {
-            if (node.sha256.isNullOrEmpty() || node.sha256 == FAKE_SHA256) return
+            if (node.sha256.isNullOrEmpty()) return
             try {
                 val credentialsKey = getCredentialsKey(node.projectId, node.repoName)
                 if (!decrementFileReferences(node.sha256, credentialsKey)) {

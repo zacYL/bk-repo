@@ -54,20 +54,20 @@ class ProjectModel @Autowired constructor(
                 criteriaList.addAll(ProjectType.GIT.prefix!!)
                 criteriaList.addAll(ProjectType.CODECC.prefix!!)
                 Query(
-                    Criteria().andOperator(buildCriteria(criteriaList))
+                    Criteria().andOperator(*buildCriteria(criteriaList).toTypedArray())
                 )
             }
             ProjectType.CODECC -> {
                 Query(
                     Criteria().orOperator(
-                        buildCriteria(ProjectType.CODECC.prefix!!.toMutableList(), false)
+                        *buildCriteria(ProjectType.CODECC.prefix!!.toMutableList(), false).toTypedArray()
                     )
                 )
             }
             ProjectType.GIT -> {
                 Query(
                     Criteria().orOperator(
-                        buildCriteria(ProjectType.GIT.prefix!!.toMutableList(), false)
+                        *buildCriteria(ProjectType.GIT.prefix!!.toMutableList(), false).toTypedArray()
                     )
                 )
             }

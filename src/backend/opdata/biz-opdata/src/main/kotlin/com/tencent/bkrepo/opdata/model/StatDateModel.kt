@@ -28,7 +28,7 @@
 package com.tencent.bkrepo.opdata.model
 
 import com.tencent.bkrepo.common.job.JobAutoConfiguration.Companion.SHED_LOCK_COLLECTION_NAME
-import com.tencent.bkrepo.common.mongo.constant.ID
+import com.tencent.bkrepo.common.mongo.dao.AbstractMongoDao.Companion.ID
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria

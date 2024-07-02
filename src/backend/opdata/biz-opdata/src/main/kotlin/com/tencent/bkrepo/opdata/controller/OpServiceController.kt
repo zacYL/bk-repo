@@ -28,7 +28,6 @@
 package com.tencent.bkrepo.opdata.controller
 
 import com.tencent.bkrepo.common.api.pojo.Response
-import com.tencent.bkrepo.common.operate.api.annotation.LogOperate
 import com.tencent.bkrepo.common.security.permission.Principal
 import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.service.util.ResponseBuilder.success
@@ -56,7 +55,6 @@ class OpServiceController @Autowired constructor(
      * 列出当前注册中心中的所有服务
      */
     @GetMapping
-    @LogOperate(type = "SERVICE_LIST")
     fun services(): Response<List<ServiceInfo>> {
         return success(opServiceService.listServices())
     }
@@ -65,13 +63,11 @@ class OpServiceController @Autowired constructor(
      * 获取服务实例信息
      */
     @GetMapping("/{serviceName}/instances")
-    @LogOperate(type = "SERVICE_INSTANCE_LIST")
     fun instances(@PathVariable("serviceName") serviceName: String): Response<List<InstanceInfo>> {
         return success(opServiceService.instances(serviceName))
     }
 
     @GetMapping("/{serviceName}/instances/{instanceId}")
-    @LogOperate(type = "SERVICE_INSTANCE")
     fun instance(
         @PathVariable serviceName: String,
         @PathVariable instanceId: String
@@ -83,7 +79,6 @@ class OpServiceController @Autowired constructor(
      * 下线服务节点
      */
     @PostMapping("/{serviceName}/instances/{instanceId}/down")
-    @LogOperate(type = "SERVICE_INSTANCE_DOWN")
     fun downInstance(
         @PathVariable serviceName: String,
         @PathVariable instanceId: String
@@ -95,7 +90,6 @@ class OpServiceController @Autowired constructor(
      * 上线服务节点
      */
     @PostMapping("/{serviceName}/instances/{instanceId}/up")
-    @LogOperate(type = "SERVICE_INSTANCE_UP")
     fun upInstance(
         @PathVariable serviceName: String,
         @PathVariable instanceId: String

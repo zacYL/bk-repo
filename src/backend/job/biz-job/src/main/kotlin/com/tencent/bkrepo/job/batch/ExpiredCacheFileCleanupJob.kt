@@ -29,7 +29,6 @@ package com.tencent.bkrepo.job.batch
 
 import com.tencent.bkrepo.common.api.util.executeAndMeasureTime
 import com.tencent.bkrepo.common.api.util.readJsonString
-import com.tencent.bkrepo.common.service.cluster.ClusterProperties
 import com.tencent.bkrepo.common.storage.core.StorageService
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.job.batch.base.DefaultContextJob
@@ -51,8 +50,7 @@ import java.time.LocalDateTime
 class ExpiredCacheFileCleanupJob(
     properties: ExpiredCacheFileCleanupJobProperties,
     private val mongoTemplate: MongoTemplate,
-    private val storageService: StorageService,
-    private val clusterProperties: ClusterProperties
+    private val storageService: StorageService
 ) : DefaultContextJob(properties) {
 
     data class TStorageCredentials(
@@ -72,7 +70,6 @@ class ExpiredCacheFileCleanupJob(
         cleanupStorage()
         // cleanup extended storage
         mongoTemplate.find(Query(), TStorageCredentials::class.java, COLLECTION_NAME)
-            .filter { clusterProperties.region.isNullOrBlank() || it.region == clusterProperties.region }
             .map { convert(it) }
             .forEach { cleanupStorage(it) }
     }

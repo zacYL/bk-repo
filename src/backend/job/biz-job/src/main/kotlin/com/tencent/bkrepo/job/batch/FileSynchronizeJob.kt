@@ -28,7 +28,6 @@
 package com.tencent.bkrepo.job.batch
 
 import com.tencent.bkrepo.common.api.util.executeAndMeasureTime
-import com.tencent.bkrepo.common.service.cluster.ClusterProperties
 import com.tencent.bkrepo.common.storage.core.StorageService
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
 import com.tencent.bkrepo.job.batch.base.DefaultContextJob
@@ -47,8 +46,7 @@ import org.springframework.stereotype.Component
 class FileSynchronizeJob(
     private val properties: FileSynchronizeJobProperties,
     private val storageCredentialsClient: StorageCredentialsClient,
-    private val storageService: StorageService,
-    private val clusterProperties: ClusterProperties
+    private val storageService: StorageService
 ) : DefaultContextJob(properties) {
 
     override fun start(): Boolean {
@@ -59,7 +57,7 @@ class FileSynchronizeJob(
         // cleanup default storage
         syncStorage()
         // cleanup extended storage
-        storageCredentialsClient.list(clusterProperties.region)
+        storageCredentialsClient.list(properties.region)
             .data?.forEach { syncStorage(it) }
     }
 

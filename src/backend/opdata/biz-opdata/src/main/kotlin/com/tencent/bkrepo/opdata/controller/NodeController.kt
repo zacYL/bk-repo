@@ -29,7 +29,6 @@ package com.tencent.bkrepo.opdata.controller
 
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.pojo.Response
-import com.tencent.bkrepo.common.operate.api.annotation.LogOperate
 import com.tencent.bkrepo.common.security.permission.Principal
 import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
@@ -55,7 +54,6 @@ class NodeController(
      * 获取当前仓库目录下的空目录列表
      */
     @GetMapping("/emptyFolders/{projectId}/{repoName}")
-    @LogOperate(type = "EMPTY_FOLDER_LIST")
     fun getEmptyFolder(
         @PathVariable("projectId")projectId: String,
         @PathVariable("repoName")repoName: String,
@@ -68,7 +66,6 @@ class NodeController(
      * 删除当前仓库目录下的空目录列表
      */
     @DeleteMapping("/emptyFolders/{projectId}/{repoName}")
-    @LogOperate(type = "EMPTY_FOLDER_DELETE")
     fun deleteEmptyFolders(
         @PathVariable("projectId")projectId: String,
         @PathVariable("repoName")repoName: String,
@@ -82,7 +79,6 @@ class NodeController(
      * 获取当前仓库目录下的一级目录统计信息
      */
     @GetMapping("/firstLevelFolder/{projectId}/{repoName}")
-    @LogOperate(type = "FIRST_LEVEL_FOLDER_STATISTICS")
     fun getFirstLevelFolders(
         @PathVariable("projectId")projectId: String,
         @PathVariable("repoName")repoName: String,

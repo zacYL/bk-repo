@@ -96,13 +96,19 @@ logging:
   path-common: __BK_HOME__/logs/bkrepo
 
 storage:
-  type: filesystem
+  type: __BK_REPO_STORAGE_TYPE__
   filesystem:
     path: __BK_CI_DATA_SHARE_DIR__/repo/filesystem/store
-  cache:
-    enabled: false
-    path: __BK_CI_DATA_SHARE_DIR__/repo/filesystem/cached
-    expireHours: 12
+    cache:
+      enabled: false
+      path: __BK_CI_DATA_SHARE_DIR__/repo/filesystem/cached
+      expireDays: 12
+  s3:
+    endpoint: __BK_REPO_S3_STORAGE_ENDPOINT__
+    bucket: __BK_REPO_S3_STORAGE_BUCKET__
+    accessKey: __BK_REPO_S3_STORAGE_ACCESS_KEY__
+    secretKey: __BK_REPO_S3_STORAGE_SECRET_KEY__
+    region: __BK_REPO_S3_STORAGE_REGION__
 
 security:
   # HTTP认证相关配置

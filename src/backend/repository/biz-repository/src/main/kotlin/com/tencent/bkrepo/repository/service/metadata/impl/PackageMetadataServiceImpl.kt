@@ -88,7 +88,9 @@ class PackageMetadataServiceImpl(
             val tPackage = getPackage(projectId, repoName, packageKey)
             val tPackageVersion = getPackageVersion(tPackage.id!!, version)
             val systemMetadata = versionMetadata?.filter { it.key in RESERVED_KEY }
-            if (systemMetadata.isNullOrEmpty() && tPackageVersion.metadata.any { it.key == LOCK_STATUS && it.value == true }) {
+            if (systemMetadata.isNullOrEmpty() &&
+                tPackageVersion.metadata.any { it.key == LOCK_STATUS && it.value == true }
+            ) {
                 throw ErrorCodeException(ArtifactMessageCode.PACKAGE_LOCK, packageKey)
             }
             val oldMetadata = tPackageVersion.metadata

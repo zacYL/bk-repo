@@ -34,14 +34,24 @@ package com.tencent.bkrepo.repository.util
 import com.tencent.bkrepo.common.api.constant.StringPool.EMPTY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
-import com.tencent.bkrepo.common.artifact.constant.*
+import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
+import com.tencent.bkrepo.common.artifact.constant.FORBID_TYPE
+import com.tencent.bkrepo.common.artifact.constant.FORBID_USER
+import com.tencent.bkrepo.common.artifact.constant.LOCK_STATUS
+import com.tencent.bkrepo.common.artifact.constant.LOCK_TYPE
+import com.tencent.bkrepo.common.artifact.constant.LOCK_USER
+import com.tencent.bkrepo.common.artifact.constant.RESERVED_KEY
 import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.LocaleMessageUtils
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.message.RepositoryMessageCode
 import com.tencent.bkrepo.repository.model.TMetadata
-import com.tencent.bkrepo.repository.pojo.metadata.*
+import com.tencent.bkrepo.repository.pojo.metadata.ForbidType
+import com.tencent.bkrepo.repository.pojo.metadata.LimitData
+import com.tencent.bkrepo.repository.pojo.metadata.LimitType
+import com.tencent.bkrepo.repository.pojo.metadata.LockType
+import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 
 /**
  * 元数据工具类
@@ -125,12 +135,12 @@ object MetadataUtils {
     fun extractLimitMetadata(
         metadata: List<MetadataModel>,
         operator: String = SecurityUtils.getUserId(),
-        limitType: LimitType ?= LimitType.FORBID
+        limitType: LimitType? = LimitType.FORBID
     ): MutableList<MetadataModel>? {
         val limitData = when (limitType) {
             LimitType.FORBID -> LimitData(FORBID_STATUS, FORBID_USER, FORBID_TYPE, ForbidType.MANUAL.name)
             LimitType.LOCK -> LimitData(LOCK_STATUS, LOCK_USER, LOCK_TYPE, LockType.MANUAL.name)
-            else -> {LimitData(EMPTY,EMPTY,EMPTY,EMPTY)}
+            else -> { LimitData(EMPTY, EMPTY, EMPTY, EMPTY) }
         }
         val limitMetadata = metadata.firstOrNull {
             it.key == limitData.limitStatus && it.value is Boolean
@@ -138,8 +148,23 @@ object MetadataUtils {
         val result = ArrayList<MetadataModel>(3)
         result.add(limitMetadata.copy(system = true, display = false))
         // 添加禁用操作用户和类型
-        result.add(MetadataModel(key = limitData.limitUser, value = operator, system = true, display = false))
-        result.add(MetadataModel(key = limitData.limitActionType, value = limitData.limitAction, system = true, display = false, description = limitMetadata.description ))
+        result.add(
+            MetadataModel(
+                key = limitData.limitUser,
+                value = operator,
+                system = true,
+                display = false
+            )
+        )
+        result.add(
+            MetadataModel(
+                key = limitData.limitActionType,
+                value = limitData.limitAction,
+                system = true,
+                display = false,
+                description = limitMetadata.description
+            )
+        )
 
         return result
     }
@@ -196,9 +221,12 @@ object MetadataUtils {
 
     fun checkEmptyAndLength(metadataList: List<TMetadata>) {
         if (metadataList.any {
-                it.key.trim() == EMPTY || (it.value is String && it.value.toString()
-                    .trim() == EMPTY)
-            }) {
+                it.key.trim() == EMPTY || (
+                    it.value is String && it.value.toString()
+                    .trim() == EMPTY
+                )
+            }
+        ) {
             throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, metadataList)
         }
         if (metadataList.any { it.key.length > 30 || (it.value is String && it.value.toString().length > 500) }) {

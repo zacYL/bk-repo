@@ -84,21 +84,26 @@ class MetadataServiceImpl(
             val node = nodeDao.findNode(projectId, repoName, fullPath)
                 ?: throw ErrorCodeException(ArtifactMessageCode.NODE_NOT_FOUND, fullPath)
             val systemMetadata = nodeMetadata?.filter { it.key in RESERVED_KEY }
-            if (systemMetadata.isNullOrEmpty() && (node.metadata?.any { it.key == LOCK_STATUS && it.value == true } == true)) {
+            if (systemMetadata.isNullOrEmpty() &&
+                (node.metadata?.any { it.key == LOCK_STATUS && it.value == true } == true)
+            ) {
                 throw ErrorCodeException(ArtifactMessageCode.NODE_LOCK, node.fullPath)
             }
             val oldMetadata = node.metadata ?: ArrayList()
             val newMetadata = MetadataUtils.compatibleFromAndCheck(metadata, nodeMetadata, operator)
             MetadataUtils.checkEmptyAndLength(newMetadata)
             node.metadata = MetadataUtils.checkAndMerge(oldMetadata, newMetadata, operator)
-
-            val currentTime = LocalDateTime.now()
-            node.lastModifiedBy = operator
-            node.lastModifiedDate = currentTime
-            nodeDao.save(node)
-            // 更新父目录的修改时间
-            val parentFullPath = PathUtils.toFullPath(PathUtils.resolveParent(fullPath))
-            nodeBaseService.updateModifiedInfo(projectId, repoName, parentFullPath, operator, currentTime)
+            if (newMetadata.all { it.key in RESERVED_KEY }) {
+                nodeDao.save(node)
+            } else {
+                val currentTime = LocalDateTime.now()
+                node.lastModifiedBy = operator
+                node.lastModifiedDate = currentTime
+                nodeDao.save(node)
+                // 更新父目录的修改时间
+                val parentFullPath = PathUtils.toFullPath(PathUtils.resolveParent(fullPath))
+                nodeBaseService.updateModifiedInfo(projectId, repoName, parentFullPath, operator, currentTime)
+            }
             publishEvent(buildMetadataSavedEvent(request))
             logger.info("Save metadata[$metadata] on node[/$projectId/$repoName$fullPath] success.")
         }

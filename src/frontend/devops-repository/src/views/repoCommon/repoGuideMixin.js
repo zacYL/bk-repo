@@ -395,13 +395,13 @@ export default {
                         {
                             subTitle: this.$t('pull'),
                             codeList: [
-                                `conan download ${this.packageName}/${this.versionLabel} -r ${location.origin}/${this.repoType}/${this.projectId}/${this.repoName}/`
+                                `conan download ${this.packageName}/${this.versionLabel} -r ${this.repoName}`
                             ]
                         },
                         {
                             subTitle: this.$t('push'),
                             codeList: [
-                                `conan upload ${this.packageName}/${this.versionLabel} -r ${location.origin}/${this.repoType}/${this.projectId}/${this.repoName}/`
+                                `conan upload ${this.packageName}/${this.versionLabel} -r ${this.repoName}`
                             ]
                         }
                     ]

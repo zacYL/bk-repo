@@ -199,7 +199,7 @@ cpack:
   host: __BK_HTTP_SCHEMA__://__BK_REPO_FQDN__
   
 devops:
-  bkHost: __BK_HTTP_SCHEMA__://__BK_PAAS_FQDN__
+  bkHost: __BK_PAAS_API_URL__
   appCode: __APP_CODE__
   appSecret: __APP_TOKEN__
   devopsHost: __BK_HTTP_SCHEMA__://__BK_CI_FQDN__

@@ -124,8 +124,13 @@ class MavenRemoteRepository(
             val downloadUrl = createRemoteDownloadUrl(context)
             val request = Request.Builder().url(downloadUrl).build()
             logger.info("Remote download url: $downloadUrl, network config: ${remoteConfiguration.network}")
-            val response = httpClient.newCall(request).execute()
-            return if (checkResponse(response)) {
+            val response = try {
+                httpClient.newCall(request).execute()
+            } catch (e: Exception) {
+                logger.error("An error occurred while sending request $downloadUrl", e)
+                null
+            }
+            return if (response != null && checkResponse(response)) {
                 onDownloadResponse(context, response)
             } else getCacheArtifactResource(context)
         } else super.onDownload(context)

@@ -57,6 +57,7 @@ import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
 import com.tencent.bkrepo.conan.pojo.enums.ConanRequestType
 import com.tencent.bkrepo.conan.service.impl.CommonService
 import com.tencent.bkrepo.conan.utils.ConanArtifactInfoUtil
+import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.buildDownloadRecordRequest
 import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.buildDownloadResponse
 import com.tencent.bkrepo.conan.utils.PathUtils
 import com.tencent.bkrepo.conan.utils.PathUtils.generateFullPath
@@ -179,19 +180,7 @@ class ConanLocalRepository : LocalRepository() {
         context: ArtifactDownloadContext,
         artifactResource: ArtifactResource,
     ): PackageDownloadRecord? {
-        with(context) {
-            val conanArtifactInfo = artifactInfo as ConanArtifactInfo
-            val fullPath = generateFullPath(conanArtifactInfo)
-            return if (fullPath.endsWith(EXPORT_SOURCES_TGZ_NAME)) {
-                PackageDownloadRecord(
-                    projectId = projectId,
-                    repoName = repoName,
-                    packageKey = PackageKeys.ofConan(conanArtifactInfo.name),
-                    packageVersion = conanArtifactInfo.version,
-                    userId = userId
-                )
-            } else null
-        }
+        return buildDownloadRecordRequest(context)
     }
 
     private fun searchRecipes(projectId: String, repoName: String): List<String> {

@@ -30,11 +30,13 @@ package com.tencent.bkrepo.conan.utils
 import com.tencent.bkrepo.common.api.constant.HttpHeaders.CONTENT_TYPE
 import com.tencent.bkrepo.common.api.constant.MediaTypes
 import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.conan.constant.CONAN_INFOS
 import com.tencent.bkrepo.conan.constant.DEFAULT_REVISION_V1
+import com.tencent.bkrepo.conan.constant.EXPORT_SOURCES_TGZ_NAME
 import com.tencent.bkrepo.conan.constant.X_CONAN_SERVER_CAPABILITIES
 import com.tencent.bkrepo.conan.controller.ConanCommonController.Companion.capabilities
 import com.tencent.bkrepo.conan.pojo.ConanPackageUploadRequest
@@ -50,6 +52,7 @@ import com.tencent.bkrepo.conan.utils.PathUtils.buildReference
 import com.tencent.bkrepo.conan.utils.PathUtils.getPackageRevisionsFile
 import com.tencent.bkrepo.conan.utils.PathUtils.getRecipeRevisionsFile
 import com.tencent.bkrepo.conan.utils.TimeFormatUtil.convertToUtcTime
+import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
@@ -244,6 +247,22 @@ object ObjectBuildUtil {
                 lastModifiedBy = lastModifiedBy,
                 lastModifiedDate = packageVersion.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME)
             )
+        }
+    }
+
+    fun buildDownloadRecordRequest(context: ArtifactDownloadContext): PackageDownloadRecord? {
+        with(context) {
+            val conanArtifactInfo = artifactInfo as ConanArtifactInfo
+            val fullPath = PathUtils.generateFullPath(conanArtifactInfo)
+            return if (fullPath.endsWith(EXPORT_SOURCES_TGZ_NAME)) {
+                PackageDownloadRecord(
+                    projectId = projectId,
+                    repoName = repoName,
+                    packageKey = PackageKeys.ofConan(conanArtifactInfo.name),
+                    packageVersion = conanArtifactInfo.version,
+                    userId = userId
+                )
+            } else null
         }
     }
 }

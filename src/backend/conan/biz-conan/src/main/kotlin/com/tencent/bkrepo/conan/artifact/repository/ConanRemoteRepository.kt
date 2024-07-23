@@ -48,6 +48,9 @@ import com.tencent.bkrepo.conan.pojo.ConanSearchResult
 import com.tencent.bkrepo.conan.pojo.RevisionInfo
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
 import com.tencent.bkrepo.conan.pojo.enums.ConanRequestType
+import com.tencent.bkrepo.conan.utils.ObjectBuildUtil
+import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.buildDownloadRecordRequest
+import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.apache.commons.lang3.ObjectUtils
@@ -101,6 +104,13 @@ class ConanRemoteRepository : RemoteRepository() {
             SpringContextUtils.publishEvent(ConanArtifactUploadEvent(context.userId, conanArtifactInfo))
         }
         return artifactResource
+    }
+
+    override fun buildDownloadRecord(
+        context: ArtifactDownloadContext,
+        artifactResource: ArtifactResource,
+    ): PackageDownloadRecord? {
+        return buildDownloadRecordRequest(context)
     }
 
     fun createRemoteSearchUrl(context: ArtifactContext, path: String): String {

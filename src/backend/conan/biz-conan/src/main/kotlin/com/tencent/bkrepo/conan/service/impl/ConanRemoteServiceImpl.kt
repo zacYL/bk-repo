@@ -28,6 +28,7 @@
 package com.tencent.bkrepo.conan.service.impl
 
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
+import com.tencent.bkrepo.common.artifact.repository.remote.buildOkHttpClient
 import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.SpringContextUtils
@@ -35,6 +36,7 @@ import com.tencent.bkrepo.conan.artifact.repository.ConanRemoteRepository
 import com.tencent.bkrepo.conan.constant.CONAN_URL_V2
 import com.tencent.bkrepo.conan.service.ConanRemoteService
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders

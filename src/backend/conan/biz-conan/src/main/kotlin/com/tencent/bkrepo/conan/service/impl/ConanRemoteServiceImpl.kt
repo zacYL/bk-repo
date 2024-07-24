@@ -28,7 +28,6 @@
 package com.tencent.bkrepo.conan.service.impl
 
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
-import com.tencent.bkrepo.common.artifact.repository.remote.buildOkHttpClient
 import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.SpringContextUtils
@@ -36,7 +35,6 @@ import com.tencent.bkrepo.conan.artifact.repository.ConanRemoteRepository
 import com.tencent.bkrepo.conan.constant.CONAN_URL_V2
 import com.tencent.bkrepo.conan.service.ConanRemoteService
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
@@ -46,33 +44,42 @@ import javax.servlet.http.HttpServletResponse
 
 @Service
 class ConanRemoteServiceImpl : ConanRemoteService {
-    override fun proxyRequestToRemote(repositoryDetail: RepositoryDetail, response: HttpServletResponse) {
+    /**
+     * @return 代理是否成功
+     */
+    override fun proxyRequestToRemote(repositoryDetail: RepositoryDetail, response: HttpServletResponse): Boolean {
         val remoteConfiguration = repositoryDetail.configuration as RemoteConfiguration
         val repository = SpringContextUtils.getBean<ConanRemoteRepository>()
         val httpClient = repository.getHttpClient(remoteConfiguration)
         val url = getUrl(remoteConfiguration)
         val request = Request.Builder().url(url).build()
         logger.info("Remote download url: $url, network config: ${remoteConfiguration.network}")
-        try {
+        return try {
             val proxyResponse = httpClient.newCall(request).execute()
             val headers = HttpHeaders()
             proxyResponse.headers().names().forEach { name ->
                 headers[name] = proxyResponse.headers().values(name)
             }
-            // 设置响应状态码
-            response.status = proxyResponse.code()
-            headers.forEach { (key, value) ->
-                response.addHeader(key, value.joinToString(","))
-            }
-            // 设置响应内容
-            proxyResponse.body()?.byteStream()?.use { inputStream ->
-                val outputStream = response.outputStream
-                inputStream.copyTo(outputStream)
-                outputStream.flush()
+            if (proxyResponse.isSuccessful) {
+                // 设置响应状态码
+                response.status = proxyResponse.code()
+                headers.forEach { (key, value) ->
+                    response.addHeader(key, value.joinToString(","))
+                }
+                // 设置响应内容
+                proxyResponse.body()?.byteStream()?.use { inputStream ->
+                    val outputStream = response.outputStream
+                    inputStream.copyTo(outputStream)
+                    outputStream.flush()
+                }
+                true
+            } else {
+                logger.info("remote proxy is false, status code: ${proxyResponse.code()},should use cache")
+                false
             }
         } catch (e: Exception) {
             logger.error("Error occurred while proxying request to remote URL: ${e.message}", e)
-            response.status = HttpServletResponse.SC_INTERNAL_SERVER_ERROR
+            false
         }
     }
 

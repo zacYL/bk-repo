@@ -34,6 +34,7 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadCon
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
 import com.tencent.bkrepo.common.artifact.repository.remote.RemoteRepository
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
+import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
 import com.tencent.bkrepo.common.service.util.SpringContextUtils
 import com.tencent.bkrepo.conan.constant.CONAN_URL_V2
@@ -48,31 +49,39 @@ import com.tencent.bkrepo.conan.pojo.ConanSearchResult
 import com.tencent.bkrepo.conan.pojo.RevisionInfo
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
 import com.tencent.bkrepo.conan.pojo.enums.ConanRequestType
-import com.tencent.bkrepo.conan.utils.ObjectBuildUtil
 import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.buildDownloadRecordRequest
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.apache.commons.lang3.ObjectUtils
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
 @Component
 class ConanRemoteRepository : RemoteRepository() {
 
+    @Autowired
+    lateinit var conanLocalRepository: ConanLocalRepository
+
     override fun query(context: ArtifactQueryContext): Any {
         context.getAttribute<ConanRequestType>(REQUEST_TYPE)?.let { requestType ->
-            return when (requestType) {
-                ConanRequestType.SEARCH -> searchResult(context)
-                ConanRequestType.RECIPE_LATEST -> getRecipeLatestRevision(context)
-                else -> throw ConanException("request path is not valid")
+            return try {
+                when (requestType) {
+                    ConanRequestType.SEARCH -> searchResult(context)
+                    ConanRequestType.RECIPE_LATEST -> getRecipeLatestRevision(context)
+                    else -> throw ConanException("request path is not valid")
+                }
+            } catch (e: Exception) {
+                //代理失败，则使用本地缓存
+                return conanLocalRepository.query(context)
             }
         } ?: throw ConanException("request path is not valid")
     }
 
     private fun searchResult(context: ArtifactQueryContext): ConanSearchResult {
         return doRequest(context, ConanSearchResult::class.java, createRemoteSearchUrl(context, "/search"))
-            ?: ConanSearchResult()
+            ?: throw ConanFileNotFoundException(ConanMessageCode.CONAN_FILE_NOT_FOUND)
     }
 
     private fun getRecipeLatestRevision(context: ArtifactQueryContext): RevisionInfo {
@@ -111,6 +120,15 @@ class ConanRemoteRepository : RemoteRepository() {
         artifactResource: ArtifactResource,
     ): PackageDownloadRecord? {
         return buildDownloadRecordRequest(context)
+    }
+
+    override fun onDownloadBefore(context: ArtifactDownloadContext) {
+        super.onDownloadBefore(context)
+        with(context.artifactInfo as ConanArtifactInfo) {
+            packageClient
+                .findVersionByName(projectId, repoName, PackageKeys.ofConan(name), version).data
+                ?.apply { packageDownloadIntercept(context, this) }
+        }
     }
 
     fun createRemoteSearchUrl(context: ArtifactContext, path: String): String {

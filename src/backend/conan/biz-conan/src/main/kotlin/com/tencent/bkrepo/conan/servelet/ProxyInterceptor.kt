@@ -81,8 +81,8 @@ class ProxyInterceptor(
             //下载请求不拦截
             true
         } else {
-            conanRemoteService.proxyRequestToRemote(repositoryDetail, response)
-            false
+            //代理失败则不拦截
+            conanRemoteService.proxyRequestToRemote(repositoryDetail, response).not()
         }
 
     private fun isDownFilePath(request: HttpServletRequest): Boolean {

@@ -40,7 +40,6 @@ import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.SpringContextUtils
 import com.tencent.bkrepo.conan.constant.CONAN_INFOS
 import com.tencent.bkrepo.conan.constant.ConanMessageCode
-import com.tencent.bkrepo.conan.constant.EXPORT_SOURCES_TGZ_NAME
 import com.tencent.bkrepo.conan.constant.IGNORECASE
 import com.tencent.bkrepo.conan.constant.NAME
 import com.tencent.bkrepo.conan.constant.PATTERN
@@ -199,7 +198,7 @@ class ConanLocalRepository : LocalRepository() {
     // 检查模式是否有效
     fun isValidPattern(pattern: String): Boolean {
         // 定义匹配包名称和版本号的正则表达式模式
-        val nameVersionPattern = "[a-zA-Z0-9_*]+(/[a-zA-Z0-9.*_]+)?"
+        val nameVersionPattern = "[a-zA-Z0-9_*\\-]+(/[a-zA-Z0-9.*_]+)?"
         // 定义匹配用户和通道的正则表达式模式
         val userChannelPattern = "[a-zA-Z0-9_*]+"
 
@@ -228,4 +227,19 @@ class ConanLocalRepository : LocalRepository() {
     companion object {
         private val logger = LoggerFactory.getLogger(ConanLocalRepository::class.java)
     }
+}
+
+fun main() {
+    fun isValidPattern(pattern: String): Boolean {
+        // 定义匹配包名称和版本号的正则表达式模式
+        val nameVersionPattern = "[a-zA-Z0-9_*\\-_]+(/[a-zA-Z0-9.*_]+)?"
+        // 定义匹配用户和通道的正则表达式模式
+        val userChannelPattern = "[a-zA-Z0-9_*]+"
+
+        val fullPattern = "^$nameVersionPattern(@$userChannelPattern/$userChannelPattern)?$".toRegex()
+        return pattern.matches(fullPattern)
+    }
+
+    val isvalid = isValidPattern("llvm_openmp/14.0.6")
+    println("isvalid = ${isvalid}")
 }

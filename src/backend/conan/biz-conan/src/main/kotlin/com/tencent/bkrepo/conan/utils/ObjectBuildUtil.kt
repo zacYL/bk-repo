@@ -36,7 +36,7 @@ import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.conan.constant.CONAN_INFOS
 import com.tencent.bkrepo.conan.constant.DEFAULT_REVISION_V1
-import com.tencent.bkrepo.conan.constant.EXPORT_SOURCES_TGZ_NAME
+import com.tencent.bkrepo.conan.constant.EXPORT_TGZ_NAME
 import com.tencent.bkrepo.conan.constant.X_CONAN_SERVER_CAPABILITIES
 import com.tencent.bkrepo.conan.controller.ConanCommonController.Companion.capabilities
 import com.tencent.bkrepo.conan.pojo.ConanPackageUploadRequest
@@ -254,7 +254,7 @@ object ObjectBuildUtil {
         with(context) {
             val conanArtifactInfo = artifactInfo as ConanArtifactInfo
             val fullPath = PathUtils.generateFullPath(conanArtifactInfo)
-            return if (fullPath.endsWith(EXPORT_SOURCES_TGZ_NAME)) {
+            return if (fullPath.endsWith(EXPORT_TGZ_NAME)) {
                 PackageDownloadRecord(
                     projectId = projectId,
                     repoName = repoName,

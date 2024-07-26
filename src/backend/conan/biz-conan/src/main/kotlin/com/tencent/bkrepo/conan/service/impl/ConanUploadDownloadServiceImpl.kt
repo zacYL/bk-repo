@@ -34,7 +34,7 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadConte
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.service.util.SpringContextUtils
 import com.tencent.bkrepo.conan.constant.CONAN_MANIFEST
-import com.tencent.bkrepo.conan.constant.EXPORT_SOURCES_TGZ_NAME
+import com.tencent.bkrepo.conan.constant.EXPORT_TGZ_NAME
 import com.tencent.bkrepo.conan.constant.PACKAGES_FOLDER
 import com.tencent.bkrepo.conan.constant.PACKAGE_TGZ_NAME
 import com.tencent.bkrepo.conan.listener.event.ConanPackageUploadEvent
@@ -84,7 +84,7 @@ class ConanUploadDownloadServiceImpl(
      */
     override fun handleConanArtifactUpload(userId: String, artifactInfo: ConanArtifactInfo) {
         val fullPath = generateFullPath(artifactInfo)
-        if (fullPath.endsWith(EXPORT_SOURCES_TGZ_NAME)) {
+        if (fullPath.endsWith(EXPORT_TGZ_NAME)) {
             createVersion(
                 artifactInfo = artifactInfo,
                 userId = userId,

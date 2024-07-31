@@ -27,8 +27,6 @@
 
 package com.tencent.bkrepo.conan.artifact.repository
 
-import com.tencent.bkrepo.common.api.util.readJsonString
-import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
@@ -38,7 +36,6 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.SpringContextUtils
-import com.tencent.bkrepo.conan.constant.CONAN_INFOS
 import com.tencent.bkrepo.conan.constant.ConanMessageCode
 import com.tencent.bkrepo.conan.constant.IGNORECASE
 import com.tencent.bkrepo.conan.constant.NAME
@@ -49,7 +46,6 @@ import com.tencent.bkrepo.conan.exception.ConanException
 import com.tencent.bkrepo.conan.exception.ConanFileNotFoundException
 import com.tencent.bkrepo.conan.exception.ConanParameterInvalidException
 import com.tencent.bkrepo.conan.listener.event.ConanArtifactUploadEvent
-import com.tencent.bkrepo.conan.pojo.ConanFileReference
 import com.tencent.bkrepo.conan.pojo.ConanSearchResult
 import com.tencent.bkrepo.conan.pojo.RevisionInfo
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
@@ -58,6 +54,7 @@ import com.tencent.bkrepo.conan.service.impl.CommonService
 import com.tencent.bkrepo.conan.utils.ConanArtifactInfoUtil
 import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.buildDownloadRecordRequest
 import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.buildDownloadResponse
+import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.toConanFileReference
 import com.tencent.bkrepo.conan.utils.PathUtils
 import com.tencent.bkrepo.conan.utils.PathUtils.generateFullPath
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
@@ -184,12 +181,10 @@ class ConanLocalRepository : LocalRepository() {
 
     private fun searchRecipes(projectId: String, repoName: String): List<String> {
         val result = mutableListOf<String>()
-        packageClient.listAllPackageNames(projectId, repoName).data.orEmpty().forEach {
-            packageClient.listAllVersion(projectId, repoName, it).data.orEmpty().forEach { pv ->
-                val conanInfo = pv.packageMetadata.first { m ->
-                    m.key == CONAN_INFOS
-                }.value.toJsonString().readJsonString<List<ConanFileReference>>()
-                result.add(PathUtils.buildConanFileName(conanInfo.first()))
+        packageClient.listAllPackageNames(projectId, repoName).data.orEmpty().forEach { packageName ->
+            packageClient.listAllVersion(projectId, repoName, packageName).data.orEmpty().forEach { pv ->
+                val conanInfo = pv.packageMetadata.toConanFileReference()
+                result.add(PathUtils.buildConanFileName(conanInfo))
             }
         }
         return result.sorted()

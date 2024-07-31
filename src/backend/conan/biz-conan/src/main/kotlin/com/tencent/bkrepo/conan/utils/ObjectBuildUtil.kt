@@ -34,11 +34,17 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadCon
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
-import com.tencent.bkrepo.conan.constant.CONAN_INFOS
+import com.tencent.bkrepo.conan.constant.CHANNEL
 import com.tencent.bkrepo.conan.constant.DEFAULT_REVISION_V1
 import com.tencent.bkrepo.conan.constant.EXPORT_TGZ_NAME
+import com.tencent.bkrepo.conan.constant.NAME
+import com.tencent.bkrepo.conan.constant.PACKAGE_REVISION
+import com.tencent.bkrepo.conan.constant.REVISION
+import com.tencent.bkrepo.conan.constant.USERNAME
+import com.tencent.bkrepo.conan.constant.VERSION
 import com.tencent.bkrepo.conan.constant.X_CONAN_SERVER_CAPABILITIES
 import com.tencent.bkrepo.conan.controller.ConanCommonController.Companion.capabilities
+import com.tencent.bkrepo.conan.pojo.ConanFileReference
 import com.tencent.bkrepo.conan.pojo.ConanPackageUploadRequest
 import com.tencent.bkrepo.conan.pojo.ConanRecipeDeleteRequest
 import com.tencent.bkrepo.conan.pojo.ConanRecipeUploadRequest
@@ -104,6 +110,29 @@ object ObjectBuildUtil {
         }
     }
 
+    private fun ConanFileReference.toPackageMetadataList(): List<MetadataModel> {
+        return listOf(
+            MetadataModel(NAME, name),
+            MetadataModel(VERSION, version),
+            MetadataModel(USERNAME, userName),
+            MetadataModel(CHANNEL, channel),
+            MetadataModel(REVISION, revision.orEmpty()),
+            MetadataModel(PACKAGE_REVISION, pRevision.orEmpty())
+        )
+    }
+
+    fun List<MetadataModel>.toConanFileReference(): ConanFileReference {
+        val map = this.filter { it.system }.associate { it.key to it.value.toString() }
+        return ConanFileReference(
+            name = map[NAME]!!,
+            version = map[VERSION]!!,
+            userName = map[USERNAME]!!,
+            channel = map[CHANNEL]!!,
+            revision = map[REVISION],
+            pRevision = map[PACKAGE_REVISION]
+        )
+    }
+
     private fun addPackageMetadata(
         artifactInfo: ConanArtifactInfo,
         sourceType: ArtifactChannel? = null,
@@ -113,10 +142,10 @@ object ObjectBuildUtil {
         sourceType?.let {
             result.add(MetadataModel(SOURCE_TYPE, sourceType))
         }
-        val oldConInfo = packageMetadata?.first { it.key == CONAN_INFOS }?.value
-        val conanInfo = oldConInfo?.apply { mutableListOf(this).add(convertToConanFileReference(artifactInfo, artifactInfo.revision, artifactInfo.pRevision)) }
-            ?: listOf(convertToConanFileReference(artifactInfo, artifactInfo.revision, artifactInfo.pRevision))
-        result.add(MetadataModel(CONAN_INFOS, conanInfo))
+        convertToConanFileReference(artifactInfo, artifactInfo.revision, artifactInfo.pRevision)
+            .toPackageMetadataList()
+            .apply { result.addAll(this) }
+        packageMetadata?.filterNot { it.system }?.let { result.addAll(it) }
         return result
     }
 

@@ -52,7 +52,7 @@ export default {
         )
     },
     // 分页， 依赖目录页面搜索功能，通过文件或文件夹名称正则匹配符合条件的文件或文件夹，需要排除二进制仓库
-    getTableListByName ({ commit }, { projectId, name, repoType = ['DOCKER', 'MAVEN', 'PYPI', 'NPM', 'HELM', 'RDS', 'COMPOSER', 'RPM', 'NUGET', 'GIT', 'OCI'], current = 1, limit = 20, sortType = 'lastModifiedDate' }) {
+    getTableListByName ({ commit }, { projectId, name, repoType = ['DOCKER', 'MAVEN', 'PYPI', 'NPM', 'HELM', 'RDS', 'COMPOSER', 'RPM', 'NUGET', 'GIT', 'OCI', 'CONAN'], current = 1, limit = 20, sortType = 'lastModifiedDate' }) {
         return Vue.prototype.$ajax.post(`${prefix}/node/search`, {
             page: {
                 pageNumber: current,

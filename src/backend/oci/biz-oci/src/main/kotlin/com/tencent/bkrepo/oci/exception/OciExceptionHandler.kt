@@ -45,11 +45,15 @@ import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.LocaleMessageUtils
 import com.tencent.bkrepo.oci.artifact.auth.OciLoginAuthHandler
 import com.tencent.bkrepo.oci.config.OciProperties
+import com.tencent.bkrepo.oci.constant.BLOB_UNKNOWN_CODE
+import com.tencent.bkrepo.oci.constant.DENIED_CODE
 import com.tencent.bkrepo.oci.constant.DOCKER_API_VERSION
 import com.tencent.bkrepo.oci.constant.DOCKER_HEADER_API_VERSION
+import com.tencent.bkrepo.oci.constant.NAME_UNKNOWN_CODE
 import com.tencent.bkrepo.oci.constant.UNAUTHORIZED_CODE
 import com.tencent.bkrepo.oci.constant.UNAUTHORIZED_DESCRIPTION
 import com.tencent.bkrepo.oci.constant.UNAUTHORIZED_MESSAGE
+import com.tencent.bkrepo.oci.constant.UNSUPPORTED_CODE
 import com.tencent.bkrepo.oci.pojo.response.OciErrorResponse
 import com.tencent.bkrepo.oci.pojo.response.OciResponse
 import org.slf4j.LoggerFactory
@@ -64,10 +68,10 @@ import javax.servlet.http.HttpServletResponse
 @Order(Ordered.HIGHEST_PRECEDENCE + 1)
 @RestControllerAdvice("com.tencent.bkrepo.oci")
 class OciExceptionHandler(
-    private val ociProperties: OciProperties
+    private val ociProperties: OciProperties,
 ) {
 
-/**
+    /**
      * 单独处理认证失败异常，需要添加WWW_AUTHENTICATE响应头触发浏览器登录
      */
     @ExceptionHandler(AuthenticationException::class)
@@ -91,13 +95,13 @@ class OciExceptionHandler(
     @ExceptionHandler(OciRepoNotFoundException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     fun handlerRepoNotFoundException(exception: OciRepoNotFoundException) {
-        ociResponse(exception)
+        ociResponse(exception, NAME_UNKNOWN_CODE)
     }
 
     @ExceptionHandler(OciFileNotFoundException::class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     fun handlerOciFileNotFoundException(exception: OciFileNotFoundException) {
-        ociResponse(exception)
+        ociResponse(exception, BLOB_UNKNOWN_CODE)
     }
 
     @ExceptionHandler(OciBadRequestException::class)
@@ -109,7 +113,7 @@ class OciExceptionHandler(
     @ExceptionHandler(OciForbiddenRequestException::class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     fun handleForbiddenException(exception: OciForbiddenRequestException) {
-        ociResponse(exception)
+        ociResponse(exception, DENIED_CODE)
     }
 
     @ExceptionHandler(OciFileAlreadyExistsException::class)
@@ -121,9 +125,7 @@ class OciExceptionHandler(
     @ExceptionHandler(ArtifactNotFoundException::class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     fun handleException(exception: ArtifactNotFoundException) {
-        val message = LocaleMessageUtils.getLocalizedMessage(exception.messageCode, exception.params)
-        val responseObject = OciErrorResponse(message, exception.messageCode.getCode(), null)
-        ociResponse(responseObject, exception)
+        ociResponse(exception)
     }
 
     @ExceptionHandler(ErrorCodeException::class)
@@ -135,25 +137,25 @@ class OciExceptionHandler(
     @ExceptionHandler(PermissionException::class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     fun handleException(exception: PermissionException) {
-        ociResponse(exception)
+        ociResponse(exception, DENIED_CODE)
     }
 
     @ExceptionHandler(ArtifactDownloadForbiddenException::class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     fun handleException(exception: ArtifactDownloadForbiddenException) {
-        ociResponse(exception)
+        ociResponse(exception, DENIED_CODE)
     }
 
-    private fun ociResponse(exception: ErrorCodeException) {
+    private fun ociResponse(exception: ErrorCodeException, code: String = UNSUPPORTED_CODE) {
         val errorMessage = LocaleMessageUtils.getLocalizedMessage(exception.messageCode, exception.params)
-        val responseObject = OciErrorResponse(errorMessage, exception.messageCode.getCode(), null)
+        val responseObject = OciErrorResponse(errorMessage, code, null)
         ociResponse(responseObject, exception)
     }
 
     private fun ociResponse(
         responseObject: OciErrorResponse,
         exception: Exception,
-        response: HttpServletResponse? = null
+        response: HttpServletResponse? = null,
     ) {
         logOciException(exception, responseObject)
         val responseString = JsonUtils.objectMapper.writeValueAsString(OciResponse.errorResponse(responseObject))

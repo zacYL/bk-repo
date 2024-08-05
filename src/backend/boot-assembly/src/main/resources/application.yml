@@ -79,4 +79,4 @@ feign:
     decode-slash: false
 
 job.repo-refresh.enabled: false
-job.artifact-push.enabled: false
+job.artifact-push.enabled: true

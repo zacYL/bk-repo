@@ -20,6 +20,6 @@ logging:
 oci:
   domain: __BK_REPO_DOCKER_DOMAIN__
   authUrl: __BK_HTTP_SCHEMA__://${oci.domain}/v2/auth
-  http: true
+  https: false
 service:
   name: oci

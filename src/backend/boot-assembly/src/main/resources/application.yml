@@ -39,7 +39,7 @@ spring:
     allow-bean-definition-overriding: true
 
 cns:
-  enabled: false
+  enabled: true
 
 logging:
   config: classpath:logback-config.xml

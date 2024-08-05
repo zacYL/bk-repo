@@ -193,7 +193,7 @@ class ConanLocalRepository : LocalRepository() {
     // 检查模式是否有效
     fun isValidPattern(pattern: String): Boolean {
         // 定义匹配包名称和版本号的正则表达式模式
-        val nameVersionPattern = "[a-zA-Z0-9_*\\-]+(/[a-zA-Z0-9.*_]+)?"
+        val nameVersionPattern = "[a-z0-9_*+.\\-]+(/[a-zA-Z0-9.*_]+)?"
         // 定义匹配用户和通道的正则表达式模式
         val userChannelPattern = "[a-zA-Z0-9_*]+"
 
@@ -202,7 +202,7 @@ class ConanLocalRepository : LocalRepository() {
     }
 
     fun matchPattern(pattern: String, pList: List<String>, ignoreCase: Boolean): List<String> {
-        if (isValidPattern(pattern).not()) throw ConanParameterInvalidException("PATTERN")
+        if (isValidPattern(pattern).not()) throw ConanParameterInvalidException("Unexpected query syntax")
 
         // 将通配符模式转换为正则表达式
         val regexPattern = pattern.replace("*", ".*")
@@ -222,19 +222,4 @@ class ConanLocalRepository : LocalRepository() {
     companion object {
         private val logger = LoggerFactory.getLogger(ConanLocalRepository::class.java)
     }
-}
-
-fun main() {
-    fun isValidPattern(pattern: String): Boolean {
-        // 定义匹配包名称和版本号的正则表达式模式
-        val nameVersionPattern = "[a-zA-Z0-9_*\\-_]+(/[a-zA-Z0-9.*_]+)?"
-        // 定义匹配用户和通道的正则表达式模式
-        val userChannelPattern = "[a-zA-Z0-9_*]+"
-
-        val fullPattern = "^$nameVersionPattern(@$userChannelPattern/$userChannelPattern)?$".toRegex()
-        return pattern.matches(fullPattern)
-    }
-
-    val isvalid = isValidPattern("llvm_openmp/14.0.6")
-    println("isvalid = ${isvalid}")
 }

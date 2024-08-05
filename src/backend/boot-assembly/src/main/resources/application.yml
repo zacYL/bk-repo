@@ -78,4 +78,4 @@ feign:
   client:
     decode-slash: false
 
-job.repo-refresh.enabled: false
+job.repo-refresh.enabled: true

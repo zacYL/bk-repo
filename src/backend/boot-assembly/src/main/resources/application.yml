@@ -77,4 +77,4 @@ management:
 feign:
   client:
     decode-slash: false
-job.repo-refresh.enabled: true
+job.repo-refresh.enabled: false

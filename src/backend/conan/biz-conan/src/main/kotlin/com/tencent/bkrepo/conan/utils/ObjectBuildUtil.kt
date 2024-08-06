@@ -36,7 +36,6 @@ import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.conan.constant.CHANNEL
 import com.tencent.bkrepo.conan.constant.DEFAULT_REVISION_V1
-import com.tencent.bkrepo.conan.constant.EXPORT_TGZ_NAME
 import com.tencent.bkrepo.conan.constant.NAME
 import com.tencent.bkrepo.conan.constant.PACKAGE_REVISION
 import com.tencent.bkrepo.conan.constant.REVISION
@@ -283,7 +282,7 @@ object ObjectBuildUtil {
         with(context) {
             val conanArtifactInfo = artifactInfo as ConanArtifactInfo
             val fullPath = PathUtils.generateFullPath(conanArtifactInfo)
-            return if (fullPath.endsWith(EXPORT_TGZ_NAME)) {
+            return if (PathUtils.isConanFile(fullPath)) {
                 PackageDownloadRecord(
                     projectId = projectId,
                     repoName = repoName,

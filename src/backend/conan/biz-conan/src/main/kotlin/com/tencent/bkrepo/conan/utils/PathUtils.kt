@@ -32,6 +32,8 @@ import com.tencent.bkrepo.common.api.constant.CharPool.COLON
 import com.tencent.bkrepo.common.api.constant.CharPool.HASH_TAG
 import com.tencent.bkrepo.common.api.constant.CharPool.SLASH
 import com.tencent.bkrepo.common.api.constant.StringPool.UNDERSCORE
+import com.tencent.bkrepo.conan.constant.CONANFILE
+import com.tencent.bkrepo.conan.constant.CONANFILE_TXT
 import com.tencent.bkrepo.conan.constant.CONANINFO
 import com.tencent.bkrepo.conan.constant.CONANS_URL_TAG
 import com.tencent.bkrepo.conan.constant.CONAN_V2
@@ -230,5 +232,9 @@ object PathUtils {
 
     fun isFirstQueryPath(uri: String): Boolean {
         return isSearchPath(uri) || (uri.endsWith("/latest") && uri.contains("/packages").not())
+    }
+
+    fun isConanFile(uri: String): Boolean {
+        return uri.endsWith(CONANFILE) || uri.endsWith(CONANFILE_TXT)
     }
 }

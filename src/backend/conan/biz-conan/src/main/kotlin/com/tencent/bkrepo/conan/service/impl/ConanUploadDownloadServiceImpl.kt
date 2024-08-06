@@ -27,17 +27,13 @@
 
 package com.tencent.bkrepo.conan.service.impl
 
-import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.service.util.SpringContextUtils
-import com.tencent.bkrepo.conan.constant.CONANFILE
-import com.tencent.bkrepo.conan.constant.CONANFILE_TXT
 import com.tencent.bkrepo.conan.constant.CONAN_MANIFEST
-import com.tencent.bkrepo.conan.constant.EXPORT_TGZ_NAME
 import com.tencent.bkrepo.conan.constant.PACKAGES_FOLDER
 import com.tencent.bkrepo.conan.constant.PACKAGE_TGZ_NAME
 import com.tencent.bkrepo.conan.listener.event.ConanPackageUploadEvent
@@ -46,6 +42,7 @@ import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
 import com.tencent.bkrepo.conan.service.ConanUploadDownloadService
 import com.tencent.bkrepo.conan.utils.ObjectBuildUtil
 import com.tencent.bkrepo.conan.utils.PathUtils.generateFullPath
+import com.tencent.bkrepo.conan.utils.PathUtils.isConanFile
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.PackageClient
 import org.slf4j.LoggerFactory
@@ -87,7 +84,7 @@ class ConanUploadDownloadServiceImpl(
      */
     override fun handleConanArtifactUpload(userId: String, artifactInfo: ConanArtifactInfo) {
         val fullPath = generateFullPath(artifactInfo)
-        if (fullPath.endsWith(CONANFILE) || fullPath.endsWith(CONANFILE_TXT)) {
+        if (isConanFile(fullPath)) {
             createVersion(
                 artifactInfo = artifactInfo,
                 userId = userId,

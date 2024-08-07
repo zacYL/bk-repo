@@ -83,8 +83,9 @@ class ActuatorAuthConfiguration {
     @Bean
     fun actuatorAuthInterceptor(
         authenticationManager: AuthenticationManager,
-        permissionManager: PermissionManager
+        permissionManager: PermissionManager,
+        webEndpointProperties: WebEndpointProperties
     ): ActuatorAuthInterceptor {
-        return ActuatorAuthInterceptor(authenticationManager, permissionManager)
+        return ActuatorAuthInterceptor(authenticationManager, permissionManager, webEndpointProperties)
     }
 }

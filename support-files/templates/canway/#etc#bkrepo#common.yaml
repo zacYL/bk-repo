@@ -12,6 +12,7 @@ spring:
         health-check-path: /management/health
         heartbeat:
           enabled: true
+          reregister-service-on-failure: true
         query-passing: true
         preferIpAddress: true
       port: __DEVOPS_CONSUL_PORT__

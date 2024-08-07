@@ -67,7 +67,6 @@ import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.storage.innercos.http.HttpMethod
 import com.tencent.bkrepo.oci.constant.CATALOG_REQUEST
 import com.tencent.bkrepo.oci.constant.DOCKER_DISTRIBUTION_MANIFEST_LIST_V2
-import com.tencent.bkrepo.oci.constant.DOCKER_DISTRIBUTION_MANIFEST_V2
 import com.tencent.bkrepo.oci.constant.DOCKER_LINK
 import com.tencent.bkrepo.oci.constant.IMAGE_INDEX_MEDIA_TYPE
 import com.tencent.bkrepo.oci.constant.IMAGE_VERSION
@@ -265,15 +264,11 @@ class OciRegistryRemoteRepository(
         }
         // 拉取第三方仓库时，默认会返回v1版本的镜像格式
         if (url.contains("/manifests/")) {
-            val acceptList = HttpContextHolder.getRequest().getHeaders(ACCEPT).toList()
-            if (acceptList.contains(DOCKER_DISTRIBUTION_MANIFEST_V2))
-                requestBuilder.addHeader(ACCEPT, DOCKER_DISTRIBUTION_MANIFEST_V2)
-            if (acceptList.contains(DOCKER_DISTRIBUTION_MANIFEST_LIST_V2))
-                requestBuilder.addHeader(ACCEPT, DOCKER_DISTRIBUTION_MANIFEST_LIST_V2)
-            if (acceptList.contains(OCI_IMAGE_MANIFEST_MEDIA_TYPE))
-                requestBuilder.addHeader(ACCEPT, OCI_IMAGE_MANIFEST_MEDIA_TYPE)
-            if (acceptList.contains(IMAGE_INDEX_MEDIA_TYPE))
-                requestBuilder.addHeader(ACCEPT, IMAGE_INDEX_MEDIA_TYPE)
+            HttpContextHolder.getRequest().getHeaders(ACCEPT).iterator().forEach {
+                if (!it.isNullOrBlank()) {
+                    requestBuilder.addHeader(ACCEPT, it)
+                }
+            }
         }
         return requestBuilder.build()
     }

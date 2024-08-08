@@ -132,7 +132,7 @@ class NpmLocalRepository(
 
     override fun query(context: ArtifactQueryContext): ArtifactInputStream? {
         val fullPath = context.getStringAttribute(NPM_FILE_FULL_PATH)!!
-        if (!ArtifactContextHolder.getUrlPath(this::javaClass.name)!!.startsWith("/ext/")) {
+        if (ArtifactContextHolder.getUrlPath(this::javaClass.name)?.startsWith("/ext/") != true) {
             context.getFullPathInterceptors().forEach { it.intercept(context.projectId, fullPath) }
         }
         return this.onQuery(context) ?: run {

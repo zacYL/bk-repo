@@ -267,6 +267,7 @@ class OciRegistryRemoteRepository(
             HttpContextHolder.getRequest().getHeaders(ACCEPT).iterator().forEach {
                 if (!it.isNullOrBlank()) {
                     requestBuilder.addHeader(ACCEPT, it)
+                    logger.info("ACCEPT header added: $it")
                 }
             }
         }

@@ -42,4 +42,8 @@ object MediaTypes {
     const val APPLICATION_TGZ = "application/x-tar"
     const val APPLICATION_ICO = "image/x-icon"
     const val APPLICATION_APK = "application/vnd.android.package-archive"
+    const val APPLICATION_OCI_INDEX_V1 = "application/vnd.oci.image.index.v1+json"
+    const val APPLICATION_OCI_MANIFEST_V1 = "application/vnd.oci.image.manifest.v1+json"
+    const val APPLICATION_DOCKER_MANIFEST_LIST_V2 = "application/vnd.docker.distribution.manifest.list.v2+json"
+    const val APPLICATION_DOCKER_MANIFEST_V2 = "application/vnd.docker.distribution.manifest.v2+json"
 }

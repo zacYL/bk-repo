@@ -305,6 +305,12 @@ open class DefaultArtifactResourceWriter(
             add("ico", MediaTypes.APPLICATION_ICO)
             add("apk", MediaTypes.APPLICATION_APK)
         }
-        private val binaryMediaTypes = setOf(MediaTypes.APPLICATION_APK)
+        private val binaryMediaTypes = setOf(
+            MediaTypes.APPLICATION_APK,
+            MediaTypes.APPLICATION_OCI_INDEX_V1,
+            MediaTypes.APPLICATION_OCI_MANIFEST_V1,
+            MediaTypes.APPLICATION_DOCKER_MANIFEST_LIST_V2,
+            MediaTypes.APPLICATION_DOCKER_MANIFEST_V2
+        )
     }
 }

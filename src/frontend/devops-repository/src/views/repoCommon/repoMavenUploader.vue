@@ -139,7 +139,8 @@
                 }
                 // 关闭弹窗时重置滚动条需要的数据
                 this.onAbortUpload()
-                this.$emit('cancel', false)
+                // 文件解析成功后点击取消按钮
+                this.cancelUploadArtifact()
             },
             onRequestUpload (uploadFile) {
                 this.isLoading = true

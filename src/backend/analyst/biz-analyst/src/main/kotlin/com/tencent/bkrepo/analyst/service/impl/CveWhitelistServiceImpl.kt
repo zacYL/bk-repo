@@ -7,7 +7,12 @@ import com.tencent.bkrepo.analyst.service.CveWhitelistService
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.EscapeUtils
 import com.tencent.bkrepo.common.api.util.Preconditions
+import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
+import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
+import com.tencent.bkrepo.common.operate.api.OperateLogService
+import com.tencent.bkrepo.common.security.util.SecurityUtils
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.query.Criteria
@@ -17,11 +22,13 @@ import java.time.LocalDateTime
 
 @Service
 class CveWhitelistServiceImpl(
-    private val cveWhitelistDao: CveWhitelistDao
+    private val cveWhitelistDao: CveWhitelistDao,
+    private val operateLogService: OperateLogService
 ) : CveWhitelistService {
     override fun insert(cveId: String, userId: String) {
         if (getByCveId(cveId) != null) return
         cveWhitelistDao.insert(transformToT(cveId, userId))
+        operateLog(EventType.CVE_WHITE_ADD, mapOf("cveId" to cveId))
     }
 
     override fun insertBatch(cveIds: List<String>, userId: String) {
@@ -29,6 +36,19 @@ class CveWhitelistServiceImpl(
             cveIds.filter { cveId -> !(getByCveIds(cveIds).map { it?.cveId }.contains(cveId)) }
                 .map { transformToT(it, userId) }
         )
+        operateLog(EventType.CVE_WHITE_ADD_BATCH, mapOf("cveIds" to cveIds))
+    }
+
+    private fun operateLog(type: EventType, data: Map<String, Any>) {
+        val event = ArtifactEvent(
+            type = type,
+            projectId = "",
+            repoName = "",
+            resourceKey = "",
+            userId = SecurityUtils.getUserId(),
+            data = data
+        )
+        operateLogService.saveEventAsync(event, HttpContextHolder.getClientAddress())
     }
 
     override fun getByCveId(cveId: String): CveWhitelistInfo? {

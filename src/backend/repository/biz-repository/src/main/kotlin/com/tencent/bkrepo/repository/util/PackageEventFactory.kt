@@ -4,6 +4,7 @@ import com.tencent.bkrepo.common.artifact.event.packages.VersionCreatedEvent
 import com.tencent.bkrepo.common.artifact.event.packages.VersionDeletedEvent
 import com.tencent.bkrepo.common.artifact.event.packages.VersionDownloadEvent
 import com.tencent.bkrepo.common.artifact.event.packages.VersionUpdatedEvent
+import com.tencent.bkrepo.common.artifact.event.packages.VersionUpgradedEvent
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionUpdateRequest
@@ -121,6 +122,35 @@ object PackageEventFactory {
             packageVersion = versionName,
             userId = createdBy,
             realIpAddress = realIpAddress
+        )
+    }
+
+    /**
+     * 包版本晋级事件
+     */
+    fun buildVersionUpgradedEvent(
+        projectId: String,
+        repoName: String,
+        packageType: PackageType,
+        packageKey: String,
+        packageName: String,
+        versionName: String,
+        createdBy: String,
+        realIpAddress: String?,
+        oldStage: String,
+        newStage: String
+    ): VersionUpgradedEvent {
+        return VersionUpgradedEvent(
+            projectId = projectId,
+            repoName = repoName,
+            packageType = packageType.name,
+            packageKey = packageKey,
+            packageName = packageName,
+            packageVersion = versionName,
+            userId = createdBy,
+            realIpAddress = realIpAddress,
+            oldStage = oldStage,
+            newStage = newStage
         )
     }
 }

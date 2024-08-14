@@ -34,12 +34,16 @@ package com.tencent.bkrepo.repository.service.packages.impl
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
+import com.tencent.bkrepo.common.security.util.SecurityUtils
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
+import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
 import com.tencent.bkrepo.repository.dao.PackageDao
 import com.tencent.bkrepo.repository.dao.PackageVersionDao
 import com.tencent.bkrepo.repository.model.TPackageVersion
 import com.tencent.bkrepo.repository.pojo.stage.ArtifactStageEnum
 import com.tencent.bkrepo.repository.pojo.stage.StageUpgradeRequest
 import com.tencent.bkrepo.repository.service.packages.StageService
+import com.tencent.bkrepo.repository.util.PackageEventFactory
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
@@ -59,7 +63,10 @@ class StageServiceImpl(
 
     override fun upgrade(request: StageUpgradeRequest) {
         with(request) {
-            val packageVersion = findPackageVersion(projectId, repoName, packageKey, version)
+            val tPackage = packageDao.findByKey(projectId, repoName, packageKey)
+                ?: throw ErrorCodeException(CommonMessageCode.RESOURCE_NOT_FOUND, packageKey)
+            val packageVersion = packageVersionDao.findByName(tPackage.id!!, version)
+                ?: throw ErrorCodeException(CommonMessageCode.RESOURCE_NOT_FOUND, version)
             try {
                 val oldStage = ArtifactStageEnum.ofTagOrDefault(packageVersion.stageTag.lastOrNull())
                 val newStage = ArtifactStageEnum.ofTagOrNull(newTag).let { oldStage.upgrade(it) }
@@ -69,6 +76,20 @@ class StageServiceImpl(
                 packageVersion.lastModifiedBy = operator
                 packageVersionDao.save(packageVersion)
                 logger.info("Upgrade stage[$packageKey] from $oldStage to $newStage success")
+                publishEvent(
+                    PackageEventFactory.buildVersionUpgradedEvent(
+                        projectId = projectId,
+                        repoName = repoName,
+                        packageType = tPackage.type,
+                        packageKey = packageKey,
+                        packageName = tPackage.name,
+                        versionName = packageVersion.name,
+                        createdBy = SecurityUtils.getUserId(),
+                        realIpAddress = HttpContextHolder.getClientAddress(),
+                        oldStage = oldStage.tag,
+                        newStage = newStage.tag
+                    )
+                )
             } catch (exception: IllegalArgumentException) {
                 throw ErrorCodeException(ArtifactMessageCode.STAGE_UPGRADE_ERROR, exception.message.orEmpty())
             }

@@ -209,7 +209,6 @@ open class OperateLogServiceImpl(
         return mutableListOf<EventType>().apply {
             addAll(repositoryEvent)
             addAll(packageEvent)
-            addAll(adminEvent)
             addAll(projectEvent)
             addAll(metadataEvent)
             addAll(cveWhiteEvent)

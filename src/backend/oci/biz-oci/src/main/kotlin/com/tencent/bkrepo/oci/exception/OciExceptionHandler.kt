@@ -61,6 +61,7 @@ import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.ExceptionHandler
+import org.springframework.web.bind.annotation.RequestMethod
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import javax.servlet.http.HttpServletResponse
@@ -158,15 +159,21 @@ class OciExceptionHandler(
         response: HttpServletResponse? = null,
     ) {
         logOciException(exception, responseObject)
-        val responseString = JsonUtils.objectMapper.writeValueAsString(OciResponse.errorResponse(responseObject))
-        val httpResponse = if (response == null) {
-            val temp = HttpContextHolder.getResponse()
-            temp.contentType = MediaTypes.APPLICATION_JSON
-            temp
-        } else {
-            response
+
+        val httpRequest = HttpContextHolder.getRequest()
+        val method = httpRequest.method
+
+        val httpResponse = response ?: HttpContextHolder.getResponse().apply {
+            contentType = MediaTypes.APPLICATION_JSON
         }
-        httpResponse.writer.println(responseString)
+
+        // 如果是HEAD请求，返回空响应体
+        if (method.equals(RequestMethod.HEAD.name, ignoreCase = true)) {
+            httpResponse.writer.close()  // 关闭输出流，确保没有写入响应体
+        } else {
+            val responseString = JsonUtils.objectMapper.writeValueAsString(OciResponse.errorResponse(responseObject))
+            httpResponse.writer.println(responseString)
+        }
     }
 
     private fun logOciException(exception: Exception, responseObject: OciErrorResponse) {

@@ -124,6 +124,16 @@
         created () {
 
         },
+        destroyed () {
+            // 刷新取消
+            window.removeEventListener('beforeunload', () => {
+                this.cancelUploadArtifact()
+            })
+        },
+        beforeRouteLeave () {
+            // 路由取消
+            this.cancelUploadArtifact()
+        },
         methods: {
             ...mapActions([
                 'uploadArtifactory',

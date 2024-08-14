@@ -34,6 +34,7 @@ enum class EventType(val msgKey: String) {
     // PROJECT
     PROJECT_CREATED("artifact.event.project-created"),
     PROJECT_DELETED("artifact.event.project-deleted"),
+    PROJECT_UPDATED("artifact.event.project-updated"),
 
     // REPOSITORY
     REPO_CREATED("artifact.event.repo-created"),

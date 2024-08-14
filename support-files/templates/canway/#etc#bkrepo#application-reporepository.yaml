@@ -10,7 +10,7 @@ spring:
   cloud:
     stream:
       function:
-        definition: devopsEvent
+        definition: devopsProjectDeleted;devopsProjectUpdated
       bindings:
         artifactEvent-out-0:
           destination: artifactEvent
@@ -18,9 +18,13 @@ spring:
         bkrepo_artifact_repo:
           destination: bkrepo_artifact_repo
           binder: pulsar
-        devopsEvent-in-0:
+        devopsProjectDeleted-in-0:
           group: repository
-          destination: devopsEvent
+          destination: devopsProjectDeleted
+          binder: pulsar
+        devopsProjectUpdated-in-0:
+          group: repository
+          destination: devopsProjectUpdated
           binder: pulsar
 server:
   port: __BK_REPO_REPOSITORY_PORT__

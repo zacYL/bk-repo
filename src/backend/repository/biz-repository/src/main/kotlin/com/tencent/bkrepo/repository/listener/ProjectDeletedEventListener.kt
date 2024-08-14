@@ -6,17 +6,17 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.util.function.Consumer
 
-@Component("devopsEvent")
-class ProjectDeleteListener(
+@Component("devopsProjectDeleted")
+class ProjectDeletedEventListener(
     private val projectService: ProjectService
 ) : Consumer<ProjectDeletedEvent> {
 
     override fun accept(event: ProjectDeletedEvent) {
-        logger.info("Receive project delete event: $event")
+        logger.info("Received project-deleted event: $event")
         projectService.deleteProject(event.userId, event.projectId, event.projectId)
     }
 
     companion object {
-        private val logger = LoggerFactory.getLogger(ProjectDeleteListener::class.java)
+        private val logger = LoggerFactory.getLogger(ProjectDeletedEventListener::class.java)
     }
 }

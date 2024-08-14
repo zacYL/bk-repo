@@ -107,7 +107,7 @@ class OciExceptionHandler(
     @ExceptionHandler(OciBadRequestException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     fun handleException(exception: OciBadRequestException) {
-        ociResponse(exception)
+        ociResponse(exception, BLOB_UNKNOWN_CODE)
     }
 
     @ExceptionHandler(OciForbiddenRequestException::class)
@@ -119,19 +119,19 @@ class OciExceptionHandler(
     @ExceptionHandler(OciFileAlreadyExistsException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     fun handleException(exception: OciFileAlreadyExistsException) {
-        ociResponse(exception)
+        ociResponse(exception, BLOB_UNKNOWN_CODE)
     }
 
     @ExceptionHandler(ArtifactNotFoundException::class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     fun handleException(exception: ArtifactNotFoundException) {
-        ociResponse(exception)
+        ociResponse(exception, BLOB_UNKNOWN_CODE)
     }
 
     @ExceptionHandler(ErrorCodeException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     fun handleException(exception: ErrorCodeException) {
-        ociResponse(exception)
+        ociResponse(exception, BLOB_UNKNOWN_CODE)
     }
 
     @ExceptionHandler(PermissionException::class)

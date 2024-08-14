@@ -169,6 +169,7 @@ class OciExceptionHandler(
 
         // 如果是HEAD请求，返回空响应体
         if (method.equals(RequestMethod.HEAD.name, ignoreCase = true)) {
+            httpResponse.status = HttpStatus.NOT_FOUND.value()
             httpResponse.writer.close()  // 关闭输出流，确保没有写入响应体
         } else {
             val responseString = JsonUtils.objectMapper.writeValueAsString(OciResponse.errorResponse(responseObject))

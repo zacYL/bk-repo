@@ -78,7 +78,7 @@
         </template>
         <!-- 不存在包 -->
         <template v-else>
-            <empty-guide class="empty-guide" :article="articleGuide"></empty-guide>
+            <empty-guide class="empty-guide" :store-type="storeType" :article="articleGuide"></empty-guide>
         </template>
 
         <bk-sideslider :is-show.sync="showGuide" :quick-close="true" :width="600">

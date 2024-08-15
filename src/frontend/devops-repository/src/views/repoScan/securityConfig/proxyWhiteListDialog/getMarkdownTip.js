@@ -14,13 +14,13 @@ export default () => `
   \`\`\`json
   [
       {
-          "packageKey":"conm.alibaba:fastjson",
+          "packageKey":"com.alibaba:fastjson",
           "versions":["1.0","2.0"],
           "type":"MAVEN"
       },
       {
           "packageKey":"net.canway:bkrepo",
-          "versions":["1.1","2.2],
+          "versions":["1.1","2.2"],
           "type":"MAVEN"
       }
   ]

@@ -325,8 +325,7 @@ class OciRegistryLocalRepository(
                 " in repo ${context.artifactInfo.getRepoIdentify()}..."
         )
         val artifactInfo = context.artifactInfo as OciArtifactInfo
-        val fullPath = ociOperationService.getNodeFullPath(artifactInfo) ?: return null
-        with(context) { getFullPathInterceptors().forEach { it.intercept(projectId, fullPath) } }
+        val fullPath = ociOperationService.getNodeFullPath(artifactInfo)
         return downloadArtifact(context, fullPath)
     }
 
@@ -358,6 +357,11 @@ class OciRegistryLocalRepository(
         if (fullPath == null) return null
         val node = getNodeDetail(context.artifactInfo as OciArtifactInfo, fullPath)
             ?.also { downloadIntercept(context, it) }
+        with(context) {
+            if (artifactInfo is OciManifestArtifactInfo) {
+                getFullPathInterceptors().forEach { it.intercept(projectId, fullPath) }
+            }
+        }
         logger.info(
             "Starting to download $fullPath " +
                 "in repo: ${context.artifactInfo.getRepoIdentify()}"

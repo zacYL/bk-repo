@@ -39,6 +39,7 @@ import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.util.JsonUtils
 import com.tencent.bkrepo.common.artifact.exception.ArtifactDownloadForbiddenException
 import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
+import com.tencent.bkrepo.common.artifact.exception.PathPatternNotMatchException
 import com.tencent.bkrepo.common.security.exception.AuthenticationException
 import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
@@ -145,6 +146,12 @@ class OciExceptionHandler(
     @ResponseStatus(HttpStatus.FORBIDDEN)
     fun handleException(exception: ArtifactDownloadForbiddenException) {
         ociResponse(exception, DENIED_CODE)
+    }
+
+    @ExceptionHandler(PathPatternNotMatchException::class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    fun handleException(exception: PathPatternNotMatchException) {
+        ociResponse(exception, NAME_UNKNOWN_CODE)
     }
 
     private fun ociResponse(exception: ErrorCodeException, code: String = UNSUPPORTED_CODE) {

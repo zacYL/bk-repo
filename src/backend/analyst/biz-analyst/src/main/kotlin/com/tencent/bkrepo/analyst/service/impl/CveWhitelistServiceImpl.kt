@@ -7,10 +7,10 @@ import com.tencent.bkrepo.analyst.service.CveWhitelistService
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.api.util.EscapeUtils
 import com.tencent.bkrepo.common.api.util.Preconditions
-import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.operate.api.OperateLogService
+import com.tencent.bkrepo.common.operate.api.pojo.OperateLog
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import org.slf4j.LoggerFactory
@@ -40,15 +40,17 @@ class CveWhitelistServiceImpl(
     }
 
     private fun operateLog(type: EventType, data: Map<String, Any>) {
-        val event = ArtifactEvent(
+        val log = OperateLog(
+            createdDate = LocalDateTime.now(),
             type = type,
             projectId = "",
             repoName = "",
             resourceKey = "",
             userId = SecurityUtils.getUserId(),
-            data = data
+            clientAddress = HttpContextHolder.getClientAddress(),
+            description = data
         )
-        operateLogService.saveEventAsync(event, HttpContextHolder.getClientAddress())
+        operateLogService.saveAsync(log)
     }
 
     override fun getByCveId(cveId: String): CveWhitelistInfo? {
@@ -70,7 +72,8 @@ class CveWhitelistServiceImpl(
 
     override fun deleteByCveId(cveId: String, userId: String) {
         logger.info("delete vul whitelist: [$cveId] by user: [$userId]")
-        return cveWhitelistDao.deleteByCveId(cveId)
+        cveWhitelistDao.deleteByCveId(cveId)
+        operateLog(EventType.CVE_WHITE_DELETE, mapOf("cveId" to cveId))
     }
 
     override fun searchByCveId(cveId: String?, pageNumber: Int?, pageSize: Int?): Page<CveWhitelistInfo> {

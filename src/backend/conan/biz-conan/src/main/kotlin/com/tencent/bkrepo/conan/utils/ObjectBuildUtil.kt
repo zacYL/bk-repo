@@ -115,8 +115,7 @@ object ObjectBuildUtil {
             MetadataModel(VERSION, version),
             MetadataModel(USERNAME, userName),
             MetadataModel(CHANNEL, channel),
-            MetadataModel(REVISION, revision.orEmpty()),
-            MetadataModel(PACKAGE_REVISION, pRevision.orEmpty())
+            MetadataModel(REVISION, revision.orEmpty())
         )
     }
 

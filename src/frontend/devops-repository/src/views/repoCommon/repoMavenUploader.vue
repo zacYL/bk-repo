@@ -124,7 +124,12 @@
         created () {
 
         },
+        
+        mounted () {
+            window.addEventListener('beforeunload', this.cancelUploadArtifact)
+        },
         destroyed () {
+            window.removeEventListener('beforeunload', this.cancelUploadArtifact)
             this.cancelUploadArtifact()
         },
         beforeRouteLeave () {

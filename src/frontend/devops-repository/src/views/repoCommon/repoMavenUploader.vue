@@ -124,12 +124,8 @@
         created () {
 
         },
-        mounted () {
-            window.addEventListener('beforeunload', this.cancelUploadArtifact)
-        },
         destroyed () {
-            // 刷新取消
-            window.removeEventListener('beforeunload', this.cancelUploadArtifact)
+            this.cancelUploadArtifact()
         },
         beforeRouteLeave () {
             // 路由取消

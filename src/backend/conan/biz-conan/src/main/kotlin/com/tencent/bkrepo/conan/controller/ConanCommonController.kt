@@ -37,6 +37,7 @@ import com.tencent.bkrepo.common.security.exception.AuthenticationException
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.conan.constant.X_CONAN_SERVER_CAPABILITIES
+import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo.Companion.BASE
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo.Companion.CHECK_CREDENTIALS_V1
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo.Companion.CHECK_CREDENTIALS_V2
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo.Companion.PING_V1
@@ -53,7 +54,8 @@ import org.springframework.web.bind.annotation.RestController
 class ConanCommonController(
     private val conanCommonService: ConanCommonService
 ) {
-    @GetMapping(PING_V1)
+    @GetMapping(BASE, PING_V1)
+    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
     fun ping(
         @PathVariable projectId: String,
         @PathVariable repoName: String

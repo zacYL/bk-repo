@@ -51,6 +51,7 @@ class ConanArtifactInfo(
     companion object {
 
         // TODO 路径优化
+        const val BASE = "/{projectId}/{repoName}"
         // v1
         private const val CONAN_V1_PREFIX = "/{projectId}/{repoName}/v1/conans"
         // ping

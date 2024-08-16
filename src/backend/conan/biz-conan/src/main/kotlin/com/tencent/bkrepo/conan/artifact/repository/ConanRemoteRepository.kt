@@ -106,6 +106,7 @@ class ConanRemoteRepository : RemoteRepository() {
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         val conanArtifactInfo = context.artifactInfo as ConanArtifactInfo
         val exist = with(conanArtifactInfo) {
+            context.getFullPathInterceptors().forEach { it.intercept(projectId, getArtifactFullPath()) }
             nodeClient.checkExist(projectId, repoName, getArtifactFullPath()).data
         }
         val artifactResource = super.onDownload(context)

@@ -51,7 +51,6 @@ class ConanArtifactConfigurer : ArtifactConfigurerSupport() {
 
             httpAuthSecurity.addHttpAuthHandler(authLoginHandler)
                 .withPrefix("/conan")
-                .excludePattern("/**/v1/ping")
         }
     }
 }

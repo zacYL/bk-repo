@@ -212,6 +212,7 @@ open class OperateLogServiceImpl(
             addAll(projectEvent)
             addAll(metadataEvent)
             addAll(cveWhiteEvent)
+            add(EventType.REPOSITORY_CLEAN)
         }
     }
 

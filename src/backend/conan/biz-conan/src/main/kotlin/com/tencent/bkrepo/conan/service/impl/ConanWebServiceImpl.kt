@@ -68,6 +68,7 @@ class ConanWebServiceImpl(
     }
 
     override fun deletePackage(artifactInfo: ConanArtifactInfo, packageKey: String) {
+        logger.info("conan delete package...")
         val name = PackageKeys.resolveConan(packageKey)
         with(artifactInfo) {
             packageClient.listAllVersion(projectId, repoName, packageKey).data?.forEach { it ->
@@ -79,12 +80,14 @@ class ConanWebServiceImpl(
                     this.channel = it.metadata[CHANNEL]?.toString() ?: StringPool.UNDERSCORE
                     version = it.name
                 }
+                logger.info("delete package artifactInfo [$copyArtifactInfo]")
                 conanDeleteService.removeConanFile(copyArtifactInfo)
             } ?: logger.warn("[$projectId/$repoName/$packageKey] version not found")
         }
     }
 
     override fun deleteVersion(artifactInfo: ConanArtifactInfo, packageKey: String, version: String) {
+        logger.info("conan delete version...")
         val name = PackageKeys.resolveConan(packageKey)
         with(artifactInfo) {
             packageMetadataClient.listMetadata(projectId,repoName,packageKey,version).data?.let {
@@ -94,6 +97,7 @@ class ConanWebServiceImpl(
                     this.channel = it[CHANNEL]?.toString() ?: StringPool.UNDERSCORE
                     this.version = version
                 }
+                logger.info("delete version artifactInfo [$artifactInfo]")
                 conanDeleteService.removeConanFile(artifactInfo)
             }
         }

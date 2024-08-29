@@ -1,3 +1,10 @@
+<!--
+ * @Author: xiaoshanwen
+ * @Date: 2024-08-16 17:30:26
+ * @LastEditTime: 2024-08-29 16:57:46
+ * @Description:
+ * @FilePath: /artifact/src/frontend/devops-repository/src/views/planManage/createPlan/repoDialog.vue
+-->
 <template>
     <canway-dialog
         :value="show"
@@ -50,7 +57,7 @@
             repoList () {
                 return this.repoListAll
                     .filter(r => {
-                        return ['DOCKER', 'MAVEN', 'NPM', 'GENERIC'].includes(r.type) && r.name !== 'pipeline' && r.name !== 'report' && r.category !== 'REMOTE' && r.category !== 'VIRTUAL'
+                        return ['DOCKER', 'MAVEN', 'NPM', 'GENERIC', 'GO'].includes(r.type) && r.name !== 'pipeline' && r.name !== 'report' && r.category !== 'REMOTE' && r.category !== 'VIRTUAL'
                     })
                     .map(repo => ({ ...repo, fid: repo.projectId + repo.name }))
                     .sort((a, b) => {

@@ -36,7 +36,7 @@
                                 <span>{{repoBaseInfo.network.switcher ? $t('open') : $t('close')}}</span>
                             </template>
                         </bk-form-item>
-                        <template v-if="repoBaseInfo.network.switcher">
+                        <div v-if="repoBaseInfo.network.switcher" class="pt20 pb20" style="padding-left: 70px;">
                             <bk-form-item label="IP" property="network.proxy.host" :required="true" error-display-type="normal">
                                 <bk-input class="w480" v-model.trim="repoBaseInfo.network.proxy.host"></bk-input>
                             </bk-form-item>
@@ -59,18 +59,18 @@
                             <bk-form-item :label="$t('networkPassword')" property="network.proxy.password">
                                 <bk-input class="w480" type="password" v-model.trim="repoBaseInfo.network.proxy.password"></bk-input>
                             </bk-form-item>
-                        </template>
-                        <bk-form-item :label="$t('cache')" property="switcher">
-                            <template v-if="['GO'].includes(repoBaseInfo.type)">
+                        </div>
+                        <bk-form-item v-show="['GO'].includes(repoBaseInfo.type) && repoBaseInfo.category === 'REMOTE'" :label="$t('cache')" property="switcher">
+                            <template>
                                 <bk-switcher v-model="repoBaseInfo.cache.enabled" theme="primary"></bk-switcher>
                                 <span>{{repoBaseInfo.cache.enabled ? $t('open') : $t('close')}}</span>
                             </template>
                         </bk-form-item>
-                        <template v-if="repoBaseInfo.cache.enabled && ['GO'].includes(repoBaseInfo.type)">
-                            <bk-form-item :label="$t('expiration')" property="cache.expiration" :required="true" error-display-type="normal">
+                        <div v-if="repoBaseInfo.cache.enabled && ['GO'].includes(repoBaseInfo.type)" class="pt20 pb20" style="padding-left: 70px;">
+                            <bk-form-item :label="$t('expiration')" property="cache.expiration" :required="true" :rules="rules.cache" error-display-type="normal">
                                 <bk-input class="w480" type="number" v-model.trim="repoBaseInfo.cache.expiration"></bk-input>
                             </bk-form-item>
-                        </template>
+                        </div>
                     </template>
                     <template v-if="repoBaseInfo.category === 'VIRTUAL'">
                         <bk-form-item :label="$t('select') + $t('space') + $t('storageStore')" property="virtualStoreList" :required="true" error-display-type="normal">
@@ -287,7 +287,7 @@
                     },
                     cache: {
                         enabled: true,
-                        expiration: -1
+                        expiration: 120
                     },
                     // 虚拟仓库的选中的存储库列表
                     virtualStoreList: [],
@@ -451,6 +451,18 @@
                         trigger: 'blur'
                     }
                 ]
+                const cacheRule = [
+                    {
+                        required: true,
+                        message: this.$t('cantSaveEmptyString'),
+                        trigger: 'blur'
+                    },
+                    {
+                        regex: /^\d+$/,
+                        message: this.$t('nonEmptyPositiveIntegerTip'),
+                        trigger: 'blur'
+                    }
+                ]
                 return {
                     repodataDepth: [
                         {
@@ -478,6 +490,7 @@
                     'web.metadata': metadataRule,
                     // 远程仓库才应该有地址的校验
                     url: this.repoBaseInfo.category === 'REMOTE' ? urlRule : {},
+                    cache: (this.repoBaseInfo.category === 'REMOTE' && ['GO'].includes(this.repoBaseInfo.type)) ? cacheRule : {},
                     // 远程仓库且开启网络代理才应该设置代理的IP和端口的校验
                     'network.proxy.host': (this.repoBaseInfo.category === 'REMOTE' && this.repoBaseInfo.network.switcher) ? proxyHostRule : {},
                     'network.proxy.port': (this.repoBaseInfo.category === 'REMOTE' && this.repoBaseInfo.network.switcher) ? proxyPortRule : {},
@@ -678,15 +691,17 @@
                                 switcher: true
                             }
                         }
-                        if (res.configuration.cache.cache === null) {
+                        const { cache } = res.configuration
+
+                        if (cache && cache.enabled !== undefined && cache.expiration !== undefined) {
                             this.repoBaseInfo.cache = {
-                                enabled: true,
-                                expiration: -1
+                                enabled: cache.enabled,
+                                expiration: cache.expiration
                             }
                         } else {
                             this.repoBaseInfo.cache = {
-                                enabled: res.configuration.cache.enabled,
-                                expiration: res.configuration.cache.expiration
+                                enabled: true,
+                                expiration: -1
                             }
                         }
                     }
@@ -814,6 +829,12 @@
                             && checkValueIsNullOrEmpty(this.repoBaseInfo.network.proxy?.password)) {
                             body.configuration.network.proxy.username = null
                             body.configuration.network.proxy.password = null
+                        }
+                    }
+                    if (this.repoBaseInfo.type === 'GO') {
+                        body.configuration.cache = {
+                            enabled: this.repoBaseInfo.cache.enabled,
+                            expiration: this.repoBaseInfo.cache.expiration
                         }
                     }
                 }

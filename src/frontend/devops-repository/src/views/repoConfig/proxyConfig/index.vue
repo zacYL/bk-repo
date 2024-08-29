@@ -111,7 +111,7 @@
                     // 当网络代理的 host 存在时表明配置了网络代理，此时请求时就需要添加 networkProxy对象
                     updateData.networkProxy = { ...data.networkProxy }
                 }
-                if (data.cache.enabled) {
+                if (data.cache?.enabled) {
                     updateData.cache = { ...data.cache }
                 }
                 // 添加

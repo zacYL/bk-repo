@@ -41,7 +41,7 @@ export default {
     // 查询包版本列表
     // 虚拟仓库时需要添加仓库来源字段srcRepo，不然后端无法知道当前制品需要从当前的虚拟仓库中的哪个仓库中获取
     // (同一个虚拟仓库中不同仓库中的制品可能重名)
-    getVersionList (_, { projectId, repoName, packageKey, version, current = 1, limit = 10 }) {
+    getVersionList (_, { projectId, repoName, packageKey, version, current = 1, limit = 10, sortProperty = '' }) {
         return Vue.prototype.$ajax.get(
             `${prefix}/version/page/${projectId}/${repoName}`,
             {
@@ -49,7 +49,12 @@ export default {
                     pageNumber: current,
                     pageSize: limit,
                     packageKey,
-                    version
+                    version,
+                    ...sortProperty
+                        ? {
+                            sortProperty
+                        }
+                        : {}
                 }
             }
         )

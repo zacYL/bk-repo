@@ -1,4 +1,5 @@
 import { mapState, mapActions } from 'vuex'
+import Vue from 'vue'
 export default {
     computed: {
         ...mapState(['userInfo', 'domain', 'dependAccessTokenValue', 'dependInputValue1', 'dependInputValue2', 'dependInputValue3']),
@@ -42,6 +43,9 @@ export default {
         // 虚拟仓库的仓库来源，虚拟仓库时需要更换repoName为此值
         sourceRepoName () {
             return this.$route.query.sourceName || ''
+        },
+        isPublic () {
+            return !!this.$route.query.publicType
         },
         // 是否是 软件源模式
         whetherSoftware () {
@@ -282,6 +286,199 @@ export default {
                             subTitle: this.$t('npmDownloadGuideSubTitle2'),
                             codeList: [
                                 `npm install ${this.packageName}@${this.versionLabel} --registry ${this.domain.npm}/${this.projectId}/${this.repoName}/`
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        goGuide () {
+            return [
+                this.noShowOption
+                    ? undefined
+                    : {
+                        optionType: 'push',
+                        inputBoxList: [
+                            ...!this.isPublic
+                                ? [
+                                    {
+                                        key: 'dependInputValue3', // vux中存储的变量名
+                                        label: this.$t('customName'), // 输入框左侧label文案
+                                        methodFunctionName: 'SET_DEPEND_INPUT_VALUE3' // vuex中mutations中的方法名
+                                    }
+                                ]
+                                : [],
+                            {
+                                key: 'dependInputValue1', // vux中存储的变量名
+                                label: this.$t('name'), // 输入框左侧label文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                            },
+                            {
+                                key: 'dependInputValue2', // vux中存储的变量名
+                                label: this.$t('customVersion'), // 输入框左侧label文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
+                            }
+                        ],
+                        main: [
+                            {
+                                title: this.$t('downClient'),
+                                contentList: [
+                                    {
+                                        val: this.$t('goTips3')
+                                    }
+                                ]
+                            },
+                            {
+                                componentInline: true,
+                                components: [
+                                    {
+                                        type: 'select',
+                                        cb: (val) => {
+                                            this.goDownloadUrl = val
+                                        },
+                                        values: [
+                                            {
+                                                platform: 'Linux (amd64)',
+                                                downloadUrl: location.origin + '/go/ext/cli/download/linux/amd64'
+                                            },
+                                            {
+                                                platform: 'Linux (arm64)',
+                                                downloadUrl: location.origin + '/go/ext/cli/download/linux/arm64'
+                                            },
+                                            {
+                                                platform: 'macOS (Intel)',
+                                                downloadUrl: location.origin + '/go/ext/cli/download/darwin/amd64'
+                                            },
+                                            {
+                                                platform: 'macOS (Apple Silicon)',
+                                                downloadUrl: location.origin + '/go/ext/cli/download/darwin/arm64'
+                                            },
+                                            {
+                                                platform: `（${this.$t('defaultValue')}）Windows`,
+                                                downloadUrl: location.origin + '/go/ext/cli/download/windows/amd64'
+                                            },
+                                            {
+                                                platform: 'Windows (arm64)',
+                                                downloadUrl: location.origin + '/go/ext/cli/download/windows/arm64'
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        type: 'button',
+                                        disabled: !this.goDownloadUrl,
+                                        cb: () => {
+                                            Vue.prototype.$ajax.get(
+                                                this.goDownloadUrl
+                                            )
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                title: this.$t('preprocessing'),
+                                subTitle: 'macOS/Linux',
+                                codeList: [
+                                    'chmod +x bk && mv bk /usr/local/bin/'
+                                ]
+                            },
+                            {
+                                subTitle: 'Windows',
+                                contentList: [
+                                    this.$t('goTips4')
+                                ]
+                            },
+                            {
+                                title: this.$t('loginRepository'),
+                                codeList: [
+                                    this.isPublic ? `bk login -n ${this.repoName} -r ${this.repoUrl}` : `bk login -n ${this.dependInputValue3 || ('<' + this.$t('customName') + '>')} -r ${this.repoUrl} -u ${this.userName} -t ${this.accessToken}`
+                                ]
+                            },
+                            {
+                                title: this.$t('pushModule'),
+                                contentList: [
+                                    this.$t('goTips5')
+                                ]
+                            },
+                            {
+                                codeNoMargin: true,
+                                codeList: [
+                                    `bk publish -n ${this.dependInputValue1 || this.$t('name')} -v ${this.dependInputValue2 || ('<' + this.$t('customVersion') + '>')}`
+                                ]
+                            },
+                            {
+                                codeNoMargin: true,
+                                contentList: [
+                                    this.$t('otherOptionalParams')
+                                ],
+                                codeList: [
+                                    `-d <${this.$t('moduleDirectory')}> ${this.$t('goTips6')}`,
+                                    `-o ${this.$t('goTips7')}`
+                                ]
+                            }
+                        ]
+                    },
+                {
+                    errTips: this.$t('goWarnTips'),
+                    showErrTips: (!this.isPublic && this.removeProtocolFromUrl(this.repoUrl, true) === 'http'),
+                    optionType: 'pull',
+                    main: [
+                        {
+                            contentList: [
+                                { val: this.$t('goVersion') }]
+                        },
+                        {
+                            title: this.$t('setEnvironmentVariable'),
+                            subTitle: 'macOS/Linux',
+                            codeList: [
+                                'export GO111MODULE=on',
+                                'export GOSUMDB=off',
+                                'export GOPROXY='
+                                + ((this.isPublic && this.removeProtocolFromUrl(this.repoUrl, true) === 'http')
+                                    ? `${this.repoUrl}`
+                                    : `${this.removeProtocolFromUrl(this.repoUrl, true)}://${this.userName}:${this.accessToken}@${this.removeProtocolFromUrl(this.repoUrl)}`)
+                            ]
+                        },
+                        {
+                            subTitle: 'Windows',
+                            contentList: [this.$t('powerShellExecute')]
+                        },
+                        {
+                            codeNoMargin: true,
+                            codeClass: 'mb10', // 调整间距
+                            codeList: [
+                                'go env -w GO111MODULE=on',
+                                'go env -w GOSUMDB=off',
+                                'go env -w GOPROXY='
+                                + ((this.isPublic && this.removeProtocolFromUrl(this.repoUrl, true) === 'http')
+                                    ? `${this.repoUrl}`
+                                    : `${this.removeProtocolFromUrl(this.repoUrl, true)}://${this.userName}:${this.accessToken}@${this.removeProtocolFromUrl(this.repoUrl)}`)
+                            ]
+                        },
+                        {
+                            title: this.$t('goTips2'),
+                            codeClass: 'mb10',
+                            codeList: [
+                                'go get <modulePath>'
+                            ]
+                        },
+                        {
+                            title: this.$t('downloadAllModule'),
+                            codeList: [
+                                'go mod download'
+                            ]
+                        }
+                    ]
+                }
+            ].filter(Boolean)
+        },
+        goInstall () {
+            return [
+                {
+                    main: [
+                        {
+                            subTitle: this.$t('pull'),
+                            codeList: [
+                                `go get ${this.packageName}@${this.version}`
                             ]
                         }
                     ]
@@ -1253,6 +1450,11 @@ export default {
             return this[`${this.$route.params.repoType}Install`]
         }
     },
+    data () {
+        return {
+            goDownloadUrl: ''
+        }
+    },
     watch: {
         repoType: {
             handler (type) {
@@ -1262,6 +1464,25 @@ export default {
         }
     },
     methods: {
-        ...mapActions(['getDomain'])
+        ...mapActions(['getDomain']),
+        removeProtocolFromUrl (url, needProtocol = false) {
+            if (needProtocol) {
+                const protocolIndex = url.indexOf('://')
+                if (protocolIndex !== -1) {
+                    // 返回协议部分
+                    return url.substring(0, protocolIndex)
+                }
+                return ''
+            }
+            // 检查 URL 是否包含协议部分
+            const protocolIndex = url.indexOf('://')
+            if (protocolIndex !== -1) {
+                // 去掉协议部分
+                return url.substring(protocolIndex + 3)
+            } else {
+                // 直接返回原 URL
+                return url
+            }
+        }
     }
 }

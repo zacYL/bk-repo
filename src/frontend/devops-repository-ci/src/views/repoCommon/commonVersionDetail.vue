@@ -58,10 +58,12 @@
                 </div>
             </div>
             <div class="version-base-info base-info-guide display-block" :data-title="$t('useTips')">
-                <div class="sub-section" v-for="block in articleInstall[0].main" :key="block.subTitle">
-                    <div class="mb10">{{ block.subTitle }}</div>
-                    <code-area class="mb20" v-if="block.codeList && block.codeList.length" :code-list="block.codeList"></code-area>
-                </div>
+                <template v-if="articleInstall?.[0]">
+                    <div class="sub-section" v-for="block in articleInstall[0].main" :key="block.subTitle">
+                        <div class="mb10">{{ block.subTitle }}</div>
+                        <code-area class="mb20" v-if="block.codeList && block.codeList.length" :code-list="block.codeList"></code-area>
+                    </div>
+                </template>
             </div>
             <div class="version-base-info base-info-checksums display-block" data-title="Checksums">
                 <div v-if="detail.basic.sha256" class="grid-item">
@@ -76,6 +78,9 @@
         </bk-tab-panel>
         <bk-tab-panel v-if="detail.basic.readme" name="readme" :label="$t('readMe')">
             <div class="version-detail-readme" v-html="readmeContent"></div>
+        </bk-tab-panel>
+        <bk-tab-panel v-if="detail.basic.definition" name="definition" :label="$t('definition')">
+            <pre class="code-block">{{ detail.basic.definition }}</pre>
         </bk-tab-panel>
         <bk-tab-panel v-if="detail.metadata" name="metadata" :label="$t('metaData')">
             <div class="display-block" :data-title="$t('metaData')">
@@ -448,6 +453,14 @@
 <style lang="scss" scoped>
 .common-version-container {
     height: 100%;
+    .code-block {
+        font-family: monospace, 'Courier New', Courier, Consolas, Monaco, 'DejaVu Sans Mono', 'Roboto Mono';
+        background-color: #F9FBFF;
+        padding: 10px;
+        color: #081E40;
+        white-space: pre-wrap;
+        overflow-x: auto;
+    }
     ::v-deep .bk-tab-section {
         height: calc(100% - 50px);
         overflow-y: auto;

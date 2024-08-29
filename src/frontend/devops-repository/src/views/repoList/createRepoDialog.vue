@@ -5,6 +5,16 @@
         height-num="770"
         :title="title"
         @cancel="cancel">
+        <bk-alert
+            v-if="tipsObj"
+            :style="{
+                marginLeft: currentLanguage === 'zh-cn' ? '82px' : '60px',
+                width: `calc(100% - ${currentLanguage === 'zh-cn' ? '82px' : '60px'})`
+            }"
+            class="mb20"
+            type="warning"
+            :title="tipsObj.tips">
+        </bk-alert>
         <bk-form class="mr10 repo-base-info" :label-width="150" :model="repoBaseInfo" :rules="rules" ref="repoBaseInfo">
             <bk-form-item :label="$t('repoType')" :required="true" property="type" error-display-type="normal">
                 <bk-radio-group v-model="repoBaseInfo.type" class="repo-type-radio-group" @change="changeRepoType">
@@ -43,7 +53,7 @@
                         <span>{{repoBaseInfo.network.switcher ? $t('open') : $t('close')}}</span>
                     </template>
                 </bk-form-item>
-                <template v-if="repoBaseInfo.network.switcher">
+                <div v-if="repoBaseInfo.network.switcher" class="pt20 pb20" style="padding-left: 70px;">
                     <bk-form-item label="IP" property="network.proxy.host" :required="true" error-display-type="normal">
                         <bk-input class="w480" v-model.trim="repoBaseInfo.network.proxy.host"></bk-input>
                     </bk-form-item>
@@ -66,18 +76,18 @@
                     <bk-form-item :label="$t('networkPassword')" property="network.proxy.password">
                         <bk-input class="w480" type="password" v-model.trim="repoBaseInfo.network.proxy.password"></bk-input>
                     </bk-form-item>
-                </template>
-                <bk-form-item :label="$t('cache')" property="switcher">
-                    <template v-if="['go'].includes(repoBaseInfo.type) && storeType === 'remote'">
+                </div>
+                <bk-form-item v-show="['go'].includes(repoBaseInfo.type) && storeType === 'remote'" :label="$t('cache')" property="switcher">
+                    <template>
                         <bk-switcher v-model="repoBaseInfo.cache.enabled" theme="primary"></bk-switcher>
                         <span>{{repoBaseInfo.cache.enabled ? $t('open') : $t('close')}}</span>
                     </template>
                 </bk-form-item>
-                <template v-if="repoBaseInfo.cache.enabled && ['go'].includes(repoBaseInfo.type)">
-                    <bk-form-item :label="$t('expiration')" property="cache.expiration" :required="true" error-display-type="normal">
+                <div v-if="repoBaseInfo.cache.enabled && ['go'].includes(repoBaseInfo.type)" class="pt20 pb20" style="padding-left: 70px;">
+                    <bk-form-item :label="$t('expiration')" property="cache.expiration" :required="true" :rules="rules.cache" error-display-type="normal">
                         <bk-input class="w480" type="number" v-model.trim="repoBaseInfo.cache.expiration"></bk-input>
                     </bk-form-item>
-                </template>
+                </div>
             </template>
 
             <template v-if="storeType === 'virtual'">
@@ -92,20 +102,6 @@
                         </store-sort>
                     </div>
                 </bk-form-item>
-                <!-- <bk-form-item :label="$t('uploadTargetStore')" property="uploadTargetStore">
-                    <bk-select
-                        v-model="repoBaseInfo.deploymentRepo"
-                        style="width:300px;"
-                        :show-empty="false"
-                        :placeholder="$t('pleaseSelect') + $t('space') + $t('uploadTargetStore')">
-                        <bk-option v-for="item in deploymentRepoCheckList" :key="item.name" :id="item.name" :name="item.name">
-                        </bk-option>
-                        <div v-if="!deploymentRepoCheckList.length" class="form-tip mt10 ml10 mr10 mb10">
-                            {{$t('noAddedLocalStore')}}
-                        </div>
-                    </bk-select>
-                    <div class="form-tip">{{$t('addPackagePrompt')}}</div>
-                </bk-form-item> -->
             </template>
             <template v-if="!['generic', 'composer'].includes(repoBaseInfo.type)">
                 <bk-form-item
@@ -147,7 +143,6 @@
                 </card-radio-group>
             </bk-form-item>
             <template v-if="repoBaseInfo.type === 'generic' && storeType === 'local'">
-                <!-- <bk-form-item v-for="type in ['mobile', 'web']" :key="type" -->
                 <bk-form-item v-for="type in ['web']" :key="type"
                     :label="$t(`${type}Download`)" :property="`${type}.enable`">
                     <bk-radio-group v-model="repoBaseInfo[type].enable">
@@ -324,6 +319,17 @@
             projectId () {
                 return this.$route.params.projectId
             },
+            tipsObj () {
+                if (this.protocol === 'http' && ['go'].includes(this.repoBaseInfo.type) && ['project', 'system'].includes(this.available)) {
+                    return {
+                        tips: this.$t('goWarnTips')
+                    }
+                }
+                return ''
+            },
+            protocol () {
+                return window.location.protocol.replace(':', '')
+            },
             includesPathDesc () {
                 return {
                     allowHtml: true,
@@ -429,6 +435,18 @@
                         trigger: 'blur'
                     }
                 ]
+                const cacheRule = [
+                    {
+                        required: true,
+                        message: this.$t('cantSaveEmptyString'),
+                        trigger: 'blur'
+                    },
+                    {
+                        regex: /^\d+$/,
+                        message: this.$t('nonEmptyPositiveIntegerTip'),
+                        trigger: 'blur'
+                    }
+                ]
                 return {
                     type: [
                         {
@@ -478,6 +496,7 @@
                     'mobile.metadata': metadataRule,
                     'web.filename': filenameRule,
                     'web.metadata': metadataRule,
+                    cache: (this.storeType === 'remote' && ['go'].includes(this.repoBaseInfo.type)) ? cacheRule : {},
                     // 远程仓库才应该有地址的校验
                     url: this.storeType === 'remote' ? urlRule : {},
                     // 远程仓库且开启网络代理才应该设置代理的IP和端口的校验
@@ -540,6 +559,7 @@
                     this.showIncludesPathDesc = false
                     this.$nextTick(() => {
                         this.showIncludesPathDesc = true
+                        this.initGoRemoteDefaultUrl()
                     })
                 }
             },
@@ -551,9 +571,18 @@
         created () {
             // 此时需要获取docker的域名，因为创建docker的远程仓库时需要用到，用户不能手动输入当前仓库地址
             this.getDomain('docker')
+            this.$nextTick(() => {
+                this.initGoRemoteDefaultUrl()
+            })
         },
         methods: {
             ...mapActions(['createRepo', 'checkRepoName', 'testRemoteUrl', 'getDomain']),
+            // 初始化go远程仓库默认路径
+            initGoRemoteDefaultUrl () {
+                if (this.storeType === 'remote') {
+                    this.repoBaseInfo.url = this.repoBaseInfo.type === 'go' ? 'https://goproxy.cn' : ''
+                }
+            },
             addPath (key) {
                 this.repoBaseInfo[key].push({ value: '' })
             },
@@ -760,10 +789,13 @@
                         }
                     }
                     if (this.repoBaseInfo.type === 'go') {
-                        body.configuration.cache.enabled = this.repoBaseInfo.cache.enabled
-                        body.configuration.cache.expiration = this.repoBaseInfo.cache.expiration
+                        body.configuration.cache = {
+                            enabled: this.repoBaseInfo.cache.enabled,
+                            expiration: this.repoBaseInfo.cache.expiration
+                        }
                     }
                 }
+                
                 // 虚拟仓库需要添加存储库相关配置
                 if (this.storeType === 'virtual') {
                     body.configuration.repositoryList = this.repoBaseInfo.virtualStoreList.map(item => {

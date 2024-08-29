@@ -85,7 +85,13 @@
     import { mapState, mapGetters, mapActions } from 'vuex'
     export default {
         name: 'commonPackageDetail',
-        components: { OperationList, InfiniteScroll, VersionDetail, commonFormDialog, operationLimitConfirmDialog },
+        components: {
+            OperationList,
+            InfiniteScroll,
+            VersionDetail,
+            commonFormDialog,
+            operationLimitConfirmDialog
+        },
         data () {
             return {
                 tabName: 'commonVersion',
@@ -232,7 +238,12 @@
                     packageKey: this.packageKey,
                     current: this.pagination.current,
                     limit: this.pagination.limit,
-                    version: this.versionInput
+                    version: this.versionInput,
+                    ...['go'].includes(this.repoType)
+                        ? {
+                            sortProperty: 'ordinal'
+                        }
+                        : {}
                 }).then(({ records, totalRecords }) => {
                     load ? this.versionList.push(...records) : (this.versionList = records)
                     this.pagination.count = totalRecords

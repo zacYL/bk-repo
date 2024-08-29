@@ -68,10 +68,14 @@
         computed: {
             // 使用指引的可用操作，需要根据仓库类型及制品类型等修改
             guideOption () {
-                const basicOption = [
+                let basicOption = [
                     { name: 'setCredentials', label: this.$t('setCredentials') },
                     { name: 'pull', label: this.$t('pull') }
                 ]
+                // go远程仓库，且为http协议的情况下
+                if (this.repoType === 'go' && this.storeType === 'remote' && this.removeProtocolFromUrl(this.repoUrl, true) === 'http') {
+                    basicOption = basicOption.filter(item => item.name !== 'setCredentials')
+                }
                 if (!this.noShowOption) {
                     basicOption.push({ name: 'push', label: this.$t('push') })
                 }

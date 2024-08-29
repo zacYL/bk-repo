@@ -27,6 +27,13 @@
         </template>
         <template v-if="currentArticleList.length > 0">
             <div v-for="(currentArticle,cIndex) in currentArticleList" :key="cIndex">
+                <bk-alert
+                    v-if="currentArticle.showErrTips"
+                    class="mb20"
+                    style="height: unset;width: 100%;"
+                    type="warning"
+                    :title="currentArticle.errTips">
+                </bk-alert>
                 <div v-if="currentArticle.title" class="section-header pt10">
                     {{ currentArticle.title }}
                 </div>
@@ -54,9 +61,41 @@
                     -->
                     <template v-if="(constructType === block.constructType) || !block.constructType || (block.constructType === 'common') ">
                         <span v-if="block.title" class="section-header pt10">{{ block.title }}</span>
-                        <span v-if="block.subTitle" class="sub-title pt10" :style="block.subTitleStyle">{{ block.subTitle }}</span>
-                        <code-area class="mt15" v-if="block.codeList && block.codeList.length" :code-list="block.codeList"></code-area>
+                        <span v-if="block.subTitle" class="sub-title pt10 fw500" :style="block.subTitleStyle">{{ block.subTitle }}</span>
+                        <div v-if="block?.contentList?.length">
+                            <p v-for="(content, index) in block.contentList" :key="index" :class="(typeof content === 'string' ? '' : content.class)" style="color: #8797aa;">
+                                {{ typeof content === 'string' ? content : content.val }}
+                            </p>
+                        </div>
+                        <code-area :class="[block.codeNoMargin ? '' : 'mt15', block.codeClass]" v-if="block.codeList && block.codeList.length" :code-list="block.codeList"></code-area>
                     </template>
+                    <div v-if="block?.components?.length" :style="{
+                        display: block.componentInline ? 'flex' : ''
+                    }">
+                        <div v-for="(component, index) in block.components" :key="index">
+                            <bk-select
+                                v-if="component.type === 'select'"
+                                @change="component.cb"
+                                style="width: 200px;"
+                                class="mt5 mb5 mr5"
+                            >
+                                <bk-option v-for="option in component.values"
+                                    :key="option.downloadUrl"
+                                    :id="option.downloadUrl"
+                                    :name="option.platform">
+                                </bk-option>
+                            </bk-select>
+                            <bk-button
+                                class="mt5 mb5 mr5"
+                                v-if="component.type === 'button'"
+                                :disabled="component.disabled"
+                                @click="component.cb"
+                                style="width: fit-content;"
+                            >
+                                {{ $t('download') }}
+                            </bk-button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </template>
@@ -141,6 +180,9 @@
     }
 </script>
 <style lang="scss" scoped>
+.fw500 {
+    font-weight: 500;
+}
 .repo-guide-container {
    position: relative;
     .section-header {

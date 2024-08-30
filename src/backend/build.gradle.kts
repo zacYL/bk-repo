@@ -79,8 +79,59 @@ allprojects {
                 entry("swagger-models")
             }
             dependency("com.tencent.bk.sdk:crypto-java-sdk:${Versions.CryptoJavaSdk}")
+            dependency("org.yaml:snakeyaml:${Versions.SnakeYaml}")
+            dependencySet("ch.qos.logback:${Versions.Logback}") {
+                entry("logback-classic")
+                entry("logback-core")
+            }
+            dependency("com.google.protobuf:protobuf-java:${Versions.ProtobufJava}")
+            dependencySet("io.undertow:${Versions.Undertow}") {
+                entry("undertow-core")
+                entry("undertow-servlet")
+            }
+            dependency("org.springframework:spring-webmvc:${Versions.SpringWebmvc}")
+            dependency("org.springframework:spring-beans:${Versions.SpringBeans}")
+            dependency("org.springframework:spring-web:${Versions.SpringWeb}")
+            dependencySet("org.springframework.boot:${Versions.SpringBootAutoconfigure}") {
+                entry("spring-boot-autoconfigure")
+                entry("spring-boot-actuator-autoconfigure")
+            }
+            dependency("net.minidev:json-smart:${Versions.JsonSmart}")
+            dependencySet("com.fasterxml.jackson.core:${Versions.Jackson}") {
+                entry("jackson-annotations")
+                entry("jackson-core")
+                entry("jackson-databind")
+            }
+            dependencySet("com.fasterxml.jackson.jaxrs:${Versions.Jackson}") {
+                entry("jackson-jaxrs-base")
+                entry("jackson-jaxrs-json-provider")
+            }
+            dependencySet("com.fasterxml.jackson.module:${Versions.Jackson}") {
+                entry("jackson-module-kotlin")
+                entry("jackson-module-parameter-names")
+                entry("jackson-module-afterburner")
+                entry("jackson-module-jaxb-annotations")
+            }
+            dependencySet("com.fasterxml.jackson.datatype:${Versions.Jackson}") {
+                entry("jackson-datatype-jdk8")
+                entry("jackson-datatype-jsr310")
+            }
+            dependencySet("com.fasterxml.jackson.dataformat:${Versions.Jackson}") {
+                entry("jackson-dataformat-yaml")
+                entry("jackson-dataformat-xml")
+                entry("jackson-dataformat-cbor")
+            }
         }
     }
+
+    dependencies {
+        constraints {
+            implementation("com.squareup.okio:okio:${Versions.Okio}")
+            implementation("commons-fileupload:commons-fileupload:${Versions.CommonsFileupload}")
+            implementation("com.fasterxml.woodstox:woodstox-core:${Versions.Woodstox}")
+        }
+    }
+
     ext["netty.version"] = Versions.Netty
     // 2.1.2才支持配置使用信号量隔离
     ext["spring-cloud-circuitbreaker.version"] = Versions.SpringCloudCircuitbreaker

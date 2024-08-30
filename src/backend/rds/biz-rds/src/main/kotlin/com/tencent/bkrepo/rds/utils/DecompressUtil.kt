@@ -94,8 +94,8 @@ object DecompressUtil {
         return getArchiversContent(TarArchiveInputStream(inputStream))
     }
 
-    private fun getArchiversContent(archiveInputStream: ArchiveInputStream): String {
-        var zipEntry: ArchiveEntry
+    private fun <E : ArchiveEntry> getArchiversContent(archiveInputStream: ArchiveInputStream<E>): String {
+        var zipEntry: E
         archiveInputStream.use { it ->
             while (it.nextEntry.also { zipEntry = it } != null) {
                 val entryList = zipEntry.name.split("/")
@@ -107,7 +107,7 @@ object DecompressUtil {
         throw NotFoundException(CommonMessageCode.RESOURCE_NOT_FOUND, "Can not find $FILE_NAME")
     }
 
-    private fun parseStream(archiveInputStream: ArchiveInputStream): String {
+    private fun <E : ArchiveEntry> parseStream(archiveInputStream: ArchiveInputStream<E>): String {
         val stringBuilder = StringBuffer()
         var length: Int
         val bytes = ByteArray(BUFFER_SIZE)

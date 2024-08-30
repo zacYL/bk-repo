@@ -107,7 +107,7 @@ class CompressedFileService(
         throw NodeNotFoundException(filePath)
     }
 
-    private fun getArchiveInputStream(artifactInfo: GenericArtifactInfo): ArchiveInputStream {
+    private fun getArchiveInputStream(artifactInfo: GenericArtifactInfo): ArchiveInputStream<ArchiveEntry> {
         with(artifactInfo) {
             val fileExtension = PathUtils.resolveExtension(getArtifactName())
             if (!Regex(COMPRESSED_FILE_TYPE_PATTERN).matches(fileExtension)) {

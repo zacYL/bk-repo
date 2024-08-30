@@ -38,7 +38,7 @@ dependencies {
     api(project(":common:common-cpack"))
     implementation("com.google.guava:guava")
     api(project(":common:common-redis"))
-    implementation("cn.hutool:hutool-crypto:5.5.4")
+    implementation("cn.hutool:hutool-crypto:${Versions.HutoolCrypto}")
     implementation("org.apache.httpcomponents:httpclient")
     implementation("com.tencent.bk.sdk:crypto-java-sdk")
 }

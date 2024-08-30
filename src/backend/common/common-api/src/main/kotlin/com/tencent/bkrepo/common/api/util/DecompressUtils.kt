@@ -43,8 +43,8 @@ object DecompressUtils {
     /**
      * 获取压缩流中的[fileName]文件内容
      */
-    fun getContent(archiveInputStream: ArchiveInputStream, fileName: String): String {
-        var zipEntry: ArchiveEntry
+    fun <E : ArchiveEntry> getContent(archiveInputStream: ArchiveInputStream<E>, fileName: String): String {
+        var zipEntry: E
         archiveInputStream.use { archiveEntry ->
             while (archiveInputStream.nextEntry.also { zipEntry = it } != null) {
                 if ((!zipEntry.isDirectory) && zipEntry.name.split("/").last() == fileName) {

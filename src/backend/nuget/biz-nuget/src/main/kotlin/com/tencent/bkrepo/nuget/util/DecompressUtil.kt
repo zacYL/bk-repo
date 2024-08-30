@@ -58,9 +58,9 @@ object DecompressUtil {
      * [archiveInputStream] 压缩文件流
      * return 以字符串格式返回.nuspec 文件内容
      */
-    private fun getNuspec(archiveInputStream: ArchiveInputStream): String {
+    private fun <E : ArchiveEntry> getNuspec(archiveInputStream: ArchiveInputStream<E>): String {
         val stringBuilder = StringBuffer()
-        var zipEntry: ArchiveEntry
+        var zipEntry: E
         loop@while (archiveInputStream.nextEntry.also { zipEntry = it } != null) {
             if ((!zipEntry.isDirectory) && zipEntry.name.endsWith(NUSPEC)) {
                 var length: Int

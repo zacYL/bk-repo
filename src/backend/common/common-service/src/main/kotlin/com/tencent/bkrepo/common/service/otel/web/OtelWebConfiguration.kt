@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.common.service.otel.web
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -36,6 +37,7 @@ import org.springframework.core.Ordered
 class OtelWebConfiguration {
 
     @Bean
+    @ConditionalOnProperty(name = ["devops.server.type"], havingValue = "undertow", matchIfMissing = true)
     fun otelWebFilter(): FilterRegistrationBean<OtelWebFilter> {
         val registrationBean = FilterRegistrationBean<OtelWebFilter>()
         registrationBean.filter = OtelWebFilter()

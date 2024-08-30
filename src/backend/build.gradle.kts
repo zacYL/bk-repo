@@ -121,6 +121,7 @@ allprojects {
                 entry("jackson-dataformat-xml")
                 entry("jackson-dataformat-cbor")
             }
+            dependency("com.tongweb.springboot:tongweb-spring-boot-starter-2.x:${Versions.TongWeb}")
         }
     }
 

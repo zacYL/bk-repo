@@ -37,6 +37,7 @@ import io.undertow.server.handlers.DisallowedMethodsHandler
 import io.undertow.server.handlers.accesslog.AccessLogHandler
 import io.undertow.server.handlers.accesslog.AccessLogReceiver
 import io.undertow.util.HttpString
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.web.embedded.undertow.UndertowBuilderCustomizer
 import org.springframework.boot.web.embedded.undertow.UndertowDeploymentInfoCustomizer
 import org.springframework.boot.web.embedded.undertow.UndertowServletWebServerFactory
@@ -44,6 +45,7 @@ import org.springframework.boot.web.server.WebServerFactoryCustomizer
 import org.springframework.context.annotation.Configuration
 
 @Configuration
+@ConditionalOnProperty(name = ["devops.server.type"], havingValue = "undertow", matchIfMissing = true)
 class AccessLogWebServerCustomizer : WebServerFactoryCustomizer<UndertowServletWebServerFactory> {
 
     override fun customize(factory: UndertowServletWebServerFactory) {

@@ -42,6 +42,7 @@ import com.tencent.bkrepo.common.service.log.AccessLogWebServerCustomizer
 import com.tencent.bkrepo.common.service.message.MessageSourceConfiguration
 import com.tencent.bkrepo.common.service.metrics.UndertowMetrics
 import com.tencent.bkrepo.common.service.info.InfoService
+import com.tencent.bkrepo.common.service.servlet.TongWebAutoConfiguration
 import com.tencent.bkrepo.common.service.shutdown.ServiceShutdownConfiguration
 import org.springframework.boot.autoconfigure.AutoConfigureOrder
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
@@ -68,7 +69,8 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
     UndertowMetrics::class,
     ServiceShutdownConfiguration::class,
     InfoController::class,
-    InfoService::class
+    InfoService::class,
+    TongWebAutoConfiguration::class
 )
 class ServiceAutoConfiguration {
 

@@ -33,12 +33,14 @@ package com.tencent.bkrepo.npm.config
 
 import io.undertow.Undertow
 import io.undertow.UndertowOptions
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.web.embedded.undertow.UndertowBuilderCustomizer
 import org.springframework.boot.web.embedded.undertow.UndertowServletWebServerFactory
 import org.springframework.boot.web.server.WebServerFactoryCustomizer
 import org.springframework.context.annotation.Configuration
 
 @Configuration
+@ConditionalOnProperty(name = ["devops.server.type"], havingValue = "undertow", matchIfMissing = true)
 class ArtifactWebServerCustomizer : WebServerFactoryCustomizer<UndertowServletWebServerFactory> {
     override fun customize(factory: UndertowServletWebServerFactory) {
         factory.addBuilderCustomizers(

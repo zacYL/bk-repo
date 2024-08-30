@@ -5,6 +5,13 @@ spring:
     active: __BK_REPO_PROFILES_ACTIVE__
   application:
     version: 4.0.0
+  autoconfigure:
+    exclude:
+      - com.tongweb.springboot.servlet.LiteTongWeb
+      - com.tongweb.springboot.autoconfigure.JspPrecompilationConfigure
+      - com.tongweb.springboot.autoconfigure.StaticResourcesAutoConfigure
+      - com.tongweb.springboot.autoconfigure.StaticResourcesAutoConfigureAfter26
+      - com.tongweb.springboot.reactive.ReactiveTongWebWebServerFactoryAutoConfiguration
   cloud:
     consul:
       discovery:
@@ -232,6 +239,8 @@ devops:
   appCode: __APP_CODE__
   appSecret: __APP_TOKEN__
   devopsHost: __BK_HTTP_SCHEMA__://__BK_CI_FQDN__
+  server:
+    type: undertow
 
 # CI集成模式固定该配置
 auth:

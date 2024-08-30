@@ -64,4 +64,5 @@ dependencies {
     }
     api("org.springframework.retry:spring-retry")
     api("com.github.ulisesbocchio:jasypt-spring-boot-starter:${Versions.Jasypt}")
+    api("com.tongweb.springboot:tongweb-spring-boot-starter-2.x")
 }

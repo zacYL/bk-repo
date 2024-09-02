@@ -183,8 +183,9 @@ class ConanLocalRepository : LocalRepository() {
         val result = mutableListOf<String>()
         packageClient.listAllPackageNames(projectId, repoName).data.orEmpty().forEach { packageName ->
             packageClient.listAllVersion(projectId, repoName, packageName).data.orEmpty().forEach { pv ->
-                val conanInfo = pv.packageMetadata.toConanFileReference()
-                result.add(PathUtils.buildConanFileName(conanInfo))
+                val conanInfo = pv.packageMetadata.toConanFileReference()?.let {
+                    result.add(PathUtils.buildConanFileName(it))
+                }
             }
         }
         return result.sorted()

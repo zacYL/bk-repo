@@ -64,11 +64,15 @@ import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionUpdateRequest
+import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import javax.servlet.http.HttpServletResponse
 
 object ObjectBuildUtil {
+
+    private val logger = LoggerFactory.getLogger(ObjectBuildUtil::class.java)
+
     fun buildPackageVersionCreateRequest(
         artifactInfo: ConanArtifactInfo,
         size: Long,
@@ -119,16 +123,22 @@ object ObjectBuildUtil {
         )
     }
 
-    fun List<MetadataModel>.toConanFileReference(): ConanFileReference {
+    fun List<MetadataModel>.toConanFileReference(): ConanFileReference? {
         val map = this.filter { it.system }.associate { it.key to it.value.toString() }
-        return ConanFileReference(
-            name = map[NAME]!!,
-            version = map[VERSION]!!,
-            userName = map[USERNAME]!!,
-            channel = map[CHANNEL]!!,
-            revision = map[REVISION],
-            pRevision = map[PACKAGE_REVISION]
-        )
+
+        return try {
+            ConanFileReference(
+                name = map[NAME]!!,
+                version = map[VERSION]!!,
+                userName = map[USERNAME]!!,
+                channel = map[CHANNEL]!!,
+                revision = map[REVISION],
+                pRevision = map[PACKAGE_REVISION]
+            )
+        } catch (e: Exception) {
+            logger.warn("Convert to ConanFileReference failed, map: $map")
+            null
+        }
     }
 
     private fun addPackageMetadata(

@@ -30,15 +30,18 @@
                             </bk-date-picker>
                         </div>
                     </bk-radio>
-                    <bk-radio value="CRON_EXPRESSION" :disabled="isDisabledExecutionStrategy || disabled">
-                        <div class="flex-align-center">
-                            <span class="label-span">{{$t('timedExecution')}}</span>
-                            <template v-if="planForm.executionStrategy === 'CRON_EXPRESSION'">
-                                <bk-input v-if="disabled" class="ml10 w180" :value="planForm.cron" :disabled="disabled"></bk-input>
-                                <Cron v-else class="ml10" v-model="planForm.cron" />
-                            </template>
-                        </div>
-                    </bk-radio>
+                    <div class="mr20 flex-align-center">
+                        <bk-radio value="CRON_EXPRESSION" :disabled="isDisabledExecutionStrategy || disabled"
+                            style="margin-right: 0;">
+                            <div class="flex-align-center">
+                                <span class="label-span">{{$t('timedExecution')}}</span>
+                            </div>
+                        </bk-radio>
+                        <template v-if="planForm.executionStrategy === 'CRON_EXPRESSION'">
+                            <bk-input v-if="disabled" class="ml10 w180" :value="planForm.cron" :disabled="disabled"></bk-input>
+                            <Cron v-else class="ml10" v-model="planForm.cron" />
+                        </template>
+                    </div>
                     <bk-radio v-if="planForm.replicaObjectType === 'REPOSITORY'" value="REAL_TIME" :disabled="isDisabledRealTime || disabled">
                         <span class="label-span">{{$t('realTimeSync')}}</span>
                     </bk-radio>

@@ -181,31 +181,6 @@ export default {
                         }
                     ]
                 },
-                {
-                    title: this.$t('npmCreditGuideSubTitle1'),
-                    optionType: 'setCredentials',
-                    main: [
-                        {
-                            subTitle: this.$t('npmCreditGuideSubTitle3'),
-                            codeList: [
-                                'node -e "require(\'readline\') .createInterface({input:process.stdin,output:process.stdout,historySize:0}) .question(\'PAT> \',p => { b64=Buffer.from(p.trim()).toString(\'base64\');console.log(b64);process.exit(); })"'
-                            ]
-                        },
-                        {
-                            subTitle: this.$t('npmCreditGuideSubTitle4')
-                        },
-                        {
-                            subTitle: this.$t('npmCreditGuideSubTitle2'),
-                            codeList: [
-                                `registry=${this.domain.npm}/${this.projectId}/${this.repoName}/`,
-                                'always-auth=true',
-                                `//${this.domain.npm.split('//')[1]}/${this.projectId}/${this.repoName}/:username=${this.userName}`,
-                                `//${this.domain.npm.split('//')[1]}/${this.projectId}/${this.repoName}/:_password=<BASE64_ENCODE_PERSONAL_ACCESS_TOKEN>`,
-                                `//${this.domain.npm.split('//')[1]}/${this.projectId}/${this.repoName}/:email=${this.userInfo.email || '<EMAIL>'}`
-                            ]
-                        }
-                    ]
-                },
                 this.noShowOption
                     ? undefined
                     : {

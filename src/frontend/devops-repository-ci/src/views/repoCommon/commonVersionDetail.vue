@@ -76,12 +76,6 @@
                 </div>
             </div>
         </bk-tab-panel>
-        <bk-tab-panel v-if="detail.basic.readme" name="readme" :label="$t('readMe')">
-            <div class="version-detail-readme" v-html="readmeContent"></div>
-        </bk-tab-panel>
-        <bk-tab-panel v-if="detail.basic.definition" name="definition" :label="$t('definition')">
-            <pre class="code-block">{{ detail.basic.definition }}</pre>
-        </bk-tab-panel>
         <bk-tab-panel v-if="detail.metadata" name="metadata" :label="$t('metaData')">
             <div class="display-block" :data-title="$t('metaData')">
                 <!-- 虚拟仓库及软件源模式下不支持更新元数据 -->
@@ -118,6 +112,19 @@
                     </bk-table-column>
                 </bk-table>
             </div>
+        </bk-tab-panel>
+        <bk-tab-panel v-if="detail.basic.definition !== undefined" name="definition" :label="$t('definition')">
+            <pre v-if="detail.basic.definition" class="code-block">{{ detail.basic.definition }}</pre>
+            <div style="width: 100%;
+                height: 100%;
+                color: #909399;
+                font-size: 14px;"
+                class="flex-center">
+                {{ $t('noData') }}
+            </div>
+        </bk-tab-panel>
+        <bk-tab-panel v-if="detail.basic.readme" name="readme" :label="$t('readMe')">
+            <div class="version-detail-readme" v-html="readmeContent"></div>
         </bk-tab-panel>
         <bk-tab-panel v-if="detail.manifest && !isEmpty(detail.manifest)" name="manifest" label="Manifest">
             <div class="display-block" data-title="Manifest">

@@ -240,7 +240,7 @@ devops:
   appSecret: __APP_TOKEN__
   devopsHost: __BK_HTTP_SCHEMA__://__BK_CI_FQDN__
   server:
-    type: undertow
+    type: __BK_CI_WEB_SERVER_TYPE__
 
 # CI集成模式固定该配置
 auth:

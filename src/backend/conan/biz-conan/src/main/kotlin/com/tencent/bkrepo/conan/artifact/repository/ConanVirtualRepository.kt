@@ -28,17 +28,27 @@
 package com.tencent.bkrepo.conan.artifact.repository
 
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactQueryContext
+import com.tencent.bkrepo.common.artifact.repository.core.AbstractArtifactRepository
 import com.tencent.bkrepo.common.artifact.repository.virtual.VirtualRepository
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.redis.RedisOperation
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.conan.constant.IGNORECASE
 import com.tencent.bkrepo.conan.constant.PATTERN
 import com.tencent.bkrepo.conan.constant.REQUEST_TYPE
 import com.tencent.bkrepo.conan.pojo.ConanSearchResult
+import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
 import com.tencent.bkrepo.conan.pojo.enums.ConanRequestType
+import com.tencent.bkrepo.conan.utils.PathUtils.extractConanFileReference
+import com.tencent.bkrepo.conan.utils.PathUtils.getConanRecipePattern
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
+import org.springframework.web.context.request.RequestContextHolder
 
 @Component
 class ConanVirtualRepository : VirtualRepository() {
@@ -74,7 +84,7 @@ class ConanVirtualRepository : VirtualRepository() {
                     context.getAttribute<Boolean>(IGNORECASE)?.let { queryContext.putAttribute(IGNORECASE, it) }
                     queryContext.putAttribute(REQUEST_TYPE, ConanRequestType.SEARCH)
                     queryFunction(queryContext).results.forEach { recipe ->
-                        recipeRepoMap[recipe] = repoDetail.name
+                        recipeRepoMap.putIfAbsent(recipe, repoDetail.name)
                         aggregateResult.add(recipe)
                     }
                 }
@@ -92,13 +102,36 @@ class ConanVirtualRepository : VirtualRepository() {
         return ConanSearchResult(aggregateResult.sorted())
     }
 
+    /**
+     * 获取缓存的recipe对应的仓库名。如果是远程仓库，则在ProxyInterceptor已经转到远程仓库，此处处理的是本地仓库
+     * @see com.tencent.bkrepo.conan.servelet.ProxyInterceptor
+     */
+    override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
+        with(context) {
+            getFullPathInterceptors().forEach { it.intercept(projectId, artifactInfo.getArtifactFullPath()) }
+            val cacheKey = getRecipeCacheKey(projectId, repoName, getConanRecipePattern(HttpContextHolder.getRequest().requestURI.extractConanFileReference()))
+            return redisOperation.get(cacheKey)?.let {it->
+                val subRepoDetail = repositoryClient.getRepoDetail(repo.projectId, it).data!!
+                val repository = ArtifactContextHolder.getRepository(subRepoDetail.category)
+                val subContext = generateSubContext(context, subRepoDetail)
+                require(subContext is ArtifactDownloadContext)
+                require(repository is ConanLocalRepository)
+                repository.onDownload(subContext)
+            }?: super.onDownload(context)
+        }
+    }
+
     private fun cacheRecipes(projectId: String, virtualRepoName: String, recipeRepoMap: MutableMap<String, String>) {
         recipeRepoMap.forEach { (recipeName, repoName) ->
+            logger.info("cache recipe $recipeName to repo $repoName")
             redisOperation.set(getRecipeCacheKey(projectId, virtualRepoName, recipeName), repoName, 60 * 5)
         }
     }
 
     companion object {
+
+        private val logger = LoggerFactory.getLogger(ConanVirtualRepository::class.java)
+
         private const val CONAN_VIR_PREFIX = "conan:virtual:"
 
         /**

@@ -74,6 +74,7 @@ class ConanRemoteRepository : RemoteRepository() {
                 }
             } catch (e: Exception) {
                 //代理失败，则使用本地缓存
+                logger.warn("request remote failed, use local cache, error: ${e.message}")
                 return conanLocalRepository.query(context)
             }
         } ?: throw ConanException("request path is not valid")

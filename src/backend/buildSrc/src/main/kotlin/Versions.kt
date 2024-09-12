@@ -45,7 +45,7 @@ object Versions {
     const val JGit = "5.11.0.202103091610-r"
     const val JavaSemver = "0.9.0"
     const val CommonsCompress = "1.26.0"
-    const val CommonsIO = "2.11.0"
+    const val CommonsIO = "2.16.1"
     const val Polaris = "1.5.2"
     const val CommonsText = "1.10.0"
     const val EmbeddedRedis = "0.7.3"

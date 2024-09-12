@@ -26,7 +26,7 @@
  */
 
 dependencies {
-    implementation("com.alibaba:easyexcel:3.3.2")
+    implementation("com.alibaba:easyexcel:4.0.3")
     implementation(project(":analyst:api-analyst"))
     implementation(project(":analysis-executor:api-analysis-executor"))
     implementation(project(":docker:api-docker"))
@@ -46,5 +46,6 @@ dependencies {
     testImplementation("org.mockito.kotlin:mockito-kotlin")
     constraints {
         implementation("org.bitbucket.b_c:jose4j:${Versions.Jose4j}")
+        implementation("org.apache.poi:poi-ooxml:5.3.0")
     }
 }

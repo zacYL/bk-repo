@@ -99,6 +99,7 @@ class OciRegistryLocalRepository(
                 return
             }
             val isForce = request.getParameter(FORCE)?.let { true } ?: false
+            val calculatedSha256 = context.getArtifactSha256()
             val projectId = repositoryDetail.projectId
             val repoName = repositoryDetail.name
             val fullPath = context.artifactInfo.getArtifactFullPath()

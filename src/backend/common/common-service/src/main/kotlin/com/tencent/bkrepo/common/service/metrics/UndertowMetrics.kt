@@ -31,14 +31,14 @@ import io.micrometer.core.instrument.Gauge
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.binder.MeterBinder
 import org.slf4j.LoggerFactory
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression
 import org.springframework.stereotype.Component
 import java.lang.management.ManagementFactory
 import javax.management.MBeanServer
 import javax.management.ObjectName
 
 @Component
-@ConditionalOnProperty(name = ["devops.server.type"], havingValue = "undertow", matchIfMissing = true)
+@ConditionalOnExpression("'\${devops.server.type:undertow}' != 'tongweb'")
 class UndertowMetrics : MeterBinder {
     private val platformMBeanServer: MBeanServer = ManagementFactory.getPlatformMBeanServer()
     private val workerObjectName by lazy { ObjectName(OBJECT_NAME) }

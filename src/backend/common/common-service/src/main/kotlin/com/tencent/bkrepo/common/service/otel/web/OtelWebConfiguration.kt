@@ -34,10 +34,10 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.core.Ordered
 
 @Configuration
+@ConditionalOnProperty(value = ["spring.sleuth.enabled"], matchIfMissing = true)
 class OtelWebConfiguration {
 
     @Bean
-    @ConditionalOnProperty(name = ["devops.server.type"], havingValue = "undertow", matchIfMissing = true)
     fun otelWebFilter(): FilterRegistrationBean<OtelWebFilter> {
         val registrationBean = FilterRegistrationBean<OtelWebFilter>()
         registrationBean.filter = OtelWebFilter()

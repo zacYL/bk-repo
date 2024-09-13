@@ -142,7 +142,7 @@
                                     { clickEvent: () => showDetail(row), label: $t('detail') },
                                     ...(!row.metadata.forbidStatus ? [
                                         !row.folder && handlerPreview(row) && !isRemote && { clickEvent: () => handlerPreview(row, true), label: $t('preview') },
-                                        !row.folder && { clickEvent: () => handlerDownload(row), label: $t('download') },
+                                        !(row.folder && isGenericRemote) && { clickEvent: () => handlerDownload(row), label: $t('download') },
                                         ...((repoName !== 'pipeline' && !row.metadata.lockStatus) ? [
                                             updateOperationPermission && !isRemote && { clickEvent: () => renameRes(row), label: $t('rename') },
                                             !whetherSoftware && !isRemote && { clickEvent: () => moveRes(row), label: $t('move') },

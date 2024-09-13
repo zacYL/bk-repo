@@ -83,9 +83,13 @@ class ConanVirtualRepository : VirtualRepository() {
                     context.getAttribute<String>(PATTERN)?.let { queryContext.putAttribute(PATTERN, it) }
                     context.getAttribute<Boolean>(IGNORECASE)?.let { queryContext.putAttribute(IGNORECASE, it) }
                     queryContext.putAttribute(REQUEST_TYPE, ConanRequestType.SEARCH)
-                    queryFunction(queryContext).results.forEach { recipe ->
-                        recipeRepoMap.putIfAbsent(recipe, repoDetail.name)
-                        aggregateResult.add(recipe)
+                    try {
+                        queryFunction(queryContext).results.forEach { recipe ->
+                            recipeRepoMap.putIfAbsent(recipe, repoDetail.name)
+                            aggregateResult.add(recipe)
+                        }
+                    } catch (e: Exception) {
+                        logger.warn("virtual repository query error, repo: ${repoDetail.name}, error: $e")
                     }
                 }
             }

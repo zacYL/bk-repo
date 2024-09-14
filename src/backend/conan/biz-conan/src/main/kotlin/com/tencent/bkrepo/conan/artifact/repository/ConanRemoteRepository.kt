@@ -111,7 +111,7 @@ class ConanRemoteRepository : RemoteRepository() {
             nodeClient.checkExist(projectId, repoName, getArtifactFullPath()).data
         }
         val artifactResource = super.onDownload(context)
-        if (true != exist) {
+        if (true != exist && artifactResource != null) {
             SpringContextUtils.publishEvent(ConanArtifactUploadEvent(context.userId, conanArtifactInfo))
         }
         return artifactResource

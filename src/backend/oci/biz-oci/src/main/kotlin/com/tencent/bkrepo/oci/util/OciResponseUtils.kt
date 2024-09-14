@@ -82,7 +82,9 @@ object OciResponseUtils {
         port?.let {
             builder.port(port)
         }
-        return builder.build()
+
+//        return builder.build()
+        return URI("http://registry.me:25811/v2/")
     }
 
     /**

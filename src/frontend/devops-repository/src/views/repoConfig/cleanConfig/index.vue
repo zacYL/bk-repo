@@ -400,8 +400,8 @@
             onDeleteGenericCatalog (index) {
                 if (this.config.autoClean) {
                     this.$bkInfoDevopsConfirm({
-                        title: this.$t('deleteDirectory'),
-                        subTitle: this.$t('deleteDirectoryConfirmTip'),
+                        subTitle: this.$t('deleteDirectory'),
+                        content: this.$t('deleteDirectoryConfirmTip'),
                         theme: 'warning',
                         confirmFn: () => {
                             this.genericConfig.rules.splice(index, 1)

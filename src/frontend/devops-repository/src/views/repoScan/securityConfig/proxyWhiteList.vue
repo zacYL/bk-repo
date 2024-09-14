@@ -172,8 +172,8 @@
             },
             handleClickDelArtifact (artifact) {
                 this.$bkInfoDevopsConfirm({
-                    title: this.$t('operationConfirmation'),
-                    subTitle: this.$t('confirmDeleteProxyWhite', [artifact.packageKey]),
+                    subTitle: this.$t('operationConfirmation'),
+                    content: this.$t('confirmDeleteProxyWhite', [artifact.packageKey]),
                     theme: 'danger',
                     confirmFn: () => {
                         this.isLoading = true

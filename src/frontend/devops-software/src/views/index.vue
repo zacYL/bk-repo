@@ -11,7 +11,7 @@
                     :title="$t(name)"
                     :class="{ 'active-route': $route.meta.breadcrumb.find(route => route.name === name) }"
                     onclick="return false"
-                    :href="''">
+                    :href="name">
                     <span class="text-overflow">
                         {{$t(name)}}
                     </span>

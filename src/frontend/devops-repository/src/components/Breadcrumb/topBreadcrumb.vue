@@ -1,10 +1,12 @@
 <template>
-    <bk-breadcrumb separator-class="bk-icon icon-angle-right">
-        <slot></slot>
+    <bk-breadcrumb>
         <bk-breadcrumb-item
-            v-for="item in list"
+            v-for="(item, index) in list"
             :key="item.name"
             :to="{ name: item.name, params: { ...$route.query, ...$route.params }, query: $route.query }">
+            <svg v-if="index === 0" width="48" height="16" style="vertical-align:-3px;margin-right: 5px;">
+                <use xlink:href="#vpack" />
+            </svg>
             {{ transformLabel(item.label) || $t(item.template) }}
         </bk-breadcrumb-item>
     </bk-breadcrumb>

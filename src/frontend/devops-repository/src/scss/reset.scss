@@ -62,24 +62,6 @@ body {
     .bk-button-text.bk-primary:not([disabled]):hover {
         color: var(--primaryWeightColor);
     }
-    /* 面包屑 */
-    .bk-breadcrumb .bk-breadcrumb-item {
-        display: inline-flex;
-        align-items: center;
-        .bk-breadcrumb-separator {
-            margin: 0;
-            font-size: 20px;
-        }
-        .bk-breadcrumb-item-inner{
-            max-width: 200px;
-            overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis;
-        }
-        &:last-child .bk-breadcrumb-item-inner.is-link {
-            cursor: initial;    
-        }
-    }
     /* 字体颜色重置 */
     .bk-table,
     .bk-form .bk-label,

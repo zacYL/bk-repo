@@ -77,3 +77,6 @@ management:
 feign:
   client:
     decode-slash: false
+
+job.repo-refresh.enabled: false
+job.artifact-push.enabled: false

@@ -290,7 +290,7 @@ class MailServiceImpl(
     }
 
     companion object {
-        const val devopsMailApi = "/ms/platform/api/service/notifies/email/"
-        const val bkMailApi = "/api/c/compapi/cmsi/send_mail/"
+        const val devopsMailApi = "/ms/platform/api/service/notifies/email"
+        const val bkMailApi = "/api/c/compapi/cmsi/send_mail"
     }
 }

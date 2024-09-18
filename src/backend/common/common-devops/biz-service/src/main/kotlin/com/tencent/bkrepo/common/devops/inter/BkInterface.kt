@@ -52,7 +52,7 @@ interface BkInterface {
     /**
      * 查询用户的部门信息
      */
-    @GET("/api/c/compapi/v2/usermanage/list_department_profiles/")
+    @GET("/api/c/compapi/v2/usermanage/list_department_profiles")
     fun listDepartmentProfiles(
         @Query("bk_app_code") bkAppCode: String,
         @Query("bk_app_secret") bkAppSecret: String,

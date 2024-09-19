@@ -120,7 +120,7 @@
         </bk-pagination>
         <plan-log v-model="planLog.show" :plan-data="planLog.planData"></plan-log>
         <plan-copy-dialog v-bind="planCopy" @cancel="planCopy.show = false" @refresh="handlerPaginationChange()"></plan-copy-dialog>
-        <bk-sideslider :is-show.sync="drawerSlider.isShow" :quick-close="true" :width="currentLanguage === 'zh-cn' ? 704 : 972">
+        <bk-sideslider :is-show.sync="drawerSlider.isShow" :quick-close="true" :width="currentLanguage === 'zh-cn' ? 724 : 992">
             <div slot="header">{{ drawerSlider.title }}</div>
             <div slot="content" class="plan-side-content">
                 <create-plan :rows-data="drawerSlider.rowsData" @close="handleClickCloseDrawer" @confirm="handlerPaginationChange" />

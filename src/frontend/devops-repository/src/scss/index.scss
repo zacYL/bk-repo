@@ -29,6 +29,16 @@ body {
     }
 }
 
+.bk-picker-confirm a.confirm {
+    background-color: #016bff;
+    color: #fff !important;
+}
+.bk-picker-confirm a.clear {
+    margin-left: auto;
+    background-color: rgba(203, 213, 224, .2);
+    color: #081e40 !important;
+}
+
 .hover-btn {
     user-select: none;
     cursor: pointer;

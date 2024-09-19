@@ -16,7 +16,7 @@
                     </bk-radio>
                     <bk-radio value="SPECIFIED_TIME" :disabled="isDisabledExecutionStrategy || disabled">
                         <div class="flex-align-center">
-                            <span class="label-span">{{$t('designatedTime')}}</span>
+                            <span class="label-span" style="flex-shrink: 0;">{{$t('designatedTime')}}</span>
                             <bk-date-picker
                                 style="width: 180px;"
                                 class="ml10"

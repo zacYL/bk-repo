@@ -27,18 +27,18 @@
 
 package com.tencent.bkrepo.common.service.metrics
 
+import com.tencent.bkrepo.common.service.condition.ConditionalOnUndertow
 import io.micrometer.core.instrument.Gauge
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.binder.MeterBinder
 import org.slf4j.LoggerFactory
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression
 import org.springframework.stereotype.Component
 import java.lang.management.ManagementFactory
 import javax.management.MBeanServer
 import javax.management.ObjectName
 
 @Component
-@ConditionalOnExpression("'\${devops.server.type:undertow}' != 'tongweb'")
+@ConditionalOnUndertow
 class UndertowMetrics : MeterBinder {
     private val platformMBeanServer: MBeanServer = ManagementFactory.getPlatformMBeanServer()
     private val workerObjectName by lazy { ObjectName(OBJECT_NAME) }

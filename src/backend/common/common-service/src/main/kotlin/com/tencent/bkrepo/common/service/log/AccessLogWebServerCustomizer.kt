@@ -31,13 +31,13 @@
 
 package com.tencent.bkrepo.common.service.log
 
+import com.tencent.bkrepo.common.service.condition.ConditionalOnUndertow
 import io.undertow.Undertow
 import io.undertow.UndertowOptions
 import io.undertow.server.handlers.DisallowedMethodsHandler
 import io.undertow.server.handlers.accesslog.AccessLogHandler
 import io.undertow.server.handlers.accesslog.AccessLogReceiver
 import io.undertow.util.HttpString
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression
 import org.springframework.boot.web.embedded.undertow.UndertowBuilderCustomizer
 import org.springframework.boot.web.embedded.undertow.UndertowDeploymentInfoCustomizer
 import org.springframework.boot.web.embedded.undertow.UndertowServletWebServerFactory
@@ -45,7 +45,7 @@ import org.springframework.boot.web.server.WebServerFactoryCustomizer
 import org.springframework.context.annotation.Configuration
 
 @Configuration
-@ConditionalOnExpression("'\${devops.server.type:undertow}' != 'tongweb'")
+@ConditionalOnUndertow
 class AccessLogWebServerCustomizer : WebServerFactoryCustomizer<UndertowServletWebServerFactory> {
 
     override fun customize(factory: UndertowServletWebServerFactory) {

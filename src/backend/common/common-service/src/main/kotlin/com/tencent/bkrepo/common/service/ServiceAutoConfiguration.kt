@@ -45,6 +45,7 @@ import com.tencent.bkrepo.common.service.info.InfoService
 import com.tencent.bkrepo.common.service.otel.web.OtelWebConfiguration
 import com.tencent.bkrepo.common.service.servlet.TongWebAutoConfiguration
 import com.tencent.bkrepo.common.service.shutdown.ServiceShutdownConfiguration
+import com.tencent.bkrepo.common.service.thread.ThreadPoolTaskExecutorConfiguration
 import org.springframework.boot.autoconfigure.AutoConfigureOrder
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
 import org.springframework.context.annotation.Bean
@@ -72,7 +73,8 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
     OtelWebConfiguration::class,
     InfoController::class,
     InfoService::class,
-    TongWebAutoConfiguration::class
+    TongWebAutoConfiguration::class,
+    ThreadPoolTaskExecutorConfiguration::class
 )
 class ServiceAutoConfiguration {
 

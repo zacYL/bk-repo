@@ -122,11 +122,11 @@ class NpmRemoteRepository(
             val packageKey = PackageKeys.ofNpm(packageInfo.first)
             val pkgVersion = packageClient.findVersionByName(projectId, repoName, packageKey, packageInfo.second).data
             if (pkgVersion == null) {
-                // 存储package-version.json文件并创建版本信息
-                val queryContext = ArtifactQueryContext(repo, artifactInfo)
-                queryContext.putAttribute(NPM_FILE_FULL_PATH, versionMetadataFullPath)
-                queryContext.putAttribute(REQUEST_URI, "/${packageInfo.first}/${packageInfo.second}")
                 executor.execute {
+                    // 存储package-version.json文件并创建版本信息
+                    val queryContext = ArtifactQueryContext(repo, artifactInfo)
+                    queryContext.putAttribute(NPM_FILE_FULL_PATH, versionMetadataFullPath)
+                    queryContext.putAttribute(REQUEST_URI, "/${packageInfo.first}/${packageInfo.second}")
                     query(queryContext)?.use {
                         val versionMetadata = it.readJsonString<NpmVersionMetadata>()
                         val size = artifactResource.getTotalSize()

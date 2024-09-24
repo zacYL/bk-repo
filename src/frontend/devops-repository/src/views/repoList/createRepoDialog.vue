@@ -83,7 +83,7 @@
                         <span>{{repoBaseInfo.cache.enabled ? $t('open') : $t('close')}}</span>
                     </template>
                 </bk-form-item>
-                <div v-if="repoBaseInfo.cache.enabled && ['go'].includes(repoBaseInfo.type)" class="pt20 pb20" style="padding-left: 70px;">
+                <div v-if="repoBaseInfo.cache.enabled && ['go'].includes(repoBaseInfo.type)" class="pt20 pb20">
                     <bk-form-item :label="$t('expiration')" property="cache.expiration" :required="true" :rules="rules.cache" error-display-type="normal">
                         <bk-input class="w480" type="number" v-model.trim="repoBaseInfo.cache.expiration"></bk-input>
                     </bk-form-item>

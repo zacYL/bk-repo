@@ -113,8 +113,8 @@
                 </bk-table>
             </div>
         </bk-tab-panel>
-        <bk-tab-panel v-if="detail.basic.definition !== undefined" name="definition" :label="$t('definition')">
-            <pre v-if="detail.basic.definition" class="code-block">{{ detail.basic.definition }}</pre>
+        <bk-tab-panel v-if="detail.mod !== undefined" name="definition" :label="$t('definition')">
+            <pre v-if="detail.mod" class="code-block">{{ detail.mod }}</pre>
             <div style="width: 100%;
                 height: 100%;
                 color: #909399;
@@ -123,7 +123,7 @@
                 {{ $t('noData') }}
             </div>
         </bk-tab-panel>
-        <bk-tab-panel v-if="detail.basic.readme" name="readme" :label="$t('readMe')">
+        <bk-tab-panel v-if="detail.readme" name="readme" :label="$t('readMe')">
             <div class="version-detail-readme" v-html="readmeContent"></div>
         </bk-tab-panel>
         <bk-tab-panel v-if="detail.manifest && !isEmpty(detail.manifest)" name="manifest" label="Manifest">
@@ -348,7 +348,7 @@
                 },
                 immediate: true
             },
-            'detail.basic.readme' (val) {
+            'detail.readme' (val) {
                 if (val) {
                     const promise = window.marked ? Promise.resolve() : window.loadLibScript('/ui/libs/marked.min.js')
                     promise.then(() => {

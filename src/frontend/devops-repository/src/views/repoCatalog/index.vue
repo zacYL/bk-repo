@@ -335,6 +335,21 @@
                     if (res.category === 'REMOTE') {
                         this.baseDetailInfo.url = res.configuration.url
                         this.baseDetailInfo.credentials = res.configuration.credentials
+                        
+                        const { cache } = res.configuration
+
+                        if (cache && cache.enabled !== undefined && cache.expiration !== undefined) {
+                            this.baseDetailInfo.cache = {
+                                enabled: cache.enabled,
+                                expiration: cache.expiration
+                            }
+                        } else {
+                            this.baseDetailInfo.cache = {
+                                enabled: true,
+                                expiration: -1
+                            }
+                        }
+                        
                         if (res.configuration.network.proxy === null) {
                             this.baseDetailInfo.network = {
                                 proxy: {

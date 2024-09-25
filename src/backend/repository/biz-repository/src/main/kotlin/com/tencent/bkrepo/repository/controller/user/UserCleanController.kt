@@ -27,6 +27,7 @@ class UserCleanController(
     }
 
     @ApiOperation("执行磁盘清理")
+    @Deprecated("使用Job服务执行清理任务")
     @PostMapping("/disk/execute")
     fun executeDiskClean(): Response<Void> {
         storageCleanService.executeDiskClean()

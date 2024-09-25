@@ -34,4 +34,5 @@ service:
   name: repository
 repository:
   cleanStrategyTime: __BK_REPO_REPOSITORY_CLEAN_STRATEGY_TIME__
-  deletedNodeReserveDays: 14
+  # deletedNodeReserveDays配置项已迁移到application-repojob.yaml配置文件，此处配置不生效
+  # deletedNodeReserveDays: 14

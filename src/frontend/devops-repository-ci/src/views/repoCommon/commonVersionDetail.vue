@@ -115,7 +115,7 @@
         </bk-tab-panel>
         <bk-tab-panel v-if="detail.mod !== undefined" name="definition" :label="$t('definition')">
             <pre v-if="detail.mod" class="code-block">{{ detail.mod }}</pre>
-            <div style="width: 100%;
+            <div v-else style="width: 100%;
                 height: 100%;
                 color: #909399;
                 font-size: 14px;"

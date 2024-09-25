@@ -354,7 +354,7 @@ export default {
                                                 downloadUrl: location.origin + '/go/ext/cli/download/darwin/arm64'
                                             },
                                             {
-                                                platform: `（${this.$t('defaultValue')}）Windows`,
+                                                platform: 'Windows',
                                                 downloadUrl: location.origin + '/go/ext/cli/download/windows/amd64'
                                             },
                                             {

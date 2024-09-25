@@ -54,7 +54,7 @@
                 </bk-form-item>
                 <template v-if="detailInfo.cache.enabled && ['go'].includes(repoType)">
                     <bk-form-item :label="$t('expiration')">
-                        <bk-input :disabled="true" class="w480" type="number" v-model.trim="detailInfo.cache.expiration"></bk-input>
+                        <bk-input :placeholder="$t('cacheExpirationPlaceholder')" :disabled="true" class="w480" type="number" v-model.trim="detailInfo.cache.expiration"></bk-input>
                     </bk-form-item>
                 </template>
             </template>

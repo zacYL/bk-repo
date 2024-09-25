@@ -61,7 +61,7 @@
                 </template>
             </bk-form-item>
             <bk-form-item v-if="editCacheData.enabled" :label="$t('expiration')" property="expiration" :required="true" error-display-type="normal">
-                <bk-input type="number" v-model.trim="editCacheData.expiration"></bk-input>
+                <bk-input :placeholder="$t('cacheExpirationPlaceholder')" type="number" v-model.trim="editCacheData.expiration"></bk-input>
             </bk-form-item>
         </bk-form>
     </canway-dialog>

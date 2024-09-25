@@ -102,6 +102,11 @@ open class ArtifactInfo(
     }
 
     /**
+     * 构件请求路径
+     */
+    open fun getRequestPath(): String = throw UnsupportedOperationException()
+
+    /**
      * 构件下载显示名称，不同依赖源解析规则不一样，可以override
      *
      * 默认使用传入的artifactUri作为名称

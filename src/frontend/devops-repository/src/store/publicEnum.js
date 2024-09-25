@@ -10,7 +10,8 @@ export const repoEnum = [
     { label: 'Rpm', value: 'rpm' },
     // { label: 'Git', value: 'git' },
     { label: 'Nuget', value: 'nuget' },
-    { label: 'Conan', value: 'conan' }
+    { label: 'Conan', value: 'conan' },
+    { label: 'Go', value: 'go' }
 ]
 // 虚拟仓库支持创建的仓库
 export const repoSupportEnum = [
@@ -19,7 +20,8 @@ export const repoSupportEnum = [
     { label: 'Pypi', value: 'pypi' },
     { label: 'Nuget', value: 'nuget' },
     { label: 'Docker', value: 'docker' },
-    { label: 'Conan', value: 'conan' }
+    { label: 'Conan', value: 'conan' },
+    { label: 'Go', value: 'go' }
 ]
 
 // 远程仓库支持创建的仓库

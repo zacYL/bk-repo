@@ -46,6 +46,17 @@
                         <bk-input :disabled="true" class="w480" type="password" v-model.trim="detailInfo.network.proxy.password"></bk-input>
                     </bk-form-item>
                 </template>
+                <bk-form-item :label="$t('cache')">
+                    <template v-if="['go'].includes(repoType)">
+                        <bk-switcher :disabled="true" v-model="detailInfo.cache.enabled" theme="primary"></bk-switcher>
+                        <span>{{detailInfo.cache.enabled ? $t('open') : $t('close')}}</span>
+                    </template>
+                </bk-form-item>
+                <template v-if="detailInfo.cache.enabled && ['go'].includes(repoType)">
+                    <bk-form-item :label="$t('expiration')">
+                        <bk-input :disabled="true" class="w480" type="number" v-model.trim="detailInfo.cache.expiration"></bk-input>
+                    </bk-form-item>
+                </template>
             </template>
             <template v-if="detailInfo.category === 'VIRTUAL'">
                 <bk-form-item :label=" $t('select') + $t('space') + $t('storageStore')">

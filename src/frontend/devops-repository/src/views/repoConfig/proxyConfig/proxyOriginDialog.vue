@@ -52,6 +52,18 @@
                 <bk-input type="password" v-model.trim="editNetworkProxyData.password"></bk-input>
             </bk-form-item>
         </bk-form>
+        <label class="ml20 mr20 mt20 mb10 form-label">{{$t('cache')}}</label>
+        <bk-form class="ml20 mr20" ref="cacheRefs" :label-width="85" :model="editCacheData" :rules="cacheRules">
+            <bk-form-item :label="$t('cacheSwitch')" property="switcher">
+                <template>
+                    <bk-switcher v-model="editCacheData.enabled" theme="primary"></bk-switcher>
+                    <span>{{editCacheData.enabled ? $t('open') : $t('close')}}</span>
+                </template>
+            </bk-form-item>
+            <bk-form-item v-if="editCacheData.enabled" :label="$t('expiration')" property="expiration" :required="true" error-display-type="normal">
+                <bk-input type="number" v-model.trim="editCacheData.expiration"></bk-input>
+            </bk-form-item>
+        </bk-form>
     </canway-dialog>
 </template>
 <script>
@@ -70,6 +82,10 @@
                 username: '',
                 password: ''
             }
+            const defaultCacheData = {
+                enabled: true,
+                expiration: 120
+            }
             return {
                 editProxyData: {
                     public: true, // 公有 or 私有
@@ -80,7 +96,9 @@
                     password: ''
                 },
                 oldEditNetworkProxyData,
+                defaultCacheData,
                 editNetworkProxyData: { ...oldEditNetworkProxyData },
+                editCacheData: { ...defaultCacheData },
                 rules: {
                     name: [
                         {
@@ -112,6 +130,15 @@
                             trigger: 'blur'
                         }
                     ]
+                },
+                cacheRules: {
+                    expiration: [
+                        {
+                            required: true,
+                            message: this.$t('cacheExpirationPlaceholder'),
+                            trigger: 'blur'
+                        }
+                    ]
                 }
             }
         },
@@ -120,6 +147,7 @@
                 // 在打开弹窗时先将之前的数据校验结果去除
                 this.$refs.proxyOrigin && this.$refs.proxyOrigin.clearError()
                 this.$refs.proxyNetworkRefs && this.$refs.proxyNetworkRefs.clearError()
+                this.$refs.cacheRefs && this.$refs.cacheRefs.clearError()
                 if (data.type === 'add') {
                     this.editProxyData = {
                         public: true,
@@ -133,6 +161,7 @@
                     this.editNetworkProxyData = {
                         ...this.oldEditNetworkProxyData
                     }
+                    this.editCacheData = { ...this.defaultCacheData }
                 } else {
                     this.editProxyData = {
                         ...this.editProxyData,
@@ -149,6 +178,17 @@
                             ...this.oldEditNetworkProxyData,
                             ...data.networkProxy,
                             switcher: true
+                        }
+                    }
+                    if (isEmpty(data.cache)) {
+                        // 当返回的不存在cache字段时表明之前没有配置缓存
+                        this.editCacheData = { ...this.defaultCacheData }
+                    } else {
+                        // 此时表明之前配置了缓存,此时需要将enabled字段置为true
+                        this.editCacheData = {
+                            ...this.defaultCacheData,
+                            ...data.cache,
+                            enabled: true
                         }
                     }
                 }

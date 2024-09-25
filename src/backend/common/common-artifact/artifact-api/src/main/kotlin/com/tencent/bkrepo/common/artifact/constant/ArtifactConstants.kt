@@ -171,3 +171,6 @@ val RESERVED_KEY =
 
 const val METADATA_KEY_PACKAGE_NAME = "packageName"
 const val METADATA_KEY_PACKAGE_VERSION = "packageVersion"
+
+const val SHA256 = "sha256"
+const val MD5 = "md5"

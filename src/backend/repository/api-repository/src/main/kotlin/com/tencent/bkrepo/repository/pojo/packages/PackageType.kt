@@ -34,17 +34,21 @@ package com.tencent.bkrepo.repository.pojo.packages
 /**
  * 包类型
  */
-enum class PackageType {
-    DOCKER,
-    MAVEN,
-    PYPI,
-    NPM,
-    HELM,
-    RDS,
-    COMPOSER,
-    RPM,
-    NUGET,
-    GIT,
-    CONAN,
-    OCI
+enum class PackageType(val schema: String, val versionSortProperty: String = PackageVersion::createdDate.name) {
+    DOCKER("docker"),
+    MAVEN("gav"),
+    PYPI("pypi"),
+    NPM("npm"),
+    HELM("helm"),
+    RDS("rds"),
+    COMPOSER("composer"),
+    RPM("rpm"),
+    NUGET("nuget"),
+    CONAN("conan"),
+    OCI("oci"),
+    GO("go", PackageVersion::ordinal.name);
+
+    companion object {
+        fun fromSchema(schema: String) = values().find { it.schema == schema }
+    }
 }

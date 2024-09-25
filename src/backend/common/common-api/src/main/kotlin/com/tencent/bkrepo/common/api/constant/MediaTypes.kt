@@ -40,6 +40,7 @@ object MediaTypes {
     const val TEXT_PLAIN = "text/plain"
     const val APPLICATION_YAML = "application/x-yaml"
     const val APPLICATION_TGZ = "application/x-tar"
+    const val APPLICATION_ZIP = "application/zip"
     const val APPLICATION_ICO = "image/x-icon"
     const val APPLICATION_APK = "application/vnd.android.package-archive"
     const val APPLICATION_OCI_INDEX_V1 = "application/vnd.oci.image.index.v1+json"

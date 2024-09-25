@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: ${service.name}
+    desc: Go Registry Service
+server:
+  port: __BK_REPO_GO_PORT__
+logging:
+  path: ${logging.path-common}/${service.name}
+service:
+  name: go
+go:
+  domain: ${cluster.self.url}/go

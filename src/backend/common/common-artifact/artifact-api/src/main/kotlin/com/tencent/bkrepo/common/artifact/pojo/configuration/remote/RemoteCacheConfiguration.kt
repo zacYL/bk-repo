@@ -41,6 +41,7 @@ data class RemoteCacheConfiguration(
     var enabled: Boolean = true,
     /**
      * 构件缓存时间，单位分钟，0或负数表示永久缓存
+     * 部分仓库类型表示元数据构件优先读取时间，0或负数表示不优先读取缓存
      */
     var expiration: Long = -1L
 )

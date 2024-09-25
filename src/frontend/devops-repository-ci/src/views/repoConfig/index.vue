@@ -60,6 +60,17 @@
                                 <bk-input class="w480" type="password" v-model.trim="repoBaseInfo.network.proxy.password"></bk-input>
                             </bk-form-item>
                         </template>
+                        <bk-form-item :label="$t('cache')" property="switcher">
+                            <template v-if="['GO'].includes(repoBaseInfo.type)">
+                                <bk-switcher v-model="repoBaseInfo.cache.enabled" theme="primary"></bk-switcher>
+                                <span>{{repoBaseInfo.cache.enabled ? $t('open') : $t('close')}}</span>
+                            </template>
+                        </bk-form-item>
+                        <template v-if="repoBaseInfo.cache.enabled && ['GO'].includes(repoBaseInfo.type)">
+                            <bk-form-item :label="$t('expiration')" property="cache.expiration" :required="true" error-display-type="normal">
+                                <bk-input class="w480" type="number" v-model.trim="repoBaseInfo.cache.expiration"></bk-input>
+                            </bk-form-item>
+                        </template>
                     </template>
                     <template v-if="repoBaseInfo.category === 'VIRTUAL'">
                         <bk-form-item :label="$t('select') + $t('space') + $t('storageStore')" property="virtualStoreList" :required="true" error-display-type="normal">
@@ -273,6 +284,10 @@
                             username: null,
                             password: null
                         }
+                    },
+                    cache: {
+                        enabled: true,
+                        expiration: -1
                     },
                     // 虚拟仓库的选中的存储库列表
                     virtualStoreList: [],
@@ -663,6 +678,17 @@
                                 switcher: true
                             }
                         }
+                        if (res.configuration.cache.cache === null) {
+                            this.repoBaseInfo.cache = {
+                                enabled: true,
+                                expiration: -1
+                            }
+                        } else {
+                            this.repoBaseInfo.cache = {
+                                enabled: res.configuration.cache.enabled,
+                                expiration: res.configuration.cache.expiration
+                            }
+                        }
                     }
                     if (res.type === 'DOCKER' && (res.category === 'LOCAL' || res.category === 'REMOTE') && res.configuration.settings.defaultNamespace === 'library') {
                         this.repoBaseInfo.enabledLibraryNamespace = true
@@ -712,7 +738,7 @@
                 } catch (error) {
                     console.error(error)
                 }
-               
+
                 return filterInterceptors
             },
             async saveBaseInfo () {

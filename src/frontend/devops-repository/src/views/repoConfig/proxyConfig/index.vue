@@ -10,6 +10,7 @@
             <div class="proxy-type">{{$t('type')}}</div>
             <div class="proxy-address">{{$t('address')}}</div>
             <div class="proxy-switcher">{{$t('networkProxy')}}</div>
+            <div class="cache-switcher">{{$t('cache')}}</div>
             <div class="proxy-operation">{{$t('operation')}}</div>
         </div>
         <draggable v-if="proxyList.length" v-model="proxyList" :options="{ animation: 200 }" @update="debounceSaveProxy">
@@ -19,6 +20,7 @@
                 <div class="proxy-type">{{proxy.public ? $t('publicProxy') : $t('privateProxy')}}</div>
                 <div class="proxy-address">{{proxy.url}}</div>
                 <div class="proxy-switcher">{{ isEmpty(proxy.networkProxy) ? $t('closed') : $t('opened')}}</div>
+                <div class="cache-switcher">{{ isEmpty(proxy.cache) ? $t('closed') : $t('opened')}}</div>
                 <div class="flex-align-center proxy-operation">
                     <Icon class="mr10 hover-btn" size="24" name="icon-edit" @click.native.stop="editProxy(proxy)" />
                     <Icon class="hover-btn" size="24" name="icon-delete" @click.native.stop="deleteProxy(proxy)" />
@@ -109,6 +111,9 @@
                     // 当网络代理的 host 存在时表明配置了网络代理，此时请求时就需要添加 networkProxy对象
                     updateData.networkProxy = { ...data.networkProxy }
                 }
+                if (data.cache.enabled) {
+                    updateData.cache = { ...data.cache }
+                }
                 // 添加
                 if (data.type === 'add') {
                     this.proxyList.push(updateData)
@@ -185,6 +190,9 @@
             flex: 6;
         }
         .proxy-switcher {
+            flex: 2;
+        }
+        .cache-switcher {
             flex: 2;
         }
         .proxy-operation {

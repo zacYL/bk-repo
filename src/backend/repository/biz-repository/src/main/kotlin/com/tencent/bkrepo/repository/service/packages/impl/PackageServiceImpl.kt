@@ -44,6 +44,7 @@ import com.tencent.bkrepo.common.artifact.constant.SCAN_STATUS
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
+import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.artifact.util.version.SemVersion
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
 import com.tencent.bkrepo.common.query.model.QueryModel
@@ -123,7 +124,7 @@ class PackageServiceImpl(
         packageKey: String
     ): PackageVersion? {
         val packageId = packageDao.findByKey(projectId, repoName, packageKey)?.id ?: return null
-        return convert(packageVersionDao.findLatest(packageId))
+        return convert(packageVersionDao.findLatest(packageId, TPackageVersion::ordinal.name))
     }
 
     override fun listPackagePage(
@@ -179,7 +180,12 @@ class PackageServiceImpl(
         return if (tPackage == null) {
             Pages.ofResponse(pageRequest, 0, emptyList())
         } else {
-            val query = PackageQueryHelper.versionListQuery(tPackage.id!!, option.version, stageTag)
+            val query = PackageQueryHelper.versionListQuery(
+                packageId = tPackage.id!!,
+                name = option.version,
+                stageTag = stageTag,
+                sortProperty = option.sortProperty
+            )
             val totalRecords = packageVersionDao.count(query)
             val records = packageVersionDao.find(query.with(pageRequest)).map { convert(it)!! }
             Pages.ofResponse(pageRequest, totalRecords, records)
@@ -194,7 +200,12 @@ class PackageServiceImpl(
     ): List<PackageVersion> {
         val stageTag = option.stageTag?.split(StringPool.COMMA)
         val tPackage = packageDao.findByKey(projectId, repoName, packageKey) ?: return emptyList()
-        val query = PackageQueryHelper.versionListQuery(tPackage.id!!, option.version, stageTag)
+        val query = PackageQueryHelper.versionListQuery(
+            packageId = tPackage.id!!,
+            name = option.version,
+            stageTag = stageTag,
+            sortProperty = option.sortProperty
+        )
         return packageVersionDao.find(query).map { convert(it)!! }
     }
 
@@ -249,7 +260,7 @@ class PackageServiceImpl(
                 }
                 packageVersionDao.save(oldVersion)
                 packageDao.upsert(query, update)
-                logger.info("Update package version[$oldVersion] success")
+                logger.info("Update package version[$projectId/$repoName/$packageKey-${oldVersion.name}] success")
                 publishEvent(buildUpdatedEvent(request, realIpAddress ?: HttpContextHolder.getClientAddress()))
             } else {
                 val newVersion = TPackageVersion(
@@ -273,7 +284,7 @@ class PackageServiceImpl(
                 packageVersionDao.save(newVersion)
                 update.inc(TPackage::versions.name)
                 packageDao.upsert(query, update)
-                logger.info("Create package version[$newVersion] success")
+                logger.info("Create package version[$projectId/$repoName/$packageKey-${newVersion.name}] success")
                 publishEvent(buildCreatedEvent(request, realIpAddress ?: HttpContextHolder.getClientAddress()))
             }
         }
@@ -322,7 +333,8 @@ class PackageServiceImpl(
             logger.info("Delete package [$projectId/$repoName/$packageKey-$versionName] because no version exist")
         } else {
             if (tPackage.latest == tPackageVersion.name) {
-                val latestVersion = packageVersionDao.findLatest(tPackage.id.orEmpty())
+                val sortProperty = PackageKeys.determineVersionSortProperty(packageKey)
+                val latestVersion = packageVersionDao.findLatest(tPackage.id.orEmpty(), sortProperty)
                 tPackage.latest = latestVersion?.name.orEmpty()
             }
             packageDao.save(tPackage)
@@ -488,7 +500,8 @@ class PackageServiceImpl(
             // 先查询包是否存在，不存在先创建包
             val tPackage = findOrCreatePackage(request)
             val packageId = tPackage.id.orEmpty()
-            var latestVersion = packageVersionDao.findLatest(packageId)
+            val versionSortProperty = PackageKeys.determineVersionSortProperty(key)
+            var latestVersion = packageVersionDao.findLatest(packageId, versionSortProperty)
             // 检查版本是否存在
             versionList.forEach {
                 if (packageVersionDao.findByName(packageId, it.name) != null) {
@@ -520,12 +533,12 @@ class PackageServiceImpl(
                 } else if (it.createdDate.isAfter(latestVersion?.createdDate)) {
                     latestVersion = newVersion
                 }
-                logger.info("Create package version[$newVersion] success")
+                logger.info("Create package version[$projectId/$repoName/$key-${newVersion.name}] success")
             }
             // 更新包
             tPackage.latest = latestVersion?.name ?: tPackage.latest
             packageDao.save(tPackage)
-            logger.info("Update package version[$tPackage] success")
+            logger.info("Update package [$tPackage] success")
         }
     }
 
@@ -634,7 +647,7 @@ class PackageServiceImpl(
      */
     private fun calculateOrdinal(versionName: String): Long {
         return try {
-            SemVersion.parse(versionName).ordinal()
+            SemVersion.parse(versionName.removePrefix("v")).ordinal()
         } catch (exception: IllegalArgumentException) {
             LOWEST_ORDINAL
         }

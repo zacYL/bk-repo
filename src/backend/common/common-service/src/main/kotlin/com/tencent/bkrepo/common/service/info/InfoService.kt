@@ -23,7 +23,7 @@ class InfoService {
     private var buildTime: String = LocalDateTime.now().toString()
 
     @Value("\${release.description}")
-    private var description: String = "©2001-2022 广州嘉为科技有限公司 版权所有"
+    private var description: String = "©2001-2024 广州嘉为科技有限公司 版权所有"
 
     @Value("\${release.cicd}")
     private var cicd: String = ""

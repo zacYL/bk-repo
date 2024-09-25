@@ -171,7 +171,7 @@ class OciRegistryRemoteRepository(
     /**
      * 注意：针对oci仓库配置的username/password鉴权方式请求返回401，需要额外去获取token
      */
-    private fun doRequest(context: ArtifactContext): Any? {
+    override fun doRequest(context: ArtifactContext): Any? {
         val remoteConfiguration = context.getRemoteConfiguration()
         val httpClient = clientCache.getIfPresent(remoteConfiguration) ?: run {
             clientCache.put(remoteConfiguration, createHttpClient(remoteConfiguration, false))

@@ -67,6 +67,17 @@
                         <bk-input class="w480" type="password" v-model.trim="repoBaseInfo.network.proxy.password"></bk-input>
                     </bk-form-item>
                 </template>
+                <bk-form-item :label="$t('cache')" property="switcher">
+                    <template v-if="['go'].includes(repoBaseInfo.type) && storeType === 'remote'">
+                        <bk-switcher v-model="repoBaseInfo.cache.enabled" theme="primary"></bk-switcher>
+                        <span>{{repoBaseInfo.cache.enabled ? $t('open') : $t('close')}}</span>
+                    </template>
+                </bk-form-item>
+                <template v-if="repoBaseInfo.cache.enabled && ['go'].includes(repoBaseInfo.type)">
+                    <bk-form-item :label="$t('expiration')" property="cache.expiration" :required="true" error-display-type="normal">
+                        <bk-input class="w480" type="number" v-model.trim="repoBaseInfo.cache.expiration"></bk-input>
+                    </bk-form-item>
+                </template>
             </template>
 
             <template v-if="storeType === 'virtual'">
@@ -273,6 +284,10 @@
                     username: null,
                     password: null
                 }
+            },
+            cache: {
+                enabled: true,
+                expiration: 120
             },
             // 虚拟仓库的选中的存储库列表
             virtualStoreList: [],
@@ -743,6 +758,10 @@
                             body.configuration.network.proxy.username = null
                             body.configuration.network.proxy.password = null
                         }
+                    }
+                    if (this.repoBaseInfo.type === 'go') {
+                        body.configuration.cache.enabled = this.repoBaseInfo.cache.enabled
+                        body.configuration.cache.expiration = this.repoBaseInfo.cache.expiration
                     }
                 }
                 // 虚拟仓库需要添加存储库相关配置

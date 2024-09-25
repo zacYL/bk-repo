@@ -35,6 +35,7 @@ import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.remote.RemoteRepository
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.service.packages.PackageService
@@ -87,6 +88,10 @@ class CommonRemoteRepository(
                 overwrite = true
             )
         }
+    }
+
+    override fun getCacheArtifactResource(context: ArtifactContext): ArtifactResource? {
+        return getCacheInfo(context)?.let { loadArtifactResource(it.first, context) }
     }
 
     /**

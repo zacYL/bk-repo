@@ -334,7 +334,7 @@ class PypiRemoteRepository(
         }
     }
 
-    private fun doRequest(context: ArtifactContext): Response {
+    override fun doRequest(context: ArtifactContext): Response {
         val remoteConfiguration = context.getRemoteConfiguration()
         val httpClient = createHttpClient(remoteConfiguration)
         val downloadUrl = createRemoteDownloadUrl(context)

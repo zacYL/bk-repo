@@ -32,6 +32,7 @@
 package com.tencent.bkrepo.common.artifact.repository.remote
 
 import com.tencent.bkrepo.common.api.constant.HttpStatus
+import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
@@ -73,22 +74,7 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
         with(context) {
             getFullPathInterceptors().forEach { it.intercept(projectId, artifactInfo.getArtifactFullPath()) }
         }
-        return getCacheArtifactResource(context) ?: run {
-            val remoteConfiguration = context.getRemoteConfiguration()
-            val httpClient = createHttpClient(remoteConfiguration)
-            val downloadUrl = createRemoteDownloadUrl(context)
-            val request = Request.Builder().url(downloadUrl).build()
-            logger.info("Remote download url: $downloadUrl, network config: ${remoteConfiguration.network}")
-            val response = try {
-                httpClient.newCall(request).execute()
-            } catch (e: Exception) {
-                logger.error("An error occurred while sending request $downloadUrl", e)
-                null
-            }
-            return if (response != null && checkResponse(response)) {
-                onDownloadResponse(context, response)
-            } else null
-        }
+        return getCacheArtifactResource(context) ?: doRequest(context) as ArtifactResource?
     }
 
     @Suppress("TooGenericExceptionCaught", "LoopWithTooManyJumpStatements")
@@ -149,19 +135,28 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
     }
 
     override fun query(context: ArtifactQueryContext): Any? {
+        return doRequest(context)
+    }
+
+    protected open fun doRequest(context: ArtifactContext): Any? {
         val remoteConfiguration = context.getRemoteConfiguration()
         val httpClient = createHttpClient(remoteConfiguration)
-        val downloadUri = createRemoteDownloadUrl(context)
-        logger.info("Remote query url: $downloadUri, network config: ${remoteConfiguration.network}")
-        val request = Request.Builder().url(downloadUri).build()
-        return try {
-            val response = httpClient.newCall(request).execute()
-            if (checkQueryResponse(response)) {
-                onQueryResponse(context, response)
-            } else null
-        } catch (ignore: Exception) {
-            logger.warn("Failed to request or resolve response", ignore)
+        val url = createRemoteDownloadUrl(context)
+        val request = Request.Builder().url(url).build()
+        logger.info("Request url: $url, network config: ${remoteConfiguration.network}")
+        val response = try {
+            httpClient.newCall(request).execute()
+        } catch (e: Exception) {
+            logger.error("An error occurred while sending request $url", e)
             null
+        }
+        return response?.let {
+            when (context) {
+                is ArtifactDownloadContext -> if (checkResponse(it)) onDownloadResponse(context, it) else null
+                is ArtifactQueryContext -> if (checkQueryResponse(it)) onQueryResponse(context, it) else null
+                is ArtifactSearchContext -> if (checkResponse(it)) onSearchResponse(context, it) else emptyList()
+                else -> MethodNotAllowedException()
+            }
         }
     }
 
@@ -183,12 +178,20 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
      * 尝试读取缓存的远程构件
      */
     open fun getCacheArtifactResource(context: ArtifactContext): ArtifactResource? {
+        return getCacheInfo(context)?.takeIf { it.second }?.let { loadArtifactResource(it.first, context) }
+    }
+
+    /**
+     * 获取缓存的远程构件节点及过期状态
+     */
+    protected fun getCacheInfo(context: ArtifactContext): Pair<NodeDetail, Boolean>? {
         val configuration = context.getRemoteConfiguration()
         if (!configuration.cache.enabled) return null
 
         val cacheNode = findCacheNodeDetail(context)
-        return if (cacheNode == null || cacheNode.folder || isExpired(cacheNode, configuration.cache.expiration)) null
-        else loadArtifactResource(cacheNode, context)
+        return if (cacheNode == null || cacheNode.folder) null else {
+            Pair(cacheNode, isExpired(cacheNode, configuration.cache.expiration))
+        }
     }
 
     /**
@@ -209,7 +212,7 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
     /**
      * 判断缓存节点[cacheNode]是否过期，[expiration]表示有效期，单位分钟
      */
-    protected fun isExpired(cacheNode: NodeDetail, expiration: Long): Boolean {
+    protected open fun isExpired(cacheNode: NodeDetail, expiration: Long): Boolean {
         if (expiration <= 0) {
             return false
         }

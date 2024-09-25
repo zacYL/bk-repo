@@ -45,5 +45,7 @@ data class VersionListOption(
     @ApiModelProperty("版本")
     val version: String? = null,
     @ApiModelProperty("晋级tag, 多个tag以逗号分隔")
-    val stageTag: String? = null
+    val stageTag: String? = null,
+    @ApiModelProperty("排序字段")
+    val sortProperty: String? = null
 )

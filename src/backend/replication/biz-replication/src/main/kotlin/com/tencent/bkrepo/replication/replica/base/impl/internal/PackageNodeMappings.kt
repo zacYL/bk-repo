@@ -30,6 +30,7 @@ package com.tencent.bkrepo.replication.replica.base.impl.internal
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.service.util.SpringContextUtils
 import com.tencent.bkrepo.replication.replica.base.impl.internal.type.DockerPackageNodeMapper
+import com.tencent.bkrepo.replication.replica.base.impl.internal.type.GoPackageNodeMapper
 import com.tencent.bkrepo.replication.replica.base.impl.internal.type.MavenPackageNodeMapper
 import com.tencent.bkrepo.replication.replica.base.impl.internal.type.NpmPackageNodeMapper
 import com.tencent.bkrepo.replication.replica.base.impl.internal.type.PackageNodeMapper
@@ -47,6 +48,7 @@ object PackageNodeMappings {
         addMapper(SpringContextUtils.getBean(MavenPackageNodeMapper::class.java))
         addMapper(NpmPackageNodeMapper())
         addMapper(SpringContextUtils.getBean(DockerPackageNodeMapper::class.java))
+        addMapper(SpringContextUtils.getBean(GoPackageNodeMapper::class.java))
     }
 
     private fun addMapper(mapper: PackageNodeMapper) {

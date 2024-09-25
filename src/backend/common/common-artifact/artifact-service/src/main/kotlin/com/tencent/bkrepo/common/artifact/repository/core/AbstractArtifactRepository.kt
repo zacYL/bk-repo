@@ -352,7 +352,7 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
 
     fun downloadIntercept(context: ArtifactDownloadContext, node: NodeDetail?) {
         node?.let { nodeDownloadIntercept(context, node) }
-        // TODO: node中统一存储packageKey与version元数据后可移除此处的package下载拦截
+        // TODO: node中统一存储packageName与version元数据后可移除此处的package下载拦截
         packageVersion(context, node)?.let { packageVersion -> packageDownloadIntercept(context, packageVersion) }
     }
 
@@ -363,7 +363,7 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
     /**
      * 拦截node下载
      */
-    private fun nodeDownloadIntercept(context: ArtifactDownloadContext, nodeDetail: NodeDetail) {
+    protected fun nodeDownloadIntercept(context: ArtifactDownloadContext, nodeDetail: NodeDetail) {
         with(context) {
             getNodeInterceptors().forEach { it.intercept(projectId, nodeDetail) }
             // 拦截package下载
@@ -379,7 +379,7 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
 
     /**
      * 拦截package下载
-     * TODO NODE中统一存储packageKey与version元数据后可设置为private方法
+     * TODO NODE中统一存储packageName与packageVersion元数据后可设置为private方法
      */
     fun packageDownloadIntercept(context: ArtifactDownloadContext, packageVersion: PackageVersion) {
         context.getPackageInterceptors().forEach { it.intercept(context.projectId, packageVersion) }

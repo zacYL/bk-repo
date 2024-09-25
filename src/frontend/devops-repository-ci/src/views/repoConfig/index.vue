@@ -1,210 +1,223 @@
 <template>
     <div class="repo-config-container" v-bkloading="{ isLoading }">
-        <bk-tab v-if="showTabPanel" class="repo-config-tab page-tab" type="unborder-card" :active.sync="tabName">
+        <bk-tab v-if="showTabPanel" class="repo-config-tab page-tab" :class="[tabName === 'baseInfo' ? 'base-info-tab' : '']" type="unborder-card" :active.sync="tabName">
             <bk-tab-panel name="baseInfo" :label="$t('repoBaseInfo')">
-                <bk-form ref="repoBaseInfo" class="repo-base-info" :label-width="150" :model="repoBaseInfo" :rules="rules">
-                    <bk-form-item :label="$t('repoName')">
-                        <div class="flex-align-center">
-                            <icon size="20" :name="repoBaseInfo.repoType || repoType" />
-                            <span class="ml10">{{replaceRepoName(repoBaseInfo.name || repoName)}}</span>
-                        </div>
-                    </bk-form-item>
-                    <bk-form-item :label="$t('storeTypes')">
-                        <div class="flex-align-center">
-                            <icon size="20" :name="(repoBaseInfo.category && repoBaseInfo.category.toLowerCase() || 'local') + '-store'" />
-                            <span class="ml10">{{$t((repoBaseInfo.category.toLowerCase() || 'local') + 'Store' ) }}</span>
-                        </div>
-                    </bk-form-item>
-                    <bk-form-item :label="$t('repoAddress')">
-                        <span>{{repoAddress}}</span>
-                    </bk-form-item>
-                    <template v-if="repoBaseInfo.category === 'REMOTE'">
-                        <bk-form-item :label="$t('remoteProxyAddress')" :required="true" property="url" error-display-type="normal">
-                            <bk-input class="w480" v-model.trim="repoBaseInfo.url"></bk-input>
-                            <!-- todo 测试链接暂未支持 -->
-                            <bk-button v-if="repoBaseInfo.type !== 'GENERIC'" theme="primary" :disabled="disableTestUrl" @click="onClickTestRemoteUrl">{{ $t('testRemoteUrl') }}</bk-button>
-                        </bk-form-item>
-                        <bk-form-item :label="$t('remoteProxyAccount')" property="credentials.username" error-display-type="normal">
-                            <bk-input class="w480" v-model.trim="repoBaseInfo.credentials.username"></bk-input>
-                        </bk-form-item>
-                        <bk-form-item :label="$t('remoteProxyPassword')" property="credentials.password" error-display-type="normal">
-                            <bk-input class="w480" type="password" v-model.trim="repoBaseInfo.credentials.password"></bk-input>
-                        </bk-form-item>
-                        <bk-form-item :label="$t('networkProxy')" property="switcher">
-                            <template>
-                                <bk-switcher v-model="repoBaseInfo.network.switcher" theme="primary"></bk-switcher>
-                                <span>{{repoBaseInfo.network.switcher ? $t('open') : $t('close')}}</span>
-                            </template>
-                        </bk-form-item>
-                        <div v-if="repoBaseInfo.network.switcher" class="pt20 pb20" style="padding-left: 70px;">
-                            <bk-form-item label="IP" property="network.proxy.host" :required="true" error-display-type="normal">
-                                <bk-input class="w480" v-model.trim="repoBaseInfo.network.proxy.host"></bk-input>
-                            </bk-form-item>
-                            <bk-form-item :label="$t('port')" property="network.proxy.port" :required="true" error-display-type="normal">
-                                <bk-input
-                                    class="w480"
-                                    type="number"
-                                    :max="65535"
-                                    :min="1"
-                                    :class="{ 'bk-form-item is-error': errorProxyPortInfo }"
-                                    v-model.trim="repoBaseInfo.network.proxy.port"
-                                    @blur="onBlurProxyPort"
-                                    @focus="errorProxyPortInfo = false">
-                                </bk-input>
-                                <p class="form-error-tip" v-if="errorProxyPortInfo">{{$t('repositoryProxyPortInfo')}}</p>
-                            </bk-form-item>
-                            <bk-form-item :label="$t('networkAccount')" property="network.proxy.username">
-                                <bk-input class="w480" v-model.trim="repoBaseInfo.network.proxy.username"></bk-input>
-                            </bk-form-item>
-                            <bk-form-item :label="$t('networkPassword')" property="network.proxy.password">
-                                <bk-input class="w480" type="password" v-model.trim="repoBaseInfo.network.proxy.password"></bk-input>
-                            </bk-form-item>
-                        </div>
-                        <bk-form-item v-show="['GO'].includes(repoBaseInfo.type) && repoBaseInfo.category === 'REMOTE'" :label="$t('cache')" property="switcher">
-                            <template>
-                                <bk-switcher v-model="repoBaseInfo.cache.enabled" theme="primary"></bk-switcher>
-                                <span>{{repoBaseInfo.cache.enabled ? $t('open') : $t('close')}}</span>
-                            </template>
-                        </bk-form-item>
-                        <div v-if="repoBaseInfo.cache.enabled && ['GO'].includes(repoBaseInfo.type)" class="pt20 pb20">
-                            <bk-form-item :label="$t('expiration')" property="cache.expiration" :required="true" :rules="rules.cache" error-display-type="normal">
-                                <bk-input :placeholder="$t('cacheExpirationPlaceholder')" class="w480" type="number" v-model.trim="repoBaseInfo.cache.expiration"></bk-input>
-                            </bk-form-item>
-                        </div>
-                    </template>
-                    <template v-if="repoBaseInfo.category === 'VIRTUAL'">
-                        <bk-form-item :label="$t('select') + $t('space') + $t('storageStore')" property="virtualStoreList" :required="true" error-display-type="normal">
-                            <bk-button class="mb10" hover-theme="primary" @click="toCheckedStore">{{ $t('pleaseSelect') }}</bk-button>
-                            <div class="virtual-check-container">
-                                <store-sort
-                                    v-if="repoBaseInfo.virtualStoreList.length"
-                                    :key="repoBaseInfo.virtualStoreList"
-                                    ref="storeSortRef"
-                                    :sort-list="repoBaseInfo.virtualStoreList"
-                                    @update="onUpdateList"></store-sort>
+                <bk-alert
+                    v-if="tipsObj"
+                    :style="{
+                        marginLeft: currentLanguage === 'zh-cn' ? '82px' : '60px',
+                        width: `fix-content`
+                    }"
+                    class="mt10"
+                    type="warning"
+                    :title="tipsObj.tips">
+                </bk-alert>
+                <div>
+                    
+                    <bk-form ref="repoBaseInfo" class="repo-base-info" :label-width="150" :model="repoBaseInfo" :rules="rules">
+                        <bk-form-item :label="$t('repoName')">
+                            <div class="flex-align-center">
+                                <icon size="20" :name="repoBaseInfo.repoType || repoType" />
+                                <span class="ml10">{{replaceRepoName(repoBaseInfo.name || repoName)}}</span>
                             </div>
                         </bk-form-item>
-                    </template>
-                    <template v-if="!['generic', 'composer'].includes(repoType)">
-                        <bk-form-item
-                            :label="$t('includePath')">
-                            <bk-button @click="addPath('includesPath')" class="mr5">{{ $t("addPath") }}</bk-button>
-                            <bk-icon-plus type="plus-hint" v-bk-tooltips="includesPathDesc" />
+                        <bk-form-item :label="$t('storeTypes')">
+                            <div class="flex-align-center">
+                                <icon size="20" :name="(repoBaseInfo.category && repoBaseInfo.category.toLowerCase() || 'local') + '-store'" />
+                                <span class="ml10">{{$t((repoBaseInfo.category.toLowerCase() || 'local') + 'Store' ) }}</span>
+                            </div>
                         </bk-form-item>
-                        <bk-form-item
-                            v-for="(item, index) in repoBaseInfo.includesPath"
-                            required
-                            :rules="rules.includesPath"
-                            :property="'includesPath.' + index + '.value'"
-                            :key="index"
-                            style="width: fit-content;"
-                            class="mt10">
-                            <bk-input v-model="item.value" :placeholder="$t('pleaseInput') + $t('space') + $t('verificationRules')" style="width: 180px;">
-                            </bk-input>
-                            <Icon class="hover-btn" size="24" name="icon-delete" @click.native.stop="repoBaseInfo.includesPath.splice(index, 1)" style="position: absolute; right: -30px; top: 4px;" />
+                        <bk-form-item :label="$t('repoAddress')">
+                            <span>{{repoAddress}}</span>
                         </bk-form-item>
-                        <bk-form-item :label="$t('ignorePath')">
-                            <bk-button @click="addPath('ignoresPath')">{{ $t("addPath") }}</bk-button>
+                        <template v-if="repoBaseInfo.category === 'REMOTE'">
+                            <bk-form-item :label="$t('remoteProxyAddress')" :required="true" property="url" error-display-type="normal">
+                                <bk-input class="w480" v-model.trim="repoBaseInfo.url"></bk-input>
+                                <!-- todo 测试链接暂未支持 -->
+                                <bk-button v-if="repoBaseInfo.type !== 'GENERIC'" theme="primary" :disabled="disableTestUrl" @click="onClickTestRemoteUrl">{{ $t('testRemoteUrl') }}</bk-button>
+                            </bk-form-item>
+                            <bk-form-item :label="$t('remoteProxyAccount')" property="credentials.username" error-display-type="normal">
+                                <bk-input class="w480" v-model.trim="repoBaseInfo.credentials.username"></bk-input>
+                            </bk-form-item>
+                            <bk-form-item :label="$t('remoteProxyPassword')" property="credentials.password" error-display-type="normal">
+                                <bk-input class="w480" type="password" v-model.trim="repoBaseInfo.credentials.password"></bk-input>
+                            </bk-form-item>
+                            <bk-form-item :label="$t('networkProxy')" property="switcher">
+                                <template>
+                                    <bk-switcher v-model="repoBaseInfo.network.switcher" theme="primary"></bk-switcher>
+                                    <span>{{repoBaseInfo.network.switcher ? $t('open') : $t('close')}}</span>
+                                </template>
+                            </bk-form-item>
+                            <div v-if="repoBaseInfo.network.switcher" class="pt20 pb20" style="padding-left: 70px;">
+                                <bk-form-item label="IP" property="network.proxy.host" :required="true" error-display-type="normal">
+                                    <bk-input class="w480" v-model.trim="repoBaseInfo.network.proxy.host"></bk-input>
+                                </bk-form-item>
+                                <bk-form-item :label="$t('port')" property="network.proxy.port" :required="true" error-display-type="normal">
+                                    <bk-input
+                                        class="w480"
+                                        type="number"
+                                        :max="65535"
+                                        :min="1"
+                                        :class="{ 'bk-form-item is-error': errorProxyPortInfo }"
+                                        v-model.trim="repoBaseInfo.network.proxy.port"
+                                        @blur="onBlurProxyPort"
+                                        @focus="errorProxyPortInfo = false">
+                                    </bk-input>
+                                    <p class="form-error-tip" v-if="errorProxyPortInfo">{{$t('repositoryProxyPortInfo')}}</p>
+                                </bk-form-item>
+                                <bk-form-item :label="$t('networkAccount')" property="network.proxy.username">
+                                    <bk-input class="w480" v-model.trim="repoBaseInfo.network.proxy.username"></bk-input>
+                                </bk-form-item>
+                                <bk-form-item :label="$t('networkPassword')" property="network.proxy.password">
+                                    <bk-input class="w480" type="password" v-model.trim="repoBaseInfo.network.proxy.password"></bk-input>
+                                </bk-form-item>
+                            </div>
+                            <bk-form-item v-show="['GO'].includes(repoBaseInfo.type) && repoBaseInfo.category === 'REMOTE'" :label="$t('cache')" property="switcher">
+                                <template>
+                                    <bk-switcher v-model="repoBaseInfo.cache.enabled" theme="primary"></bk-switcher>
+                                    <span>{{repoBaseInfo.cache.enabled ? $t('open') : $t('close')}}</span>
+                                </template>
+                            </bk-form-item>
+                            <div v-if="repoBaseInfo.cache.enabled && ['GO'].includes(repoBaseInfo.type)" class="pt20 pb20">
+                                <bk-form-item :label="$t('expiration')" property="cache.expiration" :required="true" :rules="rules.cache" error-display-type="normal">
+                                    <bk-input :placeholder="$t('cacheExpirationPlaceholder')" class="w480" type="number" v-model.trim="repoBaseInfo.cache.expiration"></bk-input>
+                                </bk-form-item>
+                            </div>
+                        </template>
+                        <template v-if="repoBaseInfo.category === 'VIRTUAL'">
+                            <bk-form-item :label="$t('select') + $t('space') + $t('storageStore')" property="virtualStoreList" :required="true" error-display-type="normal">
+                                <bk-button class="mb10" hover-theme="primary" @click="toCheckedStore">{{ $t('pleaseSelect') }}</bk-button>
+                                <div class="virtual-check-container">
+                                    <store-sort
+                                        v-if="repoBaseInfo.virtualStoreList.length"
+                                        :key="repoBaseInfo.virtualStoreList"
+                                        ref="storeSortRef"
+                                        :sort-list="repoBaseInfo.virtualStoreList"
+                                        @update="onUpdateList"></store-sort>
+                                </div>
+                            </bk-form-item>
+                        </template>
+                        <template v-if="!['generic', 'composer'].includes(repoType)">
+                            <bk-form-item
+                                :label="$t('includePath')">
+                                <bk-button @click="addPath('includesPath')" class="mr5">{{ $t("addPath") }}</bk-button>
+                                <bk-icon-plus type="plus-hint" v-bk-tooltips="includesPathDesc" />
+                            </bk-form-item>
+                            <bk-form-item
+                                v-for="(item, index) in repoBaseInfo.includesPath"
+                                required
+                                :rules="rules.includesPath"
+                                :property="'includesPath.' + index + '.value'"
+                                :key="index"
+                                style="width: fit-content;"
+                                class="mt10">
+                                <bk-input v-model="item.value" :placeholder="$t('pleaseInput') + $t('space') + $t('verificationRules')" style="width: 180px;">
+                                </bk-input>
+                                <Icon class="hover-btn" size="24" name="icon-delete" @click.native.stop="repoBaseInfo.includesPath.splice(index, 1)" style="position: absolute; right: -30px; top: 4px;" />
+                            </bk-form-item>
+                            <bk-form-item :label="$t('ignorePath')">
+                                <bk-button @click="addPath('ignoresPath')">{{ $t("addPath") }}</bk-button>
+                            </bk-form-item>
+                            <bk-form-item
+                                v-for="(item, index) in repoBaseInfo.ignoresPath"
+                                :rules="rules.ignoresPath"
+                                :property="'ignoresPath.' + index + '.value'"
+                                :key="index"
+                                style="width: fit-content;"
+                                class="mt10">
+                                <bk-input v-model="item.value" :placeholder="$t('pleaseInput') + $t('space') + $t('verificationRules')" style="width: 180px;">
+                                </bk-input>
+                                <Icon class="hover-btn" size="24" name="icon-delete" @click.native.stop="repoBaseInfo.ignoresPath.splice(index, 1)" style="position: absolute; right: -30px; top: 4px;" />
+                            </bk-form-item>
+                        </template>
+                        <bk-form-item :label="$t('accessPermission')">
+                            <card-radio-group
+                                v-model="available"
+                                :list="availableList"
+                                :disabled="repoBaseInfo.name === 'pipeline' || repoBaseInfo.name === 'report'"
+                            >
+                            </card-radio-group>
                         </bk-form-item>
-                        <bk-form-item
-                            v-for="(item, index) in repoBaseInfo.ignoresPath"
-                            :rules="rules.ignoresPath"
-                            :property="'ignoresPath.' + index + '.value'"
-                            :key="index"
-                            style="width: fit-content;"
-                            class="mt10">
-                            <bk-input v-model="item.value" :placeholder="$t('pleaseInput') + $t('space') + $t('verificationRules')" style="width: 180px;">
-                            </bk-input>
-                            <Icon class="hover-btn" size="24" name="icon-delete" @click.native.stop="repoBaseInfo.ignoresPath.splice(index, 1)" style="position: absolute; right: -30px; top: 4px;" />
-                        </bk-form-item>
-                    </template>
-                    <bk-form-item :label="$t('accessPermission')">
-                        <card-radio-group
-                            v-model="available"
-                            :list="availableList"
-                            :disabled="repoBaseInfo.name === 'pipeline' || repoBaseInfo.name === 'report'"
-                        >
-                        </card-radio-group>
-                    </bk-form-item>
 
-                    <bk-form-item :label="$t('versionStrategy')" v-if="!(repoBaseInfo.category === 'REMOTE') && !(repoBaseInfo.category === 'VIRTUAL') && (repoType === 'maven' || repoType === 'npm')">
-                        <div class="flex-align-center">
-                            <bk-switcher
-                                v-model="repoBaseInfo.override.switcher"
-                                size="small"
-                                theme="primary"
-                                @change="handleOverrideChange"
-                            ></bk-switcher>
-                            <span class="ml10">{{$t('coverStrategyInfo')}}</span>
-                        </div>
-                        <bk-radio-group v-model="repoBaseInfo.override.isFlag" v-if="repoBaseInfo.override.switcher">
-                            <bk-radio class="mr20" :value="false">{{$t('notAllowCover')}}</bk-radio>
-                            <bk-radio :value="true">{{$t('allowCover')}}</bk-radio>
-                        </bk-radio-group>
-                    </bk-form-item>
-                    <template v-if="repoType === 'generic' && repoBaseInfo.category === 'LOCAL'">
-                        <!-- <bk-form-item v-for="type in ['mobile', 'web']" :key="type" -->
-                        <bk-form-item v-for="type in ['web']" :key="type"
-                            :label="$t(`${type}Download`)" :property="`${type}.enable`">
-                            <bk-radio-group v-model="repoBaseInfo[type].enable">
-                                <bk-radio class="mr20" :value="true">{{ $t('open') }}</bk-radio>
-                                <bk-radio :value="false">{{ $t('close') }}</bk-radio>
+                        <bk-form-item :label="$t('versionStrategy')" v-if="!(repoBaseInfo.category === 'REMOTE') && !(repoBaseInfo.category === 'VIRTUAL') && (repoType === 'maven' || repoType === 'npm')">
+                            <div class="flex-align-center">
+                                <bk-switcher
+                                    v-model="repoBaseInfo.override.switcher"
+                                    size="small"
+                                    theme="primary"
+                                    @change="handleOverrideChange"
+                                ></bk-switcher>
+                                <span class="ml10">{{$t('coverStrategyInfo')}}</span>
+                            </div>
+                            <bk-radio-group v-model="repoBaseInfo.override.isFlag" v-if="repoBaseInfo.override.switcher">
+                                <bk-radio class="mr20" :value="false">{{$t('notAllowCover')}}</bk-radio>
+                                <bk-radio :value="true">{{$t('allowCover')}}</bk-radio>
                             </bk-radio-group>
-                            <template v-if="repoBaseInfo[type].enable">
-                                <bk-form-item :label="$t('fileName')" :label-width="80" class="mt10"
-                                    :property="`${type}.filename`" required error-display-type="normal">
-                                    <bk-input class="w250" v-model.trim="repoBaseInfo[type].filename"></bk-input>
-                                    <i class="bk-icon icon-info f14 ml5" v-bk-tooltips="$t('fileNameRule')"></i>
-                                </bk-form-item>
-                                <bk-form-item :label="$t('metadata')" :label-width="80"
-                                    :property="`${type}.metadata`" required error-display-type="normal">
-                                    <bk-input class="w250" v-model.trim="repoBaseInfo[type].metadata" :placeholder="$t('metadataRule')"></bk-input>
-                                </bk-form-item>
-                            </template>
                         </bk-form-item>
-                    </template>
-                    <template v-if="repoType === 'docker' && (repoBaseInfo.category === 'LOCAL' || repoBaseInfo.category === 'REMOTE')">
-                        <bk-form-item :label="$t('enabledLibraryNamespace')">
-                            <bk-checkbox v-model="repoBaseInfo.enabledLibraryNamespace"></bk-checkbox>
-                        </bk-form-item>
-                    </template>
-                    <template v-if="!(repoBaseInfo.category === 'REMOTE') && !(repoBaseInfo.category === 'VIRTUAL') && repoType === 'rpm'">
-                        <bk-form-item :label="$t('enabledFileLists')">
-                            <bk-checkbox v-model="repoBaseInfo.enabledFileLists"></bk-checkbox>
-                        </bk-form-item>
-                        <bk-form-item :label="$t('repoDataDepth')" property="repodataDepth" error-display-type="normal">
-                            <bk-input class="w480" v-model.trim="repoBaseInfo.repodataDepth"></bk-input>
-                        </bk-form-item>
-                        <bk-form-item :label="$t('groupXmlSet')" property="groupXmlSet" error-display-type="normal">
-                            <bk-tag-input
+                        <template v-if="repoType === 'generic' && repoBaseInfo.category === 'LOCAL'">
+                            <!-- <bk-form-item v-for="type in ['mobile', 'web']" :key="type" -->
+                            <bk-form-item v-for="type in ['web']" :key="type"
+                                :label="$t(`${type}Download`)" :property="`${type}.enable`">
+                                <bk-radio-group v-model="repoBaseInfo[type].enable">
+                                    <bk-radio class="mr20" :value="true">{{ $t('open') }}</bk-radio>
+                                    <bk-radio :value="false">{{ $t('close') }}</bk-radio>
+                                </bk-radio-group>
+                                <template v-if="repoBaseInfo[type].enable">
+                                    <bk-form-item :label="$t('fileName')" :label-width="80" class="mt10"
+                                        :property="`${type}.filename`" required error-display-type="normal">
+                                        <bk-input class="w250" v-model.trim="repoBaseInfo[type].filename"></bk-input>
+                                        <i class="bk-icon icon-info f14 ml5" v-bk-tooltips="$t('fileNameRule')"></i>
+                                    </bk-form-item>
+                                    <bk-form-item :label="$t('metadata')" :label-width="80"
+                                        :property="`${type}.metadata`" required error-display-type="normal">
+                                        <bk-input class="w250" v-model.trim="repoBaseInfo[type].metadata" :placeholder="$t('metadataRule')"></bk-input>
+                                    </bk-form-item>
+                                </template>
+                            </bk-form-item>
+                        </template>
+                        <template v-if="repoType === 'docker' && (repoBaseInfo.category === 'LOCAL' || repoBaseInfo.category === 'REMOTE')">
+                            <bk-form-item :label="$t('enabledLibraryNamespace')">
+                                <bk-checkbox v-model="repoBaseInfo.enabledLibraryNamespace"></bk-checkbox>
+                            </bk-form-item>
+                        </template>
+                        <template v-if="!(repoBaseInfo.category === 'REMOTE') && !(repoBaseInfo.category === 'VIRTUAL') && repoType === 'rpm'">
+                            <bk-form-item :label="$t('enabledFileLists')">
+                                <bk-checkbox v-model="repoBaseInfo.enabledFileLists"></bk-checkbox>
+                            </bk-form-item>
+                            <bk-form-item :label="$t('repoDataDepth')" property="repodataDepth" error-display-type="normal">
+                                <bk-input class="w480" v-model.trim="repoBaseInfo.repodataDepth"></bk-input>
+                            </bk-form-item>
+                            <bk-form-item :label="$t('groupXmlSet')" property="groupXmlSet" error-display-type="normal">
+                                <bk-tag-input
+                                    class="w480"
+                                    :value="repoBaseInfo.groupXmlSet"
+                                    @change="(val) => {
+                                        repoBaseInfo.groupXmlSet = val.map(v => {
+                                            return v.replace(/^([^.]*)(\.xml)?$/, '$1.xml')
+                                        })
+                                    }"
+                                    :list="[]"
+                                    trigger="focus"
+                                    :clearable="false"
+                                    allow-create
+                                    has-delete-icon>
+                                </bk-tag-input>
+                            </bk-form-item>
+                        </template>
+                        <bk-form-item :label="$t('description')">
+                            <bk-input type="textarea"
                                 class="w480"
-                                :value="repoBaseInfo.groupXmlSet"
-                                @change="(val) => {
-                                    repoBaseInfo.groupXmlSet = val.map(v => {
-                                        return v.replace(/^([^.]*)(\.xml)?$/, '$1.xml')
-                                    })
-                                }"
-                                :list="[]"
-                                trigger="focus"
-                                :clearable="false"
-                                allow-create
-                                has-delete-icon>
-                            </bk-tag-input>
+                                maxlength="200"
+                                :rows="6"
+                                v-model.trim="repoBaseInfo.description"
+                                :placeholder="$t('repoDescriptionPlaceholder')">
+                            </bk-input>
                         </bk-form-item>
-                    </template>
-                    <bk-form-item :label="$t('description')">
-                        <bk-input type="textarea"
-                            class="w480"
-                            maxlength="200"
-                            :rows="6"
-                            v-model.trim="repoBaseInfo.description"
-                            :placeholder="$t('repoDescriptionPlaceholder')">
-                        </bk-input>
-                    </bk-form-item>
-                    <bk-form-item>
-                        <bk-button :loading="repoBaseInfo.loading" theme="primary" @click="saveBaseInfo">{{$t('save')}}</bk-button>
-                    </bk-form-item>
-                </bk-form>
+                        <bk-form-item>
+                            <bk-button :loading="repoBaseInfo.loading" theme="primary" @click="saveBaseInfo">{{$t('save')}}</bk-button>
+                        </bk-form-item>
+                    </bk-form>
+                </div>
             </bk-tab-panel>
             <bk-tab-panel v-if="showProxyConfigTab" name="proxyConfig" :label="$t('proxyConfig')">
                 <proxy-config :base-data="repoBaseInfo" @refresh="getRepoInfoHandler"></proxy-config>
@@ -303,6 +316,17 @@
         },
         computed: {
             ...mapState(['domain']),
+            tipsObj () {
+                if (this.protocol === 'http' && ['GO'].includes(this.repoBaseInfo.type) && ['project', 'system'].includes(this.available)) {
+                    return {
+                        tips: this.$t('goWarnTips')
+                    }
+                }
+                return ''
+            },
+            protocol () {
+                return window.location.protocol.replace(':', '')
+            },
             projectId () {
                 return this.$route.params.projectId
             },
@@ -872,6 +896,22 @@
     }
 </script>
 <style lang="scss" scoped>
+.base-info-tab {
+    ::v-deep .bk-tab-section {
+        padding: 0;
+        .bk-tab-content {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            & > :last-child {
+                padding: 20px;
+                flex: 1;
+                min-height: 0;
+                overflow: auto;
+            }
+        }
+    }
+}
 .repo-config-container {
     height: 100%;
     background-color: white;

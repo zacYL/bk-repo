@@ -630,6 +630,10 @@
         list-style: inherit;
     }
 
+    a:not([href^="http://"]):not([href^="https://"]):not([href^="mailto://"]):not([href^="ftp://"]) {
+        pointer-events: none;
+    }
+
     a {
         color: var(--primaryColor);
         text-decoration: underline;

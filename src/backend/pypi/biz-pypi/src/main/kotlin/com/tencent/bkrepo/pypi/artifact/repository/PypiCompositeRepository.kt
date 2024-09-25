@@ -87,6 +87,7 @@ class PypiCompositeRepository(
     private fun queryFromProxyRepo(context: ArtifactQueryContext): Any? {
         return mapFirstProxyRepo(context) {
             require(it is ArtifactQueryContext)
+            it.getRemoteConfiguration().cache.enabled = false
             // 这里只会返回空，异常不会抛出
             pypiRemoteRepository.query(it)
         }

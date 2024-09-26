@@ -124,7 +124,7 @@
             </div>
         </bk-tab-panel>
         <bk-tab-panel v-if="detail.readme" name="readme" :label="$t('readMe')">
-            <div class="version-detail-readme" v-html="readmeContent"></div>
+            <div ref="readmeContent" class="version-detail-readme" v-html="readmeContent"></div>
         </bk-tab-panel>
         <bk-tab-panel v-if="detail.manifest && !isEmpty(detail.manifest)" name="manifest" label="Manifest">
             <div class="display-block" data-title="Manifest">
@@ -357,6 +357,12 @@
                 }
             }
         },
+        destroyed () {
+            this.removeReadmeAClick()
+        },
+        beforeRouteLeave () {
+            this.removeReadmeAClick()
+        },
         methods: {
             convertFileSize,
             ...mapActions([
@@ -364,10 +370,30 @@
                 'addPackageMetadata',
                 'deletePackageMetadata'
             ]),
+            readmeClickEvent (event) {
+                const target = event.target
+                // 检查是否为a标签，并阻止点击事件
+                if (target.tagName.toLowerCase() === 'a') {
+                    event.preventDefault()
+                }
+            },
+            initReadmeAClick () {
+                const readmeContent = this.$refs.readmeContent
+                if (readmeContent) {
+                    readmeContent.addEventListener('click', this.readmeClickEvent)
+                }
+            },
+            removeReadmeAClick () {
+                const readmeContent = this.$refs.readmeContent
+                if (readmeContent) {
+                    readmeContent.removeEventListener('click', this.readmeClickEvent)
+                }
+            },
             getDetail () {
                 this.isLoading = true
                 // 在每次重新获取接口详情时都需要先将此tab页的类型置为空，否则不会重新加载依赖tab页组件，也就不会重新获取数据
                 this.detailType = ''
+                this.removeReadmeAClick()
                 this.getVersionDetail({
                     projectId: this.projectId,
                     repoType: this.repoType,
@@ -403,6 +429,7 @@
                         })
                     }
                 }).finally(() => {
+                    this.initReadmeAClick()
                     this.isLoading = false
                 })
             },
@@ -629,11 +656,7 @@
     li {
         list-style: inherit;
     }
-
-    a:not([href^="http://"]):not([href^="https://"]):not([href^="mailto://"]):not([href^="ftp://"]) {
-        pointer-events: none;
-    }
-
+    
     a {
         color: var(--primaryColor);
         text-decoration: underline;

@@ -309,7 +309,8 @@ export default {
                                 : [],
                             {
                                 key: 'dependInputValue1', // vux中存储的变量名
-                                label: this.$t('name'), // 输入框左侧label文案
+                                label: this.$t('targetName'), // 输入框左侧label文案
+                                placeholder: this.repoName,
                                 methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
                             },
                             {
@@ -387,7 +388,7 @@ export default {
                             {
                                 title: this.$t('loginRepository'),
                                 codeList: [
-                                    this.isPublic ? `bk login -n ${this.repoName} -r ${this.repoUrl}` : `bk login -n ${this.dependInputValue3 || ('<' + this.$t('customName') + '>')} -r ${this.repoUrl} -u ${this.userName} -t ${this.accessToken}`
+                                    `bk go login -n ${this.dependInputValue1 || this.repoName} -r ${this.repoUrl} -u ${this.userName} -t ${this.accessToken}`
                                 ]
                             },
                             {
@@ -399,7 +400,7 @@ export default {
                             {
                                 codeNoMargin: true,
                                 codeList: [
-                                    `bk publish -n ${this.dependInputValue1 || this.$t('name')} -v ${this.dependInputValue2 || ('<' + this.$t('customVersion') + '>')}`
+                                    `bk go publish -n ${this.dependInputValue1 || this.repoName} -v ${this.dependInputValue2 || ('<' + this.$t('customVersion') + '>')}`
                                 ]
                             },
                             {

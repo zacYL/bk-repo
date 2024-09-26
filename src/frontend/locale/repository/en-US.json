@@ -1057,6 +1057,7 @@
     "preprocessing": "Preprocessing",
     "defaultValue": "Default Value",
     "powerShellExecute": "Open PowerShell and execute",
+    "targetName": "Defined target name",
     "customVersion": "Custom version",
     "moduleDirectory": "Module directory",
     "customName": "Custom name",

@@ -54,7 +54,7 @@ class GoRegistryVirtualRepository : VirtualRepository() {
                 } else {
                     mapFirstRepo(context) { sub, repository ->
                         require(sub is ArtifactQueryContext)
-                        repository.query(context)
+                        repository.query(sub)
                     }
                 }
             }

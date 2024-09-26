@@ -1057,6 +1057,7 @@
     "preprocessing": "预处理",
     "defaultValue": "默认值",
     "powerShellExecute": "打开PowerShell执行",
+    "targetName": "推送目标名称",
     "customVersion": "自定义版本号",
     "moduleDirectory": "模块目录",
     "customName": "自定义名称",

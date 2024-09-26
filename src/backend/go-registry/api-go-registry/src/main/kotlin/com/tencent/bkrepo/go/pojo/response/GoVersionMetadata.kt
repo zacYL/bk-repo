@@ -27,10 +27,12 @@
 
 package com.tencent.bkrepo.go.pojo.response
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.annotations.ApiModel
 
 @ApiModel("go版本信息")
+@JsonInclude(JsonInclude.Include.NON_NULL)
 data class GoVersionMetadata(
     @JsonProperty("Version")
     val version: String,
@@ -41,6 +43,7 @@ data class GoVersionMetadata(
     val origin: VersionOrigin? = null
 )
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 data class VersionOrigin(
     @JsonProperty("VCS")
     val vcs: String? = null,

@@ -88,7 +88,7 @@ object PackageQueryHelper {
     }
 
     fun versionLatestQuery(packageId: String, sortProperty: String? = null): Query {
-        return versionListQuery(packageId, sortProperty).limit(1)
+        return versionListQuery(packageId, sortProperty = sortProperty).limit(1)
     }
 
     fun versionQuery(packageId: String, versionList: List<String>): Query {

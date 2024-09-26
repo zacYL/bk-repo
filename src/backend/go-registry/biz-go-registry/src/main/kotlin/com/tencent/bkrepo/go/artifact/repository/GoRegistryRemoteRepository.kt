@@ -43,7 +43,6 @@ import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.artifact.stream.artifactStream
 import com.tencent.bkrepo.common.artifact.util.http.UrlFormatter
-import com.tencent.bkrepo.common.storage.monitor.Throughput
 import com.tencent.bkrepo.go.constant.GO_MOD_KEY
 import com.tencent.bkrepo.go.constant.README_KEY
 import com.tencent.bkrepo.go.pojo.artifact.GoArtifactInfo
@@ -109,44 +108,30 @@ class GoRegistryRemoteRepository(
         with(context.artifactInfo as GoModuleInfo) {
             val contentType: String
             val artifactFile = createTempFile(response.body()!!)
-            if (type == GoFileType.ZIP) {
+            val size = artifactFile.getSize()
+            val artifactStream = artifactFile.getInputStream().artifactStream(Range.full(size))
+            val node = cacheArtifactFile(context, artifactFile)
+            if (type == GoFileType.ZIP && node != null) {
                 contentType = MediaTypes.APPLICATION_ZIP
                 val (mod, readme) = goPackageService.extractModAndReadme(
                     this, artifactFile.getInputStream(), context.storageCredentials
                 )
-                mod?.let { context.putAttribute(GO_MOD_KEY, it) }
-                readme?.let { context.putAttribute(README_KEY, it) }
+                val extension = mutableMapOf<String, String>()
+                mod?.let { extension[GO_MOD_KEY] = it }
+                readme?.let { extension[README_KEY] = it }
+                goPackageService.createVersion(
+                    artifactInfo = this,
+                    size = node.size,
+                    sha256 = node.sha256!!,
+                    md5 = node.md5!!,
+                    extension = extension,
+                )
             } else contentType = MediaTypes.TEXT_PLAIN
-            val size = artifactFile.getSize()
-            val artifactStream = artifactFile.getInputStream().artifactStream(Range.full(size))
-            val node = cacheArtifactFile(context, artifactFile)
             val responseName = context.artifactInfo.getResponseName()
             val srcRepo = RepositoryIdentify(context.projectId, context.repoName)
             return ArtifactResource(artifactStream, responseName, srcRepo, node, ArtifactChannel.PROXY).apply {
                 this.contentType = contentType
             }
-        }
-    }
-
-    override fun onDownloadSuccess(
-        context: ArtifactDownloadContext,
-        artifactResource: ArtifactResource,
-        throughput: Throughput
-    ) {
-        with(context.artifactInfo as GoModuleInfo) {
-            val extension = mutableMapOf<String, String>()
-            val mod = context.getStringAttribute(GO_MOD_KEY)
-            val readme = context.getStringAttribute(README_KEY)
-            mod?.let { extension[GO_MOD_KEY] = it }
-            readme?.let { extension[README_KEY] = it }
-            goPackageService.createVersion(
-                artifactInfo = this,
-                size = artifactResource.getTotalSize(),
-                sha256 = artifactResource.node!!.sha256!!,
-                md5 = artifactResource.node!!.md5!!,
-                extension = extension,
-            )
-            super.onDownloadSuccess(context, artifactResource, throughput)
         }
     }
 

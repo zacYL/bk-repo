@@ -1,5 +1,4 @@
 import { mapState, mapActions } from 'vuex'
-import Vue from 'vue'
 export default {
     computed: {
         ...mapState(['userInfo', 'domain', 'dependAccessTokenValue', 'dependInputValue1', 'dependInputValue2', 'dependInputValue3']),
@@ -339,27 +338,27 @@ export default {
                                         values: [
                                             {
                                                 platform: 'Linux (amd64)',
-                                                downloadUrl: location.origin + '/go/ext/cli/download/linux/amd64'
+                                                downloadUrl: location.origin + '/web/go/ext/cli/download/linux/amd64'
                                             },
                                             {
                                                 platform: 'Linux (arm64)',
-                                                downloadUrl: location.origin + '/go/ext/cli/download/linux/arm64'
+                                                downloadUrl: location.origin + '/web/go/ext/cli/download/linux/arm64'
                                             },
                                             {
                                                 platform: 'macOS (Intel)',
-                                                downloadUrl: location.origin + '/go/ext/cli/download/darwin/amd64'
+                                                downloadUrl: location.origin + '/web/go/ext/cli/download/darwin/amd64'
                                             },
                                             {
                                                 platform: 'macOS (Apple Silicon)',
-                                                downloadUrl: location.origin + '/go/ext/cli/download/darwin/arm64'
+                                                downloadUrl: location.origin + '/web/go/ext/cli/download/darwin/arm64'
                                             },
                                             {
                                                 platform: 'Windows',
-                                                downloadUrl: location.origin + '/go/ext/cli/download/windows/amd64'
+                                                downloadUrl: location.origin + '/web/go/ext/cli/download/windows/amd64'
                                             },
                                             {
                                                 platform: 'Windows (arm64)',
-                                                downloadUrl: location.origin + '/go/ext/cli/download/windows/arm64'
+                                                downloadUrl: location.origin + '/web/go/ext/cli/download/windows/arm64'
                                             }
                                         ]
                                     },
@@ -367,9 +366,7 @@ export default {
                                         type: 'button',
                                         disabled: !this.goDownloadUrl,
                                         cb: () => {
-                                            Vue.prototype.$ajax.get(
-                                                this.goDownloadUrl
-                                            )
+                                            window.open(this.goDownloadUrl, '_self')
                                         }
                                     }
                                 ]

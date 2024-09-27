@@ -50,6 +50,7 @@ import com.tencent.bkrepo.conan.pojo.RevisionInfo
 import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
 import com.tencent.bkrepo.conan.pojo.enums.ConanRequestType
 import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.buildDownloadRecordRequest
+import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.buildRefStr
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -128,7 +129,7 @@ class ConanRemoteRepository : RemoteRepository() {
         super.onDownloadBefore(context)
         with(context.artifactInfo as ConanArtifactInfo) {
             packageClient
-                .findVersionByName(projectId, repoName, PackageKeys.ofConan(name), version).data
+                .findVersionByName(projectId, repoName, PackageKeys.ofConan(buildRefStr(this)), version).data
                 ?.apply { packageDownloadIntercept(context, this) }
         }
     }

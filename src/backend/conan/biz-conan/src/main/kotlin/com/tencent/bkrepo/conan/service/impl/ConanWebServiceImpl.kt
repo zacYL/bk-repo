@@ -39,6 +39,7 @@ import com.tencent.bkrepo.conan.pojo.user.PackageVersionInfo
 import com.tencent.bkrepo.conan.service.ConanDeleteService
 import com.tencent.bkrepo.conan.service.ConanWebService
 import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.buildBasicInfo
+import com.tencent.bkrepo.conan.utils.PathUtils.extractNameFromReference
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.PackageClient
 import com.tencent.bkrepo.repository.api.PackageMetadataClient
@@ -69,13 +70,13 @@ class ConanWebServiceImpl(
 
     override fun deletePackage(artifactInfo: ConanArtifactInfo, packageKey: String) {
         logger.info("conan delete package...")
-        val name = PackageKeys.resolveConan(packageKey)
+        val refStr = PackageKeys.resolveConan(packageKey)
         with(artifactInfo) {
             packageClient.listAllVersion(projectId, repoName, packageKey).data?.forEach { it ->
                 packageClient.deleteVersion(projectId, repoName, packageKey, it.name)
                 val copyArtifactInfo = artifactInfo.copy() as ConanArtifactInfo
                 copyArtifactInfo.apply {
-                    this.name = name
+                    this.name = extractNameFromReference(refStr)
                     this.userName = it.metadata[USERNAME]?.toString() ?: StringPool.UNDERSCORE
                     this.channel = it.metadata[CHANNEL]?.toString() ?: StringPool.UNDERSCORE
                     version = it.name
@@ -88,11 +89,11 @@ class ConanWebServiceImpl(
 
     override fun deleteVersion(artifactInfo: ConanArtifactInfo, packageKey: String, version: String) {
         logger.info("conan delete version...")
-        val name = PackageKeys.resolveConan(packageKey)
+        val refStr = PackageKeys.resolveConan(packageKey)
         with(artifactInfo) {
             packageMetadataClient.listMetadata(projectId,repoName,packageKey,version).data?.let {
                 apply {
-                    this.name = name
+                    this.name = extractNameFromReference(refStr)
                     this.userName = it[USERNAME]?.toString() ?: StringPool.UNDERSCORE
                     this.channel = it[CHANNEL]?.toString() ?: StringPool.UNDERSCORE
                     this.version = version

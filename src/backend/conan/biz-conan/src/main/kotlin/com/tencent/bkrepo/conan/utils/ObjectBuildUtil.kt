@@ -54,6 +54,7 @@ import com.tencent.bkrepo.conan.utils.ConanArtifactInfoUtil.convertToConanFileRe
 import com.tencent.bkrepo.conan.utils.ConanArtifactInfoUtil.convertToPackageReference
 import com.tencent.bkrepo.conan.utils.PathUtils.buildPackageReference
 import com.tencent.bkrepo.conan.utils.PathUtils.buildReference
+import com.tencent.bkrepo.conan.utils.PathUtils.buildReferenceWithoutVersion
 import com.tencent.bkrepo.conan.utils.PathUtils.getPackageRevisionsFile
 import com.tencent.bkrepo.conan.utils.PathUtils.getRecipeRevisionsFile
 import com.tencent.bkrepo.conan.utils.TimeFormatUtil.convertToUtcTime
@@ -84,7 +85,7 @@ object ObjectBuildUtil {
                 projectId = projectId,
                 repoName = repoName,
                 packageName = name,
-                packageKey = PackageKeys.ofConan(name),
+                packageKey = PackageKeys.ofConan(buildRefStr(artifactInfo)),
                 packageType = PackageType.CONAN,
                 versionName = version,
                 size = size,
@@ -98,6 +99,13 @@ object ObjectBuildUtil {
         }
     }
 
+    fun buildRefStr(artifactInfo: ConanArtifactInfo): String {
+        // conan key中的name由 实际name+username+channel组成
+        val conanFileReference = convertToConanFileReference(artifactInfo)
+        val refStr = buildReferenceWithoutVersion(conanFileReference)
+        return refStr
+    }
+
     fun buildPackageVersionUpdateRequest(
         artifactInfo: ConanArtifactInfo,
         size: Long,
@@ -106,7 +114,7 @@ object ObjectBuildUtil {
             return PackageVersionUpdateRequest(
                 projectId = projectId,
                 repoName = repoName,
-                packageKey = PackageKeys.ofConan(name),
+                packageKey = PackageKeys.ofConan(buildRefStr(artifactInfo)),
                 versionName = version,
                 size = size
             )
@@ -295,7 +303,7 @@ object ObjectBuildUtil {
                 PackageDownloadRecord(
                     projectId = projectId,
                     repoName = repoName,
-                    packageKey = PackageKeys.ofConan(conanArtifactInfo.name),
+                    packageKey = PackageKeys.ofConan(buildRefStr(conanArtifactInfo)),
                     packageVersion = conanArtifactInfo.version,
                     userId = userId
                 )

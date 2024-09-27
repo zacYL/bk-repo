@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.conan.utils
 
+import com.tencent.bkrepo.common.api.constant.CharPool
 import com.tencent.bkrepo.common.api.constant.CharPool.AT
 import com.tencent.bkrepo.common.api.constant.CharPool.COLON
 import com.tencent.bkrepo.common.api.constant.CharPool.HASH_TAG
@@ -111,6 +112,20 @@ object PathUtils {
                 .append(channel)
                 .toString()
         }
+    }
+
+    fun buildReferenceWithoutVersion(fileReference: ConanFileReference): String {
+        with(fileReference) {
+            return StringBuilder(userName)
+                .append(AT)
+                .append(name)
+                .append(SLASH)
+                .append(channel)
+                .toString()
+        }
+    }
+    fun extractNameFromReference(input: String): String {
+        return input.substringAfter(AT).substringBefore(SLASH)
     }
 
     fun buildReference(fileReference: ConanFileReference): String {
@@ -238,3 +253,4 @@ object PathUtils {
         return uri.endsWith(CONANFILE) || uri.endsWith(CONANFILE_TXT)
     }
 }
+

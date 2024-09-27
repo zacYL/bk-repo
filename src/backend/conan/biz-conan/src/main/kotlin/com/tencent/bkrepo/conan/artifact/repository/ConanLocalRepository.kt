@@ -52,8 +52,10 @@ import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
 import com.tencent.bkrepo.conan.pojo.enums.ConanRequestType
 import com.tencent.bkrepo.conan.service.impl.CommonService
 import com.tencent.bkrepo.conan.utils.ConanArtifactInfoUtil
+import com.tencent.bkrepo.conan.utils.ObjectBuildUtil
 import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.buildDownloadRecordRequest
 import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.buildDownloadResponse
+import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.buildRefStr
 import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.toConanFileReference
 import com.tencent.bkrepo.conan.utils.PathUtils
 import com.tencent.bkrepo.conan.utils.PathUtils.generateFullPath
@@ -124,7 +126,7 @@ class ConanLocalRepository : LocalRepository() {
         super.onUploadBefore(context)
         with(context.artifactInfo as ConanArtifactInfo) {
             packageClient
-                .findVersionByName(projectId, repoName, PackageKeys.ofConan(name), version).data
+                .findVersionByName(projectId, repoName, PackageKeys.ofConan(buildRefStr(this)), version).data
                 ?.apply { uploadIntercept(context, this) }
         }
     }
@@ -141,7 +143,7 @@ class ConanLocalRepository : LocalRepository() {
         super.onDownloadBefore(context)
         with(context.artifactInfo as ConanArtifactInfo) {
             packageClient
-                .findVersionByName(projectId, repoName, PackageKeys.ofConan(name), version).data
+                .findVersionByName(projectId, repoName, PackageKeys.ofConan(buildRefStr(this)), version).data
                 ?.apply { packageDownloadIntercept(context, this) }
         }
     }

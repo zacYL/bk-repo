@@ -27,11 +27,6 @@
 
 package com.tencent.bkrepo.go.pojo.artifact
 
-import com.tencent.bkrepo.common.api.constant.StringPool
-import com.tencent.bkrepo.go.constant.GENERIC_MAJOR_VERSION_SUFFIX_REGEX
-import com.tencent.bkrepo.go.constant.GOPKG_IN
-import com.tencent.bkrepo.go.constant.GOPKG_MAJOR_VERSION_SUFFIX_REGEX
-import com.tencent.bkrepo.go.constant.INCOMPATIBLE_SUFFIX
 import com.tencent.bkrepo.go.pojo.enum.GoFileType
 import com.tencent.bkrepo.go.util.GoUtils.caseEncode
 
@@ -43,12 +38,9 @@ class GoModuleInfo(
     repoName: String,
     modulePath: String,
     override val version: String,
+    private val name: String,
     val type: GoFileType
 ) : GoArtifactInfo(projectId, repoName, modulePath, version) {
-
-    private val name = getMajorVersionSuffix()
-        ?.let { modulePath.removeSuffix(it).substringAfterLast(StringPool.SLASH) }
-        ?: modulePath.substringAfterLast(StringPool.SLASH)
 
     override fun getArtifactFullPath() = getArtifactFullPathByType(type)
 
@@ -59,24 +51,4 @@ class GoModuleInfo(
     override fun getRequestPath() = "/${modulePath.caseEncode()}/@v/$version.${type.extension}"
 
     fun getArtifactFullPathByType(type: GoFileType) = "${getArtifactRootPath()}/$version.${type.extension}"
-
-    private fun getMajorVersionSuffix(): String? {
-        if (version.endsWith(INCOMPATIBLE_SUFFIX)) return null
-        val sourceGopkg = modulePath.startsWith("$GOPKG_IN/")
-        val delimiterIndex =
-            if (sourceGopkg) modulePath.lastIndexOf(StringPool.DOT) else modulePath.lastIndexOf(StringPool.SLASH)
-        if (delimiterIndex < 1) return null
-        val modulePathSuffix = modulePath.substring(delimiterIndex)
-        val versionPrefix = version.substringBefore(StringPool.DOT)
-        val regex = if (sourceGopkg) gopkgMajorVersionSuffixRegex else genericMajorVersionSuffixRegex
-        return if (
-            regex.matchEntire(modulePathSuffix) == null ||
-            modulePathSuffix.substring(1) != versionPrefix
-        ) null else modulePathSuffix
-    }
-
-    companion object {
-        private val genericMajorVersionSuffixRegex = Regex(GENERIC_MAJOR_VERSION_SUFFIX_REGEX)
-        private val gopkgMajorVersionSuffixRegex = Regex(GOPKG_MAJOR_VERSION_SUFFIX_REGEX)
-    }
 }

@@ -91,7 +91,7 @@ class CommonRemoteRepository(
     }
 
     override fun getCacheArtifactResource(context: ArtifactContext): ArtifactResource? {
-        return getCacheInfo(context)?.let { loadArtifactResource(it.first, context) }
+        return findCacheNodeDetail(context)?.takeIf { !it.folder }?.let { loadArtifactResource(it, context) }
     }
 
     /**

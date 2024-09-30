@@ -57,19 +57,23 @@ const val GO_MOD_SIZE_THRESHOLD = 16 * 1024
 const val README_SIZE_THRESHOLD = GO_MOD_SIZE_THRESHOLD
 
 // Regex
-const val WINDOWS_RESERVED_FILE_NAME_REGEX = "((?i)CON|PRN|AUX|NUL|COM\\d|LPT\\d)"
-const val MODULE_PREFIX_REGEX = "^(?!$WINDOWS_RESERVED_FILE_NAME_REGEX\\.)[a-z0-9]+[a-z0-9-]*\\.[a-z0-9-.]*[a-z0-9-]\$"
-const val MODULE_ELEMENT_REGEX =
-    "^(?!$WINDOWS_RESERVED_FILE_NAME_REGEX\\.)(?![\\w-.~]*~\\d+\\.)[\\w-~][\\w-.~]*(?<!\\.)\$"
-const val GENERIC_MAJOR_VERSION_SUFFIX_REGEX = "^/v(?!1\$)[1-9]\\d*\$"
-const val GOPKG_MAJOR_VERSION_SUFFIX_REGEX = "^\\.v(0|[1-9]\\d*)\$"
-const val CANONICAL_VERSION_REGEX = "v\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9-.]+)?(\\+incompatible)?"
+const val INCOMPATIBLE_METADATA = "+incompatible"
+const val UNSTABLE_PRERELEASE = "-unstable"
+// https://docs.microsoft.com/en-us/windows/desktop/fileio/naming-a-file
+const val WINDOWS_RESERVED_FILE_NAME = "((?i)CON|PRN|AUX|NUL|COM\\d|LPT\\d)"
+const val MODULE_PATH_PREFIX = "^(?!$WINDOWS_RESERVED_FILE_NAME\\.)[a-z0-9]+[a-z0-9-]*\\.[a-z0-9-.]*[a-z0-9-]\$"
+const val MODULE_PATH_ELEMENT = "^(?!$WINDOWS_RESERVED_FILE_NAME\\.)(?![\\w-~]*~\\d+\\.)[\\w-~][\\w-.~]*(?<!\\.)\$"
+const val GENERIC_CURSORY_PATH_MAJOR = "^/v[\\d.]+\$"
+const val GENERIC_PRECISE_PATH_MAJOR = "^/v(?!1\$)[1-9]\\d*\$"
+const val GOPKG_IN_PATH_MAJOR = "^\\.v(0|[1-9]\\d*)($UNSTABLE_PRERELEASE)?\$"
+const val CANONICAL_VERSION =
+    "^v(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)" +
+            "(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\$INCOMPATIBLE_METADATA)?\$"
 
-// other
+// Other
 const val PATH_DELIMITER = "/@v/"
 const val GOPKG_IN = "gopkg.in"
 const val ARCHIVE = "ARCHIVE"
 const val VERSION_PREFIX = "v"
 const val LATEST = "latest"
 const val LATEST_VERSION_PATH = "/@latest"
-const val INCOMPATIBLE_SUFFIX = "+incompatible"

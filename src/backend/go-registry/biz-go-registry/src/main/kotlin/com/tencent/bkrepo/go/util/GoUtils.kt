@@ -67,7 +67,7 @@ object GoUtils {
         val map = mutableMapOf<String, String>()
         userAgent.split(" ").forEach {
             val pair = it.split("/")
-            map[pair.first()] = pair.getOrNull(2).orEmpty()
+            map[pair.first()] = pair.getOrNull(1).orEmpty()
         }
         val version = map[CLIENT_NAME]
         val os = map["os"]

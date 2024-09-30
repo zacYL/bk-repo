@@ -25,18 +25,13 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.go.constant
+package com.tencent.bkrepo.go.exception
 
-import com.tencent.bkrepo.common.api.message.MessageCode
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.go.constant.GoMessageCode
 
-enum class GoMessageCode(private val key: String) : MessageCode {
-    GO_VERSION_METADATA_NOT_FOUND("go.version.metadata.not.found"),
-    GO_VERSION_LIST_NOT_FOUND("go.version.list.not.found"),
-    GO_MALFORMED_MODULE_PATH("go.malformed.module.path"),
-    GO_INVALID_VERSION("go.invalid.version"),
-    ;
-
-    override fun getBusinessCode() = ordinal + 1
-    override fun getKey() = key
-    override fun getModuleCode() = 27
-}
+class MalformedModulePathException(
+    projectId: String,
+    repoName: String,
+    modulePath: String
+) : ErrorCodeException(GoMessageCode.GO_MALFORMED_MODULE_PATH, "$projectId/$repoName", modulePath)

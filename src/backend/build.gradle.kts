@@ -223,6 +223,7 @@ allprojects {
         tasks.named("copyToRelease") {
             dependsOn(tasks.named("bootJar"))
         }
+        apply(plugin = "task-slim")
     }
 
     tasks.withType<Jar> {

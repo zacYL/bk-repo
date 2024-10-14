@@ -1,4 +1,4 @@
-FROM alpine:latest
+FROM docker-bkrepo.cwoa.net/ye0030/cw-docker/alpine:3.20.3
 
 LABEL maintainer="Tencent BlueKing Devops"
 

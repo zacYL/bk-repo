@@ -16,6 +16,7 @@ import java.util.Locale;
 import java.util.Map;
 import javax.servlet.http.Part;
 
+@SuppressWarnings("unchecked")
 public class ApplicationPart implements Part {
     private final FileItem fileItem;
     private final File location;

@@ -32,5 +32,11 @@ plugins {
 repositories {
     mavenLocal()
     maven(url = "https://mirrors.tencent.com/nexus/repository/maven-public")
+    maven(url = "https://mirrors.tencent.com/nexus/repository/gradle-plugins/")
     mavenCentral()
+}
+
+dependencies {
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.14.3")
+    implementation("org.apache.commons:commons-compress:1.26.2")
 }

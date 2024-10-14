@@ -22,6 +22,7 @@ import org.yaml.snakeyaml.nodes.ScalarNode;
 import org.yaml.snakeyaml.nodes.SequenceNode;
 import org.yaml.snakeyaml.nodes.Tag;
 
+@SuppressWarnings("unchecked")
 public class Representer extends SafeRepresenter {
     protected Map<Class<?>, TypeDescription> typeDefinitions = Collections.emptyMap();
 

@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.conan.artifact.repository
 
+import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
@@ -114,14 +115,17 @@ class ConanVirtualRepository : VirtualRepository() {
         with(context) {
             getFullPathInterceptors().forEach { it.intercept(projectId, artifactInfo.getArtifactFullPath()) }
             val cacheKey = getRecipeCacheKey(projectId, repoName, getConanRecipePattern(HttpContextHolder.getRequest().requestURI.extractConanFileReference()))
-            return redisOperation.get(cacheKey)?.let {it->
-                val subRepoDetail = repositoryClient.getRepoDetail(repo.projectId, it).data!!
+            return redisOperation.get(cacheKey)?.let { it ->
+                logger.info("recipe $cacheKey is in cache, redirect to repo $it")
+                val subRepoDetail = repositoryClient.getRepoDetail(repo.projectId, "conan0813_local").data!!
                 val repository = ArtifactContextHolder.getRepository(subRepoDetail.category)
                 val subContext = generateSubContext(context, subRepoDetail)
                 require(subContext is ArtifactDownloadContext)
                 require(repository is ConanLocalRepository)
-                repository.onDownload(subContext)
-            }?: super.onDownload(context)
+                repository.onDownloadBefore(subContext)
+                val resource = repository.onDownload(subContext)
+                return resource
+            } ?: super.onDownload(context)
         }
     }
 

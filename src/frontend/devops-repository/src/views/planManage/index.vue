@@ -222,7 +222,7 @@
             renderHeader (h, data) {
                 const directive = {
                     name: 'bkTooltips',
-                    content: '启动计划后，将无法删除计划',
+                    content: this.$t('planStartedWarning'),
                     placement: 'right'
                 }
                 return h(

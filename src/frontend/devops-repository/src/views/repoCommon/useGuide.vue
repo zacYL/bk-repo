@@ -75,6 +75,7 @@
                 // go远程仓库，且为http协议的情况下
                 if (this.repoType === 'go' && this.storeType === 'remote' && this.removeProtocolFromUrl(this.repoUrl, true) === 'http') {
                     basicOption = basicOption.filter(item => item.name !== 'setCredentials')
+                    this.activeTab = basicOption[0].name
                 }
                 if (!this.noShowOption) {
                     basicOption.push({ name: 'push', label: this.$t('push') })

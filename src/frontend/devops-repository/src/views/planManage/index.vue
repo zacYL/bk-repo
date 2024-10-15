@@ -79,7 +79,7 @@
             <bk-table-column :label="$t('createdDate')" prop="CREATED_TIME" width="150" :render-header="renderHeader">
                 <template #default="{ row }">{{formatDate(row.createdDate)}}</template>
             </bk-table-column> -->
-            <bk-table-column v-if="enablePlanPermission" :label="$t('enablePlan')" width="100">
+            <bk-table-column v-if="enablePlanPermission" :render-header="renderHeader" :label="$t('enablePlan')" width="100">
                 <template #default="{ row }">
                     <bk-switcher class="m5" v-model="row.enabled" size="small" theme="primary" @change="changeEnabledHandler(row)"></bk-switcher>
                 </template>
@@ -99,7 +99,7 @@
                             updatePlanPermission && { label: $t('edit'), clickEvent: () => editPlanHandler(row), disabled: Boolean(row.lastExecutionStatus) },
                             copyPlanPermission && { label: $t('copyPlan'), clickEvent: () => copyPlanHandler(row) },
                             copyPlanPermission && { label: $t('copyUrl'), clickEvent: () => copyUrlHandler(row) },
-                            deletePlanPermission && { label: $t('delete'), clickEvent: () => deletePlanHandler(row) },
+                            deletePlanPermission && { label: $t('delete'), clickEvent: () => deletePlanHandler(row), disabled: Boolean(row.enabled) },
                             { label: $t('log'), clickEvent: () => showPlanLogHandler(row) }
                         ]"></operation-list>
                 </template>
@@ -219,6 +219,26 @@
                 'deletePlan',
                 'getPlanOperationPermission'
             ]),
+            renderHeader (h, data) {
+                const directive = {
+                    name: 'bkTooltips',
+                    content: this.$t('planStartedWarning'),
+                    placement: 'right'
+                }
+                return h(
+                    'span', // 标签名
+                    {
+                        style: { borderBottom: '1px dashed' },
+                        directives: [ // 指令
+                            {
+                                name: 'bk-tooltips',
+                                value: directive
+                            }
+                        ]
+                    },
+                    this.$t('enablePlan') // 子节点（文本）
+                )
+            },
             getExecutionStrategy ({ replicaType, setting: { executionStrategy } }) {
                 return replicaType === 'REAL_TIME'
                     ? this.$t('realTimeSync')

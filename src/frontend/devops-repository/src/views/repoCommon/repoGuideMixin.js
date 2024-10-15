@@ -21,6 +21,13 @@ export default {
             // 包列表页不需要指定具体的包名，直接都指定为<PACKAGE_NAME>即可
             return this.$route.path.endsWith('/list') ? '<PACKAGE_NAME>' : this.packageKey.replace(/^.*:\/\/(?:.*:)*([^:]+)$/, '$1') || '<PACKAGE_NAME>'
         },
+        // 特殊正则的包名
+        specialPackageName () {
+            if (this.packageName !== '<PACKAGE_NAME>') {
+                return this.packageName.match(/@([^/]+)\//)?.[1]
+            }
+            return this.packageName
+        },
         versionLabel () {
             // 包列表页不需要指定具体的版本号，直接都指定为 <PACKAGE_VERSION> 即可
             return this.$route.path.endsWith('/list') ? '<PACKAGE_VERSION>' : this.version || '<PACKAGE_VERSION>'
@@ -565,13 +572,13 @@ export default {
                         {
                             subTitle: this.$t('pull'),
                             codeList: [
-                                `conan download ${this.packageName}/${this.versionLabel} -r ${this.repoName}`
+                                `conan download ${this.specialPackageName}/${this.versionLabel} -r ${this.repoName}`
                             ]
                         },
                         {
                             subTitle: this.$t('push'),
                             codeList: [
-                                `conan upload ${this.packageName}/${this.versionLabel} -r ${this.repoName}`
+                                `conan upload ${this.specialPackageName}/${this.versionLabel} -r ${this.repoName}`
                             ]
                         }
                     ]

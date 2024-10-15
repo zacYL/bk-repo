@@ -22,7 +22,8 @@
                         'SUCCESS': status === 'QUALITY_PASS',
                         'INIT': status === 'UN_QUALITY',
                         'WARNING': status === 'QUALITY_UNPASS'
-                    }">
+                    }"
+                    v-bk-overflow-tips>
                     {{ scanStatusEnum[status] ? $t(`scanStatusEnum.${status}`) : $t('unScanned')}}
                 </span>
             </div>

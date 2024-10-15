@@ -79,7 +79,8 @@ class GoModuleInfoResolver : ArtifactInfoResolver {
         return if (modulePath.startsWith("$GOPKG_IN/")) {
             modulePath.substring(modulePath.lastIndexOf(StringPool.DOT))
         } else {
-            val modulePathSuffix = modulePath.substring(modulePath.lastIndexOf(StringPool.SLASH))
+            val lastSlashIndex = modulePath.lastIndexOf(StringPool.SLASH).takeIf { it > 0 } ?: return null
+            val modulePathSuffix = modulePath.substring(lastSlashIndex)
             if (genericCursoryPathMajorRegex.matchEntire(modulePathSuffix) != null) modulePathSuffix else null
         }
     }

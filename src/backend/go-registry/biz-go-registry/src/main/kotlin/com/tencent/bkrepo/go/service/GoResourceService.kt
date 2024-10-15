@@ -79,7 +79,10 @@ class GoResourceService(
     fun getVersionInfo(artifactInfo: GoVersionMetadataInfo): GoVersionMetadata {
         with(artifactInfo) {
             val version = getArtifactVersion() ?: LATEST
-            logger.info("user[${SecurityUtils.getPrincipal()}] query version metadata of [${getModuleId()}]")
+            logger.info(
+                "user[${SecurityUtils.getPrincipal()}] query version metadata of [${getModuleId()}]" +
+                        " in ${artifactInfo.getRepoIdentify()}"
+            )
             return repository.query(ArtifactQueryContext()) as GoVersionMetadata?
                 ?: throw GoVersionMetadataNotFoundException(modulePath, version, artifactInfo.getRepoIdentify())
         }
@@ -88,23 +91,29 @@ class GoResourceService(
     @Suppress("UNCHECKED_CAST")
     fun listVersions(artifactInfo: GoVersionListInfo): String {
         with(artifactInfo) {
-            logger.info("user[${SecurityUtils.getPrincipal()}] query version list of [${getModuleId()}]")
+            logger.info(
+                "user[${SecurityUtils.getPrincipal()}] query version list of [${getModuleId()}]" +
+                        " in ${artifactInfo.getRepoIdentify()}"
+            )
             return (repository.query(ArtifactQueryContext()) as List<String>?)?.joinToString("\n")
                 ?: throw GoVersionListNotFoundException(modulePath, getRepoIdentify())
         }
     }
 
     fun download(artifactInfo: GoModuleInfo) {
-        logger.info("user[${SecurityUtils.getPrincipal()}] download file [${artifactInfo.getArtifactFullPath()}]")
+        logger.info(
+            "user[${SecurityUtils.getPrincipal()}] download file [${artifactInfo.getArtifactFullPath()}]" +
+                    " in ${artifactInfo.getRepoIdentify()}"
+        )
         repository.download(ArtifactDownloadContext())
     }
 
     fun upload(artifactInfo: GoModuleInfo, artifactFile: ArtifactFile) {
-        repository.upload(ArtifactUploadContext(artifactFile))
         logger.info(
             "user[${SecurityUtils.getPrincipal()}] publish module[${artifactInfo.getModuleId()}]" +
-                    " to ${artifactInfo.getRepoIdentify()} successfully"
+                    " to ${artifactInfo.getRepoIdentify()}"
         )
+        repository.upload(ArtifactUploadContext(artifactFile))
     }
 
     companion object {

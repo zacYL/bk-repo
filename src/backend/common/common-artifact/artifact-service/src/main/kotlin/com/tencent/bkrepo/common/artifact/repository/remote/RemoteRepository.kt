@@ -143,7 +143,8 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
         val httpClient = createHttpClient(remoteConfiguration)
         val url = createRemoteDownloadUrl(context)
         val request = Request.Builder().url(url).build()
-        logger.info("Request url: $url, network config: ${remoteConfiguration.network}")
+        val repoId = context.artifactInfo.getRepoIdentify()
+        logger.info("[$repoId]Request url: $url, network config: ${remoteConfiguration.network}")
         val response = try {
             httpClient.newCall(request).execute()
         } catch (e: Exception) {

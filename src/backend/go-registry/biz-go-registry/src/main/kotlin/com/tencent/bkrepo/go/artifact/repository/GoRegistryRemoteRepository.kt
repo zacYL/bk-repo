@@ -90,14 +90,10 @@ class GoRegistryRemoteRepository(
         return result
     }
 
-    override fun onDownloadBefore(context: ArtifactDownloadContext) {
+    override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         with(context) {
             getFullPathInterceptors().forEach { it.intercept(projectId, artifactInfo.getArtifactFullPath()) }
         }
-        super.onDownloadBefore(context)
-    }
-
-    override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         return getCacheInfo(context)?.run {
             nodeDownloadIntercept(context, first)
             loadArtifactResource(first, context)

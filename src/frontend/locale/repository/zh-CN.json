@@ -668,6 +668,7 @@
     "synchronizePackage":"同步制品",
     "synchronizePath":"同步文件",
     "enablePlan":"启用计划",
+    "planStartedWarning": "启动计划后，将无法删除计划",
     "targetNode":"目标节点",
     "synchronizationPolicy":"同步策略",
     "lastExecutionTime":"上次执行时间",

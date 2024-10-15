@@ -672,6 +672,7 @@
     "synchronizePackage":"Sync package",
     "synchronizePath":"Sync path",
     "enablePlan":"Enable plan",
+    "planStartedWarning": "After starting the plan, it cannot be deleted",
     "targetNode":"Target node",
     "synchronizationPolicy":"Sync policy",
     "lastExecutionTime":"Last execution time",

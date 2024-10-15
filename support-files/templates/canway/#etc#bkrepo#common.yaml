@@ -65,6 +65,12 @@ spring:
       nodes: __BK_CI_REDIS_SENTINEL_ADDR__
       password: __BK_CI_REDIS_SENTINEL_PASSWORD__
 
+server:
+  tongweb:
+    license:
+      type: file
+      path: __BK_CI_TONGWEB_LICENSE_PATH__
+
 feign:
   okhttp:
     enabled: true

@@ -32,6 +32,7 @@
     "fileExist": "同名文件已存在",
     "fileError": "服务端异常，文件下载失败",
     "fileDownloadError": "你正在下载的制品不符合下载规则，被禁止下载了，请联系管理员",
+    "productNotFound": "制品不存在或不可用",
     "origin": "来源",
     "address": "地址",
     "operation": "操作",

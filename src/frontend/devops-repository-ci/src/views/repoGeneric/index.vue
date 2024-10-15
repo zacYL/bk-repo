@@ -779,7 +779,7 @@
                         '_self'
                     )
                 }).catch(e => {
-                    const message = e.status === 423 ? this.$t('fileDownloadError') : this.$t('fileError')
+                    const message = e.status === 423 ? this.$t('fileDownloadError') : (e.status === 404 ? this.$t('productNotFound') : this.$t('fileError'))
                     this.$bkMessage({
                         theme: 'error',
                         message

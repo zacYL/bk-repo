@@ -32,6 +32,7 @@
     "fileExist": "File exist",
     "fileError": "Server exception, file download failed",
     "fileDownloadError": "The artifact you are downloading does not comply with the download rules, please contact the ({0}) project administrator",
+    "productNotFound": "The product does not exist or is unavailable",
     "origin": "Origin",
     "address": "Address",
     "operation": "Operational",

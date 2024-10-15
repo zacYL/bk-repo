@@ -21,7 +21,6 @@ class SlimContext(
         scriptFilesDir = Paths.get(project.rootDir.absolutePath, "script").toFile(),
         sqlFilesDir = Paths.get(project.rootDir.absolutePath, "../../support-files/sql").toFile(),
         shareFilesDir = Paths.get(project.rootDir.absolutePath, "../../support-files/share").toFile(),
-        gitsubmoduleFile = Paths.get(project.rootDir.absolutePath, "../../.gitmodules").toFile(),
         helmChartsFilesDir = Paths.get(project.rootDir.absolutePath, "helm-charts/templates/cpack").toFile()
     )
 
@@ -158,12 +157,10 @@ class SlimContext(
     }
 
     private fun copyHelmCharts(targetPath: String) {
-        Paths.get(targetPath, "helm-charts", "templates").toFile().mkdirs()
+        Paths.get(targetPath, "helm-charts", "templates", serviceName).toFile().mkdirs()
         packageFiles.helmChartsFilesDir.listFiles { _, name -> name.endsWith(".yaml") }?.forEach {
-            val newName = "$serviceName-${it.name}"
-            val newFile = Paths.get(targetPath, "helm-charts", "templates", newName).toFile()
+            val newFile = Paths.get(targetPath, "helm-charts", "templates", serviceName, "$serviceName-${it.name}").toFile()
             renderHelmChart(it, newFile)
-            Files.copy(it.toPath(), Paths.get(targetPath, "helm-charts", "templates", "$serviceName-${it.name}"))
         }
     }
 
@@ -186,12 +183,8 @@ class SlimContext(
 
     private fun renderHelmChart(originFile: File, newFile: File) {
         // 新文件
-        if (newFile.exists()) {
-            newFile.writeText(
-                originFile.readText()
-                    .replace("cpack", serviceName)
-            )
-        }
+        if (!newFile.exists()) newFile.createNewFile()
+        newFile.writeText(originFile.readText().replace("cpack", serviceName))
     }
 
     private fun renderK8sFile() {
@@ -209,7 +202,7 @@ class SlimContext(
         }
         // backend.sh
         val backendSH = Paths.get(packageFiles.scriptFilesDir.absolutePath, "backend.sh").toFile()
-        Files.copy(backendSH.toPath(), Paths.get(tarFiles.dockerDir.absolutePath, backendSH.name))
+        Files.copy(backendSH.toPath(), Paths.get(tarFiles.dockerDir.absolutePath, serviceName, backendSH.name))
         // helm-chart
         val serviceYml = Paths.get(packageFiles.templatesFilesDir.absolutePath, "helm-charts#build#cpack.yaml").toFile()
         val serviceNewName = "helm-charts#build#$serviceName.yaml"
@@ -309,8 +302,6 @@ class SlimContext(
 
         buildInfo.append("Commit-ID: ").append(getCommitId()).append("\n")
         buildInfo.append("Branch: ").append(getCurrentBranch()).append("\n")
-        buildInfo.append("Submodule:").append("\n")
-        buildInfo.append(getSubmoduleInfoFromFile()).append("\n")
 
         return buildInfo.toString()
     }
@@ -327,39 +318,6 @@ class SlimContext(
 
     private fun getCurrentBranch(): String = OsUtil.execCommand("git", "symbolic-ref", "--short", "HEAD").result
 
-    private fun getSubmoduleInfo(): String =
-        OsUtil.execCommand("git", "submodule").result
-
-    private fun getSubmoduleInfoFromFile(): String {
-        val submoduleInfo = mutableListOf<String>()
-        // 读取 .gitmodules 文件
-        val gitmodulesPath = packageFiles.gitsubmoduleFile.toPath()
-        if (Files.exists(gitmodulesPath)) {
-            val lines = Files.readAllLines(gitmodulesPath)
-            var path: String? = null
-            var branch: String? = null
-            lines.forEach { line ->
-                val trimLine = line.trim()
-                when {
-                    trimLine.startsWith("path = ") -> path = line.substringAfter("path = ").trim().removePrefix("src/backend/ci/")
-                    trimLine.startsWith("branch = ") -> {
-                        branch = line.substringAfter("branch = ").trim()
-                        // 获取子模块的最新 commit 信息
-                        val commitInfo = OsUtil.execCommand("git", "log", "-1", "--pretty=format:'%H %s'", "$path")
-                        // 收集子模块的信息
-                        submoduleInfo.add("Submodule: ${path?.substringAfterLast("/")}, Branch: $branch, Commit Info: ${commitInfo.result}")
-                        // Reset path and branch for next submodule
-                        path = null
-                        branch = null
-                    }
-                }
-            }
-        } else {
-            submoduleInfo.add("No .gitmodules file found.")
-        }
-        return submoduleInfo.joinToString("\n")
-    }
-
     private fun isK8s(): Boolean = project.findPropertyOrEmpty("devops.assemblyMode") == "KUBERNETES"
 
     data class PackageFiles(
@@ -367,7 +325,6 @@ class SlimContext(
         val scriptFilesDir: File,
         val sqlFilesDir: File,
         val shareFilesDir: File,
-        val gitsubmoduleFile: File,
         val helmChartsFilesDir: File
     )
 

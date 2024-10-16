@@ -24,7 +24,21 @@ export default {
         // 特殊正则的包名
         specialPackageName () {
             if (this.packageName !== '<PACKAGE_NAME>') {
-                return this.packageName.match(/@([^/]+)\//)?.[1]
+                const regex = /([^\@\/]+)@([^\@\/]+)\/([^\@\/]+)/
+                const match = this.packageName.match(regex)
+
+                if (match) {
+                    const username = match[1]
+                    const name = match[2]
+                    const channel = match[3]
+                    if (username === '_') {
+                        return `${name}/${this.version}`
+                    } else {
+                        return `${name}/${this.version}@${username}/${channel}`
+                    }
+                } else {
+                    return this.packageName
+                }
             }
             return this.packageName
         },
@@ -572,13 +586,13 @@ export default {
                         {
                             subTitle: this.$t('pull'),
                             codeList: [
-                                `conan download ${this.specialPackageName}/${this.versionLabel} -r ${this.repoName}`
+                                `conan download ${this.specialPackageName} -r ${this.repoName}`
                             ]
                         },
                         {
                             subTitle: this.$t('push'),
                             codeList: [
-                                `conan upload ${this.specialPackageName}/${this.versionLabel} -r ${this.repoName}`
+                                `conan upload ${this.specialPackageName} -r ${this.repoName}`
                             ]
                         }
                     ]

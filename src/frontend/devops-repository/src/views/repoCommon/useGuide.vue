@@ -75,7 +75,6 @@
                 // go远程仓库，且为http协议的情况下
                 if (this.repoType === 'go' && this.storeType === 'remote' && this.removeProtocolFromUrl(this.repoUrl, true) === 'http') {
                     basicOption = basicOption.filter(item => item.name !== 'setCredentials')
-                    this.activeTab = basicOption[0].name
                 }
                 if (!this.noShowOption) {
                     basicOption.push({ name: 'push', label: this.$t('push') })
@@ -95,6 +94,21 @@
                 }
                 this.activeDependType = types?.length > 0 ? types[0] : ''
                 return types
+            }
+        },
+        watch: {
+            'useGuideData.show': {
+                handler (val) {
+                    if (val) {
+                        this.$nextTick(() => {
+                            if (this.guideOption.find(item => item.name !== 'setCredentials')) {
+                                this.activeTab = this.guideOption[0].name
+                            }
+                        })
+                    }
+                },
+                deep: true,
+                immediate: true
             }
         },
         methods: {

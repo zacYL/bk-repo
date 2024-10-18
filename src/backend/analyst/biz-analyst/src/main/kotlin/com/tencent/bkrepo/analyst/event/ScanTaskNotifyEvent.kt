@@ -1,7 +1,7 @@
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
- * Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
+ * Copyright (C) 2022 THL A29 Limited, a Tencent company.  All rights reserved.
  *
  * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
  *
@@ -25,15 +25,17 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-// val testapi by configurations
+package com.tencent.bkrepo.analyst.event
 
-dependencies {
-    api(project(":replication:api-replication"))
-    api(project(":repository:api-repository"))
-    api(project(":common:common-job"))
-    api(project(":common:common-artifact:artifact-service"))
-    implementation("org.quartz-scheduler:quartz")
-    implementation(project(":common:common-notify:notify-service"))
+import com.tencent.bkrepo.analyst.model.TScanPlan
+import com.tencent.bkrepo.analyst.model.TScanTask
+import com.tencent.bkrepo.analyst.pojo.ScanTaskStatus
+import java.time.LocalDateTime
 
-    testImplementation("de.flapdoodle.embed:de.flapdoodle.embed.mongo")
-}
+data class ScanTaskNotifyEvent(
+    val status: ScanTaskStatus,
+    val scanTask: TScanTask,
+    val scanPlan: TScanPlan?,
+    val completedTime: LocalDateTime,
+    val operator: String = ""
+)

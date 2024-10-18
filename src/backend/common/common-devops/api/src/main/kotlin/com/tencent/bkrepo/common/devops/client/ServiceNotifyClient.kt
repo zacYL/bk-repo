@@ -1,7 +1,7 @@
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
- * Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
+ * Copyright (C) 2019 THL A29 Limited, a Tencent company.  All rights reserved.
  *
  * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
  *
@@ -24,16 +24,31 @@
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+package com.tencent.bkrepo.common.devops.client
 
-// val testapi by configurations
+import com.tencent.bkrepo.common.api.constant.DEVOPS_PLATFORM_SERVICE_NAME
+import com.tencent.bkrepo.common.api.pojo.Response
+import com.tencent.bkrepo.common.devops.pojo.notify.ProjectNotifyVo
+import io.swagger.annotations.Api
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import org.springframework.cloud.openfeign.FeignClient
+import org.springframework.context.annotation.Primary
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
 
-dependencies {
-    api(project(":replication:api-replication"))
-    api(project(":repository:api-repository"))
-    api(project(":common:common-job"))
-    api(project(":common:common-artifact:artifact-service"))
-    implementation("org.quartz-scheduler:quartz")
-    implementation(project(":common:common-notify:notify-service"))
+@Api("Devops 通知服务接口")
+@Primary
+@FeignClient(DEVOPS_PLATFORM_SERVICE_NAME, contextId = "ServiceNotifyClient")
+@RequestMapping("/api/service/notifies")
+interface ServiceNotifyClient {
 
-    testImplementation("de.flapdoodle.embed:de.flapdoodle.embed.mongo")
+    @Operation(summary = "发送站内信")
+    @PostMapping("/project")
+    fun sendProjectNotify(
+        @Parameter(description = "站内消息内容", required = true)
+        @RequestBody
+        message: ProjectNotifyVo
+    ): Response<Boolean>
 }

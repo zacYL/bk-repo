@@ -28,6 +28,9 @@
 package com.tencent.bkrepo.replication.replica.base.executor
 
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
+import com.tencent.bkrepo.common.devops.conf.DevopsConf
+import com.tencent.bkrepo.common.notify.pojo.enums.PlatformSmallBell
+import com.tencent.bkrepo.common.notify.service.PlatformNotify
 import com.tencent.bkrepo.replication.manager.LocalDataManager
 import com.tencent.bkrepo.replication.pojo.cluster.ClusterNodeName
 import com.tencent.bkrepo.replication.pojo.record.ExecutionResult
@@ -37,9 +40,12 @@ import com.tencent.bkrepo.replication.pojo.task.ReplicaTaskDetail
 import com.tencent.bkrepo.replication.replica.base.ReplicaService
 import com.tencent.bkrepo.replication.replica.base.context.ReplicaContext
 import com.tencent.bkrepo.replication.service.ClusterNodeService
-import org.slf4j.LoggerFactory
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.Future
 import java.util.concurrent.ThreadPoolExecutor
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 
 /**
  * 同步任务抽象实现类
@@ -49,6 +55,11 @@ open class AbstractReplicaJobExecutor(
     private val localDataManager: LocalDataManager,
     private val replicaService: ReplicaService
 ) {
+
+    @Autowired
+    lateinit var devopsConf: DevopsConf
+    @Autowired
+    lateinit var platformNotify: PlatformNotify
 
     private val threadPoolExecutor: ThreadPoolExecutor = ReplicaThreadPoolExecutor.instance
     private val logger = LoggerFactory.getLogger(AbstractReplicaJobExecutor::class.java)
@@ -93,5 +104,41 @@ open class AbstractReplicaJobExecutor(
                 ExecutionResult.fail("${clusterNodeName.name}:${exception.message}\n")
             }
         }
+    }
+
+    /**
+     * 发送制品分发开始、完成、失败的消息通知
+     */
+    protected fun sendReplicaNotify(taskDetail: ReplicaTaskDetail?, status: String) {
+        if (taskDetail == null) {
+            logger.info("replica task not found, skip notify...")
+            return
+        }
+        threadPoolExecutor.submit {
+            with(taskDetail) {
+                val templateCode = when (status) {
+                    SUCCESS -> PlatformSmallBell.ARTIFACT_REPLICA_FINISH_TEMPLATE
+                    FAILED -> PlatformSmallBell.ARTIFACT_REPLICA_FAIL_TEMPLATE
+                    START -> PlatformSmallBell.ARTIFACT_REPLICA_START_TEMPLATE
+                    else -> return@submit
+                }
+                val receivers = setOf(task.createdBy, task.lastModifiedBy)
+                val bodyParams = mapOf(
+                    "taskName" to task.name,
+                    "replicaType" to task.replicaObjectType.name,
+                    "remoteClusters" to task.remoteClusters.joinToString(",") { it.name },
+                    "localRepo" to objects.map { it.localRepoName }.distinct().joinToString (","),
+                    "time" to LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+                    "replicaUrl" to "${devopsConf.devopsHost}/console/repository/${task.projectId}/planManage"
+                )
+                platformNotify.sendPlatformNotify(task.projectId, templateCode, receivers, bodyParams)
+            }
+        }
+    }
+
+    companion object {
+        const val SUCCESS = "SUCCESS"
+        const val FAILED = "FAILED"
+        const val START = "START"
     }
 }

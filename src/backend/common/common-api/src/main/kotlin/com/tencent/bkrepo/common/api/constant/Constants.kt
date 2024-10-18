@@ -104,6 +104,8 @@ const val GENERIC_SERVICE_NAME = "\${service.prefix:repo-}generic\${service.suff
  *  Devops Service Name
  */
 const val DEVOPS_USER_MANAGER_SERVICE_NAME = "\${service.devops-prefix:}usermanager\${service.suffix:}"
+const val DEVOPS_PLATFORM_SERVICE_NAME = "\${service.devops-prefix:}platform\${service.suffix:}"
+const val DEVOPS_AUTH_SERVICE_NAME = "\${service.devops-prefix:}auth\${service.suffix:}"
 
 /**
  * 认证相关

@@ -34,6 +34,7 @@ package com.tencent.bkrepo.common.notify.config
 import com.tencent.bkrepo.common.notify.repository.NotifyChannelCredentialRepository
 import com.tencent.bkrepo.common.notify.service.DevopsNotify
 import com.tencent.bkrepo.common.notify.service.NotifyChannelCredentialService
+import com.tencent.bkrepo.common.notify.service.PlatformNotify
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
@@ -45,6 +46,7 @@ import org.springframework.context.annotation.Import
 @EnableConfigurationProperties(NotifyProperties::class)
 @Import(
     DevopsNotify::class,
+    PlatformNotify::class,
     NotifyChannelCredentialRepository::class,
     NotifyChannelCredentialService::class,
     NotifyClientConfiguration::class

@@ -31,6 +31,7 @@ import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.replication.manager.LocalDataManager
+import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus
 import com.tencent.bkrepo.replication.pojo.record.ReplicaRecordInfo
 import com.tencent.bkrepo.replication.pojo.task.ReplicaTaskDetail
 import com.tencent.bkrepo.replication.replica.base.context.ReplicaExecutionContext
@@ -56,7 +57,9 @@ class EventBasedReplicaJobExecutor(
      * 执行同步
      */
     fun execute(taskDetail: ReplicaTaskDetail, event: ArtifactEvent) {
+        sendReplicaNotify(taskDetail, START)
         val task = taskDetail.task
+        var status = ExecutionStatus.SUCCESS
         val taskRecord: ReplicaRecordInfo = replicaRecordService.findOrCreateLatestRecord(task.key)
         val fullResourceKey = when(event.type) {
                 EventType.NODE_COPIED,
@@ -76,10 +79,17 @@ class EventBasedReplicaJobExecutor(
             ReplicaExecutionContext.getArtifactCount(task.key)?.run {
                 ReplicaExecutionContext.increaseArtifactCount(task.key, count)
             } ?: ReplicaExecutionContext.initProgress(task.key, count)
-            task.remoteClusters.map { submit(taskDetail, taskRecord, it, event) }.map { it.get() }
+            val result = task.remoteClusters.map { submit(taskDetail, taskRecord, it, event) }.map { it.get() }
+            val failedResults = result.filter { it.status == ExecutionStatus.FAILED }
+            if (failedResults.isNotEmpty()) {
+                status = ExecutionStatus.FAILED
+            }
             logger.info("Replica $fullResourceKey completed.")
         } catch (exception: Exception) {
+            status = ExecutionStatus.FAILED
             logger.error("Replica $fullResourceKey failed: $exception", exception)
+        } finally {
+            sendReplicaNotify(taskDetail, status.name)
         }
     }
 

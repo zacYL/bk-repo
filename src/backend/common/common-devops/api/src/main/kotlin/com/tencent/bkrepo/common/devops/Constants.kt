@@ -16,3 +16,6 @@ const val DEPLOY_CPACK = "cpack"
 
 // 对接时要求该用户为白名单，不然无法获取到部门信息
 const val BK_WHITELIST_USER = "admin"
+
+// 平台消息发送人
+const val DEVOPS = "DevOps"

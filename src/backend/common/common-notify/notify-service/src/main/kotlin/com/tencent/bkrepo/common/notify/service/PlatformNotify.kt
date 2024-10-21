@@ -77,8 +77,8 @@ class PlatformNotify constructor(
                 promoterId = DEVOPS,
                 receiverId = realReceivers.joinToString(","),
                 operationDate = System.currentTimeMillis(),
-                operationMessgae = getMessage(templateCode.cn, bodyParams),
-                enOperationMessage = getMessage(templateCode.en, bodyParams),
+                operationMessgae = templateCode.cn,
+                enOperationMessage = templateCode.en,
                 moduleName = CPACK_PRODUCT_CODE,
                 moduleId = CPACK_PRODUCT_CODE,
                 operationAddressUrl = listOf(
@@ -86,13 +86,5 @@ class PlatformNotify constructor(
                 )
             )
         )
-    }
-
-    fun getMessage(content: String, bodyParams: Map<String, String>): String {
-        var message = content
-        bodyParams.forEach { (k, v) ->
-            message = message.replace("\${$k}", v)
-        }
-        return message
     }
 }

@@ -124,12 +124,12 @@ open class AbstractReplicaJobExecutor(
                 }
                 val receivers = setOf(task.createdBy, task.lastModifiedBy)
                 val bodyParams = mapOf(
-                    "taskName" to task.name,
+                    "name" to task.name,
                     "replicaType" to task.replicaObjectType.name,
                     "remoteClusters" to task.remoteClusters.joinToString(",") { it.name },
                     "localRepo" to objects.map { it.localRepoName }.distinct().joinToString (","),
                     "time" to LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
-                    "replicaUrl" to "${devopsConf.devopsHost}/console/repository/${task.projectId}/planManage"
+                    "url" to "${devopsConf.devopsHost}/console/repository/${task.projectId}/planManage"
                 )
                 platformNotify.sendPlatformNotify(task.projectId, templateCode, receivers, bodyParams)
             }

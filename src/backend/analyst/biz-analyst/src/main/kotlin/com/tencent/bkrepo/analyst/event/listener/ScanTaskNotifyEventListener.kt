@@ -57,9 +57,9 @@ class ScanTaskNotifyEventListener(
             }
             val receivers = setOf(scanPlan.createdBy, scanPlan.lastModifiedBy, scanTask.createdBy)
             val bodyParams = mapOf(
-                "planName" to scanPlan.name,
+                "name" to scanPlan.name,
                 "completionTime" to completedTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
-                "scanUrl" to "${devopsConf.devopsHost}/console/repository/${scanTask.projectId}/repoScan/scanReport/${scanTask.planId}",
+                "url" to "${devopsConf.devopsHost}/console/repository/${scanTask.projectId}/repoScan/scanReport/${scanTask.planId}",
                 "operator" to operator
             )
             platformNotify.sendPlatformNotify(

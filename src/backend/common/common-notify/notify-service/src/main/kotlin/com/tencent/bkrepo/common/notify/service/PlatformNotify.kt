@@ -38,6 +38,7 @@ import com.tencent.bkrepo.common.devops.DEVOPS
 import com.tencent.bkrepo.common.devops.client.ServiceNotifyClient
 import com.tencent.bkrepo.common.devops.client.ServiceNotifyMessageTemplateClient
 import com.tencent.bkrepo.common.devops.client.ServiceTenantClient
+import com.tencent.bkrepo.common.devops.pojo.notify.MessageUrlInfo
 import com.tencent.bkrepo.common.devops.pojo.notify.ProjectNotifyVo
 import com.tencent.bkrepo.common.devops.pojo.notify.SendNotifyMessageTemplateRequest
 import com.tencent.bkrepo.common.notify.pojo.enums.PlatformSmallBell
@@ -79,7 +80,10 @@ class PlatformNotify constructor(
                 operationMessgae = getMessage(templateCode.cn, bodyParams),
                 enOperationMessage = getMessage(templateCode.en, bodyParams),
                 moduleName = CPACK_PRODUCT_CODE,
-                moduleId = CPACK_PRODUCT_CODE
+                moduleId = CPACK_PRODUCT_CODE,
+                operationAddressUrl = listOf(
+                    MessageUrlInfo(enName = "name", cnName = bodyParams["name"], url = bodyParams["url"])
+                )
             )
         )
     }

@@ -209,6 +209,7 @@ class GenericLocalRepository(
             nodeClient.updateRecentlyUseDate(node.projectId, node.repoName, node.fullPath)
             val srcRepo = RepositoryIdentify(projectId, repoName)
             return ArtifactResource(inputStream, responseName, srcRepo, node, ArtifactChannel.LOCAL, useDisposition)
+                .apply { if (useDisposition) contentType = MediaTypes.APPLICATION_OCTET_STREAM }
         }
     }
 

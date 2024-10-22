@@ -38,6 +38,7 @@ import com.tencent.bkrepo.common.api.constant.ensureSuffix
 import com.tencent.bkrepo.common.api.exception.BadRequestException
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.util.toJsonString
+import com.tencent.bkrepo.common.artifact.constant.PARAM_DOWNLOAD
 import com.tencent.bkrepo.common.artifact.constant.PARAM_PREVIEW
 import com.tencent.bkrepo.common.artifact.constant.PIPELINE
 import com.tencent.bkrepo.common.artifact.constant.X_CHECKSUM_MD5
@@ -209,7 +210,10 @@ class GenericLocalRepository(
             nodeClient.updateRecentlyUseDate(node.projectId, node.repoName, node.fullPath)
             val srcRepo = RepositoryIdentify(projectId, repoName)
             return ArtifactResource(inputStream, responseName, srcRepo, node, ArtifactChannel.LOCAL, useDisposition)
-                .apply { if (useDisposition) contentType = MediaTypes.APPLICATION_OCTET_STREAM }
+                .apply {
+                    if (request.getParameter(PARAM_DOWNLOAD)?.toBoolean() == true)
+                        contentType = MediaTypes.APPLICATION_OCTET_STREAM
+                }
         }
     }
 

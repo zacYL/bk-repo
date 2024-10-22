@@ -123,7 +123,7 @@ class ConanVirtualRepository : VirtualRepository() {
                 val repository = ArtifactContextHolder.getRepository(subRepoDetail.category)
                 val subContext = generateSubContext(context, subRepoDetail)
                 require(subContext is ArtifactDownloadContext)
-                require(repository is ConanLocalRepository)
+                require(repository is AbstractArtifactRepository)
                 repository.onDownloadBefore(subContext)
                 val resource = repository.onDownload(subContext)
                 return resource

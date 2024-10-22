@@ -31,6 +31,7 @@
 
 package com.tencent.bkrepo.common.security.manager
 
+import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
@@ -94,6 +95,16 @@ open class PermissionManager(
         }
         CacheBuilder.newBuilder().maximumSize(1).expireAfterWrite(30L, TimeUnit.MINUTES).build(cacheLoader)
     }
+
+    private val permissionCache: Cache<String, Boolean> = CacheBuilder.newBuilder()
+        .maximumSize(1000)
+        .expireAfterWrite(30L, TimeUnit.SECONDS)
+        .build()
+
+    private val repositoryCache = CacheBuilder.newBuilder()
+        .maximumSize(1000)
+        .expireAfterWrite(30L, TimeUnit.SECONDS)
+        .build(CacheLoader.from<String, RepositoryInfo> { queryRepositoryInfo(it) })
 
     /**
      * 校验项目权限
@@ -296,7 +307,7 @@ open class PermissionManager(
         val platformId = SecurityUtils.getPlatformId()
         checkAnonymous(userId, platformId)
         // 加载仓库信息
-        val repo = repositoryClient.getRepoDetail(projectId, repoName).data!!
+        val repo = queryRepositoryInfo(projectId, repoName)
         val systemValue = repo.configuration.settings["system"]
         val system = try {
             systemValue as? Boolean
@@ -311,7 +322,13 @@ open class PermissionManager(
      * 查询仓库信息
      */
     private fun queryRepositoryInfo(projectId: String, repoName: String): RepositoryInfo {
-        return repositoryClient.getRepoInfo(projectId, repoName).data ?: throw RepoNotFoundException(repoName)
+        return repositoryCache.get(getRepoId(projectId, repoName))
+    }
+
+    private fun queryRepositoryInfo(key: String): RepositoryInfo {
+        val repoId = key.split(REPO_ID_DELIMITER)
+        require(repoId.size == 2)
+        return repositoryClient.getRepoInfo(repoId[0], repoId[1]).data ?: throw RepoNotFoundException(repoId[1])
     }
 
     /**
@@ -360,7 +377,10 @@ open class PermissionManager(
             repoName = repoName,
             path = paths?.first()
         )
-        if (permissionResource.checkPermission(checkRequest).data != true) {
+        val key = getAuthRequestKey(checkRequest)
+        val checkResult = permissionCache.getIfPresent(key) ?: permissionResource.checkPermission(checkRequest).data
+                ?.also { if (key.split(AUTH_REQ_DELIMITER).size == 7) permissionCache.put(key, it) }
+        if (checkResult != true) {
             throw PermissionException()
         }
         if (logger.isDebugEnabled) {
@@ -595,6 +615,12 @@ open class PermissionManager(
         return httpAuthProperties.enabled
     }
 
+    private fun getRepoId(projectId: String, repoName: String) = "$projectId$REPO_ID_DELIMITER$repoName"
+
+    private fun getAuthRequestKey(request: CheckPermissionRequest) = with(request) {
+        listOf(uid, appId, resourceType.id(), action.id(), projectId, repoName, path).joinToString(AUTH_REQ_DELIMITER)
+    }
+
     companion object {
 
         private val logger = LoggerFactory.getLogger(PermissionManager::class.java)
@@ -609,6 +635,9 @@ open class PermissionManager(
         private const val METADATA = "metadata"
         private const val NODES = "nodes"
         private const val PACKAGE_NAME_PREFIX = "com.tencent.bkrepo"
+
+        private const val REPO_ID_DELIMITER = "/"
+        private const val AUTH_REQ_DELIMITER = "::"
 
         /**
          * 检查是否为匿名用户，如果是匿名用户则返回401并提示登录

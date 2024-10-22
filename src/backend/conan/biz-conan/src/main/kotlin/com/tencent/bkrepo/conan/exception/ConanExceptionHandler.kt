@@ -32,6 +32,7 @@ import com.tencent.bkrepo.common.api.constant.MediaTypes
 import com.tencent.bkrepo.common.api.constant.USER_KEY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.util.JsonUtils
+import com.tencent.bkrepo.common.artifact.exception.ArtifactDownloadForbiddenException
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.LocaleMessageUtils
 import com.tencent.bkrepo.conan.pojo.response.ConanErrorResponse
@@ -51,6 +52,16 @@ class ConanExceptionHandler {
     @ExceptionHandler(ConanFileNotFoundException::class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     fun handlerConanFileNotFoundException(exception: ConanFileNotFoundException) {
+        val errorMessage = LocaleMessageUtils.getLocalizedMessage(exception.messageCode, exception.params)
+        val responseObject = ConanResponse.errorResponse(
+            ConanErrorResponse(errorMessage, HttpStatus.NOT_FOUND.value())
+        )
+        conanResponse(responseObject, exception)
+    }
+
+    @ExceptionHandler(ArtifactDownloadForbiddenException::class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    fun handlerConanFileNotFoundException(exception: ArtifactDownloadForbiddenException) {
         val errorMessage = LocaleMessageUtils.getLocalizedMessage(exception.messageCode, exception.params)
         val responseObject = ConanResponse.errorResponse(
             ConanErrorResponse(errorMessage, HttpStatus.NOT_FOUND.value())

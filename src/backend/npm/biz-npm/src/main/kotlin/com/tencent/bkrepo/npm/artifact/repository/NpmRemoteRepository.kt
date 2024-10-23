@@ -205,8 +205,9 @@ class NpmRemoteRepository(
         val packageMetaData = tempFile.getInputStream().readJsonString<NpmPackageMetaData>()
         val artifactFile = ArtifactFileFactory.build(packageMetaData.toCompactJsonString().byteInputStream())
         val size = artifactFile.getSize()
+        val stream = artifactFile.getInputStream().artifactStream(Range.full(size))
         cacheArtifactFile(context, artifactFile)
-        return artifactFile.getInputStream().artifactStream(Range.full(size))
+        return stream
     }
 
     override fun buildCacheNodeCreateRequest(context: ArtifactContext, artifactFile: ArtifactFile): NodeCreateRequest {

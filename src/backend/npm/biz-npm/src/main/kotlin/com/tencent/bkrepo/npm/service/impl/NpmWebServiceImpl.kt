@@ -94,9 +94,10 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
                     ?: throw NpmArtifactNotFoundException("version metadata of [$name/$version] not found")
             }
             return PackageVersionInfo(
-                basic = buildBasicInfo(nodeDetail, packageVersion, versionMetadata.readme.orEmpty()),
+                basic = buildBasicInfo(nodeDetail, packageVersion),
                 metadata = packageVersion.packageMetadata,
-                dependencyInfo = queryVersionDependenciesInfo(artifactInfo, packageKey, versionMetadata)
+                dependencyInfo = queryVersionDependenciesInfo(artifactInfo, packageKey, versionMetadata),
+                readme = versionMetadata.readme
             )
         }
     }
@@ -233,7 +234,7 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
 
         val logger: Logger = LoggerFactory.getLogger(NpmWebServiceImpl::class.java)
 
-        fun buildBasicInfo(nodeDetail: NodeDetail, packageVersion: PackageVersion, readmeInfo: String?): BasicInfo {
+        fun buildBasicInfo(nodeDetail: NodeDetail, packageVersion: PackageVersion): BasicInfo {
             with(nodeDetail) {
                 return BasicInfo(
                     packageVersion.name,
@@ -248,8 +249,7 @@ class NpmWebServiceImpl : NpmWebService, AbstractNpmService() {
                     createdBy,
                     packageVersion.createdDate.format(DateTimeFormatter.ISO_DATE_TIME),
                     lastModifiedBy,
-                    packageVersion.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME),
-                    readme = readmeInfo
+                    packageVersion.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME)
                 )
             }
         }

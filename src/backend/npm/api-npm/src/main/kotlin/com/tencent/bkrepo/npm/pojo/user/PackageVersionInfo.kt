@@ -42,7 +42,9 @@ data class PackageVersionInfo(
     @ApiModelProperty("元数据信息")
     val metadata: List<MetadataModel>,
     @ApiModelProperty("依赖信息")
-    val dependencyInfo: VersionDependenciesInfo
+    val dependencyInfo: VersionDependenciesInfo,
+    @ApiModelProperty("描述信息")
+    val readme: String?
 )
 
 @Api("基础信息")
@@ -72,9 +74,7 @@ data class BasicInfo(
     @ApiModelProperty("修改者")
     val lastModifiedBy: String,
     @ApiModelProperty("修改时间")
-    val lastModifiedDate: String,
-    @ApiModelProperty("README.md文件的内容")
-    val readme: String?
+    val lastModifiedDate: String
 )
 
 @Api("版本的依赖信息")

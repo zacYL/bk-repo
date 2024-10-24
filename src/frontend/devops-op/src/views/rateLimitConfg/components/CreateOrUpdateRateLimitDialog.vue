@@ -2,7 +2,7 @@
   <el-dialog :title="createMode ? '创建限流配置' : '更新限流配置'" :visible.sync="showDialog" :before-close="close">
     <el-form ref="form" :rules="rules" :model="rateLimit" status-icon>
       <el-form-item ref="project-form-item" label="资源标识" prop="resource" :rules="[{ required: true, message: '资源标识不能为空'}]">
-        <el-input v-model="rateLimit.resource" type="text" size="small" width="50" placeholder="请输入资源标识" />
+        <el-input v-model="rateLimit.resource" type="text" size="small" width="50" :placeholder="resourceTip" />
       </el-form-item>
       <el-form-item
         ref="repo-form-item"
@@ -10,7 +10,7 @@
         prop="limitDimension"
         :rules="[{ required: true, message: '限流维度不能为空'}]"
       >
-        <el-select v-model="rateLimit.limitDimension" placeholder="请选择">
+        <el-select v-model="rateLimit.limitDimension" :change="changeLimitDimension(rateLimit.limitDimension)" placeholder="请选择">
           <el-option
             v-for="item in options"
             :key="item.value"
@@ -125,6 +125,7 @@ export default {
     return {
       showDialog: this.visible,
       rateLimit: this.newRateLimit(),
+      resourceTip: '请输入资源标识,例子如下：',
       rules: {},
       options: [{
         label: '指定URL限流',
@@ -336,6 +337,41 @@ export default {
     },
     updateInput() {
       this.$forceUpdate()
+    },
+    changeLimitDimension(limitDimension) {
+      const msg = '请输入资源标识，例子如下：'
+      switch (limitDimension) {
+        case 'URL':
+          this.resourceTip = msg + '/'
+          break
+        case 'URL_REPO':
+          this.resourceTip = msg + '/*/'
+          break
+        case 'UPLOAD_USAGE':
+          this.resourceTip = msg + '/*/'
+          break
+        case 'DOWNLOAD_USAGE':
+          this.resourceTip = msg + '/*/'
+          break
+        case 'USER_URL':
+          this.resourceTip = msg + '*:/'
+          break
+        case 'USER_URL_REPO':
+          this.resourceTip = msg + '*:/*/'
+          break
+        case 'USER_UPLOAD_USAGE':
+          this.resourceTip = msg + '*:/*/'
+          break
+        case 'USER_DOWNLOAD_USAGE':
+          this.resourceTip = msg + '*:/'
+          break
+        case 'UPLOAD_BANDWIDTH':
+          this.resourceTip = msg + '/*/'
+          break
+        case 'DOWNLOAD_BANDWIDTH':
+          this.resourceTip = msg + '/*/'
+          break
+      }
     },
     close() {
       this.showDialog = false

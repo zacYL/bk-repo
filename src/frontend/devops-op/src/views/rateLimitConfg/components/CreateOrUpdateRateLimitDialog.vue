@@ -55,14 +55,16 @@
         </el-select>
       </el-form-item>
       <el-form-item label="作用模块" prop="moduleName" :rules="[{ required: true, message: '作用模块不能为空'}]">
-        <el-select v-model="rateLimit.moduleName" multiple filterable collapse-tags placeholder="请选择">
+        <el-select v-model="rateLimit.moduleName" multiple filterable collapse-tags placeholder="请选择" :change="changeModule(rateLimit.moduleName)">
           <el-option
             v-for="item in moduleNameOptions"
             :key="item.value"
             :label="item.label"
             :value="item.value"
+            :disabled="item.disabled"
           />
         </el-select>
+        <el-checkbox v-model="selectDockerAndOci" style="margin-left: 10px">添加docker和oci</el-checkbox>
         <el-checkbox v-model="moduleSelectAll" style="margin-left: 10px">全选</el-checkbox>
       </el-form-item>
       <el-form-item
@@ -241,7 +243,8 @@ export default {
         },
         {
           value: 'oci',
-          label: 'oci'
+          label: 'oci',
+          disabled: true
         },
         {
           value: 'webhook',
@@ -298,9 +301,15 @@ export default {
         {
           value: 'media',
           label: 'media'
+        },
+        {
+          value: 'docker',
+          label: 'docker',
+          disabled: true
         }
       ],
-      moduleSelectAll: false
+      moduleSelectAll: false,
+      selectDockerAndOci: false
     }
   },
   watch: {
@@ -320,6 +329,17 @@ export default {
         })
       } else {
         this.rateLimit.moduleName = []
+      }
+    },
+    selectDockerAndOci: function(newVal) {
+      if (newVal) {
+        if (this.rateLimit.moduleName.indexOf('docker') < 0) {
+          this.rateLimit.moduleName.push('docker')
+          this.rateLimit.moduleName.push('oci')
+        }
+      } else {
+        this.rateLimit.moduleName.splice(this.rateLimit.moduleName.indexOf('docker'), 1)
+        this.rateLimit.moduleName.splice(this.rateLimit.moduleName.indexOf('oci'), 1)
       }
     }
   },
@@ -376,6 +396,7 @@ export default {
     close() {
       this.showDialog = false
       this.moduleSelectAll = false
+      this.selectDockerAndOci = false
       this.rateLimit = this.newRateLimit()
       this.$refs['form'].resetFields()
       this.$emit('update:visible', false)
@@ -431,6 +452,9 @@ export default {
         this.rateLimit = this.newRateLimit()
       } else {
         this.rateLimit = _.cloneDeep(this.updatingRateLimit)
+        if (this.rateLimit.moduleName && this.rateLimit.moduleName.some(moduleName => moduleName === 'docker')) {
+          this.selectDockerAndOci = true
+        }
         if (this.rateLimit.targets.length === 0) {
           this.rateLimit.targets = ['']
         }
@@ -452,6 +476,19 @@ export default {
         targets: ['']
       }
       return rateLimit
+    },
+    changeModule(module) {
+      if (module === null || (module.some(mod => mod === 'oci') && module.some(mod => mod === 'docker'))) {
+        return
+      }
+      if (module.some(mod => mod === 'docker') && !module.some(mod => mod === 'oci')) {
+        this.rateLimit.moduleName.splice(this.rateLimit.moduleName.indexOf('docker'), 1)
+        this.selectDockerAndOci = false
+      }
+      if (module.some(mod => mod === 'oci') && !module.some(mod => mod === 'docker')) {
+        this.rateLimit.moduleName.splice(this.rateLimit.moduleName.indexOf('oci'), 1)
+        this.selectDockerAndOci = false
+      }
     },
     checkExist() {
       if (this.rateLimitConfig.length === 0) {

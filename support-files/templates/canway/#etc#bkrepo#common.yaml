@@ -133,7 +133,7 @@ storage:
     cache:
       enabled: __BK_REPO_CACHE_ENABLE__
       path: __BK_REPO_CACHE_MOUNT_PATH__
-      loadCacheFirst: true
+      loadCacheFirst: __BK_REPO_CACHE_ACCELERATION_ENABLE__
       expireDays: __BK_REPO_CACHE_EXPIRE_DAY__
     # 上传文件临时目录，可以不在服务实例间共享
     upload:
@@ -147,7 +147,7 @@ storage:
     cache:
       enabled: __BK_REPO_CACHE_ENABLE__
       path: __BK_REPO_CACHE_MOUNT_PATH__
-      loadCacheFirst: true
+      loadCacheFirst: __BK_REPO_CACHE_ACCELERATION_ENABLE__
       expireDays: __BK_REPO_CACHE_EXPIRE_DAY__
     # 上传文件临时目录，可以不在服务实例间共享
     upload:

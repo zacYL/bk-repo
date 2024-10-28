@@ -112,9 +112,12 @@ class PypiRemoteRepository(
             is PypiSimpleArtifactInfo -> {
                 context.getFullPathInterceptors()
                     .forEach { it.intercept(context.projectId, artifactInfo.getArtifactFullPath()) }
-                val artifactResponse = getCacheArtifactResource(context) ?: remoteQuery(context)
+                val artifactResponse = getCacheInfo(context)?.let {
+                    if (it.second) remoteQuery(context) ?: loadArtifactResource(it.first, context)
+                    else loadArtifactResource(it.first, context)
+                } ?: remoteQuery(context)
+                artifactResponse?.getSingleStream()?.readText()
                     ?: throw NotFoundException(ArtifactMessageCode.ARTIFACT_DATA_NOT_FOUND)
-                artifactResponse.getSingleStream().readText()
             }
             else -> getVersionDetail(context)
         }
@@ -158,7 +161,7 @@ class PypiRemoteRepository(
         with(context) {
             getFullPathInterceptors().forEach { it.intercept(projectId, artifactInfo.getArtifactFullPath()) }
         }
-        return getCacheArtifactResource(context) ?: run {
+        return getCacheInfo(context)?.run { loadArtifactResource(first, context) } ?: run {
             val response = doRequest(context)
             return if (checkResponse(response)) {
                 onDownloadResponse(context, response)
@@ -343,6 +346,10 @@ class PypiRemoteRepository(
         val request = Request.Builder().url(downloadUrl).addHeader(USER_AGENT, userAgent).build()
         logger.info("request url: $downloadUrl, network config: ${remoteConfiguration.network}")
         return httpClient.newCall(request).execute()
+    }
+
+    override fun isExpired(cacheNode: NodeDetail, expiration: Long): Boolean {
+        return if (expiration <= 0) true else super.isExpired(cacheNode, expiration)
     }
 
     @Suppress("UNCHECKED_CAST")

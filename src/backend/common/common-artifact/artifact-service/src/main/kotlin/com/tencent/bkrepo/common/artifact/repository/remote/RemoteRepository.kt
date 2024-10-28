@@ -179,7 +179,7 @@ abstract class RemoteRepository : AbstractArtifactRepository() {
      * 尝试读取缓存的远程构件
      */
     open fun getCacheArtifactResource(context: ArtifactContext): ArtifactResource? {
-        return getCacheInfo(context)?.takeIf { it.second }?.let { loadArtifactResource(it.first, context) }
+        return getCacheInfo(context)?.takeIf { !it.second }?.let { loadArtifactResource(it.first, context) }
     }
 
     /**

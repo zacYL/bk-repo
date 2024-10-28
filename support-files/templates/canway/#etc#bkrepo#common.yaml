@@ -48,6 +48,7 @@ spring:
       max-connection-idle-time: 60000
       autoConnectRetry: true
       socketTimeout: 1500
+      auto-index-creation: true
       ### 单机情况下关闭事务，否则报错
       transaction:
         enabled: false

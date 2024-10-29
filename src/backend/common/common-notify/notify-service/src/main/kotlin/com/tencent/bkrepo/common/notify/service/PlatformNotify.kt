@@ -48,7 +48,7 @@ import org.springframework.stereotype.Service
  * devops通知服务
  */
 @Service
-class PlatformNotify constructor(
+class PlatformNotify(
     private val serviceTenantClient: ServiceTenantClient,
     private val serviceNotifyClient: ServiceNotifyClient,
     private val serviceNotifyMessageTemplateClient: ServiceNotifyMessageTemplateClient

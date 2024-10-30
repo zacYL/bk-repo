@@ -1,11 +1,11 @@
 package com.tencent.bkrepo.auth.api
 
-import com.tencent.bkrepo.auth.constant.AuthConstant.DEVOPS_AUTH_NAME
+import com.tencent.bkrepo.common.api.constant.AUTH_HEADER_DEVOPS_UID
+import com.tencent.bkrepo.common.api.constant.DEVOPS_AUTH_SERVICE_NAME
+import com.tencent.bkrepo.common.api.pojo.Response
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
-import net.canway.devops.api.constants.Constants
-import net.canway.devops.api.pojo.Response
 import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.context.annotation.Primary
 import org.springframework.web.bind.annotation.GetMapping
@@ -18,14 +18,14 @@ import org.springframework.web.bind.annotation.RequestMapping
  */
 @Api("平台权限服务租户接口")
 @Primary
-@FeignClient(DEVOPS_AUTH_NAME, contextId = "CanwayTenantClient")
+@FeignClient(DEVOPS_AUTH_SERVICE_NAME, contextId = "CanwayTenantClient")
 @RequestMapping("/api/service/tenant")
 interface CanwayTenantClient {
     @ApiOperation("判断用户是否是租户成员或者租户管理员、系统管理员")
     @GetMapping("/{tenantId}/member/superior_admin")
     fun isTenantMemberOrAdmin(
         @ApiParam(value = "用户ID", required = true)
-        @RequestHeader(Constants.AUTH_HEADER_USER_ID)
+        @RequestHeader(AUTH_HEADER_DEVOPS_UID)
         userId: String,
         @ApiParam(value = "项目ID", required = true)
         @PathVariable

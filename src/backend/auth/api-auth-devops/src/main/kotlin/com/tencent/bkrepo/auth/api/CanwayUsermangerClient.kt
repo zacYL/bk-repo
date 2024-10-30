@@ -6,12 +6,12 @@ import com.tencent.bkrepo.auth.pojo.user.UserData
 import com.tencent.bkrepo.auth.pojo.user.CanwayUserInfo
 import com.tencent.bkrepo.auth.pojo.user.UserPasswordUpdateVO
 import com.tencent.bkrepo.auth.pojo.user.UserRequest
+import com.tencent.bkrepo.common.api.constant.AUTH_HEADER_DEVOPS_UID
 import com.tencent.bkrepo.common.api.constant.DEVOPS_USER_MANAGER_SERVICE_NAME
+import com.tencent.bkrepo.common.api.pojo.Response
 import io.swagger.annotations.Api
-import io.swagger.v3.oas.annotations.Operation
-import io.swagger.v3.oas.annotations.Parameter
-import net.canway.devops.api.constants.Constants
-import net.canway.devops.api.pojo.Response
+import io.swagger.annotations.ApiOperation
+import io.swagger.annotations.ApiParam
 import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.context.annotation.Primary
 import org.springframework.web.bind.annotation.GetMapping
@@ -29,56 +29,56 @@ import org.springframework.web.bind.annotation.RequestHeader
 @RequestMapping("/api/service")
 interface CanwayUsermangerClient {
 
-    @Operation(summary = "第三方调用认证接口")
+    @ApiOperation("第三方调用认证接口")
     @PostMapping("/authentication/login")
     fun login(
-        @Parameter(name = "用户登录信息")
+        @ApiParam(value = "用户登录信息")
         userLoginVo: UserLoginVo
     ): Response<Boolean>
 
-    @Operation(summary = "根据用户数组查询用户列表")
+    @ApiOperation("根据用户数组查询用户列表")
     @GetMapping("/list")
     fun getUserByIds(
-        @Parameter(name = "用户ID", required = true)
+        @ApiParam(value = "用户ID", required = true)
         @RequestParam(value = "userIds")
         userIds: List<String>
     ): Response<List<CanwayUserInfo>>
 
-    @Operation(summary = "迁移token")
+    @ApiOperation("迁移token")
     @PostMapping("/token/migrateToken")
     fun migrateToken(
-        @Parameter(name = "migrateTokenInfoList", required = true)
+        @ApiParam(value = "migrateTokenInfoList", required = true)
         migrateTokenInfoList: List<MigrateTokenVO>
     ): Response<Boolean>
 
-    @Operation(summary = "本地新增用户")
+    @ApiOperation("本地新增用户")
     @PostMapping("/user/add")
     fun addUsers(
-        @Parameter(name = "X-DEVOPS-UID", required = true)
-        @RequestHeader(Constants.AUTH_HEADER_USER_ID)
+        @ApiParam(value = "X-DEVOPS-UID", required = true)
+        @RequestHeader(AUTH_HEADER_DEVOPS_UID)
         loginUserId: String,
-        @Parameter(name = "本地新增用户", required = true)
+        @ApiParam(value = "本地新增用户", required = true)
         userRequest: UserRequest
     ): Response<Boolean>
 
-    @Operation(summary = "获取所有用户")
+    @ApiOperation("获取所有用户")
     @GetMapping("/user/allUser")
     fun getAllUser(
-        @Parameter(name = "是否模糊查询", required = true)
+        @ApiParam(value = "是否模糊查询", required = true)
         @RequestParam("fuzzySearch")
         fuzzySearch: Boolean,
-        @Parameter(name = "查询参数")
+        @ApiParam(value = "查询参数")
         @RequestParam("param")
         param: String?
     ): Response<List<UserData>>
 
-    @Operation(summary = "密码更新")
+    @ApiOperation("密码更新")
     @PostMapping("/authentication/password/update")
     fun passwordUpdate(
-        @Parameter(name = "登陆用户ID", required = true)
-        @RequestHeader(Constants.AUTH_HEADER_USER_ID)
+        @ApiParam(value = "登陆用户ID", required = true)
+        @RequestHeader(AUTH_HEADER_DEVOPS_UID)
         loginUserId: String,
-        @Parameter(name = "用户账号与新密码")
+        @ApiParam(value = "用户账号与新密码")
         userPasswordUpdateVO: UserPasswordUpdateVO
     ): Response<String>
 }

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.tencent.bkrepo.auth.enums.SeatBusinessStatus
 import com.tencent.bkrepo.auth.enums.SeatStatus
 import com.tencent.bkrepo.auth.enums.SeatStatusInfo
-import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.annotations.ApiModelProperty
 
 data class UserData(
     var id: String,
@@ -20,6 +20,6 @@ data class UserData(
 ) {
     @JsonProperty("seatStatus")
     @Suppress("unused")
-    @Schema(name = "座席状态, 包含启用和失效, 不包含禁用")
+    @ApiModelProperty("座席状态, 包含启用和失效, 不包含禁用")
     val seatStatus: List<SeatBusinessStatus> = SeatBusinessStatus.from(cteamSeat, ctestSeat, cmeasSeat, cflowSeat)
 }

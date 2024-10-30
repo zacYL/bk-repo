@@ -30,8 +30,8 @@ import com.tencent.bkrepo.common.api.constant.DEVOPS_PLATFORM_SERVICE_NAME
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.devops.pojo.notify.ProjectNotifyVo
 import io.swagger.annotations.Api
-import io.swagger.v3.oas.annotations.Operation
-import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.annotations.ApiOperation
+import io.swagger.annotations.ApiParam
 import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.context.annotation.Primary
 import org.springframework.web.bind.annotation.PostMapping
@@ -44,10 +44,10 @@ import org.springframework.web.bind.annotation.RequestMapping
 @RequestMapping("/api/service/notifies")
 interface ServiceNotifyClient {
 
-    @Operation(summary = "发送站内信")
+    @ApiOperation("发送站内信")
     @PostMapping("/project")
     fun sendProjectNotify(
-        @Parameter(description = "站内消息内容", required = true)
+        @ApiParam(value = "站内消息内容", required = true)
         @RequestBody
         message: ProjectNotifyVo
     ): Response<Boolean>

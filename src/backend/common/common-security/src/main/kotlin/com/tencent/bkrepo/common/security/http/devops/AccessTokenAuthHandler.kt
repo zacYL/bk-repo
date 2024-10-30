@@ -1,9 +1,9 @@
 package com.tencent.bkrepo.common.security.http.devops
 
+import com.tencent.bkrepo.common.api.constant.AUTH_HEADER_DEVOPS_ACCESS_TOKEN
+import com.tencent.bkrepo.common.api.constant.AUTH_HEADER_DEVOPS_UID
 import com.tencent.bkrepo.common.api.constant.CPACK_PRODUCT_CODE
 import com.tencent.bkrepo.common.security.constant.ACCESS_FROM_WEB
-import com.tencent.bkrepo.common.security.constant.AUTH_HEADER_DEVOPS_ACCESS_TOKEN
-import com.tencent.bkrepo.common.security.constant.AUTH_HEADER_DEVOPS_UID
 import com.tencent.bkrepo.common.security.constant.HEADER_API_TYPE
 import com.tencent.bkrepo.common.security.exception.AuthenticationException
 import com.tencent.bkrepo.common.security.exception.PermissionException

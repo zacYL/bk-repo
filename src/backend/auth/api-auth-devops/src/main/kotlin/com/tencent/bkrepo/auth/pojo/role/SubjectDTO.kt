@@ -1,13 +1,14 @@
 package com.tencent.bkrepo.auth.pojo.role
 
 import com.tencent.bkrepo.auth.constant.AuthSubjectCode
-import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.annotations.ApiModel
+import io.swagger.annotations.ApiModelProperty
 
-@Schema(description = "授权主体")
+@ApiModel("授权主体")
 class SubjectDTO(
-    @Schema(description = "授权主体ID")
+    @ApiModelProperty("授权主体ID")
     val subjectId: String,
-    @Schema(description = "授权主体标识")
+    @ApiModelProperty("授权主体标识")
     val subjectCode: String
 ) {
     companion object {

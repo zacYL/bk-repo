@@ -1,14 +1,16 @@
-package com.tencent.bkrepo.common.devops.repository.service
+package com.tencent.bkrepo.repository.cpack.service.impl
 
-import com.tencent.bkrepo.auth.api.CanwayProjectManagerClient
-import com.tencent.bkrepo.auth.pojo.project.ProjectCreateRequest
 import com.tencent.bkrepo.common.api.constant.ADMIN_USER
 import com.tencent.bkrepo.common.api.constant.StringPool.EMPTY
 import com.tencent.bkrepo.common.artifact.constant.PAAS_PROJECT
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_GLOBAL_PROJECT
+import com.tencent.bkrepo.common.devops.client.CanwayProjectManagerClient
+import com.tencent.bkrepo.common.devops.pojo.project.ProjectCreateRequest
 import com.tencent.bkrepo.repository.api.ProjectClient
 import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
 
+@Service
 class CanwayProjectService(
     private val projectClient: ProjectClient,
     private val canwayProjectManagerClient: CanwayProjectManagerClient

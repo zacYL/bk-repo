@@ -1,22 +1,23 @@
 package com.tencent.bkrepo.auth.pojo.project
 
 import com.tencent.bkrepo.auth.pojo.permission.ProjectUserPermissionSourceVO
-import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.annotations.ApiModel
+import io.swagger.annotations.ApiModelProperty
 
-@Schema(description = "项目成员信息")
+@ApiModel("项目成员信息")
 data class ProjectMemberVO(
-    @Schema(description = "用户ID")
+    @ApiModelProperty("用户ID")
     val userId: String,
-    @Schema(description = "用户名称")
+    @ApiModelProperty("用户名称")
     val username: String,
-    @Schema(description = "是否是系统管理员")
+    @ApiModelProperty("是否是系统管理员")
     val systemAdmin: Boolean,
-    @Schema(description = "是否是租户管理员")
+    @ApiModelProperty("是否是租户管理员")
     val tenantAdmin: Boolean,
-    @Schema(description = "是否项目统管理员")
+    @ApiModelProperty("是否项目统管理员")
     val projectAdmin: Boolean,
-    @Schema(description = "启用/禁用")
+    @ApiModelProperty("启用/禁用")
     val enable: Boolean,
-    @Schema(description = "用户权限来源")
+    @ApiModelProperty("用户权限来源")
     val permissionSource: ProjectUserPermissionSourceVO
 )

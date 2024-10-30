@@ -30,9 +30,7 @@
  */
 dependencies {
     api(project(":common:common-api"))
-    api("net.canway.devops:devops-boot-starter-api:6.0.0-SNAPSHOT")
     api("com.fasterxml.jackson.core:jackson-annotations")
-    api("io.swagger.core.v3:swagger-jaxrs2:2.1.10")
     compileOnly("org.springframework:spring-web")
     compileOnly("jakarta.servlet:jakarta.servlet-api")
     compileOnly("org.springframework.boot:spring-boot-starter-aop")

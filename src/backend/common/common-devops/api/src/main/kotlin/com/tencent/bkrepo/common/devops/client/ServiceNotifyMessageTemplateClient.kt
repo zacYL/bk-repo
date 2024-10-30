@@ -30,8 +30,8 @@ import com.tencent.bkrepo.common.api.constant.DEVOPS_PLATFORM_SERVICE_NAME
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.devops.pojo.notify.SendNotifyMessageTemplateRequest
 import io.swagger.annotations.Api
-import io.swagger.v3.oas.annotations.Operation
-import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.annotations.ApiOperation
+import io.swagger.annotations.ApiParam
 import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.context.annotation.Primary
 import org.springframework.http.MediaType
@@ -45,10 +45,10 @@ import org.springframework.web.bind.annotation.RequestMapping
 @RequestMapping("/api/service/notify/message/template")
 interface ServiceNotifyMessageTemplateClient {
 
-    @Operation(summary = "使用模板发送消息通知")
+    @ApiOperation("使用模板发送消息通知")
     @PostMapping("/send", consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun sendNotifyMessageByTemplate(
-        @Parameter(description = "使用模板发送消息通知请求报文体", required = true)
+        @ApiParam(value = "使用模板发送消息通知请求报文体", required = true)
         @RequestBody
         request: SendNotifyMessageTemplateRequest
     ): Response<Boolean>

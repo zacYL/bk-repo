@@ -1,23 +1,24 @@
 package com.tencent.bkrepo.auth.pojo.user
 
-import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.annotations.ApiModel
+import io.swagger.annotations.ApiModelProperty
 
-@Schema(name = "UserInsertVO")
+@ApiModel("UserInsertVO")
 data class UserInsertVO(
-    @Schema(name = "userId", required = true)
+    @ApiModelProperty("userId", required = true)
     val userId: String = "",
-    @Schema(name = "displayName", required = true)
+    @ApiModelProperty("displayName", required = true)
     val displayName: String = "",
-    @Schema(name = "headPortrait", required = true)
+    @ApiModelProperty("headPortrait", required = true)
     var headPortrait: String? = "",
-    @Schema(name = "email", required = true)
+    @ApiModelProperty("email", required = true)
     val email: String = "",
-    @Schema(name = "telephone", required = true)
+    @ApiModelProperty("telephone", required = true)
     val telephone: String = "",
-    @Schema(name = "staffStatus", required = true)
+    @ApiModelProperty("staffStatus", required = true)
     val staffStatus: Boolean = false,
-    @Schema(name = "weChatId", required = true)
+    @ApiModelProperty("weChatId", required = true)
     val weChatId: String? = "",
-    @Schema(name = "position", required = true)
+    @ApiModelProperty("position", required = true)
     val position: String? = ""
 )

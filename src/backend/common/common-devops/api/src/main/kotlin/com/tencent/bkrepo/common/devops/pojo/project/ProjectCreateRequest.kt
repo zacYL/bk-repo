@@ -1,4 +1,4 @@
-package com.tencent.bkrepo.auth.pojo.project
+package com.tencent.bkrepo.common.devops.pojo.project
 
 data class ProjectCreateRequest(
     val typeId: String,

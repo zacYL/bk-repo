@@ -106,6 +106,15 @@ const val GENERIC_SERVICE_NAME = "\${service.prefix:repo-}generic\${service.suff
 const val DEVOPS_USER_MANAGER_SERVICE_NAME = "\${service.devops-prefix:}usermanager\${service.suffix:}"
 const val DEVOPS_PLATFORM_SERVICE_NAME = "\${service.devops-prefix:}platform\${service.suffix:}"
 const val DEVOPS_AUTH_SERVICE_NAME = "\${service.devops-prefix:}auth\${service.suffix:}"
+const val DEVOPS_PROJECT_SERVICE_NAME = "\${service.devops-prefix:}projectmanager\${service.suffix:}"
+
+/**
+ *  Headers used by Devops Service
+ */
+const val AUTH_HEADER_DEVOPS_UID = "X-DEVOPS-UID"
+const val AUTH_HEADER_DEVOPS_TENANT_ID = "X-DEVOPS-TENANT-ID"
+const val AUTH_HEADER_DEVOPS_ACCESS_TOKEN = "X-DEVOPS-ACCESS-TOKEN"
+const val AUTH_HEADER_DEVOPS_PROJECT_ID = "X-DEVOPS-PROJECT-ID"
 
 /**
  * 认证相关

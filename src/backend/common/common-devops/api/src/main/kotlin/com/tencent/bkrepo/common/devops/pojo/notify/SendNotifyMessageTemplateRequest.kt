@@ -26,43 +26,44 @@
  */
 package com.tencent.bkrepo.common.devops.pojo.notify
 
-import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.annotations.ApiModel
+import io.swagger.annotations.ApiModelProperty
 
-@Schema(description = "使用模板发送消息通知请求报文体")
+@ApiModel("使用模板发送消息通知请求报文体")
 data class SendNotifyMessageTemplateRequest(
-    @Schema(description = "通知模板代码", required = true)
+    @ApiModelProperty("通知模板代码", required = true)
     val templateCode: String,
-    @Schema(description = "通知接收者", required = true)
+    @ApiModelProperty("通知接收者", required = true)
     val receivers: MutableSet<String> = mutableSetOf(),
-    @Schema(description = "指定消息类型", required = false)
+    @ApiModelProperty("指定消息类型", required = false)
     val notifyType: MutableSet<String>? = null, // 枚举保护：使用NotifyType.description传值
-    @Schema(description = "标题动态参数", required = false)
+    @ApiModelProperty("标题动态参数", required = false)
     val titleParams: Map<String, String>? = null,
-    @Schema(description = "内容动态参数", required = false)
+    @ApiModelProperty("内容动态参数", required = false)
     val bodyParams: Map<String, String>? = null,
-    @Schema(description = "邮件抄送接收者", required = false)
+    @ApiModelProperty("邮件抄送接收者", required = false)
     val cc: MutableList<String>? = null,
-    @Schema(description = "消息内容", required = false)
+    @ApiModelProperty("消息内容", required = false)
     val bcc: MutableList<String>? = null,
-    @Schema(description = "是否以markdown格式发送通知内容, 目前仅企业微信群支持markdown", required = false)
+    @ApiModelProperty("是否以markdown格式发送通知内容, 目前仅企业微信群支持markdown", required = false)
     val markdownContent: Boolean? = false,
-    @Schema(description = "回调内容", required = false)
+    @ApiModelProperty("回调内容", required = false)
     val callbackData: Map<String, String>? = null,
-    @Schema(description = "是否为全部内容, 目前仅限飞书", required = false)
+    @ApiModelProperty("是否为全部内容, 目前仅限飞书", required = false)
     val allContent: Boolean? = false,
-    @Schema(description = "自研邮件附件内容")
+    @ApiModelProperty("自研邮件附件内容")
     var attachFile: List<EmailAttach>? = listOf(),
-    @Schema(description = "假设不为空, 则同时发送站内信")
+    @ApiModelProperty("假设不为空, 则同时发送站内信")
     val mail: Mail? = null
 ) {
     data class Mail(
-        @Schema(description = "租户标识")
+        @ApiModelProperty("租户标识")
         val tenantId: String,
-        @Schema(description = "项目标识")
+        @ApiModelProperty("项目标识")
         val projectCode: String? = "",
-        @Schema(description = "跳转url")
+        @ApiModelProperty("跳转url")
         val messageUrl: String,
-        @Schema(description = "请求来源,CODING需要转换tenantId和projectCode")
+        @ApiModelProperty("请求来源,CODING需要转换tenantId和projectCode")
         val source: Source = Source.DEFAULT,
         val sender: String,
         val moduleId: String? = "CComm"

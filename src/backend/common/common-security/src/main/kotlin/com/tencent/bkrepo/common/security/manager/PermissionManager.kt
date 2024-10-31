@@ -35,6 +35,7 @@ import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
+import com.google.common.util.concurrent.UncheckedExecutionException
 import com.tencent.bkrepo.auth.api.ServiceExternalPermissionResource
 import com.tencent.bkrepo.auth.api.ServicePermissionResource
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
@@ -103,7 +104,8 @@ open class PermissionManager(
 
     private val repositoryCache = CacheBuilder.newBuilder()
         .maximumSize(1000)
-        .expireAfterWrite(30L, TimeUnit.SECONDS)
+        .refreshAfterWrite(30L, TimeUnit.SECONDS)
+        .expireAfterWrite(60L, TimeUnit.SECONDS)
         .build(CacheLoader.from<String, RepositoryInfo> { queryRepositoryInfo(it) })
 
     /**
@@ -322,7 +324,11 @@ open class PermissionManager(
      * 查询仓库信息
      */
     private fun queryRepositoryInfo(projectId: String, repoName: String): RepositoryInfo {
-        return repositoryCache.get(getRepoId(projectId, repoName))
+        return try {
+            repositoryCache.get(getRepoId(projectId, repoName))
+        } catch (e: UncheckedExecutionException) {
+            throw e.cause ?: e
+        }
     }
 
     private fun queryRepositoryInfo(key: String): RepositoryInfo {

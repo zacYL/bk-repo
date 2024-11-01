@@ -1,6 +1,6 @@
 <template>
     <div>
-        <bk-sideslider :is-show.sync="showSideslider" :quick-close="true" :width="600" :title="$t('planLogTitle', { name: planData.name })">
+        <bk-sideslider :is-show.sync="showSideslider" :quick-close="true" :width="800" :title="$t('planLogTitle', { name: planData.name })">
             <template #content>
                 <div class="plan-detail-container" v-bkloading="{ isLoading }">
                     <bk-radio-group

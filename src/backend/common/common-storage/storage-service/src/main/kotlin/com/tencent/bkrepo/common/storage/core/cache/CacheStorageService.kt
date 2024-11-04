@@ -69,7 +69,12 @@ class CacheStorageService(
                 fileStorage.store(path, filename, artifactFile.flushToFile(), credentials)
             }
             else -> {
-                val cacheFile = getCacheClient(credentials).move(path, filename, artifactFile.flushToFile())
+                val loadCacheFirst = isLoadCacheFirst(Range.full(artifactFile.getSize()), credentials)
+                val cacheFile = if (loadCacheFirst) {
+                    getCacheClient(credentials).move(path, filename, artifactFile.flushToFile())
+                } else {
+                    artifactFile.flushToFile()
+                }
                 async2Store(cancel, filename, credentials, path, cacheFile)
             }
         }

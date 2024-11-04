@@ -37,8 +37,6 @@ import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.artifact.util.http.HttpHeaderUtils.determineMediaType
 import com.tencent.bkrepo.common.artifact.util.http.HttpHeaderUtils.encodeDisposition
 import com.tencent.bkrepo.common.artifact.util.http.HttpRangeUtils
-import com.tencent.bkrepo.common.security.manager.PermissionManager
-import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.storage.core.StorageProperties
 import com.tencent.bkrepo.common.storage.core.StorageService
@@ -50,7 +48,6 @@ import com.tencent.bkrepo.common.storage.innercos.http.HttpProtocol
 import com.tencent.bkrepo.common.storage.innercos.request.CosRequest
 import com.tencent.bkrepo.common.storage.innercos.request.GetObjectRequest
 import com.tencent.bkrepo.common.storage.innercos.urlEncode
-import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import org.slf4j.LoggerFactory
 import org.springframework.core.annotation.Order
@@ -64,21 +61,17 @@ import java.time.format.DateTimeFormatter
  * 当使用对象存储作为后端存储时，支持创建对象的预签名下载URL，并将用户的下载请求重定向到该URL
  */
 @Service
-@Order(2)
+@Order(1)
 class CosRedirectService(
     private val storageProperties: StorageProperties,
     private val storageService: StorageService,
-    private val permissionManager: PermissionManager,
 ) : DownloadRedirectService {
     override fun shouldRedirect(context: ArtifactDownloadContext): Boolean {
         if (!storageProperties.redirect.enabled) {
             return false
         }
 
-        val node = ArtifactContextHolder.getNodeDetail(
-            context.repositoryDetail.projectId,
-            context.repositoryDetail.name
-        )
+        val node = ArtifactContextHolder.getNodeDetail(context.artifactInfo)
         // 从request uri中获取artifact信息，artifact为null时表示非单制品下载请求，此时不支持重定向
         val artifact = ArtifactContextHolder.getArtifactInfo()
         // node为null时表示制品不存在，或者是Remote仓库的制品尚未被缓存，此时不支持重定向
@@ -109,16 +102,13 @@ class CosRedirectService(
                 storageProperties.redirect.redirectAllDownload
 
         // 文件存在于COS上时才会被重定向
-        return needToRedirect && isSystemOrAdmin() && guessFileExists(node, storageCredentials)
+        return needToRedirect && guessFileExists(node, storageCredentials)
     }
 
     override fun redirect(context: ArtifactDownloadContext) {
         val credentials = context.repositoryDetail.storageCredentials ?: storageProperties.defaultStorageCredentials()
         require(credentials is InnerCosCredentials)
-        val node = ArtifactContextHolder.getNodeDetail(
-            projectId = context.repositoryDetail.projectId,
-            repoName = context.repositoryDetail.name
-        )!!
+        val node = ArtifactContextHolder.getNodeDetail(context.artifactInfo)!!
 
         // 创建请求并签名
         val clientConfig = ClientConfig(credentials).apply {
@@ -188,11 +178,6 @@ class CosRedirectService(
         // 判断文件是否已经上传到COS
         logger.info("Checking node[${node.sha256}] exist in cos, createdDateTime[${node.createdDate}]")
         return storageService.exist(node.sha256!!, storageCredentials)
-    }
-
-    private fun isSystemOrAdmin(): Boolean {
-        val userId = SecurityUtils.getUserId()
-        return userId == SYSTEM_USER || permissionManager.isAdminUser(SecurityUtils.getUserId())
     }
 
     companion object {

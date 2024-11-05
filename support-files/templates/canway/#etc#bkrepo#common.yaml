@@ -152,6 +152,11 @@ storage:
     # 上传文件临时目录，可以不在服务实例间共享
     upload:
       location: __BK_REPO_UPLOAD_TEMP_PATH__
+  redirect:
+    enabled: __BK_REPO_STORAGE_REDIRECT_ENABLED__
+    minDirectDownloadSize: __BK_REPO_STORAGE_REDIRECT_THRESHOLD__
+    uploadSizePerSecond: __BK_REPO_STORAGE_UPLOAD_SPEED__
+    redirectAllDownload: __BK_REPO_STORAGE_FORCE_REDIRECT__
 
 security:
   # HTTP认证相关配置

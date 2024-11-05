@@ -115,7 +115,7 @@ class ConanVirtualRepository : VirtualRepository() {
         with(context) {
             getFullPathInterceptors().forEach { it.intercept(projectId, artifactInfo.getArtifactFullPath()) }
             val cacheKey = getRecipeCacheKey(projectId, repoName, getConanRecipePattern(HttpContextHolder.getRequest().requestURI.extractConanFileReference()))
-            return redisOperation.keys(cacheKey).firstOrNull()?.let {
+            return redisOperation.scanForFirstKey(cacheKey)?.let {
                 redisOperation.get(it)
             }?.let { it ->
                 logger.info("recipe $cacheKey is in cache, redirect to repo $it")

@@ -55,7 +55,7 @@ class ConanVirtualServiceImpl : ConanVirtualService {
             var cacheRepo: String? = null
             var retryCount = 0
             while (retryCount < 3) {
-                redisOperation.keys(cacheKey).firstOrNull()?.let {
+                redisOperation.scanForFirstKey(cacheKey)?.let {
                     cacheRepo = redisOperation.get(it)
                 }
                 if (cacheRepo != null) {
@@ -74,7 +74,7 @@ class ConanVirtualServiceImpl : ConanVirtualService {
         with(repositoryDetail) {
             val conanFileReference = requestURI.extractConanFileReference()
             val cacheKey = ConanVirtualRepository.getRecipeCacheKey(projectId, name, getConanRecipePattern(conanFileReference))
-            return redisOperation.keys(cacheKey).firstOrNull()?.let {
+            return redisOperation.scanForFirstKey(cacheKey)?.let {
                 redisOperation.get(it)
             }
         }

@@ -31,7 +31,6 @@
 
 package com.tencent.bkrepo.common.security.manager
 
-import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
@@ -97,10 +96,11 @@ open class PermissionManager(
         CacheBuilder.newBuilder().maximumSize(1).expireAfterWrite(30L, TimeUnit.MINUTES).build(cacheLoader)
     }
 
-    private val permissionCache: Cache<String, Boolean> = CacheBuilder.newBuilder()
+    private val permissionCache = CacheBuilder.newBuilder()
         .maximumSize(1000)
-        .expireAfterWrite(30L, TimeUnit.SECONDS)
-        .build()
+        .refreshAfterWrite(30L, TimeUnit.SECONDS)
+        .expireAfterWrite(60L, TimeUnit.SECONDS)
+        .build(CacheLoader.from<CheckPermissionRequest, Boolean> { permissionResource.checkPermission(it).data })
 
     private val repositoryCache = CacheBuilder.newBuilder()
         .maximumSize(1000)
@@ -383,9 +383,11 @@ open class PermissionManager(
             repoName = repoName,
             path = paths?.first()
         )
-        val key = getAuthRequestKey(checkRequest)
-        val checkResult = permissionCache.getIfPresent(key) ?: permissionResource.checkPermission(checkRequest).data
-                ?.also { if (key.split(AUTH_REQ_DELIMITER).size == 7) permissionCache.put(key, it) }
+        val checkResult = try {
+            permissionCache.get(checkRequest)
+        } catch (e: UncheckedExecutionException) {
+            throw e.cause ?: e
+        }
         if (checkResult != true) {
             throw PermissionException()
         }
@@ -623,10 +625,6 @@ open class PermissionManager(
 
     private fun getRepoId(projectId: String, repoName: String) = "$projectId$REPO_ID_DELIMITER$repoName"
 
-    private fun getAuthRequestKey(request: CheckPermissionRequest) = with(request) {
-        listOf(uid, appId, resourceType.id(), action.id(), projectId, repoName, path).joinToString(AUTH_REQ_DELIMITER)
-    }
-
     companion object {
 
         private val logger = LoggerFactory.getLogger(PermissionManager::class.java)
@@ -643,7 +641,6 @@ open class PermissionManager(
         private const val PACKAGE_NAME_PREFIX = "com.tencent.bkrepo"
 
         private const val REPO_ID_DELIMITER = "/"
-        private const val AUTH_REQ_DELIMITER = "::"
 
         /**
          * 检查是否为匿名用户，如果是匿名用户则返回401并提示登录

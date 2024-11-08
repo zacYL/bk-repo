@@ -32,6 +32,8 @@
 package com.tencent.bkrepo.common.artifact.repository.context
 
 import com.google.common.cache.CacheBuilder
+import com.google.common.cache.CacheLoader
+import com.google.common.util.concurrent.UncheckedExecutionException
 import com.tencent.bkrepo.common.api.constant.CharPool
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.config.ArtifactConfigurer
@@ -97,8 +99,9 @@ class ArtifactContextHolder(
         private val artifactConfigurerMap = mutableMapOf<RepositoryType, ArtifactConfigurer>()
         private val repositoryDetailCache = CacheBuilder.newBuilder()
             .maximumSize(1000)
-            .expireAfterWrite(30, TimeUnit.SECONDS)
-            .build<RepositoryId, RepositoryDetail>()
+            .refreshAfterWrite(30L, TimeUnit.SECONDS)
+            .expireAfterWrite(60L, TimeUnit.SECONDS)
+            .build(CacheLoader.from<RepositoryId, RepositoryDetail> { queryRepoDetail(it) })
         private val regex = Regex("""com\.tencent\.bkrepo\.(\w+)\..*""")
 
         /**
@@ -170,9 +173,7 @@ class ArtifactContextHolder(
                 return repositoryAttribute
             }
             val repositoryId = getRepositoryId(request)
-            val repoDetail = repositoryDetailCache.getIfPresent(repositoryId) ?: run {
-                queryRepoDetail(repositoryId).apply { repositoryDetailCache.put(repositoryId, this) }
-            }
+            val repoDetail = getRepoDetail(repositoryId)
             request.setAttribute(REPO_KEY, repoDetail)
             return repoDetail
         }
@@ -193,8 +194,10 @@ class ArtifactContextHolder(
          * 在非http的上下文获取仓库信息
          * */
         fun getRepoDetail(repositoryId: RepositoryId): RepositoryDetail {
-            return repositoryDetailCache.get(repositoryId) {
-                queryRepoDetail(repositoryId)
+            return try {
+                repositoryDetailCache.get(repositoryId)
+            } catch (e: UncheckedExecutionException) {
+                throw e.cause ?: e
             }
         }
 

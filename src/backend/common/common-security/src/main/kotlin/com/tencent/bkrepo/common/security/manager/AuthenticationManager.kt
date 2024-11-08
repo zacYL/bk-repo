@@ -27,6 +27,9 @@
 
 package com.tencent.bkrepo.common.security.manager
 
+import com.google.common.cache.CacheBuilder
+import com.google.common.cache.CacheLoader
+import com.google.common.util.concurrent.UncheckedExecutionException
 import com.tencent.bkrepo.auth.api.ServiceAccountResource
 import com.tencent.bkrepo.auth.api.ServiceOauthAuthorizationResource
 import com.tencent.bkrepo.auth.api.ServiceUserResource
@@ -39,6 +42,7 @@ import com.tencent.bkrepo.common.security.exception.AuthenticationException
 import com.tencent.bkrepo.common.security.http.core.HttpAuthProperties
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
+import java.util.concurrent.TimeUnit
 
 /**
  * 认证管理器
@@ -52,14 +56,26 @@ class AuthenticationManager(
     private val httpAuthProperties: HttpAuthProperties
 ) {
 
+    private val userTokenCache = CacheBuilder.newBuilder()
+        .maximumSize(1000)
+        .refreshAfterWrite(30L, TimeUnit.SECONDS)
+        .expireAfterWrite(60L, TimeUnit.SECONDS)
+        .build(
+            CacheLoader.from<Pair<String, String>, Boolean> { serviceUserResource.checkToken(it.first, it.second).data }
+        )
+
     /**
      * 校验普通用户类型账户
      * @throws AuthenticationException 校验失败
      */
     fun checkUserAccount(uid: String, token: String): String {
         if (preCheck()) return uid
-        val response = serviceUserResource.checkToken(uid, token)
-        return if (response.data == true) uid else throw AuthenticationException("Authorization value check failed")
+        val result = try {
+            userTokenCache.get(Pair(uid, token))
+        } catch (e: UncheckedExecutionException) {
+            throw e.cause ?: e
+        }
+        return if (result == true) uid else throw AuthenticationException("Authorization value check failed")
     }
 
     /**

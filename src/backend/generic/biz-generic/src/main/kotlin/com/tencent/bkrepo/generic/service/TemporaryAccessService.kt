@@ -93,8 +93,8 @@ class TemporaryAccessService(
     private val genericProperties: GenericProperties,
     private val pluginManager: PluginManager,
     private val deltaSyncService: DeltaSyncService,
-    private val storageService: StorageService,
-    ) {
+    private val storageService: StorageService
+) {
 
     /**
      * 上传

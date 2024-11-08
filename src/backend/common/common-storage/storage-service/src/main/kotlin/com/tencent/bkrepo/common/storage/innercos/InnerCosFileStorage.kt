@@ -39,6 +39,7 @@ import com.tencent.bkrepo.common.storage.innercos.request.CheckObjectExistReques
 import com.tencent.bkrepo.common.storage.innercos.request.CopyObjectRequest
 import com.tencent.bkrepo.common.storage.innercos.request.DeleteObjectRequest
 import com.tencent.bkrepo.common.storage.innercos.request.GetObjectRequest
+import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -57,7 +58,11 @@ open class InnerCosFileStorage : AbstractEncryptorFileStorage<InnerCosCredential
     }
 
     override fun load(path: String, name: String, range: Range, client: CosClient): InputStream? {
-        val request = GetObjectRequest(name, range.start, range.end)
+        val request = if (range.isPartialContent()) {
+            GetObjectRequest(name, range.start, range.end)
+        } else {
+            GetObjectRequest(name)
+        }
         return client.getObjectByChunked(request).inputStream
     }
 
@@ -74,6 +79,7 @@ open class InnerCosFileStorage : AbstractEncryptorFileStorage<InnerCosCredential
             return client.checkObjectExist(CheckObjectExistRequest(name))
         } catch (ignored: IOException) {
             // return false if error
+            logger.error("check file[$path/$name] exists in cos failed", ignored)
             false
         }
     }
@@ -96,5 +102,9 @@ open class InnerCosFileStorage : AbstractEncryptorFileStorage<InnerCosCredential
         require(credentials.region.isNotBlank())
         require(credentials.bucket.isNotBlank())
         return CosClient(credentials)
+    }
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(InnerCosFileStorage::class.java)
     }
 }

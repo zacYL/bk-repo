@@ -52,14 +52,19 @@ class ClientConfig(private val credentials: InnerCosCredentials) {
     val maxUploadParts: Int = MAX_PARTS
 
     /**
+     * 分片上传最小数量
+     */
+    val minimumUploadPartSize: Long = DataSize.ofMegabytes(MIN_PART_SIZE).toBytes()
+
+    /**
      * 签名过期时间
      */
-    val signExpired: Duration = Duration.ofDays(1)
+    var signExpired: Duration = Duration.ofDays(1)
 
     /**
      * http协议
      */
-    val httpProtocol: HttpProtocol = HttpProtocol.HTTP
+    var httpProtocol: HttpProtocol = HttpProtocol.HTTP
 
     /**
      * 分片阈值，大于此值将采用分片上传/下载
@@ -67,9 +72,14 @@ class ClientConfig(private val credentials: InnerCosCredentials) {
     val multipartThreshold: Long = DataSize.ofMegabytes(MULTIPART_THRESHOLD_SIZE).toBytes()
 
     /**
-     * 分片最小数量
+     * 分片下载最大分片数量
      */
-    val minimumPartSize: Long = DataSize.ofMegabytes(MIN_PART_SIZE).toBytes()
+    val maxDownloadParts: Int = credentials.download.maxDownloadParts
+
+    /**
+     * 分片下载最小数量
+     */
+    val minimumDownloadPartSize: Long = DataSize.ofMegabytes(credentials.download.minimumPartSize).toBytes()
 
     /**
      * cos访问域名构造器
@@ -79,7 +89,7 @@ class ClientConfig(private val credentials: InnerCosCredentials) {
     /**
      * cos访问域名解析器
      */
-    val endpointResolver = createEndpointResolver()
+    var endpointResolver = createEndpointResolver()
 
     /**
      * 记录慢日志的网络速度阈值，即网络速度低于这个速度，则记录慢日志。
@@ -115,6 +125,16 @@ class ClientConfig(private val credentials: InnerCosCredentials) {
     var downloadTaskInterval: Long = credentials.download.taskInterval
 
     var timeout: Long = credentials.download.timeout
+
+    /**
+     * 下载分块的qps限速
+     * */
+    var qps: Int = credentials.download.qps
+
+    /**
+     * 上传并发数
+     */
+    var uploadWorkers = credentials.upload.workers
 
     private fun createEndpointResolver(): EndpointResolver {
         return if (credentials.modId != null && credentials.cmdId != null) {

@@ -66,7 +66,7 @@ import org.springframework.stereotype.Service
 @Service
 class DownloadService(
     private val nodeClient: NodeClient,
-    private val viewModelService: ViewModelService
+    private val viewModelService: ViewModelService,
 ) : ArtifactService() {
 
     @Value("\${spring.application.name}")
@@ -98,7 +98,6 @@ class DownloadService(
                     repository.download(context)
                 }
             } else {
-                // 如果仓库类型不是Local，可能Node在远程仓库中，尝试下载
                 repository.download(context)
             }
         }

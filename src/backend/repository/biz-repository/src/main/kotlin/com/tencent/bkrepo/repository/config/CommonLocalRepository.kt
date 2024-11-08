@@ -43,6 +43,9 @@ import org.springframework.stereotype.Component
  */
 @Component
 class CommonLocalRepository : LocalRepository() {
+    override fun onDownloadRedirect(context: ArtifactDownloadContext): Boolean {
+        return redirectManager.redirect(context)
+    }
 
     override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
         with(context) {

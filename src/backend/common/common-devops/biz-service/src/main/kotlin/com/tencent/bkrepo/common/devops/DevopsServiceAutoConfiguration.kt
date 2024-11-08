@@ -1,6 +1,5 @@
 package com.tencent.bkrepo.common.devops
 
-import com.tencent.bkrepo.common.devops.client.BkClient
 import com.tencent.bkrepo.common.devops.client.DevopsClient
 import com.tencent.bkrepo.common.devops.client.DevopsProjectClient
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -11,7 +10,6 @@ import org.springframework.context.annotation.Import
 @ConditionalOnProperty(prefix = "auth", name = ["realm"], havingValue = DEPLOY_CANWAY, matchIfMissing = true)
 @Import(
     DevopsProjectClient::class,
-    DevopsClient::class,
-    BkClient::class
+    DevopsClient::class
 )
 class DevopsServiceAutoConfiguration

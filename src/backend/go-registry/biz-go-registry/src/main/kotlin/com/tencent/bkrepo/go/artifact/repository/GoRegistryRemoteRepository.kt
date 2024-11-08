@@ -102,16 +102,14 @@ class GoRegistryRemoteRepository(
 
     override fun onDownloadResponse(context: ArtifactDownloadContext, response: Response): ArtifactResource {
         with(context.artifactInfo as GoModuleInfo) {
-            val contentType: String
             val artifactFile = createTempFile(response.body()!!)
             val size = artifactFile.getSize()
             val artifactStream = artifactFile.getInputStream().artifactStream(Range.full(size))
+            val (mod, readme) = if (type == GoFileType.ZIP && context.getRemoteConfiguration().cache.enabled) {
+                 goPackageService.extractModAndReadme(this, artifactFile.getInputStream(), context.storageCredentials)
+            } else Pair(null, null)
             val node = cacheArtifactFile(context, artifactFile)
             if (type == GoFileType.ZIP && node != null) {
-                contentType = MediaTypes.APPLICATION_ZIP
-                val (mod, readme) = goPackageService.extractModAndReadme(
-                    this, artifactFile.getInputStream(), context.storageCredentials
-                )
                 val extension = mutableMapOf<String, String>()
                 mod?.let { extension[GO_MOD_KEY] = it }
                 readme?.let { extension[README_KEY] = it }
@@ -122,11 +120,11 @@ class GoRegistryRemoteRepository(
                     md5 = node.md5!!,
                     extension = extension,
                 )
-            } else contentType = MediaTypes.TEXT_PLAIN
+            }
             val responseName = context.artifactInfo.getResponseName()
             val srcRepo = RepositoryIdentify(context.projectId, context.repoName)
             return ArtifactResource(artifactStream, responseName, srcRepo, node, ArtifactChannel.PROXY).apply {
-                this.contentType = contentType
+                this.contentType = if (type == GoFileType.ZIP) MediaTypes.APPLICATION_ZIP else MediaTypes.TEXT_PLAIN
             }
         }
     }

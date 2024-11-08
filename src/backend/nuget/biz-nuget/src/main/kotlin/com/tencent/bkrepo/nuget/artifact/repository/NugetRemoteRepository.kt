@@ -227,10 +227,11 @@ class NugetRemoteRepository(
 
     override fun onQueryResponse(context: ArtifactQueryContext, response: Response): InputStream? {
         val artifactFile = createTempFile(response.body()!!)
+        val inputStream = artifactFile.getInputStream()
         context.getAndRemoveAttribute<ArtifactContext>(CACHE_CONTEXT)?.let {
             cacheArtifactFile(it, artifactFile)
         }
-        return artifactFile.getInputStream()
+        return inputStream
     }
 
     override fun createRemoteDownloadUrl(context: ArtifactContext): String {

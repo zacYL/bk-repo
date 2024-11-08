@@ -1,0 +1,15 @@
+{
+  "code" : "GET__api_metadata_{projectId}_{repoName}_{fullPath}_repo-repository",
+  "name" : "查询文件元数据列表",
+  "desc" : "查询文件元数据列表",
+  "systemCode" : "CPack",
+  "method" : "GET",
+  "path" : "/repo-repository/api/metadata/{projectId}/{repoName}/**",
+  "headers" : [ ],
+  "targetService" : "repo-repository",
+  "targetPath" : "/api/metadata/{projectId}/{repoName}/**",
+  "targetMethod" : "GET",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "查询文件元数据列表_acc54a93.md"
+}

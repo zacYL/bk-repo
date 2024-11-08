@@ -1,0 +1,15 @@
+{
+  "code" : "POST__api_stage_upgrade_{projectId}_{repoName}_repo-repository",
+  "name" : "制品晋级",
+  "desc" : "制品晋级",
+  "systemCode" : "CPack",
+  "method" : "POST",
+  "path" : "/repo-repository/api/stage/upgrade/{projectId}/{repoName}",
+  "headers" : [ ],
+  "targetService" : "repo-repository",
+  "targetPath" : "/api/stage/upgrade/{projectId}/{repoName}",
+  "targetMethod" : "POST",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "制品晋级_93125cf9.md"
+}

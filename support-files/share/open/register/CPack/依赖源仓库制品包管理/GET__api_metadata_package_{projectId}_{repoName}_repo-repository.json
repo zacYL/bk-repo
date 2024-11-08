@@ -1,0 +1,15 @@
+{
+  "code" : "GET__api_metadata_package_{projectId}_{repoName}_repo-repository",
+  "name" : "查询制品元数据列表",
+  "desc" : "查询制品元数据列表",
+  "systemCode" : "CPack",
+  "method" : "GET",
+  "path" : "/repo-repository/api/metadata/package/{projectId}/{repoName}",
+  "headers" : [ ],
+  "targetService" : "repo-repository",
+  "targetPath" : "/api/metadata/package/{projectId}/{repoName}",
+  "targetMethod" : "GET",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "查询制品元数据列表_1bc2d33f.md"
+}

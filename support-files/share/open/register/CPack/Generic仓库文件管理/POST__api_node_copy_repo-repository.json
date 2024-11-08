@@ -1,0 +1,15 @@
+{
+  "code" : "POST__api_node_copy_repo-repository",
+  "name" : "复制文件或目录",
+  "desc" : "复制文件或目录",
+  "systemCode" : "CPack",
+  "method" : "POST",
+  "path" : "/repo-repository/api/node/copy",
+  "headers" : [ ],
+  "targetService" : "repo-repository",
+  "targetPath" : "/api/node/copy",
+  "targetMethod" : "POST",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "复制文件或目录_1fdcaccc.md"
+}

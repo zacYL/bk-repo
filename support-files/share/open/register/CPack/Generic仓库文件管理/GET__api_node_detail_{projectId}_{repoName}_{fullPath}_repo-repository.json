@@ -1,0 +1,15 @@
+{
+  "code" : "GET__api_node_detail_{projectId}_{repoName}_{fullPath}_repo-repository",
+  "name" : "查询文件或目录详情",
+  "desc" : "查询文件或目录详情",
+  "systemCode" : "CPack",
+  "method" : "GET",
+  "path" : "/repo-repository/api/node/detail/{projectId}/{repoName}/**",
+  "headers" : [ ],
+  "targetService" : "repo-repository",
+  "targetPath" : "/api/node/detail/{projectId}/{repoName}/**",
+  "targetMethod" : "GET",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "查询文件或目录详情_b1192112.md"
+}

@@ -1,0 +1,15 @@
+{
+  "code" : "GET__ext_version_detail_{projectId}_{repoName}_repo-oci",
+  "name" : "查询docker镜像版本详情",
+  "desc" : "查询docker镜像版本详情",
+  "systemCode" : "CPack",
+  "method" : "GET",
+  "path" : "/repo-oci/ext/version/detail/{projectId}/{repoName}",
+  "headers" : [ ],
+  "targetService" : "repo-oci",
+  "targetPath" : "/ext/version/detail/{projectId}/{repoName}",
+  "targetMethod" : "GET",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "查询docker镜像版本详情_c6b78321.md"
+}

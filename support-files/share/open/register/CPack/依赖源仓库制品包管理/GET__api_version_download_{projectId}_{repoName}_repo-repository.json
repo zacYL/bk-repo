@@ -1,0 +1,15 @@
+{
+  "code" : "GET__api_version_download_{projectId}_{repoName}_repo-repository",
+  "name" : "下载制品",
+  "desc" : "下载制品",
+  "systemCode" : "CPack",
+  "method" : "GET",
+  "path" : "/repo-repository/api/version/download/{projectId}/{repoName}",
+  "headers" : [ ],
+  "targetService" : "repo-repository",
+  "targetPath" : "/api/version/download/{projectId}/{repoName}",
+  "targetMethod" : "GET",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "下载制品_db0456ca.md"
+}

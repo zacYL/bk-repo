@@ -1,0 +1,15 @@
+{
+  "code" : "DELETE__api_metadata_{projectId}_{repoName}_{fullPath}_repo-repository",
+  "name" : "删除文件元数据",
+  "desc" : "删除文件元数据",
+  "systemCode" : "CPack",
+  "method" : "DELETE",
+  "path" : "/repo-repository/api/metadata/{projectId}/{repoName}/**",
+  "headers" : [ ],
+  "targetService" : "repo-repository",
+  "targetPath" : "/api/metadata/{projectId}/{repoName}/**",
+  "targetMethod" : "DELETE",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "删除文件元数据_ba69f3ab.md"
+}

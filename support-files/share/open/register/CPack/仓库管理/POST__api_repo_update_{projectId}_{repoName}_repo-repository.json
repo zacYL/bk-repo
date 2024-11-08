@@ -1,0 +1,15 @@
+{
+  "code" : "POST__api_repo_update_{projectId}_{repoName}_repo-repository",
+  "name" : "修改仓库设置",
+  "desc" : "修改仓库设置",
+  "systemCode" : "CPack",
+  "method" : "POST",
+  "path" : "/repo-repository/api/repo/update/{projectId}/{repoName}",
+  "headers" : [ ],
+  "targetService" : "repo-repository",
+  "targetPath" : "/api/repo/update/{projectId}/{repoName}",
+  "targetMethod" : "POST",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "修改仓库设置_3f8d11b9.md"
+}

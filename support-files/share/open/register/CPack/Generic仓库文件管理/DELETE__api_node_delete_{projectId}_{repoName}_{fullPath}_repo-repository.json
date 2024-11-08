@@ -1,0 +1,15 @@
+{
+  "code" : "DELETE__api_node_delete_{projectId}_{repoName}_{fullPath}_repo-repository",
+  "name" : "删除文件或目录",
+  "desc" : "删除文件或目录",
+  "systemCode" : "CPack",
+  "method" : "DELETE",
+  "path" : "/repo-repository/api/node/delete/{projectId}/{repoName}/**",
+  "headers" : [ ],
+  "targetService" : "repo-repository",
+  "targetPath" : "/api/node/delete/{projectId}/{repoName}/**",
+  "targetMethod" : "DELETE",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "删除文件或目录_a3159414.md"
+}

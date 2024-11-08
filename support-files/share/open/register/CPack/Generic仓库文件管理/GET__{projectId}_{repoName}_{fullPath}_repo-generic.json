@@ -1,0 +1,15 @@
+{
+  "code" : "GET__{projectId}_{repoName}_{fullPath}_repo-generic",
+  "name" : "下载文件或目录",
+  "desc" : "下载文件或目录",
+  "systemCode" : "CPack",
+  "method" : "GET",
+  "path" : "/repo-generic/{projectId}/{repoName}/**",
+  "headers" : [ ],
+  "targetService" : "repo-generic",
+  "targetPath" : "/{projectId}/{repoName}/**",
+  "targetMethod" : "GET",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "下载文件或目录_8e5f8ae8.md"
+}

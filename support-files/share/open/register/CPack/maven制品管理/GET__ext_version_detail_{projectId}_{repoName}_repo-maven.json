@@ -1,0 +1,15 @@
+{
+  "code" : "GET__ext_version_detail_{projectId}_{repoName}_repo-maven",
+  "name" : "查询maven包版本详情",
+  "desc" : "查询maven包版本详情",
+  "systemCode" : "CPack",
+  "method" : "GET",
+  "path" : "/repo-maven/ext/version/detail/{projectId}/{repoName}",
+  "headers" : [ ],
+  "targetService" : "repo-maven",
+  "targetPath" : "/ext/version/detail/{projectId}/{repoName}",
+  "targetMethod" : "GET",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "查询maven包版本详情_ecdb95c2.md"
+}

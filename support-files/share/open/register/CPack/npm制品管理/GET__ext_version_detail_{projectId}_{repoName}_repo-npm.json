@@ -1,0 +1,15 @@
+{
+  "code" : "GET__ext_version_detail_{projectId}_{repoName}_repo-npm",
+  "name" : "查询npm包版本详情",
+  "desc" : "查询npm包版本详情",
+  "systemCode" : "CPack",
+  "method" : "GET",
+  "path" : "/repo-npm/ext/version/detail/{projectId}/{repoName}",
+  "headers" : [ ],
+  "targetService" : "repo-npm",
+  "targetPath" : "/ext/version/detail/{projectId}/{repoName}",
+  "targetMethod" : "GET",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "查询npm包版本详情_9eb16ce8.md"
+}

@@ -1,0 +1,15 @@
+{
+  "code" : "GET__ext_repo_{projectId}_{repoName}_repo-oci",
+  "name" : "分页查询指定仓库内的镜像",
+  "desc" : "分页查询指定仓库内的镜像",
+  "systemCode" : "CPack",
+  "method" : "GET",
+  "path" : "/repo-oci/ext/repo/{projectId}/{repoName}",
+  "headers" : [ ],
+  "targetService" : "repo-oci",
+  "targetPath" : "/ext/repo/{projectId}/{repoName}",
+  "targetMethod" : "GET",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "分页查询指定仓库内的镜像_1b241c99.md"
+}

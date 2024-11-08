@@ -1,0 +1,15 @@
+{
+  "code" : "POST__api_repo_create_repo-repository",
+  "name" : "创建仓库",
+  "desc" : "创建仓库",
+  "systemCode" : "CPack",
+  "method" : "POST",
+  "path" : "/repo-repository/api/repo/create",
+  "headers" : [ ],
+  "targetService" : "repo-repository",
+  "targetPath" : "/api/repo/create",
+  "targetMethod" : "POST",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "创建仓库_4b2368e7.md"
+}

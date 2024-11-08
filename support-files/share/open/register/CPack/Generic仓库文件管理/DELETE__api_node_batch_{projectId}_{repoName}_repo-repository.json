@@ -1,0 +1,15 @@
+{
+  "code" : "DELETE__api_node_batch_{projectId}_{repoName}_repo-repository",
+  "name" : "批量删除文件",
+  "desc" : "批量删除文件",
+  "systemCode" : "CPack",
+  "method" : "DELETE",
+  "path" : "/repo-repository/api/node/batch/{projectId}/{repoName}",
+  "headers" : [ ],
+  "targetService" : "repo-repository",
+  "targetPath" : "/api/node/batch/{projectId}/{repoName}",
+  "targetMethod" : "DELETE",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "批量删除文件_c7f32702.md"
+}

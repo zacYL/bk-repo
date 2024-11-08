@@ -1,0 +1,15 @@
+{
+  "code" : "DELETE__ext_package_delete_{projectId}_{repoName}_repo-nuget",
+  "name" : "删除指定NuGet包的所有版本",
+  "desc" : "删除指定NuGet包的所有版本",
+  "systemCode" : "CPack",
+  "method" : "DELETE",
+  "path" : "/repo-nuget/ext/package/delete/{projectId}/{repoName}",
+  "headers" : [ ],
+  "targetService" : "repo-nuget",
+  "targetPath" : "/ext/package/delete/{projectId}/{repoName}",
+  "targetMethod" : "DELETE",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "删除指定NuGet包的所有版本_871d29c6.md"
+}

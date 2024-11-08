@@ -1,0 +1,15 @@
+{
+  "code" : "GET__api_stage_{projectId}_{repoName}_repo-repository",
+  "name" : "查询制品晋级状态",
+  "desc" : "查询制品晋级状态",
+  "systemCode" : "CPack",
+  "method" : "GET",
+  "path" : "/repo-repository/api/stage/{projectId}/{repoName}",
+  "headers" : [ ],
+  "targetService" : "repo-repository",
+  "targetPath" : "/api/stage/{projectId}/{repoName}",
+  "targetMethod" : "GET",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "查询制品晋级状态_4c6ce2c8.md"
+}

@@ -1,0 +1,15 @@
+{
+  "code" : "DELETE__api_repo_delete_{projectId}_{repoName}_repo-repository",
+  "name" : "删除仓库",
+  "desc" : "删除仓库",
+  "systemCode" : "CPack",
+  "method" : "DELETE",
+  "path" : "/repo-repository/api/repo/delete/{projectId}/{repoName}",
+  "headers" : [ ],
+  "targetService" : "repo-repository",
+  "targetPath" : "/api/repo/delete/{projectId}/{repoName}",
+  "targetMethod" : "DELETE",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "删除仓库_23724c8d.md"
+}

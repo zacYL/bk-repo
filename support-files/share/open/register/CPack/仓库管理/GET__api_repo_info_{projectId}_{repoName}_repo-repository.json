@@ -1,0 +1,15 @@
+{
+  "code" : "GET__api_repo_info_{projectId}_{repoName}_repo-repository",
+  "name" : "查询指定仓库详情",
+  "desc" : "查询指定仓库详情",
+  "systemCode" : "CPack",
+  "method" : "GET",
+  "path" : "/repo-repository/api/repo/info/{projectId}/{repoName}",
+  "headers" : [ ],
+  "targetService" : "repo-repository",
+  "targetPath" : "/api/repo/info/{projectId}/{repoName}",
+  "targetMethod" : "GET",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "查询指定仓库详情_94b5ea28.md"
+}

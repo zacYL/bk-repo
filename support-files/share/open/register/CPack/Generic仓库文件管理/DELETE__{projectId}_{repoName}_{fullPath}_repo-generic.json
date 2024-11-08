@@ -1,0 +1,15 @@
+{
+  "code" : "DELETE__{projectId}_{repoName}_{fullPath}_repo-generic",
+  "name" : "删除文件或空目录",
+  "desc" : "删除文件或空目录",
+  "systemCode" : "CPack",
+  "method" : "DELETE",
+  "path" : "/repo-generic/{projectId}/{repoName}/**",
+  "headers" : [ ],
+  "targetService" : "repo-generic",
+  "targetPath" : "/{projectId}/{repoName}/**",
+  "targetMethod" : "DELETE",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "删除文件或空目录_1a8d6bd9.md"
+}

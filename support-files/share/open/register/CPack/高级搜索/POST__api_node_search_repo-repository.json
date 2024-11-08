@@ -1,0 +1,15 @@
+{
+  "code" : "POST__api_node_search_repo-repository",
+  "name" : "文件高级搜索",
+  "desc" : "文件高级搜索",
+  "systemCode" : "CPack",
+  "method" : "POST",
+  "path" : "/repo-repository/api/node/search",
+  "headers" : [ ],
+  "targetService" : "repo-repository",
+  "targetPath" : "/api/node/search",
+  "targetMethod" : "POST",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "文件高级搜索_9cde044d.md"
+}

@@ -1,0 +1,15 @@
+{
+  "code" : "GET__ext_version_detail_{projectId}_{repoName}_repo-pypi",
+  "name" : "查询PyPI包版本详情",
+  "desc" : "查询PyPI包版本详情",
+  "systemCode" : "CPack",
+  "method" : "GET",
+  "path" : "/repo-pypi/ext/version/detail/{projectId}/{repoName}",
+  "headers" : [ ],
+  "targetService" : "repo-pypi",
+  "targetPath" : "/ext/version/detail/{projectId}/{repoName}",
+  "targetMethod" : "GET",
+  "timeout" : 30,
+  "retryTimes" : 10,
+  "docName" : "查询PyPI包版本详情_37fb806d.md"
+}

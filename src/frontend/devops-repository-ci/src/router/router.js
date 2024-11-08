@@ -19,7 +19,7 @@ const commonPackageDetail = () => import('@/views/repoCommon/commonPackageDetail
 
 const repoSearch = () => import('@repository/views/repoSearch')
 
-const repoScan = () => import('@repository/views/repoScan')
+const repoScan = () => import('@repository/views/repoScan/scanMain')
 const scanReport = () => import('@repository/views/repoScan/scanReport')
 const artiReport = () => import('@repository/views/repoScan/artiReport')
 const scanConfig = () => import('@repository/views/repoScan/scanConfig')

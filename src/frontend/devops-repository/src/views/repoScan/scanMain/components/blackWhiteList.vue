@@ -7,11 +7,12 @@
                 label-key="label"
                 :current-tab="currentTab"
                 @tabChang="tabChang" />
+            <FilterCondition :wb-type="type" @confirm="search" />
         </div>
         <bk-table
             class="mt10 scan-table"
             height="calc(100% - 100px)"
-            :data="scanList"
+            :data="blackWhiteListList"
             :outer-border="false"
             :row-border="false"
             row-key="id"
@@ -19,33 +20,25 @@
             <template #empty>
                 <empty-data :is-loading="isLoading" :search="Boolean(scanName)"></empty-data>
             </template>
-            <bk-table-column :label="$t('schemeName')" show-overflow-tooltip>
+            <!-- 制品包名称 -->
+            <bk-table-column :label="$t('composerInputLabel')" show-overflow-tooltip>
                 <template #default="{ row }">
-                    <span class="hover-btn" @click="showScanReport(row)">{{row.name}}</span>
+                    <span class="hover-btn">{{row.packageName}}</span>
                 </template>
             </bk-table-column>
-            <bk-table-column :label="$t('schemeType')">
-                <template #default="{ row }">{{ $t(`scanTypeEnum.${row.planType}`) }}</template>
+            <!-- 版本 -->
+            <bk-table-column :label="$t('version')">
+                <template #default="{ row }">{{row.name}}</template>
             </bk-table-column>
-            <!-- <bk-table-column :label="$t('scanner')" prop="scanner" show-overflow-tooltip></bk-table-column> -->
-            <bk-table-column :label="$t('scanStatus')">
-                <template #default="{ row }">
-                    <span class="repo-tag" :class="row.status">{{ $t(`scanStatusEnum.${row.status}`)}}</span>
-                </template>
+            <!-- 仓库类型 -->
+            <bk-table-column :label="$t('storeTypes')">
+                <template #default="{ row }">{{row.type}}</template>
             </bk-table-column>
-            <bk-table-column :label="$t('lastScanTime')">
-                <template #default="{ row }">{{formatDate(row.lastScanDate)}}</template>
+            <!-- 所属仓库 -->
+            <bk-table-column :label="$t('repo')">
             </bk-table-column>
-            <bk-table-column :label="$t('operation')" width="100">
-                <template #default="{ row }">
-                    <operation-list
-                        :list="[
-                            !row.readOnly && { label: $t('setting'), clickEvent: () => showScanConfig(row) },
-                            { label: $t('suspend'), clickEvent: () => stopScanHandler(row) },
-                            !row.readOnly && { label: $t('scan'), clickEvent: () => startScanHandler(row) },
-                            !row.readOnly && { label: $t('delete'), clickEvent: () => deleteScanHandler(row) }
-                        ]"></operation-list>
-                </template>
+            <!-- 启用状态 -->
+            <bk-table-column :label="$t('enabledStatus')">
             </bk-table-column>
         </bk-table>
         <bk-pagination
@@ -65,6 +58,7 @@
 <script>
     import { cloneDeep } from 'lodash'
     import DefaultTabBox from '@repository/components/DefaultTabBox'
+    import FilterCondition from './components/FilterCondition.vue'
     const paginationParams = {
         count: 0,
         current: 1,
@@ -72,21 +66,27 @@
         limitList: [10, 20, 40]
     }
     export default {
-        name: 'scan-solution',
+        name: 'black-white-list',
         components: {
-            DefaultTabBox
+            DefaultTabBox,
+            FilterCondition
         },
         data () {
             return {
+                defaultFilterParams: {
+                    field: 'projectId',
+                    value: this.projectId,
+                    operation: 'EQ'
+                },
                 isLoading: false,
                 tabList: [
                     {
                         name: 'white',
-                        label: '白名单'
+                        label: this.$t('whiteList')
                     },
                     {
                         name: 'black',
-                        label: '黑名单'
+                        label: this.$t('blackList')
                     }
                 ],
                 type: 'white',
@@ -105,12 +105,51 @@
             this.handlerPaginationChange({ current: 1, limit: 20 })
         },
         methods: {
+            // 分页
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
                 this.pagination.current = current
                 this.pagination.limit = limit
+                this.getBlackWhiteList()
             },
             tabChang (val) {
                 this.type = val.name
+            },
+            // 获取黑白名单列表
+            getBlackWhiteList (filterList = []) {
+                const body = {
+                    page: {
+                        pageNumber: this.pagination.current,
+                        pageSize: this.pagination.limit
+                    },
+                    sort: {
+                        properties: [
+                            'lastModifiedDate'
+                        ],
+                        direction: 'DESC'
+                    },
+                    rule: {
+                        rules: [
+                            this.defaultFilterParams,
+                            ...filterList
+                        ],
+                        relation: 'AND'
+                    }
+                }
+                this.isLoading = true
+                const url = '/repository/api/packageVersion/search'
+                this.$ajax.post(
+                    url,
+                    body
+                ).then(res => {
+                    this.blackWhiteListList = res.data.records
+                    this.pagination.count = res.data.total
+                }).finally(() => {
+                    this.isLoading = false
+                })
+            },
+            // 搜索
+            search (filterList) {
+                this.getBlackWhiteList(filterList)
             }
         }
     }

@@ -27,8 +27,8 @@
         data () {
             return {
                 panels: [
-                    { name: 'scanSolution', label: '扫描方案' },
-                    { name: 'blackWhiteList', label: '黑白名单' }
+                    { name: 'scanSolution', label: this.$t('scanScheme') },
+                    { name: 'blackWhiteList', label: this.$t('blackWhiteList') }
                 ],
                 active: 'scanSolution'
             }

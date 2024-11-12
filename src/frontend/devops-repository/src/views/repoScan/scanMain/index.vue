@@ -1,3 +1,9 @@
+<!--
+ * @Date: 2024-11-08 18:15:49
+ * @LastEditors: xiaoshan
+ * @LastEditTime: 2024-11-12 11:09:43
+ * @FilePath: /artifact/src/frontend/devops-repository/src/views/repoScan/scanMain/index.vue
+-->
 <template>
     <main style="height: 100%; width: 100%;">
         <bk-tab
@@ -11,7 +17,7 @@
             </bk-tab-panel>
         </bk-tab>
         <div style="display: flex;flex: 1;min-width: 0;min-height: 0;">
-            <component :is="active"></component>
+            <component :is="active" :project-id="projectId"></component>
         </div>
     </main>
 </template>
@@ -31,6 +37,11 @@
                     { name: 'blackWhiteList', label: this.$t('blackWhiteList') }
                 ],
                 active: 'scanSolution'
+            }
+        },
+        computed: {
+            projectId () {
+                return this.$route.params.projectId
             }
         }
     }

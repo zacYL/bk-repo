@@ -38,7 +38,7 @@
             <!-- 启用状态 -->
             <bk-table-column :label="$t('enabledStatus')">
                 <template #default="{ row }">
-                    <bk-switcher disabled :value="!!(row.metadata[0]?.value)"></bk-switcher>
+                    <bk-switcher disabled :value="getMateValue(row.metadata || [])"></bk-switcher>
                 </template>
             </bk-table-column>
         </bk-table>
@@ -123,6 +123,9 @@
             this.handlerPaginationChange({ current: 1, limit: 20 })
         },
         methods: {
+            getMateValue (metadata) {
+                return !!metadata.find(item => item.key === (this.type === 'white' ? 'exemptEnabled' : 'forbidEnabled'))?.value
+            },
             // 分页
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
                 this.pagination.current = current

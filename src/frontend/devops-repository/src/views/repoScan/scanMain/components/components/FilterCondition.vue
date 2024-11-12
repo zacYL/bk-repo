@@ -8,7 +8,7 @@
             }"
             ext-cls="recycling-popover"
             v-bk-clickoutside="clickoutside">
-            <bk-button>
+            <bk-button v-bind="filterParams ? { theme: 'primary',outline: true } : { theme: 'default' }">
                 <div
                     class="flex-align-center"
                 >
@@ -74,7 +74,7 @@
                 </main>
                 <footer class="flex-align-center"
                     style="justify-content: flex-end;">
-                    <bk-button @click="clear" class="mr10">
+                    <bk-button @click="reset" class="mr10">
                         {{$t('reset')}}
                     </bk-button>
                     <bk-button theme="primary" @click="confirm">
@@ -91,10 +91,9 @@
     export default {
         name: 'filter-condition',
         props: {
-            // 黑白名单状态
-            wbType: {
-                type: String,
-                default: 'white'
+            filterParams: {
+                type: [Array, null],
+                default: null
             }
         },
         data () {
@@ -116,11 +115,6 @@
                 }
             }
         },
-        computed: {
-            curMetadataText () {
-                return this.wbType === 'white' ? 'metadata.exemptEnabled' : 'metadata.forbidEnabled'
-            }
-        },
         methods: {
             // 处理popover点击外层是否关闭的逻辑
             clickoutside (e) {
@@ -133,7 +127,6 @@
                     }
                 })
                 if (!isInTippy) {
-                    this.clear()
                     this.$refs.recyclingPopover.hideHandler()
                 }
             },
@@ -148,6 +141,12 @@
                     version: ''
                 })
             },
+            reset () {
+                this.clear()
+                this.$emit('reset', () => {
+                    this.close()
+                })
+            },
             close () {
                 this.$refs.recyclingPopover.hideHandler()
             },
@@ -160,14 +159,16 @@
                 }
 
                 // 启用状态
-                addFilter(this.curMetadataText, this.query.enable !== '' ? this.query.enable : null, this.query.enable !== '' ? 'EQ' : 'NOT_NULL')
+                addFilter('startType', this.query.enable !== '' ? this.query.enable : null, this.query.enable !== '' ? 'EQ' : 'NOT_NULL')
 
                 // 其他固定过滤条件
                 addFilter('repoType', this.query.repoType, 'EQ')
-                addFilter('version', this.query.version, 'MATCH_I')
-                addFilter('repoName', this.query.repoName, 'MATCH_I')
-                addFilter('name', this.query.name, 'MATCH_I')
-                this.$emit('confirm', filterList)
+                this.query.version && addFilter('version', this.query.version, 'MATCH_I')
+                this.query.repoName && addFilter('repoName', this.query.repoName, 'MATCH_I')
+                this.query.name && addFilter('name', this.query.name, 'MATCH_I')
+                this.$emit('confirm', filterList, () => {
+                    this.close()
+                })
             }
         }
     }

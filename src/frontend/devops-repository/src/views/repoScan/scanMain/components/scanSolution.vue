@@ -94,6 +94,9 @@
     export default {
         name: 'scan-solution',
         components: { OperationList, createScanDialog },
+        props: {
+            projectId: String
+        },
         data () {
             return {
                 scanTypeEnum,
@@ -107,10 +110,7 @@
             }
         },
         computed: {
-            ...mapState(['userList']),
-            projectId () {
-                return this.$route.params.projectId
-            }
+            ...mapState(['userList'])
         },
         watch: {
             '$route.query' () {

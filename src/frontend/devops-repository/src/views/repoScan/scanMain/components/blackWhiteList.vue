@@ -7,7 +7,7 @@
                 label-key="label"
                 :current-tab="currentTab"
                 @tabChang="tabChang" />
-            <FilterCondition :wb-type="type" @confirm="search" />
+            <FilterCondition :filter-params="filterParams" @confirm="search" @reset="reset" />
         </div>
         <bk-table
             class="mt10 scan-table"
@@ -27,18 +27,19 @@
                 </template>
             </bk-table-column>
             <!-- 版本 -->
-            <bk-table-column :label="$t('version')">
-                <template #default="{ row }">{{row.name}}</template>
+            <bk-table-column :label="$t('version')" prop="name">
             </bk-table-column>
             <!-- 仓库类型 -->
-            <bk-table-column :label="$t('storeTypes')">
-                <template #default="{ row }">{{row.type}}</template>
+            <bk-table-column :label="$t('storeTypes')" prop="type">
             </bk-table-column>
             <!-- 所属仓库 -->
-            <bk-table-column :label="$t('repo')">
+            <bk-table-column :label="$t('repo')" prop="repoName">
             </bk-table-column>
             <!-- 启用状态 -->
             <bk-table-column :label="$t('enabledStatus')">
+                <template #default="{ row }">
+                    <bk-switcher disabled :value="!!(row.metadata[0]?.value)"></bk-switcher>
+                </template>
             </bk-table-column>
         </bk-table>
         <bk-pagination
@@ -71,13 +72,11 @@
             DefaultTabBox,
             FilterCondition
         },
+        props: {
+            projectId: String
+        },
         data () {
             return {
-                defaultFilterParams: {
-                    field: 'projectId',
-                    value: this.projectId,
-                    operation: 'EQ'
-                },
                 isLoading: false,
                 tabList: [
                     {
@@ -90,15 +89,34 @@
                     }
                 ],
                 type: 'white',
-                pagination: cloneDeep(paginationParams)
+                pagination: cloneDeep(paginationParams),
+                filterParams: null
             }
         },
         computed: {
-            projectId () {
-                return this.$route.params.projectId
-            },
             currentTab () {
                 return this.tabList.find(tab => tab.name === this.type)
+            },
+            // 必选查询条件
+            defaultFilterParams () {
+                return {
+                    field: 'projectId',
+                    value: this.projectId,
+                    operation: 'EQ'
+                }
+            },
+            // 搜索参数
+            searchFilterParams () {
+                const deepFilterParams = cloneDeep(this.filterParams) || []
+                // 替换 startType 为 黑白名单指定字段
+                const bwTarget = deepFilterParams.find(item => item.field === 'startType')
+                if (bwTarget) bwTarget.field = this.type === 'white' ? 'metadata.exemptEnabled' : 'metadata.forbidEnabled'
+                return this.filterParams
+                    ? deepFilterParams
+                    : [{
+                        field: this.type === 'white' ? 'metadata.exemptEnabled' : 'metadata.forbidEnabled',
+                        operation: 'NOT_NULL'
+                    }]
             }
         },
         created () {
@@ -111,11 +129,8 @@
                 this.pagination.limit = limit
                 this.getBlackWhiteList()
             },
-            tabChang (val) {
-                this.type = val.name
-            },
             // 获取黑白名单列表
-            getBlackWhiteList (filterList = []) {
+            getBlackWhiteList () {
                 const body = {
                     page: {
                         pageNumber: this.pagination.current,
@@ -130,26 +145,45 @@
                     rule: {
                         rules: [
                             this.defaultFilterParams,
-                            ...filterList
+                            ...this.searchFilterParams
                         ],
                         relation: 'AND'
                     }
                 }
                 this.isLoading = true
                 const url = '/repository/api/packageVersion/search'
-                this.$ajax.post(
+                return this.$ajax.post(
                     url,
                     body
                 ).then(res => {
-                    this.blackWhiteListList = res.data.records
-                    this.pagination.count = res.data.total
+                    this.blackWhiteListList = res.records
+                    this.pagination.count = res.totalRecords
                 }).finally(() => {
                     this.isLoading = false
                 })
             },
             // 搜索
-            search (filterList) {
-                this.getBlackWhiteList(filterList)
+            search (filterList, cb) {
+                this.filterParams = filterList
+                this.$nextTick(() => {
+                    this.getBlackWhiteList({ current: 1 }).then(() => {
+                        cb && cb()
+                    })
+                })
+            },
+            reset (cb) {
+                this.filterParams = null
+                this.$nextTick(() => {
+                    this.getBlackWhiteList({ current: 1 }).then(() => {
+                        cb && cb()
+                    })
+                })
+            },
+            tabChang (val) {
+                this.type = val.name
+                this.$nextTick(() => {
+                    this.getBlackWhiteList({ current: 1 })
+                })
             }
         }
     }

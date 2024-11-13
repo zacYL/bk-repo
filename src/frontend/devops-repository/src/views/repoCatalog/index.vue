@@ -117,14 +117,13 @@
         <canway-dialog
             v-if="baseDetailInfo && baseDetailInfo.fullPath"
             :value="previewDialogShow"
+            render-directive="if"
             width="800"
             height-num="600"
-            render-directive="if"
             :title="baseDetailInfo.name + $t('space') + ' ' + $t('fileContent')"
             @cancel="cancel">
             <template #default>
-                <!-- 因为dialog关闭之后没有销毁，所以当同一个文件多次预览时会有上次的文件内容，为了解决此问题，使用了 Math.random() -->
-                <div class="catalog-file-content" :key="baseDetailInfo && baseDetailInfo.fullPath + Math.random()" v-bkloading="{ isLoading: fileContentLoading }">
+                <div class="catalog-file-content" v-bkloading="{ isLoading: fileContentLoading }">
                     <div id="markdown-container"></div>
                 </div>
             </template>
@@ -335,7 +334,7 @@
                     if (res.category === 'REMOTE') {
                         this.baseDetailInfo.url = res.configuration.url
                         this.baseDetailInfo.credentials = res.configuration.credentials
-                        
+
                         const { cache } = res.configuration
 
                         if (cache && cache.enabled !== undefined && cache.expiration !== undefined) {
@@ -349,7 +348,7 @@
                                 expiration: -1
                             }
                         }
-                        
+
                         if (res.configuration.network.proxy === null) {
                             this.baseDetailInfo.network = {
                                 proxy: {

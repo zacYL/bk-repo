@@ -43,6 +43,7 @@ import com.tencent.bkrepo.common.storage.monitor.StorageHealthMonitor
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 import java.io.File
+import java.io.InputStream
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicBoolean
@@ -69,13 +70,14 @@ class CacheStorageService(
                 fileStorage.store(path, filename, artifactFile.flushToFile(), credentials)
             }
             else -> {
-                val loadCacheFirst = isLoadCacheFirst(Range.full(artifactFile.getSize()), credentials)
-                val cacheFile = if (loadCacheFirst) {
-                    getCacheClient(credentials).move(path, filename, artifactFile.flushToFile())
+                val size = artifactFile.getSize()
+                val loadCacheFirst = isLoadCacheFirst(Range.full(size), credentials)
+                if (loadCacheFirst) {
+                    val cacheFile = getCacheClient(credentials).move(path, filename, artifactFile.flushToFile())
+                    async2Store(cancel, filename, credentials, path, cacheFile)
                 } else {
-                    artifactFile.flushToFile()
+                    sync2Store(cancel, filename, credentials, path, artifactFile.getInputStream(), size)
                 }
-                async2Store(cancel, filename, credentials, path, cacheFile)
             }
         }
     }
@@ -104,6 +106,30 @@ class CacheStorageService(
                 // 失败时把文件放入暂存区，后台任务会进行补偿。
                 stagingFile(credentials, path, filename, cacheFile)
             }
+        }
+    }
+
+    @Suppress("LongParameterList")
+    private fun sync2Store(
+        cancel: AtomicBoolean?,
+        filename: String,
+        credentials: StorageCredentials,
+        path: String,
+        inputStream: InputStream,
+        size: Long
+    ) {
+        try {
+            if (cancel?.get() == true) {
+                logger.info("Cancel store file [$filename] on [${credentials.key}]")
+                return
+            }
+            fileStorage.store(path, filename, inputStream, size, credentials)
+        } catch (ignored: Exception) {
+            if (cancel?.get() == true) {
+                logger.info("Cancel sync store file [$filename] on [${credentials.key}]")
+                return
+            }
+            logger.error("Failed to sync store file [$filename] on [${credentials.key}]", ignored)
         }
     }
 

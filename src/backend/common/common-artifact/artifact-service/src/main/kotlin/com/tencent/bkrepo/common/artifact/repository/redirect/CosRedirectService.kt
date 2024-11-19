@@ -167,6 +167,7 @@ class CosRedirectService(
      * 推测文件是否在COS上存在
      */
     private fun guessFileExists(node: NodeDetail, storageCredentials: StorageCredentials): Boolean {
+        if (!storageCredentials.cache.loadCacheFirst) return true
         // 判断文件存在时间，文件存在时间超过预期的上传耗时则认为文件已上传到COS，避免频繁请求COS判断文件是否存在
         val createdDateTime = LocalDateTime.parse(node.createdDate, DateTimeFormatter.ISO_DATE_TIME)
         val existsDuration = Duration.between(createdDateTime, LocalDateTime.now())

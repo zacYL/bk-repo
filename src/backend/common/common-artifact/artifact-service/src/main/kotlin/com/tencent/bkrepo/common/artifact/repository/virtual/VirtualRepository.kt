@@ -103,18 +103,6 @@ abstract class VirtualRepository : AbstractArtifactRepository() {
         }
     }
 
-    override fun onDownloadRedirect(context: ArtifactDownloadContext): Boolean {
-        return mapFirstRepo(context) { sub, repository ->
-            require(sub is ArtifactDownloadContext)
-            require(repository is AbstractArtifactRepository)
-            if (repository.onDownloadRedirect(sub)) {
-                true
-            } else {
-                null
-            }
-        } ?: false
-    }
-
     override fun buildDownloadRecord(
         context: ArtifactDownloadContext,
         artifactResource: ArtifactResource

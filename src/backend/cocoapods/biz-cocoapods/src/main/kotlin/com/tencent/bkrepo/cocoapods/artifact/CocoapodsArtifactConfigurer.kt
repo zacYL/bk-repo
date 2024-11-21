@@ -30,14 +30,17 @@ package com.tencent.bkrepo.cocoapods.artifact
 import com.tencent.bkrepo.cocoapods.artifact.repository.CocoapodsLocalRepository
 import com.tencent.bkrepo.cocoapods.artifact.repository.CocoapodsRemoteRepository
 import com.tencent.bkrepo.cocoapods.artifact.repository.CocoapodsVirtualRepository
+import com.tencent.bkrepo.cocoapods.constant.CocoapodsProperties
 import com.tencent.bkrepo.common.artifact.config.ArtifactConfigurerSupport
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.security.http.core.HttpAuthSecurity
 import com.tencent.bkrepo.common.security.http.core.HttpAuthSecurityCustomizer
 import com.tencent.bkrepo.common.service.util.SpringContextUtils
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Configuration
 
 @Configuration
+@EnableConfigurationProperties(CocoapodsProperties::class)
 class CocoapodsArtifactConfigurer : ArtifactConfigurerSupport() {
     override fun getRepositoryType() = RepositoryType.COCOAPODS
     override fun getLocalRepository() = SpringContextUtils.getBean<CocoapodsLocalRepository>()

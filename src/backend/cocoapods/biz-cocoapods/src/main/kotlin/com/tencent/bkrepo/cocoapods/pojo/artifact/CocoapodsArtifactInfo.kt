@@ -34,15 +34,12 @@ class CocoapodsArtifactInfo(
     repoName: String,
     artifactUri: String,
     var name: String,
-    var version: String
+    var version: String,
+    var fileName: String? = null
 ) : ArtifactInfo(projectId, repoName, artifactUri) {
 
-    override fun getArtifactFullPath(): String {
-        //todo generate full path
-        return ""
-    }
-
     companion object {
-
+        private const val COCOAPODS_PREFIX = "/{projectId}/{repoName}"
+        const val UPLOAD_PACKAGE_URL = "$COCOAPODS_PREFIX/{name}/{version}/{fileName}"
     }
 }

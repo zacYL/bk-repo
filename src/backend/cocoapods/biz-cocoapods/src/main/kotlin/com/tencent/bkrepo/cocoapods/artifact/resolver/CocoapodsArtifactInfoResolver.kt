@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.cocoapods.artifact.resolver
 
+import com.tencent.bkrepo.cocoapods.constant.FILE_NAME
 import com.tencent.bkrepo.cocoapods.constant.NAME
 import com.tencent.bkrepo.cocoapods.constant.VERSION
 import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo
@@ -48,15 +49,16 @@ class CocoapodsArtifactInfoResolver : ArtifactInfoResolver {
         request: HttpServletRequest,
     ): CocoapodsArtifactInfo {
         val attributes = request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE) as Map<*, *>
-        val name = attributes[NAME]?.toString() ?: StringPool.UNDERSCORE
-        val version = attributes[VERSION]?.toString() ?: StringPool.UNDERSCORE
-
+        val name = attributes[NAME]?.toString() ?: StringPool.UNKNOWN
+        val version = attributes[VERSION]?.toString() ?: StringPool.UNKNOWN
+        val fileName = attributes[FILE_NAME]?.toString() ?: StringPool.UNDERSCORE
         return CocoapodsArtifactInfo(
             projectId = projectId,
             repoName = repoName,
             artifactUri = artifactUri,
             name = name,
             version = version,
+            fileName = fileName
         )
     }
 }

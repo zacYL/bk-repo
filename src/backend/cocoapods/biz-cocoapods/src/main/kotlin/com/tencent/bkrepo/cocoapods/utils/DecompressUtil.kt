@@ -29,27 +29,33 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.repository.pojo.packages
+package com.tencent.bkrepo.cocoapods.utils
 
-/**
- * 包类型
- */
-enum class PackageType(val schema: String, val versionSortProperty: String = PackageVersion::createdDate.name) {
-    DOCKER("docker"),
-    MAVEN("gav"),
-    PYPI("pypi"),
-    NPM("npm"),
-    HELM("helm"),
-    RDS("rds"),
-    COMPOSER("composer"),
-    RPM("rpm"),
-    NUGET("nuget"),
-    CONAN("conan"),
-    OCI("oci"),
-    GO("go", PackageVersion::ordinal.name),
-    COCOAPODS("cocoapods");
+import com.tencent.bkrepo.cocoapods.exception.CocoapodsMessageCode
+import com.tencent.bkrepo.cocoapods.exception.CocoapodsPodSpecNotFoundException
+import com.tencent.bkrepo.cocoapods.pojo.enums.PodSpecType
+import com.tencent.bkrepo.common.api.util.DecompressUtils
+import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream
+import java.io.InputStream
 
-    companion object {
-        fun fromSchema(schema: String) = values().find { it.schema == schema }
+object DecompressUtil {
+
+    /**
+     * 从压缩包中获取podspec文件，并更新源
+     */
+    fun InputStream.getPodSpec(cachePath: String): Pair<String, String> {
+        val (fileName, content) = DecompressUtils.getContentByExtensions(ZipArchiveInputStream(this), PodSpecType.extendedNames())
+        val type = PodSpecType.matchPath(fileName)
+            ?: throw CocoapodsPodSpecNotFoundException(CocoapodsMessageCode.COCOAPODS_PODSPEC_NOT_FOUND)
+        val podSpecContent = when (type) {
+            PodSpecType.POD_SPEC -> {
+                CocoapodsUtil.updatePodspecSource(content, cachePath)
+            }
+
+            PodSpecType.JSON -> {
+                CocoapodsUtil.updatePodspecJsonSource(content, cachePath)
+            }
+        }
+        return fileName to podSpecContent
     }
 }

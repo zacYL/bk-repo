@@ -26,10 +26,59 @@
  */
 
 package com.tencent.bkrepo.cocoapods.artifact.repository
+import com.tencent.bkrepo.cocoapods.constant.CocoapodsProperties
+import com.tencent.bkrepo.cocoapods.constant.DOT_SPECS
+import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo
+import com.tencent.bkrepo.cocoapods.service.CocoapodsPackageService
+import com.tencent.bkrepo.cocoapods.utils.DecompressUtil.getPodSpec
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
+import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
+import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import org.springframework.stereotype.Component
+import java.io.ByteArrayOutputStream
+import java.io.OutputStreamWriter
 
 @Component
-class CocoapodsLocalRepository : LocalRepository() {
+class CocoapodsLocalRepository(
+    private val cocoapodsProperties: CocoapodsProperties,
+    private val cocoapodsPackageService: CocoapodsPackageService
+) : LocalRepository() {
+    override fun onUploadBefore(context: ArtifactUploadContext) {
+        //todo 校验文件
+        super.onUploadBefore(context)
+        with(context.artifactInfo as CocoapodsArtifactInfo) {
+            packageClient
+                .findVersionByName(projectId, repoName, PackageKeys.ofCocoapods(name), version).data
+                ?.apply { uploadIntercept(context, this) }
+        }
+    }
+
+    override fun onUploadSuccess(context: ArtifactUploadContext) {
+
+        with(context) {
+            val artifactInfo = artifactInfo as CocoapodsArtifactInfo
+            //在.specs目录创建索引文件
+            getArtifactFile().getInputStream().use {
+                val tarFilePath = "${cocoapodsProperties.domain}/${projectId}/${repoName}/${artifactInfo.getArtifactFullPath()}"
+                val (fileName, podSpec) = it.getPodSpec(tarFilePath)
+                ByteArrayOutputStream().use { bos ->
+                    OutputStreamWriter(bos, Charsets.UTF_8).use { writer ->
+                        writer.write(podSpec)
+                    }
+                    val specArtifact = ArtifactFileFactory.build(bos.toByteArray().inputStream())
+                    val uploadContext = ArtifactUploadContext(specArtifact)
+                    val specNode = buildNodeCreateRequest(uploadContext).run {
+                        copy(fullPath = "$DOT_SPECS/${artifactInfo.name}/${artifactInfo.version}/${fileName}")
+                    }
+                    storageManager.storeArtifactFile(specNode, specArtifact, uploadContext.storageCredentials)
+                }
+            }
+            //创建包版本
+            cocoapodsPackageService.createVersion(artifactInfo, getArtifactFile().getSize())
+        }
+        super.onUploadSuccess(context)
+    }
+
 
 }

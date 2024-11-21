@@ -29,27 +29,31 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.repository.pojo.packages
+package com.tencent.bkrepo.cocoapods.utils
 
-/**
- * 包类型
- */
-enum class PackageType(val schema: String, val versionSortProperty: String = PackageVersion::createdDate.name) {
-    DOCKER("docker"),
-    MAVEN("gav"),
-    PYPI("pypi"),
-    NPM("npm"),
-    HELM("helm"),
-    RDS("rds"),
-    COMPOSER("composer"),
-    RPM("rpm"),
-    NUGET("nuget"),
-    CONAN("conan"),
-    OCI("oci"),
-    GO("go", PackageVersion::ordinal.name),
-    COCOAPODS("cocoapods");
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 
-    companion object {
-        fun fromSchema(schema: String) = values().find { it.schema == schema }
+object CocoapodsUtil {
+
+    fun updatePodspecSource(podspecContent: String,tarFilePath: String): String {
+        // 定义正则匹配 s.source 的行
+        val sourceRegex = Regex("""s\.source\s*=\s*\{.*?\}""", RegexOption.DOT_MATCHES_ALL)
+        // 替换 source 字段为目标内容
+        val updatedContent = sourceRegex.replace(podspecContent) {
+            """s.source = { :http => "$tarFilePath", :type => 'tgz' }"""
+        }
+        return updatedContent
+    }
+
+
+    fun updatePodspecJsonSource(podspecJsonContent: String, tarFilePath: String): String {
+        val jsonObject = JsonParser.parseString(podspecJsonContent).asJsonObject
+        // 替换 source 字段为目标内容
+        val sourceObject = JsonObject()
+        sourceObject.addProperty("http", tarFilePath)
+        sourceObject.addProperty("type", "tgz")
+        jsonObject.add("source", sourceObject)
+        return jsonObject.toString()
     }
 }

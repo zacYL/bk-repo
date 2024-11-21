@@ -1,7 +1,7 @@
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
- * Copyright (C) 2022 THL A29 Limited, a Tencent company.  All rights reserved.
+ * Copyright (C) 2024 THL A29 Limited, a Tencent company.  All rights reserved.
  *
  * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
  *
@@ -25,28 +25,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.cocoapods.controller
+package com.tencent.bkrepo.cocoapods.constant
 
-import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo
-import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo.Companion.UPLOAD_PACKAGE_URL
-import com.tencent.bkrepo.cocoapods.service.CocoapodsUploadDownloadService
-import com.tencent.bkrepo.common.api.pojo.Response
-import com.tencent.bkrepo.common.artifact.api.ArtifactFile
-import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
-import com.tencent.bkrepo.common.service.util.ResponseBuilder
-import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RestController
+import com.tencent.bkrepo.common.api.constant.StringPool.EMPTY
+import org.springframework.boot.context.properties.ConfigurationProperties
 
-@RestController
-class CocoapodsController(
-    private val cocoapodsUploadDownloadService: CocoapodsUploadDownloadService
-) {
-    @PutMapping(UPLOAD_PACKAGE_URL)
-    fun upload(
-    @ArtifactPathVariable cocoapodsArtifactInfo: CocoapodsArtifactInfo,
-    artifactFile: ArtifactFile
-    ): Response<Void> {
-        cocoapodsUploadDownloadService.upload(cocoapodsArtifactInfo, artifactFile)
-        return ResponseBuilder.success()
-    }
-}
+@ConfigurationProperties("cocoapods")
+data class CocoapodsProperties(
+    var domain: String = EMPTY
+)

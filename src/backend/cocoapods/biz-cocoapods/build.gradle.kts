@@ -33,4 +33,5 @@ dependencies {
     api(project(":cocoapods:api-cocoapods"))
     api(project(":common:common-artifact:artifact-service"))
     api(project(":common:common-lock"))
+    implementation("com.google.code.gson:gson")
 }

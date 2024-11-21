@@ -7,12 +7,15 @@
                 label-key="label"
                 :current-tab="currentTab"
                 @tabChang="tabChang" />
-            <FilterCondition :filter-params="filterParams" @confirm="search" @reset="reset" />
+            <div class="flex-align-center">
+                <bk-button theme="primary" class="mr10" @click="addBlackWhiteRepo">{{$t('add')}}</bk-button>
+                <FilterCondition :filter-params="filterParams" @confirm="search" @reset="reset" />
+            </div>
         </div>
         <bk-table
             class="mt10 scan-table"
             height="calc(100% - 100px)"
-            :data="blackWhiteListList"
+            :data="blackWhiteList"
             :outer-border="false"
             :row-border="false"
             row-key="id"
@@ -35,10 +38,13 @@
             <!-- 所属仓库 -->
             <bk-table-column :label="$t('repo')" prop="repoName">
             </bk-table-column>
-            <!-- 启用状态 -->
-            <bk-table-column :label="$t('enabledStatus')">
+            <!-- 有效时间 -->
+            <bk-table-column v-if="type === 'white'" :label="$t('validTime')" prop="repoName">
+            </bk-table-column>
+            <!-- 操作 -->
+            <bk-table-column :label="$t('operation')">
                 <template #default="{ row }">
-                    <bk-switcher disabled :value="getMateValue(row.metadata || [])"></bk-switcher>
+                    <bk-button theme="primary" text @click="removeBlackWhiteList(row)">{{$t('delete')}}</bk-button>
                 </template>
             </bk-table-column>
         </bk-table>
@@ -54,12 +60,14 @@
             :count="pagination.count"
             :limit-list="pagination.limitList">
         </bk-pagination>
+        <AddBlackWhiteRepoDialog :title="addConfig.title" :visible="addConfig.visible" @cancel="hideBlackWhiteRepo" @submit="addBlackWhiteRepoSubmit" />
     </div>
 </template>
 <script>
     import { cloneDeep } from 'lodash'
     import DefaultTabBox from '@repository/components/DefaultTabBox'
     import FilterCondition from './components/FilterCondition.vue'
+    import AddBlackWhiteRepoDialog from './components/AddBlackWhiteRepoDialog.vue'
     const paginationParams = {
         count: 0,
         current: 1,
@@ -70,7 +78,8 @@
         name: 'black-white-list',
         components: {
             DefaultTabBox,
-            FilterCondition
+            FilterCondition,
+            AddBlackWhiteRepoDialog
         },
         props: {
             projectId: String
@@ -90,7 +99,12 @@
                 ],
                 type: 'white',
                 pagination: cloneDeep(paginationParams),
-                filterParams: null
+                filterParams: null,
+
+                addConfig: {
+                    title: '',
+                    visible: false
+                }
             }
         },
         computed: {
@@ -108,23 +122,36 @@
             // 搜索参数
             searchFilterParams () {
                 const deepFilterParams = cloneDeep(this.filterParams) || []
-                // 替换 startType 为 黑白名单指定字段
-                const bwTarget = deepFilterParams.find(item => item.field === 'startType')
-                if (bwTarget) bwTarget.field = this.type === 'white' ? 'metadata.exemptEnabled' : 'metadata.forbidEnabled'
-                return this.filterParams
-                    ? deepFilterParams
-                    : [{
-                        field: this.type === 'white' ? 'metadata.exemptEnabled' : 'metadata.forbidEnabled',
-                        operation: 'NOT_NULL'
-                    }]
+                return deepFilterParams
             }
         },
         created () {
             this.handlerPaginationChange({ current: 1, limit: 20 })
         },
         methods: {
-            getMateValue (metadata) {
-                return !!metadata.find(item => item.key === (this.type === 'white' ? 'exemptEnabled' : 'forbidEnabled'))?.value
+            addBlackWhiteRepo () {
+                this.addConfig.visible = true
+                this.addConfig.title = this.type === 'white' ? (this.$t('add') + this.$t('whiteList')) : (this.$t('add') + this.$t('blackList'))
+            },
+            hideBlackWhiteRepo () {
+                this.addConfig.visible = false
+            },
+            addBlackWhiteRepoSubmit (form, cb) {
+                // todo 缺少新增请求
+                Promise.resolve().then(() => {
+                    this.$bkMessage({
+                        theme: 'success',
+                        message: this.$t('addSuccess')
+                    })
+                    this.getBlackWhiteList({ current: 1 })
+                }).catch(() => {
+                    this.$bkMessage({
+                        theme: 'error',
+                        message: this.$t('addFail')
+                    })
+                }).finally(() => {
+                    cb && cb()
+                })
             },
             // 分页
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
@@ -159,7 +186,7 @@
                     url,
                     body
                 ).then(res => {
-                    this.blackWhiteListList = res.records
+                    this.blackWhiteList = res.records
                     this.pagination.count = res.totalRecords
                 }).finally(() => {
                     this.isLoading = false
@@ -186,6 +213,37 @@
                 this.type = val.name
                 this.$nextTick(() => {
                     this.getBlackWhiteList({ current: 1 })
+                })
+            },
+            removeBlackWhiteList (row) {
+                this.$bkInfoDevopsConfirm({
+                    subTitle: this.$t('deleteBlackWhiteTips', [this.active === 'white' ? this.$t('whiteList') : this.$t('blackList')]),
+                    theme: 'danger',
+                    confirmFn: () => {
+                        // todo 缺一个删除接口
+                        Promise.resolve().then(() => {
+                            this.$bkMessage({
+                                theme: 'success',
+                                message: this.$t('removeSuccess')
+                            })
+                            let current = 0
+                            if (this.blackWhiteList.length === 1) {
+                                if (this.pagination.current === 1) {
+                                    current = 1
+                                } else {
+                                    current = this.pagination.current - 1
+                                }
+                            } else {
+                                current = this.pagination.current
+                            }
+                            this.getBlackWhiteList({ current: current })
+                        }).catch(() => {
+                            this.$bkMessage({
+                                theme: 'error',
+                                message: this.$t('removeFail')
+                            })
+                        })
+                    }
                 })
             }
         }

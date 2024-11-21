@@ -18,18 +18,6 @@
             <div slot="content">
                 <main>
                     <bk-form :model="query" :label-width="110" form-type="vertical">
-                        <!-- 启动状态 -->
-                        <bk-form-item :label="$t('enabledStatus')" property="enable">
-                            <bk-select
-                                v-model="query.enable"
-                                :placeholder="$t('selectEnableStatus')">
-                                <bk-option v-for="type in enableEnum" :key="type.value" :id="type.value" :name="type.label">
-                                    <div class="flex-align-center">
-                                        <span class="ml10 flex-1 text-overflow">{{type.label}}</span>
-                                    </div>
-                                </bk-option>
-                            </bk-select>
-                        </bk-form-item>
                         <!-- 制品类型 -->
                         <bk-form-item :label="$t('repoType')" :property="'repoType'">
                             <bk-select
@@ -48,15 +36,6 @@
                             <bk-input
                                 v-model="query.name"
                                 :placeholder="$t('artifactNamePlaceholder')"
-                                max-length="100"
-                                clearable
-                            />
-                        </bk-form-item>
-                        <!-- 仓库名称 -->
-                        <bk-form-item :label="$t('repoName')" :property="'repoName'">
-                            <bk-input
-                                v-model="query.repoName"
-                                :placeholder="$t('repoNameEnterPlaceholder')"
                                 max-length="100"
                                 clearable
                             />
@@ -99,17 +78,8 @@
         data () {
             return {
                 repoEnum, // 制品类型
-                enableEnum: [{
-                    value: true,
-                    label: this.$t('enable')
-                }, {
-                    value: false,
-                    label: this.$t('disable')
-                }],
                 query: {
                     repoType: 'maven',
-                    enable: '',
-                    repoName: '', // 仓库名称
                     name: '', // 制品名称
                     version: ''
                 }
@@ -135,8 +105,6 @@
             clear () {
                 Object.assign(this.query, {
                     repoType: 'maven',
-                    enable: '',
-                    repoName: '', // 仓库名称
                     name: '', // 制品名称
                     version: ''
                 })
@@ -158,13 +126,9 @@
                     filterList.push({ field, value, operation })
                 }
 
-                // 启用状态
-                addFilter('startType', this.query.enable !== '' ? this.query.enable : null, this.query.enable !== '' ? 'EQ' : 'NOT_NULL')
-
                 // 其他固定过滤条件
                 addFilter('repoType', this.query.repoType, 'EQ')
                 this.query.version && addFilter('version', this.query.version, 'MATCH_I')
-                this.query.repoName && addFilter('repoName', this.query.repoName, 'MATCH_I')
                 this.query.name && addFilter('name', this.query.name, 'MATCH_I')
                 this.$emit('confirm', filterList, () => {
                     this.close()

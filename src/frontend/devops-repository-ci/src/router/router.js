@@ -12,6 +12,8 @@ const logDetail = () => import('@repository/views/planManage/logDetail')
 
 const repoGeneric = () => import('@/views/repoGeneric')
 
+const repoRecycleBin = () => import('@/views/repoGeneric/repoRecycleBin')
+
 const commonPackageList = () => import('@repository/views/repoCommon/commonPackageList')
 const commonPackageDetail = () => import('@/views/repoCommon/commonPackageDetail')
 
@@ -216,6 +218,19 @@ const routes = [
                     breadcrumb: [
                         { name: 'repoList', label: 'repoList' },
                         { name: 'repoGeneric', label: '{repoName}', template: 'repoGeneric' }
+                    ]
+                }
+            },
+
+            {
+                path: 'repoList/recycleBin',
+                name: 'repoRecycleBin',
+                component: repoRecycleBin,
+                meta: {
+                    breadcrumb: [
+                        { name: 'repoList', label: 'repoList' },
+                        { name: 'repoGeneric', label: '{repoName}', template: 'repoGeneric' },
+                        { name: 'repoRecycleBin', label: 'recycleBin' }
                     ]
                 }
             },

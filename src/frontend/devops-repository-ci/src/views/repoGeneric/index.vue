@@ -1,12 +1,20 @@
 <template>
     <div class="repo-generic-container">
-        <header class="mb10 pl20 pr20 generic-header flex-align-center">
-            <Icon class="generic-img" size="30" name="generic" />
-            <div class="ml10 generic-title">
-                <div class="repo-title text-overflow" :title="replaceRepoName(repoName)">
-                    {{ replaceRepoName(repoName) }}
+        <header class="mb10 pl20 pr20 generic-header flex-between-center">
+            <div class="flex-align-center">
+                <Icon class="generic-img" size="30" name="generic" />
+                <div class="ml10 generic-title">
+                    <div class="repo-title text-overflow" :title="replaceRepoName(repoName)">
+                        {{ replaceRepoName(repoName) }}
+                    </div>
                 </div>
             </div>
+            <bk-button
+                v-if="type === 'GENERIC'"
+                theme="default"
+                @click="toRecycleBin()">
+                {{$t('recycleBin')}}
+            </bk-button>
         </header>
         <div class="repo-generic-main flex-align-center"
             :style="{ 'margin-left': `${searchFileName ? -(sideBarWidth + moveBarWidth) : 0}px` }">
@@ -390,6 +398,15 @@
                 'getGenericList',
                 'getCurrentRepositoryDataPermission'
             ]),
+            toRecycleBin () {
+                this.$router.push({
+                    name: 'repoRecycleBin',
+                    query: {
+                        projectId: this.projectId,
+                        repoName: this.repoName
+                    }
+                })
+            },
             tooltipContent (row) {
                 const { forbidType, forbidUser } = row.metadata
                 const forbidDescription = row.nodeMetadata.find(m => m.key === 'forbidType')?.description

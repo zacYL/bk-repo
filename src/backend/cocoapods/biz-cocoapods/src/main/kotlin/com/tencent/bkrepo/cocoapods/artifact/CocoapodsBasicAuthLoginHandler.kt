@@ -40,14 +40,15 @@ import javax.servlet.http.HttpServletResponse
 
 class CocoapodsBasicAuthLoginHandler(
     authenticationManager: AuthenticationManager,
-    private val jwtProperties: JwtAuthProperties
-) :BasicAuthHandler(authenticationManager){
+    private val jwtProperties: JwtAuthProperties,
+) : BasicAuthHandler(authenticationManager) {
     private val signingKey = JwtUtils.createSigningKey(jwtProperties.secretKey)
 
-    override fun getLoginEndpoint() ="/**/users/authenticate"
+    //todo 待确认
+    override fun getLoginEndpoint() = "/**/users/authenticate"
 
     override fun onAuthenticateSuccess(request: HttpServletRequest, response: HttpServletResponse, userId: String) {
-        logger.info("Conan checkPermission: $userId")
+        logger.info("Cocoapods checkPermission: $userId")
         val token = JwtUtils.generateToken(signingKey, jwtProperties.expiration, userId)
         response.contentType = MediaTypes.TEXT_PLAIN
         response.writer.print(token)
@@ -57,7 +58,7 @@ class CocoapodsBasicAuthLoginHandler(
     override fun onAuthenticateFailed(
         request: HttpServletRequest,
         response: HttpServletResponse,
-        authenticationException: AuthenticationException
+        authenticationException: AuthenticationException,
     ) {
         logger.warn("Authenticate failed: [$authenticationException]")
         response.status = HttpStatus.UNAUTHORIZED.value

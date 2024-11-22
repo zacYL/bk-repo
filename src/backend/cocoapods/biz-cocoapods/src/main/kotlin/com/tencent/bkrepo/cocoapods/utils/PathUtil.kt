@@ -1,7 +1,7 @@
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
- * Copyright (C) 2024 THL A29 Limited, a Tencent company.  All rights reserved.
+ * Copyright (C) 2022 THL A29 Limited, a Tencent company.  All rights reserved.
  *
  * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
  *
@@ -25,12 +25,18 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.cocoapods.constant
+package com.tencent.bkrepo.cocoapods.utils
 
-import com.tencent.bkrepo.common.api.constant.StringPool.EMPTY
-import org.springframework.boot.context.properties.ConfigurationProperties
+import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo
+import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 
-@ConfigurationProperties("cocoapods")
-data class CocoapodsProperties(
-    var domain: String = EMPTY
-)
+object PathUtil {
+    fun generateFullPath(artifactInfo: CocoapodsArtifactInfo): String {
+        return with(artifactInfo) {
+            "$orgName/$name/$version/$fileName"
+        }
+    }
+
+    fun ArtifactUploadContext.generateCachePath(artifactInfo: CocoapodsArtifactInfo, domain: String) =
+        "${domain}/${projectId}/${repoName}/${artifactInfo.getArtifactFullPath()}"
+}

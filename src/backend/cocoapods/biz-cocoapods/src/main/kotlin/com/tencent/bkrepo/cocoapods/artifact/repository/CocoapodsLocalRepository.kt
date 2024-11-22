@@ -26,15 +26,20 @@
  */
 
 package com.tencent.bkrepo.cocoapods.artifact.repository
-import com.tencent.bkrepo.cocoapods.constant.CocoapodsProperties
+
+import com.tencent.bkrepo.cocoapods.artifact.CocoapodsProperties
 import com.tencent.bkrepo.cocoapods.constant.DOT_SPECS
 import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo
 import com.tencent.bkrepo.cocoapods.service.CocoapodsPackageService
 import com.tencent.bkrepo.cocoapods.utils.DecompressUtil.getPodSpec
+import com.tencent.bkrepo.cocoapods.utils.PathUtil.generateCachePath
+import com.tencent.bkrepo.cocoapods.utils.PathUtil.generateFullPath
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.io.ByteArrayOutputStream
 import java.io.OutputStreamWriter
@@ -42,7 +47,7 @@ import java.io.OutputStreamWriter
 @Component
 class CocoapodsLocalRepository(
     private val cocoapodsProperties: CocoapodsProperties,
-    private val cocoapodsPackageService: CocoapodsPackageService
+    private val cocoapodsPackageService: CocoapodsPackageService,
 ) : LocalRepository() {
     override fun onUploadBefore(context: ArtifactUploadContext) {
         //todo 校验文件
@@ -60,7 +65,7 @@ class CocoapodsLocalRepository(
             val artifactInfo = artifactInfo as CocoapodsArtifactInfo
             //在.specs目录创建索引文件
             getArtifactFile().getInputStream().use {
-                val tarFilePath = "${cocoapodsProperties.domain}/${projectId}/${repoName}/${artifactInfo.getArtifactFullPath()}"
+                val tarFilePath = generateCachePath(artifactInfo, cocoapodsProperties.domain)
                 val (fileName, podSpec) = it.getPodSpec(tarFilePath)
                 ByteArrayOutputStream().use { bos ->
                     OutputStreamWriter(bos, Charsets.UTF_8).use { writer ->
@@ -80,5 +85,25 @@ class CocoapodsLocalRepository(
         super.onUploadSuccess(context)
     }
 
+    override fun buildNodeCreateRequest(context: ArtifactUploadContext): NodeCreateRequest {
+        with(context) {
+            val fullPath = generateFullPath(artifactInfo as CocoapodsArtifactInfo)
+            logger.info("File $fullPath will be stored in $projectId|$repoName")
+            return NodeCreateRequest(
+                projectId = projectId,
+                repoName = repoName,
+                folder = false,
+                fullPath = fullPath,
+                size = getArtifactFile().getSize(),
+                sha256 = getArtifactSha256(),
+                md5 = getArtifactMd5(),
+                operator = userId,
+                overwrite = true
+            )
+        }
+    }
 
+    companion object {
+        private val logger = LoggerFactory.getLogger(CocoapodsLocalRepository::class.java)
+    }
 }

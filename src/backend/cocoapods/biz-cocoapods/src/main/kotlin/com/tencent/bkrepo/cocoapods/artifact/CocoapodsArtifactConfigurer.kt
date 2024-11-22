@@ -30,7 +30,6 @@ package com.tencent.bkrepo.cocoapods.artifact
 import com.tencent.bkrepo.cocoapods.artifact.repository.CocoapodsLocalRepository
 import com.tencent.bkrepo.cocoapods.artifact.repository.CocoapodsRemoteRepository
 import com.tencent.bkrepo.cocoapods.artifact.repository.CocoapodsVirtualRepository
-import com.tencent.bkrepo.cocoapods.constant.CocoapodsProperties
 import com.tencent.bkrepo.common.artifact.config.ArtifactConfigurerSupport
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.security.http.core.HttpAuthSecurity

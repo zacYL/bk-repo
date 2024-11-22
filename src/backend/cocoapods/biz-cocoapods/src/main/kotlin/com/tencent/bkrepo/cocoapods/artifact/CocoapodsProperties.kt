@@ -1,7 +1,7 @@
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
- * Copyright (C) 2022 THL A29 Limited, a Tencent company.  All rights reserved.
+ * Copyright (C) 2024 THL A29 Limited, a Tencent company.  All rights reserved.
  *
  * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
  *
@@ -25,14 +25,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.cocoapods.constant
+package com.tencent.bkrepo.cocoapods.artifact
 
-import com.tencent.bkrepo.common.api.message.MessageCode
+import com.tencent.bkrepo.common.api.constant.StringPool.EMPTY
+import org.springframework.boot.context.properties.ConfigurationProperties
 
-enum class CocoapodsMessageCode(private val key: String) : MessageCode {
-    COCOAPODS_SOURCE_NOT_FOUND("cocoapods.source.not.found"),
-    COCOAPODS_SOURCE_NOT_EXIST("cocoapods.source.not.exist");
-    override fun getBusinessCode() = ordinal + 1
-    override fun getKey() = key
-    override fun getModuleCode() = 24
-}
+@ConfigurationProperties("cocoapods")
+data class CocoapodsProperties(
+    var domain: String = EMPTY,
+)

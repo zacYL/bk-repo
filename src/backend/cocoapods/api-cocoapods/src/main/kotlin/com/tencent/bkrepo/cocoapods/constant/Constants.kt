@@ -27,8 +27,9 @@
 
 package com.tencent.bkrepo.cocoapods.constant
 
-const val USER_API_PREFIX="/ext"
+const val USER_API_PREFIX = "/ext"
 const val NAME = "name"
 const val VERSION = "version"
 const val FILE_NAME = "fileName"
+const val ORG_NAME = "orgName"
 const val DOT_SPECS = ".specs"

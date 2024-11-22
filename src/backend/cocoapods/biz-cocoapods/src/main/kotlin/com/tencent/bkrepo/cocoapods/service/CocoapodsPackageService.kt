@@ -13,17 +13,17 @@ import org.springframework.stereotype.Service
 
 @Service
 class CocoapodsPackageService(
-    private val packageClient: PackageClient
+    private val packageClient: PackageClient,
 ) {
     fun createVersion(
         artifactInfo: CocoapodsArtifactInfo,
-        size: Long
+        size: Long,
     ) {
         with(artifactInfo) {
             val request = PackageVersionCreateRequest(
                 projectId = projectId,
                 repoName = repoName,
-                packageName = getArtifactName(),
+                packageName = name,
                 packageKey = PackageKeys.ofName(RepositoryType.COCOAPODS, name),
                 packageType = PackageType.COCOAPODS,
                 versionName = version,
@@ -38,7 +38,7 @@ class CocoapodsPackageService(
         }
     }
 
-    companion object{
+    companion object {
         private val logger = LoggerFactory.getLogger(CocoapodsPackageService::class.java)
     }
 }

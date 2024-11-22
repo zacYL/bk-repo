@@ -35,16 +35,30 @@ import com.tencent.bkrepo.cocoapods.exception.CocoapodsMessageCode
 import com.tencent.bkrepo.cocoapods.exception.CocoapodsPodSpecNotFoundException
 import com.tencent.bkrepo.cocoapods.pojo.enums.PodSpecType
 import com.tencent.bkrepo.common.api.util.DecompressUtils
-import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import java.io.InputStream
 
 object DecompressUtil {
+
+    private fun getContentByExtensionsFromTarGz(
+        ips: InputStream,
+        extensions: List<String>,
+    ): Pair<String, String> {
+        ips.use { fileInputStream ->
+            GzipCompressorInputStream(fileInputStream).use { gzipInputStream ->
+                TarArchiveInputStream(gzipInputStream).use { tarInputStream ->
+                    return DecompressUtils.getContentByExtensions(tarInputStream, extensions)
+                }
+            }
+        }
+    }
 
     /**
      * 从压缩包中获取podspec文件，并更新源
      */
     fun InputStream.getPodSpec(cachePath: String): Pair<String, String> {
-        val (fileName, content) = DecompressUtils.getContentByExtensions(ZipArchiveInputStream(this), PodSpecType.extendedNames())
+        val (fileName, content) = getContentByExtensionsFromTarGz(this, PodSpecType.extendedNames())
         val type = PodSpecType.matchPath(fileName)
             ?: throw CocoapodsPodSpecNotFoundException(CocoapodsMessageCode.COCOAPODS_PODSPEC_NOT_FOUND)
         val podSpecContent = when (type) {

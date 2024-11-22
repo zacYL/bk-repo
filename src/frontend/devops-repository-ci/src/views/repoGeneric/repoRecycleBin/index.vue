@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-21 15:38:37
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-11-21 16:46:32
+ * @LastEditTime: 2024-11-22 11:02:40
  * @FilePath: /artifact/src/frontend/devops-repository-ci/src/views/repoGeneric/repoRecycleBin/index.vue
 -->
 <template>
@@ -36,10 +36,10 @@
                 </template>
             </bk-table-column>
             <!-- 所属仓库 -->
-            <bk-table-column :label="$t('repo')" prop="repoName">
+            <bk-table-column :label="$t('repo')" prop="repoName" show-overflow-tooltip>
             </bk-table-column>
             <!-- 原路径 -->
-            <bk-table-column :label="$t('originalPath')" prop="repoName">
+            <bk-table-column :label="$t('originalPath')" prop="repoName" show-overflow-tooltip>
             </bk-table-column>
             <!-- 制品大小 -->
             <bk-table-column :label="$t('artifactSize')" prop="repoName">
@@ -146,7 +146,7 @@
             // 搜索
             search () {
                 this.$nextTick(() => {
-                    this.getRecycleBinList({ current: 1 })
+                    this.handlerPaginationChange({ current: 1 })
                 })
             },
             resetTable () {
@@ -160,7 +160,7 @@
                 } else {
                     current = this.pagination.current
                 }
-                this.getRecycleBinList({ current: current })
+                this.handlerPaginationChange({ current: current })
             },
             revert (row) {
                 // todo 缺少校验冲突接口

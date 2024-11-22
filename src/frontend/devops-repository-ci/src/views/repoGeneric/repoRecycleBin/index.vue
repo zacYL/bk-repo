@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-21 15:38:37
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-11-22 11:02:40
+ * @LastEditTime: 2024-11-22 21:59:02
  * @FilePath: /artifact/src/frontend/devops-repository-ci/src/views/repoGeneric/repoRecycleBin/index.vue
 -->
 <template>
@@ -32,23 +32,23 @@
             <!-- 制品包名称 -->
             <bk-table-column :label="$t('composerInputLabel')" show-overflow-tooltip>
                 <template #default="{ row }">
-                    <span class="hover-btn">{{row.packageName}}</span>
+                    <span class="hover-btn">{{row.name}}</span>
                 </template>
             </bk-table-column>
             <!-- 所属仓库 -->
             <bk-table-column :label="$t('repo')" prop="repoName" show-overflow-tooltip>
             </bk-table-column>
             <!-- 原路径 -->
-            <bk-table-column :label="$t('originalPath')" prop="repoName" show-overflow-tooltip>
+            <bk-table-column :label="$t('originalPath')" prop="fullPath" show-overflow-tooltip>
             </bk-table-column>
             <!-- 制品大小 -->
-            <bk-table-column :label="$t('artifactSize')" prop="repoName">
+            <bk-table-column :label="$t('artifactSize')" prop="size">
             </bk-table-column>
             <!-- 删除时间 -->
-            <bk-table-column :label="$t('deleteTime')" prop="repoName">
+            <bk-table-column :label="$t('deleteTime')" prop="deleted">
             </bk-table-column>
             <!-- 删除者 -->
-            <bk-table-column :label="$t('deleter')" prop="repoName">
+            <bk-table-column :label="$t('deleter')" prop="lastModifiedBy">
             </bk-table-column>
             <!-- 操作 -->
             <bk-table-column :label="$t('operation')">
@@ -74,6 +74,7 @@
 </template>
 <script>
     import { cloneDeep } from 'lodash'
+    import { mapActions } from 'vuex'
     const paginationParams = {
         count: 0,
         current: 1,
@@ -96,14 +97,18 @@
             this.handlerPaginationChange({ current: 1, limit: 20 })
         },
         methods: {
+            ...mapActions([
+                'getRecycleBinList',
+                'checkConflictPath'
+            ]),
             // 分页
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
                 this.pagination.current = current
                 this.pagination.limit = limit
-                this.getRecycleBinList()
+                this.getRecycleBinListData()
             },
             // 获取回收站列表
-            getRecycleBinList () {
+            getRecycleBinListData () {
                 const body = {
                     page: {
                         pageNumber: this.pagination.current,
@@ -111,10 +116,11 @@
                     },
                     sort: {
                         properties: [
-                            'lastModifiedDate'
+                            'deleted'
                         ],
                         direction: 'DESC'
                     },
+                    select: ['deleted', 'fullPath', 'folder', 'name', 'size', 'lastModifiedBy', 'repoName', 'sha256', 'md5', 'projectId'],
                     rule: {
                         rules: [
                             {
@@ -123,8 +129,17 @@
                                 operation: 'EQ'
                             },
                             {
-                                field: 'name',
+                                field: 'repoName',
                                 value: this.name,
+                                operation: 'EQ'
+                            },
+                            {
+                                field: 'deleted',
+                                operation: 'NOT_NULL'
+                            },
+                            {
+                                field: 'metadata._root_deleted_node',
+                                value: true,
                                 operation: 'EQ'
                             }
                         ],
@@ -132,9 +147,7 @@
                     }
                 }
                 this.isLoading = true
-                const url = '/repository/api/packageVersion/search'
-                return this.$ajax.post(
-                    url,
+                return this.getRecycleBinList(
                     body
                 ).then(res => {
                     this.recycleBinList = res.records
@@ -164,7 +177,7 @@
             },
             revert (row) {
                 // todo 缺少校验冲突接口
-                Promise.resolve().then((res) => {
+                this.checkConflictPath(row.fullPath).then((res) => {
                     const cb = () => {
                         // todo 缺少恢复接口
                         return Promise.resolve().then(() => {
@@ -196,7 +209,8 @@
                             }
                         })
                     }
-                }).catch(() => {
+                }).catch(error => {
+                    console.error(error)
                     this.$bkMessage({
                         theme: 'error',
                         message: this.$t('checkErr')

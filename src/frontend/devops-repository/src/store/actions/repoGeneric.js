@@ -316,5 +316,24 @@ export default {
             `/maven/deploy/${projectId}/${repoName}`, body
 
         )
+    },
+    
+    /**
+     * @description: 获取回收站列表
+     * @param {*} _
+     * @param {*} params
+     * @return {*}
+     */
+    getRecycleBinList (_, params) {
+        return Vue.prototype.$ajax.post(`${prefix}/node/search`, params)
+    },
+    /**
+     * @description: 校验冲突路径
+     * @param {*} _
+     * @param {*} fullPath
+     * @return {*}
+     */
+    checkConflictPath (_, fullPath) {
+        return Vue.prototype.$ajax.get(`${prefix}/node/detail/${fullPath}`)
     }
 }

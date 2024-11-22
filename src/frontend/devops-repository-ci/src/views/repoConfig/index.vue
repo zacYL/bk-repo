@@ -226,7 +226,7 @@
                 <clean-config :base-data="repoBaseInfo" @refresh="getRepoInfoHandler"></clean-config>
             </bk-tab-panel>
             <bk-tab-panel name="permissionConfig" :label="$t('permissionPath')">
-                <clean-config :base-data="repoBaseInfo" @refresh="getRepoInfoHandler"></clean-config>
+                <permissionConfig :base-data="repoBaseInfo" @refresh="getRepoInfoHandler"></permissionConfig>
             </bk-tab-panel>
         </bk-tab>
         <check-target-store
@@ -241,6 +241,7 @@
     import CardRadioGroup from '@repository/components/CardRadioGroup'
     import proxyConfig from '@repository/views/repoConfig/proxyConfig'
     import cleanConfig from '@repository/views/repoConfig/cleanConfig'
+    import permissionConfig from '@repository/views/repoConfig/permissionConfig/index'
     import CheckTargetStore from '@repository/components/CheckTargetStore'
     import StoreSort from '@repository/components/StoreSort'
     import { mapState, mapActions } from 'vuex'
@@ -253,6 +254,7 @@
             CardRadioGroup,
             proxyConfig,
             cleanConfig,
+            permissionConfig,
             StoreSort,
             CheckTargetStore
         },

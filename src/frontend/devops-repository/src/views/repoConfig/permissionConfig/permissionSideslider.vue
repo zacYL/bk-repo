@@ -1,20 +1,30 @@
 <!--
  * @Date: 2024-11-22 11:03:13
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-11-22 11:42:18
+ * @LastEditTime: 2024-11-22 14:39:06
  * @FilePath: /artifact/src/frontend/devops-repository/src/views/repoConfig/permissionConfig/permissionSideslider.vue
 -->
 <template>
     <div>
-        <bk-sideslider :is-show.sync="visible" :title="title" :quick-close="true" direction="left" :show-mask="false">
-            <div slot="content">
-                <bk-form ref="permissionForm" :label-width="200">
+        <bk-sideslider
+            direction="right"
+            width="600"
+            :is-show.sync="visible"
+            :title="title"
+            :quick-close="true"
+            :show-mask="false">
+            <div slot="content" class="pt10" style="height: 100%;overflow: auto;">
+                <bk-form :model="form" ref="permissionForm" :label-width="100">
                     <bk-form-item
                         :label="$t('name')"
                         required
-                        :property="'name'"
+                        property="name"
+                        :rules="rules.name"
                         :error-display-type="'normal'">
-                        <bk-input v-model="form.name" :placeholder="$t('pleaseInput')"></bk-input>
+                        <bk-input
+                            v-model="form.name"
+                            :placeholder="$t('pleaseInput')"
+                            style="width: 250px;"></bk-input>
                     </bk-form-item>
                     <bk-form-item
                         :label="$t('includePath')"
@@ -29,7 +39,7 @@
                         :key="index"
                         style="width: fit-content;"
                         class="mt10">
-                        <bk-input v-model="item.value" :placeholder="$t('pleaseInput')" style="width: 180px;">
+                        <bk-input v-model="item.value" max-length="32" :placeholder="$t('pleaseInput')" style="width: 250px;">
                         </bk-input>
                         <Icon class="hover-btn" size="24" name="icon-delete" @click.native.stop="form.path.splice(index, 1)" style="position: absolute; right: -30px; top: 4px;" />
                     </bk-form-item>
@@ -76,11 +86,6 @@
                     ],
                     path: [
                         {
-                            required: true,
-                            message: this.$t('cantSaveEmptyString'),
-                            trigger: 'blur'
-                        },
-                        {
                             validator: this.checkEmptyPath,
                             message: this.$t('cantSaveEmptyString'),
                             trigger: 'blur'
@@ -93,6 +98,14 @@
                         {
                             max: 32,
                             message: this.$t('maxNumTips', [32]),
+                            trigger: 'blur'
+                        },
+                        {
+                            validator: function (val) {
+                                if (!val) return true
+                                return val.match(/^[a-zA-Z0-9\u4e00-\u9fa5_-]+$/)
+                            },
+                            message: this.$t('pathCheckTips'),
                             trigger: 'blur'
                         }
                     ]
@@ -147,6 +160,13 @@
             submit () {
                 const cb = () => {
                     this.visible = false
+                }
+                if (this.form.path.length === 0) {
+                    this.$bkMessage({
+                        theme: 'error',
+                        message: this.$t('pleaseAddPath')
+                    })
+                    return
                 }
                 this.$refs.permissionForm.validate(valid => {
                     if (valid) {

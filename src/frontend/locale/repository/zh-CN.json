@@ -4,6 +4,8 @@
     "deleter": "删除人",
     "artifactSize": "制品大小",
     "originalPath": "原路径",
+    "pleaseAddPath": "请添加路径",
+    "pathCheckTips": "只支持中文、英文、数字、中划线、下划线。",
     "permanentlyDelete": "彻底删除",
     "permanentlyDeleteTips":"是否确定彻底删除?",
     "revert": "恢复",

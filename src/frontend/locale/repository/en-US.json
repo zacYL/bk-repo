@@ -4,6 +4,8 @@
     "deleter": "Deleter",
     "artifactSize": "Artifact size",
     "originalPath": "Original path",
+    "pleaseAddPath": "Please add path",
+    "pathCheckTips": "Only Chinese, English, numbers, hyphens, and underscores are supported.",
     "permanentlyDelete": "Permanently delete",
     "permanentlyDeleteTips":"Are you sure you want to permanently delete?",
     "revert": "Revert",

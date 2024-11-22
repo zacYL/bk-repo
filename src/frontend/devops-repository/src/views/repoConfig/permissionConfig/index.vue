@@ -1,11 +1,11 @@
 <!--
  * @Date: 2024-11-22 10:22:36
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-11-22 13:47:00
+ * @LastEditTime: 2024-11-22 14:09:48
  * @FilePath: /artifact/src/frontend/devops-repository/src/views/repoConfig/permissionConfig/index.vue
 -->
 <template>
-    <div style="width: 100%;height: 100%;padding: 20px;display: flex;flex-direction: column;">
+    <div style="width: 100%;height: 100%;display: flex;flex-direction: column;">
         <div class="flex-align-center">
             <bk-button theme="primary" icon="plus" @click="createPermission">{{ $t('create') }}</bk-button>
         </div>
@@ -54,7 +54,7 @@
             :count="pagination.count"
             :limit-list="pagination.limitList">
         </bk-pagination>
-        <PermissionSideslider></PermissionSideslider>
+        <PermissionSideslider v-bind="PermissionConfig" :is-show.sync="PermissionConfig.isShow"></PermissionSideslider>
     </div>
 </template>
 <script>

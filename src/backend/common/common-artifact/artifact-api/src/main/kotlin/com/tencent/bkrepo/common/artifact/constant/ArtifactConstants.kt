@@ -163,11 +163,23 @@ const val QUALITY_STATUS = "qualityRedLine"
 // 制品扫描状态
 const val SCAN_STATUS = "scanStatus"
 
+// 删除节点操作的顶层节点，在回收站显示
+const val ROOT_DELETED_NODE = "_root_deleted_node"
+
 /**
  * 元数据KEY保留字，仅允许系统使用
  */
-val RESERVED_KEY =
-    setOf(SCAN_STATUS, FORBID_STATUS, FORBID_USER, FORBID_TYPE, QUALITY_STATUS, LOCK_STATUS, LOCK_USER, LOCK_TYPE)
+val RESERVED_KEY = setOf(
+    SCAN_STATUS,
+    FORBID_STATUS,
+    FORBID_USER,
+    FORBID_TYPE,
+    QUALITY_STATUS,
+    LOCK_STATUS,
+    LOCK_USER,
+    LOCK_TYPE,
+    ROOT_DELETED_NODE
+)
 
 const val METADATA_KEY_PACKAGE_NAME = "packageName"
 const val METADATA_KEY_PACKAGE_VERSION = "packageVersion"

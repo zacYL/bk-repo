@@ -29,6 +29,7 @@ package com.tencent.bkrepo.cocoapods.controller
 
 import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo
 import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo.Companion.DOWNLOAD_INDEX_URL
+import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo.Companion.DOWNLOAD_PACKAGE_URL
 import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo.Companion.UPLOAD_PACKAGE_URL
 import com.tencent.bkrepo.cocoapods.service.CocoapodsUploadDownloadService
 import com.tencent.bkrepo.common.api.pojo.Response
@@ -58,5 +59,12 @@ class CocoapodsController(
         @ArtifactPathVariable artifactInfo: ArtifactInfo
     ) {
         cocoapodsUploadDownloadService.downloadIndex(artifactInfo)
+    }
+
+    @GetMapping(DOWNLOAD_PACKAGE_URL)
+    fun downloadPackage(
+        @ArtifactPathVariable cocoapodsArtifactInfo: CocoapodsArtifactInfo
+    ){
+      cocoapodsUploadDownloadService.downloadPackage(cocoapodsArtifactInfo)
     }
 }

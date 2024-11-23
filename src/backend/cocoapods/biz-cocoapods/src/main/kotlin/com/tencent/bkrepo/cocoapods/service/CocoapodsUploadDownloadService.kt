@@ -56,6 +56,14 @@ class CocoapodsUploadDownloadService(
             val context = ArtifactDownloadContext(repo = repo)
             ArtifactContextHolder.getRepository().download(context)
         }
+    }
 
+    fun downloadPackage(cocoapodsArtifactInfo: CocoapodsArtifactInfo) {
+        with(cocoapodsArtifactInfo) {
+            val repo = repositoryClient.getRepoDetail(projectId, repoName).data
+                ?: throw ErrorCodeException(ArtifactMessageCode.REPOSITORY_NOT_FOUND, repoName)
+            val context = ArtifactDownloadContext(repo = repo)
+            ArtifactContextHolder.getRepository().download(context)
+        }
     }
 }

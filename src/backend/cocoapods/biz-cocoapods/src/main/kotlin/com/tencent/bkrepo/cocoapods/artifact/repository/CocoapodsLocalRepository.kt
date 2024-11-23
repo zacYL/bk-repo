@@ -140,7 +140,7 @@ class CocoapodsLocalRepository(
             }
         } else {
             //下载包文件
-            return null
+            return super.onDownload(context)
         }
     }
 
@@ -154,7 +154,6 @@ class CocoapodsLocalRepository(
                     ?.apply { packageDownloadIntercept(context, this) }
             }
         }
-
     }
 
     private fun queryNodeDetailList(

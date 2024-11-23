@@ -38,7 +38,12 @@ import com.tencent.bkrepo.common.artifact.path.PathUtils.isRoot
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.repository.dao.NodeDao
 import com.tencent.bkrepo.repository.model.TNode
-import com.tencent.bkrepo.repository.pojo.node.*
+import com.tencent.bkrepo.repository.pojo.node.ConflictStrategy
+import com.tencent.bkrepo.repository.pojo.node.NodeDeletedPoint
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
+import com.tencent.bkrepo.repository.pojo.node.NodeListOption
+import com.tencent.bkrepo.repository.pojo.node.NodeRestoreOption
+import com.tencent.bkrepo.repository.pojo.node.NodeRestoreResult
 import com.tencent.bkrepo.repository.service.node.NodeRestoreOperation
 import com.tencent.bkrepo.repository.util.MetadataUtils
 import com.tencent.bkrepo.repository.util.NodeQueryHelper
@@ -47,10 +52,11 @@ import com.tencent.bkrepo.repository.util.NodeQueryHelper.nodeDeletedPointListQu
 import com.tencent.bkrepo.repository.util.NodeQueryHelper.nodeDeletedPointListQueryBySha256
 import com.tencent.bkrepo.repository.util.NodeQueryHelper.nodeDeletedPointQuery
 import com.tencent.bkrepo.repository.util.NodeQueryHelper.nodeListQuery
-import com.tencent.bkrepo.repository.util.NodeQueryHelper.nodeQuery
 import com.tencent.bkrepo.repository.util.NodeQueryHelper.nodeRestoreUpdate
+import com.tencent.bkrepo.repository.util.NodeQueryHelper.nodeTreeCriteria
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
+import org.springframework.data.mongodb.core.query.Query
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -144,8 +150,8 @@ open class NodeRestoreSupport(
                         return
                     }
                     ConflictStrategy.OVERWRITE -> {
-                        val query = nodeQuery(projectId, repoName, fullPath)
-                        nodeDao.updateFirst(query, NodeQueryHelper.nodeDeleteUpdate(operator))
+                        val query = Query(nodeTreeCriteria(projectId, repoName, fullPath))
+                        nodeDao.updateMulti(query, NodeQueryHelper.nodeDeleteUpdate(operator))
                         conflictCount += 1
                     }
                     ConflictStrategy.FAILED -> throw ErrorCodeException(ArtifactMessageCode.NODE_CONFLICT, fullPath)

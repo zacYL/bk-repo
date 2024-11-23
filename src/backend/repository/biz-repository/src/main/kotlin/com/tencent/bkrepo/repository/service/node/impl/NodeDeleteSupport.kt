@@ -33,6 +33,7 @@ import com.tencent.bkrepo.common.api.util.HumanReadable
 import com.tencent.bkrepo.common.artifact.constant.LOCK_STATUS
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.path.PathUtils
+import com.tencent.bkrepo.common.artifact.path.PathUtils.normalizeFullPath
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
 import com.tencent.bkrepo.repository.dao.NodeDao
 import com.tencent.bkrepo.repository.model.TNode
@@ -42,12 +43,14 @@ import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodesDeleteRequest
 import com.tencent.bkrepo.repository.service.node.NodeDeleteOperation
 import com.tencent.bkrepo.repository.service.repo.QuotaService
+import com.tencent.bkrepo.repository.util.MetadataUtils
 import com.tencent.bkrepo.repository.util.NodeEventFactory.buildDeletedEvent
 import com.tencent.bkrepo.repository.util.NodeQueryHelper
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
+import org.springframework.data.mongodb.core.query.Update
 import org.springframework.data.mongodb.core.query.and
 import org.springframework.data.mongodb.core.query.inValues
 import org.springframework.data.mongodb.core.query.isEqualTo
@@ -97,17 +100,7 @@ open class NodeDeleteSupport(
     ): NodeDeleteResult {
         var deletedSize = 0L
         var deletedNum = 0L
-        val normalizedFullPath = PathUtils.normalizeFullPath(fullPath)
-        val normalizedPath = PathUtils.toPath(normalizedFullPath)
-        val escapedPath = PathUtils.escapeRegex(normalizedPath)
-        val criteria = where(TNode::projectId).isEqualTo(projectId)
-            .and(TNode::repoName).isEqualTo(repoName)
-            .and(TNode::deleted).isEqualTo(null)
-            .orOperator(
-                where(TNode::fullPath).regex("^$escapedPath"),
-                where(TNode::fullPath).isEqualTo(normalizedFullPath)
-            )
-
+        val criteria = NodeQueryHelper.nodeTreeCriteria(projectId, repoName, fullPath)
         val query = Query(criteria)
         val node = nodeDao.find(query)
         if (node.any { it.metadata?.any { it.key == LOCK_STATUS && it.value == true } == true }) {
@@ -120,10 +113,15 @@ open class NodeDeleteSupport(
             deletedNum = updateResult.modifiedCount
             deletedSize = nodeBaseService.aggregateComputeSize(criteria.and(TNode::deleted).isEqualTo(deleteTime))
             quotaService.decreaseUsedVolume(projectId, repoName, deletedSize)
+            // show in recycle bin
+            nodeDao.updateFirst(
+                NodeQueryHelper.nodeDeletedPointQuery(projectId, repoName, normalizeFullPath(fullPath), deleteTime),
+                Update().push(TNode::metadata.name, MetadataUtils.buildRecycleBinMetadata())
+            )
+            publishEvent(buildDeletedEvent(projectId, repoName, fullPath, operator))
             // 更新父目录的修改信息
             val parentFullPath = PathUtils.toFullPath(PathUtils.resolveParent(fullPath))
             nodeBaseService.updateModifiedInfo(projectId, repoName, parentFullPath, operator, deleteTime)
-            publishEvent(buildDeletedEvent(projectId, repoName, fullPath, operator))
         } catch (exception: DuplicateKeyException) {
             logger.warn("Delete node[/$projectId/$repoName$fullPath] by [$operator] error: [${exception.message}]")
         }
@@ -219,6 +217,14 @@ open class NodeDeleteSupport(
             if (deletedNum == 0L) {
                 return NodeDeleteResult(deletedNum, deletedSize)
             }
+            // show in recycle bin
+            nodeDao.updateFirst(
+                Query(
+                    where(TNode::projectId).isEqualTo(projectId).and(TNode::repoName).isEqualTo(repoName)
+                        .and(TNode::fullPath).inValues(existFullPaths).and(TNode::deleted).isEqualTo(deleteTime)
+                ),
+                Update().push(TNode::metadata.name, MetadataUtils.buildRecycleBinMetadata())
+            )
             // 获取被删除节点的父目录并更新修改信息
             val parentFullPaths = if (fullPaths?.size == 1) {
                 nodeBaseService.cancelUpdateModifiedInfo(projectId, repoName, fullPaths)

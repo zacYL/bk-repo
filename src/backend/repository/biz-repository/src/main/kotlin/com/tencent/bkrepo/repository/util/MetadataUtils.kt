@@ -41,6 +41,7 @@ import com.tencent.bkrepo.common.artifact.constant.LOCK_STATUS
 import com.tencent.bkrepo.common.artifact.constant.LOCK_TYPE
 import com.tencent.bkrepo.common.artifact.constant.LOCK_USER
 import com.tencent.bkrepo.common.artifact.constant.RESERVED_KEY
+import com.tencent.bkrepo.common.artifact.constant.ROOT_DELETED_NODE
 import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.LocaleMessageUtils
@@ -233,6 +234,8 @@ object MetadataUtils {
             throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, metadataList)
         }
     }
+
+    fun buildRecycleBinMetadata() = TMetadata(key = ROOT_DELETED_NODE, value = true, system = true, display = false)
 
     private fun checkReservedKey(key: String, operator: String) {
         if (key in RESERVED_KEY && operator != SYSTEM_USER) {

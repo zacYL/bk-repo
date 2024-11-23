@@ -58,6 +58,7 @@ import com.tencent.bkrepo.repository.service.repo.StorageCredentialService
 import com.tencent.bkrepo.repository.util.NodeEventFactory
 import com.tencent.bkrepo.repository.util.NodeQueryHelper
 import org.slf4j.LoggerFactory
+import org.springframework.data.mongodb.core.query.Query
 import java.time.LocalDateTime
 
 /**
@@ -295,23 +296,19 @@ open class NodeMoveCopySupport(
     private fun moveCopyFolder(context: MoveCopyContext) {
         with(context) {
             // 判断是否存在锁定文件
-            val normalizedFullPath = PathUtils.normalizeFullPath(srcNode.fullPath)
-            val normalizedPath = toPath(normalizedFullPath)
-            val escapedPath = PathUtils.escapeRegex(normalizedPath)
-            val folderNodeQuery = NodeQueryHelper.nodeFoldQuery(
+            val nodeTreeCriteria = NodeQueryHelper.nodeTreeCriteria(
                 projectId = srcNode.projectId,
                 repoName = srcNode.repoName,
-                escapedPath = escapedPath,
-                normalizedFullPath = normalizedFullPath
+                fullPath = srcNode.fullPath
             )
-            val node = nodeDao.find(folderNodeQuery)
-            if (node.any { it.metadata?.any { it.key == LOCK_STATUS && it.value == true } == true }) {
-                val errorCode = if (node.size == 1) {
+            val nodeList = nodeDao.find(Query(nodeTreeCriteria))
+            if (nodeList.any { it.metadata?.any { it.key == LOCK_STATUS && it.value == true } == true }) {
+                val errorCode = if (nodeList.size == 1) {
                     ArtifactMessageCode.NODE_LOCK
                 } else {
                     ArtifactMessageCode.NODE_CHILD_LOCK
                 }
-                throw ErrorCodeException(errorCode, normalizedPath)
+                throw ErrorCodeException(errorCode, toPath(PathUtils.normalizeFullPath(srcNode.fullPath)))
             }
             // 目录 -> 文件: error
             if (dstNode?.folder == false) {

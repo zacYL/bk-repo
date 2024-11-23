@@ -25,28 +25,21 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.cocoapods.pojo.artifact
+package com.tencent.bkrepo.common.artifact.resolve.response
 
-import com.tencent.bkrepo.cocoapods.utils.PathUtil.generateFullPath
-import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.api.constant.MediaTypes
 
-class CocoapodsArtifactInfo(
-    projectId: String,
-    repoName: String,
-    artifactUri: String,
-    var orgName: String,
-    var name: String,
-    var version: String,
-    var fileName: String? = null,
-) : ArtifactInfo(projectId, repoName, artifactUri) {
-    override fun getArtifactFullPath(): String {
-        return generateFullPath(this)
-    }
-
-    companion object {
-        private const val COCOAPODS_PREFIX = "/{projectId}/{repoName}"
-        const val UPLOAD_PACKAGE_URL = "$COCOAPODS_PREFIX/{orgName}/{name}/{version}/{fileName}"
-        const val DOWNLOAD_INDEX_URL = "$COCOAPODS_PREFIX/index/fetchIndex"
-        const val DOWNLOAD_PACKAGE_URL = "$COCOAPODS_PREFIX/{orgName}/{name}/{version}/{fileName}"
+class ArtifactResourceWriterContext(
+    private val writers: List<ArtifactResourceWriter>,
+) {
+    fun getWriter(resource: ArtifactResource): ArtifactResourceWriter {
+        return if (MediaTypes.APPLICATION_GZIP == resource.contentType) {
+            writers.find { it is GzArtifactResourceWriter }
+                ?: throw IllegalArgumentException("No suitable writer found for gz")
+        } else {
+            // 默认选择
+            writers.find { it is DefaultArtifactResourceWriter }
+                ?: throw IllegalArgumentException("No default writer found")
+        }
     }
 }

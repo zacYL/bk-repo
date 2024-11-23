@@ -33,3 +33,5 @@ const val VERSION = "version"
 const val FILE_NAME = "fileName"
 const val ORG_NAME = "orgName"
 const val DOT_SPECS = ".specs"
+const val SPECS = "Specs"
+

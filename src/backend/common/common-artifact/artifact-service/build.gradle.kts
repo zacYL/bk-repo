@@ -44,7 +44,6 @@ dependencies {
     api("io.micrometer:micrometer-registry-prometheus")
     api("org.influxdb:influxdb-java")
     api("org.apache.commons:commons-text")
-
     testImplementation("org.mockito.kotlin:mockito-kotlin")
     testImplementation("io.mockk:mockk")
 }

@@ -25,28 +25,31 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.cocoapods.pojo.artifact
+package com.tencent.bkrepo.common.artifact.resolve.response
 
-import com.tencent.bkrepo.cocoapods.utils.PathUtil.generateFullPath
-import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.path.PathUtils
+import com.tencent.bkrepo.common.artifact.stream.STREAM_BUFFER_SIZE
+import com.tencent.bkrepo.common.storage.core.StorageProperties
 
-class CocoapodsArtifactInfo(
-    projectId: String,
-    repoName: String,
-    artifactUri: String,
-    var orgName: String,
-    var name: String,
-    var version: String,
-    var fileName: String? = null,
-) : ArtifactInfo(projectId, repoName, artifactUri) {
-    override fun getArtifactFullPath(): String {
-        return generateFullPath(this)
-    }
+abstract class BaseArtifactResourceWriter(
+    private val storageProperties: StorageProperties,
+) : ArtifactResourceWriter {
+    protected fun getBaseName(resource: ArtifactResource) =
+        when {
+            resource.node == null -> System.currentTimeMillis().toString()
+            PathUtils.isRoot(resource.node.name) -> resource.node.projectId + "-" + resource.node.repoName
+            else -> resource.node.name
+        }
 
-    companion object {
-        private const val COCOAPODS_PREFIX = "/{projectId}/{repoName}"
-        const val UPLOAD_PACKAGE_URL = "$COCOAPODS_PREFIX/{orgName}/{name}/{version}/{fileName}"
-        const val DOWNLOAD_INDEX_URL = "$COCOAPODS_PREFIX/index/fetchIndex"
-        const val DOWNLOAD_PACKAGE_URL = "$COCOAPODS_PREFIX/{orgName}/{name}/{version}/{fileName}"
+    /**
+     * 获取动态buffer size
+     * @param totalSize 数据总大小
+     */
+    protected fun getBufferSize(totalSize: Int): Int {
+        val bufferSize = storageProperties.response.bufferSize.toBytes().toInt()
+        if (bufferSize < 0 || totalSize < 0) {
+            return STREAM_BUFFER_SIZE
+        }
+        return if (totalSize < bufferSize) totalSize else bufferSize
     }
 }

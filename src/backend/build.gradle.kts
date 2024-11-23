@@ -74,6 +74,7 @@ allprojects {
             dependency("org.mockito.kotlin:mockito-kotlin:${Versions.MockitoKotlin}")
             dependency("com.h2database:h2:${Versions.H2}")
             dependency("io.mockk:mockk:${Versions.Mockk}")
+            dependency("org.apache.commons:commons-lang3:${Versions.CommonsLang3}")
             dependencySet("io.swagger:${Versions.Swagger}") {
                 entry("swagger-annotations")
                 entry("swagger-models")

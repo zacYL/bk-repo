@@ -37,6 +37,12 @@ object PathUtil {
         }
     }
 
+    fun generateSpecsPath(artifactInfo: CocoapodsArtifactInfo): String {
+        return with(artifactInfo) {
+            ".specs/$name/$version/$name.podspecs"
+        }
+    }
+
     fun ArtifactUploadContext.generateCachePath(artifactInfo: CocoapodsArtifactInfo, domain: String) =
         "${domain}/${projectId}/${repoName}/${artifactInfo.getArtifactFullPath()}"
 }

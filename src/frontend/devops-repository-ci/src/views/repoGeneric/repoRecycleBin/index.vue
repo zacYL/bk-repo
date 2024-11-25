@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-21 15:38:37
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-11-25 14:07:29
+ * @LastEditTime: 2024-11-25 18:46:38
  * @FilePath: /artifact/src/frontend/devops-repository-ci/src/views/repoGeneric/repoRecycleBin/index.vue
 -->
 <template>
@@ -30,19 +30,19 @@
                 <empty-data :is-loading="isLoading"></empty-data>
             </template>
             <!-- 制品包名称 -->
-            <bk-table-column :label="$t('composerInputLabel')" show-overflow-tooltip>
+            <bk-table-column :label="$t('name')" show-overflow-tooltip>
                 <template #default="{ row }">
                     <span>{{row.name}}</span>
                 </template>
-            </bk-table-column>
-            <!-- 所属仓库 -->
-            <bk-table-column :label="$t('repo')" prop="repoName" show-overflow-tooltip>
             </bk-table-column>
             <!-- 原路径 -->
             <bk-table-column :label="$t('originalPath')" prop="fullPath" show-overflow-tooltip>
             </bk-table-column>
             <!-- 制品大小 -->
             <bk-table-column :label="$t('artifactSize')" prop="size">
+                <template #default="{ row }">
+                    <span>{{convertFileSize(row.size)}}</span>
+                </template>
             </bk-table-column>
             <!-- 删除时间 -->
             <bk-table-column :label="$t('deleteTime')" prop="deleted" show-overflow-tooltip>
@@ -75,6 +75,8 @@
 <script>
     import { cloneDeep } from 'lodash'
     import { mapActions } from 'vuex'
+
+    import { convertFileSize } from '@repository/utils'
     const paginationParams = {
         count: 0,
         current: 1,
@@ -102,10 +104,12 @@
             this.handlerPaginationChange({ current: 1, limit: 20 })
         },
         methods: {
+            convertFileSize,
             ...mapActions([
                 'getRecycleBinList',
                 'checkConflictPath',
-                'nodeRevert'
+                'nodeRevert',
+                'nodeDelete'
             ]),
             // 分页
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
@@ -252,8 +256,13 @@
                     subTitle: this.$t('permanentlyDeleteTips'),
                     theme: 'danger',
                     confirmFn: () => {
-                        // todo 缺一个删除接口
-                        Promise.resolve().then(() => {
+                        // 彻底删除
+                        this.nodeDelete({
+                            projectId: this.projectId,
+                            repoName: this.repoName,
+                            fullPath: row.fullPath,
+                            deleteTime: new Date(row.deleted).getTime()
+                        }).then(() => {
                             this.$bkMessage({
                                 theme: 'success',
                                 message: this.$t('removeSuccess')

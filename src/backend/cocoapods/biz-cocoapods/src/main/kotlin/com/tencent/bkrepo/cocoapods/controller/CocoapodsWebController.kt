@@ -51,8 +51,8 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping(USER_API_PREFIX)
 @RestController
 class CocoapodsWebController(
-    private val cocoapodsClientService: CocoapodsClientService
-    val cocoapodsWebService: CocoapodsWebService
+    private val cocoapodsClientService: CocoapodsClientService,
+    private val cocoapodsWebService: CocoapodsWebService
 ) {
 
     @ApiOperation("包删除接口")

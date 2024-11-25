@@ -34,6 +34,8 @@ import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.cocoapods.constant.USER_API_PREFIX
 import com.tencent.bkrepo.cocoapods.service.CocoapodsClientService
+import com.tencent.bkrepo.common.security.permission.Principal
+import com.tencent.bkrepo.common.security.permission.PrincipalType
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -79,6 +81,7 @@ class CocoapodsWebController(
     }
 
     @ApiOperation("下载客户端插件")
+    @Principal(PrincipalType.GENERAL)
     @GetMapping("/client/plugin/download")
     fun downloadClientPlugin(){
         return cocoapodsClientService.downloadClientPlugin()

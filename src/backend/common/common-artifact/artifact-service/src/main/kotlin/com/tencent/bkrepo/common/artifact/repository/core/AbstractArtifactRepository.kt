@@ -54,6 +54,7 @@ import com.tencent.bkrepo.common.artifact.repository.redirect.DownloadRedirectMa
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResourceWriter
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResourceWriterContext
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
@@ -109,7 +110,7 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
     lateinit var packageDownloadsClient: PackageDownloadsClient
 
     @Autowired
-    lateinit var artifactResourceWriter: ArtifactResourceWriter
+    lateinit var artifactResourceWriterContext: ArtifactResourceWriterContext
 
     @Autowired
     private lateinit var taskAsyncExecutor: ThreadPoolTaskExecutor
@@ -150,7 +151,7 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
             val artifactResponse = this.onDownload(context) ?: if (!context.download) return else {
                     throw ArtifactNotFoundException(context.artifactInfo.toString())
                 }
-            val throughput = artifactResourceWriter.write(artifactResponse)
+            val throughput = artifactResourceWriterContext.getWriter(artifactResponse).write(artifactResponse)
             this.onDownloadSuccess(context, artifactResponse, throughput)
         } catch (exception: ArtifactResponseException) {
             context.response.status = exception.status.value

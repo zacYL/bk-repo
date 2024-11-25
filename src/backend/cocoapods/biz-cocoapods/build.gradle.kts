@@ -1,7 +1,7 @@
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
- * Copyright (C) 2020 THL A29 Limited, a Tencent company.  All rights reserved.
+ * Copyright (C) 2022 THL A29 Limited, a Tencent company.  All rights reserved.
  *
  * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
  *
@@ -29,27 +29,9 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.repository.pojo.packages
-
-/**
- * 包类型
- */
-enum class PackageType(val schema: String, val versionSortProperty: String = PackageVersion::createdDate.name) {
-    DOCKER("docker"),
-    MAVEN("gav"),
-    PYPI("pypi"),
-    NPM("npm"),
-    HELM("helm"),
-    RDS("rds"),
-    COMPOSER("composer"),
-    RPM("rpm"),
-    NUGET("nuget"),
-    CONAN("conan"),
-    OCI("oci"),
-    GO("go", PackageVersion::ordinal.name),
-    COCOAPODS("cocoapods");
-
-    companion object {
-        fun fromSchema(schema: String) = values().find { it.schema == schema }
-    }
+dependencies {
+    api(project(":cocoapods:api-cocoapods"))
+    api(project(":common:common-artifact:artifact-service"))
+    api(project(":common:common-lock"))
+    implementation("com.google.code.gson:gson")
 }

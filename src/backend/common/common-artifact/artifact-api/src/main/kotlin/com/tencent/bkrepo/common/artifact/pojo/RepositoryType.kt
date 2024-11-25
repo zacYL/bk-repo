@@ -50,7 +50,8 @@ enum class RepositoryType {
     OCI,
     CONAN,
     LFS,
-    GO
+    GO,
+    COCOAPODS
     ;
 
     companion object {

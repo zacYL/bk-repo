@@ -55,6 +55,29 @@ object DecompressUtils {
         throw NotFoundException(CommonMessageCode.RESOURCE_NOT_FOUND, "Can not find $fileName")
     }
 
+    /**
+     * 查找第一个符合其中任意后缀的文件
+     * @return 文件名，文件内容
+     */
+    fun <E : ArchiveEntry> getContentByExtensions(
+        archiveInputStream: ArchiveInputStream<E>,
+        extensions: List<String>,
+    ): Pair<String, String> {
+        var zipEntry: E
+        archiveInputStream.use { archiveEntry ->
+            while (archiveInputStream.nextEntry.also { zipEntry = it } != null) {
+                if (!zipEntry.isDirectory) {
+                    val fileName = zipEntry.name.split("/").last()
+                    val fileExtension = fileName.substringAfterLast('.', "")
+                    if (fileExtension in extensions) {
+                        return fileName to streamToString(archiveEntry)
+                    }
+                }
+            }
+        }
+        throw NotFoundException(CommonMessageCode.RESOURCE_NOT_FOUND, "No file found with extensions: $extensions")
+    }
+
     private fun streamToString(inputStream: InputStream): String {
         val stringBuilder = StringBuffer("")
         var length: Int

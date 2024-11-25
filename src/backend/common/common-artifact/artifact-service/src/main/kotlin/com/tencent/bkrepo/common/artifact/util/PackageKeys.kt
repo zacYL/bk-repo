@@ -156,6 +156,14 @@ object PackageKeys {
     }
 
     /**
+     * 生成cocoapods格式key
+     * 例子: cocoapods://test
+     */
+    fun ofCocoapods(name: String): String {
+        return ofName(PackageType.COCOAPODS.schema, name)
+    }
+
+    /**
      * 生成gav格式key
      */
     fun resolveGav(gavKey: String): String {
@@ -248,6 +256,15 @@ object PackageKeys {
      */
     fun resolveGo(goKey: String): String {
         return resolveName(PackageType.GO.schema, goKey)
+    }
+
+    /**
+     * 解析cocoapods格式的key
+     *
+     * 例子: cocoapods://test  ->  test
+     */
+    fun resolveCocoapods(goKey: String): String {
+        return resolveName(PackageType.COCOAPODS.schema, goKey)
     }
 
     /**

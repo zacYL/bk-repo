@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-21 15:38:37
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-11-22 21:59:02
+ * @LastEditTime: 2024-11-25 10:58:19
  * @FilePath: /artifact/src/frontend/devops-repository-ci/src/views/repoGeneric/repoRecycleBin/index.vue
 -->
 <template>
@@ -83,14 +83,19 @@
     }
     export default {
         name: 'repo-recycle-bin',
-        props: {
-            projectId: String
-        },
         data () {
             return {
                 isLoading: false,
                 pagination: cloneDeep(paginationParams),
                 recycleBinList: []
+            }
+        },
+        computed: {
+            projectId () {
+                return this.$route.query.projectId
+            },
+            repoName () {
+                return this.$route.query.repoName
             }
         },
         created () {
@@ -99,7 +104,8 @@
         methods: {
             ...mapActions([
                 'getRecycleBinList',
-                'checkConflictPath'
+                'checkConflictPath',
+                'nodeRevert'
             ]),
             // 分页
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
@@ -129,11 +135,6 @@
                                 operation: 'EQ'
                             },
                             {
-                                field: 'repoName',
-                                value: this.name,
-                                operation: 'EQ'
-                            },
-                            {
                                 field: 'deleted',
                                 operation: 'NOT_NULL'
                             },
@@ -141,7 +142,19 @@
                                 field: 'metadata._root_deleted_node',
                                 value: true,
                                 operation: 'EQ'
-                            }
+                            },
+                            {
+                                field: 'repoName',
+                                value: this.repoName,
+                                operation: 'EQ'
+                            },
+                            ...this.name
+                                ? [{
+                                    field: 'name',
+                                    value: this.name,
+                                    operation: 'MATCH'
+                                }]
+                                : []
                         ],
                         relation: 'AND'
                     }
@@ -176,45 +189,57 @@
                 this.handlerPaginationChange({ current: current })
             },
             revert (row) {
-                // todo 缺少校验冲突接口
+                const generateRevertPromise = (type) => {
+                    return this.nodeRevert(this.projectId, this.repoName, row.fullPath, row.deleteTime, type)
+                }
+                const cb = (revertPromise) => {
+                    return revertPromise.then(() => {
+                        this.$bkMessage({
+                            theme: 'success',
+                            message: this.$t('revertSuccess')
+                        })
+                    }).catch(() => {
+                        this.$bkMessage({
+                            theme: 'error',
+                            message: this.$t('revertFail')
+                        })
+                    })
+                }
+                // 校验冲突路径
                 this.checkConflictPath(row.fullPath).then((res) => {
-                    const cb = () => {
-                        // todo 缺少恢复接口
-                        return Promise.resolve().then(() => {
-                            this.$bkMessage({
-                                theme: 'success',
-                                message: this.$t('revertSuccess')
+                    this.$bkInfoDevopsConfirm({
+                        subTitle: this.$t('artifactConflictRevert', [row.name]),
+                        theme: 'danger',
+                        okText: this.$t('overwrite'),
+                        confirmFn: () => {
+                            const conflictNodeRevert = generateRevertPromise('OVERWRITE')
+                            // 覆盖原有文件
+                            cb(conflictNodeRevert).then(() => {
+                                this.resetTable()
                             })
-                        }).catch(() => {
-                            this.$bkMessage({
-                                theme: 'error',
-                                message: this.$t('revertFail')
-                            })
-                        })
-                    }
-                    
-                    if (res) {
-                        cb().then(() => {
-                            this.resetTable()
-                        })
-                    } else {
+                        }
+                    })
+                }).catch(error => {
+                    // todo 仅仅404时进入下述判断，这里还有问题
+                    if (error) {
                         this.$bkInfoDevopsConfirm({
-                            subTitle: this.$t('artifactConflictRevert'),
-                            theme: 'danger',
+                            subTitle: this.$t('artifactRevert', [row.name]),
+                            theme: 'success',
                             okText: this.$t('revert'),
                             confirmFn: () => {
-                                cb().then(() => {
+                                const nodeRevert = generateRevertPromise('FAILED')
+                                // 恢复文件
+                                cb(nodeRevert).then(() => {
                                     this.resetTable()
                                 })
                             }
                         })
+                    } else {
+                        this.$bkMessage({
+                            theme: 'error',
+                            message: this.$t('checkErr')
+                        })
                     }
-                }).catch(error => {
-                    console.error(error)
-                    this.$bkMessage({
-                        theme: 'error',
-                        message: this.$t('checkErr')
-                    })
                 })
             },
             remove (row) {

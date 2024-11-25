@@ -335,5 +335,18 @@ export default {
      */
     checkConflictPath (_, fullPath) {
         return Vue.prototype.$ajax.get(`${prefix}/node/detail/${fullPath}`)
+    },
+    /**
+     * @description: 节点恢复
+     * @param {*} _
+     * @param {string} projectId
+     * @param {string} repoName
+     * @param {string} fullPath
+     * @param {string} deletedId
+     * @param {string} type
+     * @return {*}
+     */
+    nodeRevert (_, projectId, repoName, fullPath, deletedId, type) {
+        return Vue.prototype.$ajax.post(`${prefix}/node/restore/${projectId}/${repoName}/${fullPath}?deletedId=${deletedId}&conflictStrategy=${type}`)
     }
 }

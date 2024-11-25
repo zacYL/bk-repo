@@ -79,7 +79,6 @@ class CocoapodsWebController(
     }
 
     @ApiOperation("下载客户端插件")
-    @
     @GetMapping("/client/plugin/download")
     fun downloadClientPlugin(){
         return cocoapodsClientService.downloadClientPlugin()

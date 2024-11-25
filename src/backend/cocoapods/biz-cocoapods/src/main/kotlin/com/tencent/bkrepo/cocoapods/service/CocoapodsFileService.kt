@@ -25,29 +25,29 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.cocoapods.artifact
+package com.tencent.bkrepo.cocoapods.service
 
-import com.tencent.bkrepo.cocoapods.artifact.repository.CocoapodsLocalRepository
-import com.tencent.bkrepo.cocoapods.artifact.repository.CocoapodsRemoteRepository
-import com.tencent.bkrepo.cocoapods.artifact.repository.CocoapodsVirtualRepository
-import com.tencent.bkrepo.common.artifact.config.ArtifactConfigurerSupport
-import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
-import com.tencent.bkrepo.common.security.http.core.HttpAuthSecurity
-import com.tencent.bkrepo.common.security.http.core.HttpAuthSecurityCustomizer
-import com.tencent.bkrepo.common.service.util.SpringContextUtils
-import org.springframework.boot.context.properties.EnableConfigurationProperties
-import org.springframework.context.annotation.Configuration
+import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo
+import com.tencent.bkrepo.cocoapods.utils.PathUtil
+import com.tencent.bkrepo.common.security.util.SecurityUtils
+import com.tencent.bkrepo.repository.api.NodeClient
+import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
+import org.springframework.stereotype.Service
 
-@Configuration
-@EnableConfigurationProperties(CocoapodsProperties::class)
-class CocoapodsArtifactConfigurer : ArtifactConfigurerSupport() {
-    override fun getRepositoryType() = RepositoryType.COCOAPODS
-    override fun getLocalRepository() = SpringContextUtils.getBean<CocoapodsLocalRepository>()
-    override fun getRemoteRepository() = SpringContextUtils.getBean<CocoapodsRemoteRepository>()
-    override fun getVirtualRepository() = SpringContextUtils.getBean<CocoapodsVirtualRepository>()
-    override fun getAuthSecurityCustomizer() = object : HttpAuthSecurityCustomizer {
-        override fun customize(httpAuthSecurity: HttpAuthSecurity) {
-            httpAuthSecurity.withPrefix("/cocoapods")
+@Service
+class CocoapodsFileService(
+    private val nodeClient: NodeClient
+){
+    fun deleteFile(artifactInfo: CocoapodsArtifactInfo) {
+        with(artifactInfo){
+            //删除包文件:"$orgName/$name/$version/$fileName"
+            var request = NodeDeleteRequest(projectId, repoName,
+                PathUtil.generateFullPath(artifactInfo),SecurityUtils.getUserId())
+            nodeClient.deleteNode(request)
+            //删除specs文件:".specs/$name/$version/$name.podspecs"
+            request = NodeDeleteRequest(projectId, repoName,
+                PathUtil.generateSpecsPath(artifactInfo),SecurityUtils.getUserId())
+            nodeClient.deleteNode(request)
         }
     }
 }

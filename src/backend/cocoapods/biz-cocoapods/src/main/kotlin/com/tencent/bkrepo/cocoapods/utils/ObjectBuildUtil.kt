@@ -1,0 +1,30 @@
+package com.tencent.bkrepo.cocoapods.utils
+
+import com.tencent.bkrepo.cocoapods.pojo.user.BasicInfo
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
+import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
+import org.slf4j.LoggerFactory
+import java.time.format.DateTimeFormatter
+
+object ObjectBuildUtil {
+    private val logger = LoggerFactory.getLogger(ObjectBuildUtil::class.java)
+    fun buildBasicInfo(nodeDetail: NodeDetail, packageVersion: PackageVersion): BasicInfo {
+        with(nodeDetail) {
+            return BasicInfo(
+                version = packageVersion.name,
+                fullPath = fullPath,
+                size = size,
+                sha256 = sha256.orEmpty(),
+                md5 = md5.orEmpty(),
+                stageTag = packageVersion.stageTag,
+                projectId = projectId,
+                repoName = repoName,
+                downloadCount = packageVersion.downloads,
+                createdBy = createdBy,
+                createdDate = packageVersion.createdDate.format(DateTimeFormatter.ISO_DATE_TIME),
+                lastModifiedBy = lastModifiedBy,
+                lastModifiedDate = packageVersion.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME)
+            )
+        }
+    }
+}

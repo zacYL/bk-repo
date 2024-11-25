@@ -33,7 +33,12 @@ import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.cocoapods.constant.USER_API_PREFIX
+import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo
+import com.tencent.bkrepo.cocoapods.service.CocoapodsWebService
+import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
 import com.tencent.bkrepo.cocoapods.service.CocoapodsClientService
+import com.tencent.bkrepo.common.security.permission.Principal
+import com.tencent.bkrepo.common.security.permission.PrincipalType
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -46,15 +51,18 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping(USER_API_PREFIX)
 @RestController
 class CocoapodsWebController(
-    private val cocoapodsClientService: CocoapodsClientService
+    private val cocoapodsClientService: CocoapodsClientService,
+    private val cocoapodsWebService: CocoapodsWebService,
 ) {
 
     @ApiOperation("包删除接口")
     @DeleteMapping("/package/delete/{projectId}/{repoName}")
     @Permission(type = ResourceType.REPO, action = PermissionAction.DELETE)
     fun deletePackage(
-        @RequestParam packageKey: String
+        @ArtifactPathVariable cocoapodsArtifactInfo: CocoapodsArtifactInfo,
+        @RequestParam packageKey: String,
     ): Response<Void> {
+        cocoapodsWebService.deletePackage(cocoapodsArtifactInfo, packageKey)
         return ResponseBuilder.success()
     }
 
@@ -62,9 +70,11 @@ class CocoapodsWebController(
     @DeleteMapping("/version/delete/{projectId}/{repoName}")
     @Permission(type = ResourceType.REPO, action = PermissionAction.DELETE)
     fun deleteVersion(
+        @ArtifactPathVariable cocoapodsArtifactInfo: CocoapodsArtifactInfo,
         @RequestParam packageKey: String,
-        @RequestParam version: String
+        @RequestParam version: String,
     ): Response<Void> {
+        cocoapodsWebService.deleteVersion(cocoapodsArtifactInfo, packageKey, version)
         return ResponseBuilder.success()
     }
 
@@ -72,15 +82,15 @@ class CocoapodsWebController(
     @GetMapping("/version/detail/{projectId}/{repoName}")
     @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
     fun artifactDetail(
+        @ArtifactPathVariable cocoapodsArtifactInfo: CocoapodsArtifactInfo,
         @RequestParam packageKey: String,
-        @RequestParam version: String
-    ) {
-
-    }
+        @RequestParam version: String,
+    ) = ResponseBuilder.success(cocoapodsWebService.artifactDetail(cocoapodsArtifactInfo, packageKey, version))
 
     @ApiOperation("下载客户端插件")
+    @Principal(PrincipalType.GENERAL)
     @GetMapping("/client/plugin/download")
-    fun downloadClientPlugin(){
+    fun downloadClientPlugin() {
         return cocoapodsClientService.downloadClientPlugin()
     }
 }

@@ -401,9 +401,13 @@
             toRecycleBin () {
                 this.$router.push({
                     name: 'repoRecycleBin',
+                    params: {
+                        ...this.$route.params
+                    },
                     query: {
                         projectId: this.projectId,
-                        repoName: this.repoName
+                        repoName: this.repoName,
+                        ...this.$route.query
                     }
                 })
             },

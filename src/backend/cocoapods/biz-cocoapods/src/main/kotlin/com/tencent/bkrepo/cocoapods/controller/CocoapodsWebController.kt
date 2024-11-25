@@ -52,7 +52,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 class CocoapodsWebController(
     private val cocoapodsClientService: CocoapodsClientService,
-    private val cocoapodsWebService: CocoapodsWebService
+    private val cocoapodsWebService: CocoapodsWebService,
 ) {
 
     @ApiOperation("包删除接口")
@@ -60,9 +60,9 @@ class CocoapodsWebController(
     @Permission(type = ResourceType.REPO, action = PermissionAction.DELETE)
     fun deletePackage(
         @ArtifactPathVariable cocoapodsArtifactInfo: CocoapodsArtifactInfo,
-        @RequestParam packageKey: String
+        @RequestParam packageKey: String,
     ): Response<Void> {
-        cocoapodsWebService.deletePackage(cocoapodsArtifactInfo,packageKey);
+        cocoapodsWebService.deletePackage(cocoapodsArtifactInfo, packageKey)
         return ResponseBuilder.success()
     }
 
@@ -72,7 +72,7 @@ class CocoapodsWebController(
     fun deleteVersion(
         @ArtifactPathVariable cocoapodsArtifactInfo: CocoapodsArtifactInfo,
         @RequestParam packageKey: String,
-        @RequestParam version: String
+        @RequestParam version: String,
     ): Response<Void> {
         cocoapodsWebService.deleteVersion(cocoapodsArtifactInfo, packageKey, version)
         return ResponseBuilder.success()
@@ -84,13 +84,13 @@ class CocoapodsWebController(
     fun artifactDetail(
         @ArtifactPathVariable cocoapodsArtifactInfo: CocoapodsArtifactInfo,
         @RequestParam packageKey: String,
-        @RequestParam version: String
+        @RequestParam version: String,
     ) = ResponseBuilder.success(cocoapodsWebService.artifactDetail(cocoapodsArtifactInfo, packageKey, version))
 
     @ApiOperation("下载客户端插件")
     @Principal(PrincipalType.GENERAL)
     @GetMapping("/client/plugin/download")
-    fun downloadClientPlugin(){
+    fun downloadClientPlugin() {
         return cocoapodsClientService.downloadClientPlugin()
     }
 }

@@ -33,6 +33,7 @@ import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.cocoapods.constant.USER_API_PREFIX
+import com.tencent.bkrepo.cocoapods.service.CocoapodsClientService
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -45,6 +46,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping(USER_API_PREFIX)
 @RestController
 class CocoapodsWebController(
+    private val cocoapodsClientService: CocoapodsClientService
 ) {
 
     @ApiOperation("包删除接口")
@@ -76,4 +78,10 @@ class CocoapodsWebController(
 
     }
 
+    @ApiOperation("下载客户端插件")
+    @
+    @GetMapping("/client/plugin/download")
+    fun downloadClientPlugin(){
+        return cocoapodsClientService.downloadClientPlugin()
+    }
 }

@@ -34,4 +34,6 @@ const val FILE_NAME = "fileName"
 const val ORG_NAME = "orgName"
 const val DOT_SPECS = ".specs"
 const val SPECS = "Specs"
+const val CLIENT_PLUGIN_NAME = "bk-cocoapods-1.0.0.gem"
+const val CLIENT_PLUGIN_PATH = "cli/bk-cocoapods-1.0.0.gem"
 

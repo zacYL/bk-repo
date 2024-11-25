@@ -47,12 +47,7 @@ class CocoapodsArtifactConfigurer : ArtifactConfigurerSupport() {
     override fun getVirtualRepository() = SpringContextUtils.getBean<CocoapodsVirtualRepository>()
     override fun getAuthSecurityCustomizer() = object : HttpAuthSecurityCustomizer {
         override fun customize(httpAuthSecurity: HttpAuthSecurity) {
-            val authenticationManager = httpAuthSecurity.authenticationManager!!
-            val jwtAuthProperties = httpAuthSecurity.jwtAuthProperties!!
-            val authLoginHandler = CocoapodsBasicAuthLoginHandler(authenticationManager, jwtAuthProperties)
-
-            httpAuthSecurity.addHttpAuthHandler(authLoginHandler)
-                .withPrefix("/cocoapods")
+            httpAuthSecurity.withPrefix("/cocoapods")
         }
     }
 }

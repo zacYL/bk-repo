@@ -78,4 +78,5 @@ object Versions {
     const val JsonSmart = "2.4.9"
     const val SpringBootAutoconfigure = "2.5.15"
     const val TongWeb = "7.0.E.6_P6"
+    const val CommonsLang3 = "3.14.0"
 }

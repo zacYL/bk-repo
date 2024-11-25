@@ -46,5 +46,7 @@ class CocoapodsArtifactInfo(
     companion object {
         private const val COCOAPODS_PREFIX = "/{projectId}/{repoName}"
         const val UPLOAD_PACKAGE_URL = "$COCOAPODS_PREFIX/{orgName}/{name}/{version}/{fileName}"
+        const val DOWNLOAD_INDEX_URL = "$COCOAPODS_PREFIX/index/fetchIndex"
+        const val DOWNLOAD_PACKAGE_URL = "$COCOAPODS_PREFIX/{orgName}/{name}/{version}/{fileName}"
     }
 }

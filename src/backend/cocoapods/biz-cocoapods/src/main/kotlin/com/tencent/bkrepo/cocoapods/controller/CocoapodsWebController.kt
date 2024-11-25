@@ -36,6 +36,9 @@ import com.tencent.bkrepo.cocoapods.constant.USER_API_PREFIX
 import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo
 import com.tencent.bkrepo.cocoapods.service.CocoapodsWebService
 import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
+import com.tencent.bkrepo.cocoapods.service.CocoapodsClientService
+import com.tencent.bkrepo.common.security.permission.Principal
+import com.tencent.bkrepo.common.security.permission.PrincipalType
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -48,6 +51,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping(USER_API_PREFIX)
 @RestController
 class CocoapodsWebController(
+    private val cocoapodsClientService: CocoapodsClientService
     val cocoapodsWebService: CocoapodsWebService
 ) {
 
@@ -83,4 +87,10 @@ class CocoapodsWebController(
         @RequestParam version: String
     ) = ResponseBuilder.success(cocoapodsWebService.artifactDetail(cocoapodsArtifactInfo, packageKey, version))
 
+    @ApiOperation("下载客户端插件")
+    @Principal(PrincipalType.GENERAL)
+    @GetMapping("/client/plugin/download")
+    fun downloadClientPlugin(){
+        return cocoapodsClientService.downloadClientPlugin()
+    }
 }

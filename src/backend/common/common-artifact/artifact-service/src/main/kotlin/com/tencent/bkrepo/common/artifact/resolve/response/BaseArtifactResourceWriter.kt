@@ -25,15 +25,31 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.cocoapods.constant
+package com.tencent.bkrepo.common.artifact.resolve.response
 
-const val USER_API_PREFIX = "/ext"
-const val NAME = "name"
-const val VERSION = "version"
-const val FILE_NAME = "fileName"
-const val ORG_NAME = "orgName"
-const val DOT_SPECS = ".specs"
-const val SPECS = "Specs"
-const val CLIENT_PLUGIN_NAME = "bk-cocoapods-1.0.0.gem"
-const val CLIENT_PLUGIN_PATH = "cli/bk-cocoapods-1.0.0.gem"
+import com.tencent.bkrepo.common.artifact.path.PathUtils
+import com.tencent.bkrepo.common.artifact.stream.STREAM_BUFFER_SIZE
+import com.tencent.bkrepo.common.storage.core.StorageProperties
 
+abstract class BaseArtifactResourceWriter(
+    private val storageProperties: StorageProperties,
+) : ArtifactResourceWriter {
+    protected fun getBaseName(resource: ArtifactResource) =
+        when {
+            resource.node == null -> System.currentTimeMillis().toString()
+            PathUtils.isRoot(resource.node.name) -> resource.node.projectId + "-" + resource.node.repoName
+            else -> resource.node.name
+        }
+
+    /**
+     * 获取动态buffer size
+     * @param totalSize 数据总大小
+     */
+    protected fun getBufferSize(totalSize: Int): Int {
+        val bufferSize = storageProperties.response.bufferSize.toBytes().toInt()
+        if (bufferSize < 0 || totalSize < 0) {
+            return STREAM_BUFFER_SIZE
+        }
+        return if (totalSize < bufferSize) totalSize else bufferSize
+    }
+}

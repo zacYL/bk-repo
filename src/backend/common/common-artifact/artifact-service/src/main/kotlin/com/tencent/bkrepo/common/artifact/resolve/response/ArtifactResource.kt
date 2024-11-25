@@ -58,7 +58,12 @@ class ArtifactResource(
     /**
      * 是否返回Content-Disposition头
      */
-    var useDisposition: Boolean = false
+    var useDisposition: Boolean = false,
+    /**
+     * 响应ContentType，如果有设置则使用固定的contentType
+     */
+    var contentType: String? = null,
+
 ) {
     /**
      * 编码类型
@@ -70,10 +75,7 @@ class ArtifactResource(
      */
     var status: HttpStatus? = null
 
-    /**
-     * 响应ContentType，如果有设置则使用固定的contentType
-     */
-    var contentType: String? = null
+
 
     /**
      * 次构造器

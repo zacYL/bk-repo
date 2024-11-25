@@ -25,15 +25,21 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.cocoapods.constant
+package com.tencent.bkrepo.common.artifact.resolve.response
 
-const val USER_API_PREFIX = "/ext"
-const val NAME = "name"
-const val VERSION = "version"
-const val FILE_NAME = "fileName"
-const val ORG_NAME = "orgName"
-const val DOT_SPECS = ".specs"
-const val SPECS = "Specs"
-const val CLIENT_PLUGIN_NAME = "bk-cocoapods-1.0.0.gem"
-const val CLIENT_PLUGIN_PATH = "cli/bk-cocoapods-1.0.0.gem"
+import com.tencent.bkrepo.common.api.constant.MediaTypes
 
+class ArtifactResourceWriterContext(
+    private val writers: List<ArtifactResourceWriter>,
+) {
+    fun getWriter(resource: ArtifactResource): ArtifactResourceWriter {
+        return if (MediaTypes.APPLICATION_GZIP == resource.contentType) {
+            writers.find { it is GzArtifactResourceWriter }
+                ?: throw IllegalArgumentException("No suitable writer found for gz")
+        } else {
+            // 默认选择
+            writers.find { it is DefaultArtifactResourceWriter }
+                ?: throw IllegalArgumentException("No default writer found")
+        }
+    }
+}

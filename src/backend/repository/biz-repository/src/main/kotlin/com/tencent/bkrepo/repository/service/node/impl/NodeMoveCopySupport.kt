@@ -201,7 +201,7 @@ open class NodeMoveCopySupport(
                 dstNode.metadata = metadata.filter { !RESERVED_KEY.contains(it.key) }.toMutableList()
             }
             // move操作，create信息保留
-            if (move) {
+            if (!move) {
                 dstNode.createdBy = operator
                 dstNode.createdDate = LocalDateTime.now()
             }

@@ -95,20 +95,18 @@ class CocoapodsLocalRepository(
         with(context) {
             val artifactInfo = artifactInfo as CocoapodsArtifactInfo
             //在.specs目录创建索引文件
-            getArtifactFile().getInputStream().use {
-                val fileName = getAttribute<String>(SPECS_FILE_NAME)
-                val podSpec = getAttribute<String>(SPECS_FILE_CONTENT)
-                ByteArrayOutputStream().use { bos ->
-                    OutputStreamWriter(bos, Charsets.UTF_8).use { writer ->
-                        writer.write(podSpec)
-                    }
-                    val specArtifact = ArtifactFileFactory.build(bos.toByteArray().inputStream())
-                    val uploadContext = ArtifactUploadContext(specArtifact)
-                    val specNode = buildNodeCreateRequest(uploadContext).run {
-                        copy(fullPath = "$DOT_SPECS/${artifactInfo.name}/${artifactInfo.version}/${fileName}")
-                    }
-                    storageManager.storeArtifactFile(specNode, specArtifact, uploadContext.storageCredentials)
+            val fileName = getAttribute<String>(SPECS_FILE_NAME)
+            val podSpec = getAttribute<String>(SPECS_FILE_CONTENT)
+            ByteArrayOutputStream().use { bos ->
+                OutputStreamWriter(bos, Charsets.UTF_8).use { writer ->
+                    writer.write(podSpec)
                 }
+                val specArtifact = ArtifactFileFactory.build(bos.toByteArray().inputStream())
+                val uploadContext = ArtifactUploadContext(specArtifact)
+                val specNode = buildNodeCreateRequest(uploadContext).run {
+                    copy(fullPath = "$DOT_SPECS/${artifactInfo.name}/${artifactInfo.version}/${fileName}")
+                }
+                storageManager.storeArtifactFile(specNode, specArtifact, uploadContext.storageCredentials)
             }
             //创建包版本
             cocoapodsPackageService.createVersion(artifactInfo, getArtifactFile().getSize())

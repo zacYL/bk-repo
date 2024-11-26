@@ -46,6 +46,7 @@ import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeListOption
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
@@ -99,15 +100,8 @@ class CocoapodsLocalRepository(
         with(context) {
             val fullPath = generateFullPath(artifactInfo as CocoapodsArtifactInfo)
             logger.info("File $fullPath will be stored in $projectId|$repoName")
-            return NodeCreateRequest(
-                projectId = projectId,
-                repoName = repoName,
-                folder = false,
+            return super.buildNodeCreateRequest(context).copy(
                 fullPath = fullPath,
-                size = getArtifactFile().getSize(),
-                sha256 = getArtifactSha256(),
-                md5 = getArtifactMd5(),
-                operator = userId,
                 overwrite = true
             )
         }
@@ -154,6 +148,15 @@ class CocoapodsLocalRepository(
                     ?.apply { packageDownloadIntercept(context, this) }
             }
         }
+    }
+
+    override fun buildDownloadRecord(
+        context: ArtifactDownloadContext,
+        artifactResource: ArtifactResource,
+    ): PackageDownloadRecord? {
+        return if (context.artifactInfo is CocoapodsArtifactInfo) {
+            cocoapodsPackageService.buildDownloadRecord(context.artifactInfo, context.userId)
+        } else null
     }
 
     private fun queryNodeDetailList(

@@ -36,17 +36,32 @@ import com.google.gson.JsonParser
 
 object CocoapodsUtil {
 
-    fun updatePodspecSource(podspecContent: String,tarFilePath: String): String {
-        // 定义正则匹配 s.source 的行
-        val sourceRegex = Regex("""s\.source\s*=\s*\{.*?\}""", RegexOption.DOT_MATCHES_ALL)
-        // 替换 source 字段为目标内容
-        val updatedContent = sourceRegex.replace(podspecContent) {
-            """s.source = { :http => "$tarFilePath", :type => 'tgz' }"""
+    /**
+     * 处理podspec文件，将s.source替换为s.source = { :http => "xxx", :type => 'tgz' }
+     */
+    fun updatePodspecSource(podspecContent: String, tarFilePath: String): String {
+        val lines = podspecContent.lines().toMutableList() // 将内容按行分割成列表
+        val targetPrefix = "s.source" // 目标行的前缀
+
+        val indent: String  // 记录原始缩进
+        val newSource = { level: String -> """${level}s.source = { :http => "$tarFilePath", :type => 'tgz' }""" }
+
+        // 遍历找到目标行并替换
+        for (i in lines.indices) {
+            val trimmedLine = lines[i].trimStart()
+            if (trimmedLine.startsWith(targetPrefix)) { // 定位到 s.source 开头的行
+                indent = lines[i].substring(0, lines[i].indexOf(trimmedLine)) // 获取行的缩进
+                lines[i] = newSource(indent) // 替换为目标内容，保留缩进
+                break
+            }
         }
-        return updatedContent
+
+        return lines.joinToString("\n")
     }
 
-
+    /**
+     * 处理podspec.json文件，将s.source替换为s.source = { :http => "xxx", :type => 'tgz' }
+     */
     fun updatePodspecJsonSource(podspecJsonContent: String, tarFilePath: String): String {
         val jsonObject = JsonParser.parseString(podspecJsonContent).asJsonObject
         // 替换 source 字段为目标内容

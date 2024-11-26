@@ -33,6 +33,7 @@ import com.google.common.cache.LoadingCache
 import com.google.common.util.concurrent.UncheckedExecutionException
 import com.mongodb.client.result.DeleteResult
 import com.tencent.bkrepo.common.api.constant.CharPool
+import com.tencent.bkrepo.common.artifact.constant.EXPIRED_DELETED_NODE
 import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
 import com.tencent.bkrepo.job.DELETED_DATE
 import com.tencent.bkrepo.job.ID
@@ -46,14 +47,19 @@ import com.tencent.bkrepo.job.batch.context.DeletedNodeCleanupJobContext
 import com.tencent.bkrepo.job.batch.utils.MongoShardingUtils
 import com.tencent.bkrepo.job.batch.utils.TimeUtils
 import com.tencent.bkrepo.job.config.properties.DeletedNodeCleanupJobProperties
+import com.tencent.bkrepo.repository.api.GlobalConfigClient
 import com.tencent.bkrepo.repository.api.StorageCredentialsClient
+import com.tencent.bkrepo.repository.pojo.config.ConfigType
+import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import org.slf4j.LoggerFactory
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.data.mongodb.core.findOne
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Update
+import org.springframework.data.mongodb.core.query.and
 import org.springframework.data.mongodb.core.query.isEqualTo
+import org.springframework.data.mongodb.core.query.where
 import org.springframework.stereotype.Component
 import java.time.Duration
 import java.time.LocalDateTime
@@ -67,7 +73,8 @@ import java.util.concurrent.TimeUnit
 @EnableConfigurationProperties(DeletedNodeCleanupJobProperties::class)
 class DeletedNodeCleanupJob(
     private val properties: DeletedNodeCleanupJobProperties,
-    private val storageCredentialsClient: StorageCredentialsClient
+    private val storageCredentialsClient: StorageCredentialsClient,
+    private val globalConfigClient: GlobalConfigClient
 ) : DefaultContextMongoDbJob<DeletedNodeCleanupJob.Node>(properties) {
 
     data class Node(
@@ -77,6 +84,7 @@ class DeletedNodeCleanupJob(
         val folder: Boolean,
         val sha256: String?,
         val deleted: LocalDateTime?,
+        val metadata: List<MetadataModel>?
     )
 
     data class FileReference(
@@ -103,10 +111,18 @@ class DeletedNodeCleanupJob(
     }
 
     override fun buildQuery(): Query {
-        val expireDate = LocalDateTime.now().minusDays(properties.deletedNodeReserveDays)
-        return Query(Criteria.where(Node::deleted.name).lt(expireDate))
+        val reserveDays = getDeletedNodeReserveDays() ?: properties.deletedNodeReserveDays
+        val expireDate = LocalDateTime.now().minusDays(reserveDays)
+        val criteria = Criteria().orOperator(
+            where(Node::deleted).lt(expireDate),
+            where(Node::metadata).elemMatch(
+                where(MetadataModel::key).isEqualTo(EXPIRED_DELETED_NODE).and(MetadataModel::value).isEqualTo(true)
+            )
+        )
+        return Query(criteria)
     }
 
+    @Suppress("UNCHECKED_CAST")
     override fun mapToEntity(row: Map<String, Any?>): Node {
         return Node(
             id = row[ID].toString(),
@@ -114,7 +130,8 @@ class DeletedNodeCleanupJob(
             repoName = row[REPO].toString(),
             folder = row[Node::folder.name] as Boolean,
             sha256 = row[Node::sha256.name] as String?,
-            deleted = TimeUtils.parseMongoDateTimeStr(row[DELETED_DATE].toString())
+            deleted = TimeUtils.parseMongoDateTimeStr(row[DELETED_DATE].toString()),
+            metadata = row[Node::metadata.name] as List<MetadataModel>?
         )
     }
 
@@ -240,6 +257,10 @@ class DeletedNodeCleanupJob(
         keySet.forEach {
             decrementFileReferences(sha256, it)
         }
+    }
+
+    fun getDeletedNodeReserveDays(): Long? {
+        return globalConfigClient.getConfig(ConfigType.DELETED_NODE_RESERVE_DAYS).data?.configuration?.toLong()
     }
 
     data class RepositoryId(val projectId: String, val repoName: String) {

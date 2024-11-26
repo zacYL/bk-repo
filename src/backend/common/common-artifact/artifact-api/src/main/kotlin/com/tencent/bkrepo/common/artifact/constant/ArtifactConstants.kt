@@ -165,6 +165,8 @@ const val SCAN_STATUS = "scanStatus"
 
 // 删除节点操作的顶层节点，在回收站显示
 const val ROOT_DELETED_NODE = "_root_deleted_node"
+// 跳过节点保留时间删除
+const val EXPIRED_DELETED_NODE = "_expired_deleted_node"
 
 /**
  * 元数据KEY保留字，仅允许系统使用
@@ -178,7 +180,8 @@ val RESERVED_KEY = setOf(
     LOCK_STATUS,
     LOCK_USER,
     LOCK_TYPE,
-    ROOT_DELETED_NODE
+    ROOT_DELETED_NODE,
+    EXPIRED_DELETED_NODE
 )
 
 const val METADATA_KEY_PACKAGE_NAME = "packageName"

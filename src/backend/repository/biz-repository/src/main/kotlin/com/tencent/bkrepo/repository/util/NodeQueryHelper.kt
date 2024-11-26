@@ -60,13 +60,18 @@ object NodeQueryHelper {
     }
 
     // 查找节点及该节点下的所有子节点
-    fun nodeTreeCriteria(projectId: String, repoName: String, fullPath: String): Criteria {
+    fun nodeTreeCriteria(
+        projectId: String,
+        repoName: String,
+        fullPath: String,
+        deletedTime: LocalDateTime? = null
+    ): Criteria {
         val normalizedFullPath = normalizeFullPath(fullPath)
         val normalizedPath = toPath(normalizedFullPath)
         val escapedPath = escapeRegex(normalizedPath)
         val criteria = where(TNode::projectId).isEqualTo(projectId)
             .and(TNode::repoName).isEqualTo(repoName)
-            .and(TNode::deleted).isEqualTo(null)
+            .and(TNode::deleted).isEqualTo(deletedTime)
             .orOperator(
                 where(TNode::fullPath).regex("^$escapedPath"),
                 where(TNode::fullPath).isEqualTo(normalizedFullPath)

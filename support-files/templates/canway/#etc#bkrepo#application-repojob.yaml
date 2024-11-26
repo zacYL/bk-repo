@@ -11,6 +11,3 @@ service:
 job:
   repoRefreshJobProperties:
     enabled: false
-  deleted-node-cleanup:
-    # 已删除节点保留天数
-    deletedNodeReserveDays: 14

@@ -30,7 +30,8 @@ package com.tencent.bkrepo.cocoapods.exception
 import com.tencent.bkrepo.common.api.message.MessageCode
 
 enum class CocoapodsMessageCode(private val key: String) : MessageCode {
-    COCOAPODS_PODSPEC_NOT_FOUND("cocoapods.podspec.not.found")
+    COCOAPODS_PODSPEC_NOT_FOUND("cocoapods.podspec.not.found"),
+    COCOAPODS_FILE_PARSE_ERROR("cocoapods.file.parse.error")
     ;
     override fun getBusinessCode() = ordinal + 1
     override fun getKey() = key

@@ -6,6 +6,7 @@ import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.repository.api.PackageClient
+import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
 import org.slf4j.LoggerFactory
@@ -13,7 +14,7 @@ import org.springframework.stereotype.Service
 
 @Service
 class CocoapodsPackageService(
-    private val packageClient: PackageClient,
+    private val packageClient: PackageClient
 ) {
     fun createVersion(
         artifactInfo: CocoapodsArtifactInfo,
@@ -35,6 +36,18 @@ class CocoapodsPackageService(
             )
             packageClient.createVersion(request, HttpContextHolder.getClientAddress())
             logger.info("created version for cocoapods,repo [$repoName], package[$name $version]")
+        }
+    }
+
+    fun buildDownloadRecord(artifactInfo: CocoapodsArtifactInfo, userId: String): PackageDownloadRecord? {
+        with(artifactInfo) {
+            return PackageDownloadRecord(
+                projectId = projectId,
+                repoName = repoName,
+                packageKey = name,
+                packageVersion = version,
+                userId = userId
+            )
         }
     }
 

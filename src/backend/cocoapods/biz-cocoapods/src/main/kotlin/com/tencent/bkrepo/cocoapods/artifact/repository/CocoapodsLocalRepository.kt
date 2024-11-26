@@ -30,6 +30,10 @@ package com.tencent.bkrepo.cocoapods.artifact.repository
 import com.tencent.bkrepo.cocoapods.artifact.CocoapodsProperties
 import com.tencent.bkrepo.cocoapods.constant.DOT_SPECS
 import com.tencent.bkrepo.cocoapods.constant.SPECS
+import com.tencent.bkrepo.cocoapods.constant.SPECS_FILE_CONTENT
+import com.tencent.bkrepo.cocoapods.constant.SPECS_FILE_NAME
+import com.tencent.bkrepo.cocoapods.exception.CocoapodsFileParseException
+import com.tencent.bkrepo.cocoapods.exception.CocoapodsMessageCode
 import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo
 import com.tencent.bkrepo.cocoapods.service.CocoapodsPackageService
 import com.tencent.bkrepo.cocoapods.utils.DecompressUtil.getPodSpec
@@ -46,6 +50,7 @@ import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeListOption
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
@@ -60,13 +65,29 @@ class CocoapodsLocalRepository(
     private val cocoapodsPackageService: CocoapodsPackageService,
 ) : LocalRepository() {
     override fun onUploadBefore(context: ArtifactUploadContext) {
-        //todo 校验文件
-        super.onUploadBefore(context)
+
+        with(context) {
+            val artifactInfo = context.artifactInfo as CocoapodsArtifactInfo
+            try {
+                getArtifactFile().getInputStream().use {
+                    //只支持tar.gz格式
+                    val tarFilePath = generateCachePath(artifactInfo, cocoapodsProperties.domain)
+                    val (fileName, podSpec) = it.getPodSpec(tarFilePath)
+                    putAttribute(SPECS_FILE_NAME, fileName)
+                    putAttribute(SPECS_FILE_CONTENT, podSpec)
+                }
+            } catch (e: Exception) {
+                logger.error("projectId [$projectId],repo [$repoName] upload package [${artifactInfo.name}] error, ${e.message}")
+                throw CocoapodsFileParseException(CocoapodsMessageCode.COCOAPODS_FILE_PARSE_ERROR)
+            }
+        }
         with(context.artifactInfo as CocoapodsArtifactInfo) {
             packageClient
                 .findVersionByName(projectId, repoName, PackageKeys.ofCocoapods(name), version).data
                 ?.apply { uploadIntercept(context, this) }
         }
+
+        super.onUploadBefore(context)
     }
 
     override fun onUploadSuccess(context: ArtifactUploadContext) {
@@ -75,8 +96,8 @@ class CocoapodsLocalRepository(
             val artifactInfo = artifactInfo as CocoapodsArtifactInfo
             //在.specs目录创建索引文件
             getArtifactFile().getInputStream().use {
-                val tarFilePath = generateCachePath(artifactInfo, cocoapodsProperties.domain)
-                val (fileName, podSpec) = it.getPodSpec(tarFilePath)
+                val fileName = getAttribute<String>(SPECS_FILE_NAME)
+                val podSpec = getAttribute<String>(SPECS_FILE_CONTENT)
                 ByteArrayOutputStream().use { bos ->
                     OutputStreamWriter(bos, Charsets.UTF_8).use { writer ->
                         writer.write(podSpec)
@@ -99,15 +120,8 @@ class CocoapodsLocalRepository(
         with(context) {
             val fullPath = generateFullPath(artifactInfo as CocoapodsArtifactInfo)
             logger.info("File $fullPath will be stored in $projectId|$repoName")
-            return NodeCreateRequest(
-                projectId = projectId,
-                repoName = repoName,
-                folder = false,
+            return super.buildNodeCreateRequest(context).copy(
                 fullPath = fullPath,
-                size = getArtifactFile().getSize(),
-                sha256 = getArtifactSha256(),
-                md5 = getArtifactMd5(),
-                operator = userId,
                 overwrite = true
             )
         }
@@ -154,6 +168,16 @@ class CocoapodsLocalRepository(
                     ?.apply { packageDownloadIntercept(context, this) }
             }
         }
+    }
+
+    override fun buildDownloadRecord(
+        context: ArtifactDownloadContext,
+        artifactResource: ArtifactResource,
+    ): PackageDownloadRecord? {
+        val artifactInfo = context.artifactInfo
+        return if (artifactInfo is CocoapodsArtifactInfo) {
+            cocoapodsPackageService.buildDownloadRecord(artifactInfo, context.userId)
+        } else null
     }
 
     private fun queryNodeDetailList(

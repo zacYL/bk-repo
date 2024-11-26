@@ -25,17 +25,10 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.cocoapods.constant
+package com.tencent.bkrepo.cocoapods.exception
 
-const val USER_API_PREFIX = "/ext"
-const val NAME = "name"
-const val VERSION = "version"
-const val FILE_NAME = "fileName"
-const val ORG_NAME = "orgName"
-const val DOT_SPECS = ".specs"
-const val SPECS = "Specs"
-const val SPECS_FILE_NAME = "specs_file_name"
-const val SPECS_FILE_CONTENT = "specs_file_content"
-const val CLIENT_PLUGIN_NAME = "bk-cocoapods-1.0.0.gem"
-const val CLIENT_PLUGIN_PATH = "cli/bk-cocoapods-1.0.0.gem"
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.api.message.MessageCode
+
+class CocoapodsFileParseException(messageCode: MessageCode): ErrorCodeException(messageCode)
 

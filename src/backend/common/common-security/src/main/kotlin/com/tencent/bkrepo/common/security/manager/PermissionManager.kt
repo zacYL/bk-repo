@@ -260,6 +260,19 @@ open class PermissionManager(
     }
 
     /**
+     * 校验是否为admin角色
+     * @param userId 用户id
+     */
+    fun isAdmin(userId: String) {
+        if (!httpAuthProperties.enabled) {
+            return
+        }
+        if (permissionResource.isAdmin(userId).data != true) {
+            throw PermissionException()
+        }
+    }
+
+    /**
      * 判断是否为public仓库且为READ操作
      */
     private fun isReadPublicRepo(

@@ -153,7 +153,7 @@ class WebHookServiceImpl(
             AssociationType.SYSTEM -> {
                 projectId = ""
                 repoName = ""
-                permissionManager.checkPrincipal(userId, PrincipalType.ADMIN)
+                permissionManager.isAdmin(userId)
             }
             AssociationType.PROJECT -> {
                 Preconditions.checkNotNull(associationId, "associationId")

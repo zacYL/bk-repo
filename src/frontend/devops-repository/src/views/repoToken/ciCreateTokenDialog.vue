@@ -22,6 +22,20 @@
             <bk-form-item :label="$t('name')" required property="name" error-display-type="normal">
                 <bk-input v-model.trim="tokenFormData.name" maxlength="32" show-word-limit></bk-input>
             </bk-form-item>
+            <!-- 过期时间 -->
+            <bk-form-item :property="'expiredTime'" :label="$t('expire')">
+                <bk-date-picker
+                    transfer
+                    v-model="tokenFormData.expiredTime"
+                    class="mt5"
+                    style="width: 428px;"
+                    :options="{ disabledDate: function (time) {
+                        return time.getTime() <= Date.now()
+                    } }"
+                    :shortcuts="shortcuts"
+                    :placeholder="$t('chooseExpire')">
+                </bk-date-picker>
+            </bk-form-item>
             <bk-form-item :label="$t('tokenScope')" required property="tokenScope" error-display-type="normal">
                 <bk-checkbox
                     disabled
@@ -52,6 +66,7 @@
                 loading: false,
                 tokenFormData: {
                     name: '',
+                    expiredTime: '',
                     tokenScope: true
                 },
                 rules: {
@@ -63,6 +78,40 @@
                         }
                     ]
                 },
+                shortcuts: [
+                    {
+                        text: this.$t('lastDays', [7]),
+                        value () {
+                            const start = new Date()
+                            start.setTime(start.getTime() + 3600 * 1000 * 24 * 7)
+                            return start
+                        }
+                    },
+                    {
+                        text: this.$t('lastDays', [30]),
+                        value () {
+                            const start = new Date()
+                            start.setTime(start.getTime() + 3600 * 1000 * 24 * 30)
+                            return start
+                        }
+                    },
+                    {
+                        text: this.$t('lastDays', [90]),
+                        value () {
+                            const start = new Date()
+                            start.setTime(start.getTime() + 3600 * 1000 * 24 * 90)
+                            return start
+                        }
+                    },
+                    {
+                        text: this.$t('lastYears', [1]),
+                        value () {
+                            const start = new Date()
+                            start.setTime(start.getTime() + 3600 * 1000 * 24 * 365)
+                            return start
+                        }
+                    }
+                ],
                 token: ''
             }
         },
@@ -71,7 +120,8 @@
             showDialogHandler () {
                 this.show = true
                 this.tokenFormData = {
-                    name: ''
+                    name: '',
+                    expiredTime: ''
                 }
                 this.token = ''
                 this.$refs.tokenForm && this.$refs.tokenForm.clearError()
@@ -81,7 +131,8 @@
                 this.loading = true
                 this.ciCreateToken({
                     tokenName: this.tokenFormData.name,
-                    tokenScope: ['CPack']
+                    tokenScope: ['CPack'],
+                    expiredTime: this.tokenFormData.expiredTime
                 }).then((res) => {
                     this.$emit('token', res)
                     this.token = res

@@ -364,7 +364,7 @@ export default {
     },
 
     /**
-     * @description: 回收站保存时间
+     * @description: 设置回收站保存时间
      * @param {*} _
      * @param {*} params
      * @return {*}
@@ -373,7 +373,7 @@ export default {
         return Vue.prototype.$ajax.post(prefix + '/config/update', params)
     },
     /**
-     * @description: 回收站保存时间
+     * @description: 读取回收站保存时间
      * @param {*} _
      * @return {*}
      */

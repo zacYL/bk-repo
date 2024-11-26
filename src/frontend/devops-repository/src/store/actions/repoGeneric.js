@@ -361,5 +361,23 @@ export default {
      */
     nodeDelete (_, { projectId, repoName, fullPath, deleteTime }) {
         return Vue.prototype.$ajax.delete(`${prefix}/recycle-bin/node/delete/${projectId}/${repoName}/${fullPath}?deletedId=${deleteTime}`)
+    },
+
+    /**
+     * @description: 回收站保存时间
+     * @param {*} _
+     * @param {*} params
+     * @return {*}
+     */
+    setRecycleBinSaveTime (_, params) {
+        return Vue.prototype.$ajax.post(prefix + '/config/update', params)
+    },
+    /**
+     * @description: 回收站保存时间
+     * @param {*} _
+     * @return {*}
+     */
+    getRecycleBinSaveTime (_) {
+        return Vue.prototype.$ajax.get(prefix + '/config/info?type=DELETED_NODE_RESERVE_DAYS')
     }
 }

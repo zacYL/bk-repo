@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-22 10:22:36
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-11-22 14:09:48
+ * @LastEditTime: 2024-11-27 18:05:28
  * @FilePath: /artifact/src/frontend/devops-repository/src/views/repoConfig/permissionConfig/index.vue
 -->
 <template>
@@ -21,17 +21,31 @@
                 <template #empty>
                     <empty-data :is-loading="isLoading"></empty-data>
                 </template>
+                <!-- 权限名称 -->
+                <bk-table-column :label="$t('permName')" prop="permName">
+                </bk-table-column>
                 <!-- 路径集合 -->
                 <bk-table-column :label="$t('pathCollection')" prop="repoName" :render-header="renderHeader" show-overflow-tooltip>
+                    <template #default="{ row }">
+                        <div>
+                            {{ row.includePattern.join('、') }}
+                        </div>
+                    </template>
                 </bk-table-column>
                 <!-- 创建人 -->
-                <bk-table-column :label="$t('createdBy')" prop="repoName">
+                <bk-table-column :label="$t('createdBy')" prop="createBy">
                 </bk-table-column>
                 <!-- 创建时间 -->
-                <bk-table-column :label="$t('createdDate')" prop="repoName">
+                <bk-table-column :label="$t('createdDate')" prop="createAt">
+                    <template #default="{ row }">
+                        {{ formatTime(row.createAt) }}
+                    </template>
                 </bk-table-column>
                 <!-- 更新时间 -->
-                <bk-table-column :label="$t('updateTime')" prop="repoName">
+                <bk-table-column :label="$t('updateTime')" prop="updateAt">
+                    <template #default="{ row }">
+                        {{ formatTime(row.updateAt) }}
+                    </template>
                 </bk-table-column>
                 <!-- 操作 -->
                 <bk-table-column :label="$t('operation')">
@@ -42,40 +56,29 @@
                 </bk-table-column>
             </bk-table>
         </main>
-        <bk-pagination
-            class="p10"
-            size="small"
-            align="right"
-            show-total-count
-            @change="current => handlerPaginationChange({ current })"
-            @limit-change="limit => handlerPaginationChange({ limit })"
-            :current.sync="pagination.current"
-            :limit="pagination.limit"
-            :count="pagination.count"
-            :limit-list="pagination.limitList">
-        </bk-pagination>
-        <PermissionSideslider v-bind="PermissionConfig" :is-show.sync="PermissionConfig.isShow"></PermissionSideslider>
+        <PermissionSideslider v-bind="PermissionConfig" :is-show.sync="PermissionConfig.isShow" @submit="submit"></PermissionSideslider>
     </div>
 </template>
 <script>
-    import { cloneDeep } from 'lodash'
     import PermissionSideslider from './permissionSideslider.vue'
-    const paginationParams = {
-        count: 0,
-        current: 1,
-        limit: 20,
-        limitList: [10, 20, 40]
-    }
+    import { mapActions } from 'vuex'
+    import moment from 'moment'
     export default {
         name: 'permission-config',
         components: {
             PermissionSideslider
         },
+        props: {
+            baseData: {
+                type: Object,
+                default: () => ({})
+            }
+        },
         data () {
             return {
                 isLoading: false,
-                pagination: cloneDeep(paginationParams),
                 permissionList: [],
+                editRow: {},
                 PermissionConfig: {
                     isShow: false,
                     title: this.$t('createPathCollection'),
@@ -85,19 +88,31 @@
             }
         },
         created () {
-            this.handlerPaginationChange({ current: 1, limit: 20 })
+            this.getPermissionList()
         },
         methods: {
+            ...mapActions(['repoPathUpdate', 'repoPathList', 'repoPathDelete', 'repoPathCreate']),
+            formatTime (dateTimeString) {
+                const momentObj = moment(dateTimeString)
+                const formattedDateTime = momentObj.format('YYYY-MM-DD HH:mm:ss.SS')
+                return formattedDateTime
+            },
             createPermission () {
+                this.editRow = {}
                 this.PermissionConfig.isShow = true
                 this.PermissionConfig.title = this.$t('createPathCollection')
                 this.PermissionConfig.type = 'create'
+                this.PermissionConfig.insertForm = {}
             },
             editPermission (row) {
+                this.editRow = row
                 this.PermissionConfig.isShow = true
                 this.PermissionConfig.title = this.$t('editPathCollection')
                 this.PermissionConfig.type = 'edit'
-                this.PermissionConfig.insertForm = row
+                this.PermissionConfig.insertForm = {
+                    name: row.permName,
+                    path: row.includePattern
+                }
             },
             renderHeader (h, data) {
                 const directive = {
@@ -123,79 +138,38 @@
                     this.$t('pathCollection') // 子节点（文本）
                 )
             },
-            // 分页
-            handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
-                this.pagination.current = current
-                this.pagination.limit = limit
-                this.getRecycleBinList()
-            },
             // 获取权限列表
             getPermissionList () {
                 const body = {
-                    page: {
-                        pageNumber: this.pagination.current,
-                        pageSize: this.pagination.limit
-                    },
-                    sort: {
-                        properties: [
-                            'lastModifiedDate'
-                        ],
-                        direction: 'DESC'
-                    },
-                    rule: {
-                        rules: [
-                            {
-                                field: 'projectId',
-                                value: this.projectId,
-                                operation: 'EQ'
-                            },
-                            {
-                                field: 'name',
-                                value: this.name,
-                                operation: 'EQ'
-                            }
-                        ],
-                        relation: 'AND'
-                    }
+                    projectId: this.baseData.projectId,
+                    repo: this.baseData.name
                 }
+                
                 this.isLoading = true
-                const url = '/repository/api/packageVersion/search'
-                return this.$ajax.post(
-                    url,
-                    body
+                return this.repoPathList(
+                    { body }
                 ).then(res => {
-                    this.permissionList = res.records
-                    this.pagination.count = res.totalRecords
+                    this.permissionList = res
                 }).finally(() => {
                     this.isLoading = false
                 })
             },
-
-            resetTable () {
-                let current = 0
-                if (this.permissionList.length === 1) {
-                    if (this.pagination.current === 1) {
-                        current = 1
-                    } else {
-                        current = this.pagination.current - 1
-                    }
-                } else {
-                    current = this.pagination.current
-                }
-                this.handlerPaginationChange({ current: current })
-            },
             remove (row) {
                 this.$bkInfoDevopsConfirm({
-                    subTitle: this.$t('permanentlyDeleteTips'),
+                    subTitle: this.$t('deleteTips'),
                     theme: 'danger',
                     confirmFn: () => {
-                        // todo 缺一个删除接口
-                        Promise.resolve().then(() => {
+                        this.repoPathDelete({
+                            body: {
+                                permissionId: row.id,
+                                projectId: this.baseData.projectId
+                            }
+                        }).then(() => {
                             this.$bkMessage({
                                 theme: 'success',
                                 message: this.$t('removeSuccess')
                             })
-                            this.resetTable()
+                            this.getPermissionList()
                         }).catch(() => {
                             this.$bkMessage({
                                 theme: 'error',
@@ -203,6 +177,39 @@
                             })
                         })
                     }
+                })
+            },
+            submit (form, cb) {
+                const method = this.PermissionConfig.type === 'create' ? this.repoPathCreate : this.repoPathUpdate
+                const body = {
+                    includePattern: form.path.map(item => item.value),
+                    permName: form.name,
+                    projectId: this.baseData.projectId,
+                    ...this.PermissionConfig.type === 'create'
+                        ? {
+                            repos: [
+                                this.baseData.name
+                            ]
+                        }
+                        : {
+                            permissionId: this.editRow.id
+                        }
+                    
+                }
+                method(
+                    { body }
+                ).then(res => {
+                    this.$bkMessage({
+                        theme: 'success',
+                        message: this.PermissionConfig.type === 'create' ? this.$t('createSuccess') : this.$t('editSuccess')
+                    })
+                    this.getPermissionList()
+                    cb()
+                }).catch(() => {
+                    this.$bkMessage({
+                        theme: 'error',
+                        message: this.PermissionConfig.type === 'create' ? this.$t('createFail') : this.$t('editFail')
+                    })
                 })
             }
 

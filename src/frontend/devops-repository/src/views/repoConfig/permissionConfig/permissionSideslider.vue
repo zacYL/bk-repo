@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-22 11:03:13
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-11-22 14:39:06
+ * @LastEditTime: 2024-11-27 17:58:25
  * @FilePath: /artifact/src/frontend/devops-repository/src/views/repoConfig/permissionConfig/permissionSideslider.vue
 -->
 <template>
@@ -144,7 +144,9 @@
                 if (this.type === 'create') {
                     this.form = cloneDeep(BASE_FORM)
                 } else if (this.type === 'edit') {
-                    this.form = cloneDeep(this.insertForm)
+                    const { name, path } = cloneDeep(this.insertForm)
+                    this.form.name = name
+                    this.form.path = path.map(item => ({ value: item }))
                 }
             },
             /**
@@ -172,6 +174,8 @@
                     if (valid) {
                         this.$emit('submit', this.form, cb)
                     }
+                }).catch(() => {
+                    
                 })
             },
 

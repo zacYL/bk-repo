@@ -63,6 +63,7 @@
         name: 'createToken',
         data () {
             return {
+                moment,
                 show: false,
                 loading: false,
                 tokenFormData: {

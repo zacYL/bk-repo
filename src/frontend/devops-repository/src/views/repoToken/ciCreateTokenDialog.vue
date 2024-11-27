@@ -22,6 +22,15 @@
             <bk-form-item :label="$t('name')" required property="name" error-display-type="normal">
                 <bk-input v-model.trim="tokenFormData.name" maxlength="32" show-word-limit></bk-input>
             </bk-form-item>
+            <bk-form-item :label="$t('tokenScope')" required property="tokenScope" error-display-type="normal">
+                <bk-checkbox
+                    disabled
+                    checked
+                    v-model="tokenScope">
+                    {{$t('CPack')}}
+                </bk-checkbox>
+                <span class="token-scope-info">{{$t('CPackTokenInfo')}}</span>
+            </bk-form-item>
             <!-- 过期时间 -->
             <bk-form-item :property="'expiredTime'" :label="$t('expire')">
                 <bk-date-picker
@@ -35,15 +44,6 @@
                     :shortcuts="shortcuts"
                     :placeholder="$t('chooseExpire')">
                 </bk-date-picker>
-            </bk-form-item>
-            <bk-form-item :label="$t('tokenScope')" required property="tokenScope" error-display-type="normal">
-                <bk-checkbox
-                    disabled
-                    checked
-                    v-model="tokenScope">
-                    {{$t('CPack')}}
-                </bk-checkbox>
-                <span class="token-scope-info">{{$t('CPackTokenInfo')}}</span>
             </bk-form-item>
         </bk-form>
         <template #footer>

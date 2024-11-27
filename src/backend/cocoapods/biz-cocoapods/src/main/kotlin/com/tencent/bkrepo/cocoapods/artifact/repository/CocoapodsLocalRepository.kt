@@ -39,6 +39,7 @@ import com.tencent.bkrepo.cocoapods.service.CocoapodsPackageService
 import com.tencent.bkrepo.cocoapods.utils.DecompressUtil.getPodSpec
 import com.tencent.bkrepo.cocoapods.utils.PathUtil.generateCachePath
 import com.tencent.bkrepo.cocoapods.utils.PathUtil.generateFullPath
+import com.tencent.bkrepo.cocoapods.utils.PathUtil.generateIndexPath
 import com.tencent.bkrepo.common.api.constant.CharPool.SLASH
 import com.tencent.bkrepo.common.api.constant.MediaTypes
 import com.tencent.bkrepo.common.api.constant.ensurePrefix
@@ -97,6 +98,7 @@ class CocoapodsLocalRepository(
             //在.specs目录创建索引文件
             val fileName = getAttribute<String>(SPECS_FILE_NAME)
             val podSpec = getAttribute<String>(SPECS_FILE_CONTENT)
+                ?: throw CocoapodsFileParseException(CocoapodsMessageCode.COCOAPODS_FILE_PARSE_ERROR)
             ByteArrayOutputStream().use { bos ->
                 OutputStreamWriter(bos, Charsets.UTF_8).use { writer ->
                     writer.write(podSpec)
@@ -104,7 +106,7 @@ class CocoapodsLocalRepository(
                 val specArtifact = ArtifactFileFactory.build(bos.toByteArray().inputStream())
                 val uploadContext = ArtifactUploadContext(specArtifact)
                 val specNode = buildNodeCreateRequest(uploadContext).run {
-                    copy(fullPath = "$DOT_SPECS/${artifactInfo.name}/${artifactInfo.version}/${fileName}")
+                    copy(fullPath = generateIndexPath(artifactInfo, fileName))
                 }
                 storageManager.storeArtifactFile(specNode, specArtifact, uploadContext.storageCredentials)
             }

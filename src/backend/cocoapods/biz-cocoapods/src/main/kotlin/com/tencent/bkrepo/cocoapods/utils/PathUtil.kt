@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.cocoapods.utils
 
+import com.tencent.bkrepo.cocoapods.constant.DOT_SPECS
 import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
@@ -50,6 +51,9 @@ object PathUtil {
             return parts?.getOrNull(0)?:""
         }
     }
+
+    fun generateIndexPath(artifactInfo: CocoapodsArtifactInfo, fileName: String?) =
+        "$DOT_SPECS/${artifactInfo.name}/${artifactInfo.version}/${fileName}"
 
     fun ArtifactUploadContext.generateCachePath(artifactInfo: CocoapodsArtifactInfo, domain: String) =
         "${domain}/${projectId}/${repoName}/${artifactInfo.getArtifactFullPath()}"

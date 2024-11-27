@@ -50,7 +50,7 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 @Component
-open class GzArtifactResourceWriter(
+class GzArtifactResourceWriter(
     private val storageProperties: StorageProperties,
 ) : BaseArtifactResourceWriter(storageProperties) {
 
@@ -69,7 +69,6 @@ open class GzArtifactResourceWriter(
     private fun writeSingleArtifact(resource: ArtifactResource): Throughput {
         val request = HttpContextHolder.getRequest()
         val response = HttpContextHolder.getResponse()
-        val name = resource.getSingleName()
         val cacheControl = resource.node?.metadata?.get(HttpHeaders.CACHE_CONTROL)?.toString()
             ?: StringPool.NO_CACHE
 
@@ -124,8 +123,9 @@ open class GzArtifactResourceWriter(
                         // 压缩多个文件并保留路径
                         resource.artifactMap.forEach { (name, inputStream) ->
                             val entry = TarArchiveEntry(name)
-                            tarOutput.putArchiveEntry(entry)
                             val recordAbleInputStream = RecordAbleInputStream(inputStream)
+                            entry.size = recordAbleInputStream.available().toLong()
+                            tarOutput.putArchiveEntry(entry)
                             recordAbleInputStream.rateLimit(storageProperties.response.rateLimit.toBytes()).use {
                                 it.copyTo(tarOutput)
                             }
@@ -142,8 +142,8 @@ open class GzArtifactResourceWriter(
                             it.copyTo(tarOutput)
                         }
                         tarOutput.closeArchiveEntry()
-                        tarOutput.finish()
                     }
+                    tarOutput.finish()
                 }
                 resource.getTotalSize()
             }

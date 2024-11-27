@@ -57,6 +57,7 @@
 </template>
 <script>
     import { mapActions } from 'vuex'
+    import moment from 'moment'
     import { copyToClipboard } from '@repository/utils'
     export default {
         name: 'createToken',
@@ -132,7 +133,7 @@
                 this.ciCreateToken({
                     tokenName: this.tokenFormData.name,
                     tokenScope: ['CPack'],
-                    expiredTime: this.tokenFormData.expiredTime
+                    expiredTime: moment(this.tokenFormData.expiredTime).format('YYYY-MM-DD')
                 }).then((res) => {
                     this.$emit('token', res)
                     this.token = res

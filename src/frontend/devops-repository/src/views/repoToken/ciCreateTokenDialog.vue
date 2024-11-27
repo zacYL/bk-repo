@@ -39,7 +39,7 @@
                     class="mt5"
                     style="width: 428px;"
                     :options="{ disabledDate: function (time) {
-                        return time.getTime() <= Date.now()
+                        return time.getTime() < Date.now()
                     } }"
                     :shortcuts="shortcuts"
                     :placeholder="$t('chooseExpire')">

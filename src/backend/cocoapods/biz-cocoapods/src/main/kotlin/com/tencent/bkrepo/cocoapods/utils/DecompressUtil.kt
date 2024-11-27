@@ -61,6 +61,7 @@ object DecompressUtil {
         val (fileName, content) = getContentByExtensionsFromTarGz(this, PodSpecType.extendedNames())
         val type = PodSpecType.matchPath(fileName)
             ?: throw CocoapodsPodSpecNotFoundException(CocoapodsMessageCode.COCOAPODS_PODSPEC_NOT_FOUND)
+        //todo 校验包名与spec内容的name要一致
         val podSpecContent = when (type) {
             PodSpecType.POD_SPEC -> {
                 CocoapodsUtil.updatePodspecSource(content, cachePath)

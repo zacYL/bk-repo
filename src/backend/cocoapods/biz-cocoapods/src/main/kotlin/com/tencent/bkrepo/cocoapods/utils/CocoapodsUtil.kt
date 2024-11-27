@@ -37,22 +37,33 @@ import com.google.gson.JsonParser
 object CocoapodsUtil {
 
     /**
-     * 处理podspec文件，将s.source替换为s.source = { :http => "xxx", :type => 'tgz' }
+     * 处理 podspec 文件，将 s.source 替换为 s.source = { :http => "xxx", :type => 'tgz' }
      */
     fun updatePodspecSource(podspecContent: String, tarFilePath: String): String {
         val lines = podspecContent.lines().toMutableList() // 将内容按行分割成列表
         val targetPrefix = "s.source" // 目标行的前缀
-
-        val indent: String  // 记录原始缩进
         val newSource = { level: String -> """${level}s.source = { :http => "$tarFilePath", :type => 'tgz' }""" }
+        var insideSourceBlock = false // 用于标识是否在 `s.source` 定义中
+        var startIndex: Int? = null // 记录 `s.source` 的起始索引
 
         // 遍历找到目标行并替换
         for (i in lines.indices) {
             val trimmedLine = lines[i].trimStart()
-            if (trimmedLine.startsWith(targetPrefix)) { // 定位到 s.source 开头的行
-                indent = lines[i].substring(0, lines[i].indexOf(trimmedLine)) // 获取行的缩进
-                lines[i] = newSource(indent) // 替换为目标内容，保留缩进
-                break
+            if (trimmedLine.startsWith(targetPrefix)) { // 定位到 `s.source` 开头的行
+                startIndex = i
+                insideSourceBlock = true
+            }
+            if (insideSourceBlock) {
+                // 检查是否到达定义结束，以 `}` 结束
+                if (trimmedLine.endsWith("}")) {
+                    // 替换 `s.source` 的内容,获取起始行的缩进
+                    val indent = lines[startIndex!!].substring(0, lines[startIndex].indexOf(lines[startIndex].trimStart()))
+                    lines[startIndex] = newSource(indent) // 使用新的 source 内容替换起始行
+                    for (j in startIndex + 1..i) {
+                        lines[j] = "" // 清空多行定义的剩余部分
+                    }
+                    break
+                }
             }
         }
 

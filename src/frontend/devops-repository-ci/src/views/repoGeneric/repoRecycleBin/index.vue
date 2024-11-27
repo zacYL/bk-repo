@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-21 15:38:37
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-11-25 10:58:19
+ * @LastEditTime: 2024-11-25 18:46:38
  * @FilePath: /artifact/src/frontend/devops-repository-ci/src/views/repoGeneric/repoRecycleBin/index.vue
 -->
 <template>
@@ -30,25 +30,25 @@
                 <empty-data :is-loading="isLoading"></empty-data>
             </template>
             <!-- 制品包名称 -->
-            <bk-table-column :label="$t('composerInputLabel')" show-overflow-tooltip>
+            <bk-table-column :label="$t('name')" show-overflow-tooltip>
                 <template #default="{ row }">
-                    <span class="hover-btn">{{row.name}}</span>
+                    <span>{{row.name}}</span>
                 </template>
-            </bk-table-column>
-            <!-- 所属仓库 -->
-            <bk-table-column :label="$t('repo')" prop="repoName" show-overflow-tooltip>
             </bk-table-column>
             <!-- 原路径 -->
             <bk-table-column :label="$t('originalPath')" prop="fullPath" show-overflow-tooltip>
             </bk-table-column>
             <!-- 制品大小 -->
             <bk-table-column :label="$t('artifactSize')" prop="size">
+                <template #default="{ row }">
+                    <span>{{convertFileSize(row.size)}}</span>
+                </template>
             </bk-table-column>
             <!-- 删除时间 -->
-            <bk-table-column :label="$t('deleteTime')" prop="deleted">
+            <bk-table-column :label="$t('deleteTime')" prop="deleted" show-overflow-tooltip>
             </bk-table-column>
             <!-- 删除者 -->
-            <bk-table-column :label="$t('deleter')" prop="lastModifiedBy">
+            <bk-table-column :label="$t('deleter')" prop="lastModifiedBy" show-overflow-tooltip>
             </bk-table-column>
             <!-- 操作 -->
             <bk-table-column :label="$t('operation')">
@@ -75,6 +75,8 @@
 <script>
     import { cloneDeep } from 'lodash'
     import { mapActions } from 'vuex'
+
+    import { convertFileSize } from '@repository/utils'
     const paginationParams = {
         count: 0,
         current: 1,
@@ -102,10 +104,12 @@
             this.handlerPaginationChange({ current: 1, limit: 20 })
         },
         methods: {
+            convertFileSize,
             ...mapActions([
                 'getRecycleBinList',
                 'checkConflictPath',
-                'nodeRevert'
+                'nodeRevert',
+                'nodeDelete'
             ]),
             // 分页
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
@@ -190,7 +194,13 @@
             },
             revert (row) {
                 const generateRevertPromise = (type) => {
-                    return this.nodeRevert(this.projectId, this.repoName, row.fullPath, row.deleteTime, type)
+                    return this.nodeRevert({
+                        projectId: this.projectId,
+                        repoName: this.repoName,
+                        fullPath: row.fullPath,
+                        deleteTime: new Date(row.deleted).getTime(),
+                        type
+                    })
                 }
                 const cb = (revertPromise) => {
                     return revertPromise.then(() => {
@@ -220,8 +230,7 @@
                         }
                     })
                 }).catch(error => {
-                    // todo 仅仅404时进入下述判断，这里还有问题
-                    if (error) {
+                    if (error.status.toString() === '404') {
                         this.$bkInfoDevopsConfirm({
                             subTitle: this.$t('artifactRevert', [row.name]),
                             theme: 'success',
@@ -247,8 +256,13 @@
                     subTitle: this.$t('permanentlyDeleteTips'),
                     theme: 'danger',
                     confirmFn: () => {
-                        // todo 缺一个删除接口
-                        Promise.resolve().then(() => {
+                        // 彻底删除
+                        this.nodeDelete({
+                            projectId: this.projectId,
+                            repoName: this.repoName,
+                            fullPath: row.fullPath,
+                            deleteTime: new Date(row.deleted).getTime()
+                        }).then(() => {
                             this.$bkMessage({
                                 theme: 'success',
                                 message: this.$t('removeSuccess')

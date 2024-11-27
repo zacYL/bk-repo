@@ -342,11 +342,25 @@ export default {
      * @param {string} projectId
      * @param {string} repoName
      * @param {string} fullPath
-     * @param {string} deletedId
+     * @param {string} deleteTime
      * @param {string} type
      * @return {*}
      */
-    nodeRevert (_, projectId, repoName, fullPath, deletedId, type) {
-        return Vue.prototype.$ajax.post(`${prefix}/node/restore/${projectId}/${repoName}/${fullPath}?deletedId=${deletedId}&conflictStrategy=${type}`)
+    nodeRevert (_, { projectId, repoName, fullPath, deleteTime, type }) {
+        return Vue.prototype.$ajax.post(`${prefix}/node/restore/${projectId}/${repoName}/${fullPath}?deletedId=${deleteTime}&conflictStrategy=${type}`)
+    },
+
+    /**
+     * @description: 节点彻底删除
+     * @param {*} _
+     * @param {string} projectId
+     * @param {string} repoName
+     * @param {string} fullPath
+     * @param {string} deleteTime
+     * @return {*}
+     */
+    nodeDelete (_, { projectId, repoName, fullPath, deleteTime }) {
+        return Vue.prototype.$ajax.delete(`${prefix}/recycle-bin/node/delete/${projectId}/${repoName}/${fullPath}?deletedId=${deleteTime}`)
     }
+
 }

@@ -59,6 +59,7 @@ class CocoapodsWebService(
             cocoapodsFileService.deletePackageFile(artifactInfo)
         }
     }
+
     fun deleteVersion(artifactInfo: CocoapodsArtifactInfo, packageKey: String, version: String) {
         logger.info("cocoapods delete version...")
         with(artifactInfo) {
@@ -69,7 +70,7 @@ class CocoapodsWebService(
                 throw PackageNotFoundException(packageKey)
             }
             packageClient.deleteVersion(projectId, repoName, packageKey, version)
-            cocoapodsFileService.deleteVersionFile(artifactInfo,packageVersion)
+            cocoapodsFileService.deleteVersionFile(artifactInfo, packageVersion)
             logger.info("delete artifactInfo:[$artifactInfo],packageVersion:[$packageVersion]")
         }
     }
@@ -94,6 +95,5 @@ class CocoapodsWebService(
 
     companion object {
         private val logger = LoggerFactory.getLogger(CocoapodsWebService::class.java)
-
     }
 }

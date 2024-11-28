@@ -1,8 +1,11 @@
 package com.tencent.bkrepo.auth.api
 
 import com.tencent.bkrepo.auth.pojo.permission.AnyResourcePermissionSaveDTO
+import com.tencent.bkrepo.auth.pojo.permission.CustomPermissionQueryDTO
 import com.tencent.bkrepo.auth.pojo.permission.PermissionVO
 import com.tencent.bkrepo.auth.pojo.permission.RemoveInstancePermissionsRequest
+import com.tencent.bkrepo.auth.pojo.permission.ResourcePermissionSaveDTO
+import com.tencent.bkrepo.auth.pojo.permission.ResourcePermissionVO
 import com.tencent.bkrepo.common.api.constant.AUTH_HEADER_DEVOPS_UID
 import com.tencent.bkrepo.common.api.constant.DEVOPS_AUTH_SERVICE_NAME
 import com.tencent.bkrepo.common.api.pojo.Response
@@ -67,4 +70,42 @@ interface CanwayCustomPermissionClient {
         @ApiParam(value = "请求参数", required = true)
         request: RemoveInstancePermissionsRequest
     ): Response<Boolean>
+
+
+    @ApiOperation("自助查询权限列表")
+    @PostMapping(
+        "/query",
+        produces = [MediaType.APPLICATION_JSON_VALUE],
+        consumes = [MediaType.APPLICATION_JSON_VALUE]
+    )
+    fun queryPermission(
+        @RequestBody
+        option: CustomPermissionQueryDTO,
+    ): Response<List<PermissionVO>>
+
+    @ApiOperation("保存指定资源的任意权限和实例权限")
+    @PostMapping(
+        "/{scopeCode}/{scopeId}/{subjectCode}/{subjectId}/resource/save",
+        produces = [MediaType.APPLICATION_JSON_VALUE],
+        consumes = [MediaType.APPLICATION_JSON_VALUE]
+    )
+    fun saveResourcePermissions(
+        @RequestHeader(AUTH_HEADER_DEVOPS_UID)
+        @ApiParam(value = "用户ID", required = true)
+        userId: String,
+        @PathVariable
+        @ApiParam(value = "作用域ID", required = true)
+        scopeId: String,
+        @PathVariable
+        @ApiParam(value = "作用域类型", required = true)
+        scopeCode: String,
+        @PathVariable
+        @ApiParam(value = "授权主体类型", required = true)
+        subjectCode: String,
+        @PathVariable
+        @ApiParam(value = "授权主体Id", required = true)
+        subjectId: String,
+        @RequestBody
+        resources: ResourcePermissionSaveDTO,
+    ): Response<ResourcePermissionVO>
 }

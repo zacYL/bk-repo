@@ -211,11 +211,12 @@ open class PermissionManager(
             return
         }
         checkPermission(
-            type = ResourceType.REPO,
+            type = ResourceType.NODE,
             action = action,
             projectId = projectId,
             repoName = repoName,
-            anonymous = anonymous
+            anonymous = anonymous,
+            paths = path.toList()
         )
     }
     /**

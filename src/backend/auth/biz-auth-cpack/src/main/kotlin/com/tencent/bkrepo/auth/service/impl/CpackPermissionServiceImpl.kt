@@ -112,6 +112,15 @@ open class CpackPermissionServiceImpl constructor(
         return true
     }
 
+    override fun listNodePermission(projectId: String, repoName: String?): List<Permission> {
+        if (repoName == null) {
+            return permissionRepository.findByResourceTypeAndProjectId(ResourceType.NODE, projectId)
+                .map { transferPermission(it) }
+        }
+        return permissionRepository.findByResourceTypeAndProjectIdAndRepos(ResourceType.NODE, projectId, repoName)
+            .map { transferPermission(it) }
+    }
+
     override fun createPermission(request: CreatePermissionRequest): Boolean {
         logger.info("create  permission request : [$request]")
         // todo check request

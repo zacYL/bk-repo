@@ -93,4 +93,6 @@ interface PermissionService {
     fun isAdmin(userId: String, projectId: String?, tenantId: String?): Boolean
 
     fun deletePermissionData(projectId: String, repoName: String): Boolean
+
+    fun listNodePermission(projectId: String, repoName: String?): List<Permission>
 }

@@ -9,10 +9,16 @@ import com.tencent.bkrepo.auth.constant.AuthConstant.ANY_RESOURCE_CODE
 import com.tencent.bkrepo.auth.constant.AuthConstant.SCOPECODE
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.convertEnumListToStringList
+import com.tencent.bkrepo.auth.pojo.general.ScopeDTO
+import com.tencent.bkrepo.auth.pojo.permission.CustomPermissionQueryDTO
+import com.tencent.bkrepo.auth.pojo.permission.PermissionVO
 import com.tencent.bkrepo.auth.pojo.permission.RemoveInstancePermissionsRequest
 import com.tencent.bkrepo.auth.pojo.permission.UserPermissionQueryDTO
 import com.tencent.bkrepo.auth.pojo.permission.UserPermissionValidateDTO
+import com.tencent.bkrepo.auth.pojo.role.SubjectDTO
 import com.tencent.bkrepo.auth.service.impl.CanwayPermissionServiceImpl
+import com.tencent.bkrepo.common.devops.REPO_PATH_RESOURCECODE
+import com.tencent.bkrepo.common.devops.REPO_PATH_SCOPE_CODE
 import com.tencent.bkrepo.common.devops.RESOURCECODE
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -100,8 +106,8 @@ class DevOpsAuthGeneral(
         ).data?.let {
             repoList.addAll(
                 it.permissions
-                .filter { it.actionCodes.toSet() == convertEnumListToStringList(actions).toSet() }
-                .map { it.instanceId }
+                    .filter { it.actionCodes.toSet() == convertEnumListToStringList(actions).toSet() }
+                    .map { it.instanceId }
             )
         }
         logger.info("$actions Permission repoNameList:$repoList")
@@ -125,6 +131,28 @@ class DevOpsAuthGeneral(
                 scope = Pair(SCOPECODE, projectId)
             )
         ).data ?: false
+    }
+
+    fun getRepoPathCollectPermission(
+        userId: String,
+        projectId: String,
+        repoName: String,
+        actionCode: String,
+        pathCollectionIds: List<String>
+    ): List<PermissionVO> {
+        // 查询用户关联的角色和权限作用域
+        val subjects =
+            canwayProjectClient.getUserRelatedRoleAndPermissionScope(userId, projectId).data?.map { it.first }
+                ?: listOf(SubjectDTO.user(userId))
+        return canwayCustomPermissionClient.queryPermission(
+            CustomPermissionQueryDTO(
+                scopes = listOf(ScopeDTO(REPO_PATH_SCOPE_CODE, "${projectId}_${repoName}")),
+                subjects = subjects,
+                // 仓库路径集合授权没有任意权限，不用加*
+                instanceIds = pathCollectionIds,
+                resourceCodes = listOf(REPO_PATH_RESOURCECODE)
+            )
+        ).data ?: emptyList()
     }
 
     companion object {

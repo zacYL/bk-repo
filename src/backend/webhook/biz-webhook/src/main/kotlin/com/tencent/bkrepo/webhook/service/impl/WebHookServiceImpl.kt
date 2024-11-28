@@ -34,7 +34,6 @@ import com.tencent.bkrepo.common.api.util.Preconditions
 import com.tencent.bkrepo.common.api.util.readJsonString
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.security.manager.PermissionManager
-import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.webhook.constant.AssociationType
 import com.tencent.bkrepo.webhook.constant.WebHookRequestStatus
 import com.tencent.bkrepo.webhook.dao.WebHookDao

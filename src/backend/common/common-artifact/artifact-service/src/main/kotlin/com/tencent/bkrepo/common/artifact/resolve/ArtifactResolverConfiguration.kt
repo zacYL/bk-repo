@@ -37,12 +37,15 @@ import com.tencent.bkrepo.common.artifact.resolve.path.ArtifactInfoResolver
 import com.tencent.bkrepo.common.artifact.resolve.path.DefaultArtifactInfoResolver
 import com.tencent.bkrepo.common.artifact.resolve.path.ResolverMap
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResourceWriter
+import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResourceWriterContext
 import com.tencent.bkrepo.common.artifact.resolve.response.DefaultArtifactResourceWriter
+import com.tencent.bkrepo.common.artifact.resolve.response.GzArtifactResourceWriter
 import com.tencent.bkrepo.common.storage.core.StorageProperties
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
+import org.springframework.context.annotation.Primary
 import org.springframework.web.method.support.HandlerMethodArgumentResolver
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
@@ -83,9 +86,19 @@ class ArtifactResolverConfiguration {
     }
 
     @Bean
-    @ConditionalOnMissingBean(ArtifactResourceWriter::class)
-    fun artifactResourceWriter(storageProperties: StorageProperties): ArtifactResourceWriter {
+    @Primary
+    fun defaultArtifactResourceWriter(storageProperties: StorageProperties): ArtifactResourceWriter {
         return DefaultArtifactResourceWriter(storageProperties)
+    }
+
+    @Bean
+    fun gzArtifactResourceWriter(storageProperties: StorageProperties): ArtifactResourceWriter {
+        return GzArtifactResourceWriter(storageProperties)
+    }
+
+    @Bean
+    fun artifactResourceWriterContext(writers: List<ArtifactResourceWriter>): ArtifactResourceWriterContext {
+        return ArtifactResourceWriterContext(writers)
     }
 
     @Bean

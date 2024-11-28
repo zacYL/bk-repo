@@ -35,10 +35,8 @@ import com.tencent.bkrepo.common.artifact.constant.X_CHECKSUM_MD5
 import com.tencent.bkrepo.common.artifact.constant.X_CHECKSUM_SHA256
 import com.tencent.bkrepo.common.artifact.exception.ArtifactResponseException
 import com.tencent.bkrepo.common.artifact.metrics.RecordAbleInputStream
-import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.artifact.stream.ArtifactInputStream
 import com.tencent.bkrepo.common.artifact.stream.Range
-import com.tencent.bkrepo.common.artifact.stream.STREAM_BUFFER_SIZE
 import com.tencent.bkrepo.common.artifact.stream.closeQuietly
 import com.tencent.bkrepo.common.artifact.stream.rateLimit
 import com.tencent.bkrepo.common.artifact.util.http.HttpHeaderUtils.determineMediaType
@@ -49,7 +47,9 @@ import com.tencent.bkrepo.common.storage.core.StorageProperties
 import com.tencent.bkrepo.common.storage.monitor.Throughput
 import com.tencent.bkrepo.common.storage.monitor.measureThroughput
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
+import org.springframework.context.annotation.Primary
 import org.springframework.http.HttpMethod
+import org.springframework.stereotype.Component
 import java.io.IOException
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -62,9 +62,11 @@ import javax.servlet.http.HttpServletResponse
 /**
  * ArtifactResourceWriter默认实现
  */
+@Component
+@Primary
 open class DefaultArtifactResourceWriter(
     private val storageProperties: StorageProperties
-) : ArtifactResourceWriter {
+) : BaseArtifactResourceWriter(storageProperties) {
 
     @Throws(ArtifactResponseException::class)
     override fun write(resource: ArtifactResource): Throughput {
@@ -139,11 +141,7 @@ open class DefaultArtifactResourceWriter(
      * 响应多个构件时解析构件名称
      */
     private fun resolveMultiArtifactName(resource: ArtifactResource): String {
-        val baseName = when {
-            resource.node == null -> System.currentTimeMillis().toString()
-            PathUtils.isRoot(resource.node.name) -> resource.node.projectId + "-" + resource.node.repoName
-            else -> resource.node.name
-        }
+        val baseName = getBaseName(resource)
         return "$baseName.zip"
     }
 
@@ -259,17 +257,7 @@ open class DefaultArtifactResourceWriter(
         return node.sha256!!
     }
 
-    /**
-     * 获取动态buffer size
-     * @param totalSize 数据总大小
-     */
-    private fun getBufferSize(totalSize: Int): Int {
-        val bufferSize = storageProperties.response.bufferSize.toBytes().toInt()
-        if (bufferSize < 0 || totalSize < 0) {
-            return STREAM_BUFFER_SIZE
-        }
-        return if (totalSize < bufferSize) totalSize else bufferSize
-    }
+
 
     /**
      * 根据[artifactName]生成ZipEntry

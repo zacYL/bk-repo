@@ -46,7 +46,8 @@ enum class PackageType(val schema: String, val versionSortProperty: String = Pac
     NUGET("nuget"),
     CONAN("conan"),
     OCI("oci"),
-    GO("go", PackageVersion::ordinal.name);
+    GO("go", PackageVersion::ordinal.name),
+    COCOAPODS("cocoapods");
 
     companion object {
         fun fromSchema(schema: String) = values().find { it.schema == schema }

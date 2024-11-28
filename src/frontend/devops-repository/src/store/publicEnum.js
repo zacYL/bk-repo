@@ -11,7 +11,8 @@ export const repoEnum = [
     // { label: 'Git', value: 'git' },
     { label: 'Nuget', value: 'nuget' },
     { label: 'Conan', value: 'conan' },
-    { label: 'Go', value: 'go' }
+    { label: 'Go', value: 'go' },
+    { label: 'Cocoapods', value: 'cocoapods' }
 ]
 // 虚拟仓库支持创建的仓库
 export const repoSupportEnum = [

@@ -1,3 +1,9 @@
+/*
+ * @Date: 2024-11-01 22:08:22
+ * @LastEditors: xiaoshan
+ * @LastEditTime: 2024-11-26 10:45:55
+ * @FilePath: /artifact/src/frontend/devops-repository/src/store/actions/repoCatalog.js
+ */
 import Vue from 'vue'
 
 const prefix = 'repository/api'
@@ -52,7 +58,7 @@ export default {
         )
     },
     // 分页， 依赖目录页面搜索功能，通过文件或文件夹名称正则匹配符合条件的文件或文件夹，需要排除二进制仓库
-    getTableListByName ({ commit }, { projectId, name, repoType = ['DOCKER', 'MAVEN', 'PYPI', 'NPM', 'HELM', 'RDS', 'COMPOSER', 'RPM', 'NUGET', 'GIT', 'OCI', 'CONAN', 'GO'], current = 1, limit = 20, sortType = 'lastModifiedDate' }) {
+    getTableListByName ({ commit }, { projectId, name, repoType = ['DOCKER', 'MAVEN', 'PYPI', 'NPM', 'HELM', 'RDS', 'COMPOSER', 'RPM', 'NUGET', 'GIT', 'OCI', 'CONAN', 'GO', 'COCOAPODS'], current = 1, limit = 20, sortType = 'lastModifiedDate' }) {
         return Vue.prototype.$ajax.post(`${prefix}/node/search`, {
             page: {
                 pageNumber: current,

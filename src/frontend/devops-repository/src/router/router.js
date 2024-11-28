@@ -13,7 +13,7 @@ const projectConfig = () => import('@repository/views/projectManage/projectConfi
 const nodeManage = () => import('@repository/views/nodeManage')
 const planManage = () => import('@repository/views/planManage')
 const logDetail = () => import('@repository/views/planManage/logDetail')
-const repoScan = () => import('@repository/views/repoScan')
+const repoScan = () => import('@repository/views/repoScan/scanMain')
 const scanReport = () => import('@repository/views/repoScan/scanReport')
 const artiReport = () => import('@repository/views/repoScan/artiReport')
 const scanConfig = () => import('@repository/views/repoScan/scanConfig')

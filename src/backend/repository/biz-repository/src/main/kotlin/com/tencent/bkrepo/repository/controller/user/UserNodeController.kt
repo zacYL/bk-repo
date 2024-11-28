@@ -141,7 +141,7 @@ class UserNodeController(
         }
     }
 
-    @ApiOperation("清理创建时间早于{date}的文件节点")
+    @ApiOperation("清理创建时间早于{date}的文件节点, 此方式删除的节点暂不放入回收站")
     @Permission(type = ResourceType.NODE, action = PermissionAction.DELETE)
     @DeleteMapping("/clean/$DEFAULT_MAPPING_URI")
     fun deleteNodeCreatedBeforeDate(

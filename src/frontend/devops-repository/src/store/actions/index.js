@@ -12,6 +12,7 @@ import scan from './scan'
 import repoCatalog from './repoCatalog'
 
 const prefix = 'repository/api'
+const auth = 'auth/api'
 
 export default {
     ...repoGeneric,
@@ -121,6 +122,54 @@ export default {
     testRemoteUrl (_, { body }) {
         return Vue.prototype.$ajax.post(
             `${prefix}/repo/testremote`,
+            body
+        )
+    },
+    /**
+     * @description: 创建仓库权限路径集合资源
+     * @param {*} _
+     * @param {*} body
+     * @return {*}
+     */
+    repoPathCreate (_, { body }) {
+        return Vue.prototype.$ajax.post(
+            `${auth}/permission/resource_type/repo_path_collection/create`,
+            body
+        )
+    },
+    /**
+     * @description: 删除仓库权限路径集合资源
+     * @param {*} _
+     * @param {*} body
+     * @return {*}
+     */
+    repoPathDelete (_, { body }) {
+        return Vue.prototype.$ajax.post(
+            `${auth}/permission/resource_type/repo_path_collection/delete`,
+            body
+        )
+    },
+    /**
+     * @description: 仓库权限路径集合资源列表
+     * @param {*} _
+     * @param {*} body
+     * @return {*}
+     */
+    repoPathList (_, { body }) {
+        return Vue.prototype.$ajax.post(
+            `${auth}/permission/resource_type/repo_path_collection/list`,
+            body
+        )
+    },
+    /**
+     * @description: 更新仓库权限路径集合资源
+     * @param {*} _
+     * @param {*} body
+     * @return {*}
+     */
+    repoPathUpdate (_, { body }) {
+        return Vue.prototype.$ajax.post(
+            `${auth}/permission/resource_type/repo_path_collection/update`,
             body
         )
     }

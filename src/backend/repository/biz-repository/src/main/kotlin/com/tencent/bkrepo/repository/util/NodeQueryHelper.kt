@@ -27,9 +27,12 @@
 
 package com.tencent.bkrepo.repository.util
 
+import com.tencent.bkrepo.common.artifact.constant.ROOT_DELETED_NODE
 import com.tencent.bkrepo.common.artifact.path.PathUtils.escapeRegex
+import com.tencent.bkrepo.common.artifact.path.PathUtils.normalizeFullPath
 import com.tencent.bkrepo.common.artifact.path.PathUtils.toFullPath
 import com.tencent.bkrepo.common.artifact.path.PathUtils.toPath
+import com.tencent.bkrepo.repository.model.TMetadata
 import com.tencent.bkrepo.repository.model.TNode
 import com.tencent.bkrepo.repository.pojo.node.NodeListOption
 import org.bson.types.ObjectId
@@ -56,8 +59,11 @@ object NodeQueryHelper {
         return Query(criteria)
     }
 
-    // 查找一个目录下所有的节点
-    fun nodeFoldQuery(projectId: String, repoName: String, escapedPath: String, normalizedFullPath: String): Query {
+    // 查找节点及该节点下的所有子节点
+    fun nodeTreeCriteria(projectId: String, repoName: String, fullPath: String): Criteria {
+        val normalizedFullPath = normalizeFullPath(fullPath)
+        val normalizedPath = toPath(normalizedFullPath)
+        val escapedPath = escapeRegex(normalizedPath)
         val criteria = where(TNode::projectId).isEqualTo(projectId)
             .and(TNode::repoName).isEqualTo(repoName)
             .and(TNode::deleted).isEqualTo(null)
@@ -65,7 +71,7 @@ object NodeQueryHelper {
                 where(TNode::fullPath).regex("^$escapedPath"),
                 where(TNode::fullPath).isEqualTo(normalizedFullPath)
             )
-        return Query(criteria)
+        return criteria
     }
 
     fun nodeQuery(projectId: String, repoName: String, fullPath: List<String>): Query {
@@ -213,6 +219,7 @@ object NodeQueryHelper {
 
     fun nodeRestoreUpdate(): Update {
         return Update().unset(TNode::deleted.name)
+            .pull(TNode::metadata.name, Query(where(TMetadata::key).isEqualTo(ROOT_DELETED_NODE)))
     }
 
     fun nodePathUpdate(path: String, name: String, operator: String): Update {

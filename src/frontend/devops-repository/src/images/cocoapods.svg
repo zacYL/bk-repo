@@ -1,16 +1,12 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="72px" height="72px" viewBox="0 0 72 72" enable-background="new 0 0 72 72" xml:space="preserve">  <image id="image0" width="72" height="72" x="0" y="0"
-    href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABIBAMAAACnw650AAAABGdBTUEAALGPC/xhBQAAACBjSFJN
-AAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAGFBMVEX6KgH6IgD7SCf8blT9
-lYL+vLD/////39pNT7zQAAAAAWJLR0QGYWa4fQAAAAd0SU1FB+gLGgInIeufw/AAAAGKSURBVEjH
-7VRNU8IwEE2qDteW4r1VtOcC6lVE5Coy9gegfb0y6JS/bzZpSvOh400PfZcm27ebtx8JYz16/CUi
-gfBnCg9my9fFJGpdfJxxAYFqw9U+vElczmkNhQ/JClbIHVKsOcAL6ToDdk6g25aDKhWGEfBmJxGj
-g734G9Qow+8DASVZnoDUJAVS0efkYiYXc0G6lp8uziWHi2KOabVVJlM5uSm96uD3UKo0lZMAKVel
-hYoWtfocQUryzjpVjkY5Y+2to5LkDFh3SXSEFsCzw+EwV8ZtVxQlZxgIQ5VAiwF8nSpM5UR69rUz
-t0hrh2TV3B/J6p5XE7PmwJud3ZcRrHSb8DvL6VjxO1VMSs6clRpHS9NHKlNiJ6IF0NFI3IIzRvOE
-nGwR8SmrkZOLdC9TMZlXaDIduPWVo10upkvoGbeaQqIy+7a4g+m5d7Gnct1Q8kaIJuydRg2LlnRP
-EcT7MXdI/ES/GJtQ7YuUeVgredZD8z7xgHnAw8vZ4zRpHzjOvPjFm9mjxz/CF/jSn71hlKdrAAAA
-JXRFWHRkYXRlOmNyZWF0ZQAyMDI0LTExLTI2VDAyOjM5OjMzKzAwOjAw39lSMQAAACV0RVh0ZGF0
-ZTptb2RpZnkAMjAyNC0xMS0yNlQwMjozOTozMyswMDowMK6E6o0AAAAASUVORK5CYII=" />
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_8241_42)">
+<path d="M0 0H48V48H0V0Z" fill="#FA2A01"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M19.0417 16C15.1439 16 12 19.1427 12 23C12 26.8573 15.1439 30 19.0417 30C21.5883 30 23.8178 28.6564 25.0544 26.6461C25.3685 26.6461 29.4388 26.7105 29.4388 26.7105C27.9098 30.9621 23.8309 34 19.0417 34C12.9523 34 8 29.0838 8 23C8 16.9162 12.9523 12 19.0417 12C24.4484 12 28.9548 15.8729 29.901 21H25.7922C24.9281 18.1138 22.2365 16 19.0417 16Z" fill="white"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M36.2128 22.7782L32.6724 14.8123L36.3276 13.1877L40.571 22.7353L36.3433 32.7761L32.6567 31.2239L36.2128 22.7782Z" fill="white"/>
+</g>
+<defs>
+<clipPath id="clip0_8241_42">
+<rect width="48" height="48" fill="white"/>
+</clipPath>
+</defs>
 </svg>

@@ -1,6 +1,6 @@
 <template>
     <div class="repo-config-container" v-bkloading="{ isLoading }">
-        <bk-tab v-if="showTabPanel" class="repo-config-tab page-tab" :class="[tabName === 'baseInfo' ? 'base-info-tab' : '']" type="unborder-card" :active.sync="tabName">
+        <bk-tab v-if="showTabPanel" class="repo-config-tab page-tab" :class="[['baseInfo', 'permissionConfig'].includes(tabName) ? 'base-info-tab' : '']" type="unborder-card" :active.sync="tabName">
             <bk-tab-panel name="baseInfo" :label="$t('repoBaseInfo')">
                 <bk-alert
                     v-if="tipsObj"
@@ -225,7 +225,7 @@
             <bk-tab-panel v-if="showCleanConfigTab" render-directive="if" name="cleanConfig" :label="$t('cleanSetting')">
                 <clean-config :base-data="repoBaseInfo" @refresh="getRepoInfoHandler"></clean-config>
             </bk-tab-panel>
-            <bk-tab-panel name="permissionConfig" :label="$t('permissionPath')" style="height: 100%;">
+            <bk-tab-panel name="permissionConfig" :label="$t('permissionPath')">
                 <permissionConfig :base-data="repoBaseInfo" @refresh="getRepoInfoHandler"></permissionConfig>
             </bk-tab-panel>
         </bk-tab>
@@ -543,12 +543,18 @@
                 !val && (this.errorProxyPortInfo = false)
             }
         },
-        created () {
+        async created () {
             if (!this.repoName || !this.repoType) this.toRepoList()
-            this.getRepoInfoHandler()
+            await this.getRepoInfoHandler()
+            this.initComp()
         },
         methods: {
             ...mapActions(['getRepoInfo', 'updateRepoInfo', 'getDomain', 'testRemoteUrl']),
+            initComp () {
+                if (this.$route.query.isAuth) {
+                    this.tabName = 'permissionConfig'
+                }
+            },
             addPath (key) {
                 this.repoBaseInfo[key].push({ value: '' })
             },
@@ -664,9 +670,9 @@
             handleOverrideChange (isFlag) {
                 this.repoBaseInfo.override.switcher = isFlag
             },
-            getRepoInfoHandler () {
+            async getRepoInfoHandler () {
                 this.isLoading = true
-                this.getRepoInfo({
+                return this.getRepoInfo({
                     projectId: this.projectId,
                     repoName: this.repoName,
                     repoType: this.repoType

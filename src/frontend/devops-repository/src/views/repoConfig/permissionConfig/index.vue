@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-22 10:22:36
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-11-27 18:05:28
+ * @LastEditTime: 2024-11-28 16:16:24
  * @FilePath: /artifact/src/frontend/devops-repository/src/views/repoConfig/permissionConfig/index.vue
 -->
 <template>
@@ -170,10 +170,10 @@
                                 message: this.$t('removeSuccess')
                             })
                             this.getPermissionList()
-                        }).catch(() => {
+                        }).catch((err) => {
                             this.$bkMessage({
                                 theme: 'error',
-                                message: this.$t('removeFail')
+                                message: err.message ?? this.$t('removeFail')
                             })
                         })
                     }
@@ -205,10 +205,10 @@
                     })
                     this.getPermissionList()
                     cb()
-                }).catch(() => {
+                }).catch((err) => {
                     this.$bkMessage({
                         theme: 'error',
-                        message: this.PermissionConfig.type === 'create' ? this.$t('createFail') : this.$t('editFail')
+                        message: err.message ?? (this.PermissionConfig.type === 'create' ? this.$t('createFail') : this.$t('editFail'))
                     })
                 })
             }

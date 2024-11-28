@@ -106,6 +106,10 @@ open class PermissionServiceImpl constructor(
         TODO("Not yet implemented")
     }
 
+    override fun listNodePermission(projectId: String, repoName: String?): List<Permission> {
+        TODO("Not yet implemented")
+    }
+
     override fun createPermission(request: CreatePermissionRequest): Boolean {
         logger.info("create  permission request : [$request]")
         // todo check request

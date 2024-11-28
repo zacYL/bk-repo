@@ -225,7 +225,7 @@
             <bk-tab-panel v-if="showCleanConfigTab" render-directive="if" name="cleanConfig" :label="$t('cleanSetting')">
                 <clean-config :base-data="repoBaseInfo" @refresh="getRepoInfoHandler"></clean-config>
             </bk-tab-panel>
-            <bk-tab-panel name="permissionConfig" :label="$t('permissionPath')">
+            <bk-tab-panel name="permissionConfig" :label="$t('permissionPath')" style="height: 100%;">
                 <permissionConfig :base-data="repoBaseInfo" @refresh="getRepoInfoHandler"></permissionConfig>
             </bk-tab-panel>
         </bk-tab>

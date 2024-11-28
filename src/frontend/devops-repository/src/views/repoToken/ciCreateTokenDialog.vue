@@ -133,7 +133,9 @@
                 this.ciCreateToken({
                     tokenName: this.tokenFormData.name,
                     tokenScope: ['CPack'],
-                    expiredTime: formatSimpleDate(this.tokenFormData.expiredTime)
+                    expiredTime: this.tokenFormData.expiredTime
+                        ? formatSimpleDate(this.tokenFormData.expiredTime)
+                        : ''
                 }).then((res) => {
                     this.$emit('token', res)
                     this.token = res

@@ -1,3 +1,9 @@
+/*
+ * @Date: 2024-11-01 22:08:22
+ * @LastEditors: xiaoshan
+ * @LastEditTime: 2024-11-26 16:44:30
+ * @FilePath: /artifact/src/frontend/devops-repository/src/store/actions/token.js
+ */
 import Vue from 'vue'
 
 const prefix = 'auth/api'
@@ -46,14 +52,16 @@ export default {
      * 集成CI模式下生成个人访问令牌
      * @param {tokenName} String token名称
      * @param {tokenScope} Array token范围，此时需要写死传 ['CPack]
+     * @param {expiredTime} Number token过期时间，单位为秒
      * @returns
      */
-    ciCreateToken (_, { tokenName, tokenScope = ['CPack'] }) {
+    ciCreateToken (_, { tokenName, tokenScope = ['CPack'], expiredTime }) {
         return Vue.prototype.$ajax.post(
             'usermanager/api/user/token/add',
             {
                 tokenName,
-                tokenScope
+                tokenScope,
+                expiredTime
             },
             { baseURL: `${window.DEVOPS_SITE_URL}/ms/` }
         )

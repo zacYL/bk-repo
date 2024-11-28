@@ -12,12 +12,14 @@ const logDetail = () => import('@repository/views/planManage/logDetail')
 
 const repoGeneric = () => import('@/views/repoGeneric')
 
+const repoRecycleBin = () => import('@/views/repoGeneric/repoRecycleBin')
+
 const commonPackageList = () => import('@repository/views/repoCommon/commonPackageList')
 const commonPackageDetail = () => import('@/views/repoCommon/commonPackageDetail')
 
 const repoSearch = () => import('@repository/views/repoSearch')
 
-const repoScan = () => import('@repository/views/repoScan')
+const repoScan = () => import('@repository/views/repoScan/scanMain')
 const scanReport = () => import('@repository/views/repoScan/scanReport')
 const artiReport = () => import('@repository/views/repoScan/artiReport')
 const scanConfig = () => import('@repository/views/repoScan/scanConfig')
@@ -216,6 +218,19 @@ const routes = [
                     breadcrumb: [
                         { name: 'repoList', label: 'repoList' },
                         { name: 'repoGeneric', label: '{repoName}', template: 'repoGeneric' }
+                    ]
+                }
+            },
+
+            {
+                path: 'repoList/recycleBin',
+                name: 'repoRecycleBin',
+                component: repoRecycleBin,
+                meta: {
+                    breadcrumb: [
+                        { name: 'repoList', label: 'repoList' },
+                        { name: 'repoGeneric', label: '{repoName}', template: 'repoGeneric' },
+                        { name: 'repoRecycleBin', label: 'recycleBin' }
                     ]
                 }
             },

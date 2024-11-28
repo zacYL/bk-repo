@@ -32,22 +32,55 @@ import com.tencent.bkrepo.cocoapods.utils.PathUtil
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
+import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
 class CocoapodsFileService(
-    private val nodeClient: NodeClient
-){
+    private val nodeClient: NodeClient,
+) {
     fun deleteFile(artifactInfo: CocoapodsArtifactInfo) {
-        with(artifactInfo){
+        with(artifactInfo) {
             //删除包文件:"$orgName/$name/$version/$fileName"
             var request = NodeDeleteRequest(projectId, repoName,
-                PathUtil.generateFullPath(artifactInfo),SecurityUtils.getUserId())
+                PathUtil.generateFullPath(artifactInfo), SecurityUtils.getUserId())
             nodeClient.deleteNode(request)
-            //删除specs文件:".specs/$name/$version/$name.podspecs"
+            //删除specs文件:".specs/$name/$version/$name.podspec"
             request = NodeDeleteRequest(projectId, repoName,
-                PathUtil.generateSpecsPath(artifactInfo),SecurityUtils.getUserId())
+                PathUtil.generateSpecsPath(artifactInfo), SecurityUtils.getUserId())
             nodeClient.deleteNode(request)
         }
+    }
+
+    fun deleteVersionFile(artifactInfo: CocoapodsArtifactInfo, packageVersion: PackageVersion) {
+        with(artifactInfo) {
+            val filePath = packageVersion.contentPath?.substringBeforeLast("/")
+            val specsPath = ".specs/${name}/${packageVersion.name}"
+            var request = NodeDeleteRequest(projectId, repoName, filePath ?: "", SecurityUtils.getUserId())
+            nodeClient.deleteNode(request)
+            logger.info("delete filePath:[$filePath]")
+            request = NodeDeleteRequest(projectId, repoName, specsPath ?: "", SecurityUtils.getUserId())
+            nodeClient.deleteNode(request)
+            logger.info("delete specsPath:[$specsPath]")
+        }
+    }
+
+    fun deletePackageFile(artifactInfo: CocoapodsArtifactInfo) {
+        logger.info("delete package file...")
+        with(artifactInfo) {
+            val packageFilePath = "/$orgName"
+            val packageSpecsPath = ".specs/$name"
+            var request = NodeDeleteRequest(projectId, repoName, packageFilePath ?: "", SecurityUtils.getUserId())
+            nodeClient.deleteNode(request)
+            logger.info("delete packageFilePath:[$packageFilePath]")
+            request = NodeDeleteRequest(projectId, repoName, packageSpecsPath ?: "", SecurityUtils.getUserId())
+            nodeClient.deleteNode(request)
+            logger.info("delete packageSpecsPath:[$packageSpecsPath]")
+        }
+    }
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(CocoapodsWebService::class.java)
     }
 }

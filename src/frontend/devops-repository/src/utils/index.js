@@ -90,6 +90,14 @@ export function formatDate (ms) {
         prezero(time.getSeconds())}`
 }
 
+export function formatSimpleDate (ms) {
+    if (!ms) return ms || '/'
+    const time = new Date(ms)
+    return `${time.getFullYear()}-${
+        prezero(time.getMonth() + 1)}-${
+        prezero(time.getDate())}`
+}
+
 // 加载先于main.js,初次渲染Vue.prototype.$ajax.defaults为空，二次渲染于main.js，此时Vue.prototype.$ajax.defaults不为空，此时添加报文头
 const { i18n } = createLocale(require.context('@locale/repository/', false, /\.json$/))
 

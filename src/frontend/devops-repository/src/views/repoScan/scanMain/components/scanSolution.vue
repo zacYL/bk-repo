@@ -80,7 +80,7 @@
 </template>
 <script>
     import OperationList from '@repository/components/OperationList'
-    import createScanDialog from './createScanDialog'
+    import createScanDialog from '../../createScanDialog'
     import { mapState, mapActions } from 'vuex'
     import { formatDate, debounce } from '@repository/utils'
     import { scanTypeEnum, scanStatusEnum } from '@repository/store/publicEnum'
@@ -92,8 +92,11 @@
         limitList: [10, 20, 40]
     }
     export default {
-        name: 'plan',
+        name: 'scan-solution',
         components: { OperationList, createScanDialog },
+        props: {
+            projectId: String
+        },
         data () {
             return {
                 scanTypeEnum,
@@ -107,10 +110,7 @@
             }
         },
         computed: {
-            ...mapState(['userList']),
-            projectId () {
-                return this.$route.params.projectId
-            }
+            ...mapState(['userList'])
         },
         watch: {
             '$route.query' () {
@@ -261,7 +261,7 @@
 <style lang="scss" scoped>
 .scan-container {
     height: 100%;
-    overflow: hidden;
+    width: 100%;
     background-color: white;
 }
 </style>

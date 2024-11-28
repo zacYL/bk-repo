@@ -29,6 +29,7 @@ package com.tencent.bkrepo.cocoapods.utils
 
 import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
+import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 
 object PathUtil {
     fun generateFullPath(artifactInfo: CocoapodsArtifactInfo): String {
@@ -39,7 +40,14 @@ object PathUtil {
 
     fun generateSpecsPath(artifactInfo: CocoapodsArtifactInfo): String {
         return with(artifactInfo) {
-            ".specs/$name/$version/$name.podspecs"
+            ".specs/$name/$version/$name.podspec"
+        }
+    }
+
+    fun getOrgNameByVersion(packageVersion: PackageVersion): String {
+        with(packageVersion) {
+            val parts = contentPath?.split("/")?.filter { it.isNotEmpty() }
+            return parts?.getOrNull(0)?:""
         }
     }
 

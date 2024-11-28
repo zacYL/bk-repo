@@ -316,5 +316,51 @@ export default {
             `/maven/deploy/${projectId}/${repoName}`, body
 
         )
+    },
+    
+    /**
+     * @description: 获取回收站列表
+     * @param {*} _
+     * @param {*} params
+     * @return {*}
+     */
+    getRecycleBinList (_, params) {
+        return Vue.prototype.$ajax.post(`${prefix}/node/search`, params)
+    },
+    /**
+     * @description: 校验冲突路径
+     * @param {*} _
+     * @param {*} fullPath
+     * @return {*}
+     */
+    checkConflictPath (_, fullPath) {
+        return Vue.prototype.$ajax.get(`${prefix}/node/detail/${fullPath}`)
+    },
+    /**
+     * @description: 节点恢复
+     * @param {*} _
+     * @param {string} projectId
+     * @param {string} repoName
+     * @param {string} fullPath
+     * @param {string} deleteTime
+     * @param {string} type
+     * @return {*}
+     */
+    nodeRevert (_, { projectId, repoName, fullPath, deleteTime, type }) {
+        return Vue.prototype.$ajax.post(`${prefix}/node/restore/${projectId}/${repoName}/${fullPath}?deletedId=${deleteTime}&conflictStrategy=${type}`)
+    },
+
+    /**
+     * @description: 节点彻底删除
+     * @param {*} _
+     * @param {string} projectId
+     * @param {string} repoName
+     * @param {string} fullPath
+     * @param {string} deleteTime
+     * @return {*}
+     */
+    nodeDelete (_, { projectId, repoName, fullPath, deleteTime }) {
+        return Vue.prototype.$ajax.delete(`${prefix}/recycle-bin/node/delete/${projectId}/${repoName}/${fullPath}?deletedId=${deleteTime}`)
     }
+
 }

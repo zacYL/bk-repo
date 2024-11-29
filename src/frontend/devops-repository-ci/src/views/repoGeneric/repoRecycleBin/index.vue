@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-21 15:38:37
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-11-25 18:46:38
+ * @LastEditTime: 2024-11-29 11:41:16
  * @FilePath: /artifact/src/frontend/devops-repository-ci/src/views/repoGeneric/repoRecycleBin/index.vue
 -->
 <template>
@@ -155,8 +155,8 @@
                             ...this.name
                                 ? [{
                                     field: 'name',
-                                    value: this.name,
-                                    operation: 'MATCH'
+                                    value: '*' + this.name + '*',
+                                    operation: 'MATCH_I'
                                 }]
                                 : []
                         ],
@@ -216,7 +216,7 @@
                     })
                 }
                 // 校验冲突路径
-                this.checkConflictPath(row.fullPath).then((res) => {
+                this.checkConflictPath({ projectId: this.projectId, repoName: this.repoName, fullPath: row.fullPath }).then((res) => {
                     this.$bkInfoDevopsConfirm({
                         subTitle: this.$t('artifactConflictRevert', [row.name]),
                         theme: 'danger',

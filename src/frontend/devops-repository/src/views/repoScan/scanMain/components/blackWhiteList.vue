@@ -65,6 +65,7 @@
 </template>
 <script>
     import { cloneDeep } from 'lodash'
+    import { mapActions } from 'vuex'
     import DefaultTabBox from '@repository/components/DefaultTabBox'
     import FilterCondition from './components/FilterCondition.vue'
     import AddBlackWhiteRepoDialog from './components/AddBlackWhiteRepoDialog.vue'
@@ -129,6 +130,11 @@
             this.handlerPaginationChange({ current: 1, limit: 20 })
         },
         methods: {
+            ...mapActions([
+                'createBlackWhiteList',
+                'deleteBlackWhiteList',
+                'getBlackWhiteRecords'
+            ]),
             addBlackWhiteRepo () {
                 this.addConfig.visible = true
                 this.addConfig.title = this.type === 'white' ? (this.$t('add') + this.$t('whiteList')) : (this.$t('add') + this.$t('blackList'))
@@ -137,8 +143,14 @@
                 this.addConfig.visible = false
             },
             addBlackWhiteRepoSubmit (form, cb) {
-                // todo 缺少新增请求
-                Promise.resolve().then(() => {
+                this.createBlackWhiteList({
+                    type: 'MAVEN',
+                    projectId: this.projectId,
+                    key: form.name,
+                    pass: this.type === 'white',
+                    version: null,
+                    versionRuleType: null
+                }).then(() => {
                     this.$bkMessage({
                         theme: 'success',
                         message: this.$t('addSuccess')
@@ -162,28 +174,14 @@
             // 获取黑白名单列表
             getBlackWhiteList () {
                 const body = {
-                    page: {
-                        pageNumber: this.pagination.current,
-                        pageSize: this.pagination.limit
-                    },
-                    sort: {
-                        properties: [
-                            'lastModifiedDate'
-                        ],
-                        direction: 'DESC'
-                    },
-                    rule: {
-                        rules: [
-                            this.defaultFilterParams,
-                            ...this.searchFilterParams
-                        ],
-                        relation: 'AND'
-                    }
+                    pageNumber: this.pagination.current,
+                    pageSize: this.pagination.limit,
+                    type: 'MAVEN',
+                    pass: this.type === 'white'
                 }
                 this.isLoading = true
-                const url = '/repository/api/packageVersion/search'
-                return this.$ajax.post(
-                    url,
+                
+                return this.getBlackWhiteRecords(
                     body
                 ).then(res => {
                     this.blackWhiteList = res.records
@@ -220,8 +218,15 @@
                     subTitle: this.$t('deleteBlackWhiteTips', [this.active === 'white' ? this.$t('whiteList') : this.$t('blackList')]),
                     theme: 'danger',
                     confirmFn: () => {
-                        // todo 缺一个删除接口
-                        Promise.resolve().then(() => {
+                        const body = {
+                            packageType: 'MAVEN',
+                            projectId: this.projectId,
+                            key: row.name,
+                            version: null,
+                            versionRuleType: null,
+                            pass: this.type === 'white'
+                        }
+                        this.deleteBlackWhiteList(body).then(() => {
                             this.$bkMessage({
                                 theme: 'success',
                                 message: this.$t('removeSuccess')

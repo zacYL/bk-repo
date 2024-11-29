@@ -10,6 +10,7 @@ import networkConfig from './networkConfig'
 import project from './project'
 import scan from './scan'
 import repoCatalog from './repoCatalog'
+import blackWhiteList from './blackWhiteList'
 
 const prefix = 'repository/api'
 const auth = 'auth/api'
@@ -24,6 +25,7 @@ export default {
     ...project,
     ...scan,
     ...repoCatalog,
+    ...blackWhiteList,
 
     /*
         创建仓库

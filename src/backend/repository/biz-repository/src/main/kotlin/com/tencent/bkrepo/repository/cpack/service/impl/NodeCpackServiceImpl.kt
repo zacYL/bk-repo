@@ -63,7 +63,9 @@ class NodeCpackServiceImpl(
                 val parentNodeQuery = NodeQueryHelper.nodeQuery(projectId, repoName, parentFullPaths)
                 val parentNodeUpdate = NodeQueryHelper.update(operator)
                 nodeDao.updateMulti(parentNodeQuery, parentNodeUpdate)
-                publishEvent(NodeEventFactory.buildBatchDeletedEvent(projectId, repoName, existNodes, operator))
+                NodeEventFactory
+                    .buildBatchDeletedEvent(projectId, repoName, existNodes, operator)
+                    .forEach { publishEvent(it) }
             } catch (exception: DuplicateKeyException) {
                 logger.warn(
                     " Delete node[/$projectId/$repoName${existNodes.toJsonString()}] " +

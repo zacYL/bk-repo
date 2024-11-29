@@ -1467,6 +1467,67 @@ export default {
         },
         articleInstall () {
             return this[`${this.$route.params.repoType}Install`]
+        },
+        cocoapodsGuide () {
+            return [
+                {
+                    title: this.$t('setCredentials'),
+                    optionType: 'setCredentials',
+                    main: [
+                        {
+                            subTitle: this.$t('cocoapodsCreditGuideSubTitle1'),
+                            btn: {
+                                cb: () => {
+                                    window.open(window.origin + '/web/cocoapods/ext/client/plugin/download', '_self')
+                                },
+                                label: this.$t('download')
+                            },
+                            codeList: [
+                                'gem install bk-cocoapods-1.0.0 gem'
+                            ]
+                        }, {
+                            subTitle: this.$t('cocoapodsCreditGuideSubTitle2'),
+                            codeList: [
+                                `pod bk-repo add ${this.repoName} ${location.origin}/${this.repoType}/${this.projectId}/${this.repoName}/`
+                            ]
+                        }
+                    ]
+                },
+                {
+                    title: this.$t('pull'),
+                    optionType: 'pull',
+                    main: [
+                        {
+                            subTitle: this.$t('cocoapodsCreditGuideSubTitle4'),
+                            codeList: [
+                                `plugin 'bk-cocoapods', :sources => ['${this.repoName}'] `
+                            ]
+                        },
+                        {
+                            subTitle: this.$t('cocoapodsCreditGuideSubTitle5'),
+                            codeList: [
+                                `pod bk-repo update ${this.repoName}`,
+                                'pod install'
+                            ]
+                        }
+                    ]
+                },
+                {
+                    title: this.$t('push'),
+                    optionType: 'push',
+                    main: [
+                        {
+                            subTitle: this.$t('cocoapodsCreditGuideSubTitle3'),
+                            codeList: [
+                                // todo
+                                `curl -u ${this.userName}:${this.accessToken} -XPUT `
+                            ]
+                        }
+                    ]
+                }
+            ].filter(Boolean)
+        },
+        cocoapodsInstall () {
         }
     },
     data () {

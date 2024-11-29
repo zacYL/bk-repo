@@ -327,14 +327,17 @@ export default {
     getRecycleBinList (_, params) {
         return Vue.prototype.$ajax.post(`${prefix}/node/search`, params)
     },
+
     /**
      * @description: 校验冲突路径
      * @param {*} _
+     * @param {*} projectId
+     * @param {*} repoName
      * @param {*} fullPath
      * @return {*}
      */
-    checkConflictPath (_, fullPath) {
-        return Vue.prototype.$ajax.get(`${prefix}/node/detail/${fullPath}`)
+    checkConflictPath (_, { projectId, repoName, fullPath }) {
+        return Vue.prototype.$ajax.get(`${prefix}/node/detail/${projectId}/${repoName}/${fullPath}`)
     },
     /**
      * @description: 节点恢复

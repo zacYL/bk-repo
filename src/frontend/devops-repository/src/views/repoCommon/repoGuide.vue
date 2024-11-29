@@ -62,6 +62,14 @@
                     <template v-if="(constructType === block.constructType) || !block.constructType || (block.constructType === 'common') ">
                         <span v-if="block.title" class="section-header pt10">{{ block.title }}</span>
                         <span v-if="block.subTitle" class="sub-title pt10 fw500" :style="block.subTitleStyle">{{ block.subTitle }}</span>
+                        <div v-if="block.btn" class="pt10">
+                            <bk-button
+                                theme="primary"
+                                outline
+                                @click="block.btn.cb()">
+                                {{ block.btn.label }}
+                            </bk-button>
+                        </div>
                         <div v-if="block?.contentList?.length">
                             <p v-for="(content, index) in block.contentList" :key="index" :class="(typeof content === 'string' ? '' : content.class)" style="color: #8797aa;">
                                 {{ typeof content === 'string' ? content : content.val }}

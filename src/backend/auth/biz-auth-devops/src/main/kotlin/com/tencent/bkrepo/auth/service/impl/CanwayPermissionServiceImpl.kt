@@ -114,6 +114,37 @@ class CanwayPermissionServiceImpl(
                         checkNodePermission(request)
                     }
 
+                    ResourceType.REPO -> {
+
+                        val validateUserPermission = devOpsAuthGeneral.validateUserPermission(
+                            projectId = projectId!!,
+                            option = UserPermissionValidateDTO(
+                                userId = uid,
+                                instanceId = repoName ?: ANY_RESOURCE_CODE,
+                                resourceCode = if (request.resourceType == ResourceType.REPLICATION) {
+                                    REPLICA_RESOURCECODE
+                                } else {
+                                    RESOURCECODE
+                                },
+                                actionCodes = listOf(action.toString().toLowerCase())
+                            )
+                        )
+                        if (!validateUserPermission && action == PermissionAction.READ) {
+                            // 仓库权限校验失败且是校验read权限，则拥有路径read权限也有仓库的read权限
+                            val repoPathCollectPermission = devOpsAuthGeneral.getRepoPathCollectPermission(
+                                uid,
+                                projectId!!,
+                                repoName!!,
+                                emptyList()
+                            )
+                            val pathReadPermission =
+                                repoPathCollectPermission.filter { it.actionCode == PermissionAction.READ.name.toLowerCase() }
+                            return pathReadPermission.isNotEmpty()
+                        } else {
+                            validateUserPermission
+                        }
+                    }
+
                     else -> {
                         devOpsAuthGeneral.validateUserPermission(
                             projectId = projectId!!,

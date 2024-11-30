@@ -137,7 +137,16 @@ class ServicePermissionResourceImpl @Autowired constructor(
         return ResponseBuilder.success(permissionService.isAdmin(userId, projectId, tenantId))
     }
 
-    override fun deletePermissionData(projectId: String, repoName: String): Response<Boolean>{
+    override fun deletePermissionData(projectId: String, repoName: String): Response<Boolean> {
         return ResponseBuilder.success(permissionService.deletePermissionData(projectId, repoName))
+    }
+
+    override fun getAuthRepoPaths(
+        userId: String,
+        projectId: String,
+        repoName: String,
+        action: PermissionAction
+    ): Response<List<String>> {
+        return ResponseBuilder.success(permissionService.getUserAuthPaths(userId, projectId, repoName, action))
     }
 }

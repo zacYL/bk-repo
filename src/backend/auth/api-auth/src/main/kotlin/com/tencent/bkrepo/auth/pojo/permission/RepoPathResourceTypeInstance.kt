@@ -38,6 +38,8 @@ import io.swagger.annotations.ApiModelProperty
 data class RepoPathResourceTypeInstance(
     @ApiModelProperty("仓库名")
     val repoName: String,
+    @ApiModelProperty("仓库类型")
+    val repoType: String,
     @ApiModelProperty("路径列表")
     val paths: List<RepoPathItem>,
 ) {

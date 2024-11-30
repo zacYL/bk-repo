@@ -76,6 +76,8 @@ interface PermissionRepository : MongoRepository<TPermission, String> {
 
     fun findByRolesIn(roleId: List<String>): List<TPermission>
 
+    fun findByIdIn(id: List<String>): List<TPermission>
+
     fun findByProjectIdAndRolesIn(projectId: String, roleId: List<String>): List<TPermission>
 
     fun findOneByProjectIdAndReposContainsAndPermNameAndResourceType(

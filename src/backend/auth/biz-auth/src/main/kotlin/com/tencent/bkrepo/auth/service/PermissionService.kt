@@ -47,7 +47,12 @@ interface PermissionService {
 
     fun checkPermission(request: CheckPermissionRequest): Boolean
 
-    fun listPermissionRepo(projectId: String, userId: String, appId: String?, actions: List<PermissionAction>?): List<String>
+    fun listPermissionRepo(
+        projectId: String,
+        userId: String,
+        appId: String?,
+        actions: List<PermissionAction>?
+    ): List<String>
 
     fun listPermissionProject(userId: String): List<String>
 
@@ -95,4 +100,11 @@ interface PermissionService {
     fun deletePermissionData(projectId: String, repoName: String): Boolean
 
     fun listNodePermission(projectId: String, repoName: String?): List<Permission>
+
+    fun getUserAuthPaths(
+        userId: String,
+        projectId: String,
+        repoName: String,
+        action: PermissionAction
+    ): List<String>
 }

@@ -9,9 +9,11 @@ import com.tencent.bkrepo.auth.model.TPermission
 import com.tencent.bkrepo.auth.pojo.RegisterResourceRequest
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
+import com.tencent.bkrepo.auth.pojo.general.ScopeDTO
 import com.tencent.bkrepo.auth.pojo.permission.Permission
 import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.CreatePermissionRequest
+import com.tencent.bkrepo.auth.pojo.permission.CustomPermissionQueryDTO
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionPathRequest
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRepoRequest
 import com.tencent.bkrepo.auth.repository.PermissionRepository
@@ -23,8 +25,11 @@ import com.tencent.bkrepo.common.devops.RESOURCECODE
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.auth.pojo.permission.UserPermissionValidateDTO
+import com.tencent.bkrepo.auth.pojo.role.SubjectDTO
 import com.tencent.bkrepo.auth.service.impl.CpackPermissionServiceImpl.Companion
 import com.tencent.bkrepo.common.api.exception.ParameterInvalidException
+import com.tencent.bkrepo.common.devops.REPO_PATH_RESOURCECODE
+import com.tencent.bkrepo.common.devops.REPO_PATH_SCOPE_CODE
 import com.tencent.bkrepo.common.security.exception.PermissionException
 import org.bouncycastle.asn1.x500.style.RFC4519Style.uid
 import org.slf4j.Logger
@@ -168,13 +173,13 @@ class CanwayPermissionServiceImpl(
                 uid,
                 projectId!!,
                 repoName!!,
-                action.toString().toLowerCase(),
-                pathCollectionIds
+                // 兼容以后任意权限的情况，同时也避免pathCollectionIds为空导致查出全部
+                pathCollectionIds.plus("*")
             )
-
+            val filterPermission = repoPathCollectPermission.filter { it.actionCode == action.toString().toLowerCase() }
 
             // 不为空则所以有权限
-            if (repoPathCollectPermission.isNotEmpty()) {
+            if (filterPermission.isNotEmpty()) {
                 return true
             }
             return false
@@ -234,6 +239,33 @@ class CanwayPermissionServiceImpl(
      */
     override fun registerResource(request: RegisterResourceRequest) {
         TODO("Not yet implemented")
+    }
+
+    override fun getUserAuthPaths(
+        userId: String,
+        projectId: String,
+        repoName: String,
+        action: PermissionAction
+    ): List<String> {
+
+        if (devOpsAuthGeneral.isProjectOrSuperiorAdmin(userId, projectId)) {
+            return listOf("/")
+        }
+
+        val repoPathPermissions = devOpsAuthGeneral.getRepoPathCollectPermission(
+            userId,
+            projectId,
+            repoName,
+            // 为表示查出全部
+            emptyList()
+        )
+
+        val repoPathCollectionsIds =
+            repoPathPermissions.filter { it.actionCode == action.name }
+                .map { it.instanceId }
+
+        return permissionRepository.findByIdIn(repoPathCollectionsIds)
+            .flatMap { it.includePattern }
     }
 
     /**
@@ -362,15 +394,6 @@ class CanwayPermissionServiceImpl(
             return false
         }
     }
-
-    /**
-     * 校验用户是否拥有项目仓库指定路径权限
-     */
-//    fun validateUserRepoPathPermission(projectId: String, repoName: String, path: String, action: String): Boolean {
-//        canwayProjectClient.
-//        val option = UserPermissionValidateDTO()
-//        return canwayProjectClient.validateUserPermission(projectId, option).data ?: false
-//    }
 
     companion object {
         val logger: Logger = LoggerFactory.getLogger(CanwayPermissionServiceImpl::class.java)

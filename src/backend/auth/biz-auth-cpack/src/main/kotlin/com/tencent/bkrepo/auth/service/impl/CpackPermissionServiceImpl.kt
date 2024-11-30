@@ -121,6 +121,15 @@ open class CpackPermissionServiceImpl constructor(
             .map { transferPermission(it) }
     }
 
+    override fun getUserAuthPaths(
+        userId: String,
+        projectId: String,
+        repoName: String,
+        action: PermissionAction
+    ): List<String> {
+        TODO("Not yet implemented")
+    }
+
     override fun createPermission(request: CreatePermissionRequest): Boolean {
         logger.info("create  permission request : [$request]")
         // todo check request

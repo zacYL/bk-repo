@@ -50,6 +50,7 @@ import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.exception.ParameterInvalidException
 import com.tencent.bkrepo.common.api.pojo.Response
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.devops.CATELOG_RESOURCECODE
 import com.tencent.bkrepo.common.devops.REPLICA_RESOURCECODE
 import com.tencent.bkrepo.common.devops.REPO_PATH_RESOURCECODE
@@ -311,9 +312,12 @@ class ExtPermissionServiceImpl(
         request: ListRepoPathInstanceRequest
     ): List<RepoPathResourceTypeInstance> {
         val permission = permissionService.listNodePermission(request.projectId, request.repo)
-        return permission.groupBy { it.permName }.map {
-            RepoPathResourceTypeInstance(it.key,
-                it.value.map { RepoPathItem(it.id!!, it.permName) }
+        val repoMap = repositoryClient.listRepo(request.projectId).data?.associateBy { it.name } ?: emptyMap()
+        return permission.groupBy { it.repos.first() }.map { group ->
+            RepoPathResourceTypeInstance(
+                group.key,
+                repoMap[group.key]?.type?.name ?: RepositoryType.GENERIC.name,
+                group.value.map { RepoPathItem(it.id!!, it.permName) }
             )
         }
     }
@@ -631,7 +635,11 @@ class ExtPermissionServiceImpl(
             ?: emptyList()
     }
 
-    fun listRepoPathCollectionPermissions(projectId: String, subjectCode: String, subjectId: String): List<PermissionVO> {
+    fun listRepoPathCollectionPermissions(
+        projectId: String,
+        subjectCode: String,
+        subjectId: String
+    ): List<PermissionVO> {
         val permission = permissionService.listNodePermission(projectId, null)
         return canwayCustomPermissionClient.queryPermission(
             CustomPermissionQueryDTO(

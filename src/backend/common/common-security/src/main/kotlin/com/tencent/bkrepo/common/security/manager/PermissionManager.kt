@@ -624,6 +624,10 @@ open class PermissionManager(
         return httpAuthProperties.enabled
     }
 
+    fun getUserAuthPath(userId: String, projectId: String, repoName: String, action: PermissionAction): List<String> {
+        return permissionResource.getAuthRepoPaths(userId, projectId, repoName, action).data ?: emptyList()
+    }
+
     private fun getRepoId(projectId: String, repoName: String) = "$projectId$REPO_ID_DELIMITER$repoName"
 
     companion object {

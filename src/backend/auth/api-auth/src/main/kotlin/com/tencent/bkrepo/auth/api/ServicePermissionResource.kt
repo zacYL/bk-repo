@@ -214,4 +214,17 @@ interface ServicePermissionResource {
         @ApiParam(value = "项目名称")
         @PathVariable repoName: String
     ): Response<Boolean>
+
+    @ApiOperation("获取用户仓库下授权的路径集合")
+    @GetMapping("/{userId}/auth/repo_path")
+    fun getAuthRepoPaths(
+        @ApiParam(value = "用户id")
+        @PathVariable userId: String,
+        @ApiParam(value = "项目id")
+        @RequestParam projectId: String,
+        @ApiParam(value = "仓库名称")
+        @RequestParam repoName: String,
+        @ApiParam(value = "仓库名称")
+        @RequestParam action: PermissionAction
+    ): Response<List<String>>
 }

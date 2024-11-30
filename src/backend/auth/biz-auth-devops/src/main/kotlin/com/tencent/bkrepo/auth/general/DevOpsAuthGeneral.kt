@@ -137,7 +137,6 @@ class DevOpsAuthGeneral(
         userId: String,
         projectId: String,
         repoName: String,
-        actionCode: String,
         pathCollectionIds: List<String>
     ): List<PermissionVO> {
         // 查询用户关联的角色和权限作用域
@@ -148,7 +147,6 @@ class DevOpsAuthGeneral(
             CustomPermissionQueryDTO(
                 scopes = listOf(ScopeDTO(REPO_PATH_SCOPE_CODE, "${projectId}_${repoName}")),
                 subjects = subjects,
-                // 仓库路径集合授权没有任意权限，不用加*
                 instanceIds = pathCollectionIds,
                 resourceCodes = listOf(REPO_PATH_RESOURCECODE)
             )

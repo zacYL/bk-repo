@@ -133,6 +133,7 @@ class DevOpsAuthGeneral(
         ).data ?: false
     }
 
+    // 获取指定仓库下用户授权的路径集合
     fun getRepoPathCollectPermission(
         userId: String,
         projectId: String,
@@ -151,6 +152,31 @@ class DevOpsAuthGeneral(
                 resourceCodes = listOf(REPO_PATH_RESOURCECODE)
             )
         ).data ?: emptyList()
+    }
+
+    // 获取用户有路径权限的仓库集合
+    fun getRepoWithPathPermission(
+        projectId: String,
+        userId: String,
+    ): List<String> {
+        // 查询用户关联的角色和权限作用域
+        val subjects =
+            canwayProjectClient.getUserRelatedRoleAndPermissionScope(userId, projectId).data?.map { it.first }
+                ?: listOf(SubjectDTO.user(userId))
+        val permission = canwayCustomPermissionClient.queryPermission(
+            CustomPermissionQueryDTO(
+                scopes = emptyList(),
+                subjects = subjects,
+                instanceIds = emptyList(),
+                resourceCodes = listOf(REPO_PATH_RESOURCECODE)
+            )
+        ).data ?: emptyList()
+        return permission.filter {
+            it.scopeCode == REPO_PATH_SCOPE_CODE
+        }.map {
+            // 这里截取是因为 scopeId格式为 projectId_repoName
+            it.scopeId.substringAfter("_")
+        }
     }
 
     companion object {

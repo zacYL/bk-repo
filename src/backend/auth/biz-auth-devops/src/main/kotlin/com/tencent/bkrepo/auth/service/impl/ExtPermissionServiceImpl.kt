@@ -316,9 +316,12 @@ class ExtPermissionServiceImpl(
         return permission.groupBy { it.repos.first() }.map { group ->
             RepoPathResourceTypeInstance(
                 group.key,
-                repoMap[group.key]?.type?.name ?: RepositoryType.GENERIC.name,
+                repoMap[group.key]?.type?.name ?: "",
                 group.value.map { RepoPathItem(it.id!!, it.permName) }
             )
+        }.filter {
+            // 路径授权只考虑二进制仓库
+            it.repoType == RepositoryType.GENERIC.name
         }
     }
 

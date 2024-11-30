@@ -363,6 +363,8 @@ class CanwayPermissionServiceImpl(
             repoList.addAll(listPublicRepo(projectId))
             // 获取该用户可查看的所有制品库仓库名称
             repoList.addAll(devOpsAuthGeneral.getUserPermission(projectId, userId))
+            // 获取用户有路径权限的仓库集合
+            repoList.addAll(devOpsAuthGeneral.getRepoWithPathPermission(projectId, userId))
             logger.info("repoList:$repoList")
         } else {
             repoList.addAll(devOpsAuthGeneral.getUserActionPermission(projectId, userId, actions))

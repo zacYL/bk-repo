@@ -100,7 +100,7 @@ class ExtPermissionController(
         return ResponseBuilder.success(extPermissionServiceImpl.listRepoPathCollectionResourceType(userId, request))
     }
 
-    @ApiOperation("查询项目下仓库权限路径集合资源实例")
+    @ApiOperation("（路径授权使用）查询项目下仓库权限路径集合资源实例")
     @PostMapping("/resource_type/repo_path_collection/instance/list")
     fun listRepoPathCollectionResourceInstance(
         @RequestAttribute userId: String,
@@ -109,7 +109,7 @@ class ExtPermissionController(
         return ResponseBuilder.success(extPermissionServiceImpl.listRepoPathCollectionResourceInstance(userId, request))
     }
 
-    @ApiOperation("查询权限路径资源动作")
+    @ApiOperation("（路径授权使用）查询权限路径资源动作")
     @PostMapping("/resource_type/repo_path_collection/action")
     fun listRepoPathCollectionResourceAction(
         @RequestAttribute userId: String,
@@ -117,7 +117,7 @@ class ExtPermissionController(
         return ResponseBuilder.success(extPermissionServiceImpl.listRepoPathCollectionResourceAction(userId))
     }
 
-    @Operation(summary = "查询仓库路径集合权限")
+    @Operation(summary = "（路径授权使用）查询仓库路径集合权限")
     @GetMapping("/repo_path_collection/{projectId}/{subjectCode}/{subjectId}/permission")
     fun listRepoPathCollectionPermissions(
         @PathVariable
@@ -139,7 +139,7 @@ class ExtPermissionController(
         )
     }
 
-    @Operation(summary = "保存仓库路径集合权限")
+    @Operation(summary = "（路径授权使用）保存仓库路径集合权限")
     @PostMapping("/repo_path_collection/{projectId}/{subjectCode}/{subjectId}/permission/save")
     fun saveRepoPathCollectionPermissions(
         @RequestAttribute userId: String,
@@ -168,7 +168,7 @@ class ExtPermissionController(
         )
     }
 
-    @Operation(summary = "查询用户路径资源最终权限")
+    @Operation(summary = "（路径授权使用）查询用户路径资源最终权限")
     @GetMapping("/repo_path_collection/{projectId}/user/permission/final")
     fun listUserRepoPathCollectionFinalPermissions(
         @RequestAttribute userId: String,

@@ -230,7 +230,7 @@
                         }
                     })
                 }).catch(error => {
-                    if (error.status.toString() === '404') {
+                    if (error.status.toString() === '400') {
                         this.$bkInfoDevopsConfirm({
                             subTitle: this.$t('artifactRevert', [row.name]),
                             theme: 'success',

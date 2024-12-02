@@ -18,8 +18,10 @@ import com.tencent.bkrepo.auth.constant.AuthConstant.SUBJECTCODE
 import com.tencent.bkrepo.auth.constant.AuthRoleType.PROJECT_ROLE
 import com.tencent.bkrepo.auth.constant.AuthSubjectCode.GROUP
 import com.tencent.bkrepo.auth.constant.AuthSubjectCode.USER
+import com.tencent.bkrepo.auth.general.DevOpsAuthGeneral
 import com.tencent.bkrepo.auth.message.AuthMessageCode
 import com.tencent.bkrepo.auth.model.TPermission
+import com.tencent.bkrepo.auth.pojo.CanwayBkrepoPathPermission
 import com.tencent.bkrepo.auth.pojo.CanwayBkrepoPermission
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
@@ -61,12 +63,15 @@ import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
+import io.swagger.annotations.ApiParam
 import net.canway.devops.auth.api.custom.CanwayCustomResourceTypeClient
 import net.canway.devops.auth.pojo.resource.action.ResourceActionVO
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.bind.annotation.RequestAttribute
+import org.springframework.web.bind.annotation.RequestParam
 
 @Service
 class ExtPermissionServiceImpl(
@@ -78,6 +83,7 @@ class ExtPermissionServiceImpl(
     private val canwayProjectClient: CanwayProjectClient,
     private val servicePermissionResource: ServicePermissionResource,
     private val canwayCustomResourceTypeClient: CanwayCustomResourceTypeClient,
+    private val devOpsAuthGeneral: DevOpsAuthGeneral,
 ) {
     @Suppress("TooGenericExceptionCaught")
     fun migHistoryPermissionData() {
@@ -709,6 +715,41 @@ class ExtPermissionServiceImpl(
             )
         ).data ?: emptyList()
     }
+
+    fun listRepoPermissionAction(
+        userId: String,
+        projectId: String,
+        repoName: String,
+        path: String
+    ): CanwayBkrepoPathPermission {
+        val projectOrSuperiorAdmin = devOpsAuthGeneral.isProjectOrSuperiorAdmin(userId, projectId)
+        if (projectOrSuperiorAdmin) {
+            // 管理员直接返回全部action
+            val resourceActions =
+                canwayCustomResourceTypeClient.listResourceAction(userId, listOf(REPO_PATH_RESOURCECODE)).data
+                    ?: emptyList()
+            return CanwayBkrepoPathPermission(REPO_PATH_RESOURCECODE, resourceActions.map { it.actionCode })
+        }
+        val pathCollection = permissionService.listNodePermission(projectId, repoName)
+        // 获取包含请求路径的匹配的路径集合
+        val matchPathCollection = pathCollection.filter { collection ->
+            collection.includePattern.any { path.startsWith(it.trimEnd('/') + "/") }
+        }
+        // 如果没有匹配的路径集合，则返回空
+        if (matchPathCollection.isEmpty()) return CanwayBkrepoPathPermission(REPO_PATH_RESOURCECODE, emptyList())
+
+        // 获取用户权限
+        val repoPathCollectPermission = devOpsAuthGeneral.getRepoPathCollectPermission(
+            userId,
+            projectId,
+            repoName,
+            matchPathCollection.map { it.id!! })
+        return CanwayBkrepoPathPermission(
+            REPO_PATH_RESOURCECODE,
+            repoPathCollectPermission.map { it.actionCode }.distinct()
+        )
+    }
+
 
     private fun getCanwayRepoPathScopeId(projectId: String, repoName: String): String {
         return "${projectId}_${repoName}"

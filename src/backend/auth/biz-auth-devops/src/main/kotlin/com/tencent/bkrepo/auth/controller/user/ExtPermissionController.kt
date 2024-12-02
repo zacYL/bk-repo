@@ -1,7 +1,7 @@
 package com.tencent.bkrepo.auth.controller.user
 
+import com.tencent.bkrepo.auth.pojo.CanwayBkrepoPathPermission
 import com.tencent.bkrepo.auth.pojo.CanwayBkrepoPermission
-import com.tencent.bkrepo.auth.pojo.permission.AnyResourcePermissionSaveDTO
 import com.tencent.bkrepo.auth.pojo.permission.CreateRepoPathResourceTypeRequest
 import com.tencent.bkrepo.auth.pojo.permission.DeleteRepoPathResourceTypeRequest
 import com.tencent.bkrepo.auth.pojo.permission.ListRepoPathInstanceRequest
@@ -13,8 +13,6 @@ import com.tencent.bkrepo.auth.pojo.permission.SaveRepoPathPermission
 import com.tencent.bkrepo.auth.pojo.permission.UpdateRepoPathResourceTypeRequest
 import com.tencent.bkrepo.auth.service.impl.ExtPermissionServiceImpl
 import com.tencent.bkrepo.common.api.pojo.Response
-import com.tencent.bkrepo.common.cpack.dsl.tr
-import com.tencent.bkrepo.common.devops.enums.subjectCode
 import com.tencent.bkrepo.common.security.permission.Principal
 import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
@@ -180,6 +178,27 @@ class ExtPermissionController(
             extPermissionServiceImpl.listUserRepoPathCollectionFinalPermissions(
                 userId,
                 projectId
+            )
+        )
+    }
+
+    @ApiOperation("获取用户的仓库指定路径的动作权限")
+    @GetMapping("/list/repo_path/permission/action")
+    fun listRepoPathPermissionAction(
+        @RequestAttribute userId: String,
+        @ApiParam(value = "项目ID")
+        @RequestParam projectId: String,
+        @ApiParam(value = "仓库名称")
+        @RequestParam repoName: String,
+        @ApiParam(value = "仓库名称")
+        @RequestParam path: String
+    ): Response<CanwayBkrepoPathPermission> {
+        return ResponseBuilder.success(
+            extPermissionServiceImpl.listRepoPermissionAction(
+                userId,
+                projectId,
+                repoName,
+                path
             )
         )
     }

@@ -292,7 +292,7 @@ class CanwayPermissionServiceImpl(
         )
 
         val repoPathCollectionsIds =
-            repoPathPermissions.filter { it.actionCode == action.name }
+            repoPathPermissions.filter { it.actionCode == action.name.toLowerCase() }
                 .map { it.instanceId }
 
         return permissionRepository.findByIdIn(repoPathCollectionsIds)

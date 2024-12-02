@@ -33,6 +33,7 @@ package com.tencent.bkrepo.repository.search.common
 
 import cn.hutool.core.lang.UUID
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction.READ
+import com.tencent.bkrepo.common.artifact.path.PathUtils
 
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.interceptor.QueryContext
@@ -71,14 +72,14 @@ class PathRuleInterceptor(
 
             if (rule.operation == OperationType.EQ) {
                 val path = value.toString()
-                val find = userAuthPath.find { path.startsWith(it.trimEnd('/') + "/") }
+                val find = userAuthPath.find { path.startsWith(PathUtils.toPath(it)) }
                 if (find != null) {
                     // 能找到父路径，则拥有全部权限
-                    val queryRule = Rule.QueryRule(NodeInfo::path.name, value, OperationType.EQ)
+                    val queryRule = Rule.QueryRule(NodeInfo::path.name, value, OperationType.EQ).toFixed()
                     return context.interpreter.resolveRule(queryRule, context)
                 } else {
                     val nextLevelPath = userAuthPath.mapNotNull {
-                        getNextLevelPath(path, it)
+                        getNextLevelPath(it, path)
                     }
                     val queryRule = Rule.QueryRule(NodeInfo::fullPath.name, nextLevelPath, OperationType.IN).toFixed()
                     return context.interpreter.resolveRule(queryRule, context)
@@ -86,19 +87,21 @@ class PathRuleInterceptor(
             } else if (rule.operation == OperationType.PREFIX) {
                 val path = value.toString()
                 // 请求前缀路径的父路径是否授权
-                val authParentPath = userAuthPath.filter { path.startsWith(it.trimEnd('/') + "/") }
+                val authParentPath = userAuthPath.filter { path.startsWith(PathUtils.toPath(it)) }
                 if (authParentPath.isNotEmpty()) {
                     // 有请求路径父路径已授权，拥有prefix下所有文件查看权限
                     val queryRule = Rule.QueryRule(NodeInfo::path.name, value, OperationType.PREFIX).toFixed()
                     return context.interpreter.resolveRule(queryRule, context)
                 } else {
                     // 过滤出当前路径下已授权的子路径
-                    val authChildrenPath = userAuthPath.filter { (it.trimEnd('/') + "/").startsWith(path) }
-                    if (authChildrenPath.isEmpty()){
+                    val authChildrenPath = userAuthPath.filter { (PathUtils.toPath(it)).startsWith(path) }
+                    if (authChildrenPath.isEmpty()) {
                         // 当前路径下没有已授权的子路径，返回查询一个不存在的路径
-                        val queryRule = Rule.QueryRule(NodeInfo::path.name, UUID.randomUUID().toString() , OperationType.EQ).toFixed()
+                        val queryRule =
+                            Rule.QueryRule(NodeInfo::path.name, UUID.randomUUID().toString(), OperationType.EQ)
+                                .toFixed()
                         return context.interpreter.resolveRule(queryRule, context)
-                    }else{
+                    } else {
                         // 当前路径下有已授权的子路径，返回查询授权子路径
                         val rules = authChildrenPath.map {
                             Rule.QueryRule(NodeInfo::path.name, it, OperationType.PREFIX).toFixed()
@@ -108,7 +111,11 @@ class PathRuleInterceptor(
                             Rule.QueryRule(NodeInfo::fullPath.name, it, OperationType.EQ)
                         }
 
-                        return context.interpreter.resolveRule(Rule.NestedRule(rules.plus(parentFolderRules).toMutableList(), RelationType.OR), context)
+                        return context.interpreter.resolveRule(
+                            Rule.NestedRule(
+                                rules.plus(parentFolderRules).toMutableList(), RelationType.OR
+                            ), context
+                        )
                     }
                 }
             } else {
@@ -160,10 +167,10 @@ class PathRuleInterceptor(
 
     private fun isSupportRule(rule: Rule.QueryRule): Boolean {
         with(rule) {
-            return if (operation == OperationType.EQ) {
-                value is List<*> && (value as List<*>).firstOrNull() is CharSequence
-            } else {
+            return if (operation == OperationType.EQ || operation == OperationType.PREFIX) {
                 value is CharSequence
+            } else {
+                false
             }
         }
     }

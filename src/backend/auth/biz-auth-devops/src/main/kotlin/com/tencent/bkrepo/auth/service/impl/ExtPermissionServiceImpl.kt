@@ -52,6 +52,7 @@ import com.tencent.bkrepo.auth.service.PermissionService
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.exception.ParameterInvalidException
 import com.tencent.bkrepo.common.api.pojo.Response
+import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.devops.CATELOG_RESOURCECODE
 import com.tencent.bkrepo.common.devops.REPLICA_RESOURCECODE
@@ -268,7 +269,7 @@ class ExtPermissionServiceImpl(
                     projectId = request.projectId,
                     permName = request.permName,
                     repos = request.repos,
-                    includePattern = request.includePattern,
+                    includePattern = request.includePattern.map { PathUtils.normalizePath(it) },
                     actions = listOf(),
                     createBy = userId,
                     updatedBy = userId
@@ -296,7 +297,9 @@ class ExtPermissionServiceImpl(
             request.permName
         )
         permissionService.updateIncludePath(
-            UpdatePermissionPathRequest(permissionId = request.permissionId, request.includePattern)
+            UpdatePermissionPathRequest(
+                permissionId = request.permissionId,
+                request.includePattern.map { PathUtils.normalizePath(it) })
         )
     }
 
@@ -352,6 +355,7 @@ class ExtPermissionServiceImpl(
 
         //校验路径集合名称，支持中文、英文、数字、中划线、下划线，限制 32 个字符
         val pattern = "^[a-zA-Z0-9_\u4e00-\u9fa5-]{1,32}$"
+
         if (!permName.matches(pattern.toRegex())) {
             throw ParameterInvalidException("permName param Invalid")
         }
@@ -730,13 +734,18 @@ class ExtPermissionServiceImpl(
                     ?: emptyList()
             return CanwayBkrepoPathPermission(REPO_PATH_RESOURCECODE, resourceActions.map { it.actionCode })
         }
+
+        // 仓库权限动作
+        val repoInstanceAction = getCanwayPermission(userId, projectId, repoName, RESOURCECODE).permissions
+        val repoActions = repoInstanceAction.flatMap { it.actionCodes }
+
         val pathCollection = permissionService.listNodePermission(projectId, repoName)
         // 获取包含请求路径的匹配的路径集合
         val matchPathCollection = pathCollection.filter { collection ->
-            collection.includePattern.any { path.startsWith(it.trimEnd('/') + "/") }
+            collection.includePattern.any { path.startsWith(PathUtils.toPath(it)) }
         }
-        // 如果没有匹配的路径集合，则返回空
-        if (matchPathCollection.isEmpty()) return CanwayBkrepoPathPermission(REPO_PATH_RESOURCECODE, emptyList())
+        // 如果没有匹配的路径集合，则返回仓库
+        if (matchPathCollection.isEmpty()) return CanwayBkrepoPathPermission(REPO_PATH_RESOURCECODE, repoActions)
 
         // 获取用户权限
         val repoPathCollectPermission = devOpsAuthGeneral.getRepoPathCollectPermission(
@@ -746,7 +755,7 @@ class ExtPermissionServiceImpl(
             matchPathCollection.map { it.id!! })
         return CanwayBkrepoPathPermission(
             REPO_PATH_RESOURCECODE,
-            repoPathCollectPermission.map { it.actionCode }.distinct()
+            repoPathCollectPermission.map { it.actionCode }.plus(repoActions).distinct()
         )
     }
 

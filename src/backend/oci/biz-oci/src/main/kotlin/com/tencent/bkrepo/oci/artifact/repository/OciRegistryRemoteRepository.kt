@@ -149,13 +149,18 @@ class OciRegistryRemoteRepository(
         }
     }
 
-    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
+    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): Pair<String, PackageVersion>? {
         requireNotNull(context)
         with(context.artifactInfo as OciManifestArtifactInfo) {
             val version = if (isValidDigest) OciDigest(reference).fileName() else reference
-            return packageClient.findVersionByName(projectId, repoName, PackageKeys.ofDocker(packageName), version)
-                .data
-                ?: packageClient.findVersionByName(projectId, repoName, PackageKeys.ofOci(packageName), version).data
+            val dockerPackageKey = PackageKeys.ofDocker(packageName)
+            return packageClient.findVersionByName(projectId, repoName, dockerPackageKey, version).data
+                ?.let { Pair(dockerPackageKey, it) }
+                ?: run {
+                    val ociPackageKey = PackageKeys.ofOci(packageName)
+                    packageClient.findVersionByName(projectId, repoName, ociPackageKey, version).data
+                        ?.let { Pair(ociPackageKey, it) }
+                }
         }
     }
 

@@ -4,5 +4,5 @@ import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 
 interface MavenOperationService {
-    fun packageVersion(node: NodeDetail): PackageVersion?
+    fun packageVersion(node: NodeDetail): Pair<String, PackageVersion>?
 }

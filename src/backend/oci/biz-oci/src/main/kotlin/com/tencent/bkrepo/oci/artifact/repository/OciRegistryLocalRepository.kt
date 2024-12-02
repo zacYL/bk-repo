@@ -458,7 +458,7 @@ class OciRegistryLocalRepository(
         return null
     }
 
-    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
+    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): Pair<String, PackageVersion>? {
         requireNotNull(context)
         requireNotNull(node)
         with(context as ArtifactDownloadContext) {
@@ -468,6 +468,7 @@ class OciRegistryLocalRepository(
                 node.metadata[OLD_DOCKER_VERSION]?.toString() ?: return null
             }
             return packageClient.findVersionByName(projectId, repoName, packageKey, version).data
+                ?.let { Pair(packageKey, it) }
         }
     }
 

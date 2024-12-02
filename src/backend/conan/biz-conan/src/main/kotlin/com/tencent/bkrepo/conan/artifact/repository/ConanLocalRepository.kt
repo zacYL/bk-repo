@@ -142,9 +142,9 @@ class ConanLocalRepository : LocalRepository() {
     override fun onDownloadBefore(context: ArtifactDownloadContext) {
         super.onDownloadBefore(context)
         with(context.artifactInfo as ConanArtifactInfo) {
-            packageClient
-                .findVersionByName(projectId, repoName, PackageKeys.ofConan(buildRefStr(this)), version).data
-                ?.apply { packageDownloadIntercept(context, this) }
+            val packageKey = PackageKeys.ofConan(buildRefStr(this))
+            packageClient.findVersionByName(projectId, repoName, packageKey, version).data
+                ?.apply { packageDownloadIntercept(context, packageKey, this) }
         }
     }
 

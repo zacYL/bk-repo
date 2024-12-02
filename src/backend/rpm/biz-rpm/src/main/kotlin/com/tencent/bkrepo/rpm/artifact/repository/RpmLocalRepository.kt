@@ -156,7 +156,7 @@ class RpmLocalRepository(
                 }
                 // TODO: 需要抽象处理
                 uploadIntercept(context, it)
-                packageVersion(context, it)?.let { packageVersion -> uploadIntercept(context, packageVersion) }
+                packageVersion(context, it)?.let { pair -> uploadIntercept(context, pair.second) }
             }
         }
     }
@@ -530,7 +530,7 @@ class RpmLocalRepository(
         }
     }
 
-    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
+    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): Pair<String, PackageVersion>? {
         requireNotNull(context)
         with(context) {
             val fullPath = artifactInfo.getArtifactFullPath()
@@ -546,6 +546,7 @@ class RpmLocalRepository(
             } ?: return null
             val packageKey = PackageKeys.ofRpm(rpmPackage.path, rpmPackage.name)
             return packageClient.findVersionByName(projectId, repoName, packageKey, rpmPackage.version).data
+                ?.let { Pair(packageKey, it) }
         }
     }
 

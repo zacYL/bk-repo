@@ -14,13 +14,14 @@ import org.springframework.stereotype.Service
 class MavenOperationServiceImpl(
     private val packageClient: PackageClient
 ) : MavenOperationService {
-    override fun packageVersion(node: NodeDetail): PackageVersion? {
+    override fun packageVersion(node: NodeDetail): Pair<String, PackageVersion>? {
         val groupId = node.metadata[METADATA_KEY_GROUP_ID]?.toString()
         val artifactId = node.metadata[METADATA_KEY_ARTIFACT_ID]?.toString()
         val version = node.metadata[METADATA_KEY_VERSION]?.toString()
         return if (groupId != null && artifactId != null && version != null) {
             val packageKey = PackageKeys.ofGav(groupId, artifactId)
             packageClient.findVersionByName(node.projectId, node.repoName, packageKey, version).data
+                ?.let { Pair(packageKey, it) }
         } else {
             null
         }

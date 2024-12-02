@@ -243,7 +243,7 @@ class ComposerLocalRepository(private val stageClient: StageClient) : LocalRepos
             // TODO: 需要抽象处理
             node?.let {
                 uploadIntercept(context, it)
-                packageVersion(null, it)?.let { packageVersion -> uploadIntercept(context, packageVersion) }
+                packageVersion(null, it)?.let { pair -> uploadIntercept(context, pair.second) }
             }
         }
     }
@@ -584,13 +584,14 @@ class ComposerLocalRepository(private val stageClient: StageClient) : LocalRepos
         return true
     }
 
-    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
+    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): Pair<String, PackageVersion>? {
         if (node == null) return null
         with(node) {
             val packageKey = metadata[METADATA_KEY_PACKAGE_KEY]?.toString()
             val packageVersion = metadata[METADATA_KEY_VERSION]?.toString()
             if (packageKey == null || packageVersion == null) return null
             return packageClient.findVersionByName(projectId, repoName, packageKey, packageVersion).data
+                ?.let { Pair(packageKey, it) }
         }
     }
 

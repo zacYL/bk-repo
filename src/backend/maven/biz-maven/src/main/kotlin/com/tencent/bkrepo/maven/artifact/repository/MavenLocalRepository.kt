@@ -326,7 +326,7 @@ class MavenLocalRepository(
         // TODO: 需要抽象处理
         node?.let {
             uploadIntercept(context, it)
-            packageVersion(null, node)?.let { packageVersion -> uploadIntercept(context, packageVersion) }
+            packageVersion(null, node)?.let { pair -> uploadIntercept(context, pair.second) }
         }
         for (hashType in HashType.values()) {
             val artifactFullPath = context.artifactInfo.getArtifactFullPath()
@@ -821,7 +821,7 @@ class MavenLocalRepository(
         }
     }
 
-    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
+    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): Pair<String, PackageVersion>? {
         requireNotNull(node)
         return mavenOperationService.packageVersion(node)
     }

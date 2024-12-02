@@ -161,9 +161,9 @@ class CocoapodsLocalRepository(
         val artifactInfo = context.artifactInfo
         if (artifactInfo is CocoapodsArtifactInfo) {
             with(artifactInfo) {
-                packageClient
-                    .findVersionByName(projectId, repoName, PackageKeys.ofCocoapods(name), version).data
-                    ?.apply { packageDownloadIntercept(context, this) }
+                val packageKey = PackageKeys.ofCocoapods(name)
+                packageClient.findVersionByName(projectId, repoName, packageKey, version).data
+                    ?.apply { packageDownloadIntercept(context, packageKey, this) }
             }
         }
     }

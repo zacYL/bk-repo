@@ -310,6 +310,10 @@ object PackageKeys {
         return nameKey.substringAfter(prefix)
     }
 
+    fun resolveName(key: String) = key.substringAfter(SEPARATOR)
+
+    fun resolveType(key: String) = PackageType.fromSchema(key.substringAfter(SEPARATOR))
+
     fun determineVersionSortProperty(packageKey: String): String {
         return PackageType.fromSchema(packageKey.substringBefore(SEPARATOR))?.versionSortProperty
             ?: PackageVersion::createdDate.name

@@ -101,7 +101,7 @@ class NpmLocalRepository(
         // 不为空说明上传的是tgz文件
         context.getStringAttribute("attachments.content_type")?.let {
             // TODO: 需要抽象处理
-            packageVersion(context, null)?.let { uploadIntercept(context, it) }
+            packageVersion(context, null)?.let { uploadIntercept(context, it.second) }
             // 计算sha1并校验
             val calculatedSha1 = context.getArtifactFile().getInputStream().sha1()
             val uploadSha1 = context.getStringAttribute(ATTRIBUTE_OCTET_STREAM_SHA1)
@@ -226,7 +226,7 @@ class NpmLocalRepository(
         }
     }
 
-    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
+    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): Pair<String, PackageVersion>? {
         requireNotNull(context)
         return npmOperationService.packageVersion(context)
     }

@@ -210,12 +210,13 @@ class HelmOperationService(
         )
     }
 
-    fun packageVersion(context: ArtifactContext, node: NodeDetail): PackageVersion? {
+    fun packageVersion(context: ArtifactContext, node: NodeDetail): Pair<String, PackageVersion>? {
         with(context) {
             val packageName = node.metadata[NAME] ?: return null
             val packageVersion = node.metadata[VERSION] ?: return null
             val packageKey = PackageKeys.ofHelm(packageName.toString())
             return packageClient.findVersionByName(projectId, repoName, packageKey, packageVersion.toString()).data
+                ?.let { Pair(packageKey, it) }
         }
     }
 

@@ -126,7 +126,7 @@ class HelmLocalRepository(
             // TODO: 需要抽象处理
             node?.let {
                 uploadIntercept(context, node)
-                packageVersion(context, node)?.let { packageVersion -> uploadIntercept(context, packageVersion) }
+                packageVersion(context, node)?.let { pair -> uploadIntercept(context, pair.second) }
             }
         }
     }
@@ -256,7 +256,7 @@ class HelmLocalRepository(
         }
     }
 
-    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
+    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): Pair<String, PackageVersion>? {
         requireNotNull(context)
         requireNotNull(node)
         return helmOperationService.packageVersion(context, node)

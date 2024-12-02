@@ -67,7 +67,7 @@ class UserMetadataController(
 ) {
 
     @ApiOperation("查询元数据列表")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
+    @Permission(type = ResourceType.NODE, action = PermissionAction.READ)
     @GetMapping(DEFAULT_MAPPING_URI)
     fun listMetadata(
         @RequestAttribute userId: String,
@@ -79,7 +79,7 @@ class UserMetadataController(
     }
 
     @ApiOperation("创建/更新元数据列表")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.UPDATE)
+    @Permission(type = ResourceType.NODE, action = PermissionAction.UPDATE)
     @PostMapping(DEFAULT_MAPPING_URI)
     fun save(
         @RequestAttribute userId: String,
@@ -101,7 +101,7 @@ class UserMetadataController(
     }
 
     @ApiOperation("创建/更新禁止元数据")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.FORBID)
+    @Permission(type = ResourceType.NODE, action = PermissionAction.FORBID)
     @PostMapping("/forbid$DEFAULT_MAPPING_URI")
     fun forbidMetadata(
         @RequestAttribute userId: String,
@@ -121,7 +121,7 @@ class UserMetadataController(
     }
 
     @ApiOperation("创建/更新锁定元数据")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.LOCK)
+    @Permission(type = ResourceType.NODE, action = PermissionAction.LOCK)
     @PostMapping("/lock$DEFAULT_MAPPING_URI")
     fun lockMetadata(
         @RequestAttribute userId: String,
@@ -141,7 +141,7 @@ class UserMetadataController(
     }
 
     @ApiOperation("删除元数据")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.UPDATE)
+    @Permission(type = ResourceType.NODE, action = PermissionAction.UPDATE)
     @DeleteMapping(DEFAULT_MAPPING_URI)
     fun delete(
         @RequestAttribute userId: String,

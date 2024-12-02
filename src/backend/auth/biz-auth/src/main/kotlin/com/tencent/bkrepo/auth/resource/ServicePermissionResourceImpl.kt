@@ -144,9 +144,9 @@ class ServicePermissionResourceImpl @Autowired constructor(
     override fun getAuthRepoPaths(
         userId: String,
         projectId: String,
-        repoName: String,
+        repoNames: List<String>,
         action: PermissionAction
-    ): Response<List<String>> {
-        return ResponseBuilder.success(permissionService.getUserAuthPaths(userId, projectId, repoName, action))
+    ): Response<Map<String,List<String>>> {
+        return ResponseBuilder.success(permissionService.getUserAuthPaths(userId, projectId, repoNames, action))
     }
 }

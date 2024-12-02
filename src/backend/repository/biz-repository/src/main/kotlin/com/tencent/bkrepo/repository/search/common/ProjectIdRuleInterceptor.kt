@@ -1,0 +1,128 @@
+/*
+ * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
+ *
+ * Copyright (C) 2020 THL A29 Limited, a Tencent company.  All rights reserved.
+ *
+ * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
+ *
+ * A copy of the MIT License is included in this file.
+ *
+ *
+ * Terms of the MIT License:
+ * ---------------------------------------------------
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+package com.tencent.bkrepo.repository.search.common
+
+import cn.hutool.core.lang.UUID
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction.READ
+import com.tencent.bkrepo.common.artifact.path.PathUtils
+
+import com.tencent.bkrepo.common.query.enums.OperationType
+import com.tencent.bkrepo.common.query.interceptor.QueryContext
+import com.tencent.bkrepo.common.query.interceptor.QueryRuleInterceptor
+import com.tencent.bkrepo.common.query.model.Rule
+import com.tencent.bkrepo.common.query.model.Rule.FixedRule
+import com.tencent.bkrepo.common.query.model.Rule.NestedRule
+import com.tencent.bkrepo.common.query.model.Rule.NestedRule.RelationType
+import com.tencent.bkrepo.common.query.model.Rule.NestedRule.RelationType.AND
+import com.tencent.bkrepo.common.query.model.Rule.QueryRule
+import com.tencent.bkrepo.common.security.manager.PermissionManager
+import com.tencent.bkrepo.common.security.util.SecurityUtils
+import com.tencent.bkrepo.repository.pojo.node.NodeInfo
+import org.aspectj.weaver.tools.cache.SimpleCacheFactory.path
+import org.springframework.data.mongodb.core.query.Criteria
+import org.springframework.stereotype.Component
+
+/**
+ * 仓库类型规则拦截器
+ *
+ * 条件构造器中传入条件是`repoType`，需要转换成对应的仓库列表
+ */
+@Component
+class ProjectIdRuleInterceptor(
+    private val permissionManager: PermissionManager,
+) : QueryRuleInterceptor {
+
+    override fun match(rule: Rule): Boolean {
+        return rule is Rule.QueryRule && rule.field == "projectId" && isSupportRule(rule)
+    }
+
+    override fun intercept(rule: Rule, context: QueryContext): Criteria {
+        require(rule is Rule.QueryRule)
+        with(rule) {
+            require(context is CommonQueryContext)
+            val projectId = rule.value.toString()
+            val repoName = context.findRepoName()
+            val userId = SecurityUtils.getUserId()
+
+            val userAuthPath = permissionManager.getUserAuthPath(userId, projectId, repoName, READ)
+            val projectIdRule = Rule.QueryRule(NodeInfo::projectId.name, projectId, OperationType.EQ).toFixed()
+
+            if (userAuthPath.isEmpty()) {
+                return context.interpreter.resolveRule(projectIdRule, context)
+            }
+
+            val reposNestedRule = userAuthPath.map { (repoName, authPaths) ->
+                val allAncestorFolders = mutableSetOf<String>()
+                // 授权路径
+                val repoAuthPathRules = authPaths.map { authPath ->
+                    val ancestorFolder = PathUtils.resolveAncestorFolder(authPath)
+                    allAncestorFolders.addAll(ancestorFolder)
+                    allAncestorFolders.add(PathUtils.toFullPath(authPath))
+                    QueryRule(NodeInfo::path.name, authPath, OperationType.PREFIX).toFixed()
+                }
+
+                // 授权路径的祖先文件夹
+                val authPathAncestorFolderRules = allAncestorFolders.map { authPathAncestorFolder ->
+                    QueryRule(NodeInfo::fullPath.name, authPathAncestorFolder, OperationType.EQ).toFixed()
+                }
+
+                val repoAuthPathNestedRule = Rule.NestedRule(
+                    repoAuthPathRules.plus(authPathAncestorFolderRules).toMutableList(), RelationType.OR
+                )
+                // 当前仓库查询条件
+                val repoNameRule = QueryRule(NodeInfo::repoName.name, repoName, OperationType.EQ)
+
+                NestedRule(
+                    mutableListOf(repoNameRule, repoAuthPathNestedRule), AND
+                )
+            }
+
+            val nestedRule = NestedRule(
+                reposNestedRule.toMutableList(), RelationType.OR
+            )
+
+            return context.interpreter.resolveRule(
+                NestedRule(mutableListOf(projectIdRule, nestedRule), RelationType.AND) , context
+            )
+        }
+    }
+
+    private fun isSupportRule(rule: Rule.QueryRule): Boolean {
+        with(rule) {
+            return if (operation == OperationType.EQ || operation == OperationType.PREFIX) {
+                value is CharSequence
+            } else {
+                false
+            }
+        }
+    }
+}

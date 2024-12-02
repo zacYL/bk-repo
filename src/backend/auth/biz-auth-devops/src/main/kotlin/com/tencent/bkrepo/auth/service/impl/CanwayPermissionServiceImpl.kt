@@ -134,7 +134,7 @@ class CanwayPermissionServiceImpl(
                             val repoPathCollectPermission = devOpsAuthGeneral.getRepoPathCollectPermission(
                                 uid,
                                 projectId!!,
-                                repoName!!,
+                                listOf(repoName!!),
                                 emptyList()
                             )
                             val pathReadPermission =
@@ -203,7 +203,7 @@ class CanwayPermissionServiceImpl(
             val repoPathCollectPermission = devOpsAuthGeneral.getRepoPathCollectPermission(
                 uid,
                 projectId!!,
-                repoName!!,
+                listOf(repoName!!),
                 // 兼容以后任意权限的情况，同时也避免pathCollectionIds为空导致查出全部
                 pathCollectionIds.plus("*")
             )
@@ -275,18 +275,18 @@ class CanwayPermissionServiceImpl(
     override fun getUserAuthPaths(
         userId: String,
         projectId: String,
-        repoName: String,
+        repoNames: List<String>,
         action: PermissionAction
-    ): List<String> {
+    ): Map<String, List<String>> {
 
         if (devOpsAuthGeneral.isProjectOrSuperiorAdmin(userId, projectId)) {
-            return listOf("/")
+            return repoNames.associateWith { listOf("/") }
         }
 
         val repoPathPermissions = devOpsAuthGeneral.getRepoPathCollectPermission(
             userId,
             projectId,
-            repoName,
+            repoNames,
             // 为表示查出全部
             emptyList()
         )
@@ -294,9 +294,11 @@ class CanwayPermissionServiceImpl(
         val repoPathCollectionsIds =
             repoPathPermissions.filter { it.actionCode == action.name.toLowerCase() }
                 .map { it.instanceId }
+        val authPathCollections = permissionRepository.findByIdIn(repoPathCollectionsIds)
 
-        return permissionRepository.findByIdIn(repoPathCollectionsIds)
-            .flatMap { it.includePattern }
+        return authPathCollections.groupBy { it.repos.first() }.map { repoGroup ->
+            repoGroup.key to repoGroup.value.flatMap { it.includePattern }.distinct()
+        }.toMap()
     }
 
     /**

@@ -21,6 +21,7 @@ import io.swagger.annotations.ApiParam
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import net.canway.devops.auth.pojo.resource.action.ResourceActionVO
+import org.springframework.web.bind.annotation.CrossOrigin
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -49,7 +50,7 @@ class ExtPermissionController(
 
     @Principal(PrincipalType.ADMIN)
     @PostMapping("/migrate/delete/permission/repo_create_action")
-    fun migrateTodeleteRepoCreateAction():Response<Boolean> {
+    fun migrateTodeleteRepoCreateAction(): Response<Boolean> {
         extPermissionServiceImpl.migrateTodeleteRepoCreateAction()
         return ResponseBuilder.success(true)
     }
@@ -105,6 +106,7 @@ class ExtPermissionController(
         return ResponseBuilder.success(extPermissionServiceImpl.listRepoPathCollectionResourceType(userId, request))
     }
 
+    @CrossOrigin
     @ApiOperation("（路径授权使用）查询项目下仓库权限路径集合资源实例")
     @PostMapping("/resource_type/repo_path_collection/instance/list")
     fun listRepoPathCollectionResourceInstance(
@@ -114,6 +116,7 @@ class ExtPermissionController(
         return ResponseBuilder.success(extPermissionServiceImpl.listRepoPathCollectionResourceInstance(userId, request))
     }
 
+    @CrossOrigin
     @ApiOperation("（路径授权使用）查询权限路径资源动作")
     @PostMapping("/resource_type/repo_path_collection/action")
     fun listRepoPathCollectionResourceAction(
@@ -122,6 +125,7 @@ class ExtPermissionController(
         return ResponseBuilder.success(extPermissionServiceImpl.listRepoPathCollectionResourceAction(userId))
     }
 
+    @CrossOrigin
     @Operation(summary = "（路径授权使用）查询仓库路径集合权限")
     @GetMapping("/repo_path_collection/{projectId}/{subjectCode}/{subjectId}/permission")
     fun listRepoPathCollectionPermissions(
@@ -144,6 +148,7 @@ class ExtPermissionController(
         )
     }
 
+    @CrossOrigin
     @Operation(summary = "（路径授权使用）保存仓库路径集合权限")
     @PostMapping("/repo_path_collection/{projectId}/{subjectCode}/{subjectId}/permission/save")
     fun saveRepoPathCollectionPermissions(
@@ -173,6 +178,7 @@ class ExtPermissionController(
         )
     }
 
+    @CrossOrigin
     @Operation(summary = "（路径授权使用）查询用户路径资源最终权限")
     @GetMapping("/repo_path_collection/{projectId}/user/permission/final")
     fun listUserRepoPathCollectionFinalPermissions(

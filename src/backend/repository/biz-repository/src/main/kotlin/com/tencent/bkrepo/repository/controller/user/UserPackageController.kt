@@ -66,7 +66,7 @@ class UserPackageController(
 ) {
 
     @ApiOperation("分页查询包")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
+    @Permission(type = ResourceType.NODE, action = PermissionAction.READ)
     @GetMapping("/package/page/{projectId}/{repoName}")
     fun listPackagePage(
         @PathVariable projectId: String,
@@ -78,7 +78,7 @@ class UserPackageController(
     }
 
     @ApiOperation("分页查询版本")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
+    @Permission(type = ResourceType.NODE, action = PermissionAction.READ)
     @GetMapping("/version/page/{projectId}/{repoName}")
     fun listVersionPage(
         @PathVariable projectId: String,
@@ -91,7 +91,7 @@ class UserPackageController(
     }
 
     @ApiOperation("查询包信息")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
+    @Permission(type = ResourceType.NODE, action = PermissionAction.READ)
     @GetMapping("/package/info/{projectId}/{repoName}")
     fun findPackageByKey(
         @PathVariable projectId: String,
@@ -102,7 +102,7 @@ class UserPackageController(
     }
 
     @ApiOperation("删除包")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.DELETE)
+    @Permission(type = ResourceType.NODE, action = PermissionAction.DELETE)
     @DeleteMapping("/package/delete/{projectId}/{repoName}")
     fun deletePackage(
         @PathVariable projectId: String,

@@ -124,9 +124,9 @@ open class CpackPermissionServiceImpl constructor(
     override fun getUserAuthPaths(
         userId: String,
         projectId: String,
-        repoName: String,
+        repoNames: List<String>,
         action: PermissionAction
-    ): List<String> {
+    ): Map<String, List<String>> {
         TODO("Not yet implemented")
     }
 
@@ -460,7 +460,7 @@ open class CpackPermissionServiceImpl constructor(
         }?.map { it.name } ?: listOf()
     }
 
-    fun listPublicRepo(projectId: String): List<String>{
+    fun listPublicRepo(projectId: String): List<String> {
         return repositoryClient.listRepo(projectId).data?.filter {
             it.configuration.settings["system"] == true || it.public
         }?.map { it.name } ?: listOf()

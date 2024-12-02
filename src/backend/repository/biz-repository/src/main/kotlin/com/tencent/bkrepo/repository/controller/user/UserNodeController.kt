@@ -91,7 +91,7 @@ class UserNodeController(
 ) {
 
     @ApiOperation("根据路径查看节点详情")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
+    @Permission(type = ResourceType.NODE, action = PermissionAction.READ)
     @GetMapping(DEFAULT_MAPPING_URI/* Deprecated */, "/detail/$DEFAULT_MAPPING_URI")
     fun getNodeDetail(
         @RequestAttribute userId: String,
@@ -103,7 +103,7 @@ class UserNodeController(
     }
 
     @ApiOperation("创建文件夹")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
+    @Permission(type = ResourceType.NODE, action = PermissionAction.WRITE)
     @PostMapping(DEFAULT_MAPPING_URI/* Deprecated */, "/mkdir/$DEFAULT_MAPPING_URI")
     fun mkdir(
         @RequestAttribute userId: String,
@@ -124,7 +124,7 @@ class UserNodeController(
     }
 
     @ApiOperation("删除节点")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.DELETE)
+    @Permission(type = ResourceType.NODE, action = PermissionAction.DELETE)
     @DeleteMapping(DEFAULT_MAPPING_URI/* Deprecated */, "/delete/$DEFAULT_MAPPING_URI")
     fun deleteNode(
         @RequestAttribute userId: String,
@@ -155,7 +155,7 @@ class UserNodeController(
     }
 
     @ApiOperation("更新节点")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.UPDATE)
+    @Permission(type = ResourceType.NODE, action = PermissionAction.UPDATE)
     @PostMapping("/update/$DEFAULT_MAPPING_URI")
     fun updateNode(
         @RequestAttribute userId: String,
@@ -176,7 +176,7 @@ class UserNodeController(
     }
 
     @ApiOperation("重命名节点")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.UPDATE)
+    @Permission(type = ResourceType.NODE, action = PermissionAction.UPDATE)
     @PostMapping("/rename/$DEFAULT_MAPPING_URI")
     fun renameNode(
         @RequestAttribute userId: String,
@@ -205,7 +205,7 @@ class UserNodeController(
         @RequestBody request: UserNodeRenameRequest
     ): Response<Void> {
         with(request) {
-            permissionManager.checkPermission(ResourceType.REPO, PermissionAction.UPDATE, projectId, repoName)
+            permissionManager.checkPermission(ResourceType.NODE, PermissionAction.UPDATE, projectId, repoName, listOf(fullPath))
 //            permissionManager.checkNodePermission(PermissionAction.UPDATE, projectId, repoName, fullPath)
 //            permissionManager.checkNodePermission(PermissionAction.UPDATE, projectId, repoName, newFullPath)
             val renameRequest = NodeRenameRequest(
@@ -267,7 +267,7 @@ class UserNodeController(
     }
 
     @ApiOperation("查询节点大小信息")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
+    @Permission(type = ResourceType.NODE, action = PermissionAction.READ)
     @GetMapping("/size/$DEFAULT_MAPPING_URI")
     fun computeSize(artifactInfo: ArtifactInfo): Response<NodeSizeInfo> {
         val nodeSizeInfo = nodeService.computeSize(artifactInfo)
@@ -275,7 +275,7 @@ class UserNodeController(
     }
 
     @ApiOperation("分页查询节点")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.READ)
+    @Permission(type = ResourceType.NODE, action = PermissionAction.READ)
     @GetMapping("/page/$DEFAULT_MAPPING_URI")
     fun listPageNode(
         artifactInfo: ArtifactInfo,

@@ -223,8 +223,8 @@ interface ServicePermissionResource {
         @ApiParam(value = "项目id")
         @RequestParam projectId: String,
         @ApiParam(value = "仓库名称")
-        @RequestParam repoName: String,
+        @RequestParam repoNames: List<String>,
         @ApiParam(value = "仓库名称")
         @RequestParam action: PermissionAction
-    ): Response<List<String>>
+    ): Response<Map<String,List<String>>>
 }

@@ -137,16 +137,17 @@ class DevOpsAuthGeneral(
     fun getRepoPathCollectPermission(
         userId: String,
         projectId: String,
-        repoName: String,
+        repoNames: List<String>,
         pathCollectionIds: List<String>
     ): List<PermissionVO> {
         // 查询用户关联的角色和权限作用域
         val subjects =
             canwayProjectClient.getUserRelatedRoleAndPermissionScope(userId, projectId).data?.map { it.first }
                 ?: listOf(SubjectDTO.user(userId))
+        val scopes = repoNames.map { repoName -> ScopeDTO(REPO_PATH_SCOPE_CODE, "${projectId}_${repoName}") }
         return canwayCustomPermissionClient.queryPermission(
             CustomPermissionQueryDTO(
-                scopes = listOf(ScopeDTO(REPO_PATH_SCOPE_CODE, "${projectId}_${repoName}")),
+                scopes = scopes,
                 subjects = subjects,
                 instanceIds = pathCollectionIds,
                 resourceCodes = listOf(REPO_PATH_RESOURCECODE)

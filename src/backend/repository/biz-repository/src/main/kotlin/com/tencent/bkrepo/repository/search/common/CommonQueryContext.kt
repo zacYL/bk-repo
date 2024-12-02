@@ -34,6 +34,7 @@ package com.tencent.bkrepo.repository.search.common
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.query.builder.MongoQueryInterpreter
+import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.interceptor.QueryContext
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.query.model.Rule
@@ -59,13 +60,18 @@ open class CommonQueryContext(
         throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "projectId")
     }
 
-    fun findRepoName(siblingRule: Rule.QueryRule? = null): String {
+    fun findRepoName(): List<String> {
         val rule = queryModel.rule
         if (rule is Rule.NestedRule && rule.relation == Rule.NestedRule.RelationType.AND) {
-            findRule(rule.rules, "repoName")?.let { return it.value.toString()}
+            findRule(rule.rules, "repoName")?.let {
+                if (it.operation == OperationType.IN && it.value is List<*>) {
+                    return it.value as List<String>
+                } else {
+                    return listOf(it.value.toString())
+                }
+            }
         }
-        if (siblingRule != null) (find("repoName", siblingRule) as? String)?.let { return it }
-        throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "repoName")
+        return emptyList()
     }
 
     /**

@@ -114,9 +114,9 @@ open class PermissionServiceImpl constructor(
     override fun getUserAuthPaths(
         userId: String,
         projectId: String,
-        repoName: String,
+        repoNames: List<String>,
         action: PermissionAction
-    ): List<String> {
+    ): Map<String,List<String>>{
         TODO("Not yet implemented")
     }
 

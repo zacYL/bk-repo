@@ -766,7 +766,7 @@ class ExtPermissionServiceImpl(
         val repoPathCollectPermission = devOpsAuthGeneral.getRepoPathCollectPermission(
             userId,
             projectId,
-            repoName,
+            listOf(repoName),
             matchPathCollection.map { it.id!! })
         return CanwayBkrepoPathPermission(
             REPO_PATH_RESOURCECODE,

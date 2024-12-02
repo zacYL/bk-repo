@@ -1,5 +1,6 @@
 package com.tencent.bkrepo.auth.service.impl
 
+import com.tencent.bkrepo.auth.api.CanwayCustomMigrationClient
 import com.tencent.bkrepo.auth.api.CanwayCustomPermissionClient
 import com.tencent.bkrepo.auth.api.CanwayCustomRoleClient
 import com.tencent.bkrepo.auth.api.CanwayProjectClient
@@ -26,6 +27,7 @@ import com.tencent.bkrepo.auth.pojo.CanwayBkrepoPermission
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.auth.pojo.general.ScopeDTO
+import com.tencent.bkrepo.auth.pojo.migration.ActionDeleteDTO
 import com.tencent.bkrepo.auth.pojo.permission.AnyResourcePermissionSaveDTO
 import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.CreatePermissionRequest
@@ -85,6 +87,7 @@ class ExtPermissionServiceImpl(
     private val servicePermissionResource: ServicePermissionResource,
     private val canwayCustomResourceTypeClient: CanwayCustomResourceTypeClient,
     private val devOpsAuthGeneral: DevOpsAuthGeneral,
+    private val canwayCustomMigrationClient: CanwayCustomMigrationClient,
 ) {
     @Suppress("TooGenericExceptionCaught")
     fun migHistoryPermissionData() {
@@ -213,6 +216,18 @@ class ExtPermissionServiceImpl(
                 logger.error("${project.name} project permission merge fail:${exception.message}")
             }
         }
+    }
+
+
+    fun migrateTodeleteRepoCreateAction() {
+        canwayCustomMigrationClient.deleteAction(
+            "admin",
+            ActionDeleteDTO(
+                actionIds = listOf("2093e9c815b54e9db06e9ea60227a1be"),
+                physicalDelete = false
+            )
+        )
+        logger.info("delete repo create action permission")
     }
 
     fun listDevOpsPermission(userId: String, projectId: String, repoName: String?): List<CanwayBkrepoPermission> {

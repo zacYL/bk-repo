@@ -225,7 +225,7 @@
             <bk-tab-panel v-if="showCleanConfigTab" render-directive="if" name="cleanConfig" :label="$t('cleanSetting')">
                 <clean-config :base-data="repoBaseInfo" @refresh="getRepoInfoHandler"></clean-config>
             </bk-tab-panel>
-            <bk-tab-panel name="permissionConfig" :label="$t('permissionPath')">
+            <bk-tab-panel v-if="showPermissionConfigTab" name="permissionConfig" :label="$t('permissionPath')">
                 <permissionConfig :base-data="repoBaseInfo" @refresh="getRepoInfoHandler"></permissionConfig>
             </bk-tab-panel>
         </bk-tab>
@@ -346,6 +346,9 @@
             },
             showCleanConfigTab () {
                 return (this.repoBaseInfo.category === 'LOCAL' || this.repoBaseInfo.category === 'COMPOSITE') && ['maven', 'docker', 'npm', 'helm', 'generic'].includes(this.repoType)
+            },
+            showPermissionConfigTab () {
+                return this.repoBaseInfo.category === 'LOCAL' && ['generic'].includes(this.repoType)
             },
             repoAddress () {
                 const { repoType, name } = this.repoBaseInfo

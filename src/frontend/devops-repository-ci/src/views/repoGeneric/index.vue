@@ -10,7 +10,7 @@
                 </div>
             </div>
             <bk-button
-                v-if="type === 'GENERIC'"
+                v-if="type === 'GENERIC' && !isRemote"
                 theme="default"
                 @click="toRecycleBin()">
                 {{$t('recycleBin')}}
@@ -111,12 +111,6 @@
                         </template>
                     </bk-table-column>
 
-                    <!-- <bk-table-column :label="$t('metadata')">
-                        <template #default="{ row }">
-                            <metadata-tag :metadata="row.nodeMetadata" />
-                        </template>
-                    </bk-table-column> -->
-
                     <bk-table-column v-if="searchFileName" :label="$t('path')" prop="fullPath" show-overflow-tooltip></bk-table-column>
                     <bk-table-column :label="$t('lastModifiedDate')" prop="lastModifiedDate" width="150" :render-header="renderHeader">
                         <template #default="{ row }">{{ formatDate(row.lastModifiedDate) }}</template>
@@ -146,22 +140,8 @@
                     <bk-table-column :label="$t('operation')" width="100">
                         <template #default="{ row }">
                             <operation-list
-                                :list="[
-                                    { clickEvent: () => showDetail(row), label: $t('detail') },
-                                    ...(!row.metadata.forbidStatus ? [
-                                        !row.folder && handlerPreview(row) && !isRemote && { clickEvent: () => handlerPreview(row, true), label: $t('preview') },
-                                        !(row.folder && isGenericRemote) && { clickEvent: () => handlerDownload(row), label: $t('download') },
-                                        ...((repoName !== 'pipeline' && !row.metadata.lockStatus) ? [
-                                            updateOperationPermission && !isRemote && { clickEvent: () => renameRes(row), label: $t('rename') },
-                                            !whetherSoftware && !isRemote && { clickEvent: () => moveRes(row), label: $t('move') },
-                                            !whetherSoftware && !isRemote && { clickEvent: () => copyRes(row), label: $t('copy') }
-                                        ] : []),
-                                        shareOperationPermission && !isRemote && { clickEvent: () => handlerShare(row), label: $t('share') }
-                                    ] : []),
-                                    (!row.folder && forbidOperationPermission) && !isRemote && { clickEvent: () => showLimitDialog('forbid',row), label: row.metadata.forbidStatus ? $t('relieve') + $t('space') + $t('forbid') : $t('forbid') },
-                                    (!row.folder && lockOperationPermission) && !isRemote && { clickEvent: () => showLimitDialog('lock',row), label: row.metadata.lockStatus ? $t('relieve') + $t('space') + $t('lock') : $t('lock') },
-                                    (deleteOperationPermission && !row.metadata.lockStatus) && !isRemote && { clickEvent: () => deleteRes(row), label: $t('delete') }
-                                ].filter(Boolean)">
+                                @show="initPermission(row)"
+                                :list="generateActions(row)">
                             </operation-list>
                         </template>
                     </bk-table-column>
@@ -266,11 +246,12 @@
                 },
                 debounceClickTreeNode: null,
                 inFolderSearchName: this.$route.query.fileName,
-                searchFullPath: ''
+                searchFullPath: '',
+                currentRepoDataPermission: []
             }
         },
         computed: {
-            ...mapState(['repoListAll', 'userList', 'genericTree', 'currentRepositoryDataPermission']),
+            ...mapState(['repoListAll', 'userList', 'genericTree']),
             ...mapGetters(['isEnterprise']),
             projectId () {
                 return this.$route.params.projectId
@@ -317,9 +298,6 @@
             // 是否是 软件源模式
             whetherSoftware () {
                 return this.$route.path.startsWith('/software')
-            },
-            currentRepoDataPermission () {
-                return this.currentRepositoryDataPermission?.find((item) => item.resourceCode === 'bkrepo')?.actionCodes || []
             },
             // 是否拥有上传制品权限
             canUploadArtifact () {
@@ -396,7 +374,8 @@
                 'forbidMetadata',
                 'lockMetadata',
                 'getGenericList',
-                'getCurrentRepositoryDataPermission'
+                'getCurrentRepositoryDataPermission',
+                'getPermissionActions'
             ]),
             toRecycleBin () {
                 this.$router.push({
@@ -948,6 +927,57 @@
                     this.searchFullPath = ''
                 }
                 this.handlerPaginationChange()
+            },
+            initPermission (row) {
+                this.getPermissionActions({ projectId: this.projectId, repoName: this.repoName, path: row.fullPath }).then(res => {
+                    this.currentRepoDataPermission = res.actionCodes || []
+                })
+            },
+            generateActions (row) {
+                const actions = [
+                    { clickEvent: () => this.showDetail(row), label: this.$t('detail') }
+                ]
+
+                if (!row.metadata.forbidStatus) {
+                    if (!row.folder && this.handlerPreview(row) && !this.isRemote) {
+                        actions.push({ clickEvent: () => this.handlerPreview(row, true), label: this.$t('preview') })
+                    }
+                    if (!(row.folder && this.isGenericRemote)) {
+                        actions.push({ clickEvent: () => this.handlerDownload(row), label: this.$t('download') })
+                    }
+                    if (this.repoName !== 'pipeline' && !row.metadata.lockStatus) {
+                        if (this.updateOperationPermission && !this.isRemote) {
+                            actions.push({ clickEvent: () => this.renameRes(row), label: this.$t('rename') })
+                        }
+                        if (!this.whetherSoftware && !this.isRemote) {
+                            actions.push({ clickEvent: () => this.moveRes(row), label: this.$t('move') })
+                            actions.push({ clickEvent: () => this.copyRes(row), label: this.$t('copy') })
+                        }
+                    }
+                    if (this.shareOperationPermission && !this.isRemote) {
+                        actions.push({ clickEvent: () => this.handlerShare(row), label: this.$t('share') })
+                    }
+                }
+
+                if (!row.folder && this.forbidOperationPermission && !this.isRemote) {
+                    actions.push({
+                        clickEvent: () => this.showLimitDialog('forbid', row),
+                        label: row.metadata.forbidStatus ? this.$t('relieve') + this.$t('space') + this.$t('forbid') : this.$t('forbid')
+                    })
+                }
+
+                if (!row.folder && this.lockOperationPermission && !this.isRemote) {
+                    actions.push({
+                        clickEvent: () => this.showLimitDialog('lock', row),
+                        label: row.metadata.lockStatus ? this.$t('relieve') + this.$t('space') + this.$t('lock') : this.$t('lock')
+                    })
+                }
+
+                if (this.deleteOperationPermission && !row.metadata.lockStatus && !this.isRemote) {
+                    actions.push({ clickEvent: () => this.deleteRes(row), label: this.$t('delete') })
+                }
+
+                return actions.filter(Boolean)
             }
         }
     }

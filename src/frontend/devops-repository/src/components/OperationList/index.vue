@@ -5,6 +5,7 @@
         placement="bottom-end"
         theme="light"
         ext-cls="operation-container"
+        :on-show="() => $emit('show')"
         :tippy-options="{ trigger: 'click' }"
         v-bind="$attrs">
         <slot>

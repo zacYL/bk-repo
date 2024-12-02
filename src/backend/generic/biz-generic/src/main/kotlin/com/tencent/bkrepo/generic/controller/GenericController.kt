@@ -87,13 +87,13 @@ class GenericController(
 ) {
 
     @PutMapping(GENERIC_MAPPING_URI)
-    @Permission(ResourceType.REPO, PermissionAction.WRITE)
+    @Permission(ResourceType.NODE, PermissionAction.WRITE)
     fun upload(@ArtifactPathVariable artifactInfo: GenericArtifactInfo, file: ArtifactFile) {
         uploadService.upload(artifactInfo, file)
     }
 
     @DeleteMapping(GENERIC_MAPPING_URI)
-    @Permission(ResourceType.REPO, PermissionAction.DELETE)
+    @Permission(ResourceType.NODE, PermissionAction.DELETE)
     fun delete(
         @RequestAttribute userId: String,
         @ArtifactPathVariable artifactInfo: GenericArtifactInfo
@@ -103,7 +103,7 @@ class GenericController(
     }
 
     @GetMapping(GENERIC_MAPPING_URI)
-    @Permission(ResourceType.REPO, PermissionAction.READ)
+    @Permission(ResourceType.NODE, PermissionAction.READ)
     fun download(@ArtifactPathVariable artifactInfo: GenericArtifactInfo) {
         downloadService.download(artifactInfo)
     }
@@ -139,7 +139,7 @@ class GenericController(
         return ResponseBuilder.success()
     }
 
-    @Permission(ResourceType.REPO, PermissionAction.READ)
+    @Permission(ResourceType.NODE, PermissionAction.READ)
     @GetMapping(BLOCK_MAPPING_URI)
     fun listBlock(
         @RequestAttribute userId: String,

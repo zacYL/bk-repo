@@ -5,12 +5,15 @@ import com.tencent.bkrepo.auth.constant.AUTH_BUILTIN_USER
 import com.tencent.bkrepo.auth.constant.AuthConstant.ANY_RESOURCE_CODE
 import com.tencent.bkrepo.auth.general.DevOpsAuthGeneral
 import com.tencent.bkrepo.auth.message.AuthMessageCode
+import com.tencent.bkrepo.auth.model.TPermission
 import com.tencent.bkrepo.auth.pojo.RegisterResourceRequest
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
+import com.tencent.bkrepo.auth.pojo.general.ScopeDTO
 import com.tencent.bkrepo.auth.pojo.permission.Permission
 import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.CreatePermissionRequest
+import com.tencent.bkrepo.auth.pojo.permission.CustomPermissionQueryDTO
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionPathRequest
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRepoRequest
 import com.tencent.bkrepo.auth.repository.PermissionRepository
@@ -22,9 +25,17 @@ import com.tencent.bkrepo.common.devops.RESOURCECODE
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.auth.pojo.permission.UserPermissionValidateDTO
+import com.tencent.bkrepo.auth.pojo.role.SubjectDTO
+import com.tencent.bkrepo.auth.service.impl.CpackPermissionServiceImpl.Companion
+import com.tencent.bkrepo.common.api.exception.ParameterInvalidException
+import com.tencent.bkrepo.common.devops.REPO_PATH_RESOURCECODE
+import com.tencent.bkrepo.common.devops.REPO_PATH_SCOPE_CODE
+import com.tencent.bkrepo.common.security.exception.PermissionException
+import org.bouncycastle.asn1.x500.style.RFC4519Style.uid
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.data.mongodb.core.MongoTemplate
+import java.time.LocalDateTime
 
 class CanwayPermissionServiceImpl(
     private val userRepository: UserRepository,
@@ -42,13 +53,6 @@ class CanwayPermissionServiceImpl(
     repositoryClient,
     projectClient
 ) {
-    /**
-     * 删除权限方法（无法删除，因集成环境下不再保存制品库权限）
-     */
-    override fun deletePermission(id: String): Boolean {
-        logger.info("Cpack permission does not exist, devops platform cannot delete permission")
-        return true
-    }
 
     /**
      * 权限列表
@@ -87,9 +91,11 @@ class CanwayPermissionServiceImpl(
                             PermissionAction.MANAGE -> {
                                 devOpsAuthGeneral.isProjectOrSuperiorAdmin(uid, projectId!!)
                             }
+
                             PermissionAction.READ -> {
                                 devOpsAuthGeneral.isProjectMemberOrAdmin(uid, projectId!!)
                             }
+
                             else -> {
                                 devOpsAuthGeneral.validateUserPermission(
                                     projectId = projectId!!,
@@ -101,6 +107,41 @@ class CanwayPermissionServiceImpl(
                                     )
                                 )
                             }
+                        }
+                    }
+
+                    ResourceType.NODE -> {
+                        checkNodePermission(request)
+                    }
+
+                    ResourceType.REPO -> {
+
+                        val validateUserPermission = devOpsAuthGeneral.validateUserPermission(
+                            projectId = projectId!!,
+                            option = UserPermissionValidateDTO(
+                                userId = uid,
+                                instanceId = repoName ?: ANY_RESOURCE_CODE,
+                                resourceCode = if (request.resourceType == ResourceType.REPLICATION) {
+                                    REPLICA_RESOURCECODE
+                                } else {
+                                    RESOURCECODE
+                                },
+                                actionCodes = listOf(action.toString().toLowerCase())
+                            )
+                        )
+                        if (!validateUserPermission && action == PermissionAction.READ) {
+                            // 仓库权限校验失败且是校验read权限，则拥有路径read权限也有仓库的read权限
+                            val repoPathCollectPermission = devOpsAuthGeneral.getRepoPathCollectPermission(
+                                uid,
+                                projectId!!,
+                                repoName!!,
+                                emptyList()
+                            )
+                            val pathReadPermission =
+                                repoPathCollectPermission.filter { it.actionCode == PermissionAction.READ.name.toLowerCase() }
+                            return pathReadPermission.isNotEmpty()
+                        } else {
+                            validateUserPermission
                         }
                     }
 
@@ -127,18 +168,87 @@ class CanwayPermissionServiceImpl(
         }
     }
 
-    /**
-     * 增加权限方法（无法增加，因集成环境下不再保存制品库权限）
-     */
-    override fun createPermission(request: CreatePermissionRequest): Boolean {
-        TODO("Not yet implemented")
+    private fun checkNodePermission(request: CheckPermissionRequest): Boolean {
+        with(request) {
+            if (devOpsAuthGeneral.isProjectOrSuperiorAdmin(request.uid, projectId!!)) {
+                return true
+            }
+
+            // 先校验仓库是否有这个权限
+            val hasRepositoryPermission = devOpsAuthGeneral.validateUserPermission(
+                projectId = projectId!!,
+                option = UserPermissionValidateDTO(
+                    userId = uid,
+                    instanceId = repoName!!,
+                    resourceCode = RESOURCECODE,
+                    actionCodes = listOf(action.toString().toLowerCase())
+                )
+            )
+            if (hasRepositoryPermission) {
+                return true
+            }
+
+            // 查询出当前路径所配置路径集合
+            val pathCollectionIds = permissionRepository.findByResourceTypeAndProjectIdAndRepos(
+                ResourceType.NODE,
+                projectId!!, repoName!!
+            ).filter {
+                it.includePattern.find { includePath ->
+                    // 判断当前路径是否在配置路径内
+                    path!!.startsWith(includePath)
+                } != null
+            }.map { it.id!! }
+
+
+            val repoPathCollectPermission = devOpsAuthGeneral.getRepoPathCollectPermission(
+                uid,
+                projectId!!,
+                repoName!!,
+                // 兼容以后任意权限的情况，同时也避免pathCollectionIds为空导致查出全部
+                pathCollectionIds.plus("*")
+            )
+            val filterPermission = repoPathCollectPermission.filter { it.actionCode == action.toString().toLowerCase() }
+
+            // 不为空则所以有权限
+            if (filterPermission.isNotEmpty()) {
+                return true
+            }
+            return false
+
+        }
     }
 
-    /**
-     * 无法更新权限include path
-     */
-    override fun updateIncludePath(request: UpdatePermissionPathRequest): Boolean {
-        TODO("Not yet implemented")
+    override fun createPermission(request: CreatePermissionRequest): Boolean {
+        logger.info("create  permission request : [$request]")
+        val permission = permissionRepository.findOneByPermNameAndProjectIdAndResourceType(
+            request.permName,
+            request.projectId,
+            request.resourceType
+        )
+        permission?.let {
+            logger.warn("create permission  [$request] is exist.")
+            throw ErrorCodeException(AuthMessageCode.AUTH_DUP_PERMNAME)
+        }
+        val result = permissionRepository.insert(
+            TPermission(
+                resourceType = request.resourceType,
+                projectId = request.projectId,
+                permName = request.permName,
+                repos = request.repos,
+                includePattern = request.includePattern,
+                excludePattern = request.excludePattern,
+                users = request.users,
+                roles = request.roles,
+                createBy = request.createBy,
+                createAt = LocalDateTime.now(),
+                updatedBy = request.updatedBy,
+                updateAt = LocalDateTime.now()
+            )
+        )
+        result.id?.let {
+            return true
+        }
+        return false
     }
 
     /**
@@ -160,6 +270,33 @@ class CanwayPermissionServiceImpl(
      */
     override fun registerResource(request: RegisterResourceRequest) {
         TODO("Not yet implemented")
+    }
+
+    override fun getUserAuthPaths(
+        userId: String,
+        projectId: String,
+        repoName: String,
+        action: PermissionAction
+    ): List<String> {
+
+        if (devOpsAuthGeneral.isProjectOrSuperiorAdmin(userId, projectId)) {
+            return listOf("/")
+        }
+
+        val repoPathPermissions = devOpsAuthGeneral.getRepoPathCollectPermission(
+            userId,
+            projectId,
+            repoName,
+            // 为表示查出全部
+            emptyList()
+        )
+
+        val repoPathCollectionsIds =
+            repoPathPermissions.filter { it.actionCode == action.name.toLowerCase() }
+                .map { it.instanceId }
+
+        return permissionRepository.findByIdIn(repoPathCollectionsIds)
+            .flatMap { it.includePattern }
     }
 
     /**
@@ -257,6 +394,8 @@ class CanwayPermissionServiceImpl(
             repoList.addAll(listPublicRepo(projectId))
             // 获取该用户可查看的所有制品库仓库名称
             repoList.addAll(devOpsAuthGeneral.getUserPermission(projectId, userId))
+            // 获取用户有路径权限的仓库集合
+            repoList.addAll(devOpsAuthGeneral.getRepoWithPathPermission(projectId, userId))
             logger.info("repoList:$repoList")
         } else {
             repoList.addAll(devOpsAuthGeneral.getUserActionPermission(projectId, userId, actions))

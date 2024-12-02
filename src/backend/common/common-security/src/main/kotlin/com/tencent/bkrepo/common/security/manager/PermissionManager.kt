@@ -211,11 +211,12 @@ open class PermissionManager(
             return
         }
         checkPermission(
-            type = ResourceType.REPO,
+            type = ResourceType.NODE,
             action = action,
             projectId = projectId,
             repoName = repoName,
-            anonymous = anonymous
+            anonymous = anonymous,
+            paths = path.toList()
         )
     }
     /**
@@ -634,6 +635,10 @@ open class PermissionManager(
 
     fun enableAuth(): Boolean {
         return httpAuthProperties.enabled
+    }
+
+    fun getUserAuthPath(userId: String, projectId: String, repoName: String, action: PermissionAction): List<String> {
+        return permissionResource.getAuthRepoPaths(userId, projectId, repoName, action).data ?: emptyList()
     }
 
     private fun getRepoId(projectId: String, repoName: String) = "$projectId$REPO_ID_DELIMITER$repoName"

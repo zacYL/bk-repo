@@ -59,6 +59,15 @@ open class CommonQueryContext(
         throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "projectId")
     }
 
+    fun findRepoName(siblingRule: Rule.QueryRule? = null): String {
+        val rule = queryModel.rule
+        if (rule is Rule.NestedRule && rule.relation == Rule.NestedRule.RelationType.AND) {
+            findRule(rule.rules, "repoName")?.let { return it.value.toString()}
+        }
+        if (siblingRule != null) (find("repoName", siblingRule) as? String)?.let { return it }
+        throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "repoName")
+    }
+
     /**
      * 寻找目标规则的值, 相邻规则不存在时将寻找最近的所在嵌入规则relation为AND的相同field规则
      *

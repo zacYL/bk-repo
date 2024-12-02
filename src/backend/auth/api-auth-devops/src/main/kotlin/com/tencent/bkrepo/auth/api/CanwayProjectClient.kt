@@ -1,5 +1,6 @@
 package com.tencent.bkrepo.auth.api
 
+import com.tencent.bkrepo.auth.pojo.general.ScopeDTO
 import com.tencent.bkrepo.auth.pojo.permission.ProjectPermissionAndAdminVO
 import com.tencent.bkrepo.auth.pojo.permission.UserPermissionQueryDTO
 import com.tencent.bkrepo.common.api.pojo.Response
@@ -8,6 +9,7 @@ import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
 import com.tencent.bkrepo.auth.pojo.permission.UserPermissionValidateDTO
 import com.tencent.bkrepo.auth.pojo.project.ProjectMemberVO
+import com.tencent.bkrepo.auth.pojo.role.SubjectDTO
 import com.tencent.bkrepo.common.api.constant.AUTH_HEADER_DEVOPS_UID
 import com.tencent.bkrepo.common.api.constant.DEVOPS_AUTH_SERVICE_NAME
 import org.springframework.cloud.openfeign.FeignClient
@@ -100,4 +102,28 @@ interface CanwayProjectClient {
         @ApiParam(value = "是否包含用户关联的角色", required = false)
         withRole: Boolean = false,
     ): Response<List<ProjectMemberVO>>
+
+    @ApiOperation("""
+        /**
+         * 查询用户在项目下相关的授权主体与权限作用域
+         * 授权主体     |  作用域
+         *
+         * 用户        |  项目
+         * 项目角色     |  项目
+         * 租户项目角色  |  租户
+         * 租户模板角色  |  空间
+         * 租户模板角色  |  项目
+         * 系统模板角色  |  空间
+         * 系统模板角色  |  项目
+         */
+    """)
+    @GetMapping("/{projectId}/user/related/subject_scope")
+    fun getUserRelatedRoleAndPermissionScope(
+        @RequestHeader(AUTH_HEADER_DEVOPS_UID)
+        @ApiParam(value = "用户ID", required = true)
+        userId: String,
+        @PathVariable
+        @ApiParam(value = "项目ID", required = true)
+        projectId: String,
+    ): Response<List<Pair<SubjectDTO, ScopeDTO>>>
 }

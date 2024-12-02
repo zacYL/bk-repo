@@ -1486,6 +1486,15 @@ export default {
                                 'gem install bk-cocoapods-1.0.0 gem'
                             ]
                         }, {
+                            subTitle: this.$t('cocoapodsCreditGuideSubTitle6'),
+                            codeList: [
+                                `machine ${location.origin}`,
+                                `login ${this.userName}`,
+                                `password ${this.accessToken}`
+
+                            ]
+                        },
+                        {
                             subTitle: this.$t('cocoapodsCreditGuideSubTitle2'),
                             codeList: [
                                 `pod bk-repo add ${this.repoName} ${location.origin}/${this.repoType}/${this.projectId}/${this.repoName}/`
@@ -1500,7 +1509,9 @@ export default {
                         {
                             subTitle: this.$t('cocoapodsCreditGuideSubTitle4'),
                             codeList: [
-                                `plugin 'bk-cocoapods', :sources => ['${this.repoName}'] `
+                                'plugin \'bk-cocoapods\', :sources => [',
+                                `       '${this.repoName}'`,
+                                '] '
                             ]
                         },
                         {
@@ -1515,12 +1526,25 @@ export default {
                 {
                     title: this.$t('push'),
                     optionType: 'push',
+                    inputBoxList: [
+                        {
+                            key: 'dependInputValue1', // vux中存储的变量名
+                            label: this.$t('packageTargetFilePath'), // 输入框左侧label文案
+                            placeholder: this.$t('pleaseInput') + this.$t('space') + this.$t('artifactNamePlaceholder'), // 输入框提示文案
+                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                        },
+                        {
+                            key: 'dependInputValue2', // vux中存储的变量名
+                            label: this.$t('uploadedFilePath'), // 输入框左侧label文案
+                            placeholder: this.$t('pleaseInput') + this.$t('space') + this.$t('uploadedFilePath'), // 输入框提示文案
+                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
+                        }
+                    ],
                     main: [
                         {
                             subTitle: this.$t('cocoapodsCreditGuideSubTitle3'),
                             codeList: [
-                                // todo
-                                `curl -u ${this.userName}:${this.accessToken} -XPUT `
+                                `curl -u ${this.userName}:${this.accessToken} -XPUT ${this.repoName} ${location.origin}/${this.repoType}/${this.projectId}/${this.repoName}/${this.dependInputValue1 || '<TARGET_FILE_PATH>'} -T ${this.dependInputValue2 || '<PATH_TO_FILE>'}`
                             ]
                         }
                     ]
@@ -1528,6 +1552,23 @@ export default {
             ].filter(Boolean)
         },
         cocoapodsInstall () {
+            return [
+                {
+                    main: [
+                        {
+                            subTitle: this.$t('cocoapodsCreditGuideSubTitle7'),
+                            codeList: [
+                                'target "YourApp" do',
+                                `   pod '${this.packageName}', '~>${this.version}'`,
+                                'end'
+                            ]
+                        },
+                        {
+                            subTitle: this.$t('cocoapodsCreditGuideSubTitle8')
+                        }
+                    ]
+                }
+            ]
         }
     },
     data () {

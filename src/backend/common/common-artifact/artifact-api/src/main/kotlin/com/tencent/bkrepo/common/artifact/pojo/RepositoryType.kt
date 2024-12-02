@@ -51,7 +51,8 @@ enum class RepositoryType {
     CONAN,
     LFS,
     GO,
-    COCOAPODS
+    COCOAPODS,
+    GRADLE
     ;
 
     companion object {

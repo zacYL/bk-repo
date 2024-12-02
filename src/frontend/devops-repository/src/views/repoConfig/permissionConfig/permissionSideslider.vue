@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-22 11:03:13
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-11-27 17:58:25
+ * @LastEditTime: 2024-12-02 10:12:42
  * @FilePath: /artifact/src/frontend/devops-repository/src/views/repoConfig/permissionConfig/permissionSideslider.vue
 -->
 <template>
@@ -82,18 +82,6 @@
                             required: true,
                             message: this.$t('cantSaveEmptyString'),
                             trigger: 'blur'
-                        }
-                    ],
-                    path: [
-                        {
-                            validator: this.checkEmptyPath,
-                            message: this.$t('cantSaveEmptyString'),
-                            trigger: 'blur'
-                        },
-                        {
-                            validator: this.checkSamePath('path'),
-                            message: this.$t('cantPassSamePath'),
-                            trigger: 'blur'
                         },
                         {
                             max: 32,
@@ -105,7 +93,19 @@
                                 if (!val) return true
                                 return val.match(/^[a-zA-Z0-9\u4e00-\u9fa5_-]+$/)
                             },
-                            message: this.$t('pathCheckTips'),
+                            message: this.$t('pathNameCheckTips'),
+                            trigger: 'blur'
+                        }
+                    ],
+                    path: [
+                        {
+                            validator: this.checkEmptyPath,
+                            message: this.$t('cantSaveEmptyString'),
+                            trigger: 'blur'
+                        },
+                        {
+                            validator: this.checkSamePath('path'),
+                            message: this.$t('cantPassSamePath'),
                             trigger: 'blur'
                         }
                     ]

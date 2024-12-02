@@ -10,7 +10,7 @@
                 </div>
             </div>
             <bk-button
-                v-if="type === 'GENERIC' && !isRemote"
+                v-if="type === 'GENERIC' && isLocal"
                 theme="default"
                 @click="toRecycleBin()">
                 {{$t('recycleBin')}}
@@ -267,6 +267,9 @@
             },
             isRemote () {
                 return this.storeType === 'remote'
+            },
+            isLocal () {
+                return this.storeType === 'local'
             },
             isGenericRemote () {
                 return this.isRemote && this.type === 'GENERIC'

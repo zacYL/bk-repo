@@ -235,5 +235,25 @@ export default {
     // 获取审计日志事件类型
     getLogEventType (_) {
         return Vue.prototype.$ajax.get('/repository/api/log/event/type')
+    },
+    /**
+     * @description: 获取权限支持的行为
+     * @param {*} _
+     * @param {*} projectId
+     * @param {*} repoName
+     * @param {*} path
+     * @return {*}
+     */
+    getPermissionActions (_, { projectId, repoName, path }) {
+        return Vue.prototype.$ajax.get(
+            `${authPrefix}/permission/list/repo_path/permission/action`,
+            {
+                params: {
+                    projectId,
+                    repoName,
+                    path
+                }
+            }
+        )
     }
 }

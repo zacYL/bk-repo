@@ -10,7 +10,7 @@
                 </div>
             </div>
             <bk-button
-                v-if="type === 'GENERIC'"
+                v-if="type === 'GENERIC' && !isRemote"
                 theme="default"
                 @click="toRecycleBin()">
                 {{$t('recycleBin')}}

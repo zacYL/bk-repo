@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-22 11:03:13
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-12-02 10:12:42
+ * @LastEditTime: 2024-12-02 16:16:03
  * @FilePath: /artifact/src/frontend/devops-repository/src/views/repoConfig/permissionConfig/permissionSideslider.vue
 -->
 <template>
@@ -107,6 +107,11 @@
                             validator: this.checkSamePath('path'),
                             message: this.$t('cantPassSamePath'),
                             trigger: 'blur'
+                        },
+                        {
+                            regex: /^(\/[^\\:*?"<>|]{1,255})+$/,
+                            message: this.$t('folderPathPlaceholder'),
+                            trigger: 'blur'
                         }
                     ]
                 }
@@ -197,7 +202,16 @@
             checkSamePath (key) {
                 return (val) => {
                     const num = this.form[key].filter(item => {
-                        return item.value === val
+                        // 路径比较，默认最后一个加上‘/’
+                        const cb = (value) => {
+                            if (!value.endsWith('/')) {
+                                value += '/'
+                            }
+                            return value
+                        }
+                        const target = cb(item.value)
+                        const current = cb(val)
+                        return target === current
                     }).length
                     return !(num > 1)
                 }

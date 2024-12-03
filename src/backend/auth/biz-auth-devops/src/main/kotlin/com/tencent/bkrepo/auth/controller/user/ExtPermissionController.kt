@@ -48,13 +48,6 @@ class ExtPermissionController(
         extPermissionServiceImpl.migrateToDevOps()
     }
 
-    @Principal(PrincipalType.ADMIN)
-    @PostMapping("/migrate/delete/permission/repo_create_action")
-    fun migrateTodeleteRepoCreateAction(): Response<Boolean> {
-        extPermissionServiceImpl.migrateTodeleteRepoCreateAction()
-        return ResponseBuilder.success(true)
-    }
-
     @ApiOperation("获取用户的项目/仓库权限列表")
     @GetMapping("/list/indevops")
     fun listDevOpsPermission(

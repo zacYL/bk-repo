@@ -40,6 +40,24 @@
                         "updatedTime": "2023-06-13 16:09:15"
                     },
                     {
+                        "id": "2093e9c815b54e9db06e9ea60227a1be",
+                        "name": "创建仓库",
+                        "englishName": "create repository",
+                        "actionCode": "create",
+                        "resourceCode": "bkrepo",
+                        "parentResourceCode": "project",
+                        "associateInstance": false,
+                        "weight": 19,
+                        "module": "CPack",
+                        "license": "STANDARD",
+                        "createdBy": "admin",
+                        "createdByName": "超级管理员[admin]",
+                        "createdTime": "2020-12-16 10:49:33",
+                        "updatedBy": "admin",
+                        "updatedByName": "超级管理员[admin]",
+                        "updatedTime": "2023-06-07 16:54:10"
+                    },
+                    {
                         "id": "01d09e5923bb4d95989e84d4e3b492fd",
                         "name": "设置仓库",
                         "englishName": "manage repository",
@@ -77,7 +95,7 @@
                     },
                     {
                         "id": "7b7b859b797f45609c98da0b98b30f8f",
-                        "name": "访问制品",
+                        "name": "访问仓库",
                         "englishName": "visit",
                         "actionCode": "read",
                         "resourceCode": "bkrepo",

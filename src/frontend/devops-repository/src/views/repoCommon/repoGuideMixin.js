@@ -1488,7 +1488,7 @@ export default {
                         }, {
                             subTitle: this.$t('cocoapodsCreditGuideSubTitle6'),
                             codeList: [
-                                `machine ${location.origin}`,
+                                `machine ${location.host}`,
                                 `login ${this.userName}`,
                                 `password ${this.accessToken}`
 

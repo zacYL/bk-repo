@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-22 10:22:36
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-11-28 16:16:24
+ * @LastEditTime: 2024-12-03 15:13:44
  * @FilePath: /artifact/src/frontend/devops-repository/src/views/repoConfig/permissionConfig/index.vue
 -->
 <template>
@@ -34,6 +34,9 @@
                 </bk-table-column>
                 <!-- 创建人 -->
                 <bk-table-column :label="$t('createdBy')" prop="createBy">
+                    <template #default="{ row }">
+                        <span>{{ userList[row.createBy] ? userList[row.createBy].name : row.createBy }}</span>
+                    </template>
                 </bk-table-column>
                 <!-- 创建时间 -->
                 <bk-table-column :label="$t('createdDate')" prop="createAt">
@@ -61,7 +64,7 @@
 </template>
 <script>
     import PermissionSideslider from './permissionSideslider.vue'
-    import { mapActions } from 'vuex'
+    import { mapActions, mapState } from 'vuex'
     import moment from 'moment'
     export default {
         name: 'permission-config',
@@ -86,6 +89,10 @@
                     insertForm: {}
                 }
             }
+        },
+        computed: {
+            
+            ...mapState(['userList'])
         },
         created () {
             this.getPermissionList()

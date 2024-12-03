@@ -86,6 +86,10 @@ class PackageAccessRuleServiceImpl(
     override fun getMatchedRules(projectId: String, type: String, key: String): List<PackageAccessRule> {
         val criteria = where(TPackageAccessRule::projectId).isEqualTo(projectId)
             .and(TPackageAccessRule::packageType).isEqualTo(type)
+            .orOperator(
+                where(TPackageAccessRule::expireDate).isEqualTo(null),
+                where(TPackageAccessRule::expireDate).lt(LocalDateTime.now()),
+            )
         if (key.contains(":")) {
             criteria.orOperator(
                 where(TPackageAccessRule::key).isEqualTo(key),
@@ -105,7 +109,8 @@ class PackageAccessRuleServiceImpl(
                 key = key,
                 version = version,
                 versionRuleType = versionRuleType,
-                pass = pass
+                pass = pass,
+                expireDate = expireDate,
             )
         }
     }

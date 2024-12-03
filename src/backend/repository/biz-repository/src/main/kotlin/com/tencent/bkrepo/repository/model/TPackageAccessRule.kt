@@ -25,5 +25,6 @@ data class TPackageAccessRule(
     var key: String,
     var version: String? = null,
     var versionRuleType: VersionRuleType? = null,
-    var pass: Boolean
+    var pass: Boolean,
+    var expireDate: LocalDateTime? = null,
 )

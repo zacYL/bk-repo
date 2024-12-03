@@ -260,7 +260,8 @@ class DeletedNodeCleanupJob(
     }
 
     fun getDeletedNodeReserveDays(): Long? {
-        return globalConfigClient.getConfig(ConfigType.DELETED_NODE_RESERVE_DAYS).data?.configuration?.toLong()
+        return globalConfigClient.getConfig(ConfigType.DELETED_NODE_RESERVE_DAYS).data?.configuration
+            ?.takeIf { it.isNotBlank() }?.toLong()
     }
 
     data class RepositoryId(val projectId: String, val repoName: String) {

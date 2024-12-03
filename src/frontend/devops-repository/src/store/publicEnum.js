@@ -12,7 +12,8 @@ export const repoEnum = [
     { label: 'Nuget', value: 'nuget' },
     { label: 'Conan', value: 'conan' },
     { label: 'Go', value: 'go' },
-    { label: 'Cocoapods', value: 'cocoapods' }
+    { label: 'Cocoapods', value: 'cocoapods' },
+    { label: 'Gradle', value: 'gradle' }
 ]
 // 虚拟仓库支持创建的仓库
 export const repoSupportEnum = [
@@ -22,7 +23,8 @@ export const repoSupportEnum = [
     { label: 'Nuget', value: 'nuget' },
     { label: 'Docker', value: 'docker' },
     { label: 'Conan', value: 'conan' },
-    { label: 'Go', value: 'go' }
+    { label: 'Go', value: 'go' },
+    { label: 'Gradle', value: 'gradle' }
 ]
 
 // 远程仓库支持创建的仓库

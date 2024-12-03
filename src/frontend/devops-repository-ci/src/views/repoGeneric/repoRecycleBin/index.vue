@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-21 15:38:37
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-11-29 11:41:16
+ * @LastEditTime: 2024-12-03 09:57:29
  * @FilePath: /artifact/src/frontend/devops-repository-ci/src/views/repoGeneric/repoRecycleBin/index.vue
 -->
 <template>
@@ -46,6 +46,9 @@
             </bk-table-column>
             <!-- 删除时间 -->
             <bk-table-column :label="$t('deleteTime')" prop="deleted" show-overflow-tooltip>
+                <template #default="{ row }">
+                    <span>{{formatDate(row.deleted)}}</span>
+                </template>
             </bk-table-column>
             <!-- 删除者 -->
             <bk-table-column :label="$t('deleter')" prop="lastModifiedBy" show-overflow-tooltip>
@@ -76,7 +79,7 @@
     import { cloneDeep } from 'lodash'
     import { mapActions } from 'vuex'
 
-    import { convertFileSize } from '@repository/utils'
+    import { convertFileSize, formatDate } from '@repository/utils'
     const paginationParams = {
         count: 0,
         current: 1,
@@ -104,6 +107,7 @@
             this.handlerPaginationChange({ current: 1, limit: 20 })
         },
         methods: {
+            formatDate,
             convertFileSize,
             ...mapActions([
                 'getRecycleBinList',

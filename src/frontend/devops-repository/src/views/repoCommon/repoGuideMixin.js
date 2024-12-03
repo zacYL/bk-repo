@@ -1488,7 +1488,7 @@ export default {
                         }, {
                             subTitle: this.$t('cocoapodsCreditGuideSubTitle6'),
                             codeList: [
-                                `machine ${location.origin}`,
+                                `machine ${location.host}`,
                                 `login ${this.userName}`,
                                 `password ${this.accessToken}`
 
@@ -1544,7 +1544,7 @@ export default {
                         {
                             subTitle: this.$t('cocoapodsCreditGuideSubTitle3'),
                             codeList: [
-                                `curl -u ${this.userName}:${this.accessToken} -XPUT ${this.repoName} ${location.origin}/${this.repoType}/${this.projectId}/${this.repoName}/${this.dependInputValue1 || '<TARGET_FILE_PATH>'} -T ${this.dependInputValue2 || '<PATH_TO_FILE>'}`
+                                `curl -u${this.userName}:${this.accessToken} -XPUT ${location.origin}/${this.repoType}/${this.projectId}/${this.repoName}/${this.dependInputValue1 || '<TARGET_FILE_PATH>'} -T ${this.dependInputValue2 || '<PATH_TO_FILE>'}`
                             ]
                         }
                     ]

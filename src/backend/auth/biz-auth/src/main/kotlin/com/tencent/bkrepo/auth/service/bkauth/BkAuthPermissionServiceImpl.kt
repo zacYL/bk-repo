@@ -112,7 +112,7 @@ class BkAuthPermissionServiceImpl constructor(
     private fun checkPipelineOrProjectPermission(request: CheckPermissionRequest): Boolean {
         with(request) {
             var projectPass = false
-            val pipelinePass = checkPipelinePermission(uid, projectId!!, path, resourceType, action)
+            val pipelinePass = checkPipelinePermission(uid, projectId!!, path?.first(), resourceType, action)
             if (!pipelinePass) {
                 logger.warn("devops pipeline permission check fail [$request]")
                 projectPass = checkProjectPermission(uid, projectId!!, action)

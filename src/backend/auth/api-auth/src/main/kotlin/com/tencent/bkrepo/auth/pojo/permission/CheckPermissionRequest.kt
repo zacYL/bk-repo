@@ -43,7 +43,7 @@ data class CheckPermissionRequest(
 	val action: PermissionAction,
 	override var projectId: String? = null,
 	override var repoName: String? = null,
-	override var path: String? = null,
+	override var path: Set<String>? = null,
 	val role: String? = null,
 	val appId: String? = null,
 	val department: String? = null

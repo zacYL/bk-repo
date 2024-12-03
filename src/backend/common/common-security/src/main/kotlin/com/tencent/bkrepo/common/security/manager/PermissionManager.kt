@@ -395,7 +395,7 @@ open class PermissionManager(
             action = action,
             projectId = projectId,
             repoName = repoName,
-            path = paths?.first()
+            path = paths?.toSet()
         )
         val checkResult = try {
             permissionCache.get(checkRequest)

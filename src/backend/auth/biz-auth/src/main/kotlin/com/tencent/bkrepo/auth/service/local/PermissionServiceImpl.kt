@@ -298,8 +298,8 @@ open class PermissionServiceImpl constructor(
                 if (path == null) return true
 
                 result.forEach {
-                    if (checkIncludePattern(it.includePattern, path!!)) return true
-                    if (!checkExcludePattern(it.excludePattern, path!!)) return false
+                    if (checkIncludePattern(it.includePattern, path!!.first())) return true
+                    if (!checkExcludePattern(it.excludePattern, path!!.first())) return false
                 }
             }
         }

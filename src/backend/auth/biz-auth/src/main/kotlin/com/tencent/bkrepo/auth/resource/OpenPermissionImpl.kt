@@ -61,7 +61,7 @@ open class OpenPermissionImpl {
                     if (repoName.isNullOrBlank()) {
                         throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "repoName")
                     }
-                    if (path.isNullOrBlank()) {
+                    if (path.isNullOrEmpty()) {
                         throw ErrorCodeException(CommonMessageCode.PARAMETER_MISSING, "path")
                     }
                 }

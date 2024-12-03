@@ -36,6 +36,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.data.mongodb.core.MongoTemplate
 import java.time.LocalDateTime
+import java.util.stream.Collectors
 
 class CanwayPermissionServiceImpl(
     private val userRepository: UserRepository,
@@ -188,17 +189,29 @@ class CanwayPermissionServiceImpl(
                 return true
             }
 
+            if (path.isNullOrEmpty()) return true
+
             // 查询出当前路径所配置路径集合
-            val pathCollectionIds = permissionRepository.findByResourceTypeAndProjectIdAndRepos(
+            val pathCollections = permissionRepository.findByResourceTypeAndProjectIdAndRepos(
                 ResourceType.NODE,
                 projectId!!, repoName!!
-            ).filter {
-                it.includePattern.find { includePath ->
-                    // 判断当前路径是否在配置路径内
-                    path!!.startsWith(includePath)
-                } != null
-            }.map { it.id!! }
+            )
 
+            val authPaths = pathCollections.flatMap { it.includePattern }.toSet()
+
+            val matchPaths = path!!.parallelStream().filter { requestPath ->
+                authPaths.any { authPath -> requestPath.startsWith(authPath) }
+            }.collect(Collectors.toList())
+
+            // 只有有个路径没有配置权限则返回没权限
+            if (matchPaths.size != path!!.size) {
+                return false
+            }
+
+            // 获取配置路径集合中，只有包含当前路径的权限集合
+            val pathCollectionIds = pathCollections.parallelStream().filter { collection ->
+                collection.includePattern.any { authPath -> matchPaths.contains(authPath) }
+            }.map { it.id!! }.collect(Collectors.toList())
 
             val repoPathCollectPermission = devOpsAuthGeneral.getRepoPathCollectPermission(
                 uid,
@@ -210,10 +223,7 @@ class CanwayPermissionServiceImpl(
             val filterPermission = repoPathCollectPermission.filter { it.actionCode == action.toString().toLowerCase() }
 
             // 不为空则所以有权限
-            if (filterPermission.isNotEmpty()) {
-                return true
-            }
-            return false
+            return filterPermission.isNotEmpty()
 
         }
     }

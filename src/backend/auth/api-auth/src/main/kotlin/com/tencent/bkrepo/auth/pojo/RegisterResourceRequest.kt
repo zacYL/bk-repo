@@ -42,5 +42,5 @@ class RegisterResourceRequest(
     override var resourceType: ResourceType,
     override var projectId: String? = null,
     override var repoName: String? = null,
-    override var path: String? = null
+    override var path: Set<String>? = null
 ) : ResourceBaseRequest(resourceType, projectId, repoName, path)

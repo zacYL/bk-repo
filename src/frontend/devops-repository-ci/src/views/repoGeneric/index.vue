@@ -60,7 +60,7 @@
                             {{$t('batchDownload')}}
                         </bk-button>
                         <bk-button class="ml10"
-                            v-if="multiSelect.length && deleteOperationPermission"
+                            v-if="multiSelect.length && globalDeleteOperationPermission"
                             @click="handlerMultiDelete()">
                             {{$t('batchDeletion')}}
                         </bk-button>
@@ -313,6 +313,10 @@
             // 上传文件，上传文件夹，新建文件夹三个操作是否显示
             showUploadOperation () {
                 return this.canUploadArtifact && this.repoName !== 'pipeline'
+            },
+            // 全局删除制品操作权限
+            globalDeleteOperationPermission () {
+                return this.globalCurrentRepoDataPermission.includes('delete')
             },
             // 删除制品操作权限
             deleteOperationPermission () {

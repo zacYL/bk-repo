@@ -238,3 +238,16 @@ export const fileTypeList = {
     // '.pom',
     // '.dependency'
 }
+
+export const VersionComparisonOperator = [
+    '==',
+    '<',
+    '<=',
+    '>',
+    '>='
+]
+
+export const DockerVersionComparisonOperator = [
+    '==',
+    '!='
+]

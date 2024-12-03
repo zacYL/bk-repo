@@ -1,4 +1,5 @@
 {
+    "versionOperators": "Version Logic",
     "recycleBin": "Recycle Bin",
     "deleteTime": "Delete time",
     "deleter": "Deleter",
@@ -383,6 +384,7 @@
     "blackList": "Black list",
     "blackWhiteList": "Black/White list",
     "deleteBlackWhiteTips": "Confirm to remove the artifact package from the {0}?",
+    "BlackWhiteAddCheckTips": "Only letters, numbers, hyphens (-), underscores (_), and periods (.) are allowed.",
     "removeSuccess": "Removed successfully",
     "removeFail": "Remove failed",
     "addSuccess": "Add successfully",

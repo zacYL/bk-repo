@@ -8,7 +8,7 @@
             }"
             ext-cls="recycling-popover"
             v-bk-clickoutside="clickoutside">
-            <bk-button v-bind="filterParams ? { theme: 'primary',outline: true } : { theme: 'default' }">
+            <bk-button v-bind="withParams ? { theme: 'primary',outline: true } : { theme: 'default' }">
                 <div
                     class="flex-align-center"
                 >
@@ -17,11 +17,11 @@
             </bk-button>
             <div slot="content">
                 <main>
-                    <bk-form :model="query" :label-width="110" form-type="vertical">
+                    <bk-form :model="query" :label-width="110" form-type="vertical" :rules="rules" ref="queryForm">
                         <!-- 制品类型 -->
-                        <bk-form-item :label="$t('repoType')" :property="'repoType'">
+                        <bk-form-item :label="$t('repoType')" :property="'packageType'">
                             <bk-select
-                                v-model="query.repoType"
+                                v-model="query.packageType"
                                 :placeholder="$t('allTypes')">
                                 <bk-option v-for="type in repoEnum" :key="type.value" :id="type.value" :name="type.label">
                                     <div class="flex-align-center">
@@ -32,9 +32,9 @@
                             </bk-select>
                         </bk-form-item>
                         <!-- 制品名称 -->
-                        <bk-form-item :label="$t('artifactName')" :property="'name'">
+                        <bk-form-item :label="$t('artifactName')" :property="'key'">
                             <bk-input
-                                v-model="query.name"
+                                v-model="query.key"
                                 :placeholder="$t('artifactNamePlaceholder')"
                                 max-length="100"
                                 clearable
@@ -67,21 +67,38 @@
 <script>
 
     import { repoEnum } from '@repository/store/publicEnum'
+    import { cloneDeep } from 'lodash'
     export default {
         name: 'filter-condition',
         props: {
-            filterParams: {
-                type: [Array, null],
-                default: null
+            withParams: {
+                type: Boolean,
+                default: false
             }
         },
         data () {
             return {
                 repoEnum, // 制品类型
                 query: {
-                    repoType: 'maven',
-                    name: '', // 制品名称
+                    packageType: 'maven',
+                    key: '', // 制品名称
                     version: ''
+                },
+                rules: {
+                    key: [
+                        {
+                            regex: /^[a-zA-Z0-9._-]+$/,
+                            message: this.$t('BlackWhiteAddCheckTips'),
+                            trigger: 'blur'
+                        }
+                    ],
+                    version: [
+                        {
+                            regex: /^[a-zA-Z0-9._-]+$/,
+                            message: this.$t('BlackWhiteAddCheckTips'),
+                            trigger: 'blur'
+                        }
+                    ]
                 }
             }
         },
@@ -104,8 +121,8 @@
             // 重置
             clear () {
                 Object.assign(this.query, {
-                    repoType: 'maven',
-                    name: '', // 制品名称
+                    packageType: 'maven',
+                    key: '', // 制品名称
                     version: ''
                 })
             },
@@ -119,20 +136,11 @@
                 this.$refs.recyclingPopover.hideHandler()
             },
             confirm () {
-                const filterList = []
-
-                // 辅助函数，用于添加过滤条件
-                const addFilter = (field, value, operation) => {
-                    filterList.push({ field, value, operation })
-                }
-
-                // 其他固定过滤条件
-                addFilter('repoType', this.query.repoType, 'EQ')
-                this.query.version && addFilter('version', this.query.version, 'MATCH_I')
-                this.query.name && addFilter('name', this.query.name, 'MATCH_I')
-                this.$emit('confirm', filterList, () => {
-                    this.close()
-                })
+                this.$refs.queryForm.validate().then(() => {
+                    this.$emit('confirm', cloneDeep(this.query), () => {
+                        this.close()
+                    })
+                }).catch(() => {})
             }
         }
     }

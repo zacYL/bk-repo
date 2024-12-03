@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-21 14:16:15
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-12-03 14:22:33
+ * @LastEditTime: 2024-12-03 18:09:43
  * @FilePath: /artifact/src/frontend/devops-repository/src/views/repoScan/scanMain/components/components/AddBlackWhiteRepoDialog.vue
 -->
 <template>
@@ -43,7 +43,7 @@
 
             <!-- groupID -->
             <bk-form-item
-                v-if="('maven', 'gradle').includes(form.repoType)"
+                v-if="['maven', 'gradle'].includes(form.repoType)"
                 label="groupID"
                 :required="true"
                 property="groupID"
@@ -51,7 +51,7 @@
             >
                 <bk-input
                     type="text"
-                    :placeholder="$t('pleaseSelect') + $t('space') + 'groupID'"
+                    :placeholder="$t('pleaseInput') + $t('space') + 'groupID'"
                     v-model.trim="form.groupID"
                     maxlength="32"
                     show-word-limit
@@ -67,7 +67,7 @@
             >
                 <bk-input
                     type="text"
-                    :placeholder="$t('artifactNamePlaceholder')"
+                    :placeholder="['go', 'conan'].includes(form.repoType) ? $t('modulePathTips') : $t('artifactNamePlaceholder')"
                     v-model.trim="form.name"
                     maxlength="128"
                     show-word-limit
@@ -127,14 +127,14 @@
 </template>
 
 <script>
-    import { repoEnum, VersionComparisonOperator, DockerVersionComparisonOperator } from '@repository/store/publicEnum'
+    import { repoEnum, VersionComparisonOperator, DockerVersionComparisonOperator, OperatorMap } from '@repository/store/publicEnum'
     import { cloneDeep } from 'lodash'
     const baseForm = {
         repoType: 'maven',
         name: '',
-        operator: '==',
+        operator: '',
         version: '',
-        groupID: ''
+        groupID: '*'
     }
     export default {
         name: 'createScan',
@@ -175,6 +175,13 @@
                             trigger: 'blur'
                         }
                     ],
+                    groupID: [
+                        {
+                            required: true,
+                            message: this.$t('pleaseInput') + this.$t('space') + 'groupID',
+                            trigger: 'blur'
+                        }
+                    ],
                     version: [
                         {
                             required: true,
@@ -205,6 +212,7 @@
             },
             visible (val) {
                 if (val) {
+                    this.$refs.Form.clearError()
                     this.form = cloneDeep(baseForm)
                 }
             }
@@ -219,7 +227,13 @@
                     this.btnLoading = false
                 }
                 this.$refs.Form.validate().then(() => {
-                    this.$emit('submit', this.form, cb)
+                    const subForm = cloneDeep(this.form)
+                    Object.keys(OperatorMap).forEach(key => {
+                        if (OperatorMap[key] === subForm.operator) {
+                            subForm.operator = key
+                        }
+                    })
+                    this.$emit('submit', subForm, cb)
                 }).catch(() => {
                     cb()
                 })

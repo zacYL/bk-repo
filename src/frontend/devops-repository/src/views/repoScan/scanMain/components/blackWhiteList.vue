@@ -9,7 +9,7 @@
                 @tabChang="tabChang" />
             <div class="flex-align-center">
                 <bk-button theme="primary" class="mr10" @click="addBlackWhiteRepo">{{$t('add')}}</bk-button>
-                <FilterCondition :filter-params="filterParams" @confirm="search" @reset="reset" />
+                <FilterCondition :with-params="!!(Object.keys(getRealParams).length)" @confirm="search" @reset="reset" />
             </div>
         </div>
         <bk-table
@@ -24,22 +24,20 @@
                 <empty-data :is-loading="isLoading" :search="Boolean(scanName)"></empty-data>
             </template>
             <!-- 制品包名称 -->
-            <bk-table-column :label="$t('composerInputLabel')" show-overflow-tooltip>
+            <bk-table-column :label="$t('composerInputLabel')" show-overflow-tooltip prop="key">
                 <template #default="{ row }">
-                    <span class="hover-btn">{{row.packageName}}</span>
+                    <span class="hover-btn">{{row.key}}</span>
                 </template>
             </bk-table-column>
             <!-- 版本 -->
-            <bk-table-column :label="$t('version')" prop="name">
+            <bk-table-column :label="$t('version')" prop="version">
             </bk-table-column>
             <!-- 仓库类型 -->
-            <bk-table-column :label="$t('storeTypes')" prop="type">
-            </bk-table-column>
-            <!-- 所属仓库 -->
-            <bk-table-column :label="$t('repo')" prop="repoName">
+            <bk-table-column :label="$t('storeTypes')" prop="packageType">
             </bk-table-column>
             <!-- 有效时间 -->
-            <bk-table-column v-if="type === 'white'" :label="$t('validTime')" prop="repoName">
+            <bk-table-column v-if="type === 'white'" :label="$t('validTime')" prop="expireDate">
+                <template #default="{ row }">{{formatDate(row.expireDate)}}</template>
             </bk-table-column>
             <!-- 操作 -->
             <bk-table-column :label="$t('operation')">
@@ -69,6 +67,7 @@
     import DefaultTabBox from '@repository/components/DefaultTabBox'
     import FilterCondition from './components/FilterCondition.vue'
     import AddBlackWhiteRepoDialog from './components/AddBlackWhiteRepoDialog.vue'
+    import { formatDate } from '@repository/utils'
     const paginationParams = {
         count: 0,
         current: 1,
@@ -105,7 +104,8 @@
                 addConfig: {
                     title: '',
                     visible: false
-                }
+                },
+                selectParams: {}
             }
         },
         computed: {
@@ -120,16 +120,29 @@
                     operation: 'EQ'
                 }
             },
-            // 搜索参数
-            searchFilterParams () {
-                const deepFilterParams = cloneDeep(this.filterParams) || []
-                return deepFilterParams
+            getRealParams () {
+                const OBj = {}
+                Object.keys(this.selectParams).forEach(key => {
+                    if (this.selectParams[key] !== '') {
+                        OBj[key] = this.selectParams[key]
+                    }
+                })
+                return OBj
+            },
+            listParams () {
+                return {
+                    pageNumber: this.pagination.current,
+                    pageSize: this.pagination.limit,
+                    pass: this.type === 'white',
+                    ...Object.keys(this.getRealParams).length ? this.getRealParams : {}
+                }
             }
         },
         created () {
             this.handlerPaginationChange({ current: 1, limit: 20 })
         },
         methods: {
+            formatDate,
             ...mapActions([
                 'createBlackWhiteList',
                 'deleteBlackWhiteList',
@@ -144,18 +157,21 @@
             },
             addBlackWhiteRepoSubmit (form, cb) {
                 this.createBlackWhiteList({
-                    type: 'MAVEN',
-                    projectId: this.projectId,
-                    key: form.name,
-                    pass: this.type === 'white',
-                    version: null,
-                    versionRuleType: null
+                    body: {
+                        packageType: form.repoType.toLocaleUpperCase(),
+                        projectId: this.projectId,
+                        key: form.groupID ? (form.groupID + ':' + form.name) : form.name,
+                        pass: this.type === 'white',
+                        version: form.version,
+                        versionRuleType: form.operator
+                    }
                 }).then(() => {
                     this.$bkMessage({
                         theme: 'success',
                         message: this.$t('addSuccess')
                     })
                     this.getBlackWhiteList({ current: 1 })
+                    this.hideBlackWhiteRepo()
                 }).catch(() => {
                     this.$bkMessage({
                         theme: 'error',
@@ -173,16 +189,10 @@
             },
             // 获取黑白名单列表
             getBlackWhiteList () {
-                const body = {
-                    pageNumber: this.pagination.current,
-                    pageSize: this.pagination.limit,
-                    type: 'MAVEN',
-                    pass: this.type === 'white'
-                }
                 this.isLoading = true
                 
                 return this.getBlackWhiteRecords(
-                    body
+                    this.listParams
                 ).then(res => {
                     this.blackWhiteList = res.records
                     this.pagination.count = res.totalRecords
@@ -191,8 +201,8 @@
                 })
             },
             // 搜索
-            search (filterList, cb) {
-                this.filterParams = filterList
+            search (selectParams, cb) {
+                this.selectParams = selectParams
                 this.$nextTick(() => {
                     this.getBlackWhiteList({ current: 1 }).then(() => {
                         cb && cb()
@@ -200,7 +210,7 @@
                 })
             },
             reset (cb) {
-                this.filterParams = null
+                this.selectParams = {}
                 this.$nextTick(() => {
                     this.getBlackWhiteList({ current: 1 }).then(() => {
                         cb && cb()
@@ -219,14 +229,14 @@
                     theme: 'danger',
                     confirmFn: () => {
                         const body = {
-                            packageType: 'MAVEN',
+                            packageType: row.packageType,
                             projectId: this.projectId,
-                            key: row.name,
-                            version: null,
-                            versionRuleType: null,
+                            key: row.key,
+                            version: row.version,
+                            versionRuleType: row.versionRuleType,
                             pass: this.type === 'white'
                         }
-                        this.deleteBlackWhiteList(body).then(() => {
+                        this.deleteBlackWhiteList({ body }).then(() => {
                             this.$bkMessage({
                                 theme: 'success',
                                 message: this.$t('removeSuccess')

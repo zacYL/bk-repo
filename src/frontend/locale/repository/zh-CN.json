@@ -1,4 +1,5 @@
 {
+    "modulePathTips": "输入完整的modulePath",
     "versionOperators": "版本逻辑",
     "recycleBin": "回收站",
     "deleteTime": "删除时间",

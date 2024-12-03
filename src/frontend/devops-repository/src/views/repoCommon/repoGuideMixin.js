@@ -959,6 +959,367 @@ export default {
                 }
             ]
         },
+        // todo
+        gradleGuide () {
+            return [
+                {
+                    title: this.$t('setCredentials'),
+                    optionType: 'setCredentials',
+                    main: [
+                        {
+                            subTitle: this.$t('mavenCreditGuideSubTitle1'),
+                            constructType: 'Apache Maven',
+                            codeList: [
+                                '<servers>',
+                                '       <server>',
+                                `               <id>${this.projectId}-${this.repoName}</id>`,
+                                `               <username>${this.userName}</username>`,
+                                `               <password>${this.accessToken}</password>`,
+                                '       </server>',
+                                '</servers>'
+                            ]
+                        },
+                        {
+                            subTitle: this.$t('mavenCreditGuideSubTitle2'),
+                            constructType: 'Gradle Groovy DSL',
+                            codeList: [
+                                `cpackUrl=${this.repoUrl}`,
+                                `cpackUsername=${this.userName}`,
+                                `cpackPassword=${this.accessToken}`
+                            ]
+                        },
+                        {
+                            subTitle: this.$t('mavenCreditGuideSubTitle2'),
+                            constructType: 'Gradle Kotlin DSL',
+                            codeList: [
+                                `cpackUrl=${this.repoUrl}`,
+                                `cpackUsername=${this.userName}`,
+                                `cpackPassword=${this.accessToken}`
+                            ]
+                        }
+                    ]
+                },
+                this.noShowOption
+                    ? undefined
+                    : {
+                        title: this.$t('push'),
+                        optionType: 'push',
+                        inputBoxList: [
+                            // groupId
+                            {
+                                key: 'dependInputValue1', // vux中存储的变量名
+                                label: this.$t('mavenGroupIdLabel'), // 输入框左侧label文案
+                                placeholder: this.$t('mavenGroupIdPlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                            },
+                            // artifactId
+                            {
+                                key: 'dependInputValue2', // vux中存储的变量名
+                                label: this.$t('mavenArtifactIdLabel'), // 输入框左侧label文案
+                                placeholder: this.$t('mavenArtifactIdPlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
+                            },
+                            // 制品版本
+                            {
+                                key: 'dependInputValue3', // vux中存储的变量名
+                                label: this.$t('artifactVersion'), // 输入框左侧label文案
+                                placeholder: this.$t('packageVersionPlaceholder'), // 输入框提示文案
+                                methodFunctionName: 'SET_DEPEND_INPUT_VALUE3' // vuex中mutations中的方法名
+                            }
+                        ],
+                        main: [
+                            {
+                                subTitle: this.$t('mavenPushGuideSubTitle1'),
+                                constructType: 'Apache Maven',
+                                notShowArtifactInput: true, // Apache Maven不需要显示制品名称等输入框
+                                codeList: [
+                                    '<distributionManagement>',
+                                    '       <repository>',
+                                    `               <!--${this.$t('mavenPushGuideCodeListAnnotate')}-->`,
+                                    `               <id>${this.projectId}-${this.repoName}</id>`,
+                                    `               <name>${this.repoName}</name>`,
+                                    `               <url>${this.repoUrl}/</url>`,
+                                    '       </repository>',
+                                    '</distributionManagement>'
+                                ]
+                            },
+                            {
+                                subTitle: this.$t('mavenPushGuideSubTitle2'),
+                                constructType: 'Apache Maven',
+                                notShowArtifactInput: true, // Apache Maven不需要显示制品名称等输入框
+                                codeList: [
+                                    'mvn clean deploy'
+                                ]
+                            },
+                            {
+                                subTitle: this.$t('mavenPushGuideSubTitle3'),
+                                constructType: 'Gradle Groovy DSL',
+                                codeList: [
+                                    'plugins {',
+                                    '    id "maven-publish"',
+                                    '}',
+                                    'publishing {',
+                                    '    publications {',
+                                    '        maven(MavenPublication) {',
+                                    `            groupId = "${this.dependInputValue1 || '<GROUP_ID>'}"`,
+                                    `            artifactId = "${this.dependInputValue2 || '<ARTIFACT_ID>'}"`,
+                                    `            version = "${this.dependInputValue3 || '<PACKAGE_VERSION>'}"`,
+                                    '            from components.java',
+                                    '        }',
+                                    '    }',
+                                    '    repositories {',
+                                    '        maven {',
+                                    '            url = "${cpackUrl}"',
+                                    '            credentials {',
+                                    '                username = "${cpackUsername}"',
+                                    '                password = "${cpackPassword}"',
+                                    '            }',
+                                    '        }',
+                                    '    }',
+                                    '}'
+                                ]
+                            },
+                            {
+                                subTitle: this.$t('mavenPushGuideSubTitle4'),
+                                constructType: 'Gradle Groovy DSL',
+                                codeList: [
+                                    'gradle publish'
+                                ]
+                            },
+                            {
+                                subTitle: this.$t('mavenPushGuideSubTitle5'),
+                                constructType: 'Gradle Kotlin DSL',
+                                codeList: [
+                                    'plugins {',
+                                    '    `maven-publish`',
+                                    '}',
+                                    'publishing {',
+                                    '    publications {',
+                                    '        create<MavenPublication>("maven") {',
+                                    `            groupId = "${this.dependInputValue1 || '<GROUP_ID>'}"`,
+                                    `            artifactId = "${this.dependInputValue2 || '<ARTIFACT_ID>'}"`,
+                                    `            version = "${this.dependInputValue3 || '<PACKAGE_VERSION>'}"`,
+                                    '            from(components["java"])',
+                                    '        }',
+                                    '    }',
+                                    '    repositories {',
+                                    '        maven {',
+                                    '            val cpackUrl: String by project',
+                                    '            val cpackUsername: String by project',
+                                    '            val cpackPassword: String by project',
+                                    '            url = uri(cpackUrl)',
+                                    '            credentials {',
+                                    '                username = cpackUsername',
+                                    '                password = cpackPassword',
+                                    '            }',
+                                    '        }',
+                                    '    }',
+                                    '}'
+                                ]
+                            },
+                            {
+                                subTitle: this.$t('mavenPushGuideSubTitle6'),
+                                constructType: 'Gradle Kotlin DSL',
+                                codeList: [
+                                    'gradle publish'
+                                ]
+                            }
+                        ]
+                    },
+                {
+                    title: this.$t('pull'),
+                    optionType: 'pull',
+                    inputBoxList: [
+                        // groupId
+                        {
+                            key: 'dependInputValue1', // vux中存储的变量名
+                            label: this.$t('mavenGroupIdLabel'), // 输入框左侧label文案
+                            placeholder: this.$t('mavenGroupIdPlaceholder'), // 输入框提示文案
+                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
+                        },
+                        // artifactId
+                        {
+                            key: 'dependInputValue2', // vux中存储的变量名
+                            label: this.$t('mavenArtifactIdLabel'), // 输入框左侧label文案
+                            placeholder: this.$t('mavenArtifactIdPlaceholder'), // 输入框提示文案
+                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
+                        },
+                        // 制品版本
+                        {
+                            key: 'dependInputValue3', // vux中存储的变量名
+                            label: this.$t('artifactVersion'), // 输入框左侧label文案
+                            placeholder: this.$t('packageVersionPlaceholder'), // 输入框提示文案
+                            methodFunctionName: 'SET_DEPEND_INPUT_VALUE3' // vuex中mutations中的方法名
+                        }
+                    ],
+                    main: [
+                        {
+                            title: this.$t('mavenGuideTitle'),
+                            subTitle: this.$t('mavenGuideSubTitle1'),
+                            constructType: 'Apache Maven',
+                            codeList: [
+                                '<mirror>',
+                                `       <id>${this.projectId}-${this.repoName}</id>`,
+                                `       <name>${this.repoName}</name>`,
+                                `       <url>${this.repoUrl}/</url>`,
+                                '       <mirrorOf>central</mirrorOf>',
+                                '</mirror>'
+                            ]
+                        },
+                        {
+                            subTitle: this.$t('mavenPullGuideSubTitle1'),
+                            constructType: 'Apache Maven',
+                            codeList: [
+                                '<profiles>',
+                                '       <profile>',
+                                '               <id>repository proxy</id>',
+                                '               <activation>',
+                                '                       <activeByDefault>true</activeByDefault>',
+                                '               </activation>',
+                                '               <repositories>',
+                                '                       <repository>',
+                                `                               <id>${this.projectId}-${this.repoName}</id>`,
+                                `                               <name>${this.repoName}</name>`,
+                                `                               <url>${this.repoUrl}/</url>`,
+                                '                               <releases>',
+                                '                                       <enabled>true</enabled>',
+                                '                               </releases>',
+                                '                               <snapshots>',
+                                '                                       <enabled>true</enabled>',
+                                '                               </snapshots>',
+                                '                       </repository>',
+                                '               </repositories>',
+                                '       </profile>',
+                                '</profiles>'
+                            ]
+                        },
+                        {
+                            title: this.$t('mavenGuideTitle2'),
+                            subTitle: this.$t('mavenGuideSubTitle2'),
+                            constructType: 'Apache Maven',
+                            codeList: [
+                                '<repositories>',
+                                '    <repository>',
+                                `       <!--${this.$t('mavenPushGuideCodeListAnnotate')}-->`,
+                                `       <id>${this.projectId}-${this.repoName}</id>`,
+                                `       <name>${this.repoName}</name>`,
+                                `       <url>${this.repoUrl}/</url>`,
+                                '    </repository>',
+                                '</repositories>'
+                            ]
+                        },
+                        {
+                            title: this.$t('mavenGuideTitle3'),
+                            subTitle: this.$t('mavenPullGuideSubTitle7'),
+                            constructType: 'Apache Maven',
+                            codeList: [
+                                '<dependencies>',
+                                '    <dependency>',
+                                `        <groupId>${this.dependInputValue1 || '[GROUP_ID]'}</groupId>`,
+                                `        <artifactId>${this.dependInputValue2 || '[ARTIFACT_ID]'}</artifactId>`,
+                                `        <version>${this.dependInputValue3 || '[VERSION]'}</version>`,
+                                '    </dependency>',
+                                '</dependencies>'
+                            ]
+                        },
+                        {
+                            subTitle: this.$t('mavenPullGuideSubTitle2'),
+                            constructType: 'Apache Maven',
+                            codeList: [
+                                'mvn clean package'
+                            ]
+                        },
+                        {
+                            subTitle: this.$t('mavenPullGuideSubTitle3'),
+                            constructType: 'Gradle Groovy DSL',
+                            codeList: [
+                                'repositories {',
+                                '    maven {',
+                                '        url = "${cpackUrl}"',
+                                '        credentials {',
+                                '            username = "${cpackUsername}"',
+                                '            password = "${cpackPassword}"',
+                                '        }',
+                                '    }',
+                                '}',
+                                '   ',
+                                'dependencies { ',
+                                `     api '${this.dependInputValue1 || '[GROUP_ID]'}:${this.dependInputValue2 || '[ARTIFACT_ID]'}:${this.dependInputValue3 || '[VERSION]'}'`,
+                                '}'
+                            ]
+                        },
+                        {
+                            subTitle: this.$t('mavenPullGuideSubTitle4'),
+                            constructType: 'Gradle Groovy DSL',
+                            codeList: [
+                                'gradle dependencies'
+                            ]
+                        },
+                        {
+                            subTitle: this.$t('mavenPullGuideSubTitle5'),
+                            constructType: 'Gradle Kotlin DSL',
+                            codeList: [
+                                'repositories {',
+                                '    maven {',
+                                '        val cpackUrl: String by project',
+                                '        val cpackUsername: String by project',
+                                '        val cpackPassword: String by project',
+                                '        url = uri(cpackUrl)',
+                                '        credentials {',
+                                '            username = cpackUsername',
+                                '            password = cpackPassword',
+                                '        }',
+                                '    }',
+                                '}',
+                                '   ',
+                                'dependencies { ',
+                                `     api ("${this.dependInputValue1 || '[GROUP_ID]'}:${this.dependInputValue2 || '[ARTIFACT_ID]'}:${this.dependInputValue3 || '[VERSION]'}")`,
+                                '}'
+                            ]
+                        },
+                        {
+                            subTitle: this.$t('mavenPullGuideSubTitle6'),
+                            constructType: 'Gradle Kotlin DSL',
+                            codeList: [
+                                'gradle dependencies'
+                            ]
+                        }
+                    ]
+                }
+            ].filter(Boolean)
+        },
+        gradleInstall () {
+            return [
+                {
+                    main: [
+                        {
+                            subTitle: 'Apache Maven',
+                            codeList: [
+                                '<dependency>',
+                                `   <groupId>${this.detail.basic.groupId}</groupId>`,
+                                `   <artifactId>${this.detail.basic.artifactId}</artifactId>`,
+                                this.detail.basic.classifier && `   <classifier>${this.detail.basic.classifier}</classifier>`,
+                                `   <version>${this.versionLabel}</version>`,
+                                this.detail.basic.type && `   <type>${this.detail.basic.type}</type>`,
+                                '</dependency>'
+                            ].filter(Boolean)
+                        },
+                        {
+                            subTitle: 'Gradle Groovy DSL',
+                            codeList: [
+                                `implementation '${this.detail.basic.groupId}:${this.detail.basic.artifactId}:${this.versionLabel}'`
+                            ]
+                        },
+                        {
+                            subTitle: 'Gradle Kotlin DSL',
+                            codeList: [
+                                `implementation("${this.detail.basic.groupId}:${this.detail.basic.artifactId}:${this.versionLabel}")`
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
         helmGuide () {
             return [
                 {

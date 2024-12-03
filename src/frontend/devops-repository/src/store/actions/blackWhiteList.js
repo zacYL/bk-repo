@@ -1,7 +1,7 @@
 /*
  * @Date: 2024-11-29 21:39:00
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-11-29 22:16:19
+ * @LastEditTime: 2024-12-03 19:04:53
  * @FilePath: /artifact/src/frontend/devops-repository/src/store/actions/blackWhiteList.js
  */
 import Vue from 'vue'
@@ -30,7 +30,9 @@ export default {
     deleteBlackWhiteList (_, { body }) {
         return Vue.prototype.$ajax.delete(
             `${Prefix}/package/access-rule/delete`,
-            body
+            {
+                params: body
+            }
         )
     },
     /**
@@ -39,16 +41,11 @@ export default {
      * @param {*} body
      * @return {*}
      */
-    getBlackWhiteRecords (_, { pageNumber, pageSize, type, pass }) {
-        return Vue.prototype.$ajax.post(
+    getBlackWhiteRecords (_, body) {
+        return Vue.prototype.$ajax.get(
             `${Prefix}/package/access-rule/page`,
             {
-                params: {
-                    pageNumber,
-                    pageSize,
-                    type,
-                    pass
-                }
+                params: body
             }
         )
     }

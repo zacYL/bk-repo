@@ -253,3 +253,12 @@ export const DockerVersionComparisonOperator = [
     '==',
     '!='
 ]
+
+export const OperatorMap = {
+    EQ: '==',
+    NE: '!=',
+    LE: '<',
+    LTE: '<=',
+    GT: '>',
+    GTE: '>='
+}

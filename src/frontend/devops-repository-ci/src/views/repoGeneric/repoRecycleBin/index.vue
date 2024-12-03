@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-21 15:38:37
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-12-03 15:12:04
+ * @LastEditTime: 2024-12-03 16:07:44
  * @FilePath: /artifact/src/frontend/devops-repository-ci/src/views/repoGeneric/repoRecycleBin/index.vue
 -->
 <template>
@@ -117,7 +117,8 @@
                 'getRecycleBinList',
                 'checkConflictPath',
                 'nodeRevert',
-                'nodeDelete'
+                'nodeDelete',
+                'getNodeDetail'
             ]),
             // 分页
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
@@ -138,7 +139,7 @@
                         ],
                         direction: 'DESC'
                     },
-                    select: ['deleted', 'fullPath', 'folder', 'name', 'size', 'lastModifiedBy', 'repoName', 'sha256', 'md5', 'projectId'],
+                    select: ['deleted', 'fullPath', 'folder', 'name', 'size', 'lastModifiedBy', 'repoName', 'sha256', 'md5', 'projectId', 'path'],
                     rule: {
                         rules: [
                             {
@@ -210,6 +211,7 @@
                         type
                     })
                 }
+
                 const cb = (revertPromise) => {
                     return revertPromise.then(() => {
                         this.$bkMessage({
@@ -223,41 +225,76 @@
                         })
                     })
                 }
-                // 校验冲突路径
-                this.checkConflictPath({ projectId: this.projectId, repoName: this.repoName, fullPath: row.fullPath }).then((res) => {
-                    this.$bkInfoDevopsConfirm({
-                        subTitle: this.$t('artifactConflictRevert', [row.name]),
-                        theme: 'danger',
-                        okText: this.$t('overwrite'),
-                        confirmFn: () => {
-                            const conflictNodeRevert = generateRevertPromise('OVERWRITE')
-                            // 覆盖原有文件
-                            cb(conflictNodeRevert).then(() => {
-                                this.resetTable()
-                            })
-                        }
-                    })
-                }).catch(error => {
-                    if (error.status.toString() === '400') {
+
+                const revertFn = () => {
+                    // 校验冲突路径
+                    this.checkConflictPath({
+                        projectId: this.projectId,
+                        repoName: this.repoName,
+                        fullPath: row.fullPath
+                    }).then((res) => {
                         this.$bkInfoDevopsConfirm({
-                            subTitle: this.$t('artifactRevert', [row.name]),
-                            theme: 'success',
-                            okText: this.$t('revert'),
+                            subTitle: this.$t('artifactConflictRevert', [row.name]),
+                            theme: 'danger',
+                            okText: this.$t('overwrite'),
                             confirmFn: () => {
-                                const nodeRevert = generateRevertPromise('FAILED')
-                                // 恢复文件
-                                cb(nodeRevert).then(() => {
+                                const conflictNodeRevert = generateRevertPromise('OVERWRITE')
+                                // 覆盖原有文件
+                                cb(conflictNodeRevert).then(() => {
                                     this.resetTable()
                                 })
                             }
                         })
-                    } else {
-                        this.$bkMessage({
-                            theme: 'error',
-                            message: this.$t('checkErr')
-                        })
-                    }
-                })
+                    }).catch((error) => {
+                        if (error.status.toString() === '400') {
+                            this.$bkInfoDevopsConfirm({
+                                subTitle: this.$t('artifactRevert', [row.name]),
+                                theme: 'success',
+                                okText: this.$t('revert'),
+                                confirmFn: () => {
+                                    const nodeRevert = generateRevertPromise('FAILED')
+                                    // 恢复文件
+                                    cb(nodeRevert).then(() => {
+                                        this.resetTable()
+                                    })
+                                }
+                            })
+                        } else {
+                            this.$bkMessage({
+                                theme: 'error',
+                                message: this.$t('checkErr')
+                            })
+                        }
+                    })
+                }
+                // 如果是根目录，直接执行恢复函数
+                if (row.path === '/') {
+                    revertFn()
+                } else {
+                    this.getNodeDetail({
+                        projectId: this.projectId,
+                        repoName: this.repoName,
+                        fullPath: row.path.slice(0, -1),
+                        localNode: true
+                    }).then((res) => {
+                        // 处理成功的情况
+                        if (res.folder) {
+                            revertFn()
+                        } else {
+                            this.$bkMessage({
+                                theme: 'error',
+                                message: this.$t('filePathNoExit', [row.path.slice(0, -1)])
+                            })
+                        }
+                    }).catch((error) => {
+                        if (error.status.toString() === '400') {
+                            this.$bkMessage({
+                                theme: 'error',
+                                message: this.$t('filePathNoExit', [row.path.slice(0, -1)])
+                            })
+                        }
+                    })
+                }
             },
             remove (row) {
                 this.$bkInfoDevopsConfirm({

@@ -13,6 +13,7 @@
     "revert": "恢复",
     "revertSuccess": "恢复成功",
     "revertFail": "恢复失败",
+    "filePathNoExit": "所属目录{0}不存在，无法恢复",
     "artifactConflictRevert": "此路径下已存在名称为 '{0}' 的文件/目录，是否覆盖?",
     "artifactRevert": "确定恢复该文件/目录？",
     "checkErr": "校验失败",

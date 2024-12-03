@@ -13,6 +13,7 @@
     "revert": "Revert",
     "revertSuccess": "Revert successfully",
     "revertFail": "Revert failed",
+    "filePathNoExit": "The specified directory {0} does not exist and cannot be restored.",
     "artifactConflictRevert": "A file/directory with the name '{0}' already exists at this path. Do you want to overwrite it?",
     "artifactRevert": "Are you sure you want to restore this file/directory?",
     "checkErr": "Check error",

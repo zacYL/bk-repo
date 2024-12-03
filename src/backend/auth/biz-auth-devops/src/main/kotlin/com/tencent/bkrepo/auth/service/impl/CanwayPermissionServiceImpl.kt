@@ -437,7 +437,7 @@ class CanwayPermissionServiceImpl(
             devOpsAuthGeneral.isTenantMemberOrAdmin(userId, tenantId)
         } else if (projectId != null && tenantId != null) {
             logger.info("check user $userId is CI project admin of [tenant: $tenantId]")
-            devOpsAuthGeneral.isProjectOrSuperiorAdmin(userId, tenantId)
+            devOpsAuthGeneral.isProjectOrSuperiorAdmin(userId, projectId)
         } else {
             return false
         }

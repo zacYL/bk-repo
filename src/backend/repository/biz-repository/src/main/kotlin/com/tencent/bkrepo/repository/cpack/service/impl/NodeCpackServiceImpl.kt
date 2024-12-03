@@ -13,17 +13,20 @@ import com.tencent.bkrepo.repository.dao.NodeDao
 import com.tencent.bkrepo.repository.model.TNode
 import com.tencent.bkrepo.repository.service.node.impl.NodeBaseService
 import com.tencent.bkrepo.repository.service.repo.QuotaService
+import com.tencent.bkrepo.repository.util.MetadataUtils
 import com.tencent.bkrepo.repository.util.NodeEventFactory
 import com.tencent.bkrepo.repository.util.NodeQueryHelper
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.mongodb.core.query.Query
+import org.springframework.data.mongodb.core.query.Update
 import org.springframework.data.mongodb.core.query.and
 import org.springframework.data.mongodb.core.query.inValues
 import org.springframework.data.mongodb.core.query.isEqualTo
 import org.springframework.data.mongodb.core.query.where
 import org.springframework.stereotype.Service
+import java.time.LocalDateTime
 
 @Service
 class NodeCpackServiceImpl(
@@ -54,7 +57,13 @@ class NodeCpackServiceImpl(
             val deleteNodesSize = nodeBaseService.aggregateComputeSize(criteria)
             try {
                 quotaService.decreaseUsedVolume(projectId, repoName, deleteNodesSize)
-                nodeDao.updateMulti(query, NodeQueryHelper.nodeDeleteUpdate(operator))
+                val now = LocalDateTime.now()
+                nodeDao.updateMulti(query, NodeQueryHelper.nodeDeleteUpdate(operator, now))
+                // show in recycle bin
+                nodeDao.updateMulti(
+                    NodeQueryHelper.nodeQuery(projectId, repoName, existNodes, now),
+                    Update().push(TNode::metadata.name, MetadataUtils.buildRecycleBinMetadata())
+                )
                 // 批量更新上层目录的修改信息
                 val parentFullPaths = existNodes
                     .map { PathUtils.toFullPath(PathUtils.resolveParent(it)) }

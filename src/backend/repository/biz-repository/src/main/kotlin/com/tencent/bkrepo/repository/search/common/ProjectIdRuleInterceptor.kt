@@ -34,6 +34,7 @@ package com.tencent.bkrepo.repository.search.common
 import cn.hutool.core.lang.UUID
 import com.google.common.util.concurrent.UncheckedExecutionException
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction.READ
+import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.path.PathUtils
 
 import com.tencent.bkrepo.common.query.enums.OperationType
@@ -50,6 +51,7 @@ import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.node.UserAuthPathOption
 import org.aspectj.weaver.tools.cache.SimpleCacheFactory.path
+import org.slf4j.LoggerFactory
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.stereotype.Component
 
@@ -62,6 +64,7 @@ import org.springframework.stereotype.Component
 class ProjectIdRuleInterceptor(
     private val permissionManager: PermissionManager,
 ) : QueryRuleInterceptor {
+    private val logger = LoggerFactory.getLogger(ProjectIdRuleInterceptor::class.java)
 
     override fun match(rule: Rule): Boolean {
         return rule is Rule.QueryRule && rule.field == "projectId" && isSupportRule(rule)
@@ -77,6 +80,8 @@ class ProjectIdRuleInterceptor(
 
             val userAuthPath =
                 permissionManager.getUserAuthPatCache(UserAuthPathOption(userId, projectId, repoName, READ))
+
+            logger.info("user $userId auth path: ${userAuthPath.toJsonString()}")
             val projectIdRule = Rule.QueryRule(NodeInfo::projectId.name, projectId, OperationType.EQ).toFixed()
 
             if (userAuthPath.isEmpty()) {

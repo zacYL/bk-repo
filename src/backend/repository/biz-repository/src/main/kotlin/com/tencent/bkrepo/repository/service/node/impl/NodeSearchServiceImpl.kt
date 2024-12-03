@@ -32,6 +32,7 @@
 package com.tencent.bkrepo.repository.service.node.impl
 
 import com.tencent.bkrepo.common.api.pojo.Page
+import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.query.model.QueryModel
 import com.tencent.bkrepo.common.security.http.core.HttpAuthProperties
@@ -45,6 +46,7 @@ import com.tencent.bkrepo.repository.search.node.NodeQueryInterpreter
 import com.tencent.bkrepo.repository.service.node.NodeSearchService
 import com.tencent.bkrepo.repository.service.repo.RepositoryService
 import com.tencent.bkrepo.repository.util.MetadataUtils
+import org.slf4j.LoggerFactory
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
@@ -62,6 +64,9 @@ class NodeSearchServiceImpl(
     private val repositoryService: RepositoryService,
     private val httpAuthProperties: HttpAuthProperties
 ) : NodeSearchService {
+
+    private val logger = LoggerFactory.getLogger(NodeSearchServiceImpl::class.java)
+
 
     override fun search(queryModel: QueryModel): Page<Map<String, Any?>> {
         val context = nodeQueryInterpreter.interpret(queryModel) as NodeQueryContext
@@ -160,6 +165,7 @@ class NodeSearchServiceImpl(
 
     private fun doQuery(context: NodeQueryContext): Page<Map<String, Any?>> {
         val query = context.mongoQuery
+        logger.info("query: ${query.toJsonString()}")
         val nodeList = queryList(query)
         val countQuery = Query.of(query).limit(0).skip(0)
         val totalRecords = nodeDao.count(countQuery)

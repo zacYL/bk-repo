@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-21 15:38:37
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-12-03 09:57:29
+ * @LastEditTime: 2024-12-03 15:12:04
  * @FilePath: /artifact/src/frontend/devops-repository-ci/src/views/repoGeneric/repoRecycleBin/index.vue
 -->
 <template>
@@ -52,6 +52,9 @@
             </bk-table-column>
             <!-- 删除者 -->
             <bk-table-column :label="$t('deleter')" prop="lastModifiedBy" show-overflow-tooltip>
+                <template #default="{ row }">
+                    <span>{{ userList[row.lastModifiedBy] ? userList[row.lastModifiedBy].name : row.lastModifiedBy }}</span>
+                </template>
             </bk-table-column>
             <!-- 操作 -->
             <bk-table-column :label="$t('operation')">
@@ -77,7 +80,7 @@
 </template>
 <script>
     import { cloneDeep } from 'lodash'
-    import { mapActions } from 'vuex'
+    import { mapActions, mapState } from 'vuex'
 
     import { convertFileSize, formatDate } from '@repository/utils'
     const paginationParams = {
@@ -96,6 +99,7 @@
             }
         },
         computed: {
+            ...mapState(['userList']),
             projectId () {
                 return this.$route.query.projectId
             },

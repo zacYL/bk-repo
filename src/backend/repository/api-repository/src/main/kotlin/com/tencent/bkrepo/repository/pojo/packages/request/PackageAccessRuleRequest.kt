@@ -3,6 +3,7 @@ package com.tencent.bkrepo.repository.pojo.packages.request
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.VersionRuleType
 import io.swagger.annotations.ApiModelProperty
+import java.time.LocalDateTime
 
 data class PackageAccessRuleRequest(
     @ApiModelProperty("项目id")
@@ -16,5 +17,7 @@ data class PackageAccessRuleRequest(
     @ApiModelProperty("版本关系")
     val versionRuleType: VersionRuleType? = null,
     @ApiModelProperty("规则行为")
-    val pass: Boolean
+    val pass: Boolean,
+    @ApiModelProperty("过期时间")
+    val expireDate: LocalDateTime? = null,
 )

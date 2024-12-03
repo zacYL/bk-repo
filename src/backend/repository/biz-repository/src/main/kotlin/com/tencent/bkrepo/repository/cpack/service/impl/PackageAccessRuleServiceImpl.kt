@@ -4,6 +4,7 @@ import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.pojo.Page
 import com.tencent.bkrepo.common.mongo.dao.util.Pages
+import com.tencent.bkrepo.common.query.util.MongoEscapeUtils
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.repository.cpack.service.PackageAccessRuleService
 import com.tencent.bkrepo.repository.dao.PackageAccessRuleDao
@@ -69,12 +70,20 @@ class PackageAccessRuleServiceImpl(
         pageNumber: Int,
         pageSize: Int,
         type: PackageType?,
+        key: String?,
+        version: String?,
         pass: Boolean?
     ): Page<PackageAccessRule> {
         val query = Query()
             .apply {
                 if (type != null) addCriteria(where(TPackageAccessRule::packageType).isEqualTo(type))
                 if (pass != null) addCriteria(where(TPackageAccessRule::pass).isEqualTo(pass))
+                if (version != null) addCriteria(where(TPackageAccessRule::version).isEqualTo(version))
+                if (key != null) {
+                    val escapedValue = MongoEscapeUtils.escapeRegexExceptWildcard(key)
+                    val regexPattern = escapedValue.replace("*", ".*")
+                    addCriteria(where(TPackageAccessRule::key).regex("^$regexPattern$", "i"))
+                }
             }
         val pageRequest =
             PageRequest.of(pageNumber, pageSize, Sort.Direction.DESC, TPackageAccessRule::createdDate.name)
@@ -86,6 +95,10 @@ class PackageAccessRuleServiceImpl(
     override fun getMatchedRules(projectId: String, type: String, key: String): List<PackageAccessRule> {
         val criteria = where(TPackageAccessRule::projectId).isEqualTo(projectId)
             .and(TPackageAccessRule::packageType).isEqualTo(type)
+            .orOperator(
+                where(TPackageAccessRule::expireDate).isEqualTo(null),
+                where(TPackageAccessRule::expireDate).lt(LocalDateTime.now()),
+            )
         if (key.contains(":")) {
             criteria.orOperator(
                 where(TPackageAccessRule::key).isEqualTo(key),
@@ -105,7 +118,8 @@ class PackageAccessRuleServiceImpl(
                 key = key,
                 version = version,
                 versionRuleType = versionRuleType,
-                pass = pass
+                pass = pass,
+                expireDate = expireDate,
             )
         }
     }

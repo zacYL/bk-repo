@@ -42,6 +42,7 @@ import com.tencent.bkrepo.common.artifact.path.PathUtils.resolveName
 import com.tencent.bkrepo.common.artifact.path.PathUtils.resolveParent
 import com.tencent.bkrepo.common.artifact.path.PathUtils.toPath
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
+import com.tencent.bkrepo.common.mongo.dao.AbstractMongoDao.Companion.ID
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
 import com.tencent.bkrepo.common.storage.core.StorageService
 import com.tencent.bkrepo.common.storage.credentials.StorageCredentials
@@ -55,10 +56,13 @@ import com.tencent.bkrepo.repository.pojo.node.service.NodeMoveCopyRequest
 import com.tencent.bkrepo.repository.service.node.NodeMoveCopyOperation
 import com.tencent.bkrepo.repository.service.repo.QuotaService
 import com.tencent.bkrepo.repository.service.repo.StorageCredentialService
+import com.tencent.bkrepo.repository.util.MetadataUtils.buildExpiredDeletedNodeMetadata
 import com.tencent.bkrepo.repository.util.NodeEventFactory
 import com.tencent.bkrepo.repository.util.NodeQueryHelper
 import org.slf4j.LoggerFactory
+import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
+import org.springframework.data.mongodb.core.query.isEqualTo
 import java.time.LocalDateTime
 
 /**
@@ -148,7 +152,9 @@ open class NodeMoveCopySupport(
             // 因为分表所以不能直接更新src节点，必须创建新的并删除旧的
             if (move) {
                 val query = NodeQueryHelper.nodeQuery(node.projectId, node.repoName, node.fullPath)
-                val update = NodeQueryHelper.nodeDeleteUpdate(operator)
+                val update = NodeQueryHelper.nodeDeleteUpdate(operator).push(
+                    TNode::metadata.name, buildExpiredDeletedNodeMetadata()
+                )
                 if (!node.folder) {
                     quotaService.decreaseUsedVolume(node.projectId, node.repoName, node.size)
                 }
@@ -173,7 +179,11 @@ open class NodeMoveCopySupport(
             // 文件 -> 文件 & 允许覆盖: 删除old
             if (existNode?.folder == false && overwrite) {
                 quotaService.checkRepoQuota(existNode.projectId, existNode.repoName, node.size - existNode.size)
-                nodeBaseService.deleteByPath(existNode.projectId, existNode.repoName, existNode.fullPath, operator)
+                val query = Query(Criteria.where(ID).isEqualTo(existNode.id!!))
+                val update = NodeQueryHelper.nodeDeleteUpdate(operator).push(
+                    TNode::metadata.name, buildExpiredDeletedNodeMetadata()
+                )
+                nodeDao.updateFirst(query, update)
             }
         }
     }

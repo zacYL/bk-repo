@@ -12,7 +12,14 @@ interface PackageAccessRuleService {
 
     fun deleteRule(request: PackageAccessRuleRequest)
 
-    fun listRulePage(pageNumber: Int, pageSize: Int, type: PackageType?, pass: Boolean?): Page<PackageAccessRule>
+    fun listRulePage(
+        pageNumber: Int,
+        pageSize: Int,
+        type: PackageType?,
+        key: String?,
+        version: String?,
+        pass: Boolean?
+    ): Page<PackageAccessRule>
 
     fun getMatchedRules(projectId: String, type: String, key: String): List<PackageAccessRule>
 }

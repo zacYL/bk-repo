@@ -67,10 +67,12 @@ class UserPackageAccessRuleController(
         @RequestParam(required = false, defaultValue = "$DEFAULT_PAGE_NUMBER") pageNumber: Int = DEFAULT_PAGE_NUMBER,
         @RequestParam(required = false, defaultValue = "$DEFAULT_PAGE_SIZE") pageSize: Int = DEFAULT_PAGE_SIZE,
         @RequestParam(required = false) type: PackageType? = null,
-        @RequestParam(required = false) pass: Boolean? = null,
         @RequestParam(required = false) key: String? = null,
         @RequestParam(required = false) version: String? = null,
+        @RequestParam(required = false) pass: Boolean? = null,
     ): Response<Page<PackageAccessRule>> {
-        return ResponseBuilder.success(packageAccessRuleService.listRulePage(pageNumber, pageSize, type, pass))
+        return ResponseBuilder.success(
+            packageAccessRuleService.listRulePage(pageNumber, pageSize, type, key, version, pass)
+        )
     }
 }

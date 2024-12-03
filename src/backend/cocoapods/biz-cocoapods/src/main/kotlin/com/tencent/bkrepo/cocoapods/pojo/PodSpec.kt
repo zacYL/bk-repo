@@ -25,36 +25,10 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.cocoapods.utils
+package com.tencent.bkrepo.cocoapods.pojo
 
-import com.tencent.bkrepo.cocoapods.constant.DOT_SPECS
-import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
-import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
-
-object PathUtil {
-    fun generateFullPath(artifactInfo: CocoapodsArtifactInfo): String {
-        return with(artifactInfo) {
-            "$orgName/$name/$version/$fileName"
-        }
-    }
-
-    fun generateSpecsPath(artifactInfo: CocoapodsArtifactInfo): String {
-        return with(artifactInfo) {
-            ".specs/$name/$version/$name.podspec"
-        }
-    }
-
-    fun getOrgNameByVersion(packageVersion: PackageVersion): String {
-        with(packageVersion) {
-            val parts = contentPath?.split("/")?.filter { it.isNotEmpty() }
-            return parts?.getOrNull(0)?:""
-        }
-    }
-
-    fun generateIndexPath(artifactInfo: CocoapodsArtifactInfo, fileName: String?) =
-        "$DOT_SPECS/${artifactInfo.name}/${artifactInfo.version}/${fileName}"
-
-    fun ArtifactUploadContext.generateCachePath(artifactInfo: CocoapodsArtifactInfo, domain: String) =
-        "${domain}/${projectId}/${repoName}/${artifactInfo.getArtifactFullPath()}"
-}
+class PodSpec(
+    val name: String?,
+    val fileName: String,
+    val content: String,
+)

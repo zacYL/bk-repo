@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-21 15:38:37
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-11-29 11:41:16
+ * @LastEditTime: 2024-12-03 16:07:44
  * @FilePath: /artifact/src/frontend/devops-repository-ci/src/views/repoGeneric/repoRecycleBin/index.vue
 -->
 <template>
@@ -46,9 +46,15 @@
             </bk-table-column>
             <!-- 删除时间 -->
             <bk-table-column :label="$t('deleteTime')" prop="deleted" show-overflow-tooltip>
+                <template #default="{ row }">
+                    <span>{{formatDate(row.deleted)}}</span>
+                </template>
             </bk-table-column>
             <!-- 删除者 -->
             <bk-table-column :label="$t('deleter')" prop="lastModifiedBy" show-overflow-tooltip>
+                <template #default="{ row }">
+                    <span>{{ userList[row.lastModifiedBy] ? userList[row.lastModifiedBy].name : row.lastModifiedBy }}</span>
+                </template>
             </bk-table-column>
             <!-- 操作 -->
             <bk-table-column :label="$t('operation')">
@@ -74,9 +80,9 @@
 </template>
 <script>
     import { cloneDeep } from 'lodash'
-    import { mapActions } from 'vuex'
+    import { mapActions, mapState } from 'vuex'
 
-    import { convertFileSize } from '@repository/utils'
+    import { convertFileSize, formatDate } from '@repository/utils'
     const paginationParams = {
         count: 0,
         current: 1,
@@ -93,6 +99,7 @@
             }
         },
         computed: {
+            ...mapState(['userList']),
             projectId () {
                 return this.$route.query.projectId
             },
@@ -104,12 +111,14 @@
             this.handlerPaginationChange({ current: 1, limit: 20 })
         },
         methods: {
+            formatDate,
             convertFileSize,
             ...mapActions([
                 'getRecycleBinList',
                 'checkConflictPath',
                 'nodeRevert',
-                'nodeDelete'
+                'nodeDelete',
+                'getNodeDetail'
             ]),
             // 分页
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
@@ -130,7 +139,7 @@
                         ],
                         direction: 'DESC'
                     },
-                    select: ['deleted', 'fullPath', 'folder', 'name', 'size', 'lastModifiedBy', 'repoName', 'sha256', 'md5', 'projectId'],
+                    select: ['deleted', 'fullPath', 'folder', 'name', 'size', 'lastModifiedBy', 'repoName', 'sha256', 'md5', 'projectId', 'path'],
                     rule: {
                         rules: [
                             {
@@ -202,6 +211,7 @@
                         type
                     })
                 }
+
                 const cb = (revertPromise) => {
                     return revertPromise.then(() => {
                         this.$bkMessage({
@@ -215,41 +225,76 @@
                         })
                     })
                 }
-                // 校验冲突路径
-                this.checkConflictPath({ projectId: this.projectId, repoName: this.repoName, fullPath: row.fullPath }).then((res) => {
-                    this.$bkInfoDevopsConfirm({
-                        subTitle: this.$t('artifactConflictRevert', [row.name]),
-                        theme: 'danger',
-                        okText: this.$t('overwrite'),
-                        confirmFn: () => {
-                            const conflictNodeRevert = generateRevertPromise('OVERWRITE')
-                            // 覆盖原有文件
-                            cb(conflictNodeRevert).then(() => {
-                                this.resetTable()
-                            })
-                        }
-                    })
-                }).catch(error => {
-                    if (error.status.toString() === '400') {
+
+                const revertFn = () => {
+                    // 校验冲突路径
+                    this.checkConflictPath({
+                        projectId: this.projectId,
+                        repoName: this.repoName,
+                        fullPath: row.fullPath
+                    }).then((res) => {
                         this.$bkInfoDevopsConfirm({
-                            subTitle: this.$t('artifactRevert', [row.name]),
-                            theme: 'success',
-                            okText: this.$t('revert'),
+                            subTitle: this.$t('artifactConflictRevert', [row.name]),
+                            theme: 'danger',
+                            okText: this.$t('overwrite'),
                             confirmFn: () => {
-                                const nodeRevert = generateRevertPromise('FAILED')
-                                // 恢复文件
-                                cb(nodeRevert).then(() => {
+                                const conflictNodeRevert = generateRevertPromise('OVERWRITE')
+                                // 覆盖原有文件
+                                cb(conflictNodeRevert).then(() => {
                                     this.resetTable()
                                 })
                             }
                         })
-                    } else {
-                        this.$bkMessage({
-                            theme: 'error',
-                            message: this.$t('checkErr')
-                        })
-                    }
-                })
+                    }).catch((error) => {
+                        if (error.status.toString() === '400') {
+                            this.$bkInfoDevopsConfirm({
+                                subTitle: this.$t('artifactRevert', [row.name]),
+                                theme: 'success',
+                                okText: this.$t('revert'),
+                                confirmFn: () => {
+                                    const nodeRevert = generateRevertPromise('FAILED')
+                                    // 恢复文件
+                                    cb(nodeRevert).then(() => {
+                                        this.resetTable()
+                                    })
+                                }
+                            })
+                        } else {
+                            this.$bkMessage({
+                                theme: 'error',
+                                message: this.$t('checkErr')
+                            })
+                        }
+                    })
+                }
+                // 如果是根目录，直接执行恢复函数
+                if (row.path === '/') {
+                    revertFn()
+                } else {
+                    this.getNodeDetail({
+                        projectId: this.projectId,
+                        repoName: this.repoName,
+                        fullPath: row.path.slice(0, -1),
+                        localNode: true
+                    }).then((res) => {
+                        // 处理成功的情况
+                        if (res.folder) {
+                            revertFn()
+                        } else {
+                            this.$bkMessage({
+                                theme: 'error',
+                                message: this.$t('filePathNoExit', [row.path.slice(0, -1)])
+                            })
+                        }
+                    }).catch((error) => {
+                        if (error.status.toString() === '400') {
+                            this.$bkMessage({
+                                theme: 'error',
+                                message: this.$t('filePathNoExit', [row.path.slice(0, -1)])
+                            })
+                        }
+                    })
+                }
             },
             remove (row) {
                 this.$bkInfoDevopsConfirm({

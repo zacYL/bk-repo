@@ -218,18 +218,6 @@ class ExtPermissionServiceImpl(
         }
     }
 
-
-    fun migrateTodeleteRepoCreateAction() {
-        canwayCustomMigrationClient.deleteAction(
-            "admin",
-            ActionDeleteDTO(
-                actionIds = listOf("2093e9c815b54e9db06e9ea60227a1be"),
-                physicalDelete = false
-            )
-        )
-        logger.info("delete repo create action permission")
-    }
-
     fun listDevOpsPermission(userId: String, projectId: String, repoName: String?): List<CanwayBkrepoPermission> {
         val canwayBkrepoPermission = mutableListOf<CanwayBkrepoPermission>()
         // 制品仓库实例数据权限动作
@@ -345,7 +333,7 @@ class ExtPermissionServiceImpl(
             )
         }.filter {
             // 路径授权只考虑二进制仓库
-            it.repoType == RepositoryType.GENERIC.name
+            it.repoType == RepositoryType.GENERIC.name.toLowerCase()
         }
     }
 

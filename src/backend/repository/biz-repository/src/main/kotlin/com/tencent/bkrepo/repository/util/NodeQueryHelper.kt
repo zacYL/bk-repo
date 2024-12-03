@@ -79,11 +79,11 @@ object NodeQueryHelper {
         return criteria
     }
 
-    fun nodeQuery(projectId: String, repoName: String, fullPath: List<String>): Query {
+    fun nodeQuery(projectId: String, repoName: String, fullPath: List<String>, deleted: LocalDateTime? = null): Query {
         val criteria = where(TNode::projectId).isEqualTo(projectId)
             .and(TNode::repoName).isEqualTo(repoName)
             .and(TNode::fullPath).inValues(fullPath)
-            .and(TNode::deleted).isEqualTo(null)
+            .and(TNode::deleted).isEqualTo(deleted)
         return Query(criteria)
     }
 
@@ -222,8 +222,8 @@ object NodeQueryHelper {
         return Query(criteria)
     }
 
-    fun nodeRestoreUpdate(): Update {
-        return Update().unset(TNode::deleted.name)
+    fun nodeRestoreUpdate(operator: String): Update {
+        return update(operator).unset(TNode::deleted.name)
             .pull(TNode::metadata.name, Query(where(TMetadata::key).isEqualTo(ROOT_DELETED_NODE)))
     }
 

@@ -32,6 +32,7 @@ import com.tencent.bkrepo.cocoapods.constant.DOT_SPECS
 import com.tencent.bkrepo.cocoapods.constant.SPECS
 import com.tencent.bkrepo.cocoapods.constant.SPECS_FILE_CONTENT
 import com.tencent.bkrepo.cocoapods.constant.SPECS_FILE_NAME
+import com.tencent.bkrepo.cocoapods.exception.CocoapodsException
 import com.tencent.bkrepo.cocoapods.exception.CocoapodsFileParseException
 import com.tencent.bkrepo.cocoapods.exception.CocoapodsMessageCode
 import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo
@@ -39,6 +40,7 @@ import com.tencent.bkrepo.cocoapods.service.CocoapodsPackageService
 import com.tencent.bkrepo.cocoapods.utils.DecompressUtil.getPodSpec
 import com.tencent.bkrepo.cocoapods.utils.PathUtil.generateCachePath
 import com.tencent.bkrepo.cocoapods.utils.PathUtil.generateFullPath
+import com.tencent.bkrepo.cocoapods.utils.PathUtil.generateIndexPath
 import com.tencent.bkrepo.common.api.constant.CharPool.SLASH
 import com.tencent.bkrepo.common.api.constant.MediaTypes
 import com.tencent.bkrepo.common.api.constant.ensurePrefix
@@ -68,18 +70,20 @@ class CocoapodsLocalRepository(
 
         with(context) {
             val artifactInfo = context.artifactInfo as CocoapodsArtifactInfo
-            try {
-                getArtifactFile().getInputStream().use {
+
+            val podSpec = getArtifactFile().getInputStream().use {
+                try {
                     //只支持tar.gz格式
                     val tarFilePath = generateCachePath(artifactInfo, cocoapodsProperties.domain)
-                    val (fileName, podSpec) = it.getPodSpec(tarFilePath)
-                    putAttribute(SPECS_FILE_NAME, fileName)
-                    putAttribute(SPECS_FILE_CONTENT, podSpec)
+                    it.getPodSpec(tarFilePath)
+                } catch (e: Exception) {
+                    logger.error("projectId [$projectId],repo [$repoName] upload package [${artifactInfo.name}] error, ${e.message}")
+                    throw CocoapodsFileParseException(CocoapodsMessageCode.COCOAPODS_FILE_PARSE_ERROR)
                 }
-            } catch (e: Exception) {
-                logger.error("projectId [$projectId],repo [$repoName] upload package [${artifactInfo.name}] error, ${e.message}")
-                throw CocoapodsFileParseException(CocoapodsMessageCode.COCOAPODS_FILE_PARSE_ERROR)
             }
+            validateName(podSpec.name, artifactInfo.name)
+            putAttribute(SPECS_FILE_NAME, podSpec.fileName)
+            putAttribute(SPECS_FILE_CONTENT, podSpec.content)
         }
         with(context.artifactInfo as CocoapodsArtifactInfo) {
             packageClient
@@ -90,6 +94,16 @@ class CocoapodsLocalRepository(
         super.onUploadBefore(context)
     }
 
+    private fun validateName(podSpecName: String?, artifactName: String) {
+        // 校验包名与spec内容的name要一致
+        if (podSpecName == null) {
+            throw CocoapodsException("podspec name cannot be empty.")
+        }
+        if (artifactName != podSpecName) {
+            throw CocoapodsException("package name should be consistent with the name attribute in the podspec file.")
+        }
+    }
+
     override fun onUploadSuccess(context: ArtifactUploadContext) {
 
         with(context) {
@@ -97,6 +111,7 @@ class CocoapodsLocalRepository(
             //在.specs目录创建索引文件
             val fileName = getAttribute<String>(SPECS_FILE_NAME)
             val podSpec = getAttribute<String>(SPECS_FILE_CONTENT)
+                ?: throw CocoapodsFileParseException(CocoapodsMessageCode.COCOAPODS_FILE_PARSE_ERROR)
             ByteArrayOutputStream().use { bos ->
                 OutputStreamWriter(bos, Charsets.UTF_8).use { writer ->
                     writer.write(podSpec)
@@ -104,7 +119,7 @@ class CocoapodsLocalRepository(
                 val specArtifact = ArtifactFileFactory.build(bos.toByteArray().inputStream())
                 val uploadContext = ArtifactUploadContext(specArtifact)
                 val specNode = buildNodeCreateRequest(uploadContext).run {
-                    copy(fullPath = "$DOT_SPECS/${artifactInfo.name}/${artifactInfo.version}/${fileName}")
+                    copy(fullPath = generateIndexPath(artifactInfo, fileName))
                 }
                 storageManager.storeArtifactFile(specNode, specArtifact, uploadContext.storageCredentials)
             }
@@ -210,3 +225,4 @@ class CocoapodsLocalRepository(
         private val logger = LoggerFactory.getLogger(CocoapodsLocalRepository::class.java)
     }
 }
+

@@ -62,6 +62,7 @@ import com.tencent.bkrepo.repository.constant.NODE_DETAIL_LIST_KEY
 import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeListOption
+import com.tencent.bkrepo.repository.pojo.node.UserAuthPathOption
 import com.tencent.bkrepo.repository.pojo.repo.RepoListOption
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
 import okhttp3.Headers
@@ -107,6 +108,12 @@ open class PermissionManager(
         .refreshAfterWrite(30L, TimeUnit.SECONDS)
         .expireAfterWrite(60L, TimeUnit.SECONDS)
         .build(CacheLoader.from<String, RepositoryInfo> { queryRepositoryInfo(it) })
+
+    private val userAuthPathCache = CacheBuilder.newBuilder()
+        .maximumSize(1000)
+        .refreshAfterWrite(30L, TimeUnit.SECONDS)
+        .expireAfterWrite(60L, TimeUnit.SECONDS)
+        .build(CacheLoader.from<UserAuthPathOption, Map<String, List<String>>> { getUserAuthPath(it) })
 
     /**
      * 校验项目权限
@@ -219,6 +226,7 @@ open class PermissionManager(
             paths = path.toList()
         )
     }
+
     /**
      * 校验分发计划权限
      * @param action 动作
@@ -637,8 +645,18 @@ open class PermissionManager(
         return httpAuthProperties.enabled
     }
 
-    fun getUserAuthPath(userId: String, projectId: String, repoNames: List<String>, action: PermissionAction): Map<String,List<String>> {
-        return permissionResource.getAuthRepoPaths(userId, projectId, repoNames, action).data ?: emptyMap()
+    fun getUserAuthPath(option: UserAuthPathOption): Map<String, List<String>> {
+        with(option) {
+            return permissionResource.getAuthRepoPaths(userId, projectId, repoNames, action).data ?: emptyMap()
+        }
+    }
+
+    fun getUserAuthPatCache(option: UserAuthPathOption): Map<String, List<String>> {
+        return try {
+            userAuthPathCache.get(option)
+        } catch (e: UncheckedExecutionException) {
+            throw e.cause ?: e
+        }
     }
 
     private fun getRepoId(projectId: String, repoName: String) = "$projectId$REPO_ID_DELIMITER$repoName"

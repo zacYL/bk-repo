@@ -158,7 +158,7 @@ open class NodeRestoreSupport(
                 }
             }
             val query = nodeDeletedPointQuery(projectId, repoName, fullPath, deletedTime)
-            restoreCount += nodeDao.updateFirst(query, nodeRestoreUpdate()).modifiedCount
+            restoreCount += nodeDao.updateFirst(query, nodeRestoreUpdate(operator)).modifiedCount
         }
     }
 
@@ -195,7 +195,7 @@ open class NodeRestoreSupport(
     private fun fastRestoreFolder(context: RestoreContext, node: TNode) {
         with(context) {
             val query = nodeDeletedFolderQuery(projectId, repoName, node.fullPath, deletedTime, true)
-            val updateResult = nodeDao.updateMulti(query, nodeRestoreUpdate())
+            val updateResult = nodeDao.updateMulti(query, nodeRestoreUpdate(operator))
             restoreCount += updateResult.modifiedCount
         }
     }

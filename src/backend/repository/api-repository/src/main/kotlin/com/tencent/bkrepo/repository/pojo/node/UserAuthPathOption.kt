@@ -1,7 +1,7 @@
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
- * Copyright (C) 2022 THL A29 Limited, a Tencent company.  All rights reserved.
+ * Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
  *
  * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
  *
@@ -25,36 +25,20 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.cocoapods.utils
+package com.tencent.bkrepo.repository.pojo.node
 
-import com.tencent.bkrepo.cocoapods.constant.DOT_SPECS
-import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
-import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
+import io.swagger.annotations.ApiModel
+import io.swagger.annotations.ApiModelProperty
 
-object PathUtil {
-    fun generateFullPath(artifactInfo: CocoapodsArtifactInfo): String {
-        return with(artifactInfo) {
-            "$orgName/$name/$version/$fileName"
-        }
-    }
-
-    fun generateSpecsPath(artifactInfo: CocoapodsArtifactInfo): String {
-        return with(artifactInfo) {
-            ".specs/$name/$version/$name.podspec"
-        }
-    }
-
-    fun getOrgNameByVersion(packageVersion: PackageVersion): String {
-        with(packageVersion) {
-            val parts = contentPath?.split("/")?.filter { it.isNotEmpty() }
-            return parts?.getOrNull(0)?:""
-        }
-    }
-
-    fun generateIndexPath(artifactInfo: CocoapodsArtifactInfo, fileName: String?) =
-        "$DOT_SPECS/${artifactInfo.name}/${artifactInfo.version}/${fileName}"
-
-    fun ArtifactUploadContext.generateCachePath(artifactInfo: CocoapodsArtifactInfo, domain: String) =
-        "${domain}/${projectId}/${repoName}/${artifactInfo.getArtifactFullPath()}"
-}
+@ApiModel("用户授权路径集合")
+data class UserAuthPathOption(
+    @ApiModelProperty("查询用户ID", required = false)
+    val userId: String,
+    @ApiModelProperty("查询项目ID", required = false)
+    val projectId: String,
+    @ApiModelProperty("仓库集合", required = false)
+    val repoNames: List<String>,
+    @ApiModelProperty("动作权限类型", required = false)
+    val action: PermissionAction
+)

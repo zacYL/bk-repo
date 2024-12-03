@@ -48,13 +48,6 @@ class ExtPermissionController(
         extPermissionServiceImpl.migrateToDevOps()
     }
 
-    @Principal(PrincipalType.ADMIN)
-    @PostMapping("/migrate/delete/permission/repo_create_action")
-    fun migrateTodeleteRepoCreateAction(): Response<Boolean> {
-        extPermissionServiceImpl.migrateTodeleteRepoCreateAction()
-        return ResponseBuilder.success(true)
-    }
-
     @ApiOperation("获取用户的项目/仓库权限列表")
     @GetMapping("/list/indevops")
     fun listDevOpsPermission(
@@ -182,7 +175,8 @@ class ExtPermissionController(
     @Operation(summary = "（路径授权使用）查询用户路径资源最终权限")
     @GetMapping("/repo_path_collection/{projectId}/user/permission/final")
     fun listUserRepoPathCollectionFinalPermissions(
-        @RequestAttribute userId: String,
+        @ApiParam(value = "用户ID")
+        @RequestParam userId: String,
         @PathVariable
         @Parameter(description = "项目ID", required = true)
         projectId: String,

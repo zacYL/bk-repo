@@ -100,9 +100,9 @@ export default {
         // return request
     },
     // 请求文件/文件夹详情
-    getNodeDetail (_, { projectId, repoName, fullPath = '', localNode = true }) {
+    getNodeDetail (_, { projectId, repoName, fullPath = '', localNode = true, withEncode = true }) {
         return Vue.prototype.$ajax.get(
-            localNode ? `${prefix}/node/detail/${projectId}/${repoName}/${encodeURIComponent(fullPath)}` : `generic/detail/${projectId}/${repoName}/${encodeURIComponent(fullPath)}`
+            localNode ? `${prefix}/node/detail/${projectId}/${repoName}/${withEncode ? encodeURIComponent(fullPath) : fullPath}` : `generic/detail/${projectId}/${repoName}/${withEncode ? encodeURIComponent(fullPath) : fullPath}`
         )
     },
     // 仓库内自定义查询

@@ -33,6 +33,7 @@ package com.tencent.bkrepo.cocoapods.utils
 
 import com.tencent.bkrepo.cocoapods.exception.CocoapodsMessageCode
 import com.tencent.bkrepo.cocoapods.exception.CocoapodsPodSpecNotFoundException
+import com.tencent.bkrepo.cocoapods.pojo.PodSpec
 import com.tencent.bkrepo.cocoapods.pojo.enums.PodSpecType
 import com.tencent.bkrepo.common.api.util.DecompressUtils
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
@@ -57,20 +58,23 @@ object DecompressUtil {
     /**
      * 从压缩包中获取podspec文件，并更新源
      */
-    fun InputStream.getPodSpec(cachePath: String): Pair<String, String> {
+    fun InputStream.getPodSpec(cachePath: String): PodSpec {
         val (fileName, content) = getContentByExtensionsFromTarGz(this, PodSpecType.extendedNames())
         val type = PodSpecType.matchPath(fileName)
             ?: throw CocoapodsPodSpecNotFoundException(CocoapodsMessageCode.COCOAPODS_PODSPEC_NOT_FOUND)
-        //todo 校验包名与spec内容的name要一致
+
+        val specName: String?
         val podSpecContent = when (type) {
             PodSpecType.POD_SPEC -> {
+                specName = CocoapodsUtil.extractNameFromPodspec(content)
                 CocoapodsUtil.updatePodspecSource(content, cachePath)
             }
 
             PodSpecType.JSON -> {
+                specName = CocoapodsUtil.extractNameFromPodspecJson(content)
                 CocoapodsUtil.updatePodspecJsonSource(content, cachePath)
             }
         }
-        return fileName to podSpecContent
+        return PodSpec(name = specName, fileName = fileName, content = podSpecContent)
     }
 }

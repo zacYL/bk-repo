@@ -34,6 +34,7 @@ package com.tencent.bkrepo.repository.util
 import com.tencent.bkrepo.common.api.constant.StringPool.EMPTY
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
+import com.tencent.bkrepo.common.artifact.constant.EXPIRED_DELETED_NODE
 import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
 import com.tencent.bkrepo.common.artifact.constant.FORBID_TYPE
 import com.tencent.bkrepo.common.artifact.constant.FORBID_USER
@@ -236,6 +237,9 @@ object MetadataUtils {
     }
 
     fun buildRecycleBinMetadata() = TMetadata(key = ROOT_DELETED_NODE, value = true, system = true, display = false)
+
+    fun buildExpiredDeletedNodeMetadata() =
+        TMetadata(key = EXPIRED_DELETED_NODE, value = true, system = true, display = false)
 
     private fun checkReservedKey(key: String, operator: String) {
         if (key in RESERVED_KEY && operator != SYSTEM_USER) {

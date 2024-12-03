@@ -1,12 +1,12 @@
 package com.tencent.bkrepo.repository.service.recycle.impl
 
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
-import com.tencent.bkrepo.common.artifact.constant.EXPIRED_DELETED_NODE
 import com.tencent.bkrepo.common.artifact.constant.ROOT_DELETED_NODE
 import com.tencent.bkrepo.repository.dao.NodeDao
 import com.tencent.bkrepo.repository.model.TMetadata
 import com.tencent.bkrepo.repository.model.TNode
 import com.tencent.bkrepo.repository.service.recycle.RecycleBinService
+import com.tencent.bkrepo.repository.util.MetadataUtils.buildExpiredDeletedNodeMetadata
 import com.tencent.bkrepo.repository.util.NodeQueryHelper.nodeDeletedPointQuery
 import com.tencent.bkrepo.repository.util.NodeQueryHelper.nodeTreeCriteria
 import org.springframework.data.mongodb.core.query.Query
@@ -30,10 +30,7 @@ class RecycleBinServiceImpl(
             )
             nodeDao.updateMulti(
                 Query(nodeTreeCriteria(projectId, repoName, getArtifactFullPath(), deletedTime)),
-                Update().push(
-                    TNode::metadata.name,
-                    TMetadata(key = EXPIRED_DELETED_NODE, value = true, system = true, display = false)
-                )
+                Update().push(TNode::metadata.name, buildExpiredDeletedNodeMetadata())
             )
         }
     }

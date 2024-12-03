@@ -1483,7 +1483,7 @@ export default {
                                 label: this.$t('download')
                             },
                             codeList: [
-                                'gem install bk-cocoapods-1.0.0 gem'
+                                'gem install bk-cocoapods-1.0.0.gem'
                             ]
                         }, {
                             subTitle: this.$t('cocoapodsCreditGuideSubTitle6'),

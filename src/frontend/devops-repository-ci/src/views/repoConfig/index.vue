@@ -348,7 +348,7 @@
                 return (this.repoBaseInfo.category === 'LOCAL' || this.repoBaseInfo.category === 'COMPOSITE') && ['maven', 'docker', 'npm', 'helm', 'generic'].includes(this.repoType)
             },
             showPermissionConfigTab () {
-                return this.repoBaseInfo.category === 'LOCAL' && ['generic'].includes(this.repoType)
+                return this.repoBaseInfo.category === 'LOCAL' && ['generic'].includes(this.repoType.toLowerCase())
             },
             repoAddress () {
                 const { repoType, name } = this.repoBaseInfo
@@ -547,6 +547,8 @@
             }
         },
         async created () {
+            console.log(21312)
+            
             if (!this.repoName || !this.repoType) this.toRepoList()
             await this.getRepoInfoHandler()
             this.initComp()

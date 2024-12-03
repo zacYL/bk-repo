@@ -333,7 +333,7 @@ class ExtPermissionServiceImpl(
             )
         }.filter {
             // 路径授权只考虑二进制仓库
-            it.repoType == RepositoryType.GENERIC.name
+            it.repoType == RepositoryType.GENERIC.name.toLowerCase()
         }
     }
 

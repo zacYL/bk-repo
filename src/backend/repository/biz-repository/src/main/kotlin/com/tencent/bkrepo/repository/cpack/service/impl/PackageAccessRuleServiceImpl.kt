@@ -16,6 +16,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
+import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.and
 import org.springframework.data.mongodb.core.query.isEqualTo
@@ -95,16 +96,18 @@ class PackageAccessRuleServiceImpl(
     override fun getMatchedRules(projectId: String, type: String, key: String): List<PackageAccessRule> {
         val criteria = where(TPackageAccessRule::projectId).isEqualTo(projectId)
             .and(TPackageAccessRule::packageType).isEqualTo(type)
-            .orOperator(
-                where(TPackageAccessRule::expireDate).isEqualTo(null),
-                where(TPackageAccessRule::expireDate).lt(LocalDateTime.now()),
+            .andOperator(
+                Criteria().orOperator(
+                    where(TPackageAccessRule::expireDate).isEqualTo(null),
+                    where(TPackageAccessRule::expireDate).lt(LocalDateTime.now())
+                ),
+                if (!key.contains(":")) where(TPackageAccessRule::key).isEqualTo(key) else {
+                    Criteria().orOperator(
+                        where(TPackageAccessRule::key).isEqualTo(key),
+                        where(TPackageAccessRule::key).isEqualTo(key.substringBefore(":"))
+                    )
+                }
             )
-        if (key.contains(":")) {
-            criteria.orOperator(
-                where(TPackageAccessRule::key).isEqualTo(key),
-                where(TPackageAccessRule::key).isEqualTo(key.substringBefore(":"))
-            )
-        } else criteria.and(TPackageAccessRule::key).isEqualTo(key)
         return packageAccessRuleDao.find(Query(criteria)).map { convert(it) }
     }
 

@@ -58,6 +58,12 @@ class CocoapodsExceptionHandler {
         cocoapodsResponse(errorMessage, exception)
     }
 
+    @ExceptionHandler(CocoapodsException::class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    fun handlerCocoapodsException(exception: CocoapodsException) {
+        cocoapodsResponse(exception.message ?: "", exception)
+    }
+
     private fun cocoapodsResponse(
         responseString: Any,
         exception: Exception,

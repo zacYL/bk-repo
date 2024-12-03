@@ -32,6 +32,7 @@ import com.tencent.bkrepo.cocoapods.constant.DOT_SPECS
 import com.tencent.bkrepo.cocoapods.constant.SPECS
 import com.tencent.bkrepo.cocoapods.constant.SPECS_FILE_CONTENT
 import com.tencent.bkrepo.cocoapods.constant.SPECS_FILE_NAME
+import com.tencent.bkrepo.cocoapods.exception.CocoapodsException
 import com.tencent.bkrepo.cocoapods.exception.CocoapodsFileParseException
 import com.tencent.bkrepo.cocoapods.exception.CocoapodsMessageCode
 import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo
@@ -69,18 +70,20 @@ class CocoapodsLocalRepository(
 
         with(context) {
             val artifactInfo = context.artifactInfo as CocoapodsArtifactInfo
-            try {
-                getArtifactFile().getInputStream().use {
+
+            val podSpec = getArtifactFile().getInputStream().use {
+                try {
                     //只支持tar.gz格式
                     val tarFilePath = generateCachePath(artifactInfo, cocoapodsProperties.domain)
-                    val (fileName, podSpec) = it.getPodSpec(tarFilePath)
-                    putAttribute(SPECS_FILE_NAME, fileName)
-                    putAttribute(SPECS_FILE_CONTENT, podSpec)
+                    it.getPodSpec(tarFilePath)
+                } catch (e: Exception) {
+                    logger.error("projectId [$projectId],repo [$repoName] upload package [${artifactInfo.name}] error, ${e.message}")
+                    throw CocoapodsFileParseException(CocoapodsMessageCode.COCOAPODS_FILE_PARSE_ERROR)
                 }
-            } catch (e: Exception) {
-                logger.error("projectId [$projectId],repo [$repoName] upload package [${artifactInfo.name}] error, ${e.message}")
-                throw CocoapodsFileParseException(CocoapodsMessageCode.COCOAPODS_FILE_PARSE_ERROR)
             }
+            validateName(podSpec.name, artifactInfo.name)
+            putAttribute(SPECS_FILE_NAME, podSpec.fileName)
+            putAttribute(SPECS_FILE_CONTENT, podSpec.content)
         }
         with(context.artifactInfo as CocoapodsArtifactInfo) {
             packageClient
@@ -89,6 +92,16 @@ class CocoapodsLocalRepository(
         }
 
         super.onUploadBefore(context)
+    }
+
+    private fun validateName(podSpecName: String?, artifactName: String) {
+        // 校验包名与spec内容的name要一致
+        if (podSpecName == null) {
+            throw CocoapodsException("podspec name cannot be empty.")
+        }
+        if (artifactName != podSpecName) {
+            throw CocoapodsException("package name should be consistent with the name attribute in the podspec file.")
+        }
     }
 
     override fun onUploadSuccess(context: ArtifactUploadContext) {
@@ -212,3 +225,4 @@ class CocoapodsLocalRepository(
         private val logger = LoggerFactory.getLogger(CocoapodsLocalRepository::class.java)
     }
 }
+

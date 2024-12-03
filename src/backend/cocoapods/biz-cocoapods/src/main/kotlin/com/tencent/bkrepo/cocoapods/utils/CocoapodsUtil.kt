@@ -82,4 +82,14 @@ object CocoapodsUtil {
         jsonObject.add("source", sourceObject)
         return jsonObject.toString()
     }
+
+    fun extractNameFromPodspec(podspecContent: String): String? {
+        return podspecContent.lines().find { it.contains(".name") }?.split("=")
+            ?.last()?.trim()?.removeSurrounding("\"")?.removeSurrounding("'")
+    }
+
+    fun extractNameFromPodspecJson(content: String): String? {
+        val jsonObject = JsonParser.parseString(content).asJsonObject
+        return jsonObject.get("name").asString
+    }
 }

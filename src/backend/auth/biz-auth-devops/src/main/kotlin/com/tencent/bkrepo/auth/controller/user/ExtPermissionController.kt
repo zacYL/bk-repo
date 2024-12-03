@@ -182,7 +182,8 @@ class ExtPermissionController(
     @Operation(summary = "（路径授权使用）查询用户路径资源最终权限")
     @GetMapping("/repo_path_collection/{projectId}/user/permission/final")
     fun listUserRepoPathCollectionFinalPermissions(
-        @RequestAttribute userId: String,
+        @ApiParam(value = "用户ID")
+        @RequestParam userId: String,
         @PathVariable
         @Parameter(description = "项目ID", required = true)
         projectId: String,

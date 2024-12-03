@@ -251,7 +251,7 @@
             }
         },
         computed: {
-            ...mapState(['repoListAll', 'userList', 'genericTree']),
+            ...mapState(['repoListAll', 'userList', 'genericTree', 'currentRepositoryDataPermission']),
             ...mapGetters(['isEnterprise']),
             projectId () {
                 return this.$route.params.projectId
@@ -302,9 +302,13 @@
             whetherSoftware () {
                 return this.$route.path.startsWith('/software')
             },
+            // 全局权限
+            globalCurrentRepoDataPermission () {
+                return this.currentRepositoryDataPermission?.find((item) => item.resourceCode === 'bkrepo')?.actionCodes || []
+            },
             // 是否拥有上传制品权限
             canUploadArtifact () {
-                return this.currentRepoDataPermission.includes('write')
+                return this.globalCurrentRepoDataPermission.includes('write')
             },
             // 上传文件，上传文件夹，新建文件夹三个操作是否显示
             showUploadOperation () {

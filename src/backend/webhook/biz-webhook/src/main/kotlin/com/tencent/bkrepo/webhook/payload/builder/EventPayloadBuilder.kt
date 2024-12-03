@@ -32,6 +32,7 @@ import com.tencent.bkrepo.auth.pojo.user.UserInfo
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.event.base.EventType
+import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.webhook.exception.WebHookMessageCode
 import com.tencent.bkrepo.webhook.pojo.payload.CommonEventPayload
 import org.springframework.beans.factory.annotation.Autowired
@@ -46,6 +47,9 @@ abstract class EventPayloadBuilder(
     abstract fun build(event: ArtifactEvent): CommonEventPayload
 
     fun getUser(userId: String): UserInfo {
+        if (userId == SYSTEM_USER) {
+            return UserInfo(SYSTEM_USER, SYSTEM_USER, null, null, null, locked = true, admin = false)
+        }
         return userResource.userInfoById(userId).data
             ?: throw ErrorCodeException(WebHookMessageCode.WEBHOOK_USER_NOT_FOUND)
     }

@@ -25,13 +25,7 @@ import com.tencent.bkrepo.common.devops.RESOURCECODE
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.auth.pojo.permission.UserPermissionValidateDTO
-import com.tencent.bkrepo.auth.pojo.role.SubjectDTO
-import com.tencent.bkrepo.auth.service.impl.CpackPermissionServiceImpl.Companion
-import com.tencent.bkrepo.common.api.exception.ParameterInvalidException
-import com.tencent.bkrepo.common.devops.REPO_PATH_RESOURCECODE
-import com.tencent.bkrepo.common.devops.REPO_PATH_SCOPE_CODE
-import com.tencent.bkrepo.common.security.exception.PermissionException
-import org.bouncycastle.asn1.x500.style.RFC4519Style.uid
+import com.tencent.bkrepo.common.artifact.path.PathUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.data.mongodb.core.MongoTemplate
@@ -200,7 +194,7 @@ class CanwayPermissionServiceImpl(
             val authPaths = pathCollections.flatMap { it.includePattern }.toSet()
 
             val matchPaths = path!!.parallelStream().filter { requestPath ->
-                authPaths.any { authPath -> requestPath.startsWith(authPath) }
+                authPaths.any { authPath -> PathUtils.toPath(requestPath).startsWith(authPath) }
             }.collect(Collectors.toList())
 
             // 只有有个路径没有配置权限则返回没权限

@@ -745,7 +745,7 @@ class ExtPermissionServiceImpl(
         val pathCollection = permissionService.listNodePermission(projectId, repoName)
         // 获取包含请求路径的匹配的路径集合
         val matchPathCollection = pathCollection.filter { collection ->
-            collection.includePattern.any { path.startsWith(PathUtils.toPath(it)) }
+            collection.includePattern.any { PathUtils.toPath(path).startsWith(PathUtils.toPath(it)) }
         }
         // 如果没有匹配的路径集合，则返回仓库
         if (matchPathCollection.isEmpty()) return CanwayBkrepoPathPermission(REPO_PATH_RESOURCECODE, repoActions)

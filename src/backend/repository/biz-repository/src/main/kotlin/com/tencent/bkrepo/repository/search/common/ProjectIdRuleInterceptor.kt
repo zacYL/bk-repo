@@ -79,7 +79,7 @@ class ProjectIdRuleInterceptor(
             val userId = SecurityUtils.getUserId()
 
             val userAuthPath =
-                permissionManager.getUserAuthPatCache(UserAuthPathOption(userId, projectId, repoName, READ))
+                permissionManager.getUserAuthPathCache(UserAuthPathOption(userId, projectId, repoName, READ))
 
             val projectIdRule = Rule.QueryRule(NodeInfo::projectId.name, projectId, OperationType.EQ).toFixed()
 

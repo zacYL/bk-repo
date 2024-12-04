@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.replication.replica.schedule
 
+import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.replication.manager.LocalDataManager
 import com.tencent.bkrepo.replication.replica.base.AbstractReplicaService
 import com.tencent.bkrepo.replication.replica.base.context.ReplicaContext
@@ -39,8 +40,9 @@ import org.springframework.stereotype.Component
 @Component
 class ScheduledReplicaService(
     replicaRecordService: ReplicaRecordService,
-    localDataManager: LocalDataManager
-) : AbstractReplicaService(replicaRecordService, localDataManager) {
+    localDataManager: LocalDataManager,
+    permissionManager: PermissionManager,
+) : AbstractReplicaService(replicaRecordService, localDataManager, permissionManager) {
 
     override fun replica(context: ReplicaContext) {
         with(context) {
@@ -71,6 +73,6 @@ class ScheduledReplicaService(
      */
     private fun includeAllData(context: ReplicaContext): Boolean {
         return context.taskObject.packageConstraints.isNullOrEmpty() &&
-            context.taskObject.pathConstraints.isNullOrEmpty()
+                context.taskObject.pathConstraints.isNullOrEmpty()
     }
 }

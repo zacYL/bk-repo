@@ -197,14 +197,14 @@ class CanwayPermissionServiceImpl(
                 authPaths.any { authPath -> PathUtils.toPath(requestPath).startsWith(authPath) }
             }.collect(Collectors.toList())
 
-            // 只有有个路径没有配置权限则返回没权限
+            // 只要有个路径没有配置权限则返回没权限
             if (matchPaths.size != path!!.size) {
                 return false
             }
 
             // 获取配置路径集合中，只有包含当前路径的权限集合
             val pathCollectionIds = pathCollections.parallelStream().filter { collection ->
-                collection.includePattern.any { authPath -> matchPaths.contains(authPath) }
+                collection.includePattern.any { authPath -> authPaths.contains(authPath) }
             }.map { it.id!! }.collect(Collectors.toList())
 
             val repoPathCollectPermission = devOpsAuthGeneral.getRepoPathCollectPermission(

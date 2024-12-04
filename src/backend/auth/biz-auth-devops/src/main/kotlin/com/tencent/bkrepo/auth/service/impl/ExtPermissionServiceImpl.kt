@@ -328,7 +328,7 @@ class ExtPermissionServiceImpl(
         return permission.groupBy { it.repos.first() }.map { group ->
             RepoPathResourceTypeInstance(
                 group.key,
-                repoMap[group.key]?.type?.name ?: "",
+                repoMap[group.key]?.type?.name?.toLowerCase() ?: "",
                 group.value.map { RepoPathItem(it.id!!, it.permName) }
             )
         }.filter {

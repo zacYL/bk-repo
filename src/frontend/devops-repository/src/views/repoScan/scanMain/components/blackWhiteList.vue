@@ -131,6 +131,7 @@
             },
             listParams () {
                 return {
+                    projectId: this.projectId,
                     pageNumber: this.pagination.current,
                     pageSize: this.pagination.limit,
                     pass: this.type === 'white',
@@ -160,7 +161,7 @@
                     body: {
                         packageType: form.repoType.toLocaleUpperCase(),
                         projectId: this.projectId,
-                        key: form.groupID ? (form.groupID + ':' + form.name) : form.name,
+                        key: ['maven', 'gradle'].includes(form.repoType) ? (form.groupID + ':' + form.name) : form.name,
                         pass: this.type === 'white',
                         version: form.version,
                         versionRuleType: form.operator

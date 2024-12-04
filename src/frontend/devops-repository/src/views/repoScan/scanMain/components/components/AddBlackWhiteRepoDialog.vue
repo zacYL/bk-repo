@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-21 14:16:15
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-12-03 18:09:43
+ * @LastEditTime: 2024-12-04 16:39:18
  * @FilePath: /artifact/src/frontend/devops-repository/src/views/repoScan/scanMain/components/components/AddBlackWhiteRepoDialog.vue
 -->
 <template>
@@ -131,10 +131,10 @@
     import { cloneDeep } from 'lodash'
     const baseForm = {
         repoType: 'maven',
-        name: '',
+        name: '*',
         operator: '',
         version: '',
-        groupID: '*'
+        groupID: ''
     }
     export default {
         name: 'createScan',
@@ -156,7 +156,7 @@
                             trigger: 'blur'
                         },
                         {
-                            regex: /^[a-zA-Z0-9._-]+$/,
+                            regex: /^[a-zA-Z0-9._*-]+$/,
                             message: this.$t('BlackWhiteAddCheckTips'),
                             trigger: 'blur'
                         }
@@ -204,7 +204,9 @@
                 handler (val) {
                     // maven/gradle 需要设置groupID
                     if (['maven', 'gradle'].includes(val)) {
-                        this.form.groupID = '*'
+                        if (!this.form.name) {
+                            this.form.name = '*'
+                        }
                     }
                     // 每次切换制品类型之后都要重置操作类型
                     this.form.operator = ''

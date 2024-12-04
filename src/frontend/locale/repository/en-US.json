@@ -388,6 +388,7 @@
     "blackWhiteList": "Black/White list",
     "deleteBlackWhiteTips": "Confirm to remove the artifact package from the {0}?",
     "BlackWhiteAddCheckTips": "Only letters, numbers, hyphens (-), underscores (_), and periods (.) are allowed.",
+    "BlackWhiteAddCheckTips1": "Only letters, numbers, hyphens (-), underscores (_), *, and periods (.) are allowed.",
     "removeSuccess": "Removed successfully",
     "removeFail": "Remove failed",
     "addSuccess": "Add successfully",

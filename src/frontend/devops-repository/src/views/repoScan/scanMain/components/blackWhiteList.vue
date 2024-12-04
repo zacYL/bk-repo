@@ -26,11 +26,14 @@
             <!-- 制品包名称 -->
             <bk-table-column :label="$t('composerInputLabel')" show-overflow-tooltip prop="key">
                 <template #default="{ row }">
-                    <span class="hover-btn">{{row.key}}</span>
+                    <span>{{row.key}}</span>
                 </template>
             </bk-table-column>
             <!-- 版本 -->
             <bk-table-column :label="$t('version')" prop="version">
+                <template #default="{ row }">
+                    <span>{{OperatorMap[row.versionRuleType] + ' ' + row.version}}</span>
+                </template>
             </bk-table-column>
             <!-- 仓库类型 -->
             <bk-table-column :label="$t('storeTypes')" prop="packageType">
@@ -67,6 +70,7 @@
     import DefaultTabBox from '@repository/components/DefaultTabBox'
     import FilterCondition from './components/FilterCondition.vue'
     import AddBlackWhiteRepoDialog from './components/AddBlackWhiteRepoDialog.vue'
+    import { OperatorMap } from '@repository/store/publicEnum'
     import { formatDate } from '@repository/utils'
     const paginationParams = {
         count: 0,
@@ -86,6 +90,7 @@
         },
         data () {
             return {
+                OperatorMap,
                 isLoading: false,
                 tabList: [
                     {

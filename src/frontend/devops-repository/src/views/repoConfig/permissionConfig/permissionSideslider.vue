@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-22 11:03:13
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-12-02 16:16:03
+ * @LastEditTime: 2024-12-04 15:53:29
  * @FilePath: /artifact/src/frontend/devops-repository/src/views/repoConfig/permissionConfig/permissionSideslider.vue
 -->
 <template>
@@ -24,6 +24,9 @@
                         <bk-input
                             v-model="form.name"
                             :placeholder="$t('pleaseInput')"
+                            type="text"
+                            :maxlength="32"
+                            show-word-limit="true"
                             style="width: 250px;"></bk-input>
                     </bk-form-item>
                     <bk-form-item
@@ -39,7 +42,11 @@
                         :key="index"
                         style="width: fit-content;"
                         class="mt10">
-                        <bk-input v-model="item.value" max-length="32" :placeholder="$t('pleaseInput')" style="width: 250px;">
+                        <bk-input
+                            v-model="item.value"
+                            :maxlength="255"
+                            show-word-limit="true"
+                            :placeholder="$t('pleaseInput')" style="width: 250px;">
                         </bk-input>
                         <Icon class="hover-btn" size="24" name="icon-delete" @click.native.stop="form.path.splice(index, 1)" style="position: absolute; right: -30px; top: 4px;" />
                     </bk-form-item>
@@ -109,8 +116,8 @@
                             trigger: 'blur'
                         },
                         {
-                            regex: /^(\/[^\\:*?"<>|]{1,255})+$/,
-                            message: this.$t('folderPathPlaceholder'),
+                            regex: /^(\/[^\\:*?"<>|\s]{0,254})+$/,
+                            message: this.$t('folderPathPlaceholder2'),
                             trigger: 'blur'
                         }
                     ]

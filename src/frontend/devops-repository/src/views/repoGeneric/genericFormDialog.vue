@@ -61,7 +61,7 @@
                             trigger: 'blur'
                         },
                         {
-                            regex: /^(\/[^\\:*?"<>|]{1,255})+$/,
+                            regex: /^(\/[^\\:*?"<>|]{0,254})+$/,
                             message: this.$t('folderPathPlaceholder'),
                             trigger: 'blur'
                         }

@@ -6,7 +6,7 @@
   "method" : "DELETE",
   "path" : "/repo-pypi/ext/package/delete/{projectId}/{repoName}",
   "headers" : [ ],
-  "targetService" : "repo-pypi",
+  "targetService" : "repopypi",
   "targetPath" : "/ext/package/delete/{projectId}/{repoName}",
   "targetMethod" : "DELETE",
   "timeout" : 30,

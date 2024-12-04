@@ -6,7 +6,7 @@
   "method" : "DELETE",
   "path" : "/repo-maven/ext/package/delete/{projectId}/{repoName}",
   "headers" : [ ],
-  "targetService" : "repo-maven",
+  "targetService" : "repomaven",
   "targetPath" : "/ext/package/delete/{projectId}/{repoName}",
   "targetMethod" : "DELETE",
   "timeout" : 30,

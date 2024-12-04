@@ -6,7 +6,7 @@
   "method" : "POST",
   "path" : "/repo-repository/api/metadata/package/{projectId}/{repoName}",
   "headers" : [ ],
-  "targetService" : "repo-repository",
+  "targetService" : "reporepository",
   "targetPath" : "/api/metadata/package/{projectId}/{repoName}",
   "targetMethod" : "POST",
   "timeout" : 30,

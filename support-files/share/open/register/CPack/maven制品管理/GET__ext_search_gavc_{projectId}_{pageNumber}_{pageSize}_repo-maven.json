@@ -6,7 +6,7 @@
   "method" : "GET",
   "path" : "/repo-maven/ext/search/gavc/{projectId}/{pageNumber}/{pageSize}",
   "headers" : [ ],
-  "targetService" : "repo-maven",
+  "targetService" : "repomaven",
   "targetPath" : "/ext/search/gavc/{projectId}/{pageNumber}/{pageSize}",
   "targetMethod" : "GET",
   "timeout" : 30,

@@ -6,7 +6,7 @@
   "method" : "DELETE",
   "path" : "/repo-npm/ext/package/delete/{projectId}/{repoName}",
   "headers" : [ ],
-  "targetService" : "repo-npm",
+  "targetService" : "reponpm",
   "targetPath" : "/ext/package/delete/{projectId}/{repoName}",
   "targetMethod" : "DELETE",
   "timeout" : 30,

@@ -6,7 +6,7 @@
   "method" : "POST",
   "path" : "/repo-repository/api/node/search",
   "headers" : [ ],
-  "targetService" : "repo-repository",
+  "targetService" : "reporepository",
   "targetPath" : "/api/node/search",
   "targetMethod" : "POST",
   "timeout" : 30,

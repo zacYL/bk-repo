@@ -319,6 +319,10 @@
             lockOperationPermission () {
                 return this.currentRepoDataPermission.includes('lock')
             },
+            // 查看制品操作权限
+            readOperationPermission () {
+                return this.currentRepoDataPermission.includes('read')
+            },
             // 禁用制品操作权限
             forbidOperationPermission () {
                 return this.currentRepoDataPermission.includes('forbid')
@@ -940,7 +944,7 @@
                 })
             },
             initFolderPermission (row) {
-                this.getPermissionActions({ projectId: this.projectId, repoName: row.name, path: row.fullPath || '/' }).then(res => {
+                this.getPermissionActions({ projectId: this.projectId, repoName: this.repoName, path: row.fullPath || '/' }).then(res => {
                     this.currentFolderDataPermission = res.actionCodes || []
                 })
             },
@@ -950,10 +954,10 @@
                 ]
 
                 if (!row.metadata.forbidStatus) {
-                    if (!row.folder && this.handlerPreview(row) && !this.isRemote) {
+                    if (!row.folder && this.handlerPreview(row) && !this.isRemote & this.readOperationPermission) {
                         actions.push({ clickEvent: () => this.handlerPreview(row, true), label: this.$t('preview') })
                     }
-                    if (!(row.folder && this.isGenericRemote)) {
+                    if (!(row.folder && this.isGenericRemote) & this.readOperationPermission) {
                         actions.push({ clickEvent: () => this.handlerDownload(row), label: this.$t('download') })
                     }
                     if (this.repoName !== 'pipeline' && !row.metadata.lockStatus) {

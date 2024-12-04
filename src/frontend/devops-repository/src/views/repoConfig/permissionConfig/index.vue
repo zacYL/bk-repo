@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-22 10:22:36
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-12-03 15:13:44
+ * @LastEditTime: 2024-12-04 15:28:38
  * @FilePath: /artifact/src/frontend/devops-repository/src/views/repoConfig/permissionConfig/index.vue
 -->
 <template>
@@ -125,10 +125,12 @@
                 const directive = {
                     name: 'bkTooltips',
                     content: '',
-                    html: `<p>${this.$t('pathCollectionDesc')}</p>
-                    <p>${this.$t('operationMethod')}</p>
-                    <p>${this.$t('pathCollectionTips1')}</p>
-                    <p>${this.$t('pathCollectionTips2')}</p>`,
+                    html: `<div style="line-height: normal;">
+                            <p>${this.$t('pathCollectionDesc')}</p>
+                            <p>${this.$t('operationMethod')}</p>
+                            <p>${this.$t('pathCollectionTips1')}</p>
+                            <p>${this.$t('pathCollectionTips2')}</p>
+                        </div>`,
                     placement: 'right'
                 }
                 return h(

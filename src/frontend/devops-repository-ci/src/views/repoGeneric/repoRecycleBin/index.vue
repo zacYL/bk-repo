@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-21 15:38:37
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-12-03 16:07:44
+ * @LastEditTime: 2024-12-04 16:28:32
  * @FilePath: /artifact/src/frontend/devops-repository-ci/src/views/repoGeneric/repoRecycleBin/index.vue
 -->
 <template>
@@ -108,12 +108,14 @@
             }
         },
         created () {
+            this.getRecycleBinPermission()
             this.handlerPaginationChange({ current: 1, limit: 20 })
         },
         methods: {
             formatDate,
             convertFileSize,
             ...mapActions([
+                'getRecycleBinPermission',
                 'getRecycleBinList',
                 'checkConflictPath',
                 'nodeRevert',

@@ -327,6 +327,15 @@ export default {
     getRecycleBinList (_, params) {
         return Vue.prototype.$ajax.post(`${prefix}/node/search`, params)
     },
+    /**
+     * @description: 获取回收站权限
+     * @param {*} _
+     * @param {*} params
+     * @return {*}
+     */
+    getRecycleBinPermission (_) {
+        return Vue.prototype.$ajax.get(window.DEVOPS_SITE_URL + '/ms/auth/api/user/global/admin/user/is_admin')
+    },
 
     /**
      * @description: 校验冲突路径

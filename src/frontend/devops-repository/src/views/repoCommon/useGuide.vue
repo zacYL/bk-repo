@@ -16,7 +16,7 @@
             <!-- 左侧tab标签页 -->
             <div class="guide-side w160">
                 <bk-select
-                    v-if="repoType === 'maven' || repoType === 'npm'"
+                    v-if="['maven', 'npm', 'gradle'].includes(repoType)"
                     class="w160"
                     :clearable="false"
                     v-model="activeDependType">
@@ -82,12 +82,13 @@
                 if (this.repoType === 'nuget' && this.storeType !== 'virtual' && !this.whetherSoftware) {
                     basicOption.push({ name: 'delete', label: this.$t('deleteArtifact') })
                 }
+                console.log(basicOption)
                 return basicOption
             },
             // 构建工具的下拉选择项，目前只有maven及npm仓库才支持
             dependTypes () {
                 let types = []
-                if (this.repoType === 'maven') {
+                if (['maven', 'gradle'].includes(this.repoType)) {
                     types = ['Apache Maven', 'Gradle Groovy DSL', 'Gradle Kotlin DSL']
                 } else if (this.repoType === 'npm') {
                     types = ['npm', 'yarn']

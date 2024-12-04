@@ -64,6 +64,7 @@ class UserPackageAccessRuleController(
     @ApiOperation("规则分页")
     @GetMapping("/page")
     fun listRulePage(
+        @RequestParam(required = true) projectId: String,
         @RequestParam(required = false, defaultValue = "$DEFAULT_PAGE_NUMBER") pageNumber: Int = DEFAULT_PAGE_NUMBER,
         @RequestParam(required = false, defaultValue = "$DEFAULT_PAGE_SIZE") pageSize: Int = DEFAULT_PAGE_SIZE,
         @RequestParam(required = false) type: PackageType? = null,
@@ -72,7 +73,7 @@ class UserPackageAccessRuleController(
         @RequestParam(required = false) pass: Boolean? = null,
     ): Response<Page<PackageAccessRule>> {
         return ResponseBuilder.success(
-            packageAccessRuleService.listRulePage(pageNumber, pageSize, type, key, version, pass)
+            packageAccessRuleService.listRulePage(projectId, pageNumber, pageSize, type, key, version, pass)
         )
     }
 }

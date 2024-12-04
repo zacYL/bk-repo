@@ -34,7 +34,7 @@
                     @item-click="itemClickHandler">
                     <template #operation="{ item }">
                         <operation-list
-                            v-if="item.roadMap === selectedTreeNode.roadMap && showUploadOperation && !isGenericRemote"
+                            v-if="item.roadMap === selectedTreeNode.roadMap && currentFolderDataPermission.includes('write') && repoName !== 'pipeline' && !isGenericRemote"
                             :list="[
                                 { clickEvent: () => handlerUpload(item), label: $t('uploadFile') },
                                 { clickEvent: () => handlerUpload(item, true), label: $t('uploadFolder') },
@@ -247,7 +247,8 @@
                 debounceClickTreeNode: null,
                 inFolderSearchName: this.$route.query.fileName,
                 searchFullPath: '',
-                currentRepoDataPermission: []
+                currentRepoDataPermission: [],
+                currentFolderDataPermission: [] // 当前文件夹的权限
             }
         },
         computed: {
@@ -305,14 +306,6 @@
             // 全局权限
             globalCurrentRepoDataPermission () {
                 return this.currentRepositoryDataPermission?.find((item) => item.resourceCode === 'bkrepo')?.actionCodes || []
-            },
-            // 是否拥有上传制品权限
-            canUploadArtifact () {
-                return this.globalCurrentRepoDataPermission.includes('write')
-            },
-            // 上传文件，上传文件夹，新建文件夹三个操作是否显示
-            showUploadOperation () {
-                return this.canUploadArtifact && this.repoName !== 'pipeline'
             },
             // 全局删除制品操作权限
             globalDeleteOperationPermission () {
@@ -551,6 +544,8 @@
             },
             // 树组件选中文件夹
             itemClickHandler (node) {
+                this.initFolderPermission(node)
+                
                 this.debounceClickTreeNode(node)
             },
             clickTreeNodeHandler (node) {
@@ -942,6 +937,11 @@
             initPermission (row) {
                 this.getPermissionActions({ projectId: this.projectId, repoName: this.repoName, path: row.fullPath }).then(res => {
                     this.currentRepoDataPermission = res.actionCodes || []
+                })
+            },
+            initFolderPermission (row) {
+                this.getPermissionActions({ projectId: this.projectId, repoName: row.name, path: row.fullPath || '/' }).then(res => {
+                    this.currentFolderDataPermission = res.actionCodes || []
                 })
             },
             generateActions (row) {

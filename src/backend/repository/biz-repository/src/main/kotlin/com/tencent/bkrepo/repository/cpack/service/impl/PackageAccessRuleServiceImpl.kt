@@ -89,7 +89,7 @@ class PackageAccessRuleServiceImpl(
         val pageRequest =
             PageRequest.of(pageNumber, pageSize, Sort.Direction.DESC, TPackageAccessRule::createdDate.name)
         val count = packageAccessRuleDao.count(query)
-        val records = packageAccessRuleDao.find(query).map { convert(it) }
+        val records = packageAccessRuleDao.find(query.with(pageRequest)).map { convert(it) }
         return Pages.ofResponse(pageRequest, count, records)
     }
 

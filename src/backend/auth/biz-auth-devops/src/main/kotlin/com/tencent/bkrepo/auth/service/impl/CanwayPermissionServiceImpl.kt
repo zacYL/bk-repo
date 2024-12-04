@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.data.mongodb.core.MongoTemplate
 import java.time.LocalDateTime
 import java.util.stream.Collectors
+import kotlin.streams.toList
 
 class CanwayPermissionServiceImpl(
     private val userRepository: UserRepository,
@@ -191,21 +192,16 @@ class CanwayPermissionServiceImpl(
                 projectId!!, repoName!!
             )
 
-            val authPaths = pathCollections.flatMap { it.includePattern }.toSet()
+            val pathToPathCollections = path!!.map { requestPath ->
+                val collections = pathCollections.parallelStream().filter { pathCollection ->
+                    pathCollection.includePattern.any { PathUtils.toPath(requestPath).startsWith(it) }
+                }.collect(Collectors.toList())
+                // 只要有个路径没有配置权限则返回没权限
+                if(collections.isEmpty()) return false
+                requestPath to collections
+            }.toMap()
 
-            val matchPaths = path!!.parallelStream().filter { requestPath ->
-                authPaths.any { authPath -> PathUtils.toPath(requestPath).startsWith(authPath) }
-            }.collect(Collectors.toList())
-
-            // 只要有个路径没有配置权限则返回没权限
-            if (matchPaths.size != path!!.size) {
-                return false
-            }
-
-            // 获取配置路径集合中，只有包含当前路径的权限集合
-            val pathCollectionIds = pathCollections.parallelStream().filter { collection ->
-                collection.includePattern.any { authPath -> authPaths.contains(authPath) }
-            }.map { it.id!! }.collect(Collectors.toList())
+            val pathCollectionIds = pathToPathCollections.flatMap { it.value }.map { it.id!! }
 
             val repoPathCollectPermission = devOpsAuthGeneral.getRepoPathCollectPermission(
                 uid,
@@ -214,10 +210,17 @@ class CanwayPermissionServiceImpl(
                 // 兼容以后任意权限的情况，同时也避免pathCollectionIds为空导致查出全部
                 pathCollectionIds.plus("*")
             )
-            val filterPermission = repoPathCollectPermission.filter { it.actionCode == action.toString().toLowerCase() }
+            val authCollectionIds = repoPathCollectPermission.filter { it.actionCode == action.toString().toLowerCase() }.map { it.instanceId }
+
+            val filter = pathToPathCollections.filter { (requestPath, pathMatchCollections) ->
+                // 只要有一个路径有权限，则返回有权限
+                val pathMatchCollectionIds = pathMatchCollections.map { it.id!! }
+                // 存在权限
+                authCollectionIds.intersect(pathMatchCollectionIds).isNotEmpty()
+            }
 
             // 不为空则所以有权限
-            return filterPermission.isNotEmpty()
+            return filter.isNotEmpty()
 
         }
     }

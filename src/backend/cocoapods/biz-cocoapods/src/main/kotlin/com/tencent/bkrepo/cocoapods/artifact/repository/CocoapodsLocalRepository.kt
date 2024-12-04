@@ -37,11 +37,13 @@ import com.tencent.bkrepo.cocoapods.exception.CocoapodsFileParseException
 import com.tencent.bkrepo.cocoapods.exception.CocoapodsMessageCode
 import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo
 import com.tencent.bkrepo.cocoapods.service.CocoapodsPackageService
+import com.tencent.bkrepo.cocoapods.utils.DecompressUtil.buildEmptySpecGzOps
 import com.tencent.bkrepo.cocoapods.utils.DecompressUtil.getPodSpec
 import com.tencent.bkrepo.cocoapods.utils.PathUtil.generateCachePath
 import com.tencent.bkrepo.cocoapods.utils.PathUtil.generateFullPath
 import com.tencent.bkrepo.cocoapods.utils.PathUtil.generateIndexPath
 import com.tencent.bkrepo.common.api.constant.CharPool.SLASH
+import com.tencent.bkrepo.common.api.constant.HttpHeaders
 import com.tencent.bkrepo.common.api.constant.MediaTypes
 import com.tencent.bkrepo.common.api.constant.ensurePrefix
 import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
@@ -52,6 +54,8 @@ import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
+import com.tencent.bkrepo.common.artifact.util.http.HttpHeaderUtils.encodeDisposition
+import com.tencent.bkrepo.common.service.util.HttpContextHolder.getResponse
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeListOption
@@ -59,7 +63,9 @@ import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.io.ByteArrayOutputStream
+import java.io.IOException
 import java.io.OutputStreamWriter
+import javax.servlet.http.HttpServletResponse
 
 @Component
 class CocoapodsLocalRepository(
@@ -158,6 +164,9 @@ class CocoapodsLocalRepository(
                             ?: throw ArtifactNotFoundException(it.fullPath)
                     }
                 }
+                if (nodeMap.isEmpty()) {
+                    returnEmptySpec()
+                }
                 return ArtifactResource(
                     artifactMap = nodeMap,
                     srcRepo = RepositoryIdentify(projectId, repoName),
@@ -168,6 +177,20 @@ class CocoapodsLocalRepository(
         } else {
             //下载包文件
             return super.onDownload(context)
+        }
+    }
+
+    private fun returnEmptySpec() {
+        val response = getResponse()
+
+        try {
+            response.contentType = MediaTypes.APPLICATION_GZIP
+            response.setHeader(HttpHeaders.CONTENT_DISPOSITION, encodeDisposition("response.gz"))
+            val gzipOutputStream = buildEmptySpecGzOps(response)
+            gzipOutputStream.finish()
+        } catch (e: IOException) {
+            logger.error("Error occurred while creating archive.", e)
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to create archive.")
         }
     }
 

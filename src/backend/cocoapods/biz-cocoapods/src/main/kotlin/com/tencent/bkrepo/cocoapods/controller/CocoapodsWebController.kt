@@ -29,16 +29,16 @@ package com.tencent.bkrepo.cocoapods.controller
 
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
-import com.tencent.bkrepo.common.api.pojo.Response
-import com.tencent.bkrepo.common.security.permission.Permission
-import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.cocoapods.constant.USER_API_PREFIX
 import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo
-import com.tencent.bkrepo.cocoapods.service.CocoapodsWebService
-import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
 import com.tencent.bkrepo.cocoapods.service.CocoapodsClientService
+import com.tencent.bkrepo.cocoapods.service.CocoapodsWebService
+import com.tencent.bkrepo.common.api.pojo.Response
+import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
+import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.security.permission.Principal
 import com.tencent.bkrepo.common.security.permission.PrincipalType
+import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import org.springframework.web.bind.annotation.DeleteMapping

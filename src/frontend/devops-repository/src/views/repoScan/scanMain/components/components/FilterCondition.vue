@@ -23,7 +23,7 @@
                             <bk-select
                                 v-model="query.packageType"
                                 :placeholder="$t('allTypes')">
-                                <bk-option v-for="type in repoEnum" :key="type.value" :id="type.value" :name="type.label">
+                                <bk-option v-for="type in repoEnum.filter(v => v.value !== 'generic')" :key="type.value" :id="type.value" :name="type.label">
                                     <div class="flex-align-center">
                                         <Icon size="20" :name="type.value" />
                                         <span class="ml10 flex-1 text-overflow">{{type.label}}</span>

@@ -1,11 +1,10 @@
 <!--
  * @Date: 2024-11-01 22:08:22
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-12-03 18:39:27
+ * @LastEditTime: 2024-12-04 18:08:26
  * @FilePath: /artifact/src/frontend/devops-repository/src/views/repoScan/scanConfig/repoTable/repoDialog.vue
 -->
 <template>
-    <!-- todo 过滤gradle -->
     <canway-dialog
         :value="show"
         width="800"

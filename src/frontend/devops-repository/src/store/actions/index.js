@@ -82,6 +82,21 @@ export default {
             return searchFlag ? res : commit('SET_REPO_LIST_ALL', res)
         })
     },
+    // 查询权限仓库列表
+    getReadRepoListAll ({ commit }, { projectId, type, searchFlag = false }) {
+        return Vue.prototype.$ajax.get(
+            `${prefix}/repo/list/${projectId}`,
+            {
+                params: {
+                    type: type || '',
+                    actions: 'READ'
+
+                }
+            }
+        ).then(res => {
+            return searchFlag ? res : commit('SET_READ_REPO_LIST_ALL', res)
+        })
+    },
     // 查询仓库信息
     getRepoInfo (_, { projectId, repoName, repoType }) {
         return Vue.prototype.$ajax.get(

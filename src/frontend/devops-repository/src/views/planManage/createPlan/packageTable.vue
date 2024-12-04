@@ -57,12 +57,12 @@
             }
         },
         computed: {
-            ...mapState(['repoListAll']),
+            ...mapState(['repoReadListAll']),
             projectId () {
                 return this.$route.params.projectId
             },
             repoGroupList () {
-                return this.repoListAll
+                return this.repoReadListAll
                     .filter(r => {
                         return ['DOCKER', 'MAVEN', 'NPM', 'GO'].includes(r.type) && r.category !== 'REMOTE' && r.category !== 'VIRTUAL'
                     })
@@ -73,7 +73,7 @@
                     }, {})
             },
             selectedRepo () {
-                return this.repoListAll.find(v => v.name === this.selectedRepoName) || {}
+                return this.repoReadListAll.find(v => v.name === this.selectedRepoName) || {}
             }
         },
         watch: {

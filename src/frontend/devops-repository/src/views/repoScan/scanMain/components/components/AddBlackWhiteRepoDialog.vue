@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-21 14:16:15
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-12-04 16:39:18
+ * @LastEditTime: 2024-12-04 17:25:31
  * @FilePath: /artifact/src/frontend/devops-repository/src/views/repoScan/scanMain/components/components/AddBlackWhiteRepoDialog.vue
 -->
 <template>
@@ -28,7 +28,7 @@
                     :placeholder="$t('allTypes')"
                 >
                     <bk-option
-                        v-for="type in repoEnum"
+                        v-for="type in repoEnum.filter(v => v.value !== 'generic')"
                         :key="type.value"
                         :id="type.value"
                         :name="type.label"

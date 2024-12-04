@@ -612,7 +612,6 @@ open class PermissionManager(
      */
     private fun isAdminUser(userId: String): Boolean {
         val cookies = HttpContextHolder.getRequest().cookies
-        logger.info("cookies: ${cookies.toJsonString()}")
         var ciProjectId: String? = null
         var ciTenantId: String? = null
         cookies?.forEach {

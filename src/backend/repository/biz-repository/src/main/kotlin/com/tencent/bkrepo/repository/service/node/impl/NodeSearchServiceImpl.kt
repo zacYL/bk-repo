@@ -165,7 +165,6 @@ class NodeSearchServiceImpl(
 
     private fun doQuery(context: NodeQueryContext): Page<Map<String, Any?>> {
         val query = context.mongoQuery
-        logger.info("query: ${query.toJsonString()}")
         val nodeList = queryList(query)
         val countQuery = Query.of(query).limit(0).skip(0)
         val totalRecords = nodeDao.count(countQuery)

@@ -651,7 +651,7 @@ open class PermissionManager(
         }
     }
 
-    fun getUserAuthPatCache(option: UserAuthPathOption): Map<String, List<String>> {
+    fun getUserAuthPathCache(option: UserAuthPathOption): Map<String, List<String>> {
         return try {
             userAuthPathCache.get(option)
         } catch (e: UncheckedExecutionException) {

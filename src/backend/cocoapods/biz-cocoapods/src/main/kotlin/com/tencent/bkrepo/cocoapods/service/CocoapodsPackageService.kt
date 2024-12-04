@@ -25,7 +25,7 @@ class CocoapodsPackageService(
                 projectId = projectId,
                 repoName = repoName,
                 packageName = name,
-                packageKey = PackageKeys.ofName(RepositoryType.COCOAPODS, name),
+                packageKey = PackageKeys.ofCocoapods(name),
                 packageType = PackageType.COCOAPODS,
                 versionName = version,
                 size = size,
@@ -44,7 +44,7 @@ class CocoapodsPackageService(
             return PackageDownloadRecord(
                 projectId = projectId,
                 repoName = repoName,
-                packageKey = name,
+                packageKey = PackageKeys.ofCocoapods(name),
                 packageVersion = version,
                 userId = userId
             )

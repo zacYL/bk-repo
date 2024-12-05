@@ -44,7 +44,6 @@ import com.tencent.bkrepo.auth.pojo.permission.RepoPathResourceTypeInstance
 import com.tencent.bkrepo.auth.pojo.permission.RepoPathResourceTypeInstance.RepoPathItem
 import com.tencent.bkrepo.auth.pojo.permission.ResourcePermissionSaveDTO
 import com.tencent.bkrepo.auth.pojo.permission.SaveRepoPathPermission
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionPathRequest
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.UpdateRepoPathResourceTypeRequest
 import com.tencent.bkrepo.auth.pojo.permission.UserPermissionQueryDTO
@@ -67,15 +66,12 @@ import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
-import io.swagger.annotations.ApiParam
 import net.canway.devops.auth.api.custom.CanwayCustomResourceTypeClient
 import net.canway.devops.auth.pojo.resource.action.ResourceActionVO
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.bind.annotation.RequestAttribute
-import org.springframework.web.bind.annotation.RequestParam
 import java.time.LocalDateTime
 
 @Service
@@ -296,12 +292,26 @@ class ExtPermissionServiceImpl(
         )
         logger.info("userId $userId updateRepoPathResourceType")
 
-        permissionService.updatePermissionById(request.permissionId, UpdatePermissionRequest(
-            permName = request.permName,
-            includePattern = request.includePattern.map { PathUtils.normalizePath(it) },
-            updatedBy = userId,
-            updateAt = LocalDateTime.now()
-        ))
+        val dumpPermission =
+            permissionService.findOneByPermNameAndProjectIdAndResourceTypeAndRepos(
+                request.permName,
+                permission.projectId,
+                ResourceType.NODE,
+                permission.repos.first()
+            )
+        if (dumpPermission != null && dumpPermission.id != request.permissionId) {
+            logger.warn("create permission  [$request] is exist.")
+            throw ErrorCodeException(AuthMessageCode.AUTH_DUP_PERMNAME)
+        }
+
+        permissionService.updatePermissionById(
+            request.permissionId, UpdatePermissionRequest(
+                permName = request.permName,
+                includePattern = request.includePattern.map { PathUtils.normalizePath(it) },
+                updatedBy = userId,
+                updateAt = LocalDateTime.now()
+            )
+        )
     }
 
     fun deleteRepoPathCollectionResourceType(userId: String, request: DeleteRepoPathResourceTypeRequest) {

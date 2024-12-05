@@ -199,7 +199,8 @@ class RepositoryServiceImpl(
             projectId = projectId,
             userId = userId,
             appId = SecurityUtils.getPlatformId(),
-            actions = option.actions
+            actions = option.actions,
+            includePathAuthRepo = option.includePathAuthRepo
         ).data.orEmpty()
         if (!option.name.isNullOrBlank()) {
             names = names.filter { it.contains(option.name.orEmpty(), true) }

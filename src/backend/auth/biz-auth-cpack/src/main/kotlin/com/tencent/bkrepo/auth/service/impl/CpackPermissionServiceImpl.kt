@@ -470,7 +470,8 @@ open class CpackPermissionServiceImpl constructor(
         projectId: String,
         userId: String,
         appId: String?,
-        actions: List<PermissionAction>?
+        actions: List<PermissionAction>?,
+        includePathAuthRepo: Boolean
     ): List<String> {
         logger.debug("list repo permission request : [$projectId, $userId] ")
         val user = userRepository.findFirstByUserId(userId) ?: run {
@@ -614,6 +615,22 @@ open class CpackPermissionServiceImpl constructor(
 
     override fun findPermissionById(id: String): Permission? {
         return permissionRepository.findFirstById(id)?.let {
+            transferPermission(it)
+        }
+    }
+
+    override fun findOneByPermNameAndProjectIdAndResourceTypeAndRepos(
+        permName: String,
+        projectId: String?,
+        resourceType: ResourceType,
+        repo: String
+    ): Permission? {
+        return permissionRepository.findOneByPermNameAndProjectIdAndResourceTypeAndRepos(
+            permName,
+            projectId,
+            resourceType,
+            repo
+        )?.let {
             transferPermission(it)
         }
     }

@@ -949,9 +949,11 @@
                 })
             },
             generateActions (row) {
-                const actions = [
-                    { clickEvent: () => this.showDetail(row), label: this.$t('detail') }
-                ]
+                const actions = []
+                
+                if (this.readOperationPermission) {
+                    actions.push({ clickEvent: () => this.showDetail(row), label: this.$t('detail') })
+                }
 
                 if (!row.metadata.forbidStatus) {
                     if (!row.folder && this.handlerPreview(row) && !this.isRemote & this.readOperationPermission) {

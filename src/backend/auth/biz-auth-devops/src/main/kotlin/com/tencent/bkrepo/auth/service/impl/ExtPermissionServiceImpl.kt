@@ -45,6 +45,7 @@ import com.tencent.bkrepo.auth.pojo.permission.RepoPathResourceTypeInstance.Repo
 import com.tencent.bkrepo.auth.pojo.permission.ResourcePermissionSaveDTO
 import com.tencent.bkrepo.auth.pojo.permission.SaveRepoPathPermission
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionPathRequest
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.UpdateRepoPathResourceTypeRequest
 import com.tencent.bkrepo.auth.pojo.permission.UserPermissionQueryDTO
 import com.tencent.bkrepo.auth.pojo.role.RoleCreateDTO
@@ -75,6 +76,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.RequestAttribute
 import org.springframework.web.bind.annotation.RequestParam
+import java.time.LocalDateTime
 
 @Service
 class ExtPermissionServiceImpl(
@@ -294,16 +296,12 @@ class ExtPermissionServiceImpl(
         )
         logger.info("userId $userId updateRepoPathResourceType")
 
-        permissionService.updatePermissionById(
-            request.permissionId,
-            "permName",
-            request.permName
-        )
-        permissionService.updateIncludePath(
-            UpdatePermissionPathRequest(
-                permissionId = request.permissionId,
-                request.includePattern.map { PathUtils.normalizePath(it) })
-        )
+        permissionService.updatePermissionById(request.permissionId, UpdatePermissionRequest(
+            permName = request.permName,
+            includePattern = request.includePattern.map { PathUtils.normalizePath(it) },
+            updatedBy = userId,
+            updateAt = LocalDateTime.now()
+        ))
     }
 
     fun deleteRepoPathCollectionResourceType(userId: String, request: DeleteRepoPathResourceTypeRequest) {

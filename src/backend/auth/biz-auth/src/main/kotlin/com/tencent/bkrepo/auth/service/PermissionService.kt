@@ -40,6 +40,7 @@ import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionActionRequest
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionDepartmentRequest
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionPathRequest
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRepoRequest
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRoleRequest
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionUserRequest
 
@@ -87,6 +88,8 @@ interface PermissionService {
     fun findPermissionById(id: String): Permission?
 
     fun updatePermissionById(id: String, key: String, value: Any): Boolean
+
+    fun updatePermissionById(id: String, request: UpdatePermissionRequest): Boolean
 
     fun listBuiltinPermissionNoBack(projectId: String, repoName: String)
 

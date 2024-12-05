@@ -89,7 +89,8 @@ export default {
             {
                 params: {
                     type: type || '',
-                    actions: 'READ'
+                    actions: 'READ',
+                    includePathAuthRepo: false
 
                 }
             }

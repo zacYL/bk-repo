@@ -39,7 +39,8 @@ class PackageAccessRuleServiceImpl(
                 key = key,
                 version = version,
                 versionRuleType = versionRuleType,
-                pass = pass
+                pass = pass,
+                expireDate = expireDate
             )
             packageAccessRuleDao.save(tPackageAccessRule)
             logger.info(

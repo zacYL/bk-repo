@@ -100,7 +100,7 @@ class PackageAccessRuleServiceImpl(
             .andOperator(
                 Criteria().orOperator(
                     where(TPackageAccessRule::expireDate).isEqualTo(null),
-                    where(TPackageAccessRule::expireDate).lt(LocalDateTime.now())
+                    where(TPackageAccessRule::expireDate).gt(LocalDateTime.now())
                 ),
                 if (!key.contains(":")) where(TPackageAccessRule::key).isEqualTo(key) else {
                     Criteria().orOperator(

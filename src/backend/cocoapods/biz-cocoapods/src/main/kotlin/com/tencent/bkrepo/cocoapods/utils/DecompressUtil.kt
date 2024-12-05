@@ -36,9 +36,13 @@ import com.tencent.bkrepo.cocoapods.exception.CocoapodsPodSpecNotFoundException
 import com.tencent.bkrepo.cocoapods.pojo.PodSpec
 import com.tencent.bkrepo.cocoapods.pojo.enums.PodSpecType
 import com.tencent.bkrepo.common.api.util.DecompressUtils
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import java.io.InputStream
+import java.util.zip.GZIPOutputStream
+import javax.servlet.http.HttpServletResponse
 
 object DecompressUtil {
 
@@ -76,5 +80,18 @@ object DecompressUtil {
             }
         }
         return PodSpec(name = specName, fileName = fileName, content = podSpecContent)
+    }
+
+    fun buildEmptySpecGzOps(response: HttpServletResponse): GZIPOutputStream {
+        val gzipOutputStream = GZIPOutputStream(response.outputStream)
+        TarArchiveOutputStream(gzipOutputStream).use { tarOutputStream ->
+
+            // 添加一个空目录 "Specs"
+            val entry: TarArchiveEntry = TarArchiveEntry("Specs/")
+            entry.setSize(0)
+            tarOutputStream.putArchiveEntry(entry)
+            tarOutputStream.closeArchiveEntry()
+        }
+        return gzipOutputStream
     }
 }

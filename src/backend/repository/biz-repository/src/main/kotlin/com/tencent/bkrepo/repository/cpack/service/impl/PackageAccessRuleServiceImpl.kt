@@ -39,7 +39,8 @@ class PackageAccessRuleServiceImpl(
                 key = key,
                 version = version,
                 versionRuleType = versionRuleType,
-                pass = pass
+                pass = pass,
+                expireDate = expireDate
             )
             packageAccessRuleDao.save(tPackageAccessRule)
             logger.info(
@@ -68,6 +69,7 @@ class PackageAccessRuleServiceImpl(
     }
 
     override fun listRulePage(
+        projectId: String,
         pageNumber: Int,
         pageSize: Int,
         type: PackageType?,
@@ -75,7 +77,7 @@ class PackageAccessRuleServiceImpl(
         version: String?,
         pass: Boolean?
     ): Page<PackageAccessRule> {
-        val query = Query()
+        val query = Query(where(TPackageAccessRule::projectId).`is`(projectId))
             .apply {
                 if (type != null) addCriteria(where(TPackageAccessRule::packageType).isEqualTo(type))
                 if (pass != null) addCriteria(where(TPackageAccessRule::pass).isEqualTo(pass))
@@ -87,9 +89,9 @@ class PackageAccessRuleServiceImpl(
                 }
             }
         val pageRequest =
-            PageRequest.of(pageNumber, pageSize, Sort.Direction.DESC, TPackageAccessRule::createdDate.name)
+            PageRequest.of(pageNumber - 1, pageSize, Sort.Direction.DESC, TPackageAccessRule::createdDate.name)
         val count = packageAccessRuleDao.count(query)
-        val records = packageAccessRuleDao.find(query).map { convert(it) }
+        val records = packageAccessRuleDao.find(query.with(pageRequest)).map { convert(it) }
         return Pages.ofResponse(pageRequest, count, records)
     }
 
@@ -99,12 +101,12 @@ class PackageAccessRuleServiceImpl(
             .andOperator(
                 Criteria().orOperator(
                     where(TPackageAccessRule::expireDate).isEqualTo(null),
-                    where(TPackageAccessRule::expireDate).lt(LocalDateTime.now())
+                    where(TPackageAccessRule::expireDate).gt(LocalDateTime.now())
                 ),
                 if (!key.contains(":")) where(TPackageAccessRule::key).isEqualTo(key) else {
                     Criteria().orOperator(
                         where(TPackageAccessRule::key).isEqualTo(key),
-                        where(TPackageAccessRule::key).isEqualTo(key.substringBefore(":"))
+                        where(TPackageAccessRule::key).isEqualTo(key.substringBefore(":") + ":*")
                     )
                 }
             )

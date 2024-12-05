@@ -44,7 +44,7 @@ import com.tencent.bkrepo.auth.pojo.permission.RepoPathResourceTypeInstance
 import com.tencent.bkrepo.auth.pojo.permission.RepoPathResourceTypeInstance.RepoPathItem
 import com.tencent.bkrepo.auth.pojo.permission.ResourcePermissionSaveDTO
 import com.tencent.bkrepo.auth.pojo.permission.SaveRepoPathPermission
-import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionPathRequest
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.UpdateRepoPathResourceTypeRequest
 import com.tencent.bkrepo.auth.pojo.permission.UserPermissionQueryDTO
 import com.tencent.bkrepo.auth.pojo.role.RoleCreateDTO
@@ -66,15 +66,13 @@ import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
-import io.swagger.annotations.ApiParam
 import net.canway.devops.auth.api.custom.CanwayCustomResourceTypeClient
 import net.canway.devops.auth.pojo.resource.action.ResourceActionVO
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.bind.annotation.RequestAttribute
-import org.springframework.web.bind.annotation.RequestParam
+import java.time.LocalDateTime
 
 @Service
 class ExtPermissionServiceImpl(
@@ -294,15 +292,25 @@ class ExtPermissionServiceImpl(
         )
         logger.info("userId $userId updateRepoPathResourceType")
 
+        val dumpPermission =
+            permissionService.findOneByPermNameAndProjectIdAndResourceTypeAndRepos(
+                request.permName,
+                permission.projectId,
+                ResourceType.NODE,
+                permission.repos.first()
+            )
+        if (dumpPermission != null && dumpPermission.id != request.permissionId) {
+            logger.warn("create permission  [$request] is exist.")
+            throw ErrorCodeException(AuthMessageCode.AUTH_DUP_PERMNAME)
+        }
+
         permissionService.updatePermissionById(
-            request.permissionId,
-            "permName",
-            request.permName
-        )
-        permissionService.updateIncludePath(
-            UpdatePermissionPathRequest(
-                permissionId = request.permissionId,
-                request.includePattern.map { PathUtils.normalizePath(it) })
+            request.permissionId, UpdatePermissionRequest(
+                permName = request.permName,
+                includePattern = request.includePattern.map { PathUtils.normalizePath(it) },
+                updatedBy = userId,
+                updateAt = LocalDateTime.now()
+            )
         )
     }
 
@@ -328,7 +336,7 @@ class ExtPermissionServiceImpl(
         return permission.groupBy { it.repos.first() }.map { group ->
             RepoPathResourceTypeInstance(
                 group.key,
-                repoMap[group.key]?.type?.name ?: "",
+                repoMap[group.key]?.type?.name?.toLowerCase() ?: "",
                 group.value.map { RepoPathItem(it.id!!, it.permName) }
             )
         }.filter {
@@ -745,7 +753,7 @@ class ExtPermissionServiceImpl(
         val pathCollection = permissionService.listNodePermission(projectId, repoName)
         // 获取包含请求路径的匹配的路径集合
         val matchPathCollection = pathCollection.filter { collection ->
-            collection.includePattern.any { path.startsWith(PathUtils.toPath(it)) }
+            collection.includePattern.any { PathUtils.toPath(path).startsWith(PathUtils.toPath(it)) }
         }
         // 如果没有匹配的路径集合，则返回仓库
         if (matchPathCollection.isEmpty()) return CanwayBkrepoPathPermission(REPO_PATH_RESOURCECODE, repoActions)

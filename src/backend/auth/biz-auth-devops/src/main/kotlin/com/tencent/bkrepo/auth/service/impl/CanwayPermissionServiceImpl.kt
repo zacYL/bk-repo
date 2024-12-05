@@ -9,13 +9,12 @@ import com.tencent.bkrepo.auth.model.TPermission
 import com.tencent.bkrepo.auth.pojo.RegisterResourceRequest
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
-import com.tencent.bkrepo.auth.pojo.general.ScopeDTO
 import com.tencent.bkrepo.auth.pojo.permission.Permission
 import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.CreatePermissionRequest
-import com.tencent.bkrepo.auth.pojo.permission.CustomPermissionQueryDTO
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionPathRequest
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRepoRequest
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRequest
 import com.tencent.bkrepo.auth.repository.PermissionRepository
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
@@ -25,18 +24,14 @@ import com.tencent.bkrepo.common.devops.RESOURCECODE
 import com.tencent.bkrepo.repository.api.ProjectClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.auth.pojo.permission.UserPermissionValidateDTO
-import com.tencent.bkrepo.auth.pojo.role.SubjectDTO
-import com.tencent.bkrepo.auth.service.impl.CpackPermissionServiceImpl.Companion
-import com.tencent.bkrepo.common.api.exception.ParameterInvalidException
-import com.tencent.bkrepo.common.devops.REPO_PATH_RESOURCECODE
-import com.tencent.bkrepo.common.devops.REPO_PATH_SCOPE_CODE
-import com.tencent.bkrepo.common.security.exception.PermissionException
-import org.bouncycastle.asn1.x500.style.RFC4519Style.uid
+import com.tencent.bkrepo.common.artifact.path.PathUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.data.mongodb.core.MongoTemplate
+import org.springframework.data.mongodb.core.query.Update
 import java.time.LocalDateTime
 import java.util.stream.Collectors
+import kotlin.streams.toList
 
 class CanwayPermissionServiceImpl(
     private val userRepository: UserRepository,
@@ -197,21 +192,16 @@ class CanwayPermissionServiceImpl(
                 projectId!!, repoName!!
             )
 
-            val authPaths = pathCollections.flatMap { it.includePattern }.toSet()
+            val pathToPathCollections = path!!.map { requestPath ->
+                val collections = pathCollections.parallelStream().filter { pathCollection ->
+                    pathCollection.includePattern.any { PathUtils.toPath(requestPath).startsWith(it) }
+                }.collect(Collectors.toList())
+                // 只要有个路径没有配置权限则返回没权限
+                if(collections.isEmpty()) return false
+                requestPath to collections
+            }.toMap()
 
-            val matchPaths = path!!.parallelStream().filter { requestPath ->
-                authPaths.any { authPath -> requestPath.startsWith(authPath) }
-            }.collect(Collectors.toList())
-
-            // 只有有个路径没有配置权限则返回没权限
-            if (matchPaths.size != path!!.size) {
-                return false
-            }
-
-            // 获取配置路径集合中，只有包含当前路径的权限集合
-            val pathCollectionIds = pathCollections.parallelStream().filter { collection ->
-                collection.includePattern.any { authPath -> matchPaths.contains(authPath) }
-            }.map { it.id!! }.collect(Collectors.toList())
+            val pathCollectionIds = pathToPathCollections.flatMap { it.value }.map { it.id!! }
 
             val repoPathCollectPermission = devOpsAuthGeneral.getRepoPathCollectPermission(
                 uid,
@@ -220,20 +210,28 @@ class CanwayPermissionServiceImpl(
                 // 兼容以后任意权限的情况，同时也避免pathCollectionIds为空导致查出全部
                 pathCollectionIds.plus("*")
             )
-            val filterPermission = repoPathCollectPermission.filter { it.actionCode == action.toString().toLowerCase() }
+            val authCollectionIds = repoPathCollectPermission.filter { it.actionCode == action.toString().toLowerCase() }.map { it.instanceId }
+
+            val filter = pathToPathCollections.filter { (requestPath, pathMatchCollections) ->
+                // 只要有一个路径有权限，则返回有权限
+                val pathMatchCollectionIds = pathMatchCollections.map { it.id!! }
+                // 存在权限
+                authCollectionIds.intersect(pathMatchCollectionIds).isNotEmpty()
+            }
 
             // 不为空则所以有权限
-            return filterPermission.isNotEmpty()
+            return filter.isNotEmpty()
 
         }
     }
 
     override fun createPermission(request: CreatePermissionRequest): Boolean {
         logger.info("create  permission request : [$request]")
-        val permission = permissionRepository.findOneByPermNameAndProjectIdAndResourceType(
+        val permission = permissionRepository.findOneByPermNameAndProjectIdAndResourceTypeAndRepos(
             request.permName,
             request.projectId,
-            request.resourceType
+            request.resourceType,
+            request.repos.first()
         )
         permission?.let {
             logger.warn("create permission  [$request] is exist.")
@@ -391,7 +389,8 @@ class CanwayPermissionServiceImpl(
         projectId: String,
         userId: String,
         appId: String?,
-        actions: List<PermissionAction>?
+        actions: List<PermissionAction>?,
+        includePathAuthRepo: Boolean
     ): List<String> {
         logger.debug("list repo permission request : [$projectId, $userId] ")
 
@@ -406,8 +405,10 @@ class CanwayPermissionServiceImpl(
             repoList.addAll(listPublicRepo(projectId))
             // 获取该用户可查看的所有制品库仓库名称
             repoList.addAll(devOpsAuthGeneral.getUserPermission(projectId, userId))
-            // 获取用户有路径权限的仓库集合
-            repoList.addAll(devOpsAuthGeneral.getRepoWithPathPermission(projectId, userId))
+            if (includePathAuthRepo){
+                // 获取用户有路径权限的仓库集合
+                repoList.addAll(devOpsAuthGeneral.getRepoWithPathPermission(projectId, userId))
+            }
             logger.info("repoList:$repoList")
         } else {
             repoList.addAll(devOpsAuthGeneral.getUserActionPermission(projectId, userId, actions))
@@ -436,7 +437,7 @@ class CanwayPermissionServiceImpl(
             logger.info("check user $userId is CI tenant admin of [tenant: $tenantId]")
             devOpsAuthGeneral.isTenantMemberOrAdmin(userId, tenantId)
         } else if (projectId != null && tenantId != null) {
-            logger.info("check user $userId is CI project admin of [tenant: $tenantId]")
+            logger.info("check user $userId is CI project admin of [project: $projectId]")
             devOpsAuthGeneral.isProjectOrSuperiorAdmin(userId, projectId)
         } else {
             return false

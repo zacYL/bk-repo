@@ -34,7 +34,7 @@
                     @item-click="itemClickHandler">
                     <template #operation="{ item }">
                         <operation-list
-                            v-if="item.roadMap === selectedTreeNode.roadMap && showUploadOperation && !isGenericRemote"
+                            v-if="item.roadMap === selectedTreeNode.roadMap && currentFolderDataPermission.includes('write') && repoName !== 'pipeline' && !isGenericRemote"
                             :list="[
                                 { clickEvent: () => handlerUpload(item), label: $t('uploadFile') },
                                 { clickEvent: () => handlerUpload(item, true), label: $t('uploadFolder') },
@@ -247,7 +247,8 @@
                 debounceClickTreeNode: null,
                 inFolderSearchName: this.$route.query.fileName,
                 searchFullPath: '',
-                currentRepoDataPermission: []
+                currentRepoDataPermission: [],
+                currentFolderDataPermission: [] // 当前文件夹的权限
             }
         },
         computed: {
@@ -306,14 +307,6 @@
             globalCurrentRepoDataPermission () {
                 return this.currentRepositoryDataPermission?.find((item) => item.resourceCode === 'bkrepo')?.actionCodes || []
             },
-            // 是否拥有上传制品权限
-            canUploadArtifact () {
-                return this.globalCurrentRepoDataPermission.includes('write')
-            },
-            // 上传文件，上传文件夹，新建文件夹三个操作是否显示
-            showUploadOperation () {
-                return this.canUploadArtifact && this.repoName !== 'pipeline'
-            },
             // 全局删除制品操作权限
             globalDeleteOperationPermission () {
                 return this.globalCurrentRepoDataPermission.includes('delete')
@@ -325,6 +318,10 @@
             // 锁定制品操作权限
             lockOperationPermission () {
                 return this.currentRepoDataPermission.includes('lock')
+            },
+            // 查看制品操作权限
+            readOperationPermission () {
+                return this.currentRepoDataPermission.includes('read')
             },
             // 禁用制品操作权限
             forbidOperationPermission () {
@@ -551,6 +548,8 @@
             },
             // 树组件选中文件夹
             itemClickHandler (node) {
+                this.initFolderPermission(node)
+                
                 this.debounceClickTreeNode(node)
             },
             clickTreeNodeHandler (node) {
@@ -944,16 +943,23 @@
                     this.currentRepoDataPermission = res.actionCodes || []
                 })
             },
+            initFolderPermission (row) {
+                this.getPermissionActions({ projectId: this.projectId, repoName: this.repoName, path: row.fullPath || '/' }).then(res => {
+                    this.currentFolderDataPermission = res.actionCodes || []
+                })
+            },
             generateActions (row) {
-                const actions = [
-                    { clickEvent: () => this.showDetail(row), label: this.$t('detail') }
-                ]
+                const actions = []
+                
+                if (this.readOperationPermission) {
+                    actions.push({ clickEvent: () => this.showDetail(row), label: this.$t('detail') })
+                }
 
                 if (!row.metadata.forbidStatus) {
-                    if (!row.folder && this.handlerPreview(row) && !this.isRemote) {
+                    if (!row.folder && this.handlerPreview(row) && !this.isRemote & this.readOperationPermission) {
                         actions.push({ clickEvent: () => this.handlerPreview(row, true), label: this.$t('preview') })
                     }
-                    if (!(row.folder && this.isGenericRemote)) {
+                    if (!(row.folder && this.isGenericRemote) & this.readOperationPermission) {
                         actions.push({ clickEvent: () => this.handlerDownload(row), label: this.$t('download') })
                     }
                     if (this.repoName !== 'pipeline' && !row.metadata.lockStatus) {

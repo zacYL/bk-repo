@@ -6,7 +6,7 @@
   "method" : "POST",
   "path" : "/repo-repository/api/repo/update/{projectId}/{repoName}",
   "headers" : [ ],
-  "targetService" : "repo-repository",
+  "targetService" : "reporepository",
   "targetPath" : "/api/repo/update/{projectId}/{repoName}",
   "targetMethod" : "POST",
   "timeout" : 30,

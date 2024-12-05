@@ -27,8 +27,10 @@
 
 package com.tencent.bkrepo.replication.replica.base
 
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.replication.manager.LocalDataManager
 import com.tencent.bkrepo.replication.pojo.record.ExecutionResult
 import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus
@@ -45,11 +47,13 @@ import com.tencent.bkrepo.replication.replica.base.context.ReplicaContext
 import com.tencent.bkrepo.replication.replica.base.context.ReplicaExecutionContext
 import com.tencent.bkrepo.replication.service.ReplicaRecordService
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
+import com.tencent.bkrepo.repository.pojo.node.UserAuthPathOption
 import com.tencent.bkrepo.repository.pojo.packages.PackageListOption
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.VersionListOption
 import org.slf4j.LoggerFactory
+import java.nio.file.Path
 
 /**
  * 同步服务抽象类
@@ -58,7 +62,8 @@ import org.slf4j.LoggerFactory
 @Suppress("TooGenericExceptionCaught")
 abstract class AbstractReplicaService(
     private val replicaRecordService: ReplicaRecordService,
-    private val localDataManager: LocalDataManager
+    private val localDataManager: LocalDataManager,
+    private val permissionManager: PermissionManager,
 ) : ReplicaService {
 
     private val logger = LoggerFactory.getLogger(AbstractReplicaService::class.java)
@@ -128,6 +133,20 @@ abstract class AbstractReplicaService(
      */
     private fun replicaByPath(replicaContext: ReplicaContext, node: NodeInfo) {
         with(replicaContext) {
+
+            val userAuthPath = permissionManager.getUserAuthPathCache(
+                UserAuthPathOption(
+                    replicaContext.task.createdBy,
+                    node.projectId,
+                    listOf(node.repoName),
+                    PermissionAction.READ
+                )
+            )[node.repoName]
+
+            check(!userAuthPath.isNullOrEmpty()) { "node fullPath[${node.fullPath}] no read permission" }
+
+            check(userAuthPath.any() { node.fullPath.startsWith(PathUtils.toFullPath(it)) }) { "node fullPath[${node.fullPath}] no read permission" }
+
             if (!node.folder) {
                 // 外部集群仓库没有project/repoName
                 if (remoteProjectId.isNullOrBlank() || remoteRepoName.isNullOrBlank()) {
@@ -259,7 +278,7 @@ abstract class AbstractReplicaService(
         with(context) {
             val fullPath = "${packageSummary.name}-${version.name}"
             try {
-                when(context.detail.conflictStrategy){
+                when (context.detail.conflictStrategy) {
                     SKIP -> return
                     FAST_FAIL -> throw IllegalArgumentException("File[$fullPath] conflict.")
                     else -> {

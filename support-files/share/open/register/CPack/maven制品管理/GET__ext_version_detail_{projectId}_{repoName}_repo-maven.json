@@ -6,7 +6,7 @@
   "method" : "GET",
   "path" : "/repo-maven/ext/version/detail/{projectId}/{repoName}",
   "headers" : [ ],
-  "targetService" : "repo-maven",
+  "targetService" : "repomaven",
   "targetPath" : "/ext/version/detail/{projectId}/{repoName}",
   "targetMethod" : "GET",
   "timeout" : 30,

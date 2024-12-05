@@ -79,9 +79,8 @@ class ProjectIdRuleInterceptor(
             val userId = SecurityUtils.getUserId()
 
             val userAuthPath =
-                permissionManager.getUserAuthPatCache(UserAuthPathOption(userId, projectId, repoName, READ))
+                permissionManager.getUserAuthPathCache(UserAuthPathOption(userId, projectId, repoName, READ))
 
-            logger.info("user $userId auth path: ${userAuthPath.toJsonString()}")
             val projectIdRule = Rule.QueryRule(NodeInfo::projectId.name, projectId, OperationType.EQ).toFixed()
 
             if (userAuthPath.isEmpty()) {

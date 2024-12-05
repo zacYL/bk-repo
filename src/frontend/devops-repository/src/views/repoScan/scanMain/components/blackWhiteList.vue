@@ -26,14 +26,17 @@
             <!-- 制品包名称 -->
             <bk-table-column :label="$t('composerInputLabel')" show-overflow-tooltip prop="key">
                 <template #default="{ row }">
-                    <span class="hover-btn">{{row.key}}</span>
+                    <span>{{row.key}}</span>
                 </template>
             </bk-table-column>
             <!-- 版本 -->
             <bk-table-column :label="$t('version')" prop="version">
+                <template #default="{ row }">
+                    <span>{{OperatorMap[row.versionRuleType] + ' ' + row.version}}</span>
+                </template>
             </bk-table-column>
             <!-- 仓库类型 -->
-            <bk-table-column :label="$t('storeTypes')" prop="packageType">
+            <bk-table-column :label="$t('repoType')" prop="packageType">
             </bk-table-column>
             <!-- 有效时间 -->
             <bk-table-column v-if="type === 'white'" :label="$t('validTime')" prop="expireDate">
@@ -58,7 +61,7 @@
             :count="pagination.count"
             :limit-list="pagination.limitList">
         </bk-pagination>
-        <AddBlackWhiteRepoDialog :title="addConfig.title" :visible="addConfig.visible" @cancel="hideBlackWhiteRepo" @submit="addBlackWhiteRepoSubmit" />
+        <AddBlackWhiteRepoDialog :is-white="type === 'white'" :title="addConfig.title" :visible="addConfig.visible" @cancel="hideBlackWhiteRepo" @submit="addBlackWhiteRepoSubmit" />
     </div>
 </template>
 <script>
@@ -67,6 +70,7 @@
     import DefaultTabBox from '@repository/components/DefaultTabBox'
     import FilterCondition from './components/FilterCondition.vue'
     import AddBlackWhiteRepoDialog from './components/AddBlackWhiteRepoDialog.vue'
+    import { OperatorMap } from '@repository/store/publicEnum'
     import { formatDate } from '@repository/utils'
     const paginationParams = {
         count: 0,
@@ -86,6 +90,7 @@
         },
         data () {
             return {
+                OperatorMap,
                 isLoading: false,
                 tabList: [
                     {
@@ -131,6 +136,7 @@
             },
             listParams () {
                 return {
+                    projectId: this.projectId,
                     pageNumber: this.pagination.current,
                     pageSize: this.pagination.limit,
                     pass: this.type === 'white',
@@ -156,15 +162,21 @@
                 this.addConfig.visible = false
             },
             addBlackWhiteRepoSubmit (form, cb) {
+                const body = {
+                    packageType: form.repoType.toLocaleUpperCase(),
+                    projectId: this.projectId,
+                    key: ['maven', 'gradle'].includes(form.repoType) ? (form.groupID + ':' + form.name) : form.name,
+                    pass: this.type === 'white',
+                    version: form.version,
+                    versionRuleType: form.operator,
+                    expireDate: form.expireDate
+                }
+                // 黑名单不需要过期时间
+                if (this.type === 'black') {
+                    delete body.expireDate
+                }
                 this.createBlackWhiteList({
-                    body: {
-                        packageType: form.repoType.toLocaleUpperCase(),
-                        projectId: this.projectId,
-                        key: form.groupID ? (form.groupID + ':' + form.name) : form.name,
-                        pass: this.type === 'white',
-                        version: form.version,
-                        versionRuleType: form.operator
-                    }
+                    body
                 }).then(() => {
                     this.$bkMessage({
                         theme: 'success',
@@ -225,7 +237,7 @@
             },
             removeBlackWhiteList (row) {
                 this.$bkInfoDevopsConfirm({
-                    subTitle: this.$t('deleteBlackWhiteTips', [this.active === 'white' ? this.$t('whiteList') : this.$t('blackList')]),
+                    subTitle: this.$t('deleteBlackWhiteTips', [this.type === 'white' ? this.$t('whiteList') : this.$t('blackList')]),
                     theme: 'danger',
                     confirmFn: () => {
                         const body = {

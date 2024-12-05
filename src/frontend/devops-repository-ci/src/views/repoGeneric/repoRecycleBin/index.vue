@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-21 15:38:37
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-12-03 16:07:44
+ * @LastEditTime: 2024-12-04 16:54:41
  * @FilePath: /artifact/src/frontend/devops-repository-ci/src/views/repoGeneric/repoRecycleBin/index.vue
 -->
 <template>
@@ -57,7 +57,7 @@
                 </template>
             </bk-table-column>
             <!-- 操作 -->
-            <bk-table-column :label="$t('operation')">
+            <bk-table-column :label="$t('operation')" v-if="withOperationPermission">
                 <template #default="{ row }">
                     <bk-button theme="primary" text class="mr10" @click="revert(row)">{{$t('revert')}}</bk-button>
                     <bk-button theme="danger" text @click="remove(row)">{{$t('permanentlyDelete')}}</bk-button>
@@ -95,7 +95,8 @@
             return {
                 isLoading: false,
                 pagination: cloneDeep(paginationParams),
-                recycleBinList: []
+                recycleBinList: [],
+                withOperationPermission: false
             }
         },
         computed: {
@@ -108,12 +109,16 @@
             }
         },
         created () {
+            this.getRecycleBinPermission().then((res) => {
+                this.withOperationPermission = !!Object.values(res).filter(Boolean).length
+            })
             this.handlerPaginationChange({ current: 1, limit: 20 })
         },
         methods: {
             formatDate,
             convertFileSize,
             ...mapActions([
+                'getRecycleBinPermission',
                 'getRecycleBinList',
                 'checkConflictPath',
                 'nodeRevert',

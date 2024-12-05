@@ -27,10 +27,11 @@
 
 package com.tencent.bkrepo.cocoapods.service
 
+import com.tencent.bkrepo.cocoapods.constant.DOT_SPECS
 import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo
-import com.tencent.bkrepo.cocoapods.utils.PathUtil
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.repository.api.NodeClient
+import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import org.slf4j.LoggerFactory
@@ -40,18 +41,6 @@ import org.springframework.stereotype.Service
 class CocoapodsFileService(
     private val nodeClient: NodeClient,
 ) {
-    fun deleteFile(artifactInfo: CocoapodsArtifactInfo) {
-        with(artifactInfo) {
-            //删除包文件:"$orgName/$name/$version/$fileName"
-            var request = NodeDeleteRequest(projectId, repoName,
-                PathUtil.generateFullPath(artifactInfo), SecurityUtils.getUserId())
-            nodeClient.deleteNode(request)
-            //删除specs文件:".specs/$name/$version/$name.podspec"
-            request = NodeDeleteRequest(projectId, repoName,
-                PathUtil.generateSpecsPath(artifactInfo), SecurityUtils.getUserId())
-            nodeClient.deleteNode(request)
-        }
-    }
 
     fun deleteVersionFile(artifactInfo: CocoapodsArtifactInfo, packageVersion: PackageVersion) {
         with(artifactInfo) {
@@ -78,6 +67,16 @@ class CocoapodsFileService(
             nodeClient.deleteNode(request)
             logger.info("delete packageSpecsPath:[$packageSpecsPath]")
         }
+    }
+
+    fun initSpecs(projectId: String, repoName: String) {
+        logger.info("project [$projectId], repo [$repoName],init specs...")
+        nodeClient.createNode(NodeCreateRequest(
+            projectId = projectId,
+            repoName = repoName,
+            fullPath = DOT_SPECS,
+            folder = true
+        ))
     }
 
     companion object {

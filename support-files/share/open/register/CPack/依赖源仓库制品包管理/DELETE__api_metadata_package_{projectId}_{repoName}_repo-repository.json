@@ -6,7 +6,7 @@
   "method" : "DELETE",
   "path" : "/repo-repository/api/metadata/package/{projectId}/{repoName}",
   "headers" : [ ],
-  "targetService" : "repo-repository",
+  "targetService" : "reporepository",
   "targetPath" : "/api/metadata/package/{projectId}/{repoName}",
   "targetMethod" : "DELETE",
   "timeout" : 30,

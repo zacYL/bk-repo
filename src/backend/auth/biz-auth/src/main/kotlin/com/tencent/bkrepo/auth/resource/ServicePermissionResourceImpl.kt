@@ -71,9 +71,18 @@ class ServicePermissionResourceImpl @Autowired constructor(
         projectId: String,
         userId: String,
         appId: String?,
-        actions: List<PermissionAction>?
+        actions: List<PermissionAction>?,
+        includePathAuthRepo: Boolean
     ): Response<List<String>> {
-        return ResponseBuilder.success(permissionService.listPermissionRepo(projectId, userId, appId, actions))
+        return ResponseBuilder.success(
+            permissionService.listPermissionRepo(
+                projectId,
+                userId,
+                appId,
+                actions,
+                includePathAuthRepo
+            )
+        )
     }
 
     override fun listPermissionProject(userId: String): Response<List<String>> {
@@ -146,7 +155,7 @@ class ServicePermissionResourceImpl @Autowired constructor(
         projectId: String,
         repoNames: List<String>,
         action: PermissionAction
-    ): Response<Map<String,List<String>>> {
+    ): Response<Map<String, List<String>>> {
         return ResponseBuilder.success(permissionService.getUserAuthPaths(userId, projectId, repoNames, action))
     }
 }

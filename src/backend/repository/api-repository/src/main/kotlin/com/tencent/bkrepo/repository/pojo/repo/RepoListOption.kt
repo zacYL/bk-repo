@@ -40,5 +40,7 @@ data class RepoListOption(
     @ApiModelProperty("仓库类别", required = false)
     val category: List<String>? = null,
     @ApiModelProperty("动作权限类型", required = false)
-    val actions: List<PermissionAction>? = null
+    val actions: List<PermissionAction>? = null,
+    @ApiModelProperty("动作权限类型", required = false)
+    val includePathAuthRepo: Boolean = true,
 )

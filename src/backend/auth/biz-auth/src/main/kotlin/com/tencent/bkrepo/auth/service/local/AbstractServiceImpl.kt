@@ -38,6 +38,7 @@ import com.tencent.bkrepo.auth.model.TUser
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.permission.Permission
 import com.tencent.bkrepo.auth.pojo.permission.PermissionSet
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRequest
 import com.tencent.bkrepo.auth.pojo.user.CreateUserRequest
 import com.tencent.bkrepo.auth.pojo.user.CreateUserToProjectRequest
 import com.tencent.bkrepo.auth.pojo.user.CreateUserToRepoRequest
@@ -118,6 +119,17 @@ open class AbstractServiceImpl constructor(
     fun updatePermissionById(id: String, key: String, value: Any): Boolean {
         val update = Update()
         update.set(key, value)
+        val result = mongoTemplate.upsert(buildIdQuery(id), update, TPermission::class.java)
+        if (result.matchedCount == 1L) return true
+        return false
+    }
+
+    fun updatePermissionById(id: String, request: UpdatePermissionRequest): Boolean{
+        val update = Update()
+        update.set(TPermission::permName.name, request.permName)
+        update.set(TPermission::includePattern.name, request.includePattern)
+        update.set(TPermission::updatedBy.name, request.updatedBy)
+        update.set(TPermission::updateAt.name, request.updateAt)
         val result = mongoTemplate.upsert(buildIdQuery(id), update, TPermission::class.java)
         if (result.matchedCount == 1L) return true
         return false

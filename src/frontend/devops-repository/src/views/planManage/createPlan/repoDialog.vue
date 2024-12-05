@@ -1,7 +1,7 @@
 <!--
  * @Author: xiaoshanwen
  * @Date: 2024-08-16 17:30:26
- * @LastEditTime: 2024-08-29 16:57:46
+ * @LastEditTime: 2024-12-04 18:11:58
  * @Description:
  * @FilePath: /artifact/src/frontend/devops-repository/src/views/planManage/createPlan/repoDialog.vue
 -->
@@ -53,9 +53,9 @@
             }
         },
         computed: {
-            ...mapState(['repoListAll']),
+            ...mapState(['repoReadListAll']),
             repoList () {
-                return this.repoListAll
+                return this.repoReadListAll
                     .filter(r => {
                         return ['DOCKER', 'MAVEN', 'NPM', 'GENERIC', 'GO'].includes(r.type) && r.name !== 'pipeline' && r.name !== 'report' && r.category !== 'REMOTE' && r.category !== 'VIRTUAL'
                     })

@@ -612,7 +612,6 @@ open class PermissionManager(
      */
     private fun isAdminUser(userId: String): Boolean {
         val cookies = HttpContextHolder.getRequest().cookies
-        logger.info("cookies: ${cookies.toJsonString()}")
         var ciProjectId: String? = null
         var ciTenantId: String? = null
         cookies?.forEach {
@@ -652,7 +651,7 @@ open class PermissionManager(
         }
     }
 
-    fun getUserAuthPatCache(option: UserAuthPathOption): Map<String, List<String>> {
+    fun getUserAuthPathCache(option: UserAuthPathOption): Map<String, List<String>> {
         return try {
             userAuthPathCache.get(option)
         } catch (e: UncheckedExecutionException) {

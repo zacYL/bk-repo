@@ -6,7 +6,7 @@
   "method" : "GET",
   "path" : "/repo-npm/ext/version/detail/{projectId}/{repoName}",
   "headers" : [ ],
-  "targetService" : "repo-npm",
+  "targetService" : "reponpm",
   "targetPath" : "/ext/version/detail/{projectId}/{repoName}",
   "targetMethod" : "GET",
   "timeout" : 30,

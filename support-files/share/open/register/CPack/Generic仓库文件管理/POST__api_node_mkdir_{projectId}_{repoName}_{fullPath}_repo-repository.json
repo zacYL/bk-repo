@@ -6,7 +6,7 @@
   "method" : "POST",
   "path" : "/repo-repository/api/node/mkdir/{projectId}/{repoName}/**",
   "headers" : [ ],
-  "targetService" : "repo-repository",
+  "targetService" : "reporepository",
   "targetPath" : "/api/node/mkdir/{projectId}/{repoName}/**",
   "targetMethod" : "POST",
   "timeout" : 30,

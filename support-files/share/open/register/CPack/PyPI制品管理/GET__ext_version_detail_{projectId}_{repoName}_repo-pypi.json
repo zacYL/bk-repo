@@ -6,7 +6,7 @@
   "method" : "GET",
   "path" : "/repo-pypi/ext/version/detail/{projectId}/{repoName}",
   "headers" : [ ],
-  "targetService" : "repo-pypi",
+  "targetService" : "repopypi",
   "targetPath" : "/ext/version/detail/{projectId}/{repoName}",
   "targetMethod" : "GET",
   "timeout" : 30,

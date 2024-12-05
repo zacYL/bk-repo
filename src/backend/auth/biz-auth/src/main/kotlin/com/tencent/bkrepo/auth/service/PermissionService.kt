@@ -33,6 +33,7 @@ package com.tencent.bkrepo.auth.service
 
 import com.tencent.bkrepo.auth.pojo.RegisterResourceRequest
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
+import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.CreatePermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.Permission
@@ -40,6 +41,7 @@ import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionActionRequest
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionDepartmentRequest
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionPathRequest
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRepoRequest
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRoleRequest
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionUserRequest
 
@@ -51,7 +53,8 @@ interface PermissionService {
         projectId: String,
         userId: String,
         appId: String?,
-        actions: List<PermissionAction>?
+        actions: List<PermissionAction>?,
+        includePathAuthRepo: Boolean
     ): List<String>
 
     fun listPermissionProject(userId: String): List<String>
@@ -86,7 +89,16 @@ interface PermissionService {
 
     fun findPermissionById(id: String): Permission?
 
+    fun findOneByPermNameAndProjectIdAndResourceTypeAndRepos(
+        permName: String,
+        projectId: String?,
+        resourceType: ResourceType,
+        repo: String
+    ): Permission?
+
     fun updatePermissionById(id: String, key: String, value: Any): Boolean
+
+    fun updatePermissionById(id: String, request: UpdatePermissionRequest): Boolean
 
     fun listBuiltinPermissionNoBack(projectId: String, repoName: String)
 

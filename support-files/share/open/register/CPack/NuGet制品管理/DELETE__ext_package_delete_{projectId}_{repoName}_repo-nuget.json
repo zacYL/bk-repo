@@ -6,7 +6,7 @@
   "method" : "DELETE",
   "path" : "/repo-nuget/ext/package/delete/{projectId}/{repoName}",
   "headers" : [ ],
-  "targetService" : "repo-nuget",
+  "targetService" : "reponuget",
   "targetPath" : "/ext/package/delete/{projectId}/{repoName}",
   "targetMethod" : "DELETE",
   "timeout" : 30,

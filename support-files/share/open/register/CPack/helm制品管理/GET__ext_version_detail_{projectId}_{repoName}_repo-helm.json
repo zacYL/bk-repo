@@ -6,7 +6,7 @@
   "method" : "GET",
   "path" : "/repo-helm/ext/version/detail/{projectId}/{repoName}",
   "headers" : [ ],
-  "targetService" : "repo-helm",
+  "targetService" : "repohelm",
   "targetPath" : "/ext/version/detail/{projectId}/{repoName}",
   "targetMethod" : "GET",
   "timeout" : 30,

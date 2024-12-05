@@ -6,7 +6,7 @@
   "method" : "POST",
   "path" : "/repo-repository/api/repo/create",
   "headers" : [ ],
-  "targetService" : "repo-repository",
+  "targetService" : "reporepository",
   "targetPath" : "/api/repo/create",
   "targetMethod" : "POST",
   "timeout" : 30,

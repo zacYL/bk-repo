@@ -6,7 +6,7 @@
   "method" : "GET",
   "path" : "/repo-nuget/ext/version/detail/{projectId}/{repoName}",
   "headers" : [ ],
-  "targetService" : "repo-nuget",
+  "targetService" : "reponuget",
   "targetPath" : "/ext/version/detail/{projectId}/{repoName}",
   "targetMethod" : "GET",
   "timeout" : 30,

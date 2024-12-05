@@ -287,11 +287,13 @@
             }
         },
         created () {
-            this.getRepoListAll({ projectId: this.rowsData.projectId })
+            this.getRepoListAll({ projectId: this.rowsData.projectId }) // 获取全部仓库列表
+            this.getReadRepoListAll({ projectId: this.rowsData.projectId }) // 获取可读仓库列表
             this.routeName !== 'createPlan' && this.handlePlanDetail()
         },
         methods: {
             ...mapActions([
+                'getReadRepoListAll',
                 'getRepoListAll',
                 'createPlan',
                 'getPlanDetail',

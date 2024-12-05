@@ -29,7 +29,7 @@ package com.tencent.bkrepo.replication.replica.event
 
 import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.common.artifact.path.PathUtils
-import com.tencent.bkrepo.common.storage.innercos.retry
+import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.replication.manager.LocalDataManager
 import com.tencent.bkrepo.replication.pojo.cluster.ClusterNodeType
 import com.tencent.bkrepo.replication.pojo.task.objects.PackageConstraint
@@ -45,8 +45,9 @@ import org.springframework.stereotype.Component
 @Component
 class EventBasedReplicaService(
     replicaRecordService: ReplicaRecordService,
-    localDataManager: LocalDataManager
-) : AbstractReplicaService(replicaRecordService, localDataManager) {
+    localDataManager: LocalDataManager,
+    permissionManager: PermissionManager,
+) : AbstractReplicaService(replicaRecordService, localDataManager, permissionManager) {
 
     override fun replica(context: ReplicaContext) {
         with(context) {
@@ -69,12 +70,14 @@ class EventBasedReplicaService(
                     val pathConstraint = PathConstraint(fullPath)
                     replicaByPathConstraint(this, pathConstraint)
                 }
+
                 EventType.VERSION_CREATED, EventType.VERSION_UPDATED -> {
                     val packageKey = event.data["packageKey"].toString()
                     val packageVersion = event.data["packageVersion"].toString()
                     val packageConstraint = PackageConstraint(packageKey, listOf(packageVersion))
                     replicaByPackageConstraint(this, packageConstraint)
                 }
+
                 EventType.VERSION_UPDATED -> {
                     // 只有third party集群支持该消息
                     if (context.remoteCluster.type != ClusterNodeType.REMOTE)
@@ -84,6 +87,7 @@ class EventBasedReplicaService(
                     val packageConstraint = PackageConstraint(packageKey, listOf(packageVersion))
                     replicaByPackageConstraint(this, packageConstraint)
                 }
+
                 else -> throw UnsupportedOperationException()
             }
         }

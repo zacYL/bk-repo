@@ -67,7 +67,7 @@ export default {
     },
     // 获取有复制移动权限的generic仓库列表
     getGenericList (_, { projectId }) {
-        return Vue.prototype.$ajax.get(`${prefix}/repo/list/${projectId}?type=GENERIC&actions=WRITE&actions=READ`)
+        return Vue.prototype.$ajax.get(`${prefix}/repo/list/${projectId}?type=GENERIC`)
     },
     // 查询仓库列表
     getRepoListAll ({ commit }, { projectId, type, searchFlag = false }) {
@@ -80,6 +80,22 @@ export default {
             }
         ).then(res => {
             return searchFlag ? res : commit('SET_REPO_LIST_ALL', res)
+        })
+    },
+    // 查询权限仓库列表
+    getReadRepoListAll ({ commit }, { projectId, type, searchFlag = false }) {
+        return Vue.prototype.$ajax.get(
+            `${prefix}/repo/list/${projectId}`,
+            {
+                params: {
+                    type: type || '',
+                    actions: 'READ',
+                    includePathAuthRepo: false
+
+                }
+            }
+        ).then(res => {
+            return searchFlag ? res : commit('SET_READ_REPO_LIST_ALL', res)
         })
     },
     // 查询仓库信息

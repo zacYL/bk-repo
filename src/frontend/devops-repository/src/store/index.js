@@ -34,6 +34,7 @@ const storeObject = {
         ],
         projectList: [],
         repoListAll: [],
+        repoReadListAll: [],
         scannerSupportFileNameExt: [],
         scannerSupportPackageType: [],
         userList: {
@@ -154,6 +155,9 @@ const storeObject = {
         },
         SET_REPO_LIST_ALL (state, data) {
             state.repoListAll = data
+        },
+        SET_READ_REPO_LIST_ALL (state, data) {
+            state.repoReadListAll = data
         },
         SHOW_LOGIN_DIALOG (state, show = true) {
             state.showLoginDialog = show

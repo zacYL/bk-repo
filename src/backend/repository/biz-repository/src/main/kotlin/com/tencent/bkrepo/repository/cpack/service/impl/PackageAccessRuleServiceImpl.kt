@@ -8,12 +8,14 @@ import com.tencent.bkrepo.common.query.util.MongoEscapeUtils
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.repository.cpack.service.PackageAccessRuleService
 import com.tencent.bkrepo.repository.dao.PackageAccessRuleDao
+import com.tencent.bkrepo.repository.message.RepositoryMessageCode
 import com.tencent.bkrepo.repository.model.TPackageAccessRule
 import com.tencent.bkrepo.repository.pojo.packages.PackageAccessRule
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageAccessRuleRequest
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.query.Criteria
@@ -42,7 +44,14 @@ class PackageAccessRuleServiceImpl(
                 pass = pass,
                 expireDate = expireDate
             )
-            packageAccessRuleDao.save(tPackageAccessRule)
+            try {
+                packageAccessRuleDao.save(tPackageAccessRule)
+            } catch (e: DuplicateKeyException) {
+                logger.warn("duplicate package access rule [type: $packageType, key: $key," +
+                    " version: $version, versionRule: $versionRuleType]"
+                )
+                throw ErrorCodeException(RepositoryMessageCode.ACCESS_RULE_EXISTS)
+            }
             logger.info(
                 "create new package access rule [type: $packageType, key: $key," +
                         " version: $version, versionRule: $versionRuleType] success"

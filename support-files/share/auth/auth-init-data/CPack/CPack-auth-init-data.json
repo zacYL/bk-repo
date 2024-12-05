@@ -95,7 +95,7 @@
                     },
                     {
                         "id": "7b7b859b797f45609c98da0b98b30f8f",
-                        "name": "访问仓库",
+                        "name": "访问制品",
                         "englishName": "visit",
                         "actionCode": "read",
                         "resourceCode": "bkrepo",

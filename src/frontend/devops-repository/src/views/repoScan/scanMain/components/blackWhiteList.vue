@@ -61,7 +61,7 @@
             :count="pagination.count"
             :limit-list="pagination.limitList">
         </bk-pagination>
-        <AddBlackWhiteRepoDialog :title="addConfig.title" :visible="addConfig.visible" @cancel="hideBlackWhiteRepo" @submit="addBlackWhiteRepoSubmit" />
+        <AddBlackWhiteRepoDialog :is-white="type === 'white'" :title="addConfig.title" :visible="addConfig.visible" @cancel="hideBlackWhiteRepo" @submit="addBlackWhiteRepoSubmit" />
     </div>
 </template>
 <script>
@@ -162,16 +162,21 @@
                 this.addConfig.visible = false
             },
             addBlackWhiteRepoSubmit (form, cb) {
+                const body = {
+                    packageType: form.repoType.toLocaleUpperCase(),
+                    projectId: this.projectId,
+                    key: ['maven', 'gradle'].includes(form.repoType) ? (form.groupID + ':' + form.name) : form.name,
+                    pass: this.type === 'white',
+                    version: form.version,
+                    versionRuleType: form.operator,
+                    expireDate: form.expireDate
+                }
+                // 黑名单不需要过期时间
+                if (this.type === 'black') {
+                    delete body.expireDate
+                }
                 this.createBlackWhiteList({
-                    body: {
-                        packageType: form.repoType.toLocaleUpperCase(),
-                        projectId: this.projectId,
-                        key: ['maven', 'gradle'].includes(form.repoType) ? (form.groupID + ':' + form.name) : form.name,
-                        pass: this.type === 'white',
-                        version: form.version,
-                        versionRuleType: form.operator,
-                        expireDate: form.expireDate
-                    }
+                    body
                 }).then(() => {
                     this.$bkMessage({
                         theme: 'success',

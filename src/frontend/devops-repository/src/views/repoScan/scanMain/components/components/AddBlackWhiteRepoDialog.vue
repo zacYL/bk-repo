@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-21 14:16:15
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-12-05 14:48:10
+ * @LastEditTime: 2024-12-05 15:28:43
  * @FilePath: /artifact/src/frontend/devops-repository/src/views/repoScan/scanMain/components/components/AddBlackWhiteRepoDialog.vue
 -->
 <template>
@@ -115,6 +115,7 @@
 
             <!-- 过期时间 -->
             <bk-form-item
+                v-if="isWhite"
                 :label="$t('expire')"
                 property="expireDate"
                 error-display-type="normal"
@@ -159,7 +160,8 @@
         name: 'createScan',
         props: {
             visible: Boolean,
-            title: String
+            title: String,
+            isWhite: Boolean
         },
         data () {
             return {
@@ -213,13 +215,6 @@
                             trigger: 'blur'
                         }
                     ]
-                    // expireDate: [
-                    //     {
-                    //         required: true,
-                    //         message: this.$t('pleaseInput') + this.$t('space') + this.$t('expire'),
-                    //         trigger: 'blur'
-                    //     }
-                    // ]
 
                 },
                 btnLoading: false

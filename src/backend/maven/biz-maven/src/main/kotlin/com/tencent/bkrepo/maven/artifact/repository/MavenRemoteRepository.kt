@@ -346,7 +346,7 @@ class MavenRemoteRepository(
                     context.repoName,
                     packageName = mavenGAVC.artifactId,
                     packageKey = PackageKeys.ofGav(mavenGAVC.groupId, mavenGAVC.artifactId),
-                    packageType = PackageType.MAVEN,
+                    packageType = if (context.repositoryDetail.type == RepositoryType.GRADLE) PackageType.GRADLE else PackageType.MAVEN,
                     versionName = mavenGAVC.version,
                     size = size,
                     artifactPath = fullPath,

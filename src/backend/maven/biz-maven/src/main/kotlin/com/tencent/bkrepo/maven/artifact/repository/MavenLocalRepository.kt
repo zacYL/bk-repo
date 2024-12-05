@@ -41,6 +41,7 @@ import com.tencent.bkrepo.common.artifact.hash.sha512
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.pojo.configuration.virtual.VirtualConfiguration
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
@@ -1012,7 +1013,7 @@ class MavenLocalRepository(
                     context.repoName,
                     packageName = mavenGAVC.artifactId,
                     packageKey = PackageKeys.ofGav(mavenGAVC.groupId, mavenGAVC.artifactId),
-                    packageType = PackageType.MAVEN,
+                    packageType = if (context.repositoryDetail.type == RepositoryType.GRADLE) PackageType.GRADLE else PackageType.MAVEN,
                     versionName = mavenGAVC.version,
                     size = context.getArtifactFile().getSize(),
                     artifactPath = fullPath,

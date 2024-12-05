@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-21 14:16:15
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-12-04 17:25:31
+ * @LastEditTime: 2024-12-05 14:48:10
  * @FilePath: /artifact/src/frontend/devops-repository/src/views/repoScan/scanMain/components/components/AddBlackWhiteRepoDialog.vue
 -->
 <template>
@@ -22,7 +22,7 @@
             ref="Form"
         >
             <!-- 制品类型 -->
-            <bk-form-item :label="$t('repoType')" :required="true" property="repoType">
+            <bk-form-item :label="$t('repoType')" required property="repoType">
                 <bk-select
                     v-model="form.repoType"
                     :placeholder="$t('allTypes')"
@@ -45,7 +45,7 @@
             <bk-form-item
                 v-if="['maven', 'gradle'].includes(form.repoType)"
                 label="groupID"
-                :required="true"
+                required
                 property="groupID"
                 error-display-type="normal"
             >
@@ -61,7 +61,7 @@
             <!-- 制品名 -->
             <bk-form-item
                 :label="$t('artifactName')"
-                :required="true"
+                required
                 property="name"
                 error-display-type="normal"
             >
@@ -77,7 +77,7 @@
             <!-- 版本逻辑 -->
             <bk-form-item
                 :label="$t('versionOperators')"
-                :required="true"
+                required
                 property="operator"
             >
                 <bk-select
@@ -100,7 +100,7 @@
             <!-- 版本 -->
             <bk-form-item
                 :label="$t('version')"
-                :required="true"
+                required
                 property="version"
                 error-display-type="normal"
             >
@@ -112,6 +112,24 @@
                     show-word-limit
                 ></bk-input>
             </bk-form-item>
+
+            <!-- 过期时间 -->
+            <bk-form-item
+                :label="$t('expire')"
+                property="expireDate"
+                error-display-type="normal"
+            >
+                <bk-date-picker
+                    style="width: 100%;"
+                    v-model="form.expireDate"
+                    format="yyyy-MM-dd 23:59:59"
+                    :placeholder="$t('pleaseSelect') + $t('expire')"
+                    :options="{ disabledDate: function (time) {
+                        return time.getTime() <= Date.now() - 86400000
+                    } }"
+                />
+            </bk-form-item>
+
         </bk-form>
 
         <template #footer>
@@ -134,7 +152,8 @@
         name: '*',
         operator: '',
         version: '',
-        groupID: ''
+        groupID: '',
+        expireDate: ''
     }
     export default {
         name: 'createScan',
@@ -194,6 +213,13 @@
                             trigger: 'blur'
                         }
                     ]
+                    // expireDate: [
+                    //     {
+                    //         required: true,
+                    //         message: this.$t('pleaseInput') + this.$t('space') + this.$t('expire'),
+                    //         trigger: 'blur'
+                    //     }
+                    // ]
 
                 },
                 btnLoading: false
@@ -230,6 +256,13 @@
                 }
                 this.$refs.Form.validate().then(() => {
                     const subForm = cloneDeep(this.form)
+                    // 处理 expireDate
+                    if (subForm.expireDate) {
+                        const date = new Date(subForm.expireDate)
+                        date.setHours(23 + 8, 59, 59)
+                        const lastDotIndex = date.toISOString().lastIndexOf('.')
+                        subForm.expireDate = date.toISOString().slice(0, lastDotIndex)
+                    }
                     Object.keys(OperatorMap).forEach(key => {
                         if (OperatorMap[key] === subForm.operator) {
                             subForm.operator = key

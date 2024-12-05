@@ -169,7 +169,8 @@
                         key: ['maven', 'gradle'].includes(form.repoType) ? (form.groupID + ':' + form.name) : form.name,
                         pass: this.type === 'white',
                         version: form.version,
-                        versionRuleType: form.operator
+                        versionRuleType: form.operator,
+                        expireDate: form.expireDate
                     }
                 }).then(() => {
                     this.$bkMessage({

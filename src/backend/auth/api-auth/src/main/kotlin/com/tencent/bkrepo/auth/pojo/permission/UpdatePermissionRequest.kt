@@ -39,4 +39,5 @@ data class UpdatePermissionRequest(
     val permName: String,
     var updatedBy: String,
     val updateAt: LocalDateTime,
+
 )

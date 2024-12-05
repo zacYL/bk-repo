@@ -168,7 +168,8 @@ class BkAuthPermissionServiceImpl constructor(
         projectId: String,
         userId: String,
         appId: String?,
-        actions: List<PermissionAction>?
+        actions: List<PermissionAction>?,
+        includePathAuthRepo: Boolean
     ): List<String> {
         // 用户为系统管理员
         if (isUserLocalAdmin(userId)) {
@@ -185,7 +186,7 @@ class BkAuthPermissionServiceImpl constructor(
                 return emptyList()
             }
         }
-        return super.listPermissionRepo(projectId, userId, appId, actions)
+        return super.listPermissionRepo(projectId, userId, appId, actions, includePathAuthRepo)
     }
 
     override fun checkPermission(request: CheckPermissionRequest): Boolean {

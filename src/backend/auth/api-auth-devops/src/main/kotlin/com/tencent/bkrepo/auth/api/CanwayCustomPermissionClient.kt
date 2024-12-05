@@ -74,7 +74,7 @@ interface CanwayCustomPermissionClient {
 
     @ApiOperation("自助查询权限列表")
     @PostMapping(
-        "/query",
+            "/query",
         produces = [MediaType.APPLICATION_JSON_VALUE],
         consumes = [MediaType.APPLICATION_JSON_VALUE]
     )

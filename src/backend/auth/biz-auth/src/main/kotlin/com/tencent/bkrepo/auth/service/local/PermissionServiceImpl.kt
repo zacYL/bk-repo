@@ -371,7 +371,8 @@ open class PermissionServiceImpl constructor(
         projectId: String,
         userId: String,
         appId: String?,
-        actions: List<PermissionAction>?
+        actions: List<PermissionAction>?,
+        includePathAuthRepo: Boolean
     ): List<String> {
         logger.debug("list repo permission request : [$projectId, $userId] ")
         val user = userRepository.findFirstByUserId(userId) ?: run {
@@ -511,6 +512,15 @@ open class PermissionServiceImpl constructor(
         return permissionRepository.findFirstById(id)?.let {
             transferPermission(it)
         }
+    }
+
+    override fun findOneByPermNameAndProjectIdAndResourceTypeAndRepos(
+        permName: String,
+        projectId: String?,
+        resourceType: ResourceType,
+        repo: String
+    ): Permission? {
+        TODO("Not yet implemented")
     }
 
     private fun checkPermissionExist(pId: String) {

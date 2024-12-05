@@ -75,7 +75,9 @@ interface ServicePermissionResource {
         @ApiParam(value = "应用ID")
         @RequestParam appId: String?,
         @ApiParam(value = "权限动作")
-        @RequestParam actions: List<PermissionAction>?
+        @RequestParam actions: List<PermissionAction>?,
+        @ApiParam(value = "是否包含仅授权路径参数的仓库")
+        @RequestParam includePathAuthRepo: Boolean = true
     ): Response<List<String>>
 
     @ApiOperation("list有权限项目")
@@ -226,5 +228,5 @@ interface ServicePermissionResource {
         @RequestParam repoNames: List<String>,
         @ApiParam(value = "仓库名称")
         @RequestParam action: PermissionAction
-    ): Response<Map<String,List<String>>>
+    ): Response<Map<String, List<String>>>
 }

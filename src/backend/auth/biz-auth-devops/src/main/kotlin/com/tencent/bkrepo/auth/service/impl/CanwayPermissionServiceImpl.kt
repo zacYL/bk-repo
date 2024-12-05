@@ -9,13 +9,12 @@ import com.tencent.bkrepo.auth.model.TPermission
 import com.tencent.bkrepo.auth.pojo.RegisterResourceRequest
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.auth.pojo.enums.ResourceType
-import com.tencent.bkrepo.auth.pojo.general.ScopeDTO
 import com.tencent.bkrepo.auth.pojo.permission.Permission
 import com.tencent.bkrepo.auth.pojo.permission.CheckPermissionRequest
 import com.tencent.bkrepo.auth.pojo.permission.CreatePermissionRequest
-import com.tencent.bkrepo.auth.pojo.permission.CustomPermissionQueryDTO
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionPathRequest
 import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRepoRequest
+import com.tencent.bkrepo.auth.pojo.permission.UpdatePermissionRequest
 import com.tencent.bkrepo.auth.repository.PermissionRepository
 import com.tencent.bkrepo.auth.repository.RoleRepository
 import com.tencent.bkrepo.auth.repository.UserRepository
@@ -29,6 +28,7 @@ import com.tencent.bkrepo.common.artifact.path.PathUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.data.mongodb.core.MongoTemplate
+import org.springframework.data.mongodb.core.query.Update
 import java.time.LocalDateTime
 import java.util.stream.Collectors
 import kotlin.streams.toList
@@ -227,10 +227,11 @@ class CanwayPermissionServiceImpl(
 
     override fun createPermission(request: CreatePermissionRequest): Boolean {
         logger.info("create  permission request : [$request]")
-        val permission = permissionRepository.findOneByPermNameAndProjectIdAndResourceType(
+        val permission = permissionRepository.findOneByPermNameAndProjectIdAndResourceTypeAndRepos(
             request.permName,
             request.projectId,
-            request.resourceType
+            request.resourceType,
+            request.repos.first()
         )
         permission?.let {
             logger.warn("create permission  [$request] is exist.")
@@ -388,7 +389,8 @@ class CanwayPermissionServiceImpl(
         projectId: String,
         userId: String,
         appId: String?,
-        actions: List<PermissionAction>?
+        actions: List<PermissionAction>?,
+        includePathAuthRepo: Boolean
     ): List<String> {
         logger.debug("list repo permission request : [$projectId, $userId] ")
 
@@ -403,8 +405,10 @@ class CanwayPermissionServiceImpl(
             repoList.addAll(listPublicRepo(projectId))
             // 获取该用户可查看的所有制品库仓库名称
             repoList.addAll(devOpsAuthGeneral.getUserPermission(projectId, userId))
-            // 获取用户有路径权限的仓库集合
-            repoList.addAll(devOpsAuthGeneral.getRepoWithPathPermission(projectId, userId))
+            if (includePathAuthRepo){
+                // 获取用户有路径权限的仓库集合
+                repoList.addAll(devOpsAuthGeneral.getRepoWithPathPermission(projectId, userId))
+            }
             logger.info("repoList:$repoList")
         } else {
             repoList.addAll(devOpsAuthGeneral.getUserActionPermission(projectId, userId, actions))

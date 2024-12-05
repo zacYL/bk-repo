@@ -35,7 +35,7 @@ import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 object PathUtil {
     fun generateFullPath(artifactInfo: CocoapodsArtifactInfo): String {
         return with(artifactInfo) {
-            "$orgName/$name/$version/$fileName"
+            "/$orgName/$name/$version/$fileName"
         }
     }
 

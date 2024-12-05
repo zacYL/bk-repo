@@ -36,7 +36,7 @@
                 </template>
             </bk-table-column>
             <!-- 仓库类型 -->
-            <bk-table-column :label="$t('storeTypes')" prop="packageType">
+            <bk-table-column :label="$t('repoType')" prop="packageType">
             </bk-table-column>
             <!-- 有效时间 -->
             <bk-table-column v-if="type === 'white'" :label="$t('validTime')" prop="expireDate">
@@ -237,7 +237,7 @@
             },
             removeBlackWhiteList (row) {
                 this.$bkInfoDevopsConfirm({
-                    subTitle: this.$t('deleteBlackWhiteTips', [this.active === 'white' ? this.$t('whiteList') : this.$t('blackList')]),
+                    subTitle: this.$t('deleteBlackWhiteTips', [this.type === 'white' ? this.$t('whiteList') : this.$t('blackList')]),
                     theme: 'danger',
                     confirmFn: () => {
                         const body = {

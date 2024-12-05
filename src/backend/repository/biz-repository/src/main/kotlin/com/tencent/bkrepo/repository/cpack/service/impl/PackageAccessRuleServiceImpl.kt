@@ -105,7 +105,7 @@ class PackageAccessRuleServiceImpl(
                 if (!key.contains(":")) where(TPackageAccessRule::key).isEqualTo(key) else {
                     Criteria().orOperator(
                         where(TPackageAccessRule::key).isEqualTo(key),
-                        where(TPackageAccessRule::key).isEqualTo(key.substringBefore(":"))
+                        where(TPackageAccessRule::key).isEqualTo(key.substringBefore(":") + ":*")
                     )
                 }
             )

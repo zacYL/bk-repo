@@ -84,7 +84,8 @@ class ProjectIdRuleInterceptor(
             val projectIdRule = Rule.QueryRule(NodeInfo::projectId.name, projectId, OperationType.EQ).toFixed()
 
             if (userAuthPath.isEmpty()) {
-                return context.interpreter.resolveRule(projectIdRule, context)
+                val neProjectIdRule = Rule.QueryRule(NodeInfo::projectId.name, projectId, OperationType.NE).toFixed()
+                return context.interpreter.resolveRule(NestedRule(mutableListOf(projectIdRule, neProjectIdRule), RelationType.AND), context)
             }
 
             val reposNestedRule = userAuthPath.map { (repoName, authPaths) ->

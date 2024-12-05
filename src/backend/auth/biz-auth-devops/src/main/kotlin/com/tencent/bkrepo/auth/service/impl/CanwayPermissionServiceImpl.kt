@@ -197,7 +197,7 @@ class CanwayPermissionServiceImpl(
                     pathCollection.includePattern.any { PathUtils.toPath(requestPath).startsWith(it) }
                 }.collect(Collectors.toList())
                 // 只要有个路径没有配置权限则返回没权限
-                if(collections.isEmpty()) return false
+                if (collections.isEmpty()) return false
                 requestPath to collections
             }.toMap()
 
@@ -210,7 +210,9 @@ class CanwayPermissionServiceImpl(
                 // 兼容以后任意权限的情况，同时也避免pathCollectionIds为空导致查出全部
                 pathCollectionIds.plus("*")
             )
-            val authCollectionIds = repoPathCollectPermission.filter { it.actionCode == action.toString().toLowerCase() }.map { it.instanceId }
+            val authCollectionIds =
+                repoPathCollectPermission.filter { it.actionCode == action.toString().toLowerCase() }
+                    .map { it.instanceId }
 
             val filter = pathToPathCollections.filter { (requestPath, pathMatchCollections) ->
                 // 只要有一个路径有权限，则返回有权限
@@ -290,6 +292,24 @@ class CanwayPermissionServiceImpl(
         if (devOpsAuthGeneral.isProjectOrSuperiorAdmin(userId, projectId)) {
             return repoNames.associateWith { listOf("/") }
         }
+
+        val repoAuthPathMap = repoNames.associateWith { mutableListOf<String>() }.toMutableMap()
+
+        repoNames.forEach { repoName ->
+            if (devOpsAuthGeneral.validateUserPermission(
+                    projectId = projectId,
+                    option = UserPermissionValidateDTO(
+                        userId = userId,
+                        instanceId = repoName,
+                        resourceCode = RESOURCECODE,
+                        actionCodes = listOf(action.toString().toLowerCase())
+                    )
+                )
+            ) {
+                repoAuthPathMap[repoName] = mutableListOf("/")
+            }
+        }
+
 
         val repoPathPermissions = devOpsAuthGeneral.getRepoPathCollectPermission(
             userId,
@@ -405,7 +425,7 @@ class CanwayPermissionServiceImpl(
             repoList.addAll(listPublicRepo(projectId))
             // 获取该用户可查看的所有制品库仓库名称
             repoList.addAll(devOpsAuthGeneral.getUserPermission(projectId, userId))
-            if (includePathAuthRepo){
+            if (includePathAuthRepo) {
                 // 获取用户有路径权限的仓库集合
                 repoList.addAll(devOpsAuthGeneral.getRepoWithPathPermission(projectId, userId))
             }

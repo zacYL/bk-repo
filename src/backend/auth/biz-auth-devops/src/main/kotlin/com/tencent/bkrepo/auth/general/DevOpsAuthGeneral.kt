@@ -16,6 +16,7 @@ import com.tencent.bkrepo.auth.pojo.permission.RemoveInstancePermissionsRequest
 import com.tencent.bkrepo.auth.pojo.permission.UserPermissionQueryDTO
 import com.tencent.bkrepo.auth.pojo.permission.UserPermissionValidateDTO
 import com.tencent.bkrepo.auth.pojo.role.SubjectDTO
+import com.tencent.bkrepo.auth.repository.PermissionRepository
 import com.tencent.bkrepo.auth.service.impl.CanwayPermissionServiceImpl
 import com.tencent.bkrepo.common.devops.REPO_PATH_RESOURCECODE
 import com.tencent.bkrepo.common.devops.REPO_PATH_SCOPE_CODE
@@ -29,7 +30,8 @@ class DevOpsAuthGeneral(
     private val canwayProjectClient: CanwayProjectClient,
     private val canwaySystemClient: CanwaySystemClient,
     private val canwayTenantClient: CanwayTenantClient,
-    private val canwayCustomPermissionClient: CanwayCustomPermissionClient
+    private val canwayCustomPermissionClient: CanwayCustomPermissionClient,
+    private val permissionRepository: PermissionRepository,
 ) {
     /**
      * 判断用户是否为系统管理员
@@ -172,8 +174,9 @@ class DevOpsAuthGeneral(
                 resourceCodes = listOf(REPO_PATH_RESOURCECODE)
             )
         ).data ?: emptyList()
+        val existsCollectionIds = permissionRepository.findByIdIn(permission.map { it.instanceId }).map { it.id }
         return permission.filter {
-            it.scopeCode == REPO_PATH_SCOPE_CODE
+            it.scopeCode == REPO_PATH_SCOPE_CODE && existsCollectionIds.contains(it.instanceId)
         }.map {
             // 这里截取是因为 scopeId格式为 projectId_repoName
             it.scopeId.substringAfter("_")

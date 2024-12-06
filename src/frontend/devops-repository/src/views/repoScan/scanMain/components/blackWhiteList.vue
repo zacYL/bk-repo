@@ -29,10 +29,16 @@
                     <span>{{row.key}}</span>
                 </template>
             </bk-table-column>
+            <!-- 版本逻辑 -->
+            <bk-table-column :label="$t('versionOperators')" prop="version">
+                <template #default="{ row }">
+                    <span>{{ OperatorMap[row.versionRuleType] }}</span>
+                </template>
+            </bk-table-column>
             <!-- 版本 -->
             <bk-table-column :label="$t('version')" prop="version">
                 <template #default="{ row }">
-                    <span>{{OperatorMap[row.versionRuleType] + ' ' + row.version}}</span>
+                    <span>{{ row.version}}</span>
                 </template>
             </bk-table-column>
             <!-- 仓库类型 -->

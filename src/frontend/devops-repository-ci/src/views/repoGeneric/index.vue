@@ -60,7 +60,7 @@
                             {{$t('batchDownload')}}
                         </bk-button>
                         <bk-button class="ml10"
-                            v-if="multiSelect.length && globalDeleteOperationPermission"
+                            v-if="multiSelect.length"
                             @click="handlerMultiDelete()">
                             {{$t('batchDeletion')}}
                         </bk-button>

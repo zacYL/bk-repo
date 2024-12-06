@@ -1,20 +1,20 @@
 <!--
  * @Date: 2024-12-05 15:00:22
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-12-06 09:52:59
+ * @LastEditTime: 2024-12-06 14:30:55
  * @FilePath: /artifact/src/frontend/devops-repository/src/components/OperationList/index.vue
 -->
 <template>
     <bk-popover
+        ref="operationPopover"
         :class="{ 'operation-trigger': !Object.keys($slots).length }"
         placement="bottom-end"
         theme="light"
         ext-cls="operation-container"
-        :on-show="() => $emit('show')"
         :tippy-options="{ trigger: 'click' }"
         v-bind="$attrs">
         <slot>
-            <i class="devops-icon icon-more flex-center hover-btn"></i>
+            <i class="devops-icon icon-more flex-center hover-btn" @click="$emit('iconClick',operationPopover)"></i>
         </slot>
         <template #content><ul class="operation-list">
             <li v-for="li in filterList" :key="li.label"
@@ -36,6 +36,9 @@
             }
         },
         computed: {
+            operationPopover () {
+                return this.$refs.operationPopover
+            },
             filterList () {
                 return this.list.filter(Boolean)
             }

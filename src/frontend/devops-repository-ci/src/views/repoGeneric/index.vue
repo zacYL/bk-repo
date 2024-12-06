@@ -140,7 +140,7 @@
                     <bk-table-column :label="$t('operation')" width="100">
                         <template #default="{ row }">
                             <operation-list
-                                @show="initPermission(row)"
+                                @iconClick="iconClick($event, row)"
                                 :list="generateActions(row)">
                             </operation-list>
                         </template>
@@ -385,6 +385,13 @@
                 'getCurrentRepositoryDataPermission',
                 'getPermissionActions'
             ]),
+            iconClick (ref, row) {
+                this.initPermission(row).then(() => {
+                    this.$nextTick(() => {
+                        ref && ref.showHandler()
+                    })
+                })
+            },
             toRecycleBin () {
                 this.$router.push({
                     name: 'repoRecycleBin',
@@ -939,7 +946,7 @@
                 this.handlerPaginationChange()
             },
             initPermission (row) {
-                this.getPermissionActions({ projectId: this.projectId, repoName: this.repoName, path: row.fullPath }).then(res => {
+                return this.getPermissionActions({ projectId: this.projectId, repoName: this.repoName, path: row.fullPath }).then(res => {
                     this.currentRepoDataPermission = res.actionCodes || []
                 })
             },

@@ -75,8 +75,11 @@ class ProjectIdRuleInterceptor(
         with(rule) {
             require(context is CommonQueryContext)
             val projectId = rule.value.toString()
-            val repoName = context.findRepoName()
+            val repoName = context.findRepoName().toMutableList()
             val userId = SecurityUtils.getUserId()
+            if(repoName.isEmpty()){
+                repoName.addAll(permissionManager.listRepo(projectId).data?.map { it.name }?: emptyList())
+            }
 
             val userAuthPath =
                 permissionManager.getUserAuthPathCache(UserAuthPathOption(userId, projectId, repoName, READ))

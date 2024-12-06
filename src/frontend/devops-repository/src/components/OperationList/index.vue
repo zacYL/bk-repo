@@ -1,7 +1,12 @@
+<!--
+ * @Date: 2024-12-05 15:00:22
+ * @LastEditors: xiaoshan
+ * @LastEditTime: 2024-12-06 09:52:59
+ * @FilePath: /artifact/src/frontend/devops-repository/src/components/OperationList/index.vue
+-->
 <template>
     <bk-popover
         :class="{ 'operation-trigger': !Object.keys($slots).length }"
-        :style="filterList.length ? '' : 'display:none;'"
         placement="bottom-end"
         theme="light"
         ext-cls="operation-container"

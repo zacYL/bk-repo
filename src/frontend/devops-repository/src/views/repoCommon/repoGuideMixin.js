@@ -959,7 +959,6 @@ export default {
                 }
             ]
         },
-        // todo
         gradleGuide () {
             return [
                 {

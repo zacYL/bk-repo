@@ -89,7 +89,12 @@
             dependTypes () {
                 let types = []
                 if (['maven', 'gradle'].includes(this.repoType)) {
-                    types = ['Apache Maven', 'Gradle Groovy DSL', 'Gradle Kotlin DSL']
+                    types = ['Gradle Groovy DSL', 'Gradle Kotlin DSL']
+                    if (this.repoType === 'gradle') {
+                        types.push('Apache Maven')
+                    } else if (this.repoType === 'maven') {
+                        types.unshift('Apache Maven')
+                    }
                 } else if (this.repoType === 'npm') {
                     types = ['npm', 'yarn']
                 }

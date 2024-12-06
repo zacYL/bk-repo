@@ -22,6 +22,7 @@
                         <bk-form-item :label="$t('repoType')" :property="'packageType'">
                             <bk-select
                                 v-model="query.packageType"
+                                :clearable="false"
                                 :placeholder="$t('allTypes')">
                                 <bk-option v-for="type in repoEnum.filter(v => v.value !== 'generic')" :key="type.value" :id="type.value" :name="type.label">
                                     <div class="flex-align-center">
@@ -85,20 +86,6 @@
                     version: ''
                 },
                 rules: {
-                    key: [
-                        {
-                            regex: /^[a-zA-Z0-9._-]+$/,
-                            message: this.$t('BlackWhiteAddCheckTips'),
-                            trigger: 'blur'
-                        }
-                    ],
-                    version: [
-                        {
-                            regex: /^[a-zA-Z0-9._-]+$/,
-                            message: this.$t('BlackWhiteAddCheckTips'),
-                            trigger: 'blur'
-                        }
-                    ]
                 }
             }
         },

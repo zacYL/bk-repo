@@ -326,7 +326,7 @@ class CanwayPermissionServiceImpl(
         authPathCollections.groupBy { it.repos.first() }.map { repoGroup ->
             repoAuthPathMap[repoGroup.key]?.addAll(repoGroup.value.flatMap { it.includePattern }.distinct())
         }
-        return repoAuthPathMap
+        return repoAuthPathMap.filter { it.value.isNotEmpty() }
     }
 
     /**

@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-12-05 15:00:22
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-12-06 14:30:55
+ * @LastEditTime: 2024-12-06 16:06:59
  * @FilePath: /artifact/src/frontend/devops-repository/src/components/OperationList/index.vue
 -->
 <template>
@@ -10,6 +10,7 @@
         :class="{ 'operation-trigger': !Object.keys($slots).length }"
         placement="bottom-end"
         theme="light"
+        :disabled="filterList.length === 0"
         ext-cls="operation-container"
         :tippy-options="{ trigger: 'click' }"
         v-bind="$attrs">

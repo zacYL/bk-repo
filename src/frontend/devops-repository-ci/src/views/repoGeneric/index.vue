@@ -966,7 +966,7 @@
                         if (this.updateOperationPermission && !this.isRemote) {
                             actions.push({ clickEvent: () => this.renameRes(row), label: this.$t('rename') })
                         }
-                        if (!this.whetherSoftware && !this.isRemote) {
+                        if (!this.whetherSoftware && !this.isRemote && this.readOperationPermission) {
                             actions.push({ clickEvent: () => this.moveRes(row), label: this.$t('move') })
                             actions.push({ clickEvent: () => this.copyRes(row), label: this.$t('copy') })
                         }

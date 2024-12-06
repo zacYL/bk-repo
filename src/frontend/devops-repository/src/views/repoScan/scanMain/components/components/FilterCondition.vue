@@ -124,7 +124,9 @@
             },
             confirm () {
                 this.$refs.queryForm.validate().then(() => {
-                    this.$emit('confirm', cloneDeep(this.query), () => {
+                    const subQuery = cloneDeep(this.query)
+                    subQuery.packageType = subQuery.packageType.toUpperCase()
+                    this.$emit('confirm', subQuery, () => {
                         this.close()
                     })
                 }).catch(() => {})

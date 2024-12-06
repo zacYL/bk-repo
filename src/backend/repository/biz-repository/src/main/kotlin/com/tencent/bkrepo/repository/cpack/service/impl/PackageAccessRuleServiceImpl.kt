@@ -13,6 +13,7 @@ import com.tencent.bkrepo.repository.model.TPackageAccessRule
 import com.tencent.bkrepo.repository.pojo.packages.PackageAccessRule
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageAccessRuleRequest
+import com.tencent.bkrepo.repository.util.AccessRuleQueryHelper
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
@@ -84,19 +85,9 @@ class PackageAccessRuleServiceImpl(
         type: PackageType?,
         key: String?,
         version: String?,
-        pass: Boolean?
+        pass: Boolean?,
     ): Page<PackageAccessRule> {
-        val query = Query(where(TPackageAccessRule::projectId).`is`(projectId))
-            .apply {
-                if (type != null) addCriteria(where(TPackageAccessRule::packageType).isEqualTo(type))
-                if (pass != null) addCriteria(where(TPackageAccessRule::pass).isEqualTo(pass))
-                if (version != null) addCriteria(where(TPackageAccessRule::version).isEqualTo(version))
-                if (key != null) {
-                    val escapedValue = MongoEscapeUtils.escapeRegexExceptWildcard(key)
-                    val regexPattern = escapedValue.replace("*", ".*")
-                    addCriteria(where(TPackageAccessRule::key).regex("^$regexPattern$", "i"))
-                }
-            }
+        val query = AccessRuleQueryHelper.ruleQuery(projectId, type, pass, version, key)
         val pageRequest =
             PageRequest.of(pageNumber - 1, pageSize, Sort.Direction.DESC, TPackageAccessRule::createdDate.name)
         val count = packageAccessRuleDao.count(query)

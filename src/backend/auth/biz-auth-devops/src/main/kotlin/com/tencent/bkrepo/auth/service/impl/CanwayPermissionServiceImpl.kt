@@ -323,10 +323,10 @@ class CanwayPermissionServiceImpl(
             repoPathPermissions.filter { it.actionCode == action.name.toLowerCase() }
                 .map { it.instanceId }
         val authPathCollections = permissionRepository.findByIdIn(repoPathCollectionsIds)
-
-        return authPathCollections.groupBy { it.repos.first() }.map { repoGroup ->
-            repoGroup.key to repoGroup.value.flatMap { it.includePattern }.distinct()
-        }.toMap()
+        authPathCollections.groupBy { it.repos.first() }.map { repoGroup ->
+            repoAuthPathMap[repoGroup.key]?.addAll(repoGroup.value.flatMap { it.includePattern }.distinct())
+        }
+        return repoAuthPathMap
     }
 
     /**

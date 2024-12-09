@@ -147,6 +147,12 @@ allprojects {
         exclude(group = "org.springframework.data", module = "spring-data-mongodb")
         exclude(group = "org.springframework.cloud", module = "spring-cloud-function-context")
         exclude(group = "org.springframework.cloud", module = "spring-cloud-function-core")
+
+        if (project.name.startsWith("boot-")) {
+            project.dependencies {
+                compileOnly("net.canway.devops:devops-debug7:6.0.0-SNAPSHOT")
+            }
+        }
     }
 
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {

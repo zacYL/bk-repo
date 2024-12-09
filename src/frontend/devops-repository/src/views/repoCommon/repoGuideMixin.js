@@ -1890,13 +1890,13 @@ export default {
                         {
                             key: 'dependInputValue1', // vux中存储的变量名
                             label: this.$t('packageTargetFilePath'), // 输入框左侧label文案
-                            placeholder: this.$t('pleaseInput') + this.$t('space') + this.$t('artifactNamePlaceholder'), // 输入框提示文案
+                            placeholder: this.$t('packageTargetFilePathPlaceholder'), // 输入框提示文案
                             methodFunctionName: 'SET_DEPEND_INPUT_VALUE1' // vuex中mutations中的方法名
                         },
                         {
                             key: 'dependInputValue2', // vux中存储的变量名
                             label: this.$t('uploadedFilePath'), // 输入框左侧label文案
-                            placeholder: this.$t('pleaseInput') + this.$t('space') + this.$t('uploadedFilePath'), // 输入框提示文案
+                            placeholder: this.$t('uploadedFilePathPlaceholder'), // 输入框提示文案
                             methodFunctionName: 'SET_DEPEND_INPUT_VALUE2' // vuex中mutations中的方法名
                         }
                     ],

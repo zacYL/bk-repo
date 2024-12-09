@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-21 14:16:15
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-12-05 15:28:43
+ * @LastEditTime: 2024-12-09 17:00:38
  * @FilePath: /artifact/src/frontend/devops-repository/src/views/repoScan/scanMain/components/components/AddBlackWhiteRepoDialog.vue
 -->
 <template>
@@ -169,7 +169,12 @@
                 VersionComparisonOperator,
                 DockerVersionComparisonOperator,
                 form: cloneDeep(baseForm),
-                rules: {
+                btnLoading: false
+            }
+        },
+        computed: {
+            rules () {
+                return {
                     name: [
                         {
                             required: true,
@@ -203,21 +208,24 @@
                             trigger: 'blur'
                         }
                     ],
-                    version: [
-                        {
-                            required: true,
-                            message: this.$t('pleaseInput') + this.$t('space') + this.$t('version'),
-                            trigger: 'blur'
-                        },
-                        {
-                            regex: /^[a-zA-Z0-9._-]+$/,
-                            message: this.$t('BlackWhiteAddCheckTips'),
-                            trigger: 'blur'
+                    // docker版本实际上是tab，不遵循语义化规则，所以前端不限制
+                    ...this.form.repoType !== 'docker'
+                        ? {
+                            version: [
+                                {
+                                    required: true,
+                                    message: this.$t('pleaseInput') + this.$t('space') + this.$t('version'),
+                                    trigger: 'blur'
+                                },
+                                {
+                                    regex: /^[a-zA-Z0-9._-]+$/,
+                                    message: this.$t('BlackWhiteAddCheckTips'),
+                                    trigger: 'blur'
+                                }
+                            ]
                         }
-                    ]
-
-                },
-                btnLoading: false
+                        : {}
+                }
             }
         },
         watch: {

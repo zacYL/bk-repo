@@ -59,7 +59,6 @@ class UserCpackNodeController(
 ) {
 
     @ApiOperation("批量删除节点")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.DELETE)
     @DeleteMapping("/batch/{projectId}/{repoName}")
     fun batchDeleteNode(
         @RequestAttribute userId: String,
@@ -78,7 +77,6 @@ class UserCpackNodeController(
     }
 
     @ApiOperation("统计批量删除节点数")
-    @Permission(type = ResourceType.REPO, action = PermissionAction.DELETE)
     @PostMapping("/batch/{projectId}/{repoName}")
     fun countBatchDeleteNode(
         @RequestAttribute userId: String,

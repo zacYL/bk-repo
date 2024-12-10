@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.generic.artifact
 
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.common.api.constant.CharPool
 import com.tencent.bkrepo.common.api.constant.DEFAULT_PAGE_NUMBER
 import com.tencent.bkrepo.common.api.constant.HttpHeaders.CONTENT_RANGE
@@ -63,6 +64,7 @@ import com.tencent.bkrepo.common.artifact.stream.EmptyInputStream
 import com.tencent.bkrepo.common.artifact.stream.Range
 import com.tencent.bkrepo.common.artifact.util.chunked.ChunkedUploadUtils
 import com.tencent.bkrepo.common.query.model.Rule
+import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.common.service.util.HeaderUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
@@ -87,6 +89,7 @@ import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.node.NodeListOption
+import com.tencent.bkrepo.repository.pojo.node.UserAuthPathOption
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
@@ -101,7 +104,8 @@ import kotlin.reflect.full.memberProperties
 
 @Component
 class GenericLocalRepository(
-    private val pipelineNodeClient: PipelineNodeClient
+    private val pipelineNodeClient: PipelineNodeClient,
+    private val permissionManager: PermissionManager,
 ) : LocalRepository() {
 
     override fun onUploadBefore(context: ArtifactUploadContext) {
@@ -110,9 +114,9 @@ class GenericLocalRepository(
         val overwrite = HeaderUtils.getBooleanHeader(HEADER_OVERWRITE)
         val uploadId = HeaderUtils.getHeader(HEADER_UPLOAD_ID)
         val sequence = HeaderUtils.getHeader(HEADER_SEQUENCE)?.toInt()
-        with(context.artifactInfo){
+        with(context.artifactInfo) {
             nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data?.let {
-                if (!overwrite && !isBlockUpload(uploadId, sequence)){
+                if (!overwrite && !isBlockUpload(uploadId, sequence)) {
                     throw ErrorCodeException(ArtifactMessageCode.NODE_EXISTED, getArtifactName())
                 }
                 uploadIntercept(context, it)
@@ -205,6 +209,19 @@ class GenericLocalRepository(
                 return downloadFolder(this, node)
             }
             downloadIntercept(this, node)
+            val userAuthPathCache = permissionManager.getUserAuthPathCache(
+                UserAuthPathOption(
+                    userId,
+                    projectId,
+                    listOf(repoName),
+                    PermissionAction.READ
+                )
+            )[repoName]?: emptyList()
+
+            val hasAuth =
+                userAuthPathCache.any { authPath -> PathUtils.toPath(node.fullPath).startsWith(authPath) }
+            if (!hasAuth) return null
+
             val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials) ?: return null
             val responseName = artifactInfo.getResponseName()
             nodeClient.updateRecentlyUseDate(node.projectId, node.repoName, node.fullPath)
@@ -239,7 +256,18 @@ class GenericLocalRepository(
                 throw NodeNotFoundException(notExistNodes.joinToString(StringPool.COMMA))
             }
             nodes.forEach { downloadIntercept(this, it) }
-            val nodeMap = nodes.associate {
+
+            val userAuthPathCache = permissionManager.getUserAuthPathCache(
+                UserAuthPathOption(
+                    userId,
+                    projectId,
+                    listOf(repoName),
+                    PermissionAction.READ
+                )
+            )[repoName]?: emptyList()
+
+            val nodeMap = nodes.filter {
+                userAuthPathCache.any { authPath -> PathUtils.toPath(it.fullPath).startsWith(authPath) }}.associate {
                 val name = it.fullPath.removePrefix(prefix)
                 val inputStream = storageManager.loadArtifactInputStream(it, context.storageCredentials)
                     ?: throw ArtifactNotFoundException(it.fullPath)
@@ -262,7 +290,7 @@ class GenericLocalRepository(
             val removePrefix = PathUtils.resolveParent(commonPrefix)
             // 节点的公共目录为根目录时，以仓库名添加额外的目录层级
             val addPath = if (commonPrefix == StringPool.ROOT && fullPathList.size > 1) repoName + StringPool.SLASH
-                else ""
+            else ""
             // 根据请求参数查询节点，如有不存在节点则抛出异常
             val nodes = getNodeDetailsFromReq(true)
                 ?: queryNodeDetailList(
@@ -285,7 +313,17 @@ class GenericLocalRepository(
             checkCountAndSize(allNodes.filter { !it.folder }.onEach { downloadIntercept(this, it) })
             // 构建节点-流映射。文件节点：更新文件使用时间并返回构件输入流；目录节点：返回空构件输入流
             val emptyArtifactInputStream = ArtifactInputStream(EmptyInputStream.INSTANCE, Range.full(0))
-            val nodeMap = allNodes.associateBy(
+            val userAuthPathCache = permissionManager.getUserAuthPathCache(
+                UserAuthPathOption(
+                    userId,
+                    projectId,
+                    listOf(repoName),
+                    PermissionAction.READ
+                )
+            )[repoName] ?: emptyList()
+            val nodeMap = allNodes.filter {
+                userAuthPathCache.any { authPath -> PathUtils.toPath(it.fullPath).startsWith(authPath) }
+            }.associateBy(
                 {
                     if (it.folder) {
                         addPath + it.fullPath.removePrefix(removePrefix).ensureSuffix(StringPool.SLASH)
@@ -302,7 +340,8 @@ class GenericLocalRepository(
                     }
                 }
             )
-            val node = if (allNodes.size == 1) allNodes.first() else null
+            val node = if (nodeMap.isEmpty()) allNodes.map { it to it.fullPath.split(StringPool.SLASH) }
+                .minByOrNull { it.second.size }?.first else null
             val srcRepo = RepositoryIdentify(context.projectId, context.repoName)
             return if (download) ArtifactResource(nodeMap, srcRepo, node, useDisposition = true) else null
         }
@@ -321,7 +360,7 @@ class GenericLocalRepository(
             while (true) {
                 val records = nodeClient.listNodePage(projectId, repoName, fullPath, option).data?.records
                     .takeUnless { it.isNullOrEmpty() } ?: return nodes
-                option.pageNumber ++
+                option.pageNumber++
                 nodes.addAll(records.map { NodeDetail(it) })
             }
         }
@@ -356,7 +395,7 @@ class GenericLocalRepository(
                     NodeDetail(it)
                 }
             )
-            pageNumber ++
+            pageNumber++
         } while (nodeDetailList.size < paths.size)
         return nodeDetailList
     }
@@ -378,7 +417,19 @@ class GenericLocalRepository(
         }
         // 构造name-node map
         val prefix = "${node.fullPath}/"
-        val nodeMap = nodes.associate {
+
+        val userAuthPathCache = permissionManager.getUserAuthPathCache(
+            UserAuthPathOption(
+                context.userId,
+                context.projectId,
+                listOf(context.repoName),
+                PermissionAction.READ
+            )
+        )[context.repoName] ?: emptyList()
+
+        val nodeMap = nodes.filter {
+            userAuthPathCache.any { authPath -> PathUtils.toPath(it.fullPath).startsWith(authPath) }
+        }.associate {
             nodeClient.updateRecentlyUseDate(it.projectId, it.repoName, it.fullPath)
             val name = it.fullPath.removePrefix(prefix)
             val inputStream = storageManager.loadArtifactInputStream(it, context.storageCredentials) ?: return null
@@ -398,6 +449,7 @@ class GenericLocalRepository(
         }
         return nodeDetailList
     }
+
     /**
      * 检查文件数量是否超过阈值
      * @throws ErrorCodeException 超过阈值抛出NODE_LIST_TOO_LARGE类型ErrorCodeException
@@ -609,7 +661,7 @@ class GenericLocalRepository(
             val length = context.request.contentLength
             logger.info(
                 "The file with range $range and length $length in repo $projectId|$repoName " +
-                    "is being uploaded with uuid: $uuid"
+                        "is being uploaded with uuid: $uuid"
             )
 
             val lengthOfAppendFile = storageService.findLengthOfAppendFile(
@@ -624,6 +676,7 @@ class GenericLocalRepository(
                 ChunkedUploadUtils.RangeStatus.ILLEGAL_RANGE -> {
                     Pair(length.toLong(), HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE)
                 }
+
                 ChunkedUploadUtils.RangeStatus.READY_TO_APPEND -> {
                     val patchLen = storageService.append(
                         appendId = uuid!!,
@@ -632,14 +685,16 @@ class GenericLocalRepository(
                     )
                     logger.info(
                         "Part of file with sha256 $sha256 in repo $projectId|$repoName " +
-                            "has been uploaded, size of append file is $patchLen and uuid: $uuid"
+                                "has been uploaded, size of append file is $patchLen and uuid: $uuid"
                     )
                     Pair(patchLen, HttpStatus.ACCEPTED)
                 }
+
                 else -> {
                     logger.info(
                         "Part of file with sha256 $sha256 in repo $projectId|$repoName " +
-                            "already appended, size of append file is $lengthOfAppendFile and uuid: $uuid")
+                                "already appended, size of append file is $lengthOfAppendFile and uuid: $uuid"
+                    )
                     Pair(lengthOfAppendFile, HttpStatus.ACCEPTED)
                 }
             }
@@ -676,7 +731,7 @@ class GenericLocalRepository(
             )
             logger.info(
                 "The file with sha256 $sha256 in repo $projectId|$repoName " +
-                    "has been uploaded with uuid: $uuid"
+                        "has been uploaded with uuid: $uuid"
             )
             val property = ChunkedResponseProperty(
                 status = HttpStatus.CREATED,

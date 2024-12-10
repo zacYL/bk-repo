@@ -1,16 +1,19 @@
 package com.tencent.bkrepo.repository.cpack.service.impl
 
+import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.api.util.toJsonString
 import com.tencent.bkrepo.common.artifact.constant.LOCK_STATUS
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.path.PathUtils
+import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
 import com.tencent.bkrepo.repository.cpack.pojo.node.service.NodeBatchDeleteRequest
 import com.tencent.bkrepo.repository.cpack.service.NodeCpackService
 import com.tencent.bkrepo.repository.dao.NodeDao
 import com.tencent.bkrepo.repository.model.TNode
+import com.tencent.bkrepo.repository.pojo.node.UserAuthPathOption
 import com.tencent.bkrepo.repository.service.node.impl.NodeBaseService
 import com.tencent.bkrepo.repository.service.repo.QuotaService
 import com.tencent.bkrepo.repository.util.MetadataUtils
@@ -19,6 +22,7 @@ import com.tencent.bkrepo.repository.util.NodeQueryHelper
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
+import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Update
 import org.springframework.data.mongodb.core.query.and
@@ -32,13 +36,36 @@ import java.time.LocalDateTime
 class NodeCpackServiceImpl(
     private val nodeBaseService: NodeBaseService,
     private val quotaService: QuotaService,
-    private val nodeDao: NodeDao
+    private val nodeDao: NodeDao,
+    private val permissionManager: PermissionManager
 ) : NodeCpackService {
     override fun nodeBatchDelete(nodeBatchDeleteRequest: NodeBatchDeleteRequest) {
+        val userAuthPath = permissionManager.getUserAuthPathCache(
+            UserAuthPathOption(
+                nodeBatchDeleteRequest.operator,
+                nodeBatchDeleteRequest.projectId,
+                listOf(nodeBatchDeleteRequest.repoName),
+                PermissionAction.DELETE
+            )
+        )[nodeBatchDeleteRequest.repoName]?: emptyList()
         val existNodes = existNodes(nodeBatchDeleteRequest)
         // 删除文件夹
         with(nodeBatchDeleteRequest) {
-            if (existNodes.isEmpty()) return // 如果没有文件夹，则直接返回
+            if (existNodes.isEmpty()||userAuthPath.isEmpty()) return
+
+            val authOrOperation = mutableListOf(
+                where(TNode::fullPath).inValues(userAuthPath)
+            )
+
+            userAuthPath.forEach {
+                val normalizedFullPath = PathUtils.normalizeFullPath(it)
+                val normalizedPath = PathUtils.toPath(normalizedFullPath)
+                val escapedPath = PathUtils.escapeRegex(normalizedPath)
+                authOrOperation.apply {
+                    add(where(TNode::fullPath).regex("^$escapedPath"))
+                }
+            }
+
             val orOperation = mutableListOf(
                 where(TNode::fullPath).inValues(existNodes)
             )
@@ -49,10 +76,18 @@ class NodeCpackServiceImpl(
                     add(where(TNode::fullPath).regex("^$escapedPath"))
                 }
             }
+
+
+            val authOrCriteria = Criteria().orOperator(*authOrOperation.toTypedArray())
+
+            val orCriteria = Criteria().orOperator(*orOperation.toTypedArray())
+
+            val andOperator = Criteria().andOperator(authOrCriteria, orCriteria)
+
             val criteria = where(TNode::projectId).isEqualTo(projectId)
                 .and(TNode::repoName).isEqualTo(repoName)
                 .and(TNode::deleted).isEqualTo(null)
-                .orOperator(*orOperation.toTypedArray())
+                .andOperator(andOperator)
             val query = Query(criteria)
             val deleteNodesSize = nodeBaseService.aggregateComputeSize(criteria)
             try {
@@ -112,10 +147,33 @@ class NodeCpackServiceImpl(
      */
     override fun countBatchDeleteNodes(nodeBatchDeleteRequest: NodeBatchDeleteRequest): Long {
         // 不允许直接删除根目录
+        val userAuthPath = permissionManager.getUserAuthPathCache(
+            UserAuthPathOption(
+                nodeBatchDeleteRequest.operator,
+                nodeBatchDeleteRequest.projectId,
+                listOf(nodeBatchDeleteRequest.repoName),
+                PermissionAction.DELETE
+            )
+        )[nodeBatchDeleteRequest.repoName]?: emptyList()
         val existNodes = existNodes(nodeBatchDeleteRequest)
+
         // 统计文件夹下制品数
         with(nodeBatchDeleteRequest) {
-            if (existNodes.isEmpty()) return 0L
+            if (existNodes.isEmpty()||userAuthPath.isEmpty()) return 0L
+
+            val authOrOperation = mutableListOf(
+                where(TNode::fullPath).inValues(userAuthPath)
+            )
+
+            userAuthPath.forEach {
+                val normalizedFullPath = PathUtils.normalizeFullPath(it)
+                val normalizedPath = PathUtils.toPath(normalizedFullPath)
+                val escapedPath = PathUtils.escapeRegex(normalizedPath)
+                authOrOperation.apply {
+                    add(where(TNode::fullPath).regex("^$escapedPath"))
+                }
+            }
+
             val orOperation = mutableListOf(
                 where(TNode::fullPath).inValues(existNodes)
             )
@@ -127,11 +185,18 @@ class NodeCpackServiceImpl(
                     add(where(TNode::fullPath).regex("^$escapedPath"))
                 }
             }
+
+            val authOrCriteria = Criteria().orOperator(*authOrOperation.toTypedArray())
+
+            val orCriteria = Criteria().orOperator(*orOperation.toTypedArray())
+
+            val andOperator = Criteria().andOperator(authOrCriteria, orCriteria)
+
             val criteria = where(TNode::projectId).isEqualTo(projectId)
                 .and(TNode::repoName).isEqualTo(repoName)
                 .and(TNode::deleted).isEqualTo(null)
                 .and(TNode::folder).isEqualTo(false)
-                .orOperator(*orOperation.toTypedArray())
+                .andOperator(andOperator)
             return nodeDao.count(Query.query(criteria))
         }
     }

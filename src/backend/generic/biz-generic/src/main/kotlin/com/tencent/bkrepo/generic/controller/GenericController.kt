@@ -157,12 +157,6 @@ class GenericController(
     ) {
         val artifacts = batchDownloadPaths.paths.map { GenericArtifactInfo(projectId, repoName, it) }
             .distinctBy { it.getArtifactFullPath() }
-        permissionManager.checkNodePermission(
-            action = PermissionAction.READ,
-            projectId = projectId,
-            repoName = repoName,
-            path = *artifacts.map { it.getArtifactFullPath() }.toTypedArray()
-        )
         downloadService.batchDownload(artifacts)
     }
 
@@ -174,12 +168,6 @@ class GenericController(
     ) {
         with(artifactInfo) {
             val artifactPaths = DownloadParamResolver.resolveMultiNodeIdParam(projectId, id, nodeClient)
-            permissionManager.checkNodePermission(
-                action = PermissionAction.READ,
-                projectId = projectId,
-                repoName = repoName,
-                path = artifactPaths.toTypedArray()
-            )
             downloadService.batchDownload(
                 artifactPaths.map { GenericArtifactInfo(projectId, repoName, it) },
                 multiFolder = true,

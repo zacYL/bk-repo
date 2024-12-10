@@ -233,12 +233,14 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
      */
     open fun onDownloadBefore(context: ArtifactDownloadContext) {
         with(context) {
-            checkPackageAccessRule(
-                projectId,
-                PackageType.valueOf(repositoryDetail.type.name),
-                artifactInfo.getPackageFullName(),
-                artifactInfo.getArtifactVersion()
-            )
+            if (repositoryDetail.type.supportPackage) {
+                checkPackageAccessRule(
+                    projectId,
+                    PackageType.valueOf(repositoryDetail.type.name),
+                    artifactInfo.getPackageFullName(),
+                    artifactInfo.getArtifactVersion()
+                )
+            }
         }
         // 控制浏览器直接下载，或打开预览
         context.useDisposition = context.request.getParameter(PARAM_DOWNLOAD)?.toBoolean() ?: false

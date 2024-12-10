@@ -106,14 +106,16 @@ class DownloadService(
     fun batchDownload(
         artifactInfoList: List<GenericArtifactInfo>,
         multiFolder: Boolean = false,
-        download: Boolean = true
+        download: Boolean = true,
+        filterAuth: Boolean = true
     ) {
         val context = ArtifactDownloadContext(
             artifact = artifactInfoList.first(),
             artifacts = artifactInfoList,
             repo = ArtifactContextHolder.getRepoDetail(),
             multiFolder = multiFolder,
-            download = download
+            download = download,
+            filterAuth = filterAuth
         )
         repository.download(context)
     }

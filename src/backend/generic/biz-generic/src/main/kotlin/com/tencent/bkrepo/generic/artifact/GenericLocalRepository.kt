@@ -202,25 +202,15 @@ class GenericLocalRepository(
      */
     private fun downloadSingleNode(context: ArtifactDownloadContext): ArtifactResource? {
         with(context) {
-            val node = getNodeDetailsFromReq(true)?.firstOrNull()
+            var node = getNodeDetailsFromReq(true)?.firstOrNull()
                 ?: ArtifactContextHolder.getNodeDetail(artifactInfo)
                 ?: return null
             if (node.folder) {
                 return downloadFolder(this, node)
             }
             downloadIntercept(this, node)
-            val userAuthPathCache = permissionManager.getUserAuthPathCache(
-                UserAuthPathOption(
-                    userId,
-                    projectId,
-                    listOf(repoName),
-                    PermissionAction.READ
-                )
-            )[repoName]?: emptyList()
 
-            val hasAuth =
-                userAuthPathCache.any { authPath -> PathUtils.toPath(node.fullPath).startsWith(authPath) }
-            if (!hasAuth) return null
+            node = listOf(node).filterNodeByAuth(context).firstOrNull()?: return null
 
             val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials) ?: return null
             val responseName = artifactInfo.getResponseName()
@@ -257,17 +247,7 @@ class GenericLocalRepository(
             }
             nodes.forEach { downloadIntercept(this, it) }
 
-            val userAuthPathCache = permissionManager.getUserAuthPathCache(
-                UserAuthPathOption(
-                    userId,
-                    projectId,
-                    listOf(repoName),
-                    PermissionAction.READ
-                )
-            )[repoName]?: emptyList()
-
-            val nodeMap = nodes.filter {
-                userAuthPathCache.any { authPath -> PathUtils.toPath(it.fullPath).startsWith(authPath) }}.associate {
+            val nodeMap = nodes.filterNodeByAuth(context).associate {
                 val name = it.fullPath.removePrefix(prefix)
                 val inputStream = storageManager.loadArtifactInputStream(it, context.storageCredentials)
                     ?: throw ArtifactNotFoundException(it.fullPath)
@@ -313,17 +293,7 @@ class GenericLocalRepository(
             checkCountAndSize(allNodes.filter { !it.folder }.onEach { downloadIntercept(this, it) })
             // 构建节点-流映射。文件节点：更新文件使用时间并返回构件输入流；目录节点：返回空构件输入流
             val emptyArtifactInputStream = ArtifactInputStream(EmptyInputStream.INSTANCE, Range.full(0))
-            val userAuthPathCache = permissionManager.getUserAuthPathCache(
-                UserAuthPathOption(
-                    userId,
-                    projectId,
-                    listOf(repoName),
-                    PermissionAction.READ
-                )
-            )[repoName] ?: emptyList()
-            val nodeMap = allNodes.filter {
-                userAuthPathCache.any { authPath -> PathUtils.toPath(it.fullPath).startsWith(authPath) }
-            }.associateBy(
+            val nodeMap = allNodes.filterNodeByAuth(context).associateBy(
                 {
                     if (it.folder) {
                         addPath + it.fullPath.removePrefix(removePrefix).ensureSuffix(StringPool.SLASH)
@@ -346,6 +316,27 @@ class GenericLocalRepository(
             return if (download) ArtifactResource(nodeMap, srcRepo, node, useDisposition = true) else null
         }
     }
+
+    private fun List<NodeDetail>.filterNodeByAuth(context: ArtifactDownloadContext): List<NodeDetail> {
+        val nodes = this
+        with(context){
+            return if (filterAuth) {
+                val userAuthPathCache = permissionManager.getUserAuthPathCache(
+                    UserAuthPathOption(
+                        userId,
+                        projectId,
+                        listOf(repoName),
+                        PermissionAction.READ
+                    )
+                )[repoName] ?: emptyList()
+                nodes.filter {
+                    userAuthPathCache.any { authPath -> PathUtils.toPath(it.fullPath).startsWith(authPath) }
+                }
+            } else {
+                nodes
+            }
+        }
+   }
 
     private fun getSubNodes(folder: NodeDetail, includeFolder: Boolean = true): List<NodeDetail> {
         with(folder) {

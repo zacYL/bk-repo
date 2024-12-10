@@ -78,7 +78,7 @@ class TemporaryAccessController(
     private val permissionManager: PermissionManager,
     private val genericProperties: GenericProperties,
     private val downloadService: DownloadService
-    ) {
+) {
 
     @PostMapping("/token/create")
     fun createToken(@RequestBody request: TemporaryTokenCreateRequest): Response<List<TemporaryAccessToken>> {
@@ -93,7 +93,12 @@ class TemporaryAccessController(
     @PostMapping("/url/create")
     fun createUrl(@RequestBody request: TemporaryUrlCreateRequest): Response<List<TemporaryAccessUrl>> {
         with(request) {
-            permissionManager.checkNodePermission(PermissionAction.SHARE, projectId, repoName, path = fullPathSet.toTypedArray())
+            permissionManager.checkNodePermission(
+                PermissionAction.SHARE,
+                projectId,
+                repoName,
+                path = fullPathSet.toTypedArray()
+            )
             return ResponseBuilder.success(temporaryAccessService.createUrl(request))
         }
     }
@@ -107,7 +112,7 @@ class TemporaryAccessController(
         val tokenInfo = temporaryAccessService.validateToken(token, artifactInfo, TokenType.DOWNLOAD)
         require(userId != ANONYMOUS_USER) { throw AuthenticationException() }
         temporaryAccessService.decrementPermits(tokenInfo)
-        downloadService.batchDownload(listOf(artifactInfo), true, true)
+        downloadService.batchDownload(listOf(artifactInfo), true, true, false)
     }
 
     /**

@@ -128,9 +128,8 @@ class ConanRemoteRepository : RemoteRepository() {
     override fun onDownloadBefore(context: ArtifactDownloadContext) {
         super.onDownloadBefore(context)
         with(context.artifactInfo as ConanArtifactInfo) {
-            val packageKey = PackageKeys.ofConan(buildRefStr(this))
-            packageClient.findVersionByName(projectId, repoName, packageKey, version).data
-                ?.apply { packageDownloadIntercept(context, packageKey, this) }
+            packageClient.findVersionByName(projectId, repoName, PackageKeys.ofConan(buildRefStr(this)), version).data
+                ?.apply { packageDownloadIntercept(context, this) }
         }
     }
 

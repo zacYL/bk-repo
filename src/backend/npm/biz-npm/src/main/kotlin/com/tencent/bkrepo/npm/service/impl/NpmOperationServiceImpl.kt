@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service
 class NpmOperationServiceImpl(
     private val packageClient: PackageClient
 ) : NpmOperationService {
-    override fun packageVersion(context: ArtifactContext): Pair<String, PackageVersion>? {
+    override fun packageVersion(context: ArtifactContext): PackageVersion? {
         with(context) {
             val (packageName, packageVersion) = if (context is ArtifactUploadContext) {
                 NpmUtils.parseNameAndVersionFromFullPath(getAttributes()[NPM_FILE_FULL_PATH] as String)
@@ -23,7 +23,6 @@ class NpmOperationServiceImpl(
             }
             val packageKey = PackageKeys.ofNpm(packageName)
             return packageClient.findVersionByName(projectId, repoName, packageKey, packageVersion).data
-                ?.let { Pair(packageKey, it) }
         }
     }
 }

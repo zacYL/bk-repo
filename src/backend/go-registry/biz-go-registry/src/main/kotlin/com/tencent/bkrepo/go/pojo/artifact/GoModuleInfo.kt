@@ -50,5 +50,7 @@ class GoModuleInfo(
 
     override fun getRequestPath() = "/${modulePath.caseEncode()}/@v/$version.${type.extension}"
 
+    override fun getPackageFullName() = modulePath
+
     fun getArtifactFullPathByType(type: GoFileType) = "${getArtifactRootPath()}/$version.${type.extension}"
 }

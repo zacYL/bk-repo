@@ -105,7 +105,7 @@ class MavenRemoteRepository(
     private val mavenOperationService: MavenOperationService
 ) : RemoteRepository() {
 
-    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): Pair<String, PackageVersion>? {
+    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
         requireNotNull(node)
         return mavenOperationService.packageVersion(node)
     }

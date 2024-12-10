@@ -126,7 +126,7 @@ class PypiLocalRepository(
         super.onUploadBefore(context)
         // TODO: 需要抽象处理
         // 不为空说明上传的是tgz文件
-        packageVersion(context, null)?.let { uploadIntercept(context, it.second) }
+        packageVersion(context, null)?.let { uploadIntercept(context, it) }
     }
 
     override fun onUpload(context: ArtifactUploadContext) {
@@ -429,7 +429,7 @@ class PypiLocalRepository(
         }
     }
 
-    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): Pair<String, PackageVersion>? {
+    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
         requireNotNull(context)
         with(context) {
             val pypiPackagePojo = if (context is ArtifactUploadContext) {
@@ -444,7 +444,6 @@ class PypiLocalRepository(
             }
             val packageKey = PackageKeys.ofPypi(pypiPackagePojo.name)
             return packageClient.findVersionByName(projectId, repoName, packageKey, pypiPackagePojo.version).data
-                ?.let { Pair(packageKey, it) }
         }
     }
 

@@ -33,6 +33,7 @@ package com.tencent.bkrepo.pypi.controller
 
 import com.tencent.bkrepo.common.artifact.api.ArtifactFileMap
 import com.tencent.bkrepo.pypi.artifact.PypiArtifactInfo
+import com.tencent.bkrepo.pypi.artifact.PypiPackageArtifactInfo
 import com.tencent.bkrepo.pypi.artifact.PypiSimpleArtifactInfo
 import com.tencent.bkrepo.pypi.service.PypiService
 import io.swagger.annotations.Api
@@ -95,7 +96,7 @@ class PypiResourceController(
      * packages/{package}/{version}/{filename}#md5={md5}
      */
     @GetMapping(PypiArtifactInfo.PYPI_PACKAGES_MAPPING_URI)
-    fun packages(artifactInfo: PypiArtifactInfo) {
+    fun packages(artifactInfo: PypiPackageArtifactInfo) {
         if (logger.isDebugEnabled) {
             logger.debug("packages pypi package: $artifactInfo")
         }

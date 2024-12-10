@@ -28,6 +28,7 @@
 package com.tencent.bkrepo.conan.pojo.artifact
 
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.conan.utils.ObjectBuildUtil
 import com.tencent.bkrepo.conan.utils.PathUtils
 
 class ConanArtifactInfo(
@@ -47,6 +48,10 @@ class ConanArtifactInfo(
     override fun getArtifactFullPath(): String {
         return PathUtils.generateFullPath(this)
     }
+
+    override fun getPackageFullName() = ObjectBuildUtil.buildRefStr(this)
+
+    override fun getArtifactVersion() = version
 
     companion object {
 

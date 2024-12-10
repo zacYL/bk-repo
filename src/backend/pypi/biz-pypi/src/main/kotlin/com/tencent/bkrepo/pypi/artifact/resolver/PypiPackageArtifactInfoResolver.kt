@@ -31,20 +31,19 @@
 
 package com.tencent.bkrepo.pypi.artifact.resolver
 
-import com.tencent.bkrepo.common.api.exception.BadRequestException
-import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.artifact.resolve.path.ArtifactInfoResolver
 import com.tencent.bkrepo.common.artifact.resolve.path.Resolver
 import com.tencent.bkrepo.pypi.artifact.PypiArtifactInfo
-import com.tencent.bkrepo.pypi.artifact.PypiSimpleArtifactInfo
+import com.tencent.bkrepo.pypi.artifact.PypiPackageArtifactInfo
 import com.tencent.bkrepo.pypi.constants.NAME
+import com.tencent.bkrepo.pypi.constants.VERSION
 import org.springframework.stereotype.Component
 import org.springframework.web.servlet.HandlerMapping
 import javax.servlet.http.HttpServletRequest
 
 @Component
-@Resolver(PypiSimpleArtifactInfo::class)
-class PypiSimpleArtifactInfoResolver : ArtifactInfoResolver {
+@Resolver(PypiPackageArtifactInfo::class)
+class PypiPackageArtifactInfoResolver : ArtifactInfoResolver {
     override fun resolve(
         projectId: String,
         repoName: String,
@@ -52,16 +51,8 @@ class PypiSimpleArtifactInfoResolver : ArtifactInfoResolver {
         request: HttpServletRequest
     ): PypiArtifactInfo {
         val attributes = request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE) as Map<*, *>
-        val name = attributes[NAME]?.toString()?.trim()?.also { validatePackageName(it) }
-        return PypiSimpleArtifactInfo(projectId, repoName, name)
-    }
-
-    private fun validatePackageName(name: String) {
-        PACKAGE_NAME_REGEX.matchEntire(name)
-            ?: throw BadRequestException(CommonMessageCode.PARAMETER_INVALID, name)
-    }
-
-    companion object {
-        private val PACKAGE_NAME_REGEX = Regex("^([A-Z0-9]|[A-Z0-9][A-Z0-9._-]*[A-Z0-9])\$", RegexOption.IGNORE_CASE)
+        val name = attributes[NAME].toString().trim()
+        val version = attributes[VERSION].toString().trim()
+        return PypiPackageArtifactInfo(projectId, repoName, name, version)
     }
 }

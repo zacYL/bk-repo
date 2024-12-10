@@ -4,5 +4,5 @@ import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContext
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 
 interface NugetOperationService {
-    fun packageVersion(context: ArtifactContext): Pair<String, PackageVersion>?
+    fun packageVersion(context: ArtifactContext): PackageVersion?
 }

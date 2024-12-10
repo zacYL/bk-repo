@@ -84,6 +84,8 @@ open class ArtifactInfo(
      */
     open fun getArtifactName(): String = normalizedUri
 
+    open fun getPackageFullName(): String = getArtifactName()
+
     /**
      * 构件版本
      *

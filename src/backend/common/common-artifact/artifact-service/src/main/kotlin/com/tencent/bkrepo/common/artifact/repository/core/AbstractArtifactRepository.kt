@@ -27,9 +27,7 @@
 
 package com.tencent.bkrepo.common.artifact.repository.core
 
-import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.exception.MethodNotAllowedException
-import com.tencent.bkrepo.common.api.message.CommonMessageCode
 import com.tencent.bkrepo.common.artifact.constant.FORBID_STATUS
 import com.tencent.bkrepo.common.artifact.constant.PARAM_DOWNLOAD
 import com.tencent.bkrepo.common.artifact.event.ArtifactDownloadedEvent
@@ -75,6 +73,7 @@ import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.api.WhitelistSwitchClient
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
+import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.VersionRuleType
 import org.slf4j.LoggerFactory
@@ -233,6 +232,14 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
      * 下载前回调
      */
     open fun onDownloadBefore(context: ArtifactDownloadContext) {
+        with(context) {
+            checkPackageAccessRule(
+                projectId,
+                PackageType.valueOf(repositoryDetail.type.name),
+                artifactInfo.getPackageFullName(),
+                artifactInfo.getArtifactVersion()
+            )
+        }
         // 控制浏览器直接下载，或打开预览
         context.useDisposition = context.request.getParameter(PARAM_DOWNLOAD)?.toBoolean() ?: false
         artifactMetrics.downloadingCount.incrementAndGet()
@@ -390,12 +397,10 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
         node?.let { nodeDownloadIntercept(context, node) }
         // TODO: node中统一存储packageName与version元数据后可移除此处的package下载拦截
         if (context.getBooleanAttribute(PACKAGE_DOWNLOAD_INTERCEPTED_FLAG) == true) return
-        packageVersion(context, node)?.let { (packageKey, packageVersion) ->
-            packageDownloadIntercept(context, packageKey, packageVersion)
-        }
+        packageVersion(context, node)?.let { packageVersion -> packageDownloadIntercept(context, packageVersion) }
     }
 
-    open fun packageVersion(context: ArtifactContext?, node: NodeDetail?): Pair<String, PackageVersion>? {
+    open fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
         return null
     }
 
@@ -410,7 +415,7 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
             val version = nodeDetail.packageVersion()
             if (packageKey != null && version != null) {
                 packageClient.findVersionByName(projectId, repoName, packageKey, version).data?.let { packageVersion ->
-                    packageDownloadIntercept(context, packageKey, packageVersion)
+                    packageDownloadIntercept(context, packageVersion)
                     putAttribute(PACKAGE_DOWNLOAD_INTERCEPTED_FLAG, true)
                 }
             }
@@ -421,20 +426,20 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
      * 拦截package下载
      * TODO NODE中统一存储packageName与packageVersion元数据后可设置为private方法
      */
-    fun packageDownloadIntercept(context: ArtifactDownloadContext, packageKey: String, packageVersion: PackageVersion) {
-        val packageType = PackageKeys.resolveType(packageKey)?.name
-            ?: throw ErrorCodeException(CommonMessageCode.PARAMETER_INVALID, "packageKey")
-        val fullName = PackageKeys.resolveName(packageKey)
-        val (passRules, forbidRules) = packageAccessRuleClient.getMatchedRules(
-            context.projectId, packageType, fullName
-        ).data!!.partition { it.pass }
-        passRules.forEach { if (matchRule(packageVersion.name, it.version, it.versionRuleType)) return }
+    fun packageDownloadIntercept(context: ArtifactDownloadContext, packageVersion: PackageVersion) {
+        context.getPackageInterceptors().forEach { it.intercept(context.projectId, packageVersion) }
+    }
+
+    protected fun checkPackageAccessRule(projectId: String, type: PackageType, fullName: String, version: String?) {
+        if (version.isNullOrBlank()) return
+        val (passRules, forbidRules) = packageAccessRuleClient.getMatchedRules(projectId, type.name, fullName).data!!
+            .partition { it.pass }
+        passRules.forEach { if (matchRule(version, it.version, it.versionRuleType)) return }
         forbidRules.forEach {
-            if (matchRule(packageVersion.name, it.version, it.versionRuleType)) {
-                throw ArtifactDownloadForbiddenException(context.projectId)
+            if (matchRule(version, it.version, it.versionRuleType)) {
+                throw ArtifactDownloadForbiddenException(projectId)
             }
         }
-        context.getPackageInterceptors().forEach { it.intercept(context.projectId, packageVersion) }
     }
 
     private fun matchRule(versionName: String, ruleVersion: String?, ruleType: VersionRuleType?): Boolean {

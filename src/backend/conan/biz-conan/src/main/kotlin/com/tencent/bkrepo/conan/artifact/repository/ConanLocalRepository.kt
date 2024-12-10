@@ -52,7 +52,6 @@ import com.tencent.bkrepo.conan.pojo.artifact.ConanArtifactInfo
 import com.tencent.bkrepo.conan.pojo.enums.ConanRequestType
 import com.tencent.bkrepo.conan.service.impl.CommonService
 import com.tencent.bkrepo.conan.utils.ConanArtifactInfoUtil
-import com.tencent.bkrepo.conan.utils.ObjectBuildUtil
 import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.buildDownloadRecordRequest
 import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.buildDownloadResponse
 import com.tencent.bkrepo.conan.utils.ObjectBuildUtil.buildRefStr
@@ -142,9 +141,8 @@ class ConanLocalRepository : LocalRepository() {
     override fun onDownloadBefore(context: ArtifactDownloadContext) {
         super.onDownloadBefore(context)
         with(context.artifactInfo as ConanArtifactInfo) {
-            val packageKey = PackageKeys.ofConan(buildRefStr(this))
-            packageClient.findVersionByName(projectId, repoName, packageKey, version).data
-                ?.apply { packageDownloadIntercept(context, packageKey, this) }
+            packageClient.findVersionByName(projectId, repoName, PackageKeys.ofConan(buildRefStr(this)), version).data
+                ?.apply { packageDownloadIntercept(context, this) }
         }
     }
 

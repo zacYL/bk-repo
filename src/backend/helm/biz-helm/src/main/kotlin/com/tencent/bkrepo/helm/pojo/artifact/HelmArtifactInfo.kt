@@ -32,12 +32,20 @@
 package com.tencent.bkrepo.helm.pojo.artifact
 
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.util.FileNameParser
+import com.tencent.bkrepo.helm.constants.NAME
+import com.tencent.bkrepo.helm.constants.VERSION
 
 open class HelmArtifactInfo(
     projectId: String,
     repoName: String,
     artifactUri: String
 ) : ArtifactInfo(projectId, repoName, artifactUri) {
+
+    override fun getArtifactName() = FileNameParser.parseNameAndVersion(getArtifactFullPath())[NAME]?.toString() ?: ""
+
+    override fun getArtifactVersion() = FileNameParser.parseNameAndVersion(getArtifactFullPath())[VERSION]?.toString()
+
     companion object {
         const val CHARTS_LIST = "/{projectId}/{repoName}/api/charts/**"
 

@@ -145,7 +145,7 @@ class PypiRemoteRepository(
         return ArtifactResource(artifactStream, responseName, srcRepo, node, ArtifactChannel.PROXY)
     }
 
-    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): Pair<String, PackageVersion>? {
+    override fun packageVersion(context: ArtifactContext?, node: NodeDetail?): PackageVersion? {
         requireNotNull(context)
         requireNotNull(node)
         with(context) {
@@ -154,7 +154,6 @@ class PypiRemoteRepository(
             if (packageName == null || packageVersion == null) return null
             val packageKey = PackageKeys.ofPypi(packageName)
             return packageClient.findVersionByName(projectId, repoName, packageKey, packageVersion).data
-                ?.let { Pair(packageKey, it) }
         }
     }
 
@@ -210,7 +209,7 @@ class PypiRemoteRepository(
         if (name != null && version != null) {
             val packageKey = PackageKeys.ofPypi(name)
             packageClient.findVersionByName(context.projectId, context.repoName, packageKey, version).data?.let {
-                packageDownloadIntercept(context, packageKey, it)
+                packageDownloadIntercept(context, it)
             }
         }
         val size = artifactFile.getSize()

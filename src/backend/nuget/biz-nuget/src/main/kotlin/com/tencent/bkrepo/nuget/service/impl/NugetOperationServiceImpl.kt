@@ -12,12 +12,11 @@ import org.springframework.stereotype.Service
 class NugetOperationServiceImpl(
     private val packageClient: PackageClient
 ) : NugetOperationService {
-    override fun packageVersion(context: ArtifactContext): Pair<String, PackageVersion>? {
+    override fun packageVersion(context: ArtifactContext): PackageVersion? {
         with(context.artifactInfo as NugetDownloadArtifactInfo) {
             if (version.isEmpty()) return null
             val packageKey = PackageKeys.ofNuget(packageName)
             return packageClient.findVersionByName(projectId, repoName, packageKey, version).data
-                ?.let { Pair(packageKey, it) }
         }
     }
 }

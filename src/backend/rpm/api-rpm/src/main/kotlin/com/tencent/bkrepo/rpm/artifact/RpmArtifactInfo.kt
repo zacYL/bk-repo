@@ -71,4 +71,17 @@ class RpmArtifactInfo(
             }
         } else getArtifactMappingUri()!!
     }
+
+    override fun getArtifactName(): String {
+        val fullPath = getArtifactFullPath()
+        val secondLastHyphenIndex = fullPath.lastIndexOf("-", fullPath.lastIndexOf("-") - 1)
+        return if (secondLastHyphenIndex < 0) "" else fullPath.substring(0, secondLastHyphenIndex).trimStart('/')
+    }
+
+    override fun getArtifactVersion(): String? {
+        val fullPath = getArtifactFullPath()
+        val secondLastHyphenIndex = fullPath.lastIndexOf("-", fullPath.lastIndexOf("-") - 1)
+        return if (secondLastHyphenIndex < 0) null else
+            fullPath.substring(secondLastHyphenIndex + 1).substringBeforeLast(".rpm")
+    }
 }

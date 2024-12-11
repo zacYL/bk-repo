@@ -75,7 +75,7 @@
                 }
             }
         }
-
+        
         const search = new URL(location.href).searchParams // redirect/token/download/?preview
         const redirect = search.get('redirect')
         if (redirect) {
@@ -90,6 +90,8 @@
                     redirectUrl.searchParams.set(key, val)
                 })
             }
+            console.log(MODE_CONFIG);
+            
 
             const xhr = new XMLHttpRequest()
             const cookies = document.cookie.split('; ').reduce((target, str) => {

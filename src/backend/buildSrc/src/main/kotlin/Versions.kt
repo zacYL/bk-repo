@@ -79,4 +79,5 @@ object Versions {
     const val SpringBootAutoconfigure = "2.5.15"
     const val TongWeb = "7.0.E.6_P6"
     const val CommonsLang3 = "3.14.0"
+    const val Easyexcel = "4.0.3"
 }

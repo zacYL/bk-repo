@@ -47,7 +47,7 @@
                     </bk-radio>
                 </bk-radio-group>
             </bk-form-item>
-            <bk-form-item v-if="planForm.executionStrategy === 'REAL_TIME'" :label="$t('deleteArtifactSync')">
+            <bk-form-item v-if="planForm.executionStrategy === 'REAL_TIME'" :label="$t('deleteArtifactSync')" :desc="$t('deleteArtifactSyncTips')">
                 <bk-switcher v-model="planForm.syncDeletion" theme="primary"></bk-switcher>
             </bk-form-item>
             <bk-form-item :label="$t('conflictStrategy')" property="conflictStrategy">

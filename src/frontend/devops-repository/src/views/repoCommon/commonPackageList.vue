@@ -23,15 +23,20 @@
         <!-- 存在包, 加载中默认存在包 -->
         <template v-if="packageList.length || $route.query.packageName || isLoading">
             <div class="package-search-tools flex-between-center">
-                <bk-input
-                    class="w250"
-                    v-model.trim="packageNameVal"
-                    :placeholder="$t('artifactPlaceholder')"
-                    clearable
-                    @enter="handlerPaginationChange()"
-                    @clear="handlerPaginationChange()"
-                    right-icon="bk-icon icon-search">
-                </bk-input>
+                <div class="flex-align-center">
+                    <bk-input
+                        class="w250 mr10"
+                        v-model.trim="packageNameVal"
+                        :placeholder="$t('artifactPlaceholder')"
+                        clearable
+                        @enter="handlerPaginationChange()"
+                        @clear="handlerPaginationChange()"
+                        right-icon="bk-icon icon-search">
+                    </bk-input>
+                    <bk-button v-if="currentType === 'MAVEN'" @click="exportList">
+                        {{ $t('exportList') }}
+                    </bk-button>
+                </div>
                 <div class="sort-tool flex-align-center">
                     <bk-select
                         style="width:200px;"
@@ -201,6 +206,26 @@
                         }
                     })
                 }
+            },
+            exportList () {
+                this.ExportList({
+                    projectId: this.projectId,
+                    repoType: this.repoType,
+                    repoName: this.repoName,
+                    packageName: this.packageNameVal,
+                    property: this.property,
+                    direction: this.direction
+                }).then(() => {
+                    this.$bkMessage({
+                        theme: 'success',
+                        message: this.$t('exportSuccess')
+                    })
+                }).catch((error) => {
+                    this.$bkMessage({
+                        theme: 'error',
+                        message: error.message || this.$t('exportFailed')
+                    })
+                })
             },
             getPackageListHandler (load) {
                 if (this.isLoading) return

@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-21 14:16:15
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-12-11 15:31:36
+ * @LastEditTime: 2024-12-11 15:38:45
  * @FilePath: /artifact/src/frontend/devops-repository/src/views/repoScan/scanMain/components/components/AddBlackWhiteRepoDialog.vue
 -->
 <template>
@@ -184,14 +184,14 @@
                         ...['maven', 'gradle'].includes(this.form.repoType)
                             ? [
                                 {
-                                    regex: /^[a-zA-Z0-9._-]*$|^[*]$/,
+                                    regex: /^[a-zA-Z0-9._@/-]+$|^[*]$/,
                                     message: this.$t('BlackWhiteAddCheckTips2'),
                                     trigger: 'blur'
                                 }
                             ]
                             : [
                                 {
-                                    regex: /^[a-zA-Z0-9._-]+$/,
+                                    regex: /^[a-zA-Z0-9._@/-]+$/,
                                     message: this.$t('BlackWhiteAddCheckTips'),
                                     trigger: 'blur'
                                 }

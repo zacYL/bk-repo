@@ -190,10 +190,10 @@
                     })
                     this.getBlackWhiteList({ current: 1 })
                     this.hideBlackWhiteRepo()
-                }).catch(() => {
+                }).catch((error) => {
                     this.$bkMessage({
                         theme: 'error',
-                        message: this.$t('addFail')
+                        message: error.message || this.$t('addFail')
                     })
                 }).finally(() => {
                     cb && cb()

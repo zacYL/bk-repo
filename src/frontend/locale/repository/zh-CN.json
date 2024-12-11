@@ -387,6 +387,7 @@
     "removeFail": "移除失败",
     "addSuccess": "新增成功",
     "addFail": "新增失败",
+    "deleteArtifactSync": "删除制品同步",
     "deleteBlackWhiteTips": "确定从{0}中移除该制品包？",
     "existingDuplicateList": "已存在重复名单",
     "BlackWhiteAddCheckTips": "仅支持输入字母、数字、短线(-)、下划线(_)、点(.)、@、/",

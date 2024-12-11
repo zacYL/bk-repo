@@ -396,6 +396,7 @@
     "removeFail": "Remove failed",
     "addSuccess": "Add successfully",
     "addFail": "Add failed",
+    "deleteArtifactSync": "Delete Artifact Sync",
     "scanningSchemeTip":"Please select a scanning scheme",
     "joinScanMsg": "Join scan queue",
     "artifactName": "Artifact name",

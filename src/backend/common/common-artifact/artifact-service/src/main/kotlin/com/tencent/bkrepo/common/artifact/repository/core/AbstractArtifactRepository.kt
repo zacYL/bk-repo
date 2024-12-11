@@ -436,18 +436,26 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
         if (version.isNullOrBlank()) return
         val (passRules, forbidRules) = packageAccessRuleClient.getMatchedRules(projectId, type.name, fullName).data!!
             .partition { it.pass }
-        passRules.forEach { if (matchRule(version, it.version, it.versionRuleType)) return }
+        passRules.forEach { if (matchRule(type, version, it.version, it.versionRuleType)) return }
         forbidRules.forEach {
-            if (matchRule(version, it.version, it.versionRuleType)) {
+            if (matchRule(type, version, it.version, it.versionRuleType)) {
                 throw ArtifactDownloadForbiddenException(projectId)
             }
         }
     }
 
-    private fun matchRule(versionName: String, ruleVersion: String?, ruleType: VersionRuleType?): Boolean {
+    private fun matchRule(
+        packageType: PackageType,
+        version: String,
+        ruleVersion: String?,
+        ruleType: VersionRuleType?
+    ): Boolean {
         if (ruleVersion.isNullOrBlank() || ruleType == null) return true
+        if (packageType == PackageType.DOCKER || packageType == PackageType.OCI) {
+            return matchNonSemVerRule(version, ruleVersion, ruleType)
+        }
         return try {
-            val packageSemVersion = SemVersionParser.parse(versionName.removePrefix("v"))
+            val packageSemVersion = SemVersionParser.parse(version.removePrefix("v"))
             val ruleSemVersion = SemVersionParser.parse(ruleVersion.removePrefix("v"))
             when (ruleType) {
                 VersionRuleType.EQ -> packageSemVersion == ruleSemVersion
@@ -458,8 +466,16 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
                 VersionRuleType.LTE -> packageSemVersion <= ruleSemVersion
             }
         } catch (e: IllegalArgumentException) {
-            logger.error("failed to parse version [$versionName] or [$ruleVersion]", e)
-            false
+            logger.error("failed to parse version [$version] or [$ruleVersion]", e)
+            matchNonSemVerRule(version, ruleVersion, ruleType)
+        }
+    }
+
+    private fun matchNonSemVerRule(version: String, ruleVersion: String, ruleType: VersionRuleType): Boolean {
+        return when (ruleType) {
+            VersionRuleType.EQ -> version == ruleVersion
+            VersionRuleType.NE -> version != ruleVersion
+            else -> false
         }
     }
 

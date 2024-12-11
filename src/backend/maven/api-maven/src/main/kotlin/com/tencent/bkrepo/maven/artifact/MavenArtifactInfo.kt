@@ -88,7 +88,7 @@ class MavenArtifactInfo(
         return versionId.endsWith(SNAPSHOT_SUFFIX)
     }
 
-    override fun getPackageFullName() = "$groupId:$artifactId"
+    override fun getPackageFullName() = if (isArtifact()) "$groupId:$artifactId" else ""
 
-    override fun getArtifactVersion() = if (hasVersion()) versionId else null
+    override fun getArtifactVersion() = if (isArtifact() && hasVersion()) versionId else null
 }

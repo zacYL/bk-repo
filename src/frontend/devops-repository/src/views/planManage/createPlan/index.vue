@@ -47,6 +47,9 @@
                     </bk-radio>
                 </bk-radio-group>
             </bk-form-item>
+            <bk-form-item v-if="planForm.executionStrategy === 'REAL_TIME'" :label="$t('deleteArtifactSync')">
+                <bk-switcher v-model="planForm.syncDeletion" theme="primary"></bk-switcher>
+            </bk-form-item>
             <bk-form-item :label="$t('conflictStrategy')" property="conflictStrategy">
                 <bk-radio-group v-model="planForm.conflictStrategy">
                     <bk-radio v-for="strategy in conflictStrategyList" :key="strategy.value"
@@ -185,6 +188,7 @@
                 planForm: {
                     loading: false,
                     name: '',
+                    syncDeletion: false,
                     executionStrategy: 'IMMEDIATELY',
                     replicaObjectType: 'REPOSITORY',
                     time: new Date(new Date().getTime() + 30 * 60 * 1000),
@@ -315,6 +319,7 @@
                         createdBy,
                         createdDate,
                         setting: {
+                            syncDeletion,
                             conflictStrategy,
                             executionStrategy,
                             executionPlan: { executeTime, cronExpression }
@@ -343,7 +348,8 @@
                         remoteClusterIds: remoteClusters.map(v => v.id),
                         description,
                         createdBy,
-                        createdDate
+                        createdDate,
+                        syncDeletion
                     }
                     this.replicaTaskObjects = objects
                     this.noRecordsCheck = notRecord
@@ -413,7 +419,14 @@
                                         : {})
                                 }
                             }
-                            : {})
+                            : {}),
+                        ...(
+                            this.planForm.executionStrategy === 'REAL_TIME'
+                                ? {
+                                    syncDeletion: this.planForm.syncDeletion
+                                }
+                                : {}
+                        )
                     },
                     remoteClusterIds: this.planForm.remoteClusterIds,
                     enabled: true,

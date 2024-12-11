@@ -109,7 +109,17 @@
                     } else if (status === 401) {
                         if (MODE_CONFIG === 'ci' || MODE_CONFIG === 'saas') {
                             // ci登录逻辑
-                            location.href = window.getLoginUrl()
+                            fetchSsoStatus().then(data => {
+                                if (data.loginUrl) {
+                                    LOGIN_SERVICE_URL = data.loginType === 'SSO' ?
+                                        data.loginUrl + `${data.loginUrl.indexOf('?') === -1 ? '?' : '&'}secretKey=` + data.secretKey + '&callback_url=' + data.callback_url :
+                                        data.loginUrl
+                                }
+                                window.loginType = data.loginType
+                                location.href = window.getLoginUrl()
+                            }).catch(e => {
+                                location.href = window.getLoginUrl()
+                            })
                         } else {
                             window.login = true
                             mountApp()
@@ -146,6 +156,35 @@
             app.setAttribute('id', 'app')
             document.body.append(app)
             if (window.repositoryVue) window.repositoryVue.$mount('#app').$router.push({ name: 'repoList' })
+        }
+
+        // 请求封装
+        function asyncGet (url, pid, includeCredentials) {
+            return new Promise(function (resolve, reject) {
+                const xhr = new XMLHttpRequest()
+                xhr.onreadystatechange = function (e) {
+                    try {
+                        if (this.readyState === 4 && this.status === 200) {
+                            const res = JSON.parse(xhr.responseText)
+                            resolve(res && res.data ? res.data : res)
+                        }
+                    } catch (error) {
+                        reject({
+                            status: this.status,
+                            message: error.message || error
+                        })
+                    }
+                }
+                xhr.withCredentials = typeof includeCredentials === 'boolean' ? includeCredentials : true
+                xhr.open('GET', url)
+                pid && xhr.setRequestHeader('X-DEVOPS-PROJECT-ID', pid)
+                xhr.send()
+            })
+        }
+        // sso配置
+        function fetchSsoStatus () {
+            // 不走网关
+            return asyncGet(DEVOPS_SITE_URL + '/ms/usermanager/api/external/login/config/unifiedLogin')
         }
 
         function printError (status, message) {

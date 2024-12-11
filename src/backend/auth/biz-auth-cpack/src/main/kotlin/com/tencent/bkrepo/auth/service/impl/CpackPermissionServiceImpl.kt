@@ -127,7 +127,7 @@ open class CpackPermissionServiceImpl constructor(
         repoNames: List<String>,
         action: PermissionAction
     ): Map<String, List<String>> {
-        TODO("Not yet implemented")
+        return repoNames.associateWith { listOf("/") }
     }
 
     override fun createPermission(request: CreatePermissionRequest): Boolean {

@@ -80,7 +80,7 @@ class OciManifestArtifactInfoResolver : ArtifactInfoResolver {
                 val isValidDigest = OciDigest.isValid(reference)
                 val contentType = request.getHeader(CONTENT_TYPE)
                 val isFat = contentType == DOCKER_DISTRIBUTION_MANIFEST_LIST_V2 || contentType == IMAGE_INDEX_MEDIA_TYPE
-                OciManifestArtifactInfo(projectId, repoName, packageName, "", reference, isValidDigest, isFat)
+                OciManifestArtifactInfo(projectId, repoName, packageName, reference, reference, isValidDigest, isFat)
             }
         }
     }

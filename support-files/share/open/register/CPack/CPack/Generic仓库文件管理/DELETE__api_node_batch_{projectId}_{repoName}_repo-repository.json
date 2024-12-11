@@ -6,7 +6,7 @@
   "method" : "DELETE",
   "path" : "/repo-repository/api/node/batch/{projectId}/{repoName}",
   "headers" : [ ],
-  "targetService" : "repo-repository",
+  "targetService" : "reporepository",
   "targetPath" : "/api/node/batch/{projectId}/{repoName}",
   "targetMethod" : "DELETE",
   "timeout" : 30,

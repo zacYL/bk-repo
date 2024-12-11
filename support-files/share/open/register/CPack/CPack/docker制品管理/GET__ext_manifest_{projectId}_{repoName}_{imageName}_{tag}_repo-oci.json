@@ -6,7 +6,7 @@
   "method" : "GET",
   "path" : "/repo-oci/ext/manifest/{projectId}/{repoName}/**/{tag}",
   "headers" : [ ],
-  "targetService" : "repo-oci",
+  "targetService" : "repooci",
   "targetPath" : "/ext/manifest/{projectId}/{repoName}/**/{tag}",
   "targetMethod" : "GET",
   "timeout" : 30,

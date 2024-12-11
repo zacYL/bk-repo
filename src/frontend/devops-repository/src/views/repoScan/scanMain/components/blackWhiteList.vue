@@ -36,7 +36,7 @@
                 </template>
             </bk-table-column>
             <!-- 版本 -->
-            <bk-table-column :label="$t('version')" prop="version">
+            <bk-table-column :label="$t('version')" prop="version" show-overflow-tooltip>
                 <template #default="{ row }">
                     <span>{{ row.version}}</span>
                 </template>
@@ -190,10 +190,16 @@
                     })
                     this.getBlackWhiteList({ current: 1 })
                     this.hideBlackWhiteRepo()
-                }).catch(() => {
+                }).catch((error) => {
+                    if (error.code === 500) {
+                        this.$bkMessage({
+                            theme: 'error',
+                            message: error.message
+                        })
+                    }
                     this.$bkMessage({
                         theme: 'error',
-                        message: this.$t('addFail')
+                        message: error.message || this.$t('addFail')
                     })
                 }).finally(() => {
                     cb && cb()

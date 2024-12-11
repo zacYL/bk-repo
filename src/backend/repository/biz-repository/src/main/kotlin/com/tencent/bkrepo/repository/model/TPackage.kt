@@ -75,15 +75,18 @@ data class TPackage(
     @ExcelProperty(value = ["所属仓库"], index = 10)
     var repoName: String,
 
-    @ColumnWidth(50)
+    @ColumnWidth(40)
     @ExcelProperty(value = ["包名"], index = 0)
     var name: String,
+
+    @ColumnWidth(60)
+    @ExcelProperty(value = ["PackageKey"], index = 1)
     var key: String,
 
     @ExcelProperty(value = ["仓库类型"], index = 3, converter = EnumToStringConverter::class)
     var type: PackageType,
 
-    @ExcelProperty(value = ["最新版本"], index = 1)
+    @ExcelProperty(value = ["最新版本"], index = 2)
     var latest: String? = null,
 
     @ExcelProperty(value = ["下载次数"], index = 5)
@@ -95,7 +98,7 @@ data class TPackage(
     var versionTag: Map<String, String>? = null,
     var extension: Map<String, Any>? = null,
 
-    @ExcelProperty(value = ["历史版本"], index = 2, converter = CollectionToStringConverter::class)
+//    @ExcelProperty(value = ["历史版本"], index = 2, converter = CollectionToStringConverter::class)
     var historyVersion: Set<String> = emptySet()
 ) {
     companion object {

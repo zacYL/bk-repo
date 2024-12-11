@@ -514,7 +514,6 @@ class PackageServiceImpl(
                 }
                 pageable = pageable.next()
             }
-            outputStream.flush()
         }
     }
 

@@ -158,3 +158,19 @@ export function copyToClipboard (text) {
 export function checkValueIsNullOrEmpty (value) {
     return value === null || value === undefined || value?.length === 0
 }
+
+/**
+ * @description: 流文件下载
+ * @param {*} res
+ * @return {*}
+ */
+export const blobFileDownload = (res) => {
+    const content = res.headers['content-disposition'].split(';')
+    const fileName = decodeURIComponent(content[1].split('=')[1])
+    const createFileUrl = window.URL.createObjectURL(res.data)
+    const aTag = document.createElement('a')
+    aTag.setAttribute('href', createFileUrl)
+    aTag.setAttribute('download', fileName)
+    aTag.click()
+    window.URL.revokeObjectURL(createFileUrl)
+}

@@ -1,6 +1,109 @@
 import Vue from 'vue'
+import axios from 'axios'
 
 const prefix = 'repository/api'
+
+const getPackageParams = ({ projectId, repoType, repoName, packageName, property = 'name', direction = 'ASC', current = 1, limit = 20, extRules = [], version = '', metadataList = [], sha256 = '', md5 = '', artifactList = [] }) => {
+    const isGeneric = repoType === 'generic'
+    return {
+        page: {
+            pageNumber: current,
+            pageSize: limit
+        },
+        sort: {
+            properties: [property],
+            direction
+        },
+        rule: {
+            rules: [
+                ...(projectId
+                    ? [{
+                        field: 'projectId',
+                        value: projectId,
+                        operation: 'EQ'
+                    }]
+                    : []),
+                ...(artifactList.length > 0
+                    ? [
+                        {
+                            field: 'repoName',
+                            value: artifactList,
+                            operation: 'IN'
+                        }
+                    ]
+                    : []),
+                ...(repoName
+                    ? [{
+                        field: 'repoName',
+                        value: repoName,
+                        operation: 'EQ'
+                    }]
+                    : [
+                        // 因为在仓库数量太大(例如超过1000)，package/search接口在存在repoType时响应太慢，所以只有在必须通过repoType确认仓库时才需要
+                        // 依赖源仓库进入仓库的包列表页不需要传此参数，目前只有制品搜索需要传repoType，其他的都可以通过projectId和repoName唯一确认
+                        ...(repoType
+                            ? [{
+                                field: 'repoType',
+                                value: repoType.toUpperCase(),
+                                operation: 'EQ'
+                            }]
+                            : [])
+                    ]),
+                ...(packageName
+                    ? [{
+                        field: 'name',
+                        value: `*${packageName}*`,
+                        operation: 'MATCH_I'
+                    }]
+                    : []),
+                ...(version
+                    ? [{
+                        field: 'version',
+                        value: `${version}`,
+                        operation: 'EQ'
+                    }]
+                    : []),
+                ...(metadataList
+                    ? metadataList?.map((item) => {
+                    // 不做下面的判断会导致接口传参添加了field: 'metadata.' 的对象，会导致搜索结果为空
+                        if (item.key && item.value) {
+                            return {
+                                field: `metadata.${item.key}`,
+                                value: item.value,
+                                operation: 'EQ'
+                            }
+                        } else {
+                            return ''
+                        }
+                    }).filter(Boolean)
+                    : []),
+                ...(md5
+                    ? [{
+                        field: 'md5',
+                        value: `${md5}`,
+                        operation: 'EQ'
+                    }]
+                    : []),
+                ...(sha256
+                    ? [{
+                        field: 'sha256',
+                        value: `${sha256}`,
+                        operation: 'EQ'
+                    }]
+                    : []),
+                ...(isGeneric
+                    ? [{
+                        field: 'folder',
+                        value: false,
+                        operation: 'EQ'
+                    }]
+                    : []),
+                ...extRules
+            ],
+            relation: 'AND'
+        }
+    }
+}
 
 export default {
     // 分页查询包列表
@@ -102,109 +205,27 @@ export default {
             }
         )
     },
+    packageListExport (_, data) {
+        const url = `${prefix}/package/export`
+        return axios({
+            baseURL: `${location.origin}/web`,
+            url,
+            method: 'POST',
+            data: getPackageParams(data),
+            // 注意，此处需要设置下载的文件的返回类型为二进制，即 blob
+            responseType: 'blob',
+            withCredentials: true,
+            xsrfCookieName: (MODE_CONFIG === 'ci' || MODE_CONFIG === 'saas') ? 'bk_token' : 'bkrepo_ticket', // 注入csrfToken
+            xsrfHeaderName: 'X-CSRFToken', // 注入csrfToken
+            headers: { 'Accept-Language': this.currentLanguage }
+        })
+    },
     // 跨仓库搜索
-    searchPackageList (_, { projectId, repoType, repoName, packageName, property = 'name', direction = 'ASC', current = 1, limit = 20, extRules = [], version = '', metadataList = [], sha256 = '', md5 = '', artifactList = [] }) {
-        const isGeneric = repoType === 'generic'
+    searchPackageList (_, data) {
+        const isGeneric = data.repoType === 'generic'
         return Vue.prototype.$ajax.post(
             `${prefix}/${isGeneric ? 'node/queryWithoutCount' : 'package/search'}`,
-            {
-                page: {
-                    pageNumber: current,
-                    pageSize: limit
-                },
-                sort: {
-                    properties: [property],
-                    direction
-                },
-                rule: {
-                    rules: [
-                        ...(projectId
-                            ? [{
-                                field: 'projectId',
-                                value: projectId,
-                                operation: 'EQ'
-                            }]
-                            : []),
-                        ...(artifactList.length > 0
-                            ? [
-                                {
-                                    field: 'repoName',
-                                    value: artifactList,
-                                    operation: 'IN'
-                                }
-                            ]
-                            : []),
-                        ...(repoName
-                            ? [{
-                                field: 'repoName',
-                                value: repoName,
-                                operation: 'EQ'
-                            }]
-                            : [
-                                // 因为在仓库数量太大(例如超过1000)，package/search接口在存在repoType时响应太慢，所以只有在必须通过repoType确认仓库时才需要
-                                // 依赖源仓库进入仓库的包列表页不需要传此参数，目前只有制品搜索需要传repoType，其他的都可以通过projectId和repoName唯一确认
-                                ...(repoType
-                                    ? [{
-                                        field: 'repoType',
-                                        value: repoType.toUpperCase(),
-                                        operation: 'EQ'
-                                    }]
-                                    : [])
-                            ]),
-                        ...(packageName
-                            ? [{
-                                field: 'name',
-                                value: `*${packageName}*`,
-                                operation: 'MATCH_I'
-                            }]
-                            : []),
-                        ...(version
-                            ? [{
-                                field: 'version',
-                                value: `${version}`,
-                                operation: 'EQ'
-                            }]
-                            : []),
-                        ...(metadataList
-                            ? metadataList?.map((item) => {
-                            // 不做下面的判断会导致接口传参添加了field: 'metadata.' 的对象，会导致搜索结果为空
-                                if (item.key && item.value) {
-                                    return {
-                                        field: `metadata.${item.key}`,
-                                        value: item.value,
-                                        operation: 'EQ'
-                                    }
-                                } else {
-                                    return ''
-                                }
-                            }).filter(Boolean)
-                            : []),
-                        ...(md5
-                            ? [{
-                                field: 'md5',
-                                value: `${md5}`,
-                                operation: 'EQ'
-                            }]
-                            : []),
-                        ...(sha256
-                            ? [{
-                                field: 'sha256',
-                                value: `${sha256}`,
-                                operation: 'EQ'
-                            }]
-                            : []),
-                        ...(isGeneric
-                            ? [{
-                                field: 'folder',
-                                value: false,
-                                operation: 'EQ'
-                            }]
-                            : []),
-                        ...extRules
-                    ],
-                    relation: 'AND'
-                }
-            }
+            getPackageParams(data)
         )
     },
     // 获取相应服务的域名

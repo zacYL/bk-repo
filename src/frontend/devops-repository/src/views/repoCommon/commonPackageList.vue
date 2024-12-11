@@ -112,6 +112,7 @@
     import useGuide from '@repository/views/repoCommon/useGuide'
     import repoGuideMixin from '@repository/views/repoCommon/repoGuideMixin'
     import { mapState, mapActions } from 'vuex'
+    import { blobFileDownload } from '@repository/utils/index'
     export default {
         name: 'commonPackageList',
         components: { InfiniteScroll, packageCard, repoGuide, emptyGuide, repoMavenUploader, useGuide },
@@ -172,6 +173,7 @@
             ...mapActions([
                 'getRepoListAll',
                 'searchPackageList',
+                'packageListExport',
                 'deletePackage',
                 'getCurrentRepositoryDataPermission'
             ]),
@@ -208,14 +210,18 @@
                 }
             },
             exportList () {
-                this.ExportList({
+                this.packageListExport({
                     projectId: this.projectId,
                     repoType: this.repoType,
                     repoName: this.repoName,
                     packageName: this.packageNameVal,
                     property: this.property,
-                    direction: this.direction
-                }).then(() => {
+                    direction: this.direction,
+                    current: this.pagination.current,
+                    limit: this.pagination.limit,
+                    isExport: true
+                }).then((res) => {
+                    blobFileDownload(res)
                     this.$bkMessage({
                         theme: 'success',
                         message: this.$t('exportSuccess')

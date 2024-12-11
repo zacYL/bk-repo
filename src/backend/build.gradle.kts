@@ -1,4 +1,5 @@
 
+import com.tencent.devops.utils.findPropertyOrNull
 import java.io.ByteArrayOutputStream
 import java.time.LocalDateTime
 
@@ -148,7 +149,10 @@ allprojects {
         exclude(group = "org.springframework.cloud", module = "spring-cloud-function-context")
         exclude(group = "org.springframework.cloud", module = "spring-cloud-function-core")
 
-        if (project.name.startsWith("boot-")) {
+        if (
+            project.name.startsWith("boot-") &&
+            project.findPropertyOrNull("devops.assemblyMode")?.toLowerCase() == "kubernetes"
+        ) {
             project.dependencies {
                 compileOnly("net.canway.devops:devops-debug7:6.0.0-SNAPSHOT")
             }

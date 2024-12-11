@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-21 15:38:37
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-12-04 16:54:41
+ * @LastEditTime: 2024-12-11 10:44:42
  * @FilePath: /artifact/src/frontend/devops-repository-ci/src/views/repoGeneric/repoRecycleBin/index.vue
 -->
 <template>
@@ -111,6 +111,13 @@
         created () {
             this.getRecycleBinPermission().then((res) => {
                 this.withOperationPermission = !!Object.values(res).filter(Boolean).length
+            }).catch((error) => {
+                if (error?.status?.toString() === '403') {
+                    this.$bkMessage({
+                        theme: 'error',
+                        message: this.$t('noBusinessTip')
+                    })
+                }
             })
             this.handlerPaginationChange({ current: 1, limit: 20 })
         },
@@ -183,6 +190,13 @@
                 ).then(res => {
                     this.recycleBinList = res.records
                     this.pagination.count = res.totalRecords
+                }).catch((error) => {
+                    if (error?.status?.toString() === '403') {
+                        this.$bkMessage({
+                            theme: 'error',
+                            message: this.$t('noBusinessTip')
+                        })
+                    }
                 }).finally(() => {
                     this.isLoading = false
                 })
@@ -223,11 +237,18 @@
                             theme: 'success',
                             message: this.$t('revertSuccess')
                         })
-                    }).catch(() => {
-                        this.$bkMessage({
-                            theme: 'error',
-                            message: this.$t('revertFail')
-                        })
+                    }).catch((error) => {
+                        if (error?.status?.toString() === '403') {
+                            this.$bkMessage({
+                                theme: 'error',
+                                message: this.$t('noBusinessTip')
+                            })
+                        } else {
+                            this.$bkMessage({
+                                theme: 'error',
+                                message: this.$t('revertFail')
+                            })
+                        }
                     })
                 }
 
@@ -251,7 +272,7 @@
                             }
                         })
                     }).catch((error) => {
-                        if (error.status.toString() === '400') {
+                        if (error?.status?.toString() === '400') {
                             this.$bkInfoDevopsConfirm({
                                 subTitle: this.$t('artifactRevert', [row.name]),
                                 theme: 'success',
@@ -263,6 +284,11 @@
                                         this.resetTable()
                                     })
                                 }
+                            })
+                        } else if (error?.status?.toString() === '403') {
+                            this.$bkMessage({
+                                theme: 'error',
+                                message: this.$t('noBusinessTip')
                             })
                         } else {
                             this.$bkMessage({
@@ -292,10 +318,15 @@
                             })
                         }
                     }).catch((error) => {
-                        if (error.status.toString() === '400') {
+                        if (error?.status?.toString() === '400') {
                             this.$bkMessage({
                                 theme: 'error',
                                 message: this.$t('filePathNoExit', [row.path.slice(0, -1)])
+                            })
+                        } else if (error?.status?.toString() === '403') {
+                            this.$bkMessage({
+                                theme: 'error',
+                                message: this.$t('noBusinessTip')
                             })
                         }
                     })
@@ -318,11 +349,18 @@
                                 message: this.$t('removeSuccess')
                             })
                             this.resetTable()
-                        }).catch(() => {
-                            this.$bkMessage({
-                                theme: 'error',
-                                message: this.$t('removeFail')
-                            })
+                        }).catch((error) => {
+                            if (error?.status?.toString() === '403') {
+                                this.$bkMessage({
+                                    theme: 'error',
+                                    message: this.$t('noBusinessTip')
+                                })
+                            } else {
+                                this.$bkMessage({
+                                    theme: 'error',
+                                    message: this.$t('revertFail')
+                                })
+                            }
                         })
                     }
                 })

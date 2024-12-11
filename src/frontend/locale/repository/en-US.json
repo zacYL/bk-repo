@@ -393,7 +393,7 @@
     "deleteBlackWhiteTips": "Confirm to remove the artifact package from the {0}?",
     "BlackWhiteAddCheckTips": "Only letters, numbers, hyphens (-), underscores (_), and periods (.), @, / are allowed.",
     "BlackWhiteAddCheckTips1": "Only letters, numbers, hyphens (-), underscores (_), *, and periods (.) are allowed.",
-    "BlackWhiteAddCheckTips2": "Only supports input of letters, numbers, hyphens (-), underscores (_), @, / or *",
+    "BlackWhiteAddCheckTips2": "Only supports input of letters, numbers, hyphens (-), underscores (_), @, / or a single *",
     "BlackWhiteAddCheckTips3": "Only letters, numbers, hyphens (-), underscores (_), :, and periods (.) are allowed.",
     "removeSuccess": "Removed successfully",
     "removeFail": "Remove failed",

@@ -6,7 +6,7 @@
   "method" : "GET",
   "path" : "/repo-generic/{projectId}/{repoName}/**",
   "headers" : [ ],
-  "targetService" : "repo-generic",
+  "targetService" : "repogeneric",
   "targetPath" : "/{projectId}/{repoName}/**",
   "targetMethod" : "GET",
   "timeout" : 30,

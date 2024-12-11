@@ -31,10 +31,14 @@
 
 package com.tencent.bkrepo.repository.model
 
+import com.alibaba.excel.annotation.ExcelProperty
+import com.alibaba.excel.annotation.write.style.ColumnWidth
 import com.tencent.bkrepo.repository.model.TPackage.Companion.PACKAGE_KEY_IDX
 import com.tencent.bkrepo.repository.model.TPackage.Companion.PACKAGE_KEY_IDX_DEF
 import com.tencent.bkrepo.repository.model.TPackage.Companion.PACKAGE_NAME_IDX
 import com.tencent.bkrepo.repository.model.TPackage.Companion.PACKAGE_NAME_IDX_DEF
+import com.tencent.bkrepo.repository.model.converter.CollectionToStringConverter
+import com.tencent.bkrepo.repository.model.converter.EnumToStringConverter
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import org.springframework.data.mongodb.core.index.CompoundIndex
 import org.springframework.data.mongodb.core.index.CompoundIndexes
@@ -44,6 +48,7 @@ import java.time.LocalDateTime
 /**
  * 包模型
  */
+@ColumnWidth(25)
 @Document("package")
 @CompoundIndexes(
     CompoundIndex(name = PACKAGE_NAME_IDX, def = PACKAGE_NAME_IDX_DEF, background = true),
@@ -51,22 +56,46 @@ import java.time.LocalDateTime
 )
 data class TPackage(
     var id: String? = null,
+
+    @ExcelProperty(value = ["创建人"], index = 6)
     var createdBy: String,
+
+    @ExcelProperty(value = ["创建时间"], index = 7)
     var createdDate: LocalDateTime,
+
+    @ExcelProperty(value = ["最后修改人"], index = 8)
     var lastModifiedBy: String,
+
+    @ExcelProperty(value = ["最后修改时间"], index = 9)
     var lastModifiedDate: LocalDateTime,
 
+    @ExcelProperty(value = ["所属项目"], index = 11)
     var projectId: String,
+
+    @ExcelProperty(value = ["所属仓库"], index = 10)
     var repoName: String,
+
+    @ColumnWidth(50)
+    @ExcelProperty(value = ["包名"], index = 0)
     var name: String,
     var key: String,
+
+    @ExcelProperty(value = ["仓库类型"], index = 3, converter = EnumToStringConverter::class)
     var type: PackageType,
+
+    @ExcelProperty(value = ["最新版本"], index = 1)
     var latest: String? = null,
+
+    @ExcelProperty(value = ["下载次数"], index = 5)
     var downloads: Long,
+
+    @ExcelProperty(value = ["版本数"], index = 4)
     var versions: Long,
     var description: String? = null,
     var versionTag: Map<String, String>? = null,
     var extension: Map<String, Any>? = null,
+
+    @ExcelProperty(value = ["历史版本"], index = 2, converter = CollectionToStringConverter::class)
     var historyVersion: Set<String> = emptySet()
 ) {
     companion object {

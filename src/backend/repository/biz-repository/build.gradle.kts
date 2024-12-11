@@ -39,5 +39,6 @@ dependencies {
     testImplementation("de.flapdoodle.embed:de.flapdoodle.embed.mongo")
     implementation(project(":common:common-redis"))
     implementation("org.quartz-scheduler:quartz")
+    implementation("com.alibaba:easyexcel:${Versions.Easyexcel}")
     testImplementation("org.mockito.kotlin:mockito-kotlin")
 }

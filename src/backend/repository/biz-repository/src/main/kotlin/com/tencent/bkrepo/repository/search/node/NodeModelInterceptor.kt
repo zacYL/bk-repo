@@ -56,7 +56,7 @@ class NodeModelInterceptor(private val permissionManager: PermissionManager) : M
         if (includeDeleted) {
             val userId = SecurityUtils.getUserId()
             try {
-                permissionManager.checkPrincipal(userId, PrincipalType.ADMIN)
+                permissionManager.checkPrincipal(userId, PrincipalType.GENERAL)
                 return queryModel
             } catch (ignore: Exception) {
                 logger.info("Query deleted node failed, User[$userId]")

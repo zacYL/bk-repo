@@ -390,6 +390,7 @@
     "BlackWhiteAddCheckTips": "Only letters, numbers, hyphens (-), underscores (_), and periods (.) are allowed.",
     "BlackWhiteAddCheckTips1": "Only letters, numbers, hyphens (-), underscores (_), *, and periods (.) are allowed.",
     "BlackWhiteAddCheckTips2": "Only supports input of letters, numbers, hyphens (-), underscores (_), or *",
+    "BlackWhiteAddCheckTips3": "Only letters, numbers, hyphens (-), underscores (_), :, and periods (.) are allowed.",
     "removeSuccess": "Removed successfully",
     "removeFail": "Remove failed",
     "addSuccess": "Add successfully",

@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-21 14:16:15
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-12-11 11:07:54
+ * @LastEditTime: 2024-12-11 11:29:44
  * @FilePath: /artifact/src/frontend/devops-repository/src/views/repoScan/scanMain/components/components/AddBlackWhiteRepoDialog.vue
 -->
 <template>
@@ -228,8 +228,8 @@
                                     trigger: 'blur'
                                 },
                                 {
-                                    regex: /^[a-zA-Z0-9._-]+$/,
-                                    message: this.$t('BlackWhiteAddCheckTips'),
+                                    regex: /^[a-zA-Z0-9._:-]+$/,
+                                    message: this.$t('BlackWhiteAddCheckTips3'),
                                     trigger: 'blur'
                                 }
                             ]

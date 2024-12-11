@@ -77,6 +77,10 @@ class EdgeNodeReplicator(
         // do nothing
     }
 
+    override fun deleteNode(context: ReplicaContext, fullPath: String): Boolean {
+        throw UnsupportedOperationException()
+    }
+
     override fun replicaPackageVersion(
         context: ReplicaContext,
         packageSummary: PackageSummary,

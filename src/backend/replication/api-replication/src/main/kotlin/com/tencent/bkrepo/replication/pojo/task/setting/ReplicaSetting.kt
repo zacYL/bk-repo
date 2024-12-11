@@ -58,5 +58,9 @@ data class ReplicaSetting(
     /**
      * 是否校验文件存储一致性
      */
-    val storageConsistencyCheck: Boolean = false
+    val storageConsistencyCheck: Boolean = false,
+    /**
+     * 实时同步计划是否同步删除操作
+     */
+    val syncDeletion: Boolean = false
 )

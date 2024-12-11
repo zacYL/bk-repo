@@ -46,7 +46,7 @@
                             <bk-input
                                 v-model="query.version"
                                 :placeholder="$t('enterVersionNumber')"
-                                max-length="100"
+                                max-length="128"
                                 clearable
                             />
                         </bk-form-item>

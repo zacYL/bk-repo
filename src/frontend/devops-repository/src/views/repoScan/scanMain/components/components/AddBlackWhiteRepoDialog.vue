@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-21 14:16:15
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-12-11 11:29:44
+ * @LastEditTime: 2024-12-11 15:31:36
  * @FilePath: /artifact/src/frontend/devops-repository/src/views/repoScan/scanMain/components/components/AddBlackWhiteRepoDialog.vue
 -->
 <template>
@@ -108,7 +108,7 @@
                     type="text"
                     :placeholder="$t('pleaseInput') + $t('space') + $t('version')"
                     v-model.trim="form.version"
-                    maxlength="64"
+                    maxlength="128"
                     show-word-limit
                 ></bk-input>
             </bk-form-item>

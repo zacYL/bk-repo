@@ -31,6 +31,8 @@
 
 package com.tencent.bkrepo.repository.service.packages.impl
 
+import com.alibaba.excel.EasyExcel
+import com.alibaba.excel.annotation.ExcelProperty
 import com.tencent.bkrepo.common.api.constant.StringPool
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
@@ -73,8 +75,10 @@ import com.tencent.bkrepo.repository.util.PackageEventFactory
 import com.tencent.bkrepo.repository.util.PackageEventFactory.buildCreatedEvent
 import com.tencent.bkrepo.repository.util.PackageEventFactory.buildUpdatedEvent
 import com.tencent.bkrepo.repository.util.PackageQueryHelper
+import org.apache.commons.lang3.reflect.FieldUtils
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DuplicateKeyException
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
@@ -82,7 +86,9 @@ import org.springframework.data.mongodb.core.query.Update
 import org.springframework.data.mongodb.core.query.and
 import org.springframework.data.mongodb.core.query.isEqualTo
 import org.springframework.data.mongodb.core.query.where
+import org.springframework.data.util.CastUtils
 import org.springframework.stereotype.Service
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
 import java.time.LocalDateTime
 
 @Service
@@ -482,6 +488,34 @@ class PackageServiceImpl(
         }
         val pageNumber = if (query.limit == 0) 0 else (query.skip / query.limit).toInt()
         return Page(pageNumber + 1, query.limit, totalRecords, packageList)
+    }
+
+    private val exportFields = FieldUtils
+        .getFieldsListWithAnnotation(TPackage::class.java, ExcelProperty::class.java)
+        .map { it.name }
+    override fun exportPackage(queryModel: QueryModel) = StreamingResponseBody { outputStream ->
+        val context = CastUtils.cast<PackageQueryContext>(packageSearchInterpreter.interpret(queryModel))
+        val sort = queryModel.sort
+            ?.let { Sort.by(Sort.Direction.fromString(it.direction.name), *it.properties.toTypedArray()) }
+            ?: Sort.unsorted()
+        var pageable = PageRequest.ofSize(500).withSort(sort)
+
+        val writerSheet = EasyExcel.writerSheet(1).build()
+
+        EasyExcel.write(outputStream, TPackage::class.java).includeColumnFieldNames(exportFields).build().use {
+            while (true) {
+                val data = packageDao.find(context.mongoQuery.with(pageable), TPackage::class.java)
+                if (data.isEmpty()) {
+                    break
+                }
+                it.write(data, writerSheet)
+                if (data.size < pageable.pageSize) {
+                    break
+                }
+                pageable = pageable.next()
+            }
+            outputStream.flush()
+        }
     }
 
     override fun listExistPackageVersion(

@@ -41,6 +41,7 @@ import com.tencent.bkrepo.repository.pojo.packages.request.PackagePopulateReques
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageUpdateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionCreateRequest
 import com.tencent.bkrepo.repository.pojo.packages.request.PackageVersionUpdateRequest
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
 
 /**
  * 包服务类接口
@@ -264,6 +265,8 @@ interface PackageService {
      * 根据[queryModel]搜索包
      */
     fun searchPackage(queryModel: QueryModel): Page<MutableMap<*, *>>
+
+    fun exportPackage(queryModel: QueryModel): StreamingResponseBody
 
     /**
      * 判断包的版本列表是否存在

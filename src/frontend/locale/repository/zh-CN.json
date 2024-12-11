@@ -390,6 +390,7 @@
     "deleteBlackWhiteTips": "确定从{0}中移除该制品包？",
     "BlackWhiteAddCheckTips": "仅支持输入字母、数字、短线(-)、下划线(_)、点(.)",
     "BlackWhiteAddCheckTips1": "仅支持输入字母、数字、短线(-)、下划线(_)、*、点(.)",
+    "BlackWhiteAddCheckTips2": "仅支持输入字母、数字、短线(-)、下划线(_) 或者 *",
     "scanningSchemeTip":"请选择扫描方案",
     "joinScanMsg": "加入扫描队列",
     "artifactName": "制品名称",

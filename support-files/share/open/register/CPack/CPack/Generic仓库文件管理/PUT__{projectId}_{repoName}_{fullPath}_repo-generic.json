@@ -6,7 +6,7 @@
   "method" : "PUT",
   "path" : "/repo-generic/{projectId}/{repoName}/**",
   "headers" : [ ],
-  "targetService" : "repo-generic",
+  "targetService" : "repogeneric",
   "targetPath" : "/{projectId}/{repoName}/**",
   "targetMethod" : "PUT",
   "timeout" : 30,

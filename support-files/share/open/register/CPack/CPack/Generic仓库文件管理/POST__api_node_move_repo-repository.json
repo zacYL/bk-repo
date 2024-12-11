@@ -6,7 +6,7 @@
   "method" : "POST",
   "path" : "/repo-repository/api/node/move",
   "headers" : [ ],
-  "targetService" : "repo-repository",
+  "targetService" : "reporepository",
   "targetPath" : "/api/node/move",
   "targetMethod" : "POST",
   "timeout" : 30,

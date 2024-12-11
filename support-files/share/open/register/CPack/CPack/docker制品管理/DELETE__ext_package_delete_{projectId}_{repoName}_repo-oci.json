@@ -6,7 +6,7 @@
   "method" : "DELETE",
   "path" : "/repo-oci/ext/package/delete/{projectId}/{repoName}",
   "headers" : [ ],
-  "targetService" : "repo-oci",
+  "targetService" : "repooci",
   "targetPath" : "/ext/package/delete/{projectId}/{repoName}",
   "targetMethod" : "DELETE",
   "timeout" : 30,

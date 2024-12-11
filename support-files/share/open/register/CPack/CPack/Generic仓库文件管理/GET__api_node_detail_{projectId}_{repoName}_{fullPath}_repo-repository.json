@@ -6,7 +6,7 @@
   "method" : "GET",
   "path" : "/repo-repository/api/node/detail/{projectId}/{repoName}/**",
   "headers" : [ ],
-  "targetService" : "repo-repository",
+  "targetService" : "reporepository",
   "targetPath" : "/api/node/detail/{projectId}/{repoName}/**",
   "targetMethod" : "GET",
   "timeout" : 30,

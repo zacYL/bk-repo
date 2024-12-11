@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-21 14:16:15
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-12-09 17:00:38
+ * @LastEditTime: 2024-12-11 10:28:25
  * @FilePath: /artifact/src/frontend/devops-repository/src/views/repoScan/scanMain/components/components/AddBlackWhiteRepoDialog.vue
 -->
 <template>
@@ -232,10 +232,11 @@
             'form.repoType': {
                 handler (val) {
                     // maven/gradle 需要设置groupID
+                    // 每次切换默认改名字，'maven', 'gradle' 默认*，其他默认‘’
                     if (['maven', 'gradle'].includes(val)) {
-                        if (!this.form.name) {
-                            this.form.name = '*'
-                        }
+                        this.form.name = '*'
+                    } else {
+                        this.form.name = ''
                     }
                     // 每次切换制品类型之后都要重置操作类型
                     this.form.operator = ''

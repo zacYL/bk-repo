@@ -140,7 +140,8 @@ class ReplicaRecordServiceImpl(
                 conflictStrategy = conflictStrategy,
                 status = RUNNING,
                 progress = ReplicaProgress(),
-                startTime = LocalDateTime.now()
+                startTime = LocalDateTime.now(),
+                actionType = actionType
             )
             return try {
                 replicaRecordDetailDao.insert(recordDetail).let { convert(it)!! }
@@ -182,7 +183,8 @@ class ReplicaRecordServiceImpl(
                 progress = result.progress!!,
                 startTime = startTime,
                 endTime = LocalDateTime.now(),
-                errorReason = result.errorReason
+                errorReason = result.errorReason,
+                actionType = actionType
             )
         }
         replicaRecordDetailDao.save(recordDetail)
@@ -340,7 +342,8 @@ class ReplicaRecordServiceImpl(
                     progress = it.progress,
                     startTime = it.startTime,
                     endTime = it.endTime,
-                    errorReason = it.errorReason
+                    errorReason = it.errorReason,
+                    actionType = it.actionType
                 )
             }
         }

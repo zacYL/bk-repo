@@ -35,6 +35,7 @@ import com.tencent.bkrepo.replication.manager.LocalDataManager
 import com.tencent.bkrepo.replication.pojo.record.ExecutionResult
 import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus
 import com.tencent.bkrepo.replication.pojo.record.request.RecordDetailInitialRequest
+import com.tencent.bkrepo.replication.pojo.request.ActionType
 import com.tencent.bkrepo.replication.pojo.request.PackageVersionExistCheckRequest
 import com.tencent.bkrepo.replication.pojo.request.ReplicaObjectType
 import com.tencent.bkrepo.replication.pojo.task.objects.PackageConstraint
@@ -53,7 +54,6 @@ import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.VersionListOption
 import org.slf4j.LoggerFactory
-import java.nio.file.Path
 
 /**
  * 同步服务抽象类
@@ -125,6 +125,28 @@ abstract class AbstractReplicaService(
             fullPath = constraint.path!!
         ).nodeInfo
         replicaByPath(replicaContext, nodeInfo)
+    }
+
+    /**
+     * 同步删除节点
+     */
+    protected fun deleteByPathConstraint(replicaContext: ReplicaContext, constraint: PathConstraint) {
+        val replicaExecutionContext = initialExecutionContext(
+            context = replicaContext,
+            artifactName = constraint.path!!,
+            actionType = ActionType.DELETE
+        )
+        with(replicaExecutionContext) {
+            try {
+                replicaContext.replicator.deleteNode(replicaContext, constraint.path!!)
+                return
+            } catch (throwable: Throwable) {
+                setErrorStatus(this, throwable)
+            } finally {
+                updateTaskProgressCache(replicaExecutionContext.taskKey)
+                completeRecordDetail(replicaExecutionContext)
+            }
+        }
     }
 
     /**
@@ -315,7 +337,8 @@ abstract class AbstractReplicaService(
         pathConstraint: PathConstraint? = null,
         artifactName: String,
         version: String? = null,
-        conflictStrategy: ConflictStrategy? = null
+        conflictStrategy: ConflictStrategy? = null,
+        actionType: ActionType? = null
     ): ReplicaExecutionContext {
         // 创建详情
         val request = RecordDetailInitialRequest(
@@ -327,7 +350,8 @@ abstract class AbstractReplicaService(
             pathConstraint = pathConstraint,
             artifactName = artifactName,
             version = version,
-            conflictStrategy = conflictStrategy
+            conflictStrategy = conflictStrategy,
+            actionType = actionType
         )
         val recordDetail = replicaRecordService.initialRecordDetail(request)
         return ReplicaExecutionContext(context, recordDetail)

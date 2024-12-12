@@ -53,6 +53,7 @@ import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
+import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
@@ -284,6 +285,25 @@ class ClusterReplicator(
                 artifactReplicaClient!!.replicaNodeCreateRequest(it)
             }
         }
+    }
+
+    override fun deleteNode(context: ReplicaContext, fullPath: String): Boolean {
+        with(context) {
+            retry(times = RETRY_COUNT, delayInSeconds = DELAY_IN_SECONDS) {
+                if (remoteProjectId.isNullOrBlank() || remoteRepoName.isNullOrBlank()) return false
+                logger.info(
+                    "The deletion of node [$remoteProjectId/$remoteRepo/$fullPath] will sync to the remote server!"
+                )
+                val nodeDeleteRequest = NodeDeleteRequest(
+                    projectId = remoteProjectId,
+                    repoName = remoteRepoName,
+                    fullPath = fullPath,
+                    operator = SYSTEM_USER
+                )
+                if (artifactReplicaClient!!.replicaNodeDeleteRequest(nodeDeleteRequest).isOk()) return true
+            }
+        }
+        return false
     }
 
     private fun buildNodeCreateRequest(context: ReplicaContext, node: NodeInfo): NodeCreateRequest? {

@@ -69,6 +69,11 @@
                     <div class="status-sign" :class="row.status" :data-name="$t(`planLogDetailStatusEnum.${row.status}`) || $t('notExecuted')"></div>
                 </template>
             </bk-table-column>
+            <bk-table-column :label="$t('actionType')" width="100">
+                <template #default="{ row }">
+                    {{ row.actionType === 'DELETE' ? $t('delete') : ($t('create') + '/' + $t('update')) }}
+                </template>
+            </bk-table-column>
             <bk-table-column :label="$t('conflictStrategy')" width="150">
                 <template #default="{ row }">
                     <span>{{row.conflictStrategy ? $t(`conflictStrategyEnum.${row.conflictStrategy}`) : '/'}}</span>

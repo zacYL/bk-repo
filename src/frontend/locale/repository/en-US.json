@@ -798,6 +798,7 @@
     "copyUrl":"Copy url",
     "copyUrlSuccessTip":"Successfully copied URL to clipboard",
     "syncStatus":"Status",
+    "actionType": "Action type",
     "syncNode": "Sync node",
     "notExecuted":"Not executed",
     "filePath":"FilePath",

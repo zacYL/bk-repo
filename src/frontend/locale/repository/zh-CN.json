@@ -795,6 +795,7 @@
     "copyUrl":"复制URL",
     "copyUrlSuccessTip":"成功复制URL到剪贴板",
     "syncStatus":"同步状态",
+    "actionType": "动作类型",
     "syncNode": "同步节点",
     "notExecuted":"未执行",
     "filePath":"文件路径",

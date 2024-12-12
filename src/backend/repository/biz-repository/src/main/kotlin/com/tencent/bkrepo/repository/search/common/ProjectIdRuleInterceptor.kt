@@ -1,7 +1,7 @@
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
- * Copyright (C) 2020 THL A29 Limited, a Tencent company.  All rights reserved.
+ * Copyright (C) 2024 THL A29 Limited, a Tencent company.  All rights reserved.
  *
  * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
  *
@@ -31,17 +31,13 @@
 
 package com.tencent.bkrepo.repository.search.common
 
-import cn.hutool.core.lang.UUID
-import com.google.common.util.concurrent.UncheckedExecutionException
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction.READ
-import com.tencent.bkrepo.common.api.util.toJsonString
+import com.tencent.bkrepo.common.artifact.constant.PROJECT_ID
 import com.tencent.bkrepo.common.artifact.path.PathUtils
-
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.interceptor.QueryContext
 import com.tencent.bkrepo.common.query.interceptor.QueryRuleInterceptor
 import com.tencent.bkrepo.common.query.model.Rule
-import com.tencent.bkrepo.common.query.model.Rule.FixedRule
 import com.tencent.bkrepo.common.query.model.Rule.NestedRule
 import com.tencent.bkrepo.common.query.model.Rule.NestedRule.RelationType
 import com.tencent.bkrepo.common.query.model.Rule.NestedRule.RelationType.AND
@@ -50,24 +46,17 @@ import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.node.UserAuthPathOption
-import org.aspectj.weaver.tools.cache.SimpleCacheFactory.path
-import org.slf4j.LoggerFactory
 import org.springframework.data.mongodb.core.query.Criteria
+import org.springframework.data.mongodb.core.query.isEqualTo
 import org.springframework.stereotype.Component
 
-/**
- * 仓库类型规则拦截器
- *
- * 条件构造器中传入条件是`repoType`，需要转换成对应的仓库列表
- */
 @Component
 class ProjectIdRuleInterceptor(
     private val permissionManager: PermissionManager,
 ) : QueryRuleInterceptor {
-    private val logger = LoggerFactory.getLogger(ProjectIdRuleInterceptor::class.java)
 
     override fun match(rule: Rule): Boolean {
-        return rule is Rule.QueryRule && rule.field == "projectId" && isSupportRule(rule)
+        return rule is Rule.QueryRule && rule.field == PROJECT_ID && isSupportRule(rule)
     }
 
     override fun intercept(rule: Rule, context: QueryContext): Criteria {
@@ -75,6 +64,7 @@ class ProjectIdRuleInterceptor(
         with(rule) {
             require(context is CommonQueryContext)
             val projectId = rule.value.toString()
+            if (SecurityUtils.isServiceRequest()) return Criteria.where(PROJECT_ID).isEqualTo(projectId)
             val repoName = context.findRepoName().toMutableList()
             val userId = SecurityUtils.getUserId()
             if(repoName.isEmpty()){
@@ -129,7 +119,7 @@ class ProjectIdRuleInterceptor(
 
     private fun isSupportRule(rule: Rule.QueryRule): Boolean {
         with(rule) {
-            return if (operation == OperationType.EQ || operation == OperationType.PREFIX) {
+            return if (operation == OperationType.EQ) {
                 value is CharSequence
             } else {
                 false

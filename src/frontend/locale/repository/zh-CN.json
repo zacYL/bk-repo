@@ -392,6 +392,7 @@
     "addFail": "新增失败",
     "deleteArtifactSync": "删除制品同步",
     "deleteArtifactSyncTips": "开启后，源仓库制品删除的操作也会分发至目标仓库，导致目标仓库对应制品删除，请谨慎开启！",
+    "deleteArtifactSyncTips2": "删除制品同步只支持二进制仓库，开启后已选的其他类型仓库会被清除，确定开启吗？",
     "deleteBlackWhiteTips": "确定从{0}中移除该制品包？",
     "existingDuplicateList": "已存在重复名单",
     "BlackWhiteAddCheckTips": "仅支持输入字母、数字、短线(-)、下划线(_)、点(.)、@、/",

@@ -1,7 +1,7 @@
 <!--
  * @Author: xiaoshanwen
  * @Date: 2024-08-16 17:30:26
- * @LastEditTime: 2024-12-04 18:11:58
+ * @LastEditTime: 2024-12-12 18:30:57
  * @Description:
  * @FilePath: /artifact/src/frontend/devops-repository/src/views/planManage/createPlan/repoDialog.vue
 -->
@@ -45,7 +45,11 @@
         name: 'repoDialog',
         props: {
             show: Boolean,
-            replicaTaskObjects: Array
+            replicaTaskObjects: Array,
+            insertFilterRepoList: {
+                type: Array,
+                default: () => []
+            }
         },
         data () {
             return {
@@ -57,7 +61,14 @@
             repoList () {
                 return this.repoReadListAll
                     .filter(r => {
-                        return ['DOCKER', 'MAVEN', 'NPM', 'GENERIC', 'GO'].includes(r.type) && r.name !== 'pipeline' && r.name !== 'report' && r.category !== 'REMOTE' && r.category !== 'VIRTUAL'
+                        return (this.insertFilterRepoList.length
+                            ? this.insertFilterRepoList
+                            : ['DOCKER', 'MAVEN', 'NPM', 'GENERIC', 'GO'])
+                            .includes(r.type)
+                            && r.name !== 'pipeline'
+                            && r.name !== 'report'
+                            && r.category !== 'REMOTE'
+                            && r.category !== 'VIRTUAL'
                     })
                     .map(repo => ({ ...repo, fid: repo.projectId + repo.name }))
                     .sort((a, b) => {

@@ -10,7 +10,7 @@
                 <Icon v-show="!disabled" class="ml10 hover-btn" size="24" name="icon-delete" @click.native="replicaTaskObjects.splice(ind, 1)" />
             </div>
         </div>
-        <repo-dialog :show="showAddDialog" :replica-task-objects="replicaTaskObjects" @confirm="confirm" @cancel="showAddDialog = false"></repo-dialog>
+        <repo-dialog :show="showAddDialog" :insert-filter-repo-list="insertFilterRepoList" :replica-task-objects="replicaTaskObjects" @confirm="confirm" @cancel="showAddDialog = false"></repo-dialog>
     </div>
 </template>
 <script>
@@ -31,7 +31,8 @@
         data () {
             return {
                 showAddDialog: false,
-                replicaTaskObjects: []
+                replicaTaskObjects: [],
+                insertFilterRepoList: []
             }
         },
         computed: {
@@ -73,6 +74,14 @@
                     // eslint-disable-next-line prefer-promise-reject-errors
                     replicaTaskObjects.length ? resolve(replicaTaskObjects) : reject()
                 })
+            },
+            // 强制内部参数
+            filterChange (cb) {
+                this.replicaTaskObjects = this.replicaTaskObjects.filter(v => cb(v))
+            },
+            // 获取过滤列表
+            setInsertFilterRepoList (v) {
+                this.insertFilterRepoList = v
             }
         }
     }

@@ -47,8 +47,8 @@
                     </bk-radio>
                 </bk-radio-group>
             </bk-form-item>
-            <bk-form-item v-if="planForm.executionStrategy === 'REAL_TIME'" :label="$t('deleteArtifactSync')" :desc="$t('deleteArtifactSyncTips')">
-                <bk-switcher v-model="planForm.syncDeletion" theme="primary"></bk-switcher>
+            <bk-form-item v-if="planForm.executionStrategy === 'REAL_TIME' && planForm.replicaObjectType === 'REPOSITORY'" :label="$t('deleteArtifactSync')" :desc="$t('deleteArtifactSyncTips')">
+                <bk-switcher v-model="planForm.syncDeletion" :disabled="disabled" theme="primary"></bk-switcher>
             </bk-form-item>
             <bk-form-item :label="$t('conflictStrategy')" property="conflictStrategy">
                 <bk-radio-group v-model="planForm.conflictStrategy">
@@ -252,7 +252,8 @@
                 replicaTaskObjects: [],
                 noRecordsCheck: true,
                 recordReserveDays: 30,
-                errorRecordReserveDaysInfo: false
+                errorRecordReserveDaysInfo: false,
+                init: false
             }
         },
         computed: {
@@ -288,6 +289,43 @@
                 }
 
                 return isDisabled
+            }
+        },
+        watch: {
+            'planForm.executionStrategy' (val) {
+                if (val === 'REAL_TIME' && !this.init) {
+                    this.planForm.syncDeletion = false
+                }
+            },
+            'planForm.replicaObjectType' (val) {
+                if (val === 'REPOSITORY' && !this.init) {
+                    this.planForm.syncDeletion = false
+                }
+            },
+            'planForm.syncDeletion' (val) {
+                const planConfig = this.$refs.planConfig
+                if (!this.init) {
+                    if (val) {
+                        // 只支持二进制仓库
+                        if (planConfig.filterChange && planConfig.setInsertFilterRepoList) {
+                            this.$bkInfoDevopsConfirm({
+                                subTitle: this.$t('deleteArtifactSyncTips2'),
+                                theme: 'primary',
+                                confirmFn: () => {
+                                    planConfig.filterChange(v => v.type === 'GENERIC')
+                                    planConfig.setInsertFilterRepoList(['GENERIC'])
+                                },
+                                cancelFn: () => {
+                                    this.planForm.syncDeletion = false
+                                }
+                            })
+                        }
+                    } else {
+                        if (planConfig.setInsertFilterRepoList) {
+                            planConfig.setInsertFilterRepoList([])
+                        }
+                    }
+                }
             }
         },
         created () {
@@ -329,6 +367,7 @@
                     },
                     objects
                 }) => {
+                    this.init = true
                     this.planForm = {
                         ...this.planForm,
                         name,
@@ -355,6 +394,7 @@
                     this.noRecordsCheck = notRecord
                     this.recordReserveDays = recordReserveDays
                 }).finally(() => {
+                    this.init = false
                     this.isLoading = false
                 })
             },

@@ -400,7 +400,7 @@
     "addSuccess": "Add successfully",
     "addFail": "Add failed",
     "deleteArtifactSync": "Delete Artifact Sync",
-    "deleteArtifactSyncTips": "Once enabled, the deletion of artifacts in the source repository will also be synchronized to the target repository, resulting in the corresponding artifacts being deleted in the target repository. Please enable with caution!",
+    "deleteArtifactSyncTips": "Once enabled, the deletion of artifacts in the source repository will also be synchronized to the target repository, resulting in the corresponding artifacts being deleted in the target repository. Please enable with caution!","deleteArtifactSyncTips2": "Deleting artifact synchronization only supports binary repositories. Enabling this will clear any other selected repository types. Are you sure you want to enable it?",
     "scanningSchemeTip":"Please select a scanning scheme",
     "joinScanMsg": "Join scan queue",
     "artifactName": "Artifact name",

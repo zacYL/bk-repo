@@ -33,11 +33,11 @@ package com.tencent.bkrepo.repository.model
 
 import com.alibaba.excel.annotation.ExcelProperty
 import com.alibaba.excel.annotation.write.style.ColumnWidth
+import com.alibaba.excel.converters.localdatetime.LocalDateTimeStringConverter
 import com.tencent.bkrepo.repository.model.TPackage.Companion.PACKAGE_KEY_IDX
 import com.tencent.bkrepo.repository.model.TPackage.Companion.PACKAGE_KEY_IDX_DEF
 import com.tencent.bkrepo.repository.model.TPackage.Companion.PACKAGE_NAME_IDX
 import com.tencent.bkrepo.repository.model.TPackage.Companion.PACKAGE_NAME_IDX_DEF
-import com.tencent.bkrepo.repository.model.converter.CollectionToStringConverter
 import com.tencent.bkrepo.repository.model.converter.EnumToStringConverter
 import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import org.springframework.data.mongodb.core.index.CompoundIndex
@@ -60,13 +60,13 @@ data class TPackage(
     @ExcelProperty(value = ["创建人"], index = 6)
     var createdBy: String,
 
-    @ExcelProperty(value = ["创建时间"], index = 7)
+    @ExcelProperty(value = ["创建时间"], index = 7, converter = LocalDateTimeStringConverter::class)
     var createdDate: LocalDateTime,
 
     @ExcelProperty(value = ["最后修改人"], index = 8)
     var lastModifiedBy: String,
 
-    @ExcelProperty(value = ["最后修改时间"], index = 9)
+    @ExcelProperty(value = ["最后修改时间"], index = 9, converter = LocalDateTimeStringConverter::class)
     var lastModifiedDate: LocalDateTime,
 
     @ExcelProperty(value = ["所属项目"], index = 11)

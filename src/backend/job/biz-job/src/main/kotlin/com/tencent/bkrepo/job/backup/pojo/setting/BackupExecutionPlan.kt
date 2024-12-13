@@ -1,7 +1,7 @@
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
- * Copyright (C) 2019 THL A29 Limited, a Tencent company.  All rights reserved.
+ * Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
  *
  * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
  *
@@ -25,33 +25,24 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.job.config
+package com.tencent.bkrepo.job.backup.pojo.setting
 
-import com.tencent.bkrepo.job.backup.config.DataBackupConfig
-import com.tencent.bkrepo.job.executor.BlockThreadPoolTaskExecutorDecorator
-import org.springframework.boot.autoconfigure.task.TaskExecutionProperties
-import org.springframework.boot.context.properties.EnableConfigurationProperties
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
+import java.time.LocalDateTime
 
 /**
- * Job配置
- * */
-@Configuration
-@EnableConfigurationProperties(
-    DataBackupConfig::class
+ * 执行计划
+ */
+data class BackupExecutionPlan(
+    /**
+     * 执行一次，创建后立即执行
+     */
+    val executeImmediately: Boolean = true,
+    /**
+     * 执行一次，指定时间执行
+     */
+    val executeTime: LocalDateTime? = null,
+    /**
+     * cron表达式定时执行
+     */
+    val cronExpression: String? = null
 )
-class JobConfig {
-    @Bean
-    fun blockThreadPoolTaskExecutorDecorator(
-        threadPoolTaskExecutor: ThreadPoolTaskExecutor,
-        properties: TaskExecutionProperties
-    ): BlockThreadPoolTaskExecutorDecorator {
-        return BlockThreadPoolTaskExecutorDecorator(
-            threadPoolTaskExecutor,
-            properties.pool.queueCapacity,
-            Runtime.getRuntime().availableProcessors()
-        )
-    }
-}

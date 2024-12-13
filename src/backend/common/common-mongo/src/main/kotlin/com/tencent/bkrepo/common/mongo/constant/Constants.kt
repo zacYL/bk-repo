@@ -25,33 +25,19 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.job.config
-
-import com.tencent.bkrepo.job.backup.config.DataBackupConfig
-import com.tencent.bkrepo.job.executor.BlockThreadPoolTaskExecutorDecorator
-import org.springframework.boot.autoconfigure.task.TaskExecutionProperties
-import org.springframework.boot.context.properties.EnableConfigurationProperties
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
+package com.tencent.bkrepo.common.mongo.constant
 
 /**
- * Job配置
- * */
-@Configuration
-@EnableConfigurationProperties(
-    DataBackupConfig::class
-)
-class JobConfig {
-    @Bean
-    fun blockThreadPoolTaskExecutorDecorator(
-        threadPoolTaskExecutor: ThreadPoolTaskExecutor,
-        properties: TaskExecutionProperties
-    ): BlockThreadPoolTaskExecutorDecorator {
-        return BlockThreadPoolTaskExecutorDecorator(
-            threadPoolTaskExecutor,
-            properties.pool.queueCapacity,
-            Runtime.getRuntime().availableProcessors()
-        )
-    }
-}
+ * mongodb 最小id
+ */
+const val MIN_OBJECT_ID = "000000000000000000000000"
+
+/**
+ * 数据库字段
+ */
+const val ID = "_id"
+
+/**
+ * id索引名
+ */
+const val ID_IDX = "_id_"

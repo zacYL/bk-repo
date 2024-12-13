@@ -65,6 +65,9 @@ const val FULL_PATH = "fullPath"
 const val PATH = "path"
 const val LAST_MODIFIED_BY = "lastModifiedBy"
 const val NAME = "name"
+const val SIZE = "size"
+const val NODE_NUM = "nodeNum"
+const val PACKAGE_ID = "packageId"
 
 /**
  * 缓存类型
@@ -90,3 +93,9 @@ const val JOB_TASK_COUNT = "job.task.count"
 const val JOB_TASK_COUNT_DESC = "任务执行统计"
 const val JOB_TIME_CONSUME = "job.task.time"
 const val JOB_TIME_CONSUME_DESC = "任务执行时长统计"
+
+/**
+ * 记录备份
+ */
+const val DATA_RECORDS_BACKUP = "DATA_BACKUP"
+const val DATA_RECORDS_RESTORE = "DATA_RESTORE"

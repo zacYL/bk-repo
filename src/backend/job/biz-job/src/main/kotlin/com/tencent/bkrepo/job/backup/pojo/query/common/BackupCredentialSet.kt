@@ -1,7 +1,7 @@
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
- * Copyright (C) 2019 THL A29 Limited, a Tencent company.  All rights reserved.
+ * Copyright (C) 2022 THL A29 Limited, a Tencent company.  All rights reserved.
  *
  * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
  *
@@ -25,33 +25,24 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.job.config
+package com.tencent.bkrepo.job.backup.pojo.query.common
 
-import com.tencent.bkrepo.job.backup.config.DataBackupConfig
-import com.tencent.bkrepo.job.executor.BlockThreadPoolTaskExecutorDecorator
-import org.springframework.boot.autoconfigure.task.TaskExecutionProperties
-import org.springframework.boot.context.properties.EnableConfigurationProperties
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
+import com.tencent.bkrepo.auth.pojo.oauth.AuthorizationGrantType
+import com.tencent.bkrepo.job.backup.pojo.query.enums.BackupCredentialStatus
+import io.swagger.annotations.ApiModel
+import io.swagger.annotations.ApiModelProperty
+import java.time.LocalDateTime
 
-/**
- * Job配置
- * */
-@Configuration
-@EnableConfigurationProperties(
-    DataBackupConfig::class
+@ApiModel("账户认证信息")
+data class BackupCredentialSet(
+    @ApiModelProperty("accessKey")
+    val accessKey: String,
+    @ApiModelProperty("secretKey")
+    var secretKey: String,
+    @ApiModelProperty("创建时间")
+    val createdAt: LocalDateTime,
+    @ApiModelProperty("状态")
+    val status: BackupCredentialStatus,
+    @ApiModelProperty("认证授权方式")
+    val authorizationGrantType: AuthorizationGrantType? = AuthorizationGrantType.PLATFORM
 )
-class JobConfig {
-    @Bean
-    fun blockThreadPoolTaskExecutorDecorator(
-        threadPoolTaskExecutor: ThreadPoolTaskExecutor,
-        properties: TaskExecutionProperties
-    ): BlockThreadPoolTaskExecutorDecorator {
-        return BlockThreadPoolTaskExecutorDecorator(
-            threadPoolTaskExecutor,
-            properties.pool.queueCapacity,
-            Runtime.getRuntime().availableProcessors()
-        )
-    }
-}

@@ -1,7 +1,7 @@
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
- * Copyright (C) 2019 THL A29 Limited, a Tencent company.  All rights reserved.
+ * Copyright (C) 2022 THL A29 Limited, a Tencent company.  All rights reserved.
  *
  * BK-CI 蓝鲸持续集成平台 is licensed under the MIT license.
  *
@@ -25,33 +25,30 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.job.config
+package com.tencent.bkrepo.job.backup.service.impl.repo
 
-import com.tencent.bkrepo.job.backup.config.DataBackupConfig
-import com.tencent.bkrepo.job.executor.BlockThreadPoolTaskExecutorDecorator
-import org.springframework.boot.autoconfigure.task.TaskExecutionProperties
-import org.springframework.boot.context.properties.EnableConfigurationProperties
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.service.util.SpringContextUtils
+import com.tencent.bkrepo.job.backup.pojo.query.enums.BackupDataEnum
+import com.tencent.bkrepo.job.backup.pojo.record.BackupContext
+import com.tencent.bkrepo.job.backup.service.BackupRepoSpecialDataService
 
-/**
- * Job配置
- * */
-@Configuration
-@EnableConfigurationProperties(
-    DataBackupConfig::class
-)
-class JobConfig {
-    @Bean
-    fun blockThreadPoolTaskExecutorDecorator(
-        threadPoolTaskExecutor: ThreadPoolTaskExecutor,
-        properties: TaskExecutionProperties
-    ): BlockThreadPoolTaskExecutorDecorator {
-        return BlockThreadPoolTaskExecutorDecorator(
-            threadPoolTaskExecutor,
-            properties.pool.queueCapacity,
-            Runtime.getRuntime().availableProcessors()
-        )
+object BackupRepoSpecialMappings {
+
+    private val mappers = mutableMapOf<RepositoryType, BackupRepoSpecialDataService>()
+
+    init {
+        addMapper(SpringContextUtils.getBean(BackupMavenRepoHandler::class.java))
+        addMapper(SpringContextUtils.getBean(BackupConanRepoHandler::class.java))
+    }
+
+    private fun addMapper(mapper: BackupRepoSpecialDataService) {
+        mappers[mapper.type()] = mapper
+        mapper.extraType()?.let { mappers[mapper.extraType()!!] = mapper }
+    }
+
+    fun getRepoSpecialDataEnum(context: BackupContext): List<BackupDataEnum>? {
+        val mapper = mappers[context.currentRepositoryType] ?: return null
+        return mapper.getRepoSpecialDataEnum(context)
     }
 }

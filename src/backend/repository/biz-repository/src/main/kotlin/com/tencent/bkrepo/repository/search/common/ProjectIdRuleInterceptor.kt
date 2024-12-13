@@ -33,6 +33,7 @@ package com.tencent.bkrepo.repository.search.common
 
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction.READ
 import com.tencent.bkrepo.common.artifact.constant.PROJECT_ID
+import com.tencent.bkrepo.common.artifact.constant.PUBLIC_GLOBAL_PROJECT
 import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.query.enums.OperationType
 import com.tencent.bkrepo.common.query.interceptor.QueryContext
@@ -40,7 +41,6 @@ import com.tencent.bkrepo.common.query.interceptor.QueryRuleInterceptor
 import com.tencent.bkrepo.common.query.model.Rule
 import com.tencent.bkrepo.common.query.model.Rule.NestedRule
 import com.tencent.bkrepo.common.query.model.Rule.NestedRule.RelationType
-import com.tencent.bkrepo.common.query.model.Rule.NestedRule.RelationType.AND
 import com.tencent.bkrepo.common.query.model.Rule.QueryRule
 import com.tencent.bkrepo.common.security.manager.PermissionManager
 import com.tencent.bkrepo.common.security.util.SecurityUtils
@@ -64,11 +64,12 @@ class ProjectIdRuleInterceptor(
         with(rule) {
             require(context is CommonQueryContext)
             val projectId = rule.value.toString()
-            if (SecurityUtils.isServiceRequest()) return Criteria.where(PROJECT_ID).isEqualTo(projectId)
+            if (SecurityUtils.isServiceRequest() || PUBLIC_GLOBAL_PROJECT == projectId) return Criteria.where(PROJECT_ID)
+                .isEqualTo(projectId)
             val repoName = context.findRepoName().toMutableList()
             val userId = SecurityUtils.getUserId()
-            if(repoName.isEmpty()){
-                repoName.addAll(permissionManager.listRepo(projectId).data?.map { it.name }?: emptyList())
+            if (repoName.isEmpty()) {
+                repoName.addAll(permissionManager.listRepo(projectId).data?.map { it.name } ?: emptyList())
             }
 
             val userAuthPath =
@@ -78,7 +79,12 @@ class ProjectIdRuleInterceptor(
 
             if (userAuthPath.isEmpty()) {
                 val neProjectIdRule = Rule.QueryRule(NodeInfo::projectId.name, projectId, OperationType.NE).toFixed()
-                return context.interpreter.resolveRule(NestedRule(mutableListOf(projectIdRule, neProjectIdRule), RelationType.AND), context)
+                return context.interpreter.resolveRule(
+                    NestedRule(
+                        mutableListOf(projectIdRule, neProjectIdRule),
+                        RelationType.AND
+                    ), context
+                )
             }
 
             val reposNestedRule = userAuthPath.map { (repoName, authPaths) ->
@@ -103,7 +109,7 @@ class ProjectIdRuleInterceptor(
                 val repoNameRule = QueryRule(NodeInfo::repoName.name, repoName, OperationType.EQ)
 
                 NestedRule(
-                    mutableListOf(repoNameRule, repoAuthPathNestedRule), AND
+                    mutableListOf(repoNameRule, repoAuthPathNestedRule), RelationType.AND
                 )
             }
 

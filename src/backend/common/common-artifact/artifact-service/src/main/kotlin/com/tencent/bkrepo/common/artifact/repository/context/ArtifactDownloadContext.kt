@@ -45,6 +45,7 @@ import kotlin.reflect.full.primaryConstructor
 
 /**
  * 构件下载context
+ * 修改主构造函数参数时，需要同步修改copy方法中的构造函数调用传参
  */
 open class ArtifactDownloadContext(
     repo: RepositoryDetail? = null,
@@ -68,7 +69,7 @@ open class ArtifactDownloadContext(
     ): ArtifactContext {
         return super.copy(repositoryDetail, artifactInfoAttrMap) { artifactInfo ->
             this::class.primaryConstructor!!.call(
-                repositoryDetail, artifactInfo, artifacts, this.userId, useDisposition, false, true
+                repositoryDetail, artifactInfo, artifacts, this.userId, useDisposition, false, true, false
             )
         }
     }

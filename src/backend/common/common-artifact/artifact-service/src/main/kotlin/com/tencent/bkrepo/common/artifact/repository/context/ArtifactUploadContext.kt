@@ -53,6 +53,7 @@ open class ArtifactUploadContext : ArtifactContext {
     private var artifactFileMap: ArtifactFileMap
     private var artifactFile: ArtifactFile? = null
 
+    // 修改此构造函数参数时，需要同步修改copy方法对应参数
     constructor(
         repo: RepositoryDetail,
         artifactFile: ArtifactFile,
@@ -74,6 +75,7 @@ open class ArtifactUploadContext : ArtifactContext {
         this.artifactFileMap = artifactFileMap
     }
 
+    // 修改此构造函数参数时，需要同步修改copy方法对应参数
     constructor(
         repo: RepositoryDetail,
         artifactFileMap: ArtifactFileMap,

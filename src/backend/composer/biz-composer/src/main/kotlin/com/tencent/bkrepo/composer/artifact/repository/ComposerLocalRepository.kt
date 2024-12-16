@@ -230,7 +230,7 @@ class ComposerLocalRepository(private val stageClient: StageClient) : LocalRepos
             if (node != null) {
                 val name = node.metadata[METADATA_KEY_PACKAGE_KEY].toString()
                 val version = node.metadata[METADATA_KEY_VERSION]?.toString()
-                checkPackageAccessRule(projectId, PackageType.COMPOSER, name, version)
+                checkPackageAccessRule(this, projectId, PackageType.COMPOSER, name, version)
             }
             downloadIntercept(context, node)
             val inputStream = storageManager.loadArtifactInputStream(node, storageCredentials) ?: return null

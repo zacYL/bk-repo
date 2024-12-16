@@ -32,6 +32,7 @@
 package com.tencent.bkrepo.repository.search.common
 
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction.READ
+import com.tencent.bkrepo.common.artifact.constant.PAAS_PROJECT
 import com.tencent.bkrepo.common.artifact.constant.PROJECT_ID
 import com.tencent.bkrepo.common.artifact.constant.PUBLIC_GLOBAL_PROJECT
 import com.tencent.bkrepo.common.artifact.path.PathUtils
@@ -64,8 +65,8 @@ class ProjectIdRuleInterceptor(
         with(rule) {
             require(context is CommonQueryContext)
             val projectId = rule.value.toString()
-            if (SecurityUtils.isServiceRequest() || PUBLIC_GLOBAL_PROJECT == projectId) return Criteria.where(PROJECT_ID)
-                .isEqualTo(projectId)
+            if (SecurityUtils.isServiceRequest() || projectId in builtInProjectList)
+                return Criteria.where(PROJECT_ID).isEqualTo(projectId)
             val repoName = context.findRepoName().toMutableList()
             val userId = SecurityUtils.getUserId()
             if (repoName.isEmpty()) {
@@ -131,5 +132,9 @@ class ProjectIdRuleInterceptor(
                 false
             }
         }
+    }
+
+    companion object {
+        private val builtInProjectList = listOf(PUBLIC_GLOBAL_PROJECT, PAAS_PROJECT)
     }
 }

@@ -28,6 +28,7 @@
 package com.tencent.bkrepo.replication.replica.base
 
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
+import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.security.manager.PermissionManager
@@ -139,7 +140,6 @@ abstract class AbstractReplicaService(
         with(replicaExecutionContext) {
             try {
                 replicaContext.replicator.deleteNode(replicaContext, constraint.path!!)
-                return
             } catch (throwable: Throwable) {
                 setErrorStatus(this, throwable)
             } finally {
@@ -185,7 +185,8 @@ abstract class AbstractReplicaService(
                 val replicaExecutionContext = initialExecutionContext(
                     context = replicaContext,
                     artifactName = node.fullPath,
-                    conflictStrategy = conflictStrategy
+                    conflictStrategy = conflictStrategy,
+                    actionType = getActionType(this)
                 )
                 replicaFile(replicaExecutionContext, node)
                 return
@@ -385,6 +386,18 @@ abstract class AbstractReplicaService(
         val artifactCount = ReplicaExecutionContext.getArtifactCount(taskKey)
         if (currentProgress != null && artifactCount != null && currentProgress >= artifactCount) {
             ReplicaExecutionContext.removeProgress(taskKey)
+        }
+    }
+
+    private fun getActionType(context: ReplicaContext): ActionType? {
+        with(context) {
+            return if (!eventExists()) null else {
+                when (event.type) {
+                    EventType.NODE_MOVED -> ActionType.MOVE
+                    EventType.NODE_COPIED -> ActionType.COPY
+                    else -> null
+                }
+            }
         }
     }
 

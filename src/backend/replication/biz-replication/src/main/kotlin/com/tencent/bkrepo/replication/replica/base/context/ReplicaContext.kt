@@ -127,6 +127,8 @@ class ReplicaContext(
         }
     }
 
+    fun eventExists() = this::event.isInitialized
+
     companion object {
         private val logger = LoggerFactory.getLogger(ReplicaContext::class.java)
         private const val READ_TIMEOUT = 60 * 60 * 1000L

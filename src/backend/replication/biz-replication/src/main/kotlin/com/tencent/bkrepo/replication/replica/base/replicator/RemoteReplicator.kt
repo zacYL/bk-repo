@@ -146,7 +146,7 @@ class RemoteReplicator : Replicator {
         // 暂时不支持同步目录到外部集群
     }
 
-    override fun deleteNode(context: ReplicaContext, fullPath: String): Boolean {
+    override fun deleteNode(context: ReplicaContext, fullPath: String) {
         throw UnsupportedOperationException()
     }
 

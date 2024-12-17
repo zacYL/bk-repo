@@ -77,7 +77,7 @@ class EdgeNodeReplicator(
         // do nothing
     }
 
-    override fun deleteNode(context: ReplicaContext, fullPath: String): Boolean {
+    override fun deleteNode(context: ReplicaContext, fullPath: String) {
         throw UnsupportedOperationException()
     }
 

@@ -82,5 +82,5 @@ interface Replicator {
     /**
      * 同步删除节点
      */
-    fun deleteNode(context: ReplicaContext, fullPath: String): Boolean
+    fun deleteNode(context: ReplicaContext, fullPath: String)
 }

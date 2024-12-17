@@ -31,5 +31,7 @@ enum class ActionType {
     CREATE,
     UPDATE,
     CREATE_OR_UPDATE,
-    DELETE
+    DELETE,
+    MOVE,
+    COPY
 }

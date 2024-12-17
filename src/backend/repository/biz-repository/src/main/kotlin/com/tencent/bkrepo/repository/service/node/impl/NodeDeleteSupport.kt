@@ -33,6 +33,7 @@ import com.tencent.bkrepo.common.api.util.HumanReadable
 import com.tencent.bkrepo.common.artifact.constant.LOCK_STATUS
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.path.PathUtils
+import com.tencent.bkrepo.common.artifact.path.PathUtils.ROOT
 import com.tencent.bkrepo.common.artifact.path.PathUtils.normalizeFullPath
 import com.tencent.bkrepo.common.service.util.SpringContextUtils.Companion.publishEvent
 import com.tencent.bkrepo.repository.dao.NodeDao
@@ -113,15 +114,17 @@ open class NodeDeleteSupport(
             deletedNum = updateResult.modifiedCount
             deletedSize = nodeBaseService.aggregateComputeSize(criteria.and(TNode::deleted).isEqualTo(deleteTime))
             quotaService.decreaseUsedVolume(projectId, repoName, deletedSize)
-            // show in recycle bin
-            nodeDao.updateFirst(
-                NodeQueryHelper.nodeDeletedPointQuery(projectId, repoName, normalizeFullPath(fullPath), deleteTime),
-                Update().push(TNode::metadata.name, MetadataUtils.buildRecycleBinMetadata())
-            )
-            publishEvent(buildDeletedEvent(projectId, repoName, fullPath, operator))
-            // 更新父目录的修改信息
-            val parentFullPath = PathUtils.toFullPath(PathUtils.resolveParent(fullPath))
-            nodeBaseService.updateModifiedInfo(projectId, repoName, parentFullPath, operator, deleteTime)
+            if (fullPath != ROOT) {
+                // show in recycle bin
+                nodeDao.updateFirst(
+                    NodeQueryHelper.nodeDeletedPointQuery(projectId, repoName, normalizeFullPath(fullPath), deleteTime),
+                    Update().push(TNode::metadata.name, MetadataUtils.buildRecycleBinMetadata())
+                )
+                publishEvent(buildDeletedEvent(projectId, repoName, fullPath, operator))
+                // 更新父目录的修改信息
+                val parentFullPath = PathUtils.toFullPath(PathUtils.resolveParent(fullPath))
+                nodeBaseService.updateModifiedInfo(projectId, repoName, parentFullPath, operator, deleteTime)
+            }
         } catch (exception: DuplicateKeyException) {
             logger.warn("Delete node[/$projectId/$repoName$fullPath] by [$operator] error: [${exception.message}]")
         }

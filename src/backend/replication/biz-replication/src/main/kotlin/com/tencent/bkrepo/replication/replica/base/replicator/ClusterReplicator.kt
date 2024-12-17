@@ -287,12 +287,13 @@ class ClusterReplicator(
         }
     }
 
-    override fun deleteNode(context: ReplicaContext, fullPath: String): Boolean {
+    override fun deleteNode(context: ReplicaContext, fullPath: String) {
         with(context) {
             retry(times = RETRY_COUNT, delayInSeconds = DELAY_IN_SECONDS) {
-                if (remoteProjectId.isNullOrBlank() || remoteRepoName.isNullOrBlank()) return false
+                if (remoteProjectId.isNullOrBlank() || remoteRepoName.isNullOrBlank()) return
                 logger.info(
-                    "The deletion of node [$remoteProjectId/$remoteRepo/$fullPath] will sync to the remote server!"
+                    "The deletion of node [$localProjectId/$localRepoName/$fullPath] " +
+                            "will sync to the remote repo [$remoteProjectId/$remoteRepoName]"
                 )
                 val nodeDeleteRequest = NodeDeleteRequest(
                     projectId = remoteProjectId,
@@ -300,10 +301,12 @@ class ClusterReplicator(
                     fullPath = fullPath,
                     operator = SYSTEM_USER
                 )
-                if (artifactReplicaClient!!.replicaNodeDeleteRequest(nodeDeleteRequest).isOk()) return true
+                if (artifactReplicaClient!!.replicaNodeDeleteRequest(nodeDeleteRequest).isNotOk())
+                    throw RuntimeException(
+                        "request of deletion of node [$remoteProjectId/$remoteRepoName/$fullPath] failed!"
+                    )
             }
         }
-        return false
     }
 
     private fun buildNodeCreateRequest(context: ReplicaContext, node: NodeInfo): NodeCreateRequest? {

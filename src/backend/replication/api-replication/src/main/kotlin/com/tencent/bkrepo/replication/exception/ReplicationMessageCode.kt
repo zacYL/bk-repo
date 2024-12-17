@@ -47,6 +47,7 @@ enum class ReplicationMessageCode(private val businessCode: Int, private val key
     PIPELINE_REPO_NOT_ALLOWED(12, "pipeline.repo.not-allowed"),
     REPLICA_RECORD_DETAIL_NOT_FOUND(13, "replica.record.detail.notfound"),
     REPLICA_RECORD_NOT_FOUND(14, "replica.record.notfound"),
+    SELF_REPLICA_NOT_ALLOWED(15, "self-replica.not-allowed"),
     ;
 
     override fun getBusinessCode() = businessCode

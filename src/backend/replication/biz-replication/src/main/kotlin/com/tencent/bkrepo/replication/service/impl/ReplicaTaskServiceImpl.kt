@@ -28,6 +28,8 @@
 package com.tencent.bkrepo.replication.service.impl
 
 import com.mongodb.DuplicateKeyException
+import com.tencent.bkrepo.common.api.constant.CharPool
+import com.tencent.bkrepo.common.api.constant.StringPool.SCHEME_SEPARATOR
 import com.tencent.bkrepo.common.api.constant.StringPool.uniqueId
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.api.message.CommonMessageCode
@@ -44,6 +46,7 @@ import com.tencent.bkrepo.replication.exception.ReplicationMessageCode
 import com.tencent.bkrepo.replication.manager.LocalDataManager
 import com.tencent.bkrepo.replication.model.TReplicaObject
 import com.tencent.bkrepo.replication.model.TReplicaTask
+import com.tencent.bkrepo.replication.pojo.cluster.ClusterNodeName
 import com.tencent.bkrepo.replication.pojo.cluster.ClusterNodeType
 import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus
 import com.tencent.bkrepo.replication.pojo.request.ReplicaObjectType
@@ -74,6 +77,7 @@ import org.quartz.JobBuilder
 import org.quartz.JobKey
 import org.quartz.TriggerBuilder
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.isEqualTo
 import org.springframework.data.domain.Sort
@@ -90,6 +94,10 @@ class ReplicaTaskServiceImpl(
     private val replicaTaskScheduler: ReplicaTaskScheduler,
     private val localDataManager: LocalDataManager
 ) : ReplicaTaskService {
+
+    @Value("\${cluster.self.url:#{null}}")
+    val selfUrl: String? = null
+
     override fun getByTaskId(taskId: String): ReplicaTaskInfo? {
         return replicaTaskDao.findById(taskId)?.let { convert(it) }
     }
@@ -153,12 +161,11 @@ class ReplicaTaskServiceImpl(
             val key = uniqueId()
             val userId = SecurityUtils.getUserId()
             // 查询集群节点信息
-            val clusterNodeSet = remoteClusterIds.map {
-                val clusterNodeName = clusterNodeService.getClusterNameById(it)
-                // 验证连接可用
-                clusterNodeService.tryConnect(clusterNodeName.name)
-                clusterNodeName
-            }.toSet()
+            val clusterNodes = remoteClusterIds.map {
+                clusterNodeService.getByClusterId(it)
+                    ?: throw ErrorCodeException(ReplicationMessageCode.CLUSTER_NODE_NOT_FOUND, it)
+            }.onEach { clusterNodeService.tryConnect(it.name) }
+            checkCircularReplica(this, clusterNodes.map { it.url })
             val task = TReplicaTask(
                 key = key,
                 name = name,
@@ -166,7 +173,7 @@ class ReplicaTaskServiceImpl(
                 replicaObjectType = replicaObjectType,
                 replicaType = replicaType,
                 setting = setting,
-                remoteClusters = clusterNodeSet,
+                remoteClusters = clusterNodes.map { ClusterNodeName(id = it.id, name = it.name) }.toSet(),
                 status = when (replicaType) {
                     ReplicaType.REAL_TIME -> ReplicaStatus.REPLICATING
                     ReplicaType.SCHEDULED -> ReplicaStatus.WAITING
@@ -294,6 +301,27 @@ class ReplicaTaskServiceImpl(
                 pathConstraints?.forEach { pathConstraint ->
                     PathUtils.normalizeFullPath(pathConstraint.path!!)
                 }
+            }
+        }
+    }
+
+    private fun checkCircularReplica(request: ReplicaTaskCreateRequest, urlList: List<String>) {
+        with(request) {
+            val selfDomain = selfUrl?.trimEnd(CharPool.SLASH)?.substringAfter(SCHEME_SEPARATOR)
+            if (
+                selfDomain == null ||
+                urlList.none {
+                    it.trimEnd(CharPool.SLASH).removeSuffix("/replication").substringAfter(SCHEME_SEPARATOR) ==
+                            selfDomain
+                }
+            ) return
+            replicaTaskObjects.forEach {
+                if (it.remoteProjectId == localProjectId && it.localRepoName == it.remoteRepoName)
+                    throw ErrorCodeException(
+                        ReplicationMessageCode.SELF_REPLICA_NOT_ALLOWED,
+                        localProjectId,
+                        it.localRepoName
+                    )
             }
         }
     }

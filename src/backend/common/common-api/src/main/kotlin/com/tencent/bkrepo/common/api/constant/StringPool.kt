@@ -58,6 +58,7 @@ object StringPool {
     const val UTF_8 = "UTF-8"
     const val BYTES = "bytes"
     const val NO_CACHE = "no-cache"
+    const val SCHEME_SEPARATOR = "://"
 
     private val alphabet: List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
 

@@ -84,7 +84,7 @@ class SoftwareRepositoryServiceImpl(
             criteria.and(TRepository::type).isEqualTo(repoType)
         }
         criteria.orOperator(publicCriteria, systemCriteria)
-        option.name?.takeIf { it.isNotBlank() }?.apply { criteria.and(TRepository::name).regex("^$this") }
+        option.name?.takeIf { it.isNotBlank() }?.apply { criteria.and(TRepository::name).regex(this) }
         option.category?.takeIf { it.isNotEmpty() }
             ?.apply { criteria.and(TRepository::category).inValues(this.map { it.toUpperCase() }) }
         return Query(criteria).with(Sort.by(Sort.Direction.DESC, TRepository::createdDate.name))

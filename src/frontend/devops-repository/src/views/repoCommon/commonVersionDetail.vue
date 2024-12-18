@@ -580,6 +580,7 @@
     }
 
     a {
+        cursor: default;
         color: var(--primaryColor);
         text-decoration: underline;
         &:hover {

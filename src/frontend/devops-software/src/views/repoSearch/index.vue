@@ -228,7 +228,7 @@
                     } else {
                         this.commonPackageInfo = pkg
                         this.$nextTick(() => {
-                            this.$refs.searchDependDetailRef && (this.$refs.searchDependDetailRef.show = true)
+                            this.$refs.searchDependDetailRef ? (this.$refs.searchDependDetailRef.show = true) : this.showCommonPackageDetail(pkg)
                         })
                     }
                 }

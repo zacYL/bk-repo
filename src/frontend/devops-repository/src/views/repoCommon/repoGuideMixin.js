@@ -1519,7 +1519,7 @@ export default {
                         {
                             subTitle: 'yum',
                             codeList: [
-                                `yum install ${this.packageName}-${this.versionLabel}`
+                                `yum install ${this.packageName.split('/').pop()}-${this.versionLabel}`
                             ]
                         }
                     ]

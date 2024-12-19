@@ -80,8 +80,15 @@ class ArtifactEventConsumer(
 
         executors.execute {
             replicaTaskService.listRealTimeTasks(projectId, repoName).forEach {
-                if (event.type == EventType.NODE_DELETED && !it.task.setting.syncDeletion) return@forEach
-                eventBasedReplicaJobExecutor.execute(it, event)
+                if (event.type == EventType.NODE_DELETED) {
+                    if (
+                        !it.task.setting.syncDeletion ||
+                        it.objects.none { obj -> obj.repoType == RepositoryType.GENERIC }
+                    ) return@forEach
+                    eventBasedReplicaJobExecutor.execute(
+                        it.copy(objects = it.objects.filter { obj -> obj.repoType == RepositoryType.GENERIC }), event
+                    )
+                } else eventBasedReplicaJobExecutor.execute(it, event)
             }
         }
     }

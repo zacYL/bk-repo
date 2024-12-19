@@ -345,7 +345,12 @@
                 return this.repoBaseInfo.category === 'COMPOSITE' && ['maven', 'npm', 'pypi', 'composer', 'nuget'].includes(this.repoType)
             },
             showCleanConfigTab () {
-                return (this.repoBaseInfo.category === 'LOCAL' || this.repoBaseInfo.category === 'COMPOSITE') && ['maven', 'docker', 'npm', 'helm', 'generic'].includes(this.repoType)
+                return (
+                    (this.repoBaseInfo.category === 'LOCAL' || this.repoBaseInfo.category === 'COMPOSITE')
+                    && ['maven', 'docker', 'npm', 'helm', 'generic'].includes(this.repoType)
+                ) || (
+                    this.repoType === 'gradle' && this.repoBaseInfo.category === 'LOCAL'
+                )
             },
             showPermissionConfigTab () {
                 return this.repoBaseInfo.category === 'LOCAL' && ['generic'].includes(this.repoType.toLowerCase())

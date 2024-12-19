@@ -1,7 +1,7 @@
 <!--
  * @Author: xiaoshanwen
  * @Date: 2024-08-16 17:30:26
- * @LastEditTime: 2024-12-12 18:30:57
+ * @LastEditTime: 2024-12-19 15:28:58
  * @Description:
  * @FilePath: /artifact/src/frontend/devops-repository/src/views/planManage/createPlan/repoDialog.vue
 -->
@@ -63,7 +63,7 @@
                     .filter(r => {
                         return (this.insertFilterRepoList.length
                             ? this.insertFilterRepoList
-                            : ['DOCKER', 'MAVEN', 'NPM', 'GENERIC', 'GO'])
+                            : ['DOCKER', 'MAVEN', 'NPM', 'GENERIC', 'GO', 'GRADLE'])
                             .includes(r.type)
                             && r.name !== 'pipeline'
                             && r.name !== 'report'

@@ -235,7 +235,6 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
         with(context) {
             if (repositoryDetail.type.supportPackage) {
                 checkPackageAccessRule(
-                    context,
                     projectId,
                     PackageType.valueOf(repositoryDetail.type.name),
                     artifactInfo.getPackageFullName(),
@@ -430,26 +429,14 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
      * TODO NODE中统一存储packageName与packageVersion元数据后可设置为private方法
      */
     fun packageDownloadIntercept(context: ArtifactDownloadContext, packageVersion: PackageVersion) {
-        if (context.getAndRemoveAttribute<Boolean>(MATCH_PASS_RULE) == true) return
         context.getPackageInterceptors().forEach { it.intercept(context.projectId, packageVersion) }
     }
 
-    protected fun checkPackageAccessRule(
-        context: ArtifactDownloadContext,
-        projectId: String,
-        type: PackageType,
-        fullName: String,
-        version: String?
-    ) {
+    protected fun checkPackageAccessRule(projectId: String, type: PackageType, fullName: String, version: String?) {
         if (version.isNullOrBlank()) return
         val (passRules, forbidRules) = packageAccessRuleClient.getMatchedRules(projectId, type.name, fullName).data!!
             .partition { it.pass }
-        passRules.forEach {
-            if (matchRule(type, version, it.version, it.versionRuleType)) {
-                context.putAttribute(MATCH_PASS_RULE, true)
-                return
-            }
-        }
+        passRules.forEach { if (matchRule(type, version, it.version, it.versionRuleType)) return }
         forbidRules.forEach {
             if (matchRule(type, version, it.version, it.versionRuleType)) {
                 throw ArtifactDownloadForbiddenException(projectId)
@@ -515,6 +502,5 @@ abstract class AbstractArtifactRepository : ArtifactRepository {
         private val logger = LoggerFactory.getLogger(AbstractArtifactRepository::class.java)
         private const val BINDING_OUT_NAME = "artifactEvent-out-0"
         private const val PACKAGE_DOWNLOAD_INTERCEPTED_FLAG = "package_download_intercept_pass"
-        private const val MATCH_PASS_RULE = "match_pass_rule"
     }
 }

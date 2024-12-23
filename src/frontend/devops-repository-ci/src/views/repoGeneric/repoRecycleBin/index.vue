@@ -1,12 +1,12 @@
 <!--
  * @Date: 2024-11-21 15:38:37
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-12-11 10:44:42
+ * @LastEditTime: 2024-12-23 14:41:14
  * @FilePath: /artifact/src/frontend/devops-repository-ci/src/views/repoGeneric/repoRecycleBin/index.vue
 -->
 <template>
     <div class="recycle-bin" v-bkloading="{ isLoading }">
-        <div class="ml20 mr20 mt10 flex-align-center">
+        <div class="ml20 mr20 mt10 flex-between-center">
             <bk-input
                 v-model.trim="name"
                 :placeholder="$t('artifactPlaceholder')"
@@ -17,6 +17,7 @@
                 @clear="() => {
                     search
                 }"></bk-input>
+            <bk-button theme="primary" @click="cleanRecycleBin">{{$t('cleanRecycleBin')}}</bk-button>
         </div>
         <bk-table
             class="mt10 scan-table"
@@ -130,7 +131,8 @@
                 'checkConflictPath',
                 'nodeRevert',
                 'nodeDelete',
-                'getNodeDetail'
+                'getNodeDetail',
+                'cleanUpRecycleBin'
             ]),
             // 分页
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}) {
@@ -337,33 +339,53 @@
                     subTitle: this.$t('permanentlyDeleteTips'),
                     theme: 'danger',
                     confirmFn: () => {
-                        // 彻底删除
-                        this.nodeDelete({
-                            projectId: this.projectId,
-                            repoName: this.repoName,
-                            fullPath: row.fullPath,
-                            deleteTime: new Date(row.deleted).getTime()
-                        }).then(() => {
-                            this.$bkMessage({
-                                theme: 'success',
-                                message: this.$t('removeSuccess')
+                        this.removePromise(
+                            // 彻底删除
+                            this.nodeDelete({
+                                projectId: this.projectId,
+                                repoName: this.repoName,
+                                fullPath: row.fullPath,
+                                deleteTime: new Date(row.deleted).getTime()
                             })
-                            this.resetTable()
-                        }).catch((error) => {
-                            if (error?.status?.toString() === '403') {
-                                this.$bkMessage({
-                                    theme: 'error',
-                                    message: this.$t('noBusinessTip')
-                                })
-                            } else {
-                                this.$bkMessage({
-                                    theme: 'error',
-                                    message: this.$t('revertFail')
-                                })
-                            }
-                        })
+                        )
                     }
                 })
+            },
+            cleanRecycleBin () {
+                this.$bkInfoDevopsConfirm({
+                    subTitle: this.$t('sureCleanRecycleBin'),
+                    theme: 'danger',
+                    okText: this.$t('cleanUp'),
+                    confirmFn: () => {
+                        this.removePromise(this.cleanUpRecycleBin({
+                            projectId: this.projectId,
+                            repoName: this.repoName
+                        }))
+                    }
+                })
+            },
+            removePromise (promise) {
+                return promise
+                    .then(() => {
+                        this.$bkMessage({
+                            theme: 'success',
+                            message: this.$t('removeSuccess')
+                        })
+                        this.resetTable()
+                    })
+                    .catch((error) => {
+                        if (error?.status?.toString() === '403') {
+                            this.$bkMessage({
+                                theme: 'error',
+                                message: this.$t('noBusinessTip')
+                            })
+                        } else {
+                            this.$bkMessage({
+                                theme: 'error',
+                                message: this.$t('revertFail')
+                            })
+                        }
+                    })
             }
         }
     }

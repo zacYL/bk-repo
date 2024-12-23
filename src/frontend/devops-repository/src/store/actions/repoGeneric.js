@@ -373,6 +373,15 @@ export default {
      */
     nodeDelete (_, { projectId, repoName, fullPath, deleteTime }) {
         return Vue.prototype.$ajax.delete(`${prefix}/recycle-bin/node/delete/${projectId}/${repoName}/${fullPath}?deletedId=${deleteTime}`)
+    },
+    /**
+     * @description: 清空回收站
+     * @param {*} _
+     * @param {*} projectId
+     * @param {*} repoName
+     * @return {*}
+     */
+    cleanUpRecycleBin (_, { projectId, repoName }) {
+        return Vue.prototype.$ajax.delete(`${prefix}/recycle-bin/clean/${projectId}/${repoName}`)
     }
-
 }

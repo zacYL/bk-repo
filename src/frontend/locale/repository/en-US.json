@@ -5,6 +5,8 @@
     "cleanRecycleBin": " Clean up the recycle bin",
     "sureCleanRecycleBin": "Are you sure to clear the recycle bin of this warehouse?",
     "cleanUp": "Clean up",
+    "cleanUpSuccess": "Clean up successfully",
+    "cleanUpFail": "Clean up failed",
     "deleteTime": "Delete time",
     "deleter": "Deleter",
     "artifactSize": "Artifact size",

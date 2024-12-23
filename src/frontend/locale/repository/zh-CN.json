@@ -5,6 +5,8 @@
     "cleanRecycleBin": "清空回收站",
     "sureCleanRecycleBin": "是否确认清空本仓库回收站？",
     "cleanUp": "清空",
+    "cleanUpSuccess": "清空成功",
+    "cleanUpFail": "清空失败",
     "deleteTime": "删除时间",
     "deleter": "删除人",
     "artifactSize": "制品大小",

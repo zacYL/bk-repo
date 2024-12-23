@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-21 15:38:37
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-12-23 14:50:06
+ * @LastEditTime: 2024-12-23 15:44:40
  * @FilePath: /artifact/src/frontend/devops-repository-ci/src/views/repoGeneric/repoRecycleBin/index.vue
 -->
 <template>
@@ -360,16 +360,16 @@
                         this.removePromise(this.cleanUpRecycleBin({
                             projectId: this.projectId,
                             repoName: this.repoName
-                        }))
+                        }), [this.$t('cleanUpSuccess'), this.$t('cleanUpFail')])
                     }
                 })
             },
-            removePromise (promise) {
+            removePromise (promise, msgList = []) {
                 return promise
                     .then(() => {
                         this.$bkMessage({
                             theme: 'success',
-                            message: this.$t('removeSuccess')
+                            message: msgList[0] ?? this.$t('removeSuccess')
                         })
                         this.resetTable()
                     })
@@ -382,7 +382,7 @@
                         } else {
                             this.$bkMessage({
                                 theme: 'error',
-                                message: this.$t('revertFail')
+                                message: msgList[1] ?? this.$t('revertFail')
                             })
                         }
                     })

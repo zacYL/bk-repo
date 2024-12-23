@@ -203,6 +203,16 @@ object NodeQueryHelper {
     }
 
     /**
+     * 查询所有被删除节点
+     */
+    fun nodeDeletedQuery(projectId: String, repoName: String): Query {
+        val criteria = where(TNode::projectId).isEqualTo(projectId)
+            .and(TNode::repoName).isEqualTo(repoName)
+            .and(TNode::deleted).ne(null)
+        return Query(criteria)
+    }
+
+    /**
      * 查询项目所有文件节点
      */
     fun nodeFileQuery(projectId: String): Query {

@@ -8,4 +8,6 @@ import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 interface RecycleBinService {
 
     fun irreversibleDelete(artifactInfo: ArtifactInfo, deletedId: Long)
+
+    fun clean(projectId: String, repoName: String)
 }

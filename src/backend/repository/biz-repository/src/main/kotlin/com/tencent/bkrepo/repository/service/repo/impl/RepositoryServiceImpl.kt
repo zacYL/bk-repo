@@ -91,6 +91,7 @@ import com.tencent.bkrepo.repository.pojo.repo.RepoUpdateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
 import com.tencent.bkrepo.repository.service.node.NodeService
+import com.tencent.bkrepo.repository.service.recycle.RecycleBinService
 import com.tencent.bkrepo.repository.service.repo.ProjectService
 import com.tencent.bkrepo.repository.service.repo.ProxyChannelService
 import com.tencent.bkrepo.repository.service.repo.RepositoryService
@@ -135,7 +136,8 @@ class RepositoryServiceImpl(
     private val packageDao: PackageDao,
     private val packageVersionDao: PackageVersionDao,
     private val nodeClient: NodeClient,
-    private val eventSupplier: EventSupplier
+    private val eventSupplier: EventSupplier,
+    private val recycleBinService: RecycleBinService
 ) : RepositoryService {
 
     override fun getRepoInfo(projectId: String, name: String, type: String?): RepositoryInfo? {
@@ -412,6 +414,8 @@ class RepositoryServiceImpl(
             if (repository.category == RepositoryCategory.LOCAL || repository.category == RepositoryCategory.REMOTE) {
                 updateAssociatedVirtualRepos(projectId, name, repository.type.name, operator)
             }
+            // 清理回收站数据
+            recycleBinService.clean(projectId, name)
         }
         //删除仓库权限中心数据
         try {

@@ -8,9 +8,11 @@ import com.tencent.bkrepo.repository.model.TNode
 import com.tencent.bkrepo.repository.service.recycle.RecycleBinService
 import com.tencent.bkrepo.repository.util.MetadataUtils.buildExpiredDeletedNodeMetadata
 import com.tencent.bkrepo.repository.util.NodeQueryHelper.nodeDeletedPointQuery
+import com.tencent.bkrepo.repository.util.NodeQueryHelper.nodeDeletedQuery
 import com.tencent.bkrepo.repository.util.NodeQueryHelper.nodeTreeCriteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Update
+import org.springframework.data.mongodb.core.query.and
 import org.springframework.data.mongodb.core.query.isEqualTo
 import org.springframework.data.mongodb.core.query.where
 import org.springframework.stereotype.Service
@@ -33,5 +35,19 @@ class RecycleBinServiceImpl(
                 Update().push(TNode::metadata.name, buildExpiredDeletedNodeMetadata())
             )
         }
+    }
+
+    override fun clean(projectId: String, repoName: String) {
+        nodeDao.updateMulti(
+            Query(
+                where(TNode::projectId).isEqualTo(projectId).and(TNode::repoName).isEqualTo(repoName)
+                    .and("${TNode::metadata.name}.${TMetadata::key.name}").isEqualTo(ROOT_DELETED_NODE)
+            ),
+            Update().pull(TNode::metadata.name, Query(where(TMetadata::key).isEqualTo(ROOT_DELETED_NODE)))
+        )
+        nodeDao.updateMulti(
+            nodeDeletedQuery(projectId, repoName),
+            Update().push(TNode::metadata.name, buildExpiredDeletedNodeMetadata())
+        )
     }
 }

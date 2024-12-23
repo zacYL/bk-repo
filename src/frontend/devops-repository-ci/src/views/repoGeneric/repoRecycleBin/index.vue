@@ -1,7 +1,7 @@
 <!--
  * @Date: 2024-11-21 15:38:37
  * @LastEditors: xiaoshan
- * @LastEditTime: 2024-12-23 14:41:14
+ * @LastEditTime: 2024-12-23 14:50:06
  * @FilePath: /artifact/src/frontend/devops-repository-ci/src/views/repoGeneric/repoRecycleBin/index.vue
 -->
 <template>
@@ -17,7 +17,7 @@
                 @clear="() => {
                     search
                 }"></bk-input>
-            <bk-button theme="primary" @click="cleanRecycleBin">{{$t('cleanRecycleBin')}}</bk-button>
+            <bk-button v-if="withOperationPermission" theme="primary" @click="cleanRecycleBin">{{$t('cleanRecycleBin')}}</bk-button>
         </div>
         <bk-table
             class="mt10 scan-table"

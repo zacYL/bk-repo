@@ -1,6 +1,12 @@
 {
     "modulePathTips": "输入完整的modulePath",
     "syncObjTips": "[目标项目]与[目标仓库]参数可为空，[目标项目]为空则等于当前项目标识，[目标仓库]为空则等于源仓库名称",
+    "specsDownloadUrl": "Specs下载地址",
+    "remoteRepoType": "远程仓库类型",
+    "other": "其他",
+    "specsDownloadUrlTips1": "如选择其他类型仓库拉取则需配置为目标仓库索引路径",
+    "specsDownloadUrlTips2": "如选择 GitHub 拉取则配置为：https://github.com/CocoaPods/Specs",
+    "specsDownloadUrlTips3": "如选择 bkrepo 拉取则配置为：{repoURL}/index/fetchIndexx，其中{repoURL}为制品库url地址",
     "projectIdCheckTips": "请输入6位小写字母或数字的组合。",
     "originRepo": "源仓库",
     "versionOperators": "版本逻辑",

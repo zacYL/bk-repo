@@ -41,6 +41,33 @@
                     <!-- todo 测试链接暂未支持 -->
                     <bk-button v-if="repoBaseInfo.type !== 'generic'" theme="primary" :disabled="disableTestUrl" @click="onClickTestRemoteUrl">{{ $t('testRemoteUrl') }}</bk-button>
                 </bk-form-item>
+                <template v-if="repoBaseInfo.type === 'cocoapods'">
+                    <bk-form-item :label="$t('remoteRepoType')" property="remoteType" error-display-type="normal">
+                        <bk-select
+                            v-model="repoBaseInfo.remoteType"
+                            class="w250">
+                            <bk-option v-for="type in remoteRepoTypes" :key="type.value" :id="type.value" :name="type.label">
+                                <div class="flex-align-center">
+                                    <span class="ml10 flex-1 text-overflow">{{type.label}}</span>
+                                </div>
+                            </bk-option>
+                        </bk-select>
+                    </bk-form-item>
+                    <!-- specs 下载地址 -->
+                    <bk-form-item :label="$t('specsDownloadUrl')"
+                        :required="repoBaseInfo.remoteType === 'OTHER'"
+                        property="downloadUrl" error-display-type="normal"
+                        :desc="{
+                            content: `<div>
+                                <p>${$t('specsDownloadUrlTips1')}</p>
+                                <p>${$t('specsDownloadUrlTips2')}</p>
+                                <p>${$t('specsDownloadUrlTips3')}</p>
+                            </div>`
+                        }"
+                        desc-type="icon">
+                        <bk-input class="w480" v-model.trim="repoBaseInfo.downloadUrl"></bk-input>
+                    </bk-form-item>
+                </template>
                 <bk-form-item :label="$t('remoteProxyAccount')" property="credentials.username" error-display-type="normal">
                     <bk-input class="w480" v-model.trim="repoBaseInfo.credentials.username"></bk-input>
                 </bk-form-item>
@@ -288,7 +315,9 @@
             virtualStoreList: [],
             // deploymentRepo: '' // 虚拟仓库中选择存储的本地仓库
             includesPath: [],
-            ignoresPath: []
+            ignoresPath: [],
+            downloadUrl: '', // specs下载地址
+            remoteType: 'GIT_HUB'
         }
     }
 
@@ -316,6 +345,22 @@
         },
         computed: {
             ...mapState(['domain']),
+            remoteRepoTypes () {
+                return [
+                    {
+                        label: 'GitHub',
+                        value: 'GIT_HUB'
+                    },
+                    {
+                        label: 'bkrepo',
+                        value: 'CPACK'
+                    },
+                    {
+                        label: this.$t('other'),
+                        value: 'OTHER'
+                    }
+                ]
+            },
             projectId () {
                 return this.$route.params.projectId
             },
@@ -503,7 +548,23 @@
                     'network.proxy.host': (this.storeType === 'remote' && this.repoBaseInfo.network.switcher) ? proxyHostRule : {},
                     'network.proxy.port': (this.storeType === 'remote' && this.repoBaseInfo.network.switcher) ? proxyPortRule : {},
                     // 虚拟仓库的选择存储库的校验
-                    virtualStoreList: this.storeType === 'virtual' ? checkStorageRule : {}
+                    virtualStoreList: this.storeType === 'virtual' ? checkStorageRule : {},
+                    // 为远程仓库且仓库类型为cocoapods且远程仓库类型为其他才设置下载地址的校验
+                    ...(
+                        this.repoBaseInfo.type === 'cocoapods'
+                        && this.storeType === 'remote'
+                        && this.repoBaseInfo.remoteType === 'OTHER'
+                    )
+                        ? {
+                            downloadUrl: [
+                                {
+                                    required: true,
+                                    message: this.$t('pleaseInput') + this.$t('space') + this.$t('specsDownloadUrl'),
+                                    trigger: 'blur'
+                                }
+                            ]
+                        }
+                        : {}
                 }
             },
             available: {
@@ -756,6 +817,16 @@
                                         groupXmlSet: this.repoBaseInfo.groupXmlSet
                                     }
                                     : {}
+                            ),
+                            ...(
+                                (this.repoBaseInfo.type === 'cocoapods'
+                                    && this.storeType === 'remote')
+                                    ? {
+                                        downloadUrl: this.repoBaseInfo.downloadUrl,
+                                        type: this.repoBaseInfo.remoteType
+                                    }
+                                    : {}
+                        
                             )
                         }
                     }

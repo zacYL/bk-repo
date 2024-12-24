@@ -66,7 +66,13 @@
                     @change="changeReplicaObjectType">
                 </card-radio-group>
             </bk-form-item>
-            <bk-form-item :label="$t('syncObject')" :required="true" property="config" error-display-type="normal">
+            <bk-form-item
+                :label="$t('syncObject')"
+                :required="true"
+                property="config"
+                error-display-type="normal"
+                :desc="$t('syncObjTips')"
+                :desc-type="'icon'">
                 <template v-if="planForm.replicaObjectType === 'REPOSITORY'">
                     <repository-table
                         ref="planConfig"

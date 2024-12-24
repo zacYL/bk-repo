@@ -1,5 +1,6 @@
 {
     "modulePathTips": "输入完整的modulePath",
+    "projectIdCheckTips": "请输入6位小写字母或数字的组合。",
     "versionOperators": "版本逻辑",
     "recycleBin": "回收站",
     "cleanRecycleBin": "清空回收站",
@@ -282,6 +283,8 @@
     "expiration":"元数据缓存过期时间",
     "port":"端口",
     "uploadTargetStore":"上传目标仓库",
+    "TargetStore": "目标仓库",
+    "TargetProject": "目标项目",
     "select":"选择",
     "successConnectServer":"成功连接到服务器",
     "connectFailed":"连接失败",

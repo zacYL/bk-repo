@@ -47,7 +47,9 @@
         components: { packageDialog },
         props: {
             initData: Array,
-            disabled: Boolean
+            disabled: Boolean,
+            targetStore: String,
+            targetProject: String
         },
         data () {
             return {
@@ -101,8 +103,8 @@
                 return new Promise((resolve, reject) => {
                     const replicaTaskObjects = [{
                         localRepoName: this.selectedRepoName,
-                        remoteProjectId: this.projectId,
-                        remoteRepoName: this.selectedRepoName,
+                        remoteProjectId: this.targetProject || this.projectId,
+                        remoteRepoName: this.targetStore || this.selectedRepoName,
                         repoType: this.selectedRepo.type,
                         packageConstraints: this.packageConstraints.map(pkg => ({ packageKey: pkg.key, versions: pkg.versions }))
                     }]

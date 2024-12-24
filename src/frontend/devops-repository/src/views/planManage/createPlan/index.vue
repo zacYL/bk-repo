@@ -79,6 +79,8 @@
                     <package-table
                         ref="planConfig"
                         :init-data="replicaTaskObjects"
+                        :target-project="planForm.targetProject"
+                        :target-store="planForm.targetStore"
                         :disabled="disabled"
                         @clearError="clearError">
                     </package-table>
@@ -87,11 +89,22 @@
                     <path-table
                         ref="planConfig"
                         :init-data="replicaTaskObjects"
+                        :target-project="planForm.targetProject"
+                        :target-store="planForm.targetStore"
                         :disabled="disabled"
                         @clearError="clearError">
                     </path-table>
                 </template>
             </bk-form-item>
+            <!-- 目标项目，目标路径 -->
+            <template v-if="['PACKAGE','PATH'].includes(planForm.replicaObjectType)">
+                <bk-form-item :label="$t('TargetProject')" property="targetProject" error-display-type="normal">
+                    <bk-input class="w480" v-model.trim="planForm.targetProject" maxlength="6" show-word-limit :disabled="disabled"></bk-input>
+                </bk-form-item>
+                <bk-form-item :label="$t('TargetStore')" property="targetStore" error-display-type="normal">
+                    <bk-input class="w480" v-model.trim="planForm.targetStore" maxlength="31" show-word-limit :disabled="disabled"></bk-input>
+                </bk-form-item>
+            </template>
             <bk-form-item :label="$t('targetNode')" :required="true" property="remoteClusterIds" error-display-type="normal">
                 <bk-select
                     class="w480"
@@ -195,6 +208,8 @@
                     cron: '* * * * * ? *',
                     conflictStrategy: 'SKIP',
                     remoteClusterIds: [],
+                    targetStore: '',
+                    targetProject: '',
                     createdBy: '',
                     createdDate: '',
                     description: ''
@@ -245,6 +260,22 @@
                         {
                             required: true,
                             message: this.$t('pleaseSelect') + this.$t('space') + this.$t('targetNode'),
+                            trigger: 'blur'
+                        }
+                    ],
+                    // 目标项目正则
+                    targetProject: [
+                        {
+                            regex: /^[a-z0-9]{6}$|^$/,
+                            message: this.$t('projectIdCheckTips'),
+                            trigger: 'blur'
+                        }
+                    ],
+                    // 目标仓库正则
+                    targetStore: [
+                        {
+                            regex: /^[a-zA-Z][a-zA-Z0-9\-_]{1,31}$|^$/,
+                            message: this.$t('repoNamePlaceholder'),
                             trigger: 'blur'
                         }
                     ]
@@ -390,6 +421,12 @@
                         createdDate,
                         syncDeletion
                     }
+                    // 回显目标项目及目标仓库
+                    if (['PACKAGE', 'PATH'].includes(this.planForm.replicaObjectType)) {
+                        this.planForm.targetProject = objects[0].remoteProjectId || ''
+                        this.planForm.targetStore = objects[0].remoteRepoName || ''
+                    }
+                    
                     this.replicaTaskObjects = objects
                     this.noRecordsCheck = notRecord
                     this.recordReserveDays = recordReserveDays

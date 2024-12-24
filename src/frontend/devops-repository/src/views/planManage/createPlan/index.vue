@@ -250,7 +250,12 @@
                     config: [
                         {
                             validator: () => {
-                                return this.$refs.planConfig.getConfig()
+                                // 仓库 及 (制品、文件) 不共用校验
+                                const res
+                                    = ['PACKAGE', 'PATH'].includes(this.planForm.replicaObjectType)
+                                        ? this.$refs.planConfig.getConfig()
+                                        : this.$refs.planConfig.getConfigCheck() // 只校验长度
+                                return res
                             },
                             message: this.$t('configRule'),
                             trigger: 'blur'
@@ -426,7 +431,7 @@
                         this.planForm.targetProject = objects[0].remoteProjectId || ''
                         this.planForm.targetStore = objects[0].remoteRepoName || ''
                     }
-                    
+
                     this.replicaTaskObjects = objects
                     this.noRecordsCheck = notRecord
                     this.recordReserveDays = recordReserveDays
@@ -464,8 +469,14 @@
                 if (this.errorRecordReserveDaysInfo) return
                 if (this.planForm.loading) return
                 this.planForm.loading = true
-
-                const replicaTaskObjects = await this.$refs.planConfig.getConfig()
+                let replicaTaskObjects = []
+                try {
+                    replicaTaskObjects = await this.$refs.planConfig.getConfig()
+                } catch (error) {
+                    this.planForm.loading = false
+                    return
+                }
+                
                 const body = {
                     name: this.planForm.name,
                     localProjectId: this.rowsData.projectId,

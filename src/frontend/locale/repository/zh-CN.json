@@ -1,6 +1,7 @@
 {
     "modulePathTips": "输入完整的modulePath",
     "projectIdCheckTips": "请输入6位小写字母或数字的组合。",
+    "originRepo": "源仓库",
     "versionOperators": "版本逻辑",
     "recycleBin": "回收站",
     "cleanRecycleBin": "清空回收站",

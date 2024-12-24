@@ -1,6 +1,7 @@
 {
     "modulePathTips": "Enter the complete modulePath",
     "projectIdCheckTips": "Please enter a combination of 6 lowercase letters or numbers.",
+    "originRepo": "Origin Repository",
     "versionOperators": "Version Logic",
     "recycleBin": "Recycle Bin",
     "cleanRecycleBin": " Clean up the recycle bin",

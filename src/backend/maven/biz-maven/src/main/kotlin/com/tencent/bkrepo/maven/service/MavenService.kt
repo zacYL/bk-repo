@@ -63,9 +63,11 @@ interface MavenService {
      * 获取对应制品版本详情
      */
     fun artifactDetail(mavenArtifactInfo: MavenArtifactInfo, packageKey: String, version: String?): Any?
-    fun fileDeploy(mavenArtifactInfo: MavenArtifactInfo, file: ArtifactFile): MavenWebDeployResponse
-    fun fileDeployCancel(mavenArtifactInfo: MavenArtifactInfo): Boolean
+//    fun fileDeploy(mavenArtifactInfo: MavenArtifactInfo, file: ArtifactFile): MavenWebDeployResponse?
+//    fun fileDeployCancel(mavenArtifactInfo: MavenArtifactInfo): Boolean
     fun verifyDeploy(mavenArtifactInfo: MavenArtifactInfo, request: MavenWebDeployRequest)
 
-    fun parsePom(file: MultipartFile): MavenWebDeployResponse
+    fun extractGavFromPom(file: MultipartFile): MavenWebDeployResponse?
+
+    fun extractGavFromJar(file: MultipartFile): MavenWebDeployResponse?
 }

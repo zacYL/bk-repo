@@ -27,13 +27,11 @@
 
 package com.tencent.bkrepo.maven.controller
 
-import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
 import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
 import com.tencent.bkrepo.maven.pojo.request.MavenWebDeployRequest
-import com.tencent.bkrepo.maven.pojo.response.MavenWebDeployResponse
 import com.tencent.bkrepo.maven.service.MavenService
 import com.tencent.bkrepo.maven.util.DeployUtils.validate
 import org.springframework.http.MediaType
@@ -58,21 +56,6 @@ class MavenResourceController(
         return mavenService.deploy(mavenArtifactInfo, file)
     }
 
-    @PutMapping("/deploy/{projectId}/{repoName}/*")
-    fun fileDeploy(
-        mavenArtifactInfo: MavenArtifactInfo,
-        file: ArtifactFile
-    ): Response<MavenWebDeployResponse> {
-        return ResponseBuilder.success(mavenService.fileDeploy(mavenArtifactInfo, file))
-    }
-
-    @PostMapping("/cancel/{projectId}/{repoName}/*")
-    fun fileDeployCancel(
-        mavenArtifactInfo: MavenArtifactInfo,
-    ): Response<Boolean> {
-        return ResponseBuilder.success(mavenService.fileDeployCancel(mavenArtifactInfo))
-    }
-
     @PostMapping("/deploy/{projectId}/{repoName}")
     fun verifyDeploy(
         mavenArtifactInfo: MavenArtifactInfo,
@@ -93,5 +76,8 @@ class MavenResourceController(
     }
 
     @PostMapping("/pom_gav", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
-    fun parsePom(@RequestPart(value = "file") file: MultipartFile) = ResponseBuilder.success(mavenService.parsePom(file))
+    fun extractGavFromPom(@RequestPart(value = "file") file: MultipartFile) = ResponseBuilder.success(mavenService.extractGavFromPom(file))
+
+    @PostMapping("/jar_gav", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    fun extractGavFromJar(@RequestPart(value = "file") file: MultipartFile) = ResponseBuilder.success(mavenService.extractGavFromJar(file))
 }

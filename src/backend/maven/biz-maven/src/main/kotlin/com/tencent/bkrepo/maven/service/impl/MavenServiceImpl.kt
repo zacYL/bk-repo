@@ -44,7 +44,6 @@ import com.tencent.bkrepo.common.artifact.repository.core.ArtifactService
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.view.ViewModelService
 import com.tencent.bkrepo.common.security.permission.Permission
-import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
 import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
 import com.tencent.bkrepo.maven.artifact.MavenDeleteArtifactInfo
@@ -77,7 +76,6 @@ import com.tencent.bkrepo.repository.pojo.list.HeaderItem
 import com.tencent.bkrepo.repository.pojo.list.RowItem
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeListViewItem
-import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
 import org.apache.commons.io.FileUtils
@@ -197,95 +195,6 @@ class MavenServiceImpl(
     override fun artifactDetail(mavenArtifactInfo: MavenArtifactInfo, packageKey: String, version: String?): Any? {
         val context = ArtifactQueryContext()
         return ArtifactContextHolder.getRepository().query(context)
-    }
-
-    @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
-    override fun fileDeploy(mavenArtifactInfo: MavenArtifactInfo, file: ArtifactFile): MavenWebDeployResponse {
-        val context = ArtifactUploadContext(file)
-        val webNode = buildMavenWebDeployNode(mavenArtifactInfo, file)
-        storageManager.storeArtifactFile(webNode, file, context.storageCredentials)
-
-        with(mavenArtifactInfo) {
-            val node = nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data!!
-            storageManager.loadArtifactInputStream(node, context.storageCredentials).use {
-                val tempFile = File.createTempFile("maven-web", "deploy")
-                FileUtils.copyInputStreamToFile(it, tempFile)
-                try {
-                    // 依靠文件名后缀判断是否为pom
-                    val model = if (getArtifactFullPath().endsWith(".pom")) {
-                        JarUtils.readModel(tempFile).apply {
-                            if (this.packaging != "pom") {
-                                throw JarFormatException("The packaging of the pom file is not pom")
-                            }
-                        }
-                    } else {
-                        JarUtils.parseModelInJar(tempFile)
-                    }
-                    // 尝试解析classifier
-                    val classifier = try {
-                        getArtifactFullPath()
-                            .substringAfterLast("/").resolverName(model.artifactId, model.version).classifier
-                    } catch (e: MavenArtifactFormatException) {
-                        if (e.messageCode == MavenMessageCode.MAVEN_VERSION_RESOLVE_FAILED) { throw e }
-                        logger.warn("Failed to parse classifier for [$projectId, $repoName, ${getArtifactFullPath()}]")
-                        null
-                    }
-                    return MavenWebDeployResponse(
-                        uuid = getArtifactFullPath(),
-                        groupId = model.groupId,
-                        artifactId = model.artifactId,
-                        version = model.version,
-                        classifier = classifier,
-                        type = model.packaging
-                    )
-                } catch (e: JarFormatException) {
-                    logger.error("Fail to parse the pom file in the jar file", e)
-                    nodeClient.deleteNode(
-                        NodeDeleteRequest(
-                            projectId = projectId,
-                            repoName = repoName,
-                            fullPath = getArtifactFullPath(),
-                            operator = "maven-web-deploy"
-                        )
-                    )
-                    throw e
-                } finally {
-                    tempFile.apply { if (this.exists()) delete() }
-                }
-            }
-        }
-    }
-    @Permission(type = ResourceType.REPO, action = PermissionAction.DELETE)
-    override fun fileDeployCancel(mavenArtifactInfo: MavenArtifactInfo): Boolean {
-        with(mavenArtifactInfo) {
-            val node = nodeClient.getNodeDetail(projectId, repoName, getArtifactFullPath()).data
-            node?.let {
-                nodeClient.deleteNode(
-                    NodeDeleteRequest(
-                        projectId = projectId,
-                        repoName = repoName,
-                        fullPath = getArtifactFullPath(),
-                        operator = SecurityUtils.getUserId()
-                    )
-                )
-            }
-            return true
-        }
-    }
-
-    private fun buildMavenWebDeployNode(mavenArtifactInfo: MavenArtifactInfo, file: ArtifactFile): NodeCreateRequest {
-        return NodeCreateRequest(
-            projectId = mavenArtifactInfo.projectId,
-            repoName = mavenArtifactInfo.repoName,
-            fullPath = mavenArtifactInfo.getArtifactFullPath(),
-            folder = false,
-            overwrite = true,
-            expires = 0L,
-            md5 = file.getFileMd5(),
-            sha256 = file.getFileSha256(),
-            size = file.getSize(),
-            operator = SecurityUtils.getUserId()
-        )
     }
 
     override fun verifyDeploy(mavenArtifactInfo: MavenArtifactInfo, request: MavenWebDeployRequest) {
@@ -478,25 +387,52 @@ class MavenServiceImpl(
         }
     }
 
-    override fun parsePom(file: MultipartFile): MavenWebDeployResponse {
-        val filename = file.originalFilename?.substringAfterLast("/")
-        if (filename.isNullOrBlank()) {
-            throw JarFormatException("invalid filename")
-        }
-        val model = JarUtils.readModel(file.inputStream)
+    override fun extractGavFromPom(file: MultipartFile): MavenWebDeployResponse {
+        val filename = file.getFilename()
+        val model = file.inputStream.use { JarUtils.readModel(it) }
         if (filename != "${model.artifactId}-${model.version}.pom") {
             throw JarFormatException("invalid pom file")
         }
-        return model.let {
-            return@let MavenWebDeployResponse(
-                uuid = "/$filename",
-                groupId = it.groupId,
-                artifactId = it.artifactId,
-                version = it.version,
-                classifier = null,
-                type = it.packaging
-            )
+        return model.toGav(filename)
+    }
+
+    private fun MultipartFile.getFilename(): String {
+        val filename = originalFilename?.substringAfterLast("/")
+        if (filename.isNullOrBlank()) {
+            throw JarFormatException("invalid filename")
         }
+        return filename
+    }
+
+
+    private fun Model.toGav(filename: String) = MavenWebDeployResponse(
+        uuid = "/$filename",
+        groupId = this.groupId,
+        artifactId = this.artifactId,
+        version = this.version,
+        classifier = null,
+        type = this.packaging
+    )
+
+
+    override fun extractGavFromJar(file: MultipartFile): MavenWebDeployResponse? {
+        val filename = file.getFilename()
+        val model = when {
+            filename.endsWith(".jar") -> {
+                val tempFile = File.createTempFile("maven-web", "deploy")
+                file.inputStream.use { FileUtils.copyInputStreamToFile(it, tempFile) }
+                JarUtils.parseModelInJar(tempFile)
+            }
+            filename.endsWith(".pom") -> {
+                JarUtils.readModel(file.inputStream).apply {
+                    if (this.packaging != "pom") {
+                        throw JarFormatException("The packaging of the pom file is not pom")
+                    }
+                }
+            }
+            else -> throw JarFormatException("invalid jar file")
+        }
+        return model.toGav(filename)
     }
 
 

@@ -415,14 +415,10 @@ class MavenServiceImpl(
     )
 
 
-    override fun extractGavFromJar(file: MultipartFile): MavenWebDeployResponse? {
+    override fun extractGavFromJar(file: MultipartFile): MavenWebDeployResponse {
         val filename = file.getFilename()
         val model = when {
-            filename.endsWith(".jar") -> {
-                val tempFile = File.createTempFile("maven-web", "deploy")
-                file.inputStream.use { FileUtils.copyInputStreamToFile(it, tempFile) }
-                JarUtils.parseModelInJar(tempFile)
-            }
+            filename.endsWith(".jar") -> parseModelInJar(file)
             filename.endsWith(".pom") -> {
                 JarUtils.readModel(file.inputStream).apply {
                     if (this.packaging != "pom") {
@@ -433,6 +429,16 @@ class MavenServiceImpl(
             else -> throw JarFormatException("invalid jar file")
         }
         return model.toGav(filename)
+    }
+
+    private fun parseModelInJar(file: MultipartFile): Model {
+        val tempFile = File.createTempFile("maven-web", "deploy")
+        file.inputStream.use { FileUtils.copyInputStreamToFile(it, tempFile) }
+        return try {
+            JarUtils.parseModelInJar(tempFile)
+        } catch (e: JarFormatException) {
+            if (e.message == "pom.xml not found") Model() else throw e
+        }
     }
 
 

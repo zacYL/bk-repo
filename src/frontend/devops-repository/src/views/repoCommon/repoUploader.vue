@@ -159,6 +159,8 @@
                 this.errorMsg = ''
                 this.uploadXhr = new XMLHttpRequest()
                 this.uploadFullPath = uploadFile.fileList[0].origin.name
+                console.log(uploadFile.fileList[0].origin)
+                
                 this.uploadArtifactory({
                     xhr: this.uploadXhr,
                     projectId: this.projectId,
@@ -179,7 +181,18 @@
 
                 }).then(res => {
                     this.customSettings.uploadFlag = false
-                    this.formData = res.data
+                    if (res) {
+                        this.formData = res.data
+                    } else {
+                        this.formData = {
+                            uuid: '',
+                            groupId: '',
+                            artifactId: '',
+                            version: '',
+                            classifier: '',
+                            type: uploadFile.fileList[0].origin.name.split('.').pop()
+                        }
+                    }
                 }).catch(error => {
                     this.isLoading = false
                     this.uploadFullPath = ''

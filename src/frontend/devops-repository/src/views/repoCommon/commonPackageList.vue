@@ -96,7 +96,7 @@
         </bk-sideslider>
 
         <!-- maven包制上传侧边栏 -->
-        <repo-maven-uploader v-if="currentType === 'MAVEN' && mavenUploader.isVisible" v-model="mavenUploader.isVisible" :project-id="projectId" :repo-name="repoName" @update="onUpdateUploader" @cancel="onCancelUploader" />
+        <repoUploader v-if="['MAVEN', 'DOCKER', 'NPM'].includes(currentType) && repoUploader.isVisible" v-model="repoUploader.isVisible" :project-id="projectId" :repo-name="repoName" @update="onUpdateUploader" @cancel="onCancelUploader" />
         <!-- maven包制上传侧边栏 /-->
         
         <!-- 使用指引 -->
@@ -108,14 +108,14 @@
     import packageCard from '@repository/components/PackageCard'
     import repoGuide from '@repository/views/repoCommon/repoGuide'
     import emptyGuide from '@repository/views/repoCommon/emptyGuide'
-    import repoMavenUploader from '@repository/views/repoCommon/repoMavenUploader'
+    import repoUploader from '@repository/views/repoCommon/repoUploader'
     import useGuide from '@repository/views/repoCommon/useGuide'
     import repoGuideMixin from '@repository/views/repoCommon/repoGuideMixin'
     import { mapState, mapActions } from 'vuex'
     import { blobFileDownload } from '@repository/utils/index'
     export default {
         name: 'commonPackageList',
-        components: { InfiniteScroll, packageCard, repoGuide, emptyGuide, repoMavenUploader, useGuide },
+        components: { InfiniteScroll, packageCard, repoGuide, emptyGuide, repoUploader, useGuide },
         mixins: [repoGuideMixin],
         data () {
             return {
@@ -131,7 +131,7 @@
                     limitList: [10, 20, 40]
                 },
                 showGuide: false,
-                mavenUploader: {
+                repoUploader: {
                     isVisible: false
                 }
             }
@@ -150,7 +150,7 @@
             },
             // 是否显示上传制品按钮
             showUploadRepo () {
-                return this.currentType === 'MAVEN' && !(this.storeType === 'remote') && !(this.storeType === 'virtual') && !this.whetherSoftware && this.canUploadArtifact
+                return ['MAVEN', 'DOCKER', 'NPM'].includes(this.currentType) && !(this.storeType === 'remote') && !(this.storeType === 'virtual') && !this.whetherSoftware && this.canUploadArtifact
             },
             currentRepoDataPermission () {
                 return this.currentRepositoryDataPermission?.find((item) => item.resourceCode === 'bkrepo')?.actionCodes || []
@@ -183,7 +183,7 @@
             },
             // 点击上传制品按钮，显示侧边抽屉
             handleClickUpload () {
-                this.mavenUploader.isVisible = true
+                this.repoUploader.isVisible = true
             },
             onUpdateUploader (flag) {
                 this.onCancelUploader(flag)
@@ -191,7 +191,7 @@
             },
             // uploader上传制品侧边栏取消按钮点击事件
             onCancelUploader (flag) {
-                this.mavenUploader.isVisible = flag
+                this.repoUploader.isVisible = flag
             },
             handlerPaginationChange ({ current = 1, limit = this.pagination.limit } = {}, load) {
                 this.pagination.current = current

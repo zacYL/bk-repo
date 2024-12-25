@@ -36,6 +36,34 @@
                                 <!-- todo 测试链接暂未支持 -->
                                 <bk-button v-if="repoBaseInfo.type !== 'GENERIC'" theme="primary" :disabled="disableTestUrl" @click="onClickTestRemoteUrl">{{ $t('testRemoteUrl') }}</bk-button>
                             </bk-form-item>
+                            <template v-if="repoType === 'cocoapods'">
+                                <!-- 远程仓库类型 -->
+                                <bk-form-item :label="$t('remoteRepoType')" property="remoteType" error-display-type="normal">
+                                    <bk-select
+                                        v-model="repoBaseInfo.remoteType"
+                                        class="w250">
+                                        <bk-option v-for="type in remoteRepoTypes" :key="type.value" :id="type.value" :name="type.label">
+                                            <div class="flex-align-center">
+                                                <span class="ml10 flex-1 text-overflow">{{type.label}}</span>
+                                            </div>
+                                        </bk-option>
+                                    </bk-select>
+                                </bk-form-item>
+                                <!-- specs 下载地址 -->
+                                <bk-form-item :label="$t('specsDownloadUrl')"
+                                    :required="repoBaseInfo.remoteType === 'OTHER'"
+                                    property="downloadUrl" error-display-type="normal"
+                                    :desc="{
+                                        content: `<div>
+                                            <p>${$t('specsDownloadUrlTips1')}</p>
+                                            <p>${$t('specsDownloadUrlTips2')}</p>
+                                            <p>${$t('specsDownloadUrlTips3')}</p>
+                                        </div>`
+                                    }"
+                                    desc-type="icon">
+                                    <bk-input class="w480" v-model.trim="repoBaseInfo.downloadUrl"></bk-input>
+                                </bk-form-item>
+                            </template>
                             <bk-form-item :label="$t('remoteProxyAccount')" property="credentials.username" error-display-type="normal">
                                 <bk-input class="w480" v-model.trim="repoBaseInfo.credentials.username"></bk-input>
                             </bk-form-item>
@@ -311,7 +339,9 @@
                     virtualStoreList: [],
                     // deploymentRepo: '' // 虚拟仓库中选择存储的本地仓库
                     includesPath: [],
-                    ignoresPath: []
+                    ignoresPath: [],
+                    downloadUrl: '', // specs下载地址
+                    remoteType: 'GIT_HUB'
                 },
                 // 是否展示tab标签页，因为代理设置和清理设置需要根据详情页接口返回的数据判断是否显示，解决异步导致的tab顺序错误的问题
                 showTabPanel: false,
@@ -321,6 +351,22 @@
         },
         computed: {
             ...mapState(['domain']),
+            remoteRepoTypes () {
+                return [
+                    {
+                        label: 'GitHub',
+                        value: 'GIT_HUB'
+                    },
+                    {
+                        label: 'bkrepo',
+                        value: 'CPACK'
+                    },
+                    {
+                        label: this.$t('other'),
+                        value: 'OTHER'
+                    }
+                ]
+            },
             tipsObj () {
                 if (this.protocol === 'http' && ['GO'].includes(this.repoBaseInfo.type) && ['project', 'system'].includes(this.available)) {
                     return {
@@ -532,7 +578,23 @@
                     'network.proxy.host': (this.repoBaseInfo.category === 'REMOTE' && this.repoBaseInfo.network.switcher) ? proxyHostRule : {},
                     'network.proxy.port': (this.repoBaseInfo.category === 'REMOTE' && this.repoBaseInfo.network.switcher) ? proxyPortRule : {},
                     // 虚拟仓库的选择存储库的校验
-                    virtualStoreList: this.repoBaseInfo.category === 'VIRTUAL' ? checkStorageRule : {}
+                    virtualStoreList: this.repoBaseInfo.category === 'VIRTUAL' ? checkStorageRule : {},
+                    // 为远程仓库且仓库类型为cocoapods且远程仓库类型为其他才设置下载地址的校验
+                    ...(
+                        this.repoBaseInfo.type === 'cocoapods'
+                        && this.repoBaseInfo.category === 'REMOTE'
+                        && this.repoBaseInfo.remoteType === 'OTHER'
+                    )
+                        ? {
+                            downloadUrl: [
+                                {
+                                    required: true,
+                                    message: this.$t('pleaseInput') + this.$t('space') + this.$t('specsDownloadUrl'),
+                                    trigger: 'blur'
+                                }
+                            ]
+                        }
+                        : {}
                 }
             }
             // 虚拟仓库中选择上传的目标仓库的下拉列表数据
@@ -552,8 +614,6 @@
             }
         },
         async created () {
-            console.log(21312)
-            
             if (!this.repoName || !this.repoType) this.toRepoList()
             await this.getRepoInfoHandler()
             this.initComp()
@@ -688,12 +748,13 @@
                     repoType: this.repoType
                 }).then(res => {
                     this.repoBaseInfo = {
+                        ...res.configuration.settings, // 这里要放在第一行，里面有type属性会被解构处理，不放第一行会覆盖res的type
                         ...this.repoBaseInfo,
                         ...res,
-                        ...res.configuration.settings,
                         repoType: res.type.toLowerCase(),
                         category: res.category
                     }
+                        
                     if (res.type === 'MAVEN' || res.type === 'NPM') {
                         switch (res.coverStrategy) {
                             case 'COVER':
@@ -749,6 +810,15 @@
                                 expiration: -1
                             }
                         }
+                    }
+
+                    // 远程仓库 和 cocoapods 支持specs下载地址 和 远程仓库类型
+                    if (
+                        res.type === 'COCOAPODS'
+                        && res.category === 'REMOTE'
+                    ) {
+                        this.repoBaseInfo.downloadUrl = res.configuration.settings.downloadUrl // specs下载地址
+                        this.repoBaseInfo.remoteType = res.configuration.settings.type // 远程仓库类型
                     }
                     if (res.type === 'DOCKER' && (res.category === 'LOCAL' || res.category === 'REMOTE') && res.configuration.settings.defaultNamespace === 'library') {
                         this.repoBaseInfo.enabledLibraryNamespace = true
@@ -844,6 +914,16 @@
                                         groupXmlSet: this.repoBaseInfo.groupXmlSet
                                     }
                                     : {}
+                            ),
+                            ...(
+                                (this.repoType === 'cocoapods'
+                                    && this.repoBaseInfo.category === 'REMOTE')
+                                    ? {
+                                        downloadUrl: this.repoBaseInfo.downloadUrl,
+                                        type: this.repoBaseInfo.remoteType
+                                    }
+                                    : {}
+                        
                             )
                         }
                     }

@@ -74,20 +74,6 @@
                                     @update="onUpdateList"></store-sort>
                             </div>
                         </bk-form-item>
-                        <!-- <bk-form-item :label="$t('uploadTargetStore')" property="deploymentRepo">
-                            <bk-select
-                                v-model="repoBaseInfo.deploymentRepo"
-                                style="width:300px;"
-                                :show-empty="false"
-                                :placeholder="$t('pleaseSelect') + $t('space') + $t('uploadTargetStore')">
-                                <bk-option v-for="item in deploymentRepoCheckList" :key="item.name" :id="item.name" :name="item.name">
-                                </bk-option>
-                                <div v-if="!deploymentRepoCheckList.length" class="form-tip mt10 ml10 mr10 mb10">
-                                    {{$t('noAddedLocalStore')}}
-                                </div>
-                            </bk-select>
-                            <div class="form-tip">{{$t('addPackagePrompt')}}</div>
-                        </bk-form-item> -->
                     </template>
                     <bk-form-item :label="$t('accessPermission')">
                         <card-radio-group
@@ -548,9 +534,9 @@
                     repoType: this.repoType
                 }).then(res => {
                     this.repoBaseInfo = {
+                        ...res.configuration.settings,
                         ...this.repoBaseInfo,
                         ...res,
-                        ...res.configuration.settings,
                         repoType: res.type.toLowerCase(),
                         category: res.category
                     }

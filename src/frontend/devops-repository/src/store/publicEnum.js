@@ -30,6 +30,7 @@ export const repoSupportEnum = [
 // 远程仓库支持创建的仓库
 export const remoteRepoSupportEnum = [
     { label: 'Generic', value: 'generic' },
+    { label: 'Cocoapods', value: 'cocoapods' },
     ...repoSupportEnum
 ]
 

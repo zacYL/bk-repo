@@ -16,6 +16,7 @@
                     :size="5 * 1024"
                     :limit="1"
                     :multiple="false"
+                    :accept="'.pom,.jar'"
                     :custom-request="onRequestUpload"
                     ext-cls="content-upload"
                     url="#"
@@ -43,25 +44,40 @@
                 </div>
                 <bk-form :label-width="200" :model="formData" form-type="vertical">
                     <bk-form-item label="Group ID" property="groupId">
-                        <bk-input readonly v-model="formData.groupId"></bk-input>
+                        <bk-input :readonly="!checkFail" v-model="formData.groupId"></bk-input>
                     </bk-form-item>
                     <bk-form-item label="Artifact ID" property="artifactId">
-                        <bk-input readonly v-model="formData.artifactId"></bk-input>
+                        <bk-input :readonly="!checkFail" v-model="formData.artifactId"></bk-input>
                     </bk-form-item>
                     <bk-form-item label="Version" property="version">
-                        <bk-input readonly v-model="formData.version"></bk-input>
+                        <bk-input :readonly="!checkFail" v-model="formData.version"></bk-input>
                     </bk-form-item>
                     <bk-form-item v-if="formData.classifier" label="Classifier" property="classifier">
-                        <bk-input readonly v-model="formData.classifier"></bk-input>
+                        <bk-input :readonly="!checkFail" v-model="formData.classifier"></bk-input>
                     </bk-form-item>
                     <bk-form-item label="Type" property="type">
                         <bk-input readonly v-model="formData.type"></bk-input>
+                    </bk-form-item>
+
+                    <bk-form-item v-if="checkFail">
+                        <bk-upload
+                            theme="button"
+                            class="mb5"
+                            v-bkloading="{ isLoading: isLoading, title: $t('uploadMavenArtifactLoading') }"
+                            :with-credentials="true"
+                            :size="5 * 1024"
+                            :limit="1"
+                            :multiple="false"
+                            :custom-request="onRequestUpload"
+                            :accept="'.pom'"
+                            url="#"
+                        ></bk-upload>
                     </bk-form-item>
                 </bk-form>
             </div>
         </div>
         <div slot="footer">
-            <bk-button @click.stop.prevent="cancelUploadArtifact">{{$t('cancel')}}</bk-button>
+            <bk-button @click.stop.prevent="cancel">{{$t('cancel')}}</bk-button>
             <bk-button
                 class="ml10"
                 theme="primary"
@@ -111,30 +127,20 @@
                     classifier: '',
                     type: ''
                 },
+                checkFail: false, // 用于上传校验，如果失败的话，提供pom文件上传按钮
                 currentFileName: '', // 当前上传的文件名
                 errorMsg: '', // 上传接口后台返回的错误信息
                 uploadPercent: 0,
                 uploadXhr: null, // 上传请求的xhr对象，用于上传和取消上传时所用
-                isLoading: false, // 上传选择框是否在加载中状态，因为不能禁用，所以选择使用loading代替
-                uploadFullPath: '' // 上传jar包等的文件名，如果用户点击取消按钮需要用到
+                isLoading: false // 上传选择框是否在加载中状态，因为不能禁用，所以选择使用loading代替
             }
         },
-        computed: {
-        },
-        created () {
-
-        },
-        
-        mounted () {
-            window.addEventListener('beforeunload', this.cancelUploadArtifact)
-        },
-        destroyed () {
-            window.removeEventListener('beforeunload', this.cancelUploadArtifact)
-            this.cancelUploadArtifact()
-        },
-        beforeRouteLeave () {
-            // 路由取消
-            this.cancelUploadArtifact()
+        watch: {
+            isVisible (val) {
+                if (val) {
+                    this.checkFail = false
+                }
+            }
         },
         methods: {
             ...mapActions([
@@ -151,40 +157,61 @@
                 }
                 // 关闭弹窗时重置滚动条需要的数据
                 this.onAbortUpload()
-                // 文件解析成功后点击取消按钮
-                this.cancelUploadArtifact()
+                this.cancel()
             },
+            onRequestPomUpload (uploadFile) {
+                this.handleUpload(uploadFile, 'pomUpload')
+            },
+
             onRequestUpload (uploadFile) {
+                this.handleUpload(uploadFile, 'mavenUpload')
+            },
+
+            handleUpload (uploadFile, uploadType) {
+                this.checkFail = false
                 this.isLoading = true
                 this.errorMsg = ''
                 this.uploadXhr = new XMLHttpRequest()
-                this.uploadFullPath = uploadFile.fileList[0].origin.name
+
+                const body = uploadFile.fileList[0].origin
+                const formData = new FormData()
+                formData.append('file', body)
+                const headers = {
+                    'Content-Type': 'multipart/form-data; boundary=----',
+                    'X-BKREPO-EXPIRES': 0
+                }
+
                 this.uploadArtifactory({
                     xhr: this.uploadXhr,
-                    projectId: this.projectId,
-                    repoName: this.repoName,
-                    body: uploadFile.fileList[0].origin,
+                    body: formData,
                     progressHandler: ($event) => {
                         const num = $event.loaded / $event.total
                         uploadFile.onProgress({ percent: num })
                         this.uploadPercent = num
-                        this.currentFileName = uploadFile.fileList[0].origin.name || ''
+                        this.currentFileName = body.name || ''
                     },
-                    fullPath: uploadFile.fileList[0].origin.name,
-                    headers: {
-                        'Content-Type': uploadFile.fileList[0].origin.type || 'application/octet-stream',
-                        'X-BKREPO-EXPIRES': 0
-                    },
-                    uploadType: 'mavenUpload'
-
+                    headers,
+                    uploadType
                 }).then(res => {
                     this.customSettings.uploadFlag = false
-                    this.formData = res.data
+                    if (uploadType === 'mavenUpload' && (!res || !res.data || (!res.data.groupId && !res.data.artifactId && !res.data.version))) {
+                        this.checkFail = true
+                        this.formData = {
+                            uuid: '',
+                            groupId: '',
+                            artifactId: '',
+                            version: '',
+                            classifier: '',
+                            type: body.name.split('.').pop()
+                        }
+                    } else {
+                        this.formData = res.data
+                    }
                 }).catch(error => {
-                    this.isLoading = false
-                    this.uploadFullPath = ''
                     // error &&  this.errorMsg = error.message || error.error || '无法识别包信息，请确认是否由Maven客户端打包，并重新上传'
-                    error && (this.errorMsg = error.message || error.error || error)
+                    this.errorMsg = error.message || error.error || error
+                }).finally(() => {
+                    this.isLoading = false
                 })
             },
             // 取消上传操作(此时还没有解析文件)
@@ -196,23 +223,7 @@
                 this.currentFileName = ''
                 this.errorMsg = ''
             },
-            // 文件解析成功后点击取消按钮
-            cancelUploadArtifact () {
-                // 只有上传了jar包或pom文件之后点击取消按钮才需要调用删除无用jar包的接口，
-                // 通过 artifactId、groupId、version三者可以唯一确定一个jar包，所以必须这三者都存在才需要调用删除无用jar包接口
-                if (this.projectId
-                    && this.repoName
-                    && this.uploadFullPath
-                    && this.formData.artifactId
-                    && this.formData.groupId
-                    && this.formData.version
-                ) {
-                    this.deleteUselessPackage({
-                        projectId: this.projectId,
-                        repoName: this.repoName,
-                        fullPath: this.uploadFullPath
-                    })
-                }
+            cancel () {
                 this.$emit('cancel', false)
             },
             submitData () {

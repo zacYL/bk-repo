@@ -198,12 +198,18 @@ export default {
             }
             let requestUrl
             if (uploadType === 'mavenUpload') {
-                requestUrl = 'web/maven/deploy'
+                requestUrl = 'web/maven/jar_gav'
+            } else if (uploadType === 'pomUpload') {
+                requestUrl = 'web/maven/pom_gav'
             } else {
                 requestUrl = 'web/generic'
             }
             xhr.upload.addEventListener('progress', progressHandler)
-            xhr.open('PUT', `/${requestUrl}/${projectId}/${repoName}/${encodeURIComponent(fullPath)}`, true)
+            if (['mavenUpload', 'pomUpload'].includes(uploadType)) {
+                xhr.open('POST', `/${requestUrl}`, true)
+            } else {
+                xhr.open('PUT', `/${requestUrl}/${projectId}/${repoName}/${encodeURIComponent(fullPath)}`, true)
+            }
             xhr.responseType = 'json'
             xhr.setRequestHeader('Content-Type', headers['Content-Type'])
             xhr.setRequestHeader('X-BKREPO-OVERWRITE', headers['X-BKREPO-OVERWRITE'])

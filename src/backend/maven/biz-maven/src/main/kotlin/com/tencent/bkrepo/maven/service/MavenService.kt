@@ -67,7 +67,7 @@ interface MavenService {
 //    fun fileDeployCancel(mavenArtifactInfo: MavenArtifactInfo): Boolean
     fun verifyDeploy(mavenArtifactInfo: MavenArtifactInfo, request: MavenWebDeployRequest)
 
-    fun extractGavFromPom(file: MultipartFile): MavenWebDeployResponse?
+    fun extractGavFromPom(file: MultipartFile): MavenWebDeployResponse
 
-    fun extractGavFromJar(file: MultipartFile): MavenWebDeployResponse?
+    fun extractGavFromJar(file: MultipartFile): MavenWebDeployResponse
 }

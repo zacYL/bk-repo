@@ -42,6 +42,7 @@
                     <bk-button v-if="repoBaseInfo.type !== 'generic'" theme="primary" :disabled="disableTestUrl" @click="onClickTestRemoteUrl">{{ $t('testRemoteUrl') }}</bk-button>
                 </bk-form-item>
                 <template v-if="repoBaseInfo.type === 'cocoapods'">
+                    <!-- 远程仓库类型 -->
                     <bk-form-item :label="$t('remoteRepoType')" property="remoteType" error-display-type="normal">
                         <bk-select
                             v-model="repoBaseInfo.remoteType"
@@ -605,14 +606,6 @@
                     this.repoBaseInfo.type = this.filterRepoEnum[0]?.value || ''
                 }
             },
-            // deploymentRepoCheckList: {
-            //     handler (val) {
-            //         // 当选中的存储库中没有本地仓库或者当前选中的上传目标仓库不在被选中的存储库中时需要将当前选中的上传目标仓库重置为空
-            //         if (!val.length || !(val.map((item) => item.name).includes(this.repoBaseInfo.deploymentRepo))) {
-            //             this.repoBaseInfo.deploymentRepo = ''
-            //         }
-            //     }
-            // },
             'repoBaseInfo.type': {
                 // 当选择的仓库类型改变时需要将选择的存储库重置为空
                 handler () {

@@ -20,6 +20,33 @@
                 <bk-form-item :label="$t('remoteProxyAddress')">
                     <bk-input :disabled="true" class="w480" v-model.trim="detailInfo.url"></bk-input>
                 </bk-form-item>
+                <template v-if="repoType === 'cocoapods'">
+                    <bk-form-item :label="$t('remoteRepoType')" property="remoteType" error-display-type="normal">
+                        <bk-select
+                            disabled
+                            v-model="detailInfo.remoteType"
+                            class="w250">
+                            <bk-option v-for="type in remoteRepoTypes" :key="type.value" :id="type.value" :name="type.label">
+                                <div class="flex-align-center">
+                                    <span class="ml10 flex-1 text-overflow">{{type.label}}</span>
+                                </div>
+                            </bk-option>
+                        </bk-select>
+                    </bk-form-item>
+                    <bk-form-item :label="$t('specsDownloadUrl')"
+                        :required="detailInfo.remoteType === 'OTHER'"
+                        property="downloadUrl" error-display-type="normal"
+                        :desc="{
+                            content: `<div>
+                                            <p>${$t('specsDownloadUrlTips1')}</p>
+                                            <p>${$t('specsDownloadUrlTips2')}</p>
+                                            <p>${$t('specsDownloadUrlTips3')}</p>
+                                        </div>`
+                        }"
+                        desc-type="icon">
+                        <bk-input class="w480" disabled v-model.trim="detailInfo.downloadUrl"></bk-input>
+                    </bk-form-item>
+                </template>
                 <bk-form-item :label="$t('remoteProxyAccount')">
                     <bk-input :disabled="true" class="w480" v-model.trim="detailInfo.credentials.username"></bk-input>
                 </bk-form-item>
@@ -212,6 +239,22 @@
         },
         computed: {
             ...mapState(['domain']),
+            remoteRepoTypes () {
+                return [
+                    {
+                        label: 'GitHub',
+                        value: 'GIT_HUB'
+                    },
+                    {
+                        label: 'bkrepo',
+                        value: 'CPACK'
+                    },
+                    {
+                        label: this.$t('other'),
+                        value: 'OTHER'
+                    }
+                ]
+            },
             projectId () {
                 return this.$route.params.projectId
             },

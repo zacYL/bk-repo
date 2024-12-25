@@ -297,8 +297,8 @@
                     repoType: repoType
                 }).then(res => {
                     this.baseDetailInfo = {
-                        ...res,
                         ...res.configuration.settings,
+                        ...res,
                         name: res.name || repoName,
                         createdBy: res.createdBy,
                         createdDate: formatDate(res.createdDate),
@@ -307,7 +307,9 @@
                         override: {
                             switcher: false,
                             isFlag: true
-                        }
+                        },
+                        remoteType: 'GIT_HUB',
+                        downloadUrl: ''
                     }
                     if (res.type === 'MAVEN' || res.type === 'NPM') {
                         switch (res.coverStrategy) {
@@ -365,6 +367,14 @@
                                 switcher: true
                             }
                         }
+                    }
+                    // 远程仓库 和 cocoapods 支持specs下载地址 和 远程仓库类型
+                    if (
+                        res.type === 'COCOAPODS'
+                        && res.category === 'REMOTE'
+                    ) {
+                        this.baseDetailInfo.downloadUrl = res.configuration.settings.downloadUrl // specs下载地址
+                        this.baseDetailInfo.remoteType = res.configuration.settings.type // 远程仓库类型
                     }
                 }).finally(() => {
                     if (!this.searchNode && !this.searchNode.id) {

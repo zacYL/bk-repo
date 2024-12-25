@@ -80,7 +80,7 @@ object JarUtils {
         }
     }
 
-    private fun readModel(inputStream: InputStream): Model {
+    fun readModel(inputStream: InputStream): Model {
         return try {
             ReaderFactory.newXmlReader(inputStream).use {
                 MavenXpp3Reader().read(it)

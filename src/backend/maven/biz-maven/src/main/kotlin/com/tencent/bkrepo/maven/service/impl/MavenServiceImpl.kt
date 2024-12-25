@@ -89,6 +89,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import org.springframework.web.multipart.MultipartFile
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileInputStream
@@ -476,6 +477,28 @@ class MavenServiceImpl(
             }
         }
     }
+
+    override fun parsePom(file: MultipartFile): MavenWebDeployResponse {
+        val filename = file.originalFilename?.substringAfterLast("/")
+        if (filename.isNullOrBlank()) {
+            throw JarFormatException("invalid filename")
+        }
+        val model = JarUtils.readModel(file.inputStream)
+        if (filename != "${model.artifactId}-${model.version}.pom") {
+            throw JarFormatException("invalid pom file")
+        }
+        return model.let {
+            return@let MavenWebDeployResponse(
+                uuid = "/$filename",
+                groupId = it.groupId,
+                artifactId = it.artifactId,
+                version = it.version,
+                classifier = null,
+                type = it.packaging
+            )
+        }
+    }
+
 
     companion object {
         private val logger: Logger = LoggerFactory.getLogger(MavenServiceImpl::class.java)

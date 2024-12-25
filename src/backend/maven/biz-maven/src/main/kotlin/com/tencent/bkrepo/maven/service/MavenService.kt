@@ -32,6 +32,7 @@ import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
 import com.tencent.bkrepo.maven.artifact.MavenDeleteArtifactInfo
 import com.tencent.bkrepo.maven.pojo.request.MavenWebDeployRequest
 import com.tencent.bkrepo.maven.pojo.response.MavenWebDeployResponse
+import org.springframework.web.multipart.MultipartFile
 
 interface MavenService {
 
@@ -65,4 +66,6 @@ interface MavenService {
     fun fileDeploy(mavenArtifactInfo: MavenArtifactInfo, file: ArtifactFile): MavenWebDeployResponse
     fun fileDeployCancel(mavenArtifactInfo: MavenArtifactInfo): Boolean
     fun verifyDeploy(mavenArtifactInfo: MavenArtifactInfo, request: MavenWebDeployRequest)
+
+    fun parsePom(file: MultipartFile): MavenWebDeployResponse
 }

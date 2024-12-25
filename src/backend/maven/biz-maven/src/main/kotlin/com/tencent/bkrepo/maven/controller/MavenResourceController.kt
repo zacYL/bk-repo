@@ -42,7 +42,9 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.multipart.MultipartFile
 
 @RestController
 class MavenResourceController(
@@ -89,4 +91,7 @@ class MavenResourceController(
     fun deleteDependency(@ArtifactPathVariable mavenArtifactInfo: MavenArtifactInfo) {
         mavenService.deleteDependency(mavenArtifactInfo)
     }
+
+    @PostMapping("/pom_gav", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    fun parsePom(@RequestPart(value = "file") file: MultipartFile) = ResponseBuilder.success(mavenService.parsePom(file))
 }

@@ -12,6 +12,7 @@
                     {{ $t('refresh') }}
                 </bk-button>
                 <bk-button v-if="showUploadRepo" class="ml10" @click="handleClickUpload">{{$t('uploadArtifact')}}</bk-button>
+                <bk-button v-if="showUploadRepo" class="ml10" @click="handleClickBatchUpload">{{$t('batchUpload')}}</bk-button>
                 <bk-button class="ml20 flex-align-center" @click="onClickShowGuide">
                     <span class="flex-align-center">
                         <Icon class="mr5" name="hand-guide" size="16" />
@@ -131,6 +132,9 @@
                     limitList: [10, 20, 40]
                 },
                 showGuide: false,
+                repoBatchUploader: {
+                    isVisible: false
+                },
                 repoUploader: {
                     isVisible: false
                 }
@@ -184,6 +188,9 @@
             // 点击上传制品按钮，显示侧边抽屉
             handleClickUpload () {
                 this.repoUploader.isVisible = true
+            },
+            handleClickBatchUpload () {
+                this.repoBatchUploader.isVisible = true
             },
             onUpdateUploader (flag) {
                 this.onCancelUploader(flag)

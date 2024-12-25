@@ -4,6 +4,7 @@
     "specsDownloadUrl": "Specs download URL",
     "remoteRepoType": "Remote Repository Type",
     "other": "Other",
+    "batchUpload": "Batch upload",
     "specsDownloadUrlTips1": "If you choose to pull from other types of repositories, you need to configure it as the target repository index path",
     "specsDownloadUrlTips2": "If you choose to pull from GitHub, configure it as: https://github.com/CocoaPods/Specs",
     "specsDownloadUrlTips3": "If you choose to pull from bkrepo, configure it as: {repoURL}/index/fetchIndexx, where {repoURL} is the artifact repository URL",

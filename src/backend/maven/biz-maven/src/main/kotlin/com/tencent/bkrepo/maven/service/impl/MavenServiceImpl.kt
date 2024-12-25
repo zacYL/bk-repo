@@ -407,11 +407,11 @@ class MavenServiceImpl(
 
     private fun Model.toGav(filename: String) = MavenWebDeployResponse(
         uuid = "/$filename",
-        groupId = this.groupId,
-        artifactId = this.artifactId,
-        version = this.version,
+        groupId = this.groupId.orEmpty(),
+        artifactId = this.artifactId.orEmpty(),
+        version = this.version.orEmpty(),
         classifier = null,
-        type = this.packaging
+        type = this.packaging.orEmpty()
     )
 
 
@@ -437,7 +437,7 @@ class MavenServiceImpl(
         return try {
             JarUtils.parseModelInJar(tempFile)
         } catch (e: JarFormatException) {
-            if (e.message == "pom.xml not found") Model() else throw e
+            if (e.params.any { it == "pom.xml not found" }) Model() else throw e
         }
     }
 

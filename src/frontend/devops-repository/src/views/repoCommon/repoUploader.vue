@@ -42,18 +42,18 @@
                         currentFileName = ''
                     }" />
                 </div>
-                <bk-form :label-width="200" :model="formData" form-type="vertical">
-                    <bk-form-item label="Group ID" property="groupId">
+                <bk-form ref="formRef" :label-width="200" :model="formData" form-type="vertical">
+                    <bk-form-item label="Group ID" property="groupId" :required="checkFail">
                         <bk-input :readonly="!checkFail" v-model="formData.groupId"></bk-input>
                     </bk-form-item>
-                    <bk-form-item label="Artifact ID" property="artifactId">
+                    <bk-form-item label="Artifact ID" property="artifactId" :required="checkFail">
                         <bk-input :readonly="!checkFail" v-model="formData.artifactId"></bk-input>
                     </bk-form-item>
-                    <bk-form-item label="Version" property="version">
+                    <bk-form-item label="Version" property="version" :required="checkFail">
                         <bk-input :readonly="!checkFail" v-model="formData.version"></bk-input>
                     </bk-form-item>
                     <bk-form-item v-if="formData.classifier" label="Classifier" property="classifier">
-                        <bk-input :readonly="!checkFail" v-model="formData.classifier"></bk-input>
+                        <bk-input readonly v-model="formData.classifier"></bk-input>
                     </bk-form-item>
                     <bk-form-item label="Type" property="type">
                         <bk-input readonly v-model="formData.type"></bk-input>
@@ -113,6 +113,29 @@
         },
         data () {
             return {
+                rules: {
+                    groupID: [
+                        {
+                            required: true,
+                            message: this.$t('pleaseInput') + this.$t('space') + 'groupID',
+                            trigger: 'blur'
+                        }
+                    ],
+                    version: [
+                        {
+                            required: true,
+                            message: this.$t('pleaseInput') + this.$t('space') + 'Version',
+                            trigger: 'blur'
+                        }
+                    ],
+                    artifactId: [
+                        {
+                            required: true,
+                            message: this.$t('pleaseInput') + this.$t('space') + 'artifactID',
+                            trigger: 'blur'
+                        }
+                    ]
+                },
                 customSettings: {
                     isShow: false,
                     title: this.$t('uploadMavenConfirmContent'),
@@ -227,21 +250,23 @@
                 this.$emit('cancel', false)
             },
             submitData () {
-                this.customSettings.saveBtnDisable = true
-                const params = {
-                    projectId: this.projectId,
-                    repoName: this.repoName,
-                    body: { ...this.formData }
-                }
-                this.submitMavenArtifactory(params).then(res => {
-                    this.$emit('update', false)
-                }).catch(error => {
-                    this.$bkMessage({
-                        theme: 'error',
-                        message: `${error.message || this.$t('uploadMavenErrorMsgTip')}`
+                this.$refs.formRef.validate().then(() => {
+                    this.customSettings.saveBtnDisable = true
+                    const params = {
+                        projectId: this.projectId,
+                        repoName: this.repoName,
+                        body: { ...this.formData }
+                    }
+                    this.submitMavenArtifactory(params).then(res => {
+                        this.$emit('update', false)
+                    }).catch(error => {
+                        this.$bkMessage({
+                            theme: 'error',
+                            message: `${error.message || this.$t('uploadMavenErrorMsgTip')}`
+                        })
+                    }).finally(() => {
+                        this.customSettings.saveBtnDisable = false
                     })
-                }).finally(() => {
-                    this.customSettings.saveBtnDisable = false
                 })
             }
         }

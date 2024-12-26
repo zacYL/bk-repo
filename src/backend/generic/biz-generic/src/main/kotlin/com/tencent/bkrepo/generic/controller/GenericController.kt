@@ -160,26 +160,27 @@ class GenericController(
         downloadService.batchDownload(artifacts)
     }
 
+    @Deprecated("已在开源bkrepo重写")
     @GetMapping(MULTI_MAPPING_URI)
     fun batchDownloadIncludeFolder(
         @PathVariable download: Boolean,
-        @ArtifactPathVariable artifactInfo: GenericArtifactInfo,
+        @PathVariable projectId: String,
+        @PathVariable repoName: String,
         @RequestParam id: String
     ) {
-        with(artifactInfo) {
-            val artifactPaths = DownloadParamResolver.resolveMultiNodeIdParam(projectId, id, nodeClient)
-            downloadService.batchDownload(
-                artifactPaths.map { GenericArtifactInfo(projectId, repoName, it) },
-                multiFolder = true,
-                download = download
-            )
-            if (!download) {
-                val response = HttpContextHolder.getResponse()
-                response.contentType = APPLICATION_JSON
-                response.writer.println(ResponseBuilder.success().toJsonString())
-            }
+        val artifactPaths = DownloadParamResolver.resolveMultiNodeIdParam(projectId, id, nodeClient)
+        downloadService.batchDownload(
+            artifactPaths.map { GenericArtifactInfo(projectId, repoName, it) },
+            multiFolder = true,
+            download = download
+        )
+        if (!download) {
+            val response = HttpContextHolder.getResponse()
+            response.contentType = APPLICATION_JSON
+            response.writer.println(ResponseBuilder.success().toJsonString())
         }
     }
+
     @Permission(ResourceType.NODE, PermissionAction.READ)
     @GetMapping("/compressed/list/$GENERIC_MAPPING_URI")
     fun listCompressedFile(

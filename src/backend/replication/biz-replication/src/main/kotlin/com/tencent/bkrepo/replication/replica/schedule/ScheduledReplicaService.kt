@@ -48,10 +48,8 @@ class ScheduledReplicaService(
         with(context) {
             // 检查版本
             replicator.checkVersion(this)
-            // 同步项目
-            replicator.replicaProject(this)
-            // 同步仓库
-            replicator.replicaRepo(this)
+            // 同步项目和仓库
+            replicaProjectAndRepo(this)
             // 按仓库同步
             if (includeAllData(this)) {
                 replicaByRepo(this)

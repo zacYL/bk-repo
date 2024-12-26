@@ -138,10 +138,11 @@ class ReplicaRecordServiceImpl(
                 artifactName = artifactName,
                 version = version,
                 conflictStrategy = conflictStrategy,
-                status = RUNNING,
+                status = status,
                 progress = ReplicaProgress(),
                 startTime = LocalDateTime.now(),
-                actionType = actionType
+                actionType = actionType,
+                errorReason = errorReason
             )
             return try {
                 replicaRecordDetailDao.insert(recordDetail).let { convert(it)!! }

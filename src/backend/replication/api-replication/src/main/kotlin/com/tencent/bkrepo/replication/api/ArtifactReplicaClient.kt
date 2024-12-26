@@ -154,4 +154,9 @@ interface ArtifactReplicaClient {
     fun replicaPackageVersionCreatedRequest(
         @RequestBody request: PackageVersionCreateRequest
     ): Response<Void>
+
+    @GetMapping("/project/exist")
+    fun checkProjectExist(
+        @RequestParam projectId: String
+    ): Response<Boolean>
 }

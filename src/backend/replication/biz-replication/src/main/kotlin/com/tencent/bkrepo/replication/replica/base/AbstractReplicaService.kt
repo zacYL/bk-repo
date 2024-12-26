@@ -28,6 +28,8 @@
 package com.tencent.bkrepo.replication.replica.base
 
 import com.tencent.bkrepo.auth.pojo.enums.PermissionAction
+import com.tencent.bkrepo.common.api.constant.HttpStatus
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
@@ -76,6 +78,34 @@ abstract class AbstractReplicaService(
     private lateinit var eventSupplier: EventSupplier
 
     private val logger = LoggerFactory.getLogger(AbstractReplicaService::class.java)
+
+    /**
+     * 同步项目和仓库
+     */
+    protected fun replicaProjectAndRepo(context: ReplicaContext) {
+        with(context) {
+            try {
+                replicator.replicaProject(this)
+                replicator.replicaRepo(this)
+            } catch (e: ErrorCodeException) {
+                val request = RecordDetailInitialRequest(
+                    recordId = taskRecord.id,
+                    remoteCluster = remoteCluster.name,
+                    localRepoName = localRepoName,
+                    repoType = localRepoType,
+                    artifactName = "/",
+                    status = ExecutionStatus.FAILED,
+                    errorReason = when (e.status) {
+                        HttpStatus.NOT_FOUND -> "project[$remoteProjectId] not found"
+                        HttpStatus.CONFLICT -> "repo[$remoteProjectId/$remoteRepoName] conflict"
+                        else -> null
+                    }
+                )
+                logger.warn("Fail to create project or repo: ${request.errorReason}")
+                replicaRecordService.initialRecordDetail(request)
+            }
+        }
+    }
 
     /**
      * 同步整个仓库数据

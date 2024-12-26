@@ -28,6 +28,7 @@
 package com.tencent.bkrepo.replication.pojo.record.request
 
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus
 import com.tencent.bkrepo.replication.pojo.request.ActionType
 import com.tencent.bkrepo.replication.pojo.task.objects.PackageConstraint
 import com.tencent.bkrepo.replication.pojo.task.objects.PathConstraint
@@ -56,5 +57,9 @@ data class RecordDetailInitialRequest(
     @ApiModelProperty("冲突策略")
     var conflictStrategy: ConflictStrategy? = null,
     @ApiModelProperty("动作类型")
-    var actionType: ActionType? = null
+    var actionType: ActionType? = null,
+    @ApiModelProperty("当前状态")
+    var status: ExecutionStatus = ExecutionStatus.RUNNING,
+    @ApiModelProperty("错误原因")
+    var errorReason: String? = null
 )

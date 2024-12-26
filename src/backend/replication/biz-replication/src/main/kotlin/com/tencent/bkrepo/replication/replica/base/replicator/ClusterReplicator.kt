@@ -29,14 +29,17 @@ package com.tencent.bkrepo.replication.replica.base.replicator
 
 import com.google.common.base.Throwables
 import com.tencent.bkrepo.common.api.constant.HttpStatus
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.artifact.cluster.ClusterInfo
 import com.tencent.bkrepo.common.artifact.constant.RESERVED_KEY
 import com.tencent.bkrepo.common.artifact.constant.SOURCE_TYPE
 import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
+import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.configuration.composite.CompositeConfiguration
 import com.tencent.bkrepo.common.artifact.pojo.configuration.local.LocalConfiguration
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactChannel
+import com.tencent.bkrepo.common.service.condition.ConditionalOnNotDevops
 import com.tencent.bkrepo.common.storage.innercos.retry
 import com.tencent.bkrepo.replication.config.ReplicationProperties
 import com.tencent.bkrepo.replication.constant.DEFAULT_VERSION
@@ -71,6 +74,7 @@ import java.util.concurrent.TimeUnit
  * 独立集群 同步到 独立集群 的同步实现类
  */
 @Component
+@ConditionalOnNotDevops
 class ClusterReplicator(
     private val localDataManager: LocalDataManager,
     private val artifactReplicationHandler: ClusterArtifactReplicationHandler,
@@ -131,7 +135,15 @@ class ClusterReplicator(
                 configuration = configuration,
                 operator = localRepo.createdBy
             )
-            context.remoteRepo = artifactReplicaClient!!.replicaRepoCreateRequest(request).data!!
+            val remoteRepo = artifactReplicaClient!!.replicaRepoCreateRequest(request).data!!
+            if (remoteRepo.type != remoteRepoType) {
+                throw ErrorCodeException(
+                    ArtifactMessageCode.REPOSITORY_EXISTED,
+                    "$remoteProjectId/$remoteRepoName",
+                    status = HttpStatus.CONFLICT
+                )
+            }
+            context.remoteRepo = remoteRepo
         }
     }
 

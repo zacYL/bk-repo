@@ -175,4 +175,8 @@ class ArtifactReplicaController(
     ): Response<Void> {
         return packageClient.createVersion(request, HttpContextHolder.getClientAddress())
     }
+
+    override fun checkProjectExist(projectId: String): Response<Boolean> {
+        return ResponseBuilder.success(projectClient.getProjectInfo(projectId).data != null)
+    }
 }

@@ -51,10 +51,8 @@ class EventBasedReplicaService(
 
     override fun replica(context: ReplicaContext) {
         with(context) {
-            //同步项目
-            replicator.replicaProject(this)
-            // 同步仓库
-            replicator.replicaRepo(this)
+            // 同步项目和仓库
+            replicaProjectAndRepo(this)
             when (event.type) {
                 EventType.NODE_CREATED,
                 EventType.NODE_MOVED,

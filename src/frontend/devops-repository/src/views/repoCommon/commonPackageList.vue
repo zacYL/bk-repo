@@ -12,7 +12,7 @@
                     {{ $t('refresh') }}
                 </bk-button>
                 <bk-button v-if="showUploadRepo" class="ml10" @click="handleClickUpload">{{$t('uploadArtifact')}}</bk-button>
-                <bk-button v-if="showUploadRepo" class="ml10" @click="handleClickBatchUpload">{{$t('batchUpload')}}</bk-button>
+                <bk-button v-if="showBatchUploadRepo" class="ml10" @click="handleClickBatchUpload">{{$t('batchUpload')}}</bk-button>
                 <bk-button class="ml20 flex-align-center" @click="onClickShowGuide">
                     <span class="flex-align-center">
                         <Icon class="mr5" name="hand-guide" size="16" />
@@ -132,9 +132,6 @@
                     limitList: [10, 20, 40]
                 },
                 showGuide: false,
-                repoBatchUploader: {
-                    isVisible: false
-                },
                 repoUploader: {
                     isVisible: false
                 }
@@ -155,6 +152,9 @@
             // 是否显示上传制品按钮
             showUploadRepo () {
                 return ['MAVEN', 'DOCKER', 'NPM'].includes(this.currentType) && !(this.storeType === 'remote') && !(this.storeType === 'virtual') && !this.whetherSoftware && this.canUploadArtifact
+            },
+            showBatchUploadRepo () {
+                return ['MAVEN', 'NPM'].includes(this.currentType) && !(this.storeType === 'remote') && !(this.storeType === 'virtual') && !this.whetherSoftware && this.canUploadArtifact
             },
             currentRepoDataPermission () {
                 return this.currentRepositoryDataPermission?.find((item) => item.resourceCode === 'bkrepo')?.actionCodes || []
@@ -189,8 +189,15 @@
             handleClickUpload () {
                 this.repoUploader.isVisible = true
             },
+            // 批量导出弹窗
             handleClickBatchUpload () {
-                this.repoBatchUploader.isVisible = true
+                this.$globalUploadFiles({
+                    projectId: this.projectId,
+                    repoName: this.repoName,
+                    folder: false,
+                    fullPath: '',
+                    uploadType: 'mavenUpload'
+                })
             },
             onUpdateUploader (flag) {
                 this.onCancelUploader(flag)

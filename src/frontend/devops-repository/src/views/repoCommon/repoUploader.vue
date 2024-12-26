@@ -60,8 +60,16 @@
                     </bk-form-item>
 
                     <bk-form-item v-if="checkFail">
+                        <bk-button
+                            text
+                            theme="primary"
+                            class="ml5"
+                            @click="reupload()">
+                            {{$t('upload') + $t('space') + 'pom'}}
+                        </bk-button>
                         <bk-upload
-                            theme="button"
+                            v-show="false"
+                            ref="pomUpload"
                             class="mb5"
                             v-bkloading="{ isLoading: isLoading, title: $t('uploadMavenArtifactLoading') }"
                             :with-credentials="true"
@@ -188,6 +196,13 @@
 
             onRequestUpload (uploadFile) {
                 this.handleUpload(uploadFile, 'mavenUpload')
+            },
+
+            reupload () {
+                this.$refs.pomUpload.fileList = []
+                this.$nextTick(() => {
+                    this.$refs.pomUpload.$refs.uploadel.click()
+                })
             },
 
             handleUpload (uploadFile, uploadType) {

@@ -113,7 +113,8 @@
         },
         methods: {
             ...mapActions([
-                'uploadArtifactory'
+                'uploadArtifactory',
+                'submitMavenArtifactory'
             ]),
             selectFiles (data = {}) {
                 this.rootData = {
@@ -123,10 +124,58 @@
                 this.$refs.selectedFilesDialog.selectFiles()
             },
             addFilesToFileList ({ overwrite, selectedFiles }) {
-                const fileList = selectedFiles.map(file => this.getUploadObj(file, overwrite))
-                this.sortFileList(fileList)
-                this.addToUpLoadTaskQueue()
-                this.show = true
+                if (this.rootData.uploadType) {
+                    if (selectedFiles.length) {
+                        selectedFiles.forEach(file => {
+                            this.mavenUploadHandle(file)
+                        })
+                        this.show = true
+                    } else {
+                        this.$bkMessage({
+                            theme: 'error',
+                            message: this.$t('uploadMavenErrorMsgTip')
+                        })
+                    }
+                } else {
+                    const fileList = selectedFiles.map(file => this.getUploadObj(file, overwrite))
+                    this.sortFileList(fileList)
+                    this.addToUpLoadTaskQueue()
+                    this.show = true
+                }
+            },
+            mavenUploadHandle (formData) {
+                return new Promise((resolve, reject) => {
+                    const index = this.fileList.findIndex(item => item.file.name === formData.name)
+                    const data = {
+                        xhr: new XMLHttpRequest(),
+                        projectId: this.rootData.projectId,
+                        repoName: this.rootData.repoName,
+                        file: formData,
+                        status: 'INIT'
+                    }
+                    data.status = 'UPLOADING'
+                
+                    const params = {
+                        projectId: this.rootData.projectId,
+                        repoName: this.rootData.repoName,
+                        body: { ...formData._tempParams }
+                    }
+                    this.submitMavenArtifactory(params).then(res => {
+                        data.status = 'SUCCESS'
+                        resolve()
+                    }).catch(error => {
+                        data.status = 'FAILED'
+                        data.errMsg = `${error.message || this.$t('uploadMavenErrorMsgTip')}`
+                        // eslint-disable-next-line prefer-promise-reject-errors
+                        reject(error)
+                    }).finally(() => {
+                        if (index !== -1) {
+                            this.fileList.splice(index, 1, data)
+                        } else {
+                            this.fileList.push(data)
+                        }
+                    })
+                })
             },
             getUploadObj (file, overwrite) {
                 const { projectId, repoName, fullPath: path } = this.rootData
@@ -206,9 +255,23 @@
                 row.xhr.abort()
             },
             reUpload (row) {
-                this.$set(row, 'status', 'INIT')
-                this.sortFileList()
-                this.addToUpLoadTaskQueue() // 开启队列
+                if (this.rootData.uploadType) {
+                    this.mavenUploadHandle(row.file).then(() => {
+                        this.$bkMessage({
+                            theme: 'success',
+                            message: this.$t('uploadSuccess')
+                        })
+                    }).catch(error => {
+                        this.$bkMessage({
+                            message: `${error.message || this.$t('uploadMavenErrorMsgTip')}`,
+                            theme: 'error'
+                        })
+                    })
+                } else {
+                    this.$set(row, 'status', 'INIT')
+                    this.sortFileList()
+                    this.addToUpLoadTaskQueue() // 开启队列
+                }
             },
             getProgress ({ loaded, total }) {
                 const progressDetail = `(${convertFileSize(loaded)}/${convertFileSize(total)})`

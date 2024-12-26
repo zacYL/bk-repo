@@ -28,7 +28,12 @@
 package com.tencent.bkrepo.cocoapods.utils
 
 import com.tencent.bkrepo.cocoapods.constant.DOT_SPECS
+import com.tencent.bkrepo.cocoapods.model.TCocoapodsRemotePackage
+import com.tencent.bkrepo.cocoapods.pojo.CocoapodsRemoteConfiguration
 import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo
+import com.tencent.bkrepo.cocoapods.pojo.enums.PodSpecSourceType
+import com.tencent.bkrepo.cocoapods.pojo.enums.RemoteRepoType
+import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 
@@ -55,6 +60,47 @@ object PathUtil {
     fun generateIndexPath(artifactInfo: CocoapodsArtifactInfo, fileName: String?) =
         "$DOT_SPECS/${artifactInfo.name}/${artifactInfo.version}/${fileName}"
 
+    fun generateIndexTarPath() =
+        "$DOT_SPECS/index.tar.gz"
+
     fun ArtifactUploadContext.generateCachePath(artifactInfo: CocoapodsArtifactInfo, domain: String) =
         "${domain}/${projectId}/${repoName}/${artifactInfo.getArtifactFullPath()}"
+
+    fun ArchiveModifier.Podspec.generateCachePath(projectId: String, repoName: String, domain: String) =
+        "$domain/$projectId/$repoName/$name/$version/$name-$version.tar.gz}"
+
+    fun buildRemoteSpecsUrl(cocoapodsConf: CocoapodsRemoteConfiguration, conf: RemoteConfiguration) =
+        when (cocoapodsConf.type) {
+            RemoteRepoType.GIT_HUB -> {
+                "https://github.com/CocoaPods/Specs/archive/refs/heads/master.zip"
+            }
+
+            RemoteRepoType.CPACK -> {
+                "${conf.url}/index/fetchIndex"
+            }
+
+            RemoteRepoType.OTHER -> {
+                cocoapodsConf.downloadUrl ?: kotlin.run {
+                    null
+                }
+            }
+        }
+
+    fun TCocoapodsRemotePackage.Source.toDownloadUrl(): String?{
+        return when (type) {
+            PodSpecSourceType.HTTP.name -> {
+                url
+            }
+
+            PodSpecSourceType.GIT.name -> {
+                "${url.removeSuffix(".git")}/archive/refs/tags/$gitTag.zip"
+            }
+
+            else -> {
+                null
+            }
+        }
+    }
+
+    fun buildSpecsGitPath(basePath: String, projectId: String, name: String) = "$basePath/$projectId/$name"
 }

@@ -28,7 +28,7 @@
 package com.tencent.bkrepo.cocoapods.service
 
 import com.tencent.bkrepo.cocoapods.exception.CocoapodsMessageCode
-import com.tencent.bkrepo.cocoapods.exception.CocoapodsPodSpecNotFoundException
+import com.tencent.bkrepo.cocoapods.exception.CocoapodsCommonException
 import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo
 import com.tencent.bkrepo.cocoapods.pojo.user.PackageVersionInfo
 import com.tencent.bkrepo.cocoapods.utils.ObjectBuildUtil.buildBasicInfo
@@ -44,7 +44,7 @@ import org.springframework.stereotype.Service
 class CocoapodsWebService(
     private val nodeClient: NodeClient,
     private val packageClient: PackageClient,
-    private val cocoapodsFileService: CocoapodsFileService,
+    private val cocoapodsPackageService: CocoapodsPackageService,
 ) {
     //TODO 逻辑待优化。当前为遍历版本，取其中一个的contentPath解析出orgName然后删除整个路径
     fun deletePackage(artifactInfo: CocoapodsArtifactInfo, packageKey: String) {
@@ -56,7 +56,7 @@ class CocoapodsWebService(
             } ?: logger.warn("[$projectId/$repoName/$packageKey] version not found")
             packageClient.deletePackage(projectId, repoName, packageKey)
             name = PackageKeys.resolveCocoapods(packageKey)
-            cocoapodsFileService.deletePackageFile(artifactInfo)
+            cocoapodsPackageService.deletePackageFile(artifactInfo)
         }
     }
 
@@ -70,7 +70,7 @@ class CocoapodsWebService(
                 throw PackageNotFoundException(packageKey)
             }
             packageClient.deleteVersion(projectId, repoName, packageKey, version)
-            cocoapodsFileService.deleteVersionFile(artifactInfo, packageVersion)
+            cocoapodsPackageService.deleteVersionFile(artifactInfo, packageVersion)
             logger.info("delete artifactInfo:[$artifactInfo],packageVersion:[$packageVersion]")
         }
     }
@@ -87,7 +87,7 @@ class CocoapodsWebService(
             }
             val nodeDetail = nodeClient.getNodeDetail(projectId, repoName, packageVersion.contentPath!!).data ?: run {
                 logger.warn("node [${packageVersion.contentPath}] don't found.")
-                throw CocoapodsPodSpecNotFoundException(CocoapodsMessageCode.COCOAPODS_PODSPEC_NOT_FOUND)
+                throw CocoapodsCommonException(CocoapodsMessageCode.COCOAPODS_PODSPEC_NOT_FOUND)
             }
             return PackageVersionInfo(buildBasicInfo(nodeDetail, packageVersion), packageVersion.packageMetadata)
         }

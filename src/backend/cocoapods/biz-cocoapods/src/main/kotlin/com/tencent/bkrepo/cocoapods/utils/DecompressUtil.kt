@@ -32,7 +32,7 @@
 package com.tencent.bkrepo.cocoapods.utils
 
 import com.tencent.bkrepo.cocoapods.exception.CocoapodsMessageCode
-import com.tencent.bkrepo.cocoapods.exception.CocoapodsPodSpecNotFoundException
+import com.tencent.bkrepo.cocoapods.exception.CocoapodsCommonException
 import com.tencent.bkrepo.cocoapods.pojo.PodSpec
 import com.tencent.bkrepo.cocoapods.pojo.enums.PodSpecType
 import com.tencent.bkrepo.common.api.util.DecompressUtils
@@ -65,7 +65,7 @@ object DecompressUtil {
     fun InputStream.getPodSpec(cachePath: String): PodSpec {
         val (fileName, content) = getContentByExtensionsFromTarGz(this, PodSpecType.extendedNames())
         val type = PodSpecType.matchPath(fileName)
-            ?: throw CocoapodsPodSpecNotFoundException(CocoapodsMessageCode.COCOAPODS_PODSPEC_NOT_FOUND)
+            ?: throw CocoapodsCommonException(CocoapodsMessageCode.COCOAPODS_PODSPEC_NOT_FOUND)
 
         val specName: String?
         val podSpecContent = when (type) {

@@ -38,4 +38,4 @@ const val SPECS_FILE_NAME = "specs_file_name"
 const val SPECS_FILE_CONTENT = "specs_file_content"
 const val CLIENT_PLUGIN_NAME = "bk-cocoapods-1.0.0.gem"
 const val CLIENT_PLUGIN_PATH = "cli/bk-cocoapods-1.0.0.gem"
-
+const val LOCK_PREFIX = "cocoapods:lock:"

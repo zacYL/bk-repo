@@ -1,8 +1,12 @@
 package com.tencent.bkrepo.cocoapods.utils
 
+import com.tencent.bkrepo.cocoapods.pojo.CocoapodsRemoteConfiguration
+import com.tencent.bkrepo.cocoapods.pojo.enums.RemoteRepoType
 import com.tencent.bkrepo.cocoapods.pojo.user.BasicInfo
+import com.tencent.bkrepo.common.artifact.pojo.configuration.RepositoryConfiguration
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
+import org.apache.commons.lang3.EnumUtils
 import org.slf4j.LoggerFactory
 import java.time.format.DateTimeFormatter
 
@@ -26,5 +30,12 @@ object ObjectBuildUtil {
                 lastModifiedDate = packageVersion.lastModifiedDate.format(DateTimeFormatter.ISO_DATE_TIME)
             )
         }
+    }
+
+    fun RepositoryConfiguration.toCocoapodsRemoteConfiguration(): CocoapodsRemoteConfiguration {
+       return CocoapodsRemoteConfiguration(
+            type = EnumUtils.getEnum(RemoteRepoType::class.java, this.getStringSetting("type")),
+            downloadUrl = this.getStringSetting("downloadUrl")
+        )
     }
 }

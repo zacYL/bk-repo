@@ -30,7 +30,6 @@ package com.tencent.bkrepo.cocoapods.service
 import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
-import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.message.ArtifactMessageCode
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactContextHolder
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
@@ -45,15 +44,6 @@ class CocoapodsUploadDownloadService(
     fun upload(cocoapodsArtifactInfo: CocoapodsArtifactInfo, artifactFile: ArtifactFile) {
         val context = ArtifactUploadContext(artifactFile)
         ArtifactContextHolder.getRepository().upload(context)
-    }
-
-    fun downloadIndex(artifactInfo: ArtifactInfo) {
-        with(artifactInfo) {
-            val repo = repositoryClient.getRepoDetail(projectId, repoName).data
-                ?: throw ErrorCodeException(ArtifactMessageCode.REPOSITORY_NOT_FOUND, repoName)
-            val context = ArtifactDownloadContext(repo = repo)
-            ArtifactContextHolder.getRepository().download(context)
-        }
     }
 
     fun downloadPackage(cocoapodsArtifactInfo: CocoapodsArtifactInfo) {

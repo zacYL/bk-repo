@@ -30,5 +30,5 @@ package com.tencent.bkrepo.cocoapods.exception
 import com.tencent.bkrepo.common.api.exception.NotFoundException
 import com.tencent.bkrepo.common.api.message.MessageCode
 
-class CocoapodsPodSpecNotFoundException(messageCode: MessageCode): NotFoundException(messageCode)
+class CocoapodsCommonException(messageCode: MessageCode): NotFoundException(messageCode)
 

@@ -104,6 +104,16 @@ class ArtifactFileFactory(
         }
 
         /**
+         * 通过输入流构造artifact file，指定凭证
+         * @param inputStream 输入流
+         */
+        fun build(inputStream: InputStream, storageCredentials: StorageCredentials): ArtifactFile {
+            return StreamArtifactFile(inputStream, getMonitor(storageCredentials), properties, storageCredentials).apply {
+                track(this)
+            }
+        }
+
+        /**
          * 通过输入流构造artifact file
          * @param inputStream 输入流
          */

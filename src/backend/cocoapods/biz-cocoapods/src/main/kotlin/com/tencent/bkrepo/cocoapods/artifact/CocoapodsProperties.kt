@@ -33,4 +33,5 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 @ConfigurationProperties("cocoapods")
 data class CocoapodsProperties(
     var domain: String = EMPTY,
+    var gitPath: String = EMPTY,
 )

@@ -29,6 +29,9 @@ package com.tencent.bkrepo.cocoapods.pojo.artifact
 
 import com.tencent.bkrepo.cocoapods.utils.PathUtil.generateFullPath
 import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
+import com.tencent.bkrepo.common.artifact.constant.METADATA_KEY_PACKAGE_NAME
+import com.tencent.bkrepo.common.artifact.constant.METADATA_KEY_PACKAGE_VERSION
+import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
 
 class CocoapodsArtifactInfo(
     projectId: String,
@@ -46,6 +49,11 @@ class CocoapodsArtifactInfo(
     override fun getArtifactName() = name
 
     override fun getArtifactVersion() = version
+
+    fun generateMetadata(): List<MetadataModel> = listOf(
+        MetadataModel(key = METADATA_KEY_PACKAGE_NAME, value = name, system = true),
+        MetadataModel(key = METADATA_KEY_PACKAGE_VERSION, value = version, system = true)
+    )
 
     companion object {
         private const val COCOAPODS_PREFIX = "/{projectId}/{repoName}"

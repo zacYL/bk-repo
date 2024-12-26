@@ -6,7 +6,7 @@
     "other": "Other",
     "batchUpload": "Batch upload",
     "specsDownloadUrlTips1": "If you choose to pull from other types of repositories, you need to configure it as the target repository index path",
-    "specsDownloadUrlTips2": "If you choose to pull from GitHub, configure it as: https://github.com/CocoaPods/Specs",
+    "specsDownloadUrlTips2": "If you choose to pull from GitHub, configure it as: https://github.com/CocoaPods/Specs.git",
     "specsDownloadUrlTips3": "If you choose to pull from bkrepo, configure it as: {repoURL}/index/fetchIndexx, where {repoURL} is the artifact repository URL",
     "projectIdCheckTips": "Please enter a combination of 6 lowercase letters or numbers.",
     "originRepo": "Origin Repository",

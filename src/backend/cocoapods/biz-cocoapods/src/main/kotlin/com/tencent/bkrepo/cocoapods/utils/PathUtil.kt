@@ -72,7 +72,7 @@ object PathUtil {
     fun buildRemoteSpecsUrl(cocoapodsConf: CocoapodsRemoteConfiguration, conf: RemoteConfiguration) =
         when (cocoapodsConf.type) {
             RemoteRepoType.GIT_HUB -> {
-                "https://github.com/CocoaPods/Specs/archive/refs/heads/master.zip"
+                cocoapodsConf.downloadUrl?:"https://github.com/CocoaPods/Specs.git"
             }
 
             RemoteRepoType.CPACK -> {

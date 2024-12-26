@@ -205,7 +205,7 @@ class CocoapodsSpecsService(
         response.body()?.byteStream()?.use { ips ->
             val wrap = ByteArrayInputStream(ips.readBytes())
             val fileType = FileUtil.detectFileType(wrap)
-            ips.reset()
+            wrap.reset()
             return ArchiveModifier.modifyArchive(projectId, repoInfo.name, cocoapodsProperties.domain, wrap, outputStream, fileType, tempPath)
         } ?: run {
             logger.error("Failed to read the response body")

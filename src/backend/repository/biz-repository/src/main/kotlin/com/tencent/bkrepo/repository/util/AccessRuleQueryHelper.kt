@@ -16,12 +16,12 @@ object AccessRuleQueryHelper {
                 if (version != null) {
                     val escapedValue = MongoEscapeUtils.escapeRegexExceptWildcard(version)
                     val regexPattern = escapedValue.replace("*", ".*")
-                    addCriteria(where(TPackageAccessRule::version).regex("$regexPattern", "i"))
+                    addCriteria(where(TPackageAccessRule::version).regex(regexPattern, "i"))
                 }
                 if (key != null) {
                     val escapedValue = MongoEscapeUtils.escapeRegex(key)
                     val regexPattern = escapedValue.replace("*", ".*")
-                    addCriteria(where(TPackageAccessRule::key).regex("$regexPattern", "i"))
+                    addCriteria(where(TPackageAccessRule::key).regex(regexPattern, "i"))
                 }
             }
     }

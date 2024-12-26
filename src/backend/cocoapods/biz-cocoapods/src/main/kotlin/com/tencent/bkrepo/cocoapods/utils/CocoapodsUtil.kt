@@ -33,6 +33,10 @@ package com.tencent.bkrepo.cocoapods.utils
 
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import com.tencent.bkrepo.cocoapods.pojo.enums.PodSpecType
+import com.tencent.bkrepo.cocoapods.model.TCocoapodsRemotePackage.Source
+import com.tencent.bkrepo.cocoapods.pojo.enums.PodSpecSourceType
+import org.apache.commons.lang3.StringUtils
 
 object CocoapodsUtil {
 
@@ -83,13 +87,105 @@ object CocoapodsUtil {
         return jsonObject.toString()
     }
 
+
+    // 解析 Podspec 内容并返回 Source 对象
+    fun parseSourceFromContent(content: String, contentType: PodSpecType): ArchiveModifier.Podspec? {
+        return when (contentType) {
+            PodSpecType.POD_SPEC -> parsePodspecSource(content)
+            PodSpecType.JSON -> parsePodspecJsonSource(content)
+        }
+    }
+
+    // 解析 .podspec 文件的 s.source
+    private fun parsePodspecSource(podspecContent: String): ArchiveModifier.Podspec? {
+        val lines = podspecContent.lines()
+        var name: String? = null
+        var version: String? = null
+        var type: String? = null
+        var url: String? = null
+        var gitTag: String? = null
+        for (line in lines) {
+            val sourceLine = line.trim()
+            val key = line.substringBefore("=")
+            if (key.contains(".name")){
+                name = getValueFromPodspecLine(line) ?: break
+            }
+            if (key.contains(".version")){
+                version = getValueFromPodspecLine(line) ?: break
+            }
+
+            // 如果是 HTTP 源
+            if (sourceLine.contains(":http")) {
+                type = PodSpecSourceType.HTTP.name
+                url = getByRegex("http", sourceLine)
+            }else {
+                // 如果是 Git 源
+                if (sourceLine.contains(":git")) {
+                    type = PodSpecSourceType.GIT.name
+                    url = getByRegex("git", sourceLine)
+                }
+                if (sourceLine.contains(":tag")) {
+                    gitTag = getByRegex("tag", sourceLine)
+                }
+            }
+        }
+
+        //tag可能是v#{s.version.to_s}这样的 Ruby 语言中的一个 字符串插值表达式
+        if (gitTag?.contains("version") == true) {
+            resolveTag(gitTag, version ?: gitTag).also { gitTag = it }
+        }
+
+        // 如果没有找到有效的 source 信息，则返回 null
+        return if (name != null && version != null && type != null && url != null) {
+            ArchiveModifier.Podspec(name, version, Source(type, url, gitTag), null)
+        } else null
+
+    }
+
+    // 解析 podspec.json 文件的 s.source
+    private fun parsePodspecJsonSource(podspecJsonContent: String): ArchiveModifier.Podspec? {
+        val jsonObject = JsonParser.parseString(podspecJsonContent).asJsonObject
+        val name = jsonObject.get("name")?.asString
+        val version = jsonObject.get("version")?.asString
+        val sourceJson = jsonObject.getAsJsonObject("source")
+
+        var url = sourceJson?.get("git")?.asString
+        val source = if (StringUtils.isNotBlank(url)) {
+            val tag = sourceJson?.get("tag")?.asString
+            Source(PodSpecSourceType.GIT.name, url!!, tag)
+        } else {
+            url = sourceJson.get("http")?.asString
+            Source(PodSpecSourceType.HTTP.name, url.toString(), null)
+        }
+        return if (name != null && version != null && url != null){
+             ArchiveModifier.Podspec(name, version, source, null)
+        }else {
+            null
+        }
+    }
+
     fun extractNameFromPodspec(podspecContent: String): String? {
-        return podspecContent.lines().find { it.contains(".name") }?.split("=")
-            ?.last()?.trim()?.removeSurrounding("\"")?.removeSurrounding("'")
+        return podspecContent.lines().find { it.contains(".name") }.apply {
+            getValueFromPodspecLine(this)
+        }
     }
 
     fun extractNameFromPodspecJson(content: String): String? {
         val jsonObject = JsonParser.parseString(content).asJsonObject
         return jsonObject.get("name").asString
+    }
+
+    private fun getValueFromPodspecLine(line: String?): String? {
+        return line?.split("=")?.last()?.trim()?.removeSurrounding("\"")?.removeSurrounding("'")
+    }
+    private fun getByRegex(key:String,line:String): String? {
+        val urlMatch = Regex(":$key\\s*=>\\s*['\"]([^'\"]+)['\"]").find(line)
+        return urlMatch?.groupValues?.get(1)
+    }
+
+    private fun resolveTag(template: String, version: String): String {
+        // 使用正则表达式来替换 `#{}` 中的内容
+        val regex = Regex("""#\{([^}]+)}""")
+        return regex.replace(template,version)
     }
 }

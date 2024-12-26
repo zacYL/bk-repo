@@ -28,8 +28,6 @@
 package com.tencent.bkrepo.cocoapods.artifact.repository
 
 import com.tencent.bkrepo.cocoapods.artifact.CocoapodsProperties
-import com.tencent.bkrepo.cocoapods.constant.DOT_SPECS
-import com.tencent.bkrepo.cocoapods.constant.SPECS
 import com.tencent.bkrepo.cocoapods.constant.SPECS_FILE_CONTENT
 import com.tencent.bkrepo.cocoapods.constant.SPECS_FILE_NAME
 import com.tencent.bkrepo.cocoapods.exception.CocoapodsException
@@ -37,35 +35,22 @@ import com.tencent.bkrepo.cocoapods.exception.CocoapodsFileParseException
 import com.tencent.bkrepo.cocoapods.exception.CocoapodsMessageCode
 import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo
 import com.tencent.bkrepo.cocoapods.service.CocoapodsPackageService
-import com.tencent.bkrepo.cocoapods.utils.DecompressUtil.buildEmptySpecGzOps
 import com.tencent.bkrepo.cocoapods.utils.DecompressUtil.getPodSpec
 import com.tencent.bkrepo.cocoapods.utils.PathUtil.generateCachePath
 import com.tencent.bkrepo.cocoapods.utils.PathUtil.generateFullPath
 import com.tencent.bkrepo.cocoapods.utils.PathUtil.generateIndexPath
-import com.tencent.bkrepo.common.api.constant.CharPool.SLASH
-import com.tencent.bkrepo.common.api.constant.HttpHeaders
-import com.tencent.bkrepo.common.api.constant.MediaTypes
-import com.tencent.bkrepo.common.api.constant.ensurePrefix
-import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
-import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactDownloadContext
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.common.artifact.repository.local.LocalRepository
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.util.PackageKeys
-import com.tencent.bkrepo.common.artifact.util.http.HttpHeaderUtils.encodeDisposition
-import com.tencent.bkrepo.common.service.util.HttpContextHolder.getResponse
 import com.tencent.bkrepo.repository.pojo.download.PackageDownloadRecord
-import com.tencent.bkrepo.repository.pojo.node.NodeDetail
-import com.tencent.bkrepo.repository.pojo.node.NodeListOption
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.io.ByteArrayOutputStream
-import java.io.IOException
 import java.io.OutputStreamWriter
-import javax.servlet.http.HttpServletResponse
 
 @Component
 class CocoapodsLocalRepository(
@@ -137,71 +122,14 @@ class CocoapodsLocalRepository(
 
     override fun buildNodeCreateRequest(context: ArtifactUploadContext): NodeCreateRequest {
         with(context) {
-            val fullPath = generateFullPath(artifactInfo as CocoapodsArtifactInfo)
+            val cocoapodsArtifactInfo = artifactInfo as CocoapodsArtifactInfo
+            val fullPath = generateFullPath(cocoapodsArtifactInfo)
             logger.info("File $fullPath will be stored in $projectId|$repoName")
             return super.buildNodeCreateRequest(context).copy(
                 fullPath = fullPath,
+                nodeMetadata = cocoapodsArtifactInfo.generateMetadata(),
                 overwrite = true
             )
-        }
-    }
-
-    override fun onDownload(context: ArtifactDownloadContext): ArtifactResource? {
-        if (context.artifactInfo !is CocoapodsArtifactInfo) {
-            //下载index文件,将.specs目录下的文件压缩返回
-            val prefix = SLASH + DOT_SPECS
-            with(context) {
-                val nodes = queryNodeDetailList(
-                    projectId = projectId,
-                    repoName = repoName,
-                    prefix = prefix
-                )
-                val nodeMap = nodes.filterNot { it.folder }.associate {
-                    val name = it.fullPath.removePrefix(prefix).ensurePrefix(SPECS)
-                    name to run {
-                        nodeClient.updateRecentlyUseDate(it.projectId, it.repoName, it.fullPath)
-                        storageManager.loadArtifactInputStream(it, storageCredentials)
-                            ?: throw ArtifactNotFoundException(it.fullPath)
-                    }
-                }
-                if (nodeMap.isEmpty()) {
-                    returnEmptySpec()
-                }
-                return ArtifactResource(
-                    artifactMap = nodeMap,
-                    srcRepo = RepositoryIdentify(projectId, repoName),
-                    useDisposition = true,
-                    contentType = MediaTypes.APPLICATION_GZIP
-                )
-            }
-        } else {
-            //下载包文件
-            return super.onDownload(context)
-        }
-    }
-
-    private fun returnEmptySpec() {
-        val response = getResponse()
-
-        try {
-            response.contentType = MediaTypes.APPLICATION_GZIP
-            response.setHeader(HttpHeaders.CONTENT_DISPOSITION, encodeDisposition("response.gz"))
-            val gzipOutputStream = buildEmptySpecGzOps(response)
-            gzipOutputStream.finish()
-        } catch (e: IOException) {
-            logger.error("Error occurred while creating archive.", e)
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to create archive.")
-        }
-    }
-
-    override fun onDownloadBefore(context: ArtifactDownloadContext) {
-        super.onDownloadBefore(context)
-        val artifactInfo = context.artifactInfo
-        if (artifactInfo is CocoapodsArtifactInfo) {
-            with(artifactInfo) {
-                packageClient.findVersionByName(projectId, repoName, PackageKeys.ofCocoapods(name), version).data
-                    ?.apply { packageDownloadIntercept(context, this) }
-            }
         }
     }
 
@@ -213,34 +141,6 @@ class CocoapodsLocalRepository(
         return if (artifactInfo is CocoapodsArtifactInfo) {
             cocoapodsPackageService.buildDownloadRecord(artifactInfo, context.userId)
         } else null
-    }
-
-    private fun queryNodeDetailList(
-        projectId: String,
-        repoName: String,
-        prefix: String,
-    ): List<NodeDetail> {
-        var pageNumber = 1
-        val nodeDetailList = mutableListOf<NodeDetail>()
-        val count = nodeClient.countFileNode(projectId, repoName, prefix).data ?: 0
-        do {
-            val option = NodeListOption(
-                pageNumber = pageNumber,
-                pageSize = 1000,
-                includeFolder = true,
-                includeMetadata = true,
-                deep = true
-            )
-            val records = nodeClient.listNodePage(projectId, repoName, prefix, option).data?.records
-            if (records.isNullOrEmpty()) {
-                break
-            }
-            nodeDetailList.addAll(
-                records.map { NodeDetail(it) }
-            )
-            pageNumber++
-        } while (nodeDetailList.size < count)
-        return nodeDetailList
     }
 
     companion object {

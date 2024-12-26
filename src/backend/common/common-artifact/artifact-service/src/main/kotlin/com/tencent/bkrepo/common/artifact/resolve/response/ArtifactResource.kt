@@ -76,7 +76,6 @@ class ArtifactResource(
     var status: HttpStatus? = null
 
 
-
     /**
      * 次构造器
      */
@@ -86,8 +85,9 @@ class ArtifactResource(
         srcRepo: RepositoryIdentify,
         node: NodeDetail? = null,
         channel: ArtifactChannel = ArtifactChannel.LOCAL,
-        useDisposition: Boolean = false
-    ) : this(mapOf(artifactName to inputStream), srcRepo, node, channel, useDisposition)
+        useDisposition: Boolean = false,
+        contentType: String? = null,
+    ) : this(mapOf(artifactName to inputStream), srcRepo, node, channel, useDisposition, contentType)
 
     /**
      * 是否包含多个构件资源

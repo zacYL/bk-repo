@@ -51,9 +51,9 @@ class CocoapodsExceptionHandler {
         cocoapodsResponse(errorMessage, exception)
     }
 
-    @ExceptionHandler(CocoapodsPodSpecNotFoundException::class)
+    @ExceptionHandler(CocoapodsCommonException::class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    fun handlerCocoapodsPodSpecNotFoundException(exception: CocoapodsPodSpecNotFoundException) {
+    fun handlerCocoapodsPodSpecNotFoundException(exception: CocoapodsCommonException) {
         val errorMessage = LocaleMessageUtils.getLocalizedMessage(exception.messageCode, exception.params)
         cocoapodsResponse(errorMessage, exception)
     }

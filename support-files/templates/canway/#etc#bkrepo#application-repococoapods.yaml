@@ -20,3 +20,4 @@ service:
   name: cocoapods
 cocoapods:
   domain: ${cluster.self.url}/cocoapods
+  gitPath: ${storage.filesystem.path}/cocoapods/git

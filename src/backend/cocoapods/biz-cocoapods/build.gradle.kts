@@ -1,3 +1,5 @@
+import Versions.Tika
+
 /*
  * Tencent is pleased to support the open source community by making BK-CI 蓝鲸持续集成平台 available.
  *
@@ -34,4 +36,6 @@ dependencies {
     api(project(":common:common-artifact:artifact-service"))
     api(project(":common:common-lock"))
     implementation("com.google.code.gson:gson")
+    implementation("org.apache.tika:tika-core:$Tika")
+    implementation("org.eclipse.jgit:org.eclipse.jgit")
 }

@@ -80,4 +80,5 @@ object Versions {
     const val TongWeb = "7.0.E.6_P6"
     const val CommonsLang3 = "3.14.0"
     const val Easyexcel = "4.0.3"
+    const val Tika = "2.9.2"
 }

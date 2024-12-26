@@ -25,10 +25,28 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.tencent.bkrepo.cocoapods.exception
+package com.tencent.bkrepo.replication.replica.event
 
-import com.tencent.bkrepo.common.api.exception.NotFoundException
-import com.tencent.bkrepo.common.api.message.MessageCode
+import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
+import com.tencent.bkrepo.common.artifact.event.base.EventType
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
+import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 
-class CocoapodsPodSpecNotFoundException(messageCode: MessageCode): NotFoundException(messageCode)
-
+/**
+ * Cocoapods制品分发消息类
+ * 现用于在分发Cocoapods制品时通知Cocoapods服务修改索引文件
+ */
+data class CocoapodsReplicaEvent(
+    private val packageSummary: PackageSummary,
+    private val version: PackageVersion,
+    override val userId: String,
+    val repoType: RepositoryType
+) : ArtifactEvent(
+    type = EventType.COCOAPODS_REPLICA,
+    projectId = packageSummary.projectId,
+    repoName = packageSummary.repoName,
+    resourceKey = version.contentPath ?: "",
+    userId = userId,
+    data = mapOf("repoType" to repoType, "contentPath" to (version.contentPath ?: ""))
+)

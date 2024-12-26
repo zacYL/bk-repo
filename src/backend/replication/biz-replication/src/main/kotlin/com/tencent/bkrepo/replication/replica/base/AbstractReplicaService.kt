@@ -32,6 +32,8 @@ import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.common.artifact.path.PathUtils
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.security.manager.PermissionManager
+import com.tencent.bkrepo.common.security.util.SecurityUtils
+import com.tencent.bkrepo.common.stream.event.supplier.EventSupplier
 import com.tencent.bkrepo.replication.manager.LocalDataManager
 import com.tencent.bkrepo.replication.pojo.record.ExecutionResult
 import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus
@@ -47,14 +49,17 @@ import com.tencent.bkrepo.replication.pojo.task.setting.ConflictStrategy.SKIP
 import com.tencent.bkrepo.replication.pojo.task.setting.ErrorStrategy
 import com.tencent.bkrepo.replication.replica.base.context.ReplicaContext
 import com.tencent.bkrepo.replication.replica.base.context.ReplicaExecutionContext
+import com.tencent.bkrepo.replication.replica.event.CocoapodsReplicaEvent
 import com.tencent.bkrepo.replication.service.ReplicaRecordService
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.node.UserAuthPathOption
 import com.tencent.bkrepo.repository.pojo.packages.PackageListOption
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
+import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 import com.tencent.bkrepo.repository.pojo.packages.VersionListOption
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 
 /**
  * 同步服务抽象类
@@ -66,6 +71,9 @@ abstract class AbstractReplicaService(
     private val localDataManager: LocalDataManager,
     private val permissionManager: PermissionManager,
 ) : ReplicaService {
+
+    @Autowired
+    private lateinit var eventSupplier: EventSupplier
 
     private val logger = LoggerFactory.getLogger(AbstractReplicaService::class.java)
 
@@ -307,6 +315,22 @@ abstract class AbstractReplicaService(
                     else -> {
                         // not conflict or overwrite
                         replicator.replicaPackageVersion(replicaContext, packageSummary, version)
+
+                        //仅针对Cocoapods制品同步，发送消息给Cocoapods服务，通知处理包文件索引
+                        if (packageSummary.type == PackageType.COCOAPODS) {
+                            val event = CocoapodsReplicaEvent(
+                                packageSummary,
+                                version,
+                                SecurityUtils.getUserId(),
+                                RepositoryType.COCOAPODS
+                            )
+                            logger.info("send cocoapods replica event[$event]")
+                            eventSupplier.delegateToSupplier(
+                                event = event,
+                                topic = event.topic,
+                                key = event.getFullResourceKey()
+                            )
+                        }
                     }
                 }
                 return

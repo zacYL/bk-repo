@@ -68,7 +68,7 @@
                             :size="5 * 1024"
                             :limit="1"
                             :multiple="false"
-                            :custom-request="onRequestUpload"
+                            :custom-request="onRequestPomUpload"
                             :accept="'.pom'"
                             url="#"
                         ></bk-upload>
@@ -168,7 +168,7 @@
             },
 
             handleUpload (uploadFile, uploadType) {
-                this.checkFail = false
+                if (uploadType === 'mavenUpload') this.checkFail = false
                 this.isLoading = true
                 this.errorMsg = ''
                 this.uploadXhr = new XMLHttpRequest()
@@ -195,7 +195,7 @@
                 }).then(res => {
                     this.customSettings.uploadFlag = false
                     if (uploadType === 'mavenUpload' && (!res || !res.data || (!res.data.groupId && !res.data.artifactId && !res.data.version))) {
-                        this.checkFail = true
+                        if (uploadType === 'mavenUpload') this.checkFail = true
                         this.formData = {
                             uuid: '',
                             groupId: '',

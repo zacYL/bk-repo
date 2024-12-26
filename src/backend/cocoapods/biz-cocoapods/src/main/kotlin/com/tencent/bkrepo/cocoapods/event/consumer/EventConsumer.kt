@@ -1,5 +1,6 @@
-package com.tencent.bkrepo.cocoapods.event
+package com.tencent.bkrepo.cocoapods.event.consumer
 
+import com.tencent.bkrepo.cocoapods.service.CocoapodsReplicaService
 import com.tencent.bkrepo.cocoapods.service.CocoapodsSpecsService
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.event.base.EventType
@@ -13,12 +14,18 @@ import java.util.function.Consumer
 @Component("artifactEvent")
 class EventConsumer (
     private val cocoapodsSpecsService: CocoapodsSpecsService,
-    private val repositoryClient: RepositoryClient
+    private val repositoryClient: RepositoryClient,
+    private val cocoapodsReplicaService: CocoapodsReplicaService
 ) : Consumer<ArtifactEvent> {
     override fun accept(event: ArtifactEvent) {
-        if (event.type == EventType.REPO_CREATED){
-            repoCreateHandle(event)
+        when (event.type) {
+            EventType.COCOAPODS_REPLICA -> replicaHandle(event)
+            EventType.REPO_CREATED -> repoCreateHandle(event)
+            else -> {}
         }
+    }
+    private fun replicaHandle(event: ArtifactEvent) {
+        cocoapodsReplicaService.resolveIndexFile(event)
     }
 
     private fun repoCreateHandle(event: ArtifactEvent) {

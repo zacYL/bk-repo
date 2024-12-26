@@ -40,6 +40,7 @@ enum class EventType(val msgKey: String) {
     REPO_CREATED("artifact.event.repo-created"),
     REPO_UPDATED("artifact.event.repo-updated"),
     REPO_DELETED("artifact.event.repo-deleted"),
+
     // 主要针对代理仓库需要定时从远程将相关信息同步到本地
     REPO_REFRESHED("artifact.event.repo-refreshed"),
     REPO_VOLUME_SYNC("artifact.event.repo-volume-sync"),
@@ -73,6 +74,7 @@ enum class EventType(val msgKey: String) {
     USER_ADD("新增用户"),
     USER_DELETE("删除用户"),
     USER_UPDATE("更新用户"),
+
     // WebHook
     WEBHOOK_TEST("artifact.event.webhook-test"),
     WEBHOOK_LIST("artifact.event.webhook-list"),
@@ -164,5 +166,8 @@ enum class EventType(val msgKey: String) {
     CVE_WHITE_DELETE("artifact.event.cve-whitelist-item-remove"),
 
     // 第三方同步
-    REPLICATION_THIRD_PARTY("artifact.event.replication-third-party");
+    REPLICATION_THIRD_PARTY("artifact.event.replication-third-party"),
+
+    //Cocoapods制品同步
+    COCOAPODS_REPLICA("artifact.event.cocoapods-replica");
 }

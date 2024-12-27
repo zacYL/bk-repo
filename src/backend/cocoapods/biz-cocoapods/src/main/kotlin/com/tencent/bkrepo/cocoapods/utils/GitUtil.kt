@@ -11,6 +11,7 @@ object GitUtil {
      */
     fun cloneOrPullRepo(repoUrl: String, localPath: String): String {
         val repoDir = File(localPath)
+        logger.info("git url: $repoUrl, localPath: $localPath")
 
         try {
             if (repoDir.exists() && repoDir.isDirectory) {

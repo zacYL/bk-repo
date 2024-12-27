@@ -1,90 +1,43 @@
 package com.tencent.bkrepo.maven.util
 
+import com.tencent.bkrepo.common.api.util.DecompressUtils
 import com.tencent.bkrepo.maven.exception.JarFormatException
-import com.tencent.bkrepo.maven.pojo.request.MavenWebDeployRequest
 import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader
-import org.codehaus.plexus.util.IOUtil
-import org.codehaus.plexus.util.ReaderFactory
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.io.FileInputStream
-import java.io.FileNotFoundException
-import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.util.jar.JarFile
-import java.util.regex.Pattern
 
 object JarUtils {
 
     private val logger: Logger = LoggerFactory.getLogger(JarUtils::class.java)
 
-    // pom.xml 文件位置
-    private var pomEntry: Pattern = Pattern.compile("META-INF/maven/.*/pom\\.xml")
-
-    // find pom.xml in jar
-    fun parsePomInJar(jarFile: File): Pair<File, Model> {
-        val jar = JarFile(jarFile)
-        val entries = jar.entries()
-        while (entries.hasMoreElements()) {
-            val entry = entries.nextElement()
-            if (pomEntry.matcher(entry.name).matches()) {
-                jar.getInputStream(entry).use {
-                    var filename = jarFile.name
-                    if (filename.indexOf('.') > 0) {
-                        filename = filename.substring(0, filename.lastIndexOf('.'))
-                    }
-                    val pomFile = File(jarFile.parentFile, "$filename.pom")
-                    FileOutputStream(pomFile).use { pomOutputStream ->
-                        IOUtil.copy(it, pomOutputStream)
-                        return Pair(pomFile, readModel(pomFile).apply { processModel(this) })
-                    }
-                }
-            }
-        }
-        throw JarFormatException("pom.xml not found")
-    }
+    private val noPom = ByteArray(0)
 
     fun parseModelInJar(jarFile: File): Model {
-        val jar = try {
+        try {
             JarFile(jarFile)
         } catch (e: IOException) {
             throw JarFormatException("only jar file is supported")
         }
-        val entries = jar.entries()
-        while (entries.hasMoreElements()) {
-            val entry = entries.nextElement()
-            if (pomEntry.matcher(entry.name).matches()) {
-                jar.getInputStream(entry).use {
-                    return readModel(it).apply { processModel(this) }
-                }
-            }
-        }
-        throw JarFormatException("pom.xml not found")
-    }
-
-    fun readModel(pomFile: File): Model {
-        return try {
-            FileInputStream(pomFile).use {
-                readModel(it)
-            }
-        } catch (e: FileNotFoundException) {
-            logger.error("pom file not found: ${pomFile.absolutePath}", e)
-            throw JarFormatException("")
-        } catch (e: IOException) {
-            logger.error("Error reading POM file: : ${pomFile.absolutePath}", e)
-            throw JarFormatException("")
-        }
+        return DecompressUtils
+            .doWithArchiver(
+                jarFile.inputStream(),
+                callbackPre = { it.name.endsWith("pom.xml") },
+                callback = { stream, _ -> readModel(stream).transform() },
+                callbackPost = { _, it -> it != null }
+            )
+            .firstOrNull()
+            ?: throw JarFormatException("pom.xml not found")
     }
 
     fun readModel(inputStream: InputStream): Model {
         return try {
-            ReaderFactory.newXmlReader(inputStream).use {
-                MavenXpp3Reader().read(it)
-            }.apply { processModel(this) }
+            MavenXpp3Reader().read(inputStream).transform()
         } catch (e: IOException) {
             logger.error("Error reading POM ", e)
             throw JarFormatException("")
@@ -94,33 +47,56 @@ object JarUtils {
         }
     }
 
-    private fun processModel(model: Model) {
-        val parent = model.parent
-        with(model) {
+    /**
+     * 解析模型从给定的输入流中。
+     * 此函数首先从输入流中提取pom.xml文件内容，然后根据内容创建模型对象。
+     * 如果pom.xml内容为空，则返回一个空的模型对象。
+     *
+     * @param inputStream 包含项目信息的输入流，通常是一个压缩文件流。
+     * @return 解析后的模型对象。
+     */
+    fun parseModel(inputStream: InputStream): Model {
+        val pom = extractPom(inputStream)
+        return if (isEmptyPom(pom)) Model() else readModel(pom.inputStream())
+    }
+
+    /**
+     * 从输入流中提取pom.xml文件的字节内容。
+     * 此函数使用DecompressUtils工具类来解压缩输入流，并查找名为pom.xml的文件。
+     * 如果找到，则读取其内容为字节数组；如果没有找到，则返回一个预定义的空字节数组。
+     *
+     * @param inputStream 包含项目信息的输入流，通常是一个压缩文件流。
+     * @return pom.xml文件的字节内容，如果没有找到则返回空字节数组。
+     */
+    fun extractPom(inputStream: InputStream): ByteArray {
+        return DecompressUtils
+            .doWithArchiver(
+                inputStream,
+                callbackPre = { it.name.endsWith("pom.xml") },
+                callback = { stream, _ -> stream.readBytes() },
+                callbackPost = { _, it -> it != null }
+            )
+            .firstOrNull()
+            ?: noPom
+    }
+
+    /**
+     * 检查给定的pom.xml内容是否为空。
+     * 此函数通过比较给定的字节数组是否等于预定义的空字节数组来判断pom.xml内容是否为空。
+     *
+     * @param pom pom.xml文件的字节内容。
+     * @return 如果pom.xml内容为空则返回true，否则返回false。
+     */
+    fun isEmptyPom(pom: ByteArray) = pom === noPom
+
+    private fun Model.transform(): Model {
+        val parent = this.parent
+        with(this) {
             if (groupId == null) groupId = parent?.groupId
             if (version == null) version = parent?.version
             if (packaging == "bundle") packaging = "jar"
         }
+        return this
     }
 
-    /**
-     * 按照请求参数构建model
-     */
-    fun processModel(model: Model, request: MavenWebDeployRequest) {
-        with(request) {
-            if (groupId != null && groupId!!.isNotBlank() && request.groupId != model.groupId) {
-                model.groupId = request.groupId
-            }
-            if (artifactId != null && artifactId!!.isNotBlank() && request.artifactId != model.artifactId) {
-                model.artifactId = request.artifactId
-            }
-            if (version != null && version!!.isNotBlank() && request.version != model.version) {
-                model.version = request.version
-            }
-            if (type != null && type!!.isNotBlank() && request.type != model.packaging) {
-                if (model.packaging == "pom") return@with
-                model.packaging = request.type
-            }
-        }
-    }
 }

@@ -45,6 +45,7 @@ import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.view.ViewModelService
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.HttpContextHolder
+import com.tencent.bkrepo.common.storage.core.StorageService
 import com.tencent.bkrepo.maven.artifact.MavenArtifactInfo
 import com.tencent.bkrepo.maven.artifact.MavenDeleteArtifactInfo
 import com.tencent.bkrepo.maven.enum.MavenMessageCode
@@ -58,6 +59,7 @@ import com.tencent.bkrepo.maven.pojo.response.MavenWebDeployResponse
 import com.tencent.bkrepo.maven.service.MavenMetadataService
 import com.tencent.bkrepo.maven.service.MavenService
 import com.tencent.bkrepo.maven.util.JarUtils
+import com.tencent.bkrepo.maven.util.JarUtils.readModel
 import com.tencent.bkrepo.maven.util.MavenMetadataUtils.initByModel
 import com.tencent.bkrepo.maven.util.MavenMetadataUtils.reRender
 import com.tencent.bkrepo.maven.util.MavenModelUtils.toArtifact
@@ -78,21 +80,21 @@ import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeListViewItem
 import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
-import org.apache.commons.io.FileUtils
 import org.apache.maven.artifact.repository.metadata.Metadata
 import org.apache.maven.artifact.repository.metadata.io.xpp3.MetadataXpp3Reader
 import org.apache.maven.artifact.repository.metadata.io.xpp3.MetadataXpp3Writer
 import org.apache.maven.model.Model
+import org.apache.maven.model.Profile.SOURCE_POM
+import org.apache.maven.model.io.xpp3.MavenXpp3Writer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import java.io.ByteArrayOutputStream
-import java.io.File
-import java.io.FileInputStream
 import java.io.InputStream
-import java.util.*
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.regex.PatternSyntaxException
 
 @Service
@@ -101,6 +103,7 @@ class MavenServiceImpl(
     private val viewModelService: ViewModelService,
     private val repositoryClient: RepositoryClient,
     private val storageManager: StorageManager,
+    private val storageService: StorageService,
     private val mavenMetadataService: MavenMetadataService
 ) : ArtifactService(), MavenService {
 
@@ -198,68 +201,91 @@ class MavenServiceImpl(
     }
 
     override fun verifyDeploy(mavenArtifactInfo: MavenArtifactInfo, request: MavenWebDeployRequest) {
-        with(mavenArtifactInfo) {
-            val node = nodeClient.getNodeDetail(projectId, repoName, request.uuid).data
-                ?: throw NodeNotFoundException(request.uuid)
-            storageManager.loadArtifactInputStream(node, null)?.use {
-                val repo = repositoryClient.getRepoDetail(projectId, repoName).data
-                    ?: throw ErrorCodeException(ArtifactMessageCode.REPOSITORY_NOT_FOUND, repoName)
-                val jarFile = File("$system_temp_dir/${UUID.randomUUID()}", request.uuid.trim('/'))
-                FileUtils.copyInputStreamToFile(it, jarFile)
-                val (pomFile, model) = if (node.name.endsWith(".pom")) {
-                    Pair(jarFile, JarUtils.readModel(jarFile).apply { JarUtils.processModel(this, request) })
-                } else {
-                    JarUtils.parsePomInJar(jarFile).apply {
-                        Pair(this.first, JarUtils.processModel(this.second, request))
-                    }
-                }
-                // 以mavenVersion是否为空来决定snapshot or release
-                var mavenVersion: MavenVersion? = try {
-                    request.uuid
-                        .substringAfterLast("/").resolverName(model.artifactId, model.version)
-                } catch (e: MavenArtifactFormatException) {
-                    logger.warn("Failed to parse maven version for [$projectId, $repoName, ${request.uuid}]")
-                    null
-                }
-                val classifier = if (request.classifier.isNullOrBlank()) {
-                    mavenVersion?.classifier
-                } else {
-                    request.classifier
-                }
-                // 此处至空，表示是release版本
-                mavenVersion = null
-                // 在接下来的if 中，如果是snapshot版本，会对mavenVersion重新赋值
-                if (model.version.isSnapshotUri()) {
-                    mavenVersion = getSnapshotVersion(mavenArtifactInfo, model, classifier)
-                }
-                logger.info("[ $projectId, $repoName, ${request.uuid} ] maven version is $mavenVersion")
-                if (model.packaging != "pom") {
-                    createArtifact(mavenArtifactInfo, model, mavenVersion, classifier = classifier).let { jarArtifact ->
-                        uploadArtifact(repo, jarArtifact, FileInputStream(jarFile))
-                        jarFile.apply { if (this.exists()) delete() }
-                    }
-                }
-                createPom(mavenArtifactInfo, model, mavenVersion).let { pomArtifact ->
-                    uploadArtifact(repo, pomArtifact, FileInputStream(pomFile))
-                    pomFile.apply { if (this.exists()) delete() }
-                }
-                if (mavenVersion != null) {
-                    // version/maven-metadata.xml
-                    uploadArtifact(repo, createSnapshotMetadata(mavenArtifactInfo, model), "".byteInputStream())
-                }
-                // maven-metadata.xml
-                updateMetadata(repo, model)
+        val projectId = mavenArtifactInfo.projectId
+        val repoName = mavenArtifactInfo.repoName
+        val repo = repositoryClient.getRepoDetail(projectId, repoName).data
+            ?: throw ErrorCodeException(ArtifactMessageCode.REPOSITORY_NOT_FOUND, repoName)
+        val (model, pom, file) = artifactInfo(request)
+        try {
+            // 以mavenVersion是否为空来决定snapshot or release
+            var mavenVersion = try {
+                request.uuid.substringAfterLast("/").resolverName(model.artifactId, model.version)
+            } catch (e: MavenArtifactFormatException) {
+                logger.warn("Failed to parse maven version for [$projectId, $repoName, ${request.uuid}]")
+                null
             }
-        }
-        nodeClient.deleteNode(
-            NodeDeleteRequest(
-                projectId = mavenArtifactInfo.projectId,
-                repoName = mavenArtifactInfo.repoName,
-                fullPath = request.uuid,
-                operator = "maven-web-deploy"
+            val classifier = if (request.classifier.isNullOrBlank()) mavenVersion?.classifier else request.classifier
+            // 此处至空，表示是release版本
+            mavenVersion = null
+            // 在接下来的if 中，如果是snapshot版本，会对mavenVersion重新赋值
+            if (model.version.isSnapshotUri()) {
+                mavenVersion = getSnapshotVersion(mavenArtifactInfo, model, classifier)
+            }
+            logger.info("[ $projectId, $repoName, ${request.uuid} ] maven version is $mavenVersion")
+            if (model.packaging != SOURCE_POM) {
+                uploadArtifact(
+                    repo,
+                    createArtifact(mavenArtifactInfo, model, mavenVersion, classifier = classifier),
+                    Files.newInputStream(file)
+                )
+            }
+            uploadArtifact(repo, createPom(mavenArtifactInfo, model, mavenVersion), pom.inputStream())
+            if (mavenVersion != null) {
+                // version/maven-metadata.xml
+                uploadArtifact(repo, createSnapshotMetadata(mavenArtifactInfo, model), "".byteInputStream())
+            }
+            // maven-metadata.xml
+            updateMetadata(repo, model)
+            nodeClient.deleteNode(
+                NodeDeleteRequest(
+                    projectId = mavenArtifactInfo.projectId,
+                    repoName = mavenArtifactInfo.repoName,
+                    fullPath = request.uuid,
+                    operator = "maven-web-deploy"
+                )
             )
-        )
+        } finally {
+            Files.deleteIfExists(file)
+        }
     }
+
+    /**
+     * 根据请求信息获取 artifact 的详细信息。
+     * 此函数主要用于处理 Maven 构建过程中对 artifact 信息的请求。
+     * 它会根据请求的类型，从临时存储中读取相应的 POM 文件或压缩包中的 POM 信息，
+     * 并与请求中的信息进行匹配，以确保所操作的 artifact 是正确的。
+     *
+     * @param request 包含请求的详细信息，如 UUID、组 ID、artifact ID、版本和类型。
+     * @return 返回一个 Triple 对象，包含 Model（artifact 的元数据）、字节数组（POM 文件内容）和文件路径（临时存储路径）。
+     * @throws NodeNotFoundException 如果根据 UUID 找不到对应的临时文件，则抛出此异常。
+     */
+    private fun artifactInfo(request: MavenWebDeployRequest): Triple<Model, ByteArray, Path> {
+        // 获取临时文件路径并根据请求的 UUID 解析出具体的文件路径。
+        val path = storageService.getTempPath().resolve(request.uuid)
+        // 检查文件是否存在，如果不存在则抛出异常。
+        if (Files.notExists(path)) {
+            throw NodeNotFoundException(request.uuid)
+        }
+        // 如果请求的类型是 SOURCE_POM，则直接读取文件内容并解析为 Model 对象。
+        if (request.type == SOURCE_POM) {
+            val bytes = Files.readAllBytes(path)
+            return Triple(readModel(bytes.inputStream()), bytes, path)
+        }
+        // 如果提取的 POM 文件信息与请求不匹配，则创建一个新的 Model 对象。
+        val model = Model().apply {
+            this.groupId = request.groupId
+            this.artifactId = request.artifactId
+            this.version = request.version
+            this.packaging = request.type
+        }
+
+        // 将新的 Model 对象写入到字节数组输出流中。
+        val os = ByteArrayOutputStream()
+        MavenXpp3Writer().write(os, model)
+        // 返回包含新 Model、字节数组和路径的 Triple 对象。
+        return Triple(model, os.toByteArray(), path)
+    }
+
 
     private fun getSnapshotVersion(
         mavenArtifactInfo: MavenArtifactInfo,
@@ -389,11 +415,11 @@ class MavenServiceImpl(
 
     override fun extractGavFromPom(file: MultipartFile): MavenWebDeployResponse {
         val filename = file.getFilename()
-        val model = file.inputStream.use { JarUtils.readModel(it) }
+        val model = readModel(file.inputStream)
         if (filename != "${model.artifactId}-${model.version}.pom") {
             throw JarFormatException("invalid pom file")
         }
-        return model.toGav(filename)
+        return model.toGav("")
     }
 
     private fun MultipartFile.getFilename(): String {
@@ -404,9 +430,8 @@ class MavenServiceImpl(
         return filename
     }
 
-
-    private fun Model.toGav(filename: String) = MavenWebDeployResponse(
-        uuid = "/$filename",
+    private fun Model.toGav(uuid: String) = MavenWebDeployResponse(
+        uuid = uuid,
         groupId = this.groupId.orEmpty(),
         artifactId = this.artifactId.orEmpty(),
         version = this.version.orEmpty(),
@@ -417,33 +442,26 @@ class MavenServiceImpl(
 
     override fun extractGavFromJar(file: MultipartFile): MavenWebDeployResponse {
         val filename = file.getFilename()
-        val model = when {
-            filename.endsWith(".jar") -> parseModelInJar(file)
-            filename.endsWith(".pom") -> {
-                JarUtils.readModel(file.inputStream).apply {
-                    if (this.packaging != "pom") {
+        if (filename.endsWith(".pom")) {
+            return readModel(file.inputStream)
+                .apply {
+                    if (this.packaging != SOURCE_POM) {
                         throw JarFormatException("The packaging of the pom file is not pom")
                     }
                 }
-            }
-            else -> throw JarFormatException("invalid jar file")
+                .toGav(filename)
         }
-        return model.toGav(filename)
-    }
-
-    private fun parseModelInJar(file: MultipartFile): Model {
-        val tempFile = File.createTempFile("maven-web", "deploy")
-        file.inputStream.use { FileUtils.copyInputStreamToFile(it, tempFile) }
-        return try {
-            JarUtils.parseModelInJar(tempFile)
-        } catch (e: JarFormatException) {
-            if (e.params.any { it == "pom.xml not found" }) Model() else throw e
+        val bytes = file.inputStream.readBytes()
+        val model = JarUtils.parseModel(bytes.inputStream())
+        val path = storageService.getTempPath().resolve(filename)
+        if (Files.notExists(path.parent)) {
+            Files.createDirectories(path.parent)
         }
+        return Files.write(path, bytes).let { model.toGav(filename) }
     }
 
 
     companion object {
         private val logger: Logger = LoggerFactory.getLogger(MavenServiceImpl::class.java)
-        private val system_temp_dir = System.getProperty("java.io.tmpdir")
     }
 }

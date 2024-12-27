@@ -94,6 +94,7 @@ class CocoapodsSpecsService(
     private val redisOperation: RedisOperation,
     private val cocoapodsRemotePackageDao: CocoapodsRemotePackageDao,
     private val cocoapodsGitInstanceDao: CocoapodsGitInstanceDao,
+    private val cocoapodsRepoService: CocoapodsRepoService,
     private val artifactResourceWriterContext: ArtifactResourceWriterContext,
 ) {
 
@@ -115,14 +116,23 @@ class CocoapodsSpecsService(
         val tempPath = FileUtil.buildTempDir("cocoapods/$projectId/${repoInfo.name}")
         val lockKey = "$LOCK_PREFIX:init_specs:$projectId:${repoInfo.name}"
          lockOperation.doWithLock(lockKey) {
+             val url = PathUtil.buildRemoteSpecsUrl(cocoapodsConf, conf)
+                 ?: kotlin.run {
+                     logger.error("downloadUrl is null")
+                     throw CocoapodsCommonException(CocoapodsMessageCode.COCOAPODS_PODSPEC_NOT_FOUND)
+                 }
              val podspecList = when (cocoapodsConf.type) {
                 RemoteRepoType.GIT_HUB -> {
-                    cloneAndGetPodSpecs(conf, projectId, repoInfo, tempPath, outputStream)
+                    cloneAndGetPodSpecs(url, projectId, repoInfo, tempPath, outputStream)
                 }
                 else -> {
-                    downloadAndGetPodSpecs(conf, cocoapodsConf, repoInfo, projectId, outputStream, tempPath)
+                    downloadAndGetPodSpecs(conf, url, repoInfo, projectId, outputStream, tempPath)
                 }
             }
+             if (podspecList.isEmpty()) {
+                 logger.warn("project [$projectId], repo [${repoInfo.name}], no podspec found")
+                 return@doWithLock
+             }
              val repoDetail = repositoryClient.getRepoDetail(projectId, repoInfo.name).data
                  ?: throw RepoNotFoundException(repoInfo.name)
 
@@ -170,37 +180,41 @@ class CocoapodsSpecsService(
         }
     }
 
-    private fun cloneAndGetPodSpecs(conf: RemoteConfiguration, projectId: String, repoInfo: RepositoryInfo, tempPath: File, outputStream: ByteArrayOutputStream): MutableList<ArchiveModifier.Podspec> {
-        val gitInstance = cocoapodsGitInstanceDao.findByUrl(conf.url)
+    private fun cloneAndGetPodSpecs(remoteUrl: String, projectId: String, repoInfo: RepositoryInfo, tempPath: File, outputStream: ByteArrayOutputStream): MutableList<ArchiveModifier.Podspec> {
+
+        val gitInstance = cocoapodsGitInstanceDao.findByUrl(remoteUrl)
         val specsGitPath = gitInstance?.path
             ?: PathUtil.buildSpecsGitPath(cocoapodsProperties.gitPath, projectId, repoInfo.name)
         val lockKey = "$LOCK_PREFIX:git_clone:$specsGitPath"
+        val oldLatestRef = cocoapodsRepoService.getStringSetting(projectId, repoInfo.name, LATEST_REF)
+        var latestRef = ""
         lockOperation.doWithLock(lockKey) {
-            val latestRef = GitUtil.cloneOrPullRepo(conf.url, specsGitPath)
-            cocoapodsGitInstanceDao.saveIfNotExist(TCocoapodsGitInstance(url = conf.url, path = specsGitPath, ref = latestRef))
+            latestRef = GitUtil.cloneOrPullRepo(remoteUrl, specsGitPath)
+            cocoapodsGitInstanceDao.saveIfNotExist(TCocoapodsGitInstance(url = remoteUrl, path = specsGitPath, ref = latestRef))
+        }
+        //如果当前已是最新的引用，则不需要再更新
+        if (oldLatestRef == latestRef && indexExist(projectId, repoInfo.name)) {
+            logger.info("repo [${repoInfo.name}] is latest, no need to update")
+            return mutableListOf()
         }
         FileUtil.copyDirectory(specsGitPath, tempPath)
         return ArchiveModifier.modifyAndZip(tempPath, projectId, repoInfo.name, cocoapodsProperties.domain, outputStream)
     }
 
-    private fun downloadAndGetPodSpecs(conf: RemoteConfiguration, cocoapodsConf: CocoapodsRemoteConfiguration, repoInfo: RepositoryInfo, projectId: String, outputStream: ByteArrayOutputStream, tempPath: File): MutableList<ArchiveModifier.Podspec> {
+    private fun downloadAndGetPodSpecs(conf: RemoteConfiguration, remoteUrl: String, repoInfo: RepositoryInfo, projectId: String, outputStream: ByteArrayOutputStream, tempPath: File): MutableList<ArchiveModifier.Podspec> {
         val httpClient = buildOkHttpClient(conf).build()
-        val url = PathUtil.buildRemoteSpecsUrl(cocoapodsConf, conf)
-            ?: kotlin.run {
-                logger.error("downloadUrl is null")
-                throw CocoapodsCommonException(CocoapodsMessageCode.COCOAPODS_PODSPEC_NOT_FOUND)
-            }
-        val request = Request.Builder().url(url).build()
-        logger.info("repo [${repoInfo.name}] Request url: $url, network config: ${conf.network}")
+
+        val request = Request.Builder().url(remoteUrl).build()
+        logger.info("repo [${repoInfo.name}] Request url: $remoteUrl, network config: ${conf.network}")
         val response = try {
             httpClient.newCall(request).execute()
         } catch (e: Exception) {
-            logger.error("An error occurred while sending request $url", e)
+            logger.error("An error occurred while sending request $remoteUrl", e)
             throw e
         }
 
         if (!response.isSuccessful) {
-            logger.error("Request failed with status code, url: $url, message: ${response.message()}")
+            logger.error("Request failed with status code, url: $remoteUrl, message: ${response.message()}")
             throw CocoapodsCommonException(CocoapodsMessageCode.COCOAPODS_PODSPEC_NOT_FOUND)
         }
         response.body()?.byteStream()?.use { ips ->
@@ -317,6 +331,7 @@ class CocoapodsSpecsService(
     }
 
     companion object {
+        const val LATEST_REF = "latestRef"
         private val logger = LoggerFactory.getLogger(CocoapodsWebService::class.java)
     }
 }

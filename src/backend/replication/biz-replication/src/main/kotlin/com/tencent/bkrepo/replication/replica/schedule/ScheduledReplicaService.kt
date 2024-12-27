@@ -49,7 +49,7 @@ class ScheduledReplicaService(
             // 检查版本
             replicator.checkVersion(this)
             // 同步项目和仓库
-            replicaProjectAndRepo(this)
+            try { replicaProjectAndRepo(this) } catch (e: Throwable) { return }
             // 按仓库同步
             if (includeAllData(this)) {
                 replicaByRepo(this)

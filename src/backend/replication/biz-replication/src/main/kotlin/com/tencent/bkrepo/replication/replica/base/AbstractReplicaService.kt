@@ -88,6 +88,7 @@ abstract class AbstractReplicaService(
                 replicator.replicaProject(this)
                 replicator.replicaRepo(this)
             } catch (e: ErrorCodeException) {
+                status = ExecutionStatus.FAILED
                 val request = RecordDetailInitialRequest(
                     recordId = taskRecord.id,
                     remoteCluster = remoteCluster.name,
@@ -103,6 +104,7 @@ abstract class AbstractReplicaService(
                 )
                 logger.warn("Fail to create project or repo: ${request.errorReason}")
                 replicaRecordService.initialRecordDetail(request)
+                throw e
             }
         }
     }

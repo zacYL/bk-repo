@@ -5,7 +5,9 @@
             <bk-table
                 class="mt10 scan-table"
                 height="300px"
-                style="width: 520px;"
+                :style="{
+                    width: (currentLanguage === 'zh-cn' ? 520 : 540) + 'px'
+                }"
                 :data="replicaTaskObjects"
                 :row-border="false"
                 row-key="fid"
@@ -35,7 +37,7 @@
                         </bk-form>
                     </template>
                 </bk-table-column>
-                <bk-table-column v-if="!disabled" :label="$t('operation')" width="80">
+                <bk-table-column v-if="!disabled" :label="$t('operation')" :width="currentLanguage === 'zh-cn' ? 80 : 100">
                     <template #default="{ $index }">
                         <Icon class="hover-btn" size="24" name="icon-delete" @click.native="replicaTaskObjects.splice($index, 1)" />
                     </template>

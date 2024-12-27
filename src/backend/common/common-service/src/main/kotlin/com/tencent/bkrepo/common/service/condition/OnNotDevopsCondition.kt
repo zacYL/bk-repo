@@ -7,5 +7,5 @@ import org.springframework.core.type.AnnotatedTypeMetadata
 
 class OnNotDevopsCondition : Condition {
     override fun matches(context: ConditionContext, metadata: AnnotatedTypeMetadata) =
-        context.environment.getProperty("auth.realm", AuthRealm.DEVOPS.value) != AuthRealm.DEVOPS.value
+        context.environment.getProperty("auth.realm", AuthRealm.PLATFORM.value) != AuthRealm.PLATFORM.value
 }

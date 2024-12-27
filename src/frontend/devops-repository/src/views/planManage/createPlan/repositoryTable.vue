@@ -101,7 +101,7 @@
                         return {
                             ...repo,
                             type: repo.repoType,
-                            name: repo.localRepoName,
+                            name: repo.remoteRepoName,
                             projectId: this.projectId,
                             targetProject: repo.remoteProjectId || '',
                             targetStore: repo.remoteRepoName || '',

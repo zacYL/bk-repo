@@ -19,6 +19,7 @@
                         {{$t('guide')}}
                     </span>
                 </bk-button>
+                <bk-button v-if="repoType === 'cocoapods'" class="ml10" @click="updateIndexHandler">{{$t('updateIndex')}}</bk-button>
             </div>
         </header>
         <!-- 存在包, 加载中默认存在包 -->
@@ -179,8 +180,31 @@
                 'searchPackageList',
                 'packageListExport',
                 'deletePackage',
-                'getCurrentRepositoryDataPermission'
+                'getCurrentRepositoryDataPermission',
+                'updateIndex'
             ]),
+            updateIndexHandler () {
+                this.updateIndex({
+                    projectId: this.projectId,
+                    repoName: this.repoName
+                }).then((res) => {
+                    if (res._error) {
+                        return this.$bkMessage({
+                            theme: 'error',
+                            message: res?._error?.message || this.$t('update') + this.$t('space') + this.$t('fail')
+                        })
+                    }
+                    this.$bkMessage({
+                        theme: 'success',
+                        message: this.$t('update') + this.$t('space') + this.$t('success')
+                    })
+                }).catch(() => {
+                    this.$bkMessage({
+                        theme: 'error',
+                        message: this.$t('update') + this.$t('space') + this.$t('fail')
+                    })
+                })
+            },
             changeDirection () {
                 this.direction = this.direction === 'ASC' ? 'DESC' : 'ASC'
                 this.handlerPaginationChange()

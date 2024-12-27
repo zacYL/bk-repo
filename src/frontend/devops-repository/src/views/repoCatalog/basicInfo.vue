@@ -34,7 +34,7 @@
                         </bk-select>
                     </bk-form-item>
                     <bk-form-item :label="$t('specsDownloadUrl')"
-                        :required="detailInfo.remoteType === 'OTHER'"
+                        :required="['GIT_HUB', 'OTHER'].includes(detailInfo.remoteType)"
                         property="downloadUrl" error-display-type="normal"
                         :desc="{
                             content: `<div>

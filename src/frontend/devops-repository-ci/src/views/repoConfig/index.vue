@@ -32,14 +32,17 @@
                         </bk-form-item>
                         <template v-if="repoBaseInfo.category === 'REMOTE'">
                             <bk-form-item :label="$t('remoteProxyAddress')" :required="true" property="url" error-display-type="normal">
-                                <bk-input class="w480" v-model.trim="repoBaseInfo.url"></bk-input>
+                                <!-- url 如果初始有值，则禁止编辑 -->
+                                <bk-input :disabled="repoType === 'cocoapods' && !!tempRepoBaseInfo.url" class="w480" v-model.trim="repoBaseInfo.url"></bk-input>
                                 <!-- todo 测试链接暂未支持 -->
-                                <bk-button v-if="repoBaseInfo.type !== 'GENERIC'" theme="primary" :disabled="disableTestUrl" @click="onClickTestRemoteUrl">{{ $t('testRemoteUrl') }}</bk-button>
+                                <bk-button v-if="repoBaseInfo.type !== 'GENERIC'" theme="primary" :disabled="disableTestUrl || (repoType === 'cocoapods' && !!tempRepoBaseInfo.url)" @click="onClickTestRemoteUrl">{{ $t('testRemoteUrl') }}</bk-button>
                             </bk-form-item>
                             <template v-if="repoType === 'cocoapods'">
                                 <!-- 远程仓库类型 -->
                                 <bk-form-item :label="$t('remoteRepoType')" property="remoteType" error-display-type="normal">
+                                    <!-- remoteType 如果初始有值，则禁止编辑 -->
                                     <bk-select
+                                        :disabled="!!tempRepoBaseInfo.remoteType"
                                         v-model="repoBaseInfo.remoteType"
                                         class="w250">
                                         <bk-option v-for="type in remoteRepoTypes" :key="type.value" :id="type.value" :name="type.label">
@@ -50,8 +53,9 @@
                                     </bk-select>
                                 </bk-form-item>
                                 <!-- specs 下载地址 -->
-                                <bk-form-item :label="$t('specsDownloadUrl')"
-                                    :required="repoBaseInfo.remoteType === 'OTHER'"
+                                <bk-form-item
+                                    :label="$t('specsDownloadUrl')"
+                                    :required="['GIT_HUB', 'OTHER'].includes(repoBaseInfo.remoteType)"
                                     property="downloadUrl" error-display-type="normal"
                                     :desc="{
                                         content: `<div>
@@ -61,7 +65,7 @@
                                         </div>`
                                     }"
                                     desc-type="icon">
-                                    <bk-input class="w480" v-model.trim="repoBaseInfo.downloadUrl"></bk-input>
+                                    <bk-input :disabled="!!tempRepoBaseInfo.downloadUrl" class="w480" v-model.trim="repoBaseInfo.downloadUrl"></bk-input>
                                 </bk-form-item>
                             </template>
                             <bk-form-item :label="$t('remoteProxyAccount')" property="credentials.username" error-display-type="normal">
@@ -290,6 +294,11 @@
             return {
                 tabName: 'baseInfo',
                 isLoading: false,
+                tempRepoBaseInfo: {
+                    url: '',
+                    downloadUrl: '',
+                    remoteType: ''
+                },
                 repoBaseInfo: {
                     loading: false,
                     repoName: '',
@@ -583,7 +592,7 @@
                     ...(
                         this.repoBaseInfo.type === 'cocoapods'
                         && this.repoBaseInfo.category === 'REMOTE'
-                        && this.repoBaseInfo.remoteType === 'OTHER'
+                        && ['GIT_HUB', 'OTHER'].includes(this.repoBaseInfo.remoteType)
                     )
                         ? {
                             downloadUrl: [
@@ -741,6 +750,7 @@
                 this.repoBaseInfo.override.switcher = isFlag
             },
             async getRepoInfoHandler () {
+                this.tempRepoBaseInfo = {}
                 this.isLoading = true
                 return this.getRepoInfo({
                     projectId: this.projectId,
@@ -778,7 +788,7 @@
                     }
                     // 远程仓库，添加地址，账号密码和网络代理相关配置
                     if (res.category === 'REMOTE') {
-                        this.repoBaseInfo.url = res.configuration.url
+                        this.tempRepoBaseInfo.url = this.repoBaseInfo.url = res.configuration.url
                         this.repoBaseInfo.credentials = res.configuration.credentials
 
                         if (res.configuration.network.proxy === null) {
@@ -817,8 +827,8 @@
                         res.type === 'COCOAPODS'
                         && res.category === 'REMOTE'
                     ) {
-                        this.repoBaseInfo.downloadUrl = res.configuration.settings.downloadUrl // specs下载地址
-                        this.repoBaseInfo.remoteType = res.configuration.settings.type // 远程仓库类型
+                        this.tempRepoBaseInfo.downloadUrl = this.repoBaseInfo.downloadUrl = res.configuration.settings.downloadUrl // specs下载地址
+                        this.tempRepoBaseInfo.remoteType = this.repoBaseInfo.remoteType = res.configuration.settings.type // 远程仓库类型
                     }
                     if (res.type === 'DOCKER' && (res.category === 'LOCAL' || res.category === 'REMOTE') && res.configuration.settings.defaultNamespace === 'library') {
                         this.repoBaseInfo.enabledLibraryNamespace = true

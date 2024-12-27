@@ -143,6 +143,11 @@
                     this.show = true
                 }
             },
+            /**
+             * @description: maven 上报处理函数
+             * @param {*} formData
+             * @return {*}
+             */
             mavenUploadHandle (formData) {
                 return new Promise((resolve, reject) => {
                     const index = this.fileList.findIndex(item => item.file.name === formData.name)
@@ -166,7 +171,6 @@
                     }).catch(error => {
                         data.status = 'FAILED'
                         data.errMsg = `${error.message || this.$t('uploadMavenErrorMsgTip')}`
-                        // eslint-disable-next-line prefer-promise-reject-errors
                         reject(error)
                     }).finally(() => {
                         if (index !== -1) {

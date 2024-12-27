@@ -264,6 +264,17 @@ export default {
                 commit('SET_ARTIFACT_LIST', res)
             })
     },
+    
+    /**
+     * @description: 更新索引
+     * @param {*} _
+     * @param {*} projectId
+     * @param {*} repoName
+     * @return {*}
+     */
+    updateIndex (_, { projectId, repoName }) {
+        return Vue.prototype.$ajax.put(window.origin + `/web/cocoapods/ext/specs/update/${projectId}/${repoName}`)
+    },
     // 查询白名单列表
     getWhitelist (_, { type, packageKey, version, pageNumber, pageSize, regex = true }) {
         return Vue.prototype.$ajax.get(`${prefix}/remote/whitelist/page`, {

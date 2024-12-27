@@ -6,6 +6,7 @@
     "other": "Other",
     "batchUpload": "Batch upload",
     "coordinate": "coordinate",
+    "updateIndex": "Update Index",
     "reupload": "reupload",
     "uploadSuccess": "upload success",
     "specsDownloadUrlTips1": "If you choose to pull from other types of repositories, you need to configure it as the target repository index path",

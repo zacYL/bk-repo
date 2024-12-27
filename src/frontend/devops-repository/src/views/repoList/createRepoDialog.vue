@@ -56,7 +56,7 @@
                     </bk-form-item>
                     <!-- specs 下载地址 -->
                     <bk-form-item :label="$t('specsDownloadUrl')"
-                        :required="repoBaseInfo.remoteType === 'OTHER'"
+                        :required="['GIT_HUB', 'OTHER'].includes(repoBaseInfo.remoteType)"
                         property="downloadUrl" error-display-type="normal"
                         :desc="{
                             content: `<div>
@@ -554,7 +554,7 @@
                     ...(
                         this.repoBaseInfo.type === 'cocoapods'
                         && this.storeType === 'remote'
-                        && this.repoBaseInfo.remoteType === 'OTHER'
+                        && ['GIT_HUB', 'OTHER'].includes(this.repoBaseInfo.remoteType)
                     )
                         ? {
                             downloadUrl: [

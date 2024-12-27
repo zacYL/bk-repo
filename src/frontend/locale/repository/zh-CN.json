@@ -6,6 +6,7 @@
     "other": "其他",
     "batchUpload": "批量上传",
     "coordinate": "坐标",
+    "updateIndex": "更新索引",
     "reupload": "重新上传",
     "uploadSuccess": "上传成功",
     "specsDownloadUrlTips1": "如选择其他类型仓库拉取则需配置为目标仓库索引路径",

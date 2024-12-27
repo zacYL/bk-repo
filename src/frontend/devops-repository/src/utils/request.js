@@ -1,3 +1,9 @@
+/*
+ * @Date: 2024-11-01 22:08:22
+ * @LastEditors: xiaoshan
+ * @LastEditTime: 2024-12-27 10:59:02
+ * @FilePath: /artifact/src/frontend/devops-repository/src/utils/request.js
+ */
 import axios from 'axios'
 import Vue from 'vue'
 
@@ -26,7 +32,12 @@ request.interceptors.response.use(response => {
     if (status === 404 && error) {
         return {
             basic: {},
-            metadata: []
+            metadata: [],
+            _error: {
+                error,
+                status,
+                message
+            }
         }
     }
 

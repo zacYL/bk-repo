@@ -41,7 +41,7 @@ class MavenPackageNodeMapper(
 
     override fun type() = RepositoryType.MAVEN
     override fun extraType(): RepositoryType? {
-        return null
+        return RepositoryType.GRADLE
     }
 
     override fun map(

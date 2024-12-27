@@ -165,8 +165,8 @@ object CocoapodsUtil {
     }
 
     fun extractNameFromPodspec(podspecContent: String): String? {
-        return podspecContent.lines().find { it.contains(".name") }.apply {
-            getValueFromPodspecLine(this)
+        return podspecContent.lines().find { it.contains(".name") }.let {
+            getValueFromPodspecLine(it)
         }
     }
 

@@ -136,11 +136,11 @@ class CocoapodsSpecsService(
                  size = specArtifact.getSize(),
                  sha256 = specArtifact.getFileSha256(),
                  md5 = specArtifact.getFileMd5(),
-                 overwrite = false,
+                 overwrite = true,
                  operator = ADMIN_USER
              )
              storageManager.storeArtifactFile(nodeCreateRequest, specArtifact, null)
-             cocoapodsRemotePackageDao.insert(podspecList.map {
+             cocoapodsRemotePackageDao.saveIfNotExists(podspecList.map {
                  TCocoapodsRemotePackage(
                      projectId = projectId,
                      repoName = repoInfo.name,
@@ -200,7 +200,8 @@ class CocoapodsSpecsService(
         }
 
         if (!response.isSuccessful) {
-            logger.error("Request failed with status code")
+            logger.error("Request failed with status code, url: $url, message: ${response.message()}")
+            throw CocoapodsCommonException(CocoapodsMessageCode.COCOAPODS_PODSPEC_NOT_FOUND)
         }
         response.body()?.byteStream()?.use { ips ->
             val wrap = ByteArrayInputStream(ips.readBytes())

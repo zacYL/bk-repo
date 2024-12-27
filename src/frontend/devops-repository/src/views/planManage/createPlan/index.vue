@@ -71,7 +71,10 @@
                 :required="true"
                 property="config"
                 error-display-type="normal"
-                :desc="$t('syncObjTips')"
+                :desc="{
+                    content: $t('syncObjTips'),
+                    width: 500
+                }"
                 :desc-type="'icon'">
                 <template v-if="planForm.replicaObjectType === 'REPOSITORY'">
                     <repository-table

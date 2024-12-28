@@ -33,15 +33,15 @@ import com.tencent.bkrepo.cocoapods.constant.DOT_SPECS
 import com.tencent.bkrepo.cocoapods.constant.LOCK_PREFIX
 import com.tencent.bkrepo.cocoapods.dao.CocoapodsGitInstanceDao
 import com.tencent.bkrepo.cocoapods.dao.CocoapodsRemotePackageDao
+import com.tencent.bkrepo.cocoapods.event.consumer.RemoteEventJobExecutor
 import com.tencent.bkrepo.cocoapods.exception.CocoapodsMessageCode
-import com.tencent.bkrepo.cocoapods.exception.CocoapodsCommonException
 import com.tencent.bkrepo.cocoapods.model.TCocoapodsGitInstance
 import com.tencent.bkrepo.cocoapods.model.TCocoapodsRemotePackage
-import com.tencent.bkrepo.cocoapods.pojo.CocoapodsRemoteConfiguration
 import com.tencent.bkrepo.cocoapods.pojo.enums.RemoteRepoType
 import com.tencent.bkrepo.cocoapods.utils.DecompressUtil.buildEmptySpecGzOps
 import com.tencent.bkrepo.cocoapods.utils.FileUtil
 import com.tencent.bkrepo.cocoapods.utils.GitUtil
+import com.tencent.bkrepo.cocoapods.utils.ObjectBuildUtil
 import com.tencent.bkrepo.cocoapods.utils.ObjectBuildUtil.toCocoapodsRemoteConfiguration
 import com.tencent.bkrepo.cocoapods.utils.PathUtil
 import com.tencent.bkrepo.cocoapods.utils.PathUtil.generateIndexTarPath
@@ -51,13 +51,13 @@ import com.tencent.bkrepo.common.api.constant.HttpHeaders
 import com.tencent.bkrepo.common.api.constant.MediaTypes.APPLICATION_GZIP
 import com.tencent.bkrepo.common.api.constant.MediaTypes.APPLICATION_ZIP
 import com.tencent.bkrepo.common.api.constant.ensurePrefix
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
 import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
 import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
-import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
 import com.tencent.bkrepo.common.artifact.repository.remote.buildOkHttpClient
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
@@ -95,6 +95,7 @@ class CocoapodsSpecsService(
     private val cocoapodsRemotePackageDao: CocoapodsRemotePackageDao,
     private val cocoapodsGitInstanceDao: CocoapodsGitInstanceDao,
     private val cocoapodsRepoService: CocoapodsRepoService,
+    private val remoteEventJobExecutor: RemoteEventJobExecutor,
     private val artifactResourceWriterContext: ArtifactResourceWriterContext,
 ) {
 
@@ -114,70 +115,67 @@ class CocoapodsSpecsService(
         val cocoapodsConf = conf.toCocoapodsRemoteConfiguration()
         val outputStream = ByteArrayOutputStream()
         val tempPath = FileUtil.buildTempDir("cocoapods/$projectId/${repoInfo.name}")
-        val lockKey = "$LOCK_PREFIX:init_specs:$projectId:${repoInfo.name}"
-         lockOperation.doWithLock(lockKey) {
-             val url = PathUtil.buildRemoteSpecsUrl(cocoapodsConf, conf)
-                 ?: kotlin.run {
-                     logger.error("downloadUrl is null")
-                     throw CocoapodsCommonException(CocoapodsMessageCode.COCOAPODS_PODSPEC_NOT_FOUND)
-                 }
-             val podspecList = when (cocoapodsConf.type) {
+        cocoapodsRepoService.updateStringSetting(projectId, repoInfo.name, INDEX_GENERATING, INDEX_GENERATING_VALUE_DOING)
+        val url = PathUtil.buildRemoteSpecsUrl(cocoapodsConf, conf)
+            ?: kotlin.run {
+                logger.error("downloadUrl is null")
+                throw ErrorCodeException(CocoapodsMessageCode.COCOAPODS_PODSPEC_NOT_FOUND)
+            }
+        try {
+            val podspecList = when (cocoapodsConf.type) {
                 RemoteRepoType.GIT_HUB -> {
                     cloneAndGetPodSpecs(url, projectId, repoInfo, tempPath, outputStream)
                 }
+
                 else -> {
                     downloadAndGetPodSpecs(conf, url, repoInfo, projectId, outputStream, tempPath)
                 }
             }
-             if (podspecList.isEmpty()) {
-                 logger.warn("project [$projectId], repo [${repoInfo.name}], no podspec found")
-                 return@doWithLock
-             }
-             val repoDetail = repositoryClient.getRepoDetail(projectId, repoInfo.name).data
-                 ?: throw RepoNotFoundException(repoInfo.name)
+            if (podspecList.isEmpty()) {
+                logger.warn("project [$projectId], repo [${repoInfo.name}], no podspec found")
+                return
+            }
+            val repoDetail = repositoryClient.getRepoDetail(projectId, repoInfo.name).data
+                ?: throw RepoNotFoundException(repoInfo.name)
 
-             val specArtifact = ArtifactFileFactory.build(outputStream.toByteArray().inputStream(), repoDetail.storageCredentials
-                 ?: storageProperties.defaultStorageCredentials())
-             val nodeCreateRequest = NodeCreateRequest(
-                 projectId = projectId,
-                 repoName = repoInfo.name,
-                 fullPath = generateIndexTarPath(),
-                 folder = false,
-                 size = specArtifact.getSize(),
-                 sha256 = specArtifact.getFileSha256(),
-                 md5 = specArtifact.getFileMd5(),
-                 overwrite = true,
-                 operator = ADMIN_USER
-             )
-             storageManager.storeArtifactFile(nodeCreateRequest, specArtifact, null)
-             cocoapodsRemotePackageDao.saveIfNotExists(podspecList.map {
-                 TCocoapodsRemotePackage(
-                     projectId = projectId,
-                     repoName = repoInfo.name,
-                     packageName = it.name,
-                     packageVersion = it.version,
-                     source = it.source
-                 )
-             })
+            val specArtifact = ArtifactFileFactory.build(outputStream.toByteArray().inputStream(), repoDetail.storageCredentials
+                ?: storageProperties.defaultStorageCredentials())
+            val nodeCreateRequest = NodeCreateRequest(
+                projectId = projectId,
+                repoName = repoInfo.name,
+                fullPath = generateIndexTarPath(),
+                folder = false,
+                size = specArtifact.getSize(),
+                sha256 = specArtifact.getFileSha256(),
+                md5 = specArtifact.getFileMd5(),
+                overwrite = true,
+                operator = ADMIN_USER
+            )
+            storageManager.storeArtifactFile(nodeCreateRequest, specArtifact, null)
+            cocoapodsRemotePackageDao.saveIfNotExists(podspecList.map {
+                TCocoapodsRemotePackage(
+                    projectId = projectId,
+                    repoName = repoInfo.name,
+                    packageName = it.name,
+                    packageVersion = it.version,
+                    source = it.source
+                )
+            })
+        } finally {
+            cocoapodsRepoService.updateStringSetting(projectId, repoInfo.name, INDEX_GENERATING, INDEX_GENERATING_VALUE_DONE)
         }
+        logger.info("project [$projectId], repo [${repoInfo.name},url:$url],init remote specs success")
     }
 
+    /**
+     * 更新远程仓库的podspec 索引
+     */
     fun updateRemoteSpecs(projectId: String, repoName: String) {
-        val updateKey= "$LOCK_PREFIX:update_specs:$projectId:$repoName"
-        redisOperation.get(updateKey)?.let {
-            throw CocoapodsCommonException(CocoapodsMessageCode.COCOAPODS_INDEX_UPDATING_ERROR)
+        val indexGenerating = cocoapodsRepoService.getStringSetting(projectId, repoName, INDEX_GENERATING)
+        if (INDEX_GENERATING_VALUE_DOING == indexGenerating) {
+            throw ErrorCodeException(CocoapodsMessageCode.COCOAPODS_INDEX_UPDATING_ERROR)
         }
-        val repoInfo = repositoryClient.getRepoInfo(projectId, repoName).data?: throw RepoNotFoundException(repoName)
-        if (repoInfo.category != RepositoryCategory.REMOTE || repoInfo.type != RepositoryType.COCOAPODS) {
-            throw CocoapodsCommonException(CocoapodsMessageCode.COCOAPODS_INDEX_UPDATING_ERROR)
-        }
-        logger.info("project [$projectId], repo [$repoName],update remote specs...")
-        redisOperation.set(key = updateKey, value = "1", expired = false)
-        try {
-            initRemoteSpecs(projectId, repoInfo)
-        } finally {
-            redisOperation.delete(updateKey)
-        }
+        remoteEventJobExecutor.execute(ObjectBuildUtil.buildCreatedEvent(projectId, repoName, ADMIN_USER))
     }
 
     private fun cloneAndGetPodSpecs(remoteUrl: String, projectId: String, repoInfo: RepositoryInfo, tempPath: File, outputStream: ByteArrayOutputStream): MutableList<ArchiveModifier.Podspec> {
@@ -215,7 +213,7 @@ class CocoapodsSpecsService(
 
         if (!response.isSuccessful) {
             logger.error("Request failed with status code, url: $remoteUrl, message: ${response.message()}")
-            throw CocoapodsCommonException(CocoapodsMessageCode.COCOAPODS_PODSPEC_NOT_FOUND)
+            throw ErrorCodeException(CocoapodsMessageCode.COCOAPODS_PODSPEC_NOT_FOUND)
         }
         response.body()?.byteStream()?.use { ips ->
             val wrap = ByteArrayInputStream(ips.readBytes())
@@ -224,7 +222,7 @@ class CocoapodsSpecsService(
             return ArchiveModifier.modifyArchive(projectId, repoInfo.name, cocoapodsProperties.domain, wrap, outputStream, fileType, tempPath)
         } ?: run {
             logger.error("Failed to read the response body")
-            throw CocoapodsCommonException(CocoapodsMessageCode.COCOAPODS_PODSPEC_NOT_FOUND)
+            throw ErrorCodeException(CocoapodsMessageCode.COCOAPODS_PODSPEC_NOT_FOUND)
         }
     }
 
@@ -250,6 +248,7 @@ class CocoapodsSpecsService(
                 }
                 if (nodeMap.isEmpty()) {
                     returnEmptySpec()
+                    return
                 }
                 ArtifactResource(
                     artifactMap = nodeMap,
@@ -263,9 +262,9 @@ class CocoapodsSpecsService(
                 //下载index文件
                 if (indexExist(projectId, repoName).not()) {
                     logger.warn("repo $repoName index file not exist")
-                    val repoInfo = repositoryClient.getRepoInfo(projectId, repoName).data
-                        ?: throw RepoNotFoundException(repoName)
-                    initRemoteSpecs(projectId, repoInfo)
+                    remoteEventJobExecutor.execute(ObjectBuildUtil.buildCreatedEvent(projectId, repoName, ADMIN_USER))
+                    returnEmptySpec()
+                    return
                 }
                 val node = nodeClient.getNodeDetail(projectId, repoName, generateIndexTarPath()).data
                     ?: throw NodeNotFoundException(generateIndexTarPath())
@@ -332,6 +331,9 @@ class CocoapodsSpecsService(
 
     companion object {
         const val LATEST_REF = "latestRef"
+        const val INDEX_GENERATING = "indexGenerating"
+        const val INDEX_GENERATING_VALUE_DOING = "doing"
+        const val INDEX_GENERATING_VALUE_DONE = "done"
         private val logger = LoggerFactory.getLogger(CocoapodsWebService::class.java)
     }
 }

@@ -33,45 +33,26 @@ import com.tencent.bkrepo.cocoapods.constant.DOT_SPECS
 import com.tencent.bkrepo.cocoapods.constant.LOCK_PREFIX
 import com.tencent.bkrepo.cocoapods.dao.CocoapodsGitInstanceDao
 import com.tencent.bkrepo.cocoapods.dao.CocoapodsRemotePackageDao
-import com.tencent.bkrepo.cocoapods.event.consumer.RemoteEventJobExecutor
 import com.tencent.bkrepo.cocoapods.exception.CocoapodsMessageCode
 import com.tencent.bkrepo.cocoapods.model.TCocoapodsGitInstance
 import com.tencent.bkrepo.cocoapods.model.TCocoapodsRemotePackage
 import com.tencent.bkrepo.cocoapods.pojo.enums.RemoteRepoType
-import com.tencent.bkrepo.cocoapods.utils.DecompressUtil.buildEmptySpecGzOps
 import com.tencent.bkrepo.cocoapods.utils.FileUtil
 import com.tencent.bkrepo.cocoapods.utils.GitUtil
-import com.tencent.bkrepo.cocoapods.utils.ObjectBuildUtil
 import com.tencent.bkrepo.cocoapods.utils.ObjectBuildUtil.toCocoapodsRemoteConfiguration
 import com.tencent.bkrepo.cocoapods.utils.PathUtil
 import com.tencent.bkrepo.cocoapods.utils.PathUtil.generateIndexTarPath
 import com.tencent.bkrepo.common.api.constant.ADMIN_USER
-import com.tencent.bkrepo.common.api.constant.CharPool.SLASH
-import com.tencent.bkrepo.common.api.constant.HttpHeaders
-import com.tencent.bkrepo.common.api.constant.MediaTypes.APPLICATION_GZIP
-import com.tencent.bkrepo.common.api.constant.MediaTypes.APPLICATION_ZIP
-import com.tencent.bkrepo.common.api.constant.ensurePrefix
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
-import com.tencent.bkrepo.common.artifact.exception.ArtifactNotFoundException
-import com.tencent.bkrepo.common.artifact.exception.NodeNotFoundException
 import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
-import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
-import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
 import com.tencent.bkrepo.common.artifact.repository.remote.buildOkHttpClient
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
-import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
-import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResourceWriterContext
-import com.tencent.bkrepo.common.artifact.util.http.HttpHeaderUtils.encodeDisposition
 import com.tencent.bkrepo.common.lock.service.LockOperation
-import com.tencent.bkrepo.common.redis.RedisOperation
-import com.tencent.bkrepo.common.service.util.HttpContextHolder.getResponse
 import com.tencent.bkrepo.common.storage.core.StorageProperties
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
-import com.tencent.bkrepo.repository.pojo.node.NodeDetail
-import com.tencent.bkrepo.repository.pojo.node.NodeListOption
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
 import okhttp3.Request
@@ -80,8 +61,6 @@ import org.springframework.stereotype.Service
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.IOException
-import javax.servlet.http.HttpServletResponse
 
 @Service
 class CocoapodsSpecsService(
@@ -91,12 +70,9 @@ class CocoapodsSpecsService(
     private val storageProperties: StorageProperties,
     private val cocoapodsProperties: CocoapodsProperties,
     private val lockOperation: LockOperation,
-    private val redisOperation: RedisOperation,
     private val cocoapodsRemotePackageDao: CocoapodsRemotePackageDao,
     private val cocoapodsGitInstanceDao: CocoapodsGitInstanceDao,
     private val cocoapodsRepoService: CocoapodsRepoService,
-    private val remoteEventJobExecutor: RemoteEventJobExecutor,
-    private val artifactResourceWriterContext: ArtifactResourceWriterContext,
 ) {
 
     fun initSpecs(projectId: String, repoName: String) {
@@ -167,17 +143,6 @@ class CocoapodsSpecsService(
         logger.info("project [$projectId], repo [${repoInfo.name},url:$url],init remote specs success")
     }
 
-    /**
-     * 更新远程仓库的podspec 索引
-     */
-    fun updateRemoteSpecs(projectId: String, repoName: String) {
-        val indexGenerating = cocoapodsRepoService.getStringSetting(projectId, repoName, INDEX_GENERATING)
-        if (INDEX_GENERATING_VALUE_DOING == indexGenerating) {
-            throw ErrorCodeException(CocoapodsMessageCode.COCOAPODS_INDEX_UPDATING_ERROR)
-        }
-        remoteEventJobExecutor.execute(ObjectBuildUtil.buildCreatedEvent(projectId, repoName, ADMIN_USER))
-    }
-
     private fun cloneAndGetPodSpecs(remoteUrl: String, projectId: String, repoInfo: RepositoryInfo, tempPath: File, outputStream: ByteArrayOutputStream): MutableList<ArchiveModifier.Podspec> {
 
         val gitInstance = cocoapodsGitInstanceDao.findByUrl(remoteUrl)
@@ -226,107 +191,8 @@ class CocoapodsSpecsService(
         }
     }
 
-    fun downloadSpecs(projectId: String, repoName: String) {
-        val repoDetail = repositoryClient.getRepoDetail(projectId, repoName).data
-            ?: throw RepoNotFoundException(repoName)
-        val resource = when (repoDetail.category) {
-            RepositoryCategory.LOCAL -> {
-                //下载index文件,将.specs目录下的文件压缩返回
-                val prefix = SLASH + DOT_SPECS
-                val nodes = queryNodeDetailList(
-                    projectId = projectId,
-                    repoName = repoName,
-                    prefix = prefix
-                )
-                val nodeMap = nodes.filterNot { it.folder }.associate {
-                    val name = it.fullPath.removePrefix(prefix).ensurePrefix(com.tencent.bkrepo.cocoapods.constant.SPECS)
-                    name to run {
-                        nodeClient.updateRecentlyUseDate(it.projectId, it.repoName, it.fullPath)
-                        storageManager.loadArtifactInputStream(it, repoDetail.storageCredentials)
-                            ?: throw ArtifactNotFoundException(it.fullPath)
-                    }
-                }
-                if (nodeMap.isEmpty()) {
-                    returnEmptySpec()
-                    return
-                }
-                ArtifactResource(
-                    artifactMap = nodeMap,
-                    srcRepo = RepositoryIdentify(projectId, repoName),
-                    useDisposition = true,
-                    contentType = APPLICATION_GZIP
-                )
-            }
-
-            RepositoryCategory.REMOTE -> {
-                //下载index文件
-                if (indexExist(projectId, repoName).not()) {
-                    logger.warn("repo $repoName index file not exist")
-                    remoteEventJobExecutor.execute(ObjectBuildUtil.buildCreatedEvent(projectId, repoName, ADMIN_USER))
-                    returnEmptySpec()
-                    return
-                }
-                val node = nodeClient.getNodeDetail(projectId, repoName, generateIndexTarPath()).data
-                    ?: throw NodeNotFoundException(generateIndexTarPath())
-                val inputStream = storageManager.loadArtifactInputStream(node, repoDetail.storageCredentials)
-                    ?: throw ArtifactNotFoundException(generateIndexTarPath())
-                ArtifactResource(
-                    inputStream = inputStream,
-                    artifactName = generateIndexTarPath(),
-                    srcRepo = RepositoryIdentify(projectId, repoName),
-                    contentType = APPLICATION_ZIP
-                )
-            }
-
-            else -> throw RepoNotFoundException(repoName)
-        }
-        artifactResourceWriterContext.getWriter(resource).write(resource)
-    }
-
     fun indexExist(projectId: String, repoName: String): Boolean {
         return nodeClient.checkExist(projectId, repoName, generateIndexTarPath()).data ?: false
-    }
-
-    private fun queryNodeDetailList(
-        projectId: String,
-        repoName: String,
-        prefix: String,
-    ): List<NodeDetail> {
-        var pageNumber = 1
-        val nodeDetailList = mutableListOf<NodeDetail>()
-        val count = nodeClient.countFileNode(projectId, repoName, prefix).data ?: 0
-        do {
-            val option = NodeListOption(
-                pageNumber = pageNumber,
-                pageSize = 1000,
-                includeFolder = true,
-                includeMetadata = true,
-                deep = true
-            )
-            val records = nodeClient.listNodePage(projectId, repoName, prefix, option).data?.records
-            if (records.isNullOrEmpty()) {
-                break
-            }
-            nodeDetailList.addAll(
-                records.map { NodeDetail(it) }
-            )
-            pageNumber++
-        } while (nodeDetailList.size < count)
-        return nodeDetailList
-    }
-
-    private fun returnEmptySpec() {
-        val response = getResponse()
-
-        try {
-            response.contentType = APPLICATION_GZIP
-            response.setHeader(HttpHeaders.CONTENT_DISPOSITION, encodeDisposition("response.gz"))
-            val gzipOutputStream = buildEmptySpecGzOps(response)
-            gzipOutputStream.finish()
-        } catch (e: IOException) {
-            logger.error("Error occurred while creating archive.", e)
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to create archive.")
-        }
     }
 
     companion object {

@@ -34,6 +34,7 @@ import com.tencent.bkrepo.cocoapods.service.CocoapodsSpecsService
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.common.artifact.event.repo.RepoCreatedEvent
+import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.lock.service.LockOperation
@@ -79,13 +80,12 @@ class RemoteEventJobExecutor(
                     }
                 }
                 submit(action)
-                logger.info("Helm Remote event ${getFullResourceKey()} completed.")
+                logger.info("Cocoapods Remote event ${getFullResourceKey()} completed.")
             }
         } catch (exception: Exception) {
-            logger.warn("Helm Remote event ${event.getFullResourceKey()}} failed: $exception")
+            logger.warn("Cocoapods Remote event ${event.getFullResourceKey()}} failed: $exception")
         }
     }
-
 
     /**
      * 提交任务到线程池执行
@@ -127,7 +127,8 @@ class RemoteEventJobExecutor(
     private fun repoCreateHandle(event: ArtifactEvent) {
         logger.info("repo create event: $event")
         with(event) {
-            require(data[RepoCreatedEvent::repoType.name] == RepositoryType.COCOAPODS.name) { return }
+            val dd  = data[RepoCreatedEvent::repoType.name].toString()
+            require(data[RepoCreatedEvent::repoType.name].toString() == RepositoryType.COCOAPODS.name) { return }
             repositoryClient.getRepoInfo(projectId, repoName).data?.let { repoInfo ->
                 when (repoInfo.category) {
                     RepositoryCategory.LOCAL -> {
@@ -140,7 +141,7 @@ class RemoteEventJobExecutor(
 
                     else -> TODO()
                 }
-            }
+            } ?: throw RepoNotFoundException(repoName)
         }
     }
 

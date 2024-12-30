@@ -33,6 +33,8 @@ import com.tencent.bkrepo.cocoapods.pojo.CocoapodsRemoteConfiguration
 import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo
 import com.tencent.bkrepo.cocoapods.pojo.enums.PodSpecSourceType
 import com.tencent.bkrepo.cocoapods.pojo.enums.RemoteRepoType
+import com.tencent.bkrepo.common.api.constant.StringPool
+import com.tencent.bkrepo.common.api.constant.StringPool.EMPTY
 import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfiguration
 import com.tencent.bkrepo.common.artifact.repository.context.ArtifactUploadContext
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
@@ -66,8 +68,11 @@ object PathUtil {
     fun ArtifactUploadContext.generateCachePath(artifactInfo: CocoapodsArtifactInfo, domain: String) =
         "${domain}/${projectId}/${repoName}/${artifactInfo.getArtifactFullPath()}"
 
+    /**
+     * 生成缓存路径，远程仓库解析无法得到orgName，用name占位
+     */
     fun ArchiveModifier.Podspec.generateCachePath(projectId: String, repoName: String, domain: String) =
-        "$domain/$projectId/$repoName/$name/$version/$name-$version.tar.gz}"
+        "$domain/$projectId/$repoName/$name/$name/$version/$name-$version.tar.gz"
 
     fun buildRemoteSpecsUrl(cocoapodsConf: CocoapodsRemoteConfiguration, conf: RemoteConfiguration) =
         when (cocoapodsConf.type) {

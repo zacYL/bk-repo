@@ -11,6 +11,9 @@ spring:
           group: replication
           destination: artifactEvent
           binder: pulsar
+        artifactEvent-out-0:
+          destination: artifactEvent
+          binder: pulsar
 server:
   port: __BK_REPO_REPLICATION_PORT__
 logging:

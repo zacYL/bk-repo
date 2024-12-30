@@ -32,8 +32,9 @@ import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo
 import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo.Companion.DOWNLOAD_INDEX_URL
 import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo.Companion.DOWNLOAD_PACKAGE_URL
+import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo.Companion.TEST_REMOTE_URL
 import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo.Companion.UPLOAD_PACKAGE_URL
-import com.tencent.bkrepo.cocoapods.service.CocoapodsSpecsService
+import com.tencent.bkrepo.cocoapods.service.CocoapodsIndexService
 import com.tencent.bkrepo.cocoapods.service.CocoapodsUploadDownloadService
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.artifact.api.ArtifactFile
@@ -41,15 +42,24 @@ import com.tencent.bkrepo.common.artifact.api.ArtifactInfo
 import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
 import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
 class CocoapodsController(
     private val cocoapodsUploadDownloadService: CocoapodsUploadDownloadService,
-    private val cocoapodsSpecsService: CocoapodsSpecsService
+    private val cocoapodsIndexService: CocoapodsIndexService
 ) {
+
+    @GetMapping(TEST_REMOTE_URL)
+    @Permission(ResourceType.REPO, PermissionAction.READ)
+    fun repoInfo(@PathVariable projectId: String, @PathVariable repoName: String): ResponseEntity<Void> {
+        return ResponseEntity.ok().build<Void>()
+    }
+
     @PutMapping(UPLOAD_PACKAGE_URL)
     @Permission(type = ResourceType.REPO, action = PermissionAction.WRITE)
     fun upload(
@@ -65,7 +75,7 @@ class CocoapodsController(
     fun downloadIndex(
         @ArtifactPathVariable artifactInfo: ArtifactInfo
     ) {
-        cocoapodsSpecsService.downloadSpecs(artifactInfo.projectId, artifactInfo.repoName)
+        cocoapodsIndexService.downloadSpecs(artifactInfo.projectId, artifactInfo.repoName)
     }
 
     @GetMapping(DOWNLOAD_PACKAGE_URL)

@@ -21,6 +21,7 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.io.InputStreamReader
+import kotlin.math.log
 
 @Service
 class CocoapodsReplicaService(
@@ -35,7 +36,7 @@ class CocoapodsReplicaService(
      * {fullPath}.podspec或者{fullPath}.podspec.json
      */
     fun resolveIndexFile(event: ArtifactEvent) {
-        logger.info("Cocoapods-Event: resolveIndexFile...")
+        logger.info("Cocoapods-Event: resolveIndexFile, event:[$event]")
         with(event) {
 
             val packageFilePath = data["contentPath"] as (String)
@@ -43,6 +44,7 @@ class CocoapodsReplicaService(
             val indexFilePath = getIndexFilePath(projectId, repoName, packageFilePath)
 
             val type = checkIndexFilePath(indexFilePath)
+            logger.info("packageFilePath: $packageFilePath\nindexFilePath: $indexFilePath\ntype: $type")
 
             if (type == 0) return
 
@@ -52,12 +54,17 @@ class CocoapodsReplicaService(
             val nodeDetail = nodeClient
                 .getNodeDetail(projectId, repoName, indexFilePath)
                 .data as NodeDetail
+
+            logger.info("repoDetail: $repoDetail")
+            logger.info("nodeDetail: $nodeDetail")
+
             //索引源文件InputStream
             val indexFileInputStream =
                 storageManager.loadArtifactInputStream(nodeDetail, repoDetail.storageCredentials) ?: return
-
             //目标地址,ex:"http://bkrepo.indecpack7.com/cocoapods/z153ce/hb-pod-1220//MatthewYork/DateTools/5.0.0/DateTools-5.0.0.tar.gz"
-            val sourcePath = "${cocoapodsProperties.domain}/${projectId}/${repoName}//${packageFilePath}"
+            val sourcePath = "${cocoapodsProperties.domain}/${projectId}/${repoName}/${packageFilePath}"
+
+            logger.info("replace with sourcePath: $sourcePath")
 
             when (type) {
                 1 -> handleForPodSpec(indexFileInputStream, sourcePath, repoDetail, indexFilePath)
@@ -80,6 +87,7 @@ class CocoapodsReplicaService(
     ) {
         val jsonStr = JsonParser.parseReader(InputStreamReader(inputStream)).toJsonString()
         val newJsonStr = CocoapodsUtil.updatePodspecJsonSource(jsonStr, sourcePath)
+        logger.info("newJsonStr: $newJsonStr")
         val newInputStream = ByteArrayInputStream(newJsonStr.toByteArray())
         val artifactFile = ArtifactFileFactory.build(newInputStream)
         store(artifactFile, repoDetail, indexFilePath)
@@ -89,10 +97,13 @@ class CocoapodsReplicaService(
      * 存储文件
      */
     private fun store(artifactFile: ArtifactFile, repoDetail: RepositoryDetail, indexFilePath: String) {
+        logger.info("start to store $indexFilePath")
         with(repoDetail) {
             val nodeCreateRequest = NodeCreateRequest(projectId, name, indexFilePath, false)
+            logger.info("nodeCreateRequest: $nodeCreateRequest")
             storageManager.storeArtifactFile(nodeCreateRequest, artifactFile, storageCredentials)
         }
+        logger.info("store success")
     }
 
     /**
@@ -109,6 +120,7 @@ class CocoapodsReplicaService(
         val specStr = getSpecStr(inputStream)
         val newSpecStr = CocoapodsUtil.updatePodspecSource(specStr, sourcePath)
         val newInputStream = ByteArrayInputStream(newSpecStr.toByteArray())
+        logger.info("newSpecStr: $newSpecStr")
         val artifactFile = ArtifactFileFactory.build(newInputStream)
         store(artifactFile, repoDetail, indexFilePath)
     }
@@ -132,9 +144,9 @@ class CocoapodsReplicaService(
      */
     private fun getIndexFilePath(projectId: String, repoName: String, packageFilePath: String): String {
         val split = packageFilePath.split('/')
-        val orgName = split[0]
-        val artifactName = split[1]
-        val versionName = split[2]
+        val orgName = split[1]
+        val artifactName = split[2]
+        val versionName = split[3]
         val specsPath = "/.specs/${artifactName}/${versionName}/${artifactName}.podspec"
         val jsonPath = "/.specs/${artifactName}/${versionName}/${artifactName}.podspec.json"
         val pathList: List<String> =

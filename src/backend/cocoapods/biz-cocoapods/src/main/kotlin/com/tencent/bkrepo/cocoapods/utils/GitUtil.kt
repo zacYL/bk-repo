@@ -1,6 +1,7 @@
 package com.tencent.bkrepo.cocoapods.utils
 
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.transport.CredentialsProvider
 import org.slf4j.LoggerFactory
 import java.io.File
 
@@ -9,25 +10,35 @@ object GitUtil {
      * @param repoUrl Git 仓库地址
      * @param localPath 本地存储路径
      */
-    fun cloneOrPullRepo(repoUrl: String, localPath: String): String {
+    fun cloneOrPullRepo(repoUrl: String, localPath: String, credentialsProvider: CredentialsProvider?): String {
         val repoDir = File(localPath)
-        logger.info("git url: $repoUrl, localPath: $localPath")
+        logger.info("Git URL: $repoUrl, Local Path: $localPath")
 
         try {
             if (repoDir.exists() && repoDir.isDirectory) {
                 // 如果目录已存在，尝试执行 `git pull`
                 logger.info("Local repository exists. Performing 'git pull'.")
                 Git.open(repoDir).use { git ->
-                    git.pull().call()
+                    val pullCommand = git.pull()
+                    if (credentialsProvider != null) {
+                        pullCommand.setCredentialsProvider(credentialsProvider)
+                    }
+                    pullCommand.call()
                 }
-                logger.info("Repository $ pull successfully.")
+                logger.info("Repository pulled successfully.")
             } else {
                 // 如果目录不存在，执行 `git clone`
                 logger.info("Cloning repository from $repoUrl to $localPath.")
-                Git.cloneRepository()
+                val cloneCommand = Git.cloneRepository()
                     .setURI(repoUrl)
                     .setDirectory(repoDir)
-                    .call()
+                    .setNoTags()
+                    .setBranchesToClone(listOf("refs/heads/master")) // 仅克隆指定分支
+                    .setBranch("refs/heads/master") // 设置克隆的起始分支
+                if (credentialsProvider != null) {
+                    cloneCommand.setCredentialsProvider(credentialsProvider)
+                }
+                cloneCommand.call()
             }
             logger.info("Repository updated successfully.")
             return getLatestRefs(localPath)

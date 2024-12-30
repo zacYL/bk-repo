@@ -3,6 +3,8 @@ package com.tencent.bkrepo.cocoapods.utils
 import com.tencent.bkrepo.cocoapods.pojo.CocoapodsRemoteConfiguration
 import com.tencent.bkrepo.cocoapods.pojo.enums.RemoteRepoType
 import com.tencent.bkrepo.cocoapods.pojo.user.BasicInfo
+import com.tencent.bkrepo.common.artifact.event.repo.RepoCreatedEvent
+import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.artifact.pojo.configuration.RepositoryConfiguration
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
@@ -36,6 +38,22 @@ object ObjectBuildUtil {
        return CocoapodsRemoteConfiguration(
             type = EnumUtils.getEnum(RemoteRepoType::class.java, this.getStringSetting("type")),
             downloadUrl = this.getStringSetting("downloadUrl")
+        )
+    }
+
+    /**
+     * 仓库创建事件
+     */
+    fun buildCreatedEvent(
+        projectId: String,
+        repoName: String,
+        operator: String
+    ): RepoCreatedEvent {
+        return RepoCreatedEvent(
+            projectId = projectId,
+            repoName = repoName,
+            userId = operator,
+            repoType = RepositoryType.COCOAPODS
         )
     }
 }

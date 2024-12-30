@@ -19,7 +19,11 @@
                         {{$t('guide')}}
                     </span>
                 </bk-button>
-                <bk-button v-if="repoType === 'cocoapods'" class="ml10" @click="updateIndexHandler">{{$t('updateIndex')}}</bk-button>
+                <bk-button
+                    v-if="repoType === 'cocoapods' && storeType === 'remote'"
+                    class="ml10"
+                    @click="updateIndexHandler"
+                >{{$t('updateIndex')}}</bk-button>
             </div>
         </header>
         <!-- 存在包, 加载中默认存在包 -->
@@ -198,10 +202,10 @@
                         theme: 'success',
                         message: this.$t('update') + this.$t('space') + this.$t('success')
                     })
-                }).catch(() => {
+                }).catch((error) => {
                     this.$bkMessage({
                         theme: 'error',
-                        message: this.$t('update') + this.$t('space') + this.$t('fail')
+                        message: error.message || (this.$t('update') + this.$t('space') + this.$t('fail'))
                     })
                 })
             },

@@ -32,7 +32,7 @@ import com.tencent.bkrepo.auth.pojo.enums.ResourceType
 import com.tencent.bkrepo.cocoapods.constant.USER_API_PREFIX
 import com.tencent.bkrepo.cocoapods.pojo.artifact.CocoapodsArtifactInfo
 import com.tencent.bkrepo.cocoapods.service.CocoapodsClientService
-import com.tencent.bkrepo.cocoapods.service.CocoapodsSpecsService
+import com.tencent.bkrepo.cocoapods.service.CocoapodsIndexService
 import com.tencent.bkrepo.cocoapods.service.CocoapodsWebService
 import com.tencent.bkrepo.common.api.pojo.Response
 import com.tencent.bkrepo.common.artifact.api.ArtifactPathVariable
@@ -40,7 +40,6 @@ import com.tencent.bkrepo.common.security.permission.Permission
 import com.tencent.bkrepo.common.security.permission.Principal
 import com.tencent.bkrepo.common.security.permission.PrincipalType
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
-import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -59,7 +58,7 @@ import org.springframework.web.bind.annotation.RestController
 class CocoapodsWebController(
     private val cocoapodsClientService: CocoapodsClientService,
     private val cocoapodsWebService: CocoapodsWebService,
-    private val cocoapodsSpecsService: CocoapodsSpecsService
+    private val cocoapodsIndexService: CocoapodsIndexService
 ) {
 
     @ApiOperation("包删除接口")
@@ -101,12 +100,13 @@ class CocoapodsWebController(
         return cocoapodsClientService.downloadClientPlugin()
     }
 
-    @PostMapping("/init/{projectId}")
+    @PostMapping("/specs/init/{projectId}/{repoName}")
+    @Permission(type = ResourceType.REPO, action = PermissionAction.UPDATE)
     fun initRemoteSpecs(
         @PathVariable projectId: String,
-        @RequestBody repoInfo: RepositoryInfo,
+        @RequestBody repoName: String,
     ){
-        return cocoapodsSpecsService.initRemoteSpecs(projectId, repoInfo)
+        return cocoapodsIndexService.initRemoteSpecs(projectId, repoName)
     }
 
     @PutMapping("/specs/update/{projectId}/{repoName}")
@@ -115,6 +115,6 @@ class CocoapodsWebController(
         @PathVariable projectId: String,
         @PathVariable repoName: String,
     ){
-        return cocoapodsSpecsService.updateRemoteSpecs(projectId, repoName)
+        return cocoapodsIndexService.updateRemoteSpecs(projectId, repoName)
     }
 }

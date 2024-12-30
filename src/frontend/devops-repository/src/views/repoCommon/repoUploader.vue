@@ -235,7 +235,7 @@
                     if (uploadType === 'mavenUpload' && (!res || !res.data || (!res.data.groupId && !res.data.artifactId && !res.data.version))) {
                         if (uploadType === 'mavenUpload') this.checkFail = true
                         this.formData = {
-                            uuid: '',
+                            uuid: res.data.uuid || '',
                             groupId: '',
                             artifactId: '',
                             version: '',
@@ -243,7 +243,10 @@
                             type: body.name.split('.').pop()
                         }
                     } else {
-                        this.formData = res.data
+                        this.formData = {
+                            ...res.data,
+                            uuid: this.formData.uuid || res.data.uuid
+                        }
                     }
                 }).catch(error => {
                     // error &&  this.errorMsg = error.message || error.error || '无法识别包信息，请确认是否由Maven客户端打包，并重新上传'

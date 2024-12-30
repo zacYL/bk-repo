@@ -54,6 +54,10 @@ class CocoapodsReplicaService(
             val nodeDetail = nodeClient
                 .getNodeDetail(projectId, repoName, indexFilePath)
                 .data as NodeDetail
+
+            logger.info("repoDetail: $repoDetail")
+            logger.info("nodeDetail: $nodeDetail")
+
             //索引源文件InputStream
             val indexFileInputStream =
                 storageManager.loadArtifactInputStream(nodeDetail, repoDetail.storageCredentials) ?: return

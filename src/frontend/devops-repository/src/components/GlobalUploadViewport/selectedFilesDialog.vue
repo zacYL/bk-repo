@@ -150,7 +150,11 @@
                 this.refreshTable = true
                 this.handleUpload(file, 'pomUpload').then((res) => {
                     // 更新坐标
-                    this.$set(this.selectedFiles[this.reuploadIndex], '_tempParams', res.value)
+                    const { uuid: existingUuid } = this.selectedFiles[this.reuploadIndex]._tempParams || {}
+                    this.selectedFiles[this.reuploadIndex]._tempParams = {
+                        ...res.value,
+                        uuid: existingUuid || res.value.uuid || ''
+                    }
                     this.$bkMessage({
                         theme: 'success',
                         message: this.$t('uploadSuccess')
@@ -233,7 +237,7 @@
                             if ((!res || !res.data || this.checkCoordinate(res.data))) {
                                 resolve({
                                     value: {
-                                        uuid: '',
+                                        uuid: res.data.uuid || '',
                                         groupId: '',
                                         artifactId: '',
                                         version: '',

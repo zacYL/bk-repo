@@ -67,7 +67,7 @@ object PathUtil {
         "${domain}/${projectId}/${repoName}/${artifactInfo.getArtifactFullPath()}"
 
     fun ArchiveModifier.Podspec.generateCachePath(projectId: String, repoName: String, domain: String) =
-        "$domain/$projectId/$repoName/$name/$version/$name-$version.tar.gz}"
+        "$domain/$projectId/$repoName/$name/$version/$name-$version.tar.gz"
 
     fun buildRemoteSpecsUrl(cocoapodsConf: CocoapodsRemoteConfiguration, conf: RemoteConfiguration) =
         when (cocoapodsConf.type) {

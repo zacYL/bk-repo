@@ -56,6 +56,8 @@ import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
 import okhttp3.Request
+import org.eclipse.jgit.transport.CredentialsProvider
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.io.ByteArrayInputStream
@@ -100,7 +102,7 @@ class CocoapodsSpecsService(
         try {
             val podspecList = when (cocoapodsConf.type) {
                 RemoteRepoType.GIT_HUB -> {
-                    cloneAndGetPodSpecs(url, projectId, repoInfo, tempPath, outputStream)
+                    cloneAndGetPodSpecs(conf, url, projectId, repoInfo, tempPath, outputStream)
                 }
 
                 else -> {
@@ -143,8 +145,15 @@ class CocoapodsSpecsService(
         logger.info("project [$projectId], repo [${repoInfo.name},url:$url],init remote specs success")
     }
 
-    private fun cloneAndGetPodSpecs(remoteUrl: String, projectId: String, repoInfo: RepositoryInfo, tempPath: File, outputStream: ByteArrayOutputStream): MutableList<ArchiveModifier.Podspec> {
-
+    private fun cloneAndGetPodSpecs(conf: RemoteConfiguration,remoteUrl: String, projectId: String, repoInfo: RepositoryInfo, tempPath: File, outputStream: ByteArrayOutputStream): MutableList<ArchiveModifier.Podspec> {
+        var credentialsProvider: CredentialsProvider? = null
+        if (conf.credentials.username != null &&
+            conf.credentials.password != null
+        ) {
+            credentialsProvider = UsernamePasswordCredentialsProvider(
+                conf.credentials.username, conf.credentials.password
+            )
+        }
         val gitInstance = cocoapodsGitInstanceDao.findByUrl(remoteUrl)
         val specsGitPath = gitInstance?.path
             ?: PathUtil.buildSpecsGitPath(cocoapodsProperties.gitPath, projectId, repoInfo.name)
@@ -152,7 +161,8 @@ class CocoapodsSpecsService(
         val oldLatestRef = cocoapodsRepoService.getStringSetting(projectId, repoInfo.name, LATEST_REF)
         var latestRef = ""
         lockOperation.doWithLock(lockKey) {
-            latestRef = GitUtil.cloneOrPullRepo(remoteUrl, specsGitPath)
+
+            latestRef = GitUtil.cloneOrPullRepo(remoteUrl, specsGitPath, credentialsProvider)
             cocoapodsGitInstanceDao.saveIfNotExist(TCocoapodsGitInstance(url = remoteUrl, path = specsGitPath, ref = latestRef))
         }
         //如果当前已是最新的引用，则不需要再更新

@@ -24,15 +24,14 @@ object JarUtils {
         } catch (e: IOException) {
             throw JarFormatException("only jar file is supported")
         }
-        return DecompressUtils
-            .doWithArchiver(
-                jarFile.inputStream(),
-                callbackPre = { it.name.endsWith("pom.xml") },
-                callback = { stream, _ -> readModel(stream).transform() },
-                callbackPost = { _, it -> it != null }
-            )
-            .firstOrNull()
-            ?: throw JarFormatException("pom.xml not found")
+        val model = DecompressUtils.doWithArchiver<Model, Model>(
+            jarFile.inputStream(),
+            callbackPre = { it.name.endsWith("pom.xml") },
+            callback = { stream, _ -> readModel(stream).transform() },
+            handleResult = { _, e, _ -> e },
+            callbackPost = { _, e -> e != null }
+        )
+        return model ?: throw JarFormatException("pom.xml not found")
     }
 
     fun readModel(inputStream: InputStream): Model {
@@ -68,16 +67,15 @@ object JarUtils {
      * @param inputStream 包含项目信息的输入流，通常是一个压缩文件流。
      * @return pom.xml文件的字节内容，如果没有找到则返回空字节数组。
      */
-    fun extractPom(inputStream: InputStream): ByteArray {
-        return DecompressUtils
-            .doWithArchiver(
-                inputStream,
-                callbackPre = { it.name.endsWith("pom.xml") },
-                callback = { stream, _ -> stream.readBytes() },
-                callbackPost = { _, it -> it != null }
-            )
-            .firstOrNull()
-            ?: noPom
+    private fun extractPom(inputStream: InputStream): ByteArray {
+        val bytes = DecompressUtils.doWithArchiver<ByteArray, ByteArray>(
+            inputStream,
+            callbackPre = { it.name.endsWith("pom.xml") },
+            callback = { stream, _ -> stream.readBytes() },
+            handleResult = { _, e, _ -> e },
+            callbackPost = { _, e -> e != null }
+        )
+        return bytes ?: noPom
     }
 
     /**
@@ -87,7 +85,7 @@ object JarUtils {
      * @param pom pom.xml文件的字节内容。
      * @return 如果pom.xml内容为空则返回true，否则返回false。
      */
-    fun isEmptyPom(pom: ByteArray) = pom === noPom
+    private fun isEmptyPom(pom: ByteArray) = pom === noPom
 
     private fun Model.transform(): Model {
         val parent = this.parent

@@ -442,17 +442,14 @@ class MavenServiceImpl(
 
     override fun extractGavFromJar(file: MultipartFile): MavenWebDeployResponse {
         val filename = file.getFilename()
-        if (filename.endsWith(".pom")) {
-            return readModel(file.inputStream)
-                .apply {
-                    if (this.packaging != SOURCE_POM) {
-                        throw JarFormatException("The packaging of the pom file is not pom")
-                    }
+        val bytes = file.bytes
+        val model = if (!filename.endsWith(".pom")) JarUtils.parseModel(bytes.inputStream()) else {
+            readModel(bytes.inputStream()).apply {
+                if (this.packaging != SOURCE_POM) {
+                    throw JarFormatException("The packaging of the pom file is not pom")
                 }
-                .toGav(filename)
+            }
         }
-        val bytes = file.inputStream.readBytes()
-        val model = JarUtils.parseModel(bytes.inputStream())
         val path = storageService.getTempPath().resolve(filename)
         if (Files.notExists(path.parent)) {
             Files.createDirectories(path.parent)

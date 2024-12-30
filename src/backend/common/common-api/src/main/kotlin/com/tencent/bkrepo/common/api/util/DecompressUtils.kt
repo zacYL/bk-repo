@@ -93,79 +93,87 @@ object DecompressUtils {
     }
 
     /**
-     * 使用归档处理器处理输入流中的数据
+     * 使用压缩流处理输入流中的归档文件
      *
-     * 此函数通过读取输入流中的归档数据，并根据提供的回调函数对每个归档条目进行处理
-     * 它支持通过多次尝试来解压缩数据，以便更好地处理复杂或嵌套的归档文件
+     * 该函数尝试使用压缩流读取输入流中的归档文件，并对归档中的每个条目执行回调函数
+     * 如果输入流不支持标记，则将其包装在BufferedInputStream中以支持标记
+     * 如果读取过程中遇到ArchiveException异常，则尝试使用压缩流读取归档文件
      *
-     * @param `is` 输入流，包含归档数据
-     * @param collection 用于收集处理结果的集合
-     * @param compressCount 尝试解压缩的次数，默认为2次
-     * @param callbackPre 在处理每个归档条目之前调用的回调函数，返回true以继续处理
-     * @param callback 处理每个归档条目的回调函数，返回处理结果
-     * @param callbackPost 在处理每个归档条目之后调用的回调函数，返回false可提前结束处理
-     * @return 处理结果的集合
+     * @param `is` 输入流，用于读取归档文件
+     * @param resultFactory 结果工厂，用于创建结果对象的lambda表达式，默认为返回null
+     * @param callbackPre 条目预处理回调，用于确定是否处理当前条目的lambda表达式，默认为不处理目录条目
+     * @param callback 条目处理回调，用于处理当前条目的lambda表达式，返回处理结果
+     * @param handleResult 结果处理回调，用于根据当前条目的处理结果更新总结果的lambda表达式
+     * @param callbackPost 条目后处理回调，用于在条目处理后执行额外操作的lambda表达式，默认为空操作
+     * @return R? 返回处理结果，如果结果为null，则表示处理失败
      */
-    fun <R> doWithArchiver(
+    fun <R, E> tryArchiverWithCompressor(
         `is`: InputStream,
-        collection: MutableList<R> = mutableListOf(),
-        compressCount: Int = 2,
-        callbackPre: (ArchiveEntry) -> Boolean = { true },
-        callback: (ArchiveInputStream<*>, ArchiveEntry) -> R,
-        callbackPost: (ArchiveEntry, R?) -> Boolean = { _, _ -> true }
-    ): List<R> {
-        require(compressCount > 1)
-        // 根据输入流的支持情况，决定是否需要包装为BufferedInputStream
+        resultFactory: () -> R? = { null },
+        callbackPre: (ArchiveEntry) -> Boolean = { !it.isDirectory },
+        callback: (ArchiveInputStream<*>, ArchiveEntry) -> E?,
+        handleResult: (R?, E?, ArchiveEntry) -> R?,
+        callbackPost: (ArchiveEntry, E?) -> Boolean = { _, _ -> true }
+    ): R? {
+        // 根据输入流是否支持标记，决定是否将其包装在BufferedInputStream中
         var wrap = if (`is`.markSupported()) `is` else BufferedInputStream(`is`)
-
-        // 尝试对输入流进行解压缩处理，最多尝试compressCount次
-        for (count in 1..compressCount) {
-            try {
-                // 尝试使用当前包装的输入流进行归档处理
-                return doWithArchiver(wrap, collection, callbackPre, callback, callbackPost)
-            } catch (e: ArchiveException) {
-                // 如果达到最大尝试次数，则重新抛出异常
-                if (count == compressCount) {
-                    throw e
-                }
-                // 如果解压缩失败，尝试使用CompressorStreamFactory创建新的压缩输入流进行下一次尝试
-                wrap = BufferedInputStream(CompressorStreamFactory().createCompressorInputStream(wrap))
-            }
+        return try {
+            // 尝试使用归档流处理输入流
+            doWithArchiver(wrap, resultFactory, callbackPre, callback, handleResult, callbackPost)
+        } catch (e: ArchiveException) {
+            // 如果遇到ArchiveException异常，重置输入流并使用压缩流重新尝试
+            wrap.reset()
+            wrap = BufferedInputStream(CompressorStreamFactory().createCompressorInputStream(wrap))
+            doWithArchiver(wrap, resultFactory, callbackPre, callback, handleResult, callbackPost)
         }
-        return collection
     }
 
     /**
-     * 使用归档处理器处理输入流中的数据
+     * 使用归档流处理输入流中的数据
      *
-     * 此重载版本的函数提供了一个默认的空集合作为结果收集器，并且允许回调函数返回可空类型
-     * 它适用于需要处理可嵌套归档，但不需要多次解压缩尝试的场景
+     * 该函数创建一个ArchiveInputStream并使用它来处理输入流中的归档条目它允许在处理每个条目之前和之后执行自定义操作，
+     * 并且可以累积处理结果
      *
      * @param `is` 输入流，包含归档数据
-     * @param collection 用于收集处理结果的集合，默认为mutableListOf()
-     * @param callbackPre 在处理每个归档条目之前调用的回调函数，返回true以继续处理
-     * @param callback 处理每个归档条目的回调函数，返回处理结果，可以为null
-     * @param callbackPost 在处理每个归档条目之后调用的回调函数，返回false可提前结束处理
-     * @return 处理结果的集合
+     * @param resultFactory 结果对象的工厂方法，用于创建初始结果对象默认为null
+     * @param callbackPre 处理每个归档条目之前调用的回调函数，返回true继续处理，返回false跳过当前条目
+     * @param callback 处理每个归档条目的回调函数，返回的结果将传递给handleResult
+     * @param handleResult 处理结果的回调函数，用于累积处理结果
+     * @param callbackPost 处理每个归档条目之后调用的回调函数，返回false则终止处理
+     * @return R? 最终的处理结果，可能为null
      */
-    fun <R> doWithArchiver(
+    fun <R, E> doWithArchiver(
         `is`: InputStream,
-        collection: MutableList<R> = mutableListOf(),
-        callbackPre: (ArchiveEntry) -> Boolean = { true },
-        callback: (ArchiveInputStream<*>, ArchiveEntry) -> R?,
-        callbackPost: (ArchiveEntry, R?) -> Boolean = { _, _ -> true }
-    ): List<R> {
+        resultFactory: () -> R? = { null },
+        callbackPre: (ArchiveEntry) -> Boolean = { !it.isDirectory },
+        callback: (ArchiveInputStream<*>, ArchiveEntry) -> E?,
+        handleResult: (R?, E?, ArchiveEntry) -> R?,
+        callbackPost: (ArchiveEntry, E?) -> Boolean = { _, _ -> true }
+    ): R? {
+        // 初始化结果对象
+        var result = resultFactory()
+        // 根据输入流是否支持标记来决定是否包装为BufferedInputStream
         val wrap = if (`is`.markSupported()) `is` else BufferedInputStream(`is`)
+        // 创建并使用ArchiveInputStream处理归档数据
         ArchiveStreamFactory().createArchiveInputStream<ArchiveInputStream<*>>(wrap).use {
+            // 循环处理每个归档条目
             while (true) {
+                // 获取下一个归档条目，如果为空则退出循环
                 val entry = it.nextEntry ?: break
+                // 如果当前条目数据不可读，则跳过
                 if (!it.canReadEntryData(entry)) continue
+                // 调用预处理回调，决定是否处理当前条目
                 if (!callbackPre(entry)) continue
-                val r = callback(it, entry)?.apply { collection.add(this) }
+                // 处理当前条目，并获取处理结果
+                val r = callback(it, entry)
+                // 使用处理结果更新累积结果
+                result = handleResult(result, r, entry)
+                // 调用后处理回调，决定是否继续处理下一个条目
                 if (!callbackPost(entry, r)) break
             }
         }
-        return collection
+        // 返回最终的处理结果
+        return result
     }
 
 }

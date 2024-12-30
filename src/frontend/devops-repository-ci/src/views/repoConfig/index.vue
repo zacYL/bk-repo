@@ -35,7 +35,7 @@
                                 <!-- url 如果初始有值，则禁止编辑 -->
                                 <bk-input :disabled="repoType === 'cocoapods' && !!tempRepoBaseInfo.url" class="w480" v-model.trim="repoBaseInfo.url"></bk-input>
                                 <!-- todo 测试链接暂未支持 -->
-                                <bk-button v-if="repoBaseInfo.type !== 'GENERIC'" theme="primary" :disabled="disableTestUrl || (repoType === 'cocoapods' && !!tempRepoBaseInfo.url)" @click="onClickTestRemoteUrl">{{ $t('testRemoteUrl') }}</bk-button>
+                                <bk-button v-if="repoBaseInfo.type !== 'GENERIC'" theme="primary" :disabled="disableTestUrl" @click="onClickTestRemoteUrl">{{ $t('testRemoteUrl') }}</bk-button>
                             </bk-form-item>
                             <template v-if="repoType === 'cocoapods'">
                                 <!-- 远程仓库类型 -->

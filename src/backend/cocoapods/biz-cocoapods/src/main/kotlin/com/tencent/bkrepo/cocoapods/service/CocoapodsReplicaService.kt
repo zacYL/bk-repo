@@ -132,9 +132,9 @@ class CocoapodsReplicaService(
      */
     private fun getIndexFilePath(projectId: String, repoName: String, packageFilePath: String): String {
         val split = packageFilePath.split('/')
-        val orgName = split[0]
-        val artifactName = split[1]
-        val versionName = split[2]
+        val orgName = split[1]
+        val artifactName = split[2]
+        val versionName = split[3]
         val specsPath = "/.specs/${artifactName}/${versionName}/${artifactName}.podspec"
         val jsonPath = "/.specs/${artifactName}/${versionName}/${artifactName}.podspec.json"
         val pathList: List<String> =

@@ -35,7 +35,7 @@ class CocoapodsReplicaService(
      * {fullPath}.podspec或者{fullPath}.podspec.json
      */
     fun resolveIndexFile(event: ArtifactEvent) {
-        logger.info("Cocoapods-Event: resolveIndexFile...")
+        logger.info("Cocoapods-Event: resolveIndexFile, event:[$event]")
         with(event) {
 
             val packageFilePath = data["contentPath"] as (String)
@@ -43,6 +43,7 @@ class CocoapodsReplicaService(
             val indexFilePath = getIndexFilePath(projectId, repoName, packageFilePath)
 
             val type = checkIndexFilePath(indexFilePath)
+            logger.info("packageFilePath: $packageFilePath\nindexFilePath: $indexFilePath\ntype: $type")
 
             if (type == 0) return
 
@@ -55,9 +56,10 @@ class CocoapodsReplicaService(
             //索引源文件InputStream
             val indexFileInputStream =
                 storageManager.loadArtifactInputStream(nodeDetail, repoDetail.storageCredentials) ?: return
-
             //目标地址,ex:"http://bkrepo.indecpack7.com/cocoapods/z153ce/hb-pod-1220//MatthewYork/DateTools/5.0.0/DateTools-5.0.0.tar.gz"
             val sourcePath = "${cocoapodsProperties.domain}/${projectId}/${repoName}//${packageFilePath}"
+
+            logger.info("replace with sourcePath: $sourcePath")
 
             when (type) {
                 1 -> handleForPodSpec(indexFileInputStream, sourcePath, repoDetail, indexFilePath)
@@ -80,6 +82,7 @@ class CocoapodsReplicaService(
     ) {
         val jsonStr = JsonParser.parseReader(InputStreamReader(inputStream)).toJsonString()
         val newJsonStr = CocoapodsUtil.updatePodspecJsonSource(jsonStr, sourcePath)
+        logger.info("newJsonStr: $newJsonStr")
         val newInputStream = ByteArrayInputStream(newJsonStr.toByteArray())
         val artifactFile = ArtifactFileFactory.build(newInputStream)
         store(artifactFile, repoDetail, indexFilePath)
@@ -109,6 +112,7 @@ class CocoapodsReplicaService(
         val specStr = getSpecStr(inputStream)
         val newSpecStr = CocoapodsUtil.updatePodspecSource(specStr, sourcePath)
         val newInputStream = ByteArrayInputStream(newSpecStr.toByteArray())
+        logger.info("newSpecStr: $newSpecStr")
         val artifactFile = ArtifactFileFactory.build(newInputStream)
         store(artifactFile, repoDetail, indexFilePath)
     }

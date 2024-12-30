@@ -29,39 +29,10 @@
  * SOFTWARE.
  */
 
-package com.tencent.bkrepo.oci.service
+package com.tencent.bkrepo.oci.exception
 
-import com.tencent.bkrepo.common.artifact.api.ArtifactFile
-import com.tencent.bkrepo.oci.pojo.artifact.OciArtifactInfo
-import com.tencent.bkrepo.oci.pojo.artifact.OciBlobArtifactInfo
-import org.springframework.web.multipart.MultipartFile
+import com.tencent.bkrepo.common.api.exception.ErrorCodeException
+import com.tencent.bkrepo.common.api.message.MessageCode
 
-interface OciBlobService {
-    /**
-     * 上传blob文件
-     * 分为两种情况：
-     * 1 当digest参数存在时，是使用single post直接上传文件
-     * 2 当digest参数不存在时，使用post and put方式上传文件,此接口返回追加uuid
-     */
-    fun startUploadBlob(artifactInfo: OciBlobArtifactInfo, artifactFile: ArtifactFile)
-
-    /**
-     * 根据[artifactInfo]的信息来上传[artifactFile]文件
-     */
-    fun uploadBlob(artifactInfo: OciBlobArtifactInfo, artifactFile: ArtifactFile)
-
-    /**
-     * 根据[artifactInfo]的信息下载blob文件
-     */
-    fun downloadBlob(artifactInfo: OciBlobArtifactInfo)
-
-    /**
-     * 根据[artifactInfo]的信息下载blob文件
-     */
-    fun deleteBlob(artifactInfo: OciBlobArtifactInfo)
-
-    /**
-     * 页面上传镜像包
-     */
-    fun uploadImage(artifactInfo: OciArtifactInfo, file: MultipartFile)
-}
+class OciImageUploadException(messageCode: MessageCode, vararg params: String)
+    : ErrorCodeException(messageCode, *params)

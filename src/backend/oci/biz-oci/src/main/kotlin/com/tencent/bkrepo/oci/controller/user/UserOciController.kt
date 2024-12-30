@@ -52,17 +52,22 @@ import com.tencent.bkrepo.oci.pojo.artifact.OciManifestArtifactInfo
 import com.tencent.bkrepo.oci.pojo.response.OciImageResult
 import com.tencent.bkrepo.oci.pojo.response.OciTagResult
 import com.tencent.bkrepo.oci.pojo.user.PackageVersionInfo
+import com.tencent.bkrepo.oci.service.OciBlobService
 import com.tencent.bkrepo.oci.service.OciOperationService
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiParam
+import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestAttribute
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.servlet.HandlerMapping
 import javax.servlet.http.HttpServletRequest
 
@@ -71,6 +76,7 @@ import javax.servlet.http.HttpServletRequest
 @RestController
 @RequestMapping("/ext")
 class UserOciController(
+    private val ociBlobService: OciBlobService,
     private val operationService: OciOperationService
 ) {
 
@@ -201,4 +207,28 @@ class UserOciController(
             )
         )
     }
+
+    @PutMapping("/upload/{projectId}/{repoName}", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    fun uploadImage(
+
+        @PathVariable
+        projectId: String,
+
+        @PathVariable
+        repoName: String,
+
+        @RequestParam
+        packageName: String,
+
+        @RequestParam
+        version: String,
+
+        @RequestPart(value = "file")
+        file: MultipartFile
+
+    ): Response<Boolean> {
+        ociBlobService.uploadImage(OciArtifactInfo(projectId, repoName, packageName, version), file)
+        return ResponseBuilder.success()
+    }
+
 }

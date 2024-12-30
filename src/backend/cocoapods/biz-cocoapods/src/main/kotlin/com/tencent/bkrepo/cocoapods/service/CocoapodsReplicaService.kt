@@ -21,6 +21,7 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.io.InputStreamReader
+import kotlin.math.log
 
 @Service
 class CocoapodsReplicaService(
@@ -57,7 +58,7 @@ class CocoapodsReplicaService(
             val indexFileInputStream =
                 storageManager.loadArtifactInputStream(nodeDetail, repoDetail.storageCredentials) ?: return
             //目标地址,ex:"http://bkrepo.indecpack7.com/cocoapods/z153ce/hb-pod-1220//MatthewYork/DateTools/5.0.0/DateTools-5.0.0.tar.gz"
-            val sourcePath = "${cocoapodsProperties.domain}/${projectId}/${repoName}//${packageFilePath}"
+            val sourcePath = "${cocoapodsProperties.domain}/${projectId}/${repoName}/${packageFilePath}"
 
             logger.info("replace with sourcePath: $sourcePath")
 
@@ -92,10 +93,12 @@ class CocoapodsReplicaService(
      * 存储文件
      */
     private fun store(artifactFile: ArtifactFile, repoDetail: RepositoryDetail, indexFilePath: String) {
+        logger.info("start to store $indexFilePath")
         with(repoDetail) {
             val nodeCreateRequest = NodeCreateRequest(projectId, name, indexFilePath, false)
             storageManager.storeArtifactFile(nodeCreateRequest, artifactFile, storageCredentials)
         }
+        logger.info("store success")
     }
 
     /**

@@ -29,11 +29,7 @@ package com.tencent.bkrepo.replication.replica.base.impl.internal
 
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
 import com.tencent.bkrepo.common.service.util.SpringContextUtils
-import com.tencent.bkrepo.replication.replica.base.impl.internal.type.DockerPackageNodeMapper
-import com.tencent.bkrepo.replication.replica.base.impl.internal.type.GoPackageNodeMapper
-import com.tencent.bkrepo.replication.replica.base.impl.internal.type.MavenPackageNodeMapper
-import com.tencent.bkrepo.replication.replica.base.impl.internal.type.NpmPackageNodeMapper
-import com.tencent.bkrepo.replication.replica.base.impl.internal.type.PackageNodeMapper
+import com.tencent.bkrepo.replication.replica.base.impl.internal.type.*
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
 
@@ -45,10 +41,9 @@ object PackageNodeMappings {
     private val mappers = mutableMapOf<RepositoryType, PackageNodeMapper>()
 
     init {
-        addMapper(SpringContextUtils.getBean(MavenPackageNodeMapper::class.java))
-        addMapper(NpmPackageNodeMapper())
-        addMapper(SpringContextUtils.getBean(DockerPackageNodeMapper::class.java))
-        addMapper(SpringContextUtils.getBean(GoPackageNodeMapper::class.java))
+        SpringContextUtils.getBeansOfType(PackageNodeMapper::class.java).forEach { (_, mapper) ->
+            addMapper(mapper)
+        }
     }
 
     private fun addMapper(mapper: PackageNodeMapper) {

@@ -63,9 +63,9 @@ class CocoapodsPackageNodeMapper(
 
     fun getSpecsAndJsonPath(contentPath: String): List<String> {
         val split = contentPath.split('/')
-        val orgName = split[0]
-        val artifactName = split[1]
-        val versionName = split[2]
+        val orgName = split[1]
+        val artifactName = split[2]
+        val versionName = split[3]
         val specsPath = "/.specs/${artifactName}/${versionName}/${artifactName}.podspec"
         val jsonPath = "/.specs/${artifactName}/${versionName}/${artifactName}.podspec.json"
         logger.info("specsPath: ${specsPath},jsonPath: $jsonPath")

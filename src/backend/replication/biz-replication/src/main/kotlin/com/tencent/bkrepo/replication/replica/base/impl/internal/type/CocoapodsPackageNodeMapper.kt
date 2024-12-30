@@ -32,6 +32,7 @@ import com.tencent.bkrepo.common.artifact.util.PackageKeys
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
 import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
 @Component
@@ -51,11 +52,13 @@ class CocoapodsPackageNodeMapper(
         type: RepositoryType
     ): List<String> {
         val contentPath = packageVersion.contentPath ?: ""
-        return nodeClient.listExistFullPath(
+        val fullPathList = nodeClient.listExistFullPath(
             packageSummary.projectId,
             packageSummary.repoName,
             listOf(contentPath) + getSpecsAndJsonPath(contentPath)
         ).data.orEmpty()
+        logger.info("Cocoapods-replica: fullPathList: [$fullPathList]")
+        return fullPathList
     }
 
     fun getSpecsAndJsonPath(contentPath: String): List<String> {
@@ -65,6 +68,11 @@ class CocoapodsPackageNodeMapper(
         val versionName = split[2]
         val specsPath = "/.specs/${artifactName}/${versionName}/${artifactName}.podspec"
         val jsonPath = "/.specs/${artifactName}/${versionName}/${artifactName}.podspec.json"
+        logger.info("specsPath: ${specsPath},jsonPath: $jsonPath")
         return listOf(specsPath, jsonPath)
+    }
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(this::class.java)
     }
 }

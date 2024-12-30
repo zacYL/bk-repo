@@ -359,7 +359,7 @@ abstract class AbstractReplicaService(
                             logger.info("send cocoapods replica event[$event]")
                             eventSupplier.delegateToSupplier(
                                 event = event,
-                                topic = event.topic,
+                                topic = BINDING_OUT_NAME,
                                 key = event.getFullResourceKey()
                             )
                         }
@@ -459,5 +459,6 @@ abstract class AbstractReplicaService(
 
     companion object {
         private const val PAGE_SIZE = 1000
+        private const val BINDING_OUT_NAME = "artifactEvent-out-0"
     }
 }

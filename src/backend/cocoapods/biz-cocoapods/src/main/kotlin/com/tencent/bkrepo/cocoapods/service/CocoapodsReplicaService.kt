@@ -42,7 +42,7 @@ class CocoapodsReplicaService(
         logger.info("Cocoapods-Event: resolveIndexFile, event:[$event]")
         with(event) {
 
-            val packageFilePath = data["contentPath"] as (String)
+            val packageFilePath = data["fullPath"] as (String)
 
             val indexFilePath = getIndexFilePath(projectId, repoName, packageFilePath)
 

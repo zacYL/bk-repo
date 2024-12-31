@@ -1,9 +1,7 @@
 package com.tencent.bkrepo.cocoapods.utils
 
 import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.transport.CredentialsProvider
-import org.eclipse.jgit.transport.RefSpec
 import org.eclipse.jgit.transport.TagOpt
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -19,8 +17,7 @@ object GitUtil {
 
         try {
             if (repoDir.exists() && repoDir.isDirectory) {
-                // 如果目录已存在，尝试执行 `git fetch` + `reset`
-                logger.info("Local repository exists. Fetching updates from remote.")
+                logger.info("Local repository exists. pull from remote.")
 
                 // 检测并删除锁文件
                 val lockFile = File(repoDir, ".git/index.lock")
@@ -30,23 +27,14 @@ object GitUtil {
                 }
 
                 Git.open(repoDir).use { git ->
-                    // 执行 fetch，启用浅拉取和禁用标签
-                    val fetchCommand = git.fetch()
-                        .setRemote("origin") // 远程仓库名
-                        .setRefSpecs(RefSpec("refs/heads/master:refs/heads/master")) // 拉取目标分支
+                    // 执行 pull，启用浅拉取和禁用标签
+                    val pullCommand = git.pull()
                         .setTagOpt(TagOpt.NO_TAGS) // 禁用标签拉取
+                        .setRemoteBranchName("master")
                     if (credentialsProvider != null) {
-                        fetchCommand.setCredentialsProvider(credentialsProvider)
+                        pullCommand.setCredentialsProvider(credentialsProvider)
                     }
-                    fetchCommand.call()
-                    logger.info("Fetch completed.")
-
-                    // 执行 reset，将本地分支同步到远程分支
-                    git.reset()
-                        .setMode(ResetCommand.ResetType.HARD)
-                        .setRef("refs/remotes/origin/master") // 指定远程分支
-                        .call()
-                    logger.info("Repository reset to remote state.")
+                    pullCommand.call()
                 }
             } else {
                 // 如果目录不存在，执行 `git clone`
@@ -72,7 +60,7 @@ object GitUtil {
         }
     }
 
-    fun getLatestRefs(repoPath: String): String {
+    private fun getLatestRefs(repoPath: String): String {
         // 打开本地仓库
         val git = Git.open(File(repoPath))
 
@@ -83,7 +71,7 @@ object GitUtil {
             val latestCommit = repository.resolve(headRef.objectId.name) // 获取提交 ID
             logger.info("Latest commit hash: $latestCommit")
             return latestCommit.name
-        }catch (e: Exception){
+        } catch (e: Exception) {
             logger.error("Failed to get latest refs: ${e.message}", e)
             throw e
         }

@@ -27,6 +27,7 @@
 
 package com.tencent.bkrepo.cocoapods.event.consumer
 
+import com.google.gson.Gson
 import com.tencent.bkrepo.cocoapods.constant.LOCK_PREFIX
 import com.tencent.bkrepo.cocoapods.pool.EventHandlerThreadPoolExecutor
 import com.tencent.bkrepo.cocoapods.service.CocoapodsReplicaService
@@ -41,6 +42,7 @@ import com.tencent.bkrepo.common.lock.service.LockOperation
 import com.tencent.bkrepo.replication.pojo.record.ExecutionResult
 import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus
 import com.tencent.bkrepo.repository.api.RepositoryClient
+import okhttp3.OkHttpClient
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.util.concurrent.Future
@@ -51,9 +53,11 @@ class RemoteEventJobExecutor(
     private val lockOperation: LockOperation,
     private val cocoapodsSpecsService: CocoapodsSpecsService,
     private val repositoryClient: RepositoryClient,
-    private val cocoapodsReplicaService: CocoapodsReplicaService,
+    private val cocoapodsReplicaService: CocoapodsReplicaService
 ) {
     private val threadPoolExecutor: ThreadPoolExecutor = EventHandlerThreadPoolExecutor.instance
+    private val client = OkHttpClient()
+    private val gson = Gson()
 
     fun execute(event: ArtifactEvent) {
         try {
@@ -66,7 +70,7 @@ class RemoteEventJobExecutor(
                         }
                     }
 
-                    EventType.COCOAPODS_REPLICA -> {
+                    EventType.REPLICATION -> {
                         {
                             replicaHandle(this)
                         }
@@ -118,7 +122,21 @@ class RemoteEventJobExecutor(
     }
 
     private fun replicaHandle(event: ArtifactEvent) {
+        //TODO 应该利用http调用
         cocoapodsReplicaService.resolveIndexFile(event)
+//        val clusterUrl = event.data["clusterUrl"] as? String
+//            ?: throw IllegalArgumentException("Cluster URL not found in event data")
+//
+//        // 将 ArtifactEvent 对象转换为 JSON 字符串
+//        val eventJson = gson.toJson(event)
+//
+//        val mediaType = MediaType.parse("application/json")
+//        val requestBody = RequestBody.create(mediaType, eventJson)
+//        val request = Request.Builder()
+//            .url(clusterUrl+"/cocoapods"+COCOAPODS_REPLICA_RESOLVE)
+//            .post(requestBody)
+//            .build()
+//        client.newCall(request).execute()
     }
 
     private fun repoCreateHandle(event: ArtifactEvent) {

@@ -51,8 +51,10 @@ import com.tencent.bkrepo.replication.pojo.task.setting.ConflictStrategy.SKIP
 import com.tencent.bkrepo.replication.pojo.task.setting.ErrorStrategy
 import com.tencent.bkrepo.replication.replica.base.context.ReplicaContext
 import com.tencent.bkrepo.replication.replica.base.context.ReplicaExecutionContext
-import com.tencent.bkrepo.replication.replica.event.CocoapodsReplicaEvent
+import com.tencent.bkrepo.replication.replica.event.ReplicaEvent
 import com.tencent.bkrepo.replication.service.ReplicaRecordService
+import com.tencent.bkrepo.repository.api.NodeClient
+import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.NodeInfo
 import com.tencent.bkrepo.repository.pojo.node.UserAuthPathOption
 import com.tencent.bkrepo.repository.pojo.packages.PackageListOption
@@ -350,11 +352,15 @@ abstract class AbstractReplicaService(
 
                         //仅针对Cocoapods制品同步，发送消息给Cocoapods服务，通知处理包文件索引
                         if (packageSummary.type == PackageType.COCOAPODS) {
-                            val event = CocoapodsReplicaEvent(
-                                packageSummary,
-                                version,
-                                SecurityUtils.getUserId(),
-                                RepositoryType.COCOAPODS
+                            //构建消息对象，传入的参数是有关同步接收方节点的信息
+                            val event = ReplicaEvent(
+                                projectId = replicaContext.remoteProjectId!!,
+                                repoName = replicaContext.remoteRepoName!!,
+                                fullPath = version.contentPath!!,
+                                clusterUrl = replicaContext.cluster.url.substring(0, replicaContext.cluster.url.indexOf("/replication")),
+                                repoType = RepositoryType.COCOAPODS,
+                                packageType = PackageType.COCOAPODS,
+                                userId = SecurityUtils.getUserId()
                             )
                             logger.info("send cocoapods replica event[$event]")
                             eventSupplier.delegateToSupplier(

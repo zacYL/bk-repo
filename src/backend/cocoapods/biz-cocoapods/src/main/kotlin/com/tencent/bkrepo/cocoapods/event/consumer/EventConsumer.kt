@@ -10,7 +10,7 @@ class EventConsumer (
     private val remoteEventJobExecutor: RemoteEventJobExecutor
 ) : Consumer<ArtifactEvent> {
     companion object {
-        var supportEvent = listOf(EventType.REPO_CREATED, EventType.COCOAPODS_REPLICA)
+        var supportEvent = listOf(EventType.REPO_CREATED, EventType.REPLICATION)
     }
 
     override fun accept(event: ArtifactEvent) {

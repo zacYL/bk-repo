@@ -30,23 +30,31 @@ package com.tencent.bkrepo.replication.replica.event
 import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
-import com.tencent.bkrepo.repository.pojo.packages.PackageSummary
-import com.tencent.bkrepo.repository.pojo.packages.PackageVersion
+import com.tencent.bkrepo.repository.pojo.packages.PackageType
 
 /**
- * Cocoapods制品分发消息类
- * 现用于在分发Cocoapods制品时通知Cocoapods服务修改索引文件
+ * 制品分发相关消息类
+ * 传入远程被同步方节点的相关信息
+ * eventType为EventType.REPLICATION
  */
-data class CocoapodsReplicaEvent(
-    private val packageSummary: PackageSummary,
-    private val version: PackageVersion,
+data class ReplicaEvent(
+    override val projectId: String,
+    override val repoName: String,
+    private val packageType: PackageType,
+    private val fullPath: String,
+    private val clusterUrl: String,
+    private val repoType: RepositoryType,
     override val userId: String,
-    val repoType: RepositoryType
 ) : ArtifactEvent(
-    type = EventType.COCOAPODS_REPLICA,
-    projectId = packageSummary.projectId,
-    repoName = packageSummary.repoName,
-    resourceKey = version.contentPath ?: "",
+    type = EventType.REPLICATION,
+    projectId = projectId,
+    repoName = repoName,
+    resourceKey = fullPath,
     userId = userId,
-    data = mapOf("repoType" to repoType, "contentPath" to (version.contentPath ?: ""))
+    data = mapOf(
+        "packageType" to packageType,
+        "fullPath" to fullPath,
+        "clusterUrl" to clusterUrl,
+        "repoType" to repoType
+    )
 )

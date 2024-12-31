@@ -168,6 +168,6 @@ enum class EventType(val msgKey: String) {
     // 第三方同步
     REPLICATION_THIRD_PARTY("artifact.event.replication-third-party"),
 
-    //Cocoapods制品同步
-    COCOAPODS_REPLICA("artifact.event.cocoapods-replica");
+    //制品同步
+    REPLICATION("artifact.event.replication");
 }

@@ -65,7 +65,7 @@ class CocoapodsReplicaService(
             val indexFileInputStream =
                 storageManager.loadArtifactInputStream(nodeDetail, repoDetail.storageCredentials) ?: return
             //目标地址,ex:"http://bkrepo.indecpack7.com/cocoapods/z153ce/hb-pod-1220//MatthewYork/DateTools/5.0.0/DateTools-5.0.0.tar.gz"
-            val sourcePath = "${cocoapodsProperties.domain}/${projectId}/${repoName}/${packageFilePath}"+"/test"
+            val sourcePath = "${cocoapodsProperties.domain}/${projectId}/${repoName}/${packageFilePath}"
 
             logger.info("replace with sourcePath: $sourcePath")
 

@@ -81,8 +81,8 @@
         watch: {
             initData: {
                 handler (data) {
-                    const { remoteRepoName, remoteProjectId, repoType, packageConstraints = [] } = JSON.parse(JSON.stringify(data))[0] || {}
-                    this.selectedRepoName = remoteRepoName
+                    const { remoteRepoName, remoteProjectId, repoType, packageConstraints = [], localRepoName } = JSON.parse(JSON.stringify(data))[0] || {}
+                    this.selectedRepoName = localRepoName
                     this.packageConstraints = packageConstraints.map(pkg => ({
                         ...pkg,
                         key: pkg.packageKey,

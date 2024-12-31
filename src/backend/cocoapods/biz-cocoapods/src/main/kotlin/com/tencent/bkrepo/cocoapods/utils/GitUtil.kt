@@ -1,7 +1,10 @@
 package com.tencent.bkrepo.cocoapods.utils
 
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.transport.CredentialsProvider
+import org.eclipse.jgit.transport.RefSpec
+import org.eclipse.jgit.transport.TagOpt
 import org.slf4j.LoggerFactory
 import java.io.File
 
@@ -16,24 +19,35 @@ object GitUtil {
 
         try {
             if (repoDir.exists() && repoDir.isDirectory) {
-                // 如果目录已存在，尝试执行 `git pull`
-                logger.info("Local repository exists. Performing 'git pull'.")
+                // 如果目录已存在，尝试执行 `git fetch` + `reset`
+                logger.info("Local repository exists. Fetching updates from remote.")
+
                 // 检测并删除锁文件
                 val lockFile = File(repoDir, ".git/index.lock")
                 if (lockFile.exists()) {
                     logger.warn("Lock file detected: ${lockFile.absolutePath}. Deleting it to prevent conflicts.")
                     lockFile.delete()
                 }
+
                 Git.open(repoDir).use { git ->
-                    // 检查仓库状态
-                    logger.info("Git repository status: ${git.status().call()}")
-                    val pullCommand = git.pull()
+                    // 执行 fetch，启用浅拉取和禁用标签
+                    val fetchCommand = git.fetch()
+                        .setRemote("origin") // 远程仓库名
+                        .setRefSpecs(RefSpec("refs/heads/master:refs/heads/master")) // 拉取目标分支
+                        .setTagOpt(TagOpt.NO_TAGS) // 禁用标签拉取
                     if (credentialsProvider != null) {
-                        pullCommand.setCredentialsProvider(credentialsProvider)
+                        fetchCommand.setCredentialsProvider(credentialsProvider)
                     }
-                    pullCommand.call()
+                    fetchCommand.call()
+                    logger.info("Fetch completed.")
+
+                    // 执行 reset，将本地分支同步到远程分支
+                    git.reset()
+                        .setMode(ResetCommand.ResetType.HARD)
+                        .setRef("refs/remotes/origin/master") // 指定远程分支
+                        .call()
+                    logger.info("Repository reset to remote state.")
                 }
-                logger.info("Repository pulled successfully.")
             } else {
                 // 如果目录不存在，执行 `git clone`
                 logger.info("Cloning repository from $repoUrl to $localPath.")

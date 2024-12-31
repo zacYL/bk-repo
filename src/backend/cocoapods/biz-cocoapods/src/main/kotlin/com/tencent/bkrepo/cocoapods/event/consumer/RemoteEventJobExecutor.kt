@@ -62,10 +62,7 @@ class RemoteEventJobExecutor(
                 val action: () -> Unit = when (type) {
                     EventType.REPO_CREATED -> {
                         {
-                            val lockKey = "$LOCK_PREFIX:init_specs:$projectId:$repoName"
-                            lockAction(lockKey) {
-                                repoCreateHandle(this)
-                            }
+                            repoCreateHandle(this)
                         }
                     }
 
@@ -128,19 +125,22 @@ class RemoteEventJobExecutor(
         with(event) {
             require(data[RepoCreatedEvent::repoType.name].toString() == RepositoryType.COCOAPODS.name) { return }
             logger.info("repo create event: $event")
-            repositoryClient.getRepoInfo(projectId, repoName).data?.let { repoInfo ->
-                when (repoInfo.category) {
-                    RepositoryCategory.LOCAL -> {
-                        cocoapodsSpecsService.initSpecs(projectId, repoName)
-                    }
+            val lockKey = "$LOCK_PREFIX:init_specs:$projectId:$repoName"
+            lockAction(lockKey) {
+                repositoryClient.getRepoInfo(projectId, repoName).data?.let { repoInfo ->
+                    when (repoInfo.category) {
+                        RepositoryCategory.LOCAL -> {
+                            cocoapodsSpecsService.initSpecs(projectId, repoName)
+                        }
 
-                    RepositoryCategory.REMOTE -> {
-                        cocoapodsSpecsService.initRemoteSpecs(projectId, repoInfo)
-                    }
+                        RepositoryCategory.REMOTE -> {
+                            cocoapodsSpecsService.initRemoteSpecs(projectId, repoInfo)
+                        }
 
-                    else -> TODO()
-                }
-            } ?: throw RepoNotFoundException(repoName)
+                        else -> TODO()
+                    }
+                } ?: throw RepoNotFoundException(repoName)
+            }
         }
     }
 

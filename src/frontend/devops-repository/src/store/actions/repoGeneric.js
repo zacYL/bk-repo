@@ -189,7 +189,7 @@ export default {
         return new Promise((resolve, reject) => {
             xhr.onreadystatechange = () => {
                 if (xhr.readyState === 4) {
-                    if (xhr.status === 200) {
+                    if ([200, 201].includes(xhr.status)) {
                         resolve(xhr.response)
                     } else {
                         reject(xhr.response)
@@ -201,12 +201,16 @@ export default {
                 requestUrl = 'web/maven/jar_gav'
             } else if (uploadType === 'pomUpload') {
                 requestUrl = 'web/maven/pom_gav'
+            } else if (uploadType === 'dockerUpload') {
+                requestUrl = 'web/docker/ext/upload'
             } else {
                 requestUrl = 'web/generic'
             }
             xhr.upload.addEventListener('progress', progressHandler)
             if (['mavenUpload', 'pomUpload'].includes(uploadType)) {
                 xhr.open('POST', `/${requestUrl}`, true)
+            } else if (uploadType === 'dockerUpload') {
+                xhr.open('PUT', `/${requestUrl}/${projectId}/${repoName}`, true)
             } else {
                 xhr.open('PUT', `/${requestUrl}/${projectId}/${repoName}/${encodeURIComponent(fullPath)}`, true)
             }

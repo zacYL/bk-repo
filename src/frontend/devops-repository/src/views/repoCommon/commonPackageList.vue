@@ -102,7 +102,14 @@
         </bk-sideslider>
 
         <!-- maven包制上传侧边栏 -->
-        <repoUploader v-if="['MAVEN', 'DOCKER', 'NPM'].includes(currentType) && repoUploader.isVisible" v-model="repoUploader.isVisible" :project-id="projectId" :repo-name="repoName" @update="onUpdateUploader" @cancel="onCancelUploader" />
+        <repoUploader
+            v-if="['MAVEN', 'DOCKER', 'NPM'].includes(currentType) && repoUploader.isVisible"
+            v-model="repoUploader.isVisible"
+            :project-id="projectId"
+            :repo-name="repoName"
+            :repo-type="currentType"
+            @update="onUpdateUploader"
+            @cancel="onCancelUploader" />
         <!-- maven包制上传侧边栏 /-->
         
         <!-- 使用指引 -->

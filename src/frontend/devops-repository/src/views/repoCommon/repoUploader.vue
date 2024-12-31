@@ -3,12 +3,14 @@
         :is-show.sync="isVisible"
         :quick-close="true"
         :width="500"
-        @hidden="handleClickClose">
+        @hidden="handleClickClose"
+    >
         <div slot="header">{{ customSettings.title }}</div>
         <div class="content-container" slot="content">
             <div v-if="customSettings.uploadFlag">
                 <div class="content-info">
-                    {{$t('selectMavenArtifact')}}
+                    <p v-if="repoType === 'MAVEN'">{{ $t('selectMavenArtifact') }}</p>
+                    <p v-if="repoType === 'DOCKER'">{{ $t('selectDockerImage') }}</p>
                 </div>
                 <bk-upload
                     v-bkloading="{ isLoading: isLoading, title: $t('uploadMavenArtifactLoading') }"
@@ -16,82 +18,137 @@
                     :size="5 * 1024"
                     :limit="1"
                     :multiple="false"
-                    :accept="'.pom,.jar'"
+                    v-bind="{
+                        ...repoType === 'MAVEN' ? { accept: '.pom,.jar' } : {}
+                    }"
                     :custom-request="onRequestUpload"
                     ext-cls="content-upload"
                     url="#"
-                ></bk-upload>
+                />
+                <template v-if="repoType === 'DOCKER'">
+                    <bk-form
+                        class="mt10"
+                        ref="formRef"
+                        :label-width="200"
+                        :model="dockerFormData"
+                        form-type="vertical"
+                        :rules="dockerRules"
+                    >
+                        <bk-form-item :label="$t('currentFile')" v-if="dockerFormData.currentFile" required>
+                            <bk-input disabled v-model="dockerFormData.currentFile" />
+                        </bk-form-item>
+                        <bk-form-item label="Package Name" property="packageName" required>
+                            <bk-input v-model="dockerFormData.packageName" />
+                        </bk-form-item>
+                        <bk-form-item label="Version" property="version" required>
+                            <bk-input v-model="dockerFormData.version" />
+                        </bk-form-item>
+                    </bk-form>
+                    <div class="g-flex mt10">
+                        {{ $t('progress') }}:
+                        <bk-progress :stroke-width="8" :percent="uploadPercent" />
+                    </div>
+                </template>
                 <div class="upload-show-file-container" v-if="currentFileName">
                     <div class="upload-show-file-container-info">
-                        {{currentFileName || ''}}
-                        <bk-progress :stroke-width="8" :percent="uploadPercent"></bk-progress>
+                        {{ currentFileName || '' }}
+                        <bk-progress :stroke-width="8" :percent="uploadPercent" />
                     </div>
-                    <bk-button v-if="uploadPercent > 0 && uploadPercent !== 1" class="upload-show-file-container-cancel" :title="$t('cancel')" theme="warning" :text="true" @click="onAbortUpload">
-                        {{$t('cancel')}}
+                    <bk-button
+                        v-if="uploadPercent > 0 && uploadPercent !== 1"
+                        class="upload-show-file-container-cancel"
+                        :title="$t('cancel')"
+                        theme="warning"
+                        :text="true"
+                        @click="onAbortUpload"
+                    >
+                        {{ $t('cancel') }}
                     </bk-button>
-                    <bk-button v-if="uploadPercent === 1 && !errorMsg && !isLoading" class="upload-show-file-container-cancel" :title="$t('uploadMavenSuccessInfo')" theme="success" :text="true">
-                        {{$t('uploadMavenSuccessInfo')}}
+                    <bk-button
+                        v-if="uploadPercent === 1 && !errorMsg && !isLoading"
+                        class="upload-show-file-container-cancel"
+                        :title="$t('uploadMavenSuccessInfo')"
+                        theme="success"
+                        :text="true"
+                    >
+                        {{ $t('uploadMavenSuccessInfo') }}
                     </bk-button>
                 </div>
-                <div class="error-upload-info" v-if="errorMsg">{{errorMsg || $t('uploadMavenErrorMsg')}}</div>
+                <div class="error-upload-info" v-if="errorMsg">{{ errorMsg || $t('uploadMavenErrorMsg') }}</div>
             </div>
             <div v-else>
-                <div class="content-file-info" v-if="currentFileName">
-                    <span>{{currentFileName}}</span>
-                    <bk-icon-plus type="plus-close" @click="() => {
-                        currentFileName = ''
-                    }" />
-                </div>
-                <bk-form ref="formRef" :label-width="200" :model="formData" form-type="vertical">
-                    <bk-form-item label="Group ID" property="groupId" :required="checkFail">
-                        <bk-input :readonly="!checkFail" v-model="formData.groupId"></bk-input>
-                    </bk-form-item>
-                    <bk-form-item label="Artifact ID" property="artifactId" :required="checkFail">
-                        <bk-input :readonly="!checkFail" v-model="formData.artifactId"></bk-input>
-                    </bk-form-item>
-                    <bk-form-item label="Version" property="version" :required="checkFail">
-                        <bk-input :readonly="!checkFail" v-model="formData.version"></bk-input>
-                    </bk-form-item>
-                    <bk-form-item v-if="formData.classifier" label="Classifier" property="classifier">
-                        <bk-input readonly v-model="formData.classifier"></bk-input>
-                    </bk-form-item>
-                    <bk-form-item label="Type" property="type">
-                        <bk-input readonly v-model="formData.type"></bk-input>
-                    </bk-form-item>
-
-                    <bk-form-item v-if="checkFail">
-                        <bk-button
-                            text
-                            theme="primary"
-                            class="ml5"
-                            @click="reupload()">
-                            {{$t('upload') + $t('space') + 'pom'}}
-                        </bk-button>
-                        <bk-upload
-                            v-show="false"
-                            ref="pomUpload"
-                            class="mb5"
-                            v-bkloading="{ isLoading: isLoading, title: $t('uploadMavenArtifactLoading') }"
-                            :with-credentials="true"
-                            :size="5 * 1024"
-                            :limit="1"
-                            :multiple="false"
-                            :custom-request="onRequestPomUpload"
-                            :accept="'.pom'"
-                            url="#"
-                        ></bk-upload>
-                    </bk-form-item>
-                </bk-form>
+                <template v-if="repoType === 'MAVEN'">
+                    <div class="content-file-info" v-if="currentFileName">
+                        <span>{{ currentFileName }}</span>
+                        <bk-icon-plus type="plus-close" @click="() => {
+                            currentFileName = ''
+                        }" />
+                    </div>
+                    <bk-form
+                        ref="formRef"
+                        :label-width="200"
+                        :model="mavenFormData"
+                        form-type="vertical"
+                        :rules="mavenRules"
+                    >
+                        <bk-form-item label="Group ID" property="groupId" :required="checkFail">
+                            <bk-input :readonly="!checkFail" v-model="mavenFormData.groupId" />
+                        </bk-form-item>
+                        <bk-form-item label="Artifact ID" property="artifactId" :required="checkFail">
+                            <bk-input :readonly="!checkFail" v-model="mavenFormData.artifactId" />
+                        </bk-form-item>
+                        <bk-form-item label="Version" property="version" :required="checkFail">
+                            <bk-input :readonly="!checkFail" v-model="mavenFormData.version" />
+                        </bk-form-item>
+                        <bk-form-item v-if="mavenFormData.classifier" label="Classifier" property="classifier">
+                            <bk-input readonly v-model="mavenFormData.classifier" />
+                        </bk-form-item>
+                        <bk-form-item label="Type" property="type">
+                            <bk-input readonly v-model="mavenFormData.type" />
+                        </bk-form-item>
+                        <bk-form-item v-if="checkFail">
+                            <bk-button
+                                text
+                                theme="primary"
+                                class="ml5"
+                                @click="reupload()"
+                            >
+                                {{ $t('upload') + $t('space') + 'pom' }}
+                            </bk-button>
+                            <bk-upload
+                                v-show="false"
+                                ref="pomUpload"
+                                class="mb5"
+                                v-bkloading="{ isLoading: isLoading, title: $t('uploadMavenArtifactLoading') }"
+                                :with-credentials="true"
+                                :size="5 * 1024"
+                                :limit="1"
+                                :multiple="false"
+                                :custom-request="onRequestPomUpload"
+                                :accept="'.pom'"
+                                url="#"
+                            />
+                        </bk-form-item>
+                    </bk-form>
+                </template>
             </div>
         </div>
         <div slot="footer">
-            <bk-button @click.stop.prevent="cancel">{{$t('cancel')}}</bk-button>
+            <bk-button @click.stop.prevent="cancel">{{ $t('cancel') }}</bk-button>
             <bk-button
                 class="ml10"
                 theme="primary"
-                :disabled="customSettings.uploadFlag || customSettings.saveBtnDisable"
-                @click.stop.prevent="submitData">
-                {{$t('confirm')}}
+                v-bind="{
+                    ...repoType === 'MAVEN' ? {
+                        disabled: customSettings.uploadFlag || customSettings.saveBtnDisable
+                    } : {},
+                    ...repoType === 'DOCKER' ? {
+                        disabled: customSettings.saveBtnDisable
+                    } : {}
+                }"
+                @click.stop.prevent="submitData"
+            >
+                {{ $t('confirm') }}
             </bk-button>
         </div>
     </bk-sideslider>
@@ -106,6 +163,10 @@
             event: 'update'
         },
         props: {
+            repoType: {
+                type: String,
+                default: 'MAVEN'
+            },
             isVisible: {
                 type: Boolean,
                 default: false
@@ -121,7 +182,7 @@
         },
         data () {
             return {
-                rules: {
+                mavenRules: {
                     groupID: [
                         {
                             required: true,
@@ -144,19 +205,41 @@
                         }
                     ]
                 },
+                dockerRules: {
+                    packageName: [
+                        {
+                            required: true,
+                            message: this.$t('pleaseInput') + this.$t('space') + 'Package Name',
+                            trigger: 'blur'
+                        }
+                    ],
+                    version: [
+                        {
+                            required: true,
+                            message: this.$t('pleaseInput') + this.$t('space') + 'Version',
+                            trigger: 'blur'
+                        }
+                    ]
+                },
                 customSettings: {
                     isShow: false,
                     title: this.$t('uploadMavenConfirmContent'),
                     uploadFlag: true, // 是否显示上传组件
                     saveBtnDisable: false // 确认按钮是否禁用
                 },
-                formData: {
+                mavenFormData: {
                     uuid: '',
                     groupId: '',
                     artifactId: '',
                     version: '',
                     classifier: '',
                     type: ''
+                },
+                dockerFormData: {
+                    packageName: '',
+                    version: '',
+                    file: '',
+                    currentFile: ''
                 },
                 checkFail: false, // 用于上传校验，如果失败的话，提供pom文件上传按钮
                 currentFileName: '', // 当前上传的文件名
@@ -191,11 +274,12 @@
                 this.cancel()
             },
             onRequestPomUpload (uploadFile) {
-                this.handleUpload(uploadFile, 'pomUpload')
+                this.handleMavenUpload(uploadFile, 'pomUpload')
             },
 
             onRequestUpload (uploadFile) {
-                this.handleUpload(uploadFile, 'mavenUpload')
+                if (this.repoType === 'MAVEN') this.handleMavenUpload(uploadFile, 'mavenUpload')
+                if (this.repoType === 'DOCKER') this.handleDockerUpload(uploadFile)
             },
 
             reupload () {
@@ -205,7 +289,12 @@
                 })
             },
 
-            handleUpload (uploadFile, uploadType) {
+            handleDockerUpload (uploadFile) {
+                this.dockerFormData.file = uploadFile
+                this.dockerFormData.currentFile = uploadFile.fileObj.name
+            },
+
+            handleMavenUpload (uploadFile, uploadType) {
                 if (uploadType === 'mavenUpload') this.checkFail = false
                 this.isLoading = true
                 this.errorMsg = ''
@@ -234,7 +323,7 @@
                     this.customSettings.uploadFlag = false
                     if (uploadType === 'mavenUpload' && (!res || !res.data || (!res.data.groupId && !res.data.artifactId && !res.data.version))) {
                         if (uploadType === 'mavenUpload') this.checkFail = true
-                        this.formData = {
+                        this.mavenFormData = {
                             uuid: res.data.uuid || '',
                             groupId: '',
                             artifactId: '',
@@ -243,9 +332,9 @@
                             type: body.name.split('.').pop()
                         }
                     } else {
-                        this.formData = {
+                        this.mavenFormData = {
                             ...res.data,
-                            uuid: this.formData.uuid || res.data.uuid
+                            uuid: this.mavenFormData.uuid || res.data.uuid
                         }
                     }
                 }).catch(error => {
@@ -269,18 +358,76 @@
             },
             submitData () {
                 this.$refs.formRef.validate().then(() => {
-                    this.customSettings.saveBtnDisable = true
-                    const params = {
-                        projectId: this.projectId,
-                        repoName: this.repoName,
-                        body: { ...this.formData }
+                    const cb = () => {
+                        return new Promise((resolve, reject) => {
+                            // 提交数据
+                            if (this.repoType === 'MAVEN') {
+                                const params = {
+                                    projectId: this.projectId,
+                                    repoName: this.repoName,
+                                    body: { ...this.mavenFormData }
+                                }
+                                resolve(
+                                    this.submitMavenArtifactory(params).then(res => {
+                                        this.$emit('update', false)
+                                    }).catch(error => {
+                                        this.$bkMessage({
+                                            theme: 'error',
+                                            message: `${error.message || this.$t('uploadMavenErrorMsgTip')}`
+                                        })
+                                    })
+                                )
+                            }
+                            if (this.repoType === 'DOCKER') {
+                                if (!this.dockerFormData.file) {
+                                    reject(this.$t('uploadDockerErrorMsgTip'))
+                                } else {
+                                    this.uploadPercent = 0
+                                    this.errorMsg = ''
+                                    const formData = new FormData()
+                                    formData.append('file', this.dockerFormData.file.fileList[0].origin)
+                                    formData.append('version', this.dockerFormData.version)
+                                    formData.append('packageName', this.dockerFormData.packageName)
+                                    const headers = {
+                                        'Content-Type': 'multipart/form-data; boundary=----',
+                                        'X-BKREPO-EXPIRES': 0
+                                    }
+                                    this.uploadXhr = new XMLHttpRequest()
+                                
+                                    resolve(
+                                        this.uploadArtifactory({
+                                            xhr: this.uploadXhr,
+                                            body: formData,
+                                            headers,
+                                            uploadType: 'dockerUpload',
+                                            projectId: this.projectId,
+                                            repoName: this.repoName,
+                                            progressHandler: ($event) => {
+                                                const num = $event.loaded / $event.total
+                                                this.dockerFormData.file.onProgress({ percent: num })
+                                                this.uploadPercent = num
+                                            }
+                                        }).then(res => {
+                                            this.$bkMessage({
+                                                theme: 'success',
+                                                message: this.$t('uploadSuccess')
+                                            })
+                                            this.$emit('update', false)
+                                        }).catch(error => {
+                                            this.errorMsg = error.message || error.error || error
+                                            reject(this.errorMsg)
+                                        })
+
+                                    )
+                                }
+                            }
+                        })
                     }
-                    this.submitMavenArtifactory(params).then(res => {
-                        this.$emit('update', false)
-                    }).catch(error => {
+                    this.customSettings.saveBtnDisable = true
+                    cb().catch(err => {
                         this.$bkMessage({
                             theme: 'error',
-                            message: `${error.message || this.$t('uploadMavenErrorMsgTip')}`
+                            message: err
                         })
                     }).finally(() => {
                         this.customSettings.saveBtnDisable = false
@@ -292,11 +439,12 @@
 </script>
 
 <style lang="scss" scoped>
-.content-container{
+.content-container {
     width: 100%;
     padding: 20px 30px;
 }
-.content-info{
+
+.content-info {
     margin: 0 0 9px 0;
     font-style: normal;
     font-weight: 400;
@@ -304,13 +452,16 @@
     line-height: 16px;
     color: #081E40;
 }
-.content-upload{
+
+.content-upload {
     height: 181px;
 }
-.error-upload-info{
+
+.error-upload-info {
     color: red;
 }
-.content-file-info{
+
+.content-file-info {
     box-sizing: border-box;
     width: 440px;
     height: 40px;
@@ -321,33 +472,40 @@
     justify-content: space-between;
     align-items: center;
 }
-.upload-show-file-container{
+
+.upload-show-file-container {
     height: 70px;
     padding: 5px;
     display: flex;
     justify-content: space-between;
-    width: 100% ;
-    &-info{
+    width: 100%;
+
+    &-info {
         text-align: center;
         width: 78%;
     }
-    &-cancel{
+
+    &-cancel {
         margin: 22px 0 0 0;
     }
 }
-::v-deep .progress-text{
+
+::v-deep .progress-text {
     margin: 0 0 0 10px;
 }
-::v-deep .bk-upload.draggable .file-wrapper{
+
+::v-deep .bk-upload.draggable .file-wrapper {
     height: 100%;
 }
-::v-deep .bk-sideslider-footer{
+
+::v-deep .bk-sideslider-footer {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    padding: 0 30px 0 0 ;
+    padding: 0 30px 0 0;
 }
-::v-deep .all-file{
+
+::v-deep .all-file {
     display: none;
 }
 </style>

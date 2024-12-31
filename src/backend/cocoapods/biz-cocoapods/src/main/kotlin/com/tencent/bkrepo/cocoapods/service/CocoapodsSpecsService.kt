@@ -161,16 +161,17 @@ class CocoapodsSpecsService(
         val oldLatestRef = cocoapodsRepoService.getStringSetting(projectId, repoInfo.name, LATEST_REF)
         var latestRef = ""
         lockOperation.doWithLock(lockKey) {
-
             latestRef = GitUtil.cloneOrPullRepo(remoteUrl, specsGitPath, credentialsProvider)
             cocoapodsGitInstanceDao.saveIfNotExist(TCocoapodsGitInstance(url = remoteUrl, path = specsGitPath, ref = latestRef))
         }
+        logger.info("repo [${repoInfo.name}] latestRef: $latestRef , oldLatestRef: $oldLatestRef")
         //如果当前已是最新的引用，则不需要再更新
         if (oldLatestRef == latestRef && indexExist(projectId, repoInfo.name)) {
             logger.info("repo [${repoInfo.name}] is latest, no need to update")
             return mutableListOf()
         }
         FileUtil.copyDirectory(specsGitPath, tempPath)
+        cocoapodsRepoService.updateStringSetting(projectId, repoInfo.name, LATEST_REF, latestRef)
         return ArchiveModifier.modifyAndZip(tempPath, projectId, repoInfo.name, cocoapodsProperties.domain, outputStream)
     }
 

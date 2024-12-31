@@ -63,7 +63,9 @@ object GitUtil {
                 cloneCommand.call()
             }
             logger.info("Repository updated successfully.")
-            return getLatestRefs(localPath)
+            val latestRefs = getLatestRefs(localPath)
+            logger.info("Latest Refs: $latestRefs")
+            return latestRefs
         } catch (e: Exception) {
             logger.error("Failed to update repository: ${e.message}", e)
             throw e
@@ -79,7 +81,7 @@ object GitUtil {
             val repository = git.repository
             val headRef = repository.findRef("HEAD") // 获取 HEAD 引用
             val latestCommit = repository.resolve(headRef.objectId.name) // 获取提交 ID
-            println("Latest commit hash: $latestCommit")
+            logger.info("Latest commit hash: $latestCommit")
             return latestCommit.name
         }catch (e: Exception){
             logger.error("Failed to get latest refs: ${e.message}", e)

@@ -28,6 +28,7 @@
 package com.tencent.bkrepo.cocoapods.event.consumer
 
 import com.google.gson.Gson
+import com.tencent.bkrepo.cocoapods.constant.COCOAPODS_REPLICA_RESOLVE
 import com.tencent.bkrepo.cocoapods.constant.LOCK_PREFIX
 import com.tencent.bkrepo.cocoapods.pool.EventHandlerThreadPoolExecutor
 import com.tencent.bkrepo.cocoapods.service.CocoapodsReplicaService
@@ -38,15 +39,21 @@ import com.tencent.bkrepo.common.artifact.event.repo.RepoCreatedEvent
 import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryCategory
 import com.tencent.bkrepo.common.artifact.pojo.RepositoryType
+import com.tencent.bkrepo.common.artifact.util.okhttp.BasicAuthInterceptor
+import com.tencent.bkrepo.common.artifact.util.okhttp.HttpClientBuilderFactory
 import com.tencent.bkrepo.common.lock.service.LockOperation
 import com.tencent.bkrepo.replication.pojo.record.ExecutionResult
 import com.tencent.bkrepo.replication.pojo.record.ExecutionStatus
 import com.tencent.bkrepo.repository.api.RepositoryClient
+import okhttp3.MediaType
 import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.util.concurrent.Future
 import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 
 @Component
 class RemoteEventJobExecutor(
@@ -122,21 +129,28 @@ class RemoteEventJobExecutor(
     }
 
     private fun replicaHandle(event: ArtifactEvent) {
-        //TODO 应该利用http调用
-        cocoapodsReplicaService.resolveIndexFile(event)
-//        val clusterUrl = event.data["clusterUrl"] as? String
-//            ?: throw IllegalArgumentException("Cluster URL not found in event data")
-//
-//        // 将 ArtifactEvent 对象转换为 JSON 字符串
-//        val eventJson = gson.toJson(event)
-//
-//        val mediaType = MediaType.parse("application/json")
-//        val requestBody = RequestBody.create(mediaType, eventJson)
-//        val request = Request.Builder()
-//            .url(clusterUrl+"/cocoapods"+COCOAPODS_REPLICA_RESOLVE)
-//            .post(requestBody)
-//            .build()
-//        client.newCall(request).execute()
+        with(event) {
+            val httpClient = HttpClientBuilderFactory
+                .create()
+                .addInterceptor(BasicAuthInterceptor(data["username"] as String, data["password"] as String))
+                .readTimeout(READ_TIMEOUT, TimeUnit.MILLISECONDS)
+                .connectTimeout(CONNECT_TIMEOUT, TimeUnit.MILLISECONDS)
+                .build()
+//        cocoapodsReplicaService.resolveIndexFile(event)
+            val domain = event.data["domain"] as? String
+                ?: throw IllegalArgumentException("domain not found in event data")
+
+            // 将 ArtifactEvent 对象转换为 JSON 字符串
+            val eventJson = gson.toJson(event)
+
+            val mediaType = MediaType.parse("application/json")
+            val requestBody = RequestBody.create(mediaType, eventJson)
+            val request = Request.Builder()
+                .url(domain + "/cocoapods" + COCOAPODS_REPLICA_RESOLVE)
+                .post(requestBody)
+                .build()
+            httpClient.newCall(request).execute()
+        }
     }
 
     private fun repoCreateHandle(event: ArtifactEvent) {
@@ -164,5 +178,13 @@ class RemoteEventJobExecutor(
 
     companion object {
         private val logger = LoggerFactory.getLogger(RemoteEventJobExecutor::class.java)
+        /**
+         * 远程请求连接超时时间，单位ms
+         */
+        const val CONNECT_TIMEOUT: Long = 10 * 1000L
+        /**
+         * 远程请求读超时时间，单位ms
+         */
+        const val READ_TIMEOUT: Long = 10 * 1000L
     }
 }

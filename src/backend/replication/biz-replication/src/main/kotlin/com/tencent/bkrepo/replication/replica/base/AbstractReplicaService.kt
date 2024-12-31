@@ -357,7 +357,7 @@ abstract class AbstractReplicaService(
                                 projectId = replicaContext.remoteProjectId!!,
                                 repoName = replicaContext.remoteRepoName!!,
                                 fullPath = version.contentPath!!,
-                                clusterUrl = replicaContext.cluster.url.substring(0, replicaContext.cluster.url.indexOf("/replication")),
+                                cluster = replicaContext.cluster,
                                 repoType = RepositoryType.COCOAPODS,
                                 packageType = PackageType.COCOAPODS,
                                 userId = SecurityUtils.getUserId()

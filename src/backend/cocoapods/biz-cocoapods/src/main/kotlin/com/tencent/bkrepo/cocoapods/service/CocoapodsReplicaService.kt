@@ -65,8 +65,11 @@ class CocoapodsReplicaService(
             //索引源文件InputStream
             val indexFileInputStream =
                 storageManager.loadArtifactInputStream(nodeDetail, repoDetail.storageCredentials) ?: return
+            val domain = data["domain"] as? String?:
+            throw IllegalArgumentException("domain is missing or not a string")
+
             //目标地址,ex:"http://bkrepo.indecpack7.com/cocoapods/z153ce/hb-pod-1220//MatthewYork/DateTools/5.0.0/DateTools-5.0.0.tar.gz"
-            val sourcePath = "${cocoapodsProperties.domain}/${projectId}/${repoName}/${packageFilePath}"
+            val sourcePath = "${domain}/${projectId}/${repoName}/${packageFilePath}"
 
             logger.info("replace with sourcePath: $sourcePath")
 

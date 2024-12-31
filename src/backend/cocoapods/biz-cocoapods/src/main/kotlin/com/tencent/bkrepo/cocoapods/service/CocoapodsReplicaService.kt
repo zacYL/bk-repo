@@ -104,7 +104,7 @@ class CocoapodsReplicaService(
             val nodeDetail = nodeClient
                 .getNodeDetail(projectId, name, indexFilePath)
                 .data as NodeDetail
-            nodeClient.deleteNode(NodeDeleteRequest(projectId,name,indexFilePath,SecurityUtils.getUserId()))
+            nodeClient.deleteNode(NodeDeleteRequest(projectId, name, indexFilePath, SecurityUtils.getUserId()))
             val nodeCreateRequest = NodeCreateRequest(projectId, name, indexFilePath, false, sha256 = nodeDetail.sha256)
             logger.info("nodeCreateRequest: $nodeCreateRequest")
             storageManager.storeArtifactFile(nodeCreateRequest, artifactFile, storageCredentials)

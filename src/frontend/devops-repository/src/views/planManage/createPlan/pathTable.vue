@@ -77,8 +77,8 @@
         watch: {
             initData: {
                 handler (data) {
-                    const { remoteRepoName, pathConstraints = [] } = JSON.parse(JSON.stringify(data))[0] || {}
-                    this.selectedRepoName = remoteRepoName
+                    const { pathConstraints = [], localRepoName } = JSON.parse(JSON.stringify(data))[0] || {}
+                    this.selectedRepoName = localRepoName
                     this.pathConstraints = pathConstraints.map(v => v.path)
                 },
                 deep: true,

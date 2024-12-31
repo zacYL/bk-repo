@@ -10,10 +10,12 @@ import com.tencent.bkrepo.common.artifact.event.base.ArtifactEvent
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.stream.ArtifactInputStream
+import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
 import com.tencent.bkrepo.repository.pojo.node.service.NodeCreateRequest
+import com.tencent.bkrepo.repository.pojo.node.service.NodeDeleteRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryDetail
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -102,6 +104,7 @@ class CocoapodsReplicaService(
             val nodeDetail = nodeClient
                 .getNodeDetail(projectId, name, indexFilePath)
                 .data as NodeDetail
+            nodeClient.deleteNode(NodeDeleteRequest(projectId, name, indexFilePath, SecurityUtils.getUserId()))
             val nodeCreateRequest = NodeCreateRequest(projectId, name, indexFilePath, false, sha256 = nodeDetail.sha256)
             logger.info("nodeCreateRequest: $nodeCreateRequest")
             storageManager.storeArtifactFile(nodeCreateRequest, artifactFile, storageCredentials)

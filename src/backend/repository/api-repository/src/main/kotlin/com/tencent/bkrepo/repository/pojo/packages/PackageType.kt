@@ -48,7 +48,8 @@ enum class PackageType(val schema: String, val versionSortProperty: String = Pac
     OCI("oci"),
     GO("go", PackageVersion::ordinal.name),
     COCOAPODS("cocoapods"),
-    GRADLE("gav");
+    GRADLE("gav"),
+    IVY("ivy");
 
     companion object {
         fun fromSchema(schema: String) = values().find { it.schema == schema }

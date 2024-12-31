@@ -14,7 +14,6 @@ import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.ResponseBuilder
 import com.tencent.bkrepo.maven.constants.PACKAGE_SUFFIX_REGEX
-import com.tencent.bkrepo.maven.constants.REPO_TYPE
 import com.tencent.bkrepo.maven.enum.MavenMessageCode
 import com.tencent.bkrepo.maven.exception.MavenArtifactNotFoundException
 import com.tencent.bkrepo.maven.pojo.MavenDependency
@@ -32,6 +31,7 @@ import com.tencent.bkrepo.repository.api.VersionDependentsClient
 import com.tencent.bkrepo.repository.pojo.dependent.VersionDependentsRelation
 import com.tencent.bkrepo.repository.pojo.dependent.VersionDependentsRequest
 import com.tencent.bkrepo.repository.pojo.metadata.MetadataModel
+import com.tencent.bkrepo.repository.pojo.packages.PackageType
 import com.tencent.bkrepo.repository.pojo.repo.RepoListOption
 import org.apache.maven.model.Model
 import org.slf4j.Logger
@@ -64,7 +64,7 @@ class MavenExtService(
         gavcCheck(g, a, v, c)
         val userId = SecurityUtils.getUserId()
         val repoListOption = RepoListOption(
-            type = REPO_TYPE,
+            type = PackageType.MAVEN.name,
             category = listOf(
                 RepositoryCategory.LOCAL.name,
                 RepositoryCategory.REMOTE.name,

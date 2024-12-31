@@ -2,6 +2,12 @@ spring:
   application:
     name: ${service.name}
     desc: Generic Service
+  cloud:
+    stream:
+      bindings:
+        artifactEvent-out-0:
+          destination: artifactEvent
+          binder: pulsar
 server:
   port: __BK_REPO_GENERIC_PORT__
 logging:

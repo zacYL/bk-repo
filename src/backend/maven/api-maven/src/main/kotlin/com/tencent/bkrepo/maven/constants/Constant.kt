@@ -54,6 +54,3 @@ const val PACKAGE_METADATA_AND_CHECKSUM_REGEX = "^maven-metadata\\.xml(\\.([a-z0
 const val ARTIFACT_FORMAT = "^%s-%s-?(SNAPSHOT|[0-9]{8}\\.[0-9]{6}-[0-9]+)?-?(.+)?.%s\$"
 
 const val TIMESTAMP_FORMAT = "([0-9]{8}\\.[0-9]{6})-([0-9]+)"
-
-const val REPO_TYPE = "MAVEN"
-

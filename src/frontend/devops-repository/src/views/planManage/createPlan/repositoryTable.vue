@@ -16,7 +16,7 @@
                 <bk-table-column :label="$t('originRepo')" show-overflow-tooltip width="130">
                     <template #default="{ row }">
                         <div class="flex-align-center">
-                            <Icon size="16" :name="row.type.toLowerCase()" class="mr5" />
+                            <Icon size="16" :name="row.type.toLowerCase()" class="mr5" style="flex-shrink: 0;" />
                             <span class="repo-name text-overflow" :title="row.name">{{ row.name }}</span>
                         </div>
                     </template>
@@ -32,7 +32,13 @@
                                 <bk-input style="width: 130px;" :placeholder="row.projectId" v-model.trim="row.targetProject" maxlength="6" :disabled="disabled"></bk-input>
                             </bk-form-item>
                             <bk-form-item property="targetStore">
-                                <bk-input style="width: 130px;" :placeholder="row.name" v-model.trim="row.targetStore" maxlength="31" :disabled="disabled"></bk-input>
+                                <bk-input style="width: 130px;"
+                                    v-bk-tooltips="{
+                                        content: row.targetStore,
+                                        placement: 'top',
+                                        disabled: !disabled
+                                    }"
+                                    :placeholder="row.name" v-model.trim="row.targetStore" maxlength="32" :disabled="disabled"></bk-input>
                             </bk-form-item>
                         </bk-form>
                     </template>

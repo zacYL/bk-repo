@@ -42,7 +42,8 @@ class CocoapodsReplicaService(
         logger.info("Cocoapods-Event: resolveIndexFile, event:[$event]")
         with(event) {
 
-            val packageFilePath = data["fullPath"] as (String)
+            val packageFilePath = data["fullPath"] as? String?:
+            throw IllegalArgumentException("fullPath is missing or not a string")
 
             val indexFilePath = getIndexFilePath(projectId, repoName, packageFilePath)
 

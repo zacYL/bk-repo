@@ -99,7 +99,10 @@ class CocoapodsReplicaService(
     private fun store(artifactFile: ArtifactFile, repoDetail: RepositoryDetail, indexFilePath: String) {
         logger.info("start to store $indexFilePath")
         with(repoDetail) {
-            val nodeCreateRequest = NodeCreateRequest(projectId, name, indexFilePath, false)
+            val nodeDetail = nodeClient
+                .getNodeDetail(projectId, name, indexFilePath)
+                .data as NodeDetail
+            val nodeCreateRequest = NodeCreateRequest(projectId, name, indexFilePath, false, sha256 = nodeDetail.sha256)
             logger.info("nodeCreateRequest: $nodeCreateRequest")
             storageManager.storeArtifactFile(nodeCreateRequest, artifactFile, storageCredentials)
         }

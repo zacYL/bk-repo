@@ -91,7 +91,7 @@
                             projectId: this.projectId,
                             targetProject: repo.remoteProjectId || '',
                             targetStore: repo.remoteRepoName || '',
-                            fid: repo.remoteProjectId + repo.remoteRepoName
+                            fid: repo.remoteProjectId + repo.localRepoName
                         }
                     })
                 },

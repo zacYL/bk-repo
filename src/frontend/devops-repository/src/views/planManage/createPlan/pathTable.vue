@@ -81,6 +81,7 @@
                     this.selectedRepoName = remoteRepoName
                     this.pathConstraints = pathConstraints.map(v => v.path)
                 },
+                deep: true,
                 immediate: true
             }
         },

@@ -91,6 +91,7 @@
                         fid: remoteProjectId + remoteRepoName + pkg.packageKey
                     }))
                 },
+                deep: true,
                 immediate: true
             }
         },

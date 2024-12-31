@@ -18,7 +18,15 @@ object GitUtil {
             if (repoDir.exists() && repoDir.isDirectory) {
                 // 如果目录已存在，尝试执行 `git pull`
                 logger.info("Local repository exists. Performing 'git pull'.")
+                // 检测并删除锁文件
+                val lockFile = File(repoDir, ".git/index.lock")
+                if (lockFile.exists()) {
+                    logger.warn("Lock file detected: ${lockFile.absolutePath}. Deleting it to prevent conflicts.")
+                    lockFile.delete()
+                }
                 Git.open(repoDir).use { git ->
+                    // 检查仓库状态
+                    logger.info("Git repository status: ${git.status().call()}")
                     val pullCommand = git.pull()
                     if (credentialsProvider != null) {
                         pullCommand.setCredentialsProvider(credentialsProvider)

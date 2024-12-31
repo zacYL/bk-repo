@@ -1,10 +1,9 @@
 package com.tencent.bkrepo.cocoapods.service
 
-import com.tencent.bkrepo.common.api.constant.ADMIN_USER
 import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
 import com.tencent.bkrepo.common.artifact.pojo.configuration.RepositoryConfiguration
-import com.tencent.bkrepo.common.artifact.repository.context.ArtifactSearchContext
 import com.tencent.bkrepo.repository.api.RepositoryClient
+import com.tencent.bkrepo.repository.constant.SYSTEM_USER
 import com.tencent.bkrepo.repository.pojo.repo.RepoUpdateRequest
 import com.tencent.bkrepo.repository.pojo.repo.RepositoryInfo
 import org.springframework.stereotype.Service
@@ -40,7 +39,7 @@ class CocoapodsRepoService(
             public = repoInfo.public,
             description = repoInfo.description,
             configuration = configuration,
-            operator = ADMIN_USER
+            operator = SYSTEM_USER
         )
     }
 }

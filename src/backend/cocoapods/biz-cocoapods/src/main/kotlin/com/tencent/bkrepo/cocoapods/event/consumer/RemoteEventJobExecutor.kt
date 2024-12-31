@@ -125,10 +125,9 @@ class RemoteEventJobExecutor(
     }
 
     private fun repoCreateHandle(event: ArtifactEvent) {
-        logger.info("repo create event: $event")
         with(event) {
-            val dd  = data[RepoCreatedEvent::repoType.name].toString()
             require(data[RepoCreatedEvent::repoType.name].toString() == RepositoryType.COCOAPODS.name) { return }
+            logger.info("repo create event: $event")
             repositoryClient.getRepoInfo(projectId, repoName).data?.let { repoInfo ->
                 when (repoInfo.category) {
                     RepositoryCategory.LOCAL -> {

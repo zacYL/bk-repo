@@ -15,6 +15,8 @@ spring:
 server:
   port: __BK_REPO_COCOAPODS_PORT__
 logging:
+  level:
+    com.tencent.bkrepo.cocoapods.utils: DEBUG
   path: ${logging.path-common}/${service.name}
 service:
   name: cocoapods

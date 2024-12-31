@@ -33,7 +33,6 @@ import com.tencent.bkrepo.cocoapods.exception.CocoapodsMessageCode
 import com.tencent.bkrepo.cocoapods.utils.DecompressUtil.buildEmptySpecGzOps
 import com.tencent.bkrepo.cocoapods.utils.ObjectBuildUtil
 import com.tencent.bkrepo.cocoapods.utils.PathUtil.generateIndexTarPath
-import com.tencent.bkrepo.common.api.constant.ADMIN_USER
 import com.tencent.bkrepo.common.api.constant.CharPool.SLASH
 import com.tencent.bkrepo.common.api.constant.HttpHeaders
 import com.tencent.bkrepo.common.api.constant.MediaTypes.APPLICATION_GZIP
@@ -49,6 +48,7 @@ import com.tencent.bkrepo.common.artifact.pojo.RepositoryIdentify
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResource
 import com.tencent.bkrepo.common.artifact.resolve.response.ArtifactResourceWriterContext
 import com.tencent.bkrepo.common.artifact.util.http.HttpHeaderUtils.encodeDisposition
+import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.service.util.HttpContextHolder.getResponse
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
@@ -78,7 +78,7 @@ class CocoapodsIndexService(
         if (CocoapodsSpecsService.INDEX_GENERATING_VALUE_DOING == indexGenerating) {
             throw ErrorCodeException(CocoapodsMessageCode.COCOAPODS_INDEX_UPDATING_ERROR)
         }
-        remoteEventJobExecutor.execute(ObjectBuildUtil.buildCreatedEvent(projectId, repoName, ADMIN_USER))
+        remoteEventJobExecutor.execute(ObjectBuildUtil.buildCreatedEvent(projectId, repoName, SecurityUtils.getUserId()))
     }
 
     fun downloadSpecs(projectId: String, repoName: String) {
@@ -117,7 +117,7 @@ class CocoapodsIndexService(
                 //下载index文件
                 if (cocoapodsSpecsService.indexExist(projectId, repoName).not()) {
                     logger.warn("repo $repoName index file not exist")
-                    remoteEventJobExecutor.execute(ObjectBuildUtil.buildCreatedEvent(projectId, repoName, ADMIN_USER))
+                    remoteEventJobExecutor.execute(ObjectBuildUtil.buildCreatedEvent(projectId, repoName, SecurityUtils.getUserId()))
                     returnEmptySpec()
                     return
                 }

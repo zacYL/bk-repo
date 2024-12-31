@@ -42,7 +42,6 @@ import com.tencent.bkrepo.cocoapods.utils.GitUtil
 import com.tencent.bkrepo.cocoapods.utils.ObjectBuildUtil.toCocoapodsRemoteConfiguration
 import com.tencent.bkrepo.cocoapods.utils.PathUtil
 import com.tencent.bkrepo.cocoapods.utils.PathUtil.generateIndexTarPath
-import com.tencent.bkrepo.common.api.constant.ADMIN_USER
 import com.tencent.bkrepo.common.api.exception.ErrorCodeException
 import com.tencent.bkrepo.common.artifact.exception.RepoNotFoundException
 import com.tencent.bkrepo.common.artifact.manager.StorageManager
@@ -50,6 +49,7 @@ import com.tencent.bkrepo.common.artifact.pojo.configuration.remote.RemoteConfig
 import com.tencent.bkrepo.common.artifact.repository.remote.buildOkHttpClient
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.lock.service.LockOperation
+import com.tencent.bkrepo.common.security.util.SecurityUtils
 import com.tencent.bkrepo.common.storage.core.StorageProperties
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
@@ -127,7 +127,7 @@ class CocoapodsSpecsService(
                 sha256 = specArtifact.getFileSha256(),
                 md5 = specArtifact.getFileMd5(),
                 overwrite = true,
-                operator = ADMIN_USER
+                operator = SecurityUtils.getUserId()
             )
             storageManager.storeArtifactFile(nodeCreateRequest, specArtifact, null)
             cocoapodsRemotePackageDao.saveIfNotExists(podspecList.map {

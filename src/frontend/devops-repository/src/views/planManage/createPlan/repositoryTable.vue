@@ -26,7 +26,7 @@
                         <bk-form
                             :ref="row.fid"
                             form-type="inline"
-                            :rules="rules"
+                            :rules="getRules(row.type.toLowerCase())"
                             :model="row">
                             <bk-form-item property="targetProject">
                                 <bk-input style="width: 130px;" :placeholder="row.projectId" v-model.trim="row.targetProject" maxlength="6" :disabled="disabled"></bk-input>
@@ -66,29 +66,7 @@
             return {
                 showAddDialog: false,
                 replicaTaskObjects: [],
-                insertFilterRepoList: [],
-                rules: {
-                    // 目标项目正则
-                    targetProject: [
-                        {
-                            validator: function (val) {
-                                return !!val.match(/^[a-z0-9]{6}$|^$/)
-                            },
-                            message: this.$t('projectIdCheckTips'),
-                            trigger: 'blur'
-                        }
-                    ],
-                    // 目标仓库正则
-                    targetStore: [
-                        {
-                            validator: function (val) {
-                                return !!val.match(/^[a-zA-Z][a-zA-Z0-9\-_]{1,31}$|^$/)
-                            },
-                            message: this.$t('repoNamePlaceholder'),
-                            trigger: 'blur'
-                        }
-                    ]
-                }
+                insertFilterRepoList: []
             }
         },
         computed: {
@@ -115,6 +93,31 @@
             }
         },
         methods: {
+            getRules (type) {
+                return {
+                    // 目标项目正则
+                    targetProject: [
+                        {
+                            validator: function (val) {
+                                return !!val.match(/^[a-z0-9]{6}$|^$/)
+                            },
+                            message: this.$t('projectIdCheckTips'),
+                            trigger: 'blur'
+                        }
+                    ],
+                    // 目标仓库正则
+                    targetStore: [
+                        {
+                            validator: function (val) {
+                                const regex = type === 'docker' ? /^[a-z][a-z0-9\-_]{1,31}$|^$/ : /^[a-zA-Z][a-zA-Z0-9\-_]{1,31}$|^$/
+                                return !!val.match(regex)
+                            },
+                            message: type === 'docker' ? this.$t('repoDockerNamePlaceholder') : this.$t('repoNamePlaceholder'),
+                            trigger: 'blur'
+                        }
+                    ]
+                }
+            },
             confirm (repoList) {
                 const repoMap = new Map(repoList.map(v => [v.fid, { ...v, targetProject: '', targetStore: '' }]))
 

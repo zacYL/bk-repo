@@ -11,6 +11,7 @@ import com.tencent.bkrepo.common.artifact.manager.StorageManager
 import com.tencent.bkrepo.common.artifact.resolve.file.ArtifactFileFactory
 import com.tencent.bkrepo.common.artifact.stream.ArtifactInputStream
 import com.tencent.bkrepo.common.security.util.SecurityUtils
+import com.tencent.bkrepo.common.storage.filesystem.FileSystemClient
 import com.tencent.bkrepo.repository.api.NodeClient
 import com.tencent.bkrepo.repository.api.RepositoryClient
 import com.tencent.bkrepo.repository.pojo.node.NodeDetail
@@ -64,7 +65,7 @@ class CocoapodsReplicaService(
             val indexFileInputStream =
                 storageManager.loadArtifactInputStream(nodeDetail, repoDetail.storageCredentials) ?: return
             //目标地址,ex:"http://bkrepo.indecpack7.com/cocoapods/z153ce/hb-pod-1220//MatthewYork/DateTools/5.0.0/DateTools-5.0.0.tar.gz"
-            val sourcePath = "${cocoapodsProperties.domain}/${projectId}/${repoName}/${packageFilePath}"
+            val sourcePath = "${cocoapodsProperties.domain}/${projectId}/${repoName}/${packageFilePath}"+"/test"
 
             logger.info("replace with sourcePath: $sourcePath")
 
@@ -101,13 +102,18 @@ class CocoapodsReplicaService(
     private fun store(artifactFile: ArtifactFile, repoDetail: RepositoryDetail, indexFilePath: String) {
         logger.info("start to store $indexFilePath")
         with(repoDetail) {
-            val nodeDetail = nodeClient
-                .getNodeDetail(projectId, name, indexFilePath)
-                .data as NodeDetail
-            nodeClient.deleteNode(NodeDeleteRequest(projectId, name, indexFilePath, SecurityUtils.getUserId()))
-            val nodeCreateRequest = NodeCreateRequest(projectId, name, indexFilePath, false, sha256 = nodeDetail.sha256)
-            logger.info("nodeCreateRequest: $nodeCreateRequest")
-            storageManager.storeArtifactFile(nodeCreateRequest, artifactFile, storageCredentials)
+            val nodeCreateRequest = NodeCreateRequest(
+                projectId,
+                name,
+                indexFilePath,
+                false,
+                sha256 = artifactFile.getFileSha256(),
+                md5 = artifactFile.getFileMd5(),
+                overwrite = true
+            )
+            val nodeDetail =
+                storageManager.storeArtifactFile(nodeCreateRequest, artifactFile, storageCredentials)
+            logger.info("the new nodeDetail is: $nodeDetail")
         }
         logger.info("store success")
     }

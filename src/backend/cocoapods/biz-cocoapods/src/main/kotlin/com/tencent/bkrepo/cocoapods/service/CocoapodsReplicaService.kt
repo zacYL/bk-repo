@@ -30,7 +30,6 @@ import kotlin.math.log
 class CocoapodsReplicaService(
     private val nodeClient: NodeClient,
     private val repoClient: RepositoryClient,
-    private val cocoapodsProperties: CocoapodsProperties,
     private val storageManager: StorageManager
 ) {
 

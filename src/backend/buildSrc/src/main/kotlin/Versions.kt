@@ -81,4 +81,5 @@ object Versions {
     const val CommonsLang3 = "3.14.0"
     const val Easyexcel = "4.0.3"
     const val Tika = "2.9.2"
+    const val ivy = "2.5.2"
 }

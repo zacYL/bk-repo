@@ -46,6 +46,18 @@ object PackageKeys {
     /**
      * 生成gav格式key
      */
+    fun ofIvy(org: String, module: String, branch: String): String {
+        return StringBuilder(PackageType.IVY.schema).append(SEPARATOR).append(org)
+            .append(StringPool.COLON)
+            .append(module)
+            .append(StringPool.COLON)
+            .append(branch)
+            .toString()
+    }
+
+    /**
+     * 生成gav格式key
+     */
     fun ofGav(groupId: String, artifactId: String): String {
         return StringBuilder(PackageType.MAVEN.schema).append(SEPARATOR).append(groupId)
             .append(StringPool.COLON)

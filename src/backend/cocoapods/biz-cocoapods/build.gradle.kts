@@ -38,5 +38,4 @@ dependencies {
     implementation("com.google.code.gson:gson")
     implementation("org.apache.tika:tika-core:$Tika")
     implementation("org.eclipse.jgit:org.eclipse.jgit")
-    implementation("org.jruby:jruby-complete:9.4.9.0")
 }

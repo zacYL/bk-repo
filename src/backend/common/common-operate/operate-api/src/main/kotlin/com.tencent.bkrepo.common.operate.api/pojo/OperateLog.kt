@@ -38,5 +38,6 @@ data class OperateLog(
     val resourceKey: String,
     val userId: String,
     val clientAddress: String,
-    val description: Map<String, Any>
+    val description: Map<String, Any>,
+    val result: Boolean = true
 )

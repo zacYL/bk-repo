@@ -37,7 +37,8 @@ data class OperateLogResponse(
     val userId: String,
     val clientAddress: String,
     val result: Boolean,
-    val content: Content
+    val content: Content,
+    val failReason: String? = null,
 ) {
     open class Content(
         val projectId: String? = null,

@@ -54,10 +54,13 @@ data class TOperateLog(
     var resourceKey: String,
     var userId: String,
     var clientAddress: String,
-    var description: Map<String, Any>
+    var description: Map<String, Any>,
+    var result: Boolean = true, // 默认成功，失败原因存储在description中，key为failReason
 ) {
     companion object {
         const val RESOURCE_KEY_IDX = "projectId_repoName_resourceKey_type_idx"
         const val RESOURCE_KEY_IDX_DEF = "{'projectId':1,'repoName':1,'resourceKey':1, 'type': 1}"
+
+        const val DESCRIPTION_KEY_FAIL_REASON = "failReason"
     }
 }

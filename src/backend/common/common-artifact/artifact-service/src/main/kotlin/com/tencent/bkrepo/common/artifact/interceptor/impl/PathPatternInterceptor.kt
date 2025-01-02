@@ -1,8 +1,16 @@
 package com.tencent.bkrepo.common.artifact.interceptor.impl
 
+import com.tencent.bkrepo.common.artifact.event.base.EventType
 import com.tencent.bkrepo.common.artifact.exception.PathPatternNotMatchException
 import com.tencent.bkrepo.common.artifact.interceptor.DownloadInterceptor
+import com.tencent.bkrepo.common.operate.api.OperateLogService
+import com.tencent.bkrepo.common.operate.api.pojo.OperateLog
+import com.tencent.bkrepo.common.operate.service.model.TOperateLog.Companion.DESCRIPTION_KEY_FAIL_REASON
+import com.tencent.bkrepo.common.security.util.SecurityUtils
+import com.tencent.bkrepo.common.service.util.HttpContextHolder
+import com.tencent.bkrepo.common.service.util.SpringContextUtils
 import org.springframework.util.AntPathMatcher
+import java.time.LocalDateTime
 
 /**
  * 路径模式下载拦截器
@@ -28,9 +36,25 @@ class PathPatternInterceptor(rules: Map<String, Any>)
         return PathPatternNotMatchException(artifact)
     }
 
+    override fun onForbidden(projectId: String, artifact: String) {
+        val log = OperateLog(
+            createdDate = LocalDateTime.now(),
+            type = EventType.NODE_DOWNLOADED,
+            projectId = projectId,
+            repoName = null,
+            resourceKey = artifact,
+            userId = SecurityUtils.getUserId(),
+            clientAddress = HttpContextHolder.getClientAddress(),
+            description = mapOf(DESCRIPTION_KEY_FAIL_REASON to PATH_PATTERN_NOT_MATCHED),
+            result = false
+        )
+        SpringContextUtils.getBean(OperateLogService::class.java).saveAsync(log)
+    }
+
     companion object {
         private val antPathMatcher = AntPathMatcher()
         private const val INCLUDE_PATH_PATTERNS = "includePathPatterns"
         private const val EXCLUDE_PATH_PATTERNS = "excludePathPatterns"
+        private const val PATH_PATTERN_NOT_MATCHED = "Artifact not match path-pattern settings of repository"
     }
 }

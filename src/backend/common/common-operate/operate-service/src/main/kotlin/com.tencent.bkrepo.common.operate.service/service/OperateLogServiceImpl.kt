@@ -47,6 +47,7 @@ import com.tencent.bkrepo.common.operate.service.config.OperateProperties
 import com.tencent.bkrepo.common.operate.service.dao.OperateLogDao
 import com.tencent.bkrepo.common.operate.service.dao.OperateLogMigrateDao
 import com.tencent.bkrepo.common.operate.service.model.TOperateLog
+import com.tencent.bkrepo.common.operate.service.model.TOperateLog.Companion.DESCRIPTION_KEY_FAIL_REASON
 import com.tencent.bkrepo.common.operate.service.model.TOperateLogMig
 import com.tencent.bkrepo.common.security.exception.PermissionException
 import com.tencent.bkrepo.common.security.manager.PermissionManager
@@ -371,8 +372,9 @@ open class OperateLogServiceImpl(
             operate = eventName(tOperateLog.type),
             userId = tOperateLog.userId,
             clientAddress = tOperateLog.clientAddress,
-            result = true,
-            content = content
+            result = tOperateLog.result,
+            content = content,
+            failReason = if (tOperateLog.result) null else tOperateLog.description[DESCRIPTION_KEY_FAIL_REASON] as? String
         )
     }
 
@@ -399,7 +401,8 @@ open class OperateLogServiceImpl(
             repoName = repoName,
             description = description,
             userId = userId,
-            clientAddress = clientAddress
+            clientAddress = clientAddress,
+            result = result
         )
     }
 
